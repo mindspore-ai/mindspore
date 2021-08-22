@@ -69,7 +69,7 @@ int ReduceInt8Coder::CalculateQuantArgs() {
       QuantizeMultiplierSmallerThanOne(prod_multiplier, &qm->multiplier_, &shift);
       qm->left_shift_ = shift < 0 ? -shift : 0;
       qm->right_shift_ = shift > 0 ? shift : 0;
-      mean_multipliers_.push_back(qm);
+      prod_multipliers_.push_back(qm);
     }
   }
 

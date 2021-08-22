@@ -52,7 +52,6 @@ do
     --is_distribute=1 \
     --device_id=$DEVICE_ID \
     --pretrained=$PATH_CHECKPOINT \
-    --data_dir=$DATA_DIR \
-    --run_eval=False > log_less.txt 2>&1 &
+    --data_dir=$DATA_DIR > log_less.txt 2>&1 &
     cd ../
 done

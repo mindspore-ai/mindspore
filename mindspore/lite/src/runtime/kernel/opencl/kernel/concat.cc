@@ -38,7 +38,10 @@ int ConcatOpenCLKernel::RunAxis0() {
   auto *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
   for (int i = 0; i < in_tensors_.size(); i++) {
     auto src_data = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data_c() : weight_ptrs_.at(i);
-    allocator_->GetImageSize(src_data, &img_size);
+    if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
+      MS_LOG(ERROR) << "GetImageSize failed.";
+      return RET_ERROR;
+    }
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
     auto *input_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
@@ -107,7 +110,7 @@ int ConcatOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void ConcatOpenCLKernel::SetConstArgs() {
+int ConcatOpenCLKernel::SetConstArgs() {
   GpuTensorInfo img_info(out_tensors_[0]);
   size_t dtype = ocl_runtime_->GetFp16Enable() ? sizeof(cl_half) : sizeof(cl_float);
   stride_w = img_info.RowPitch() / dtype;
@@ -124,9 +127,15 @@ void ConcatOpenCLKernel::SetConstArgs() {
         temp.s[j] = in_tensor->shape()[j];
       }
       Broadcast2GpuShape(in_shape_.s, temp.s, in_tensor->shape().size(), 1);
-      ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_);
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
+        MS_LOG(ERROR) << "SetKernelArg failed.";
+        return RET_ERROR;
+      }
     }
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
     for (auto &in_tensor : in_tensors_) {
       cl_int4 temp = {};
@@ -135,11 +144,18 @@ void ConcatOpenCLKernel::SetConstArgs() {
       }
       Broadcast2GpuShape(in_shape_.s, temp.s, in_tensor->shape().size(), 1);
       in_shape_.s[3] = UP_DIV(in_shape_.s[3], C4NUM);
-      ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_);
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
+        MS_LOG(ERROR) << "SetKernelArg failed.";
+        return RET_ERROR;
+      }
     }
   }
   out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void ConcatOpenCLKernel::SetGlobalLocal() {
@@ -190,6 +206,10 @@ int ConcatOpenCLKernel::ConvertWeightToTensor() {
       }
       ImageSize img_size{in_shape.width, in_shape.height, dtype};
       auto weight_ptr_ = allocator->Malloc(img_size, weight.data());
+      if (weight_ptr_ == nullptr) {
+        MS_LOG(ERROR) << "Malloc failed.";
+        return RET_ERROR;
+      }
       weight_ptrs_.push_back(weight_ptr_);
     } else {
       weight_ptrs_.push_back(nullptr);
@@ -222,7 +242,7 @@ int ConcatOpenCLKernel::Prepare() {
   kernel_name += "_NHWC4";
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
   std::string source = concat_source;
-  std::string program_name = "Concat";
+  const std::string program_name = "Concat";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -234,7 +254,10 @@ int ConcatOpenCLKernel::Prepare() {
     return ret;
   }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   return RET_OK;
 }
@@ -247,14 +270,27 @@ int ConcatOpenCLKernel::Run() {
   int arg_cn = 0;
   for (int i = 0; i < in_tensors_.size(); ++i) {
     auto input_ptr = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data_c() : weight_ptrs_.at(i);
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_ptr);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_ptr) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
   if (axis_ == 3 && !Align_) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF) !=
+        CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

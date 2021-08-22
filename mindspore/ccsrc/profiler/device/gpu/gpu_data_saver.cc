@@ -68,6 +68,10 @@ void GpuDataSaver::ParseEvent(const std::vector<Event> &events) {
   for (auto &device_infos : activity_infos_) {
     // device_infos: <device_id, DeviceActivityInfos>
     for (auto &activity_info : device_infos.second) {
+      if (activity_info.second.count_ == 0) {
+        MS_LOG(ERROR) << "The num of operations can not be 0.";
+        return;
+      }
       // activity_info: <kernel_name, Activity>
       activity_info.second.avg_duration_ = activity_info.second.total_duration_ / activity_info.second.count_;
     }

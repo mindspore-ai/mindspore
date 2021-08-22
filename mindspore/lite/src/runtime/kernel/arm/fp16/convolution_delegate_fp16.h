@@ -60,7 +60,7 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
     return fp16_conv_kernel_->SetTrainable(trainable);
   }
 
-  void set_in_tensor(lite::Tensor *in_tensor, int index) override {
+  void set_in_tensor(lite::Tensor *in_tensor, size_t index) override {
     MS_ASSERT(index < in_tensors_.size());
     this->in_tensors_[index] = in_tensor;
     if (fp16_conv_kernel_ != nullptr) {
@@ -68,7 +68,7 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
     }
   }
 
-  void set_out_tensor(lite::Tensor *out_tensor, int index) override {
+  void set_out_tensor(lite::Tensor *out_tensor, size_t index) override {
     MS_ASSERT(index < out_tensors_.size());
     this->out_tensors_[index] = out_tensor;
     if (fp16_conv_kernel_ != nullptr) {

@@ -17,7 +17,6 @@ import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as vision
-from mindspore import log as logger
 
 
 DATA_DIR_TF2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -208,9 +207,8 @@ def test_skip_exception_1():
         for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
 
-    except RuntimeError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "skip_count should not be negative, skip_count: -1" in str(e)
+    except ValueError as e:
+        assert "Input count is not within the required interval" in str(e)
 
 
 def test_skip_exception_2():

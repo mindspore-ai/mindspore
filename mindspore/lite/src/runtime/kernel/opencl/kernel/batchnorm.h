@@ -32,11 +32,13 @@ class BatchNormOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
-  void SetConstArgs() override;
+  int SetConstArgs() override;
   void SetGlobalLocal() override;
 
  private:
   int Initweight();
+  int UnmapBuffer();
+  int MapBuffer();
 
  private:
   bool use_fp16_enable_{false};

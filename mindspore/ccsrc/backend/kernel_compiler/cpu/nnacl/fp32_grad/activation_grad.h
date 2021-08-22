@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ int HSwishGrad(const float *src0, const float *src1, size_t length, float *dst);
 int HSigmoidGrad(const float *src0, const float *src1, size_t length, float *dst);
 int EluGrad(const float *src0, const float *src1, size_t length, float *dst, float alpha);
 int GeluGrad(const float *src0, const float *src1, size_t length, float *dst);
+int SoftplusGrad(const float *src, const float *src1, int length, float *dst);
 
 #ifdef __cplusplus
 }

@@ -218,7 +218,7 @@ int16x4_t ClacSumHalfWord(int32x4_t scaled_input, int32x4_t left_shift_out_vec, 
 void SquareInt8NEON(const int8_t *input_data, int8_t *output_data, int64_t element_size, ArithSelfQuantArg para,
                     int *index) {
   int32x4_t output_multiplier_vec = vdupq_n_s32(para.output_multiplier_);
-  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << para.shift_left_);
+  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << (size_t)para.shift_left_);
 
   for (; (*index) <= element_size - 8; (*index) += 8) {
     int16x8_t input_val = LoadAndAddOffset(input_data, *index, para.in_args_.zp_);

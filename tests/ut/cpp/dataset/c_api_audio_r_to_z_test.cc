@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "common/common.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/include/dataset/datasets.h"
@@ -24,73 +23,12 @@ using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::INFO;
 
-class MindDataTestPipeline : public UT::DatasetOpTesting {
- protected:
+class MindDataTestPipeline : public UT::Common {
+ public:
 };
 
-TEST_F(MindDataTestPipeline, TestTimeMaskingPipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeMaskingPipeline.";
-  // Original waveform
-  std::shared_ptr<SchemaObj> schema = Schema();
-  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
-  std::shared_ptr<Dataset> ds = RandomData(50, schema);
-  EXPECT_NE(ds, nullptr);
-
-  ds = ds->SetNumWorkers(4);
-  EXPECT_NE(ds, nullptr);
-
-  auto timemasking = audio::TimeMasking(true, 6);
-
-  ds = ds->Map({timemasking});
-  EXPECT_NE(ds, nullptr);
-
-  // Filtered waveform by bandbiquad
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(ds, nullptr);
-
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  std::vector<int64_t> expected = {2, 200};
-
-  int i = 0;
-  while (row.size() != 0) {
-    auto col = row["inputData"];
-    ASSERT_EQ(col.Shape(), expected);
-    ASSERT_EQ(col.Shape().size(), 2);
-    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
-    ASSERT_OK(iter->GetNextRow(&row));
-    i++;
-  }
-  EXPECT_EQ(i, 50);
-
-  iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestTimeMaskingWrongArgs) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeMaskingWrongArgs.";
-  // Original waveform
-  std::shared_ptr<SchemaObj> schema = Schema();
-  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 20}));
-  std::shared_ptr<Dataset> ds = RandomData(50, schema);
-  EXPECT_NE(ds, nullptr);
-
-  ds = ds->SetNumWorkers(4);
-  EXPECT_NE(ds, nullptr);
-
-  auto timemasking = audio::TimeMasking(true, -100);
-
-  ds = ds->Map({timemasking});
-  EXPECT_NE(ds, nullptr);
-
-  // Filtered waveform by bandbiquad
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  // Expect failure
-  EXPECT_EQ(iter, nullptr);
-}
-
 TEST_F(MindDataTestPipeline, TestTimeStretchPipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeStretchPipeline.";
+  MS_LOG(INFO) << "Doing test TimeStretchOp with custom param value. Pipeline.";
   // op param
   int freq = 1025;
   int hop_length = 512;
@@ -116,7 +54,7 @@ TEST_F(MindDataTestPipeline, TestTimeStretchPipeline) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
 
-  std::vector<int64_t> expected = {2, freq, static_cast<int64_t>(std::ceil(400 / rate)), 2};
+  std::vector<int64_t> expected = {2, freq, int(std::ceil(400 / rate)), 2};
 
   int i = 0;
   while (row.size() != 0) {
@@ -132,7 +70,7 @@ TEST_F(MindDataTestPipeline, TestTimeStretchPipeline) {
 }
 
 TEST_F(MindDataTestPipeline, TestTimeStretchPipelineWrongArgs) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeStretchPipelineWrongArgs.";
+  MS_LOG(INFO) << "Doing test TimeStretchOp with wrong param value. Pipeline.";
   // op param
   int freq = 1025;
   int hop_length = 512;

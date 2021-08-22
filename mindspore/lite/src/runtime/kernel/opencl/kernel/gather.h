@@ -34,7 +34,7 @@ class GatherOpenCLKernel : public OpenCLKernel {
   int PreProcess() override;
 
   int CheckSpecs() override;
-  void SetConstArgs() override;
+  int SetConstArgs() override;
   void SetGlobalLocal() override;
   int Tune() override { return lite::RET_OK; }
   int ConvertTensorToweight();

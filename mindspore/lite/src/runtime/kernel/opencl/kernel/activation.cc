@@ -65,37 +65,53 @@ int ActivationOpenCLKernel::CheckSpecs() {
 int ActivationOpenCLKernel::Prepare() {
   outShape = GpuTensorInfo(out_tensors_[0]);
   std::string source = activation_source;
-  std::string program_name = "Activation";
+  const std::string program_name = "Activation";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
   }
-  std::string kernel_name = GetActTypeString(type_);
+  const std::string kernel_name = GetActTypeString(type_);
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " init Done!";
   return RET_OK;
 }
 
-void ActivationOpenCLKernel::SetConstArgs() {
+int ActivationOpenCLKernel::SetConstArgs() {
   int arg_idx = 2;
   cl_int2 image_size = {static_cast<int>(outShape.width), static_cast<int>(outShape.height)};
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, image_size);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, image_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
   if (type_ == ActivationType_LEAKY_RELU) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, alpha_);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, alpha_) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
   if (type_ == ActivationType_SIGMOID) {
     int c4 = outShape.Slice;
     int last_c4 = outShape.C % 4 == 0 ? 4 : outShape.C % 4;
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, c4);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, last_c4);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, c4) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, last_c4) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
+  return RET_OK;
 }
 
 void ActivationOpenCLKernel::SetGlobalLocal() {
@@ -107,8 +123,14 @@ void ActivationOpenCLKernel::SetGlobalLocal() {
 int ActivationOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
   auto ret = ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel:" << this->name() << " fail.";

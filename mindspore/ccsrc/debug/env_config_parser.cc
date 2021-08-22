@@ -122,7 +122,8 @@ void EnvConfigParser::ParseFromFile() {
   std::ifstream json_file(config_file_);
   if (!json_file.is_open()) {
     MS_LOG(WARNING) << "Env config file:" << config_file_ << " open failed."
-                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
+                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context."
+                    << " Errno:" << errno << " ErrInfo:" << strerror(errno);
     return;
   }
 

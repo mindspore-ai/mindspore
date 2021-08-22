@@ -147,6 +147,7 @@ class TrainSession : virtual public lite::LiteSession {
   void FreeRestoreTensors();
   bool AllInputsNeedScale(kernel::LiteKernel *kernel);
   void FreeWorkSpace();
+  int AllocTensors(const std::vector<kernel::LiteKernel *> &kernels);
 
   std::map<Tensor *, Tensor *> restored_origin_tensors_;
   int virtual_batch_idx_ = 0;
@@ -155,6 +156,8 @@ class TrainSession : virtual public lite::LiteSession {
   void *workspace_ = nullptr;
   SchedCallBack sched_mix_precision_callback_;
   bool train_mode_ = false;
+  void *tensors_data_ = nullptr;
+  std::shared_ptr<Allocator> allocator_;
 };
 
 }  // namespace lite

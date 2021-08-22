@@ -1454,7 +1454,10 @@ KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
         auto tensor = beforeInputs[0];
         MS_ASSERT(tensor != nullptr);
         auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-        MS_ASSERT(lite_tensor != nullptr);
+        if (lite_tensor == nullptr) {
+          MS_LOG(ERROR) << "Before inputs is not a lite::Tensor";
+          return false;
+        }
         if (tensor->data_type() != kNumberTypeInt8) {
           MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
           return false;
@@ -1513,7 +1516,10 @@ KernelCallBack PostTrainingQuantizer::GetInt8AfterCallBack() {
       auto tensor = afterOutputs[0];
       MS_ASSERT(tensor != nullptr);
       auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-      MS_ASSERT(lite_tensor != nullptr);
+      if (lite_tensor == nullptr) {
+        MS_LOG(ERROR) << "Before inputs is not a lite::Tensor";
+        return false;
+      }
       if (tensor->data_type() != kNumberTypeInt8) {
         MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
         return false;

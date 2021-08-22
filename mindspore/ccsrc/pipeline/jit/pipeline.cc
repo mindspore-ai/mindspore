@@ -206,7 +206,8 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   ChangeFileMode(realpath.value(), S_IRWXU);
   std::ofstream fout(realpath.value());
   if (!fout.is_open()) {
-    MS_LOG(EXCEPTION) << "Open cache file '" << realpath.value() << "' failed!";
+    MS_LOG(EXCEPTION) << "Open cache file '" << realpath.value() << "' failed!"
+                      << " Errno:" << errno << " ErrInfo:" << strerror(errno);
   }
   FuncGraphPtr fg = resource->func_graph();
   mind_ir::ModelProto fg_model = GetBinaryProto(fg, true);
@@ -707,6 +708,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   SaveCompiledGraph(phase_s);
 
   opt::python_pass::PyPassManager::GetInstance()->ClearPipelineRes();
+  abstract::AnalysisContext::ClearContext();
   // Reclaim all resource used by optimizer;
   ReclaimOptimizer();
   resource->Clean();
@@ -1336,6 +1338,7 @@ void ClearResAtexit() {
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();
+  abstract::AnalysisContext::ClearContext();
 #ifdef ENABLE_DEBUGGER
   Debugger::GetInstance()->Reset();
 #endif

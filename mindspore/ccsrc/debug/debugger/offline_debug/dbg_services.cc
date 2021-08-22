@@ -48,7 +48,7 @@ DbgServices::~DbgServices() {
 
 std::string DbgServices::GetVersion() {
   MS_LOG(INFO) << "get version is called";
-  return "1.3.0";
+  return "1.4.0";
 }
 
 int32_t DbgServices::Initialize(std::string net_name, std::string dump_folder_path, bool is_sync_mode) {

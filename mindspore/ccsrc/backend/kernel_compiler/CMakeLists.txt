@@ -35,6 +35,7 @@ if(ENABLE_CPU)
         "cpu/fl/*.cc"
         "cpu/ps/*.cc"
         "cpu/quantum/*.cc"
+        "cpu/pyfunc/*.cc"
     )
 
     if(NOT ENABLE_MPI)

@@ -175,6 +175,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
 }
 
 void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
@@ -212,6 +213,7 @@ void GPUSession::RunOpOptimize(const std::shared_ptr<KernelGraph> &kernel_graph)
 }
 
 void GPUSession::RunOpHardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
@@ -334,6 +336,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
 #endif
       auto pk_node = input_node->cast<ParameterPtr>();
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
+      MS_EXCEPTION_IF_NULL(device_address);
       auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
       bool need_sync = false;
       if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
@@ -354,7 +357,6 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
             ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
           tensor->set_device_address(device_address);
         }
-        MS_EXCEPTION_IF_NULL(device_address);
         auto size = UpdateGraphInputAbstract(input_node, tensor);
         if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0), size, tensor->data_type(),
                                               tensor->data_c())) {
@@ -381,7 +383,7 @@ GraphId GPUSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   MS_EXCEPTION_IF_NULL(root_graph);
   if (all_graphs.size() != 1) {
-    MS_LOG(EXCEPTION) << "Gpu backend does not support multi-graph schedule. graph num" << all_graphs.size();
+    MS_LOG(EXCEPTION) << "Gpu backend does not support multi-graph schedule, graph num is " << all_graphs.size();
   }
   // Insert maketuple graph output in case of multi-outputs.
   // The ConvertTupleOutputToMaketuple pass will insert TupleGetItem.
@@ -391,6 +393,7 @@ GraphId GPUSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 }
 
 GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   // Prepare ms context info for dump .pb graph
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -627,6 +630,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   EraseValueNodeTensor(tensors_mask, input_tensors);
   // wait for allreduce
   for (auto &tensor : *input_tensors) {
+    MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->NeedWaitDevice()) {
       tensor->WaitDevice();
     }

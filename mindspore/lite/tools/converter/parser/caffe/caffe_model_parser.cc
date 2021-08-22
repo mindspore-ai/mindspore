@@ -39,6 +39,11 @@ namespace {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
 constexpr size_t kConvWeightShapeSize = 4;
+constexpr size_t kFcWeightFirstShapeIndex = 0;
+constexpr size_t kFcWeightSecondShapeIndex = 1;
+constexpr size_t kFcBiasFirstShapeIndex = 0;
+constexpr size_t kFcBiasSecondShapeIndex = 1;
+constexpr size_t kFcBiasThirdShapeIndex = 2;
 }  // namespace
 bool IsSkipedLayer(const caffe::LayerParameter &layer) {
   if (layer.type() == "Input" || layer.type() == "Dropout" || layer.type() == "Split") {
@@ -50,12 +55,14 @@ bool IsSkipedLayer(const caffe::LayerParameter &layer) {
 void FcSqueezeWeightBias(const caffe::LayerParameter &layer, int blob_index, std::vector<int32_t> *shape) {
   if (layer.type() == "InnerProduct") {
     if (blob_index == 0) {
-      if (shape->size() == kConvWeightShapeSize && shape->at(0) == 1 && shape->at(1) == 1) {
+      if (shape->size() == kConvWeightShapeSize && shape->at(kFcWeightFirstShapeIndex) == 1 &&
+          shape->at(kFcWeightSecondShapeIndex) == 1) {
         shape->erase(shape->begin());
         shape->erase(shape->begin());
       }
     } else if (blob_index == 1) {
-      if (shape->size() == kConvWeightShapeSize && shape->at(0) == 1 && shape->at(1) == 1 && shape->at(2) == 1) {
+      if (shape->size() == kConvWeightShapeSize && shape->at(kFcBiasFirstShapeIndex) == 1 &&
+          shape->at(kFcBiasSecondShapeIndex) == 1 && shape->at(kFcBiasThirdShapeIndex) == 1) {
         shape->erase(shape->begin());
         shape->erase(shape->begin());
         shape->erase(shape->begin());
@@ -105,110 +112,12 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag)
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_CAFFE, false);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_CAFFE, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
-  if ((status = WeightFormatTransform(res_graph_)) != RET_OK) {
-    MS_LOG(ERROR) << "WeightFormatTransform failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
-  }
   return res_graph_;
-}
-
-STATUS CaffeModelParser::WeightFormatTransform(const FuncGraphPtr &graph) {
-  MS_ASSERT(graph != nullptr);
-  auto node_list = TopoSort(graph->get_return());
-  for (auto &node : node_list) {
-    if (!utils::isa<CNodePtr>(node)) {
-      continue;
-    }
-    auto conv_cnode = node->cast<CNodePtr>();
-    if (!opt::CheckPrimitiveType(node, prim::kPrimConv2DFusion) &&
-        !opt::CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) &&
-        !opt::CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
-      continue;
-    }
-    MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
-    auto weight_node = conv_cnode->input(kConvWeightIndex);
-    MS_ASSERT(weight_node != nullptr);
-    auto tensor_info = opt::GetTensorInfo(weight_node);
-    if (tensor_info == nullptr) {
-      MS_LOG(ERROR) << "weight node must param value";
-      return RET_OK;
-    }
-    auto status = HardCodeCaffe(conv_cnode, tensor_info, graph);
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "Format hard code failed: " << status << ", node: " << node->fullname_with_scope();
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
-
-STATUS CaffeModelParser::HardCodeCaffe(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info,
-                                       const FuncGraphPtr &graph) {
-  MS_ASSERT(conv_cnode != nullptr);
-  MS_ASSERT(tensor_info != nullptr);
-  auto weight_node = conv_node->input(kConvWeightIndex);
-  auto weight_value = opt::GetTensorInfo(weight_node);
-  if (weight_value == nullptr) {
-    MS_LOG(DEBUG) << "weight node must param value";
-    return RET_OK;
-  }
-  schema::Format weight_dst_format = schema::Format::Format_KHWC;
-  STATUS status = RET_OK;
-  schema::Format weight_src_format = Format_NUM_OF_FORMAT;
-  switch (quant_type_) {
-    case QuantType_PostTraining:
-    case QuantType_WeightQuant:
-    case QuantType_QUANT_NONE: {
-      weight_src_format = schema::Format::Format_KCHW;
-    } break;
-    default: {
-      MS_LOG(ERROR) << "Unsupported quantType: " << EnumNameQuantType(quant_type_)
-                    << ", node: " << conv_node->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
-  }
-  if (utils::isa<CNodePtr>(weight_node)) {
-    auto status =
-      HandleWeightConst(graph, conv_node, weight_node->cast<CNodePtr>(), weight_src_format, weight_dst_format);
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "handle weight-const failed.";
-      return RET_ERROR;
-    }
-  }
-  weight_value = opt::GetTensorInfo(weight_node);
-  if (weight_value != nullptr) {
-    status = opt::TransFilterFormat(weight_value, schema::Format::Format_KCHW, weight_dst_format);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_dst_format]) << "To"
-                    << EnumNameFormat(weight_dst_format) << " failed, node : " << conv_node->fullname_with_scope()
-                    << "quant type:" << quant_type_;
-      return RET_ERROR;
-    }
-    auto type_id = static_cast<TypeId>(weight_value->data_type());
-    auto shape = weight_value->shape();
-    std::vector<int64_t> shape_vector(shape.begin(), shape.end());
-    auto abstract = lite::CreateTensorAbstract(shape_vector, type_id);
-    if (abstract == nullptr) {
-      MS_LOG(ERROR) << "Create tensor abstarct failed";
-      return RET_ERROR;
-    }
-    weight_node->set_abstract(abstract);
-  }
-  if (utils::isa<ParameterPtr>(weight_node)) {
-    auto status =
-      HandleWeightSharing(graph, KHWC, weight_node->cast<ParameterPtr>(), weight_src_format, weight_dst_format);
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "handle weight-sharing failed.";
-      return RET_ERROR;
-    }
-  }
-  return lite::RET_OK;
 }
 
 STATUS CaffeModelParser::ConvertLayers() {

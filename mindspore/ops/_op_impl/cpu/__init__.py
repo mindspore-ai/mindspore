@@ -64,3 +64,4 @@ from .one_hot import _one_hot_cpu
 from .pad import _pad_cpu
 from .range import _range_cpu
 from .tensor_copy_slices import _tensor_copy_slices_cpu
+from .l2loss import _l2loss_cpu

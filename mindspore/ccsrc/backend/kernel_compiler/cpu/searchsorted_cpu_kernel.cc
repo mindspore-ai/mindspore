@@ -39,7 +39,7 @@ void SearchSortedCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
 template <typename S, typename T>
 const S *SearchSortedCPUKernel<S, T>::CustomizedLowerBound(const S *seq_start, const S *seq_end, const S key) {
   while (seq_start < seq_end) {
-    const S *mid = seq_start + ((seq_end - seq_start) >> 1);
+    const S *mid = seq_start + ((seq_end - seq_start) / 2);
     if (!(key <= *mid)) {
       seq_start = mid + 1;
     } else {
@@ -61,11 +61,12 @@ bool SearchSortedCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &
   size_t seq_dim = sequence_shape_.size();
   size_t search_repeat = values_shape_.back();
 
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &sequence, &values, &output, seq_dim, search_repeat](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       auto seq_start = (seq_dim == 1) ? sequence : sequence + (i / search_repeat) * search_len;
-      output[i] = right_ ? std::upper_bound(seq_start, seq_start + search_len, values[i]) - seq_start
-                         : CustomizedLowerBound(seq_start, seq_start + search_len, values[i]) - seq_start;
+      auto result = right_ ? std::upper_bound(seq_start, seq_start + search_len, values[i]) - seq_start
+                           : CustomizedLowerBound(seq_start, seq_start + search_len, values[i]) - seq_start;
+      output[i] = static_cast<T>(result);
     }
   };
   CPUKernelUtils::ParallelFor(task, elem_num);
@@ -92,8 +93,8 @@ void SearchSortedCPUKernel<S, T>::CheckParam(const std::vector<AddressPtr> &inpu
   }
 
   auto sequence = reinterpret_cast<S *>(inputs[0]->addr);
-  size_t list_count = accumulate(sequence_shape_.begin(), sequence_shape_.end() - 1, 1, std::multiplies<int>());
-  auto task = [&](size_t start, size_t end) {
+  int list_count = accumulate(sequence_shape_.begin(), sequence_shape_.end() - 1, 1, std::multiplies<int>());
+  auto task = [this, &sequence](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       for (size_t j = 0; j < search_len - 1; j++) {
         if (sequence[i * search_len + j] > sequence[i * search_len + j + 1]) {
@@ -104,6 +105,5 @@ void SearchSortedCPUKernel<S, T>::CheckParam(const std::vector<AddressPtr> &inpu
   };
   CPUKernelUtils::ParallelFor(task, list_count);
 }
-
 }  // namespace kernel
 }  // namespace mindspore

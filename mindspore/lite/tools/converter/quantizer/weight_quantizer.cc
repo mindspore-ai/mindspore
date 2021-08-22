@@ -143,7 +143,7 @@ STATUS WeightQuantizer::DoMulQuantize(const CNodePtr &cnode) {
 
           auto status = RET_ERROR;
           auto per_channel = true;
-          if (i == 3) {
+          if (i == kInputSize2) {
             per_channel = false;
           }
           if (type_id_ == kNumberTypeInt8) {

@@ -24,15 +24,18 @@ void Concat(void **input, int input_num, int axis, int **inputs_output_shape, si
   }
 
   int after_axis_size = data_size;
-  for (size_t i = axis + 1; i < shape_size; ++i) {
+  for (size_t i = (size_t)(axis) + 1; i < shape_size; ++i) {
     after_axis_size *= inputs_output_shape[0][i];
   }
   int axis_offset = 0;
   uint8_t *dst_base = (output);
-  size_t output_stride = after_axis_size * inputs_output_shape[input_num][axis];
+  int output_stride = after_axis_size * inputs_output_shape[input_num][axis];
   for (int i = 0; i < input_num; ++i) {
     const uint8_t *src_base = (input[i]);
-    size_t input_stride = after_axis_size * inputs_output_shape[i][axis];
+    if (inputs_output_shape[i] == NULL) {
+      continue;
+    }
+    int input_stride = after_axis_size * inputs_output_shape[i][axis];
     int offset = UP_DIV(input_stride, thread_num);
     int count = input_stride - offset * task_id;
     if (count <= 0) {

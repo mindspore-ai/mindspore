@@ -25,8 +25,8 @@ class DynamicLibraryLoader {
  public:
   DynamicLibraryLoader() = default;
   ~DynamicLibraryLoader();
-  int Open(std::string lib_path);
-  void *GetFunc(std::string func_name);
+  int Open(const std::string &lib_path);
+  void *GetFunc(const std::string &func_name);
   int Close();
 
  private:

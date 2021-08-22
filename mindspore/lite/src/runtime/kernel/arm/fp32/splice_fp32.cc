@@ -27,7 +27,11 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_Splice;
 namespace mindspore::kernel {
-int SpliceCPUKernel::Init() { return RET_OK; }
+int SpliceCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int SpliceCPUKernel::ReSize() { return RET_OK; }
 

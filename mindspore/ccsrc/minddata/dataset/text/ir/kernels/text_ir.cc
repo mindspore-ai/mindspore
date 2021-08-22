@@ -396,6 +396,13 @@ Status ToNumberOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
+Status ToNumberOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("data_type") != op_params.end(), "Failed to find data_type");
+  std::string data_type = op_params["data_type"];
+  *operation = std::make_shared<text::ToNumberOperation>(data_type);
+  return Status::OK();
+}
+
 // TruncateSequencePairOperation
 TruncateSequencePairOperation::TruncateSequencePairOperation(int32_t max_length) : max_length_(max_length) {}
 

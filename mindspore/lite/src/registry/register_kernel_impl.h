@@ -24,6 +24,7 @@
 #include <vector>
 #include <set>
 #include "include/registry/register_kernel.h"
+#include "src/registry/register_utils.h"
 
 using mindspore::schema::PrimitiveType_MAX;
 using mindspore::schema::PrimitiveType_MIN;

@@ -33,7 +33,7 @@ int ReduceOnSelectedAxes(const TensorC *input, size_t num_axes, const int *actua
   for (size_t i = 0; i < input->shape_size_; i++) {
     bool reduce_axis = false;
     for (size_t idx = 0; idx < num_axes; ++idx) {
-      if ((size_t)(actual_axes[idx]) == i || (size_t)(actual_axes[idx] + input->shape_size_) == i) {
+      if ((size_t)(actual_axes[idx]) == i || (size_t)(actual_axes[idx]) + input->shape_size_ == i) {
         reduce_axis = true;
         break;
       }
@@ -79,7 +79,7 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (axes == NULL) {
     return NNACL_NULL_PTR;
   }
-  size_t num_axes;
+  int num_axes;
   if (axes_input->shape_size_ == 1) {
     num_axes = axes_input->shape_[0];
   } else if (axes_input->shape_size_ == 0) {
@@ -102,7 +102,10 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
     int begin_axis;
     begin_axis = axes[0] < 0 ? axes[0] + rank : axes[0];
-    for (size_t i = begin_axis + 1; i < rank; ++i) {
+    if (rank > MAX_SHAPE_SIZE || rank < 0) {
+      return NNACL_ERR;
+    }
+    for (int i = begin_axis + 1; i < rank; ++i) {
       ShapePush(actual_axes, &actual_axes_size, i);
     }
     num_axes = rank - begin_axis;

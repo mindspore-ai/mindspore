@@ -93,10 +93,16 @@ class Executor {
   bool initialized() const;
 
   const std::vector<std::string> &param_names() const;
+
+  // The unmasking method for pairwise encrypt algorithm.
   bool Unmask();
 
+  // The setter and getter for unmasked flag to judge whether the unmasking is completed.
+  void set_unmasked(bool unmasked);
+  bool unmasked() const;
+
  private:
-  Executor() : initialized_(false), aggregation_count_(0), param_names_({}), param_aggrs_({}) {}
+  Executor() : initialized_(false), aggregation_count_(0), param_names_({}), param_aggrs_({}), unmasked_(false) {}
   ~Executor() = default;
   Executor(const Executor &) = delete;
   Executor &operator=(const Executor &) = delete;
@@ -123,9 +129,13 @@ class Executor {
   // Because ParameterAggregator is not threadsafe, we have to create mutex for each ParameterAggregator so we can
   // acquire lock before calling its method.
   std::map<std::string, std::mutex> parameter_mutex_;
+
 #ifdef ENABLE_ARMOUR
   armour::CipherUnmask cipher_unmask_;
 #endif
+
+  // The flag represents the unmasking status.
+  std::atomic<bool> unmasked_;
 };
 }  // namespace server
 }  // namespace fl

@@ -24,6 +24,10 @@ Option<std::string> FlagParser::ParseFlags(int argc, const char *const *argv, bo
                                            bool supportDuplicate) {
   MS_ASSERT(argv != nullptr);
   const int FLAG_PREFIX_LEN = 2;
+  if (argc <= 0) {
+    MS_LOG(ERROR) << "The arguments number is out of range";
+    return Option<std::string>("Failed: flags is not valid");
+  }
   binName = GetFileName(argv[0]);
 
   std::multimap<std::string, Option<std::string>> keyValues;

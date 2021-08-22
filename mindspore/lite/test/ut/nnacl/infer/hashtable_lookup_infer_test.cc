@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "nnacl/infer/hashtable_lookup_infer.h"
+#include "nnacl/infer/string/hashtable_lookup_infer.h"
 
 namespace mindspore {
 

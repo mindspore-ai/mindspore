@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class AngleOp : public TensorOp {
  public:
   // Convert complex numbers to angles

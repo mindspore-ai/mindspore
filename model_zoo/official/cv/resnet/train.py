@@ -14,9 +14,10 @@
 # ============================================================================
 """train resnet."""
 import os
+import numpy as np
 from mindspore import context
 from mindspore import Tensor
-from mindspore.nn.optim import Momentum, thor
+from mindspore.nn.optim import Momentum, thor, LARS
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.train.train_thor import ConvertModelUtils
@@ -37,6 +38,7 @@ from src.metric import DistAccuracy, ClassifyCorrectCell
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
 from src.model_utils.device_adapter import get_rank_id, get_device_num
+from src.resnet import conv_variance_scaling_initializer
 
 set_seed(1)
 
@@ -130,13 +132,26 @@ def init_weight(net):
     else:
         for _, cell in net.cells_and_names():
             if isinstance(cell, nn.Conv2d):
-                cell.weight.set_data(weight_init.initializer(weight_init.XavierUniform(),
-                                                             cell.weight.shape,
-                                                             cell.weight.dtype))
+                if config.conv_init == "XavierUniform":
+                    cell.weight.set_data(weight_init.initializer(weight_init.XavierUniform(),
+                                                                 cell.weight.shape,
+                                                                 cell.weight.dtype))
+                elif config.conv_init == "TruncatedNormal":
+                    weight = conv_variance_scaling_initializer(cell.in_channels,
+                                                               cell.out_channels,
+                                                               cell.kernel_size[0])
+                    cell.weight.set_data(weight)
             if isinstance(cell, nn.Dense):
-                cell.weight.set_data(weight_init.initializer(weight_init.TruncatedNormal(),
-                                                             cell.weight.shape,
-                                                             cell.weight.dtype))
+                if config.dense_init == "TruncatedNormal":
+                    cell.weight.set_data(weight_init.initializer(weight_init.TruncatedNormal(),
+                                                                 cell.weight.shape,
+                                                                 cell.weight.dtype))
+                elif config.dense_init == "RandomNormal":
+                    in_channel = cell.in_channels
+                    out_channel = cell.out_channels
+                    weight = np.random.normal(loc=0, scale=0.01, size=out_channel * in_channel)
+                    weight = Tensor(np.reshape(weight, (out_channel, in_channel)), dtype=cell.weight.dtype)
+                    cell.weight.set_data(weight)
 
 def init_lr(step_size):
     """init lr"""
@@ -162,6 +177,21 @@ def init_loss_scale():
     else:
         loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     return loss
+
+
+def init_group_params(net):
+    decayed_params = []
+    no_decayed_params = []
+    for param in net.trainable_params():
+        if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
+            decayed_params.append(param)
+        else:
+            no_decayed_params.append(param)
+
+    group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
+                    {'params': no_decayed_params},
+                    {'order_params': net.trainable_params()}]
+    return group_params
 
 def run_eval(target, model, ckpt_save_dir, cb):
     """run_eval"""
@@ -205,18 +235,11 @@ def train_net():
     init_weight(net=net)
     lr = Tensor(init_lr(step_size=step_size))
     # define opt
-    decayed_params = []
-    no_decayed_params = []
-    for param in net.trainable_params():
-        if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
-            decayed_params.append(param)
-        else:
-            no_decayed_params.append(param)
-
-    group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
-                    {'params': no_decayed_params},
-                    {'order_params': net.trainable_params()}]
+    group_params = init_group_params(net)
     opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
+    if config.optimizer == "LARS":
+        opt = LARS(opt, epsilon=config.lars_epsilon, coefficient=config.lars_coefficient,
+                   lars_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name)
     loss = init_loss_scale()
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
     dist_eval_network = ClassifyCorrectCell(net) if config.run_distribute else None

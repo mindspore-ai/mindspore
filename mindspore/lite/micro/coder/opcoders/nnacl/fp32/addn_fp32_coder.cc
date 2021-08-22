@@ -38,10 +38,8 @@ int AddNFP32Coder::DoCode(CoderContext *const context) {
           });
   NNaclFp32Serializer code;
   code.CodeFunction("ElementAdd", input0, input1, output_tensor_, elements_num);
-  if (input_tensors_.size() > 2) {
-    for (size_t i = 2; i < input_tensors_.size(); ++i) {
-      code.CodeFunction("ElementAdd", input_tensors_.at(i), output_tensor_, elements_num);
-    }
+  for (size_t i = 2; i < input_tensors_.size(); ++i) {
+    code.CodeFunction("ElementAdd", input_tensors_.at(i), output_tensor_, elements_num);
   }
   context->AppendCode(code.str());
   return RET_OK;

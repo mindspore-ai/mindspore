@@ -59,7 +59,7 @@ class YoloBlock(nn.Cell):
 
     Args:
         in_channels: Integer. Input channel.
-        out_chls: Interger. Middle channel.
+        out_chls: Integer. Middle channel.
         out_channels: Integer. Output channel.
 
     Returns:
@@ -108,7 +108,7 @@ class YOLOv3(nn.Cell):
      Args:
          backbone_shape: List. Darknet output channels shape.
          backbone: Cell. Backbone Network.
-         out_channel: Interger. Output channel.
+         out_channel: Integer. Output channel.
 
      Returns:
          Tensor, output tensor.
@@ -436,4 +436,5 @@ class TrainingWrapper(nn.Cell):
         grads = self.grad(self.network, weights)(*args, sens)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss

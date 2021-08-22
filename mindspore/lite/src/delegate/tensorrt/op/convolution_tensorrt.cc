@@ -24,6 +24,10 @@ constexpr int BIAS_INDEX = 2;
 int ConvolutionTensorRT::IsSupport(const schema::Primitive *primitive,
                                    const std::vector<mindspore::MSTensor> &in_tensors,
                                    const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (!IsShapeKnown()) {
+    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
+    return RET_ERROR;
+  }
   if (in_tensors.size() != 2 && in_tensors.size() != 3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -53,8 +57,12 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
 
+  // transpose weight
+  const mindspore::MSTensor &weight_tensor = in_tensors_[1];
+  nvinfer1::Weights kernelWeights = lite::TransposeWeight(weight_tensor, &pack_weight_);
+
   // conv
-  int nbOutputMaps = conv_op->out_channel();
+  int nbOutputMaps = weight_tensor.Shape()[0];
   if (nbOutputMaps <= 0) {
     MS_LOG(ERROR) << "out_channel is invalid";
     return RET_ERROR;
@@ -66,9 +74,6 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   nvinfer1::Dims kernelSize = lite::ConvertCudaDims(std::vector<int64_t>(kernel_size->begin(), kernel_size->end()));
-
-  // transpose weight
-  nvinfer1::Weights kernelWeights = lite::TransposeWeight(in_tensors_[1], &pack_weight_);
 
   // bias
   nvinfer1::Weights biasWeights{};
@@ -113,7 +118,7 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   transpose_layer_out->setName((op_name_ + "_transpose2NHWC").c_str());
-
+  transpose_layer_out->getOutput(0)->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(transpose_layer_out->getOutput(0));
   return RET_OK;
 }

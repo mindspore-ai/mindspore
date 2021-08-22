@@ -24,6 +24,8 @@ using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore::kernel {
 int CropFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -48,7 +50,8 @@ static int CropFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scal
 int CropFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-
+  MS_ASSERT(input_tensor != nullptr);
+  MS_ASSERT(output_tensor != nullptr);
   input_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
   output_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
 

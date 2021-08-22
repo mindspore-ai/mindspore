@@ -115,8 +115,7 @@ class DynamicLossScaleManager(LossScaleManager):
         scale_window (int): Maximum continuous normal steps when there is no overflow. Default: 2000.
 
     Examples:
-        >>> from mindspore import Model, nn
-        >>> from mindspore.train.loss_scale_manager import DynamicLossScaleManager
+        >>> from mindspore import Model, nn, DynamicLossScaleManager
         >>>
         >>> net = Net()
         >>> loss_scale_manager = DynamicLossScaleManager()

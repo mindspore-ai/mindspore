@@ -40,7 +40,7 @@ void PackInputSum16x4Int8(const int8_t *input, int32_t *input_sum, const int32_t
                           const ConvParameter *conv_param);
 void PackInputSum16x4PerLayer(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16);
 void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvParameter *conv_param);
-void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight_data, ConvParameter *conv_param);
+void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight_data, const ConvParameter *conv_param);
 void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int real_cal_num,
                            int block_index, const int32_t *filter_zp, int32_t *input_sum,
                            const ConvParameter *conv_param, bool per_channel, bool is_optimize);

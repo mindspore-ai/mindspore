@@ -280,8 +280,11 @@ void FlagParser::AddFlag(Option<T> Flags::*t, const std::string &flagName, const
   ConstructFlag(t, flagName, helpInfo, &flagItem);
   flagItem.isRequired = false;
   flagItem.parse = [t](FlagParser *base, const std::string &value) -> Option<Nothing> {
+    if (base == nullptr) {
+      return Option<Nothing>(Nothing());
+    }
     auto *flag = dynamic_cast<Flags *>(base);
-    if (base != nullptr) {
+    if (flag != nullptr) {
       Option<T> ret = Option<std::string>(GenericParseValue<T>(value));
       if (ret.IsNone()) {
         return Option<Nothing>(None());

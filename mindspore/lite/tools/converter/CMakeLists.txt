@@ -27,6 +27,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/protobuf_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/func_graph_subgraph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/storage.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ir/primitive_t_value.cc
@@ -47,7 +48,6 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/common/gllo_utils.cc
         ../optimizer/common/format_utils.cc
         ../optimizer/common/multiple_pattern_process_pass.cc
-        ../optimizer/format/conv_weight_format.cc
         ../optimizer/format/delete_redundant_transpose.cc
         ../optimizer/format/to_format_base.cc
         ../optimizer/format/to_nchw_format.cc
@@ -113,6 +113,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/transpose_strategy.cc
         ../optimizer/graph/reduce_same_act_pass.cc
         ../optimizer/graph/split_one_pass.cc
+        ../optimizer/graph/find_const_subgraph_pass.cc
         )
 
 add_subdirectory(../anf_exporter anf_exporter)
@@ -136,11 +137,14 @@ set(LITE_SRC
         ${SRC_DIR}/common/tensor_util.cc
         ${SRC_DIR}/runtime/inner_allocator.cc
         ${SRC_DIR}/runtime/infer_manager.cc
+        ${SRC_DIR}/runtime/runtime_pass.cc
         ${SRC_DIR}/inner_context.cc
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/ms_tensor.cc
         ${SRC_DIR}/tensorlist.cc
         ${SRC_DIR}/registry/kernel_interface_registry.cc
+        ${SRC_DIR}/registry/register_utils.cc
+        ${SRC_DIR}/registry/register_kernel_impl.cc
         ${SRC_DIR}/registry/kernel_interface.cc
         ${SRC_DIR}/kernel_registry.cc
         ${SRC_DIR}/inner_kernel.cc

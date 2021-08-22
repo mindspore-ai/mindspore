@@ -470,7 +470,7 @@ void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
   }
 }
 
-void KernelGraph::ResetAssignInputFeaatureMapFlag(const CNodePtr &cnode) const {
+void KernelGraph::ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const {
   if (kOpAssignKernelNameList.find(AnfAlgo::GetCNodeName(cnode)) == kOpAssignKernelNameList.end()) {
     MS_LOG(EXCEPTION) << "Only supported to change the node [Assign , AssignSub, AssignAdd] node's input feature map "
                          "flag but got the node :"
@@ -482,7 +482,7 @@ void KernelGraph::ResetAssignInputFeaatureMapFlag(const CNodePtr &cnode) const {
     return;
   }
   if (!AnfAlgo::IsFeatureMapOutput(input_node) && AnfAlgo::IsFeatureMapOutput(assign_value_node)) {
-    auto kernel_info = static_cast<device::KernelInfo *>(input_node->kernel_info());
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
     kernel_info->set_feature_map_flag(true);
   }
 }
@@ -493,7 +493,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   node->set_kernel_info(kernel_info);
   if (node->isa<CNode>()) {
     if (kOpAssignKernelNameList.find(AnfAlgo::GetCNodeName(node)) != kOpAssignKernelNameList.end()) {
-      ResetAssignInputFeaatureMapFlag(node->cast<CNodePtr>());
+      ResetAssignInputFeatureMapFlag(node->cast<CNodePtr>());
     }
 #if defined(__APPLE__)
     std::vector<int> feature_map_input_indexs;
@@ -1347,6 +1347,9 @@ void KernelGraph::SetOptimizerFlag() {
   for (const auto &cnode : execution_order_) {
     MS_EXCEPTION_IF_NULL(cnode);
     auto node_name = AnfAlgo::GetCNodeName(cnode);
+    if (AnfAlgo::HasNodeAttr(kAttrAsync, cnode) && AnfAlgo::GetNodeAttr<bool>(cnode, kAttrAsync)) {
+      continue;
+    }
     if (kOptOperatorSet.find(node_name) != kOptOperatorSet.end()) {
       has_optimizer_ = true;
     } else if (node_name.find("Assign") == string::npos) {

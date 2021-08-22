@@ -687,6 +687,8 @@ void RelativePositionAttentionCPUKernel::FreeAllPackData() {
 }
 
 int RelativePositionAttentionCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_11D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = CheckWeights();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "CheckWeights failed.";

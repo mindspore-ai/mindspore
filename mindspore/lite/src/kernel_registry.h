@@ -37,12 +37,10 @@ class KernelRegistry {
   virtual ~KernelRegistry();
 
   static KernelRegistry *GetInstance();
-  static int Init();
   virtual kernel::KernelCreator GetCreator(const kernel::KernelKey &desc);
   int GetCreatorFuncIndex(kernel::KernelKey desc);
   void RegKernel(kernel::KernelKey desc, kernel::KernelCreator creator);
   void RegKernel(kernel::KERNEL_ARCH arch, TypeId data_type, int type, kernel::KernelCreator creator);
-  bool Merge(const std::unordered_map<kernel::KernelKey, kernel::KernelCreator> &newCreators);
   bool SupportKernel(const kernel::KernelKey &key);
   int GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                 const InnerContext *ctx, const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
@@ -57,6 +55,9 @@ class KernelRegistry {
   static const int op_type_length_{PrimitiveType_MAX - PrimitiveType_MIN + 1};
   static const int array_size_{device_type_length_ * data_type_length_ * op_type_length_};
   kernel::KernelCreator *creator_arrays_ = nullptr;
+
+ private:
+  void CreatorArraysInit();
 
  private:
   std::mutex lock_;

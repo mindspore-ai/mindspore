@@ -58,7 +58,7 @@ from .queue import _SharedQueue
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, check_device_send, check_take, check_project, check_imagefolderdataset, \
     check_mnist_cifar_dataset, check_manifestdataset, check_tfrecorddataset, check_vocdataset, check_cocodataset, \
-    check_celebadataset, check_minddataset,check_libri_speech_dataset, check_generatordataset, check_sync_wait, check_zip_dataset, \
+    check_celebadataset, check_minddataset,check_cmu_arctic_dataset, check_generatordataset, check_sync_wait, check_zip_dataset, \
     check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
@@ -4369,19 +4369,19 @@ class Cifar10Dataset(MappableDataset):
         return cde.Cifar10Node(self.dataset_dir, self.usage, self.sampler)
 
 
-class LibriSpeechDataset(MappableDataset):
+class CmuArcticDataset(MappableDataset):
 
-    @check_libri_speech_dataset
+    @check_cmu_arctic_dataset
     def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
                  sampler=None, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
 
         self.dataset_dir = dataset_dir
-        self.usage = replace_none(usage, "test-other")
+        self.usage = replace_none(usage, "aew")
 
     def parse(self, children=None):
-        return cde.LibriSpeechNode(self.dataset_dir, self.usage, self.sampler)
+        return cde.CmuArcticNode(self.dataset_dir, self.usage, self.sampler)
 
 class Cifar100Dataset(MappableDataset):
     """

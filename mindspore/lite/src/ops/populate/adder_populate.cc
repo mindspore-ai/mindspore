@@ -53,8 +53,8 @@ OpParameter *PopulateAdderParameter(const void *prim) {
   param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
   param->pad_u_ = static_cast<int>(*(pad_list->begin()));
   param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
-  param->pad_l_ = static_cast<int>(*(pad_list->begin() + 2));
-  param->pad_r_ = static_cast<int>(*(pad_list->begin() + 3));
+  param->pad_l_ = static_cast<int>(*(pad_list->begin() + kOffsetTwo));
+  param->pad_r_ = static_cast<int>(*(pad_list->begin() + kOffsetThree));
   param->dilation_h_ = static_cast<int>(*(dilation->begin()));
   param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
   param->input_channel_ = static_cast<int>(value->in_channel());

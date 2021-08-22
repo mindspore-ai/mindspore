@@ -31,8 +31,6 @@ DeConvolutionCPUKernel::~DeConvolutionCPUKernel() {
     delete matmul_param_;
     matmul_param_ = nullptr;
   }
-  FreeAlignedData(reinterpret_cast<void **>(&weight_ptr_));
-  FreeAlignedData(reinterpret_cast<void **>(&bias_ptr));
 }
 
 int DeConvolutionCPUKernel::ReSize() {
@@ -50,46 +48,45 @@ int DeConvolutionCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int DeConvolutionCPUKernel::InitWeightBias() {
+int DeConvolutionCPUKernel::MallocWeightBiasData() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = weight_tensor->Batch();
   auto output_channel = weight_tensor->Channel();
   auto kernel_h_ = weight_tensor->Height();
   auto kernel_w_ = weight_tensor->Width();
   int output_aligned_size = UP_ROUND(output_channel, C8NUM);
-  bias_ptr = reinterpret_cast<float *>(MallocAlignedData(C32NUM, output_aligned_size * sizeof(float)));
-  if (bias_ptr == nullptr) {
-    MS_LOG(ERROR) << "deconv malloc bias_ptr error!";
-    return RET_ERROR;
-  }
-  memset(bias_ptr, 0, output_aligned_size * sizeof(float));
-  if (in_tensors_.size() == DIMENSION_3D) {
-    if (in_tensors_.at(kBiasIndex)->shape().size() == DIMENSION_1D &&
-        in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
-      MS_ASSERT(in_tensors_.at(kBiasIndex)->data_c() != nullptr);
-      memcpy(bias_ptr, in_tensors_.at(kBiasIndex)->data_c(), output_channel * sizeof(float));
-    } else {
-      MS_LOG(ERROR) << "unsupported bias shape for deconv!";
-      return RET_ERROR;
-    }
-  }
-
   size_t weight_pack_size = input_channel * kernel_w_ * kernel_h_ * output_aligned_size * sizeof(float);
-  weight_ptr_ = reinterpret_cast<float *>(MallocAlignedData(C32NUM, weight_pack_size));
-  if (weight_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "deconv malloc weight_ptr_ error!";
+  packed_weight_ = MallocAlignedData(C32NUM, weight_pack_size);
+  if (packed_weight_ == nullptr) {
+    MS_LOG(ERROR) << "deconv malloc packed_weight_ error!";
     return RET_ERROR;
   }
-  memset(weight_ptr_, 0, weight_pack_size);
-  MS_ASSERT(in_tensors_.at(kWeightIndex)->data_c() != nullptr);
-#ifdef ENABLE_AVX
-  PackNHWCToCXHWNXFp32(reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c()), weight_ptr_, input_channel,
-                       kernel_w_ * kernel_h_, output_channel);
-#else
-  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c()), weight_ptr_, input_channel,
-                       kernel_w_ * kernel_h_, output_channel);
-#endif
+  memset(packed_weight_, 0, weight_pack_size);
+
+  bias_data_ = MallocAlignedData(C32NUM, output_aligned_size * sizeof(float));
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "deconv malloc bias_data_ error!";
+    return RET_ERROR;
+  }
+  memset(bias_data_, 0, output_aligned_size * sizeof(float));
   return RET_OK;
+}
+
+void DeConvolutionCPUKernel::PackWeight() {
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = weight_tensor->Batch();
+  auto output_channel = weight_tensor->Channel();
+  auto kernel_h = weight_tensor->Height();
+  auto kernel_w = weight_tensor->Width();
+  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  MS_ASSERT(origin_weight != nullptr);
+#ifdef ENABLE_AVX
+  PackNHWCToCXHWNXFp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),
+                       input_channel, kernel_w * kernel_h, output_channel);
+#else
+  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),
+                       input_channel, kernel_w * kernel_h, output_channel);
+#endif
 }
 
 int DeConvolutionCPUKernel::InitParam() {
@@ -133,26 +130,32 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
   }
   auto tmp_buffer = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_align_;
 #ifdef ENABLE_AVX
-  DeconvMatmulAvx(pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
-                  tmp_buffer, matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_,
-                  kernel_plane_);
+  DeconvMatmulAvx(
+    pack_input_,
+    reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
+    tmp_buffer, matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_, kernel_plane_);
 #elif ENABLE_SSE
-  DeconvMatmulFloatSse(pack_input_,
-                       weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
-                       tmp_buffer, matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_);
+  DeconvMatmulFloatSse(
+    pack_input_,
+    reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
+    tmp_buffer, matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_);
 #else
-  MatMulOpt(pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
-            tmp_buffer, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_align_,
-            oc * C8NUM * kernel_plane_, matmul_param_->col_, OutType_C8);
+  MatMulOpt(
+    pack_input_,
+    reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
+    tmp_buffer, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_,
+    matmul_param_->col_, OutType_C8);
 #endif
 
   DeConvPostFp32C8(tmp_buffer, pack_output_ + task_id * thread_stride_ * C8NUM * output_plane_,
-                   reinterpret_cast<float *>(bias_ptr) + thread_stride_ * task_id * C8NUM,
+                   reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id * C8NUM,
                    output_ptr_ + task_id * thread_stride_ * C8NUM, oc_res, conv_param_);
   return RET_OK;
 }
 
 int DeConvolutionCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #if defined(ENABLE_ARM32) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
   row_tile_ = C4NUM;
 #else
@@ -163,10 +166,15 @@ int DeConvolutionCPUKernel::Init() {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
-  int error_code = InitWeightBias();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv InitWeightBias error!ret: " << error_code;
-    return error_code;
+  if (in_tensors_.at(kWeightIndex)->data_c() != nullptr) {
+    int error_code = InitConvWeightBias();
+    if (error_code != RET_OK) {
+      MS_LOG(ERROR) << "deconv InitConvWeightBias error!ret: " << error_code;
+      return error_code;
+    }
+  } else {
+    is_repack_ = true;
+    MS_LOG(WARNING) << "The weight is nullptr, will pack in runtime.";
   }
   if (!InferShapeDone()) {
     return RET_OK;
@@ -214,6 +222,10 @@ int DeConvolutionCPUKernel::InitRunBuf() {
 }
 
 int DeConvolutionCPUKernel::Run() {
+  if (RepackWeight() != RET_OK) {
+    MS_LOG(ERROR) << "Repack weight failed.";
+    return RET_ERROR;
+  }
   float *src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
   float *src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
   MS_ASSERT(src_in != nullptr);

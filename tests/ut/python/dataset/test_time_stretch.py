@@ -31,24 +31,27 @@ COMPLEX = 2
 def gen(shape):
     np.random.seed(0)
     data = np.random.random(shape)
-    yield (np.array(data, dtype=np.float32),)
+    yield(np.array(data, dtype=np.float32),)
 
 
-def count_unequal_element(data_expected, data_me, rtol, atol):
+def _count_unequal_element(data_expected, data_me, rtol, atol):
     assert data_expected.shape == data_me.shape
     total_count = len(data_expected.flatten())
     error = np.abs(data_expected - data_me)
     greater = np.greater(error, atol + np.abs(data_expected) * rtol)
     loss_count = np.count_nonzero(greater)
-    assert (loss_count / total_count) < rtol, "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}".format(
-        data_expected[greater], data_me[greater], error[greater])
+    assert (loss_count / total_count) < rtol, \
+        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
+        format(data_expected[greater], data_me[greater], error[greater])
 
 
 def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
     if np.any(np.isnan(data_expected)):
         assert np.allclose(data_me, data_expected, rtol, atol, equal_nan=equal_nan)
     elif not np.allclose(data_me, data_expected, rtol, atol, equal_nan=equal_nan):
-        count_unequal_element(data_expected, data_me, rtol, atol)
+        _count_unequal_element(data_expected, data_me, rtol, atol)
+    else:
+        assert True
 
 
 def test_time_stretch_pipeline():
@@ -57,14 +60,18 @@ def test_time_stretch_pipeline():
     """
     logger.info("test TimeStretch op")
     generator = gen([CHANNEL_NUM, FREQ, FRAME_NUM, COMPLEX])
-    data1 = ds.GeneratorDataset(source=generator, column_names=["multi_dimensional_data"])
+    data1 = ds.GeneratorDataset(source=generator, column_names=[
+        "multi_dimensional_data"])
 
-    transforms = [c_audio.TimeStretch(512, FREQ, 1.3)]
-    data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
+    transforms = [
+        c_audio.TimeStretch(512, FREQ, 1.3)
+    ]
+    data1 = data1.map(operations=transforms, input_columns=[
+        "multi_dimensional_data"])
 
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         out_put = item["multi_dimensional_data"]
-    assert out_put.shape == (CHANNEL_NUM, FREQ, np.ceil(FRAME_NUM / 1.3), COMPLEX)
+    assert out_put.shape == (CHANNEL_NUM, FREQ, np.ceil(FRAME_NUM/1.3), COMPLEX)
 
 
 def test_time_stretch_pipeline_invalid_param():
@@ -73,15 +80,19 @@ def test_time_stretch_pipeline_invalid_param():
     """
     logger.info("test TimeStretch op with invalid values")
     generator = gen([CHANNEL_NUM, FREQ, FRAME_NUM, COMPLEX])
-    data1 = ds.GeneratorDataset(source=generator, column_names=["multi_dimensional_data"])
+    data1 = ds.GeneratorDataset(source=generator, column_names=[
+        "multi_dimensional_data"])
 
     with pytest.raises(ValueError, match=r"Input fixed_rate is not within the required interval of \(0, 16777216\]."):
-        transforms = [c_audio.TimeStretch(512, FREQ, -1.3)]
-        data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
+        transforms = [
+            c_audio.TimeStretch(512, FREQ, -1.3)
+        ]
+        data1 = data1.map(operations=transforms, input_columns=[
+            "multi_dimensional_data"])
 
         for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             out_put = item["multi_dimensional_data"]
-        assert out_put.shape == (CHANNEL_NUM, FREQ, np.ceil(FRAME_NUM / 1.3), COMPLEX)
+        assert out_put.shape == (CHANNEL_NUM, FREQ, np.ceil(FRAME_NUM/1.3), COMPLEX)
 
 
 def test_time_stretch_eager():
@@ -91,7 +102,7 @@ def test_time_stretch_eager():
     logger.info("test TimeStretch op with customized parameter values")
     spectrogram = next(gen([CHANNEL_NUM, FREQ, FRAME_NUM, COMPLEX]))[0]
     out_put = c_audio.TimeStretch(512, FREQ, 1.3)(spectrogram)
-    assert out_put.shape == (CHANNEL_NUM, FREQ, np.ceil(FRAME_NUM / 1.3), COMPLEX)
+    assert out_put.shape == (CHANNEL_NUM, FREQ, np.ceil(FRAME_NUM/1.3), COMPLEX)
 
 
 def test_percision_time_stretch_eager():

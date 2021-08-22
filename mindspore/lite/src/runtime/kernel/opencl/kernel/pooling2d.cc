@@ -53,18 +53,25 @@ int PoolingOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-int PoolingOpenCLKernel::Prepare() {
+int PoolingOpenCLKernel::BuildKernel() {
   std::string kernel_name;
   if (parameter_->pool_mode_ == PoolMode_MaxPool) {
     kernel_name = "MaxPooling2d";
   } else if (parameter_->pool_mode_ == PoolMode_AvgPool) {
     kernel_name = "AvgPooling2d";
   }
+
+  if (parameter_->global_ &&
+      (parameter_->window_h_ >= LOCAL_CACHE_THREAD || parameter_->window_w_ >= LOCAL_CACHE_THREAD)) {
+    kernel_name += "_global";
+    is_use_local_ = true;
+  }
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   switch (parameter_->act_type_) {
     case ActType_No:
       break;
     case ActType_Relu:
-      kernel_name += "_ReLU";
+      build_options_ext.emplace_back("-DRELU");
       break;
     default:
       MS_LOG(ERROR) << "Unsupported activation type " << parameter_->act_type_;
@@ -73,34 +80,49 @@ int PoolingOpenCLKernel::Prepare() {
   kernel_name += "_NHWC4";
   kernel_name += "_IMG";
   std::string source = pooling2d_source;
-  std::string program_name = "Pooling2d";
+  const std::string program_name = "Pooling2d";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
   }
-  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
-  SetGlobalLocal();
-  MS_LOG(DEBUG) << kernel_name << " Init Done!";
+  return RET_OK;
+}
 
+int PoolingOpenCLKernel::Prepare() {
+  input_tensor_ = GpuTensorInfo(in_tensors_[0]);
+  if (BuildKernel() != RET_OK) {
+    MS_LOG(ERROR) << "BuildKernel failed.";
+    return RET_ERROR;
+  }
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
+  SetGlobalLocal();
   return RET_OK;
 }
 
 void PoolingOpenCLKernel::SetGlobalLocal() {
-  const size_t global_x = out_tensors_[0]->shape()[1] * out_tensors_[0]->shape()[0];
-  const size_t global_y = out_tensors_[0]->shape()[2];
-  const size_t global_z = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
-  global_size_ = {global_z, global_y, global_x};
-  local_size_ = {};
-  AlignGlobalLocal(global_size_, local_size_);
+  if (is_use_local_) {
+    local_size_ = {1, LOCAL_CACHE_THREAD, LOCAL_CACHE_THREAD};
+    global_size_ = {static_cast<size_t>(input_tensor_.Slice), 1, 1};
+    AlignGlobalLocal(global_size_, local_size_);
+  } else {
+    const size_t global_x = out_tensors_[0]->shape()[1] * out_tensors_[0]->shape()[0];
+    const size_t global_y = out_tensors_[0]->shape()[2];
+    const size_t global_z = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
+    global_size_ = {global_z, global_y, global_x};
+    local_size_ = {};
+    AlignGlobalLocal(global_size_, local_size_);
+  }
 }
 
-void PoolingOpenCLKernel::SetConstArgs() {
+int PoolingOpenCLKernel::SetGlobalConstArgs() {
   int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
   cl_int4 input_shape = {in_tensors_[0]->shape()[0], in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], slices};
   cl_int4 output_shape = {out_tensors_[0]->shape()[0], out_tensors_[0]->shape()[1], out_tensors_[0]->shape()[2],
@@ -109,19 +131,73 @@ void PoolingOpenCLKernel::SetConstArgs() {
   cl_int2 kernel_size = {parameter_->window_h_, parameter_->window_w_};
   cl_int2 padding = {parameter_->pad_u_, parameter_->pad_l_};
   int arg_idx = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, stride);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, kernel_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, padding);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, stride) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, kernel_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, padding) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int PoolingOpenCLKernel::SetLocalConstArgs() {
+  int h = input_tensor_.H;
+  int w = input_tensor_.W;
+  int c = input_tensor_.C;
+  int c4 = UP_DIV(c, C4NUM);
+  cl_int4 size = {h, w, c4, c};
+  int arg_idx = 2;
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int PoolingOpenCLKernel::SetConstArgs() {
+  if (is_use_local_) {
+    return SetLocalConstArgs();
+  } else {
+    return SetGlobalConstArgs();
+  }
+}
+
+int PoolingOpenCLKernel::Tune() {
+  if (is_use_local_) {
+    return RET_OK;
+  }
+  return OpenCLKernel::Tune();
 }
 
 int PoolingOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

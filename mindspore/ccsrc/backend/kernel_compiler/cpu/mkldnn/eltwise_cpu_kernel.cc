@@ -13,39 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/eltwise_cpu_kernel.h"
+#include <string>
+#include <unordered_map>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+struct DescParam {
+  dnnl::algorithm algorithm;
+  float alpha = 0.f;
+  float beta = 0.f;
+};
+}  // namespace
+
 dnnl::eltwise_forward::desc EltWiseCPUKernel::GetForwardEltwiseDesc(const CNodePtr &kernel_node,
                                                                     const dnnl::memory::desc src_desc) {
+  static const std::unordered_map<std::string, DescParam> eltWiseOpDescMap{
+    {prim::kPrimRelu->name(), DescParam{dnnl::algorithm::eltwise_relu}},
+    {prim::kPrimRelu6->name(), DescParam{dnnl::algorithm::eltwise_clip, 0.f, 6.f}},
+    {prim::kPrimAbs->name(), DescParam{dnnl::algorithm::eltwise_abs}},
+    {prim::kPrimExp->name(), DescParam{dnnl::algorithm::eltwise_exp}},
+    {prim::kPrimLog->name(), DescParam{dnnl::algorithm::eltwise_log}},
+    {prim::kPrimSigmoid->name(), DescParam{dnnl::algorithm::eltwise_logistic}},
+    {prim::kPrimSqrt->name(), DescParam{dnnl::algorithm::eltwise_sqrt}},
+    {prim::kPrimSquare->name(), DescParam{dnnl::algorithm::eltwise_square}},
+    {prim::kPrimTanh->name(), DescParam{dnnl::algorithm::eltwise_tanh}},
+    {prim::kPrimElu->name(), DescParam{dnnl::algorithm::eltwise_elu, 1.f, 0.f}},
+    {prim::kPrimSoftplus->name(), DescParam{dnnl::algorithm::eltwise_soft_relu}},
+  };
+
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == "ReLU") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_relu, src_desc, 0.0);
-  } else if (kernel_name == "ReLU6") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_clip, src_desc, 0.0, 6.0);
-  } else if (kernel_name == "Abs") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_abs, src_desc);
-  } else if (kernel_name == "Exp") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_exp, src_desc);
-  } else if (kernel_name == "Log") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_log, src_desc);
-  } else if (kernel_name == "Sigmoid") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_logistic, src_desc);
-  } else if (kernel_name == "Sqrt") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_sqrt, src_desc);
-  } else if (kernel_name == "Square") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_square, src_desc);
-  } else if (kernel_name == "Tanh") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_tanh, src_desc);
-  } else if (kernel_name == "Elu") {
-    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_elu, src_desc, 1.0);
-  } else {
-    MS_LOG(EXCEPTION) << "Eltwise operators don't support " << kernel_name;
+  const auto desc_pair = eltWiseOpDescMap.find(kernel_name);
+  if (desc_pair == eltWiseOpDescMap.end()) {
+    MS_LOG(EXCEPTION) << "EltWiseCPUKernel does not support " << kernel_name;
   }
+  return dnnl::eltwise_forward::desc(DnnlForward, desc_pair->second.algorithm, src_desc, desc_pair->second.alpha,
+                                     desc_pair->second.beta);
 }
 
 void EltWiseCPUKernel::InitKernel(const CNodePtr &kernel_node) {

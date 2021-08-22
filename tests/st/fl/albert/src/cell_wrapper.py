@@ -295,5 +295,5 @@ class NetworkNoClientTrainCell(nn.Cell):
                                                  self.cast(F.tuple_to_array((self.sens,)),
                                                            mstype.float32))
         grads = self.hyper_map(F.partial(clip_grad, self.clip_type, self.clip_value), grads)
-        succ = self.optimizer(grads)
-        return F.depend(loss, succ)
+        self.optimizer(grads)
+        return loss

@@ -2,3 +2,5 @@ numpy
 opencv-python
 pillow
 pyyaml
+Polygon3
+pyclipper

@@ -66,7 +66,7 @@ int AudioSpectrogramInferShape(const TensorC *const *inputs, size_t inputs_size,
   int sample_sub_window = input->shape_[0] - param->window_size_;
   output_shape[1] = sample_sub_window < 0 ? 0 : 1 + sample_sub_window / param->stride_;
   // compute fft length
-  int fft_length = GetFftLength(param->window_size_);
+  int fft_length = (int)GetFftLength(param->window_size_);
   output_shape[2] = fft_length / 2 + 1;
   SetShapeArray(output, output_shape, 3);
   return NNACL_OK;

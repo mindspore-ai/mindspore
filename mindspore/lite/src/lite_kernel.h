@@ -238,7 +238,7 @@ class LiteKernel {
     }
   }
 
-  void set_in_tensor(lite::Tensor *in_tensor, int index) {
+  void set_in_tensor(lite::Tensor *in_tensor, size_t index) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensor(in_tensor, index);
@@ -264,7 +264,7 @@ class LiteKernel {
     }
   }
 
-  virtual void set_out_tensor(lite::Tensor *out_tensor, int index) {
+  virtual void set_out_tensor(lite::Tensor *out_tensor, size_t index) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_out_tensor(out_tensor, index);
@@ -327,7 +327,7 @@ class LiteKernel {
 
   virtual bool IsReady(const std::vector<lite::Tensor *> &in_tensor);
 
-  virtual void InitOutTensorInitRefCount();
+  virtual void InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels = nullptr);
 
   KernelKey desc() const { return desc_; }
 
@@ -353,7 +353,7 @@ class LiteKernel {
   mutable std::vector<lite::Tensor *> mutable_out_tensors_;
   bool is_model_output_ = false;
   SubGraphType subgraph_type_ = kNotSubGraph;
-  const lite::InnerContext *context_;
+  const lite::InnerContext *context_ = nullptr;
 };
 
 typedef InnerKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
@@ -378,4 +378,4 @@ kernel::InnerKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs
 }
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_INNER_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_LITE_KERNEL_H_

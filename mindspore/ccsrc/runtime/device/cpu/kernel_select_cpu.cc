@@ -31,6 +31,8 @@ namespace cpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
+constexpr auto kParamDynamic = "dynamic";
+
 bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
   auto input_node = AnfAlgo::VisitKernel(kernel_node->input(input_index + 1), 0).first;
   MS_EXCEPTION_IF_NULL(input_node);
@@ -66,6 +68,13 @@ void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_ty
   }
 }
 
+void GetOutputFormat(const CNodePtr &kernel_node, std::vector<std::string> *output_formats) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    output_formats->emplace_back(kOpFormat_DEFAULT);
+  }
+}
+
 void GetInputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *input_types,
                     std::vector<size_t> *input_no_cnode_indexes) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -78,6 +87,13 @@ void GetInputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *input_type
       dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
     }
     input_types->emplace_back(dtype);
+  }
+}
+
+void GetInputFormat(const CNodePtr &kernel_node, std::vector<std::string> *input_formats) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
+    input_formats->emplace_back(kOpFormat_DEFAULT);
   }
 }
 
@@ -200,7 +216,57 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node, const std::vector<
   operator_info << "is not support.";
   MS_EXCEPTION(TypeError) << operator_info.str() << " Trace: " << trace::DumpSourceLines(kernel_node);
 }
+
+void UpdateDynamicKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
+  const std::string &op_name = AnfAlgo::GetCNodeName(kernel_node);
+  MS_LOG(INFO) << "Operator name: " << op_name;
+  // Set kernel build info
+  std::vector<TypeId> input_types;
+  std::vector<size_t> input_not_cnode_indexes;
+  GetInputDtypes(kernel_node, &input_types, &input_not_cnode_indexes);
+  std::vector<TypeId> output_types;
+  GetOutputDtypes(kernel_node, &output_types);
+  std::vector<std::string> input_formats;
+  GetInputFormat(kernel_node, &input_formats);
+  std::vector<std::string> output_formats;
+  GetOutputFormat(kernel_node, &output_formats);
+  SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
+
+  // Set kernel attrs
+  KernelAttr attr;
+  for (size_t i = 0; i < input_types.size(); i++) {
+    attr.AddInputAttr(input_types[i]);
+  }
+  for (size_t j = 0; j < output_types.size(); j++) {
+    attr.AddInputAttr(output_types[j]);
+  }
+  std::vector<KernelAttr> kernel_attrs =
+    kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
+  kernel_attrs.emplace_back(attr);
+  kernel::CPUKernelFactory::GetInstance().UpdateKernelAttrs(op_name, kernel_attrs);
+  return;
+}
 }  // namespace
+
+bool IsDynamicParamKernel(const std::string &op_name) {
+  const auto &op_info = kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU);
+  if (op_info == nullptr) {
+    return false;
+  }
+
+  const auto &input_io_info = op_info->inputs_ptr();
+  if (input_io_info.size() != 1 || input_io_info[0]->param_type() != kParamDynamic) {
+    return false;
+  }
+
+  const auto &output_io_info = op_info->outputs_ptr();
+  if (output_io_info.size() != 1 || output_io_info[0]->param_type() != kParamDynamic) {
+    return false;
+  }
+
+  return true;
+}
+
 bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
                   const std::vector<KernelAttr> &kernel_attrs, const std::vector<TypeId> &input_types,
                   const std::vector<size_t> &input_not_cnode_indexes, const std::vector<TypeId> &output_types,
@@ -229,7 +295,14 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
   }
   return false;
 }
+
 void SetKernelInfo(const CNodePtr &kernel_node) {
+  // Select for dynamic kernel(both the number and data type are undetermined).
+  const std::string &op_name = AnfAlgo::GetCNodeName(kernel_node);
+  if (IsDynamicParamKernel(op_name)) {
+    return UpdateDynamicKernelBuildInfoAndAttrs(kernel_node);
+  }
+
   std::vector<std::string> input_formats;
   std::vector<TypeId> input_types;
   std::vector<size_t> input_not_cnode_indexes;
@@ -241,7 +314,6 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
     kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
   if (kernel_attrs.empty() || (kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0)) {
     MS_LOG(DEBUG) << "Operator[" << AnfAlgo::GetCNodeName(kernel_node) << "] will get ops attr info.";
-    std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU);
     if (op_info_ptr == nullptr) {
       MS_LOG(EXCEPTION) << "Not find op[" << op_name << "] in cpu";

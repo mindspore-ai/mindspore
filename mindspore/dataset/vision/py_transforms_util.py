@@ -19,7 +19,6 @@ import math
 import numbers
 import random
 import colorsys
-
 import numpy as np
 from PIL import Image, ImageOps, ImageEnhance, __version__
 
@@ -1243,6 +1242,7 @@ def rgb_to_bgr(np_rgb_img, is_hwc):
         np_bgr_img = np_rgb_img[::-1, :, :]
     return np_bgr_img
 
+
 def rgb_to_bgrs(np_rgb_imgs, is_hwc):
     """
     Convert RGB imgs to BGR imgs.
@@ -1471,6 +1471,32 @@ def random_sharpness(img, degrees):
 
     v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
     return ImageEnhance.Sharpness(img).enhance(v)
+
+
+def adjust_gamma(img, gamma, gain):
+    """
+    Adjust gamma of the input PIL image.
+
+    Args:
+        img (PIL image): Image to be augmented with AdjustGamma.
+        gamma (float): Non negative real number, same as gamma in the equation.
+        gain (float, optional): The constant multiplier.
+
+    Returns:
+        img (PIL image), Augmented image.
+
+    """
+
+    if not is_pil(img):
+        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
+
+    gamma_table = [(255 + 1 - 1e-3) * gain * pow(x / 255., gamma) for x in range(256)]
+    if len(img.split()) == 3:
+        gamma_table = gamma_table * 3
+        img = img.point(gamma_table)
+    elif len(img.split()) == 1:
+        img = img.point(gamma_table)
+    return img
 
 
 def auto_contrast(img, cutoff, ignore):

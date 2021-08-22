@@ -98,6 +98,10 @@ int ArithmeticInt8OpenCLKernel::InitWeights() {
       size_t dtype = fp16_enable ? CL_HALF_FLOAT : CL_FLOAT;
       ImageSize img_size{in_shape.width, in_shape.height, dtype};
       auto weight_ptr_ = allocator->Malloc(img_size, weight.data());
+      if (weight_ptr_ == nullptr) {
+        MS_LOG(ERROR) << "Malloc failed.";
+        return RET_ERROR;
+      }
       weight_ptrs_.push_back(weight_ptr_);
     } else {
       weight_ptrs_.push_back(nullptr);
@@ -106,7 +110,7 @@ int ArithmeticInt8OpenCLKernel::InitWeights() {
   return RET_OK;
 }
 
-void ArithmeticInt8OpenCLKernel::SetConstArgs() {
+int ArithmeticInt8OpenCLKernel::SetConstArgs() {
   int arg_idx = 3;
   if (!element_flag_) {
     cl_int4 in0_shape = {static_cast<int>(in0_shape_.N), static_cast<int>(in0_shape_.H), static_cast<int>(in0_shape_.W),
@@ -121,16 +125,37 @@ void ArithmeticInt8OpenCLKernel::SetConstArgs() {
     } else if (in0_shape_.C != 1 && in1_shape_.C == 1) {
       broadcastC_flag = 2;  // BroadCast C4 in input1
     }
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in0_shape);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in1_shape);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_shape);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, broadcastC_flag);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in0_shape) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in1_shape) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_shape) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, broadcastC_flag) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
     cl_int2 output_shape{static_cast<int>(global_range_[0]), static_cast<int>(global_range_[1])};
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_min_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_max_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_min_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_max_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
 
   // set quantization parameter.
   auto input0_quant_param = in_tensors_[0]->quant_params().front();
@@ -141,8 +166,15 @@ void ArithmeticInt8OpenCLKernel::SetConstArgs() {
   cl_char4 zero_point = {static_cast<int8_t>(input0_quant_param.zeroPoint),
                          static_cast<int8_t>(input1_quant_param.zeroPoint),
                          static_cast<int8_t>(output_quant_param.zeroPoint), 0};
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale);       // scale
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, zero_point);  // zero_point
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // scale
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, zero_point) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // zero_point
+  return RET_OK;
 }
 
 int ArithmeticInt8OpenCLKernel::Prepare() {
@@ -191,7 +223,7 @@ int ArithmeticInt8OpenCLKernel::Prepare() {
     activation_max_ = 6.f;
   }
 
-  std::string program_name = "Arithmetic";
+  const std::string program_name = "Arithmetic";
   std::string source = arithmetic_source;
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
@@ -207,7 +239,10 @@ int ArithmeticInt8OpenCLKernel::Prepare() {
   if (type() != PrimitiveType_BiasAdd) {
     InitWeights();
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   MS_LOG(DEBUG) << kernel_name_ << " Init Done!";
   return RET_OK;
 }
@@ -218,10 +253,22 @@ int ArithmeticInt8OpenCLKernel::Run() {
   auto input_1_ptr = weight_ptrs_[1] == nullptr ? in_tensors_[1]->data_c() : weight_ptrs_[1];
   int arg_idx = 0;
 
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_0_ptr);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_1_ptr);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_0_ptr) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_1_ptr) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

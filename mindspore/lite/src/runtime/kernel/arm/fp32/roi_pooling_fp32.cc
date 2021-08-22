@@ -29,6 +29,8 @@ using mindspore::schema::PrimitiveType_ROIPooling;
 
 namespace mindspore::kernel {
 int ROIPoolingCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -42,7 +44,7 @@ int ROIPoolingCPUKernel::ReSize() {
   }
   auto in_shape = in_tensors_.front()->shape();
   auto out_shape = out_tensors_.front()->shape();
-  int ndims = in_shape.size();
+  int ndims = static_cast<int>(in_shape.size());
   if (ndims < C4NUM) {
     MS_LOG(ERROR) << "ROIPooling in_shape.size() error ,shape dim greater than or equal to 4!";
     return RET_ERROR;
@@ -67,7 +69,7 @@ int ROIPoolingCPUKernel::ReSize() {
     param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
   }
   param_->thread_num_ = MSMIN(param_->op_parameter_.thread_num_, out_shape.at(0));
-  max_c_ = reinterpret_cast<float *>(malloc(param_->input_c_ * sizeof(float)));
+  max_c_ = reinterpret_cast<float *>(malloc(param_->input_c_ * static_cast<int>(sizeof(float))));
   if (max_c_ == nullptr) {
     MS_LOG(ERROR) << "malloc max_c failed.";
     return RET_MEMORY_FAILED;

@@ -150,6 +150,7 @@ from .logical_or import _logical_or_tbe
 from .reduce_max import _reduce_max_tbe
 from .reduce_min import _reduce_min_tbe
 from .reduce_sum import _reduce_sum_tbe
+from .reduce_sum_ds import _reduce_sum_ds_tbe
 from .round import _round_tbe
 from .tanh import _tanh_tbe
 from .tanh_grad import _tanh_grad_tbe
@@ -219,6 +220,8 @@ from .arg_max_with_value import _arg_max_with_value_tbe
 from .arg_min_with_value import _arg_min_with_value_tbe
 from .smooth_l1_loss import _smooth_l1_loss_tbe
 from .smooth_l1_loss_grad import _smooth_l1_loss_grad_tbe
+from .soft_margin_loss import _soft_margin_loss_tbe
+from .soft_margin_loss_grad import _soft_margin_loss_grad_tbe
 from .fused_mul_add import _fused_mul_add_tbe
 from .fused_mul_add_n import _fused_mul_add_n_tbe
 from .fused_mul_apply_momentum import _fused_mul_apply_momentum_tbe
@@ -394,3 +397,5 @@ from .soft_shrink import _soft_shrink_tbe
 from .soft_shrink_grad import _soft_shrink_grad_tbe
 from .hsigmoid_grad import _hsigmoid_grad_tbe
 from .hsigmoid import _hsigmoid_tbe
+from .hshrink import _hshrink_tbe
+from .hshrink_grad import _hshrink_grad_tbe

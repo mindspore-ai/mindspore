@@ -31,10 +31,6 @@ DeConvolutionFp16CPUKernel::~DeConvolutionFp16CPUKernel() {
     delete matmul_param_;
     matmul_param_ = nullptr;
   }
-  if (pack_weight_ != nullptr) {
-    free(pack_weight_);
-    pack_weight_ = nullptr;
-  }
   return;
 }
 
@@ -52,13 +48,31 @@ int DeConvolutionFp16CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int DeConvolutionFp16CPUKernel::InitWeightBias() {
+void DeConvolutionFp16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = weight_tensor->Batch();
   auto output_channel = weight_tensor->Channel();
   auto kernel_h = weight_tensor->Height();
   auto kernel_w = weight_tensor->Width();
+  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  MS_ASSERT(origin_weight != nullptr);
+  PackNHWCFp16ToC8HWN8Fp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_),
+                           input_channel, kernel_w * kernel_h, output_channel);
+}
 
+int DeConvolutionFp16CPUKernel::MallocWeightBiasData() {
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = weight_tensor->Batch();
+  auto output_channel = weight_tensor->Channel();
+  auto kernel_h = weight_tensor->Height();
+  auto kernel_w = weight_tensor->Width();
+  size_t weight_pack_size = input_channel * kernel_w * kernel_h * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
+  packed_weight_ = malloc(weight_pack_size);
+  if (packed_weight_ == nullptr) {
+    MS_LOG(ERROR) << "deconv malloc packed_weight_ error!";
+    return RET_ERROR;
+  }
+  memset(packed_weight_, 0, weight_pack_size);
   auto bias_size = UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
   bias_data_ = malloc(bias_size);
   if (bias_data_ == nullptr) {
@@ -66,33 +80,6 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, UP_ROUND(output_channel, C8NUM) * sizeof(float16_t));
-  if (in_tensors_.size() == 3) {
-    if (in_tensors_.at(kBiasIndex)->data_type() != kNumberTypeFloat16) {
-      MS_LOG(ERROR) << "DeConv fp16 only support fp16 weight";
-      return RET_ERROR;
-    }
-    if (in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
-        in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
-      memcpy(bias_data_, in_tensors_.at(kBiasIndex)->data_c(), output_channel * sizeof(float16_t));
-    } else {
-      MS_LOG(ERROR) << "unsupported bias shape for deconv!";
-      return RET_ERROR;
-    }
-  }
-
-  size_t weight_pack_size = input_channel * kernel_w * kernel_h * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
-  pack_weight_ = reinterpret_cast<float16_t *>(malloc(weight_pack_size));
-  if (pack_weight_ == nullptr) {
-    MS_LOG(ERROR) << "deconv malloc pack_weight_ error!";
-    return RET_ERROR;
-  }
-  memset(pack_weight_, 0, weight_pack_size);
-  if (in_tensors_.at(1)->data_type() != kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "deconv fp16 kernel require fp16 weight";
-    return RET_ERROR;
-  }
-  PackNHWCFp16ToC8HWN8Fp16(reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->data_c()), pack_weight_,
-                           input_channel, kernel_w * kernel_h, output_channel);
   return RET_OK;
 }
 
@@ -172,7 +159,9 @@ int DeConvolutionFp16CPUKernel::DoDeconv(int task_id) {
   }
 
   auto tmp_buf = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_16_;
-  MatMulFp16(pack_input_, pack_weight_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
+  MatMulFp16(pack_input_,
+             reinterpret_cast<float16_t *>(packed_weight_) +
+               task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
              tmp_buf, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_, oc * C8NUM * kernel_plane_, 0,
              OutType_C8);
 
@@ -183,14 +172,16 @@ int DeConvolutionFp16CPUKernel::DoDeconv(int task_id) {
 }
 
 int DeConvolutionFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
-  int ret = InitWeightBias();
+  int ret = InitConvWeightBias();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "deconv InitWeightBias error!";
+    MS_LOG(ERROR) << "deconv InitConvWeightBias error!";
     return ret;
   }
   if (!InferShapeDone()) {
@@ -200,6 +191,10 @@ int DeConvolutionFp16CPUKernel::Init() {
 }
 
 int DeConvolutionFp16CPUKernel::Run() {
+  if (RepackWeight() != RET_OK) {
+    MS_LOG(ERROR) << "Repack weight failed.";
+    return RET_ERROR;
+  }
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
   MS_ASSERT(input_ptr != nullptr);
@@ -225,6 +220,8 @@ int DeConvolutionFp16CPUKernel::Run() {
     error_code = ParallelLaunch(this->ms_context_, DeConvFp16Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv fp16 run error! error_code[" << error_code << "]";
+      FreeRunBuf();
+      return error_code;
     }
   }
 

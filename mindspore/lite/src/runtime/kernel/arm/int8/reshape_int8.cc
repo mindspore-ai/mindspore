@@ -63,18 +63,14 @@ int ReshapeInt8CPUKernel::Run() {
 
 int ReshapeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto reshape = reinterpret_cast<ReshapeInt8CPUKernel *>(cdata);
-  auto ret = reshape->DoExecute(task_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Reshapeint8Run task_id " << task_id << " failed.";
-    return ret;
-  }
+  reshape->DoExecute(task_id);
   return lite::RET_OK;
 }
 
-int ReshapeInt8CPUKernel::DoExecute(int task_id) {
+void ReshapeInt8CPUKernel::DoExecute(int task_id) {
   int64_t real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
   if (real_dst_count <= 0) {
-    return lite::RET_OK;
+    return;
   }
   MS_ASSERT(input_data_);
   MS_ASSERT(output_data_);
@@ -82,7 +78,7 @@ int ReshapeInt8CPUKernel::DoExecute(int task_id) {
   int8_t *cur_output_data = output_data_ + task_id * count_unit_;
 
   Int8Reshape(cur_input0_data, cur_output_data, real_dst_count, reshape_param_->quant_para_);
-  return lite::RET_OK;
+  return;
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Reshape, LiteKernelCreator<ReshapeInt8CPUKernel>)

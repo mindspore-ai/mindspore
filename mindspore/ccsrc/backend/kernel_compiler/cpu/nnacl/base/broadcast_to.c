@@ -62,7 +62,7 @@ void pad_input_shape(int *input_shape, int input_shape_len, int output_shape_len
     shape_info->input_shape_size_ = dim_max + 1;                                                       \
                                                                                                        \
     size_t before_dim_elements_num = accumulate(input_shape, 0, dim_max - 1);                          \
-    size_t after_dim_elements_num = input_shape[dim_max];                                              \
+    size_t after_dim_elements_num = (size_t)(input_shape[dim_max]);                                    \
     size_t dim_broadcast_rate = (size_t)(output_shape[dim_max] / input_shape[dim_max]);                \
     for (size_t i = 0; i < before_dim_elements_num; ++i) {                                             \
       const type *in_ptr = input + i * after_dim_elements_num;                                         \

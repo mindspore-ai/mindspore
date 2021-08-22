@@ -27,7 +27,18 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ConvolutionFP16CPUKernel::InitWeightBias() {
+void ConvolutionFP16CPUKernel::PackWeight() {
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  int in_channel = filter_tensor->Channel();
+  int out_channel = filter_tensor->Batch();
+  int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+  void *weight_origin = IsTrainable() ? filter_tensor->data_c() : origin_weight_;
+  MS_ASSERT(weight_origin != nullptr);
+  RowMajor2Col8MajorFp16(weight_origin, reinterpret_cast<float16_t *>(packed_weight_), out_channel,
+                         in_channel * kernel_plane, false);
+}
+
+int ConvolutionFP16CPUKernel::MallocWeightBiasData() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   int in_channel = filter_tensor->Channel();
   int out_channel = filter_tensor->Batch();
@@ -39,15 +50,13 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
 
   // init weight
   if (packed_weight_ == nullptr) {
-    packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
+    packed_weight_ = malloc(pack_weight_size * sizeof(float16_t));
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "malloc packed_weight_ failed.";
       return RET_ERROR;
     }
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float16_t));
-  void *weight_origin_tmp = IsTrainable() ? filter_tensor->data_c() : origin_weight_;
-  RowMajor2Col8MajorFp16(weight_origin_tmp, packed_weight_, out_channel, in_channel * kernel_plane, false);
 
   // init bias
   if (bias_data_ == nullptr) {
@@ -58,11 +67,6 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
     }
   }
   memset(bias_data_, 0, oc8 * sizeof(float16_t));
-  if (in_tensors_.size() == kInputSize2) {
-    auto bias_tensor = in_tensors_.at(kBiasIndex);
-    void *bias_origin_tmp = IsTrainable() ? bias_tensor->data_c() : origin_bias_;
-    memcpy(bias_data_, bias_origin_tmp, out_channel * sizeof(float16_t));
-  }
   return RET_OK;
 }
 
@@ -85,13 +89,15 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
 }
 
 int ConvolutionFP16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
   row_tile_ = C16NUM;
 #else
   row_tile_ = C12NUM;
 #endif
   col_tile_ = C8NUM;
-  auto ret = InitWeightBias();
+  auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
@@ -129,8 +135,8 @@ int ConvolutionFP16CPUKernel::RunImpl(int task_id) {
     MS_LOG(ERROR) << "Convolution Fp16 get null tensor data!";
     return RET_ERROR;
   }
-  ConvFp16(input_ptr, packed_input_, packed_weight_, reinterpret_cast<float16_t *>(bias_data_), col_major_input_,
-           output_ptr, task_id, conv_param_);
+  ConvFp16(input_ptr, packed_input_, reinterpret_cast<float16_t *>(packed_weight_),
+           reinterpret_cast<float16_t *>(bias_data_), col_major_input_, output_ptr, task_id, conv_param_);
   return RET_OK;
 }
 
@@ -151,14 +157,9 @@ int ConvolutionFP16CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-
-  if (IsTrainable() && (IsTrain() || IsRepack())) {
-    ret = InitWeightBias();
-    if (ret != 0) {
-      MS_LOG(ERROR) << "Convolution 1x1 fp16 repack weight failure";
-      return RET_ERROR;
-    }
-    is_repack_ = false;
+  if (RepackWeight() != RET_OK) {
+    MS_LOG(ERROR) << "Repack weight failed.";
+    return RET_ERROR;
   }
   ret = ParallelLaunch(this->ms_context_, ConvolutionFp16Impl, this, thread_count_);
   if (ret != RET_OK) {

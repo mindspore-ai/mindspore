@@ -42,11 +42,7 @@ int TensorListReserveCPUKernel::Run() {
     std::vector<std::vector<int> > tmp_shape(num_elements, std::vector<int>());
     output->set_element_shape(std::vector<int>(ele_shape_ptr, ele_shape_ptr + input0->ElementsNum()));
     output->set_shape(std::vector<int>(1, num_elements));
-    auto ret = output->MallocTensorListData(kTypeUnknown, tmp_shape);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Failed to MallocTensorListData";
-      return ret;
-    }
+    output->MallocTensorListData(kTypeUnknown, tmp_shape);
   }
   output->set_tensors_data_type(element_dtype_);
   return RET_OK;

@@ -138,10 +138,14 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, g
 void OpTilingCalculateAdapter::ConvertCompileInfo(const CNodePtr &node, ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
-  MS_LOG(INFO) << "For op " << op_name_ << ", get compile_info: " << op_compile_info_;
-  std::string compile_info_key = std::to_string(std::hash<std::string>()(op_compile_info_));
+  if (!AnfAlgo::HasNodeAttr(kAttrCompileInfo, node)) {
+    MS_LOG(EXCEPTION) << "Get compile_info failed";
+  }
+  auto compile_info_attr = AnfAlgo::GetNodeAttr<std::string>(node, kAttrCompileInfo);
+  MS_LOG(INFO) << "For op " << op_name_ << ", get compile_info: " << compile_info_attr;
+  std::string compile_info_key = std::to_string(std::hash<std::string>()(compile_info_attr));
   (void)ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_KEY, compile_info_key);
-  (void)ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_JSON, op_compile_info_);
+  (void)ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_JSON, compile_info_attr);
 }
 
 ge::NodePtr OpTilingCalculateAdapter::NewConstantOp(const CNodePtr &node, const std::string &name,
@@ -265,11 +269,9 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
 }
 
 ge::NodePtr OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
-  const CNodePtr &node, ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-  const std::string &op_compile_info) {
+  const CNodePtr &node, ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map) {
   MS_EXCEPTION_IF_NULL(node);
   op_name_ = AnfAlgo::GetCNodeName(node);
-  op_compile_info_ = op_compile_info;
   auto op_type = GetRealOpType(op_name_);
   (void)InitOpIoName(node);
   ge::OpDescPtr op_desc = std::make_shared<ge::OpDesc>(op_name_, op_type);

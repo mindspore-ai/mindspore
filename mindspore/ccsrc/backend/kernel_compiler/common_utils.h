@@ -55,8 +55,7 @@ using KernelMetaPtr = std::shared_ptr<KernelMetaInfo>;
 class KernelMeta {
  public:
   KernelMeta() = default;
-  void Initialize(int pid);
-  void RemoveKernelCache();
+  void Initialize();
   std::string Search(const std::string &kernel_name) const;
   bool Insert(const std::string &kernel_name, const std::string &kernel_json);
   std::string kernel_meta_path() const { return kernel_meta_path_; }

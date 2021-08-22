@@ -17,8 +17,8 @@
 #include "nnacl/infer/affine_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int MatmulInfer(AffineParameter *param, int a_shape[MAX_SHAPE_SIZE], size_t a_shape_size, int b_shape[MAX_SHAPE_SIZE],
-                size_t b_shape_size) {
+int MatmulInfer(const AffineParameter *param, int a_shape[MAX_SHAPE_SIZE], size_t a_shape_size,
+                int b_shape[MAX_SHAPE_SIZE], size_t b_shape_size) {
   MatMulParameter *matmul_param = param->matmul_parameter_;
   if (matmul_param->a_transpose_) {
     if (a_shape_size < 2) {

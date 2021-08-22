@@ -35,8 +35,12 @@ class ElementWiseTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  nvinfer1::ElementWiseOperation element_wise_op_;
   nvinfer1::ITensor *AddActivation(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *in_tensor);
+
+  nvinfer1::ElementWiseOperation element_wise_op_;
+
+  // index of first input MSTensor in the trt input tensor vector
+  size_t first_in_tensor_index_ = 0;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ELEMENTWISE_TENSORRT_H_

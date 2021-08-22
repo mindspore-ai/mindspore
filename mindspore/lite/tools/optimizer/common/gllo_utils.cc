@@ -530,6 +530,9 @@ tensor::TensorPtr GetTensorInfo(const AnfNodePtr &node) {
   }
   auto param = node->cast<ParameterPtr>();
   MS_ASSERT(param != nullptr);
+  if (!param->has_default()) {
+    return nullptr;
+  }
   auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param->default_param());
   return tensor_info;
 }
@@ -1493,10 +1496,14 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   MS_ASSERT(trans_prim != nullptr);
   auto cnode = func_graph->NewCNode(trans_prim, {input_node, perm_node});
   MS_ASSERT(cnode != nullptr);
+  auto manager = Manage(func_graph);
+  MS_ASSERT(manager != nullptr);
+  auto tr = manager->Transact();
+  tr.SetEdge(cnode, 1, input_node);
+  tr.SetEdge(cnode, kInputIndexTwo, perm_node);
+  tr.Commit();
   cnode->set_fullname_with_scope(cnode_name);
-  size_t input_size = 2;
-  size_t output_size = 1;
-  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(input_size, output_size);
+  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSizeTwo, 1);
   auto trans_insert_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   trans_insert_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;

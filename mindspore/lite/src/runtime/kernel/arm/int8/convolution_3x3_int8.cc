@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 namespace {
 constexpr size_t kUnitBufferMultipler = 4 * 4;
 }  // namespace
-int ProcessFilterUint8(const int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param) {
+int ProcessFilterUint8(const int8_t *origin_weight, int16_t *dst_weight, const ConvParameter *conv_param) {
   auto input_channel = conv_param->input_channel_;
   auto output_channel = conv_param->output_channel_;
   auto kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
@@ -116,7 +116,7 @@ int Convolution3x3Int8CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, new_bias_size);
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias_addr = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->MutableData());
-    memcpy(bias_data_, ori_bias_addr, output_channel * sizeof(int32_t));
+    memcpy(bias_data_, ori_bias_addr, static_cast<size_t>(output_channel) * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }

@@ -32,6 +32,7 @@ namespace converter {
 namespace {
 constexpr int kBase = 10;
 constexpr int kQuantBitNumInt16 = 16;
+constexpr int kPathLengthUpperLimit = 1024;
 }  // namespace
 Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX", "");
@@ -211,10 +212,10 @@ int Flags::InitTrainModel() {
 int Flags::InitInTensorShape() {
   std::string content = this->inTensorShape;
   std::vector<int64_t> shape;
-  auto shape_strs = StringSplit(content, std::string(";"));
+  auto shape_strs = StrSplit(content, std::string(";"));
   for (const auto &shape_str : shape_strs) {
     shape.clear();
-    auto string_split = StringSplit(shape_str, std::string(":"));
+    auto string_split = StrSplit(shape_str, std::string(":"));
     auto name = string_split[0];
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
@@ -223,7 +224,7 @@ int Flags::InitInTensorShape() {
     if (dim_strs.empty()) {
       MS_LOG(ERROR) << "input tensor dim string is empty";
     }
-    auto dims = StringSplit(dim_strs, std::string(","));
+    auto dims = StrSplit(dim_strs, std::string(","));
     if (dims.empty()) {
       MS_LOG(ERROR) << "input tensor dim is empty";
     }
@@ -428,7 +429,7 @@ std::string GetStrFromConfigFile(const std::string &file, const std::string &tar
   }
 
 #ifdef _WIN32
-  char *real_path = _fullpath(resolved_path.get(), file.c_str(), 1024);
+  char *real_path = _fullpath(resolved_path.get(), file.c_str(), kPathLengthUpperLimit);
 #else
   char *real_path = realpath(file.c_str(), resolved_path.get());
 #endif
@@ -486,7 +487,6 @@ std::vector<std::string> SplitStringToVector(const std::string &raw_str, const c
   }
   return res;
 }
-
 }  // namespace converter
 }  // namespace lite
 }  // namespace mindspore

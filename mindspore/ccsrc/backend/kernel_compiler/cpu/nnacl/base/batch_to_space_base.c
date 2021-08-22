@@ -23,19 +23,19 @@ void BatchToSpaceNoCropForNHWC(const void *input, void *output, const int *in_sh
   int in_h = in_shape[1];
   int in_w = in_shape[2];
   int in_c = in_shape[3];
-  size_t stride_h = block_w * out_n;
-  size_t output_offset = 0;
-  size_t copy_size = in_c * data_size;
-  size_t in_stride_h = in_w * in_c;
-  size_t in_stride_n = in_stride_h * in_h;
+  int stride_h = block_w * out_n;
+  int output_offset = 0;
+  int copy_size = in_c * data_size;
+  int in_stride_h = in_w * in_c;
+  int in_stride_n = in_stride_h * in_h;
   for (int n = 0; n < out_n; ++n) {
     for (int h = 0; h < in_h; ++h) {
-      size_t h_offset = h * in_stride_h;
+      int h_offset = h * in_stride_h;
       for (int bh = 0; bh < block_h; ++bh) {
         for (int w = 0; w < in_w; ++w) {
-          size_t w_offset = w * in_c;
+          int w_offset = w * in_c;
           for (int bw = 0; bw < block_w; ++bw) {
-            size_t in_offset = in_stride_n * (bh * stride_h + bw * out_n + n) + w_offset + h_offset;
+            int in_offset = in_stride_n * (bh * stride_h + bw * out_n + n) + w_offset + h_offset;
             memcpy((int8_t *)output + output_offset, (int8_t *)input + in_offset * data_size, copy_size);
             output_offset += copy_size;
           }
@@ -49,6 +49,9 @@ void BatchToSpaceForNHWC(const void *input, void *output, const int *in_shape, i
                          const int *crops, int data_size) {
   int block_h = block[0];
   int block_w = block[1];
+  if (block_h == 0 || block_w == 0) {
+    return;
+  }
   int in_h = in_shape[1];
   int in_w = in_shape[2];
   int in_c = in_shape[3];
@@ -61,27 +64,27 @@ void BatchToSpaceForNHWC(const void *input, void *output, const int *in_shape, i
   int w_end = MSMIN((in_w * block_w - crops[3]) / block_w + 1, in_w);
   int w_valid_end = in_w * block_w - crops[3] - 1;
 
-  size_t stride_h = block_w * out_n;
-  size_t output_offset = 0;
-  size_t copy_size = in_c * data_size;
-  size_t in_stride_h = in_w * in_c;
-  size_t in_stride_n = in_stride_h * in_h;
+  int stride_h = block_w * out_n;
+  int output_offset = 0;
+  int copy_size = in_c * data_size;
+  int in_stride_h = in_w * in_c;
+  int in_stride_n = in_stride_h * in_h;
   for (int n = 0; n < out_n; ++n) {
     for (int h = h_start; h < h_end; ++h) {
-      size_t h_offset = h * in_stride_h;
+      int h_offset = h * in_stride_h;
       for (int bh = 0; bh < block_h; ++bh) {
-        size_t h_index = h * block_h + bh;
+        int h_index = h * block_h + bh;
         if (h_index < h_valid_begin || h_index > h_valid_end) {
           continue;
         }
         for (int w = w_start; w < w_end; ++w) {
-          size_t w_offset = w * in_c;
+          int w_offset = w * in_c;
           for (int bw = 0; bw < block_w; ++bw) {
-            size_t w_index = w * block_w + bw;
+            int w_index = w * block_w + bw;
             if (w_index < w_valid_begin || w_index > w_valid_end) {
               continue;
             }
-            size_t in_offset = in_stride_n * (bh * stride_h + bw * out_n + n) + w_offset + h_offset;
+            int in_offset = in_stride_n * (bh * stride_h + bw * out_n + n) + w_offset + h_offset;
             memcpy((int8_t *)output + output_offset, (int8_t *)input + in_offset * data_size, copy_size);
             output_offset += copy_size;
           }

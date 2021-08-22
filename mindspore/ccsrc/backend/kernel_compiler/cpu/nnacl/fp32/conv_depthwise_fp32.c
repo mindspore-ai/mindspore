@@ -52,7 +52,8 @@ int ConvDw(float *output_data, const float *input_data, const float *weight_data
       int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih_origin, conv_param->dilation_h_));
 
       for (int ow = 0; ow < conv_param->output_w_; ow++) {
-        memcpy(dst_data + ow * conv_param->output_channel_, bias_data, conv_param->output_channel_ * sizeof(float));
+        memcpy(dst_data + ow * conv_param->output_channel_, bias_data,
+               conv_param->output_channel_ * (int)(sizeof(float)));
       }
       for (int kh = start_kh; kh < end_kh; kh++) {
         int ih = ih_origin + conv_param->dilation_w_ * kh;
@@ -764,10 +765,10 @@ void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, c
                            int output_width, int input_stride, bool relu, bool relu6, int kernel) {
   do {
     float **in = input;
-    size_t c = channels;
+    size_t c = (size_t)channels;
     const float *w = weights;
     float *out = output;
-    memcpy(out, bias, channels * sizeof(float));
+    memcpy(out, bias, channels * (int)sizeof(float));
     for (; c >= C4NUM; c -= C4NUM) {
       for (int i = 0; i < C4NUM; i++) {
         for (int k = 0; k < kernel; k++) {

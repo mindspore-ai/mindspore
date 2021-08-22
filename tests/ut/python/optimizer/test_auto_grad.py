@@ -252,3 +252,112 @@ def test_limit_lift_fv_scope():
     grad_net = GradNet(net)
     grad_net.add_flags_recursive(defer_inline=True)
     grad_net(x, y)
+
+
+def test_same_primal_used_by_multi_j():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self, x):
+            return x
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.grad = ops.GradOperation()
+
+        def construct(self, x):
+            out = self.net(x)
+            gout = self.grad(self.net)(x)
+            gout1 = self.grad(self.net)(x)
+            return out, gout, gout1
+
+    x = Tensor(np.array([1.0], dtype=np.float32))
+    net = Net()
+    grad = GradNet(net)
+    grad(x)
+
+
+def test_same_primal_used_by_multi_j_with_monad1():
+    class AdamNet(nn.Cell):
+        def __init__(self, var, m, v):
+            super(AdamNet, self).__init__()
+            self.apply_adam = P.Adam()
+            self.var = Parameter(var, name="var")
+            self.m = Parameter(m, name="m")
+            self.v = Parameter(v, name="v")
+
+        def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
+            self.apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
+            return self.var
+
+    class AdamGradNet(nn.Cell):
+        def __init__(self, network):
+            super(AdamGradNet, self).__init__()
+            self.grad_fn = ops.GradOperation(sens_param=True)
+            self.sens = [Tensor(np.ones([3, 3, 3]).astype(np.float32)), Tensor(np.ones([3, 3, 3]).astype(np.float32))]
+            self.network = network
+
+        def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
+            out = self.network(beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
+            gout1 = self.grad_fn(self.network)(beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, self.sens[0])
+            gout2 = self.grad_fn(self.network)(beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, self.sens[1])
+            return out, gout1, gout2
+
+    var = Tensor(np.ones([3, 3, 3]).astype(np.float32))
+    m = Tensor(np.ones([3, 3, 3]).astype(np.float32))
+    v = Tensor(np.ones([3, 3, 3]).astype(np.float32))
+    beta1_power = Tensor(np.array([0.9], dtype=np.float32))
+    beta2_power = Tensor(np.array([0.999], dtype=np.float32))
+    lr = Tensor(np.array([0.001], dtype=np.float32))
+    beta1 = Tensor(np.array([0.9], dtype=np.float32))
+    beta2 = Tensor(np.array([0.999], dtype=np.float32))
+    epsilon = Tensor(np.array([1e-8], dtype=np.float32))
+    grad = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
+    net = AdamNet(var, m, v)
+    grad_net = AdamGradNet(net)
+    grad_net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
+
+
+def test_same_primal_used_by_multi_j_with_monad2():
+    class AdamNet(nn.Cell):
+        def __init__(self, var, m, v):
+            super(AdamNet, self).__init__()
+            self.apply_adam = P.Adam()
+            self.var = Parameter(var, name="var")
+            self.m = Parameter(m, name="m")
+            self.v = Parameter(v, name="v")
+
+        def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
+            self.apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
+            return self.var
+
+    class AdamGradNet(nn.Cell):
+        def __init__(self, network):
+            super(AdamGradNet, self).__init__()
+            self.grad = ops.GradOperation(sens_param=True)
+            self.sens = [Tensor(np.ones([3, 3, 3]).astype(np.float32)), Tensor(np.ones([3, 3, 3]).astype(np.float32))]
+            self.network = network
+
+        def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
+            out = self.network(beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
+            grad_fn = self.grad(self.network)
+            gout1 = grad_fn(beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, self.sens[0])
+            gout2 = grad_fn(beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, self.sens[1])
+            return out, gout1, gout2
+
+    var = Tensor(np.ones([3, 3, 3]).astype(np.float32))
+    m = Tensor(np.ones([3, 3, 3]).astype(np.float32))
+    v = Tensor(np.ones([3, 3, 3]).astype(np.float32))
+    beta1_power = Tensor(np.array([0.9], dtype=np.float32))
+    beta2_power = Tensor(np.array([0.999], dtype=np.float32))
+    lr = Tensor(np.array([0.001], dtype=np.float32))
+    beta1 = Tensor(np.array([0.9], dtype=np.float32))
+    beta2 = Tensor(np.array([0.999], dtype=np.float32))
+    epsilon = Tensor(np.array([1e-8], dtype=np.float32))
+    grad = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
+    net = AdamNet(var, m, v)
+    grad_net = AdamGradNet(net)
+    grad_net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)

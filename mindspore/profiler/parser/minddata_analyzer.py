@@ -304,6 +304,8 @@ class MinddataProfilingAnalyzer:
         if metrics and metrics['output_queue']:
             queue_size = metrics['output_queue']['size']
             queue_length = metrics['output_queue']['length']
+            if queue_length == 0:
+                raise ValueError("The input queue can not be None.")
             queue_average_size = round(sum(queue_size) / len(queue_size), 2) if queue_size else -1
             queue_utilization_pct = round(100 * queue_average_size / queue_length, 2)
             # Compute percentage of time queue is empty

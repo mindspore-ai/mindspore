@@ -42,8 +42,11 @@
 #include "backend/optimizer/graph_kernel/reorder_ops.h"
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
 #include "backend/optimizer/graph_kernel/axis_normalizer.h"
+#include "backend/optimizer/graph_kernel/decrease_compute_precision.h"
+#include "backend/optimizer/graph_kernel/decrease_transfer_precision.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_pass_manager.h"
+#include "backend/optimizer/graph_kernel/rewrite_output_shape.h"
 
 namespace mindspore {
 namespace opt {
@@ -59,6 +62,9 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
   // Do cse before all passes of graphkernel
   pm->AddPass(std::make_shared<CommonSubexpressionElimination>("cse1"), OptLevel_1);
+
+  // Save the original output info
+  pm->AddPass(std::make_shared<SaveOutputShape>(), OptLevel_1);
 
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
   pm->AddPass(std::make_shared<SplitAssign>(), OptLevel_1, is_gpu);
@@ -152,6 +158,10 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_stitch_fusion);
   pm->AddPass(std::make_shared<StitchAtomicCleanInsertter>(), level, is_gpu);
 
+  // Enable low precision
+  auto level_low_precision = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_low_precision);
+  pm->AddPass(std::make_shared<DecreaseTransferPrecision>(), level_low_precision);
+  pm->AddPass(std::make_shared<DecreaseComputePrecision>(), level_low_precision, is_ascend);
   return pm;
 }
 
@@ -166,11 +176,15 @@ PassManagerPtr GraphKernelOptimizer::Combine() const {
 
 PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   auto pm = std::make_shared<GraphKernelPassManager>(6, "postprocess");
-  // Add the new tensors to the kernel_graph
-  pm->AddPass(std::make_shared<BindValueToGraph>(), OptLevel_1);
-
   // Make Tuple for the inputs of UpdateState. (the reverse of SpreadUpdateState)
   pm->AddPass(std::make_shared<ShrinkUpdateState>(), OptLevel_1);
+
+  // Recover the original output info
+  pm->AddPass(std::make_shared<GetitemTuple>(), OptLevel_1);
+  pm->AddPass(std::make_shared<RewriteOutputShape>(), OptLevel_1);
+
+  // Add the new tensors to the kernel_graph
+  pm->AddPass(std::make_shared<BindValueToGraph>(), OptLevel_1);
   return pm;
 }
 

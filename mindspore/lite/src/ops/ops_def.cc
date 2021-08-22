@@ -220,6 +220,7 @@ OP_TYPE(TensorArrayWrite)
 OP_TYPE(Affine)
 OP_TYPE(Attention)
 OP_TYPE(LSTMGrad)
+OP_TYPE(ScatterNdUpdate)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1212,3 +1213,6 @@ OP_SCHEMA_DEF_END(Affine)
 
 OP_SCHEMA_DEF(Attention)
 OP_SCHEMA_DEF_END(Attention)
+
+OP_SCHEMA_DEF(ScatterNdUpdate)
+OP_SCHEMA_DEF_END(ScatterNdUpdate)

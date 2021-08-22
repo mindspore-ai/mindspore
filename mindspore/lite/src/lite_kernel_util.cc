@@ -190,12 +190,13 @@ int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *ke
 
 void LiteKernelUtil::InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels) {
   for (auto *kernel : kernels) {
-    kernel->InitOutTensorInitRefCount();
+    kernel->InitOutTensorInitRefCount(&kernels);
   }
 }
 
 int LiteKernelUtil::SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs) { return -1; }
 
+#ifdef ENABLE_CONTROL_TENSORLIST
 bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
   if (kernel->desc().delegate != nullptr) {
     return false;
@@ -214,6 +215,7 @@ bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
 
   return false;
 }
+#endif
 
 kernel::LiteKernel *LiteKernelUtil::GetInputsSpecificNode(const kernel::LiteKernel *kernel,
                                                           const schema::PrimitiveType &primitive_type) {

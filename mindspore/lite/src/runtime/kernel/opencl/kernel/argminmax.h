@@ -32,7 +32,7 @@ class ArgMinMaxOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
-  void SetConstArgs() override;
+  int SetConstArgs() override;
   void SetGlobalLocal() override;
   int InitWeights() override;
   int Tune() override { return lite::RET_OK; }

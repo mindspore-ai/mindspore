@@ -35,6 +35,9 @@ AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   (void)CheckAndConvertUtils::CheckInteger("top_k_infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
 
   // Infer dtype
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto output1_type = kInt32;
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto output0_type =

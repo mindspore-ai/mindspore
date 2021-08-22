@@ -41,7 +41,6 @@ int DropoutGradCPUKernelFp16::Init() {
     MS_LOG(ERROR) << "unsupported ratio value - Dropout ratio should be between zero to one";
     return RET_ERROR;
   }
-
   if (ratio >= 1.0f) {
     scale_ = 1.0f;
   } else {

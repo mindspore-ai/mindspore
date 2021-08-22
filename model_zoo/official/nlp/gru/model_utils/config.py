@@ -20,6 +20,8 @@ import ast
 import argparse
 from pprint import pformat
 import yaml
+import mindspore.common.dtype as mstype
+
 
 class Config:
     """
@@ -108,6 +110,24 @@ def merge(args, cfg):
         cfg[item] = args_var[item]
     return cfg
 
+def parse_dtype(dtype):
+    if dtype not in ["mstype.float32", "mstype.float16"]:
+        raise ValueError("Not supported dtype")
+
+    if dtype == "mstype.float32":
+        return mstype.float32
+    if dtype == "mstype.float16":
+        return mstype.float16
+    return None
+
+def extra_operations(cfg):
+    """
+    Do extra work on config
+    Args:
+        config: Object after instantiation of class 'Config'.
+    """
+    cfg.dtype = parse_dtype(cfg.dtype)
+    cfg.compute_type = parse_dtype(cfg.compute_type)
 
 def get_config():
     """
@@ -121,6 +141,8 @@ def get_config():
     default, helper, choices = parse_yaml(path_args.config_path)
     args = parse_cli_to_yaml(parser=parser, cfg=default, helper=helper, choices=choices, cfg_path=path_args.config_path)
     final_config = merge(args, default)
-    return Config(final_config)
+    final_config = Config(final_config)
+    extra_operations(final_config)
+    return final_config
 
 config = get_config()

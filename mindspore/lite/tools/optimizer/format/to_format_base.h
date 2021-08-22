@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FORMAT_TO_FORMAT_BASE_H_
 
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -45,13 +46,16 @@ class ToFormatBase : public Pass {
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
   STATUS GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm, bool before,
                      size_t index = 0);
-  STATUS ModifyCNodeAbstract(const CNodePtr &cnode);
+  STATUS ModifyCNode(const CNodePtr &cnode);
+  STATUS ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<AnfNodePtr> *has_visited);
 
  protected:
-  virtual void GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) = 0;
+  virtual STATUS GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) = 0;
   virtual void SetSensitiveOps() { sensitive_ops_ = opt::GetNHWCOpMap(); }
   virtual bool DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ShapeVector &shape) { return true; }
   virtual bool DecideWhetherInferShapeForNewNode() { return true; }
+  virtual STATUS DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
+                                                 schema::Format *dst_format) = 0;
   FmkType fmk_type_{lite::converter::FmkType_MS};
   bool train_flag_{false};
   mindspore::Format format_{mindspore::NHWC};

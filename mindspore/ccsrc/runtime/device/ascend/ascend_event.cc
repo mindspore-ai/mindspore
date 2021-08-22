@@ -53,6 +53,10 @@ void AscendEvent::WaitEvent() {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtStreamWaitEvent failed, ret:" << ret;
   }
+  ret = rtEventReset(event_, wait_stream_);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "rtEventReset failed, ret:" << ret;
+  }
   need_wait_ = false;
 }
 

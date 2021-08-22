@@ -47,11 +47,13 @@ from mindspore.nn.cell import Cell
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
+
 class ProfileOption(Enum):
     """
     Profile Option Enum which be used in Profiler.profile.
     """
     trainable_parameters = 0
+
 
 class Profiler:
     """
@@ -67,9 +69,9 @@ class Profiler:
             and analysed,will deal with all op if null; Different op types should be separated by comma.
         ascend_job_id (str): (Ascend only) The directory where the profiling files to be parsed are located;
             This parameter is used to support offline parsing.
-        profile_communication(bool): Whether to collect communication performance data, collect when True.
-            Default is False.
-        profile_memory(bool): Whether to collect tensor memory data, collect when True.Default is False.
+        profile_communication (bool): Whether to collect communication performance data in a multi devices training.
+            collect when True. Default is False. Setting this parameter has no effect during single device training.
+        profile_memory (bool): Whether to collect tensor memory data, collect when True.Default is False.
 
     Examples:
         >>> import numpy as np
@@ -145,29 +147,7 @@ class Profiler:
             if kwargs:
                 logger.warning("Params not be supported yet on GPU.")
         elif self._device_target and self._device_target == "Ascend":
-            optypes_not_deal = kwargs.pop("optypes_not_deal", "Variable")
-            if not isinstance(optypes_not_deal, str):
-                raise TypeError("The parameter optypes_not_deal must be str.")
-            job_dir = kwargs.pop("ascend_job_id", "")
-            if job_dir:
-                job_dir = validate_and_normalize_path(job_dir)
-                if not os.path.exists(job_dir):
-                    msg = f"Invalid ascend_job_id: {job_dir}, Please pass the absolute path of the JOB dir"
-                    logger.error(msg)
-                    raise ValueError(msg)
-                self._output_path, _ = os.path.split(job_dir)
-            self._profile_communication = kwargs.pop("profile_communication", False)
-            if not isinstance(self._profile_communication, bool):
-                raise TypeError("The parameter profile_communication must be bool.")
-            if self._profile_communication:
-                hccl_option = {"output": self._output_path, "task_trace": "on"}
-                os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
-            self._profile_memory = kwargs.pop("profile_memory", False)
-            if not isinstance(self._profile_memory, bool):
-                raise TypeError("The parameter profile_memory must be bool")
-            if kwargs:
-                logger.warning("There are invalid params which don't work.")
-
+            self._parse_parameter_for_ascend(**kwargs)
             os.environ['DEVICE_ID'] = self._dev_id
 
             profiling_options = json.dumps(self._construct_profiling_options())
@@ -185,7 +165,6 @@ class Profiler:
             if not os.path.exists(data_path):
                 os.makedirs(data_path, exist_ok=True)
 
-            self._filt_optype_names = optypes_not_deal.split(",") if optypes_not_deal else []
             # add job id env through user input later
             self._job_id_env = 0
             self._start_time = int(time.time() * 10000000)
@@ -211,9 +190,45 @@ class Profiler:
             "aic_metrics": "PipeUtilization",
             "aicpu": "on",
             "profile_memory": profile_memory
-            }
+        }
 
         return profiling_options
+
+    def _parse_parameter_for_ascend(self, **kwargs):
+        """Parse parameter in Proflier when the device target is Ascend."""
+        optypes_not_deal = kwargs.pop("optypes_not_deal", "Variable")
+        if not isinstance(optypes_not_deal, str):
+            raise TypeError("The parameter optypes_not_deal must be str.")
+        self._filt_optype_names = optypes_not_deal.split(",") if optypes_not_deal else []
+        job_dir = kwargs.pop("ascend_job_id", "")
+        if job_dir:
+            job_dir = validate_and_normalize_path(job_dir)
+            if not os.path.exists(job_dir):
+                msg = f"Invalid ascend_job_id: {job_dir}, Please pass the absolute path of the JOB dir"
+                logger.error(msg)
+                raise ValueError(msg)
+            self._output_path, _ = os.path.split(job_dir)
+
+        env_rank_id = os.getenv("RANK_ID")
+        env_table_file = os.getenv("RANK_TABLE_FILE")
+        env_hccl_path = os.getenv("MINDSPORE_HCCL_CONFIG_PATH")
+        # Determine whether it is multi card training.
+        if env_rank_id and (env_table_file or env_hccl_path):
+            self._profile_communication = kwargs.pop("profile_communication", False)
+        if "profile_communication" in kwargs:
+            kwargs.pop("profile_communication")
+            logger.warning("The profile_communication parameter is invalid in single device training "
+                           " which doesn't work.")
+        if not isinstance(self._profile_communication, bool):
+            raise TypeError("The parameter profile_communication must be bool.")
+        if self._profile_communication:
+            hccl_option = {"output": self._output_path, "task_trace": "on"}
+            os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
+        self._profile_memory = kwargs.pop("profile_memory", False)
+        if not isinstance(self._profile_memory, bool):
+            raise TypeError("The parameter profile_memory must be bool")
+        if kwargs:
+            logger.warning("There are invalid params which don't work.")
 
     def analyse(self):
         """
@@ -539,7 +554,7 @@ class Profiler:
             for line in f.readlines():
                 if "clock_realtime" in line:
                     # 16 means the first digit of the timestamp, len(line)-3 means the last.
-                    job_start_time = line[16:len(line)-3]
+                    job_start_time = line[16:len(line) - 3]
 
         return job_start_time
 
@@ -651,7 +666,7 @@ class Profiler:
 
             return select_time
 
-        if "output_path" not in kwargs or kwargs.get("output_path") is None:
+        if kwargs.get("output_path") is None:
             if "output_path" in kwargs:
                 kwargs.pop("output_path")
             # Environment variables are mainly set for the convenience of cloud profiler.
@@ -684,6 +699,9 @@ class Profiler:
         if not os.path.exists(hccl_path):
             os.makedirs(hccl_path, exist_ok=True)
             os.chmod(hccl_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        logger.info("Start call the interface HCCLParseOP parsing hccl info...")
+        logger.info('Warm Prompt: It could take a few minutes if you are training '
+                    'with a complex network or more than 10 steps.')
         # Call the interface HCCLParseOP parsing hccl info.
         try:
             from hccl_parser.entry import hccl_parse_op
@@ -693,11 +711,14 @@ class Profiler:
                          "The hccl_parser-{version}-py3-none-any.whl package is usually located "
                          "in the /usr/local/Ascend/tools Directory", err)
             raise ImportError(err)
+        logger.info("Parse hccl info successfully.")
+        logger.info("Start analyse hccl info.")
         hccl_parse = HcclParser(hccl_path, self._dev_id, self._output_path)
         hccl_parse.parse()
+        logger.info("Analyse hccl info successfully.")
 
     @staticmethod
-    def profile(network=None, profile_option=None):
+    def profile(network, profile_option):
         """
         Get the number of trainable parameters in the training network.
 

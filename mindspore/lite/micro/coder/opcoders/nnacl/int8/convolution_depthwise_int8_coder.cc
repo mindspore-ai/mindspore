@@ -24,7 +24,7 @@
 
 namespace mindspore::lite::micro {
 int ConvolutionDepthwiseINT8Coder::Prepare(CoderContext *const context) {
-  Conv2DBaseCoder::Init();
+  MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "Conv2d base init failed.");
   // init sliding window param
   MS_CHECK_RET_CODE(SetQuantParam(), "Set quant param failed.");
   MS_CHECK_RET_CODE(InitWeightBias(context), "dwconvolution do init weightbais failed");

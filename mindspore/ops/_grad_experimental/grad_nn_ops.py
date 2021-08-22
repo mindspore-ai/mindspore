@@ -34,6 +34,19 @@ def get_bprop_ctc_loss_v2(self):
     return bprop
 
 
+@bprop_getters.register(P.SoftMarginLoss)
+def get_bprop_soft_margin_loss(self):
+    """Grad definition for `SoftMarginLoss` operation."""
+    grad = G.SoftMarginLossGrad(reduction=self.reduction)
+
+    def bprop(predict, label, out, dout):
+        dx = grad(predict, label, dout)
+        dy = grad(label, predict, dout)
+        return dx, dy
+
+    return bprop
+
+
 @bprop_getters.register(P.SoftShrink)
 def get_bprop_softshrink(self):
     """Grad definition for `SoftShrink` operation."""
@@ -41,6 +54,18 @@ def get_bprop_softshrink(self):
 
     def bprop(input_x, out, dout):
         dx = input_grad(dout, input_x)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.HShrink)
+def get_bprop_hshrink(self):
+    """Grad definition for `HShrinkGrad` operation."""
+    grad = G.HShrinkGrad(self.lambd)
+
+    def bprop(features, out, gradients):
+        dx = grad(gradients, features)
         return (dx,)
 
     return bprop

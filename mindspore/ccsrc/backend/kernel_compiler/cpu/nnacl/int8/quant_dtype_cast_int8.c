@@ -112,7 +112,7 @@ int UInt8ToInt8(const uint8_t *real_values, int8_t *quant_values, int size) {
   }
 
   for (int i = 0; i < size; ++i) {
-    int temp = real_values[i] - 128;
+    int temp = (int)real_values[i] - 128;
     if (temp > 127) {
       quant_values[i] = 127;
     } else if (temp < -128) {

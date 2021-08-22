@@ -19,6 +19,8 @@
 #include <vector>
 #include "src/inner_kernel.h"
 #include "include/context.h"
+#include "include/errorcode.h"
+#include "src/runtime/kernel/arm/base/carry_data.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
@@ -28,16 +30,9 @@ class ReshapeBaseCPUKernel : public InnerKernel {
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~ReshapeBaseCPUKernel() override = default;
-
-  int Init() override;
-  int ReSize() override;
+  int Init() override { return lite::RET_OK; };
+  int ReSize() override { return lite::RET_OK; };
   int Run() override;
-  int RunImpl(int task_id);
-
- private:
-  size_t cal_max_num_per_thread_ = 0;
-  uint8_t *input_ptr_ = nullptr;
-  uint8_t *output_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

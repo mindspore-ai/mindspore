@@ -31,7 +31,7 @@ class GroupConvolutionBaseCPUKernel : public ConvolutionBaseCPUKernel {
   GroupConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                 GroupConvCreator *group_conv_creator, const int group_num)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, nullptr, nullptr),
         group_conv_creator_(group_conv_creator),
         group_num_(group_num) {}  // opParameter(in channel, out channel) in this kernel has been split to groups, if
                                   // you want to get real params, multiply in channel / out channel with group num

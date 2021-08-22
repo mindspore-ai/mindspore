@@ -110,13 +110,9 @@ def main():
 
     # construct hccn_table
     device_ips: Dict[Any, Any] = {}
-    with open('/etc/hccn.conf', 'r') as fin:
-        for hccn_item in fin.readlines():
-            if hccn_item.strip().startswith('address_'):
-                device_id, device_ip = hccn_item.split('=')
-                device_id = device_id.split('_')[1]
-                device_ips[device_id] = device_ip.strip()
-
+    for device_id in device_num_list:
+        ret = os.popen("hccn_tool -i %d -ip -g" % device_id).readlines()
+        device_ips[str(device_id)] = ret[0].split(":")[1].replace('\n', '')
     hccn_table = {'version': '1.0',
                   'server_count': '1',
                   'server_list': []}

@@ -119,11 +119,11 @@ Status RandomRotationOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomRotationOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Fail to find degrees");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("resample") != op_params.end(), "Fail to find resample");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("expand") != op_params.end(), "Fail to find expand");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("center") != op_params.end(), "Fail to find center");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Fail to find fill_value");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Failed to find degrees");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("resample") != op_params.end(), "Failed to find resample");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("expand") != op_params.end(), "Failed to find expand");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("center") != op_params.end(), "Failed to find center");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Failed to find fill_value");
   std::vector<float> degrees = op_params["degrees"];
   InterpolationMode resample = static_cast<InterpolationMode>(op_params["resample"]);
   bool expand = op_params["expand"];

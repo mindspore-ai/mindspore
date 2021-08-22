@@ -812,11 +812,11 @@ void Conv3x3Int8InputTransform(const int16_t *input_data, int16_t *trans_input, 
       for (int j = real_y_start; j < real_y_end; j++) {
         const int16_t *src = input_data + src_c8_offset + C8NUM * (j * input_width + real_x_start);
         int16_t *dst = tmp_data + C8NUM * (C4NUM * j + real_x_start);
-        memcpy(dst, src, (real_x_end - real_x_start) * C8NUM * sizeof(int16_t));
+        memcpy(dst, src, (size_t)(real_x_end - real_x_start) * C8NUM * sizeof(int16_t));
       }
       // input transform
       int dst_ic8_offset = dst_plane_offset + ic * TILE_NUM * C8NUM;
-      size_t dst_step = ic8 * C8NUM * TILE_NUM;
+      size_t dst_step = (size_t)ic8 * C8NUM * TILE_NUM;
       int16_t *trans_input_ptr = trans_input + dst_ic8_offset;
       Conv3x3Int8InputUnit(tmp_data, trans_input_ptr, dst_step, input_zp);
     }
@@ -826,7 +826,7 @@ void Conv3x3Int8InputTransform(const int16_t *input_data, int16_t *trans_input, 
 void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, int oc, int ic8, size_t real_cal_num) {
   int oc4 = UP_DIV(oc, C4NUM);
 #ifdef ENABLE_ARM
-  IndirectGemmInt16to32_8x4(dst, src, weight, 16, ic8, oc4, oc4 * 4 * 16 * sizeof(int32_t));
+  IndirectGemmInt16to32_8x4(dst, src, weight, 16, ic8, oc4, (size_t)oc4 * 4 * 16 * sizeof(int32_t));
 #else
   const int input_unit_square = 16;
   for (int c = 0; c < oc4; c++) {

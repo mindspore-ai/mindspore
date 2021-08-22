@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <map>
 #include "utils/utils.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore {
 static DataType TransToApiType(aclDataType data_type) {
@@ -157,13 +158,14 @@ Status ModelProcess::InitInputsBuffer() {
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Get input shape failed";
       if (!is_run_on_device_) {
-        aclrtFree(data_mem_buffer);
+        (void)aclrtFree(data_mem_buffer);
       }
       return kMCDeviceError;
     }
     aclDataType data_type = aclmdlGetInputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
-    std::string input_name = aclmdlGetInputNameByIndex(model_desc_, i);
+    const char *input_name_char = aclmdlGetInputNameByIndex(model_desc_, i);
+    std::string input_name = (input_name_char == nullptr) ? input_name_char : std::string();
     if (input_name.empty()) {
       MS_LOG(WARNING) << "Get name of input " << i << " failed.";
     }
@@ -175,7 +177,7 @@ Status ModelProcess::InitInputsBuffer() {
   return kSuccess;
 }
 
-Status ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset) {
+Status ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset) const {
   MS_EXCEPTION_IF_NULL(data_mem_buffer);
   aclError ret;
   auto free_data_buffer = [this](void *dataMemBuffer) {
@@ -246,7 +248,8 @@ Status ModelProcess::InitOutputsBuffer() {
     }
     aclDataType data_type = aclmdlGetOutputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
-    std::string output_name = aclmdlGetOutputNameByIndex(model_desc_, i);
+    const char *output_name_char = aclmdlGetOutputNameByIndex(model_desc_, i);
+    std::string output_name = (output_name_char == nullptr) ? output_name_char : std::string();
     if (output_name.empty()) {
       MS_LOG(WARNING) << "Get name of output " << i << " failed.";
     }
@@ -344,7 +347,7 @@ Status ModelProcess::SetBatchSize(const std::vector<MSTensor> &inputs) {
   }
   auto *p = reinterpret_cast<const float *>(inputs[inputs.size() - 1].Data().get());
   MS_EXCEPTION_IF_NULL(p);
-  auto dynamicBatchSize = p[0];
+  size_t dynamicBatchSize = FloatToSize(p[0]);
   ret = aclmdlGetInputIndexByName(model_desc_, ACL_DYNAMIC_TENSOR_NAME, &index);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "get index failed";
@@ -442,7 +445,7 @@ Status ModelProcess::ResetOutputSize() {
   aclError ret;
   size_t output_size = aclmdlGetNumOutputs(model_desc_);
   for (size_t index = 0; index < output_size; index++) {
-    size_t dims = 1;
+    int64_t dims = 1;
     struct aclmdlIODims output_dims;
     ret = aclmdlGetCurOutputDims(model_desc_, index, &output_dims);
     if (ret != ACL_ERROR_NONE) {
@@ -453,7 +456,7 @@ Status ModelProcess::ResetOutputSize() {
       dims *= output_dims.dims[i];
     }
     output_type = aclmdlGetOutputDataType(model_desc_, index);
-    output_infos_[index].buffer_size = dims * aclDataTypeSize(output_type);
+    output_infos_[index].buffer_size = LongToSize(dims) * aclDataTypeSize(output_type);
   }
   return kSuccess;
 }

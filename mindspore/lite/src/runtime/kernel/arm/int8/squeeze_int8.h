@@ -36,7 +36,7 @@ class SqueezeInt8CPUKernel : public InnerKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int DoExecute(int tId);
+  void DoExecute(int tId);
 
  private:
   SqueezeQuantArg *quant_squeeze_param_{nullptr};

@@ -29,6 +29,8 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
+// Indicate whether the kernel input/output number are variable.
+bool IsDynamicParamKernel(const std::string &op_name);
 
 class KernelAttr {
  public:

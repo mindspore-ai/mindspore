@@ -55,10 +55,10 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
 }
 
 int Conv2dTransposeOpenCLKernel::Prepare() {
-  std::string kernel_name = "conv2d_transpose";
+  const std::string kernel_name = "conv2d_transpose";
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   std::string source = GetActDefines() + conv2d_transpose_source;
-  std::string program_name = "conv2d_transpose";
+  const std::string program_name = "conv2d_transpose";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -74,7 +74,10 @@ int Conv2dTransposeOpenCLKernel::Prepare() {
     return ret;
   }
   SetGlobalLocal();
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -94,7 +97,7 @@ void Conv2dTransposeOpenCLKernel::SetGlobalLocal() {
   AlignGlobalLocal(global_size_, local_size_);
 }
 
-void Conv2dTransposeOpenCLKernel::SetConstArgs() {
+int Conv2dTransposeOpenCLKernel::SetConstArgs() {
   int arg_cnt = 2;
   auto *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   int ci = in_tensors_[0]->shape()[3];
@@ -115,14 +118,39 @@ void Conv2dTransposeOpenCLKernel::SetConstArgs() {
   cl_int2 padding = {pad_h, pad_w};
   cl_int4 src_size = {h, w, UP_DIV(ci, C4NUM), n};
   cl_int4 dst_size = {oh, ow, UP_DIV(co, C4NUM), n};
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padWeight_, lite::opencl::MemType::BUF);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, kernel_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, stride);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padding);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt, static_cast<cl_int>(param->act_type_));
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padWeight_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, kernel_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, stride) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padding) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt, static_cast<cl_int>(param->act_type_)) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 int Conv2dTransposeOpenCLKernel::InitWeights() {
@@ -147,7 +175,15 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
   // IHWO to OHWI4(I)4(O)(converter format is IHWO)
   // init padWeight_(buffer mem)
   padWeight_ = allocator->Malloc(div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size, lite::opencl::MemType::BUF);
+  if (padWeight_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
+  if (padWeight_ == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
   memset(padWeight_, 0x00, div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
   auto origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data_c() : stored_weight_;
   auto weight_dtype = in_tensors_.at(kWeightIndex)->data_type();
@@ -188,7 +224,10 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
       }
     }
   }
-  allocator->UnmapBuffer(padWeight_);
+  if (allocator->UnmapBuffer(padWeight_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
   FreeStoredData(stored_weight_);
   return RET_OK;
 }
@@ -208,7 +247,15 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
   }
   ImageSize img_size{im_dst_x, im_dst_y, img_dtype};
   bias_ = allocator->Malloc(img_size);
+  if (bias_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
+  if (bias_ == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
   memset(bias_, 0x00, div_co * C4NUM * data_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
@@ -225,7 +272,10 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
       memcpy(bias_, src_data, co * data_size);
     }
   }
-  allocator->UnmapBuffer(bias_);
+  if (allocator->UnmapBuffer(bias_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
   FreeStoredData(stored_bias_);
   return RET_OK;
 }
@@ -233,9 +283,18 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
 int Conv2dTransposeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_cnt = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

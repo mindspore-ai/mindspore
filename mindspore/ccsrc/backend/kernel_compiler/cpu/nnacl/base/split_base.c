@@ -21,10 +21,6 @@
 
 int DoSplit(void *in_data, void **out_data, const int *input_shape, int offset, int num_unit,
             SplitParameter *split_param, int data_size) {
-  if (in_data == NULL || out_data == NULL) {
-    return NNACL_ERR;
-  }
-
   int8_t *int8_in = (int8_t *)in_data;
 
   int num_split = split_param->num_split_;

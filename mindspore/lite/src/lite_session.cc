@@ -68,11 +68,16 @@ int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   // huffman code and bit pack are not assumed to be performed at same time
   STATUS ret = RET_ERROR;
   if (src_tensor.enableHuffmanCode()) {
+#ifdef ENABLE_HUFFMAN_DECODE
     ret = WeightDecoder::DecodeHuffmanCode(src_tensor, dst_tensor);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Decode huffman code failed: " << ret;
       return ret;
     }
+#else
+    MS_LOG(ERROR) << unsupport_huffman_decode_log;
+    return RET_ERROR;
+#endif
   } else if (need_bit_unpack) {
     ret = WeightDecoder::UnPackToInt(src_tensor, dst_tensor);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {
@@ -123,11 +128,16 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
   MS_ASSERT(dst_tensor != nullptr);
   if (src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
     if (dst_tensor->data_type() == kObjectTypeTensorType) {
+#ifdef ENABLE_CONTROL_TENSORLIST
       auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
       if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
         MS_LOG(ERROR) << "Decode tensorlist data failed";
         return RET_ERROR;
       }
+#else
+      MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+      return RET_NOT_SUPPORT;
+#endif
     } else {
       auto ret = DecompressTensor(*src_tensor, dst_tensor);
       if (ret == RET_NO_CHANGE) {
@@ -159,6 +169,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   }
   lite::Tensor *dst_tensor = nullptr;
   if (TypeId(src_tensor.dataType()) == kObjectTypeTensorType) {
+#ifdef ENABLE_CONTROL_TENSORLIST
     dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>(), src_category);
     // set tensor list datatype
     auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
@@ -166,6 +177,9 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
       auto tensor_data_type = TypeId(reinterpret_cast<const int *>(src_tensor.data()->data())[0]);
       tensor_list->set_tensors_data_type(tensor_data_type);
     }
+#else
+    MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+#endif
   } else {
     dst_tensor = new (std::nothrow)
       Tensor(TypeId(src_tensor.dataType()), shape, static_cast<mindspore::Format>(src_tensor.format()), src_category);
@@ -688,12 +702,6 @@ int LiteSession::Init(const Context *context) {
       MS_LOG(ERROR) << "Delegate init failed";
       return RET_ERROR;
     }
-  }
-  ret = KernelRegistry::GetInstance()->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "KernelRegistry Init Failed.";
-    is_running_.store(false);
-    return ret;
   }
   ret = InitGPURuntime();
   if (ret != RET_OK) {

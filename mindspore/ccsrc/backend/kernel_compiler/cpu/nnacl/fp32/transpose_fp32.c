@@ -180,15 +180,15 @@ void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_
   int *strides = (int *)(transpose_param->strides_);
   int *out_strides = (int *)(transpose_param->out_strides_);
   int num_axes = transpose_param->num_axes_;
-  size_t data_size = (*out_strides) * output_shape[0];
-  size_t offset_size = UP_DIV(data_size, thread_num);
-  size_t task_offset = offset_size * task_id;
+  int data_size = (*out_strides) * output_shape[0];
+  int offset_size = UP_DIV(data_size, thread_num);
+  int task_offset = offset_size * task_id;
   int count = data_size - task_offset;
   if (count <= 0) {
     return;
   }
   count = MSMIN(offset_size, count);
-  for (size_t idx = task_offset; idx < task_offset + count; ++idx) {
+  for (int idx = task_offset; idx < task_offset + count; ++idx) {
     int pos = idx;
     int output_idx = 0;
     int input_idx = 0;

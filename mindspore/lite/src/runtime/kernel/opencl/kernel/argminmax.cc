@@ -16,6 +16,7 @@
 #include <cstring>
 #include <string>
 #include <functional>
+#include <algorithm>
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/kernel/argminmax.h"
@@ -58,19 +59,41 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void ArgMinMaxOpenCLKernel::SetConstArgs() {
+int ArgMinMaxOpenCLKernel::SetConstArgs() {
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   cl_int4 in_shape{static_cast<int>(im_in_.N), static_cast<int>(im_in_.H), static_cast<int>(im_in_.W),
                    static_cast<int>(im_in_.C)};
   cl_int4 flags = {param->out_value_, param->get_max_, param->axis_, param->topk_};
   int arg_cnt = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, buff_, lite::opencl::MemType::BUF);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, ids_, lite::opencl::MemType::BUF);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, cus_size_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, strides_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, flags);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, buff_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, ids_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, cus_size_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, strides_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, flags) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
@@ -134,14 +157,22 @@ int ArgMinMaxOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   int dtype_size = ocl_runtime_->GetFp16Enable() ? sizeof(int16_t) : sizeof(float);
   buff_ = allocator->Malloc(in_tensors_[0]->ElementsNum() * dtype_size, lite::opencl::MemType::BUF);
+  if (buff_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
   ids_ = allocator->Malloc(in_tensors_[0]->ElementsNum() * sizeof(int32_t), lite::opencl::MemType::BUF);
+  if (ids_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int ArgMinMaxOpenCLKernel::Prepare() {
-  std::string kernel_name = "argminmax";
+  const std::string kernel_name = "argminmax";
   std::string source = argminmax_source;
-  std::string program_name = "argminmax";
+  const std::string program_name = "argminmax";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -162,16 +193,28 @@ int ArgMinMaxOpenCLKernel::Prepare() {
 
   InitWeights();
   SetGlobalLocal();
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
 int ArgMinMaxOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
-  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

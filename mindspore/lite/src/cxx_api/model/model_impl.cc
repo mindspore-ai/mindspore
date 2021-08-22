@@ -210,6 +210,7 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     }
     old_data.push_back(input->data());
     if (input->data_type() == kObjectTypeString) {
+#ifdef ENABLE_STRING_KERNEL
       std::vector<int32_t> shape = TruncateShape(user_input.Shape(), input->data_type(), user_input.DataSize(), false);
       if (shape.empty() && !(user_input.Shape().empty())) {
         ResetTensorData(old_data, input_tensors);
@@ -218,6 +219,10 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       }
       input->set_shape(shape);
       input->set_data(user_input.MutableData());
+#else
+      MS_LOG(ERROR) << unsupport_string_tensor_log;
+      return kLiteError;
+#endif
     } else {
       if (user_input.MutableData() != input->data()) {
         if (input->Size() != user_input.DataSize()) {
@@ -260,7 +265,6 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
   }
   res.resize(inputs.size());
   for (size_t i = 0; i < inputs.size(); i++) {
-    inputs[i]->MutableData();  // prepare data
     auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(inputs[i]));
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";

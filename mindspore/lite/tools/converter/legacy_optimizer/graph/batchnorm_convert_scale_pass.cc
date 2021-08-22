@@ -230,15 +230,8 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::un
   return RET_OK;
 }
 
-// BatchNorm weight Tensor definition:
-// caffe
-//   estimated_mean  --0
-//   estimated_variance  --1
-// tensorflow
-//   scale    -- 0
-//   bias        --1
-//   estimated_mean  --2
-//   estimated_variance  --3
+// caffe:estimated_mean:0 estimated_variance:1
+// tensorflow scale:0,bias:1,estimated_mean:2,estimated_variance:3
 STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeightTensors *bnWeightTensors,
                                                      const std::unique_ptr<CNodeT> &bnNode) {
   MS_ASSERT(graph != nullptr);
@@ -250,19 +243,6 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
   if (fmkType == converter::FmkType_CAFFE) {
     bnWeightTensors->meanTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_MEAN_INDEX]).get();
     bnWeightTensors->varianceTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_VARIANCE_INDEX]).get();
-    auto scaleTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_SCALE_INDEX]).get();
-
-    // calibrate mean and variance
-    float scale_factor_data = (reinterpret_cast<float *>(scaleTensor->data.data()))[0];
-    float scale_factor = scale_factor_data == 0 ? 0 : 1 / scale_factor_data;
-    auto mean_data = reinterpret_cast<float *>(bnWeightTensors->meanTensor->data.data());
-    auto variance_data = reinterpret_cast<float *>(bnWeightTensors->varianceTensor->data.data());
-    for (size_t i = 0; i < GetShapeSize(*bnWeightTensors->meanTensor); i++) {
-      mean_data[i] *= scale_factor;
-    }
-    for (size_t i = 0; i < GetShapeSize(*bnWeightTensors->varianceTensor); i++) {
-      variance_data[i] *= scale_factor;
-    }
   } else {
     bnWeightTensors->scaleTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_SCALE_INDEX]).get();
     bnWeightTensors->biasTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_BIAS_INDEX]).get();
@@ -274,10 +254,23 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
     MS_LOG(ERROR) << "BatchNorm's mean tensor is nullptr";
     return RET_ERROR;
   }
-
   if (bnWeightTensors->varianceTensor == nullptr) {
     MS_LOG(ERROR) << "BatchNorm's variance tensor is nullptr";
     return RET_ERROR;
+  }
+  if (fmkType == converter::FmkType_CAFFE) {
+    auto scaleTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_SCALE_INDEX]).get();
+    // calibrate mean and variance
+    float scale_factor_data = (reinterpret_cast<float *>(scaleTensor->data.data()))[0];
+    float scale_factor = scale_factor_data == 0 ? 0 : 1 / scale_factor_data;
+    auto mean_data = reinterpret_cast<float *>(bnWeightTensors->meanTensor->data.data());
+    auto variance_data = reinterpret_cast<float *>(bnWeightTensors->varianceTensor->data.data());
+    for (size_t i = 0; i < GetShapeSize(*bnWeightTensors->meanTensor); i++) {
+      mean_data[i] *= scale_factor;
+    }
+    for (size_t i = 0; i < GetShapeSize(*bnWeightTensors->varianceTensor); i++) {
+      variance_data[i] *= scale_factor;
+    }
   }
   bnChannel = bnWeightTensors->meanTensor->data.size() * sizeof(uint8_t) / sizeof(float);
   if (bnChannel <= 0) {
@@ -289,14 +282,12 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
     MS_LOG(ERROR) << "conv kernel num expected to be equal to variance size";
     return RET_ERROR;
   }
-
   if (bnWeightTensors->scaleTensor != nullptr) {
     if (bnChannel != bnWeightTensors->scaleTensor->data.size() * sizeof(uint8_t) / sizeof(float)) {
       MS_LOG(ERROR) << "conv kernel num  expected to be equal to scale size";
       return RET_ERROR;
     }
   }
-
   if (bnWeightTensors->biasTensor != nullptr) {
     if (bnChannel != bnWeightTensors->biasTensor->data.size() * sizeof(uint8_t) / sizeof(float)) {
       MS_LOG(ERROR) << "conv kernel num expected to be equal to bias size";

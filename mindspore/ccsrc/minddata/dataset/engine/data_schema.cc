@@ -408,7 +408,7 @@ void DataSchema::Print(std::ostream &out) const {
 // Adds a column descriptor to the schema
 Status DataSchema::AddColumn(const ColDescriptor &cd) {
   // Sanity check there's not a duplicate name before adding the column
-  for (int32_t i = 0; i < col_descs_.size(); ++i) {
+  for (auto i = 0; i < col_descs_.size(); ++i) {
     if (col_descs_[i].name() == cd.name()) {
       std::ostringstream ss;
       ss << "column name '" << cd.name() << "' already exists in schema.";

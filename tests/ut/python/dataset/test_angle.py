@@ -19,28 +19,28 @@ import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.audio.transforms as a_c_trans
 
+def _count_unequal_element(data_expected, data_me, rtol, atol):
 
-def count_unequal_element(data_expected, data_me, rtol, atol):
     assert data_expected.shape == data_me.shape
     total_count = len(data_expected.flatten())
     error = np.abs(data_expected - data_me)
     greater = np.greater(error, atol + np.abs(data_expected) * rtol)
     loss_count = np.count_nonzero(greater)
-    assert (loss_count / total_count) < rtol, "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}".format(
-        data_expected[greater], data_me[greater], error[greater])
-
+    assert (loss_count / total_count) < rtol, \
+        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
+        format(data_expected[greater], data_me[greater], error[greater])
 
 def test_func_angle_001():
     """
     Eager Test
     """
-    arr = np.array([[73.04, -13.00], [57.49, 13.20], [-57.64, 6.51], [-52.25, 30.67], [-30.11, -18.34],
+    arr = np.array([[73.04, -13.00], [57.49, 13.20], [-57.64, 6.51], [-52.25, 30.67], [-30.11, -18.34], \
                     [-63.32, 99.33], [95.82, -24.76]], dtype=np.double)
-    expected = np.array([-0.17614017, 0.22569334, 3.02912684, 2.6107975, -2.59450886, 2.13831337, -0.25286988],
+    expected = np.array([-0.17614017, 0.22569334, 3.02912684, 2.6107975, -2.59450886, 2.13831337, -0.25286988], \
                         dtype=np.double)
     angle_op = a_c_trans.Angle()
     output = angle_op(arr)
-    count_unequal_element(expected, output, 0.0001, 0.0001)
+    _count_unequal_element(expected, output, 0.0001, 0.0001)
 
 
 def test_func_angle_002():
@@ -48,9 +48,9 @@ def test_func_angle_002():
     Pipeline Test
     """
     np.random.seed(6)
-    arr = np.array([[[84.25, -85.92], [-92.23, 23.06], [-7.33, -44.17], [-62.95, -14.73]],
+    arr = np.array([[[84.25, -85.92], [-92.23, 23.06], [-7.33, -44.17], [-62.95, -14.73]], \
                     [[93.09, 38.18], [-81.94, 71.34], [71.33, -39.00], [95.25, -32.94]]], dtype=np.double)
-    expected = np.array([[-0.79521156, 2.89658848, -1.73524737, -2.91173309],
+    expected = np.array([[-0.79521156, 2.89658848, -1.73524737, -2.91173309], \
                          [0.3892177, 2.42523905, -0.50034807, -0.33295219]], dtype=np.double)
     label = np.random.sample((2, 4, 1))
     data = (arr, label)
@@ -58,8 +58,7 @@ def test_func_angle_002():
     angle_op = a_c_trans.Angle()
     dataset = dataset.map(operations=angle_op, input_columns=["col1"])
     for item1, item2 in zip(dataset.create_dict_iterator(output_numpy=True), expected):
-        count_unequal_element(item2, item1['col1'], 0.0001, 0.0001)
-
+        _count_unequal_element(item2, item1['col1'], 0.0001, 0.0001)
 
 def test_func_angle_003():
     """
@@ -73,7 +72,7 @@ def test_func_angle_003():
     angle_op = a_c_trans.Angle()
     dataset = dataset.map(operations=angle_op, input_columns=["col1"])
     num_itr = 0
-    with pytest.raises(RuntimeError, match="input tensor type should be int, float or double"):
+    with pytest.raises(RuntimeError, match="The input type should be numbers"):
         for _ in dataset.create_dict_iterator(output_numpy=True):
             num_itr += 1
 

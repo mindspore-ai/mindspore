@@ -51,8 +51,8 @@ int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
     output_c = GetBatch(weight); /* depthwise */
   }
 
-  int kernel_w = param->kernel_w_;
-  int kernel_h = param->kernel_h_;
+  int kernel_w = param->kernel_w_ != -1 ? param->kernel_w_ : GetWidth(weight);
+  int kernel_h = param->kernel_h_ != -1 ? param->kernel_h_ : GetHeight(weight);
   int stride_w = param->stride_w_;
   int stride_h = param->stride_h_;
   int dilate_w = param->dilation_w_;
@@ -97,6 +97,8 @@ int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   param->output_h_ = output_h;
   param->output_w_ = output_w;
   param->output_channel_ = output_c;
+  param->kernel_h_ = kernel_h;
+  param->kernel_w_ = kernel_w;
   return NNACL_OK;
 }
 

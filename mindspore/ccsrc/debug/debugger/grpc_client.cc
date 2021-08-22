@@ -24,6 +24,7 @@ using debugger::EventListener;
 using debugger::EventReply;
 using debugger::EventReply_Status_FAILED;
 using debugger::GraphProto;
+using debugger::Heartbeat;
 using debugger::Metadata;
 using debugger::TensorProto;
 using debugger::WatchpointHit;
@@ -180,6 +181,20 @@ EventReply GrpcClient::SendWatchpointHits(const std::list<WatchpointHit> &watchp
 
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendWatchpointHits";
+    MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
+    reply.set_status(EventReply_Status_FAILED);
+  }
+  return reply;
+}
+
+EventReply GrpcClient::SendHeartbeat(const Heartbeat &heartbeat) {
+  EventReply reply;
+  grpc::ClientContext context;
+
+  grpc::Status status = stub_->SendHeartbeat(&context, heartbeat, &reply);
+
+  if (!status.ok()) {
+    MS_LOG(ERROR) << "RPC failed: SendHeartbeat";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
     reply.set_status(EventReply_Status_FAILED);
   }

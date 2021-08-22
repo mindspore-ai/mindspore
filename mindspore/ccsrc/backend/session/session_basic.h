@@ -176,8 +176,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
                             const FuncGraphManagerPtr &front_func_graph_manager,
                             const std::shared_ptr<KernelGraph> &backend_graph);
-  std::string AddPartialParametersMap(const FuncGraphManagerPtr &front_func_graph_manager,
-                                      const AnfNodePtr &partial_node);
+  std::string AddPartialParametersMap(const AnfNodePtr &partial_node);
   void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                          std::map<AnfNodePtr, size_t> *parameter_index);
   void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,

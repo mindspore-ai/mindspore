@@ -49,7 +49,7 @@ const std::vector<size_t> &AkgKernelMod::GetOutputSizeList() const { return outp
 
 const std::vector<size_t> &AkgKernelMod::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
@@ -74,6 +74,10 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                        [](const AddressPtr &input) -> void * { return input->addr; });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtime_args),
                        [](const AddressPtr &output) -> void * { return output->addr; });
+  if (!workspace.empty()) {
+    (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtime_args),
+                         [](const AddressPtr &addr) -> void * { return addr->addr; });
+  }
 
   rtL2Ctrl_t *l2ctrl = nullptr;
   auto stream = static_cast<rtStream_t *>(stream_ptr);
@@ -86,7 +90,8 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   return true;
 }
 
-std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
+                                               const std::vector<AddressPtr> &workspace,
                                                const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (kernel_pack_ == nullptr) {
     MS_LOG(EXCEPTION) << "kernel pack should not be nullptr.";
@@ -107,6 +112,10 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
                        [](const AddressPtr &input) -> void * { return input->addr; });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
                        [](const AddressPtr &output) -> void * { return output->addr; });
+  if (!workspace.empty()) {
+    (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(workspace_addrs),
+                         [](const AddressPtr &workspace) -> void * { return workspace->addr; });
+  }
 
   uint32_t block_dim = DEFAULT_BLOCK_DIM;  // default blockdim equal to 1.
   auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim);

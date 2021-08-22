@@ -17,8 +17,11 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
@@ -28,6 +31,42 @@
 constexpr double PI = 3.141592653589793;
 namespace mindspore {
 namespace dataset {
+/// \brief Turn a tensor from the power/amplitude scale to the decibel scale.
+/// \param input/output: Tensor of shape <...,freq,time>
+/// \param multiplier: power - 10, amplitude - 20
+/// \param amin: lower bound
+/// \param db_multiplier: multiplier for decibels
+/// \param top_db: the lower bound for decibels cut-off
+/// \return Status code
+template <typename T>
+Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T multiplier, T amin,
+                     T db_multiplier, T top_db);
+
+/// \brief Calculate the angles of the complex numbers
+/// \param input/output: Tensor of shape <...,time>
+template <typename T>
+Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  TensorShape shape = input->shape();
+  std::vector output_shape = shape.AsVector();
+  output_shape.pop_back();
+  std::shared_ptr<Tensor> output_tensor;
+  std::vector<T> out;
+  T o;
+  T x;
+  T y;
+  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+    x = static_cast<T>(*itr);
+    itr++;
+    y = static_cast<T>(*itr);
+    o = std::atan2(y, x);
+    out.emplace_back(o);
+  }
+  // Generate multidimensional results corresponding to input
+  Tensor::CreateFromVector(out, TensorShape{output_shape}, &output_tensor);
+  *output = output_tensor;
+  return Status::OK();
+}
+
 /// \brief Perform a biquad filter of input tensor.
 /// \param input/output: Tensor of shape <...,time>
 /// \param a0: denominator coefficient of current output y[n], typically 1
@@ -137,6 +176,15 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   delete m_py;
   return Status::OK();
 }
+
+/// \brief Stretch STFT in time at a given rate, without changing the pitch.
+/// \param[in] input - Tensor of shape <...,freq,time>.
+/// \param[in] rate - Stretch factor.
+/// \param[in] phase_advance - Expected phase advance in each bin.
+/// \param[out] output - Tensor after stretch in time domain.
+/// \return Status return code
+Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
+                   float n_freq);
 
 }  // namespace dataset
 }  // namespace mindspore

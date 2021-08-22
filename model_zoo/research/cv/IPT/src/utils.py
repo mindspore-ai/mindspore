@@ -23,7 +23,6 @@ from mindspore.common import dtype as mstype
 from mindspore.context import ParallelMode
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.parallel._utils import _get_parallel_mode
 from mindspore.train.serialization import save_checkpoint
@@ -82,7 +81,8 @@ class MyTrainOneStepCell(nn.Cell):
         grads = self.grad(self.network, weights)(*args, sens)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss
 
 
 def sub_mean(x):

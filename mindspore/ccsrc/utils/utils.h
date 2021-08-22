@@ -203,6 +203,7 @@ constexpr auto kSoftmaxGradExtOpName = "SoftmaxGradExt";
 constexpr auto kStridedReadOpName = "StridedRead";
 constexpr auto kStridedWriteOpName = "StridedWrite";
 constexpr auto kFusedAdamWeightDecayName = "FusedAdamWeightDecay";
+constexpr auto kAdamWeightDecayName = "AdamWeightDecay";
 constexpr auto kFusedAdamName = "FusedAdam";
 constexpr auto kFusedSparseAdamName = "FusedSparseAdam";
 constexpr auto kFusedMatMulBiasAddName = "FusedMatMulBiasAdd";
@@ -322,6 +323,7 @@ constexpr auto kAttrInputNames = "input_names";
 constexpr auto kAttrIsAICPUKernel = "is_AICPU_kernel";
 constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
+constexpr auto kAttrAsync = "async";
 constexpr auto kAttrVisited = "visited";
 constexpr auto kAttrShape = "shape";
 constexpr auto kAttrMomentum = "momentum";
@@ -333,6 +335,7 @@ constexpr auto kAttrDataShape = "data_shape";
 constexpr auto kAttrFormat = "format";
 constexpr auto kAttrReshapeType = "reshape_type";
 constexpr auto kAttrAxis = "axis";
+constexpr auto kAttrAxes = "axes";
 constexpr auto kAttrKeepDims = "keep_dims";
 constexpr auto kAttrShapeGamma = "shape_gamma";
 constexpr auto kAttrPerm = "perm";
@@ -589,6 +592,7 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kAdamApplyOneWithDecayOpName,
                                                kAdamApplyOneWithDecayAssignOpName,
                                                kFusedAdamWeightDecayName,
+                                               kAdamWeightDecayName,
                                                kFusedAdamName,
                                                kFusedSparseAdamName,
                                                kFusedMulApplyMomentumOpName,
@@ -628,6 +632,10 @@ const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
 
 const std::set<std::string> DynamicShapeConstInputToAttr = {
+  kCastOpName,       kExpandDimsOpName, kReshapeOpName,   kEmbeddingLookupOpName, kTransposeOpName, kReduceMinOpName,
+  kReduceMeanOpName, kReduceMaxOpName,  kReduceAllOpName, kReduceAnyOpName,       kConcatOpName};
+
+const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
   kCastOpName,      kExpandDimsOpName, kReshapeOpName,   kEmbeddingLookupOpName, kTransposeOpName, kReduceSumOpName,
   kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName, kReduceAllOpName,       kReduceAnyOpName, kConcatOpName};
 

@@ -24,7 +24,6 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.parallel import set_algo_parameters
@@ -419,7 +418,8 @@ class TrainOneStepCell(nn.Cell):
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(data, sens)
 
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss
 
 
 def reshape_common2(parallel_mode, net):

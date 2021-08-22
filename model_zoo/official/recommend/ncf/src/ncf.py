@@ -20,7 +20,6 @@ from mindspore.nn.layer.activation import get_activation
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
-from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
@@ -261,7 +260,8 @@ class TrainStepWrap(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss
 
 
 class PredictWithSigmoid(nn.Cell):

@@ -31,6 +31,7 @@ __all__ = ["CusBatchMatMul",
            "CusTranspose02314",
            "CusMatMulCubeDenseRight",
            "CusMatMulCubeFraczLeftCast",
+           "LoadIm2Col"
            ]
 
 
@@ -362,6 +363,7 @@ class CusTranspose02314(PrimitiveWithInfer):
 
     def get_bprop(self):
         """Get backprop for CusTranspose02314."""
+
         def bprop(x, out, dout):
             return (C.zeros_like(x),)
 
@@ -527,6 +529,55 @@ class Im2Col(PrimitiveWithInfer):
         valid_dtypes = [mstype.float16, mstype.float32]
         validator.check_tensor_dtype_valid('x', x_dtype, valid_dtypes, self.name)
         return x_dtype
+
+
+class LoadIm2Col(PrimitiveWithInfer):
+    """
+    extracts image patches from image.
+
+    The rank of input_x1 must be `4`, data_format is "NCHW".
+    Only supports when C is divisible by 16.
+
+    Inputs:
+        - **input_x1** (Tensor) - The feature map.
+          The shape of the tensor is :math:`(N, C, H, W)`.
+    Outputs:
+        Tensor.
+    Examples:
+        >>> input_x = Tensor(np.random.rand(32, 16, 224, 224).astype(np.float16))
+        >>> img2col = ops.LoadIm2Col(kernel_size=(7,7), stride=(2,2))
+        >>> output = img2col(input_x)
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 ksizes,
+                 strides,
+                 pad_mode="same",
+                 dilates=(1, 1, 1, 1)):
+        """Initialize LoadIm2Col"""
+
+        self.init_prim_io_names(inputs=['x1'], outputs=['y'])
+        self.ksizes = ksizes
+        self.strides = strides
+        self.pad_mode = validator.check_string(pad_mode, ['same'], 'pad_mode', self.name)
+        self.dilation = dilates
+
+    def infer_shape(self, data1_shape):
+        bs, c, h, w = data1_shape
+        stride_h, stride_w = self.strides
+        k_w, k_h = self.ksizes
+        h_out = math.ceil(h / stride_h)
+        w_out = math.ceil(w / stride_w)
+        m = h_out * w_out
+        if m % 16 != 0:
+            shape = [(bs * m) // 16, (c * k_h * k_w) // 16, 16, 16]
+        else:
+            shape = [bs, m // 16, (c * k_h * k_w) // 16, 16, 16]
+        return shape
+
+    def infer_dtype(self, data1_dtype):
+        return data1_dtype
 
 
 class UpdateThorGradient(PrimitiveWithInfer):

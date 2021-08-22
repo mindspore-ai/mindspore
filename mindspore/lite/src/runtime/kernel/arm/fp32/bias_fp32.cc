@@ -47,7 +47,7 @@ int BiasCPUKernel::Run() {
   auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto bias = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  size_t data_size = in_tensors_.at(0)->ElementsNum();
+  size_t data_size = static_cast<size_t>(in_tensors_.at(0)->ElementsNum());
   MS_ASSERT(ms_context_->allocator != nullptr);
   float *tile_in = reinterpret_cast<float *>(ms_context_->allocator->Malloc(data_size * sizeof(float)));
   float *tile_bias = reinterpret_cast<float *>(ms_context_->allocator->Malloc(data_size * sizeof(float)));
@@ -57,13 +57,15 @@ int BiasCPUKernel::Run() {
     ms_context_->allocator->Free(tile_bias);
     return RET_ERROR;
   }
-  auto ret = BroadcastAdd(in, bias, tile_in, tile_bias, out, data_size, bias_param_);
+  auto ret = BroadcastAdd(in, bias, tile_in, tile_bias, out, static_cast<int>(data_size), bias_param_);
   ms_context_->allocator->Free(tile_in);
   ms_context_->allocator->Free(tile_bias);
   return ret;
 }
 
 int BiasCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }

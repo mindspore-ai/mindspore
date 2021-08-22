@@ -37,6 +37,8 @@ int CastFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }  // namespace
 
 int CastFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -55,6 +57,9 @@ int CastFp16CPUKernel::ReSize() {
 
 int CastFp16CPUKernel::DoCast(int thread_id) {
   auto input = in_tensors_.at(0);
+  MS_ASSERT(input != nullptr);
+  auto input_data = input->data_c();
+  MS_ASSERT(input_data != nullptr);
   int data_num = MSMIN(stride_, data_num_ - thread_id * stride_);
   if (data_num <= 0) {
     return RET_OK;
@@ -63,26 +68,27 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
   auto offset = thread_id * stride_;
   auto output = out_tensors_.at(0);
   auto output_data = output->data_c();
+  MS_ASSERT(output_data != nullptr);
   auto input_data_type = input->data_type();
   auto output_data_type = output->data_type();
 
   if (input_data_type == kNumberTypeFloat16) {
     switch (output_data_type) {
       case kNumberTypeInt64:
-        Float16ToInt64(reinterpret_cast<float16_t *>(input->data_c()) + offset,
+        Float16ToInt64(reinterpret_cast<float16_t *>(input_data) + offset,
                        reinterpret_cast<int64_t *>(output_data) + offset, data_num);
         break;
       case kNumberTypeInt32:
-        Float16ToInt32(reinterpret_cast<float16_t *>(input->data_c()) + offset,
+        Float16ToInt32(reinterpret_cast<float16_t *>(input_data) + offset,
                        reinterpret_cast<int32_t *>(output_data) + offset, data_num);
         break;
       case kNumberTypeFloat32:
-        Float16ToFloat32(reinterpret_cast<float16_t *>(input->MutableData()) + offset,
+        Float16ToFloat32(reinterpret_cast<float16_t *>(input_data) + offset,
                          reinterpret_cast<float *>(output_data) + offset, data_num);
         break;
       case kNumberTypeFloat16:
-        memcpy(reinterpret_cast<float16_t *>(output_data) + offset,
-               reinterpret_cast<float16_t *>(input->data_c()) + offset, data_num * sizeof(float16_t));
+        memcpy(reinterpret_cast<float16_t *>(output_data) + offset, reinterpret_cast<float16_t *>(input_data) + offset,
+               data_num * sizeof(float16_t));
         break;
       default:
         MS_LOG(ERROR) << "Unsupported output data type " << output_data_type;
@@ -91,19 +97,19 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
   } else if (input_data_type == kNumberTypeFloat32) {
     switch (output_data_type) {
       case kNumberTypeInt64:
-        Float32ToInt64(reinterpret_cast<float *>(input->data_c()) + offset,
+        Float32ToInt64(reinterpret_cast<float *>(input_data) + offset,
                        reinterpret_cast<int64_t *>(output_data) + offset, data_num);
         break;
       case kNumberTypeInt32:
-        Float32ToInt32(reinterpret_cast<float *>(input->data_c()) + offset,
+        Float32ToInt32(reinterpret_cast<float *>(input_data) + offset,
                        reinterpret_cast<int32_t *>(output_data) + offset, data_num);
         break;
       case kNumberTypeFloat32:
-        memcpy(reinterpret_cast<float *>(output_data) + offset, reinterpret_cast<float *>(input->data_c()) + offset,
+        memcpy(reinterpret_cast<float *>(output_data) + offset, reinterpret_cast<float *>(input_data) + offset,
                data_num * sizeof(float));
         break;
       case kNumberTypeFloat16:
-        Float32ToFloat16(reinterpret_cast<float *>(input->MutableData()) + offset,
+        Float32ToFloat16(reinterpret_cast<float *>(input_data) + offset,
                          reinterpret_cast<float16_t *>(output_data) + offset, data_num);
         break;
       default:
@@ -113,7 +119,7 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
   } else if (input_data_type == kNumberTypeInt32) {
     switch (output_data_type) {
       case kNumberTypeFloat32:
-        Int32ToFloat32(static_cast<int32_t *>(input->data_c()) + offset, static_cast<float *>(output_data) + offset,
+        Int32ToFloat32(static_cast<int32_t *>(input_data) + offset, static_cast<float *>(output_data) + offset,
                        data_num);
         break;
       default:

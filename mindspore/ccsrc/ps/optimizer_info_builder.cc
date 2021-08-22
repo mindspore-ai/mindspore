@@ -29,6 +29,7 @@ OptimizerInfo *OptimizerInfoBuilder::Build(const std::shared_ptr<PServerKernel> 
                                            const Lengths &lens, const InputsShapePtr &inputs_shape, size_t worker_num,
                                            bool sharded) {
   MS_EXCEPTION_IF_NULL(pserver_kernel);
+  MS_EXCEPTION_IF_NULL(weight);
   MS_EXCEPTION_IF_NULL(inputs_shape);
   OptimizerInfo *optim_info =
     BuildInputs(weight, keys, values, lens, inputs_shape, worker_num, pserver_kernel, sharded);
@@ -40,6 +41,7 @@ OptimizerInfo *OptimizerInfoBuilder::Build(const std::shared_ptr<PServerKernel> 
 }
 
 void OptimizerInfoBuilder::BuildWorkspaces(OptimizerInfo *info, const std::vector<size_t> &ws_sizes, size_t) {
+  MS_EXCEPTION_IF_NULL(info);
   for (size_t i = 0; i < ws_sizes.size(); i++) {
     size_t size = ws_sizes[i];
     AddressPtr workspace = std::make_shared<kernel::Address>();
@@ -116,6 +118,7 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
 OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &, const Values &values,
                                                      const Lengths &lens, const InputsShapePtr &, size_t,
                                                      const std::shared_ptr<PServerKernel> &, bool) {
+  MS_EXCEPTION_IF_NULL(weight);
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(weight_addr);
   weight_addr->addr = weight->data();

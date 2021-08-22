@@ -21,7 +21,7 @@ import argparse
 from pprint import pprint, pformat
 import yaml
 
-_config_path = "./resnet50_cifar10_config.yaml"
+_config_path = "./config/resnet50_cifar10_config.yaml"
 
 class Config:
     """
@@ -118,7 +118,7 @@ def get_config():
     parser = argparse.ArgumentParser(description="default name", add_help=False)
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parser.add_argument("--config_path", type=str, default=os.path.join(current_dir, \
-        "../resnet50_cifar10_config.yaml"), help="Config file path")
+        "../config/resnet50_cifar10_config.yaml"), help="Config file path")
     path_args, _ = parser.parse_known_args()
     default, helper, choices = parse_yaml(path_args.config_path)
     pprint(default)

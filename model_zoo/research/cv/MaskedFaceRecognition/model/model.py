@@ -22,7 +22,6 @@ from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits, L1Loss
 from  mindspore.nn import Momentum
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.common.initializer import HeNormal
 from mindspore.common.initializer import Normal
 from mindspore  import Tensor
@@ -382,7 +381,8 @@ class TrainStepWrap(nn.Cell):
         if not self.is_train:
             return loss
         grads = self.grad(self.network, weights)(x, labels1, labels2)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss
 
 
 class TestStepWrap(nn.Cell):

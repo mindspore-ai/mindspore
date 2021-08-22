@@ -368,7 +368,7 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
 Status CifarOp::ComputeColMap() {
   // set the column name map (base class field)
   if (column_name_id_map_.empty()) {
-    for (uint32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
       column_name_id_map_[data_schema_->column(i).name()] = i;
     }
   } else {

@@ -484,6 +484,7 @@ bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
 }
 
 CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto idx = NewValueNode(SizeToLong(output_idx));
   MS_EXCEPTION_IF_NULL(idx);
   auto imm = std::make_shared<Int64Imm>(SizeToLong(output_idx));
@@ -713,8 +714,17 @@ AbstractBasePtrList RectifyAbstractFromRegAttr(const PrimitivePtr &primitive,
   if (!opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(primitive->name(), &reg)) {
     return input_abstract;
   }
-  if (AnfAlgo::HasDynamicShapeFlag(primitive) ||
-      DynamicShapeConstInputToAttr.find(primitive->name()) != DynamicShapeConstInputToAttr.end()) {
+  if (AnfAlgo::HasDynamicShapeFlag(primitive)) {
+    return input_abstract;
+  }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device == kGPUDevice) {
+    if (DynamicShapeConstInputToAttrGPU.find(primitive->name()) != DynamicShapeConstInputToAttrGPU.end()) {
+      return input_abstract;
+    }
+  } else if (DynamicShapeConstInputToAttr.find(primitive->name()) != DynamicShapeConstInputToAttr.end()) {
     return input_abstract;
   }
   auto convert_input_list = reg.GetConstInputAttrInfo();

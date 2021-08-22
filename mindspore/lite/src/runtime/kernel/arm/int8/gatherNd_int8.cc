@@ -57,7 +57,7 @@ int GatherNdInt8CPUKernel::ReSize() {
 
   auto indices_tensor = in_tensors_.at(1);
   auto indices_shape = indices_tensor->shape();
-  int indices_rank = indices_shape.size();
+  int indices_rank = static_cast<size_t>(indices_shape.size());
   count_ = 1;
   for (int i = 0; i < indices_rank - 1; ++i) {
     count_ *= indices_shape[i];
@@ -66,12 +66,12 @@ int GatherNdInt8CPUKernel::ReSize() {
     MS_LOG(ERROR) << "count_ is invalid, count_: " << count_;
     return RET_ERROR;
   }
-  in_offset_ = reinterpret_cast<int *>(malloc(count_ * sizeof(int)));
+  in_offset_ = reinterpret_cast<int *>(malloc(static_cast<size_t>(count_) * sizeof(int)));
   if (in_offset_ == nullptr) {
     MS_LOG(ERROR) << "GatherNdInt8 Malloc in_offset_ error!";
     return RET_ERROR;
   }
-  (void)memset(in_offset_, 0, count_ * sizeof(int));
+  (void)memset(in_offset_, 0, static_cast<size_t>(count_) * sizeof(int));
   thread_sz_count_ = MSMIN(thread_count_, count_);
   if (thread_sz_count_ == 0) {
     MS_LOG(ERROR) << "div zero";
@@ -85,9 +85,9 @@ int GatherNdInt8CPUKernel::InitOffset() {
   auto ind_quant_args = in_tensors_.at(1)->quant_params();
   auto indices_tensor = in_tensors_.at(1);
   auto indices_shape = indices_tensor->shape();
-  int indices_rank = indices_shape.size();
+  int indices_rank = static_cast<size_t>(indices_shape.size());
   auto in_shape = in_tensors_.front()->shape();
-  int in_rank = in_shape.size();
+  int in_rank = static_cast<size_t>(in_shape.size());
   if (indices_rank < 1) {
     MS_LOG(ERROR) << "inex out of bounds";
     return RET_ERROR;

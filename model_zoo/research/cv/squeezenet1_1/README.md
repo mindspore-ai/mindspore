@@ -149,6 +149,13 @@ For more configuration details, please refer the script `config.py`.
   Usage: sh scripts/run_standalone_train.sh [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
   ```
 
+```shell
+# standalone training example
+sh scripts/run_standalone_train.sh 0 /data/imagenet/train
+```
+
+checkpoint can be produced in training process and be saved in the folder ./train/ckpt_squeezenet.
+
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
 
 Please follow the instructions in the link [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -182,10 +189,8 @@ Usage: sh scripts/run_eval.sh [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
 
 ```shell
 # evaluation example
-sh scripts/run_eval.sh 0 ~/data/imagenet/train ckpt_squeezenet/squeezenet_imagenet-200_40036.ckpt
+sh scripts/run_eval.sh 0 /data/imagenet/val ./train/ckpt_squeezenet/squeezenet_imagenet-200_40036.ckpt
 ```
-
-checkpoint can be produced in training process.
 
 ### Result
 

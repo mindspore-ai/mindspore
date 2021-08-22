@@ -72,6 +72,7 @@ class ParamInfo {
     this->be_cloned_ = true;
     this->be_cloned_index_.push_back(index);
     clone->init_in_server_ = this->init_in_server_;
+    clone->requires_aggr_ = this->requires_aggr_;
     clone->ClearParameter();
     return clone;
   }
@@ -91,6 +92,9 @@ class ParamInfo {
   void set_parameter(const ParameterPtr &parameter) { parameter_ = parameter; }
   void ClearParameter() { parameter_ = nullptr; }
 
+  bool requires_aggr() const { return requires_aggr_; }
+  void set_requires_aggr(bool requires_aggr) { requires_aggr_ = requires_aggr; }
+
  private:
   std::string name_{"Parameter"};
   bool requires_grad_{true};
@@ -105,6 +109,7 @@ class ParamInfo {
   bool cache_enable_{false};
   std::vector<int64_t> cache_shape_;
   ParameterPtr parameter_{nullptr};
+  bool requires_aggr_{true};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PARAM_INFO_H_

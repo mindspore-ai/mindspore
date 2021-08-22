@@ -161,9 +161,17 @@ class OrderEnforcer {
       auto update_state = FindLastUpdateState(maketuple);
       if (update_state != nullptr) {
         std::unordered_set<AnfNodePtr> maketuple_users = GetSpecialOperatorRealUsers(maketuple);
+        std::unordered_set<AnfNodePtr> no_push_maketuple_users;
+        // Push and Pull at the end of the execution order,
+        // In order to ensure push and pull operator cut into the same graph, do not put push operator into updatestate
+        for (auto maketuple_user : maketuple_users) {
+          if (!IsPrimitiveCNode(maketuple_user, prim::kPrimPush)) {
+            no_push_maketuple_users.insert(maketuple_user);
+          }
+        }
         auto update_state_cnode = update_state->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(update_state_cnode);
-        AddInputEdges(update_state_cnode, maketuple_users);
+        AddInputEdges(update_state_cnode, no_push_maketuple_users);
       }
     }
   }
@@ -207,7 +215,7 @@ class OrderEnforcer {
     if (!IsPrimitiveCNode(last_input, prim::kPrimUpdateState)) {
       return;
     }
-    const std::set<PrimitivePtr> special_operators = {prim::kPrimExpandDims};
+    const std::set<PrimitivePtr> special_operators = {prim::kPrimExpandDims, prim::kPrimBatchNormGrad};
     for (size_t i = 1; i < inputs.size(); ++i) {
       auto &input = inputs.at(i);
       if (!IsRef(input)) {

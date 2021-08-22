@@ -22,6 +22,10 @@
 #include <vector>
 
 #include "frontend/operator/ops.h"
+#include "frontend/optimizer/irpass.h"
+#include "frontend/optimizer/optimizer_caller.h"
+#include "frontend/optimizer/anf_visitor.h"
+#include "ir/pattern_matcher.h"
 
 namespace mindspore::opt::irpass {
 namespace {
@@ -81,35 +85,7 @@ bool OnlyUsedByTwoNode(const AnfNodePtr &be_used_node, const AnfNodePtr &first_n
          (first_user == second_node && second_user == first_node);
 }
 
-// Eliminate useless node that only used by associated update_state.
-// Convert:
-//   x1 = node(x, u)
-//   u1 = update_state(u, x1) # update_state is the only user of node
-//   user(u1)
-// To:
-//   user(u)
-AnfNodePtr EliminateUpdateStateOnlyUsedNode(const CNodePtr &update_state, const AnfNodePtr &node) {
-  if (!OnlyUsedByOneNode(node, update_state)) {
-    // Skip if UpdateState is not the only user of cnode.
-    return nullptr;
-  }
-  // Replace UpdateState with the input monad.
-  return update_state->input(kInputIndex);
-}
-
-// Eliminate UpdateState that attaches a pure (no-side-effect) node.
-// Convert:
-//   x = pure_node(args) # no side effect
-//   u1 = update_state(u, x)
-//   user(u1)
-// To:
-//   x = pure_node(args)
-//   user(u)
 AnfNodePtr EliminateUpdateStateForPureNode(const CNodePtr &update_state, const AnfNodePtr &attach) {
-  if (IsPrimitiveCNode(attach, prim::kPrimTupleGetItem)) {
-    // Skip tuple_getitem.
-    return nullptr;
-  }
   auto cnode = dyn_cast<CNode>(attach);
   if (cnode == nullptr) {
     // Skip value node or parameter.
@@ -122,26 +98,11 @@ AnfNodePtr EliminateUpdateStateForPureNode(const CNodePtr &update_state, const A
       return nullptr;
     }
   }
-  // Skip Call/Switch/SwitchLayer.
-  auto first_input_node = cnode->input(kFirstInputIndex);
-  if (IsPrimitiveCNode(first_input_node, prim::kPrimCall) || IsPrimitiveCNode(first_input_node, prim::kPrimSwitch) ||
-      IsPrimitiveCNode(first_input_node, prim::kPrimSwitchLayer)) {
-    return nullptr;
-  }
 
   // Remove UpdateState by replace it with its input monad.
   return update_state->input(kInputIndex);
 }
 
-// Eliminate redundant UpdateState/Depend pair nodes caused by inline.
-// Convert:
-//    x1 = Depend(x, u)
-//    u1 = UpdateState(u, x1)
-//    out = x_user(x1)
-//    u2 = u_user(u1)
-// To:
-//    out = x_user(x)
-//    u2 = u_user(u)
 AnfNodePtr EliminateUpdateStateWithDepend(const CNodePtr &update_state, const CNodePtr &depend) {
   auto input_monad = depend->inputs().back();
   if (!HasAbstractMonad(input_monad)) {
@@ -638,28 +599,86 @@ AnfNodePtr EliminateUpdateStateBetweenAssignMakeTuple(const CNodePtr &update_sta
   }
   return nullptr;
 }
-
 }  // namespace
 
-AnfNodePtr UpdatestateEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+// Eliminate useless node that only used by associated update_state.
+// {prim::kPrimUpdateState, u, {prim::kPrimLoad, m, u}} -> u
+// {prim::kPrimUpdateState, u, {prim::kPrimPartial, m, u}} -> u
+// Convert:
+//   x1 = node(x, u)
+//   u1 = update_state(u, x1) # update_state is the only user of x1.
+//   user(u1)
+// To:
+//   user(u)
+AnfNodePtr UpdatestateOnlyUsedNodeEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   auto update_state_node = dyn_cast<CNode>(node);
   if (update_state_node == nullptr || update_state_node->inputs().empty()) {
     MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
     return nullptr;
   }
   auto &attach = update_state_node->input(kAttachIndex);
+  if (IsPrimitiveCNode(attach, prim::kPrimPartial) || IsPrimitiveCNode(attach, prim::kPrimLoad)) {
+    // Replace UpdateState with the input monad.
+    if (OnlyUsedByOneNode(attach, update_state_node)) {
+      return update_state_node->input(kInputIndex);
+    }
+  }
+  return nullptr;
+}
 
-  // Handle UpdateState(u, Depend(...)).
+// Eliminate UpdateState that attaches a pure (no-side-effect) node.
+// Convert:
+//   x = pure_node(args) # no side effect
+//   u1 = update_state(u, x)
+//   user(u1)
+// To:
+//   x = pure_node(args)
+//   user(u)
+AnfNodePtr UpdatestatePureNodeEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+  auto update_state_node = dyn_cast<CNode>(node);
+  if (update_state_node == nullptr || update_state_node->inputs().empty()) {
+    MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
+    return nullptr;
+  }
+  auto &attach = update_state_node->input(kAttachIndex);
+  if (IsPrimitiveCNode(attach, prim::kPrimTupleGetItem) || IsPrimitiveCNode(attach, prim::kPrimDepend) ||
+      IsPrimitiveCNode(attach, prim::kPrimPartial) || IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
+    return nullptr;
+  }
+  return EliminateUpdateStateForPureNode(update_state_node, attach);
+}
+
+// Eliminate redundant UpdateState/Depend pair nodes caused by inline.
+// Convert:
+//    x1 = Depend(x, u)
+//    u1 = UpdateState(u, x1)
+//    out = x_user(x1)
+//    u2 = u_user(u1)
+// To:
+//    out = x_user(x)
+//    u2 = u_user(u)
+AnfNodePtr UpdatestateDependEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+  auto update_state_node = dyn_cast<CNode>(node);
+  if (update_state_node == nullptr || update_state_node->inputs().empty()) {
+    MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
+    return nullptr;
+  }
+  auto &attach = update_state_node->input(kAttachIndex);
   if (IsPrimitiveCNode(attach, prim::kPrimDepend)) {
     return EliminateUpdateStateWithDepend(update_state_node, attach->cast<CNodePtr>());
   }
+  return nullptr;
+}
 
-  // Handle UpdateState(u, Partial(...)).
-  if (IsPrimitiveCNode(attach, prim::kPrimPartial)) {
-    return EliminateUpdateStateOnlyUsedNode(update_state_node, attach);
+// Eliminate UpdateStates between Assign nodes.
+// Eliminate UpdateStates between Assign and MakeTuple.
+AnfNodePtr UpdatestateAssignEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+  auto update_state_node = dyn_cast<CNode>(node);
+  if (update_state_node == nullptr || update_state_node->inputs().empty()) {
+    MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
+    return nullptr;
   }
-
-  // Handle UpdateState(u, Assign(...)).
+  auto &attach = update_state_node->input(kAttachIndex);
   if (IsPrimitiveCNode(attach, prim::kPrimAssign)) {
     auto new_node = EliminateUpdateStateBetweenAssigns(update_state_node, attach);
     if (new_node != nullptr) {
@@ -667,20 +686,15 @@ AnfNodePtr UpdatestateEliminater::operator()(const OptimizerPtr &, const AnfNode
     }
     return EliminateUpdateStateBetweenMakeTupleAssign(update_state_node, attach);
   }
+  return nullptr;
+}
 
-  // Handle UpdateState(u, Load(...)).
-  const bool attach_is_load = IsPrimitiveCNode(attach, prim::kPrimLoad);
-  if (attach_is_load) {
-    auto new_node = EliminateUpdateStateOnlyUsedNode(update_state_node, attach);
-    if (new_node != nullptr) {
-      return new_node;
-    }
-  }
-
-  // Handle UpdateState(u, MakeTuple(...)).
-  const bool attach_is_tuple = IsPrimitiveCNode(attach, prim::kPrimMakeTuple);
-  if (attach_is_tuple) {
-    auto make_tuple = attach->cast<CNodePtr>();
+// Eliminate UpdateStates which the second input is MakeTuple.
+AnfNodePtr UpdatestateMakeTupleEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+  PatternNode<AnfNodePtr> u, attach;
+  auto MakeTupleLambda = [&node, &u, &attach]() -> AnfNodePtr {
+    auto update_state_node = node->cast<CNodePtr>();
+    auto make_tuple = attach.GetNode(node)->cast<CNodePtr>();
     auto new_node = EliminateMakeTupleWithDeadNode(update_state_node, make_tuple);
     if (new_node != nullptr) {
       return new_node;
@@ -689,23 +703,31 @@ AnfNodePtr UpdatestateEliminater::operator()(const OptimizerPtr &, const AnfNode
     if (new_node != nullptr) {
       return new_node;
     }
-    new_node = EliminateUpdateStateBetweenAssignMakeTuple(update_state_node, make_tuple);
-    if (new_node != nullptr) {
-      return new_node;
-    }
+    return EliminateUpdateStateBetweenAssignMakeTuple(update_state_node, make_tuple);
+  };
+
+  MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimUpdateState, u, attach), MakeTupleLambda,
+                          IsPrimitiveCNode(attach.GetNode(node), prim::kPrimMakeTuple));
+  return nullptr;
+}
+
+// Eliminate UpdateStates for consecutive Loads.
+AnfNodePtr UpdatestateLoadsEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+  auto update_state_node = dyn_cast<CNode>(node);
+  if (update_state_node == nullptr || update_state_node->inputs().empty()) {
+    MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
+    return nullptr;
   }
-  // Merge UpdateStates for Loads.
-  if (attach_is_load || attach_is_tuple) {
+  auto &attach = update_state_node->input(kAttachIndex);
+  if (IsPrimitiveCNode(attach, prim::kPrimLoad) || IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
     std::vector<CNodePtr> update_states;
     std::vector<CNodePtr> loads;
     GetLoadsFromUpdateState(update_state_node, &update_states, &loads);
     if (update_states.size() > 1 && loads.size() > 1) {
       return EliminateUpdateStateForLoads(update_state_node, update_states, loads);
     }
-    return nullptr;
   }
-  // Eliminate UpdateStates that attaches a no-side-effect node.
-  return EliminateUpdateStateForPureNode(update_state_node, attach);
+  return nullptr;
 }
 
 // Eliminate Monad parameter for switch call.
@@ -725,7 +747,7 @@ AnfNodePtr UpdatestateEliminater::operator()(const OptimizerPtr &, const AnfNode
 //     g2 = Partial(..., u)
 //     s = switch(cond, g1, g2)
 //     res = s()
-AnfNodePtr EliminateMonadParameterForSwitchCall(const AnfNodePtr &node) {
+AnfNodePtr SwitchCallMonadParameterEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   const CNodePtr &switch_call = dyn_cast<CNode>(node);
   if (switch_call == nullptr) {
     return nullptr;
@@ -776,9 +798,5 @@ AnfNodePtr EliminateMonadParameterForSwitchCall(const AnfNodePtr &node) {
   auto new_switch_cnode = fg->NewCNode({NewValueNode(prim::kPrimSwitch), cond, fg1_node, fg2_node});
   auto new_switch_call = fg->NewCNode({new_switch_cnode});
   return new_switch_call;
-}
-
-AnfNodePtr SwitchCallMonadParameterEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
-  return EliminateMonadParameterForSwitchCall(node);
 }
 }  // namespace mindspore::opt::irpass

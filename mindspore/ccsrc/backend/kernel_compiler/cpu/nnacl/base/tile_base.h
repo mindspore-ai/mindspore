@@ -18,20 +18,20 @@
 #define MINDSPORE_NNACL_BASE_TILE_H_
 
 #include "nnacl/op_base.h"
-
+#define MAX_TILE_DIM_SIZE 8
 typedef struct TileParameter {
   // primitive parameter
   OpParameter op_parameter_;
-  int multiples_[8];
-  int dims_[8];
+  int multiples_[MAX_TILE_DIM_SIZE];
+  int dims_[MAX_TILE_DIM_SIZE];
   size_t dims_size_;
   size_t multiples_size_;
 
   // shape correlative
-  int in_shape_[8];
-  int out_shape_[8];
-  int in_strides_[8];
-  int out_strides_[8];
+  int in_shape_[MAX_TILE_DIM_SIZE];
+  int out_shape_[MAX_TILE_DIM_SIZE];
+  int in_strides_[MAX_TILE_DIM_SIZE];
+  int out_strides_[MAX_TILE_DIM_SIZE];
 
   // other parameter
   int in_dim_;

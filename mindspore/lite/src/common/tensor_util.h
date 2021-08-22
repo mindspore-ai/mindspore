@@ -30,13 +30,15 @@ namespace lite {
 int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out);
 int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out);
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in);
-void FreeTensorListC(TensorListC *tensorListC);
 int Tensor2TensorC(const Tensor *src, TensorC *dst);
 void TensorC2Tensor(const TensorC *src, Tensor *dst);
+#ifdef ENABLE_CONTROL_TENSORLIST
+void FreeTensorListC(TensorListC *tensorListC);
 int TensorList2TensorListC(TensorList *src, TensorListC *dst);
 int TensorListC2TensorList(const TensorListC *src, TensorList *dst);
-int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, int output_size,
                                   std::vector<TensorC *> *out_tensor_c);
+#endif
 int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *in_tensor_c);
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,

@@ -31,6 +31,8 @@ using mindspore::schema::PrimitiveType_AdderFusion;
 
 namespace mindspore::kernel {
 int AdderCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
@@ -71,13 +73,13 @@ int AdderCPUKernel::InitWeightBias() {
   int pack_weight_size = oc_block_num * oc_block * in_channel * kernel_plane;
 
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->MutableData());
-  packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
+  packed_weight_ = malloc(pack_weight_size * sizeof(float));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed weight failed.";
     return RET_ERROR;
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
-  RowMajor2Col4Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
+  RowMajor2Col4Major(origin_weight, reinterpret_cast<float *>(packed_weight_), out_channel, in_channel * kernel_plane);
 
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
   if (bias_data_ == nullptr) {
@@ -101,8 +103,8 @@ int AdderCPUKernel::RunImpl(int task_id) {
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->MutableData());
   MS_ASSERT(ori_input_data != nullptr);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
-  AdderFp32(ori_input_data, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), col_major_input_,
-            output_addr, task_id, conv_param_);
+  AdderFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+            reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
   return RET_OK;
 }
 

@@ -35,7 +35,7 @@ class PadOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
 
   int Prepare() override;
-  void SetConstArgs() override;
+  int SetConstArgs() override;
 
   int Run() override;
 

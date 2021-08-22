@@ -47,6 +47,7 @@ exit 1
 fi
 
 ulimit -u unlimited
+export DEVICE_TARGET="Ascend"
 export DEVICE_NUM=8
 export RANK_SIZE=8
 export RANK_TABLE_FILE=$PATH1
@@ -65,6 +66,6 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --run_distribute=True --dataset_path=$DATASET_PATH &> log &
+    python train.py --device_target=$DEVICE_TARGET --run_distribute=True --dataset_path=$DATASET_PATH &> log &
     cd ..
 done

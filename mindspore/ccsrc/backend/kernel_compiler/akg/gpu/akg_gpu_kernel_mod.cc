@@ -92,13 +92,15 @@ void GpuKernelMod::SetInputSizeList(const std::vector<size_t> &size_list) { inpu
 
 void GpuKernelMod::SetOutputSizeList(const std::vector<size_t> &size_list) { output_size_list_ = size_list; }
 
+void GpuKernelMod::SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
+
 const std::vector<size_t> &GpuKernelMod::GetInputSizeList() const { return input_size_list_; }
 
 const std::vector<size_t> &GpuKernelMod::GetOutputSizeList() const { return output_size_list_; }
 
 const std::vector<size_t> &GpuKernelMod::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (stream_ptr == 0) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
@@ -122,6 +124,10 @@ bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                        [](const AddressPtr &input) -> void * { return reinterpret_cast<void *>(&(input->addr)); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
                        [](const AddressPtr &output) -> void * { return reinterpret_cast<void *>(&(output->addr)); });
+  if (!workspace.empty()) {
+    (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
+                         [](const AddressPtr &addr) -> void * { return addr->addr; });
+  }
   result = cuLaunchKernel(kernel_addr, thread_info[0], thread_info[1], thread_info[2], thread_info[3], thread_info[4],
                           thread_info[5], 0, reinterpret_cast<CUstream>(stream_ptr),
                           reinterpret_cast<void **>(&runtimeargs[0]), 0);

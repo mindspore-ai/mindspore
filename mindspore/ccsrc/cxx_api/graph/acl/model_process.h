@@ -60,7 +60,7 @@ class ModelProcess {
   uint32_t model_id() const { return model_id_; }
 
  private:
-  Status CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
+  Status CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset) const;
   Status CheckAndInitInput(const std::vector<MSTensor> &inputs);
   Status ConstructTensors(const std::vector<AclTensorInfo> &acl_tensor_list, std::vector<MSTensor> *tensor_list);
   Status BuildOutputs(std::vector<MSTensor> *outputs);

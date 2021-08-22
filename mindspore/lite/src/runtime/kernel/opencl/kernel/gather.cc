@@ -81,7 +81,7 @@ int GatherOpenCLKernel::CheckSpecs() {
   }
 }
 
-void GatherOpenCLKernel::SetConstArgs() {
+int GatherOpenCLKernel::SetConstArgs() {
   auto input = GpuTensorInfo(in_tensors_.front());
   auto output = GpuTensorInfo(out_tensors_.front());
   int indices_num = in_tensors_.at(1)->ElementsNum();
@@ -90,10 +90,23 @@ void GatherOpenCLKernel::SetConstArgs() {
   cl_int4 dst_size = {static_cast<cl_int>(output.W), static_cast<cl_int>(output.H), static_cast<cl_int>(output.Slice),
                       static_cast<cl_int>(output.N)};
   int arg_cnt = 3;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, indices_num);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt, axis_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, indices_num) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt, axis_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void GatherOpenCLKernel::SetGlobalLocal() {
@@ -104,11 +117,11 @@ void GatherOpenCLKernel::SetGlobalLocal() {
 }
 
 int GatherOpenCLKernel::Prepare() {
-  std::string kernel_name = "gather";
+  const std::string kernel_name = "gather";
   if (in_tensors_.at(0)->shape().size() == 1 && axis_ == 0) {
     axis_ = 3;
   }
-  std::string program_name = "gather";
+  const std::string program_name = "gather";
   if (!ocl_runtime_->LoadSource(program_name, gather_source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -127,7 +140,10 @@ int GatherOpenCLKernel::Prepare() {
     }
   }
   SetGlobalLocal();
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -135,11 +151,21 @@ int GatherOpenCLKernel::Prepare() {
 int GatherOpenCLKernel::ConvertTensorToweight() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto indices_tensor = in_tensors_.at(1);
-  allocator->MapBuffer(indices_tensor->data_c(), CL_MAP_WRITE, nullptr, true);
+  if (allocator->MapBuffer(indices_tensor->data_c(), CL_MAP_WRITE, nullptr, true) == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
   auto indices_num = indices_tensor->ElementsNum();
   indices_data_ =
     reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num, lite::opencl::MemType::BUF));
-  allocator->MapBuffer(indices_data_, CL_MAP_WRITE, nullptr, true);
+  if (indices_data_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  if (allocator->MapBuffer(indices_data_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
   if (indices_data_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
@@ -155,8 +181,14 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
                   << " But Your type is :" << data_type;
     return RET_ERROR;
   }
-  allocator->UnmapBuffer(indices_data_);
-  allocator->UnmapBuffer(indices_tensor->data_c());
+  if (allocator->UnmapBuffer(indices_data_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
+  if (allocator->UnmapBuffer(indices_tensor->data_c()) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -197,7 +229,10 @@ int GatherOpenCLKernel::PreProcess() {
   if (!InferShapeDone()) {
     auto indices_tensor = in_tensors_[1];
     if (!indices_tensor->IsConst()) {
-      ocl_runtime_->SyncCommandQueue();
+      if (!ocl_runtime_->SyncCommandQueue()) {
+        MS_LOG(ERROR) << "SyncCommandQueue failed.";
+        return RET_ERROR;
+      }
       indices_tensor->MutableData();
     }
   }
@@ -209,10 +244,22 @@ int GatherOpenCLKernel::Run() {
   if (intensor1_is_tensor) {
     ConvertTensorToweight();
   }
-  ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_.front()->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_.front()->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, 2, indices_data_, lite::opencl::MemType::BUF);
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, 2, indices_data_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

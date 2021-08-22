@@ -34,7 +34,6 @@ class GatherFp16CPUKernel : public InnerKernel {
 
   int Init() override;
   int ReSize() override;
-  int PreProcess() override;
   int Run() override;
   int DoGather(int task_id);
 

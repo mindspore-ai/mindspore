@@ -372,7 +372,7 @@ std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, 
 RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, size_t index,
                                                     const std::string &def_format) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  auto kernel_info = static_cast<device::KernelInfo *>(anf_node->kernel_info());
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(anf_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto format =
     kernel_info->select_kernel_build_info() == nullptr ? def_format : AnfAlgo::GetInputFormat(anf_node, index);
@@ -396,7 +396,7 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
 RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node, size_t index,
                                                      const std::string &def_format) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  auto kernel_info = static_cast<device::KernelInfo *>(anf_node->kernel_info());
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(anf_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto format =
     kernel_info->select_kernel_build_info() == nullptr ? def_format : AnfAlgo::GetOutputFormat(anf_node, index);

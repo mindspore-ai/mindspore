@@ -65,8 +65,11 @@ void *ConvolutionDelegateFP16CPUKernel::CopyData(lite::Tensor *tensor) {
 }
 
 int ConvolutionDelegateFP16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
-    origin_weight_ = CopyData(in_tensors_.at(kWeightIndex));
+    auto weight_tensor = in_tensors_.at(kWeightIndex);
+    origin_weight_ = weight_tensor->data_c() != nullptr ? CopyData(weight_tensor) : nullptr;
     need_free_ = need_free_ | WEIGHT_NEED_FREE;
     if (in_tensors_.size() == 3) {
       origin_bias_ = CopyData(in_tensors_.at(kBiasIndex));
@@ -75,7 +78,6 @@ int ConvolutionDelegateFP16CPUKernel::Init() {
     return RET_OK;
   }
   origin_weight_ = in_tensors_.at(kWeightIndex)->data_c();
-  MS_ASSERT(origin_weight_ != nullptr);
   if (in_tensors_.size() == 3) {
     origin_bias_ = in_tensors_.at(kBiasIndex)->data_c();
     MS_ASSERT(origin_bias_ != nullptr);

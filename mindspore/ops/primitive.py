@@ -101,8 +101,8 @@ class Primitive(Primitive_):
             value (Any): Attribute value.
 
         Examples:
-            >>> import mindspore.ops as P
-            >>> a = P.Add()
+            >>> import mindspore.ops as ops
+            >>> a = ops.Add()
             >>> a = a.add_prim_attr("attr",1)
             >>> out = a.attrs["attr"]
             >>> print(out)
@@ -120,8 +120,8 @@ class Primitive(Primitive_):
         Args:
             name (str): Attribute Name.
         Examples:
-            >>> import mindspore.ops as P
-            >>> a = P.Add()
+            >>> import mindspore.ops as ops
+            >>> a = ops.Add()
             >>> a = a.add_prim_attr("attr",1)
             >>> a = a.del_prim_attr("attr")
             >>> print(a.attrs)
@@ -143,8 +143,8 @@ class Primitive(Primitive_):
         Args:
             stage (int): The stage id for the current operation.
         Examples:
-            >>> from mindspore.ops import operations as P
-            >>> add = P.Add()
+            >>> from mindspore.ops as ops
+            >>> add = ops.Add()
             >>> print(add.set_stage(0))
             Prim[Add]<stage=0>
         """
@@ -162,8 +162,8 @@ class Primitive(Primitive_):
         Args:
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
         Examples:
-            >>> from mindspore.ops import operations as P
-            >>> add = P.Add()
+            >>> from mindspore.ops as ops
+            >>> add = ops.Add()
             >>> print(add.shard(((1, 1), (1, 1))))
             Prim[Add]<strategy=((1, 1), (1, 1))>
         """
@@ -190,8 +190,8 @@ class Primitive(Primitive_):
         Args:
             instance_name (str): Instance name of primitive operator set by user.
         Examples:
-            >>> import mindspore.ops as P
-            >>> a = P.Add()
+            >>> import mindspore.ops as ops
+            >>> a = ops.Add()
             >>> a.set_prim_instance_name("add")
             >>> print(a.instance_name)
             add
@@ -270,8 +270,8 @@ class Primitive(Primitive_):
             inputs (list[str]): list of inputs names.
             outputs (list[str]): list of outputs names.
         Examples:
-            >>> import mindspore.ops as P
-            >>> a = P.Add()
+            >>> import mindspore.ops as ops
+            >>> a = ops.Add()
             >>> a.init_prim_io_names(["x","y"],["sum"])
             >>> print(a.input_names)
             ['x','y']
@@ -631,14 +631,14 @@ def constexpr(fn=None, get_instance=True, name=None):
         >>> def tuple_len(x):
         ...     return len(x)
         ...
-        >>> tuple_len(a)
+        >>> print(tuple_len(a))
         2
         >>> # make an operator class to calculate tuple len
         >>> @constexpr(get_instance=False, name="TupleLen")
         >>> def tuple_len_class(x):
         ...     return len(x)
         ...
-        >>> tuple_len_class()(a)
+        >>> print(tuple_len_class()(a))
         2
     """
 

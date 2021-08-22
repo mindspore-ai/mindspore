@@ -59,7 +59,8 @@ class TrainOneStepD(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads_d = self.grad_reducer(grads_d)
-        return ops.depend(ld, self.optimizer(grads_d))
+        self.optimizer(grads_d)
+        return ld
 
 class TrainOnestepG(nn.Cell):
     """
@@ -103,4 +104,5 @@ class TrainOnestepG(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads_g = self.grad_reducer(grads_g)
-        return ops.depend(lg, self.optimizer(grads_g))
+        self.optimizer(grads_g)
+        return lg

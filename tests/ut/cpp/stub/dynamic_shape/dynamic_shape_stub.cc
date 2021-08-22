@@ -18,7 +18,6 @@
 #include "runtime/device/ascend/executor/rts/memcpy_rts_dynamic_kernel.h"
 #include "runtime/device/ascend/executor/rts/profiling_rts_dynamic_kernel.h"
 #include "runtime/device/ascend/executor/ai_core_dynamic_kernel.h"
-#include "runtime/device/ascend/executor/tiling/op_tiling_calculater.h"
 #include "backend/kernel_compiler/host/host_kernel_metadata.h"
 #include "backend/kernel_compiler/host/host_kernel_build.h"
 
@@ -38,11 +37,6 @@ void AiCoreDynamicKernel::Execute() {}
 void AiCoreDynamicKernel::UpdateArgs() {}
 void AiCoreDynamicKernel::Initialize() {}
 void AiCoreDynamicKernel::PostExecute() {}
-
-void OpTilingCalculater::Init() {}
-void OpTilingCalculater::CalculateTiling(const NotNull<CNodePtr> &cnode, const optiling::OpCompileInfo &op_compile_info,
-                     const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-                     NotNull<optiling::OpRunInfo *> op_run_info) {}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

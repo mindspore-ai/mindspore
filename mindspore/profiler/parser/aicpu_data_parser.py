@@ -45,9 +45,10 @@ class DataPreProcessParser:
         self._source_file_name = self._get_source_file()
         self._ms_kernel_flag = 3
         self._other_kernel_flag = 6
-        self._thread_flag = 7
         self._ms_kernel_run_end_index = 2
         self._other_kernel_run_end_index = 5
+        self._dispatch_time_index = 5
+        self._total_time_index = 6
         self._result_list = []
         self._min_cycle_counter = float('inf')
 
@@ -66,10 +67,10 @@ class DataPreProcessParser:
     def _get_kernel_result(self, number, node_list, thread_list):
         """Get the profiling data form different aicpu kernel"""
         try:
-            if len(node_list) == self._ms_kernel_flag and len(thread_list) == self._thread_flag:
+            if len(node_list) == self._ms_kernel_flag:
                 node_type_name = node_list[0].split(':')[-1]
                 run_end_index = self._ms_kernel_run_end_index
-            elif len(node_list) == self._other_kernel_flag and len(thread_list) == self._thread_flag:
+            elif len(node_list) == self._other_kernel_flag:
                 node_type_name = node_list[0].split(':')[-1].split('/')[-1].split('-')[0]
                 run_end_index = self._other_kernel_run_end_index
             else:
@@ -82,8 +83,8 @@ class DataPreProcessParser:
             run_start = node_list[1].split(':')[-1].split(' ')[0]
             run_end = node_list[run_end_index].split(':')[-1].split(' ')[0]
             exe_time = (float(run_end) - float(run_start)) / self._ms_unit
-            total_time = float(thread_list[-1].split('=')[-1].split()[0]) / self._ms_unit
-            dispatch_time = float(thread_list[-2].split('=')[-1].split()[0]) / self._ms_unit
+            total_time = float(thread_list[self._total_time_index].split('=')[-1].split()[0]) / self._ms_unit
+            dispatch_time = float(thread_list[self._dispatch_time_index].split('=')[-1].split()[0]) / self._ms_unit
 
             return [number, node_type_name, total_time, dispatch_time, exe_time,
                     run_start_counter, run_end_counter]

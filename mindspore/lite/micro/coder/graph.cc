@@ -30,8 +30,11 @@
 
 namespace mindspore::lite::micro {
 CoderGraph::~CoderGraph() {
-  model_->Free();
-  delete model_;
+  if (model_ != nullptr) {
+    model_->Free();
+    delete model_;
+    model_ = nullptr;
+  }
   for (auto &tensor : all_tensors_) {
     delete tensor;
   }

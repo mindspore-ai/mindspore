@@ -46,7 +46,7 @@ Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &in, std::shared_ptr
   cv::Mat cv_out;
   cv::merge(temp, 3, cv_out);
   std::shared_ptr<CVTensor> cvt_out;
-  RETURN_IF_NOT_OK(CVTensor::CreateFromMat(cv_out, &cvt_out));
+  RETURN_IF_NOT_OK(CVTensor::CreateFromMat(cv_out, cvt_in->Rank(), &cvt_out));
   if (abs(t - 0.0) < eps) {
     // return grayscale
     *out = std::static_pointer_cast<Tensor>(cvt_out);

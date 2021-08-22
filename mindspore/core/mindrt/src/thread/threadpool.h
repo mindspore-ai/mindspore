@@ -73,16 +73,21 @@ class Worker {
 
   std::thread::id thread_id() const { return thread_.get_id(); }
 #ifdef BIND_CORE
+  void set_mask(const cpu_set_t &mask) { mask_ = mask; }
   pthread_t handle() { return thread_.native_handle(); }
 #endif
 
  protected:
+  void SetAffinity();
   void Run();
   void YieldAndDeactive();
   void WaitUntilActive();
 
   bool alive_{true};
   std::thread thread_;
+#ifdef BIND_CORE
+  cpu_set_t mask_;
+#endif
   std::atomic_int status_{kThreadBusy};
 
   std::mutex mutex_;
@@ -98,7 +103,7 @@ class Worker {
 
 class ThreadPool {
  public:
-  static ThreadPool *CreateThreadPool(size_t thread_num);
+  static ThreadPool *CreateThreadPool(size_t thread_num, const std::vector<int> &core_list = {});
   virtual ~ThreadPool();
 
   size_t thread_num() const { return workers_.size(); }
@@ -112,7 +117,7 @@ class ThreadPool {
  protected:
   ThreadPool() = default;
 
-  int CreateThreads(size_t thread_num);
+  int CreateThreads(size_t thread_num, const std::vector<int> &core_list);
 
   int InitAffinityInfo();
 

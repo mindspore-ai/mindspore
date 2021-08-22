@@ -254,11 +254,9 @@ class CPMTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
 
         cond = self.get_overflow_status(status, grads)
         overflow = self.process_loss_scale(cond)
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
-        return F.depend(loss, succ), cond, scaling_sens
+        if not overflow:
+            self.optimizer(grads)
+        return loss, cond, scaling_sens
 
 
 cast = P.Cast()
@@ -352,7 +350,6 @@ class CPMTrainAccuStepsWithLossScaleCell(TrainOneStepWithLossScaleCell):
         accu_overflow = self.select(overflow, self.one, self.zero)
 
         if self.accumulation:
-            succ = False
             self.accu_overflow = accu_overflow
         else:
             my_zero = F.depend(self.zero, accu_overflow)
@@ -378,9 +375,7 @@ class CPMTrainAccuStepsWithLossScaleCell(TrainOneStepWithLossScaleCell):
             overflow = self.reshape(overflow, (()))
             overflow = self.process_loss_scale(overflow)
 
-            if overflow:
-                succ = False
-            else:
-                succ = self.optimizer(grads)
+            if not overflow:
+                self.optimizer(grads)
 
-        return F.depend(loss, succ), overflow, scaling_sens
+        return loss, overflow, scaling_sens

@@ -47,6 +47,8 @@ constexpr int kBoxPointNum = 4;
 }  // namespace
 
 int NonMaxSuppressionCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   // boxes, scores, max_output_boxes, iou_threshold, score_threshold
   if (in_tensors_.size() < kMinInputsSize || in_tensors_.size() > kMaxInputsSize || out_tensors_.size() != kOutputNum) {
     MS_LOG(ERROR) << "NonMaxSuppression input size should be in [" << kMinInputsSize << ", " << kMaxInputsSize << "]"
@@ -245,7 +247,16 @@ int NonMaxSuppressionCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  return Run_Selecte(simple_out, box_num, batch_num, class_num, scores_data, box_data);
+  auto ret = Run_Selecte(simple_out, box_num, batch_num, class_num, scores_data, box_data);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run_Selecte failed";
+    return RET_ERROR;
+  }
+
+  for (auto *output : this->out_tensors()) {
+    output->ResetRefCount();
+  }
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_NonMaxSuppression, LiteKernelCreator<NonMaxSuppressionCPUKernel>)

@@ -105,12 +105,12 @@ class SliceGradGpuKernel : public GpuKernel {
       std::swap(size_[1], size_[2]);
     }
     for (size_t i = 0; i < begin_.size(); i++) {
-      if (begin_[i] < 0) {
+      if (begin_[i] < 0 && i < input_shape_.size()) {
         begin_[i] = begin_[i] + input_shape_[i];
       }
     }
     for (size_t i = 0; i < size_.size(); i++) {
-      if (size_[i] < 0) {
+      if (size_[i] < 0 && i < input_shape_.size()) {
         size_[i] = (size_[i] + input_shape_[i]) > 0 ? (size_[i] + input_shape_[i]) : 0;
       }
     }

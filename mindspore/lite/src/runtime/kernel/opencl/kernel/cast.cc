@@ -52,9 +52,13 @@ int CastOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void CastOpenCLKernel::SetConstArgs() {
+int CastOpenCLKernel::SetConstArgs() {
   cl_int2 shape = {static_cast<int>(shape_.width), static_cast<int>(shape_.height)};
-  ocl_runtime_->SetKernelArg(kernel_, 2, shape);
+  if (ocl_runtime_->SetKernelArg(kernel_, 2, shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void CastOpenCLKernel::SetGlobalLocal() {
@@ -68,8 +72,8 @@ int CastOpenCLKernel::Prepare() {
     {kNumberTypeFloat32, "fp32"},
     {kNumberTypeFloat16, "fp16"},
   };
-  std::string program_name = "Cast";
-  std::string kernel_name =
+  const std::string program_name = "Cast";
+  const std::string kernel_name =
     "Cast_" + dtype_names[in_tensors_.front()->data_type()] + "_to_" + dtype_names[out_tensors_.front()->data_type()];
   if (!ocl_runtime_->LoadSource(program_name, cast_source)) {
     MS_LOG(ERROR) << "Load source failed.";
@@ -80,16 +84,28 @@ int CastOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   return RET_OK;
 }
 
 int CastOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

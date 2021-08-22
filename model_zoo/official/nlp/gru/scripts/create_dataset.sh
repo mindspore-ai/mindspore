@@ -17,7 +17,6 @@ echo "==========================================================================
 echo "Please run the script as: "
 echo "sh create_dataset.sh DATASET_PATH OUTPUT_PATH"
 echo "for example: sh create_dataset.sh /path/multi30k/ /path/multi30k/mindrecord/"
-echo "DATASET_NAME including ag, dbpedia, and yelp_p"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 ulimit -u unlimited

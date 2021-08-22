@@ -263,10 +263,10 @@ Status Tensor::CreateFromFile(const std::string &path, std::shared_ptr<Tensor> *
   }
   std::ifstream fs;
   fs.open(path, std::ios::binary | std::ios::in);
-  CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + path);
+  CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Failed to open file: " + path);
   int64_t num_bytes = fs.seekg(0, std::ios::end).tellg();
   CHECK_FAIL_RETURN_UNEXPECTED(num_bytes <= kDeMaxDim, "Invalid file to allocate tensor memory, check path: " + path);
-  CHECK_FAIL_RETURN_UNEXPECTED(fs.seekg(0, std::ios::beg).good(), "Fail to find size of file, check path: " + path);
+  CHECK_FAIL_RETURN_UNEXPECTED(fs.seekg(0, std::ios::beg).good(), "Failed to find size of file, check path: " + path);
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape{num_bytes}, DataType(DataType::DE_UINT8), out));
   int64_t written_bytes = fs.read(reinterpret_cast<char *>((*out)->GetMutableBuffer()), num_bytes).gcount();
   CHECK_FAIL_RETURN_UNEXPECTED(written_bytes == num_bytes && fs.good(),
@@ -508,7 +508,9 @@ Status Tensor::GetItemPtr(uchar **ptr, const std::vector<dsize_t> &index, offset
     RETURN_IF_NOT_OK(shape_.ToFlatIndex(index, &flat_idx));
     offset_t length_temp = 0;
     RETURN_IF_NOT_OK(GetStringAt(flat_idx, ptr, &length_temp));
-    if (length != nullptr) *length = length_temp;
+    if (length != nullptr) {
+      *length = length_temp;
+    }
     return Status::OK();
   } else {
     std::string err = "data type not compatible";
@@ -626,12 +628,94 @@ Status Tensor::GetBufferInfo(Tensor *t, py::buffer_info *out) {
 
 Status Tensor::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
-  args["shape"] = shape_.ToString();
+  args["shape"] = shape_.AsVector();
   args["type"] = type_.ToString();
-  std::stringstream ss;
-  this->PrintData(ss);
-  args["data"] = ss.str();
+  if (type_ == DataType::DE_BOOL) {
+    RETURN_IF_NOT_OK(to_json_convert<bool>(&args));
+  } else if (type_ == DataType::DE_INT8) {
+    RETURN_IF_NOT_OK(to_json_convert<int8_t>(&args));
+  } else if (type_ == DataType::DE_INT16) {
+    RETURN_IF_NOT_OK(to_json_convert<int16_t>(&args));
+  } else if (type_ == DataType::DE_INT32) {
+    RETURN_IF_NOT_OK(to_json_convert<int32_t>(&args));
+  } else if (type_ == DataType::DE_INT64) {
+    RETURN_IF_NOT_OK(to_json_convert<int64_t>(&args));
+  } else if (type_ == DataType::DE_UINT8) {
+    RETURN_IF_NOT_OK(to_json_convert<uint8_t>(&args));
+  } else if (type_ == DataType::DE_UINT16) {
+    RETURN_IF_NOT_OK(to_json_convert<uint16_t>(&args));
+  } else if (type_ == DataType::DE_UINT32) {
+    RETURN_IF_NOT_OK(to_json_convert<uint32_t>(&args));
+  } else if (type_ == DataType::DE_UINT64) {
+    RETURN_IF_NOT_OK(to_json_convert<uint64_t>(&args));
+  } else if (type_ == DataType::DE_FLOAT32) {
+    RETURN_IF_NOT_OK(to_json_convert<float>(&args));
+  } else if (type_ == DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(to_json_convert<double>(&args));
+  } else if (type_ == DataType::DE_STRING) {
+    std::vector<std::string> data_out;
+    for (auto it = this->begin<std::string_view>(); it != this->end<std::string_view>(); it++) {
+      data_out.emplace_back(*it);
+    }
+    args["data"] = data_out;
+  } else {
+    return Status(StatusCode::kMDUnexpectedError, "Type is not supported for tensor");
+  }
   *out_json = args;
+  return Status::OK();
+}
+
+template <typename T>
+Status Tensor::to_json_convert(nlohmann::json *args) {
+  std::vector<T> data_out;
+  for (auto it = this->begin<T>(); it != this->end<T>(); it++) {
+    data_out.emplace_back(*it);
+  }
+  (*args)["data"] = data_out;
+  return Status::OK();
+}
+
+Status Tensor::from_json(nlohmann::json op_params, std::shared_ptr<Tensor> *tensor) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("shape") != op_params.end(), "Failed to find shape");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("type") != op_params.end(), "Failed to find type");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("data") != op_params.end(), "Failed to find data");
+  std::string type = op_params["type"];
+  std::vector<dsize_t> list = op_params["shape"];
+  TensorShape shape = TensorShape(list);
+  if (type == "bool") {
+    RETURN_IF_NOT_OK(from_json_convert<bool>(op_params["data"], shape, tensor));
+  } else if (type == "int8") {
+    RETURN_IF_NOT_OK(from_json_convert<int8_t>(op_params["data"], shape, tensor));
+  } else if (type == "int16") {
+    RETURN_IF_NOT_OK(from_json_convert<int16_t>(op_params["data"], shape, tensor));
+  } else if (type == "int32") {
+    RETURN_IF_NOT_OK(from_json_convert<int32_t>(op_params["data"], shape, tensor));
+  } else if (type == "int64") {
+    RETURN_IF_NOT_OK(from_json_convert<int64_t>(op_params["data"], shape, tensor));
+  } else if (type == "uint8") {
+    RETURN_IF_NOT_OK(from_json_convert<uint8_t>(op_params["data"], shape, tensor));
+  } else if (type == "uint16") {
+    RETURN_IF_NOT_OK(from_json_convert<uint16_t>(op_params["data"], shape, tensor));
+  } else if (type == "uint32") {
+    RETURN_IF_NOT_OK(from_json_convert<uint32_t>(op_params["data"], shape, tensor));
+  } else if (type == "uint64") {
+    RETURN_IF_NOT_OK(from_json_convert<uint64_t>(op_params["data"], shape, tensor));
+  } else if (type == "float32") {
+    RETURN_IF_NOT_OK(from_json_convert<float>(op_params["data"], shape, tensor));
+  } else if (type == "float64") {
+    RETURN_IF_NOT_OK(from_json_convert<double>(op_params["data"], shape, tensor));
+  } else if (type == "string") {
+    RETURN_IF_NOT_OK(from_json_convert<std::string>(op_params["data"], shape, tensor));
+  } else {
+    return Status(StatusCode::kMDUnexpectedError, "Type is not supported for tensor");
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status Tensor::from_json_convert(nlohmann::json json_data, TensorShape shape, std::shared_ptr<Tensor> *tensor) {
+  std::vector<T> data = json_data;
+  RETURN_IF_NOT_OK(CreateFromVector(data, shape, tensor));
   return Status::OK();
 }
 

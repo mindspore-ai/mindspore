@@ -164,8 +164,8 @@ void BBoxOpCommon::CompareActualAndExpected(const std::string &op_name) {
     EXPECT_TRUE(remove(actual_path.c_str()) == 0);
     // compare using ==operator by Tensor
     std::shared_ptr<CVTensor> expect_img_t, actual_img_t;
-    CVTensor::CreateFromMat(expect_img, &expect_img_t);
-    CVTensor::CreateFromMat(actual_img, &actual_img_t);
+    CVTensor::CreateFromMat(expect_img, 3, &expect_img_t);
+    CVTensor::CreateFromMat(actual_img, 3, &actual_img_t);
     if (actual_img.data) {
       EXPECT_EQ(*expect_img_t == *actual_img_t, true);
     } else {

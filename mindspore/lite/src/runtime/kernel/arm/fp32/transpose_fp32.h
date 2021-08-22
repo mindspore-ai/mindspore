@@ -48,7 +48,7 @@ class TransposeCPUKernel : public InnerKernel {
   virtual int TransposeDim2to6();
   virtual int TransposeDimGreaterThan6(int task_id);
 
-  void GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor);
+  void GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor);
   void *in_data_ = nullptr;
   void *out_data_ = nullptr;
   int *out_shape_ = nullptr;

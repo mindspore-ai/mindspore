@@ -40,7 +40,7 @@ int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, T
   }
   int new_k = 1;
   if (param->use_axis_) {
-    for (size_t i = param->axis_; i < input0->shape_size_; ++i) {
+    for (size_t i = (size_t)(param->axis_); i < input0->shape_size_; ++i) {
       new_k *= input0->shape_[i];
     }
     if (new_k != input1->shape_[1]) {
@@ -61,7 +61,7 @@ int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, T
   size_t out_shape_size = 0;
   ShapeSet(out_shape, &out_shape_size, inputs[0]->shape_, inputs[0]->shape_size_);
   if (param->use_axis_) {
-    out_shape_size = param->axis_ + 1;
+    out_shape_size = (size_t)(param->axis_) + 1;
     out_shape[param->axis_] = input1->shape_[0];
   } else {
     int total = 1;

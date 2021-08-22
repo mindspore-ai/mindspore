@@ -57,6 +57,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImpl(const std::stri
 
 std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::string &name,
                                                                     const std::vector<std::string> &str) {
+#ifdef ENABLE_STRING_KERNEL
   auto lite_tensor = new (std::nothrow) lite::Tensor();
   if (lite_tensor == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate lite tensor.";
@@ -78,15 +79,24 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::s
   impl->set_own_data(true);
   impl->set_from_session(false);
   return impl;
+#else
+  MS_LOG(ERROR) << unsupport_string_tensor_log;
+  return nullptr;
+#endif
 }
 
 std::vector<std::string> MSTensor::Impl::TensorImplToStrings(const std::shared_ptr<Impl> &impl) {
   std::vector<std::string> empty;
+#ifdef ENABLE_STRING_KERNEL
   auto lite_tensor = impl->lite_tensor();
   if (lite_tensor == nullptr) {
     MS_LOG(ERROR) << "Invalid tensor impl.";
     return empty;
   }
   return lite::MSTensorToStrings(lite_tensor);
+#else
+  MS_LOG(ERROR) << unsupport_string_tensor_log;
+  return empty;
+#endif
 }
 }  // namespace mindspore

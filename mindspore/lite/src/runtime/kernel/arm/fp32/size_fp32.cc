@@ -25,7 +25,11 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Size;
 
 namespace mindspore::kernel {
-int SizeCPUKernel::Init() { return RET_OK; }
+int SizeCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int SizeCPUKernel::ReSize() { return RET_OK; }
 

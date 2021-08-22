@@ -15,7 +15,6 @@
 """define network"""
 
 import mindspore.nn as nn
-from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore import ParameterTuple
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
@@ -83,4 +82,5 @@ class TrainOneStepCell(nn.Cell):
         grads = self.grad(self.net_with_loss, weights)(data3, data2, data1, label)
         if self.reduce_flag:
             grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss

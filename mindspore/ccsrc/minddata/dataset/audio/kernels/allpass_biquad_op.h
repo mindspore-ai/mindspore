@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class AllpassBiquadOp : public TensorOp {
  public:
   AllpassBiquadOp(int32_t sample_rate, float central_freq, float Q)

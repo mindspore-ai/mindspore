@@ -43,6 +43,8 @@ int DepthwiseConv2dInferShape(const TensorC *const *inputs, size_t inputs_size, 
   if (param->stride_h_ == 0 || param->stride_w_ == 0) {
     return NNACL_PARAM_INVALID;
   }
+  param->kernel_h_ = param->kernel_h_ != -1 ? param->kernel_h_ : GetHeight(inputs[kWeightIndex]);
+  param->kernel_w_ = param->kernel_w_ != -1 ? param->kernel_w_ : GetWidth(inputs[kWeightIndex]);
   if (param->pad_mode_ == Pad_same) {
     output_h = ceil((float)(input_h) / (float)(param->stride_h_));
     output_w = ceil((float)(input_w) / (float)(param->stride_w_));

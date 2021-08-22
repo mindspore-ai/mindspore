@@ -13,21 +13,51 @@
 # limitations under the License.
 # ============================================================================
 '''NON BOND'''
+
+
 class NON_BOND_14:
     '''NON BOND'''
-    def __init__(self, controller, dihedral, atom_numbers):
-        self.dihedral_with_hydrogen = dihedral.dihedral_with_hydrogen
-        self.dihedral_numbers = dihedral.dihedral_numbers
-        self.dihedral_type_numbers = dihedral.dihedral_type_numbers
-        self.atom_numbers = atom_numbers
 
+    def __init__(self, controller, dihedral, atom_numbers):
+        self.module_name = "nb14"
+        self.atom_numbers = atom_numbers
+        self.h_atom_a = []
+        self.h_atom_b = []
+        self.h_lj_scale_factor = []
+        self.h_cf_scale_factor = []
+        self.nb14_numbers = 0
+        self.is_initialized = 0
         if controller.amber_parm is not None:
+            self.dihedral_with_hydrogen = dihedral.dihedral_with_hydrogen
+            self.dihedral_numbers = dihedral.dihedral_numbers
+            self.dihedral_type_numbers = dihedral.dihedral_type_numbers
             file_path = controller.amber_parm
             self.read_information_from_amberfile(file_path)
-        self.h_atom_a = self.h_atom_a[:self.nb14_numbers]
-        self.h_atom_b = self.h_atom_b[:self.nb14_numbers]
-        self.h_lj_scale_factor = self.h_lj_scale_factor[:self.nb14_numbers]
-        self.h_cf_scale_factor = self.h_cf_scale_factor[:self.nb14_numbers]
+            self.h_atom_a = self.h_atom_a[:self.nb14_numbers]
+            self.h_atom_b = self.h_atom_b[:self.nb14_numbers]
+            self.h_lj_scale_factor = self.h_lj_scale_factor[:self.nb14_numbers]
+            self.h_cf_scale_factor = self.h_cf_scale_factor[:self.nb14_numbers]
+            self.is_initialized = 1
+        else:
+            self.read_in_file(controller)
+
+    def read_in_file(self, controller):
+        """read_in_file"""
+        name = self.module_name + "_in_file"
+        if name in controller.Command_Set:
+            path = controller.Command_Set[name]
+            file = open(path, 'r')
+            context = file.readlines()
+            self.nb14_numbers = int(context[0].strip())
+            print("    non-bond 14 numbers is", self.nb14_numbers)
+            for i in range(self.nb14_numbers):
+                val = list(map(float, context[i + 1].strip().split()))
+                self.h_atom_a.append(int(val[0]))
+                self.h_atom_b.append(int(val[1]))
+                self.h_lj_scale_factor.append(val[2])
+                self.h_cf_scale_factor.append(val[3])
+            self.is_initialized = 1
+            file.close()
 
     def read_information_from_amberfile(self, file_path):
         '''read amber file'''

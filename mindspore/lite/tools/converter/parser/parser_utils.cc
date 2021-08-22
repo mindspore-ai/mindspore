@@ -17,6 +17,7 @@
 #include <memory>
 #include <algorithm>
 #include <vector>
+#include <set>
 #include <string>
 #include "tools/converter/parser/tf_bidirection_gru_cf_fusion.h"
 #include "tools/converter/parser/unused_node_remove_pass.h"
@@ -30,7 +31,15 @@
 namespace mindspore::lite {
 namespace {
 constexpr size_t kNumWeightIndex = 2;
+bool IsWeightNodeSensitive(const AnfNodePtr &node) {
+  return opt::CheckPrimitiveType(node, prim::kPrimConv2DFusion) ||
+         opt::CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) ||
+         opt::CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion) ||
+         opt::CheckPrimitiveType(node, prim::kPrimApplyMomentum) || opt::CheckPrimitiveType(node, prim::kPrimSGD) ||
+         opt::CheckPrimitiveType(node, prim::kPrimAdam);
 }
+}  // namespace
+
 void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
   if (all_func_graphs->find(func_graph) == all_func_graphs->end()) {
     all_func_graphs->insert(func_graph);
@@ -106,6 +115,7 @@ int GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::
   }
   return lite::RET_OK;
 }
+
 int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm) {
   MS_ASSERT(perm != nullptr);
   auto src_format_str = std::string(schema::EnumNameFormat(src_format));
@@ -125,112 +135,74 @@ int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format
   return lite::RET_OK;
 }
 
-int TransposeInsertForWeightSharing(const FuncGraphPtr &graph, int64_t dst_format, int64_t format,
-                                    const ParameterPtr &weight_node, std::vector<int> perm) {
-  MS_ASSERT(graph != nullptr);
-  MS_ASSERT(weight_node != nullptr);
-  auto node_list = TopoSort(graph->get_return());
-  std::vector<CNodePtr> adjust_nodes;
-  for (auto &node : node_list) {
-    if (!utils::isa<CNodePtr>(node)) {
-      continue;
+AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode) {
+  MS_ASSERT(graph != nullptr && cnode != nullptr);
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) &&
+      !opt::CheckPrimitiveType(cnode, opt::kPrimConv2DBackpropInputFusion) &&
+      !opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
+    MS_LOG(ERROR) << "cnode is not a member of convolution's family.";
+    return nullptr;
+  }
+  auto weight_node = cnode->input(opt::kInputIndexTwo);
+  bool is_real_weight =
+    !opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) && !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
+  while (!is_real_weight) {
+    if (!utils::isa<CNode>(weight_node)) {
+      MS_LOG(ERROR) << "weight node is invalid.";
+      return nullptr;
     }
-    if (opt::CheckPrimitiveType(node, prim::kPrimApplyMomentum) || opt::CheckPrimitiveType(node, prim::kPrimSGD) ||
-        opt::CheckPrimitiveType(node, prim::kPrimAdam)) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    auto inputs = cnode->inputs();
-    if (std::any_of(inputs.begin(), inputs.end(),
-                    [&](const AnfNodePtr &anf_node) { return weight_node == anf_node; })) {
-      if (opt::CheckPrimitiveType(node, prim::kPrimConv2DFusion) ||
-          opt::CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) ||
-          opt::CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
-        auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-        prim->AddAttr(ops::kFormat, MakeValue<int64_t>(format));
-        continue;
-      }
-      adjust_nodes.push_back(cnode);
-    }
+    auto weight_cnode = weight_node->cast<CNodePtr>();
+    weight_node = weight_cnode->input(1);
+    is_real_weight = !opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) &&
+                     !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
   }
-  if (adjust_nodes.empty()) {
-    MS_LOG(DEBUG) << "do not need to adjust nodes.";
-    return lite::RET_OK;
-  }
-  auto perm_node = opt::BuildIntVecParameterNode(graph, perm, weight_node->fullname_with_scope() + "_sharing_perm");
-  auto prim = std::make_shared<ops::Transpose>();
-  prim->AddAttr("quant_params", std::make_shared<QuantParamHolder>(1, 1));
-  prim->AddAttr(ops::kFormat, MakeValue<int64_t>(dst_format));
-  auto transpose_node = graph->NewCNode(prim, {weight_node, perm_node});
-  if (!weight_node->has_default()) {
-    MS_LOG(DEBUG) << "Weight parameter should has default parameter.";
-    return lite::RET_ERROR;
-  }
-  auto weight_tensor = weight_node->default_param()->cast<tensor::TensorPtr>();
-  if (weight_tensor == nullptr) {
-    MS_LOG(DEBUG) << "Default parameter of weight parameter should be a tensor.";
-    return lite::RET_ERROR;
-  }
-  auto abstract = CreateTensorAbstract(weight_tensor->shape_c(), weight_tensor->data_type());
-  if (abstract == nullptr) {
-    MS_LOG(ERROR) << "Create tensor abstarct failed";
-    return RET_ERROR;
-  }
-  transpose_node->set_abstract(abstract);
-  transpose_node->set_fullname_with_scope(weight_node->fullname_with_scope() + "_sharing_post");
-  for (auto &adjust_node : adjust_nodes) {
-    auto inputs = adjust_node->inputs();
-    std::replace_if(
-      inputs.begin(), inputs.end(), [&weight_node](const AnfNodePtr &anf_node) { return weight_node == anf_node; },
-      transpose_node);
-    adjust_node->set_inputs(inputs);
-  }
-  return lite::RET_OK;
+  auto manager = Manage(graph);
+  MS_ASSERT(manager != nullptr);
+  manager->Replace(cnode->input(opt::kInputIndexTwo), weight_node);
+  return weight_node;
 }
 
-int HandleWeightSharing(const FuncGraphPtr &graph, int64_t format, const ParameterPtr &weight_node,
-                        schema::Format src_format, schema::Format dst_format) {
-  MS_ASSERT(graph != nullptr);
-  MS_ASSERT(weight_node != nullptr);
+int UnifyConvWeightFormat(const FuncGraphPtr &graph, const CNodePtr &cnode, schema::Format src_format,
+                          schema::Format dst_format, std::set<AnfNodePtr> *has_visited) {
+  MS_ASSERT(graph != nullptr && cnode != nullptr && has_visited != nullptr);
   if (src_format == dst_format) {
     return lite::RET_OK;
   }
-  std::vector<int> perm;
-  auto status = GetTransposePermSharing(src_format, dst_format, &perm);
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "get perm failed.";
-    return status;
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) &&
+      !opt::CheckPrimitiveType(cnode, opt::kPrimConv2DBackpropInputFusion) &&
+      !opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
+    MS_LOG(ERROR) << "cnode is not a member of convolution's family.";
+    return RET_ERROR;
   }
-  status = TransposeInsertForWeightSharing(graph, dst_format, format, weight_node, perm);
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "transpose insert failed.";
+  if (GetRealConvWeightNode(graph, cnode) == nullptr) {
+    MS_LOG(ERROR) << "current conv node is invalid, node name is " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
+  bool is_const_weight = true;
+  auto weight_node = cnode->input(opt::kInputIndexTwo);
+  if (utils::isa<CNode>(weight_node)) {
+    is_const_weight = false;
+  } else if (utils::isa<Parameter>(weight_node)) {
+    auto weight_param_node = weight_node->cast<ParameterPtr>();
+    if (!weight_param_node->has_default()) {
+      is_const_weight = false;
+    }
+  }
+  int status;
+  if (is_const_weight) {
+    status = UnifyConstConvWeight(graph, weight_node, src_format, dst_format, has_visited);
+  } else {
+    status = UnifyVariableConvWeight(graph, weight_node, src_format, dst_format, has_visited);
+  }
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "unfiy coneight failed, cnode name is " << cnode->fullname_with_scope();
   }
   return status;
 }
 
-int TransposeInsertForWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, const CNodePtr &weight_node,
-                                  std::vector<int> perm) {
-  MS_ASSERT(graph != nullptr);
-  MS_ASSERT(weight_node != nullptr);
-  auto manager = Manage(graph);
-  if (opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) ||
-      opt::CheckPrimitiveType(weight_node, prim::kPrimLoad)) {
-    manager->Replace(weight_node, weight_node->input(1));
-    return RET_OK;
-  }
-  auto perm_node = opt::BuildIntVecParameterNode(graph, perm, weight_node->fullname_with_scope() + "_const_perm");
-  auto prim = std::make_shared<ops::Transpose>();
-  prim->AddAttr("quant_params", std::make_shared<QuantParamHolder>(1, 1));
-  auto transpose_node = graph->NewCNode(prim, {weight_node, perm_node});
-  transpose_node->set_fullname_with_scope(weight_node->fullname_with_scope() + "_const_post");
-  conv_node->set_input(kNumWeightIndex, transpose_node);
-  return lite::RET_OK;
-}
-
-int HandleWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, const CNodePtr &weight_node,
-                      schema::Format src_format, schema::Format dst_format) {
-  MS_ASSERT(graph != nullptr);
-  MS_ASSERT(weight_node != nullptr);
+int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
+                            schema::Format dst_format, std::set<AnfNodePtr> *has_visited) {
+  MS_ASSERT(graph != nullptr && weight_node != nullptr && has_visited != nullptr);
   if (src_format == dst_format) {
     return lite::RET_OK;
   }
@@ -240,10 +212,142 @@ int HandleWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, cons
     MS_LOG(ERROR) << "get perm failed.";
     return status;
   }
-  status = TransposeInsertForWeightConst(graph, conv_node, weight_node, perm);
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "transpose insert failed.";
+  auto manager = Manage(graph);
+  MS_ASSERT(manager != nullptr);
+  CNodePtr trans_cnode = nullptr;
+  auto weight_node_users = manager->node_users()[weight_node];
+  for (auto &weight_node_user : weight_node_users) {
+    auto post_node = weight_node_user.first;
+    if (!utils::isa<CNodePtr>(post_node)) {
+      MS_LOG(ERROR) << "post node is invalid.";
+      return RET_ERROR;
+    }
+    if (!IsWeightNodeSensitive(post_node)) {
+      continue;
+    }
+    has_visited->insert(post_node);
+    if (trans_cnode == nullptr) {
+      trans_cnode = opt::GenTransposeNode(graph, weight_node, perm, weight_node->fullname_with_scope() + "_post_perm");
+      MS_ASSERT(trans_cnode != nullptr);
+      auto abstract = weight_node->abstract();
+      ShapeVector shape;
+      if (abstract != nullptr) {
+        ShapeVector weight_shape;
+        if (opt::FetchShapeFromAbstract(abstract, &weight_shape) != RET_OK) {
+          MS_LOG(ERROR) << "fetch shape from abstract failed.";
+          return RET_ERROR;
+        }
+        if (!weight_shape.empty()) {
+          if (weight_shape.size() != opt::kInputSizeFour) {
+            MS_LOG(ERROR) << "conv weight shape is invalid, which is not 4D, now is " << weight_shape.size();
+            return RET_ERROR;
+          }
+          std::transform(perm.begin(), perm.end(), std::back_inserter(shape),
+                         [&weight_shape](const int index) { return weight_shape[index]; });
+        }
+        abstract = abstract->Clone();
+      } else {
+        abstract = CreateTensorAbstract(shape, TypeId::kNumberTypeFloat32);
+        MS_ASSERT(abstract != nullptr);
+      }
+      abstract->set_shape(std::make_shared<abstract::Shape>(shape));
+      trans_cnode->set_abstract(abstract);
+    }
+    auto post_cnode = post_node->cast<CNodePtr>();
+    auto tr = manager->Transact();
+    tr.SetEdge(post_cnode, weight_node_user.second, trans_cnode);
+    tr.Commit();
   }
-  return status;
+  return RET_OK;
+}
+
+int UnifyConstConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
+                         schema::Format dst_format, std::set<AnfNodePtr> *has_visited) {
+  MS_ASSERT(graph != nullptr && weight_node != nullptr && has_visited != nullptr);
+  if (src_format == dst_format) {
+    return lite::RET_OK;
+  }
+  auto weight_value = opt::GetTensorInfo(weight_node);
+  if (weight_value == nullptr) {
+    MS_LOG(ERROR) << "conv weight is non-const.";
+    return RET_ERROR;
+  }
+  auto status = opt::TransFilterFormat(weight_value, src_format, dst_format);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(src_format) << "To" << EnumNameFormat(dst_format)
+                  << " failed, node : " << weight_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto type_id = static_cast<TypeId>(weight_value->data_type());
+  auto shape = weight_value->shape();
+  auto abstract = CreateTensorAbstract(shape, type_id);
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
+    return RET_ERROR;
+  }
+  weight_node->set_abstract(abstract);
+  if (HandleConstConvWeightShared(graph, weight_node, src_format, dst_format, has_visited) != RET_OK) {
+    MS_LOG(ERROR) << "handle const conv weight-shared failed, node name is " << weight_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
+                                schema::Format dst_format, std::set<AnfNodePtr> *has_visited) {
+  MS_ASSERT(graph != nullptr && weight_node != nullptr && has_visited != nullptr);
+  if (src_format == dst_format) {
+    return RET_OK;
+  }
+  std::vector<int> perm;
+  auto status = GetTransposePermSharing(src_format, dst_format, &perm);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "get perm failed.";
+    return status;
+  }
+  auto manager = Manage(graph);
+  MS_ASSERT(manager != nullptr);
+  CNodePtr trans_cnode = nullptr;
+  auto weight_node_users = manager->node_users()[weight_node];
+  for (auto &weight_node_user : weight_node_users) {
+    auto post_node = weight_node_user.first;
+    if (!utils::isa<CNodePtr>(post_node)) {
+      MS_LOG(ERROR) << "post node is invalid.";
+      return RET_ERROR;
+    }
+    if (IsWeightNodeSensitive(post_node)) {
+      has_visited->insert(post_node);
+      continue;
+    }
+    if (trans_cnode == nullptr) {
+      trans_cnode = opt::GenTransposeNode(graph, weight_node, perm, weight_node->fullname_with_scope() + "_post_perm");
+      MS_ASSERT(trans_cnode != nullptr);
+      auto prim = GetValueNode<PrimitivePtr>(trans_cnode->input(0));
+      MS_ASSERT(prim != nullptr);
+      prim->AddAttr(ops::kFormat, MakeValue<int64_t>(dst_format));
+      auto weight_value = opt::GetTensorInfo(weight_node);
+      MS_ASSERT(weight_value != nullptr);
+      auto weight_shape = weight_value->shape();
+      ShapeVector shape;
+      if (!weight_shape.empty()) {
+        if (weight_shape.size() != opt::kInputSizeFour) {
+          MS_LOG(ERROR) << "conv weight shape is invalid, which is not 4D, now is " << weight_shape.size();
+          return RET_ERROR;
+        }
+        std::transform(perm.begin(), perm.end(), std::back_inserter(shape),
+                       [&weight_shape](const int index) { return weight_shape[index]; });
+      }
+      auto abstract = weight_node->abstract();
+      MS_ASSERT(abstract != nullptr);
+      abstract = abstract->Clone();
+      abstract->set_shape(std::make_shared<abstract::Shape>(shape));
+      trans_cnode->set_abstract(abstract);
+    }
+    auto post_cnode = post_node->cast<CNodePtr>();
+    auto tr = manager->Transact();
+    tr.SetEdge(post_cnode, weight_node_user.second, trans_cnode);
+    tr.Commit();
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::lite

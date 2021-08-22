@@ -17,5 +17,4 @@
 # an simple tutorial as follows, more parameters can be setting
 script_self=$(readlink -f "$0")
 self_path=$(dirname "${script_self}")
-CKPT_PATH=$1
-python -s ${self_path}/../train.py --device_target="GPU" --ckpt_path=$CKPT_PATH > log.txt 2>&1 &
+python -s ${self_path}/../train.py --device_target="GPU" > log.txt 2>&1 &

@@ -59,11 +59,12 @@ int ConcatInt8CPUKernel::Init() {
 }
 
 int ConcatInt8CPUKernel::ReSize() {
-  concat_param_->axis_ =
-    concat_param_->axis_ >= 0 ? concat_param_->axis_ : in_tensors_.front()->shape().size() + concat_param_->axis_;
+  concat_param_->axis_ = concat_param_->axis_ >= 0
+                           ? concat_param_->axis_
+                           : static_cast<int>(in_tensors_.front()->shape().size()) + concat_param_->axis_;
 
   auto input_num = in_tensors_.size();
-  concat_param_->input_num_ = input_num;
+  concat_param_->input_num_ = static_cast<int>(input_num);
   concat_param_->input_shapes_ = reinterpret_cast<int **>(malloc(sizeof(int *) * input_num));
   if (concat_param_->input_shapes_ == nullptr) {
     MS_LOG(ERROR) << "malloc concat_param_->input_shapes_ failed.";
@@ -97,7 +98,7 @@ int ConcatInt8CPUKernel::ReSize() {
   memcpy(reinterpret_cast<void *>(concat_param_->output_shapes_), output_tensor->shape().data(),
          sizeof(int) * output_dim);
 
-  for (size_t i = concat_param_->axis_ + 1; i < output_dim; i++) {
+  for (size_t i = static_cast<size_t>(concat_param_->axis_ + 1); i < output_dim; i++) {
     after_axis_size *= concat_param_->output_shapes_[i];
   }
   concat_param_->after_axis_size = after_axis_size;
@@ -122,21 +123,17 @@ int ConcatInt8CPUKernel::Run() {
 
 int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto concat = reinterpret_cast<ConcatInt8CPUKernel *>(cdata);
-  auto ret = concat->DoExecute(task_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConcatInt8Run task_id " << task_id << " failed.";
-    return ret;
-  }
+  concat->DoExecute(task_id);
   return lite::RET_OK;
 }
 
-int ConcatInt8CPUKernel::DoExecute(int task_id) {
+void ConcatInt8CPUKernel::DoExecute(int task_id) {
   int64_t real_dst_count = MSMIN(before_axis_size - task_id * count_unit_, count_unit_);
   if (real_dst_count <= 0) {
-    return lite::RET_OK;
+    return;
   }
   Int8Concat(input_data_, output_data_, concat_param_, concat_param_->axis_, real_dst_count, task_id);
-  return lite::RET_OK;
+  return;
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Concat, LiteKernelCreator<ConcatInt8CPUKernel>)

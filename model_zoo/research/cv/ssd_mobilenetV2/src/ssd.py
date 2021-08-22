@@ -388,7 +388,8 @@ class TrainingWrapper(nn.Cell):
         if self.use_global_norm:
             grads = self.hyper_map(F.partial(grad_scale, F.scalar_to_array(self.sens)), grads)
             grads = C.clip_by_global_norm(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss
 
 
 class SSDWithMobileNetV2(nn.Cell):

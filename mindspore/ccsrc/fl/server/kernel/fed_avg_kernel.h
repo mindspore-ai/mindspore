@@ -97,6 +97,10 @@ class FedAvgKernel : public AggregationKernel {
         MS_LOG(ERROR) << "Federated average allreduce failed.";
         return;
       }
+      if (data_size_addr[0] == 0) {
+        MS_LOG(ERROR) << "After AllReduce, the data size is 0.";
+        return;
+      }
       LocalMetaStore::GetInstance().put_value(kCtxFedAvgTotalDataSize, data_size_addr[0]);
       for (size_t i = 0; i < weight_size / sizeof(T); i++) {
         weight_addr[i] /= data_size_addr[0];
@@ -115,6 +119,10 @@ class FedAvgKernel : public AggregationKernel {
       MS_LOG(ERROR) << "The inputs number of FedAvgKernel should be 4, but got " << inputs.size();
       return false;
     }
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[0], false);
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[1], false);
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[2], false);
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[3], false);
     MS_ERROR_IF_NULL_W_RET_VAL(inputs[0]->addr, false);
     MS_ERROR_IF_NULL_W_RET_VAL(inputs[1]->addr, false);
     MS_ERROR_IF_NULL_W_RET_VAL(inputs[2]->addr, false);

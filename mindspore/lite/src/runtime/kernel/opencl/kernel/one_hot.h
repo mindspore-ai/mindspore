@@ -33,7 +33,7 @@ class OneHotOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
   int InitWeights() override;
   int CheckSpecs() override;
-  void SetConstArgs() override;
+  int SetConstArgs() override;
   void SetGlobalLocal() override;
 
  private:

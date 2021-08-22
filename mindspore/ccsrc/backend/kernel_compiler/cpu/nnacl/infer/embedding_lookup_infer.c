@@ -49,6 +49,9 @@ int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, 
   size_t output_shape_size = 0;
   ShapeSet(output_shape, &output_shape_size, ids->shape_, ids->shape_size_);
   for (size_t i = 0; i < embedding_shape_size; ++i) {
+    if (output_shape_size >= MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
     ShapePush(output_shape, &output_shape_size, embedding_shape[i]);
   }
   for (size_t i = 1; i < inputs_size - 1; ++i) {

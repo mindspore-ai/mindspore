@@ -103,6 +103,7 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
       return false;
     }
 
+    MS_ERROR_IF_NULL_W_RET_VAL(report_cnt_rsp_msg, false);
     CountResponse count_rsp;
     (void)count_rsp.ParseFromArray(report_cnt_rsp_msg->data(), SizeToInt(report_cnt_rsp_msg->size()));
     if (!count_rsp.result()) {

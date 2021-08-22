@@ -42,7 +42,7 @@ int SplitInt8CPUKernel::Init() {
   auto in_quant_args = in_tensor->quant_params();
   param->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   param->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
-  MS_ASSERT(param->num_split_ == this->out_tensors_.size());
+  MS_ASSERT(static_cast<size_t>(param->num_split_) == this->out_tensors_.size());
   for (int i = 0; i < param->num_split_; i++) {
     auto *out_tensor = out_tensors_.at(i);
     auto out_quant_args = out_tensor->quant_params();
@@ -91,7 +91,7 @@ int SplitInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int SplitInt8CPUKernel::Run() {
   auto in_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->MutableData());
-  MS_ASSERT(param->num_split_ == this->out_tensors_.size());
+  MS_ASSERT(static_cast<size_t>(param->num_split_) == this->out_tensors_.size());
   for (int i = 0; i < param->num_split_; i++) {
     output_ptr_[i] = reinterpret_cast<int8_t *>(out_tensors_.at(i)->data_c());
   }

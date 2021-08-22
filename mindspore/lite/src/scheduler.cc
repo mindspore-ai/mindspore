@@ -34,6 +34,7 @@
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
 #include "src/runtime/infer_manager.h"
+#include "src/runtime/runtime_pass.h"
 #include "src/sub_graph_split.h"
 #include "src/weight_decoder.h"
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
@@ -60,15 +61,6 @@ kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &
   return sub_kernel;
 }
 }  // namespace
-
-void Scheduler::SetSubgraphForPartialNode() {
-  for (auto &pair : partial_kernel_subgraph_index_map_) {
-    auto &partial_kernel = pair.first;
-    auto &subgraph_index = pair.second;
-    static_cast<kernel::PartialFusionKernel *>(partial_kernel->kernel())
-      ->set_subgraph_kernel(subgraph_index_subgraph_kernel_map_.at(subgraph_index));
-  }
-}
 
 int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
   if (is_train_session_) {
@@ -117,9 +109,14 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 
   if (context_->enable_parallel_ && infershape_ret != RET_INFER_INVALID) {
+#ifdef ENABLE_AUTO_PARALLEL
     auto search_sub_graph =
       SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
     search_sub_graph.SubGraphSplit();
+#else
+    MS_LOG(ERROR) << unsupport_auto_parallel_log;
+    return RET_NOT_SUPPORT;
+#endif
   }
 
   int ret = ScheduleGraphToKernels(dst_kernels);
@@ -129,7 +126,9 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
 
+#ifdef ENABLE_CONTROL_TENSORLIST
   SetSubgraphForPartialNode();
+#endif
   if (delegate_ != nullptr) {
     ret = ReplaceDelegateKernels(dst_kernels);
     if (ret != RET_OK) {
@@ -137,8 +136,13 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
       return ret;
     }
   }
-  FindAllInoutKernels(*dst_kernels);
 
+  if (Nc4hw4PassValid(context_, dst_kernels)) {
+    Nc4hw4Pass(dst_kernels, src_tensors_);
+  }
+
+  FindAllInoutKernels(*dst_kernels);
+#ifdef ENABLE_CONTROL_TENSORLIST
   if (IsControlFlowParttern(*dst_kernels)) {
     ret = ConstructControlFlowMainGraph(dst_kernels);
     if (ret != RET_OK) {
@@ -146,6 +150,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
       return ret;
     }
   } else {
+#endif
     auto src_kernel = *dst_kernels;
     dst_kernels->clear();
     std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
@@ -154,7 +159,9 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
       MS_LOG(ERROR) << "ConstructSubGraphs failed.";
       return ret;
     }
+#ifdef ENABLE_CONTROL_TENSORLIST
   }
+#endif
 
   ret = InitKernels(*dst_kernels);
   if (ret != RET_OK) {
@@ -332,19 +339,6 @@ int Scheduler::RestoreSubGraphInput(const lite::Model::Node *partial_node) {
   return RET_OK;
 }
 
-void CopyTensorList(TensorList *dst_tensor, TensorList *src_tensor) {
-  dst_tensor->set_data_type(src_tensor->data_type());
-  dst_tensor->set_format(src_tensor->format());
-  dst_tensor->set_element_shape(src_tensor->element_shape());
-  dst_tensor->set_shape(src_tensor->shape());
-  std::vector<Tensor *> cpy_tensors{};
-  for (auto &tensor : src_tensor->tensors()) {
-    auto new_tensor = Tensor::CopyTensor(*tensor, false);
-    cpy_tensors.push_back(new_tensor);
-  }
-  dst_tensor->set_tensors(cpy_tensors);
-}
-
 void CopyCommonTensor(Tensor *dst_tensor, Tensor *src_tensor) {
   dst_tensor->set_data_type(src_tensor->data_type());
   dst_tensor->set_shape(src_tensor->shape());
@@ -396,57 +390,12 @@ int Scheduler::InferPartialShape(const lite::Model::Node *node) {
   return ret;
 }
 
-int Scheduler::InferSwitchShape(const lite::Model::Node *switch_node) {
-  MS_ASSERT(src_model_ != nullptr);
-  MS_ASSERT(switch_node != nullptr);
-  if (!IsSwitchNode(switch_node->primitive_)) {
-    MS_LOG(ERROR) << "Node is not a switch";
-    return RET_PARAM_INVALID;
-  }
-  std::deque<lite::Model::Node *> partial_cnode_to_infer{};
-  auto true_branch_output_index = switch_node->input_indices_.at(kSwitchTrueBranch);
-  auto false_branch_output_index = switch_node->input_indices_.at(kSwitchFalseBranch);
-  for (auto &node : src_model_->all_nodes_) {
-    if ((IsContain(node->output_indices_, true_branch_output_index) ||
-         IsContain(node->output_indices_, false_branch_output_index)) &&
-        IsPartialNode(node->primitive_) && partial_cnode_inferred_.find(node) == partial_cnode_inferred_.end()) {
-      partial_cnode_inferred_.insert(node);
-      partial_cnode_to_infer.push_back(node);
-    }
-  }
-
-  while (!partial_cnode_to_infer.empty()) {
-    auto &node = partial_cnode_to_infer.front();
-    partial_cnode_to_infer.pop_front();
-    int ret = InferPartialShape(node);
-    if (ret != RET_OK) {
-      MS_LOG(WARNING) << "partial infer not ok, ret: " << ret;
-    }
-  }
-  return RET_OK;
-}
-
 Model::Node *Scheduler::NodeInputIsPartial(const lite::Model::Node *node) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(node != nullptr);
   for (auto &iter : src_model_->all_nodes_) {
     if (iter->output_indices_ == node->input_indices_) {
       if (IsPartialNode(iter->primitive_)) {
-        return iter;
-      } else {
-        return nullptr;
-      }
-    }
-  }
-  return nullptr;
-}
-
-Model::Node *Scheduler::NodeInputIsSwitch(const lite::Model::Node *node) {
-  MS_ASSERT(src_model_ != nullptr);
-  MS_ASSERT(node != nullptr);
-  for (auto &iter : src_model_->all_nodes_) {
-    if (iter->output_indices_ == node->input_indices_) {
-      if (IsSwitchNode(iter->primitive_)) {
         return iter;
       } else {
         return nullptr;
@@ -468,11 +417,12 @@ int Scheduler::InferCallShape(const lite::Model::Node *node) {
   if (partial_input) {
     return InferPartialShape(partial_input);
   }
-
+#ifdef ENABLE_CONTROL_TENSORLIST
   auto switch_input = NodeInputIsSwitch(node);
   if (switch_input) {
     return InferSwitchShape(switch_input);
   }
+#endif
 
   MS_LOG(ERROR) << "call input is not partial and also not switch.";
   return RET_ERROR;
@@ -1090,12 +1040,6 @@ kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src
   return kernel;
 }
 
-bool Scheduler::SubGraphHasScheduled(const int &index) {
-  return scheduled_subgraph_index_.find(index) != scheduled_subgraph_index_.end();
-}
-
-void Scheduler::SubGraphMarkScheduled(const int &index) { scheduled_subgraph_index_.insert(index); }
-
 bool Scheduler::IsControlFlowPattern(const lite::Model::Node &partial_node) {
   lite::Model::Node *partial_node_output = nullptr;
   for (auto output_index : partial_node.output_indices_) {
@@ -1147,6 +1091,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
 
     if (IsPartialNode(primitive)) {
       if (IsControlFlowPattern(*node)) {
+#ifdef ENABLE_CONTROL_TENSORLIST
         kernel = ScheduleNodeToKernel(node, prefer_data_type);
         auto partial_subgraph_index = GetPartialGraphIndex(primitive);
         if (SubGraphHasScheduled(partial_subgraph_index)) {
@@ -1157,6 +1102,10 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
           partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;
           subgraphs_to_schedule_.push_back(partial_subgraph_index);
         }
+#else
+        MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+        return RET_ERROR;
+#endif
       } else {
         kernel = SchedulePartialToKernel(node);
       }
@@ -1283,6 +1232,7 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
     if (dtype == kObjectTypeString) {
       return kNumberTypeFloat32;
     }
+#ifdef ENABLE_CONTROL_TENSORLIST
     if (dtype == kObjectTypeTensorType) {
       auto tensor_list = reinterpret_cast<TensorList *>(tensor);
       auto tensor_list_dtype = tensor_list->tensors_data_type();
@@ -1292,6 +1242,7 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
         return tensor_list_dtype;
       }
     }
+#endif
     if (dtype == kNumberTypeFloat32 || dtype == kNumberTypeFloat16 || dtype == kNumberTypeInt8 ||
         dtype == kNumberTypeInt32 || dtype == kNumberTypeBool) {
       return dtype;
@@ -1366,6 +1317,80 @@ kernel::SubGraphType Scheduler::PartialSubGraphType(const std::vector<kernel::Li
   return kernel::kCpuFP32SubGraph;
 }
 
+#ifdef ENABLE_CONTROL_TENSORLIST
+int Scheduler::InferSwitchShape(const lite::Model::Node *switch_node) {
+  MS_ASSERT(src_model_ != nullptr);
+  MS_ASSERT(switch_node != nullptr);
+  if (!IsSwitchNode(switch_node->primitive_)) {
+    MS_LOG(ERROR) << "Node is not a switch";
+    return RET_PARAM_INVALID;
+  }
+  std::deque<lite::Model::Node *> partial_cnode_to_infer{};
+  auto true_branch_output_index = switch_node->input_indices_.at(kSwitchTrueBranch);
+  auto false_branch_output_index = switch_node->input_indices_.at(kSwitchFalseBranch);
+  for (auto &node : src_model_->all_nodes_) {
+    if ((IsContain(node->output_indices_, true_branch_output_index) ||
+         IsContain(node->output_indices_, false_branch_output_index)) &&
+        IsPartialNode(node->primitive_) && partial_cnode_inferred_.find(node) == partial_cnode_inferred_.end()) {
+      partial_cnode_inferred_.insert(node);
+      partial_cnode_to_infer.push_back(node);
+    }
+  }
+
+  while (!partial_cnode_to_infer.empty()) {
+    auto &node = partial_cnode_to_infer.front();
+    partial_cnode_to_infer.pop_front();
+    int ret = InferPartialShape(node);
+    if (ret != RET_OK) {
+      MS_LOG(WARNING) << "partial infer not ok, ret: " << ret;
+    }
+  }
+  return RET_OK;
+}
+
+Model::Node *Scheduler::NodeInputIsSwitch(const lite::Model::Node *node) {
+  MS_ASSERT(src_model_ != nullptr);
+  MS_ASSERT(node != nullptr);
+  for (auto &iter : src_model_->all_nodes_) {
+    if (iter->output_indices_ == node->input_indices_) {
+      if (IsSwitchNode(iter->primitive_)) {
+        return iter;
+      } else {
+        return nullptr;
+      }
+    }
+  }
+  return nullptr;
+}
+
+bool Scheduler::SubGraphHasScheduled(const int &index) {
+  return scheduled_subgraph_index_.find(index) != scheduled_subgraph_index_.end();
+}
+
+void Scheduler::SubGraphMarkScheduled(const int &index) { scheduled_subgraph_index_.insert(index); }
+
+void Scheduler::SetSubgraphForPartialNode() {
+  for (auto &pair : partial_kernel_subgraph_index_map_) {
+    auto &partial_kernel = pair.first;
+    auto &subgraph_index = pair.second;
+    static_cast<kernel::PartialFusionKernel *>(partial_kernel->kernel())
+      ->set_subgraph_kernel(subgraph_index_subgraph_kernel_map_.at(subgraph_index));
+  }
+}
+
+void CopyTensorList(TensorList *dst_tensor, TensorList *src_tensor) {
+  dst_tensor->set_data_type(src_tensor->data_type());
+  dst_tensor->set_format(src_tensor->format());
+  dst_tensor->set_element_shape(src_tensor->element_shape());
+  dst_tensor->set_shape(src_tensor->shape());
+  std::vector<Tensor *> cpy_tensors{};
+  for (auto &tensor : src_tensor->tensors()) {
+    auto new_tensor = Tensor::CopyTensor(*tensor, false);
+    cpy_tensors.push_back(new_tensor);
+  }
+  dst_tensor->set_tensors(cpy_tensors);
+}
+
 bool Scheduler::IsControlFlowParttern(const std::vector<kernel::LiteKernel *> &kernels) {
   if (std::any_of(kernels.begin(), kernels.end(), [](kernel::LiteKernel *item) {
         if (item->op_parameter()) {
@@ -1398,4 +1423,5 @@ int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *
   kernels->insert(kernels->begin(), subgraph_kernel);
   return RET_OK;
 }
+#endif
 }  // namespace mindspore::lite

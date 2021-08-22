@@ -20,13 +20,22 @@
 namespace mindspore {
 #ifdef THREAD_POOL_DEBUG
 #include <stdio.h>
+#define THREAD_DEBUG(content, args...) \
+  { printf("[DEBUG] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
 #define THREAD_INFO(content, args...) \
   { printf("[INFO] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
 #define THREAD_ERROR(content, args...) \
   { printf("[ERROR] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
 #else
+#define THREAD_DEBUG(content, ...)
 #define THREAD_INFO(content, ...)
+#if defined(__ANDROID__)
+#include <android/log.h>
+#define THREAD_ERROR(content, args...) \
+  { __android_log_print(ANDROID_LOG_ERROR, "MS_LITE", "%s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
+#else
 #define THREAD_ERROR(content, ...)
+#endif
 #endif
 
 #define THREAD_ERROR_IF_NULL(ptr) \

@@ -98,12 +98,12 @@ If set `split`=1.0, you should split train dataset and val dataset by directorie
 
 We support script to convert COCO and a Cell_Nuclei dataset used in used in [Unet++ original paper](https://arxiv.org/abs/1912.05074) to mulyi-class dataset format.
 
-1. Select `*yaml` in `unet`.
+1. Select `*.yaml` file under `unet` and modify the parameters as needed.
 
 2. run script to convert to mulyi-class dataset format:
 
 ```shell
-python preprocess_dataset.py -d /data/save_data_path
+python preprocess_dataset.py --config_path path/unet/*.yaml  --data_path /data/save_data_path
 ```
 
 ## [Environment Requirements](#contents)
@@ -481,7 +481,7 @@ Export MindIR on local
 Before exporting, you need to modify the parameter in the configuration — checkpoint_file_path and batch_ Size . checkpoint_ file_ Path is the CKPT file path, batch_ Size is set to 1.
 
 ```shell
-python export.py --config_path=[CONFIG_PATH]
+python export.py --config_path=[CONFIG_PATH] --checkpoint_file_path=[model_ckpt_path] --file_name=[air_model_name] --file_format=AIR
 ```
 
 The checkpoint_file_path parameter is required,

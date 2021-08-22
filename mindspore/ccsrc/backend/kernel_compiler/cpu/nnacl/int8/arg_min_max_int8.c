@@ -39,8 +39,8 @@ void DoArgMinMaxQuant(const int8_t *input, int8_t *output, const ArgMinMaxParame
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
   int32_t output_zp = out_quant_arg->zp_;
   for (int i = 0; i < pre_axis_count; ++i) {
-    size_t output_offset = i * after_axis_count;
-    size_t input_offset = output_offset * axis_count;
+    int output_offset = i * after_axis_count;
+    int input_offset = output_offset * axis_count;
     for (int j = 0; j < after_axis_count; ++j) {
       float value = -FLT_MAX;
       if (!param->get_max_) {
@@ -97,8 +97,8 @@ void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output, const int *in_shape,
   int32_t output_zp = out_quant_arg->zp_;
   for (int32_t i = 0; i < param->in_strides_[0]; ++i) {
     for (int j = 0; j < in_shape[0]; ++j) {
-      size_t offset = param->in_strides_[0] * j + i;
-      param->arg_elements_[j].index_ = j;
+      int offset = param->in_strides_[0] * j + i;
+      param->arg_elements_[j].index_ = (uint32_t)j;
       param->arg_elements_[j].data_.f_data_ = input[offset] * in_quant_arg->scale_ + bias;
     }
     if (param->get_max_) {
@@ -108,7 +108,7 @@ void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output, const int *in_shape,
     }
 
     for (int j = 0; j < param->topk_; ++j) {
-      size_t out_offset = j * param->out_strides_[0] + i;
+      int out_offset = j * param->out_strides_[0] + i;
       float real_out = out_value ? param->arg_elements_[j].data_.f_data_ : param->arg_elements_[j].index_;
       output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
     }
@@ -123,12 +123,12 @@ void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output, const int *in_shape,
   int32_t output_zp = out_quant_arg->zp_;
   int in_shape1 = in_shape[1];
   for (int i = 0; i < in_shape[0]; ++i) {
-    size_t in_dim0_offset = i * param->in_strides_[0];
-    size_t out_dim0_offset = i * param->out_strides_[0];
+    int in_dim0_offset = i * param->in_strides_[0];
+    int out_dim0_offset = i * param->out_strides_[0];
     for (int j = 0; j < param->in_strides_[1]; ++j) {
       for (int k = 0; k < in_shape1; ++k) {
-        size_t offset = param->in_strides_[1] * k + in_dim0_offset + j;
-        param->arg_elements_[k].index_ = k;
+        int offset = param->in_strides_[1] * k + in_dim0_offset + j;
+        param->arg_elements_[k].index_ = (size_t)k;
         param->arg_elements_[k].data_.f_data_ = input[offset] * in_quant_arg->scale_ + bias;
       }
       if (param->get_max_) {
@@ -138,7 +138,7 @@ void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output, const int *in_shape,
       }
 
       for (int k = 0; k < param->topk_; ++k) {
-        size_t out_offset = out_dim0_offset + j + k * param->out_strides_[1];
+        int out_offset = out_dim0_offset + j + k * param->out_strides_[1];
         float real_out = out_value ? param->arg_elements_[k].data_.f_data_ : param->arg_elements_[k].index_;
         output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
       }
@@ -155,15 +155,15 @@ void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output, const int *in_shape,
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   for (int i = 0; i < in_shape[0]; ++i) {
-    size_t in_dim0_offset = i * param->in_strides_[0];
-    size_t out_dim0_offset = i * param->out_strides_[0];
+    int in_dim0_offset = i * param->in_strides_[0];
+    int out_dim0_offset = i * param->out_strides_[0];
     for (int j = 0; j < in_shape1; ++j) {
-      size_t in_dim1_offset = j * param->in_strides_[1] + in_dim0_offset;
-      size_t out_dim1_offset = j * param->out_strides_[1] + out_dim0_offset;
+      int in_dim1_offset = j * param->in_strides_[1] + in_dim0_offset;
+      int out_dim1_offset = j * param->out_strides_[1] + out_dim0_offset;
       for (int k = 0; k < param->in_strides_[2]; ++k) {
         for (int l = 0; l < in_shape2; ++l) {
-          size_t offset = param->in_strides_[2] * l + k + in_dim1_offset;
-          param->arg_elements_[l].index_ = l;
+          int offset = param->in_strides_[2] * l + k + in_dim1_offset;
+          param->arg_elements_[l].index_ = (uint32_t)l;
           param->arg_elements_[l].data_.f_data_ = input[offset] * in_quant_arg->scale_ + bias;
         }
         if (param->get_max_) {
@@ -172,7 +172,7 @@ void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output, const int *in_shape,
           qsort(param->arg_elements_, in_shape2, sizeof(ArgElement), ArgCompareAscInt8);
         }
         for (int l = 0; l < param->topk_; ++l) {
-          size_t out_offset = out_dim1_offset + k + l * param->out_strides_[2];
+          int out_offset = out_dim1_offset + k + l * param->out_strides_[2];
           float real_out = out_value ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
           output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
         }
@@ -191,17 +191,17 @@ void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output, const int *in_shape,
   int in_shape2 = in_shape[2];
   int in_shape3 = in_shape[3];
   for (int i = 0; i < in_shape[0]; ++i) {
-    size_t in_dim0_offset = i * param->in_strides_[0];
-    size_t out_dim0_offset = i * param->out_strides_[0];
+    int in_dim0_offset = i * param->in_strides_[0];
+    int out_dim0_offset = i * param->out_strides_[0];
     for (int j = 0; j < in_shape1; ++j) {
-      size_t in_dim1_offset = j * param->in_strides_[1] + in_dim0_offset;
-      size_t out_dim1_offset = j * param->out_strides_[1] + out_dim0_offset;
+      int in_dim1_offset = j * param->in_strides_[1] + in_dim0_offset;
+      int out_dim1_offset = j * param->out_strides_[1] + out_dim0_offset;
       for (int k = 0; k < in_shape2; ++k) {
-        size_t in_dim2_offset = k * param->in_strides_[2] + in_dim1_offset;
-        size_t out_dim2_offset = k * param->out_strides_[2] + out_dim1_offset;
+        int in_dim2_offset = k * param->in_strides_[2] + in_dim1_offset;
+        int out_dim2_offset = k * param->out_strides_[2] + out_dim1_offset;
         for (int l = 0; l < in_shape3; ++l) {
-          size_t offset = l + in_dim2_offset;
-          param->arg_elements_[l].index_ = l;
+          int offset = l + in_dim2_offset;
+          param->arg_elements_[l].index_ = (uint32_t)l;
           param->arg_elements_[l].data_.f_data_ = input[offset] * in_quant_arg->scale_ + bias;
         }
         if (param->get_max_) {
@@ -210,7 +210,7 @@ void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output, const int *in_shape,
           qsort(param->arg_elements_, in_shape3, sizeof(ArgElement), ArgCompareAscInt8);
         }
         for (int l = 0; l < param->topk_; ++l) {
-          size_t out_offset = out_dim2_offset + l;
+          int out_offset = out_dim2_offset + l;
           float real_out = out_value ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
           output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
         }
