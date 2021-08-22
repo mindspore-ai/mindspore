@@ -203,9 +203,6 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, siz
     auto input0 = cnode->input(0);
     MS_EXCEPTION_IF_NULL(input0);
     if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
-      if (AnfAlgo::GetInputTensorNum(cnode) == 0) {
-        return std::make_pair(nullptr, 0);
-      }
       auto node = cnode->input(index + IntToSize(1));
       MS_EXCEPTION_IF_NULL(node);
       return VisitKernel(node, 0);
@@ -623,7 +620,7 @@ std::vector<std::string> AnfRuntimeAlgorithm::GetAllOutputFormats(const AnfNodeP
                       << "#node [" << node->DebugString() << "]"
                       << " trace: " << trace::DumpSourceLines(node);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -638,7 +635,7 @@ std::vector<std::string> AnfRuntimeAlgorithm::GetAllInputFormats(const AnfNodePt
                       << "#node [" << node->DebugString() << "]"
                       << " trace: " << trace::DumpSourceLines(node);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -653,7 +650,7 @@ std::vector<TypeId> AnfRuntimeAlgorithm::GetAllInputDeviceTypes(const AnfNodePtr
                       << "#node [" << node->DebugString() << "]"
                       << " trace: " << trace::DumpSourceLines(node);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -668,7 +665,7 @@ std::vector<TypeId> AnfRuntimeAlgorithm::GetAllOutputDeviceTypes(const AnfNodePt
                       << "#node [" << node->DebugString() << "]"
                       << " trace: " << trace::DumpSourceLines(node);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -683,7 +680,7 @@ std::string AnfRuntimeAlgorithm::GetOriginDataFormat(const AnfNodePtr &node) {
                       << "#node [" << node->DebugString() << "]"
                       << " trace: " << trace::DumpSourceLines(node);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -702,7 +699,7 @@ std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t 
   if (!AnfAlgo::IsRealKernel(node)) {
     return AnfAlgo::GetPrevNodeOutputFormat(node, output_idx);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -726,7 +723,7 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
   if (!IsRealKernel(node)) {
     return GetPrevNodeOutputFormat(node, input_idx);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -872,7 +869,7 @@ std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, siz
   if (!IsRealKernel(node)) {
     return GetPrevNodeOutputReshapeType(node, input_idx);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -892,7 +889,7 @@ std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, si
   if (!IsRealKernel(node)) {
     return GetPrevNodeOutputReshapeType(node, output_idx);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -946,7 +943,7 @@ TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size
   if (!IsRealKernel(node)) {
     return GetPrevNodeOutputDeviceDataType(node, output_idx);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -969,7 +966,7 @@ TypeId AnfRuntimeAlgorithm::GetInputDeviceDataType(const AnfNodePtr &node, size_
   if (!IsRealKernel(node)) {
     return GetPrevNodeOutputDeviceDataType(node, 0);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -1001,7 +998,7 @@ const DeviceAddress *AnfRuntimeAlgorithm::GetOutputAddr(const AnfNodePtr &node, 
                         << " trace: " << trace::DumpSourceLines(node);
     }
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto addr = kernel_info->GetOutputAddr(output_idx);
   if (addr == nullptr) {
@@ -1026,7 +1023,7 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
     }
   }
   // Critical path performance optimization: `KernelInfo` is unique subclass of `KernelInfoDevice`
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto addr = kernel_info->GetMutableOutputAddr(output_idx);
   if (addr == nullptr) {
@@ -1049,7 +1046,7 @@ bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_
     return false;
   }
   // Critical path performance optimization: `KernelInfo` is unique subclass of `KernelInfoDevice`
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->OutputAddrExist(output_idx);
 }
@@ -1057,7 +1054,7 @@ bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_
 bool AnfRuntimeAlgorithm::WorkspaceAddrExist(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   // Critical path performance optimization: `KernelInfo` is unique subclass of `KernelInfoDevice`
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->WorkspaceAddrExist(output_idx);
 }
@@ -1077,7 +1074,7 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetPrevNodeMutableOutputAddr(const AnfNode
 // set output device addr of anf_node
 void AnfRuntimeAlgorithm::SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   if (!kernel_info->SetOutputAddr(addr, output_idx)) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << "set adr" << output_idx << " fail."
@@ -1088,7 +1085,7 @@ void AnfRuntimeAlgorithm::SetOutputAddr(const DeviceAddressPtr &addr, size_t out
 // set workspace device addr of anf_node
 void AnfRuntimeAlgorithm::SetWorkspaceAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   if (!kernel_info->SetWorkspaceAddr(addr, output_idx)) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << "set adr" << output_idx << " fail。"
@@ -1099,7 +1096,7 @@ void AnfRuntimeAlgorithm::SetWorkspaceAddr(const DeviceAddressPtr &addr, size_t 
 // get workspace device addr of anf_node
 DeviceAddress *AnfRuntimeAlgorithm::GetWorkspaceAddr(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto addr = kernel_info->GetWorkspaceAddr(output_idx);
   if (addr == nullptr) {
@@ -1113,7 +1110,7 @@ DeviceAddress *AnfRuntimeAlgorithm::GetWorkspaceAddr(const AnfNodePtr &node, siz
 // get workspace device mutable addr of anf_node
 DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableWorkspaceAddr(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto addr = kernel_info->GetMutableWorkspaceAddr(index);
   if (addr == nullptr) {
@@ -1251,7 +1248,7 @@ void AnfRuntimeAlgorithm::CopyAbstract(const AnfNodePtr &from_node, AnfNode *to_
 
 kernel::OpPattern AnfRuntimeAlgorithm::GetOpPattern(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   // select_kernel_build_info() has checked whether return pointer is null
   auto build_info = kernel_info->select_kernel_build_info();
@@ -1262,7 +1259,7 @@ kernel::OpPattern AnfRuntimeAlgorithm::GetOpPattern(const AnfNodePtr &node) {
 // get KernelBuildType of node, such as ATT,RT,FWK and so on
 KernelType AnfRuntimeAlgorithm::GetKernelType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   // select_kernel_build_info() has checked whether return pointer is null
   auto build_info = kernel_info->select_kernel_build_info();
@@ -1290,7 +1287,7 @@ void AnfRuntimeAlgorithm::SetOutputDataDesc(const AnfNodePtr &node, const std::v
 
 std::vector<nlohmann::json> AnfRuntimeAlgorithm::GetOutputDataDesc(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   if (kernel_info == nullptr) {
     return {};
   }
@@ -1303,7 +1300,7 @@ std::vector<nlohmann::json> AnfRuntimeAlgorithm::GetOutputDataDesc(const AnfNode
 
 kernel::Processor AnfRuntimeAlgorithm::GetProcessor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
@@ -1312,7 +1309,7 @@ kernel::Processor AnfRuntimeAlgorithm::GetProcessor(const AnfNodePtr &node) {
 
 kernel::FusionType AnfRuntimeAlgorithm::GetFusionType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   if (build_info == nullptr) {
@@ -1324,7 +1321,7 @@ kernel::FusionType AnfRuntimeAlgorithm::GetFusionType(const AnfNodePtr &node) {
 // set select kernel_build_info
 void AnfRuntimeAlgorithm::SetSelectKernelBuildInfo(const KernelBuildInfoPtr &select_kernel_build_info, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->set_select_kernel_build_info(select_kernel_build_info);
 }
@@ -1332,7 +1329,7 @@ void AnfRuntimeAlgorithm::SetSelectKernelBuildInfo(const KernelBuildInfoPtr &sel
 // get select kernel_build_info
 KernelBuildInfoPtr AnfRuntimeAlgorithm::GetSelectKernelBuildInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->GetMutableSelectKernelBuildInfo();
 }
@@ -1340,7 +1337,7 @@ KernelBuildInfoPtr AnfRuntimeAlgorithm::GetSelectKernelBuildInfo(const AnfNodePt
 // get kernelMode
 KernelMod *AnfRuntimeAlgorithm::GetKernelMod(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->MutableKernelMod();
 }
@@ -1348,7 +1345,7 @@ KernelMod *AnfRuntimeAlgorithm::GetKernelMod(const AnfNodePtr &node) {
 // set kernel mod
 void AnfRuntimeAlgorithm::SetKernelMod(const KernelModPtr &kernel_mod, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   kernel_info->set_kernel_mod(kernel_mod);
 }
@@ -1444,42 +1441,42 @@ bool AnfRuntimeAlgorithm::IsLabelIndexInNode(const AnfNodePtr &node, size_t labe
 
 void AnfRuntimeAlgorithm::SetStreamId(uint32_t stream_id, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   kernel_info->set_stream_id(stream_id);
 }
 
 uint32_t AnfRuntimeAlgorithm::GetStreamId(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->stream_id();
 }
 
 void AnfRuntimeAlgorithm::SetStreamDistinctionLabel(uint32_t stream_label, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   kernel_info->set_stream_distinction_label(stream_label);
 }
 
 uint32_t AnfRuntimeAlgorithm::GetStreamDistinctionLabel(const AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<const device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<const device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->stream_distinction_label();
 }
 
 void AnfRuntimeAlgorithm::SetGraphId(uint32_t graph_id, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   kernel_info->set_graph_id(graph_id);
 }
 
 uint32_t AnfRuntimeAlgorithm::GetGraphId(const AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<const device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<const device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->graph_id();
 }
@@ -1513,7 +1510,7 @@ bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
     return IsFeatureMapOutput(node->cast<CNodePtr>()->input(1));
   }
-  auto kernel_info = dynamic_cast<const device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<const device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->is_feature_map();
 }
@@ -1578,15 +1575,16 @@ bool AnfRuntimeAlgorithm::IsInplaceNode(const mindspore::AnfNodePtr &kernel, con
 }
 
 bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
-  static const std::set<std::string> kCommunicationOpNames = {kAllReduceOpName,     kAllGatherOpName, kBroadcastOpName,
-                                                              kReduceScatterOpName, kHcomSendOpName,  kReceiveOpName,
-                                                              kAllToAllVOpName};
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
   }
   auto kernel_name = AnfAlgo::GetCNodeName(node);
-  return (kCommunicationOpNames.find(kernel_name) != kCommunicationOpNames.end());
+  if (kernel_name == kAllReduceOpName || kernel_name == kAllGatherOpName || kernel_name == kBroadcastOpName ||
+      kernel_name == kReduceScatterOpName || kernel_name == kHcomSendOpName || kernel_name == kReceiveOpName) {
+    return true;
+  }
+  return false;
 }
 
 bool AnfRuntimeAlgorithm::IsFusedCommunicationOp(const AnfNodePtr &node) {
@@ -1726,7 +1724,7 @@ void AnfRuntimeAlgorithm::ReorderOptimizerExecList(NotNull<std::vector<CNodePtr>
 
     auto trans_data_func = [&](const CNodePtr &node) -> bool {
       MS_EXCEPTION_IF_NULL(node);
-      if (AnfAlgo::GetCNodeName(node) == prim::kPrimTransData->name()) {
+      if (AnfAlgo::GetCNodeName(node) == prim::KPrimTransData->name()) {
         auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, 0), 0);
         MS_EXCEPTION_IF_NULL(kernel_index.first);
         if (kernel_index.first->isa<CNode>() && kOptOperatorSet.find(AnfAlgo::GetCNodeName(
@@ -2127,8 +2125,6 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
   for (size_t i = 0; i < input_size; ++i) {
     auto input_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
     auto real_input = input_with_index.first;
-    auto cnode_input = node->input(i + 1);
-    MS_EXCEPTION_IF_NULL(cnode_input);
     MS_EXCEPTION_IF_NULL(real_input);
     if (depend_tensors != nullptr) {
       auto iter_tensor = depend_tensors->find(i);
@@ -2137,29 +2133,24 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
         MS_EXCEPTION_IF_NULL(tensor_ptr);
         // sync data from device to host
         tensor_ptr->data_sync();
-        auto real_abs = real_input->abstract();
-        if (real_abs->isa<abstract::AbstractTensor>()) {
-          real_input->abstract()->set_value(tensor_ptr);
-        } else if (real_abs->isa<abstract::AbstractTuple>()) {
-          auto tuple_get_item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
-          auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
-          MS_EXCEPTION_IF_NULL(abstract_tuple);
-          auto tuple_elements = abstract_tuple->elements()[tuple_get_item_index];
-          tuple_elements->set_value(tensor_ptr);
-        }
+        real_input->abstract()->set_value(tensor_ptr);
       }
     }
+    auto cnode_input = node->input(i + 1);
+    MS_EXCEPTION_IF_NULL(cnode_input);
     if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {
       auto base_shape = real_input->Shape();
       if (!base_shape->isa<abstract::TupleShape>()) {
         MS_LOG(EXCEPTION) << "Node:" << node->DebugString()
                           << " input is a tuple_get_item but real input node shape is not a TupleShape";
       }
-      auto abs = real_input->abstract()->cast<abstract::AbstractTuplePtr>();
-      MS_EXCEPTION_IF_NULL(abs);
-      auto tuple_get_item_indexk = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
-      auto abs_i = abs->elements()[tuple_get_item_indexk];
-      args_spec_list.emplace_back(abs_i);
+      auto tuple_ptr = base_shape->cast<abstract::TupleShapePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_ptr);
+      auto tuple_get_item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
+      auto real_shape = tuple_ptr->shape().at(tuple_get_item_index);
+      auto abstract_tensor = cnode_input->abstract()->cast<abstract::AbstractTensorPtr>();
+      MS_EXCEPTION_IF_NULL(abstract_tensor);
+      args_spec_list.emplace_back(std::make_shared<abstract::AbstractTensor>(abstract_tensor->element(), real_shape));
     } else if (cnode_input->isa<CNode>() && AnfAlgo::GetCNodeName(cnode_input) == prim::kPrimReshape->name()) {
       args_spec_list.emplace_back(cnode_input->abstract());
     } else {
@@ -2239,138 +2230,6 @@ bool AnfRuntimeAlgorithm::IsNodeInputContainMonad(const AnfNodePtr &node) {
     }
   }
   return false;
-}
-
-void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto nodes = kernel_graph->execution_order();
-  for (auto &kernel : nodes) {
-    // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
-    // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
-    // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
-    if (HasNodeAttr("nop_op", kernel)) {
-      for (size_t idx = 0; idx < GetOutputTensorNum(kernel); idx += 1) {
-        auto real_input = GetRealInputIndex(kernel, idx);
-        auto device_address = GetPrevNodeMutableOutputAddr(kernel, real_input);
-        SetOutputAddr(device_address, idx, kernel.get());
-      }
-      continue;
-    }
-    auto kernel_mod = GetKernelMod(kernel);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    if (GetCNodeName(kernel) == kAtomicAddrCleanOpName) {
-      CacheAddrForAtomicClean(kernel, kernel_mod);
-      continue;
-    }
-    CacheAddrForKernel(kernel, kernel_mod);
-  }
-}
-
-void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::KernelMod *kernel_mod) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  std::vector<AddressPtr> kernel_inputs;
-  std::vector<AddressPtr> kernel_workspaces;
-  std::vector<AddressPtr> kernel_outputs;
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto visit_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
-  size_t input_num = GetInputTensorNum(node);
-  for (size_t i = 0; i < input_num; ++i) {
-    auto op_name = GetCNodeName(cnode);
-    constexpr auto none_placeholder_index = 3;
-    if (op_name == kDynamicRNNOpName && i == none_placeholder_index) {
-      continue;
-    }
-    if (op_name == kDynamicGRUV2OpName) {
-      auto none_index = GetNodeAttr<std::vector<int64_t>>(cnode, "placeholder_index");
-      auto item = std::find(none_index.begin(), none_index.end(), i);
-      if (item != none_index.end()) {
-        continue;
-      }
-    }
-    auto real_input = GetRealInputIndex(node, i);
-    auto device_address = GetPrevNodeOutputAddr(node, real_input, visit_nop_node);
-    MS_EXCEPTION_IF_NULL(device_address);
-    kernel::AddressPtr input = std::make_shared<kernel::Address>();
-    MS_EXCEPTION_IF_NULL(input);
-    input->addr = const_cast<void *>(device_address->GetPtr());
-    MS_EXCEPTION_IF_NULL(input->addr);
-    input->size = device_address->GetSize();
-    kernel_inputs.emplace_back(input);
-  }
-  for (size_t i = 0; i < kernel_mod->GetOutputSizeList().size(); ++i) {
-    auto device_address = GetOutputAddr(node, i, visit_nop_node);
-    kernel::AddressPtr output = std::make_shared<kernel::Address>();
-    MS_EXCEPTION_IF_NULL(output);
-    output->addr = const_cast<void *>(device_address->GetPtr());
-    MS_EXCEPTION_IF_NULL(output->addr);
-    output->size = device_address->GetSize();
-    kernel_outputs.emplace_back(output);
-  }
-  for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
-    auto device_address = GetWorkspaceAddr(node, i);
-    kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
-    MS_EXCEPTION_IF_NULL(workspace);
-    workspace->addr = const_cast<void *>(device_address->GetPtr());
-    MS_EXCEPTION_IF_NULL(workspace->addr);
-    workspace->size = device_address->GetSize();
-    kernel_workspaces.emplace_back(workspace);
-  }
-  kernel_mod->set_inputs_addr(kernel_inputs);
-  kernel_mod->set_workspaces_addr(kernel_workspaces);
-  kernel_mod->set_outputs_addr(kernel_outputs);
-}
-
-void AnfRuntimeAlgorithm::CacheAddrForAtomicClean(const AnfNodePtr &node, kernel::KernelMod *kernel_mod) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  std::vector<AddressPtr> kernel_inputs;
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() != 2) {
-    MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
-  }
-  MS_EXCEPTION_IF_NULL(cnode->inputs()[1]);
-  auto pre_node = (cnode->inputs()[1])->cast<CNodePtr>();
-  // set clean output address
-  if (HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
-#if defined(__APPLE__)
-    auto clean_output_indexes = GetNodeAttr<std::vector<int>>(pre_node, kAttrAtomicOutputIndexs);
-#else
-    auto clean_output_indexes = GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
-#endif
-    for (auto index : clean_output_indexes) {
-      auto device_address = GetOutputAddr(pre_node, index);
-      kernel::AddressPtr input = std::make_shared<kernel::Address>();
-      MS_EXCEPTION_IF_NULL(input);
-      input->addr = const_cast<void *>(device_address->GetPtr());
-      MS_EXCEPTION_IF_NULL(input->addr);
-      input->size = device_address->GetSize();
-      kernel_inputs.emplace_back(input);
-    }
-    MS_LOG(DEBUG) << "AtomicAddClean clean output size:" << clean_output_indexes.size();
-  }
-  // set clean workspace address
-  if (HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
-#if defined(__APPLE__)
-    auto clean_workspaces_indexes = GetNodeAttr<std::vector<int>>(pre_node, kAttrAtomicWorkspaceIndexs);
-#else
-    auto clean_workspaces_indexes = GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
-#endif
-    for (const auto &index : clean_workspaces_indexes) {
-      auto device_address = GetWorkspaceAddr(pre_node, index);
-      kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
-      MS_EXCEPTION_IF_NULL(workspace);
-      workspace->addr = const_cast<void *>(device_address->GetPtr());
-      MS_EXCEPTION_IF_NULL(workspace->addr);
-      workspace->size = device_address->GetSize();
-      kernel_inputs.emplace_back(workspace);
-    }
-  }
-  kernel_mod->set_inputs_addr(kernel_inputs);
 }
 }  // namespace session
 }  // namespace mindspore

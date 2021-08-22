@@ -46,6 +46,7 @@ int ResizeGradCPUKernelFp16::ReSize() {
   param->out_width_ = static_cast<size_t>(out_tensors_.at(0)->Width());
   param->height_scale_ = ScalingFp16(param->out_height_, param->in_height_, align_corners);
   param->width_scale_ = ScalingFp16(param->out_width_, param->in_width_, align_corners);
+
   return RET_OK;
 }
 
@@ -66,6 +67,7 @@ int ResizeGradCPUKernelFp16::Execute(int task_id) {
   }
   auto batch_size = in_tensors_.at(0)->Batch();
   auto channel = in_tensors_.at(0)->Channel();
+
   if (param->method == static_cast<int>(schema::ResizeMethod_NEAREST)) {
     ResizeNearestNeighborFp16Grad(in_addr, out_addr, batch_size, channel, in_tensors_.at(0)->format(), param);
   } else {

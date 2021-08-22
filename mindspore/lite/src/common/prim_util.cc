@@ -24,28 +24,25 @@
 
 namespace mindspore {
 namespace lite {
-int GetPrimitiveType(const void *primitive, int schema_version) {
+int GetPrimitiveType(const void *primitive) {
   if (primitive == nullptr) {
     return -1;
   }
 #ifdef ENABLE_V0
-  if (schema_version == SCHEMA_V0) {
+  if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
     return static_cast<const schema::v0::Primitive *>(primitive)->value_type();
   }
 #endif
   return static_cast<const schema::Primitive *>(primitive)->value_type();
 }
 
-const char *GetPrimitiveTypeName(const void *primitive, int schema_version) {
-  if (primitive == nullptr) {
-    return "NONE";
-  }
+const char *PrimitiveTypeName(int type) {
 #ifdef ENABLE_V0
-  if (schema_version == SCHEMA_V0) {
-    return schema::v0::EnumNamePrimitiveType(static_cast<const schema::v0::Primitive *>(primitive)->value_type());
+  if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
+    return schema::v0::EnumNamePrimitiveType(static_cast<schema::v0::PrimitiveType>(type));
   }
 #endif
-  return schema::EnumNamePrimitiveType(static_cast<const schema::Primitive *>(primitive)->value_type());
+  return schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type));
 }
 
 const char *PrimitiveCurVersionTypeName(int type) {
@@ -54,8 +51,9 @@ const char *PrimitiveCurVersionTypeName(int type) {
 
 int GenPrimVersionKey(int primitive_type, int schema_version) { return primitive_type * 1000 + schema_version; }
 
-bool IsPartialNode(const void *primitive, int schema_version) {
+bool IsPartialNode(const void *primitive) {
   MS_ASSERT(primitive != nullptr);
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_PartialFusion;
   }
@@ -68,31 +66,27 @@ bool IsPartialNode(const void *primitive, int schema_version) {
   return false;
 }
 
-bool IsCallNode(const void *primitive, int schema_version) {
+bool IsCallNode(const void *primitive) {
   MS_ASSERT(primitive != nullptr);
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Call;
   }
   return false;
 }
 
-bool IsSwitchNode(const void *primitive, int schema_version) {
+bool IsSwitchNode(const void *primitive) {
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Switch;
   }
   return false;
 }
 
-bool IsCustomNode(const void *primitive, int schema_version) {
-  if (schema_version == SCHEMA_CUR) {
-    return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Custom;
-  }
-  return false;
-}
-
-int GetPartialGraphIndex(const void *primitive, int schema_version) {
+int GetPartialGraphIndex(const void *primitive) {
   MS_ASSERT(primitive != nullptr);
   int index = -1;
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   if (schema_version == SCHEMA_CUR) {
     auto partial_fusion = reinterpret_cast<const schema::Primitive *>(primitive)->value_as_PartialFusion();
     if (partial_fusion == nullptr) {
@@ -107,6 +101,66 @@ int GetPartialGraphIndex(const void *primitive, int schema_version) {
       return -1;
     }
     index = partial->subGraphIndex();
+  }
+#endif
+  return index;
+}
+
+bool IsWhileNode(const void *primitive) {
+  MS_ASSERT(primitive != nullptr);
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  if (schema_version == SCHEMA_CUR) {
+    return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_While;
+  }
+#ifdef ENABLE_V0
+  if (schema_version == SCHEMA_V0) {
+    return reinterpret_cast<const schema::v0::Primitive *>(primitive)->value_type() == schema::v0::PrimitiveType_While;
+  }
+#endif
+  return false;
+}
+
+int GetWhileBodySubgraphIndex(const void *primitive) {
+  MS_ASSERT(primitive != nullptr);
+  int index = -1;
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  if (schema_version == SCHEMA_CUR) {
+    auto while_value = reinterpret_cast<const schema::Primitive *>(primitive)->value_as_While();
+    if (while_value == nullptr) {
+      return -1;
+    }
+    index = while_value->body_subgraph_index();
+  }
+#ifdef ENABLE_V0
+  if (schema_version == SCHEMA_V0) {
+    auto while_value = reinterpret_cast<const schema::v0::Primitive *>(primitive)->value_as_While();
+    if (while_value == nullptr) {
+      return -1;
+    }
+    index = while_value->bodySubgraphIndex();
+  }
+#endif
+  return index;
+}
+
+int GetWhileCondSubgraphIndex(const void *primitive) {
+  MS_ASSERT(primitive != nullptr);
+  int index = -1;
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  if (schema_version == SCHEMA_CUR) {
+    auto while_value = reinterpret_cast<const schema::Primitive *>(primitive)->value_as_While();
+    if (while_value == nullptr) {
+      return -1;
+    }
+    index = while_value->cond_subgraph_index();
+  }
+#ifdef ENABLE_V0
+  if (schema_version == SCHEMA_V0) {
+    auto while_value = reinterpret_cast<const schema::v0::Primitive *>(primitive)->value_as_While();
+    if (while_value == nullptr) {
+      return -1;
+    }
+    index = while_value->condSubgraphIndex();
   }
 #endif
   return index;

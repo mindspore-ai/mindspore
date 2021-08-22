@@ -81,6 +81,28 @@ class LiteGraph::GraphBuilder {
   LiteGraphPtr Get() { return graph_; }
 
  private:
+  static PrimOpPtr Elemwise(const std::string &op, const std::string &name) {
+    return std::make_shared<ElemwiseOp>(op, name);
+  }
+
+  static PrimOpPtr BroadcastTo(const std::string &op, const std::string &name) {
+    return std::make_shared<BroadcastToOp>(op, name);
+  }
+
+  static PrimOpPtr Reshape(const std::string &op, const std::string &name) {
+    return std::make_shared<ReshapeOp>(op, name);
+  }
+
+  static PrimOpPtr Reduce(const std::string &op, const std::string &name) {
+    return std::make_shared<ReduceOp>(op, name);
+  }
+  static PrimOpPtr Opaque(const std::string &op, const std::string &name) {
+    return std::make_shared<OpaqueOp>(op, name);
+  }
+  static PrimOpPtr Conv2d(const std::string &op, const std::string &name) {
+    return std::make_shared<Conv2dOp>(op, name);
+  }
+
   PrimOpPtr CreateOp(const std::string &id, const std::string &name);
   std::string NewName(std::string prefix = "output_") { return prefix + std::to_string(graph_->name_id_++); }
 

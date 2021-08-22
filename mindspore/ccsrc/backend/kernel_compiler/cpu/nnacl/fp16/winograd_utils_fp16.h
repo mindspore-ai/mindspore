@@ -32,6 +32,13 @@ typedef void (*InputTransFp16Func)(const float16_t *src_data, float16_t *dst_dat
 typedef void (*OutputTransFp16Func)(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
                                     int src_step, int dst_step, int out_c, int r_w, int r_h, int r_c);
 
+void GeneralInputTransformUnitFp16(const float16_t *src_data, float16_t *dst_data, float16_t *matrix_b,
+                                   float16_t *matrix_bt, int src_step, int dst_step, int in_unit);
+
+void GeneralOutputTransformUnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
+                                    float16_t *matrix_a, float16_t *matrix_at, int src_step, int dst_step, int in_unit,
+                                    int out_unit);
+
 #define Load16DataFp16                           \
   src[0] = vld1q_f16(src_data + 0 * src_step);   \
   src[1] = vld1q_f16(src_data + 1 * src_step);   \
@@ -485,9 +492,9 @@ void OutputTransform8x7ReluUnitFp16(const float16_t *src_data, float16_t *dst_da
 void OutputTransform8x7Relu6UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
                                      int src_step, int dst_step, int out_c, int r_w, int r_h, int r_c);
 
-int SelectOutputUnitFp16(const ConvParameter *conv_param);
+int SelectOutputUnitFp16(ConvParameter *conv_param);
 
-void CheckIfUseWinogradFp16(bool *use_winograd, int *output_unit, const ConvParameter *conv_param);
+void CheckIfUseWinogradFp16(bool *use_winograd, int *output_unit, ConvParameter *conv_param);
 #ifdef __cplusplus
 }
 #endif

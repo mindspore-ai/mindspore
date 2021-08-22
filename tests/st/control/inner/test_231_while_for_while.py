@@ -14,14 +14,13 @@
 # ============================================================================
 
 import numpy as np
-import pytest
 from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore import context
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend")
 
 
 class ForwardNet(nn.Cell):
@@ -55,7 +54,7 @@ class BackwardNet(nn.Cell):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
-@pytest.mark.skip(reason="not supported for in while")
+
 def test_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -63,7 +62,7 @@ def test_forward():
     out = forward_net(x, y)
     print("forward out:", out)
 
-@pytest.mark.skip(reason="not supported for in while")
+
 def test_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)

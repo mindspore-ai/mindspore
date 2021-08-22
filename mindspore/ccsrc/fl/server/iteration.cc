@@ -26,15 +26,6 @@ namespace mindspore {
 namespace fl {
 namespace server {
 class Server;
-
-Iteration::~Iteration() {
-  move_to_next_thread_running_ = false;
-  next_iteration_cv_.notify_all();
-  if (move_to_next_thread_.joinable()) {
-    move_to_next_thread_.join();
-  }
-}
-
 void Iteration::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator) {
   MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
@@ -88,28 +79,7 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<ps::core::Communica
                                                  });
   LocalMetaStore::GetInstance().put_value(kCtxTotalTimeoutDuration, iteration_time_window);
   MS_LOG(INFO) << "Time window for one iteration is " << iteration_time_window;
-
-  // Initialize the thread which will handle the signal from round kernels.
-  move_to_next_thread_ = std::thread([this]() {
-    while (move_to_next_thread_running_.load()) {
-      std::unique_lock<std::mutex> lock(next_iteration_mutex_);
-      next_iteration_cv_.wait(lock);
-      if (!move_to_next_thread_running_.load()) {
-        break;
-      }
-      MoveToNextIteration(is_last_iteration_valid_, move_to_next_reason_);
-    }
-  });
   return;
-}
-
-void Iteration::ClearRounds() { rounds_.clear(); }
-
-void Iteration::NotifyNext(bool is_last_iter_valid, const std::string &reason) {
-  std::unique_lock<std::mutex> lock(next_iteration_mutex_);
-  is_last_iteration_valid_ = is_last_iter_valid;
-  move_to_next_reason_ = reason;
-  next_iteration_cv_.notify_one();
 }
 
 void Iteration::MoveToNextIteration(bool is_last_iter_valid, const std::string &reason) {
@@ -149,10 +119,7 @@ void Iteration::SetIterationRunning() {
     // This event helps worker/server to be consistent in iteration state.
     server_node_->BroadcastEvent(static_cast<uint32_t>(ps::CustomEvent::kIterationRunning));
   }
-
-  std::unique_lock<std::mutex> lock(iteration_state_mtx_);
   iteration_state_ = IterationState::kRunning;
-  start_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count());
 }
 
 void Iteration::SetIterationCompleted() {
@@ -162,17 +129,13 @@ void Iteration::SetIterationCompleted() {
     // This event helps worker/server to be consistent in iteration state.
     server_node_->BroadcastEvent(static_cast<uint32_t>(ps::CustomEvent::kIterationCompleted));
   }
-
-  std::unique_lock<std::mutex> lock(iteration_state_mtx_);
   iteration_state_ = IterationState::kCompleted;
-  complete_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count());
 }
 
 void Iteration::ScalingBarrier() {
   MS_LOG(INFO) << "Starting Iteration scaling barrier.";
-  std::unique_lock<std::mutex> lock(iteration_state_mtx_);
-  if (iteration_state_.load() != IterationState::kCompleted) {
-    iteration_state_cv_.wait(lock);
+  while (iteration_state_.load() != IterationState::kCompleted) {
+    std::this_thread::yield();
   }
   MS_LOG(INFO) << "Ending Iteration scaling barrier.";
 }
@@ -193,147 +156,9 @@ bool Iteration::ReInitForScaling(uint32_t server_num, uint32_t server_rank) {
   return true;
 }
 
-bool Iteration::ReInitForUpdatingHyperParams(const std::vector<RoundConfig> &updated_rounds_config) {
-  for (const auto &updated_round : updated_rounds_config) {
-    for (const auto &round : rounds_) {
-      if (updated_round.name == round->name()) {
-        MS_LOG(INFO) << "Reinitialize for round " << round->name();
-        if (!round->ReInitForUpdatingHyperParams(updated_round.threshold_count, updated_round.time_window)) {
-          MS_LOG(ERROR) << "Reinitializing for round " << round->name() << " failed.";
-          return false;
-        }
-      }
-    }
-  }
-  return true;
-}
-
 const std::vector<std::shared_ptr<Round>> &Iteration::rounds() const { return rounds_; }
 
 bool Iteration::is_last_iteration_valid() const { return is_last_iteration_valid_; }
-
-void Iteration::set_metrics(const std::shared_ptr<IterationMetrics> &metrics) { metrics_ = metrics; }
-
-void Iteration::set_loss(float loss) { loss_ = loss; }
-
-void Iteration::set_accuracy(float accuracy) { accuracy_ = accuracy; }
-
-InstanceState Iteration::instance_state() const { return instance_state_.load(); }
-
-bool Iteration::EnableServerInstance(std::string *result) {
-  MS_ERROR_IF_NULL_W_RET_VAL(result, false);
-  // Before enabling server instance, we should judge whether this request should be handled.
-  std::unique_lock<std::mutex> lock(instance_mtx_);
-  if (is_instance_being_updated_) {
-    *result = "The instance is being updated. Please retry enabling server later.";
-    MS_LOG(WARNING) << *result;
-    return false;
-  }
-  if (instance_state_.load() == InstanceState::kFinish) {
-    *result = "The instance is completed. Please do not enabling server now.";
-    MS_LOG(WARNING) << *result;
-    return false;
-  }
-
-  // Start enabling server instance.
-  is_instance_being_updated_ = true;
-
-  instance_state_ = InstanceState::kRunning;
-  *result = "Enabling FL-Server succeeded.";
-  MS_LOG(INFO) << *result;
-
-  // End enabling server instance.
-  is_instance_being_updated_ = false;
-  return true;
-}
-
-bool Iteration::DisableServerInstance(std::string *result) {
-  MS_ERROR_IF_NULL_W_RET_VAL(result, false);
-  // Before disabling server instance, we should judge whether this request should be handled.
-  std::unique_lock<std::mutex> lock(instance_mtx_);
-  if (is_instance_being_updated_) {
-    *result = "The instance is being updated. Please retry disabling server later.";
-    MS_LOG(WARNING) << *result;
-    return false;
-  }
-  if (instance_state_.load() == InstanceState::kFinish) {
-    *result = "The instance is completed. Please do not disabling server now.";
-    MS_LOG(WARNING) << *result;
-    return false;
-  }
-  if (instance_state_.load() == InstanceState::kDisable) {
-    *result = "Disabling FL-Server succeeded.";
-    MS_LOG(INFO) << *result;
-    return true;
-  }
-
-  // Start disabling server instance.
-  is_instance_being_updated_ = true;
-
-  // If instance is running, we should drop current iteration and move to the next.
-  instance_state_ = InstanceState::kDisable;
-  if (!ForciblyMoveToNextIteration()) {
-    *result = "Disabling instance failed. Can't drop current iteration and move to the next.";
-    MS_LOG(ERROR) << result;
-    return false;
-  }
-  *result = "Disabling FL-Server succeeded.";
-  MS_LOG(INFO) << *result;
-
-  // End disabling server instance.
-  is_instance_being_updated_ = false;
-  return true;
-}
-
-bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string *result) {
-  MS_ERROR_IF_NULL_W_RET_VAL(result, false);
-  // Before new instance, we should judge whether this request should be handled.
-  std::unique_lock<std::mutex> lock(instance_mtx_);
-  if (is_instance_being_updated_) {
-    *result = "The instance is being updated. Please retry new instance later.";
-    MS_LOG(WARNING) << *result;
-    return false;
-  }
-
-  // Start new server instance.
-  is_instance_being_updated_ = true;
-
-  // Reset current instance.
-  instance_state_ = InstanceState::kFinish;
-  Server::GetInstance().WaitExitSafeMode();
-  WaitAllRoundsFinish();
-  MS_LOG(INFO) << "Proceed to a new instance.";
-  for (auto &round : rounds_) {
-    MS_ERROR_IF_NULL_W_RET_VAL(round, false);
-    round->Reset();
-  }
-  iteration_num_ = 1;
-  LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
-  ModelStore::GetInstance().Reset();
-
-  // Update the hyper-parameters on server and reinitialize rounds.
-  if (!UpdateHyperParams(new_instance_json)) {
-    *result = "Updating hyper-parameters failed.";
-    return false;
-  }
-  if (!ReInitRounds()) {
-    *result = "Reinitializing rounds failed.";
-    return false;
-  }
-
-  instance_state_ = InstanceState::kRunning;
-  *result = "New FL-Server instance succeeded.";
-
-  // End new server instance.
-  is_instance_being_updated_ = false;
-  return true;
-}
-
-void Iteration::WaitAllRoundsFinish() {
-  while (running_round_num_.load() != 0) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(kThreadSleepTime));
-  }
-}
 
 bool Iteration::SyncIteration(uint32_t rank) {
   MS_ERROR_IF_NULL_W_RET_VAL(communicator_, false);
@@ -491,7 +316,6 @@ void Iteration::HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::
 void Iteration::PrepareForNextIter() {
   MS_LOG(INFO) << "Prepare for next iteration. Switch the server to safemode.";
   Server::GetInstance().SwitchToSafeMode();
-  WaitAllRoundsFinish();
 }
 
 bool Iteration::BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const std::string &reason) {
@@ -608,132 +432,23 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
 
 void Iteration::EndLastIter() {
   MS_LOG(INFO) << "End the last iteration " << iteration_num_;
-  if (iteration_num_ == ps::PSContext::instance()->fl_iteration_num()) {
+  iteration_num_++;
+  // After the job is done, reset the iteration to the initial number and reset ModelStore.
+  if (iteration_num_ > ps::PSContext::instance()->fl_iteration_num()) {
     MS_LOG(INFO) << "Iteration loop " << iteration_loop_count_
                  << " is completed. Iteration number: " << ps::PSContext::instance()->fl_iteration_num();
+    iteration_num_ = 1;
     iteration_loop_count_++;
-    instance_state_ = InstanceState::kFinish;
+    ModelStore::GetInstance().Reset();
   }
 
   std::unique_lock<std::mutex> lock(pinned_mtx_);
   pinned_iter_num_ = 0;
   lock.unlock();
-
-  SetIterationCompleted();
-  SummarizeIteration();
-  iteration_num_++;
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   Server::GetInstance().CancelSafeMode();
-  iteration_state_cv_.notify_all();
+  SetIterationCompleted();
   MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
-}
-
-bool Iteration::ForciblyMoveToNextIteration() {
-  NotifyNext(false, "Forcibly move to next iteration.");
-  return true;
-}
-
-bool Iteration::SummarizeIteration() {
-  // If the metrics_ is not initialized or the server is not the leader server, do not summarize.
-  if (server_node_->rank_id() != kLeaderServerRank || metrics_ == nullptr) {
-    MS_LOG(INFO) << "This server will not summarize for iteration.";
-    return true;
-  }
-
-  metrics_->set_fl_name(ps::PSContext::instance()->fl_name());
-  metrics_->set_fl_iteration_num(ps::PSContext::instance()->fl_iteration_num());
-  metrics_->set_cur_iteration_num(iteration_num_ - 1);
-  metrics_->set_instance_state(instance_state_.load());
-  metrics_->set_loss(loss_);
-  metrics_->set_accuracy(accuracy_);
-  // The joined client number is equal to the threshold of updateModel.
-  size_t update_model_threshold = static_cast<size_t>(
-    std::ceil(ps::PSContext::instance()->start_fl_job_threshold() * ps::PSContext::instance()->update_model_ratio()));
-  metrics_->set_joined_client_num(update_model_threshold);
-  // The rejected client number is equal to threshold of startFLJob minus threshold of updateModel.
-  metrics_->set_rejected_client_num(ps::PSContext::instance()->start_fl_job_threshold() - update_model_threshold);
-
-  if (complete_timestamp_ < start_timestamp_) {
-    MS_LOG(ERROR) << "The complete_timestamp_: " << complete_timestamp_ << ", start_timestamp_: " << start_timestamp_
-                  << ". One of them is invalid.";
-    metrics_->set_iteration_time_cost(UINT64_MAX);
-  } else {
-    metrics_->set_iteration_time_cost(complete_timestamp_ - start_timestamp_);
-  }
-
-  metrics_->Summarize();
-  return true;
-}
-
-bool Iteration::UpdateHyperParams(const nlohmann::json &json) {
-  for (const auto &item : json.items()) {
-    std::string key = item.key();
-    if (key == "start_fl_job_threshold") {
-      ps::PSContext::instance()->set_start_fl_job_threshold(item.value().get<uint64_t>());
-      continue;
-    }
-    if (key == "start_fl_job_time_window") {
-      ps::PSContext::instance()->set_start_fl_job_time_window(item.value().get<uint64_t>());
-      continue;
-    }
-    if (key == "update_model_ratio") {
-      ps::PSContext::instance()->set_update_model_ratio(item.value().get<float>());
-      continue;
-    }
-    if (key == "update_model_time_window") {
-      ps::PSContext::instance()->set_update_model_time_window(item.value().get<uint64_t>());
-      continue;
-    }
-    if (key == "fl_iteration_num") {
-      ps::PSContext::instance()->set_fl_iteration_num(item.value().get<uint64_t>());
-      continue;
-    }
-    if (key == "client_epoch_num") {
-      ps::PSContext::instance()->set_client_epoch_num(item.value().get<uint64_t>());
-      continue;
-    }
-    if (key == "client_batch_size") {
-      ps::PSContext::instance()->set_client_batch_size(item.value().get<uint64_t>());
-      continue;
-    }
-    if (key == "client_learning_rate") {
-      ps::PSContext::instance()->set_client_learning_rate(item.value().get<float>());
-      continue;
-    }
-  }
-  return true;
-}
-
-bool Iteration::ReInitRounds() {
-  size_t start_fl_job_threshold = ps::PSContext::instance()->start_fl_job_threshold();
-  float update_model_ratio = ps::PSContext::instance()->update_model_ratio();
-  size_t update_model_threshold = static_cast<size_t>(std::ceil(start_fl_job_threshold * update_model_ratio));
-  uint64_t start_fl_job_time_window = ps::PSContext::instance()->start_fl_job_time_window();
-  uint64_t update_model_time_window = ps::PSContext::instance()->update_model_time_window();
-  std::vector<RoundConfig> new_round_config = {
-    {"startFLJob", true, start_fl_job_time_window, true, start_fl_job_threshold},
-    {"updateModel", true, update_model_time_window, true, update_model_threshold}};
-  if (!ReInitForUpdatingHyperParams(new_round_config)) {
-    MS_LOG(ERROR) << "Reinitializing for updating hyper-parameters failed.";
-    return false;
-  }
-
-  size_t executor_threshold = 0;
-  const std::string &server_mode = ps::PSContext::instance()->server_mode();
-  uint32_t worker_num = ps::PSContext::instance()->initial_worker_num();
-  if (server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) {
-    executor_threshold = update_model_threshold;
-  } else if (server_mode == ps::kServerModePS) {
-    executor_threshold = worker_num;
-  } else {
-    MS_LOG(ERROR) << "Server mode " << server_mode << " is not supported.";
-    return false;
-  }
-  if (!Executor::GetInstance().ReInitForUpdatingHyperParams(executor_threshold)) {
-    MS_LOG(ERROR) << "Reinitializing executor failed.";
-    return false;
-  }
-  return true;
 }
 }  // namespace server
 }  // namespace fl

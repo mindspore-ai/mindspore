@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMaxFusion = "ArgMaxFusion";
-class MS_CORE_API ArgMaxFusion : public ArgMax {
+class ArgMaxFusion : public ArgMax {
  public:
   ArgMaxFusion() : ArgMax(kNameArgMaxFusion) { InitIOName({"x"}, {"output"}); }
   ~ArgMaxFusion() = default;

@@ -180,7 +180,6 @@ TEST_F(LstmFp32, LstmForwardFp32Accuracy) {
     delete output;
   }
   delete kernel;
-  delete ctx;
   MS_LOG(INFO) << "LstmFp32 forward accuracy passed";
 }
 
@@ -333,7 +332,6 @@ TEST_F(LstmFp32, LstmBackwardFp32Accuracy) {
     delete output;
   }
   delete kernel;
-  delete ctx;
   MS_LOG(INFO) << "LstmFp32 backward accuracy passed";
 }
 

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRandomStandardNormal = "RandomStandardNormal";
-class MS_CORE_API RandomStandardNormal : public PrimitiveC {
+class RandomStandardNormal : public PrimitiveC {
  public:
   RandomStandardNormal() : PrimitiveC(kNameRandomStandardNormal) {}
   ~RandomStandardNormal() = default;

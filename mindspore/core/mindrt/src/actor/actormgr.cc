@@ -44,43 +44,7 @@ ActorMgr::ActorMgr() : actors(), procotols(), urls() {
   urls.clear();
 }
 
-ActorMgr::~ActorMgr() {
-  if (inner_pool_ != nullptr) {
-    delete inner_pool_;
-    inner_pool_ = nullptr;
-  }
-}
-
-void ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t max_thread_num) {
-  bool expected = false;
-  if (!initialized_.compare_exchange_strong(expected, true)) {
-    MS_LOG(DEBUG) << "Actor Manager has been initialized before";
-    return;
-  }
-  // create inner thread pool only when specified use_inner_pool
-  if (use_inner_pool) {
-    if (max_thread_num <= actor_thread_num) {
-      inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num);
-    } else {
-      inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num, max_thread_num, {});
-      inner_pool_->SetActorThreadNum(actor_thread_num);
-      inner_pool_->DisableOccupiedActorThread();
-      inner_pool_->SetKernelThreadNum(max_thread_num - actor_thread_num);
-    }
-  }
-}
-
-void ActorMgr::SetActorReady(const ActorReference &actor) const {
-  // use inner thread pool or actor thread pool created externally
-  // priority to use actor thread pool
-  ActorThreadPool *pool = actor->pool_ ? actor->pool_ : inner_pool_;
-  if (pool == nullptr) {
-    MS_LOG(ERROR) << "ThreadPool is nullptr, " << actor->pool_ << ", " << inner_pool_
-                  << ", actor: " << actor->GetAID().Name();
-    return;
-  }
-  pool->PushActorToQueue(actor.get());
-}
+ActorMgr::~ActorMgr() {}
 
 const std::string ActorMgr::GetUrl(const std::string &protocol) {
   auto it = procotols.find(protocol);
@@ -145,10 +109,6 @@ void ActorMgr::Finalize() {
     MS_LOG(INFO) << "finalize IOMgr=" << mgrIt->first.c_str();
     mgrIt->second->Finish();
   }
-
-  // delete actor thread pool if use_inner_pool
-  delete inner_pool_;
-  inner_pool_ = nullptr;
   MS_LOG(INFO) << "mindrt IOMGRS finish exiting.";
 }
 
@@ -211,7 +171,7 @@ int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> &&msg, bool remot
   }
 }
 
-AID ActorMgr::Spawn(const ActorReference &actor, bool shareThread, bool start) {
+AID ActorMgr::Spawn(ActorReference &actor, bool shareThread, bool start) {
   actorsMutex.lock();
   if (actors.find(actor->GetAID().Name()) != actors.end()) {
     actorsMutex.unlock();

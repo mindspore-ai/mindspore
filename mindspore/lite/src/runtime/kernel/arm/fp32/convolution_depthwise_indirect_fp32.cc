@@ -23,6 +23,10 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 ConvolutionDepthwiseIndirectCPUKernel::~ConvolutionDepthwiseIndirectCPUKernel() {
+  if (packed_weight_ != nullptr) {
+    free(packed_weight_);
+    packed_weight_ = nullptr;
+  }
   if (zero_ptr_ != nullptr) {
     free(zero_ptr_);
     zero_ptr_ = nullptr;
@@ -33,23 +37,60 @@ ConvolutionDepthwiseIndirectCPUKernel::~ConvolutionDepthwiseIndirectCPUKernel() 
   }
 }
 
-int ConvolutionDepthwiseIndirectCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  if (op_parameter_->is_train_session_) {
-    auto weight_tensor = in_tensors_[kWeightIndex];
+int ConvolutionDepthwiseIndirectCPUKernel::InitWeightBias() {
+  // init weight: o, h, w, i; o == group, i == 1
+  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
-    int div_flag = C8NUM;
+  int div_flag = C8NUM;
 #else
-    int div_flag = C4NUM;
+  int div_flag = C4NUM;
 #endif
-    int batch_flag = UP_DIV(weight_tensor->Batch(), div_flag);
-    int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
-    set_workspace_size(pack_weight_size * sizeof(float));
+  int batch_flag = UP_DIV(weight_tensor->Batch(), div_flag);
+  int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
+
+  packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
+  if (packed_weight_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
   }
-  auto ret = InitConvWeightBias();
+#ifdef ENABLE_AVX
+  PackDepthwiseIndirectWeightC8Fp32(origin_weight, packed_weight_, weight_tensor->Height(), weight_tensor->Width(),
+                                    weight_tensor->Batch());
+#else
+  PackDepthwiseIndirectWeightC4Fp32(origin_weight, packed_weight_, weight_tensor->Height(), weight_tensor->Width(),
+                                    weight_tensor->Batch());
+#endif
+
+  bias_data_ = reinterpret_cast<float *>(malloc(batch_flag * div_flag * sizeof(float)));
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
+  }
+
+  if (in_tensors_.size() == kInputSize2) {
+    auto bias_tensor = in_tensors_[kBiasIndex];
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->data_c());
+    memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
+  } else {
+    memset(bias_data_, 0, batch_flag * div_flag * sizeof(float));
+  }
+
+  // malloc zero ptr
+  zero_ptr_ = reinterpret_cast<float *>(malloc(batch_flag * div_flag * sizeof(float)));
+  if (zero_ptr_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
+  }
+  memset(zero_ptr_, 0, batch_flag * div_flag * sizeof(float));
+  return RET_OK;
+}
+
+int ConvolutionDepthwiseIndirectCPUKernel::Init() {
+  auto ret = InitWeightBias();
   if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise Indirect fp32 InitConvWeightBias failed.";
+    MS_LOG(ERROR) << "Convolution depthwise Indirect fp32 InitWeightBias failed.";
     return RET_ERROR;
   }
   if (!InferShapeDone()) {
@@ -96,8 +137,8 @@ int ConvolutionDepthwiseIndirectCPUKernel::ReSize() {
 }
 
 int ConvolutionDepthwiseIndirectCPUKernel::Execute(int task_id) {
-  ConvDwIndirection(output_ptr_, indirect_buffer_, reinterpret_cast<float *>(packed_weight_),
-                    reinterpret_cast<float *>(bias_data_), zero_ptr_, conv_param_, task_id);
+  ConvDwIndirection(output_ptr_, indirect_buffer_, packed_weight_, reinterpret_cast<float *>(bias_data_), zero_ptr_,
+                    conv_param_, task_id);
   return RET_OK;
 }
 
@@ -152,10 +193,11 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
   } else {
     packed_input_ = input_ptr;
   }
-  if (RepackWeight() != RET_OK) {
-    MS_LOG(ERROR) << "Repack weight failed.";
-    return RET_ERROR;
+
+  if (IsTrain() && IsTrainable()) {
+    PackWeight();
   }
+
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
   MS_ASSERT(output_ptr_ != nullptr);
@@ -173,49 +215,27 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
 }
 
 void ConvolutionDepthwiseIndirectCPUKernel::PackWeight() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
+  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
   MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
-  PackDepthwiseIndirectWeightC8Fp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),
-                                    weight_tensor->Height(), weight_tensor->Width(), weight_tensor->Batch());
+  PackDepthwiseIndirectWeightC8Fp32(origin_weight, packed_weight_, weight_tensor->Height(), weight_tensor->Width(),
+                                    weight_tensor->Batch());
 #else
-  PackDepthwiseIndirectWeightC4Fp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),
-                                    weight_tensor->Height(), weight_tensor->Width(), weight_tensor->Batch());
+  PackDepthwiseIndirectWeightC4Fp32(origin_weight, packed_weight_, weight_tensor->Height(), weight_tensor->Width(),
+                                    weight_tensor->Batch());
 #endif
 }
 
-int ConvolutionDepthwiseIndirectCPUKernel::MallocWeightBiasData() {
-  auto weight_tensor = in_tensors_[kWeightIndex];
-#ifdef ENABLE_AVX
-  int div_flag = C8NUM;
-#else
-  int div_flag = C4NUM;
-#endif
-  int batch_flag = UP_DIV(weight_tensor->Batch(), div_flag);
-  int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
-  if (!op_parameter_->is_train_session_) {
-    packed_weight_ = malloc(pack_weight_size * sizeof(float));
-    if (packed_weight_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
+int ConvolutionDepthwiseIndirectCPUKernel::Eval() {
+  auto ret = InnerKernel::Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "eval failed!";
+    return ret;
   }
-  bias_data_ = malloc(batch_flag * div_flag * sizeof(float));
-  if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+  if (IsTrainable()) {
+    PackWeight();
   }
-  memset(bias_data_, 0, batch_flag * div_flag * sizeof(float));
-
-  // malloc zero ptr
-  zero_ptr_ = reinterpret_cast<float *>(malloc(batch_flag * div_flag * sizeof(float)));
-  if (zero_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
-  }
-  memset(zero_ptr_, 0, batch_flag * div_flag * sizeof(float));
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

@@ -28,8 +28,7 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeConvolutionFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
-                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DeConvolutionFp16CPUKernel() override;
   int Init() override;
   int Run() override;
@@ -42,17 +41,17 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseCPUKernel {
   int InitRunBuf();
   void FreeRunBuf();
   int InitParam();
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
+  int InitWeightBias();
 
  private:
-  MatMulParameter *matmul_param_ = nullptr;
-  int input_plane_ = 0;
-  int kernel_plane_ = 0;
-  int output_plane_ = 0;
-  int thread_count_ = 0;
-  int thread_stride_ = 0;
+  MatMulParameter *matmul_param_;
+  int input_plane_;
+  int kernel_plane_;
+  int output_plane_;
+  int thread_count_;
+  int thread_stride_;
   float16_t *pack_input_ = nullptr;
+  float16_t *pack_weight_ = nullptr;
   float16_t *pack_output_ = nullptr;
   float16_t *tmp_buffer_ = nullptr;
   float16_t *batch_input_ = nullptr;

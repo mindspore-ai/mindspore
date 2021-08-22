@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Common module for various compression algorithms, now only including datatype definition for quantization.
+Compression common module.
 """
 
 from .constant import QuantDtype

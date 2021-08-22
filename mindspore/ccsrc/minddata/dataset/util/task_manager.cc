@@ -53,7 +53,7 @@ Status TaskManager::CreateAsyncTask(const std::string &my_name, const std::funct
   // Track all the TaskGroup. Used for control-c
   {
     LockGuard lck(&tg_lock_);
-    (void)this->grp_list_.insert(vg);
+    this->grp_list_.insert(vg);
   }
   RETURN_IF_NOT_OK((*task)->wp_.Register(vg));
   RETURN_IF_NOT_OK((*task)->Run());
@@ -170,7 +170,7 @@ Status TaskManager::DoServiceStart() {
     watchdog_grp_ = nullptr;
     return rc;
   }
-  (void)grp_list_.erase(watchdog_grp_);
+  grp_list_.erase(watchdog_grp_);
   lru_.Remove(watchdog_);
 #endif
   return Status::OK();

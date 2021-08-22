@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "nnacl/infer/string/custom_predict_infer.h"
+#include "nnacl/infer/custom_predict_infer.h"
 
 namespace mindspore {
 

@@ -98,7 +98,6 @@ TEST_F(TestGatherNdInt8, GatherNdTest) {
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
-  delete kernel;
   MS_LOG(INFO) << "TestGatherNd accuracy passed";
 }
 }  // namespace mindspore

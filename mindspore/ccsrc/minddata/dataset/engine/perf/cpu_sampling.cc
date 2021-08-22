@@ -18,9 +18,9 @@
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sys/syscall.h>
 #endif
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
-#include <algorithm>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -33,8 +33,8 @@
 using json = nlohmann::json;
 namespace mindspore {
 namespace dataset {
-bool BaseCpu::fetched_all_process_shared_ = false;
-std::unordered_map<int32_t, std::vector<pid_t>> BaseCpu::op_process_shared_ = {};
+bool BaseCpu::fetched_all_process_shared = false;
+std::unordered_map<int32_t, std::vector<pid_t>> BaseCpu::op_process_shared = {};
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #define USING_LINUX
@@ -46,8 +46,8 @@ BaseCpu::BaseCpu() {
   pre_cpu_stat_.io_stat_ = 0;
   pre_cpu_stat_.idle_stat_ = 0;
   pre_cpu_stat_.total_stat_ = 0;
-  fetched_all_process_ = false;
-  pre_fetched_state_ = false;
+  fetched_all_process = false;
+  pre_fetched_state = false;
   cpu_processor_num_ = 0;
 }
 
@@ -157,7 +157,6 @@ Status DeviceCpu::Collect(const ExecutionTree *tree) {
   return Status::OK();
 }
 Status DeviceCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
-  RETURN_UNEXPECTED_IF_NULL(name);
   name->clear();
   name->append("device_info");
   int total_samples = cpu_util_.size();
@@ -222,7 +221,6 @@ Status DeviceCpu::SaveToFile(const std::string &file_path) {
 
 Status OperatorCpu::ParseCpuInfo(int32_t op_id, int64_t thread_id,
                                  std::unordered_map<int32_t, std::unordered_map<int64_t, CpuOpStat>> *op_stat) {
-  RETURN_UNEXPECTED_IF_NULL(op_stat);
   pid_t pid = 0;
 #if defined(USING_LINUX)
   pid = syscall(SYS_getpid);
@@ -259,12 +257,11 @@ Status OperatorCpu::ParseCpuInfo(int32_t op_id, int64_t thread_id,
 }
 
 Status OperatorCpu::Collect(const ExecutionTree *tree) {
-  RETURN_UNEXPECTED_IF_NULL(tree);
   if (first_collect_) {
     for (auto iter = tree->begin(); iter != tree->end(); ++iter) {
       id_count_++;
-      op_name_[iter->id()] = iter->NameWithID();
-      op_parallel_workers_[iter->id()] = iter->num_workers();
+      op_name[iter->id()] = iter->NameWithID();
+      op_parallel_workers[iter->id()] = iter->num_workers();
     }
 #if defined(USING_LINUX)
     cpu_processor_num_ = get_nprocs_conf();
@@ -272,34 +269,34 @@ Status OperatorCpu::Collect(const ExecutionTree *tree) {
   }
 
   // Obtain the op and thread mapping
-  op_thread_.clear();
+  op_thread.clear();
   List<Task> allTasks = tree->AllTasks()->GetTask();
   for (auto &task1 : allTasks) {
     int32_t op_id = task1.get_operator_id();
-    op_thread_[op_id].emplace_back(task1.get_linux_id());
+    op_thread[op_id].emplace_back(task1.get_linux_id());
   }
 
   // add process id into op_thread
-  if (!fetched_all_process_) {
+  if (!fetched_all_process) {
     {
       py::gil_scoped_acquire gil_acquire;
       py::module ds = py::module::import("mindspore.dataset.engine.datasets");
       py::tuple process_info = ds.attr("_get_operator_process")();
       py::dict sub_process = py::reinterpret_borrow<py::dict>(process_info[0]);
-      fetched_all_process_ = py::reinterpret_borrow<py::bool_>(process_info[1]);
+      fetched_all_process = py::reinterpret_borrow<py::bool_>(process_info[1]);
       // parse dict value
-      op_process_ = toIntMap(sub_process);
-      BaseCpu::op_process_shared_ = op_process_;
-      BaseCpu::fetched_all_process_shared_ = fetched_all_process_;
+      op_process = toIntMap(sub_process);
+      BaseCpu::op_process_shared = op_process;
+      BaseCpu::fetched_all_process_shared = fetched_all_process;
     }
 
     // judge whether there is device_que operator, if so operator id may need increase by one, temp use directly
-    for (auto item : op_process_) {
+    for (auto item : op_process) {
       if (!item.second.empty()) {
-        if (op_thread_.find(item.first) != op_thread_.end()) {
-          op_thread_[item.first].insert(op_thread_[item.first].end(), item.second.begin(), item.second.end());
+        if (op_thread.find(item.first) != op_thread.end()) {
+          op_thread[item.first].insert(op_thread[item.first].end(), item.second.begin(), item.second.end());
         } else {
-          op_thread_[item.first] = item.second;
+          op_thread[item.first] = item.second;
         }
       }
     }
@@ -313,15 +310,16 @@ Status OperatorCpu::Collect(const ExecutionTree *tree) {
   if (!first_collect_) {
     // obtain all the op id in current tasks
     std::vector<int32_t> total_op_id;
-    (void)std::transform(op_thread_.begin(), op_thread_.end(), std::back_inserter(total_op_id),
-                         [](const auto &iter) { return iter.first; });
+    for (auto iter = op_thread.begin(); iter != op_thread.end(); iter++) {
+      total_op_id.emplace_back(iter->first);
+    }
 
     // iter all the op, and obtain the CPU utilization of each operator
     for (auto op_id = -1; op_id < id_count_; op_id++) {
       float user_util = 0, sys_util = 0;
       auto iter = std::find(total_op_id.begin(), total_op_id.end(), op_id);
       if (iter != total_op_id.end()) {
-        for (auto thread_id : op_thread_[op_id]) {
+        for (auto thread_id : op_thread[op_id]) {
           if (ParseCpuInfo(op_id, thread_id, &op_stat_) == Status::OK()) {
             user_util += (op_stat_[op_id][thread_id].user_stat_ - pre_op_stat_[op_id][thread_id].user_stat_) * 1.0 /
                          (total_stat_ - pre_total_stat_) * 100;
@@ -331,7 +329,7 @@ Status OperatorCpu::Collect(const ExecutionTree *tree) {
         }
       }
       CpuOpUtil info;
-      info.op_id_ = op_id;
+      info.op_id = op_id;
       info.sys_utilization_ = sys_util;
       info.user_utilization_ = user_util;
       cpu_step_util_.emplace_back(info);
@@ -339,10 +337,10 @@ Status OperatorCpu::Collect(const ExecutionTree *tree) {
     cpu_op_util_.emplace_back(cpu_step_util_);
   } else {
     // mainly obtain the init CPU execute time in first collect
-    for (const auto &iter : op_thread_) {
-      int32_t op_id = iter.first;
-      for (auto thread_id_ : iter.second) {
-        // ParseCpuInfo may execute failed for cpu data not ready, but we still get next thread cpu info
+    for (auto iter = op_thread.begin(); iter != op_thread.end(); iter++) {
+      int32_t op_id = iter->first;
+      for (auto thread_id_ : iter->second) {
+        // ignore errors in the first collect
         (void)ParseCpuInfo(op_id, thread_id_, &op_stat_);
       }
     }
@@ -357,8 +355,6 @@ Status OperatorCpu::Collect(const ExecutionTree *tree) {
 }
 
 Status OperatorCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
-  RETURN_UNEXPECTED_IF_NULL(name);
-  RETURN_UNEXPECTED_IF_NULL(extra_message);
   int total_samples = cpu_op_util_.size();
 
   // Only analyze the middle half of the samples
@@ -378,15 +374,15 @@ Status OperatorCpu::Analyze(std::string *name, double *utilization, std::string 
       sum += cpu_op_util_[i][index].sys_utilization_;
     }
     if ((end_analyze - start_analyze) > 0) {
-      op_util = 1.0 * sum * cpu_processor_num_ / (op_parallel_workers_[op_id] * (end_analyze - start_analyze));
+      op_util = 1.0 * sum * cpu_processor_num_ / (op_parallel_workers[op_id] * (end_analyze - start_analyze));
     }
     if (op_util > *utilization) {
       *utilization = op_util;
       name->clear();
-      (void)name->append(op_name_[op_id]);
+      name->append(op_name[op_id]);
     }
-    (void)extra_message->append(op_name_[op_id] + " utilization per thread: " + std::to_string(op_util) + "% (" +
-                                std::to_string(op_parallel_workers_[op_id]) + " parallel_workers); ");
+    extra_message->append(op_name[op_id] + " utiliization per thread: " + std::to_string(op_util) + "% (" +
+                          std::to_string(op_parallel_workers[op_id]) + " parallel_workers);  ");
   }
   return Status::OK();
 }
@@ -432,24 +428,24 @@ Status ProcessCpu::ParseCpuInfo() {
   uint64_t total_stat_;
   RETURN_IF_NOT_OK(GetTotalCpuTime(&total_stat_));
 
-  if (!pre_fetched_state_) {
-    process_id_.clear();
+  if (!pre_fetched_state) {
+    process_id.clear();
     pid_t main_pid = 0;
 #if defined(USING_LINUX)
     main_pid = syscall(SYS_getpid);
 #endif
-    process_id_.emplace_back(main_pid);
-    op_process_ = BaseCpu::op_process_shared_;
-    fetched_all_process_ = BaseCpu::fetched_all_process_shared_;
-    for (const auto &item : op_process_) {
-      for (const auto &id : item.second) {
-        process_id_.emplace_back(id);
+    process_id.emplace_back(main_pid);
+    op_process = BaseCpu::op_process_shared;
+    fetched_all_process = BaseCpu::fetched_all_process_shared;
+    for (auto item : op_process) {
+      for (auto id : item.second) {
+        process_id.emplace_back(id);
       }
     }
   }
 
   float user_util = 0, sys_util = 0;
-  for (const auto &pid : process_id_) {
+  for (auto pid : process_id) {
     std::string stat_path = "/proc/" + std::to_string(pid) + "/stat";
 
     std::ifstream file(stat_path);
@@ -483,12 +479,11 @@ Status ProcessCpu::ParseCpuInfo() {
   }
   pre_total_stat_ = total_stat_;
   first_collect_ = false;
-  pre_fetched_state_ = fetched_all_process_;
+  pre_fetched_state = fetched_all_process;
   return Status::OK();
 }
 
 Status ProcessCpu::Collect(const ExecutionTree *tree) {
-  RETURN_UNEXPECTED_IF_NULL(tree);
   if (first_collect_) {
 #if defined(USING_LINUX)
     cpu_processor_num_ = get_nprocs_conf();
@@ -500,9 +495,6 @@ Status ProcessCpu::Collect(const ExecutionTree *tree) {
 }
 
 Status ProcessCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
-  RETURN_UNEXPECTED_IF_NULL(name);
-  RETURN_UNEXPECTED_IF_NULL(utilization);
-  RETURN_UNEXPECTED_IF_NULL(extra_message);
   name->clear();
   name->append("process_info");
   int total_samples = process_util_.size();

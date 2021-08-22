@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDepthToSpace = "DepthToSpace";
-class MS_CORE_API DepthToSpace : public PrimitiveC {
+class DepthToSpace : public PrimitiveC {
  public:
   DepthToSpace() : PrimitiveC(kNameDepthToSpace) { InitIOName({"x"}, {"y"}); }
   ~DepthToSpace() = default;

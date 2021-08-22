@@ -162,7 +162,7 @@ class FusionEltwiseOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
   int InitWeights() override;
   void SetGlobalLocal() override;
-  int SetConstArgs() override;
+  void SetConstArgs() override;
   int Run() override;
 
   void ClearParameter() { op_parameter_ = nullptr; }

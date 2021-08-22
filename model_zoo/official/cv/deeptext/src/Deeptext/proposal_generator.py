@@ -19,6 +19,9 @@ import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore import Tensor
+from mindspore import context
+
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Proposal(nn.Cell):

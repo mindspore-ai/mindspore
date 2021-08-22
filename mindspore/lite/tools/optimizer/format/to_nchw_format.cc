@@ -18,36 +18,16 @@
 
 namespace mindspore {
 namespace opt {
-STATUS ToNCHWFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) {
+
+void ToNCHWFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) {
   MS_ASSERT(cnode != nullptr);
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
   MS_ASSERT(prim != nullptr);
-  if (prim->GetAttr(ops::kFormat) != nullptr) {
-    auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-    if (node_format == mindspore::NCHW) {
-      MS_LOG(DEBUG) << "node's format has been nchw, no need to transfer, " << cnode->fullname_with_scope();
-      return lite::RET_OK;
-    }
-    if (node_format != mindspore::NHWC) {
-      MS_LOG(ERROR) << "node's format is invalid, which must be nhwc or nchw, now is " << node_format
-                    << ", node name is " << cnode->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
-  }
   if (sensitive_ops_.find(prim->name()) != sensitive_ops_.end()) {
     trans_info->pre_ = opt::kNHWC2NCHW;
     trans_info->post_ = opt::kNCHW2NHWC;
   }
-  return lite::RET_OK;
-}
-
-STATUS ToNCHWFormat::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
-                                                     schema::Format *dst_format) {
-  MS_ASSERT(cnode != nullptr && src_format != nullptr && dst_format != nullptr);
-  *src_format = schema::Format_KHWC;
-  *dst_format = schema::Format_KCHW;
-  return lite::RET_OK;
 }
 }  // namespace opt
 }  // namespace mindspore

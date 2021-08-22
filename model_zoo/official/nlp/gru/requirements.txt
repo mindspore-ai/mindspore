@@ -1,0 +1,3 @@
+nltk
+numpy
+pyyaml

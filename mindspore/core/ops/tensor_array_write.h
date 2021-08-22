@@ -25,7 +25,7 @@ namespace ops {
 
 constexpr auto kNameTensorArrayWrite = "TensorArrayWrite";
 
-class MS_CORE_API TensorArrayWrite : public PrimitiveC {
+class TensorArrayWrite : public PrimitiveC {
  public:
   TensorArrayWrite() : PrimitiveC(kNameTensorArrayWrite) {
     InitIOName({"handle", "index", "value", "flow_in"}, {"flow_out"});

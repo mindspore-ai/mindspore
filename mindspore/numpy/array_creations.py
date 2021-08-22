@@ -49,7 +49,6 @@ _reduce_min_keepdims = P.ReduceMin(True)
 _reduce_max_keepdims = P.ReduceMax(True)
 _reduce_mean_keepdims = P.ReduceMean(True)
 
-
 def array(obj, dtype=None, copy=True, ndmin=0):
     """
     Creates a tensor.
@@ -90,7 +89,7 @@ def array(obj, dtype=None, copy=True, ndmin=0):
             _raise_value_error("Empty tensor cannot be expanded beyond the current dimension.")
         res = _expand(res, ndmin)
 
-    if copy and isinstance(obj, Tensor):
+    if copy:
         res = copy_(res)
     elif dtype is not None and dtype != res.dtype:
         res = res.astype(dtype)
@@ -235,12 +234,12 @@ def copy_(a):
 
     Args:
         a (Union[int, float, bool, list, tuple, Tensor]): Input data, in any form that can
-            be converted to a Tensor. This includes Tensor, list, tuple and numbers.
+            be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
 
     Returns:
         Tensor, has the same data as `a`.
 
-    Raises:
+     Raises:
         TypeError: If input `a` has type not specified above.
         ValueError: If input `a` has different sizes at different dimensions.
 
@@ -2209,71 +2208,22 @@ def _pad_linear(arr, pad_width, end_values):
     dtype = arr.dtype
     end_values = _convert_pad_to_nd(end_values, ndim)
     for i in range(ndim):
+        # shape [..., 1, ...]
         left_value = _slice_along_axis(arr, i, 0, 1)
         right_value = _slice_along_axis(arr, i, shape[i]-1, shape[i])
         pad_before = ()
         pad_after = ()
         if pad_width[i][0] > 0:
+            # shape [..., pad_width[i][0], ...]
             pad_before = (linspace(end_values[i][0], left_value, num=pad_width[i][0],
                                    endpoint=False, dtype=dtype, axis=i).squeeze(i+1),)
         if pad_width[i][1] > 0:
+            # shape [..., pad_width[i][1], ...]
             pad_after = linspace(right_value, end_values[i][1], num=pad_width[i][1]+1,
                                  endpoint=True, dtype=dtype, axis=i).squeeze(i+1)
             pad_after = (_slice_along_axis(pad_after, i, 1, pad_width[i][1]+1),)
         tensor_with_pad = pad_before + (arr,) + pad_after
         arr = concatenate(tensor_with_pad, axis=i)
-    return arr
-
-
-def _add_pads_before(arr, pad_args, mode):
-    """handle pads before the array"""
-    idx, array_length, times_to_pad_before, additional_pad_before, reflect_type = pad_args
-    curr_pad = None
-    endpoint_adder = None
-    edge_before = _slice_along_axis(arr, idx, 0, 1)
-    if mode == "reflect":
-        endpoint_adder = 1
-    else:
-        endpoint_adder = 0
-    # Deal with paddings before the original array
-    for times in range(times_to_pad_before):
-        if times < times_to_pad_before - 1:
-            endpoint = array_length
-        else:
-            endpoint = additional_pad_before + endpoint_adder
-        if endpoint != endpoint_adder:
-            curr_pad = _slice_along_axis(arr, idx, endpoint_adder, endpoint)
-            curr_pad = flip(curr_pad, axis=idx)
-            if reflect_type == "odd":
-                curr_pad = 2 * edge_before - curr_pad
-            arr = P.Concat(idx)((curr_pad, arr))
-            edge_before = _slice_along_axis(arr, idx, 0, 1)
-    return arr
-
-
-def _add_pads_after(arr, pad_args, mode):
-    """handle pads after the array"""
-    idx, array_length, times_to_pad_after, additional_pad_after, reflect_type = pad_args
-    curr_pad = None
-    endpoint_adder = None
-    edge_end = _slice_along_axis(arr, idx, arr.shape[idx]-1, arr.shape[idx])
-    if mode == "reflect":
-        endpoint_adder = 1
-    else:
-        endpoint_adder = 0
-    # Deal with paddings after the original array
-    for times in range(times_to_pad_after):
-        if times < times_to_pad_after - 1:
-            startpoint = arr.shape[idx] - array_length
-        else:
-            startpoint = arr.shape[idx] - additional_pad_after - endpoint_adder
-        if startpoint != arr.shape[idx] - endpoint_adder:
-            curr_pad = _slice_along_axis(arr, idx, startpoint, arr.shape[idx] - endpoint_adder)
-            curr_pad = flip(curr_pad, axis=idx)
-            if reflect_type == "odd":
-                curr_pad = 2 * edge_end - curr_pad
-            arr = P.Concat(idx)((arr, curr_pad))
-            edge_end = _slice_along_axis(arr, idx, arr.shape[idx]-1, arr.shape[idx])
     return arr
 
 
@@ -2285,18 +2235,41 @@ def _pad_symmetric(arr, pad_width, reflect_type):
         has_pad_before = (pad_width[i][0] > 0)
         has_pad_after = (pad_width[i][1] > 0)
 
+        edge_before = _slice_along_axis(arr, i, 0, 1)
+        edge_end = _slice_along_axis(arr, i, array_length-1, array_length)
         times_to_pad_before = pad_width[i][0] // array_length + 1
         additional_pad_before = pad_width[i][0] % array_length
         times_to_pad_after = pad_width[i][1] // array_length + 1
         additional_pad_after = pad_width[i][1] % array_length
+        curr_pad = None
         if has_pad_before:
             # Deal with paddings before the original array
-            pad_args = (i, array_length, times_to_pad_before, additional_pad_before, reflect_type)
-            arr = _add_pads_before(arr, pad_args, "symmetric")
+            for times in range(times_to_pad_before):
+                if times < times_to_pad_before - 1:
+                    endpoint = array_length
+                else:
+                    endpoint = additional_pad_before
+                if endpoint != 0:
+                    curr_pad = _slice_along_axis(arr, i, 0, endpoint)
+                    curr_pad = flip(curr_pad, axis=i)
+                    if reflect_type == "odd":
+                        curr_pad = 2 * edge_before - curr_pad
+                    arr = P.Concat(i)((curr_pad, arr))
+                    edge_before = _slice_along_axis(arr, i, 0, 1)
         if has_pad_after:
             # Deal with paddings after the original array
-            pad_args = (i, array_length, times_to_pad_after, additional_pad_after, reflect_type)
-            arr = _add_pads_after(arr, pad_args, "symmetric")
+            for times in range(times_to_pad_after):
+                if times < times_to_pad_after - 1:
+                    startpoint = arr.shape[i] - array_length
+                else:
+                    startpoint = arr.shape[i] - additional_pad_after
+                if startpoint != arr.shape[i]:
+                    curr_pad = _slice_along_axis(arr, i, startpoint, arr.shape[i])
+                    curr_pad = flip(curr_pad, axis=i)
+                    if reflect_type == "odd":
+                        curr_pad = 2 * edge_end - curr_pad
+                    arr = P.Concat(i)((arr, curr_pad))
+                    edge_end = _slice_along_axis(arr, i, arr.shape[i]-1, arr.shape[i])
     return arr
 
 
@@ -2305,6 +2278,7 @@ def _pad_reflect(arr, pad_width, reflect_type):
     pad the array with reflect paddings, this is very similar to symmetric paddings,
     but differs at how edges are selected.
     """
+    # pylint: disable=too-many-nested-blocks
     for i in range(arr.ndim):
         array_length = arr.shape[i]
         if array_length == 1:
@@ -2314,19 +2288,42 @@ def _pad_reflect(arr, pad_width, reflect_type):
             has_pad_before = (pad_width[i][0] > 0)
             has_pad_after = (pad_width[i][1] > 0)
 
+            edge_before = _slice_along_axis(arr, i, 0, 1)
+            edge_end = _slice_along_axis(arr, i, array_length-1, array_length)
             pad_size = array_length - 1
             times_to_pad_before = pad_width[i][0] // pad_size + 1
             additional_pad_before = pad_width[i][0] % pad_size
             times_to_pad_after = pad_width[i][1] // pad_size + 1
             additional_pad_after = pad_width[i][1] % pad_size
+            curr_pad = None
             if has_pad_before:
                 # Deal with paddings before the original array
-                pad_args = (i, array_length, times_to_pad_before, additional_pad_before, reflect_type)
-                arr = _add_pads_before(arr, pad_args, "reflect")
+                for times in range(times_to_pad_before):
+                    if times < times_to_pad_before - 1:
+                        endpoint = array_length
+                    else:
+                        endpoint = additional_pad_before + 1
+                    if endpoint != 1:
+                        curr_pad = _slice_along_axis(arr, i, 1, endpoint)
+                        curr_pad = flip(curr_pad, axis=i)
+                        if reflect_type == "odd":
+                            curr_pad = 2 * edge_before - curr_pad
+                        arr = P.Concat(i)((curr_pad, arr))
+                        edge_before = _slice_along_axis(arr, i, 0, 1)
             if has_pad_after:
                 # Deal with paddings after the original array
-                pad_args = (i, array_length, times_to_pad_after, additional_pad_after, reflect_type)
-                arr = _add_pads_after(arr, pad_args, "reflect")
+                for times in range(times_to_pad_after):
+                    if times < times_to_pad_after - 1:
+                        startpoint = arr.shape[i] - array_length
+                    else:
+                        startpoint = arr.shape[i] - additional_pad_after - 1
+                    if startpoint != arr.shape[i]-1:
+                        curr_pad = _slice_along_axis(arr, i, startpoint, arr.shape[i]-1)
+                        curr_pad = flip(curr_pad, axis=i)
+                        if reflect_type == "odd":
+                            curr_pad = 2 * edge_end - curr_pad
+                        arr = P.Concat(i)((arr, curr_pad))
+                        edge_end = _slice_along_axis(arr, i, arr.shape[i]-1, arr.shape[i])
     return arr
 
 
@@ -2479,7 +2476,7 @@ def pad(arr, pad_width, mode="constant", stat_length=None, constant_values=0,
         constant_values = _convert_pad_to_nd(constant_values, arr.ndim)
         return _pad_constant(arr, pad_width, constant_values)
     if mode in ("maximum", "minimum", "mean", "median"):
-        # support median mode once P.Sort/P.Median is supported on GPU/CPU
+        # TODO: support median mode once P.Sort/P.Median is supported on GPU/CPU
         if mode == "median":
             _raise_unimplemented_error("median mode is not supported yet")
         return _pad_statistic(arr, pad_width, stat_length, stat_func[mode])

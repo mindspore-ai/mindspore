@@ -43,9 +43,9 @@ void DropoutGradCpuBwdKernel::InitKernel(const CNodePtr &kernel_node) {
 bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
-    DropoutBackwardKernel<float16>(inputs, outputs, keep_prob_);
+    DropoutBackwardKernel<float16>(inputs, outputs, num_count_, keep_prob_);
   } else if (dtype_ == kNumberTypeFloat32) {
-    DropoutBackwardKernel<float>(inputs, outputs, keep_prob_);
+    DropoutBackwardKernel<float>(inputs, outputs, num_count_, keep_prob_);
   } else {
     MS_LOG(ERROR) << "Input data type: " << dtype_ << " is not supported for DropoutGrad kernel for CPU.";
   }
@@ -55,7 +55,8 @@ bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs, cons
 
 template <typename T>
 void DropoutGradCpuBwdKernel::DropoutBackwardKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &outputs, float keep_prob) {
+                                                    const std::vector<AddressPtr> &outputs, size_t num_count,
+                                                    float keep_prob) {
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *mask = reinterpret_cast<T *>(inputs[1]->addr);
@@ -69,7 +70,7 @@ void DropoutGradCpuBwdKernel::DropoutBackwardKernel(const std::vector<AddressPtr
       input_tmp[i] = static_cast<float>(input[i]);
       mask_tmp[i] = static_cast<float>(mask[i]);
     }
-    DropoutGrad(input_tmp, mask_tmp, output_tmp, SizeToInt(num_count_), scale);
+    DropoutGrad(input_tmp, mask_tmp, output_tmp, num_count_, scale);
     for (size_t i = 0; i < num_count_; ++i) {
       output[i] = static_cast<float16>(output_tmp[i]);
     }
@@ -77,7 +78,7 @@ void DropoutGradCpuBwdKernel::DropoutBackwardKernel(const std::vector<AddressPtr
     delete[] output_tmp;
     delete[] mask_tmp;
   } else if constexpr (std::is_same_v<T, float>) {
-    DropoutGrad(input, mask, output, SizeToInt(num_count_), scale);
+    DropoutGrad(input, mask, output, num_count_, scale);
   }
 }
 }  // namespace kernel

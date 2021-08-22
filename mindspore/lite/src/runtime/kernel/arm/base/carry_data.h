@@ -19,9 +19,7 @@
 #include <vector>
 #include "src/inner_kernel.h"
 #include "src/tensor.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
 
 namespace mindspore::kernel {
 class CarryDataKernel : public InnerKernel {
@@ -37,9 +35,7 @@ class CarryDataKernel : public InnerKernel {
                const std::vector<lite::Tensor *>::iterator &src_begin,
                const std::vector<lite::Tensor *>::iterator &src_limit);
   int MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_tensor);
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   int MoveTensorListData(lite::TensorList *dst_tensorlist, lite::TensorList *src_tensorlist);
-#endif
 };
 }  // namespace mindspore::kernel
 

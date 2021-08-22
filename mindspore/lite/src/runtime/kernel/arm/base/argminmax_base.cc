@@ -89,9 +89,6 @@ int ArgMinMaxCPUKernel::Run() {
 #endif
   } else {
     MS_LOG(ERROR) << "unsupported data type!";
-    ms_context_->allocator->Free(arg_param_->arg_elements_);
-    arg_param_->arg_elements_ = nullptr;
-    return RET_ERROR;
   }
 
   ms_context_->allocator->Free(arg_param_->arg_elements_);

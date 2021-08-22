@@ -40,18 +40,12 @@
 #include "abstract/dshape.h"
 #include "tools/converter/quantizer/huffman_encode.h"
 #include "tools/converter/quantizer/bitpacking.h"
-#include "tools/converter/quantizer/fix_bit_weight_quantizer.h"
 #include "src/lite_session.h"
 #include "tools/converter/graphdef_transform.h"
 #include "src/common/file_utils.h"
 #include "src/common/quant_utils.h"
 
 namespace mindspore::lite::quant {
-enum WeightQuantType {
-  FIXED_BIT_PER_CHANNEL = 0,
-  FIXED_BIT_PER_LAYER = 1,
-  MIXED_BIT_PER_LAYER = 2,
-};
 constexpr size_t kUint8Quantization = 8;
 constexpr size_t kMaxBit = 8;
 constexpr size_t kMaxNum1024 = 1024;
@@ -161,20 +155,17 @@ STATUS DoBitPack(const tensor::TensorPtr &weight, const size_t &bit_num, const s
   return RET_OK;
 }
 
-STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
-                   WeightQuantType weight_quant_type, TypeId quant_data_type, int index = 1);
-
 template <typename T>
 STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type, int quant_max,
-                   int quant_min, size_t bit_num, WeightQuantType weight_quant_type, TypeId quant_data_type,
-                   int index = 1, bool k_means = false) {
+                   int quant_min, size_t bit_num, bool per_channel, TypeId quant_data_type, int index = 1,
+                   bool k_means = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto dims = weight->shape();
-  if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
+  if (per_channel) {
     if (dims.size() <= 1) {
       MS_LOG(WARNING) << "dims is " << dims.size() << " can not per_channel";
-      weight_quant_type = FIXED_BIT_PER_LAYER;
+      per_channel = false;
     }
   }
 
@@ -188,7 +179,7 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
 
   std::vector<T> quant_data(elem_count);
   int ret = RET_OK;
-  if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
+  if (per_channel) {
     bool channel_at_first = true;
     int channel_cnt = -1;
     CalQuantAssitInfo(primitive, dims, index, &channel_at_first, &channel_cnt);
@@ -206,15 +197,13 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
       MS_LOG(ERROR) << "Do per channel quant failed.";
       return ret;
     }
-  } else if (weight_quant_type == FIXED_BIT_PER_LAYER) {
+  } else {
     ret = DoPerLayerQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(), &quant_params, quant_max,
                              quant_min, bit_num, k_means, &quant_data);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do per layer quant failed.";
       return ret;
     }
-  } else {
-    MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
   }
   auto status = UpdateTensorDataAndSize(weight, quant_data.data(), quant_data.size() * sizeof(T), quant_data_type);
   if (status != RET_OK) {

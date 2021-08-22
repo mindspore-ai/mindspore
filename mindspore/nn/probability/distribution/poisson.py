@@ -155,11 +155,10 @@ class Poisson(Distribution):
         return self._rate
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = 'rate = {}'.format(self.rate)
+            s = f'rate = {self.rate}'
         else:
-            s = 'batch_shape = {}'.format(self._broadcast_shape)
+            s = f'batch_shape = {self._broadcast_shape}'
         return s
 
     def _get_dist_type(self):
@@ -220,7 +219,6 @@ class Poisson(Distribution):
         safe_x = self.select(self.less(value, zeros), zeros, value)
         y = log_rate * safe_x - self.lgamma(safe_x + 1.)
         comp = self.equal(value, safe_x)
-        # pylint: disable=E1130
         log_unnormalized_prob = self.select(comp, y, -inf)
         log_normalization = self.exp(log_rate)
         return log_unnormalized_prob - log_normalization

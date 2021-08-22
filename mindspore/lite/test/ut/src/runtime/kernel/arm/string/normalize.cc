@@ -15,7 +15,7 @@
  */
 
 #include <iostream>
-#include "src/runtime/kernel/arm/string/skip_gram.h"
+#include "src/runtime/kernel/arm/fp32/skip_gram_fp32.h"
 #include "src/runtime/kernel/arm/string/normalize.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "nnacl/skip_gram_parameter.h"
@@ -32,7 +32,6 @@ class TestNormalize : public mindspore::CommonTest {
  public:
   TestNormalize() {}
   void NormalizeTestInit();
-  void TearDown() override;
 
  public:
   Tensor input_tensor_;
@@ -45,12 +44,6 @@ class TestNormalize : public mindspore::CommonTest {
   kernel::KernelCreator creator_ = nullptr;
   kernel::InnerKernel *kernel_ = nullptr;
 };
-
-void TestNormalize::TearDown() {
-  delete kernel_;
-  input_tensor_.set_data(nullptr);
-  output_tensor_.set_data(nullptr);
-}
 
 void TestNormalize::NormalizeTestInit() {
   input_tensor_.set_data_type(kObjectTypeString);
@@ -86,6 +79,9 @@ TEST_F(TestNormalize, TestSentence) {
     }
     printf("\n");
   }
+
+  input_tensor_.set_data(nullptr);
+  output_tensor_.set_data(nullptr);
 }
 
 }  // namespace mindspore

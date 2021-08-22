@@ -65,11 +65,15 @@ void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
   (void)mindspore::RDR::RecordString(module, name, somas_reuse_util_ptr_->SomasMemory());
 #endif
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
   if (save_graphs) {
-    std::string file_path = GetSaveGraphsPathName("somas_allocate_info_" + std::to_string(graph->graph_id()) + ".ir");
+    std::string file_path = save_graphs_path + "/" + "somas_allocate_info_" + std::to_string(graph->graph_id()) + ".ir";
     somas_reuse_util_ptr_->DumpSomasInfoIR(file_path);
 
-    std::string mem_file_path = GetSaveGraphsPathName("somas_mem_info_" + std::to_string(graph->graph_id()) + ".ir");
+    std::string mem_file_path = save_graphs_path + "/" + "somas_mem_info_" + std::to_string(graph->graph_id()) + ".ir";
     somas_reuse_util_ptr_->DumpSomasMemoryIR(mem_file_path);
   }
 }

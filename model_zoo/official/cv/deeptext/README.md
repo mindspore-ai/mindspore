@@ -1,4 +1,4 @@
-# DeepText
+# DeepText for Ascend
 
 - [DeepText Description](#DeepText-description)
 - [Model Architecture](#model-architecture)
@@ -73,13 +73,9 @@ Here we used 4 datasets for training, and 1 datasets for Evaluation.
     └─moxing_adapter.py                 # Moxing adapter for ModelArts
   ├─scripts
     ├─run_standalone_train_ascend.sh    # launch standalone training with ascend platform(1p)
-    ├─run_standalone_train_gpu.sh       # launch standalone training with GPU platform(1p)
     ├─run_distribute_train_ascend.sh    # launch distributed training with ascend platform(8p)
-    ├─run_distribute_train_gpu.sh       # launch distributed training with GPU platform(8p)
     ├─run_infer_310.sh                  # shell script for 310 inference
-    ├─run_eval_gpu.sh                   # launch evaluation with GPU platform
     └─run_eval_ascend.sh                # launch evaluating with ascend platform
-
   ├─src
     ├─DeepText
       ├─__init__.py                     # package init file
@@ -117,17 +113,6 @@ bash run_distribute_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [RANK_TABLE_FILE] [
 bash run_standalone_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]
 # evaluation:
 bash run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]
-```
-
-- GPU:
-
-```bash
-# distribute training example(8p)
-sh run_distribute_train_gpu.sh [IMGS_PATH] [ANNOS_PATH] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH]
-# standalone training
-sh run_standalone_train_gpu.sh [IMGS_PATH] [ANNOS_PATH] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]
-# evaluation:
-sh run_eval_gpu.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]
 ```
 
 > Notes:
@@ -302,14 +287,6 @@ Evaluation result will be stored in the example path, you can find result like t
 class 1 precision is 88.01%, recall is 82.77%
 ```
 
-Evaluation result on GPU will be as follows:
-
-```python
-========================================
-
-class 1 precision is 84.49%, recall is 88.28%
-```
-
 ## Model Export
 
 ```shell
@@ -345,34 +322,34 @@ class 1 precision is 84.24%, recall is 87.40%, F1 is 85.79%
 
 ### Training Performance
 
-| Parameters                 | Ascend                                                                                              | GPU                            |
-| -------------------------- | --------------------------------------------------------------------------------------------------- |--------------------------------------- |
-| Model Version              | Deeptext                                                                                            | Deeptext                       |
-| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8                                         | Tesla V100 PCIe 32GB; CPU 2.70GHz; 52cores; Memory 1510G; OS Ubuntu 18.04.5       |
-| uploaded Date              | 12/26/2020                                                                                          | 7/29/2021 (month/day/year)     |
-| MindSpore Version          | 1.1.0                                                                                               | 1.3.0                        |
-| Dataset                    | 66040 images                                                                                        | 66040 images                 |
-| Batch_size                 | 2                                                                                                   | 2                        |
-| Training Parameters        | src/config.py                                                                                       | src/config.py            |
-| Optimizer                  | Momentum                                                                                            | Momentum             |
-| Loss Function              | SoftmaxCrossEntropyWithLogits for classification, SmoothL2Loss for bbox regression                  | SoftmaxCrossEntropyWithLogits for classification, SmoothL2Loss for bbox regression  |
-| Loss                       | ~0.008                                                                                              | ~0.116               |
-| Total time (8p)            | 4h                                                                                                  | 9h                   |
-| Scripts                    | [deeptext script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeptext) | [deeptext script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeptext)  |
+| Parameters                 | Ascend                                                       |
+| -------------------------- | ------------------------------------------------------------ |
+| Model Version              | Deeptext                                                     |
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8   |
+| uploaded Date              | 12/26/2020                                                   |
+| MindSpore Version          | 1.1.0                                                        |
+| Dataset                    | 66040 images                                                 |
+| Batch_size                 | 2                                                            |
+| Training Parameters        | src/config.py                                                |
+| Optimizer                  | Momentum                                                     |
+| Loss Function              | SoftmaxCrossEntropyWithLogits for classification, SmoothL2Loss for bbox regression|
+| Loss                       | ~0.008                                                       |
+| Total time (8p)            | 4h                                                           |
+| Scripts                    | [deeptext script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeptext) |
 
 #### Inference Performance
 
-| Parameters          | Ascend                                                       | GPU                        |
-| ------------------- | -------------------------------------------------------------| --------------------------- |
-| Model Version       | Deeptext                                                     | Deeptext
-| Resource            | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8  | Tesla V100 PCIe 32GB; CPU 2.70GHz; 52cores; Memory 1510G; OS Ubuntu 18.04.5  |
-| Uploaded Date       | 12/26/2020                                                   | 7/29/2021 (month/day/year)    |
-| MindSpore Version   | 1.1.0                                                        | 1.3.0                         |
-| Dataset             | 229 images                                                   | 229 images              |
-| Batch_size          | 2                                                            | 2                       |
-| Accuracy            | F1 score is 84.50%                                           | F1 score is 86.34%      |
-| Total time          | 1 min                                                        | 1 min                   |
-| Model for inference | 3492M (.ckpt file)                                           | 3492M (.ckpt)           |
+| Parameters          | Ascend                 |
+| ------------------- | --------------------------- |
+| Model Version       | Deeptext                 |
+| Resource            | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8         |
+| Uploaded Date       | 12/26/2020                 |
+| MindSpore Version   | 1.1.0              |
+| Dataset             | 229 images                  |
+| Batch_size          | 2                         |
+| Accuracy            | F1 score is 84.50% |
+| Total time          | 1 min                      |
+| Model for inference | 3492M (.ckpt file)   |
 
 #### Training performance results
 
@@ -382,15 +359,7 @@ class 1 precision is 84.24%, recall is 87.40%, F1 is 85.79%
 
 | **Ascend** | train performance |
 | :--------: | :---------------: |
-|     8p     |     50 img/s      |
-
-|   **GPU**   |  train performance  |
-| :---------: | :---------------: |
-|     1p      |     5 img/s       |
-
-|   **GPU**   |  train performance  |
-| :---------: | :-----------------: |
-|     8p      |     25 img/s     |
+|     8p     |     50 img/s     |
 
 # [Description of Random Situation](#contents)
 

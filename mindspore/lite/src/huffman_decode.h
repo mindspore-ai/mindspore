@@ -76,4 +76,5 @@ class HuffmanDecode {
 
 }  // namespace lite
 }  // namespace mindspore
+
 #endif  // MINDSPORE_LITE_MINDSPORE_LITE_SRC_HUFFMAN_DECODE_H_

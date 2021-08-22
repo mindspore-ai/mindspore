@@ -19,11 +19,10 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
-#include <memory>
-#include "include/api/model.h"
-#include "include/api/context.h"
-#include "include/api/status.h"
-#include "include/api/types.h"
+#include "include/errorcode.h"
+#include "include/model.h"
+#include "include/context.h"
+#include "include/lite_session.h"
 namespace {
 constexpr int kNumPrintOfOutData = 50;
 }
@@ -96,19 +95,81 @@ void GenerateRandomData(int size, void *data, Distribution distribution) {
                         [&distribution, &random_engine]() { return static_cast<T>(distribution(random_engine)); });
 }
 
-int GenerateInputDataWithRandom(std::vector<mindspore::MSTensor> inputs) {
+int GenerateInputDataWithRandom(std::vector<mindspore::tensor::MSTensor *> inputs) {
   for (auto tensor : inputs) {
-    auto input_data = tensor.MutableData();
+    auto input_data = tensor->MutableData();
     if (input_data == nullptr) {
       std::cerr << "MallocData for inTensor failed." << std::endl;
       return -1;
     }
-    GenerateRandomData<float>(tensor.DataSize(), input_data, std::uniform_real_distribution<float>(0.1f, 1.0f));
+    GenerateRandomData<float>(tensor->Size(), input_data, std::uniform_real_distribution<float>(0.1f, 1.0f));
   }
-  return mindspore::kSuccess;
+  return mindspore::lite::RET_OK;
 }
 
-int QuickStart(int argc, const char **argv) {
+int Run(mindspore::session::LiteSession *session) {
+  auto inputs = session->GetInputs();
+
+  // Generate random data as input data.
+  auto ret = GenerateInputDataWithRandom(inputs);
+  if (ret != mindspore::lite::RET_OK) {
+    std::cerr << "Generate Random Input Data failed." << std::endl;
+    return ret;
+  }
+
+  // Run Inference.
+  ret = session->RunGraph();
+  if (ret != mindspore::lite::RET_OK) {
+    std::cerr << "Inference error " << ret << std::endl;
+    return ret;
+  }
+
+  // Get Output Tensor Data.
+  auto out_tensors = session->GetOutputs();
+  for (auto tensor : out_tensors) {
+    std::cout << "tensor name is:" << tensor.first << " tensor size is:" << tensor.second->Size()
+              << " tensor elements num is:" << tensor.second->ElementsNum() << std::endl;
+    auto out_data = reinterpret_cast<float *>(tensor.second->MutableData());
+    std::cout << "output data is:";
+    for (int i = 0; i < tensor.second->ElementsNum() && i <= kNumPrintOfOutData; i++) {
+      std::cout << out_data[i] << " ";
+    }
+    std::cout << std::endl;
+  }
+  return mindspore::lite::RET_OK;
+}
+
+mindspore::session::LiteSession *Compile(mindspore::lite::Model *model) {
+  // Create and init context.
+  auto context = std::make_shared<mindspore::lite::Context>();
+  if (context == nullptr) {
+    std::cerr << "New context failed while." << std::endl;
+    return nullptr;
+  }
+
+  // Create the session.
+  mindspore::session::LiteSession *session = mindspore::session::LiteSession::CreateSession(context.get());
+  if (session == nullptr) {
+    std::cerr << "CreateSession failed while running." << std::endl;
+    return nullptr;
+  }
+
+  // Compile graph.
+  auto ret = session->CompileGraph(model);
+  if (ret != mindspore::lite::RET_OK) {
+    delete session;
+    std::cerr << "Compile failed while running." << std::endl;
+    return nullptr;
+  }
+
+  // Note: when use model->Free(), the model can not be compiled again.
+  if (model != nullptr) {
+    model->Free();
+  }
+  return session;
+}
+
+int CompileAndRun(int argc, const char **argv) {
   if (argc < 2) {
     std::cerr << "Model file must be provided.\n";
     return -1;
@@ -116,7 +177,7 @@ int QuickStart(int argc, const char **argv) {
   // Read model file.
   auto model_path = RealPath(argv[1]);
   if (model_path.empty()) {
-    std::cerr << "Model path " << argv[1] << " is invalid.";
+    std::cerr << "model path " << argv[1] << " is invalid.";
     return -1;
   }
   size_t size = 0;
@@ -125,74 +186,33 @@ int QuickStart(int argc, const char **argv) {
     std::cerr << "Read model file failed." << std::endl;
     return -1;
   }
-
-  // Create and init context, add CPU device info
-  auto context = std::make_shared<mindspore::Context>();
-  if (context == nullptr) {
-    delete[](model_buf);
-    std::cerr << "New context failed." << std::endl;
-    return -1;
-  }
-  auto &device_list = context->MutableDeviceInfo();
-  auto device_info = std::make_shared<mindspore::CPUDeviceInfo>();
-  if (device_info == nullptr) {
-    delete[](model_buf);
-    std::cerr << "New CPUDeviceInfo failed." << std::endl;
-    return -1;
-  }
-  device_list.push_back(device_info);
-
-  // Create model
-  auto model = new (std::nothrow) mindspore::Model();
-  if (model == nullptr) {
-    delete[](model_buf);
-    std::cerr << "New Model failed." << std::endl;
-    return -1;
-  }
-  // Build model
-  auto build_ret = model->Build(model_buf, size, mindspore::kMindIR, context);
+  // Load the .ms model.
+  auto model = mindspore::lite::Model::Import(model_buf, size);
   delete[](model_buf);
-  if (build_ret != mindspore::kSuccess) {
-    delete model;
-    std::cerr << "Build model failed." << std::endl;
+  if (model == nullptr) {
+    std::cerr << "Import model file failed." << std::endl;
     return -1;
   }
-
-  // Get Input
-  auto inputs = model->GetInputs();
-  // Generate random data as input data.
-  auto ret = GenerateInputDataWithRandom(inputs);
-  if (ret != mindspore::kSuccess) {
+  // Compile MindSpore Lite model.
+  auto session = Compile(model);
+  if (session == nullptr) {
     delete model;
-    std::cerr << "Generate Random Input Data failed." << std::endl;
+    std::cerr << "Create session failed." << std::endl;
     return -1;
   }
-  // Get Output
-  auto outputs = model->GetOutputs();
-
-  // Model Predict
-  auto predict_ret = model->Predict(inputs, &outputs);
-  if (predict_ret != mindspore::kSuccess) {
+  // Run inference.
+  auto ret = Run(session);
+  if (ret != mindspore::lite::RET_OK) {
     delete model;
-    std::cerr << "Predict error " << ret << std::endl;
-    return ret;
+    delete session;
+    std::cerr << "MindSpore Lite run failed." << std::endl;
+    return -1;
   }
-
-  // Print Output Tensor Data.
-  for (auto tensor : outputs) {
-    std::cout << "tensor name is:" << tensor.Name() << " tensor size is:" << tensor.DataSize()
-              << " tensor elements num is:" << tensor.ElementNum() << std::endl;
-    auto out_data = reinterpret_cast<const float *>(tensor.Data().get());
-    std::cout << "output data is:";
-    for (int i = 0; i < tensor.ElementNum() && i <= 50; i++) {
-      std::cout << out_data[i] << " ";
-    }
-    std::cout << std::endl;
-  }
-
-  // Delete model.
+  // Delete model buffer.
   delete model;
-  return mindspore::kSuccess;
+  // Delete session buffer.
+  delete session;
+  return mindspore::lite::RET_OK;
 }
 
-int main(int argc, const char **argv) { return QuickStart(argc, argv); }
+int main(int argc, const char **argv) { return CompileAndRun(argc, argv); }

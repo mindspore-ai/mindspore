@@ -31,7 +31,6 @@ void PsDataPrefetch::CreateDataChannel(const std::string &channel_name, size_t s
   if (iter != ps_data_channel_map_.end()) {
     MS_LOG(WARNING) << "The ps data channel already exists, channel name:" << channel_name;
     auto channel = iter->second;
-    MS_ERROR_IF_NULL_WO_RET_VAL(channel);
     channel->set_step_num(step_num);
   } else {
     auto channel = std::make_shared<PsDataChannel>(channel_name, step_num);

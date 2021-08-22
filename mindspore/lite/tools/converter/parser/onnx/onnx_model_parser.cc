@@ -37,7 +37,7 @@
 #include "ops/transpose.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::converter::kFmkTypeOnnx;
+using mindspore::lite::converter::FmkType_ONNX;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -59,8 +59,8 @@ std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
   {onnx::TensorProto_DataType_BOOL, mindspore::kNumberTypeBool}};
 
 FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) {
-  string model_file = flag.model_file;
-  quant_type_ = flag.quant_type;
+  string model_file = flag.model_file_;
+  quant_type_ = flag.quant_type_;
   NotSupportOp::GetInstance()->set_fmk_type("ONNX");
   res_graph_ = std::make_shared<FuncGraph>();
   auto status = InitOriginModel(model_file);
@@ -79,10 +79,10 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
   static auto root_func_manager = Manage(res_graph_);
   for (auto &subgraph : all_subgraphs_) {
     subgraph->set_manager(root_func_manager);
-    subgraph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
+    subgraph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
   if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
@@ -95,12 +95,152 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeOnnx, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_ONNX, false);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
+  if ((status = WeightFormatTransform(all_func_graphs)) != RET_OK) {
+    MS_LOG(ERROR) << "WeightFormatTransform failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    return nullptr;
+  }
   return res_graph_;
+}
+
+STATUS OnnxModelParser::WeightFormatTransform(const std::set<FuncGraphPtr> &all_func_graphs) {
+  for (const auto &graph : all_func_graphs) {
+    MS_ASSERT(graph != nullptr);
+    auto node_list = TopoSort(graph->get_return());
+    for (auto &node : node_list) {
+      if (!utils::isa<CNodePtr>(node)) {
+        continue;
+      }
+      auto conv_cnode = node->cast<CNodePtr>();
+      if (!opt::CheckPrimitiveType(node, prim::kPrimConv2DFusion) &&
+          !opt::CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) &&
+          !opt::CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
+        continue;
+      }
+      MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
+      auto weight_node = conv_cnode->input(kConvWeightIndex);
+      MS_ASSERT(weight_node != nullptr);
+      auto tensor_info = opt::GetTensorInfo(weight_node);
+      auto status = HardCodeONNX(conv_cnode, tensor_info, graph);
+      if (status != lite::RET_OK) {
+        MS_LOG(ERROR) << "Format hard code failed: " << status << ", node: " << node->fullname_with_scope();
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+lite::STATUS OnnxModelParser::HardCodeONNX(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info,
+                                           const FuncGraphPtr &graph) {
+  MS_ASSERT(conv_cnode != nullptr);
+  MS_ASSERT(tensor_info != nullptr);
+  auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
+    return lite::RET_ERROR;
+  }
+  bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
+  int64_t format = prim->GetAttr(ops::kFormat) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kFormat)) : 0;
+  schema::Format weight_dst_format = schema::Format::Format_KHWC;
+  STATUS status = RET_OK;
+  schema::Format weight_src_format = Format_NUM_OF_FORMAT;
+  auto weight_node = conv_node->input(kConvWeightIndex);
+  switch (quant_type_) {
+    case QuantType_AwareTraining: {
+      // sum up from current onnx quant models
+      if (opt::CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
+        if (!is_depth_wise) {
+          weight_src_format = schema::Format::Format_KHWC;
+          prim->AddAttr(ops::kFormat, MakeValue<int64_t>(weight_dst_format));
+        } else {
+          prim->AddAttr(ops::kFormat, MakeValue<int64_t>(weight_dst_format));
+          weight_src_format = schema::Format::Format_CHWK;
+        }
+      } else if (opt::CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
+        prim->AddAttr(ops::kFormat, MakeValue<int64_t>(weight_dst_format));
+        weight_src_format = schema::Format::Format_KCHW;
+      } else {
+        MS_LOG(ERROR) << "Unsupported op: " << conv_node->fullname_with_scope();
+        return lite::RET_ERROR;
+      }
+    } break;
+    case QuantType_PostTraining:
+    case QuantType_WeightQuant:
+    case QuantType_QUANT_NONE: {
+      // conv (K x C/group x kH x kW) group = 1
+      // depth (K x C/group x kH x kW) group = channelOut ==> (K, multiplier, H, W)
+      // deconv (C x K/group x kH x kW) group = 1
+      // dedepth (C x K/group x kH x kW) group = channelIn ==> (C, multiplier, H, W)
+      if (opt::CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion) ||
+          opt::CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion)) {
+        if (format == schema::Format::Format_NHWC) {
+          prim->AddAttr(ops::kFormat, MakeValue<int64_t>(Format_NHWC));
+          weight_src_format = schema::Format::Format_KHWC;
+        } else if (format == schema::Format::Format_KHWC) {
+          weight_src_format = schema::Format::Format_KHWC;
+        } else {
+          prim->AddAttr(ops::kFormat, MakeValue<int64_t>(weight_dst_format));
+          weight_src_format = schema::Format::Format_KCHW;
+        }
+      }
+    } break;
+    default: {
+      MS_LOG(ERROR) << "Unsupported quantType: " << EnumNameQuantType(quant_type_)
+                    << ", node: " << conv_node->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+  }
+  status = DoWeightFormatTransform(conv_node, weight_node, graph, weight_src_format, weight_dst_format);
+  if (status != RET_OK) {
+    return RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+int OnnxModelParser::DoWeightFormatTransform(const CNodePtr &conv_node, const AnfNodePtr &weight_node,
+                                             const FuncGraphPtr &graph, schema::Format weight_src_format,
+                                             schema::Format weight_dst_format) {
+  if (utils::isa<CNodePtr>(weight_node)) {
+    auto status =
+      HandleWeightConst(graph, conv_node, weight_node->cast<CNodePtr>(), weight_src_format, weight_dst_format);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "handle weight-const failed.";
+      return RET_ERROR;
+    }
+  }
+  auto weight_value = opt::GetTensorInfo(weight_node);
+  if (weight_value != nullptr) {
+    auto status = opt::TransFilterFormat(weight_value, weight_src_format, weight_dst_format);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_src_format]) << "To"
+                    << EnumNameFormat(weight_dst_format) << " failed, node : " << conv_node->fullname_with_scope()
+                    << "quant type:" << quant_type_;
+      return RET_ERROR;
+    }
+    auto type_id = static_cast<TypeId>(weight_value->data_type());
+    auto shape = weight_value->shape();
+    std::vector<int64_t> shape_vector(shape.begin(), shape.end());
+    auto abstract = lite::CreateTensorAbstract(shape_vector, type_id);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
+    weight_node->set_abstract(abstract);
+  }
+  if (utils::isa<ParameterPtr>(weight_node)) {
+    auto status =
+      HandleWeightSharing(graph, KHWC, weight_node->cast<ParameterPtr>(), weight_src_format, weight_dst_format);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "handle weight-sharing failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 
 STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
@@ -118,7 +258,7 @@ STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
   }
   OnnxNodeParser::set_opset_version(onnx_model_.opset_import().Get(0).version());
   onnx_root_graph_ = onnx_model_.graph();
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
   return RET_OK;
 }
 STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,
@@ -156,13 +296,6 @@ STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, con
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     MS_LOG(ERROR) << "convert graph outputs failed.";
     return RET_ERROR;
-  }
-  // save original output tensor names.
-  if (root_node_name == "root_node") {
-    std::vector<std::string> output_names;
-    std::transform(onnx_graph.output().begin(), onnx_graph.output().end(), std::back_inserter(output_names),
-                   [](auto &graph_output) { return graph_output.name(); });
-    ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_names);
   }
   return status;
 }
@@ -221,7 +354,6 @@ STATUS OnnxModelParser::ConvertGraphInputs(const onnx::GraphProto &onnx_graph, c
     }
     parameter->set_abstract(abstract_tensor);
     parameter->set_name(input_value.name());
-    ConverterContext::GetInstance()->AddGraphInputTensorNames(input_value.name());
     anf_nodes_map->emplace(input_value.name(), parameter);
   }
   return RET_OK;
@@ -254,7 +386,7 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
       continue;
     }
     if (primitive_c->GetAttr(ops::kFormat) == nullptr) {
-      primitive_c->AddAttr(mindspore::ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
+      primitive_c->AddAttr(mindspore::ops::kFormat, MakeValue<int64_t>(Format_NCHW));
     }
     status = ConvertOpQuantParams(onnx_node, primitive_c);
     if (status != RET_OK) {
@@ -1254,6 +1386,6 @@ int OnnxModelParser::Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graph
   return RET_OK;
 }
 
-REG_MODEL_PARSER(kFmkTypeOnnx, converter::LiteModelParserCreator<OnnxModelParser>)
+REG_MODEL_PARSER(FmkType_ONNX, LiteModelParserCreator<OnnxModelParser>)
 }  // namespace lite
 }  // namespace mindspore

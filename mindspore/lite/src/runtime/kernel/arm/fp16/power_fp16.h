@@ -45,7 +45,7 @@ class PowerFp16CPUKernel : public InnerKernel {
   float shift_;
   float16_t *exp_data_ = nullptr;
   lite::Tensor *exp_tensor_ = nullptr;
-  TypeId exp_data_type_ = kNumberTypeFloat16;
+  TypeId exp_data_type_;
 };
 }  // namespace mindspore::kernel
 

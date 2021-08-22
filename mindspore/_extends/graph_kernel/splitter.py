@@ -24,7 +24,7 @@ from . import utils
 
 
 def split_with_json(json_str, flags_str):
-    """Call cost model to split GraphKernel"""
+    """Call costmodel to split GraphKernel"""
     try:
         graph_desc = json.loads(json_str)
         flags = json.loads(flags_str)
@@ -57,11 +57,11 @@ def _dump_split_info(flags, graph_json, graph_desc, subgraphs, graph_mode):
         return
     utils.create_dir(utils.GRAPH_KERNEL_DUMP_PATH)
     filename = os.path.join(utils.GRAPH_KERNEL_DUMP_PATH, "graph_kernel_split_mode.txt")
-    with os.fdopen(os.open(filename, os.O_WRONLY | os.O_CREAT), "a+") as f:
+    with open(filename, "a+") as f:
         f.write("********** main graph: {} **********\n".format(graph_desc.name))
         f.write("input json:\n{}\n".format(graph_json))
         f.write("graph desc:\n{}\n".format(str(graph_desc)))
-        if len(subgraphs) > 1 or subgraphs[0].stitch_info.has_stitch_op():
+        if len(subgraphs) > 1:
             for i, g in enumerate(subgraphs):
                 f.write("-------- subgraph {}, mode: {} --------\n".format(i, graph_mode[i]))
                 f.write("{}\n".format(str(g)))

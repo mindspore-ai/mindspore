@@ -123,7 +123,7 @@ std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(const schema::R
   MS_ERROR_IF_NULL_W_RET_VAL(push_weight_req, {});
   std::map<std::string, Address> upload_feature_map;
   auto fbs_feature_map = push_weight_req->feature_map();
-  MS_ERROR_IF_NULL_W_RET_VAL(fbs_feature_map, upload_feature_map);
+  MS_ERROR_IF_NULL_W_RET_VAL(push_weight_req, upload_feature_map);
   for (size_t i = 0; i < fbs_feature_map->size(); i++) {
     std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
     float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());

@@ -234,16 +234,6 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
 Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &cutoff,
                     const std::vector<uint32_t> &ignore);
 
-/// \brief Returns image with gamma correction.
-/// \param[in] input: Tensor of shape <H,W,3>/<H,W,1>/<H,W> in RGB/Grayscale and any OpenCV compatible type,
-///     see CVTensor.
-/// \param[in] gamma: Non negative real number, same as gamma in the equation. gamma larger than 1 make the shadows
-///     darker, while gamma smaller than 1 make dark regions lighter.
-/// \param[in] gain: The constant multiplier.
-/// \param[out] output: Adjusted image of same shape and type.
-Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &gamma,
-                   const float &gain);
-
 /// \brief Returns image with adjusted saturation.
 /// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
 /// \param alpha: Alpha value to adjust saturation by. Should be a positive number.

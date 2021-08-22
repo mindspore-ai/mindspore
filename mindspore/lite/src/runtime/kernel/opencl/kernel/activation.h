@@ -35,13 +35,13 @@ class ActivationOpenCLKernel : public OpenCLKernel {
   int Run() override;
   int Prepare() override;
   int CheckSpecs() override;
-  int SetConstArgs() override;
+  void SetConstArgs() override;
   void SetGlobalLocal() override;
 
  private:
   static std::string GetActTypeString(int act_type);
-  int type_ = 0;
-  float alpha_ = 0.0f;
+  int type_;
+  float alpha_;
   GpuTensorInfo outShape;
 };
 

@@ -66,7 +66,7 @@ Status RandomSharpnessOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomSharpnessOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Failed to find degrees");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Fail to find degrees");
   std::vector<float> degrees = op_params["degrees"];
   *operation = std::make_shared<vision::RandomSharpnessOperation>(degrees);
   return Status::OK();

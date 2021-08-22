@@ -38,21 +38,9 @@ class TimeMonitor(Callback):
         self.epoch_time = time.time()
 
     def epoch_begin(self, run_context):
-        """
-        Record time at the begin of epoch.
-
-        Args:
-            run_context (RunContext): Context of the process running.
-        """
         self.epoch_time = time.time()
 
     def epoch_end(self, run_context):
-        """
-        Print process cost time at the end of epoch.
-
-        Args:
-           run_context (RunContext): Context of the process running.
-        """
         epoch_seconds = (time.time() - self.epoch_time) * 1000
         step_size = self.data_size
         cb_params = run_context.original_args()

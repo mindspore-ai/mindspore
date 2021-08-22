@@ -37,7 +37,7 @@ class ReluXInt8CPUKernel : public InnerKernel {
   int Run() override;
   int DoActivation(int task_id);
 
-  ReluXQuantArg quant_arg_ = {};
+  ReluXQuantArg quant_arg_;
 
  private:
   int type_{0};

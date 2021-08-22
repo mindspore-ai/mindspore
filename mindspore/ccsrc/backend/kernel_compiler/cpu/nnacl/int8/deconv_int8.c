@@ -20,9 +20,9 @@
 int DeConvPostInt8C4(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t *out, int output_channel,
                      const ConvParameter *conv_param) {
   /* row4x4-major(ih*iw x oc*kh*kw)  ->  row4-major(oh*ow x oc) */
-  int input_plane = conv_param->input_w_ * conv_param->input_h_;
-  int kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
-  int output_plane = conv_param->output_w_ * conv_param->output_h_;
+  size_t input_plane = conv_param->input_w_ * conv_param->input_h_;
+  size_t kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
+  size_t output_plane = conv_param->output_w_ * conv_param->output_h_;
   int oc4 = UP_DIV(output_channel, C4NUM);
   int in_plane4 = UP_ROUND(input_plane, C4NUM);
 
@@ -38,7 +38,7 @@ int DeConvPostInt8C4(const int32_t *src, const int32_t *bias, int32_t *tmp, int8
   for (int c = 0; c < oc4; c++) {
     int32_t *dst_ptr = tmp + c * output_plane * C4NUM;
     const int32_t *src_ptr = src + c * in_plane4 * kernel_plane * C4NUM;
-    memset(dst_ptr, 0, (size_t)output_plane * C4NUM * sizeof(int32_t));
+    memset(dst_ptr, 0, output_plane * C4NUM * sizeof(int32_t));
 
     for (int ih = 0; ih < conv_param->input_h_; ih++) {
       for (int iw = 0; iw < conv_param->input_w_; iw++) {
@@ -81,7 +81,7 @@ int DeConvPostInt8C4(const int32_t *src, const int32_t *bias, int32_t *tmp, int8
     }       /*ih*/
   }         /*oc*/
 
-  PostFuncInt8C4(tmp, bias, out, output_channel, (size_t)output_plane, conv_param->output_channel_,
+  PostFuncInt8C4(tmp, bias, out, output_channel, output_plane, conv_param->output_channel_,
                  conv_param->conv_quant_arg_.quant_multiplier_[0], conv_param->conv_quant_arg_.left_shift_[0],
                  conv_param->conv_quant_arg_.right_shift_[0], conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
                  conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0]);
@@ -130,9 +130,9 @@ void DeConvPackInputSum(const int8_t *src, int32_t *dst, int32_t filter_zp, size
   return;
 }
 
-int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, const int32_t *weight_sum,
-               const int32_t *input_sum, size_t act_row, size_t act_col, size_t act_deep,
-               const ConvParameter *conv_param, MATMUL_OPT_R4_FUNC matmul_func) {
+int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, int32_t *weight_sum, int32_t *input_sum,
+               size_t act_row, size_t act_col, size_t act_deep, ConvParameter *conv_param,
+               MATMUL_OPT_R4_FUNC matmul_func) {
   if (matmul_func != NULL) {
     matmul_func(input, weight, output, act_row, act_col, act_deep, input_sum, weight_sum);
   } else {

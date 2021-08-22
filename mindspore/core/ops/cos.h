@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCos = "Cos";
-class MS_CORE_API Cos : public PrimitiveC {
+class Cos : public PrimitiveC {
  public:
   Cos() : PrimitiveC(kNameCos) {}
   ~Cos() = default;

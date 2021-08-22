@@ -75,8 +75,6 @@ class TensorRTOp {
   const std::vector<TensorRTOp *> &out_ops() const;
 
  protected:
-  bool IsShapeKnown();
-
   std::vector<nvinfer1::ILayer *> layers_;
 
   const schema::Primitive *op_primitive_;

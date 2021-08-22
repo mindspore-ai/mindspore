@@ -21,7 +21,6 @@ from collections import OrderedDict
 
 import numpy
 
-from mindspore._checkparam import args_type_check
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from mindspore.common._decorator import deprecated
@@ -86,7 +85,6 @@ class Cell(Cell_):
         self._cells = OrderedDict()
         self._params_list = OrderedDict()
         self._tensor_list = OrderedDict()
-        self._primitives = OrderedDict()
         self.training = False
         self.requires_grad = False
         self.pynative = False
@@ -339,7 +337,7 @@ class Cell(Cell_):
 
     def run_construct(self, cast_inputs, kwargs):
         if self.enable_hook:
-            output = self._hook_construct(*cast_inputs)
+            output = self._hook_construct(*cast_inputs, **kwargs)
         else:
             output = self.construct(*cast_inputs, **kwargs)
         return output
@@ -512,7 +510,6 @@ class Cell(Cell_):
         else:
             if isinstance(value, Primitive):
                 value.set_prim_instance_name(name)
-                self._primitives[name] = value
             object.__setattr__(self, name, value)
         if name not in Cell.IGNORE_LIST:
             self._attr_synced = False
@@ -1209,7 +1206,7 @@ class Cell(Cell_):
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
-    def _hook_construct(self, *inputs):
+    def _hook_construct(self, *inputs, **kwargs):
         """Hook construct method to replace original construct method when hook function enabled."""
         inputs = self._backward_hook(*inputs)
         inputs = self.construct(inputs)
@@ -1250,18 +1247,17 @@ class Cell(Cell_):
         for param in params:
             param.set_param_ps(init_in_server)
 
-    def set_param_fl(self, push_to_server=False, pull_from_server=False, requires_aggr=True):
+    def set_param_fl(self, push_to_server=False, pull_from_server=False):
         """
         Set the way of parameter and server interaction.
 
         Args:
             push_to_server (bool): Whether the parameter should be pushed to server. Default: False.
             pull_from_server (bool): Whether the parameter should be pulled from server. Default: False.
-            requires_aggr (bool): Whether the parameter should be aggregated in the server. Default: True.
         """
         params = self.parameters_and_names()
         for param in params:
-            param[1].set_param_fl(push_to_server, pull_from_server, requires_aggr)
+            param[1].set_param_fl(push_to_server, pull_from_server)
 
     def set_comm_fusion(self, fusion_type, recurse=True):
         """
@@ -1290,26 +1286,7 @@ class Cell(Cell_):
         elif not self._scope is None and self._scope.startswith(prefix):
             self._scope = self._scope[len(prefix):]
 
-    def _mp_comm_recompute(self, mp_comm_recompute=True):
-        for _, value in self._primitives.items():
-            if value:
-                value.add_prim_attr("recompute_comm_op", mp_comm_recompute)
-        for cell in self.cells():
-            cell._mp_comm_recompute(mp_comm_recompute)
-
-    def _recompute(self, mode=True, output_recompute=False):
-        if context.get_context("mode") == context.PYNATIVE_MODE:
-            raise TypeError("Recompute is not supported in pynative mode currently.")
-        Validator.check_bool(mode)
-        Validator.check_bool(output_recompute)
-        self._set_recompute_scope(mode)
-        if mode and not output_recompute:
-            self.add_flags(output_no_recompute=True)
-        for cell in self.cells():
-            cell._recompute(mode, True)
-
-    @args_type_check(mode=bool, output_recompute=bool, mp_comm_recompute=bool)
-    def recompute(self, **kwargs):
+    def recompute(self, mode=True, output_recompute=False):
         """
         Set the cell recomputed. All the primitive in the cell will be set recomputed. If a primitive
         set recomputed feeds into some backward nodes for computing gradient, rather than storing the
@@ -1326,25 +1303,16 @@ class Cell(Cell_):
             mode (bool): Specifies whether the cell is recomputed. Default: True.
             output_recompute (bool): Specifies whether the output of this cell is recomputed when
                 the mode is true. Note that when the mode is false, this arg is not working. Default: False.
-            mp_comm_recompute (bool): Specifies whether the model parallel communication operators in the
-                cell is recomputed in auto parallel or semi auto parallel mode. Default: True.
         """
-        if not kwargs:
-            self._recompute()
-        if 'mode' in kwargs.keys() or 'output_recompute' in kwargs.keys():
-            mode = True
-            output_recompute = False
-            if 'mode' in kwargs.keys():
-                mode = kwargs['mode']
-            if 'output_recompute' in kwargs.keys():
-                output_recompute = kwargs['output_recompute']
-            self._recompute(mode, output_recompute)
-        if 'mp_comm_recompute' in kwargs.keys():
-            self._mp_comm_recompute(kwargs['mp_comm_recompute'])
-        for key, _ in kwargs.items():
-            if key not in ('mode', 'output_recompute', 'mp_comm_recompute'):
-                raise ValueError("Recompute keyword %s is not recognized!" % key)
-
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            raise TypeError("Recompute is not supported in pynative mode currently.")
+        Validator.check_bool(mode)
+        Validator.check_bool(output_recompute)
+        self._set_recompute_scope(mode)
+        if mode and not output_recompute:
+            self.add_flags(output_no_recompute=True)
+        for cell in self.cells():
+            cell.recompute(mode, True)
 
     def infer_param_pipeline_stage(self):
         """
@@ -1435,7 +1403,8 @@ class GraphCell(Cell):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, export, load
+        >>> from mindspore import Tensor
+        >>> from mindspore.train import export, load
         >>>
         >>> net = nn.Conv2d(1, 1, kernel_size=3, weight_init="ones")
         >>> input = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
@@ -1458,6 +1427,4 @@ class GraphCell(Cell):
         return self.graph(*inputs)
 
     def __call__(self, *inputs):
-        self.phase = "graph_load_from_mindir"
-        self._add_attr("graph_load_from_mindir", self.graph)
         return self.compile_and_run(*inputs)

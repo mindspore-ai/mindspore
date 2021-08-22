@@ -54,7 +54,7 @@ int PadInt8TestInit1(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   memcpy(*correct, co, out_t->ElementsNum() * sizeof(int8_t));
 
   int padding[] = {0, 0, 0, 0, 0, 0, 2, 2};
-  memcpy(pad_param->paddings_, padding, std::min(sizeof(padding), MAX_PAD_SIZE * sizeof(int)));
+  memcpy(pad_param->paddings_, padding, MAX_PAD_SIZE * sizeof(int));
   pad_param->constant_value_ = 0;
 
   return out_t->ElementsNum();
@@ -107,7 +107,7 @@ int PadInt8TestInit2(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   memcpy(*correct, co, out_t->ElementsNum() * sizeof(int8_t));
 
   int padding[] = {0, 0, 0, 0, 3, 1, 1, 2};
-  memcpy(pad_param->paddings_, padding, std::min(sizeof(padding), MAX_PAD_SIZE * sizeof(int)));
+  memcpy(pad_param->paddings_, padding, MAX_PAD_SIZE * sizeof(int));
   pad_param->constant_value_ = 0;
 
   return out_t->ElementsNum();
@@ -174,7 +174,7 @@ int PadInt8TestInit4(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   memcpy(*correct, co, out_t->ElementsNum() * sizeof(int8_t));
 
   int padding[] = {3, 1, 1, 2, 2, 0, 1, 1};
-  memcpy(pad_param->paddings_, padding, std::min(sizeof(padding), MAX_PAD_SIZE * sizeof(int)));
+  memcpy(pad_param->paddings_, padding, MAX_PAD_SIZE * sizeof(int));
   pad_param->constant_value_ = 0;
 
   return out_t->ElementsNum();

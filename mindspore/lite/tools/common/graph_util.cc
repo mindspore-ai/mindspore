@@ -26,7 +26,6 @@
 #include "tools/common/node_util.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
-#include "tools/converter/ops/ops_def.h"
 
 namespace mindspore {
 namespace lite {
@@ -34,29 +33,6 @@ namespace {
 enum QuantBitNum { QuantBitNum_INT8 = 8, QuantBitNum_INT16 = 16 };
 const int kZeroPointGap = 128;
 }  // namespace
-int SetFuncGraphOutput(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &outputs) {
-  if (graph == nullptr || outputs.empty()) {
-    MS_LOG(DEBUG) << "Input graph is nullptr or outputs is empty";
-    return RET_INPUT_PARAM_INVALID;
-  }
-  if (outputs.size() == 1) {
-    graph->set_output(outputs.front(), false);
-    return RET_OK;
-  }
-  auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
-  if (make_tuple_prim_ptr == nullptr) {
-    MS_LOG(DEBUG) << "new MakeTuple failed";
-    return lite::RET_NULL_PTR;
-  }
-  auto make_tuple_cnode = graph->NewCNode(make_tuple_prim_ptr, outputs);
-  if (make_tuple_prim_ptr == nullptr) {
-    MS_LOG(DEBUG) << "new cnode failed";
-    return lite::RET_NULL_PTR;
-  }
-  make_tuple_cnode->set_fullname_with_scope("return tuple");
-  graph->set_output(make_tuple_cnode, false);
-  return RET_OK;
-}
 
 OpDefCopyer GetSimpleOpCopyer() {
   return [](CNodeT *inCNode) -> std::unique_ptr<CNodeT> {

@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_PadFusion;
 
 namespace mindspore::kernel {
 namespace {
-constexpr size_t kPadCommonInputSize = 2;
+constexpr size_t kPadMaxInputSize = 2;
 }  // namespace
 int PadFp16CPUKernel::RunImpl(int task_id) {
   PadFp16(input_, output_, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
@@ -53,14 +53,8 @@ int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) {
         for (int b = 0; b < block.size_[1]; b++) {
           int out_b_index = out_a_index + b * block.out_stride_[1];
           for (int c = 0; c < block.size_[2]; ++c) {
-            int out_c_index = out_b_index + c * block.out_stride_[2];
-            for (int d = 0; d < block.size_[3]; ++d) {
-              int out_d_index = out_c_index + d * block.out_stride_[3];
-              for (int e = 0; e < block.size_[4]; ++e) {
-                int output_index = out_d_index + e * block.out_stride_[4];
-                MirrorPadFp16(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[5]);
-              }
-            }
+            int output_index = out_b_index + c * block.out_stride_[2];
+            MirrorPadFp16(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[3]);
           }
         }
       }
@@ -90,11 +84,10 @@ int PadFp16CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(0);
   input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
   output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
-  MS_ASSERT(input_ != nullptr);
-  MS_ASSERT(output_ != nullptr);
+
   int ret = 0;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
-    if (in_tensors_.size() >= kPadCommonInputSize) {
+    if (in_tensors_.size() == kPadMaxInputSize) {
       ret = CopyPaddingFromInput();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "PadFp16CPUKernel CopyPaddingFromInput failed";

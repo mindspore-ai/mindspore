@@ -21,7 +21,6 @@
 #include <string>
 
 #include "runtime/device/kernel_info.h"
-#include "runtime/device/cpu/kernel_select_cpu.h"
 
 namespace mindspore {
 namespace kernel {
@@ -112,11 +111,6 @@ std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &
     MS_LOG(INFO) << "Not registered CPU kernel: op[" << kernel_name << "]!";
     return std::make_pair(false, 0);
   }
-
-  if (device::cpu::IsDynamicParamKernel(kernel_name)) {
-    return std::make_pair(true, 0);
-  }
-
   auto kernel_attrs = GetSupportedKernelAttrList(kernel_name);
   if (kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0) {
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(kernel_name, kernel::OpImplyType::kCPU);

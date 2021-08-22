@@ -21,12 +21,11 @@
 #include <memory>
 #include <string>
 
-#include "utils/visible.h"
 #include "api/ir/func_graph_manager.h"
 
 namespace mindspore::api {
 
-class MS_CORE_API FuncGraph {
+class FuncGraph {
  public:
   FuncGraph() = default;
   virtual ~FuncGraph() = default;
@@ -46,8 +45,6 @@ class MS_CORE_API FuncGraph {
   virtual void set_attr(const std::string &key, const ValuePtr &value) = 0;
 
   virtual FuncGraphManagerPtr get_manager() const = 0;
-
-  static std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &node);
 };
 }  // namespace mindspore::api
 #endif  // MINDSPORE_CORE_API_IR_FUNC_GRAPH_H_

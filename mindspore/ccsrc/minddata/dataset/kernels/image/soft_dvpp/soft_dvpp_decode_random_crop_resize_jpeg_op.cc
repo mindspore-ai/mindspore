@@ -57,7 +57,7 @@ Status SoftDvppDecodeRandomCropResizeJpegOp::Compute(const std::shared_ptr<Tenso
   SoftDpCropInfo crop_info;
   RETURN_IF_NOT_OK(GetCropInfo(input, &crop_info));
   try {
-    auto buffer = const_cast<unsigned char *>(input->GetBuffer());
+    unsigned char *buffer = const_cast<unsigned char *>(input->GetBuffer());
     CHECK_FAIL_RETURN_UNEXPECTED(buffer != nullptr,
                                  "SoftDvppDecodeRandomCropResizeJpeg: the input image buffer is empty.");
     SoftDpProcsessInfo info;
@@ -74,8 +74,7 @@ Status SoftDvppDecodeRandomCropResizeJpegOp::Compute(const std::shared_ptr<Tenso
     error_info += std::to_string(ret) + ", please check the log information for more details.";
     CHECK_FAIL_RETURN_UNEXPECTED(ret == 0, error_info);
     std::shared_ptr<CVTensor> cv_tensor = nullptr;
-
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_rgb_img, 3, &cv_tensor));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_rgb_img, &cv_tensor));
     *output = std::static_pointer_cast<Tensor>(cv_tensor);
   } catch (const cv::Exception &e) {
     std::string error = "SoftDvppDecodeRandomCropResizeJpeg:" + std::string(e.what());

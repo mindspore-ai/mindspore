@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API Log1p : public PrimitiveC {
+class Log1p : public PrimitiveC {
  public:
   Log1p() : PrimitiveC(prim::kPrimLog1p->name()) { InitIOName({"x"}, {"y"}); }
   ~Log1p() = default;

@@ -26,10 +26,7 @@
 #include "hccl/hcom.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "utils/ms_context.h"
 #include "runtime/hccl_adapter/converter.h"
-#include "runtime/device/ascend/distribute/ascend_collective.h"
-using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 
 static constexpr const char *kHcclPluginFileName = "libhccl_plugin.so";
 static constexpr const char *kHcclDeployModeEnv = "DEPLOY_MODE";
@@ -78,14 +75,13 @@ void HcclAdapter::InitPlugin() {
   if (plugin_handle_ == nullptr) {
     MS_LOG(EXCEPTION) << "Dlopen " << kHcclPluginFileName << " failed, result = " << GetDlErrorMsg();
   }
+
   init_hcom_graph_adapter_ = DlsymFuncObj(InitHcomGraphAdapter, plugin_handle_);
   finalize_hcom_graph_adapter_ = DlsymFuncObj(FinalizeHcomGraphAdapter, plugin_handle_);
   get_hccl_kernel_info_store_ = DlsymFuncObj(GetHcclKernelInfoStore, plugin_handle_);
   get_all_kernel_builder_ = DlsymFuncObj(GetAllKernelBuilder, plugin_handle_);
   init_hccl_comm_ = DlsymFuncObj(HcclCommInitClusterInfo, plugin_handle_);
   finalize_hccl_comm_ = DlsymFuncObj(HcclCommDestroy, plugin_handle_);
-  single_op_hccl_get_rank_id_ = DlsymFuncObj(HcclGetRankId, plugin_handle_);
-  single_op_hccl_get_rank_size_ = DlsymFuncObj(HcclGetRankSize, plugin_handle_);
   launch_hccl_broadcast_ = DlsymFuncObj(HcclBroadcast, plugin_handle_);
   launch_hccl_all_reduce_ = DlsymFuncObj(HcclAllReduce, plugin_handle_);
   hccl_create_group_ = DlsymFuncObj(HcomCreateGroup, plugin_handle_);
@@ -102,6 +98,7 @@ void HcclAdapter::FinalizePlugin() {
   if (plugin_handle_ == nullptr) {
     return;
   }
+
   init_hcom_graph_adapter_ = nullptr;
   finalize_hcom_graph_adapter_ = nullptr;
   get_hccl_kernel_info_store_ = nullptr;
@@ -110,10 +107,6 @@ void HcclAdapter::FinalizePlugin() {
   finalize_hccl_comm_ = nullptr;
   launch_hccl_broadcast_ = nullptr;
   launch_hccl_all_reduce_ = nullptr;
-  launch_hccl_reduce_scatter_ = nullptr;
-  launch_hccl_all_gather_ = nullptr;
-  launch_hccl_send_ = nullptr;
-  launch_hccl_recv_ = nullptr;
   hccl_create_group_ = nullptr;
   hccl_destroy_group_ = nullptr;
   hccl_get_rank_id_ = nullptr;
@@ -126,44 +119,27 @@ void HcclAdapter::FinalizePlugin() {
   plugin_handle_ = nullptr;
 }
 
-bool HcclAdapter::InitHccl() {
+bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file) {
   MS_LOG(INFO) << "Start init hccl adapter.";
   std::lock_guard<std::mutex> lock(init_mutex_);
   if (init_flag_) {
     MS_LOG(INFO) << "Hccl has been inited, skip.";
     return true;
   }
-  InitPlugin();
-  init_flag_ = true;
-  MS_LOG(INFO) << "Init hccl adapter success.";
-  return true;
-}
 
-bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file,
-                           bool is_graph_mode) {
-  MS_LOG(INFO) << "Start init hccl adapter for " << (is_graph_mode ? "graph mode." : "pynative mode.");
-  std::lock_guard<std::mutex> lock(init_mutex_);
-  if (init_flag_) {
-    MS_LOG(INFO) << "Hccl has been inited, skip.";
-    return true;
+  InitPlugin();
+  bool ret = InitKernelInfoStore(device_id, rank_id, rank_file);
+  if (!ret) {
+    return false;
   }
-  is_graph_mode_ = is_graph_mode;
-  InitPlugin();
-  if (is_graph_mode_) {
-    bool ret = InitKernelInfoStore(device_id, rank_id, rank_file);
-    if (!ret) {
-      return false;
-    }
+  ret = InitHcclComm(rank_id, rank_file);
+  if (!ret) {
+    return false;
+  }
 
-    ret = InitHcclExec();
-    if (!ret) {
-      return false;
-    }
-  } else {
-    bool ret = InitHcclComm(rank_id, rank_file);
-    if (!ret) {
-      return false;
-    }
+  ret = InitHcclExec();
+  if (!ret) {
+    return false;
   }
 
   init_flag_ = true;
@@ -172,20 +148,16 @@ bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::st
 }
 
 bool HcclAdapter::FinalizeHccl() {
+  MS_LOG(INFO) << "Start destroy hccl adapter.";
   std::lock_guard<std::mutex> lock(init_mutex_);
-  MS_LOG(INFO) << "Start destroy hccl adapter for " << (is_graph_mode_ ? "graph mode." : "pynative mode.");
   if (!init_flag_) {
     MS_LOG(INFO) << "Hccl has never been inited, skip.";
     return true;
   }
 
-  if (is_graph_mode_) {
-    (void)FinalizeHcclExec();
-    (void)FinalizeKernelInfoStore();
-  } else {
-    (void)FinalizeHcclComm();
-  }
-
+  (void)FinalizeHcclExec();
+  (void)FinalizeHcclComm();
+  (void)FinalizeKernelInfoStore();
   FinalizePlugin();
   init_flag_ = false;
   MS_LOG(INFO) << "Destroy hccl adapter success.";
@@ -266,69 +238,10 @@ HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType da
   return launch_hccl_broadcast_(buf, count, dataType, root, hccl_comm_, stream);
 }
 
-HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                                      HcclReduceOp op, aclrtStream stream, const std::string &group) const {
+HcclResult HcclAdapter::HcclAllReduce(void *sendBuf, void *recvBuf, uint64_t count, HcclDataType dataType,
+                                      HcclReduceOp op, aclrtStream stream) const {
   MS_EXCEPTION_IF_NULL(launch_hccl_all_reduce_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
-  return launch_hccl_all_reduce_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
-}
-
-HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                                          HcclReduceOp op, aclrtStream stream, const std::string &group) const {
-  MS_EXCEPTION_IF_NULL(launch_hccl_reduce_scatter_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
-  return launch_hccl_reduce_scatter_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
-}
-
-HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                                      aclrtStream stream, const std::string &group) const {
-  MS_EXCEPTION_IF_NULL(launch_hccl_all_gather_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
-  return launch_hccl_all_gather_(send_buf, recv_buf, count, dataType, hccl_comm, stream);
-}
-
-HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
-                                 aclrtStream stream, const std::string &group) const {
-  MS_EXCEPTION_IF_NULL(launch_hccl_send_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
-  return launch_hccl_send_(send_buf, count, dataType, destRank, hccl_comm, stream);
-}
-
-HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank,
-                                 aclrtStream stream, const std::string &group) const {
-  MS_EXCEPTION_IF_NULL(launch_hccl_recv_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
-  return launch_hccl_recv_(recv_buf, count, dataType, srcRank, hccl_comm, stream);
+  return launch_hccl_all_reduce_(sendBuf, recvBuf, count, dataType, op, hccl_comm_, stream);
 }
 
 bool HcclAdapter::InitKernelInfoStore(uint32_t device_id, std::string_view rank_id, std::string_view rank_file) {
@@ -425,12 +338,6 @@ bool HcclAdapter::InitHcclComm(std::string_view rank_id, std::string_view rank_f
 
 bool HcclAdapter::FinalizeHcclComm() {
   MS_LOG(INFO) << "Start finalize hccl comm.";
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  if (!task_sink) {
-    HcclCollectiveGroup::instance().DestroyCommGroup();
-  }
   if (hccl_comm_ == nullptr) {
     return true;
   }
@@ -454,16 +361,6 @@ HcclResult HcclAdapter::HcclCreateGroup(const std::string &group, uint32_t rank_
 HcclResult HcclAdapter::HcclDestroyGroup(const std::string &group) const {
   MS_EXCEPTION_IF_NULL(hccl_destroy_group_);
   return hccl_destroy_group_(group.c_str());
-}
-
-HcclResult HcclAdapter::HcclGetRankId(uint32_t *rank_id) const {
-  MS_EXCEPTION_IF_NULL(single_op_hccl_get_rank_id_);
-  return single_op_hccl_get_rank_id_(hccl_comm_, rank_id);
-}
-
-HcclResult HcclAdapter::HcclGetRankSize(uint32_t *rank_size) const {
-  MS_EXCEPTION_IF_NULL(single_op_hccl_get_rank_size_);
-  return single_op_hccl_get_rank_size_(hccl_comm_, rank_size);
 }
 
 HcclResult HcclAdapter::HcclGetRankId(const std::string &group, uint32_t *rank_id) const {

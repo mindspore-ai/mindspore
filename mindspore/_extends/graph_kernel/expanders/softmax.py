@@ -15,8 +15,7 @@
 """generate json desc for softmax"""
 from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from ._utils import Expander, ExpanderInfoValidator as VLD
-from ._utils import infer_shape_from_fractalnz, get_reduced_ori_shape, to_frac_z_axis
-
+from ._utils import infer_shape_from_fractalNz, get_reduced_ori_shape, to_frac_z_axis
 
 @VLD.add_format(DF.FRAC_NZ)
 @VLD.add_format(DF.DEFAULT)
@@ -31,7 +30,7 @@ class Softmax(Expander):
 
         ori_shape = input_x.shape
         if input_x.data_format == DF.FRAC_NZ:
-            ori_shape = infer_shape_from_fractalnz(input_x.shape)
+            ori_shape = infer_shape_from_fractalNz(input_x.shape)
 
         for i, _ in enumerate(list(axis)):
             if axis[i] < 0:

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEmbeddingLookup = "EmbeddingLookup";
-class MS_CORE_API EmbeddingLookup : public PrimitiveC {
+class EmbeddingLookup : public PrimitiveC {
  public:
   EmbeddingLookup() : PrimitiveC(kNameEmbeddingLookup) { InitIOName({"params", "indices", "offset"}, {"output"}); }
   ~EmbeddingLookup() = default;

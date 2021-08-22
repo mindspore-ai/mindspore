@@ -25,17 +25,12 @@
 namespace mindspore {
 namespace runtime {
 void KernelActor::Init() {
-  // Check device contexts number.
-  if (device_contexts_.size() != device::kDeviceContextsNumOne) {
-    MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
-  }
-
   // Set the number of actor running dependent messages.
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
 
   MS_EXCEPTION_IF_NULL(kernel_);
   real_input_num_ = AnfAlgo::GetInputTensorNum(kernel_);
-  kernel_info_ = dynamic_cast<KernelInfo *>(kernel_->kernel_info());
+  kernel_info_ = static_cast<KernelInfo *>(kernel_->kernel_info());
   is_dynamic_shape_ = AnfAlgo::IsDynamicShape(kernel_);
 
   // Init the device tensors and kernel launch info.
@@ -89,10 +84,10 @@ void KernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
   // When all the inputs are collected, then allocate memory and callback launch.
-  if (CheckRunningCondition(context)) {
+  if (CheckLaunchCondition(context)) {
     // Infer kernel shape and update abstract info for dynamic shape kernel.
     if (is_dynamic_shape_) {
-      device_contexts_[0]->UpdateDynamicShape(kernel_);
+      device_context_->UpdateDynamicShape(kernel_);
     }
 
     FetchInputDeviceTensor(context);
@@ -110,10 +105,10 @@ void KernelActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor>
   auto &sequential_num = context->sequential_num_;
   (void)input_op_controls_[sequential_num].emplace_back(input_control);
   // When all the inputs are collected, then allocate memory and callback launch.
-  if (CheckRunningCondition(context)) {
+  if (CheckLaunchCondition(context)) {
     // Infer kernel shape and update abstract info for dynamic shape kernel.
     if (is_dynamic_shape_) {
-      device_contexts_[0]->UpdateDynamicShape(kernel_);
+      device_context_->UpdateDynamicShape(kernel_);
     }
 
     FetchInputDeviceTensor(context);
@@ -135,7 +130,7 @@ void KernelActor::RunOpControlWithInputTensor(AID *const input_control, OpContex
 
   PushInputDeviceTensor(input_tensors);
   // When all the inputs are collected, then allocate memory and callback launch.
-  if (CheckRunningCondition(context)) {
+  if (CheckLaunchCondition(context)) {
     FetchOutputDeviceTensor();
     if (memory_alloc_list_.size() > 0) {
       SendMemoryAllocReq(context);
@@ -186,30 +181,30 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_contexts_[0], context,
+    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_context_, context,
           GetAID());
   } else {
-    AllocateMemory(memory_alloc_list_, device_contexts_[0]);
+    AllocateMemory(memory_alloc_list_, device_context_);
   }
 }
 
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0], context);
+    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_context_, context);
   } else {
-    FreeMemory(memory_free_list_, device_contexts_[0]);
+    FreeMemory(memory_free_list_, device_context_);
   }
 }
 
 void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(kernel_);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  MS_EXCEPTION_IF_NULL(device_context_);
   PreLaunchKernel(context);
 
   try {
-    auto ret = device_contexts_[0]->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                                 launch_info_.outputs_, is_dynamic_shape_);
+    auto ret = device_context_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
+                                             launch_info_.outputs_, is_dynamic_shape_);
     if (!ret) {
       std::string error_info = "Launch kernel failed: " + kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
@@ -231,12 +226,36 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
-  Async(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context, &GetAID());
+  Async(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_context_, context, &GetAID());
 }
 
 void KernelActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   PostLaunchKernel(context);
+}
+
+bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *const context) const {
+  MS_EXCEPTION_IF_NULL(context);
+  if (input_datas_num_ != 0) {
+    const auto &data_iter = input_op_datas_.find(context->sequential_num_);
+    if (data_iter == input_op_datas_.end()) {
+      return false;
+    }
+    if (data_iter->second.size() != input_datas_num_) {
+      return false;
+    }
+  }
+
+  if (input_controls_num_ != 0) {
+    const auto &control_iter = input_op_controls_.find(context->sequential_num_);
+    if (control_iter == input_op_controls_.end()) {
+      return false;
+    }
+    if (control_iter->second.size() != input_controls_num_) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors) {
@@ -260,25 +279,24 @@ void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tens
 void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
                                         OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_data);
-  if ((input_data->data_ == nullptr) ||
-      (input_data->data_->DeviceType() == device_contexts_[0]->GetDeviceAddressType())) {
+  if ((input_data->data_ == nullptr) || (input_data->data_->DeviceType() == device_context_->GetDeviceAddressType())) {
     return;
   }
 
   MS_LOG(DEBUG) << "Copy from device type: " << input_data->data_->DeviceType()
-                << " to device type: " << device_contexts_[0]->GetDeviceAddressType() << " in " << GetAID().Name();
+                << " to device type: " << device_context_->GetDeviceAddressType() << " in " << GetAID().Name();
   if (copy_input_device_tensors_[input_data->index_] == nullptr) {
-    copy_input_device_tensors_[input_data->index_] = device_contexts_[0]->CreateDeviceAddress(
+    copy_input_device_tensors_[input_data->index_] = device_context_->CreateDeviceAddress(
       nullptr, input_data->data_->GetSize(), input_data->data_->format(), input_data->data_->type_id());
   }
   // Dynamic shape need update size.
   copy_input_device_tensors_[input_data->index_]->SetSize(input_data->data_->GetSize());
 
   if (copy_input_device_tensors_[input_data->index_]->GetPtr() == nullptr) {
-    if (!device_contexts_[0]->AllocateMemory(copy_input_device_tensors_[input_data->index_].get(),
-                                             copy_input_device_tensors_[input_data->index_]->GetSize())) {
+    if (!device_context_->AllocateMemory(copy_input_device_tensors_[input_data->index_].get(),
+                                         copy_input_device_tensors_[input_data->index_]->GetSize())) {
       std::string error_info =
-        "Device(id:" + std::to_string(device_contexts_[0]->device_context_key().device_id_) +
+        "Device(id:" + std::to_string(device_context_->device_context_key().device_id_) +
         ") memory isn't enough and alloc failed, actor name: " + GetAID().Name() +
         ", alloc size: " + std::to_string(copy_input_device_tensors_[input_data->index_]->GetSize());
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
@@ -297,7 +315,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
 
 void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  MS_EXCEPTION_IF_NULL(device_context_);
 
   const auto &data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter != input_op_datas_.end()) {
@@ -312,12 +330,12 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
   }
 
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    auto device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
-                                                                device_contexts_[0]->GetDeviceAddressType());
+    auto device_tensor =
+      DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
     if (device_tensor == nullptr) {
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
-        ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceAddressType()));
+        ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
     if (input_device_tensors_[device_tensor_store_key.first] != device_tensor) {
@@ -421,14 +439,37 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *const context) const {
 
   // 4.Send recorder info.
   if (recorder_aid_ != nullptr) {
-    Async(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_,
-          device_contexts_[0], context);
+    Async(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_, device_context_,
+          context);
   }
 
   // No output.
   if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
       (output_result_arrows_.size() == 0)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
+  }
+}
+
+void KernelActor::EraseInput(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  if (input_datas_num_ != 0) {
+    auto ret = input_op_datas_.erase(context->sequential_num_);
+    if (ret == 0) {
+      std::string error_info = "Erase input data failed: " + GetAID().Name();
+      // The sequential num may be invalid, can't set the promise value of context.
+      MS_LOG(ERROR) << error_info << ", sequential_num: " << context->sequential_num_;
+      return;
+    }
+  }
+
+  if (input_controls_num_ != 0) {
+    auto ret = input_op_controls_.erase(context->sequential_num_);
+    if (ret == 0) {
+      std::string error_info = "Erase input controls failed: " + GetAID().Name();
+      // The sequential num may be invalid, can't set the promise value of context.
+      MS_LOG(ERROR) << error_info << ", sequential_num: " << context->sequential_num_;
+      return;
+    }
   }
 }
 }  // namespace runtime

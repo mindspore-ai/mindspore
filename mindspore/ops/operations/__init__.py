@@ -76,9 +76,9 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Adam
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ComputeAccidentalHits,
                      MaxPoolWithArgmax, OneHot, Pad, MirrorPad, Mish, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
-                     ResizeBilinear, Sigmoid, SeLU, HShrink,
+                     ResizeBilinear, Sigmoid, SeLU,
                      SigmoidCrossEntropyWithLogits, NLLLoss, BCEWithLogitsLoss,
-                     SmoothL1Loss, SoftMarginLoss, Softmax, Softsign, Softplus, LRN, RNNTLoss, DynamicRNN, DynamicGRUV2,
+                     SmoothL1Loss, Softmax, Softsign, Softplus, LRN, RNNTLoss, DynamicRNN, DynamicGRUV2,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, KLDivLoss, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
@@ -92,12 +92,11 @@ from ._quant_ops import *
 from .other_ops import (Assign, InplaceAssign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, PopulationCount, UpdateState, Load,
                         CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PullWeight, PushWeight,
-                        StartFLJob, UpdateModel, GetModel, PyFunc)
+                        StartFLJob, UpdateModel, GetModel)
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
                         CusMatMulCubeDenseRight,
-                        CusMatMulCubeFraczLeftCast, Im2Col, LoadIm2Col, UpdateThorGradient, Cholesky, CholeskyTrsm,
-                        DetTriangle,
+                        CusMatMulCubeFraczLeftCast, Im2Col, UpdateThorGradient, Cholesky, CholeskyTrsm, DetTriangle,
                         ProdForceSeA)
 from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul)
 from ._embedding_cache_ops import (CacheSwapTable, UpdateCache, MapCacheIdx, SubAndFilter,
@@ -108,19 +107,9 @@ from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAto
                          AngleEnergy, AngleAtomEnergy, AngleForceWithAtomEnergy, PMEReciprocalForce,
                          LJForce, LJEnergy, LJForceWithPMEDirectForce, PMEExcludedForce, PMEEnergy, Dihedral14LJForce,
                          Dihedral14LJForceWithDirectCF, Dihedral14LJEnergy, Dihedral14LJCFForceWithAtomEnergy,
-                         Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy,
-                         GetCenterOfGeometry, MDTemperature, MDIterationLeapFrogLiujian,
-                         CrdToUintCrd, MDIterationSetupRandState, TransferCrd, FFT3D, IFFT3D, NeighborListUpdate)
-from .sponge_update_ops import (v0coordinaterefresh, v1coordinaterefresh, v2coordinaterefresh, v3coordinaterefresh,
-                                v0forceredistribute, v1forceredistribute, v2forceredistribute, v3forceredistribute,
-                                restrainenergy, restrainforcewithatomenergyandvirial, constrainforcecyclewithvirial,
-                                refreshuintcrd, lastcrdtodr, refreshcrdvel, calculatenowrapcrd, refreshboxmaptimes,
-                                totalc6get, copyfrctosystemgrad, CrdToUintCrdQuarter,
-                                MDIterationLeapFrogLiujianWithMaxVel, GetCenterOfMass, MapCenterOfMass,
-                                NeighborListUpdateNew, MDIterationLeapFrog,
-                                MDIterationLeapFrogWithMaxVel, MDIterationGradientDescent,
-                                BondForceWithAtomEnergyAndVirial, ConstrainForceCycle)
-from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
+                         Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy, MDIterationLeapFrog,
+                         GetCenterOfGeometry, MDTemperature, NeighborListUpdate, MDIterationLeapFrogLiujian,
+                         CrdToUintCrd, MDIterationSetupRandState, TransferCrd, FFT3D, IFFT3D)
 
 __all__ = [
     'Unique',
@@ -287,7 +276,6 @@ __all__ = [
     'FloatStatus',
     'Reciprocal',
     'SmoothL1Loss',
-    'SoftMarginLoss',
     'L2Loss',
     'CTCLoss',
     'CTCGreedyDecoder',
@@ -497,39 +485,7 @@ __all__ = [
     "TensorScatterSub",
     "SoftShrink",
     "FFT3D",
-    "IFFT3D",
-    "HShrink",
-    "v0coordinaterefresh",
-    "v1coordinaterefresh",
-    "v2coordinaterefresh",
-    "v3coordinaterefresh",
-    "v0forceredistribute",
-    "v1forceredistribute",
-    "v2forceredistribute",
-    "v3forceredistribute",
-    "restrainenergy",
-    "restrainforcewithatomenergyandvirial",
-    "constrainforcecyclewithvirial",
-    "refreshuintcrd",
-    "lastcrdtodr",
-    "refreshcrdvel",
-    "calculatenowrapcrd",
-    "refreshboxmaptimes",
-    "totalc6get",
-    "copyfrctosystemgrad",
-    "CrdToUintCrdQuarter",
-    "MDIterationLeapFrogLiujianWithMaxVel",
-    "GetCenterOfMass",
-    "MapCenterOfMass",
-    "MDIterationLeapFrogWithMaxVel",
-    "MDIterationGradientDescent",
-    "BondForceWithAtomEnergyAndVirial",
-    "ConstrainForceCycle",
-    "PyFunc",
-    "BufferAppend",
-    "BufferGetItem",
-    "BufferSample",
-    "NeighborListUpdateNew",
+    "IFFT3D"
 ]
 
 __all__.sort()

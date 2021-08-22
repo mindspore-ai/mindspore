@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCropAndResize = "CropAndResize";
-class MS_CORE_API CropAndResize : public PrimitiveC {
+class CropAndResize : public PrimitiveC {
  public:
   CropAndResize() : PrimitiveC(kNameCropAndResize) { InitIOName({"x", "boxes", "box_index", "crop_size"}, {"y"}); }
   ~CropAndResize() = default;

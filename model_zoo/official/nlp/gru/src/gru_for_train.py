@@ -234,51 +234,9 @@ class GRUTrainOneStepWithLossScaleCell(nn.Cell):
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
-        if not overflow:
-            self.optimizer(grads)
-        return (loss, cond, scaling_sens)
-
-class GRUTrainOneStepCell(nn.TrainOneStepCell):
-    """
-    Encapsulation class of GRU network training.
-    Append an optimizer to the training network after that the construct
-    function can be called to create the backward graph.
-    Args:
-        network (Cell): The training network. Note that loss function should have been added.
-        optimizer (Optimizer): Optimizer for updating the weights.
-        sens (Number): The adjust parameter. Default: 1.0.
-        enable_clip_grad (boolean): If True, clip gradients in GRUTrainOneStepCell. Default: True.
-    """
-
-    def __init__(self, network, optimizer, sens=1.0, enable_clip_grad=True):
-        super(GRUTrainOneStepCell, self).__init__(network, optimizer, sens)
-        self.cast = P.Cast()
-        self.hyper_map = C.HyperMap()
-        self.clip_gradients = ClipGradients()
-        self.enable_clip_grad = enable_clip_grad
-
-    def set_sens(self, value):
-        self.sens = value
-
-    def construct(self,
-                  encoder_inputs,
-                  decoder_inputs,
-                  teacher_force,
-                  sens=None):
-        """Defines the computation performed."""
-
-        weights = self.weights
-        loss = self.network(encoder_inputs,
-                            decoder_inputs,
-                            teacher_force)
-
-        grads = self.grad(self.network, weights)(encoder_inputs,
-                                                 decoder_inputs,
-                                                 teacher_force,
-                                                 self.cast(F.tuple_to_array((self.sens,)),
-                                                           mstype.float32))
-        if self.enable_clip_grad:
-            grads = self.clip_gradients(grads, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE)
-        grads = self.grad_reducer(grads)
-        succ = self.optimizer(grads)
-        return F.depend(loss, succ)
+        if overflow:
+            succ = False
+        else:
+            succ = self.optimizer(grads)
+        ret = (loss, cond, scaling_sens)
+        return F.depend(ret, succ)

@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore import context
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE, save_graphs=True, device_target="Ascend")
 
 
 class ForwardNet(nn.Cell):
@@ -42,11 +41,7 @@ class BackwardNet(nn.Cell):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_forward():
     c1 = Tensor([0], mstype.int32)
     c2 = Tensor([0], mstype.int32)
@@ -55,11 +50,7 @@ def test_forward():
     output = forward_net(c1, c2)
     assert expect == output
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_backward():
     c1 = Tensor([0], mstype.int32)
     c2 = Tensor([0], mstype.int32)

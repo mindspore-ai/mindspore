@@ -35,8 +35,8 @@ TEST_F(MindDataTestPath, Test1) {
   auto dir_it = Path::DirIterator::OpenDirectory(&f);
   ASSERT_NE(dir_it.get(), nullptr);
   int i = 0;
-  while (dir_it->HasNext()) {
-    Path v = dir_it->Next();
+  while (dir_it->hasNext()) {
+    Path v = dir_it->next();
     MS_LOG(DEBUG) << v.toString() << "\n";
     i++;
     if (i == 10) {

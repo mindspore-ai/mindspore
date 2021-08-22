@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <string>
-#include "include/graph/op/all_ops.h"
 #include "include/graph/compatible/all_ops.h"
 #include "src/delegate/npu/op/npu_op.h"
 
@@ -47,10 +46,6 @@ class BatchnormNPUOp : public NPUOp {
 
  private:
   ge::op::BatchNormExt2 *batchnorm_ = nullptr;
-  hiai::op::Const *scale_ = nullptr;
-  hiai::op::Const *offset_ = nullptr;
-  hiai::op::Const *mean_ = nullptr;
-  hiai::op::Const *variance_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_BATCHNORM_NPU_H_

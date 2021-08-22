@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameToFormat = "ToFormat";
-class MS_CORE_API ToFormat : public PrimitiveC {
+class ToFormat : public PrimitiveC {
  public:
   ToFormat() : PrimitiveC(kNameToFormat) {}
   ~ToFormat() = default;

@@ -21,11 +21,7 @@ namespace mindspore::lite {
 int SliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
                              const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
-  if (in_tensors.size() < STRIDE_INDEX + 1) {
+  if (in_tensors.size() != 4 && in_tensors.size() != 5) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
@@ -33,8 +29,8 @@ int SliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  if (in_tensors_[BEGIN_INDEX].Data() == nullptr || in_tensors_[STRIDE_INDEX].Data() == nullptr) {
-    MS_LOG(ERROR) << "invalid pad or stride tensor for: " << op_name_;
+  if (in_tensors_[1].Data() == nullptr) {
+    MS_LOG(ERROR) << "invalid pad tensor for: " << op_name_;
     return RET_ERROR;
   }
   return RET_OK;
@@ -46,8 +42,9 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "convert StridedSlice failed: " << op_name_;
     return RET_ERROR;
   }
-  const mindspore::MSTensor &begin = in_tensors_[BEGIN_INDEX];
-  const mindspore::MSTensor &stride = in_tensors_[STRIDE_INDEX];
+  const mindspore::MSTensor &begin = in_tensors_[1];
+  // mindspore::MSTensor &end = in_tensors_[2];
+  const mindspore::MSTensor &stride = in_tensors_[3];
 
   nvinfer1::Dims start_dims = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
   nvinfer1::Dims size_dims = lite::ConvertCudaDims(out_tensors_[0].Shape());

@@ -122,7 +122,6 @@ class Softplus(Bijector):
         ones = self.fill(self.dtypeop(x), self.shape(x), 1.0)
         too_small_or_too_large = self.logicalor(too_small, too_large)
         x = self.select(too_small_or_too_large, ones, x)
-        # pylint: disable=E1130
         y = x + self.log(self.abs(self.expm1(-x)))
         return self.select(too_small, too_small_value, self.select(too_large, too_large_value, y))
 
@@ -131,11 +130,10 @@ class Softplus(Bijector):
         return self._sharpness
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            str_info = 'sharpness = {}'.format(self.sharpness)
+            str_info = f'sharpness = {self.sharpness}'
         else:
-            str_info = 'batch_shape = {}'.format(self.batch_shape)
+            str_info = f'batch_shape = {self.batch_shape}'
         return str_info
 
     def _forward(self, x):

@@ -30,7 +30,7 @@ class SoftmaxOpenCLKernel : public OpenCLKernel {
   int Run() override;
   int Prepare() override;
   int CheckSpecs() override;
-  int SetConstArgs() override;
+  void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Tune() override;
 

@@ -37,7 +37,7 @@ struct is_shared_ptr : public std::false_type {};
 template <typename T>
 struct is_shared_ptr<std::shared_ptr<T>> : public std::true_type {};
 
-class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
+class Base : public std::enable_shared_from_this<Base> {
  public:
   constexpr Base() = default;
   Base(const Base &other) : std::enable_shared_from_this<Base>(other) {}

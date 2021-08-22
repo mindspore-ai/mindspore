@@ -64,7 +64,6 @@ int load_model(Model *model, std::vector<MSTensor> *model_inputs, std::string mi
   auto context = std::make_shared<Context>();
   auto ascend310 = std::make_shared<mindspore::Ascend310DeviceInfo>();
   ascend310->SetDeviceID(device_id);
-  ascend310->SetPrecisionMode("allow_fp32_to_fp16");
   context->MutableDeviceInfo().push_back(ascend310);
   mindspore::Graph graph;
   Serialization::Load(mindir_path, ModelType::kMindIR, &graph);

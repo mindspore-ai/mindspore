@@ -26,7 +26,6 @@
 #include "runtime/framework/control_node_parser.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/abstract_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/tensor.h"
@@ -38,15 +37,16 @@ using mindspore::session::KernelWithIndex;
 using mindspore::tensor::TensorPtr;
 
 // The output actor is used to receive the output result of actor which represents the graph output.
-class OutputActor : public AbstractActor {
+class OutputActor : public OpActor<DeviceTensor> {
  public:
   OutputActor(std::string name, size_t loop_count, size_t outputs_num, bool need_loop_count)
-      : AbstractActor(name, KernelTransformType::kOutputActor, nullptr),
+      : OpActor(name),
         loop_count_(loop_count),
         current_count_(0),
         outputs_num_(outputs_num),
         current_outputs_num_(0),
-        need_loop_count_(need_loop_count) {
+        need_loop_count_(need_loop_count),
+        running_dependent_msg_num_(1) {
     outputs_.resize(outputs_num);
     output_nodes_.resize(outputs_num);
     device_contexts_.resize(outputs_num);
@@ -54,6 +54,7 @@ class OutputActor : public AbstractActor {
   ~OutputActor() override = default;
 
   void Init() override;
+  bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
 
   // The output actor collects loop count when receive the input control of loop count actor.
   void CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *const context);
@@ -79,9 +80,15 @@ class OutputActor : public AbstractActor {
   // The outputs.
   std::vector<TensorPtr> outputs_;
   std::vector<KernelWithIndex> output_nodes_;
+  std::vector<const DeviceContext *> device_contexts_;
   size_t outputs_num_;
   size_t current_outputs_num_;
   bool need_loop_count_;
+
+  // The dependent messages number of actor running.
+  int running_dependent_msg_num_;
+
+  std::vector<std::pair<size_t, AnfNodePtr>> device_tensor_store_keys_;
 };
 
 using OutputActorPtr = std::shared_ptr<OutputActor>;

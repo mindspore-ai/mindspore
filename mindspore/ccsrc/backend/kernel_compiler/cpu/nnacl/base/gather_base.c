@@ -29,14 +29,12 @@ int Gather(const void *input, int outer_size, int inner_size, int limit, const i
     int8_t *int8_out_m = int8_out + inner_size * m * indices_element_size * data_size;
 
     for (int i = 0; i < indices_element_size; ++i) {
-      int index = indices[i];
-      if (index < -limit || indices[i] >= limit) {
+      if (indices[i] < 0 || indices[i] >= limit) {
+        printf("[ERROR] [%s:%d] %s] indices[%d]:%d is out of range [%d, %d)\n", __FILE__, __LINE__, __func__, i,
+               indices[i], 0, limit);
         return NNACL_ERR;
       }
-      if (indices[i] < 0) {
-        index = limit + indices[i];
-      }
-      memcpy(int8_out_m + i * inner_size * data_size, int8_in_m + index * inner_size * data_size,
+      memcpy(int8_out_m + i * inner_size * data_size, int8_in_m + indices[i] * inner_size * data_size,
              data_size * inner_size);
     }
   }

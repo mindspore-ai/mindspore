@@ -85,6 +85,7 @@
 // IR leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/libri_speech_node.h"
 
 // IR leaf nodes disabled for android
 #ifndef ENABLE_ANDROID
@@ -94,7 +95,6 @@
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
@@ -593,16 +593,14 @@ SchemaObj::SchemaObj(const std::vector<char> &schema_file) : data_(std::make_sha
 
 // SchemaObj Init function
 Status SchemaObj::Init() {
-  if (data_ != nullptr && !data_->schema_file_.empty()) {
-    std::string real_path;
-    RETURN_IF_NOT_OK(Path::RealPath(data_->schema_file_, real_path));
-    Path schema_file(real_path);
+  if (!data_->schema_file_.empty()) {
+    Path schema_file(data_->schema_file_);
     CHECK_FAIL_RETURN_UNEXPECTED(schema_file.Exists(),
                                  "The file " + data_->schema_file_ + " does not exist or permission denied!");
 
     nlohmann::json js;
     try {
-      std::ifstream in(real_path);
+      std::ifstream in(data_->schema_file_);
       in >> js;
       CHECK_FAIL_RETURN_UNEXPECTED(js.find("columns") != js.end(),
                                    "\"columns\" node is required in the schema json file.");
@@ -930,32 +928,6 @@ CSVDataset::CSVDataset(const std::vector<std::vector<char>> &dataset_files, char
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
-FlickrDataset::FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
-                             bool decode, const std::shared_ptr<Sampler> &sampler,
-                             const std::shared_ptr<DatasetCache> &cache) {
-  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
-  auto ds =
-    std::make_shared<FlickrNode>(CharToString(dataset_dir), CharToString(annotation_file), decode, sampler_obj, cache);
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
-}
-
-FlickrDataset::FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
-                             bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
-  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
-  auto ds =
-    std::make_shared<FlickrNode>(CharToString(dataset_dir), CharToString(annotation_file), decode, sampler_obj, cache);
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
-}
-
-FlickrDataset::FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
-                             bool decode, const std::reference_wrapper<Sampler> sampler,
-                             const std::shared_ptr<DatasetCache> &cache) {
-  auto sampler_obj = sampler.get().Parse();
-  auto ds =
-    std::make_shared<FlickrNode>(CharToString(dataset_dir), CharToString(annotation_file), decode, sampler_obj, cache);
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
-}
-
 ImageFolderDataset::ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode,
                                        const std::shared_ptr<Sampler> &sampler,
                                        const std::set<std::vector<char>> &extensions,
@@ -1137,6 +1109,29 @@ MnistDataset::MnistDataset(const std::vector<char> &dataset_dir, const std::vect
   auto ds = std::make_shared<MnistNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
+
+
+LibriSpeechDataset::LibriSpeechDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                           const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<LibriSpeechNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LibriSpeechDataset::LibriSpeechDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                           const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<LibriSpeechNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LibriSpeechDataset::LibriSpeechDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                           const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<LibriSpeechNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
 
 #ifndef ENABLE_ANDROID
 TextFileDataset::TextFileDataset(const std::vector<std::vector<char>> &dataset_files, int64_t num_samples,

@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropInputFusion = "Conv2DBackpropInputFusion";
-class MS_CORE_API Conv2DBackpropInputFusion : public Conv2DBackpropInput {
+class Conv2DBackpropInputFusion : public Conv2DBackpropInput {
  public:
   Conv2DBackpropInputFusion() : Conv2DBackpropInput(kNameConv2DBackpropInputFusion) {}
   ~Conv2DBackpropInputFusion() = default;

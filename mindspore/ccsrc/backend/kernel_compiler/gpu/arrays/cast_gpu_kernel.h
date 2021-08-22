@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,18 +36,10 @@ class CastGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    S *input_addr = GetPossiblyNullDeviceAddress<S>(inputs, 0);
-    T *output_addr = GetPossiblyNullDeviceAddress<T>(outputs, 0);
+    S *input_addr = GetDeviceAddress<S>(inputs, 0);
+    T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    if (input_addr == nullptr && output_addr == nullptr) {
-      return true;
-    } else if (input_addr != nullptr && output_addr != nullptr) {
-      Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else {
-      MS_LOG(EXCEPTION)
-        << "The input and output device addresses for CastGpuKernel should be both null or both not null.";
-    }
-
+    Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 

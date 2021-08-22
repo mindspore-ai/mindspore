@@ -61,8 +61,6 @@
 #define DIMENSION_6D 6
 #define DIMENSION_7D 7
 #define DIMENSION_8D 8
-#define DIMENSION_10D 10
-#define DIMENSION_11D 11
 #define kInputIndex 0
 #define kWeightIndex 1
 #define kBiasIndex 2
@@ -76,7 +74,6 @@
 #define MAX_AXIS_SIZE 6
 #define MAX_LEN 256
 #define FLT16_MAX 65504
-#define NNACL_NC4HW4 13
 
 #ifndef ENABLE_HIGH_PERFORMANCE
 #define CHECK_NULL_RETURN(ptr)                       \
@@ -91,7 +88,7 @@
   do {                                                             \
     if ((size1) < (size2)) {                                       \
       MS_LOG(ERROR) << #size1 << " must not less than " << #size2; \
-      return lite::RET_ERROR;                                      \
+      return RET_ERROR;                                            \
     }                                                              \
   } while (0);
 
@@ -109,19 +106,11 @@
     }                                \
   } while (0);
 
-#define NNACL_CHECK_NULL_RETURN_ERR(ptr) \
-  do {                                   \
-    if ((ptr) == NULL) {                 \
-      return NNACL_NULL_PTR;             \
-    }                                    \
-  } while (0);
-
 #else
 #define CHECK_NULL_RETURN(ptr)
 #define CHECK_LESS_RETURN(size1, size2)
 #define NNACL_CHECK_ZERO_RETURN_ERR(val)
 #define NNACL_CHECK_ZERO_RETURN(val)
-#define NNACL_CHECK_NULL_RETURN_ERR(ptr)
 #endif
 
 typedef enum LiteDataType {

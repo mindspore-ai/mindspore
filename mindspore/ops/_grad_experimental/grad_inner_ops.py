@@ -31,17 +31,3 @@ def get_bprop_tensor_copy_slices(self):
         return x_grad, update_grad, zeros_like(begin), zeros_like(end), zeros_like(stride)
 
     return bprop
-
-
-@bprop_getters.register(inner.Roll)
-def get_bprop_roll(self):
-    """Generate bprop for Roll"""
-    shift = self.shift
-    axis = self.axis
-    roll_grad = inner.Roll(-shift, axis)
-
-    def bprop(x_input, out, dout):
-        dx = roll_grad(dout)
-        return (dx,)
-
-    return bprop

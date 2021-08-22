@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNegGrad = "NegGrad";
-class MS_CORE_API NegGrad : public PrimitiveC {
+class NegGrad : public PrimitiveC {
  public:
   NegGrad() : PrimitiveC(kNameNegGrad) {}
   ~NegGrad() = default;

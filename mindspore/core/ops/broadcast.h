@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBroadcast = "Broadcast";
-class MS_CORE_API Broadcast : public PrimitiveC {
+class Broadcast : public PrimitiveC {
  public:
   Broadcast() : PrimitiveC(kNameBroadcast) {}
   ~Broadcast() = default;

@@ -20,9 +20,8 @@
 #include "nnacl/fp16/matmul_fp16.h"
 
 // fp16 convolution common (im2col+gemm)
-void ConvFp16(const float16_t *input_data, float16_t *packed_input, const float16_t *packed_weight,
-              const float16_t *bias_data, float16_t *col_major_input, float16_t *output_data, int task_id,
-              const ConvParameter *conv_param) {
+void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_weight, float16_t *bias_data,
+              float16_t *col_major_input, float16_t *output_data, int task_id, ConvParameter *conv_param) {
 #ifdef ENABLE_ARM64
   const int tile_n = 16;
 #else
@@ -60,55 +59,10 @@ void ConvFp16(const float16_t *input_data, float16_t *packed_input, const float1
   }
 }
 
-void ConvOutNc8hw8Fp16(const float16_t *input_data, float16_t *packed_input, const float16_t *packed_weight,
-                       const float16_t *bias_data, float16_t *col_major_input, float16_t *output_data, int task_id,
-                       const ConvParameter *conv_param) {
-#ifdef ENABLE_ARM64
-  const int tile_n = 16;
-#else
-  const int tile_n = 12;
-#endif
-  int output_hw = conv_param->output_h_ * conv_param->output_w_;
-  int input_block = UP_DIV(output_hw, tile_n);
-  int block_per_thread = UP_DIV(input_block, conv_param->thread_num_);
-  int start_block = block_per_thread * task_id;
-  int end_block = MSMIN(start_block + block_per_thread, input_block);
-  if (start_block >= end_block) {
-    return;
-  }
-  int weight_block = UP_DIV(conv_param->output_channel_, C8NUM);
-  int deep = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
-  packed_input += deep * tile_n * task_id;
-  col_major_input += deep * tile_n * task_id;
-  size_t input_size = deep * tile_n * sizeof(float16_t);
-
-  for (int b = 0; b < conv_param->input_batch_; b++) {
-    int in_offset = b * conv_param->input_channel_ * conv_param->input_h_ * conv_param->input_w_;
-    for (int i = start_block; i < end_block; i++) {
-      int real_in_row = (i != input_block - 1) ? tile_n : output_hw - i * tile_n;
-      memset(packed_input, 0, input_size);
-      Im2ColPackUnitFp16(input_data + in_offset, conv_param, packed_input, real_in_row, i * tile_n);
-#ifdef ENABLE_ARM64
-      RowMajor2Col16MajorFp16Opt(packed_input, col_major_input, tile_n, deep);
-#else
-      RowMajor2Col12MajorFp16Opt(packed_input, col_major_input, tile_n, deep);
-#endif
-      for (int j = 0; j < weight_block; j++) {
-        int real_weight_row = (j != weight_block - 1) ? C8NUM : conv_param->output_channel_ - j * C8NUM;
-        int weight_offset = j * C8NUM * deep;
-        int bias_offset = j * real_weight_row;
-        int out_offset = j * output_hw * C8NUM + i * tile_n * real_weight_row;
-        MatMulFp16(col_major_input, packed_weight + weight_offset, output_data + out_offset, bias_data + bias_offset,
-                   conv_param->act_type_, deep, real_in_row, real_weight_row, real_weight_row, OutType_Nhwc);
-      }
-    }
-  }
-}
-
 // fp16 convolution winograd
-void ConvWinogardFp16(const float16_t *input_data, const float16_t *trans_weight, const float16_t *bias_data,
-                      float16_t *output_data, TmpBufferAddressFp16 *buffer_list, int task_id,
-                      const ConvParameter *conv_param, InputTransFp16Func in_func, OutputTransFp16Func out_func) {
+void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,
+                      float16_t *output_data, TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
+                      InputTransFp16Func in_func, OutputTransFp16Func out_func) {
 #ifdef ENABLE_ARM64
   const int tile_num = 16;
 #else
@@ -162,13 +116,8 @@ void ConvWinogardFp16(const float16_t *input_data, const float16_t *trans_weight
       }
 
       // step 4 : output transform
-      if (conv_param->out_format_ != NNACL_NC4HW4) {  // nc4hw4
-        WinogradOutputNHWCTransformFp16(gemm_out + task_id * gemm_out_offset, output_data + out_batch_offset, bias_data,
-                                        cal_num, out_tile_index, out_w_block, conv_param, out_func);
-      } else {
-        WinogradOutputNC4HW4TransformFp16(gemm_out + task_id * gemm_out_offset, output_data + out_batch_offset,
-                                          bias_data, cal_num, out_tile_index, out_w_block, conv_param, out_func);
-      }
+      WinogradOutputTransformFp16(gemm_out + task_id * gemm_out_offset, output_data + out_batch_offset, bias_data,
+                                  cal_num, out_tile_index, out_w_block, conv_param, out_func);
     }
   }
 }

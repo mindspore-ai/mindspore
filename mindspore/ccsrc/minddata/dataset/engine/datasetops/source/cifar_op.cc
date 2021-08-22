@@ -205,8 +205,8 @@ Status CifarOp::GetCifarFiles() {
   Path dir_path(folder_path_);
   auto dirIt = Path::DirIterator::OpenDirectory(&dir_path);
   if (dirIt) {
-    while (dirIt->HasNext()) {
-      Path file = dirIt->Next();
+    while (dirIt->hasNext()) {
+      Path file = dirIt->next();
       if (file.Extension() == kExtension) {
         cifar_files_.push_back(file.toString());
       }
@@ -236,7 +236,7 @@ Status CifarOp::ParseCifarData() {
 
       std::shared_ptr<Tensor> image_tensor;
       RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({kCifarImageHeight, kCifarImageWidth, kCifarImageChannel}),
-                                           data_schema_->Column(0).Type(), &image_tensor));
+                                           data_schema_->column(0).type(), &image_tensor));
       auto itr = image_tensor->begin<uint8_t>();
       uint32_t total_pix = kCifarImageHeight * kCifarImageWidth;
       for (uint32_t pix = 0; pix < total_pix; ++pix) {
@@ -368,8 +368,8 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
 Status CifarOp::ComputeColMap() {
   // set the column name map (base class field)
   if (column_name_id_map_.empty()) {
-    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->Column(i).Name()] = i;
+    for (uint32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

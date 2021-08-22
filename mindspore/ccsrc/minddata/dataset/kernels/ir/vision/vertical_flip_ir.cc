@@ -39,12 +39,6 @@ std::shared_ptr<TensorOp> VerticalFlipOperation::Build() {
   std::shared_ptr<VerticalFlipOp> tensor_op = std::make_shared<VerticalFlipOp>();
   return tensor_op;
 }
-
-Status VerticalFlipOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  *operation = std::make_shared<vision::VerticalFlipOperation>();
-  return Status::OK();
-}
-
 #endif
 
 }  // namespace vision

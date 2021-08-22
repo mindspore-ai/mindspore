@@ -19,28 +19,21 @@
 
 #include <utility>
 #include <string>
-#include "runtime/framework/actor/abstract_actor.h"
+#include "mindrt/include/actor/op_actor.h"
 #include "runtime/framework/device_tensor_store.h"
 
 namespace mindspore {
 namespace runtime {
 // The actor represents a set of common memory related operations of actor.
-class MemoryAwareActor : public AbstractActor {
+class MemoryAwareActor : public OpActor<DeviceTensor> {
  public:
-  explicit MemoryAwareActor(const std::string &name, KernelTransformType type, const AID *recorder_aid,
-                            const AID &memory_manager_aid)
-      : AbstractActor(name, type, recorder_aid), memory_manager_aid_(memory_manager_aid) {}
+  explicit MemoryAwareActor(std::string name) : OpActor(name) {}
   virtual ~MemoryAwareActor() = default;
-
   virtual void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {}
   virtual void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {}
   virtual void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {}
 
- protected:
   friend class GraphScheduler;
-
-  // The id of memory manager actor. Send message to it for alloc and free memory.
-  const AID memory_manager_aid_;
 };
 }  // namespace runtime
 }  // namespace mindspore

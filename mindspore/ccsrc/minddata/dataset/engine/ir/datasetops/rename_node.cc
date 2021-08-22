@@ -72,16 +72,5 @@ Status RenameNode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
-Status RenameNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
-                             std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("input_columns") != json_obj.end(), "Failed to find input_columns");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("output_columns") != json_obj.end(), "Failed to find output_columns");
-  std::vector<std::string> input_columns = json_obj["input_columns"];
-  std::vector<std::string> output_columns = json_obj["output_columns"];
-  *result = std::make_shared<RenameNode>(ds, input_columns, output_columns);
-  return Status::OK();
-}
-
 }  // namespace dataset
 }  // namespace mindspore

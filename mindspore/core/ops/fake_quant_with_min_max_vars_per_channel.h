@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFakeQuantWithMinMaxVarsPerChannel = "FakeQuantWithMinMaxVarsPerChannel";
-class MS_CORE_API FakeQuantWithMinMaxVarsPerChannel : public PrimitiveC {
+class FakeQuantWithMinMaxVarsPerChannel : public PrimitiveC {
  public:
   FakeQuantWithMinMaxVarsPerChannel() : PrimitiveC(kNameFakeQuantWithMinMaxVarsPerChannel) {}
   ~FakeQuantWithMinMaxVarsPerChannel() = default;

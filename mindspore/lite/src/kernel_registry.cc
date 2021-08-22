@@ -17,9 +17,7 @@
 #include <utility>
 #include <memory>
 #include "include/errorcode.h"
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 #include "include/registry/register_kernel.h"
-#endif
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "nnacl/pooling_parameter.h"
@@ -33,45 +31,40 @@
 #endif
 #include "src/common/tensor_util.h"
 
+using mindspore::kernel::CreateKernel;
 using mindspore::kernel::kBuiltin;
 using mindspore::kernel::kCPU;
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::kernel::KernelCreator;
 using mindspore::kernel::KernelKey;
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-using mindspore::registry::CreateKernel;
-using mindspore::registry::KernelDesc;
-#endif
 
 namespace mindspore::lite {
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 namespace {
 const char *const kArchCPU = "CPU";
-void KernelKeyToKernelDesc(const KernelKey &key, KernelDesc *desc) {
+void KernelKeyToKernelDesc(const KernelKey &key, kernel::KernelDesc *desc) {
   MS_ASSERT(desc != nullptr);
-  desc->data_type = static_cast<DataType>(key.data_type);
+  desc->data_type = key.data_type;
   desc->type = key.type;
   desc->arch = key.kernel_arch;
   desc->provider = key.provider;
 }
 }  // namespace
-#endif
-
-void KernelRegistry::CreatorArraysInit() {
-  std::unique_lock<std::mutex> malloc_creator_array(lock_);
-  if (creator_arrays_ == nullptr) {
-    creator_arrays_ = reinterpret_cast<KernelCreator *>(malloc(array_size_ * sizeof(KernelCreator)));
-    if (creator_arrays_ != nullptr) {
-      memset(creator_arrays_, 0, array_size_ * sizeof(KernelCreator));
-    }
-  }
-  return;
-}
 
 KernelRegistry *KernelRegistry::GetInstance() {
   static KernelRegistry instance;
+
+  std::unique_lock<std::mutex> malloc_creator_array(instance.lock_);
+  if (instance.creator_arrays_ == nullptr) {
+    instance.creator_arrays_ = reinterpret_cast<KernelCreator *>(malloc(array_size_ * sizeof(KernelCreator)));
+    if (instance.creator_arrays_ == nullptr) {
+      return nullptr;
+    }
+    memset(instance.creator_arrays_, 0, array_size_ * sizeof(KernelCreator));
+  }
   return &instance;
 }
+
+int KernelRegistry::Init() { return RET_OK; }
 
 kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   if (desc.provider == kBuiltin) {
@@ -81,9 +74,7 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
                     << desc.type;
       return nullptr;
     }
-    if (creator_arrays_ != nullptr) {
-      return creator_arrays_[index];
-    }
+    return creator_arrays_[index];
   }
   MS_LOG(ERROR) << "Call wrong interface!provider: " << desc.provider;
   return nullptr;
@@ -98,20 +89,16 @@ int KernelRegistry::GetCreatorFuncIndex(const kernel::KernelKey desc) {
 }
 
 void KernelRegistry::RegKernel(const KernelKey desc, const kernel::KernelCreator creator) {
-  CreatorArraysInit();
   int index = GetCreatorFuncIndex(desc);
   if (index >= array_size_ || index < 0) {
     MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
                   << desc.type;
     return;
   }
-  if (creator_arrays_ != nullptr) {
-    creator_arrays_[index] = creator;
-  }
+  creator_arrays_[index] = creator;
 }
 
 void KernelRegistry::RegKernel(KERNEL_ARCH arch, TypeId data_type, int op_type, kernel::KernelCreator creator) {
-  CreatorArraysInit();
   KernelKey desc = {arch, data_type, op_type};
   int index = GetCreatorFuncIndex(desc);
   if (index >= array_size_ || index < 0) {
@@ -119,10 +106,10 @@ void KernelRegistry::RegKernel(KERNEL_ARCH arch, TypeId data_type, int op_type, 
                   << desc.type;
     return;
   }
-  if (creator_arrays_ != nullptr) {
-    creator_arrays_[index] = creator;
-  }
+  creator_arrays_[index] = creator;
 }
+
+bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &new_creators) { return false; }
 
 KernelRegistry::~KernelRegistry() {
   KernelRegistry *instance = GetInstance();
@@ -138,15 +125,14 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
   return kernel_creator != nullptr;
 }
 
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                     const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
                                     kernel::LiteKernel **kernel, const void *primitive) {
   MS_ASSERT(ms_ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
-  KernelDesc desc;
+  kernel::KernelDesc desc;
   KernelKeyToKernelDesc(key, &desc);
-  auto creator = registry::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
+  CreateKernel creator = kernel::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
     return RET_NOT_SUPPORT;
   }
@@ -169,16 +155,13 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
   }
   return RET_ERROR;
 }
-#endif
 
 int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                               const InnerContext *ctx, const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
                               OpParameter *parameter, kernel::LiteKernel **kernel, const void *primitive) {
   MS_ASSERT(ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   if (key.provider == kBuiltin) {
-#endif
     auto creator = GetCreator(key);
     if (creator != nullptr) {
       auto inner_kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
@@ -195,7 +178,6 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       }
       return RET_ERROR;
     }
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   } else {
     auto ret = GetCustomKernel(in_tensors, out_tensors, ms_ctx, key, kernel, primitive);
     if (ret == RET_OK) {
@@ -203,7 +185,6 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
     }
     return ret;
   }
-#endif
   return RET_NOT_SUPPORT;
 }
 }  // namespace mindspore::lite

@@ -47,11 +47,11 @@ std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
 namespace mindspore {
 namespace kernel {
 void HcclKernelFactory::Register(const std::string &name, HcclKernelCreater &&fun) {
-  hccl_kernel_map_.emplace(name, fun);
+  hcclKernelMap_.emplace(name, std::move(fun));
 }
 
 std::shared_ptr<HcclKernel> HcclKernelFactory::Get(const std::string &name) {
-  const auto &map = Get().hccl_kernel_map_;
+  const auto &map = Get().hcclKernelMap_;
   auto it = map.find(name);
   if (it != map.end() && it->second) {
     return (it->second)();
@@ -64,15 +64,14 @@ HcclKernelFactory &HcclKernelFactory::Get() {
   return _this;
 }
 
-HcclKernel::HcclKernel()
-    : hccl_count_(0), op_type_(::HcclReduceOp::HCCL_REDUCE_SUM), root_id_(0), src_rank_(0), dest_rank_(0) {}
+HcclKernel::HcclKernel() : hccl_count_(0), op_type_(HCCL_REDUCE_SUM), root_id_(0) {}
 
 HcclKernel::~HcclKernel() {
   hccl_kernel_input_shape_list_.clear();
   hccl_kernel_output_shape_list_.clear();
   hccl_data_type_list_.clear();
   hccl_count_ = 0;
-  op_type_ = ::HcclReduceOp::HCCL_REDUCE_SUM;
+  op_type_ = HCCL_REDUCE_SUM;
   root_id_ = 0;
   input_size_list_.clear();
   output_size_list_.clear();
@@ -82,18 +81,6 @@ HcclKernel::~HcclKernel() {
 bool HcclKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   op_name_ = AnfAlgo::GetCNodeName(anf_node);
-  if (op_name_ == kHcomSend) {
-    if (!HcomUtil::GetHcomDestRank(anf_node, &dest_rank_)) {
-      MS_LOG(ERROR) << "GetHcomDestRank fail!";
-      return false;
-    }
-  }
-  if (op_name_ == kReceive) {
-    if (!HcomUtil::GetHcomSrcRank(anf_node, &src_rank_)) {
-      MS_LOG(ERROR) << "GetHcomSrcRank fail!";
-      return false;
-    }
-  }
   if (!HcomUtil::GetKernelInputShape(anf_node, &hccl_kernel_input_shape_list_)) {
     MS_LOG(ERROR) << "GetKernelInputShape fail!";
     return false;
@@ -139,10 +126,6 @@ const std::vector<size_t> &HcclKernel::GetInputSizeList() const {
   if (!input_size_list_.empty()) {
     return input_size_list_;
   }
-  if (hccl_data_type_list_.size() != hccl_kernel_input_shape_list_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid data type size " << hccl_data_type_list_.size() << " diff shape size "
-                      << hccl_kernel_input_shape_list_.size();
-  }
   for (ulong i = 0; i < hccl_data_type_list_.size(); ++i) {
     if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[i], hccl_kernel_input_shape_list_[i], &size)) {
       MS_LOG(ERROR) << "GetHcclOpInputSize failed";
@@ -162,7 +145,6 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
     return output_size_list_;
   }
   auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = AnfAlgo::GetCNodeName(cnode);
   int64_t rank_size = 1;
   if (AnfAlgo::HasNodeAttr(kAttrRankSize, cnode)) {
@@ -171,10 +153,6 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
   int64_t fusion = 0;
   if (AnfAlgo::HasNodeAttr(kAttrFusion, cnode)) {
     fusion = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
-  }
-  if (hccl_data_type_list_.size() != hccl_kernel_input_shape_list_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid data type size " << hccl_data_type_list_.size() << " diff shape size "
-                      << hccl_kernel_input_shape_list_.size();
   }
   ulong loop_size = hccl_data_type_list_.size();
   if (AnfAlgo::GetInputTensorNum(anf_node) > 1 && op_name == kAllGatherOpName && fusion >= 1) {
@@ -193,14 +171,10 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
 }
 
 const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (!workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode) ||
-      mode == kPynativeMode) {
+  if (!workspace_size_list_.empty() || hccl_data_type_list_.empty()) {
     return workspace_size_list_;
   }
+
   workspace_size_list_.emplace_back(
     hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node_.lock(), hccl_data_type_list_[0]));
   return workspace_size_list_;
@@ -230,9 +204,6 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
   MS_EXCEPTION_IF_NULL(outputs.at(0));
   auto output_data_addr = outputs.at(0)->addr;
   std::vector<uint8_t> private_def;
-  if (hccl_data_type_list_.empty()) {
-    MS_LOG(EXCEPTION) << "Hccl data type list is empty";
-  }
   HcclDataType data_type = hccl_data_type_list_[0];
   std::vector<hccl::HcclTaskInfo> task_info;
   bool ret = hccl::HcclAdapter::GetInstance().GenTask(anf_node, data_type, &task_info);

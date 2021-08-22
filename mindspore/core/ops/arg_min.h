@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMin = "ArgMin";
-class MS_CORE_API ArgMin : public PrimitiveC {
+class ArgMin : public PrimitiveC {
  public:
   ArgMin() : PrimitiveC(kNameArgMin) { InitIOName({"x"}, {"output"}); }
   explicit ArgMin(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"output"}); }

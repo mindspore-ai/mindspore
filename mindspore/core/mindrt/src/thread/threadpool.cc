@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _MSC_VER
-#include <sched.h>
-#include <unistd.h>
-#endif
+
 #include "thread/threadpool.h"
 #include "thread/core_affinity.h"
 
@@ -34,28 +31,7 @@ Worker::~Worker() {
 
 void Worker::CreateThread() { thread_ = std::thread(&Worker::Run, this); }
 
-void Worker::SetAffinity() {
-#ifdef BIND_CORE
-#ifdef __ANDROID__
-  int ret = sched_setaffinity(gettid(), sizeof(cpu_set_t), &mask_);
-  if (ret != THREAD_OK) {
-    THREAD_ERROR("bind thread %d to cpu failed. ERROR %d", gettid(), errno);
-  }
-  return;
-#else
-#if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
-  int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &mask_);
-  if (ret != THREAD_OK) {
-    THREAD_ERROR("bind thread %lu to cpu failed. ERROR %d", pthread_self(), errno);
-  }
-  return;
-#endif
-#endif
-#endif
-}
-
 void Worker::Run() {
-  SetAffinity();
 #if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
   static std::atomic_int index = {0};
   pthread_setname_np(pthread_self(), ("KernelThread_" + std::to_string(index++)).c_str());
@@ -129,7 +105,7 @@ ThreadPool::~ThreadPool() {
   THREAD_INFO("destruct success");
 }
 
-int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_list) {
+int ThreadPool::CreateThreads(size_t thread_num) {
   size_t core_num = std::thread::hardware_concurrency();
   thread_num = thread_num < core_num ? thread_num : core_num;
   THREAD_INFO("ThreadInfo, Num: [%zu], CoreNum: [%zu]", thread_num, core_num);
@@ -141,14 +117,6 @@ int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_li
   for (size_t i = 0; i < thread_num; ++i) {
     auto worker = new (std::nothrow) Worker();
     THREAD_ERROR_IF_NULL(worker);
-#ifdef BIND_CORE
-    cpu_set_t mask;
-    CPU_ZERO(&mask);
-    if (core_list.size() > 0) {
-      CPU_SET(core_list[workers_.size() % core_list.size()], &mask);
-    }
-    worker->set_mask(mask);
-#endif
     worker->CreateThread();
     workers_.push_back(worker);
     THREAD_INFO("create kernel thread[%zu]", i);
@@ -159,7 +127,7 @@ int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_li
 int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) const {
   // distribute task to the KernelThread and the idle ActorThread,
   // if the task num is greater than the KernelThread num
-  THREAD_DEBUG("launch: %d", task_num);
+  THREAD_INFO("launch: %d", task_num);
   Task task = {func, content};
 
   DistributeTask(&task, task_num);
@@ -175,11 +143,11 @@ int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) 
   return THREAD_OK;
 }
 
-void ThreadPool::SyncRunTask(Task *task, int start_num, int task_num) const {
+void ThreadPool::SyncRunTask(Task *task, int task_num) const {
   // run task sequentially
   // if the current thread is not the actor thread
-  float per_scale = kMaxScale / (task_num - start_num);
-  for (int i = start_num; i < task_num; ++i) {
+  float per_scale = kMaxScale / task_num;
+  for (int i = 0; i < task_num; ++i) {
     float lhs_scale = i * per_scale;
     float rhs_scale = (i + 1) * per_scale;
     rhs_scale = i == task_num - 1 ? kMaxScale : rhs_scale;
@@ -197,11 +165,7 @@ void ThreadPool::DistributeTask(Task *task, int task_num) const {
   int sum_frequency = 0;
   std::vector<Worker *> assigned;
   int num = static_cast<int>(workers_.size()) - 1;
-  int offset = 0;
-  if (!occupied_actor_thread_) {
-    offset = static_cast<int>(actor_thread_num_);
-  }
-  for (int i = num; i >= offset && count < num_assigned; --i) {
+  for (int i = num; i >= 0 && count < num_assigned; --i) {
     if (workers_[i]->available()) {
       assigned.push_back(workers_[i]);
       sum_frequency += workers_[i]->frequency();
@@ -216,9 +180,7 @@ void ThreadPool::DistributeTask(Task *task, int task_num) const {
       sum_frequency += curr->frequency();
     }
   } else if (assigned.size() != static_cast<size_t>(task_num)) {
-    CalculateScales(assigned, sum_frequency);
-    ActiveWorkers(assigned, task, assigned.size(), curr);
-    SyncRunTask(task, assigned.size(), task_num);
+    SyncRunTask(task, task_num);
     return;
   }
   CalculateScales(assigned, sum_frequency);
@@ -304,12 +266,12 @@ int ThreadPool::SetProcessAffinity(BindMode bind_mode) const {
 #endif  // BIND_CORE
 }
 
-ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<int> &core_list) {
+ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num) {
   ThreadPool *pool = new (std::nothrow) ThreadPool();
   if (pool == nullptr) {
     return nullptr;
   }
-  int ret = pool->CreateThreads(thread_num, core_list);
+  int ret = pool->CreateThreads(thread_num);
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;

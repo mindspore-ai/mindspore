@@ -196,7 +196,6 @@ STATUS OnnxInputAdjust::ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_
   auto shape_ptr = param_node->abstract()->GetShapeTrack()->cast<abstract::ShapePtr>();
   if (shape_ptr == nullptr) {
     MS_LOG(ERROR) << "shape is nullptr.";
-    return lite::RET_ERROR;
   }
   auto shape_vector = shape_ptr->shape();
   if (shape_vector.size() != opt::kInputSizeFour) {

@@ -390,7 +390,7 @@ overall performance on coco2017 validation dataset
 
 ### Convert
 
-If you want to infer the network on Ascend 310, you should convert the model to MINDIR. What you need to do before is to specify the `ckpt_file` that needs to be converted in the `export_config` section of the `src/config.py` file.
+If you want to infer the network on Ascend 310, you should convert the model to AIR:
 
 ```python
 python export.py [DEVICE_ID]

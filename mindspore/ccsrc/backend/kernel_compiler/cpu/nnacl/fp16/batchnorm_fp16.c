@@ -17,7 +17,7 @@
 #include "nnacl/fp16/batchnorm_fp16.h"
 #include <math.h>
 
-void BatchNormFp16(const float16_t *input, const void *mean, const void *variance, const BatchNormParameter *param,
+void BatchNormFp16(const float16_t *input, const void *mean, const void *variance, BatchNormParameter *param,
                    int task_id, float16_t *output) {
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
@@ -36,7 +36,7 @@ void BatchNormFp16(const float16_t *input, const void *mean, const void *varianc
 }
 
 void FusedBatchNormFp16(const void *input, const void *scale, const void *offset, const void *mean,
-                        const void *variance, const BatchNormParameter *param, int task_id, void *output) {
+                        const void *variance, BatchNormParameter *param, int task_id, void *output) {
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);

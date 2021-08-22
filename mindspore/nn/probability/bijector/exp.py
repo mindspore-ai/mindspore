@@ -57,9 +57,8 @@ class Exp(PowerTransform):
         super(Exp, self).__init__(name=name)
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
             str_info = 'exp'
         else:
-            str_info = 'batch_shape = {}'.format(self.batch_shape)
+            str_info = f'batch_shape = {self.batch_shape}'
         return str_info

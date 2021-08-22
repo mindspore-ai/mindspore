@@ -20,7 +20,7 @@
 #include "tools/converter/converter_flags.h"
 #include "backend/optimizer/common/pass.h"
 
-using mindspore::converter::FmkType;
+using mindspore::lite::converter::FmkType;
 using mindspore::schema::QuantType;
 namespace mindspore::opt {
 class ClipConvertActivationPass : public Pass {

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,19 +14,27 @@
 # ============================================================================
 """Infer api."""
 import time
+
 import numpy as np
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
-from mindspore import Parameter
+from mindspore import context, Parameter
 from mindspore.train.model import Model
 
 from src.dataset import load_dataset
 from .gnmt import GNMT
 from ..utils import zero_weight
 from ..utils.load_weights import load_infer_weights
+
+context.set_context(
+    mode=context.GRAPH_MODE,
+    save_graphs=False,
+    device_target="Ascend",
+    reserve_class_name_in_scope=False)
+
 
 class GNMTInferCell(nn.Cell):
     """

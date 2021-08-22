@@ -93,12 +93,6 @@ TEST_F(TestFcFp32, FcTest1) {
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete fc;
   delete ctx;
-  for (unsigned int i = 0; i < inputs_.size(); i++) {
-    delete inputs_[i];
-  }
-  for (unsigned int i = 0; i < outputs_.size(); i++) {
-    delete outputs_[i];
-  }
 }
 
 int FcTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
@@ -161,12 +155,6 @@ TEST_F(TestFcFp32, FcTest2) {
 #endif
   fc->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
-  for (unsigned int i = 0; i < inputs_.size(); i++) {
-    delete inputs_[i];
-  }
-  for (unsigned int i = 0; i < outputs_.size(); i++) {
-    delete outputs_[i];
-  }
   delete fc;
   delete ctx;
 }
@@ -224,12 +212,6 @@ TEST_F(TestFcFp32, FcTest3) {
   for (int i = 0; i < 100000; ++i) fc->Run();
   gettimeofday(&end, nullptr);
   // printf("## elapsed: %llu\n", 1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - end.tv_usec);
-  for (unsigned int i = 0; i < inputs_.size(); i++) {
-    delete inputs_[i];
-  }
-  for (unsigned int i = 0; i < outputs_.size(); i++) {
-    delete outputs_[i];
-  }
   delete fc;
   delete ctx;
 }

@@ -87,7 +87,7 @@ function preprocess_data()
     fi
     mkdir preprocess_Result
     BASE_PATH=$(dirname "$(dirname "$(readlink -f $0)")")
-    CONFIG_FILE="${BASE_PATH}/config/$1"
+    CONFIG_FILE="${BASE_PATH}/$1"
 
     python3.7 ../preprocess.py --data_path=$data_path --output_path=./preprocess_Result --config_path=$CONFIG_FILE &> preprocess.log
 }

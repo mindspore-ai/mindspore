@@ -133,7 +133,7 @@ class __attribute__((visibility("default"))) ShardHeader {
 
   MSRStatus FileToPages(const std::string dump_file_name);
 
-  static MSRStatus Initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
+  static MSRStatus initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
                               const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
                               uint64_t &schema_id);
 

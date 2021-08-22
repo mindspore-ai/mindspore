@@ -78,7 +78,7 @@ void AddInt8OutputRounding(int32x4_t *out1, int32x4_t *out2, int32x4_t *out3, in
 }
 #endif
 
-void AddInt8(const int8_t *input0, const int8_t *input1, int8_t *output, int size, const AddQuantParameter *params) {
+void AddInt8(const int8_t *input0, const int8_t *input1, int8_t *output, int size, AddQuantParameter *params) {
   int in0_left_shift = (1 << params->left_shift_) * (1 << params->in0_args_.left_shift_);
   int in1_left_shift = (1 << params->left_shift_) * (1 << params->in1_args_.left_shift_);
   int index = 0;

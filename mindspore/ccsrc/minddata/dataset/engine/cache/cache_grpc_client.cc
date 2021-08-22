@@ -73,7 +73,7 @@ Status CacheClientGreeter::DoServiceStop() {
     void *tag;
     while (cq_.Next(&tag, &success)) {
       auto r = reinterpret_cast<CacheClientRequestTag *>(tag);
-      (void)req_.erase(r->seqNo_);
+      req_.erase(r->seqNo_);
     }
   }
   return Status::OK();

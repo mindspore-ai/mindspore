@@ -95,7 +95,7 @@ bool SpreadUpdateState::Run(const FuncGraphPtr &func_graph) {
       // Create a new UpdateState
       auto new_node = func_graph->NewCNode(node_inputs);
       new_node->set_abstract(node->abstract());
-      (void)mng->Replace(node, new_node);
+      mng->Replace(node, new_node);
       changed = true;
     }
   }
@@ -124,7 +124,7 @@ bool ShrinkUpdateState::Run(const FuncGraphPtr &func_graph) {
     auto new_node = func_graph->NewCNode(inputs);
     new_node->set_abstract(node->abstract());
     new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-    (void)mng->Replace(node, new_node);
+    mng->Replace(node, new_node);
     changed = true;
   }
   return changed;

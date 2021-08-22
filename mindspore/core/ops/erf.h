@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameErf = "Erf";
-class MS_CORE_API Erf : public PrimitiveC {
+class Erf : public PrimitiveC {
  public:
   Erf() : PrimitiveC(kNameErf) { InitIOName({"x"}, {"y"}); }
   ~Erf() = default;

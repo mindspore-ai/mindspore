@@ -57,7 +57,7 @@ std::vector<int> GetTransposePerm(const CNodePtr &node) {
 }
 
 bool RemoveUnusedTransposeOpPass::Run(const FuncGraphPtr &func_graph) {
-  if (this->fmk_type != converter::kFmkTypeOnnx) {
+  if (this->fmk_type != lite::converter::FmkType_ONNX) {
     MS_LOG(ERROR) << "The framework type of model should be onnx.";
     return RET_ERROR;
   }

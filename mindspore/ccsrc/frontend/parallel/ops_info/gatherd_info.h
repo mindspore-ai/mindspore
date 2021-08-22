@@ -40,7 +40,6 @@ class GatherDInfo : public OperatorInfo {
   Status InitForCostModel(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
-  void ReComputeBatchSplitFlagList() override;
 
  protected:
   Status GetAttrs() override;

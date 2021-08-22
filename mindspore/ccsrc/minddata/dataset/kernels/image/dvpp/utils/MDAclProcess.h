@@ -17,25 +17,25 @@
 #define MDACLMANAGER_H
 
 #include <climits>
-#include <cstdio>
+#include <string>
+#include <string.h>
 #include <map>
 #include <iostream>
 #include <memory>
-#include <unistd.h>
-#include <string>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include "acl/acl.h"
-
+#include "CommonDataType.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/core/data_type.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/DvppCommon.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
 #include "mindspore/ccsrc/minddata/dataset/core/device_tensor.h"
 #include "mindspore/ccsrc/minddata/dataset/core/tensor.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/ccsrc/minddata/dataset/util/status.h"
+#include "ErrorCode.h"
+#include "DvppCommon.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 mode_t SetFileDefaultUmask();
 

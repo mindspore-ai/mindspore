@@ -25,9 +25,8 @@
 extern "C" {
 #endif
 void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                       const TransposeParameter *param, int task_id, int thread_num);
-int DoTransposeFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                    const TransposeParameter *param);
+                       TransposeParameter *param, int task_id, int thread_num);
+int DoTransposeFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape, TransposeParameter *param);
 #ifdef __cplusplus
 }
 #endif

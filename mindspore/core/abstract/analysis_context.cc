@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace abstract {
-std::list<AnalysisContextPtr> AnalysisContext::all_context_;
 AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &func_graph,
                                                const AbstractBasePtrList &args_spec_list) {
   // Find func graph's parent and its parent context firstly.
@@ -57,7 +56,7 @@ AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &func_graph,
   }
 
   // Create a new context for the func graph and its specific arguments.
-  AnalysisContextPtr new_context = CreateContext(parent_context, func_graph, args_spec_list);
+  AnalysisContextPtr new_context = std::make_shared<AnalysisContext>(parent_context, func_graph, args_spec_list);
   // To avoid cycle-reference, use weak_ptr here.
   auto weak_new_context = std::weak_ptr<AnalysisContext>(new_context);
   new_context->extant_context_cache_[func_graph] = weak_new_context;
@@ -103,7 +102,7 @@ AnalysisContextPtr AnalysisContext::FindOwnOrParentContext(const FuncGraphPtr &f
 }
 
 AnalysisContextPtr AnalysisContext::DummyContext() {
-  AnalysisContextPtr dummy_context = CreateContext(nullptr, nullptr, AbstractBasePtrList());
+  AnalysisContextPtr dummy_context = std::make_shared<AnalysisContext>(nullptr, nullptr, AbstractBasePtrList());
   dummy_context->extant_context_cache_[nullptr] = std::weak_ptr<AnalysisContext>(dummy_context);
   return dummy_context;
 }
@@ -113,7 +112,7 @@ bool AnalysisContext::IsDummyContext() {
 }
 
 const AnalysisContextPtr kDummyAnalysisContext =
-  AnalysisContext::CreateContext(nullptr, nullptr, AbstractBasePtrList());
+  std::make_shared<AnalysisContext>(nullptr, nullptr, AbstractBasePtrList());
 
 bool AnalysisContext::operator==(const AnalysisContext &other) const {
   if (func_graph_ != other.func_graph_) {
@@ -175,7 +174,7 @@ AnalysisContextPtr AnalysisContext::SpecializeKey() const {
                          }
                          return arg;
                        });
-  AnalysisContextPtr context_new = CreateContext(nullptr, func_graph_, args_broad_shp);
+  AnalysisContextPtr context_new = std::make_shared<AnalysisContext>(nullptr, func_graph_, args_broad_shp);
   context_new->parent_ = parent_;
   return context_new;
 }
@@ -209,24 +208,6 @@ std::string AnalysisContext::ToString() const {
   }
   buffer << "}";
   return buffer.str();
-}
-
-void AnalysisContext::ClearContext() {
-  for (auto &item : all_context_) {
-    item->parent_ = nullptr;
-    item->func_graph_ = nullptr;
-    item->args_spec_list_.clear();
-    item->extant_context_cache_.clear();
-    item->children_cache_.clear();
-  }
-  all_context_.clear();
-}
-
-AnalysisContextPtr AnalysisContext::CreateContext(const AnalysisContextPtr &parent, const FuncGraphPtr &fg,
-                                                  const AbstractBasePtrList &args_spec_list) {
-  auto context = std::make_shared<AnalysisContext>(parent, fg, args_spec_list);
-  all_context_.emplace_back(context);
-  return context;
 }
 }  // namespace abstract
 }  // namespace mindspore

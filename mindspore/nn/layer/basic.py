@@ -33,7 +33,7 @@ from ..cell import Cell
 from .activation import get_activation
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
-           'Tril', 'Triu', 'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Roll']
+           'Tril', 'Triu', 'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer']
 
 
 class L1Regularizer(Cell):
@@ -1355,88 +1355,3 @@ class MatrixSetDiag(Cell):
         assist = _get_matrix_diag_part_assist(x_shape, x_dtype)
         out_matrix_set_diag = self.matrix_set_diag(input_x, diagonal, assist)
         return out_matrix_set_diag
-
-
-@constexpr
-def _check_input_dim(axis, dim, cls_name):
-    Validator.check_int_range(axis, -dim, dim, Rel.INC_LEFT, 'axis', cls_name)
-
-
-class Roll(Cell):
-    """
-    Rolls the elements of a tensor along an axis.
-
-    The elements are shifted positively (towards larger indices) by the offset of `shift` along the dimension of `axis`.
-    Negative `shift` values will shift elements in the opposite direction. Elements that roll passed the last position
-    will wrap around to the first and vice versa. Multiple shifts along multiple axes may be specified.
-
-    Args:
-        shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
-            positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
-            in the opposite direction.
-        axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled.
-
-    Inputs:
-        - **input_x** (Tensor) - Input tensor.
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If `shift` is not an int, a tuple or a list.
-        TypeError: If `axis` is not an int, a tuple or a list.
-        TypeError: If element of `shift` is not an int.
-        TypeError: If element of `axis` is not an int.
-        ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
-        ValueError: If length of shape of `shift` is not equal to length of shape of `axis`.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
-        >>> op = nn.Roll(shift=2, axis=0)
-        >>> output = op(input_x)
-        >>> print(output)
-        [3. 4. 0. 1. 2.]
-        >>> input_x = Tensor(np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]).astype(np.float32))
-        >>> op = nn.Roll(shift=[1, -2], axis=[0, 1])
-        >>> output = op(input_x)
-        >>> print(output)
-        [[7. 8. 9. 5. 6.]
-         [2. 3. 4. 0. 1.]]
-    """
-
-    def __init__(self, shift, axis):
-        """Initialize Roll"""
-        super(Roll, self).__init__()
-        Validator.check_value_type("shift", shift, [int, tuple, list], self.cls_name)
-        Validator.check_value_type("axis", axis, [int, tuple, list], self.cls_name)
-        self.shape_op = P.Shape()
-        self.shift = shift
-        self.axis = axis
-        self.op_list = []
-
-        if not isinstance(self.axis, (list, tuple)):
-            self.op_list.append((inner.Roll(shift=self.shift, axis=0), self.axis))
-        else:
-            if len(self.shift) != len(self.axis):
-                raise ValueError('The shape of shift and the shape of axis must be the same.')
-            for idx, _ in enumerate(self.axis):
-                self.op_list.append((inner.Roll(shift=self.shift[idx], axis=0), self.axis[idx]))
-
-    def construct(self, input_x):
-        dim = len(self.shape_op(input_x))
-        for single_op_roll, single_axis in self.op_list:
-            _check_input_dim(single_axis, dim, self.cls_name)
-            if single_axis < 0:
-                single_axis += dim
-            transpose_perm = []
-            for i in range(dim):
-                transpose_perm.append(i)
-            transpose_perm[0], transpose_perm[single_axis] = single_axis, 0
-
-            input_x = input_x.transpose(transpose_perm)
-            input_x = single_op_roll(input_x)
-            input_x = input_x.transpose(transpose_perm)
-        return input_x

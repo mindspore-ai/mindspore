@@ -16,6 +16,22 @@
 
 #include "backend/optimizer/graph_kernel/parallel_fusion.h"
 
+#include <algorithm>
+#include <cstddef>
+#include <list>
+#include <map>
+#include <memory>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <cstdlib>
+
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "frontend/operator/ops.h"
 #include "ir/func_graph_cloner.h"
@@ -447,10 +463,10 @@ std::tuple<AnfNodePtrList, std::vector<int>> ParallelOpFusion::GetAvaliableNodes
   if (start >= node_limit) {
     MS_LOG(EXCEPTION) << "Index offset is exceed the limit of given nodes.";
   }
-  AnfNodePtrList target_nodes = {nodes[IntToSize(start)]};
+  AnfNodePtrList target_nodes = {nodes[start]};
   std::vector<int> valid_indices;
   std::vector<size_t> unused;
-  for (size_t i = IntToSize(start); i < used.size(); ++i) {
+  for (size_t i = start; i < used.size(); ++i) {
     if (!used[i] && excludes.count(i) == 0) {
       unused.push_back(i);
     }
@@ -577,7 +593,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::Searc
 
   std::map<AnfNodePtr, int> sorted_indices;
   for (size_t i = 0; i < candidates.size(); ++i) {
-    (void)sorted_indices.emplace(candidates[i], i);
+    sorted_indices.emplace(candidates[i], i);
   }
 
   return DoSearchInSortedCandidates(cs.size(), candidates, &origin_indices, &sorted_indices);

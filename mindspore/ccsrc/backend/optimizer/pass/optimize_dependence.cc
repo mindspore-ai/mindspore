@@ -166,7 +166,7 @@ std::vector<size_t> SearchTransDataAndCast(const CNodePtr &cnode) {
   for (size_t i = 1; i < cnode->size(); ++i) {
     auto &input = cnode->input(i);
     if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimCast) ||
-        AnfAlgo::CheckPrimitiveType(input, prim::kPrimTransData) ||
+        AnfAlgo::CheckPrimitiveType(input, prim::KPrimTransData) ||
         AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
       result.emplace_back(i);
     }
@@ -191,9 +191,6 @@ const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, con
   std::vector<AnfNodePtr> new_inputs = cnode->inputs();
   bool inputs_changed = false;
   for (auto index : candidate_inputs) {
-    if (index >= new_inputs.size()) {
-      MS_LOG(EXCEPTION) << "Index is out of the size of cnode inputs.";
-    }
     auto replace_node = GetConvertNode(func_graph, cnode, index);
     if (replace_node != nullptr) {
       new_inputs[index] = replace_node;

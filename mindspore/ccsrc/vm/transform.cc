@@ -388,13 +388,6 @@ int64_t CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
   MS_LOG(DEBUG) << "Call:" << Ref(fn) << ", " << height_ << ", " << (size - 1);
   AddInst(Instruction::kCall, Ref(fn));
   Ret(static_cast<int64_t>(size - 1));
-
-  for (size_t i = size - 1; i > 0; i--) {
-    const auto iter = slots_.find(inputs[i]);
-    if (iter != slots_.end() && iter->second >= height_) {
-      slots_.erase(inputs[i]);
-    }
-  }
   return RET_SUCCESS;
 }
 
@@ -580,6 +573,9 @@ BackendPtr CreateBackend() {
       if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
         backend->set_is_multi_graph_sink(false);
         context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+      } else {
+        backend->set_is_multi_graph_sink(true);
+        context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
       }
     }
     return backend;
@@ -610,7 +606,7 @@ void SetMindRTEnable() {
   }
 #endif
 
-  MS_LOG(DEBUG) << "Enable mindRT.";
+  MS_LOG(INFO) << "Enable mindRT.";
   context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
 }
 }  // namespace compile

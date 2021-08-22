@@ -92,7 +92,7 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
       continue;
     }
     // search cache
-    auto kernel_pack = TbeUtils::SearchCache(json_name);
+    auto kernel_pack = TbeUtils::SearchCache(json_name, tbe::kProcessorAiCore);
     if (kernel_pack != nullptr && ((!offline_tune.empty() && offline_tune != "true") || tune_mode == "NO_TUNE")) {
       auto kernel_mod = build_manger->GenKernelMod(input_size_list, output_size_list, kernel_pack);
       if (kernel_mod != nullptr) {

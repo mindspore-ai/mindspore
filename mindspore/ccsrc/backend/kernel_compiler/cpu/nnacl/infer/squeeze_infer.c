@@ -40,7 +40,7 @@ int SqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   size_t out_shape_size = 0;
 
   for (size_t i = 0; i < param->axis_size_; i++) {
-    param->axis_[i] = param->axis_[i] >= 0 ? param->axis_[i] : param->axis_[i] + (int)input->shape_size_;
+    param->axis_[i] = param->axis_[i] >= 0 ? param->axis_[i] : param->axis_[i] + input->shape_size_;
   }
 
   if (param->axis_size_ == 0) {

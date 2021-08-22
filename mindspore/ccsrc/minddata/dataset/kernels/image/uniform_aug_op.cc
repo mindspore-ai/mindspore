@@ -22,7 +22,7 @@ namespace dataset {
 const int UniformAugOp::kDefNumOps = 2;
 
 UniformAugOp::UniformAugOp(std::vector<std::shared_ptr<TensorOp>> op_list, int32_t num_ops)
-    : tensor_op_list_(std::move(op_list)), num_ops_(num_ops) {
+    : tensor_op_list_(op_list), num_ops_(num_ops) {
   rnd_.seed(GetSeed());
 }
 

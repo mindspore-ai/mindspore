@@ -39,7 +39,7 @@ int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
     return NNACL_INPUT_TENSOR_ERROR;
   }
   param->begin_norm_axis_ =
-    param->begin_norm_axis_ < 0 ? param->begin_norm_axis_ + ((int)(input->shape_size_)) : param->begin_norm_axis_;
+    param->begin_norm_axis_ < 0 ? param->begin_norm_axis_ + input->shape_size_ : param->begin_norm_axis_;
   SetShapeTensor(output, input);
   // take care of other outputs
   if (outputs_size == 3) {
@@ -52,8 +52,8 @@ int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
       output_mean->shape_[size] = input->shape_[size];
       output_var->shape_[size] = input->shape_[size];
     }
-    output_mean->shape_size_ = (size_t)size;
-    output_var->shape_size_ = (size_t)size;
+    output_mean->shape_size_ = size;
+    output_var->shape_size_ = size;
   }
 
   return NNACL_OK;

@@ -33,7 +33,7 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   Convolution1x1Int8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, nullptr, nullptr) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~Convolution1x1Int8CPUKernel() override;
 
   int Init() override;

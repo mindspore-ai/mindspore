@@ -27,7 +27,7 @@ class Convolution3x3Int8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   Convolution3x3Int8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, nullptr, nullptr) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~Convolution3x3Int8CPUKernel() override;
 
   int Init() override;
@@ -46,7 +46,7 @@ class Convolution3x3Int8CPUKernel : public ConvolutionBaseCPUKernel {
   int32_t *tmp_dst_buffer_ = nullptr;
   int8_t *tmp_out_ = nullptr;
 };
-int ProcessFilterUint8(const int8_t *origin_weight, int16_t *dst_weight, const ConvParameter *conv_param);
+int ProcessFilterUint8(const int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_3X3_INT8_H_

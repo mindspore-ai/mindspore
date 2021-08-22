@@ -60,19 +60,6 @@ Status PKSamplerObj::to_json(nlohmann::json *const out_json) {
   return Status::OK();
 }
 
-#ifndef ENABLE_ANDROID
-Status PKSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples, std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_val") != json_obj.end(), "Failed to find num_val");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
-  int64_t num_val = json_obj["num_val"];
-  bool shuffle = json_obj["shuffle"];
-  *sampler = std::make_shared<PKSamplerObj>(num_val, shuffle, num_samples);
-  // Run common code in super class to add children samplers
-  RETURN_IF_NOT_OK(SamplerObj::from_json(json_obj, sampler));
-  return Status::OK();
-}
-#endif
-
 Status PKSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
   *sampler = std::make_shared<dataset::PKSamplerRT>(num_val_, shuffle_, num_samples_);

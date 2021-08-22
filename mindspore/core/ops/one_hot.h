@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API OneHot : public PrimitiveC {
+class OneHot : public PrimitiveC {
  public:
   OneHot() : PrimitiveC(prim::kPrimOneHot->name()) {
     InitIOName({"indices", "depth", "on_value", "off_value"}, {"output"});

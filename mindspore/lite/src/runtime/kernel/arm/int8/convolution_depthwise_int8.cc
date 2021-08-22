@@ -55,7 +55,7 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
 
-  bool filter_per_channel = static_cast<bool>(conv_param_->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL);
+  bool filter_per_channel = conv_param_->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
   if (filter_per_channel) {
     for (int i = 0; i < weight_tensor->Height() * weight_tensor->Width(); i++) {
       for (int c = 0; c < channel; c++) {

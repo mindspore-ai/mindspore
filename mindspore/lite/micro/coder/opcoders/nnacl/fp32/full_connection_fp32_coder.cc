@@ -28,7 +28,6 @@ int FullConnectionFP32Coder::ReSize() {
   }
   params_->row_ = row;
   params_->col_ = output_tensor_->shape().back();
-  MS_CHECK_TRUE(filter_tensor_->shape().size() >= DIMENSION_2D, "filter_tensor_->shape().size() < DIMENSION_2D");
   params_->deep_ = filter_tensor_->shape().at(1);
   return MatMulFP32BaseCoder::ReSize();
 }

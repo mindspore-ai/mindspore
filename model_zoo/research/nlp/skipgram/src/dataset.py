@@ -177,8 +177,6 @@ def load_eval_data(data_dir):
         if not os.path.isfile(data_path):
             continue
         with open(data_path, 'r') as f:
-            k = "capital-common-countries"
-            samples[k] = list()
             for line in f:
                 if ':' in line:
                     strs = line.strip().split(' ')

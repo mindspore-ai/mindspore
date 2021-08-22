@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGather = "Gather";
-class MS_CORE_API Gather : public PrimitiveC {
+class Gather : public PrimitiveC {
  public:
   Gather() : PrimitiveC(kNameGather) { InitIOName({"param", "indices", "axis"}, {"output"}); }
   ~Gather() = default;

@@ -52,6 +52,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int CompareDataGetTotalBiasAndSize(const std::string &name, mindspore::MSTensor *tensor, float *total_bias,
                                      int *total_size);
   void InitContext(const std::shared_ptr<mindspore::Context> &context);
+  mindspore::MSTensor GetMSTensorByNodeShape(const std::vector<size_t> &node_shape);
+  mindspore::MSTensor GetMSTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
 
   // call GenerateRandomData to fill inputTensors
   int GenerateInputData() override;

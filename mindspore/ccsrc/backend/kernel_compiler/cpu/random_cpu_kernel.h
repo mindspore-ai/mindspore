@@ -45,15 +45,6 @@ class RandomCPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL(StandardNormal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
                   RandomCPUKernel);
-MS_REG_CPU_KERNEL(UniformInt,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  RandomCPUKernel)
-MS_REG_CPU_KERNEL(UniformReal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                  RandomCPUKernel)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_CPU_KERNEL_H_

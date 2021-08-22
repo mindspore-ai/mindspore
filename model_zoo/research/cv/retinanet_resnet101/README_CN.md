@@ -313,9 +313,3 @@ mAP: 0.3710347196613514
 # [ModelZoo 主页](#内容)
 
 请核对官方 [主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
-
-# FAQ
-
-优先参考[ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/model_zoo#FAQ)来查找一些常见的公共问题。
-
-- **Q: 使用PYNATIVE_MODE发生内存溢出怎么办？** **A**：内存溢出通常是因为PYNATIVE_MODE需要更多的内存， 将batch size设置为16降低内存消耗，可进行网络训练。

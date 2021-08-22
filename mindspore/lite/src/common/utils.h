@@ -37,6 +37,8 @@ enum NodeType {
 
 const int USEC = 1000000;
 const int MSEC = 1000;
+std::vector<std::string> StringSplit(std::string str, const std::string &pattern);
+
 uint64_t GetTimeUs();
 
 bool IsSupportSDot();
@@ -64,17 +66,6 @@ bool VectorErase(std::vector<T> *vec, T element) {
       ret = true;
     } else {
       iter++;
-    }
-  }
-  return ret;
-}
-
-template <typename T>
-bool VectorSetNull(std::vector<T> *vec, T element) {
-  bool ret = false;
-  for (size_t i = 0; i < vec->size(); i++) {
-    if (vec->at(i) == element) {
-      vec->at(i) = nullptr;
     }
   }
   return ret;
@@ -128,7 +119,7 @@ inline std::string GetFileName(const std::string &path) {
   char delim = '/';
 
   size_t i = path.rfind(delim, path.length());
-  if (i != std::string::npos && i + 1 < path.length()) {
+  if (i != std::string::npos) {
     return (path.substr(i + 1, path.length() - i));
   }
 

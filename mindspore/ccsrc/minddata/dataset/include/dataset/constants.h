@@ -49,12 +49,6 @@ enum class ShuffleMode {
   kInfile = 3   ///< Shuffle data within each file.
 };
 
-/// \brief Possible scale for input audio.
-enum class ScaleType {
-  kMagnitude = 0,  ///< Audio scale is magnitude.
-  kPower = 1,      ///< Audio scale is power.
-};
-
 /// \brief The method of padding.
 enum class BorderType {
   kConstant = 0,  ///< Fill the border with constant values.
@@ -153,19 +147,9 @@ enum class OutputFormat {
 // convenience functions for 32bit int bitmask
 inline bool BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
 
-inline void BitSet(uint32_t *bits, uint32_t bitMask) {
-  if (bits == nullptr) {
-    return;
-  }
-  *bits |= bitMask;
-}
+inline void BitSet(uint32_t *bits, uint32_t bitMask) { *bits |= bitMask; }
 
-inline void BitClear(uint32_t *bits, uint32_t bitMask) {
-  if (bits == nullptr) {
-    return;
-  }
-  *bits &= (~bitMask);
-}
+inline void BitClear(uint32_t *bits, uint32_t bitMask) { *bits &= (~bitMask); }
 
 constexpr int64_t kDeMaxDim = std::numeric_limits<int64_t>::max();
 constexpr int32_t kDeMaxRank = std::numeric_limits<int32_t>::max();

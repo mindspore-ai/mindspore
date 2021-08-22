@@ -93,7 +93,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   bool valid_shape_ = false;
   bool pattern_impl_ = false;
   Four_DIMENSION_REDUCE_TEMPLATE pattern_;
-  QuantMulArg reduce_mean_quant_param_ = {};  // used in reduce mean 4D situation
+  QuantMulArg reduce_mean_quant_param_;  // used in reduce mean 4D situation
   Reducer reducer_ = nullptr;
   LastReducer last_reducer_ = nullptr;
   std::vector<QuantMulArg *> mean_multipliers_;

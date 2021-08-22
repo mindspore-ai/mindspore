@@ -24,7 +24,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Unstack(const void *input, void **output, const UnstackParameter *para, int data_size);
+void Unstack(const void *input, void **output, UnstackParameter *para, int data_size);
 #ifdef __cplusplus
 }
 #endif

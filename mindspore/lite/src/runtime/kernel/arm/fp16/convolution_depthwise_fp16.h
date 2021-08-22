@@ -36,19 +36,19 @@ class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                     const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
-                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
-  ~ConvolutionDepthwiseFp16CPUKernel() override {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+  ~ConvolutionDepthwiseFp16CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
 
+  int InitWeightBias();
   int Execute(int task_id);
 
  private:
-  void PackWeight() override;
-  int MallocWeightBiasData() override;
+  float16_t *packed_weight_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

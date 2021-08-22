@@ -20,7 +20,7 @@
 #include "src/runtime/kernel/arm/fp32/arithmetic_self_fp32.h"
 
 namespace mindspore::kernel {
-typedef int (*ArithmeticSelfFp16Func)(const float16_t *input, float16_t *output, int element_size);
+typedef int (*ArithmeticSelfFp16Func)(float16_t *input, float16_t *output, int element_size);
 class ArithmeticSelfFp16CPUKernel : public ArithmeticSelfCPUKernel {
  public:
   explicit ArithmeticSelfFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

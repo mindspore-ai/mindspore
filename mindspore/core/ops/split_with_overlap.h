@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSplitWithOverlap = "SplitWithOverlap";
-class MS_CORE_API SplitWithOverlap : public PrimitiveC {
+class SplitWithOverlap : public PrimitiveC {
  public:
   SplitWithOverlap() : PrimitiveC(kNameSplitWithOverlap) {}
   ~SplitWithOverlap() = default;

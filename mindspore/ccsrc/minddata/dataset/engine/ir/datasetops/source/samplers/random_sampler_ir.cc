@@ -56,20 +56,6 @@ Status RandomSamplerObj::to_json(nlohmann::json *const out_json) {
   return Status::OK();
 }
 
-#ifndef ENABLE_ANDROID
-Status RandomSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples, std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("replacement") != json_obj.end(), "Failed to find replacement");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("reshuffle_each_epoch") != json_obj.end(),
-                               "Failed to find reshuffle_each_epoch");
-  bool replacement = json_obj["replacement"];
-  bool reshuffle_each_epoch = json_obj["reshuffle_each_epoch"];
-  *sampler = std::make_shared<RandomSamplerObj>(replacement, num_samples, reshuffle_each_epoch);
-  // Run common code in super class to add children samplers
-  RETURN_IF_NOT_OK(SamplerObj::from_json(json_obj, sampler));
-  return Status::OK();
-}
-#endif
-
 Status RandomSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
   *sampler = std::make_shared<dataset::RandomSamplerRT>(replacement_, num_samples_, reshuffle_each_epoch_);

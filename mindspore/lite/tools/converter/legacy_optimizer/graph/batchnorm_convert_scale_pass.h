@@ -61,7 +61,7 @@ class BatchNormConvertScalePass : public GraphPass {
   float *transBias = nullptr;
   std::unique_ptr<TensorT> newScaleWeightTensor = nullptr;
   std::unique_ptr<TensorT> newScaleBiasTensor = nullptr;
-  converter::FmkType fmkType = converter::kFmkTypeTf;
+  converter::FmkType fmkType = converter::FmkType_TF;
 };
 }  // namespace lite
 }  // namespace mindspore

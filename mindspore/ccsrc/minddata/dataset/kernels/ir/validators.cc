@@ -38,11 +38,6 @@ Status ValidateFloatScalarPositive(const std::string &op_name, const std::string
   return Status::OK();
 }
 
-Status ValidateFloatScalarNonNegative(const std::string &op_name, const std::string &scalar_name, float scalar) {
-  RETURN_IF_NOT_OK(ValidateScalar(op_name, scalar_name, scalar, {0}, false));
-  return Status::OK();
-}
-
 Status ValidateVectorFillvalue(const std::string &op_name, const std::vector<uint8_t> &fill_value) {
   if (fill_value.empty() || (fill_value.size() != 1 && fill_value.size() != 3)) {
     std::string err_msg =

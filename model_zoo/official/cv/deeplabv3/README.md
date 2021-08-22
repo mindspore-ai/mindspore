@@ -29,7 +29,6 @@
     - [Inference Process](#inference-process)
         - [Usage](#usage-2)
         - [result](#result-2)
-    - [Post Training Quantization](#post-training-quantization)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
@@ -113,7 +112,13 @@ After installing MindSpore via the official website, you can start training and 
 
 - Prepare backbone
 
-Download resnet101 for here(https://download.mindspore.cn/model_zoo/r1.2/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt).
+Download resnet101 for here(https://download.pytorch.org/models/resnet101-5d3b4d8f.pth).
+
+Use convert_resnet101.py to convert as backbone.
+
+```shell
+python convert_resnet101.py
+```
 
 - Running on Ascend
 
@@ -803,40 +808,6 @@ Inference result is saved in current path, you can find result in acc.log file.
 | **Network**    | OS=16 | OS=8 | MS   | Flip  | mIOU  | mIOU in paper |
 | :----------: | :-----: | :----: | :----: | :-----: | :-----: | :-------------: |
 | deeplab_v3 |       | √    |      |       | 78.84 | 78.51    |
-
-## [Post Training Quantization](#contents)
-
-Relative executing script files reside in the directory "ascend310_quant_infer". Please implement following steps sequentially to complete post quantization.
-In this project, the model is set as deeplab_v3_s8.
-
-1. Generate data of .bin format required for AIR model inference at Ascend310 platform.
-
-```shell
-python export_bin.py --model [MODEL] --data_root [DATA ROOT] --data_lst [DATA LST]
-```
-
-2. Export quantized AIR model.
-
-Post quantization of model requires special toolkits for exporting quantized AIR model. Please refer to [official website](https://www.hiascend.com/software/cann/community).
-
-```shell
-python post_quant.py --model [MODEL] --data_root [DATA ROOT] --data_lst [DATA LST] --ckpt_file [CKPT_PATH]
-```
-
-The quantized AIR file will be stored as "./results/deeplabv3_quant.air".
-
-3. Implement inference at Ascend310 platform.
-
-```shell
-# Ascend310 quant inference
-bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH] [SHAPE_PATH]
-```
-
-Inference result is saved in current path, you can find result like this in acc.log file.
-
-```bash
-mean Iou 0.7854572371350974
-```
 
 # [Model Description](#contents)
 

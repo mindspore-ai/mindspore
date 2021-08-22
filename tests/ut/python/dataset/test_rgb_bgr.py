@@ -24,6 +24,8 @@ import mindspore.dataset.vision.c_transforms as vision
 import mindspore.dataset.vision.py_transforms as py_vision
 import mindspore.dataset.vision.py_transforms_util as util
 
+GENERATE_GOLDEN = False
+
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 

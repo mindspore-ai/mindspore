@@ -20,11 +20,11 @@ import mindspore.common.dtype as mstype
 from mindspore import Tensor, context, load_checkpoint, export
 
 from src.finetune_eval_config import bert_net_cfg
-from src.bert_for_finetune import BertCLS
+from src.finetune_eval_model import BertCLSModel
 parser = argparse.ArgumentParser(description="Bert export")
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--number_labels", type=int, default=26, help="batch size")
+parser.add_argument("--batch_size", type=int, default=16, help="batch size")
+parser.add_argument("--number_labels", type=int, default=16, help="batch size")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Bert ckpt file.")
 parser.add_argument("--file_name", type=str, default="Bert", help="bert output air name.")
 parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
@@ -38,7 +38,7 @@ if args.device_target == "Ascend":
 
 
 if __name__ == "__main__":
-    net = BertCLS(bert_net_cfg, False, num_labels=args.number_labels)
+    net = BertCLSModel(bert_net_cfg, False, num_labels=args.number_labels)
 
     load_checkpoint(args.ckpt_file, net=net)
     net.set_train(False)
@@ -49,4 +49,4 @@ if __name__ == "__main__":
     label_ids = Tensor(np.zeros([args.batch_size, bert_net_cfg.seq_length]), mstype.int32)
 
     input_data = [input_ids, input_mask, token_type_id]
-    export(net.bert, *input_data, file_name=args.file_name, file_format=args.file_format)
+    export(net, *input_data, file_name=args.file_name, file_format=args.file_format)

@@ -15,6 +15,7 @@
  */
 
 #include <unistd.h>
+
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
 
 #ifndef _WIN32
@@ -315,9 +316,7 @@ Status SentencePieceTokenizerOperation::ValidateParams() {
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   } else {
-    std::string real_vocab_path;
-    RETURN_IF_NOT_OK(Path::RealPath(vocab_path_, real_vocab_path));
-    Path vocab_file(real_vocab_path);
+    Path vocab_file(vocab_path_);
     if (!vocab_file.Exists() || vocab_file.IsDirectory()) {
       std::string err_msg = "SentencePieceTokenizer : vocab file: [" + vocab_path_ + "] is invalid or does not exist.";
       MS_LOG(ERROR) << err_msg;
@@ -394,13 +393,6 @@ Status ToNumberOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["data_type"] = data_type_.ToString();
   *out_json = args;
-  return Status::OK();
-}
-
-Status ToNumberOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("data_type") != op_params.end(), "Failed to find data_type");
-  std::string data_type = op_params["data_type"];
-  *operation = std::make_shared<text::ToNumberOperation>(data_type);
   return Status::OK();
 }
 

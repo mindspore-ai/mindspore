@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMinFusion = "ArgMinFusion";
-class MS_CORE_API ArgMinFusion : public ArgMin {
+class ArgMinFusion : public ArgMin {
  public:
   ArgMinFusion() : ArgMin(kNameArgMinFusion) { InitIOName({"x"}, {"output"}); }
   ~ArgMinFusion() = default;

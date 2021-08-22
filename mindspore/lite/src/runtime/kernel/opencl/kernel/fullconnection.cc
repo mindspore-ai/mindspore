@@ -98,7 +98,7 @@ int FullConnectionOpenCLKernel::Prepare() {
     kernel_name = "FullConnectionWeightVar";
   }
   std::string source = fullconnection_source;
-  const std::string program_name = "FullConnection";
+  std::string program_name = "FullConnection";
   if (!ocl_runtime_->LoadSource(program_name, GetActDefines() + source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -113,10 +113,7 @@ int FullConnectionOpenCLKernel::Prepare() {
   if (ret != RET_OK) {
     return ret;
   }
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
@@ -140,20 +137,11 @@ int FullConnectionOpenCLKernel::InitFilter() {
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   padWeight_ = allocator->Malloc(nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size,
                                  lite::opencl::MemType::BUF);
-  if (padWeight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
-    return RET_ERROR;
-  }
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
-  if (padWeight_ == nullptr) {
-    MS_LOG(ERROR) << "Map Buffer failed.";
-    return RET_ERROR;
-  }
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);
   memset(padWeight_, 0x00, nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size);
   void *src_data = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data_c() : stored_weight_;
-  MS_ASSERT(src_data);
   auto originWeightFp32 = reinterpret_cast<float *>(src_data);
   auto originWeightFp16 = reinterpret_cast<float16_t *>(src_data);
   bool isModelFp16 = in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16;
@@ -195,10 +183,7 @@ int FullConnectionOpenCLKernel::InitFilter() {
       }
     }
   }
-  if (allocator->UnmapBuffer(padWeight_) != RET_OK) {
-    MS_LOG(ERROR) << "UnmapBuffer failed.";
-    return RET_ERROR;
-  }
+  allocator->UnmapBuffer(padWeight_);
   FreeStoredData(stored_weight_);
   return RET_OK;
 }
@@ -217,19 +202,10 @@ int FullConnectionOpenCLKernel::InitBias() {
   }
   ImageSize img_size{im_dst_x, im_dst_y, img_dtype};
   bias_ = allocator->Malloc(img_size);
-  if (bias_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
-    return RET_ERROR;
-  }
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
-  if (bias_ == nullptr) {
-    MS_LOG(ERROR) << "Map Buffer failed.";
-    return RET_ERROR;
-  }
   memset(bias_, 0x00, co4 * C4NUM * dtype_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
-    MS_ASSERT(src_data);
     if (in_tensors_[kBiasIndex]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < CO_; i++) {
         reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(src_data)[i];
@@ -242,10 +218,7 @@ int FullConnectionOpenCLKernel::InitBias() {
       memcpy(bias_, src_data, CO_ * dtype_size);
     }
   }
-  if (allocator->UnmapBuffer(bias_) != RET_OK) {
-    MS_LOG(ERROR) << "UnmapBuffer failed.";
-    return RET_ERROR;
-  }
+  allocator->UnmapBuffer(bias_);
   FreeStoredData(stored_bias_);
   return RET_OK;
 }
@@ -258,44 +231,22 @@ void FullConnectionOpenCLKernel::SetGlobalLocal() {
   AlignGlobalLocal(global_size_, local_size_);
 }
 
-int FullConnectionOpenCLKernel::SetConstArgs() {
+void FullConnectionOpenCLKernel::SetConstArgs() {
   if (!weight_var_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, 2, padWeight_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, 2, padWeight_, lite::opencl::MemType::BUF);
   }
   int arg_count = 3;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, N_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, N_);
   auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
   int CI4 = CI_remainder_ * intensor_shape.Slice;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, CI4) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, UP_DIV(CO_, C4NUM)) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, CI4);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, UP_DIV(CO_, C4NUM));
   auto in_shape_info = GpuTensorInfo(in_tensors_[0]);
   cl_int2 in_img_shape = {static_cast<int>(in_shape_info.height), static_cast<int>(in_shape_info.width)};
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_img_shape) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_img_shape);
   auto *param = reinterpret_cast<MatMulParameter *>(op_parameter_);
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count, static_cast<cl_int>(param->act_type_)) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  ocl_runtime_->SetKernelArg(kernel_, arg_count, static_cast<cl_int>(param->act_type_));
 }
 
 int FullConnectionOpenCLKernel::StoreConstData() {
@@ -319,24 +270,12 @@ int FullConnectionOpenCLKernel::StoreConstData() {
 int FullConnectionOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_count = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
   if (weight_var_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[1]->data_c()) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[1]->data_c());
   }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

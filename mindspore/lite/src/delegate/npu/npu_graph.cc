@@ -191,10 +191,10 @@ std::vector<NPUOp *> NPUGraph::FindReadySubgraphOps(std::queue<NPUOp *> op_queue
       }
       auto input_ready = std::all_of(out_op->in_ops().begin(), out_op->in_ops().end(),
                                      [&](NPUOp *in_op) { return (*is_visited)[in_op] == true; });
-      if (out_op->type() == schema::PrimitiveType_Transpose) {
-        next_candidate_ops->push(out_op);
-      } else if (input_ready) {
+      if (input_ready && out_op->type() != schema::PrimitiveType_Transpose) {
         op_queue.push(out_op);
+      } else {
+        next_candidate_ops->push(out_op);
       }
     }
   }
@@ -238,7 +238,7 @@ int NPUGraph::CreateSubgraphFromReadyOps(std::queue<NPUOp *> *valid_in_ops, std:
     if ((*is_searched)[op]) {
       continue;
     }
-    if (!valid_in_ops->empty()) {
+    if (valid_in_ops->empty()) {
       // use BFS to find out connected input ops
       FindConnectedOps(op, ready_ops, &connected_ops, is_searched);
     } else {

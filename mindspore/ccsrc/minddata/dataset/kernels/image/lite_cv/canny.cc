@@ -48,7 +48,7 @@ static void GetSobelKernel(float *kernel, int flag, int ksize, double scale) {
       buffer[0] = 1, buffer[1] = -2, buffer[2] = 1;
     }
   } else {
-    float old, now;
+    int old, now;
     buffer[0] = 1;
     for (int i = 0; i < ksize; i++) {
       buffer[i + 1] = 0;

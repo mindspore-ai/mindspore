@@ -381,25 +381,7 @@ class TBERegOp(RegOp):
     Class for TBE operator information register.
 
     Args:
-        op_name (str):kernel name.
-
-    Examples:
-        >>> from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
-        >>> abs_op_info = TBERegOp("Abs") \
-        ...    .fusion_type("ELEMWISE") \
-        ...    .async_flag(False) \
-        ...    .binfile_name("abs.so") \
-        ...    .compute_cost(10) \
-        ...    .kernel_name("abs") \
-        ...    .partial_flag(True) \
-        ...    .op_pattern("formatAgnostic") \
-        ...    .input(0, "x", None, "required", None) \
-        ...    .output(0, "y", True, "required", "all") \
-        ...    .dtype_format(DataType.F16_None, DataType.F16_None) \
-        ...    .dtype_format(DataType.F32_None, DataType.F32_None) \
-        ...    .dtype_format(DataType.I32_None, DataType.I32_None) \
-        ...    .get_op_info()
-        >>>
+        op_name (string):kernel name.
     """
 
     def __init__(self, op_name):
@@ -908,6 +890,3 @@ class DataType:
     F64_HWCN = ("float64", "HWCN")
     F64_NDHWC = ("float64", "NDHWC")
     F64_ChannelLast = ("float64", "ChannelLast")
-
-    C64_Default = ("complex64", "DefaultFormat")
-    C128_Default = ("complex128", "DefaultFormat")

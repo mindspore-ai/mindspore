@@ -119,7 +119,7 @@ struct tensor_data_t {
 
 class DbgServices {
  private:
-  DebugServices *debug_services_;
+  DebugServices *debug_services;
 
  public:
   explicit DbgServices(bool verbose = false);

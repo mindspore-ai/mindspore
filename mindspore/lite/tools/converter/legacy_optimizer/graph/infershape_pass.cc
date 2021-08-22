@@ -30,7 +30,7 @@
 #include "tools/converter/converter_flags.h"
 #include "src/common/string_util.h"
 
-using mindspore::converter::kFmkTypeTf;
+using mindspore::lite::converter::FmkType_TF;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -203,7 +203,7 @@ STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::ve
     return RET_ERROR;
   }
 
-  auto ret = KernelInferShape(inputs, *outputs, prim, {}, SCHEMA_CUR);
+  auto ret = KernelInferShape(inputs, *outputs, prim, {});
   if (ret == lite::RET_NOT_SUPPORT) {
     auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), SCHEMA_CUR);
     if (parameter_gen == nullptr) {

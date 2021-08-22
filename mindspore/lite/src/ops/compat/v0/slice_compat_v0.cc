@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 int TransferSliceAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_tensors,
                       std::vector<char *> *const tensor_bufs) {
-  if (node == nullptr || node->primitive_ == nullptr || dst_tensors == nullptr || tensor_bufs == nullptr) {
+  if (node == nullptr || dst_tensors == nullptr || tensor_bufs == nullptr) {
     MS_LOG(ERROR) << "the parameter of this function is nullptr.";
     return RET_ERROR;
   }

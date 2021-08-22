@@ -17,8 +17,8 @@
 #include <float.h>
 #include "nnacl/errorcode.h"
 
-int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
-                   int task_id, float16_t min, float16_t max) {
+int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id,
+                   float16_t min, float16_t max) {
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;
@@ -134,8 +134,8 @@ int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const Pool
   return NNACL_OK;
 }
 
-void MaxPoolingC8Fp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
-                      float16_t min, float16_t max, int in_batch_offset, int out_plane_offset, int real_win_h_start,
+void MaxPoolingC8Fp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, float16_t min,
+                      float16_t max, int in_batch_offset, int out_plane_offset, int real_win_h_start,
                       int real_win_h_end, int real_win_w_start, int real_win_w_end, int in_h_index, int in_w_index) {
   int channel = pooling_param->input_channel_;
   int in_w = pooling_param->input_w_;
@@ -178,8 +178,8 @@ void MaxPoolingC8Fp16(const float16_t *input_ptr, float16_t *output_ptr, const P
   }  // c8 loop
 }
 
-void MaxPoolingC4Fp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
-                      float16_t min, float16_t max, int in_batch_offset, int out_plane_offset, int real_win_h_start,
+void MaxPoolingC4Fp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, float16_t min,
+                      float16_t max, int in_batch_offset, int out_plane_offset, int real_win_h_start,
                       int real_win_h_end, int real_win_w_start, int real_win_w_end, int in_h_index, int in_w_index) {
   int channel = pooling_param->input_channel_;
   int in_w = pooling_param->input_w_;
@@ -224,8 +224,8 @@ void MaxPoolingC4Fp16(const float16_t *input_ptr, float16_t *output_ptr, const P
 #endif
   }  // c4 loop
 }
-void MaxPoolingC1Fp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
-                      float16_t min, float16_t max, int in_batch_offset, int out_plane_offset, int real_win_h_start,
+void MaxPoolingC1Fp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, float16_t min,
+                      float16_t max, int in_batch_offset, int out_plane_offset, int real_win_h_start,
                       int real_win_h_end, int real_win_w_start, int real_win_w_end, int in_h_index, int in_w_index) {
   int channel = pooling_param->input_channel_;
   int in_w = pooling_param->input_w_;
@@ -249,8 +249,8 @@ void MaxPoolingC1Fp16(const float16_t *input_ptr, float16_t *output_ptr, const P
   }  // channel_res loop
 }
 
-void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
-                    int task_id, float16_t min, float16_t max) {
+void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id,
+                    float16_t min, float16_t max) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;

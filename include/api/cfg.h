@@ -23,6 +23,12 @@
 #include "include/api/data_type.h"
 #include "include/api/dual_abi_helper.h"
 
+#ifdef _WIN32
+#define MS_API __declspec(dllexport)
+#else
+#define MS_API __attribute__((visibility("default")))
+#endif
+
 namespace mindspore {
 
 class MixPrecisionCfg {

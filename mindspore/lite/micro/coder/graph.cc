@@ -27,15 +27,11 @@
 #include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "src/common/prim_util.h"
-#include "src/lite_model.h"
 
 namespace mindspore::lite::micro {
 CoderGraph::~CoderGraph() {
-  if (model_ != nullptr) {
-    model_->Free();
-    delete model_;
-    model_ = nullptr;
-  }
+  model_->Free();
+  delete model_;
   for (auto &tensor : all_tensors_) {
     delete tensor;
   }
@@ -250,7 +246,7 @@ void CoderGraph::DumpUnSupportLayer(Target target) {
     uint32_t input_idx = node->input_indices_.at(0);
     Tensor *t = all_tensors_.at(input_idx);
     TypeId dtype = t->data_type();
-    int pt = GetPrimitiveType(node->primitive_, reinterpret_cast<lite::LiteModel *>(model_)->GetSchemaVersion());
+    int pt = GetPrimitiveType(node->primitive_);
     CoderKey key(target, dtype, pt);
     // search from the opcoder registry
     if (OpCoderFactory::GetInstance()->FindOpCoder(key) == nullptr) {

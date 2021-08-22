@@ -76,7 +76,7 @@ class OptimizerKernel : public CPUKernel {
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
-      std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
+      std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, output_index);
       size_t tensor_size =
         shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
       output_size_list_.emplace_back(tensor_size);

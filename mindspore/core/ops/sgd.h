@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSGD = "SGD";
-class MS_CORE_API SGD : public PrimitiveC {
+class SGD : public PrimitiveC {
  public:
   SGD() : PrimitiveC(kNameSGD) {}
   ~SGD() = default;

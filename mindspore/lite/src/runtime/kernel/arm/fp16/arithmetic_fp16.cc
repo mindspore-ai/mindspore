@@ -21,7 +21,6 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 using mindspore::schema::PrimitiveType_AddFusion;
@@ -184,11 +183,8 @@ int ArithmeticFP16CPUKernel::Run() {
     return RET_ERROR;
   }
   auto ret = ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ArithmeticsRun failed, ret : " << ret;
-  }
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    Float16ToFloat32(static_cast<float16_t *>(output_ptr_), reinterpret_cast<float *>(output_tensor->data_c()),
+    Float16ToFloat32(static_cast<float16_t *>(output_ptr_), reinterpret_cast<float *>(output_tensor->MutableData()),
                      output_tensor->ElementsNum());
   }
   FreeFp16Buffer();

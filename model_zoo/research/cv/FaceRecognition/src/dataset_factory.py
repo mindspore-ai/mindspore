@@ -21,16 +21,18 @@ import mindspore.dataset as de
 import mindspore.dataset.vision.py_transforms as F
 import mindspore.dataset.transforms.py_transforms as F2
 
+from model_utils.config import config
 from src.custom_dataset import DistributedCustomSampler, CustomDataset
 
 __all__ = ['get_de_dataset']
+
 
 def get_de_dataset(args):
     '''get_de_dataset'''
     lbl_transforms = [F.ToType(np.int32)]
     transform_label = F2.Compose(lbl_transforms)
 
-    drop_remainder = True
+    drop_remainder = False
 
     transforms = [F.ToPIL(),
                   F.RandomHorizontalFlip(),
@@ -38,21 +40,16 @@ def get_de_dataset(args):
                   F.Normalize(mean=[0.5], std=[0.5])]
     transform = F2.Compose(transforms)
     cache_path = os.path.join('cache', os.path.basename(args.data_dir), 'data_cache.pkl')
-    if args.device_target == 'GPU' and args.local_rank != 0:
-        while True:
-            if os.path.exists(cache_path) and os.path.exists(cache_path[:cache_path.rfind('.')] + 'txt'):
-                break
-        with open(cache_path[:cache_path.rfind('.')] + 'txt') as _f:
-            args.logger.info(_f.readline())
+    print(cache_path)
     if not os.path.exists(os.path.dirname(cache_path)):
         os.makedirs(os.path.dirname(cache_path))
     dataset = CustomDataset(args.data_dir, cache_path, args.is_distributed)
     args.logger.info("dataset len:{}".format(dataset.__len__()))
-    if args.device_target in ('Ascend', 'GPU'):
+    if config.device_target == 'Ascend':
         sampler = DistributedCustomSampler(dataset, num_replicas=args.world_size, rank=args.local_rank,
                                            is_distributed=args.is_distributed)
         de_dataset = de.GeneratorDataset(dataset, ["image", "label"], sampler=sampler)
-    elif args.device_target == 'CPU':
+    elif config.device_target == 'CPU':
         de_dataset = de.GeneratorDataset(dataset, ["image", "label"])
     args.logger.info("after sampler de_dataset datasize :{}".format(de_dataset.get_dataset_size()))
     de_dataset = de_dataset.map(input_columns="image", operations=transform)

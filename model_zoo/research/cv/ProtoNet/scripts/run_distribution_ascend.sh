@@ -16,7 +16,7 @@
 # an simple tutorial as follows, more parameters can be setting
 if [ $# != 4 ]
 then
-    echo "Usage: sh run_distribution_ascend.sh [RANK_TABLE_FILE] [DATA_PATH] [TRAIN_CLASS] [EPOCHS]"
+    echo "Usage: sh run_distribution_ascend.sh [RANK_TABLE_FILE] [DATA_PATH] [TRAIN_CLASS]"
 exit 1
 fi
 
@@ -33,7 +33,6 @@ RANK_TABLE_FILE=$(realpath $1)
 export RANK_TABLE_FILE
 export DATA_PATH=$2
 export TRAIN_CLASS=$3
-export EPOCHS=$4
 echo "RANK_TABLE_FILE=${RANK_TABLE_FILE}"
 
 export SERVER_ID=0
@@ -44,16 +43,13 @@ do
     export RANK_ID=$((rank_start + i))
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
-    cp -r ../src ./train_parallel$i
-    cp ../train.py ./train_parallel$i
-    cp ../model_init.py ./train_parallel$i
+    cp -r ./src ./train_parallel$i
+    cp ./train.py ./train_parallel$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     cd ./train_parallel$i ||exit
     env > env.log
-    python train.py --dataset_root=$DATA_PATH \
+    python train.py --data_path=$DATA_PATH \
                     --device_id=$DEVICE_ID --device_target="Ascend" \
-                    --classes_per_it_tr=$TRAIN_CLASS\
-                    --experiment_root=./output\
-                    --epochs=$EPOCHS > log 2>&1 &
+                    --classes_per_it_tr=$TRAIN_CLASS > log 2>&1 &
     cd ..
 done

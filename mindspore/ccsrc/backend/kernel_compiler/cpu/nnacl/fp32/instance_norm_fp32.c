@@ -21,11 +21,14 @@
 
 int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data, const float *beta_data,
                  const InstanceNormParameter *param, size_t task_id) {
-  NNACL_CHECK_NULL_RETURN_ERR(src_data);
-  NNACL_CHECK_NULL_RETURN_ERR(dst_data);
-  NNACL_CHECK_NULL_RETURN_ERR(param->op_parameter_.thread_num_)
+  if (src_data == NULL || dst_data == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  if (param->op_parameter_.thread_num_ == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int channel_step = UP_DIV(param->channel_, param->op_parameter_.thread_num_);
-  int channel_begin = (int)(task_id)*channel_step;
+  int channel_begin = task_id * channel_step;
   int channel_end = MSMIN(channel_begin + channel_step, param->channel_);
 
   for (int b = 0; b < param->batch_; b++) {
@@ -106,77 +109,6 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
 #endif
       for (; index < param->inner_size_; index++) {
         dst[index] = (src[index] - mean) * deno + beta_data[c];
-      }
-    }
-  }
-  return NNACL_OK;
-}
-
-int InstanceNormNC4HW4(const float *src_data, float *dst_data, const float *gamma_data, const float *beta_data,
-                       const InstanceNormParameter *param, size_t task_id) {
-  NNACL_CHECK_NULL_RETURN_ERR(src_data);
-  NNACL_CHECK_NULL_RETURN_ERR(dst_data);
-  NNACL_CHECK_NULL_RETURN_ERR(param->op_parameter_.thread_num_);
-  int channel = param->channel_;
-  int hw_plane = param->inner_size_;
-  int channel_step = UP_DIV(UP_DIV(channel, C4NUM), param->op_parameter_.thread_num_) * C4NUM;
-  int channel_begin = (int)(task_id)*channel_step;
-  int channel_end = MSMIN(channel_begin + channel_step, channel);
-#if defined(ENABLE_SSE) || defined(ENABLE_ARM)
-  int c4_down = channel_end / C4NUM * C4NUM;
-  MS_FLOAT32X4 hw_planev = MS_MOVQ_F32((float)(hw_plane));
-#endif
-  for (int b = 0; b < param->batch_; b++) {
-    const float *src_b = src_data + b * channel * hw_plane;
-    float *dst_b = dst_data + b * channel * hw_plane;
-    int c = channel_begin;
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-    for (; c < c4_down; c += C4NUM) {
-      const float *src = src_b + c * hw_plane;
-      float *dst = dst_b + c;
-      MS_FLOAT32X4 mean = MS_MOVQ_F32(0.0f);
-      MS_FLOAT32X4 square_mean = MS_MOVQ_F32(0.0f);
-      for (int index = 0; index < hw_plane; ++index) {
-        MS_FLOAT32X4 srcv = MS_LDQ_F32(src + index * C4NUM);
-        MS_FLOAT32X4 squarev = MS_MULQ_F32(srcv, srcv);
-        mean = MS_ADDQ_F32(mean, srcv);
-        square_mean = MS_ADDQ_F32(square_mean, squarev);
-      }
-      mean = MS_DIVQ_F32(mean, hw_planev);
-      square_mean = MS_DIVQ_F32(square_mean, hw_planev);
-      MS_FLOAT32X4 deno =
-        MS_ADDQ_F32(MS_SUBQ_F32(square_mean, MS_MULQ_F32(mean, mean)), MS_MOVQ_F32(param->epsilon_));  // question
-      deno = MS_DIVQ_F32(MS_MOVQ_F32(1.0f), MS_SQRTFX4_F32(deno));
-
-      MS_FLOAT32X4 gammav = MS_MULQ_F32(MS_LDQ_F32(gamma_data + c), deno);  // deno * gamma_data[c]
-      MS_FLOAT32X4 betav = MS_LDQ_F32(beta_data + c);
-      for (int index = 0; index < hw_plane; ++index) {
-        MS_FLOAT32X4 srcv = MS_LDQ_F32(src + index * C4NUM);
-        MS_FLOAT32X4 outv = MS_SUBQ_F32(srcv, mean);
-        outv = MS_MULQ_F32(outv, gammav);
-        outv = MS_ADDQ_F32(outv, betav);
-        MS_STQ_F32(dst + index * channel, outv);
-      }
-    }
-#endif
-    for (; c < channel_end; ++c) {
-      int c4_down_loop = c / C4NUM * C4NUM;
-      int c4_mod = c % C4NUM;
-      int c_res = MSMIN(channel_end - c4_down_loop, C4NUM);
-      const float *src = src_b + c4_down_loop * hw_plane + c4_mod;
-      float *dst = dst_b + c;
-      float mean = 0.0f;
-      float square_mean = 0.0f;
-      for (int index = 0; index < hw_plane; ++index) {
-        float tmp = src[index * c_res];
-        mean += tmp;
-        square_mean += tmp * tmp;
-      }
-      mean /= (float)hw_plane;
-      square_mean /= (float)hw_plane;
-      const float deno = gamma_data[c] / sqrtf(square_mean - mean * mean + param->epsilon_);
-      for (int index = 0; index < hw_plane; ++index) {
-        dst[index * channel] = (src[index * c_res] - mean) * deno + beta_data[c];
       }
     }
   }

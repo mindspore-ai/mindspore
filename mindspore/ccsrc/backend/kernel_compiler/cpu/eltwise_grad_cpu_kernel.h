@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ class EltWiseGradCPUKernel : public CPUKernel {
   void AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void SoftplusGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
 
   std::string kernel_name_ = "";
 };
@@ -102,10 +101,6 @@ MS_REG_CPU_KERNEL_T(
   EltWiseGradCPUKernel, float);
 MS_REG_CPU_KERNEL_T(
   AcoshGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCPUKernel, float);
-MS_REG_CPU_KERNEL_T(
-  SoftplusGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   EltWiseGradCPUKernel, float);
 }  // namespace kernel

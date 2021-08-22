@@ -95,7 +95,7 @@ class TFRecordNode : public NonMappableSourceNode {
 
   /// \brief Get the shard id of node
   /// \return Status Status::OK() if get shard id successfully
-  Status GetShardId(int32_t *const shard_id) override;
+  Status GetShardId(int32_t *shard_id) override;
 
   /// \brief Base-class override for GetDatasetSize
   /// \param[in] size_getter Shared pointer to DatasetSizeGetter
@@ -126,12 +126,6 @@ class TFRecordNode : public NonMappableSourceNode {
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
 
-  /// \brief Function to read dataset in json
-  /// \param[in] json_obj The JSON object to be deserialized
-  /// \param[out] ds Deserialized dataset
-  /// \return Status The status code returned
-  static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
-
   /// \brief TFRecord by itself is a non-mappable dataset that does not support sampling.
   ///     However, if a cache operator is injected at some other place higher in the tree, that cache can
   ///     inherit this sampler from the leaf, providing sampling support from the caching layer.
@@ -158,7 +152,7 @@ class TFRecordNode : public NonMappableSourceNode {
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
+  Status AcceptAfter(IRNodePass *p, bool *const modified) override;
 
  private:
   std::vector<std::string> dataset_files_;

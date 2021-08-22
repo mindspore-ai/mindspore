@@ -27,7 +27,7 @@
 
 namespace mindspore {
 // TypeRefKey type
-class MS_CORE_API RefKeyType : public Object {
+class RefKeyType : public Object {
  public:
   RefKeyType() : Object(kObjectTypeRefKey) {}
   ~RefKeyType() override {}
@@ -40,7 +40,7 @@ class MS_CORE_API RefKeyType : public Object {
 };
 
 // TypeRef type
-class MS_CORE_API RefType : public TensorType {
+class RefType : public TensorType {
  public:
   RefType() : TensorType() {}
   explicit RefType(const TensorTypePtr &subtype) : TensorType(subtype->element()) {}
@@ -53,8 +53,8 @@ class MS_CORE_API RefType : public TensorType {
 };
 using RefTypePtr = std::shared_ptr<RefType>;
 
-MS_CORE_API extern const TypePtr kRefKeyType;
-MS_CORE_API extern const TypePtr kRefType;
+extern const TypePtr kRefKeyType;
+extern const TypePtr kRefType;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_REF_H_

@@ -1,4 +1,4 @@
 easydict
 six
 numpy
-paddlepaddle
+paddleocr

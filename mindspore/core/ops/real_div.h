@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRealDiv = prim::kRealDiv;
-class MS_CORE_API RealDiv : public PrimitiveC {
+class RealDiv : public PrimitiveC {
  public:
   RealDiv() : PrimitiveC(kNameRealDiv) { InitIOName({"x", "y"}, {"output"}); }
   ~RealDiv() = default;

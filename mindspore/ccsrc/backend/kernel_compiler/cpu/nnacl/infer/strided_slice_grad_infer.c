@@ -32,9 +32,8 @@ bool StridedSliceCheckInputs(const TensorC *const *inputs, size_t inputs_size) {
   return true;  // note: the original code is ndim_ <= in_shape_size
 }
 
-void ApplyBeginEndEllipsisMask(size_t ndim, int *begins, const uint32_t *const begins_mask, int *ends,
-                               const uint32_t *const ends_mask, const uint32_t *const ellipsis_mask,
-                               const int *const in_shape) {
+void ApplyBeginEndEllipsisMask(size_t ndim, int *begins, uint32_t *begins_mask, int *ends, uint32_t *ends_mask,
+                               uint32_t *ellipsis_mask, int *in_shape) {
   for (size_t i = 0; i < ndim; i++) {
     if (begins_mask[i]) {
       begins[i] = 0;
@@ -85,8 +84,8 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
   int *end_data = (int *)(inputs[3]->data_);
   int *stride_data = (int *)(inputs[4]->data_);
 
-  size_t ndim_ = (size_t)GetElementNum(begin_tensor);
-  for (size_t i = 0; i < ndim_; ++i) {
+  size_t ndim_ = GetElementNum(begin_tensor);
+  for (int i = 0; i < ndim_; ++i) {
     ShapePush(begins_, &begins_size, begin_data[i]);
     ShapePush(ends_, &ends_size, end_data[i]);
     ShapePush(strides_, &strides_size, stride_data[i]);
@@ -105,9 +104,9 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
     ellipsis_mask_[i] = (unsigned)(param->ellipsisMask_) & (1 << i);
     new_axis_mask_[i] = (unsigned)(param->newAxisMask_) & (1 << i);
   }
-  param->num_axes_ = (int)(in_shape_size);
-  param->in_shape_length_ = (int)(in_shape_size);
-  for (size_t i = 0; i < ndim_; ++i) {
+  param->num_axes_ = in_shape_size;
+  param->in_shape_length_ = in_shape_size;
+  for (int i = 0; i < ndim_; ++i) {
     param->begins_[i] = begins_[i];
     param->ends_[i] = ends_[i];
     param->strides_[i] = strides_[i];
@@ -139,16 +138,13 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
     return NNACL_OK;
   }
 
-  int output_size = inputs[1]->shape_[0];
+  size_t output_size = inputs[1]->shape_[0];
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   if (inputs[1]->data_ == NULL) {
     return NNACL_ERR;
   }
 
-  if (output_size > MAX_SHAPE_SIZE) {
-    return NNACL_ERR;
-  }
   for (int i = 0; i < output_size; i++) {
     ShapePush(output_shape, &output_shape_size, ((int *)(inputs[1]->data_))[i]);
   }

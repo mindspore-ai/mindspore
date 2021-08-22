@@ -51,8 +51,6 @@ class HcclKernel : public AscendKernelMod {
   uint64_t hccl_count_;
   HcclReduceOp op_type_;
   uint32_t root_id_;
-  uint32_t src_rank_;
-  uint32_t dest_rank_;
   mutable std::vector<size_t> input_size_list_;
   mutable std::vector<size_t> output_size_list_;
   mutable std::vector<size_t> workspace_size_list_;
@@ -73,7 +71,7 @@ class HcclKernelFactory {
   static std::shared_ptr<HcclKernel> Get(const string &name);
 
  private:
-  std::map<string, HcclKernelCreater> hccl_kernel_map_;
+  std::map<string, HcclKernelCreater> hcclKernelMap_;
 };
 
 class _HcclKernelRegister {

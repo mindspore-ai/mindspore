@@ -1,4 +1,4 @@
-# Copyright 2020-21 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
-from mindspore import context
 
 
 def bias_init_zeros(shape):
@@ -67,10 +66,6 @@ class FeatPyramidNeck(nn.Cell):
                  out_channels,
                  num_outs):
         super(FeatPyramidNeck, self).__init__()
-        if context.get_context("device_target") == "CPU":
-            self.platform_mstype = mstype.float32
-        else:
-            self.platform_mstype = mstype.float16
         self.num_outs = num_outs
         self.in_channels = in_channels
         self.fpn_layer = len(self.in_channels)
@@ -101,9 +96,9 @@ class FeatPyramidNeck(nn.Cell):
             x += (self.lateral_convs_list[i](inputs[i]),)
 
         y = (x[3],)
-        y = y + (x[2] + self.cast(self.interpolate1(y[self.fpn_layer - 4]), self.platform_mstype),)
-        y = y + (x[1] + self.cast(self.interpolate2(y[self.fpn_layer - 3]), self.platform_mstype),)
-        y = y + (x[0] + self.cast(self.interpolate3(y[self.fpn_layer - 2]), self.platform_mstype),)
+        y = y + (x[2] + self.cast(self.interpolate1(y[self.fpn_layer - 4]), mstype.float16),)
+        y = y + (x[1] + self.cast(self.interpolate2(y[self.fpn_layer - 3]), mstype.float16),)
+        y = y + (x[0] + self.cast(self.interpolate3(y[self.fpn_layer - 2]), mstype.float16),)
 
         z = ()
         for i in range(self.fpn_layer - 1, -1, -1):

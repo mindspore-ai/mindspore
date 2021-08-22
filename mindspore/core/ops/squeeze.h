@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSqueeze = "Squeeze";
-class MS_CORE_API Squeeze : public PrimitiveC {
+class Squeeze : public PrimitiveC {
  public:
   Squeeze() : PrimitiveC(kNameSqueeze) { InitIOName({"x"}, {"output"}); }
   ~Squeeze() = default;

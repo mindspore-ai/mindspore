@@ -30,21 +30,17 @@ extern "C" {
 #endif
 // fp16 common winograd
 void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data, int cal_num,
-                                int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
+                                int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
                                 InputTransFp16Func func);
 
-void WinogradOutputNHWCTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
-                                     int cal_num, int out_tile_index, int output_unit_num,
-                                     const ConvParameter *conv_param, OutputTransFp16Func func);
-
-void WinogradOutputNC4HW4TransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
-                                       int cal_num, int out_tile_index, int output_unit_num,
-                                       const ConvParameter *conv_param, OutputTransFp16Func func);
+void WinogradOutputTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
+                                 int cal_num, int out_tile_index, int output_unit_num, ConvParameter *conv_param,
+                                 OutputTransFp16Func func);
 
 // fp16 winograd weight trans
-int WinogradWeightTransformFp16(const float16_t *weight_data, float16_t *winograd_data, const float *matrix_g,
-                                const float *matrix_gt, int oc_block, int input_unit, int kernel_unit,
-                                int filter_channel, int filter_batch, bool pack);
+int WinogradWeightTransformFp16(const float16_t *weight_data, float16_t *winograd_data, float *matrix_g,
+                                float *matrix_gt, int oc_block, int input_unit, int kernel_unit, int filter_channel,
+                                int filter_batch, bool pack);
 
 #ifdef __cplusplus
 }

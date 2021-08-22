@@ -42,17 +42,13 @@ class HcclAdapter {
   static HcclAdapter &GetInstance();
 
   // common
-  bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, bool is_graph_mode);
-  bool InitHccl();
+  bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file);
   bool FinalizeHccl();
 
   HcclResult HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const;
   HcclResult HcclDestroyGroup(const std::string &group) const;
   HcclResult HcclGetRankId(const std::string &group, uint32_t *rank_id) const;
   HcclResult HcclGetRankSize(const std::string &group, uint32_t *rank_size) const;
-
-  HcclResult HcclGetRankId(uint32_t *rank_id) const;
-  HcclResult HcclGetRankSize(uint32_t *rank_size) const;
 
   // for ge node
   bool GenTask(const AnfNodePtr &node, HcclDataType datatype, std::vector<HcclTaskInfo> *task_info_lists) const;
@@ -62,16 +58,8 @@ class HcclAdapter {
 
   // for single op
   HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream) const;
-  HcclResult HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
-                           aclrtStream stream, const std::string &group = "") const;
-  HcclResult HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, aclrtStream stream,
-                           const std::string &group = "") const;
-  HcclResult HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
-                               aclrtStream stream, const std::string &group = "") const;
-  HcclResult HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank, aclrtStream stream,
-                      const std::string &group = "") const;
-  HcclResult HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank, aclrtStream stream,
-                      const std::string &group = "") const;
+  HcclResult HcclAllReduce(void *sendBuf, void *recvBuf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
+                           aclrtStream stream) const;
 
   // for enqueue op
   HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
@@ -103,12 +91,6 @@ class HcclAdapter {
   HcclCommDestroyFunObj finalize_hccl_comm_ = nullptr;
   HcclBroadcastFunObj launch_hccl_broadcast_ = nullptr;
   HcclAllReduceFunObj launch_hccl_all_reduce_ = nullptr;
-  HcclReduceScatterFunObj launch_hccl_reduce_scatter_ = nullptr;
-  HcclAllGatherFunObj launch_hccl_all_gather_ = nullptr;
-  HcclSendFunObj launch_hccl_send_ = nullptr;
-  HcclRecvFunObj launch_hccl_recv_ = nullptr;
-  HcclGetRankIdFunObj single_op_hccl_get_rank_id_ = nullptr;
-  HcclGetRankSizeFunObj single_op_hccl_get_rank_size_ = nullptr;
 
   HcomCreateGroupFunObj hccl_create_group_ = nullptr;
   HcomDestroyGroupFunObj hccl_destroy_group_ = nullptr;
@@ -126,7 +108,6 @@ class HcclAdapter {
   std::shared_ptr<::ge::OpsKernelBuilder> ops_kernel_builder_ = nullptr;
 
   bool init_flag_ = false;
-  bool is_graph_mode_ = false;
   std::mutex init_mutex_;
 };
 }  // namespace mindspore::hccl

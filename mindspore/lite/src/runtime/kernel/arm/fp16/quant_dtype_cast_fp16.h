@@ -26,7 +26,7 @@ class QuantDTypeCastFp16CPUKernel : public InnerKernel {
  public:
   QuantDTypeCastFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx), thread_num_(ctx->thread_num_) {}
   ~QuantDTypeCastFp16CPUKernel() override = default;
 
   int Init() override;
@@ -35,14 +35,15 @@ class QuantDTypeCastFp16CPUKernel : public InnerKernel {
   int QuantDTypeCast(int task_id);
 
  private:
-  int thread_n_num_ = 0;
-  int thread_n_stride_ = 0;
-  int num_unit_ = 0;
-  int8_t *int8_ptr_ = nullptr;
-  uint8_t *uint8_ptr_ = nullptr;
-  float16_t *float16_ptr_ = nullptr;
-  bool int_to_float_ = false;
-  bool is_uint8_ = false;
+  int thread_num_;
+  int thread_n_num_;
+  int thread_n_stride_;
+  int num_unit_;
+  int8_t *int8_ptr_;
+  uint8_t *uint8_ptr_;
+  float16_t *float16_ptr_;
+  bool int_to_float_;
+  bool is_uint8_;
 };
 }  // namespace mindspore::kernel
 

@@ -15,11 +15,9 @@
  */
 
 #include "src/delegate/npu/op/scale_npu.h"
-#include <memory>
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-constexpr int INPUT_INDEX = 0;
 constexpr int SCALE_INDEX = 1;
 constexpr int BIAS_INDEX = 2;
 
@@ -27,37 +25,28 @@ int ScaleNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<
                           const std::vector<mindspore::MSTensor> &out_tensors) {
   auto scale_prim = primitive->value_as_ScaleFusion();
   if (scale_prim == nullptr) {
-    MS_LOG(ERROR) << "Get null primitive value for op: " << name_;
+    MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
   axis_ = scale_prim->axis();
   if (axis_ < 0) {
-    axis_ = axis_ + in_tensors[INPUT_INDEX].Shape().size();
+    axis_ = axis_ + in_tensors[0].Shape().size();
   }
   if (axis_ != NHWC_C && axis_ != NCHW_C) {
-    if (in_tensors.size() <= BIAS_INDEX) {
-      MS_LOG(INFO) << "Npu Scale op does not support axis: " << axis_ << ", try to convert to Mul op.";
-      use_mul_ = true;
-    } else {
-      MS_LOG(WARNING) << "Npu Scale axis attr only support 1 or channel, now is " << axis_;
-      return RET_NOT_SUPPORT;
-    }
+    MS_LOG(WARNING) << "Npu scale axis attr only support 1 or channel, now is " << axis_;
+    return RET_NOT_SUPPORT;
   }
   return RET_OK;
 }
 
 int ScaleNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                      const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!use_mul_) {
-    // note that Scale only support the default axis(i.e., 1), setting axis is meaningless.
-    op_ = new (std::nothrow) hiai::op::Scale(name_);
-  } else {
-    op_ = new (std::nothrow) hiai::op::Mul(name_);
-  }
+  op_ = new (std::nothrow) hiai::op::Scale(name_);
   if (op_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
+  op_->set_attr_axis(1);  // only support axis 1 now
 
   auto scale_prim = primitive->value_as_ScaleFusion();
   if (scale_prim == nullptr) {
@@ -78,20 +67,40 @@ int ScaleNPUOp::Init(const schema::Primitive *primitive, const std::vector<minds
 int ScaleNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<mindspore::MSTensor> &out_tensors,
                              const std::vector<ge::Operator *> &npu_inputs) {
+  op_->set_input_x(*npu_inputs.at(0));
   MS_ASSERT(in_tensors.size() > SCALE_INDEX);
-  if (use_mul_) {
-    auto ret = ConvertScaleToMul(npu_inputs, op_, in_tensors);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Convert Scale to Mul failed, op name: " << name_;
-    }
-    return ret;
+  auto scale_shape = in_tensors[SCALE_INDEX].Shape();
+  auto scale_tensor = ConverterToNPUTensor(in_tensors[SCALE_INDEX]);
+  if (scale_tensor == nullptr) {
+    MS_LOG(ERROR) << "Get scale_tensor failed.";
+    return RET_ERROR;
   }
+  scale_tensor->SetTensorDesc(ge::TensorDesc(ConverterToNPUShape({1, scale_shape[0], 1, 1})));
 
-  auto scale_op = reinterpret_cast<hiai::op::Scale *>(op_);
-  scale_op->set_input_x(*npu_inputs.at(INPUT_INDEX));
-  scale_op->set_input_scale(*npu_inputs.at(SCALE_INDEX));
+  scale_ = new (std::nothrow) hiai::op::Const(name_ + "_scale");
+  if (scale_ == nullptr) {
+    MS_LOG(ERROR) << "New scale_ const failed.";
+    return RET_ERROR;
+  }
+  scale_->set_attr_value(scale_tensor);
+  op_->set_input_scale(*scale_);
+
   if (in_tensors.size() > BIAS_INDEX && in_tensors[BIAS_INDEX] != nullptr) {
-    scale_op->set_input_bias(*npu_inputs.at(BIAS_INDEX));
+    auto bias_shape = in_tensors[BIAS_INDEX].Shape();
+    auto bias_tensor = ConverterToNPUTensor(in_tensors[BIAS_INDEX]);
+    if (bias_tensor == nullptr) {
+      MS_LOG(ERROR) << "Get bias_tensor failed.";
+      return RET_ERROR;
+    }
+    scale_tensor->SetTensorDesc(ge::TensorDesc(ConverterToNPUShape({1, bias_shape[0], 1, 1})));
+
+    bias_ = new (std::nothrow) hiai::op::Const(name_ + "_beta");
+    if (bias_ == nullptr) {
+      MS_LOG(ERROR) << "New beta_ const failed.";
+      return RET_ERROR;
+    }
+    bias_->set_attr_value(bias_tensor);
+    op_->set_input_bias(*bias_);
   }
   return RET_OK;
 }
@@ -121,45 +130,6 @@ int ScaleNPUOp::SetActivation(const ge::Operator *input) {
   return RET_OK;
 }
 
-int ScaleNPUOp::ConvertScaleToMul(const std::vector<ge::Operator *> &npu_inputs, ge::Operator *cur_op,
-                                  const std::vector<mindspore::MSTensor> &in_tensors) {
-  auto input_shape = in_tensors[INPUT_INDEX].Shape();
-  auto scale_shape = in_tensors[SCALE_INDEX].Shape();
-  auto mul_op = reinterpret_cast<hiai::op::Mul *>(cur_op);
-  mul_op->set_input_x1(*npu_inputs.at(INPUT_INDEX));
-  if (input_shape.size() == scale_shape.size()) {
-    mul_op->set_input_x2(*npu_inputs.at(SCALE_INDEX));
-  } else {
-    int valid_shape[4] = {1, 1, 1, 1};
-    for (size_t i = 0; i < scale_shape.size(); i++) {
-      valid_shape[axis_ + i] = static_cast<int>(scale_shape[i]);
-    }
-    reshape_ = new (std::nothrow) hiai::op::Reshape(name_ + "_reshape");
-    if (reshape_ == nullptr) {
-      MS_LOG(ERROR) << "New Reshape npu operator for op " << name_ << " failed.";
-      return RET_ERROR;
-    }
-    std::shared_ptr<ge::Tensor> shape_tensor = std::make_shared<ge::Tensor>();
-    if (shape_tensor == nullptr) {
-      MS_LOG(ERROR) << "new shape_tensor failed.";
-      return RET_ERROR;
-    }
-    ge::TensorDesc tensor_desc(ge::Shape({NPU_SHAPE_SIZE}), ge::FORMAT_ND, ge::DT_INT32);
-    shape_tensor->SetTensorDesc(tensor_desc);
-    shape_tensor->SetData(reinterpret_cast<const uint8_t *>(valid_shape), NPU_SHAPE_SIZE * sizeof(int));
-    shape_ = new (std::nothrow) hiai::op::Const(name_ + "_reshape_1");
-    if (shape_ == nullptr) {
-      MS_LOG(ERROR) << "New shape const for op " << name_ << " failed.";
-      return RET_ERROR;
-    }
-    shape_->set_attr_value(shape_tensor);
-    reshape_->set_input_x(*npu_inputs.at(SCALE_INDEX));
-    reshape_->set_input_shape(*shape_);
-    mul_op->set_input_x2(*reshape_);
-  }
-  return RET_OK;
-}
-
 ScaleNPUOp::~ScaleNPUOp() {
   if (op_ != nullptr) {
     delete op_;
@@ -176,14 +146,6 @@ ScaleNPUOp::~ScaleNPUOp() {
   if (act_ != nullptr) {
     delete act_;
     act_ = nullptr;
-  }
-  if (reshape_ != nullptr) {
-    delete reshape_;
-    reshape_ = nullptr;
-  }
-  if (shape_ != nullptr) {
-    delete shape_;
-    shape_ = nullptr;
   }
 }
 }  // namespace mindspore

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFftReal = "FftReal";
-class MS_CORE_API FftReal : public PrimitiveC {
+class FftReal : public PrimitiveC {
  public:
   FftReal() : PrimitiveC(kNameFftReal) {}
   ~FftReal() = default;

@@ -33,7 +33,7 @@ class Net(nn.Cell):
         return self.dropout(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():
@@ -54,7 +54,7 @@ class Net1(nn.Cell):
         return self.dropout(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net1():
@@ -75,7 +75,7 @@ class Net2(nn.Cell):
         return self.dropout(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net2():

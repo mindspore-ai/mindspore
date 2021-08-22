@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-// The duration between two PushWeights requests when return code is ResponseCode_SucNotReady.
+// The duration between two uploading requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPushWeights = 200;
 template <typename T>
 class FusedPushWeightKernel : public CPUKernel {
@@ -49,17 +49,19 @@ class FusedPushWeightKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(fbb);
 
     total_iteration_++;
-    uint64_t step_num_per_iteration = fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration();
     // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
-    MS_LOG(INFO) << "Try to push weights. Local step number: " << total_iteration_
-                 << ", step number needs to run per iteration: " << step_num_per_iteration;
-    if (step_num_per_iteration != fl::kOneStepPerIteration &&
-        total_iteration_ % step_num_per_iteration != fl::kTrainEndStepNum) {
+    if (total_iteration_ % fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration() !=
+        fl::kTrainBeginStepNum) {
       return true;
     }
 
     fl_iteration_++;
-    MS_LOG(INFO) << "Launching pushing weight for federated learning iteration " << fl_iteration_;
+    if (fl_iteration_ > ps::PSContext::instance()->fl_iteration_num()) {
+      MS_LOG(INFO) << ps::PSContext::instance()->fl_iteration_num() << " iterations are completed.";
+      fl_iteration_ = 1;
+    }
+
+    MS_LOG(INFO) << "Start pushing weight for federated learning iteration " << fl_iteration_;
     if (!BuildPushWeightReq(fbb, inputs)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPushWeight failed.";
       return false;
@@ -71,17 +73,13 @@ class FusedPushWeightKernel : public CPUKernel {
       const schema::ResponsePushWeight *push_weight_rsp = nullptr;
       int retcode = schema::ResponseCode_SucNotReady;
       while (retcode == schema::ResponseCode_SucNotReady) {
-        if (!fl::worker::FLWorker::GetInstance().running()) {
-          MS_LOG(WARNING) << "Worker has finished.";
-          return true;
-        }
         if (!fl::worker::FLWorker::GetInstance().SendToServer(i, fbb->GetBufferPointer(), fbb->GetSize(),
                                                               ps::core::TcpUserCommand::kPushWeight,
                                                               &push_weight_rsp_msg)) {
-          MS_LOG(WARNING) << "Sending request for FusedPushWeight to server " << i << " failed.";
-          retcode = schema::ResponseCode_SucNotReady;
-          std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPushWeights));
-          continue;
+          MS_LOG(WARNING) << "Sending request for FusedPushWeight to server " << i
+                          << " failed. This iteration is dropped.";
+          fl::worker::FLWorker::GetInstance().SetIterationCompleted();
+          return true;
         }
         MS_EXCEPTION_IF_NULL(push_weight_rsp_msg);
 
@@ -107,7 +105,8 @@ class FusedPushWeightKernel : public CPUKernel {
       }
     }
 
-    MS_LOG(INFO) << "Push weights for " << weight_full_names_ << " success. Iteration: " << fl_iteration_;
+    MS_LOG(INFO) << "Push weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
+    fl::worker::FLWorker::GetInstance().SetIterationCompleted();
     return true;
   }
 

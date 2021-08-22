@@ -50,8 +50,8 @@ class MatmulBaseFP16CPUKernel : public InnerKernel {
   void ResizeParameter();
   int InitBufferA();
   int InitBufferB();
-  void InitMatrixA(const void *src_ptr);
-  void InitMatrixB(const void *src_ptr, TypeId data_type);
+  void InitMatrixA(void *src_ptr);
+  void InitMatrixB(void *src_ptr, TypeId data_type);
   void FreeResizeBufA();
   void FreeResizeBufB();
 

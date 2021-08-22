@@ -27,10 +27,6 @@
 
 namespace mindspore {
 namespace lite {
-constexpr int kOffsetTwo = 2;
-constexpr int kOffsetThree = 3;
-constexpr size_t kMinShapeSizeTwo = 2;
-constexpr size_t kMinShapeSizeFour = 4;
 typedef OpParameter *(*ParameterGen)(const void *prim);
 
 class PopulateRegistry {

@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnsortedSegmentSum = "UnsortedSegmentSum";
-class MS_CORE_API UnsortedSegmentSum : public PrimitiveC {
+class UnsortedSegmentSum : public PrimitiveC {
  public:
   UnsortedSegmentSum() : PrimitiveC(kNameUnsortedSegmentSum) {
     InitIOName({"x", "segment_ids", "num_segments"}, {"y"});

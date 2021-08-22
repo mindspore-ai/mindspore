@@ -22,17 +22,17 @@ void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, c
   int32_t in_shape_dim1 = in_shape[1];
   size_t copy_size = block_size * param->out_stride_dim2_ * param->data_type_size_;
   for (int i = 0; i < in_shape[0]; ++i) {
-    int in_offset_n = i * param->in_stride_dim0_;
-    int out_offset_n = i * param->out_stride_dim0_;
+    size_t in_offset_n = i * param->in_stride_dim0_;
+    size_t out_offset_n = i * param->out_stride_dim0_;
     for (int j = 0; j < in_shape_dim1; ++j) {
-      int in_offset_h = in_offset_n + j * param->in_stride_dim1_;
-      int out_offset_h = out_offset_n + j * block_size * param->out_stride_dim1_;
+      size_t in_offset_h = in_offset_n + j * param->in_stride_dim1_;
+      size_t out_offset_h = out_offset_n + j * block_size * param->out_stride_dim1_;
       for (int k = 0; k < in_shape_dim2; ++k) {
-        int in_offset_w = in_offset_h + k * param->in_stride_dim2_;
-        int out_offset_w = out_offset_h + k * block_size * param->out_stride_dim2_;
+        size_t in_offset_w = in_offset_h + k * param->in_stride_dim2_;
+        size_t out_offset_w = out_offset_h + k * block_size * param->out_stride_dim2_;
         for (int l = 0; l < block_size; ++l) {
-          int out_offset = (out_offset_w + l * param->out_stride_dim1_) * param->data_type_size_;
-          int in_offset = (in_offset_w + l * block_size * param->out_stride_dim2_) * param->data_type_size_;
+          size_t out_offset = (out_offset_w + l * param->out_stride_dim1_) * param->data_type_size_;
+          size_t in_offset = (in_offset_w + l * block_size * param->out_stride_dim2_) * param->data_type_size_;
           memcpy((int8_t *)output + out_offset, (int8_t *)input + in_offset, copy_size);
         }
       }

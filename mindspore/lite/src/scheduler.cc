@@ -21,9 +21,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
 #include "src/common/utils.h"
@@ -34,28 +32,18 @@
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "src/common/prim_util.h"
-#include "src/lite_model.h"
 #include "src/common/tensor_util.h"
 #include "src/runtime/infer_manager.h"
-#ifndef RUNTIME_PASS_CLIP
-#include "src/runtime/runtime_pass.h"
-#endif
-#ifndef AUTO_PARALLEL_CLIP
 #include "src/sub_graph_split.h"
-#endif
-#ifndef WEIGHT_DECODE_CLIP
 #include "src/weight_decoder.h"
-#endif
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #include "nnacl/nnacl_common.h"
 #if GPU_OPENCL
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
-#include "include/registry/register_kernel_interface.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
+#include "include/registry/kernel_interface.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
-#endif
 
 namespace mindspore::lite {
 namespace {
@@ -73,17 +61,24 @@ kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &
 }
 }  // namespace
 
+void Scheduler::SetSubgraphForPartialNode() {
+  for (auto &pair : partial_kernel_subgraph_index_map_) {
+    auto &partial_kernel = pair.first;
+    auto &subgraph_index = pair.second;
+    static_cast<kernel::PartialFusionKernel *>(partial_kernel->kernel())
+      ->set_subgraph_kernel(subgraph_index_subgraph_kernel_map_.at(subgraph_index));
+  }
+}
+
 int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
   if (is_train_session_) {
     return RET_OK;
   }
   for (auto kernel : dst_kernels) {
-#ifndef DELEGATE_CLIP
     // delegate graph kernel
     if (kernel->desc().delegate != nullptr) {
       continue;
     }
-#endif
     if (kernel->subgraph_type() == kernel::kNotSubGraph) {
       MS_LOG(ERROR) << "construct subgraph failed.";
       return RET_ERROR;
@@ -100,105 +95,7 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
   return RET_OK;
 }
 
-int Scheduler::SchedulePreProcess() {
-  this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
-
-  int infershape_ret = InferSubGraphShape(kMainSubGraphIndex);
-  if (infershape_ret != RET_OK && infershape_ret != RET_INFER_INVALID) {
-    MS_LOG(ERROR) << "op infer shape failed.";
-    return infershape_ret;
-  }
-
-  if (context_->enable_parallel_ && infershape_ret != RET_INFER_INVALID) {
-#ifndef AUTO_PARALLEL_CLIP
-    auto search_sub_graph =
-      SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
-    search_sub_graph.SubGraphSplit();
-#else
-    MS_LOG(ERROR) << unsupport_auto_parallel_log;
-    return RET_NOT_SUPPORT;
-#endif
-  }
-  return RET_OK;
-}
-
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
-  int check_input_ret = CheckInputParam(dst_kernels);
-  if (check_input_ret != RET_OK) {
-    MS_LOG(ERROR) << "CheckInputParam failed! ret: " << check_input_ret;
-    return check_input_ret;
-  }
-
-  schema_version_ = reinterpret_cast<LiteModel *>(src_model_)->GetSchemaVersion();
-
-  int ret = SchedulePreProcess();
-  if (ret != RET_OK) {
-    return ret;
-  }
-
-  ret = ScheduleGraphToKernels(dst_kernels);
-  FreeOpParameters();
-  op_parameters_.clear();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Schedule graph to kernels failed.";
-    return ret;
-  }
-
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  SetSubgraphForPartialNode();
-#endif
-
-  if (delegate_ != nullptr) {
-#ifndef DELEGATE_CLIP
-    ret = ReplaceDelegateKernels(dst_kernels);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Repalce delegate kernels failed.";
-      return ret;
-    }
-#else
-    MS_LOG(ERROR) << unsupport_delegate_log;
-    return RET_ERROR;
-#endif
-  }
-
-  FindAllInoutKernels(*dst_kernels);
-
-#ifndef RUNTIME_PASS_CLIP
-  Nc4hw4Pass(context_, dst_kernels, src_tensors_);
-#endif
-
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  if (IsControlFlowParttern(*dst_kernels)) {
-    ret = ConstructControlFlowMainGraph(dst_kernels);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "ConstructControlFlowMainGraph failed.";
-      return ret;
-    }
-  } else {
-#endif
-    auto src_kernel = *dst_kernels;
-    dst_kernels->clear();
-    std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
-    ret = ConstructSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "ConstructSubGraphs failed.";
-      return ret;
-    }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  }
-#endif
-
-  ret = InitKernels(*dst_kernels);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "InitKernels failed.";
-    return ret;
-  }
-
-  MS_LOG(DEBUG) << "schedule kernels success.";
-  return RET_OK;
-}
-
-int Scheduler::CheckInputParam(std::vector<kernel::LiteKernel *> *dst_kernels) {
   if (dst_kernels == nullptr) {
     return RET_ERROR;
   }
@@ -210,10 +107,65 @@ int Scheduler::CheckInputParam(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "Model should have a subgraph at least";
     return RET_PARAM_INVALID;
   }
+
+  this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
+
+  int infershape_ret = InferSubGraphShape(kMainSubGraphIndex);
+  if (infershape_ret != RET_OK && infershape_ret != RET_INFER_INVALID) {
+    MS_LOG(ERROR) << "op infer shape failed.";
+    return infershape_ret;
+  }
+
+  if (context_->enable_parallel_ && infershape_ret != RET_INFER_INVALID) {
+    auto search_sub_graph =
+      SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
+    search_sub_graph.SubGraphSplit();
+  }
+
+  int ret = ScheduleGraphToKernels(dst_kernels);
+  op_parameters_.clear();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Schedule graph to kernels failed.";
+    return ret;
+  }
+
+  SetSubgraphForPartialNode();
+  if (delegate_ != nullptr) {
+    ret = ReplaceDelegateKernels(dst_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Repalce delegate kernels failed.";
+      return ret;
+    }
+  }
+  FindAllInoutKernels(*dst_kernels);
+
+  if (IsControlFlowParttern(*dst_kernels)) {
+    ret = ConstructControlFlowMainGraph(dst_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ConstructControlFlowMainGraph failed.";
+      return ret;
+    }
+  } else {
+    auto src_kernel = *dst_kernels;
+    dst_kernels->clear();
+    std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
+    ret = ConstructSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ConstructSubGraphs failed.";
+      return ret;
+    }
+  }
+
+  ret = InitKernels(*dst_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitKernels failed.";
+    return ret;
+  }
+
+  MS_LOG(DEBUG) << "schedule kernels success.";
   return RET_OK;
 }
 
-#ifndef DELEGATE_CLIP
 int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels) {
   std::vector<kernel::Kernel *> kernels;
   for (size_t i = 0; i < dst_kernels->size(); i++) {
@@ -222,7 +174,7 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
 
   ms_inputs_ = LiteTensorsToMSTensors(inputs_);
   ms_outputs_ = LiteTensorsToMSTensors(outputs_);
-  auto schema_version = static_cast<SchemaVersion>(schema_version_);
+  auto schema_version = static_cast<SchemaVersion>(VersionManager::GetInstance()->GetSchemaVersion());
   DelegateModel *model =
     new (std::nothrow) DelegateModel(&kernels, ms_inputs_, ms_outputs_, primitives_, schema_version);
   if (model == nullptr) {
@@ -282,7 +234,6 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
   delete model;
   return RET_OK;
 }
-#endif
 
 void Scheduler::FindNodeInoutTensors(const lite::Model::Node &node, std::vector<Tensor *> *inputs,
                                      std::vector<Tensor *> *outputs) {
@@ -307,25 +258,21 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*node, &inputs, &outputs);
-  int ret;
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  ret = KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders(), schema_version_);
+  auto ret = KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders());
   if (ret != RET_NOT_SUPPORT) {
     return ret;
   }
-#endif
 
-  auto parame_gen = PopulateRegistry::GetInstance()->GetParameterCreator(
-    GetPrimitiveType(node->primitive_, schema_version_), schema_version_);
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  auto parame_gen =
+    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
   if (parame_gen == nullptr) {
     MS_LOG(ERROR) << "parameter generator is nullptr.";
-    FreeOpParameters();
     return RET_NULL_PTR;
   }
   auto parameter = parame_gen(primitive);
   if (parameter == nullptr) {
-    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << GetPrimitiveTypeName(primitive, schema_version_);
-    FreeOpParameters();
+    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
     return RET_ERROR;
   }
   parameter->quant_type_ = node->quant_type_;
@@ -338,7 +285,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
     op_parameters_[node->output_indices_.at(0)] = parameter;
   }
 
-  if (IsCallNode(primitive, schema_version_)) {
+  if (IsCallNode(primitive)) {
     return InferCallShape(node);
   }
   ret = KernelInferShape(inputs, outputs, parameter);
@@ -362,34 +309,40 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
     for (auto &output : outputs) {
       if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
         MS_LOG(ERROR) << "The size of output tensor is too big";
-        FreeOpParameters();
         return RET_ERROR;
       }
     }
   } else if (ret != RET_INFER_INVALID) {
-    FreeOpParameters();
-    return RET_ERROR;
+    for (auto &param : op_parameters_) {
+      free(param.second);
+      param.second = nullptr;
+      return RET_ERROR;
+    }
   }
   return ret;
 }
 
-void Scheduler::FreeOpParameters() {
-  for (auto &param : op_parameters_) {
-    if (param.second != nullptr) {
-      free(param.second);
-      param.second = nullptr;
-    }
-  }
-}
-
 int Scheduler::RestoreSubGraphInput(const lite::Model::Node *partial_node) {
-  auto subgraph_index = GetPartialGraphIndex(partial_node->primitive_, schema_version_);
+  auto subgraph_index = GetPartialGraphIndex(partial_node->primitive_);
   auto subgraph = src_model_->sub_graphs_.at(subgraph_index);
   for (size_t i = 0; i < subgraph->input_indices_.size(); ++i) {
     auto &subgraph_input = src_tensors_->at(subgraph->input_indices_[i]);
     subgraph_input->set_data(nullptr);
   }
   return RET_OK;
+}
+
+void CopyTensorList(TensorList *dst_tensor, TensorList *src_tensor) {
+  dst_tensor->set_data_type(src_tensor->data_type());
+  dst_tensor->set_format(src_tensor->format());
+  dst_tensor->set_element_shape(src_tensor->element_shape());
+  dst_tensor->set_shape(src_tensor->shape());
+  std::vector<Tensor *> cpy_tensors{};
+  for (auto &tensor : src_tensor->tensors()) {
+    auto new_tensor = Tensor::CopyTensor(*tensor, false);
+    cpy_tensors.push_back(new_tensor);
+  }
+  dst_tensor->set_tensors(cpy_tensors);
 }
 
 void CopyCommonTensor(Tensor *dst_tensor, Tensor *src_tensor) {
@@ -400,7 +353,7 @@ void CopyCommonTensor(Tensor *dst_tensor, Tensor *src_tensor) {
 }
 
 int Scheduler::CopyPartialShapeToSubGraph(const lite::Model::Node *partial_node) {
-  auto subgraph_index = GetPartialGraphIndex(partial_node->primitive_, schema_version_);
+  auto subgraph_index = GetPartialGraphIndex(partial_node->primitive_);
   auto subgraph = src_model_->sub_graphs_.at(subgraph_index);
   if (subgraph->input_indices_.size() != partial_node->input_indices_.size()) {
     MS_LOG(ERROR) << "partial node " << partial_node->name_ << " inputs size: " << partial_node->input_indices_.size()
@@ -429,12 +382,12 @@ int Scheduler::CopyPartialShapeToSubGraph(const lite::Model::Node *partial_node)
 int Scheduler::InferPartialShape(const lite::Model::Node *node) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(node != nullptr);
-  if (!IsPartialNode(node->primitive_, schema_version_)) {
+  if (!IsPartialNode(node->primitive_)) {
     MS_LOG(ERROR) << "Node is not a partial";
     return RET_PARAM_INVALID;
   }
   CopyPartialShapeToSubGraph(node);
-  int subgraph_index = GetPartialGraphIndex(node->primitive_, schema_version_);
+  int subgraph_index = GetPartialGraphIndex(node->primitive_);
   auto ret = InferSubGraphShape(subgraph_index);
   if (ret != RET_OK) {
     MS_LOG(WARNING) << "infer subgraph: " << subgraph_index << " failed, ret:" << ret;
@@ -443,12 +396,57 @@ int Scheduler::InferPartialShape(const lite::Model::Node *node) {
   return ret;
 }
 
+int Scheduler::InferSwitchShape(const lite::Model::Node *switch_node) {
+  MS_ASSERT(src_model_ != nullptr);
+  MS_ASSERT(switch_node != nullptr);
+  if (!IsSwitchNode(switch_node->primitive_)) {
+    MS_LOG(ERROR) << "Node is not a switch";
+    return RET_PARAM_INVALID;
+  }
+  std::deque<lite::Model::Node *> partial_cnode_to_infer{};
+  auto true_branch_output_index = switch_node->input_indices_.at(kSwitchTrueBranch);
+  auto false_branch_output_index = switch_node->input_indices_.at(kSwitchFalseBranch);
+  for (auto &node : src_model_->all_nodes_) {
+    if ((IsContain(node->output_indices_, true_branch_output_index) ||
+         IsContain(node->output_indices_, false_branch_output_index)) &&
+        IsPartialNode(node->primitive_) && partial_cnode_inferred_.find(node) == partial_cnode_inferred_.end()) {
+      partial_cnode_inferred_.insert(node);
+      partial_cnode_to_infer.push_back(node);
+    }
+  }
+
+  while (!partial_cnode_to_infer.empty()) {
+    auto &node = partial_cnode_to_infer.front();
+    partial_cnode_to_infer.pop_front();
+    int ret = InferPartialShape(node);
+    if (ret != RET_OK) {
+      MS_LOG(WARNING) << "partial infer not ok, ret: " << ret;
+    }
+  }
+  return RET_OK;
+}
+
 Model::Node *Scheduler::NodeInputIsPartial(const lite::Model::Node *node) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(node != nullptr);
   for (auto &iter : src_model_->all_nodes_) {
     if (iter->output_indices_ == node->input_indices_) {
-      if (IsPartialNode(iter->primitive_, schema_version_)) {
+      if (IsPartialNode(iter->primitive_)) {
+        return iter;
+      } else {
+        return nullptr;
+      }
+    }
+  }
+  return nullptr;
+}
+
+Model::Node *Scheduler::NodeInputIsSwitch(const lite::Model::Node *node) {
+  MS_ASSERT(src_model_ != nullptr);
+  MS_ASSERT(node != nullptr);
+  for (auto &iter : src_model_->all_nodes_) {
+    if (iter->output_indices_ == node->input_indices_) {
+      if (IsSwitchNode(iter->primitive_)) {
         return iter;
       } else {
         return nullptr;
@@ -461,7 +459,7 @@ Model::Node *Scheduler::NodeInputIsPartial(const lite::Model::Node *node) {
 int Scheduler::InferCallShape(const lite::Model::Node *node) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(node != nullptr);
-  if (!IsCallNode(node->primitive_, schema_version_)) {
+  if (!IsCallNode(node->primitive_)) {
     MS_LOG(ERROR) << "Node is not a call cnode";
     return RET_PARAM_INVALID;
   }
@@ -470,12 +468,11 @@ int Scheduler::InferCallShape(const lite::Model::Node *node) {
   if (partial_input) {
     return InferPartialShape(partial_input);
   }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
+
   auto switch_input = NodeInputIsSwitch(node);
   if (switch_input) {
     return InferSwitchShape(switch_input);
   }
-#endif
 
   MS_LOG(ERROR) << "call input is not partial and also not switch.";
   return RET_ERROR;
@@ -495,14 +492,14 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index) {
       MS_LOG(ERROR) << "Op " << node->name_ << " should exist in model!";
       return RET_ERROR;
     }
+    auto type = GetPrimitiveType(primitive);
     auto ret = InferNodeShape(node);
     if (ret == RET_INFER_INVALID) {
-      MS_LOG(INFO) << "InferShape interrupted, name: " << node->name_
-                   << ", type: " << GetPrimitiveTypeName(primitive, schema_version_) << ", set infer flag to false.";
+      MS_LOG(INFO) << "InferShape interrupted, name: " << node->name_ << ", type: " << PrimitiveTypeName(type)
+                   << ", set infer flag to false.";
       subgraph_infershape_ret = RET_INFER_INVALID;
     } else if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InferShape failed, name: " << node->name_
-                    << ", type: " << GetPrimitiveTypeName(primitive, schema_version_);
+      MS_LOG(ERROR) << "InferShape failed, name: " << node->name_ << ", type: " << PrimitiveTypeName(type);
       return RET_INFER_ERR;
     }
   }
@@ -656,14 +653,11 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     }
     cpu_desc.data_type = kNumberTypeFloat16;
   }
-  int ret;
-#ifndef WEIGHT_DECODE_CLIP
-  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type);
+  auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
     return RET_NOT_SUPPORT;
   }
-#endif
   std::map<Tensor *, Tensor *> restored_origin_tensors;
 
   ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type,
@@ -696,7 +690,6 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   return ret;
 }
 
-#ifdef GPU_OPENCL
 int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                              OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel) {
   MS_ASSERT(op_parameter != nullptr);
@@ -707,15 +700,13 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     if (desc.data_type == kNumberTypeFloat32 && context_->IsGpuFloat16Enabled()) {
       gpu_desc.data_type = kNumberTypeFloat16;
     }
-    int ret;
-#ifndef WEIGHT_DECODE_CLIP
+
     // weight dequant
-    ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
+    auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
     if (ret != RET_OK) {
       MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
       return RET_NOT_SUPPORT;
     }
-#endif
     // we don't need to restore tensor for copy data
     ret = CopyConstTensorData(in_tensors, op_parameter->type_);
     if (ret != RET_OK) {
@@ -733,14 +724,12 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   }
   return RET_NOT_SUPPORT;
 }
-#endif
 
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                   const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel) {
   MS_ASSERT(kernel != nullptr);
   int ret = RET_NOT_SUPPORT;
-  auto prim_type = GetPrimitiveType(node->primitive_, schema_version_);
+  auto prim_type = GetPrimitiveType(node->primitive_);
   if (prim_type == schema::PrimitiveType_Custom) {
     for (auto &&device : context_->device_list_) {
       if (!device.provider_.empty() && !device.provider_device_.empty()) {
@@ -765,7 +754,7 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
   if (!context_->IsProviderEnabled()) {
     return ret;
   }
-  if (schema_version_ == SCHEMA_V0) {
+  if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
     return ret;
   }
   for (auto &&device : context_->device_list_) {
@@ -782,7 +771,6 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
 
   return RET_NOT_SUPPORT;
 }
-#endif
 
 kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in_tensors,
                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
@@ -792,17 +780,14 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   TypeId data_type =
     (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) ? kNumberTypeFloat32 : GetFirstFp32Fp16OrInt8Type(in_tensors);
   kernel::LiteKernel *kernel = nullptr;
-  int status;
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
+  int status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
   if (status == RET_OK && kernel != nullptr) {
     return kernel;
   }
-#endif
   MS_ASSERT(!node->output_indices_.empty());
   OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
   if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Can not find OpParameter!type: " << GetPrimitiveTypeName(node->primitive_, schema_version_);
+    MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));
     return nullptr;
   }
   int kernel_thread_count = op_parameter->thread_num_;
@@ -865,8 +850,6 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       if (!(ret == RET_INFER_INVALID || ret == RET_OK)) {
         MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
       }
-    } else if (status == RET_NOT_SUPPORT) {
-      free(op_parameter);
     }
   }
   return nullptr;
@@ -876,7 +859,7 @@ namespace {
 kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
                                              const std::vector<lite::Tensor *> *in_tensors,
                                              const std::vector<lite::Tensor *> *out_tensors, kernel::SubGraphType type,
-                                             const InnerContext &context, int schema_version) {
+                                             const InnerContext &context) {
   if (type == kernel::kApuSubGraph) {
     return nullptr;
   }
@@ -947,7 +930,6 @@ kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKerne
     return nullptr;
   }
   sub_graph->set_context(&context);
-  sub_graph->SetSchemaVersion(schema_version);
   return sub_graph;
 }
 
@@ -991,10 +973,10 @@ kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *
   MS_ASSERT(src_node != nullptr);
   auto *primitive = src_node->primitive_;
   MS_ASSERT(primitive != nullptr);
-  if (!IsPartialNode(primitive, schema_version_)) {
+  if (!IsPartialNode(primitive)) {
     return nullptr;
   }
-  auto subgraph_index = GetPartialGraphIndex(src_node->primitive_, schema_version_);
+  auto subgraph_index = GetPartialGraphIndex(src_node->primitive_);
   auto subgraph_kernel = SchedulePartialToSubGraphKernel(subgraph_index);
   subgraph_kernel->set_name("subgraph_" + std::to_string(subgraph_index));
   return subgraph_kernel;
@@ -1013,7 +995,7 @@ int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_
     MS_ASSERT(!node->output_indices_.empty());
     OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
     if (op_parameter == nullptr) {
-      MS_LOG(ERROR) << "Can not find OpParameter!type: " << GetPrimitiveTypeName(node->primitive_, schema_version_);
+      MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));
       return RET_ERROR;
     }
     kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat16,
@@ -1069,13 +1051,9 @@ kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgra
     return {};
   }
   FindAllInoutKernels(kernels);
-  kernel::SubGraphType cur_sub_graph_type = kernel::kCpuFP32SubGraph;
-  if (!kernels.empty()) {
-    cur_sub_graph_type = GetKernelSubGraphType(kernels.front(), *context_, true);
-  }
+  auto cur_sub_graph_type = GetKernelSubGraphType(kernels.front(), *context_, true);
   MS_LOG(INFO) << "cur_sub_graph_type: " << cur_sub_graph_type;
-  auto subgraph_kernel =
-    CreateSubGraphKernel(kernels, &in_tensors, &out_tensors, cur_sub_graph_type, *context_, schema_version_);
+  auto subgraph_kernel = CreateSubGraphKernel(kernels, &in_tensors, &out_tensors, cur_sub_graph_type, *context_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(ERROR) << "CreateSubGraphKernel failed, cur_sub_graph_type: " << cur_sub_graph_type;
     return nullptr;
@@ -1100,19 +1078,23 @@ std::vector<kernel::LiteKernel *> Scheduler::ScheduleSubGraphToSubGraphKernels(c
 kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src_node, TypeId prefer_data_type) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
-  MS_ASSERT(src_node != nullptr);
   FindNodeInoutTensors(*src_node, &inputs, &outputs);
   auto *kernel = this->FindBackendKernel(inputs, outputs, src_node, prefer_data_type);
-  op_parameters_[src_node->output_indices_.at(0)] = nullptr;
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << src_node->name_
-                  << ", type: " << GetPrimitiveTypeName(src_node->primitive_, schema_version_);
+                  << ", type: " << PrimitiveTypeName(GetPrimitiveType(src_node->primitive_));
     return nullptr;
   }
   SetKernelTensorDataType(kernel);
   kernel->set_name(src_node->name_);
   return kernel;
 }
+
+bool Scheduler::SubGraphHasScheduled(const int &index) {
+  return scheduled_subgraph_index_.find(index) != scheduled_subgraph_index_.end();
+}
+
+void Scheduler::SubGraphMarkScheduled(const int &index) { scheduled_subgraph_index_.insert(index); }
 
 bool Scheduler::IsControlFlowPattern(const lite::Model::Node &partial_node) {
   lite::Model::Node *partial_node_output = nullptr;
@@ -1125,9 +1107,9 @@ bool Scheduler::IsControlFlowPattern(const lite::Model::Node &partial_node) {
     }
   }
 
-  return partial_node_output == nullptr ? false
-                                        : (IsCallNode(partial_node_output->primitive_, schema_version_) ||
-                                           IsSwitchNode(partial_node_output->primitive_, schema_version_));
+  return partial_node_output == nullptr
+           ? false
+           : (IsCallNode(partial_node_output->primitive_) || IsSwitchNode(partial_node_output->primitive_));
 }
 
 int Scheduler::ScheduleGraphToKernels(std::vector<kernel::LiteKernel *> *dst_kernels, TypeId prefer_data_type) {
@@ -1161,12 +1143,12 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
     auto *primitive = node->primitive_;
     MS_ASSERT(primitive != nullptr);
     kernel::LiteKernel *kernel = nullptr;
+    auto prim_type = GetPrimitiveType(primitive);
 
-    if (IsPartialNode(primitive, schema_version_)) {
+    if (IsPartialNode(primitive)) {
       if (IsControlFlowPattern(*node)) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
         kernel = ScheduleNodeToKernel(node, prefer_data_type);
-        auto partial_subgraph_index = GetPartialGraphIndex(primitive, schema_version_);
+        auto partial_subgraph_index = GetPartialGraphIndex(primitive);
         if (SubGraphHasScheduled(partial_subgraph_index)) {
           partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;
           MS_LOG(INFO) << "subgraph has scheduled. ";
@@ -1175,10 +1157,6 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
           partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;
           subgraphs_to_schedule_.push_back(partial_subgraph_index);
         }
-#else
-        MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-        return RET_ERROR;
-#endif
       } else {
         kernel = SchedulePartialToKernel(node);
       }
@@ -1187,7 +1165,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
     }
     if (kernel == nullptr || ret != RET_OK) {
       MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << node->name_
-                    << ", type: " << GetPrimitiveTypeName(primitive, schema_version_);
+                    << ", type: " << PrimitiveTypeName(prim_type);
       return RET_ERROR;
     }
     kernel->set_is_model_output(IsContain(graph_output_node_indexes_, size_t(node_index)));
@@ -1239,7 +1217,7 @@ bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const ke
 }
 
 kernel::LiteKernel *FindAllSubGraphKernels(const std::vector<kernel::LiteKernel *> &sorted_kernels,
-                                           const InnerContext &context, size_t *cur_index, int schema_version) {
+                                           const InnerContext &context, size_t *cur_index) {
   std::vector<kernel::LiteKernel *> sub_kernels;
   sub_kernels.emplace_back(sorted_kernels[*cur_index]);
   auto cur_sub_graph_type = GetKernelSubGraphType(sorted_kernels[*cur_index], context);
@@ -1247,20 +1225,17 @@ kernel::LiteKernel *FindAllSubGraphKernels(const std::vector<kernel::LiteKernel 
     auto cur_kernel = sorted_kernels[*cur_index];
     MS_ASSERT(GetKernelSubGraphType(cur_kernel, context) != kernel::kApuSubGraph);
     // already a subgraph or a delegate
-#ifndef DELEGATE_CLIP
-    if (cur_kernel->desc().delegate != nullptr) {
+    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph || cur_kernel->desc().delegate != nullptr) {
       --(*cur_index);
       break;
     }
-#endif
-    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph ||
-        !KernelFitCurrentSubGraph(cur_sub_graph_type, *cur_kernel)) {
+    if (!KernelFitCurrentSubGraph(cur_sub_graph_type, *cur_kernel)) {
       --(*cur_index);
       break;
     }
     sub_kernels.emplace_back(cur_kernel);
   }
-  return CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type, context, schema_version);
+  return CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type, context);
 }
 }  // namespace
 
@@ -1277,18 +1252,12 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     MS_ASSERT(cur_kernel != nullptr);
     // Not support APU now
     MS_ASSERT(GetKernelSubGraphType(cur_kernel, *context_) != kernel::kApuSubGraph);
-#ifndef DELEGATE_CLIP
-    if (cur_kernel->desc().delegate != nullptr) {
-      dst_kernel->emplace_back(cur_kernel);
-      continue;
-    }
-#endif
     // already a subgraph or a delegate
-    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph) {
+    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph || cur_kernel->desc().delegate != nullptr) {
       dst_kernel->emplace_back(cur_kernel);
       continue;
     }
-    auto subgraph = FindAllSubGraphKernels(src_kernel, *context_, &index, schema_version_);
+    auto subgraph = FindAllSubGraphKernels(src_kernel, *context_, &index);
     if (subgraph == nullptr) {
       MS_LOG(ERROR) << "Create SubGraphKernel failed";
       return RET_ERROR;
@@ -1296,18 +1265,14 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     dst_kernel->emplace_back(subgraph);
   }
   for (auto *subgraph : *dst_kernel) {
-#ifndef DELEGATE_CLIP
     auto subgraph_delegate = subgraph->desc().delegate;
     if (subgraph_delegate == nullptr) {
-#endif
       auto ret = subgraph->Init();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
         return ret;
       }
-#ifndef DELEGATE_CLIP
     }
-#endif
   }
   return RET_OK;
 }
@@ -1318,7 +1283,6 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
     if (dtype == kObjectTypeString) {
       return kNumberTypeFloat32;
     }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     if (dtype == kObjectTypeTensorType) {
       auto tensor_list = reinterpret_cast<TensorList *>(tensor);
       auto tensor_list_dtype = tensor_list->tensors_data_type();
@@ -1328,7 +1292,6 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
         return tensor_list_dtype;
       }
     }
-#endif
     if (dtype == kNumberTypeFloat32 || dtype == kNumberTypeFloat16 || dtype == kNumberTypeInt8 ||
         dtype == kNumberTypeInt32 || dtype == kNumberTypeBool) {
       return dtype;
@@ -1403,83 +1366,6 @@ kernel::SubGraphType Scheduler::PartialSubGraphType(const std::vector<kernel::Li
   return kernel::kCpuFP32SubGraph;
 }
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-int Scheduler::InferSwitchShape(const lite::Model::Node *switch_node) {
-  MS_ASSERT(src_model_ != nullptr);
-  MS_ASSERT(switch_node != nullptr);
-  if (!IsSwitchNode(switch_node->primitive_, schema_version_)) {
-    MS_LOG(ERROR) << "Node is not a switch";
-    return RET_PARAM_INVALID;
-  }
-  std::deque<lite::Model::Node *> partial_cnode_to_infer{};
-  auto true_branch_output_index = switch_node->input_indices_.at(kSwitchTrueBranch);
-  auto false_branch_output_index = switch_node->input_indices_.at(kSwitchFalseBranch);
-  for (auto &node : src_model_->all_nodes_) {
-    if ((IsContain(node->output_indices_, true_branch_output_index) ||
-         IsContain(node->output_indices_, false_branch_output_index)) &&
-        IsPartialNode(node->primitive_, schema_version_) &&
-        partial_cnode_inferred_.find(node) == partial_cnode_inferred_.end()) {
-      partial_cnode_inferred_.insert(node);
-      partial_cnode_to_infer.push_back(node);
-    }
-  }
-
-  while (!partial_cnode_to_infer.empty()) {
-    auto &node = partial_cnode_to_infer.front();
-    partial_cnode_to_infer.pop_front();
-    int ret = InferPartialShape(node);
-    if (ret != RET_OK) {
-      MS_LOG(WARNING) << "partial infer not ok, ret: " << ret;
-    }
-  }
-  return RET_OK;
-}
-
-Model::Node *Scheduler::NodeInputIsSwitch(const lite::Model::Node *node) {
-  MS_ASSERT(src_model_ != nullptr);
-  MS_ASSERT(node != nullptr);
-  for (auto &iter : src_model_->all_nodes_) {
-    if (iter->output_indices_ == node->input_indices_) {
-      if (IsSwitchNode(iter->primitive_, schema_version_)) {
-        return iter;
-      } else {
-        return nullptr;
-      }
-    }
-  }
-  return nullptr;
-}
-
-bool Scheduler::SubGraphHasScheduled(const int &index) {
-  return scheduled_subgraph_index_.find(index) != scheduled_subgraph_index_.end();
-}
-
-void Scheduler::SubGraphMarkScheduled(const int &index) { scheduled_subgraph_index_.insert(index); }
-
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-void Scheduler::SetSubgraphForPartialNode() {
-  for (auto &pair : partial_kernel_subgraph_index_map_) {
-    auto &partial_kernel = pair.first;
-    auto &subgraph_index = pair.second;
-    static_cast<kernel::PartialFusionKernel *>(partial_kernel->kernel())
-      ->set_subgraph_kernel(subgraph_index_subgraph_kernel_map_.at(subgraph_index));
-  }
-}
-#endif
-
-void CopyTensorList(TensorList *dst_tensor, TensorList *src_tensor) {
-  dst_tensor->set_data_type(src_tensor->data_type());
-  dst_tensor->set_format(src_tensor->format());
-  dst_tensor->set_element_shape(src_tensor->element_shape());
-  dst_tensor->set_shape(src_tensor->shape());
-  std::vector<Tensor *> cpy_tensors{};
-  for (auto &tensor : src_tensor->tensors()) {
-    auto new_tensor = Tensor::CopyTensor(*tensor, false);
-    cpy_tensors.push_back(new_tensor);
-  }
-  dst_tensor->set_tensors(cpy_tensors);
-}
-
 bool Scheduler::IsControlFlowParttern(const std::vector<kernel::LiteKernel *> &kernels) {
   if (std::any_of(kernels.begin(), kernels.end(), [](kernel::LiteKernel *item) {
         if (item->op_parameter()) {
@@ -1504,8 +1390,7 @@ int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *
     }
   }
   auto cur_subgraph_type = PartialSubGraphType(main_graph_kernels);
-  auto subgraph_kernel =
-    CreateSubGraphKernel(main_graph_kernels, nullptr, nullptr, cur_subgraph_type, *context_, schema_version_);
+  auto subgraph_kernel = CreateSubGraphKernel(main_graph_kernels, nullptr, nullptr, cur_subgraph_type, *context_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(ERROR) << "create main graph for control flow model failed.";
     return RET_ERROR;
@@ -1513,5 +1398,4 @@ int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *
   kernels->insert(kernels->begin(), subgraph_kernel);
   return RET_OK;
 }
-#endif
 }  // namespace mindspore::lite

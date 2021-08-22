@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftShrinkGrad = "SoftShrinkGrad";
-class MS_CORE_API SoftShrinkGrad : public PrimitiveC {
+class SoftShrinkGrad : public PrimitiveC {
  public:
   SoftShrinkGrad() : PrimitiveC(kNameSoftShrinkGrad) { InitIOName({"input_grad", "input_x"}, {"output"}); }
   ~SoftShrinkGrad() = default;

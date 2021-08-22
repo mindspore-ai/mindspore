@@ -45,22 +45,22 @@ YOLOv5作为先进的检测器，它比所有可用的替代检测器更快（FP
 - 目录结构如下，由用户定义目录和文件的名称：
 
     ```shell
-        ├── dataset
-            ├── YOLOv5
-                ├── annotations
-                │   ├─ train.json
-                │   └─ val.json
-                ├─ images
-                    ├─ train
-                    │    └─images
-                    │       ├─picture1.jpg
-                    │       ├─ ...
-                    │       └─picturen.jpg
-                    └─ val
-                        └─images
-                            ├─picture1.jpg
-                            ├─ ...
-                            └─picturen.jpg
+        ©À©¤©¤ dataset
+            ©À©¤©¤ YOLOv5
+                ©À©¤©¤ annotations
+                ©¦   ©À©¤ train.json
+                ©¦   ©¸©¤ val.json
+                ©À©¤ images
+                    ©À©¤ train
+                    ©¦    ©¸©¤images
+                    ©¦       ©À©¤picture1.jpg
+                    ©¦       ©À©¤ ...
+                    ©¦       ©¸©¤picturen.jpg
+                    ©¸©¤ val
+                        ©¸©¤images
+                            ©À©¤picture1.jpg
+                            ©À©¤ ...
+                            ©¸©¤picturen.jpg
     ```
 
 建议用户使用MS COCO数据集来体验模型，
@@ -125,34 +125,34 @@ bash run_eval.sh dataset/xxx checkpoint/xxx.ckpt
 ## [脚本和示例代码](#目录)
 
 ```python
-└─yolov5
-  ├─README.md
-  ├─mindspore_hub_conf.md             # Mindspore Hub配置
-  ├─ascend310_infer                   # 用于310推理
-  ├─scripts
-    ├─run_standalone_train.sh         # 在Ascend中启动单机训练（1卡）
-    ├─run_distribute_train.sh         # 在Ascend中启动分布式训练（8卡）
-    ├─run_infer_310.sh                # 在Ascend中启动310推理
-    ├─run_eval.sh                     # 在Ascend中启动评估
-  ├─src
-    ├─__init__.py                     # Python初始化文件
-    ├─config.py                       # 参数配置
-    ├─yolov5_backbone.py              # 网络骨干
-    ├─distributed_sampler.py          # 数据集迭代器
-    ├─initializer.py                  # 参数初始化器
-    ├─logger.py                       # 日志函数
-    ├─loss.py                         # 损失函数
-    ├─lr_scheduler.py                 # 生成学习率
-    ├─transforms.py                   # 预处理数据
-    ├─util.py                         # 工具函数
-    ├─yolo.py                         # YOLOv5网络
-    ├─yolo_dataset.py                 # 为YOLOv5创建数据集
+©¸©¤yolov5
+  ©À©¤README.md
+  ©À©¤mindspore_hub_conf.md             # Mindspore Hub配置
+  ©À©¤ascend310_infer                   # 用于310推理
+  ©À©¤scripts
+    ©À©¤run_standalone_train.sh         # 在Ascend中启动单机训练（1卡）
+    ©À©¤run_distribute_train.sh         # 在Ascend中启动分布式训练（8卡）
+    ©À©¤run_infer_310.sh                # 在Ascend中启动310推理
+    ©¸©¤run_eval.sh                     # 在Ascend中启动评估
+  ©À©¤src
+    ©À©¤__init__.py                     # Python初始化文件
+    ©À©¤config.py                       # 参数配置
+    ©À©¤yolov5_backbone.py              # 网络骨干
+    ©À©¤distributed_sampler.py          # 数据集迭代器
+    ©À©¤initializer.py                  # 参数初始化器
+    ©À©¤logger.py                       # 日志函数
+    ©À©¤loss.py                         # 损失函数
+    ©À©¤lr_scheduler.py                 # 生成学习率
+    ©À©¤transforms.py                   # 预处理数据
+    ©À©¤util.py                         # 工具函数
+    ©À©¤yolo.py                         # YOLOv5网络
+    ©À©¤yolo_dataset.py                 # 为YOLOv5创建数据集
 
-  ├─eval.py                           # 评估验证结果
-  ├─export.py                         # 将MindSpore模型转换为AIR模型
-  ├─preprocess.py                     # 310推理前处理脚本
-  ├─postprocess.py                    # 310推理后处理脚本
-  ├─train.py                          # 训练网络
+  ©À©¤eval.py                           # 评估验证结果
+  ©À©¤export.py                         # 将MindSpore模型转换为AIR模型
+  ©À©¤preprocess.py                     # 310推理前处理脚本
+  ©À©¤postprocess.py                    # 310推理后处理脚本
+  ©¸©¤train.py                          # 训练网络
 ```
 
 ## [脚本参数](#目录)
@@ -378,7 +378,7 @@ YOLOv5应用于118000张图像上（标注和数据格式必须与COCO 2017相�
 |输出|heatmaps                                                    |
 | 损失                       | 53                                                         |
 |速度| 1卡：55 img/s；8卡：440 img/s（shape=640）|
-| 总时长                 | 24小时(8卡)                                                         |
+| 总时长                 | 80小时                                                         |
 | 微调检查点 | 58M （.ckpt文件）                                           |
 |脚本| <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/> |
 

@@ -26,6 +26,7 @@
 #include "ir/func_graph.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/graphdef_transform.h"
+#include "tools/converter/dump_graph_init.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/graph/control_flow_pass.h"
 
@@ -33,6 +34,9 @@ namespace mindspore {
 namespace lite {
 namespace {
 using NodesMap = std::map<std::string, std::vector<AnfNodePtr>>;
+}
+static converter::Flags *flags = nullptr;
+
 void CloneGraphInputs(const FuncGraphPtr &origin, const FuncGraphPtr &mirror, NodesMap *origin_map,
                       NodesMap *mirror_map) {
   MS_ASSERT(origin != nullptr && mirror != nullptr);
@@ -49,8 +53,7 @@ void CloneGraphInputs(const FuncGraphPtr &origin, const FuncGraphPtr &mirror, No
   }
 }
 
-AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const FuncGraphPtr &mirror_graph,
-                                      const converter::Flags *flags) {
+AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const FuncGraphPtr &mirror_graph) {
   MS_ASSERT(cnode != nullptr && mirror_graph != nullptr);
   if (index >= cnode->size()) {
     MS_LOG(ERROR) << "input index out of range.";
@@ -128,7 +131,7 @@ PrimitivePtr ClonePrimitive(const CNodePtr &cnode) {
   return prim;
 }
 
-FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *flags) {
+FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto mirror_graph = std::make_shared<FuncGraph>();
   mirror_graph->set_attrs(graph->attrs());
@@ -154,10 +157,10 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
       if (mirror_input == nullptr) {
         if (IsValueNode<FuncGraph>(origin_input)) {
           auto sub_func_graph = GetValueNode<FuncGraphPtr>(origin_input);
-          auto mirror_sub_graph = CloneFuncGraph(sub_func_graph, flags);
+          auto mirror_sub_graph = CloneFuncGraph(sub_func_graph);
           mirror_input = NewValueNode(mirror_sub_graph);
         } else {
-          mirror_input = CloneParameterAndValueNode(cnode, i, mirror_graph, flags);
+          mirror_input = CloneParameterAndValueNode(cnode, i, mirror_graph);
         }
         if (mirror_input == nullptr) {
           MS_LOG(ERROR) << "node input cannot be found.";
@@ -181,24 +184,23 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
   }
   return mirror_graph;
 }
-}  // namespace
 
-STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
+STATUS ExportModel(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr && flags != nullptr);
-  auto mirror_graph = CloneFuncGraph(graph, flags);
+  auto mirror_graph = CloneFuncGraph(graph);
   if (mirror_graph == nullptr) {
     MS_LOG(ERROR) << "Clone funcGraph failed.";
     return RET_ERROR;
   }
   (void)Manage(mirror_graph, true);
-  if (!RunOptimizerPass(mirror_graph, {"InferShapePass", "DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
+  if (!opt::RunOptimizerPass(mirror_graph, {"InferShapePass", "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "Run transpose opt pass failed.";
     return RET_ERROR;
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
-  if (flags->fmk == converter::kFmkTypeTflite || flags->fmk == converter::kFmkTypeTf ||
-      flags->fmk == converter::kFmkTypeOnnx) {
+  if (flags->fmk == lite::converter::FmkType_TFLITE || flags->fmk == lite::converter::FmkType_TF ||
+      flags->fmk == lite::converter::FmkType_ONNX) {
     graph_pm->AddPass(std::make_shared<opt::ControlFlowPass>());
   }
   optimizer->AddPassManager(graph_pm);
@@ -230,6 +232,12 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
 
   delete meta_graph;
   return status;
+}
+
+void ExportModelInit(converter::Flags *flag) {
+  MS_ASSERT(flag != nullptr);
+  flags = flag;
+  InitDumpGraphFunc(ExportModel);
 }
 }  // namespace lite
 }  // namespace mindspore

@@ -59,8 +59,7 @@ def test_serdes_imagefolder_dataset(remove_json_files=True):
 
     resize_op = vision.Resize((resize_height, resize_width), Inter.LINEAR)
     data1 = data1.map(operations=[rescale_op, resize_op], input_columns=["image"])
-    data1_1 = ds.TFRecordDataset(["../data/dataset/testTFTestAllTypes/test.data"], num_samples=6).batch(2).repeat(10)
-    data1 = data1.zip(data1_1)
+    data1 = data1.batch(2)
 
     # Serialize the dataset pre-processing pipeline.
     # data1 should still work after saving.
@@ -79,7 +78,6 @@ def test_serdes_imagefolder_dataset(remove_json_files=True):
     ds.serialize(data2, "imagenet_dataset_pipeline_1.json")
     assert validate_jsonfile("imagenet_dataset_pipeline_1.json") is True
     assert filecmp.cmp('imagenet_dataset_pipeline.json', 'imagenet_dataset_pipeline_1.json')
-    assert data1.get_dataset_size() == data2.get_dataset_size()
 
     # Deserialize the latest json file again
     data3 = ds.deserialize(json_filepath="imagenet_dataset_pipeline_1.json")
@@ -99,7 +97,7 @@ def test_serdes_imagefolder_dataset(remove_json_files=True):
         num_samples += 1
 
     logger.info("Number of data in data1: {}".format(num_samples))
-    assert num_samples == 11
+    assert num_samples == 6
 
     # Remove the generated json file
     if remove_json_files:
@@ -171,8 +169,8 @@ def test_serdes_cifar10_dataset(remove_json_files=True):
     data1 = data1.map(operations=trans, input_columns="image")
     data1 = data1.batch(3, drop_remainder=True)
     data1 = data1.repeat(1)
-    # json files are needed for create iterator, remove_json_files = False
-    data2 = util_check_serialize_deserialize_file(data1, "cifar10_dataset_pipeline", False)
+    data2 = util_check_serialize_deserialize_file(data1, "cifar10_dataset_pipeline", remove_json_files)
+
     num_samples = 0
     # Iterate and compare the data in the original pipeline (data1) against the deserialized pipeline (data2)
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
@@ -185,8 +183,6 @@ def test_serdes_cifar10_dataset(remove_json_files=True):
     # Restore configuration num_parallel_workers
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
-    if remove_json_files:
-        delete_json_files()
 
 
 def test_serdes_celeba_dataset(remove_json_files=True):
@@ -200,8 +196,7 @@ def test_serdes_celeba_dataset(remove_json_files=True):
     center_crop = vision.CenterCrop((80, 80))
     pad_op = vision.Pad(20, fill_value=(20, 20, 20))
     data1 = data1.map(operations=[center_crop, pad_op], input_columns=["image"], num_parallel_workers=8)
-    # json files are needed for create iterator, remove_json_files = False
-    data2 = util_check_serialize_deserialize_file(data1, "celeba_dataset_pipeline", False)
+    data2 = util_check_serialize_deserialize_file(data1, "celeba_dataset_pipeline", remove_json_files)
 
     num_samples = 0
     # Iterate and compare the data in the original pipeline (data1) against the deserialized pipeline (data2)
@@ -211,8 +206,6 @@ def test_serdes_celeba_dataset(remove_json_files=True):
         num_samples += 1
 
     assert num_samples == 8
-    if remove_json_files:
-        delete_json_files()
 
 
 def test_serdes_csv_dataset(remove_json_files=True):
@@ -227,8 +220,7 @@ def test_serdes_csv_dataset(remove_json_files=True):
         shuffle=False)
     columns = ["col1", "col4", "col2"]
     data1 = data1.project(columns=columns)
-    # json files are needed for create iterator, remove_json_files = False
-    data2 = util_check_serialize_deserialize_file(data1, "csv_dataset_pipeline", False)
+    data2 = util_check_serialize_deserialize_file(data1, "csv_dataset_pipeline", remove_json_files)
 
     num_samples = 0
     # Iterate and compare the data in the original pipeline (data1) against the deserialized pipeline (data2)
@@ -240,8 +232,6 @@ def test_serdes_csv_dataset(remove_json_files=True):
         num_samples += 1
 
     assert num_samples == 3
-    if remove_json_files:
-        delete_json_files()
 
 
 def test_serdes_voc_dataset(remove_json_files=True):
@@ -261,8 +251,7 @@ def test_serdes_voc_dataset(remove_json_files=True):
     data1 = data1.map(operations=random_color_adjust_op, input_columns=["image"])
     data1 = data1.map(operations=random_rotation_op, input_columns=["image"])
     data1 = data1.skip(2)
-    # json files are needed for create iterator, remove_json_files = False
-    data2 = util_check_serialize_deserialize_file(data1, "voc_dataset_pipeline", False)
+    data2 = util_check_serialize_deserialize_file(data1, "voc_dataset_pipeline", remove_json_files)
 
     num_samples = 0
     # Iterate and compare the data in the original pipeline (data1) against the deserialized pipeline (data2)
@@ -276,8 +265,6 @@ def test_serdes_voc_dataset(remove_json_files=True):
     # Restore configuration num_parallel_workers
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
-    if remove_json_files:
-        delete_json_files()
 
 
 def test_serdes_zip_dataset(remove_json_files=True):
@@ -393,8 +380,8 @@ def test_serdes_pyvision(remove_json_files=True):
     try:
         util_check_serialize_deserialize_file(data1, "pyvision_dataset_pipeline", remove_json_files)
         assert False
-    except RuntimeError as e:
-        assert "python operation is not yet supported" in str(e)
+    except NotImplementedError as e:
+        assert "python function is not yet supported" in str(e)
 
 
 def test_serdes_uniform_augment(remove_json_files=True):
@@ -433,6 +420,7 @@ def skip_test_serdes_fill(remove_json_files=True):
     for data_row in data:
         np.testing.assert_array_equal(data_row[0].asnumpy(), expected)
 
+    # FIXME - need proper serdes support for Fill's fill_value parameter
     util_check_serialize_deserialize_file(data, "fill_pipeline", remove_json_files)
 
 
@@ -446,10 +434,8 @@ def test_serdes_exception():
     data1 = data1.filter(input_columns=["image", "label"], predicate=lambda data: data < 11, num_parallel_workers=4)
     data1_json = ds.serialize(data1)
     with pytest.raises(RuntimeError) as msg:
-        data2 = ds.deserialize(input_dict=data1_json)
-        ds.serialize(data2, "filter_dataset_fail.json")
-    assert "Filter operation is not supported" in str(msg)
-    delete_json_files()
+        ds.deserialize(input_dict=data1_json)
+    assert "Filter is not yet supported by ds.engine.deserialize" in str(msg)
 
 
 def util_check_serialize_deserialize_file(data_orig, filename, remove_json_files):
@@ -470,7 +456,7 @@ def util_check_serialize_deserialize_file(data_orig, filename, remove_json_files
     data_changed = ds.deserialize(json_filepath=file1)
     ds.serialize(data_changed, file2)
     assert validate_jsonfile(file2) is True
-    assert filecmp.cmp(file1, file2, shallow=False)
+    assert filecmp.cmp(file1, file2)
 
     # Remove the generated json file
     if remove_json_files:

@@ -56,8 +56,8 @@ int ArgMinMaxInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   ShapeSet(output_shape, &output_shape_size, input->shape_, input->shape_size_);
-  int input_shape_size = (int)input->shape_size_;
-  int axis = param->axis_ < 0 ? param->axis_ + input_shape_size : param->axis_;
+  size_t input_shape_size = input->shape_size_;
+  int axis = param->axis_ < 0 ? param->axis_ + (int)input_shape_size : param->axis_;
   if (axis >= input_shape_size || axis < 0) {
     return NNACL_PARAM_INVALID;
   }

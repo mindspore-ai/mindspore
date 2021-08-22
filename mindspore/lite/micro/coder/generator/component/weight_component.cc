@@ -158,4 +158,5 @@ void SaveDataToNet(const std::map<std::string, Tensor *> &saved_weights, const s
   }
   net.close();
 }
+
 }  // namespace mindspore::lite::micro

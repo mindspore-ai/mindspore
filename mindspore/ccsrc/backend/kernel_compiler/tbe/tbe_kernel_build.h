@@ -37,8 +37,6 @@ class TbeKernelBuild {
   enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2, kFusionAdd };
 
  public:
-  static bool GetIOSize2(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
-                         std::vector<size_t> *output_size_list, const AnfNodePtr &anf_node);
   static bool GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
                         std::vector<size_t> *output_size_list, const AnfNodePtr &anf_node);
   // Ub Fuison

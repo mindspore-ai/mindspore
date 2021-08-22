@@ -30,7 +30,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_GLU;
 
 namespace mindspore::kernel {
-const int kGluBranchNum = 2;
 int GluCPUKernel::MallocTmpBuffer() {
   FreeTmpBuffer();
   auto in_tensor = in_tensors_.front();
@@ -116,7 +115,7 @@ int GluCPUKernel::Split(int task_id) {
 int GluCPUKernel::Sigmoid(int task_id) {
   auto input_addr = reinterpret_cast<float *>(split_ptr_.at(1));
   auto output_addr = reinterpret_cast<float *>(sigmoid_ptr_);
-  auto length = in_tensors_.at(0)->ElementsNum() / kGluBranchNum;
+  auto length = in_tensors_.at(0)->ElementsNum() / 2;
 
   int stride = UP_DIV(length, op_parameter_->thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
@@ -130,7 +129,7 @@ int GluCPUKernel::Mul(int task_id) {
   auto input_addr0 = reinterpret_cast<float *>(split_ptr_.at(0));
   auto input_addr1 = reinterpret_cast<float *>(sigmoid_ptr_);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  auto length = in_tensors_.at(0)->ElementsNum() / kGluBranchNum;
+  auto length = in_tensors_.at(0)->ElementsNum() / 2;
 
   int stride = UP_DIV(length, op_parameter_->thread_num_);
   int count = MSMIN(stride, length - stride * task_id);

@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API TensorSummary : public PrimitiveC {
+class TensorSummary : public PrimitiveC {
  public:
   TensorSummary() : PrimitiveC(prim::kPrimTensorSummary->name()) {}
   ~TensorSummary() = default;

@@ -77,27 +77,24 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
     std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
                  [onnx_conv_weight](const onnx::TensorProto &proto) { return proto.name() == onnx_conv_weight; });
   if (node_iter == onnx_graph.initializer().end()) {
-    // in_channel and out_channnel is set to 1 by default.
-    prim->set_in_channel(1);
-    prim->set_out_channel(1);
-    MS_LOG(WARNING) << "parsing of channelIn/Out is delayed.";
-  } else {
-    std::vector<int> weight_shape;
-    auto size = (*node_iter).dims_size();
-    weight_shape.reserve(size);
-    for (int i = 0; i < size; ++i) {
-      weight_shape.emplace_back((*node_iter).dims(i));
-    }
-    if (weight_shape.size() != 4) {
-      MS_LOG(ERROR) << "weight_shape.size() should be 4, but is " << weight_shape.size();
-      return nullptr;
-    }
-    prim->set_in_channel(weight_shape[0]);
-    prim->set_out_channel(weight_shape[1] * group);
+    MS_LOG(ERROR) << "not find node: " << onnx_conv_weight.c_str();
+    return nullptr;
+  }
+  std::vector<int> weight_shape;
+  auto size = (*node_iter).dims_size();
+  weight_shape.reserve(size);
+  for (int i = 0; i < size; ++i) {
+    weight_shape.emplace_back((*node_iter).dims(i));
+  }
+  if (weight_shape.size() != 4) {
+    MS_LOG(ERROR) << "weight_shape.size() should be 4, but is " << weight_shape.size();
+    return nullptr;
+  }
+  prim->set_in_channel(weight_shape[0]);
+  prim->set_out_channel(weight_shape[1] * group);
 
-    if (group != 1 && weight_shape[1] == 1) {
-      prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
-    }
+  if (group != 1 && weight_shape[1] == 1) {
+    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
   }
 
   return prim.release();

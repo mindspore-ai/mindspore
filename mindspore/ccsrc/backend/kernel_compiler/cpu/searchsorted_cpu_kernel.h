@@ -42,7 +42,7 @@ class SearchSortedCPUKernel : public CPUKernel {
   std::vector<size_t> sequence_shape_;
   std::vector<size_t> values_shape_;
   std::vector<size_t> output_shape_;
-  size_t search_len{0};
+  size_t search_len;
 };
 
 MS_REG_CPU_KERNEL_T_S(
@@ -104,6 +104,8 @@ MS_REG_CPU_KERNEL_T_S(
   SearchSorted,
   KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
   SearchSortedCPUKernel, int8_t, int64_t);
+
 }  // namespace kernel
 }  // namespace mindspore
+
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SEARCHSORTED_CPU_KERNEL_H_

@@ -38,22 +38,18 @@ class ConvDelegateCoder : public OperatorCoder {
 void SetInputOutputShapeInfo(ConvParameter *conv_param, const lite::Tensor *input, const lite::Tensor *output);
 std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<Tensor *> &in_tensors,
                                                              const std::vector<Tensor *> &out_tensors,
-                                                             const Model::Node *node, size_t node_index, Target target,
-                                                             int schema_version);
-
+                                                             const Model::Node *node, size_t node_index, Target target);
 std::unique_ptr<OperatorCoder> CreateDelegateConv(const std::vector<Tensor *> &in_tensors,
                                                   const std::vector<Tensor *> &out_tensors, const Model::Node *node,
-                                                  size_t node_index, Target target, int schema_version);
-
+                                                  size_t node_index, Target target);
 std::unique_ptr<OperatorCoder> CPUConvDwFp32CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                          const std::vector<Tensor *> &out_tensors,
-                                                         const Model::Node *node, size_t node_index, Target target,
-                                                         int schema_version);
+                                                         const Model::Node *node, size_t node_index, Target target);
 
 std::unique_ptr<OperatorCoder> CPUConv2DFusionFP32CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                                const std::vector<Tensor *> &out_tensors,
                                                                const Model::Node *node, size_t node_index,
-                                                               Target target, int schema_version);
+                                                               Target target);
 
 }  // namespace mindspore::lite::micro::nnacl
 

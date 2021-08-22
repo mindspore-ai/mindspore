@@ -75,10 +75,6 @@ LD_LIBRARY_PATH=${MSLITE_LINUX}/tools/converter/lib/:${MSLITE_LINUX}/tools/conve
 EXPORT=${EXPORT} LD_LIBRARY_PATH=${LD_LIBRARY_PATH} CONVERTER=${CONVERTER} ./prepare_model.sh $DOCKER || exit 1
 cd ../
 
-if [ "$TARBALL" != "" ]; then
-  rm -rf build
-fi
-
 cd target || exit 1
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:../lib/ 
 java -Djava.library.path=../lib/ -classpath .:./train_lenet_java.jar:../lib/mindspore-lite-java.jar  com.mindspore.lite.train_lenet.Main ../model/lenet_tod.ms $MNIST_DATA_PATH 1

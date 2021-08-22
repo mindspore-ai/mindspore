@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPool = "MaxPool";
-class MS_CORE_API MaxPool : public PrimitiveC {
+class MaxPool : public PrimitiveC {
  public:
   MaxPool() : PrimitiveC(kNameMaxPool) { InitIOName({"x"}, {"output"}); }
   explicit MaxPool(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"output"}); }

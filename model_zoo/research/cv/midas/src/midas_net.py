@@ -22,6 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.operations import Add, Split, Concat
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
+from mindspore.ops import functional as F
 from src.custom_op import SEBlock, GroupConv
 from src.blocks_ms import Interpolate, FeatureFusionBlock
 from src.loss import ScaleAndShiftInvariantLoss
@@ -389,5 +390,4 @@ class TrainOneStepCell(nn.Cell):
         if self.reduce_flag:
             grads = self.grad_reducer(grads)
 
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))

@@ -16,6 +16,8 @@
 
 #include "backend/optimizer/graph_kernel/parallel_cost_model.h"
 
+#include <algorithm>
+
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "pipeline/jit/parse/python_adapter.h"

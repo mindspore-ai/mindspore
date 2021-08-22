@@ -569,7 +569,6 @@ int ShardWriter::LockWriter(bool parallel_writer) {
     auto realpath = Common::GetRealPath(file);
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed, path=" << file;
-      close(fd);
       return -1;
     }
 
@@ -577,7 +576,6 @@ int ShardWriter::LockWriter(bool parallel_writer) {
     fs->open(realpath.value(), std::ios::in | std::ios::out | std::ios::binary);
     if (fs->fail()) {
       MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
-      close(fd);
       return -1;
     }
     file_streams_.push_back(fs);
@@ -585,7 +583,6 @@ int ShardWriter::LockWriter(bool parallel_writer) {
 
   if (shard_header_->FileToPages(pages_file_) == FAILED) {
     MS_LOG(ERROR) << "Invalid data, failed to read pages from file.";
-    close(fd);
     return -1;
   }
   return fd;
@@ -1215,7 +1212,6 @@ MSRStatus ShardWriter::WriteShardHeader() {
       uint64_t line_len = bin_header.size();
       if (line_len + kInt64Len > header_size_) {
         MS_LOG(ERROR) << "Shard header is too big";
-        file_streams_[shard_id]->close();
         return FAILED;
       }
 
@@ -1308,7 +1304,7 @@ void ShardWriter::SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &la
   }
 }
 
-MSRStatus ShardWriter::Initialize(const std::unique_ptr<ShardWriter> *writer_ptr,
+MSRStatus ShardWriter::initialize(const std::unique_ptr<ShardWriter> *writer_ptr,
                                   const std::vector<std::string> &file_names) {
   if (writer_ptr == nullptr) {
     MS_LOG(ERROR) << "ShardWriter pointer is NULL.";

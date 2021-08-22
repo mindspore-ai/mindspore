@@ -26,29 +26,9 @@
 #include "utils/utils.h"
 
 namespace mindspore {
-std::string Common::CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path) {
-  std::string res_path = default_path;
-  if (!env_path.empty()) {
-    char real_path[PATH_MAX] = {0};
-#if defined(SYSTEM_ENV_WINDOWS)
-    if (_fullpath(real_path, common::SafeCStr(env_path), PATH_MAX) == nullptr) {
-      MS_LOG(EXCEPTION) << "The dir " << env_path << " does not exist.";
-    }
-    return real_path;
-#else
-    if (realpath(env_path.c_str(), real_path)) {
-      return real_path;
-    }
-    MS_LOG(EXCEPTION) << "Invalid env path, path : " << env_path;
-#endif
-  }
-  return res_path;
-}
-
 std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
   if (input_path.length() >= PATH_MAX) {
-    MS_LOG(ERROR) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
-    return std::nullopt;
+    MS_LOG(EXCEPTION) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
   }
   auto path_split_pos = input_path.find_last_of('/');
   if (path_split_pos == std::string::npos) {
@@ -66,8 +46,7 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
     }
 #if defined(SYSTEM_ENV_POSIX)
     if (file_name.length() > NAME_MAX) {
-      MS_LOG(ERROR) << "The length of file name : " << file_name.length() << " exceeds limit: " << NAME_MAX;
-      return std::nullopt;
+      MS_LOG(EXCEPTION) << "The length of file name : " << file_name.length() << " exceeds limit: " << NAME_MAX;
     }
     if (realpath(common::SafeCStr(prefix_path), real_path) == nullptr) {
       MS_LOG(ERROR) << "The dir " << prefix_path << " does not exist.";
@@ -84,8 +63,7 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
   // input_path is only file_name
 #if defined(SYSTEM_ENV_POSIX)
   if (input_path.length() > NAME_MAX) {
-    MS_LOG(ERROR) << "The length of file name : " << input_path.length() << " exceeds limit: " << NAME_MAX;
-    return std::nullopt;
+    MS_LOG(EXCEPTION) << "The length of file name : " << input_path.length() << " exceeds limit: " << NAME_MAX;
   }
   if (realpath(common::SafeCStr(input_path), real_path) == nullptr) {
     MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
@@ -167,8 +145,8 @@ std::optional<std::string> Common::GetConfigFile(const std::string &env) {
 bool Common::IsStrLengthValid(const std::string &str, size_t length_limit, const std::string &error_message) {
   auto len_str = str.length();
   if (len_str > length_limit) {
-    MS_LOG(ERROR) << error_message << "The length is " << str.length() << ", exceeding the limit of " << length_limit
-                  << ".";
+    MS_LOG(WARNING) << error_message << "The length is " << str.length() << ", exceeding the limit of " << length_limit
+                    << ".";
     return false;
   }
   return true;
@@ -220,16 +198,14 @@ bool Common::IsPathValid(const std::string &path, size_t length_limit, const std
     return false;
   }
 
-  if (!std::all_of(path.begin(), path.end(), [](char c) {
-        return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '.' || c == '/';
-      })) {
-    MS_LOG(ERROR) << err_msg << "The path only supports alphabets, digit or {'-', '_', '.', '/'}, but got:" << path
-                  << ".";
+  if (!std::all_of(path.begin(), path.end(),
+                   [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '/'; })) {
+    MS_LOG(WARNING) << err_msg << "The path only supports alphabets, digit or {'-', '_', '/'}, but got:" << path << ".";
     return false;
   }
 
   if (path[0] != '/') {
-    MS_LOG(ERROR) << err_msg << "The path only supports absolute path and should start with '/'.";
+    MS_LOG(WARNING) << err_msg << "The path only supports absolute path and should start with '/'.";
     return false;
   }
 
@@ -253,10 +229,11 @@ bool Common::IsFilenameValid(const std::string &filename, size_t length_limit, c
   if (!IsStrLengthValid(filename, length_limit, err_msg)) {
     return false;
   }
-  auto func = [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '.'; };
-  if (!std::all_of(filename.begin(), filename.end(), func)) {
-    MS_LOG(ERROR) << err_msg << "The filename only supports alphabets, digit or {'-', '_', '.'}, but got:" << filename
-                  << ".";
+
+  if (!std::all_of(filename.begin(), filename.end(),
+                   [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '.'; })) {
+    MS_LOG(WARNING) << err_msg << "The filename only supports alphabets, digit or {'-', '_', '.'}, but got:" << filename
+                    << ".";
     return false;
   }
   return true;
@@ -297,8 +274,7 @@ bool Common::SaveStringToFile(const std::string filename, const std::string stri
   ofs.open(real_path.value());
 
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
     return false;
   }
   ofs << string_info << std::endl;
@@ -322,37 +298,18 @@ struct GlogLogDirRegister {
     if (logtostderr != nullptr && log_dir != nullptr) {
       std::string logtostderr_str = std::string(logtostderr);
       std::string log_dir_str = std::string(log_dir);
-      const char *rank_id = std::getenv("RANK_ID");
-      const char *gpu_rank_id = std::getenv("OMPI_COMM_WORLD_RANK");
-      std::string rank = "0";
-      bool both_exist = false;
-      if (rank_id != nullptr && gpu_rank_id == nullptr) {
-        rank = std::string(rank_id);
-      } else if (rank_id == nullptr && gpu_rank_id != nullptr) {
-        rank = std::string(gpu_rank_id);
-      } else if (rank_id != nullptr && gpu_rank_id != nullptr) {
-        rank = std::string(rank_id);
-        both_exist = true;
-      }
-      log_dir_str += "/rank_" + rank + "/logs";
+
       auto real_log_dir_str = Common::GetRealPath(log_dir_str);
-      // While 'GLOG_logtostderr' = 0, logs output to files. 'GLOG_log_dir' must be specified as the path of log files.
-      // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
+      // While 'GLOG_logtostderr' = 0, logs output to files.
+      // 'GLOG_log_dir' must be specified as the path of log files.
       if (logtostderr_str == "0" && real_log_dir_str.has_value()) {
         if (!Common::IsPathValid(real_log_dir_str.value(), MAX_DIRECTORY_LENGTH, "")) {
-          MS_LOG(ERROR) << "The path of log files, which set by 'GLOG_log_dir', is invalid";
-          exit(EXIT_FAILURE);
+          MS_LOG(EXCEPTION) << "The path of log files, set by 'GLOG_log_dir', is invalid";
         } else if (!Common::CreateNotExistDirs(real_log_dir_str.value())) {
-          MS_LOG(ERROR) << "Create the path of log files, which set by 'GLOG_log_dir', failed.";
-          exit(EXIT_FAILURE);
+          MS_LOG(EXCEPTION) << "Create the path of log files, set by 'GLOG_log_dir', failed.";
         }
       } else if (logtostderr_str == "0") {
-        MS_LOG(ERROR) << "The path of log files, which set by 'GLOG_log_dir', is invalid.";
-        exit(EXIT_FAILURE);
-      }
-      if (both_exist) {
-        MS_LOG(WARNING) << "Environment variables RANK_ID and OMPI_COMM_WORLD_RANK both exist, we will use RANK_ID to "
-                           "get rank id by default.";
+        MS_LOG(EXCEPTION) << "The path of log files, set by 'GLOG_log_dir', is invalid.";
       }
     }
   }

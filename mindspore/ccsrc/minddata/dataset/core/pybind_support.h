@@ -39,9 +39,7 @@ struct npy_scalar_caster {
   bool load(handle src, bool convert) {
     // Taken from Eigen casters. Permits either scalar dtype or scalar array.
     handle type = dtype::of<T>().attr("type");  // Could make more efficient.
-    if (!convert && !isinstance<Array>(src) && !isinstance(src, type)) {
-      return false;
-    }
+    if (!convert && !isinstance<Array>(src) && !isinstance(src, type)) return false;
 
     Array tmp = Array::ensure(src);
     if (tmp && tmp.size() == 1 && tmp.ndim() == 0) {

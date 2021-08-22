@@ -226,16 +226,16 @@ void TransposeDimsInt8(const int8_t *in_data, int8_t *out_data, const int *outpu
   const int *strides = transpose_param->strides_;
   const int *out_strides = transpose_param->out_strides_;
   int num_axes = transpose_param->num_axes_;
-  size_t data_size = (size_t)((*out_strides) * output_shape[0]);
+  size_t data_size = (*out_strides) * output_shape[0];
   size_t offset_size = UP_DIV(data_size, thread_num);
   size_t task_offset = offset_size * task_id;
-  size_t count = data_size - task_offset;
-  if (data_size < task_offset) {
+  int count = data_size - task_offset;
+  if (count <= 0) {
     return;
   }
   count = MSMIN(offset_size, count);
   for (size_t idx = task_offset; idx < task_offset + count; ++idx) {
-    int pos = (int)idx;
+    int pos = idx;
     int output_idx = 0;
     int input_idx = 0;
     for (int i = 0; i < num_axes; ++i) {

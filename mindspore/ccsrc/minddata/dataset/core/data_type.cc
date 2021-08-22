@@ -61,7 +61,7 @@ uint8_t DataType::AsCVType() const {
   }
 
   return res;
-}
+}  // namespace dataset
 
 DataType DataType::FromCVType(int cv_type) {
   auto depth = static_cast<uchar>(cv_type) & static_cast<uchar>(CV_MAT_DEPTH_MASK);

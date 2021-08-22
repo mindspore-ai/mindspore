@@ -38,7 +38,7 @@ def test_set_recompute_true():
 
 def test_set_recompute_false():
     net = Net()
-    net.pool.recompute(mode=False)
+    net.pool.recompute(False)
     assert net.pool.get_scope() is None
 
 
@@ -51,32 +51,32 @@ def test_set_recompute_true_twice():
 
 def test_set_recompute_false_twice():
     net = Net()
-    net.pool.recompute(mode=False)
-    net.pool.recompute(mode=False)
+    net.pool.recompute(False)
+    net.pool.recompute(False)
     assert net.pool.get_scope() is None
 
 
 def test_reset_recompute1():
     net = Net()
-    net.pool.recompute(mode=True)
-    net.pool.recompute(mode=False)
+    net.pool.recompute(True)
+    net.pool.recompute(False)
     assert net.pool.get_scope() == ""
 
 
 def test_reset_recompute2():
     net = Net()
-    net.pool.recompute(mode=False)
-    net.pool.recompute(mode=True)
+    net.pool.recompute(False)
+    net.pool.recompute(True)
     assert net.pool.get_scope() == recompute_prefix
 
 
 def test_set_scope_and_set_recompute_repeatedly():
     net = Net()
-    net.pool.recompute(mode=True)
+    net.pool.recompute(True)
     assert net.pool.get_scope() == recompute_prefix
-    net.pool.recompute(mode=False)
+    net.pool.recompute(False)
     assert net.pool.get_scope() == ""
-    net.pool.recompute(mode=True)
+    net.pool.recompute(True)
     assert net.pool.get_scope() == recompute_prefix
-    net.pool.recompute(mode=False)
+    net.pool.recompute(False)
     assert net.pool.get_scope() == ""

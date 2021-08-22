@@ -27,6 +27,7 @@
 #include "include/api/metrics/metrics.h"
 #include "src/lite_model.h"
 #include "src/runtime/inner_allocator.h"
+#include "src/common/string_util.h"
 #include "src/cxx_api/converters.h"
 #include "src/cxx_api/graph/graph_data.h"
 #include "src/cxx_api/tensor/tensor_impl.h"

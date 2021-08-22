@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePoolGrad = "PoolGrad";
-class MS_CORE_API PoolGrad : public PrimitiveC {
+class PoolGrad : public PrimitiveC {
  public:
   PoolGrad() : PrimitiveC(kNamePoolGrad) { InitIOName({"x_origin", "out_origin", "grad"}, {"output"}); }
   explicit PoolGrad(const std::string k_name) : PrimitiveC(k_name) {

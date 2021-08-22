@@ -279,7 +279,6 @@ void TensorPrint::operator()() {
       acltdtDataset *acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
-        break;
       }
       if (acltdtReceiveTensor(acl_handle_, acl_dataset, -1 /* no timeout */) != ACL_SUCCESS) {
         MS_LOG(ERROR) << "AclHandle failed to receive tensor.";
@@ -296,7 +295,6 @@ void TensorPrint::operator()() {
       acltdtDataset *acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
-        break;
       }
       if (acltdtReceiveTensor(acl_handle_, acl_dataset, -1 /* no timeout */) != ACL_SUCCESS) {
         MS_LOG(ERROR) << "Acltdt failed to receive tensor.";

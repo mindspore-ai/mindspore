@@ -43,52 +43,46 @@
 #if GPU_TENSORRT
 #include "src/delegate/tensorrt/tensorrt_delegate.h"
 #endif
-#ifndef WEIGHT_DECODE_CLIP
-#include "tools/converter/quantizer/fse_decoder.h"
-#endif
+
 namespace mindspore {
 namespace lite {
 namespace {
-bool NeedBitUppackCheck(const schema::Tensor &src_tensor) {
-  if (src_tensor.enableHuffmanCode()) {
-    return true;
-  }
-  bool need_bit_unpack = src_tensor.quantParams() != nullptr && src_tensor.quantParams()->size() > 0 &&
-                         src_tensor.quantParams()->Get(0) != nullptr && src_tensor.quantParams()->Get(0)->inited();
-  if (need_bit_unpack) {
-    auto num_bits = src_tensor.quantParams()->Get(0)->numBits();
-    need_bit_unpack = ((num_bits >= kBitNum1 && num_bits < kBitNum8) || (num_bits > kBitNum8 && num_bits < kBitNum16));
-  }
-
-  return need_bit_unpack;
-}
-
 int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
-#ifndef WEIGHT_DECODE_CLIP
-  if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {
-    return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor);
-  } else if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
+  if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
     return IndexingDecompress(src_tensor, dst_tensor);
   } else if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_SPARSE) {
     return SparseDecompress(src_tensor, dst_tensor);
   }
-#else
-  if (src_tensor.weightQunatCompressType() != schema::WeightQunatCompressType_NONE) {
-    MS_LOG(ERROR) << unsupport_weight_decode_log;
-    return RET_ERROR;
+
+  bool need_bit_unpack = src_tensor.quantParams() != nullptr && src_tensor.quantParams()->size() > 0 &&
+                         src_tensor.quantParams()->Get(0) != nullptr && src_tensor.quantParams()->Get(0)->inited();
+  if (need_bit_unpack) {
+    auto num_bits = src_tensor.quantParams()->Get(0)->numBits();
+    need_bit_unpack = ((num_bits >= WeightDecoder::kBitNum1 && num_bits < WeightDecoder::kBitNum8) ||
+                       (num_bits > WeightDecoder::kBitNum8 && num_bits < WeightDecoder::kBitNum16));
   }
-#endif
-  if (!NeedBitUppackCheck(src_tensor)) {
+  if (!src_tensor.enableHuffmanCode() && !need_bit_unpack) {
     return RET_NO_CHANGE;
-  } else {
-#ifndef WEIGHT_DECODE_CLIP
-    return WeightDecoder::UnPack(src_tensor, dst_tensor);
-#else
-    MS_LOG(ERROR) << unsupport_weight_decode_log;
-    return RET_ERROR;
-#endif
   }
+  // huffman code and bit pack are not assumed to be performed at same time
+  STATUS ret = RET_ERROR;
+  if (src_tensor.enableHuffmanCode()) {
+    ret = WeightDecoder::DecodeHuffmanCode(src_tensor, dst_tensor);
+    if (ret != RET_OK && ret != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Decode huffman code failed: " << ret;
+      return ret;
+    }
+  } else if (need_bit_unpack) {
+    ret = WeightDecoder::UnPackToInt(src_tensor, dst_tensor);
+    if (ret != RET_OK && ret != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Unpack to int8 failed: " << ret;
+      return ret;
+    }
+  } else {
+    ret = RET_OK;
+  }
+  return ret;
 }
 }  // namespace
 
@@ -129,16 +123,11 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
   MS_ASSERT(dst_tensor != nullptr);
   if (src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
     if (dst_tensor->data_type() == kObjectTypeTensorType) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
       auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
       if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
         MS_LOG(ERROR) << "Decode tensorlist data failed";
         return RET_ERROR;
       }
-#else
-      MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-      return RET_NOT_SUPPORT;
-#endif
     } else {
       auto ret = DecompressTensor(*src_tensor, dst_tensor);
       if (ret == RET_NO_CHANGE) {
@@ -170,7 +159,6 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   }
   lite::Tensor *dst_tensor = nullptr;
   if (TypeId(src_tensor.dataType()) == kObjectTypeTensorType) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>(), src_category);
     // set tensor list datatype
     auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
@@ -178,9 +166,6 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
       auto tensor_data_type = TypeId(reinterpret_cast<const int *>(src_tensor.data()->data())[0]);
       tensor_list->set_tensors_data_type(tensor_data_type);
     }
-#else
-    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-#endif
   } else {
     dst_tensor = new (std::nothrow)
       Tensor(TypeId(src_tensor.dataType()), shape, static_cast<mindspore::Format>(src_tensor.format()), src_category);
@@ -419,11 +404,10 @@ void LiteSession::IsolateOutputTensor() {
           subgraph->set_out_tensor(new_tensor, i);
         }
       }
-#ifndef DELEGATE_CLIP
+
       if (subgraph->desc().delegate != nullptr) {
         continue;
       }
-#endif
       /* node input and output */
       auto nodes = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
       for (size_t i = 0; i < nodes.size(); i++) {
@@ -580,18 +564,14 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
   // find in_kernels and out_kernels for subgraphs
   for (auto kernel : this->kernels_) {
     kernel->FindInoutKernels(this->kernels_);
-#ifndef DELEGATE_CLIP
     if (kernel->desc().delegate != nullptr) {
       all_kernels.push_back(kernel);
     } else {
-#endif
       auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
       MS_ASSERT(sub_graph != nullptr);
       auto kernel_in_subgraph = sub_graph->nodes();
       all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
-#ifndef DELEGATE_CLIP
     }
-#endif
   }
 
   if (!use_mindrt_run) {
@@ -603,11 +583,9 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
 
   // init init_ref_count for subgraphs and kernels
   for (auto *kernel : this->kernels_) {
-#ifndef DELEGATE_CLIP
     if (kernel->desc().delegate != nullptr) {
       continue;
     }
-#endif
     if (IsIsolatedSubGraph(kernel)) {
       static_cast<kernel::SubGraphKernel *>(kernel)->InitInputTensorInitRefCount();
     }
@@ -650,7 +628,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   return ret;
 }
 
-int LiteSession::Init(InnerContext *context) {
+int LiteSession::Init(const Context *context) {
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
     MS_LOG(ERROR) << "Not support multi-threading";
@@ -661,8 +639,12 @@ int LiteSession::Init(InnerContext *context) {
     is_running_.store(false);
     return RET_NULL_PTR;
   }
-  this->context_ = context;
-
+  this->context_ = new (std::nothrow) InnerContext(context);
+  if (this->context_ == nullptr) {
+    MS_LOG(ERROR) << "New Context failed";
+    is_running_.store(false);
+    return RET_MEMORY_FAILED;
+  }
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
@@ -696,7 +678,6 @@ int LiteSession::Init(InnerContext *context) {
     }
   }
 #endif
-#ifndef DELEGATE_CLIP
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
     if (delegate_ret == RET_NOT_SUPPORT) {
@@ -708,7 +689,12 @@ int LiteSession::Init(InnerContext *context) {
       return RET_ERROR;
     }
   }
-#endif
+  ret = KernelRegistry::GetInstance()->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "KernelRegistry Init Failed.";
+    is_running_.store(false);
+    return ret;
+  }
   ret = InitGPURuntime();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init GPU runtime failed.";
@@ -737,9 +723,7 @@ LiteSession::~LiteSession() {
     kernel = nullptr;
   }
   for (auto tensor : tensors_) {
-    if (tensor == nullptr) {
-      continue;
-    }
+    MS_ASSERT(tensor != nullptr);
     // Data of const tensor which doesn't own data will not freed.
     // Such as const data from meta_graph which will be freed when freeing meta_graph.
     if (tensor->IsConst() && !tensor->own_data()) {
@@ -854,11 +838,9 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
       return RET_ERROR;
     }
     auto ret = RET_OK;
-#ifndef DELEGATE_CLIP
     if (kernel->desc().delegate != nullptr) {
       ret = kernel->ReSize();
     } else {
-#endif
       if (kernel->subgraph_type() == kernel::kGpuSubGraph) {
 #if GPU_OPENCL
         auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
@@ -868,9 +850,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
         auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
         ret = sub_graph->ReSize();
       }
-#ifndef DELEGATE_CLIP
     }
-#endif
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape is interrupted";
       continue;
@@ -960,10 +940,7 @@ session::LiteSession *session::LiteSession::CreateSession(const lite::Context *c
     MS_LOG(ERROR) << "create session failed";
     return nullptr;
   }
-
-  mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
-
-  auto ret = session->Init(inner_context);
+  auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
     delete session;
@@ -979,67 +956,48 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
-  auto ret = lite::LiteSession::CreateSessionByBuf(model_buf, size, session);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init session failed";
-    delete session;
-    return nullptr;
-  }
-  return session;
-}
-
-session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_path, const lite::Context *context) {
-  auto *session = session::LiteSession::CreateSession(context);
-  if (session == nullptr) {
-    MS_LOG(ERROR) << "Create session failed";
-    return nullptr;
-  }
-  auto ret = lite::LiteSession::CreateSessionByPath(model_path, session);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init session failed";
-    delete session;
-    return nullptr;
-  }
-  return session;
-}
-
-int lite::LiteSession::CreateSessionByBuf(const char *model_buf, size_t size, session::LiteSession *session) {
   auto *model = lite::ImportFromBuffer(model_buf, size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
-    return RET_ERROR;
+    delete session;
+    return nullptr;
   }
   auto ret = session->CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
     delete model;
-    return RET_ERROR;
+    delete session;
+    return nullptr;
   }
   model->buf = nullptr;
   (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
-  return RET_OK;
+  return session;
 }
 
-int lite::LiteSession::CreateSessionByPath(const std::string &model_path, session::LiteSession *session) {
+session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_path, const lite::Context *context) {
   size_t model_size;
   auto model_buf = lite::ReadFile(model_path.c_str(), &model_size);
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "Read model file failed";
-    return RET_ERROR;
+    return nullptr;
+  }
+  auto *session = session::LiteSession::CreateSession(context);
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "Create session failed";
+    return nullptr;
   }
   auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
-    return RET_ERROR;
+    return nullptr;
   }
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = session->CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
-    return RET_ERROR;
+    return nullptr;
   }
   (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
-  return RET_OK;
+  return session;
 }
-
 }  // namespace mindspore

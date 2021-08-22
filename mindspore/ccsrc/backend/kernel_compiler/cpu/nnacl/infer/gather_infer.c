@@ -43,9 +43,6 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (inputs[2]->data_ == NULL) {
     return NNACL_NULL_PTR;
   }
-  if (GetElementNum(inputs[2]) < 1) {
-    return NNACL_ERR;
-  }
   int axis = *((int *)inputs[2]->data_);
   if (axis < 0) {
     axis += input->shape_size_;
@@ -53,11 +50,12 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   int indices_shape[MAX_SHAPE_SIZE];
   size_t indices_shape_size = 0;
   ShapeSet(indices_shape, &indices_shape_size, indices->shape_, indices->shape_size_);
-  size_t indices_rank = indices_shape_size;
+  int indices_rank = indices_shape_size;
   int in_shape[MAX_SHAPE_SIZE] = {0};
   size_t in_shape_size = 0;
   ShapeSet(in_shape, &in_shape_size, input->shape_, input->shape_size_);
-  if ((size_t)(in_shape_size) < axis + 1) {
+  int in_rank = in_shape_size;
+  if (in_rank < axis + 1) {
     return NNACL_ERR;
   }
   int out_shape[MAX_SHAPE_SIZE] = {0};
@@ -67,7 +65,7 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (erase_ret != NNACL_OK) {
     return NNACL_ERR;
   }
-  for (int i = (int)(indices_rank - 1); i >= 0; --i) {
+  for (int i = indices_rank - 1; i >= 0; --i) {
     ret = ShapeInsert(out_shape, &out_shape_size, axis, indices_shape[i]);
     if (ret != NNACL_OK) {
       return NNACL_ERR;

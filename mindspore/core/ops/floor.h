@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFloor = "Floor";
-class MS_CORE_API Floor : public PrimitiveC {
+class Floor : public PrimitiveC {
  public:
   Floor() : PrimitiveC(kNameFloor) { InitIOName({"x"}, {"y"}); }
   ~Floor() = default;

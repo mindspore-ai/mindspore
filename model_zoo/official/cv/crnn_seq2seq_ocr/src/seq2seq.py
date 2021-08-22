@@ -109,7 +109,7 @@ class AttnDecoderRNN(nn.Cell):
         output = self.relu(output)
 
         gru_hidden = self.squeeze1(hidden)
-        output, hidden = self.gru(output, gru_hidden)
+        output, hidden, _, _, _, _ = self.gru(output, gru_hidden)
         output = self.squeeze1(output)
         output = self.log_softmax(self.out(output))
 

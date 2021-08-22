@@ -15,12 +15,10 @@
  */
 
 #include "tools/optimizer/format/to_format_base.h"
-#include <set>
 #include "ops/op_utils.h"
 #include "src/common/common.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/parser/parser_utils.h"
 
 using mindspore::lite::NHWC_SHAPE;
 namespace mindspore {
@@ -69,17 +67,8 @@ STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr 
   return lite::RET_OK;
 }
 
-STATUS ToFormatBase::ModifyCNode(const CNodePtr &cnode) {
+STATUS ToFormatBase::ModifyCNodeAbstract(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "current node's prim is nullptr, " << cnode->fullname_with_scope();
-    return lite::RET_ERROR;
-  }
-  auto insert_pos = sensitive_ops_[prim->name()];
-  if (insert_pos.empty() || std::find(insert_pos.begin(), insert_pos.end(), 1) != insert_pos.end()) {
-    prim->AddAttr(ops::kFormat, MakeValue<int64_t>(format_));
-  }
   auto abstract_base = cnode->abstract();
   std::vector<AbstractBasePtr> abstracts;
   if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
@@ -227,10 +216,7 @@ STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
 STATUS ToFormatBase::HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   opt::TransTypePair trans_info;
-  if (GetTransNodeFormatType(cnode, &trans_info) != lite::RET_OK) {
-    MS_LOG(ERROR) << "obtain node's transferring format type failed, " << cnode->fullname_with_scope();
-    return lite::RET_ERROR;
-  }
+  GetTransNodeFormatType(cnode, &trans_info);
   if (trans_info.pre_ == opt::kNONE || trans_info.post_ == opt::kNONE) {
     return lite::RET_NO_CHANGE;
   }
@@ -243,7 +229,7 @@ STATUS ToFormatBase::HandleGraphNode(const FuncGraphPtr &func_graph, const CNode
   if (opt::CheckPrimitiveType(cnode, prim::kPrimAdam) || opt::CheckPrimitiveType(cnode, prim::kPrimSGD)) {
     return lite::RET_OK;
   }
-  if (ModifyCNode(cnode) != lite::RET_OK) {
+  if (ModifyCNodeAbstract(cnode) != lite::RET_OK) {
     MS_LOG(ERROR) << "adjust cnode's output shape failed, " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
@@ -295,59 +281,6 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
   return true;
 }
 
-STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<AnfNodePtr> *has_visited) {
-  MS_ASSERT(graph != nullptr && has_visited != nullptr);
-  auto node_list = TopoSort(graph->get_return());
-  schema::Format src_format = schema::Format_NUM_OF_FORMAT;
-  schema::Format dst_format = schema::Format_NUM_OF_FORMAT;
-  for (auto &node : node_list) {
-    if (!utils::isa<CNodePtr>(node)) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
-      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
-      }
-      if (ConvWeightFormatTrans(sub_func_graph, has_visited) != lite::RET_OK) {
-        MS_LOG(ERROR) << "transform conv weight format failed.";
-        return lite::RET_ERROR;
-      }
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
-      }
-      if (ConvWeightFormatTrans(sub_func_graph, has_visited) != lite::RET_OK) {
-        MS_LOG(ERROR) << "transform conv weight format failed.";
-        return lite::RET_ERROR;
-      }
-      continue;
-    }
-    if (!CheckPrimitiveType(node, prim::kPrimConv2DFusion) &&
-        !CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) &&
-        !CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
-      continue;
-    }
-    if (has_visited->find(node) != has_visited->end()) {
-      continue;
-    }
-    has_visited->insert(node);
-    if (DecideConvWeightSrcAndDstFormat(cnode, &src_format, &dst_format) != lite::RET_OK) {
-      MS_LOG(ERROR) << "weight's src format and dst format get failed.";
-      return lite::RET_ERROR;
-    }
-    auto status = lite::UnifyConvWeightFormat(graph, cnode, src_format, dst_format, has_visited);
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "unify conv weight failed, current node name is " << cnode->fullname_with_scope();
-      return status;
-    }
-  }
-  return lite::RET_OK;
-}
-
 bool ToFormatBase::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   if (format_ != mindspore::NHWC && format_ != mindspore::NCHW) {
@@ -362,12 +295,6 @@ bool ToFormatBase::Run(const FuncGraphPtr &func_graph) {
   node_infer_shape_ = std::make_shared<NodeInferShape>(fmk_type_, train_flag_);
   if (node_infer_shape_ == nullptr) {
     MS_LOG(ERROR) << "create NodeInferShape object failed.";
-    return false;
-  }
-  std::set<AnfNodePtr> has_visited;
-  auto status = ConvWeightFormatTrans(func_graph, &has_visited);
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "Conv2D weight FormatTrans failed: " << status;
     return false;
   }
   SetSensitiveOps();

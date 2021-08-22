@@ -30,7 +30,7 @@ class PowerOpenCLKernel : public OpenCLKernel {
 
   int Prepare() override;
   int CheckSpecs() override;
-  int SetConstArgs() override;
+  void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Run() override;
 

@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API BroadcastTo : public PrimitiveC {
+class BroadcastTo : public PrimitiveC {
  public:
   BroadcastTo() : PrimitiveC(prim::kPrimBroadcastTo->name()) {}
   ~BroadcastTo() = default;

@@ -26,15 +26,15 @@ void DoCopyData(const uint8_t *input_data, uint8_t *output_data, size_t size, si
 }
 
 int DoTileOneDimension(uint8_t *input_data, uint8_t *output_data, size_t dim, const TileParameter *parameter) {
-  int src_dim_size = parameter->in_shape_[dim];
+  size_t src_dim_size = parameter->in_shape_[dim];
   if (dim == parameter->in_dim_ - 1) {
     DoCopyData(input_data, output_data, src_dim_size, parameter->data_size_, parameter->multiples_[dim]);
     return 0;
   }
-  for (int i = 0; i < src_dim_size; ++i) {
-    for (int j = 0; j < parameter->multiples_[dim]; ++j) {
-      int in_pos = parameter->in_strides_[dim] * i;
-      int out_pos = parameter->out_strides_[dim] * (i + j * src_dim_size);
+  for (size_t i = 0; i < src_dim_size; ++i) {
+    for (size_t j = 0; j < parameter->multiples_[dim]; ++j) {
+      size_t in_pos = parameter->in_strides_[dim] * i;
+      size_t out_pos = parameter->out_strides_[dim] * (i + j * src_dim_size);
       DoTileOneDimension(input_data + in_pos * parameter->data_size_, output_data + out_pos * parameter->data_size_,
                          dim + 1, parameter);
     }

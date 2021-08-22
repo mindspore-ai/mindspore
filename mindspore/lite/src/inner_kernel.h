@@ -52,7 +52,39 @@ class InnerKernel : public Kernel {
     }
   }
 
-  int Execute() override;
+  int Execute() override {
+    auto ret = PreProcess();
+    if (lite::RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
+      return ret;
+    }
+
+    // Support ZeroShape
+    size_t zero_shape_num = 0;
+    for (auto tensor : this->out_tensors()) {
+      for (size_t i = 0; i < tensor->shape().size(); i++) {
+        if (tensor->shape()[i] == 0) {
+          zero_shape_num++;
+          break;
+        }
+      }
+    }
+
+    if (zero_shape_num != this->out_tensors().size()) {
+      auto ret = Run();
+      if (lite::RET_OK != ret) {
+        MS_LOG(ERROR) << "run kernel failed, name: " << this->name();
+        return ret;
+      }
+    }
+
+    ret = PostProcess();
+    if (lite::RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel PostProcess failed, name: " << this->name();
+      return ret;
+    }
+    return lite::RET_OK;
+  }
 
   // called while compiling graph
   int Prepare() override { return mindspore::lite::RET_OK; }
@@ -62,7 +94,14 @@ class InnerKernel : public Kernel {
   // called before Run
   virtual int PreProcess();
   // called after Run
-  virtual int PostProcess() { return FreeInWorkTensor(); }
+  virtual int PostProcess() {
+    for (auto *output : this->out_tensors()) {
+      MS_ASSERT(output != nullptr);
+      output->ResetRefCount();
+    }
+
+    return FreeInWorkTensor();
+  }
 
   virtual int FreeInWorkTensor() const {
     for (auto &in_tensor : this->in_tensors()) {
@@ -125,14 +164,14 @@ class InnerKernel : public Kernel {
 
   void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) { this->in_tensors_ = in_tensors; }
 
-  virtual void set_in_tensor(lite::Tensor *in_tensor, size_t index) {
+  virtual void set_in_tensor(lite::Tensor *in_tensor, int index) {
     MS_ASSERT(index < in_tensors_.size());
     this->in_tensors_[index] = in_tensor;
   }
 
   void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) { this->out_tensors_ = out_tensors; }
 
-  virtual void set_out_tensor(lite::Tensor *out_tensor, size_t index) {
+  virtual void set_out_tensor(lite::Tensor *out_tensor, int index) {
     MS_ASSERT(index < out_tensors_.size());
     this->out_tensors_[index] = out_tensor;
   }
@@ -164,7 +203,7 @@ class InnerKernel : public Kernel {
   void set_registry_data_type(TypeId data_type) { registry_data_type_ = data_type; }
 
   void set_workspace_size(size_t value) { workspace_size_ = value; }
-  virtual size_t workspace_size() { return workspace_size_; }
+  size_t workspace_size() { return workspace_size_; }
   void AllocWorkspace();
   void FreeWorkspace();
   void *workspace() { return workspace_; }

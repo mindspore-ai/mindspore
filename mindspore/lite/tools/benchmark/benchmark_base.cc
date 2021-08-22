@@ -208,10 +208,10 @@ void BenchmarkFlags::InitInputDataList() {
 void BenchmarkFlags::InitResizeDimsList() {
   std::string content = this->resize_dims_in_;
   std::vector<int> shape;
-  auto shape_strs = StrSplit(content, std::string(DELIM_COLON));
+  auto shape_strs = StringSplit(content, std::string(DELIM_COLON));
   for (const auto &shape_str : shape_strs) {
     shape.clear();
-    auto dim_strs = StrSplit(shape_str, std::string(DELIM_COMMA));
+    auto dim_strs = StringSplit(shape_str, std::string(DELIM_COMMA));
     std::cout << "Resize Dims: ";
     for (const auto &dim_str : dim_strs) {
       std::cout << dim_str << " ";

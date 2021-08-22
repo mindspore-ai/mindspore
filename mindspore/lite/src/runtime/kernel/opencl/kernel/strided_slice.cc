@@ -85,7 +85,7 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
 }
 
 int StridedSliceOpenCLKernel::Prepare() {
-  const std::string program_name = "strided_slice";
+  std::string program_name = "strided_slice";
   if (!ocl_runtime_->LoadSource(program_name, strided_slice_source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -96,10 +96,7 @@ int StridedSliceOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   SetGlobalLocal();
   return RET_OK;
 }
@@ -115,9 +112,7 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
 
   if (type() == PrimitiveType_SliceFusion) {
     auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
-    MS_ASSERT(begin);
     auto *size = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
-    MS_ASSERT(size);
     Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
     Broadcast2GpuShape(size_.s, size, input_info.NDim, -1);
     for (int i = 0; i < 4; ++i) {
@@ -139,11 +134,8 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
     }
   } else {
     auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
-    MS_ASSERT(begin);
     auto *end = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
-    MS_ASSERT(end);
     auto *stride = reinterpret_cast<int32_t *>(in_tensors_.at(3)->data_c());
-    MS_ASSERT(stride);
     cl_int4 end_ = input_shape_;
     Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
     Broadcast2GpuShape(end_.s, end, input_info.NDim);
@@ -195,33 +187,14 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
   return RET_OK;
 }
 
-int StridedSliceOpenCLKernel::SetConstArgs() {
+void StridedSliceOpenCLKernel::SetConstArgs() {
   int arg_cn = 2;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, io_slices_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, begin_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn, size_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, io_slices_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, begin_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn, size_);
 }
 
 void StridedSliceOpenCLKernel::SetGlobalLocal() {
@@ -241,18 +214,9 @@ void StridedSliceOpenCLKernel::SetGlobalLocal() {
 
 int StridedSliceOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

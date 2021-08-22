@@ -22,8 +22,6 @@ namespace dataset {
 TreeAdapterLite::TreeAdapterLite() : root_(nullptr) { tree_ = std::make_unique<ExecutionTree>(); }
 
 Status TreeAdapterLite::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *const op) {
-  RETURN_UNEXPECTED_IF_NULL(ir);
-  RETURN_UNEXPECTED_IF_NULL(op);
   // Build the DatasetOp ExecutionTree from the optimized IR tree
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(ir->Build(&ops));
@@ -43,7 +41,7 @@ Status TreeAdapterLite::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir,
   }
 
   // Build the children of IR, once they return, add the return value to *op
-  for (const std::shared_ptr<DatasetNode> &child_ir : ir->Children()) {
+  for (std::shared_ptr<DatasetNode> child_ir : ir->Children()) {
     std::shared_ptr<DatasetOp> child_op;
     RETURN_IF_NOT_OK(BuildExecutionTreeRecur(child_ir, &child_op));
     RETURN_IF_NOT_OK(ops.back()->AddChild(child_op));  // append children to the last of ops
@@ -62,7 +60,6 @@ Status TreeAdapterLite::BuildTree(std::shared_ptr<DatasetNode> root_ir) {
 Status TreeAdapterLite::GetNextRow(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(root_);
   RETURN_IF_NOT_OK(root_->GetNextRowPullMode(row));
-  RETURN_UNEXPECTED_IF_NULL(row);
   return Status::OK();
 }
 

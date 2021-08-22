@@ -27,7 +27,6 @@ service EventListener {
   rpc SendTensors (stream TensorProto) returns (EventReply) {};
   rpc SendWatchpointHits (stream WatchpointHit) returns (EventReply) {};
   rpc SendMultiGraphs (stream Chunk) returns (EventReply) {};
-  rpc SendHeartbeat (Heartbeat) returns (EventReply) {};
 }
 
 message Metadata {
@@ -136,9 +135,4 @@ message WatchpointHit {
   WatchCondition watch_condition = 2;
   int32 id = 3;
   int32 error_code = 4;
-}
-
-message Heartbeat {
-  string message = 1;
-  int32 period = 2;
 }

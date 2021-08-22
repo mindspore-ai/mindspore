@@ -17,34 +17,31 @@
 #include <algorithm>
 #include <set>
 #include <string>
-#include <memory>
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
-#include "include/registry/register_kernel_interface.h"
+#include "include/registry/kernel_interface.h"
 #include "src/kernel_registry.h"
 
 namespace mindspore {
 namespace lite {
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                     const void *primitive, std::set<std::string> &&providers, int schema_version) {
+                     const void *primitive, std::set<std::string> &&providers) {
   if (primitive == nullptr) {
     return RET_NOT_SUPPORT;
   }
+  auto prim_type = GetPrimitiveType(primitive);
   std::shared_ptr<kernel::KernelInterface> kernel_interface = nullptr;
-  if (IsCustomNode(primitive, schema_version)) {
+  if (prim_type == schema::PrimitiveType_Custom) {
     kernel_interface =
-      registry::RegisterKernelInterface::GetKernelInterface("", static_cast<const schema::Primitive *>(primitive));
+      kernel::RegisterKernelInterface::GetKernelInterface("", static_cast<const schema::Primitive *>(primitive));
   } else {
     for (auto &&provider : providers) {
-      kernel_interface = registry::RegisterKernelInterface::GetKernelInterface(
+      kernel_interface = kernel::RegisterKernelInterface::GetKernelInterface(
         provider, static_cast<const schema::Primitive *>(primitive));
       if (kernel_interface != nullptr) {
         break;
@@ -61,16 +58,12 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   std::transform(outputs.begin(), outputs.end(), std::back_inserter(out_tensors),
                  [](lite::Tensor *tensor) { return mindspore::MSTensor(std::make_shared<MSTensor::Impl>(tensor)); });
   auto ret = kernel_interface->Infer(&in_tensors, &out_tensors, static_cast<const schema::Primitive *>(primitive));
-  if (ret == kLiteInferInvalid) {
-    return RET_INFER_INVALID;
-  }
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "op_type: " << GetPrimitiveTypeName(primitive, schema_version) << " infer fail!ret: " << ret;
-    return RET_ERROR;
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "op_type: " << PrimitiveTypeName(prim_type) << " infer fail!ret: " << ret;
+    return ret;
   }
   return RET_OK;
 }
-#endif
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter) {
@@ -78,12 +71,6 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     MS_LOG(ERROR) << "No input!";
     return RET_ERROR;
   }
-#ifdef CONTROLFLOW_TENSORLIST_CLIP
-  if (parameter->type_ == schema::PrimitiveType_Switch) {
-    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-    return RET_ERROR;
-  }
-#endif
   std::vector<TensorC *> in_tensors;
   std::vector<TensorC *> out_tensors;
   if (parameter->type_ == schema::PrimitiveType_PartialFusion || parameter->type_ == schema::PrimitiveType_Switch ||
@@ -114,7 +101,6 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     if (out_tensors.at(i) == nullptr) {
       continue;
     }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     if (reinterpret_cast<TensorListC *>(out_tensors.at(i))->data_type_ == TypeIdC::kObjectTypeTensorType) {
       auto *tensor_list_c = reinterpret_cast<TensorListC *>(out_tensors.at(i));
       auto *tensor_list = reinterpret_cast<TensorList *>(outputs.at(i));
@@ -126,11 +112,8 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
       tensor_list->MallocTensorListData(static_cast<TypeId>(tensor_list_c->data_type_), tensor_shape);
       TensorListC2TensorList(tensor_list_c, tensor_list);
     } else {
-#endif
       TensorC2Tensor(out_tensors.at(i), outputs.at(i));
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
-#endif
     if (ret == NNACL_INFER_INVALID) {
       outputs.at(i)->set_shape({-1});
     }

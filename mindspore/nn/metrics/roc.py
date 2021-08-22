@@ -90,8 +90,7 @@ class ROC(Metric):
         # single class evaluation
         if len(y_pred.shape) == len(y.shape):
             if class_num is not None and class_num != 1:
-                raise ValueError('The y_pred and y should have the same shape, '
-                                 'but the number of classes is different from 1.')
+                raise ValueError('y_pred and y should have the same shape, but number of classes is different from 1.')
             class_num = 1
             if pos_label is None:
                 pos_label = 1

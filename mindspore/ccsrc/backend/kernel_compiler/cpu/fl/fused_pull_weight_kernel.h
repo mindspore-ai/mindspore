@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
-// The duration between two PullWeights requests when return code is ResponseCode_SucNotReady.
+// The duration between two downloading requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPullWeights = 200;
 template <typename T>
 class FusedPullWeightKernel : public CPUKernel {
@@ -51,17 +51,19 @@ class FusedPullWeightKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(fbb);
 
     total_iteration_++;
-    uint64_t step_num_per_iteration = fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration();
     // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
-    MS_LOG(INFO) << "Try to pull weights. Local step number: " << total_iteration_
-                 << ", step number needs to run per iteration: " << step_num_per_iteration;
-    if (step_num_per_iteration != fl::kOneStepPerIteration &&
-        total_iteration_ % step_num_per_iteration != fl::kTrainBeginStepNum) {
+    if (total_iteration_ % fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration() !=
+        fl::kTrainBeginStepNum) {
       return true;
     }
 
     fl_iteration_++;
-    MS_LOG(INFO) << "Launching pulling weight for federated learning iteration " << fl_iteration_;
+    if (fl_iteration_ > ps::PSContext::instance()->fl_iteration_num()) {
+      MS_LOG(INFO) << ps::PSContext::instance()->fl_iteration_num() << " iterations are completed.";
+      fl_iteration_ = 1;
+    }
+
+    MS_LOG(INFO) << "Start pulling weight for federated learning iteration " << fl_iteration_;
     if (!BuildPullWeightReq(fbb)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPullWeight failed.";
       return false;
@@ -71,16 +73,11 @@ class FusedPullWeightKernel : public CPUKernel {
     const schema::ResponsePullWeight *pull_weight_rsp = nullptr;
     int retcode = schema::ResponseCode_SucNotReady;
     while (retcode == schema::ResponseCode_SucNotReady) {
-      if (!fl::worker::FLWorker::GetInstance().running()) {
-        MS_LOG(WARNING) << "Worker has finished.";
-        return true;
-      }
       if (!fl::worker::FLWorker::GetInstance().SendToServer(
             0, fbb->GetBufferPointer(), fbb->GetSize(), ps::core::TcpUserCommand::kPullWeight, &pull_weight_rsp_msg)) {
-        MS_LOG(WARNING) << "Sending request for FusedPullWeight to server 0 failed. Retry later.";
-        retcode = schema::ResponseCode_SucNotReady;
-        std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPullWeights));
-        continue;
+        MS_LOG(WARNING) << "Sending request for FusedPullWeight to server 0 failed. This iteration is dropped.";
+        fl::worker::FLWorker::GetInstance().SetIterationRunning();
+        return true;
       }
       MS_EXCEPTION_IF_NULL(pull_weight_rsp_msg);
 
@@ -91,8 +88,6 @@ class FusedPullWeightKernel : public CPUKernel {
         fl_iteration_ = pull_weight_rsp->iteration();
         MS_LOG(DEBUG) << "Server is not ready for downloading yet. Reason: " << pull_weight_rsp->reason()->str()
                       << ". Retry later.";
-        // Recreate fbb to avoid memory leak of FlatBuffers.
-        fbb = std::make_shared<fl::FBBuilder>();
         if (!BuildPullWeightReq(fbb)) {
           MS_LOG(EXCEPTION) << "Building request for FusedDownloadWeightsByKeys failed.";
           return false;
@@ -121,7 +116,7 @@ class FusedPullWeightKernel : public CPUKernel {
         return false;
       }
     }
-    MS_LOG(INFO) << "Pull weights for " << weight_full_names_ << " success. Iteration: " << fl_iteration_;
+    MS_LOG(INFO) << "Pull weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
     fl::worker::FLWorker::GetInstance().SetIterationRunning();
     return true;
   }

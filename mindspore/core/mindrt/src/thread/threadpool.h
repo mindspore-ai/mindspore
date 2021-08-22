@@ -24,7 +24,6 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include <functional>
 #include "thread/threadlog.h"
 #include "thread/core_affinity.h"
 
@@ -41,7 +40,7 @@ enum ThreadStatus {
 
 // used in scenarios with unequal division of task
 // the parameters indicate the start and end coefficients
-using Func = std::function<int(void *, int, float, float)>;
+using Func = int (*)(void *, int, float, float);
 using Content = void *;
 
 typedef struct Task {
@@ -74,21 +73,16 @@ class Worker {
 
   std::thread::id thread_id() const { return thread_.get_id(); }
 #ifdef BIND_CORE
-  void set_mask(const cpu_set_t &mask) { mask_ = mask; }
   pthread_t handle() { return thread_.native_handle(); }
 #endif
 
  protected:
-  void SetAffinity();
   void Run();
   void YieldAndDeactive();
   void WaitUntilActive();
 
   bool alive_{true};
   std::thread thread_;
-#ifdef BIND_CORE
-  cpu_set_t mask_;
-#endif
   std::atomic_int status_{kThreadBusy};
 
   std::mutex mutex_;
@@ -104,7 +98,7 @@ class Worker {
 
 class ThreadPool {
  public:
-  static ThreadPool *CreateThreadPool(size_t thread_num, const std::vector<int> &core_list = {});
+  static ThreadPool *CreateThreadPool(size_t thread_num);
   virtual ~ThreadPool();
 
   size_t thread_num() const { return workers_.size(); }
@@ -114,19 +108,15 @@ class ThreadPool {
   int SetProcessAffinity(BindMode bind_mode) const;
 
   int ParallelLaunch(const Func &func, Content content, int task_num) const;
-  void DisableOccupiedActorThread() { occupied_actor_thread_ = false; }
-  void SetActorThreadNum(size_t actor_thread_num) { actor_thread_num_ = actor_thread_num; }
-  void SetKernelThreadNum(size_t kernel_thread_num) { kernel_thread_num_ = kernel_thread_num; }
-  size_t GetKernelThreadNum() const { return kernel_thread_num_; }
 
  protected:
   ThreadPool() = default;
 
-  int CreateThreads(size_t thread_num, const std::vector<int> &core_list);
+  int CreateThreads(size_t thread_num);
 
   int InitAffinityInfo();
 
-  void SyncRunTask(Task *task, int start_num, int task_num) const;
+  void SyncRunTask(Task *task, int task_num) const;
 
   void DistributeTask(Task *task, int task_num) const;
   void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
@@ -137,9 +127,6 @@ class ThreadPool {
   std::mutex pool_mutex_;
   std::vector<Worker *> workers_;
   CoreAffinity *affinity_{nullptr};
-  size_t actor_thread_num_{0};
-  size_t kernel_thread_num_{0};
-  bool occupied_actor_thread_{true};
 };
 
 }  // namespace mindspore

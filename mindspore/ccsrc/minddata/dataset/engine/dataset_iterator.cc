@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/dataset_iterator.h"
-#include <algorithm>
 #include <unordered_map>
 #include <utility>
 #include "minddata/dataset/core/data_type.h"

@@ -113,7 +113,7 @@ Status MindRecordOp::Init() {
       CHECK_FAIL_RETURN_UNEXPECTED(
         colname_to_ind.find(colname) != colname_to_ind.end(),
         "Invalid data, specified loading column name: " + colname + " does not exist in data file.");
-      RETURN_IF_NOT_OK(tmp_schema->AddColumn(data_schema_->Column(colname_to_ind[colname])));
+      RETURN_IF_NOT_OK(tmp_schema->AddColumn(data_schema_->column(colname_to_ind[colname])));
     }
     data_schema_ = std::move(tmp_schema);
   }
@@ -223,7 +223,7 @@ Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, uint64_t row_id, i
 
 Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint8_t> &columns_blob,
                                    const mindrecord::json &columns_json, const mindrecord::TaskType task_type) {
-  for (int32_t i_col = 0; i_col < columns_to_load_.size(); i_col++) {
+  for (uint32_t i_col = 0; i_col < columns_to_load_.size(); i_col++) {
     auto column_name = columns_to_load_[i_col];
 
     // Initialize column parameters
@@ -271,8 +271,8 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     }
 
     std::shared_ptr<Tensor> tensor;
-    const ColDescriptor &column = data_schema_->Column(i_col);
-    DataType type = column.Type();
+    const ColDescriptor &column = data_schema_->column(i_col);
+    DataType type = column.type();
 
     // Set shape
     CHECK_FAIL_RETURN_UNEXPECTED(column_data_type_size != 0, "Found memory size of column data type is 0.");
@@ -280,14 +280,9 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     if (type == DataType::DE_STRING) {
       std::string s{data, data + n_bytes};
       RETURN_IF_NOT_OK(Tensor::CreateScalar(s, &tensor));
-    } else if (column.HasShape()) {
-      auto new_shape = TensorShape(column.Shape());
-      // if the numpy is null, create empty tensor shape
-      if (num_elements == 0) {
-        new_shape = TensorShape({});
-      } else {
-        RETURN_IF_NOT_OK(column.MaterializeTensorShape(static_cast<int32_t>(num_elements), &new_shape));
-      }
+    } else if (column.hasShape()) {
+      auto new_shape = TensorShape(column.shape());
+      RETURN_IF_NOT_OK(column.MaterializeTensorShape(static_cast<int32_t>(num_elements), &new_shape));
       RETURN_IF_NOT_OK(Tensor::CreateFromMemory(new_shape, type, data, &tensor));
     } else {
       std::vector<dsize_t> shapeDetails = {static_cast<dsize_t>(num_elements)};

@@ -38,19 +38,19 @@ namespace parse {
 // Parse status define
 enum ParseStatusCode : int64_t {
   PARSE_SUCCESS = 0,
-  PARSE_FUNCTION_IS_NULL,            // Python function is null
-  PARSE_PARAMETER_INVALID,           // Parameter is invalid
-  PARSE_NO_RETURN,                   // Function no return node
-  PARSE_NODE_TYPE_NO_MATCH,          // Ast node type is error
-  PARSE_NODE_TYPE_UNKNOWN,           // Node type is unknown
-  PARSE_NODE_METHOD_UNSUPPORTED,     // No method to parse the node
-  PARSE_DONT_RESOLVE_SYMBOL,         // Can't resolve the string
-  PARSE_NOT_SUPPORTED_COMPARE_EXPR,  // The comparison is not supported
+  PARSE_FUNCTION_IS_NULL,            // python function is null
+  PARSE_PARAMETER_INVALID,           // parameter is invalid
+  PARSE_NO_RETURN,                   // function no return node
+  PARSE_NODE_TYPE_NO_MATCH,          // ast node type is error
+  PARSE_NODE_TYPE_UNKNOWN,           // node type is unknown
+  PARSE_NODE_METHOD_UNSUPPORTED,     // no method to parse the node
+  PARSE_DONT_RESOLVE_SYMBOL,         // can't resolve the string
+  PARSE_NOT_SUPPORTED_COMPARE_EXPR,  // the comparison is not supported
   PARSE_FAILURE = 0xFF
 };
 
-// Max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
-// will be sunk(i.e. not unrolled)
+// max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
+//  will be sunk(i.e. not unrolled)
 // NOTE: Since when the for loop was unrolled, it depends backend operators `tuple_getitem` and `scalar_add` which were
 //  not implemented, so here set MAX_FOR_LOOP_COUNT to int64_t max limit to override default value `600`. This will make
 //  the for loop will always be unrolled, but don't worry about the memory were exhausted, an exception will be raised
@@ -97,7 +97,7 @@ class Parser {
   FuncGraphPtr func_graph() const { return func_graph_; }
   ParseStatusCode errcode() const { return errcode_; }
   std::shared_ptr<ParseAst> ast() const { return ast_; }
-  // Get location info from the ast node
+  // get location info from the ast node
   LocationPtr GetLocation(const py::object &node) const;
   static void InitParserEnvironment(const py::object &obj);
   static void CleanParserResource();
@@ -105,118 +105,114 @@ class Parser {
   static void UpdateTopFuncGraph(const FuncGraphPtr &func_graph);
 
  private:
-  // Process the stmt node method list
+  // process the stmt node method list
   FunctionBlockPtr ParseReturn(const FunctionBlockPtr &block, const py::object &node);
-  // Parse expression
+  // parse expression
   FunctionBlockPtr ParseExpr(const FunctionBlockPtr &block, const py::object &node);
-  // Process a if statement
+  // process a if statement
   FunctionBlockPtr ParseIf(const FunctionBlockPtr &block, const py::object &node);
-  // Process a while statement
+  // process a while statement
   FunctionBlockPtr ParseWhile(const FunctionBlockPtr &block, const py::object &node);
-  // Process a for statement
+  // process a for statement
   FunctionBlockPtr ParseFor(const FunctionBlockPtr &block, const py::object &node);
   FunctionBlockPtr ParseForIter(const FunctionBlockPtr &block, const py::object &node);
   FunctionBlockPtr ParseForLoop(const FunctionBlockPtr &block, const py::object &node);
-  // Process a function def statement
+  // process a function def statement
   FunctionBlockPtr ParseFunctionDef(const FunctionBlockPtr &block, const py::object &node);
-  // Process a augment assign
+  // process a augment assign
   FunctionBlockPtr ParseAugAssign(const FunctionBlockPtr &block, const py::object &node);
-  // Process a global declaration
+  // process a global declaration
   FunctionBlockPtr ParseGlobal(const FunctionBlockPtr &block, const py::object &node);
-  // Process assign statement
+  // process assign statement
   FunctionBlockPtr ParseAssign(const FunctionBlockPtr &block, const py::object &node);
-  // Process break statement
+  // process break statement
   FunctionBlockPtr ParseBreak(const FunctionBlockPtr &block, const py::object &node);
-  // Process continue statement
+  // process continue statement
   FunctionBlockPtr ParseContinue(const FunctionBlockPtr &block, const py::object &node);
-  // Process pass statement
+  // process pass statement
   FunctionBlockPtr ParsePass(const FunctionBlockPtr &block, const py::object &node);
-
-  // Process the expr and slice node method list
+  // process the expr and slice node method list
   AnfNodePtr ParseBinOp(const FunctionBlockPtr &block, const py::object &node);
-  // Process a variable name
+  // process a variable name
   AnfNodePtr ParseName(const FunctionBlockPtr &block, const py::object &node);
-  // Process NoneType
+  // process NoneType
   AnfNodePtr ParseNone(const FunctionBlockPtr &block, const py::object &node);
-  // Process Ellipsis
+  // process Ellipsis
   AnfNodePtr ParseEllipsis(const FunctionBlockPtr &block, const py::object &node);
-  // Process a integer or float number
+  // process a integer or float number
   AnfNodePtr ParseNum(const FunctionBlockPtr &block, const py::object &node);
-  // Process a string variable
+  // process a string variable
   AnfNodePtr ParseStr(const FunctionBlockPtr &block, const py::object &node);
-  // Process a Constant
+  // process a Constant
   AnfNodePtr ParseConstant(const FunctionBlockPtr &block, const py::object &node);
-  // Process a name
+  // process a name
   AnfNodePtr ParseNameConstant(const FunctionBlockPtr &block, const py::object &node);
-  // Process a function call
+  // process a function call
   AnfNodePtr ParseCall(const FunctionBlockPtr &block, const py::object &node);
-  // Process function 'super'
+  // process function 'super'
   AnfNodePtr ParseSuper(const FunctionBlockPtr &block, const py::list &args);
-  // Process the if expression
+  // process the if expression
   AnfNodePtr ParseIfExp(const FunctionBlockPtr &block, const py::object &node);
-  // Process class type define
+  // process class type define
   AnfNodePtr ParseAttribute(const FunctionBlockPtr &block, const py::object &node);
-  // Process a compare expression
+  // process a compare expression
   AnfNodePtr ParseCompare(const FunctionBlockPtr &block, const py::object &node);
-  // Process a bool operation
+  // process a bool operation
   AnfNodePtr ParseBoolOp(const FunctionBlockPtr &block, const py::object &node);
-  // Process a lambda operation
+  // process a lambda operation
   AnfNodePtr ParseLambda(const FunctionBlockPtr &block, const py::object &node);
-  // Process a tuple
+  // process a tuple
   AnfNodePtr ParseTuple(const FunctionBlockPtr &block, const py::object &node);
-  // Process a tuple
+  // process a tuple
   AnfNodePtr ParseList(const FunctionBlockPtr &block, const py::object &node);
-  // Process a tuple
+  // process a tuple
   AnfNodePtr ParseSubscript(const FunctionBlockPtr &block, const py::object &node);
-  // Process a slice
+  // process a slice
   AnfNodePtr ParseSlice(const FunctionBlockPtr &block, const py::object &node);
-  // Process a extslice
-  AnfNodePtr ParseExtSlice(const FunctionBlockPtr &block, const py::object &node);
-  // Process a tuple
-  AnfNodePtr ParseIndex(const FunctionBlockPtr &block, const py::object &node);
-  // Process a unaryop
-  AnfNodePtr ParseUnaryOp(const FunctionBlockPtr &block, const py::object &node);
-  // Process a dict ast node expression
-  AnfNodePtr ParseDict(const FunctionBlockPtr &block, const py::object &node);
-  // Process ListComp expression
-  AnfNodePtr ParseListComp(const FunctionBlockPtr &block, const py::object &node);
-  FunctionBlockPtr ParseListCompIter(const FunctionBlockPtr &block, const py::object &node,
-                                     const py::object &generator_node);
-  AnfNodePtr ParseListCompIfs(const FunctionBlockPtr &list_body_block, const ParameterPtr &list_param,
-                              const py::object &node, const py::object &generator_node);
 
-  // Generate argument nodes for ast  function node
+  // process a extslice
+  AnfNodePtr ParseExtSlice(const FunctionBlockPtr &block, const py::object &node);
+
+  // process a tuple
+  AnfNodePtr ParseIndex(const FunctionBlockPtr &block, const py::object &node);
+
+  // process a unaryop
+  AnfNodePtr ParseUnaryOp(const FunctionBlockPtr &block, const py::object &node);
+
+  // process a dict ast node expression
+  AnfNodePtr ParseDict(const FunctionBlockPtr &block, const py::object &node);
+  // generate argument nodes for ast  function node
   void GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py::object &function_node);
-  // Generate argument default value for ast  function node
+  // generate argument default value for ast  function node
   void GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, const py::object &function_node);
-  // Parse ast function node
+  // parse ast function node
   FunctionBlockPtr ParseFunction(const py::object &function_node, const FunctionBlockPtr &block = nullptr);
-  // Parse ast statements
+  // parse ast statements
   FunctionBlockPtr ParseStatements(FunctionBlockPtr block, const py::object &stmt_node);
-  // Parse one ast statement node
+  // parse one ast statement node
   FunctionBlockPtr ParseStatement(const FunctionBlockPtr &block, const py::object &node);
-  // Parse an ast expression node
+  // parse an ast expression node
   AnfNodePtr ParseExprNode(const FunctionBlockPtr &block, const py::object &node);
 
   void MakeConditionBlocks(const FunctionBlockPtr &block, const FunctionBlockPtr &trueBlock,
                            const FunctionBlockPtr &falseBlock);
   void RemoveUnnecessaryPhis();
-  // Write a new var
+  // write a new var
   void WriteAssignVars(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &value_node);
 
-  // Assign value to single variable name
+  // assign value to single variable name
   void HandleAssignName(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
 
-  // Assign value to tuple
+  // assign value to tuple
   void HandleAssignTuple(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
 
-  // Assign value to class member
+  // assign value to class member
   void HandleAssignClassMember(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
 
-  // Assign value to subscript
+  // assign value to subscript
   void HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
 
-  // Process a bool operation value list
+  // process a bool operation value list
   AnfNodePtr ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, AstSubType mode);
 
   CNodePtr GenerateIteratorInFor(const FunctionBlockPtr &block, const pybind11::object &node,
@@ -225,7 +221,7 @@ class Parser {
   CNodePtr GenerateCondInFor(const ParameterPtr &iter_param, const FunctionBlockPtr &header_block,
                              const AnfNodePtr &op_hasnext);
 
-  FunctionBlockPtr GenerateBlock(const TraceInfoPtr &trace_info);
+  FunctionBlockPtr GenerateBlockInFor(const TraceInfoPtr &trace_info);
 
   bool ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object &node,
                            std::vector<AnfNodePtr> *packed_arguments);
@@ -253,27 +249,27 @@ class Parser {
     func_block_list_.push_back(block);
     return block;
   }
-  // Return a make tuple for input elements list
+  // return a make tuple for input elements list
   AnfNodePtr GenerateMakeTuple(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &element_nodes);
   int64_t GetForTransToWhileLoop();
 
-  // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
+  // shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
   // Python function id, used to indicate whether two CNodes come from the same Python function
   const std::shared_ptr<ParseAst> &ast_;
   FuncGraphPtr func_graph_;
-  // Error code setwhen parsing ast tree
+  // error code setwhen parsing ast tree
   ParseStatusCode errcode_;
 
-  // Hold all reference for FunctionBlock in this round of parsing,
+  // hold all reference for FunctionBlock in this round of parsing,
   // so in FunctionBlock class we can use FunctionBlock* in member
   // pre_blocks_ and jumps_ to break reference cycle.
   std::vector<FunctionBlockPtr> func_block_list_;
   using pStmtFunc = FunctionBlockPtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
   using pExprFunc = AnfNodePtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
-  // Define the function map to parse ast Statement
+  // define the function map to parse ast Statement
   std::map<std::string, pStmtFunc> stmt_method_map_;
-  // Define the function map to parse ast expression
+  // define the function map to parse ast expression
   std::map<std::string, pExprFunc> expr_method_map_;
   // Save current loops to support 'continue', 'break' statement.
   std::stack<Loop> loops_;
@@ -354,10 +350,10 @@ class ParseAst {
   bool IsClassMember(const py::object &node);
 
  private:
-  // Save obj,eg: class instance or function
+  // save obj,eg: class instance or function
   py::object obj_;
 
-  // Function or class method.
+  // function or class method.
   py::function function_;
 
   py::object ast_tree_;
@@ -373,7 +369,7 @@ class ParseAst {
   int64_t function_line_offset_;
 };
 
-// Update the graph flags
+// update the graph flags
 bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph);
 
 AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param);

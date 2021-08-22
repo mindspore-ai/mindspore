@@ -371,43 +371,10 @@ class _Reduce(PrimitiveWithInfer):
         input_shp = input_x['shape']
         args = {'input_x': input_x['dtype']}
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtype, self.name)
-        if not isinstance(axis, mstype.tensor_type) and axis_v is None:
-            raise ValueError(f"For {self.name}, axis must be const.")
-        out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
-        if -1 in input_shp:
-            if axis_v is None:
-                max_v = max(input_shp)
-                if 'max_shape' and 'min_shape' in input_x:
-                    input_max_shp = input_x['max_shape']
-                    max_v = max(input_max_shp)
-                axis_shape_list = axis['shape']
-                if len(axis_shape_list) != 1:
-                    raise ValueError("axis_shape must be 1-D, but got ", len(axis_shape_list))
-                axis_shape = axis_shape_list[0]
-                if len(axis_shape) == 1 and axis_shape[0] == -1 and not self.keep_dims:
-                    out_shape = np.array([-2]).tolist()
-                    output_min_shape = np.ones_like(input_shp).tolist()
-                    output_max_shape = max_v * np.ones_like(input_shp)
-                    output_max_shape = output_max_shape.tolist()
-                elif not self.keep_dims:
-                    out_shape = -1 * np.ones_like(input_shp[:-axis_shape])
-                    out_shape = out_shape.tolist()
-                    output_min_shape = np.ones_like(out_shape).tolist()
-                    output_max_shape = max_v * np.ones_like(out_shape)
-                    output_max_shape = output_max_shape.tolist()
-                else:
-                    out_shape = -1 * np.ones_like(input_shp)
-                    out_shape = out_shape.tolist()
-                    output_min_shape = np.ones_like(input_shp).tolist()
-                    output_max_shape = max_v * np.ones_like(input_shp)
-                    output_max_shape = output_max_shape.tolist()
-            else:
-                output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
-                output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
-        else:
-            output_max_shape = out_shape
-            output_min_shape = out_shape
 
+        if axis_v is None:
+            raise ValueError(f"For {self.name}, axis must be const.")
+        input_shp = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
         value = None
         if input_x['value'] is not None:
             prim_map = {
@@ -419,13 +386,20 @@ class _Reduce(PrimitiveWithInfer):
 
             if np_reduce_func is not None:
                 value = input_x['value'].asnumpy()
-                if not axis_v:
+                if not axis_v and axis_v != 0:
                     axis_v = [i for i in range(len(input_x['shape']))]
                     axis_v = tuple(axis_v)
                 value = np_reduce_func(value, axis_v, keepdims=self.keep_dims)
                 value = np.array(value)
                 value = Tensor(value)
-        return {'shape': out_shape,
+        if 'max_shape' and 'min_shape' in input_x:
+            output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
+            output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
+        else:
+            output_max_shape = input_shp
+            output_min_shape = input_shp
+
+        return {'shape': input_shp,
                 'min_shape': output_min_shape,
                 'max_shape': output_max_shape,
                 'dtype': input_x['dtype'],
@@ -1037,9 +1011,9 @@ class MatMul(PrimitiveWithCheck):
     r"""
     Multiplies matrix `x` and matrix `y`.
 
-    .. math::
+     .. math::
 
-        (Output)_{i j}=\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\cdots+a_{i p} b_{p j}, p\in N
+        (Output)_{i j}=\\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\\cdots+a_{i p} b_{p j}, p\\in N
 
     where the :math:`i,j` indicates the output of the i-th row and j-th column element.
 
@@ -3274,10 +3248,10 @@ class ApproximateEqual(_LogicBinaryOp):
 
     .. math::
 
-        out_i = \begin{cases}
-        & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True  \\
-        & \text{ if } \left | x_{i} - y_{i} \right | \ge \text{tolerance},\ \  False
-        \end{cases}
+    out_i = \begin{cases}
+      & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True\  \\
+      & \text{ if } \left | x_{i} - y_{i} \right | \ge  \text{tolerance},\ \ False\
+    \end{cases}
 
     where :math:`\text{tolerance}` indicates Acceptable maximum tolerance.
 
@@ -3785,10 +3759,10 @@ class IsNan(PrimitiveWithInfer):
 
     .. math::
 
-        out_i = \begin{cases}
-          & \text{ if } x_{i} = \text{Nan},\ \ True \\
-          & \text{ if } x_{i} \ne  \text{Nan},\ \ False
-        \end{cases}
+    out_i = \begin{cases}
+      & \text{ if } x_{i} = \text{Nan},\ \ True\  \\
+      & \text{ if } x_{i} \ne  \text{Nan},\ \ False\
+    \end{cases}
 
     where :math:`Nan` means not a number.
 
@@ -3831,10 +3805,10 @@ class IsInf(PrimitiveWithInfer):
 
     .. math::
 
-        out_i = \begin{cases}
-        & \text{ if } x_{i} = \text{Inf},\ \ True \\
-        & \text{ if } x_{i} \ne \text{Inf},\ \ False
-        \end{cases}
+    out_i = \begin{cases}
+      & \text{ if } x_{i} = \text{Inf},\ \ True\  \\
+      & \text{ if } x_{i} \ne  \text{Inf},\ \ False\
+    \end{cases}
 
     where :math:`Inf` means not a number.
 
@@ -3877,10 +3851,10 @@ class IsFinite(PrimitiveWithInfer):
 
     .. math::
 
-        out_i = \begin{cases}
-          & \text{ if } x_{i} = \text{Finite},\ \ True\  \\
-          & \text{ if } x_{i} \ne \text{Finite},\ \ False
-        \end{cases}
+    out_i = \begin{cases}
+      & \text{ if } x_{i} = \text{Finite},\ \ True\  \\
+      & \text{ if } x_{i} \ne  \text{Finite},\ \ False\
+    \end{cases}
 
     Inputs:
         - **x** (Tensor) - The input tensor.

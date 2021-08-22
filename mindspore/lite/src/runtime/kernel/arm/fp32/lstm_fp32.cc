@@ -212,8 +212,6 @@ int LstmCPUKernel::InitParam() {
 }
 
 int LstmCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_6D);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }

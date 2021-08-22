@@ -251,7 +251,7 @@ def gamma(shape, alpha, beta, seed=None):
         >>> output = ops.gamma(shape, alpha, beta, seed=5)
         >>> result = output.shape
         >>> print(output)
-        [[[ 2.2132034  5.8855834]]
+       [[[ 2.2132034  5.8855834]]
          [ 3.3981476  7.5805717]
         [[ 3.3981476  7.5805717]]
          [ 3.7190282 19.941492]
@@ -264,7 +264,7 @@ def gamma(shape, alpha, beta, seed=None):
         >>> output = ops.gamma(shape, alpha, beta, seed=5)
         >>> result = output.shape
         >>> print(output)
-        [[[ 5.6085486  7.8280783]]
+       [[[ 5.6085486  7.8280783]]
          [ 15.97684  16.116285]
         [[ 1.8347423  1.713663]]
          [ 3.2434065 15.667398]

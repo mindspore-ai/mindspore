@@ -27,8 +27,6 @@ using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
 int GatherCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   axis_ = *(reinterpret_cast<int *>(in_tensors_.at(2)->data_c()));
   if (!InferShapeDone()) {
     return RET_OK;
@@ -65,7 +63,7 @@ int GatherCPUKernel::DoGather(int task_id) {
   int8_t *int8_in = reinterpret_cast<int8_t *>(input_tensor->data_c());
   int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data_c());
 
-  int data_size = static_cast<int>(lite::DataTypeSize(input_tensor->data_type()));
+  int data_size = lite::DataTypeSize(input_tensor->data_type());
   int8_in += thread_stride * limit * inner_size * data_size;
   int8_out += thread_stride * indices_element_size * inner_size * data_size;
 
@@ -121,7 +119,7 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lit
       }
     } else {
       for (int i = 0; i < indices_num; i++) {
-        indices_data_[i] = static_cast<int>(reinterpret_cast<float *>(indices_tensor->MutableData())[i]);
+        indices_data_[i] = reinterpret_cast<float *>(indices_tensor->MutableData())[i];
       }
     }
   } else {

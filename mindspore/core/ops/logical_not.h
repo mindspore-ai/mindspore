@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalNot = "LogicalNot";
-class MS_CORE_API LogicalNot : public PrimitiveC {
+class LogicalNot : public PrimitiveC {
  public:
   LogicalNot() : PrimitiveC(kNameLogicalNot) { InitIOName({"x"}, {"output"}); }
   ~LogicalNot() = default;

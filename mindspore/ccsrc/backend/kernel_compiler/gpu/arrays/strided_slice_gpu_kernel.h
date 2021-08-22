@@ -65,13 +65,13 @@ class StridedSliceGpuKernel : public GpuKernel, public StridedSliceGpuCommon {
  protected:
   void InitSizeLists() override {
     size_t size = sizeof(T);
-    for (size_t i = 0; i < input_shape_.size(); i++) {
+    for (size_t i = 0; i < MAX_DIMS; i++) {
       size *= input_shape_[i];
     }
     input_size_list_.push_back(size);
 
     size_t size1 = sizeof(T);
-    for (size_t i = 0; i < output_shape_.size(); i++) {
+    for (size_t i = 0; i < MAX_DIMS; i++) {
       size1 *= output_shape_[i];
     }
     output_size_list_.push_back(size1);

@@ -16,24 +16,31 @@
 
 echo "========================================================================"
 echo "Please run the script as: "
-echo "bash run.sh RANK_TABLE"
-echo "For example: bash run_distribute.sh RANK_TABLE"
+echo "bash run.sh RANK_SIZE"
+echo "For example: bash run_distribute.sh 8"
 echo "It is better to use the absolute path."
 echo "========================================================================"
 set -e
-get_real_path(){
-  if [ "${1:0:1}" == "/" ]; then
-    echo "$1"
-  else
-    echo "$(realpath -m $PWD/$1)"
-  fi
-}
-RANK_TABLE=$(get_real_path $1)
+
+RANK_SIZE=$1
+export RANK_SIZE
 
 EXEC_PATH=$(pwd)
 echo "$EXEC_PATH"
-export RANK_TABLE_FILE=$RANK_TABLE
-export RANK_SIZE=8
+
+test_dist_8pcs()
+{
+    export RANK_TABLE_FILE=${EXEC_PATH}/rank_table_8pcs.json
+    export RANK_SIZE=8
+}
+
+test_dist_2pcs()
+{
+    export RANK_TABLE_FILE=${EXEC_PATH}/rank_table_2pcs.json
+    export RANK_SIZE=2
+}
+
+test_dist_${RANK_SIZE}pcs
 
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 

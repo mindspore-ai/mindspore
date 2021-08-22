@@ -156,8 +156,8 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
       RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + folder_name);
     }
     std::set<std::string> imgs;  // use this for ordering
-    while (dirItr->HasNext()) {
-      Path file = dirItr->Next();
+    while (dirItr->hasNext()) {
+      Path file = dirItr->next();
       if (extensions_.empty() || extensions_.find(file.Extension()) != extensions_.end()) {
         (void)imgs.insert(file.toString().substr(dirname_offset_));
       } else {
@@ -182,8 +182,8 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
 Status ImageFolderOp::RecursiveWalkFolder(Path *dir) {
   std::shared_ptr<Path::DirIterator> dir_itr = Path::DirIterator::OpenDirectory(dir);
   RETURN_UNEXPECTED_IF_NULL(dir_itr);
-  while (dir_itr->HasNext()) {
-    Path subdir = dir_itr->Next();
+  while (dir_itr->hasNext()) {
+    Path subdir = dir_itr->next();
     if (subdir.IsDirectory()) {
       if (class_index_.empty() ||
           class_index_.find(subdir.toString().substr(dirname_offset_ + 1)) != class_index_.end()) {
@@ -256,8 +256,8 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
   std::queue<std::string> folder_paths;
   std::shared_ptr<Path::DirIterator> dir_itr = Path::DirIterator::OpenDirectory(&dir);
   std::unordered_set<std::string> folder_names;
-  while (dir_itr->HasNext()) {
-    Path subdir = dir_itr->Next();
+  while (dir_itr->hasNext()) {
+    Path subdir = dir_itr->next();
     if (subdir.IsDirectory()) {
       folder_paths.push(subdir.toString());
       if (!class_index.empty()) folder_names.insert(subdir.Basename());
@@ -283,7 +283,7 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
     if (subdir.Exists() == false || dir_itr == nullptr) {
       RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + subdir.toString());
     }
-    while (dir_itr->HasNext()) {
+    while (dir_itr->hasNext()) {
       if (exts.empty() || exts.find(subdir.Extension()) != exts.end()) {
         ++row_cnt;
       }
@@ -298,7 +298,7 @@ Status ImageFolderOp::ComputeColMap() {
   // Set the column name map (base class field)
   if (column_name_id_map_.empty()) {
     for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->Column(i).Name()] = i;
+      column_name_id_map_[data_schema_->column(i).name()] = i;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

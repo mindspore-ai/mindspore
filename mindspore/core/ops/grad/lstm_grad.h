@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLSTMGrad = "LSTMGrad";
-class MS_CORE_API LSTMGrad : public PrimitiveC {
+class LSTMGrad : public PrimitiveC {
  public:
   LSTMGrad() : PrimitiveC(kNameLSTMGrad) {}
   ~LSTMGrad() = default;

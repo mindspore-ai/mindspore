@@ -27,8 +27,6 @@ using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
 int TransposeCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -115,7 +113,7 @@ int TransposeCPUKernel::TransposeDimGreaterThan6(int task_id) {
   return RET_OK;
 }
 
-void TransposeCPUKernel::GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor) {
+void TransposeCPUKernel::GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor) {
   if (in_tensor->shape().size() != 4) {
     return;
   }

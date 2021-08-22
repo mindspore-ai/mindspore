@@ -52,8 +52,6 @@ class KernelRuntime {
   KernelRuntime() = default;
   virtual ~KernelRuntime();
   virtual bool Init() = 0;
-  virtual uint32_t GetRankId() { MS_LOG(EXCEPTION) << "Not Implement"; }
-  virtual uint32_t GetRankSize() { MS_LOG(EXCEPTION) << "Not Implement"; }
   virtual void AssignMemory(session::KernelGraph *graph);
   void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, session::KernelGraph *graph);
   void RunOpClearMemory(const session::KernelGraph *graph) const;
@@ -67,7 +65,12 @@ class KernelRuntime {
   bool LaunchKernel(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
-  virtual void ClearGraphRuntimeResource(uint32_t graph_id);
+  virtual void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
+                                         const std::unordered_set<ValueNodePtr> &value_nodes,
+                                         const std::vector<CNodePtr> &execution_order);
+  virtual void ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
+                                  const std::unordered_set<ValueNodePtr> &value_nodes,
+                                  const std::vector<CNodePtr> &execution_order);
   virtual bool SyncStream() = 0;
   virtual bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) = 0;
   virtual void ClearGlobalIdleMem() {}
@@ -100,7 +103,6 @@ class KernelRuntime {
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
   void GenKernelEvents(const session::KernelGraph *graph);
   virtual std::shared_ptr<DeviceEvent> CreateDeviceEvent() { return nullptr; }
-  virtual std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() { return nullptr; }
   virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
@@ -130,7 +132,6 @@ class KernelRuntime {
   void AssignStaticMemoryOutput(const session::KernelGraph *graph);
   bool LaunchKernelMod(const session::KernelGraph &graph);
   void LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &run_events, size_t index);
-  void DebugStreamSync(const CNodePtr &kernel);
   static void GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs);
   void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph *graph);
   void RunOpAssignOutputMemory(const AnfNodePtr &kernel);
@@ -138,10 +139,6 @@ class KernelRuntime {
   void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, session::KernelGraph *graph);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);
   DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index);
-  bool LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_mod, const std::string &op_name,
-                                         const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream);
 #if (ENABLE_CPU && !_WIN32)
   void GetFirstPSEmbeddingCache(const session::KernelGraph *graph, AnfNodePtr *const first_cache_input_index,
                                 size_t *const first_cache_size);
@@ -151,7 +148,6 @@ class KernelRuntime {
 
  protected:
   uint32_t device_id_{0};
-  bool pynative_mode_profiling_flag_{false};
 #if !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
 #endif

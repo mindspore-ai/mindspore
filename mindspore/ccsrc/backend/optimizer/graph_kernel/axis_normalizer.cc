@@ -15,6 +15,8 @@
  */
 #include "backend/optimizer/graph_kernel/axis_normalizer.h"
 
+#include <algorithm>
+#include <vector>
 #include "ir/scalar.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -69,7 +71,6 @@ bool AxisNormalizer::Process(const FuncGraphPtr &func_graph) const {
       }
       if (diff) {
         changed = true;
-        std::sort(axis_vec.begin(), axis_vec.end());
         SetNodeAttrSafely(kAttrAxis, MakeValue(axis_vec), node);
       }
     }

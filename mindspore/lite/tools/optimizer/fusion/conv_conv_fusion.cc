@@ -55,10 +55,6 @@ bool IsCommonConvNode(const BaseRef &n) {
 }
 STATUS GenNewConvBias(const ParameterPtr &down_bias_node, const ParameterPtr &down_weight_node,
                       const ParameterPtr &up_bias_node, const ParameterPtr &new_bias_node) {
-  if (down_weight_node == nullptr || up_bias_node == nullptr || new_bias_node == nullptr) {
-    MS_LOG(ERROR) << "Input  down_weight_node or up_bias_node or new_bias_node is nullptr";
-    return RET_FAILED;
-  }
   float *down_bias_data = nullptr;
   if (down_bias_node != nullptr) {
     auto down_bias_param = std::dynamic_pointer_cast<tensor::Tensor>(down_bias_node->default_param());

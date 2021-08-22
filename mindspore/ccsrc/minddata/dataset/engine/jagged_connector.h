@@ -43,7 +43,6 @@ class JaggedConnector : public Connector<TensorRow> {
   }
 
   Status Pop(int32_t worker_id, TensorRow *result) noexcept override {
-    RETURN_UNEXPECTED_IF_NULL(result);
     {
       MS_ASSERT(worker_id < num_consumers_);
       std::unique_lock<std::mutex> lock(m_);
@@ -54,7 +53,7 @@ class JaggedConnector : public Connector<TensorRow> {
       }
 
       RETURN_IF_NOT_OK(queues_[pop_from_]->PopFront(result));
-      if (result != nullptr && result->eoe()) {
+      if (result->eoe()) {
         is_queue_finished_[pop_from_] = true;
       }
 

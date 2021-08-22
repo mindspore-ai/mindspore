@@ -27,13 +27,11 @@
 #include "tools/converter/converter_context.h"
 
 namespace mindspore {
+namespace lite {
 namespace converter {
-using mindspore::lite::RET_INPUT_PARAM_INVALID;
-using mindspore::lite::RET_OK;
 namespace {
 constexpr int kBase = 10;
 constexpr int kQuantBitNumInt16 = 16;
-constexpr int kPathLengthUpperLimit = 1024;
 }  // namespace
 Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX", "");
@@ -76,8 +74,6 @@ Flags::Flags() {
           "set this option. Model input shapes is same with origin model by default."
           "e.g. inTensor1:1,32,32,32;inTensor2:1,1,32,32,4",
           "");
-  AddFlag(&Flags::graphInputFormatStr, "inputFormat",
-          "Assign the format of model inputs. Valid only for 4-dimensional input. NHWC | NCHW", "NHWC");
 }
 
 int Flags::InitInputOutputDataType() {
@@ -114,21 +110,21 @@ int Flags::InitInputOutputDataType() {
 
 int Flags::InitFmk() {
   if (this->fmkIn == "CAFFE") {
-    this->fmk = kFmkTypeCaffe;
+    this->fmk = FmkType_CAFFE;
   } else if (this->fmkIn == "MINDIR") {
-    this->fmk = kFmkTypeMs;
+    this->fmk = FmkType_MS;
   } else if (this->fmkIn == "TFLITE") {
-    this->fmk = kFmkTypeTflite;
+    this->fmk = FmkType_TFLITE;
   } else if (this->fmkIn == "ONNX") {
-    this->fmk = kFmkTypeOnnx;
+    this->fmk = FmkType_ONNX;
   } else if (this->fmkIn == "TF") {
-    this->fmk = kFmkTypeTf;
+    this->fmk = FmkType_TF;
   } else {
     std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->fmk != kFmkTypeCaffe && !weightFile.empty()) {
+  if (this->fmk != FmkType_CAFFE && !weightFile.empty()) {
     std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
@@ -162,28 +158,20 @@ int Flags::QuantParamInputCheck() {
     std::cerr << "bitNum should be a valid number." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
-  if (this->quantType == schema::QuantType_WeightQuant) {
-    if (this->bitNum < 0 || this->bitNum > kQuantBitNumInt16) {
-      std::cerr << "bitNum should be greater than zero and less than 16 currently." << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
-  } else {
-    if (this->bitNum <= 0 || this->bitNum > kQuantBitNumInt16) {
-      std::cerr << "bitNum should be greater or equal to zero and less than 16 currently." << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
+  if (this->bitNum <= 0 || this->bitNum > kQuantBitNumInt16) {
+    std::cerr << "bitNum should be greater than zero and lesser than 16 currently." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
   }
-
   return RET_OK;
 }
 
 int Flags::InitQuantParam() {
   if (this->quantTypeStr == "WeightQuant") {
-    this->quantType = schema::QuantType_WeightQuant;
+    this->quantType = QuantType_WeightQuant;
   } else if (this->quantTypeStr == "PostTraining") {
-    this->quantType = schema::QuantType_PostTraining;
+    this->quantType = QuantType_PostTraining;
   } else if (this->quantTypeStr.empty()) {
-    this->quantType = schema::QuantType_QUANT_NONE;
+    this->quantType = QuantType_QUANT_NONE;
   } else {
     std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining" << std::endl;
     return RET_INPUT_PARAM_INVALID;
@@ -204,7 +192,7 @@ int Flags::InitTrainModel() {
   }
 
   if (this->trainModel) {
-    if (this->fmk != kFmkTypeMs) {
+    if (this->fmk != FmkType_MS) {
       std::cerr << "INPUT ILLEGAL: train model converter supporting only MINDIR format" << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }
@@ -221,15 +209,12 @@ int Flags::InitTrainModel() {
 }
 
 int Flags::InitInTensorShape() {
-  if (this->inTensorShape.empty()) {
-    return RET_OK;
-  }
   std::string content = this->inTensorShape;
   std::vector<int64_t> shape;
-  auto shape_strs = lite::StrSplit(content, std::string(";"));
+  auto shape_strs = StringSplit(content, std::string(";"));
   for (const auto &shape_str : shape_strs) {
     shape.clear();
-    auto string_split = lite::StrSplit(shape_str, std::string(":"));
+    auto string_split = StringSplit(shape_str, std::string(":"));
     auto name = string_split[0];
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
@@ -238,31 +223,19 @@ int Flags::InitInTensorShape() {
     if (dim_strs.empty()) {
       MS_LOG(ERROR) << "input tensor dim string is empty";
     }
-    auto dims = lite::StrSplit(dim_strs, std::string(","));
+    auto dims = StringSplit(dim_strs, std::string(","));
     if (dims.empty()) {
       MS_LOG(ERROR) << "input tensor dim is empty";
     }
     for (const auto &dim : dims) {
       if (std::stoi(dim) < 0) {
         MS_LOG(ERROR) << "Unsupported dim < 0.";
-        return lite::RET_ERROR;
+        return RET_ERROR;
       } else {
         shape.push_back(std::stoi(dim));
       }
     }
-    lite::ConverterContext::GetInstance()->UpdateGraphInputTensorShape(name, shape);
-  }
-  return RET_OK;
-}
-
-int Flags::InitGraphInputFormat() {
-  if (this->graphInputFormatStr == "NHWC") {
-    graphInputFormat = mindspore::NHWC;
-  } else if (this->graphInputFormatStr == "NCHW") {
-    graphInputFormat = mindspore::NCHW;
-  } else if (!this->graphInputFormatStr.empty()) {
-    MS_LOG(ERROR) << "graph input format is invalid.";
-    return RET_INPUT_PARAM_INVALID;
+    ConverterContext::GetInstance()->UpdateGraphInputTensorShape(name, shape);
   }
   return RET_OK;
 }
@@ -273,7 +246,7 @@ int Flags::InitConfigFile() {
     const char *delimiter = ";";
     auto relative_path = SplitStringToVector(plugins_path_str, *delimiter);
     for (size_t i = 0; i < relative_path.size(); i++) {
-      this->pluginsPath.push_back(lite::RealPath(relative_path[i].c_str()));
+      this->pluginsPath.push_back(RealPath(relative_path[i].c_str()));
     }
   }
 
@@ -297,9 +270,9 @@ int Flags::Init(int argc, const char **argv) {
   int ret;
   if (argc == 1) {
     std::cout << this->Usage() << std::endl;
-    return lite::RET_SUCCESS_EXIT;
+    return RET_SUCCESS_EXIT;
   }
-  lite::Option<std::string> err = this->ParseFlags(argc, argv);
+  Option<std::string> err = this->ParseFlags(argc, argv);
 
   if (err.IsSome()) {
     std::cerr << err.Get() << std::endl;
@@ -309,7 +282,7 @@ int Flags::Init(int argc, const char **argv) {
 
   if (this->help) {
     std::cout << this->Usage() << std::endl;
-    return lite::RET_SUCCESS_EXIT;
+    return RET_SUCCESS_EXIT;
   }
   if (this->modelFile.empty()) {
     std::cerr << "INPUT MISSING: model file path is necessary" << std::endl;
@@ -376,16 +349,12 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  ret = InitInTensorShape();
-  if (ret != RET_OK) {
-    std::cerr << "Init input tensor shape failed." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  ret = InitGraphInputFormat();
-  if (ret != RET_OK) {
-    std::cerr << "Init graph input format failed." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
+  if (!this->inTensorShape.empty()) {
+    ret = InitInTensorShape();
+    if (ret != RET_OK) {
+      std::cerr << "Init input tensor shape failed." << std::endl;
+      return RET_INPUT_PARAM_INVALID;
+    }
   }
   return RET_OK;
 }
@@ -459,7 +428,7 @@ std::string GetStrFromConfigFile(const std::string &file, const std::string &tar
   }
 
 #ifdef _WIN32
-  char *real_path = _fullpath(resolved_path.get(), file.c_str(), kPathLengthUpperLimit);
+  char *real_path = _fullpath(resolved_path.get(), file.c_str(), 1024);
 #else
   char *real_path = realpath(file.c_str(), resolved_path.get());
 #endif
@@ -517,5 +486,7 @@ std::vector<std::string> SplitStringToVector(const std::string &raw_str, const c
   }
   return res;
 }
+
 }  // namespace converter
+}  // namespace lite
 }  // namespace mindspore

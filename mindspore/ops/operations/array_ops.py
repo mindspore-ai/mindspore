@@ -739,7 +739,6 @@ class Unique(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tuple, containing Tensor objects `(y, idx), `y` is a tensor with the
@@ -1203,7 +1202,7 @@ class Size(PrimitiveWithInfer):
         else:
             size = functools.reduce(lambda x, y: x * y, x['shape'])
         out = {'shape': None,
-               'dtype': mstype.int64,
+               'dtype': mstype.int32,
                'value': size}
         return out
 
@@ -1264,7 +1263,7 @@ class Fill(PrimitiveWithInfer):
         return out
 
 
-class Ones(Primitive):
+class Ones(PrimitiveWithInfer):
     r"""
     Creates a tensor filled with value ones.
 
@@ -1286,6 +1285,7 @@ class Ones(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops import operations as ops
         >>> ones = ops.Ones()
         >>> output = ones((2, 2), mindspore.float32)
         >>> print(output)
@@ -1301,6 +1301,27 @@ class Ones(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Ones"""
+
+    def __infer__(self, dims, dtype):
+        if isinstance(dims['value'], int):
+            shape = (dims['value'],)
+        else:
+            shape = dims['value']
+        validator.check_value_type("shape", shape, [tuple], self.name)
+        for i, item in enumerate(shape):
+            validator.check_non_negative_int(item, shape[i], self.name)
+        valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                       mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
+                       mstype.float16, mstype.float32, mstype.float64]
+        validator.check_types_same_and_valid({"value": dtype['value']}, valid_types, self.name)
+        x_nptype = mstype.dtype_to_nptype(dtype['value'])
+        ret = np.ones(shape, x_nptype)
+        out = {
+            'value': Tensor(ret),
+            'shape': shape,
+            'dtype': x_nptype,
+        }
+        return out
 
 
 class Zeros(Primitive):
@@ -1326,6 +1347,7 @@ class Zeros(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops import operations as ops
         >>> zeros = ops.Zeros()
         >>> output = zeros((2, 2), mindspore.float32)
         >>> print(output)
@@ -1347,7 +1369,6 @@ class OnesLike(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x` but filled with ones.
@@ -1380,7 +1401,6 @@ class ZerosLike(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. The data type is int32, int64, float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x` but filled with zeros.
@@ -1635,7 +1655,7 @@ class Argmax(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Support data type list as follows:
+        Support data type list as follows:
 
           - Ascend: Float16, Float32.
           - GPU: Float16, Float32.
@@ -1696,7 +1716,6 @@ class Argmin(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, indices of the min value of input tensor across the axis.
@@ -1841,7 +1860,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
         >>> output = ops.ArgMinWithValue()(input_x)
         >>> print(output)
-        (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0))
+        (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0.0))
         >>> output = ops.ArgMinWithValue(keep_dims=True)(input_x)
         >>> print(output)
         (Tensor(shape=[1], dtype=Int32, value= [0]), Tensor(shape=[1], dtype=Float32, value= [ 0.00000000e+00]))
@@ -2280,14 +2299,13 @@ class Concat(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (tuple, list) - A tuple or a list of input tensors.
-          Suppose there are two tensors in this tuple or list, namely x1 and x2.
-          To perform `Concat` in the axis 0 direction, except for the 0th axis, all other axes should be equal,
-          that is, :math:`x1.shape[1] == x2.shape[1], x1.shape[2] == x2.shape[2], ..., x1.shape[R] == x2.shape[R]',
-          where the :math:`R' indicates the last axis.
+          `input_x`, `input_y` should has same data type.
+        - **input_y** (tuple, list) - A tuple or a list of input tensors.
+          `input_x`, `input_y` should has same data type.
 
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-        The data type is the same with `input_x`.
+          The data type is the same with `input_X` and `input_y`.
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -2296,17 +2314,17 @@ class Concat(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> input_y = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> op = ops.Concat()
-        >>> output = op((input_x1, input_x2))
+        >>> output = op((input_x, input_y))
         >>> print(output)
         [[0. 1.]
          [2. 1.]
          [0. 1.]
          [2. 1.]]
         >>> op = ops.Concat(1)
-        >>> output = op((input_x1, input_x2))
+        >>> output = op((input_x, input_y))
         >>> print(output)
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
@@ -2640,7 +2658,6 @@ class Slice(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor): The target tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
         - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
 
@@ -2716,7 +2733,6 @@ class ReverseV2(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The data type is Number except float64.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -2779,7 +2795,7 @@ class Rint(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor, which must be one of the following types:
-          float16, float32. The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          float16, float32.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -5704,9 +5720,6 @@ class EmbeddingLookup(PrimitiveWithCheck):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
         validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
         validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
-        indices_shp = indices['shape']
-        if not indices_shp:
-            raise ValueError("'indices' should NOT be a scalar.")
         params_shp = params['shape']
         if len(params_shp) > 2:
             raise ValueError("The dimension of 'params' in EmbeddingLookup must <= 2, but got %d." % len(params_shp))
@@ -5962,15 +5975,8 @@ class SearchSorted(PrimitiveWithInfer):
 
 class TensorScatterMax(PrimitiveWithInfer):
     """
-    By comparing the value at the position indicated by the index in input_x with the value in the update,
-    the value at the index will eventually be equal to the largest one to create a new tensor.
-
-    The last axis of the index is the depth of each index vector. For each index vector,
-    there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
-
-    Note:
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `update` will not be updated to `input_x`.
+    This operator is equivalent to TensorScatterAdd, except we take the maximum instead
+    of adding values together.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -6020,15 +6026,8 @@ class TensorScatterMax(PrimitiveWithInfer):
 
 class TensorScatterMin(PrimitiveWithInfer):
     """
-    By comparing the value at the position indicated by the index in input_x with the value in the update,
-    the value at the index will eventually be equal to the smallest one to create a new tensor.
-
-    The last axis of the index is the depth of each index vector. For each index vector,
-    there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
-
-    Note:
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `update` will not be updated to `input_x`.
+    This operator is equivalent to TensorScatterAdd, except we take the minimum instead
+    of adding values together.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -6079,18 +6078,8 @@ class TensorScatterMin(PrimitiveWithInfer):
 
 class TensorScatterSub(PrimitiveWithInfer):
     """
-    Creates a new tensor by subtracting the values from the positions in `input_x` indicicated by
-    `indices`, with values from `update`. When multiple values are provided for the same
-    index, the result of the update will be to subtract these values respectively. This operation is almost
-    equivalent to using ScatterNdSub, except that the updates are applied on `Tensor` instead of `Parameter`.
-
-    The last axis of `indices` is the depth of each index vectors. For each index vector,
-    there must be a corresponding value in `update`. The shape of `update` should be
-    equal to the shape of `input_x[indices]`.
-
-    Note:
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `update` will not be updated to `input_x`.
+    This operator is equivalent to TensorScatterAdd, except we subtract, instead of
+    adding values together.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -6116,8 +6105,8 @@ class TensorScatterSub(PrimitiveWithInfer):
         >>> op = ops.TensorScatterSub()
         >>> output = op(input_x, indices, update)
         >>> print(output)
-        [[-3.3000002  0.3        3.6      ]
-         [ 0.4        0.5       -3.2      ]]
+        [[ -3.3  0.3  3.6]
+         [ 0.4  0.5 -3.2]]
     """
 
     @prim_attr_register

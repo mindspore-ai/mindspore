@@ -172,22 +172,6 @@ Status GatherDInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-void GatherDInfo::ReComputeBatchSplitFlagList() {
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
-  }
-
-  if (dim_ == 0) {
-    MS_LOG(EXCEPTION)
-      << name_
-      << ": Can not generate batch data parallel strategy since the dim is 0, please set others strategy for it";
-  }
-
-  for (size_t i = 0; i < inputs_shape_.size(); ++i) {
-    split_flag_list_[i] = true;
-  }
-}
-
 Status GatherDInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> GatherDInfo::GenerateOpStrategies(int64_t stage_id) {

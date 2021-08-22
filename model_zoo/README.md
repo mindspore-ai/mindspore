@@ -113,9 +113,3 @@ MindSpore is Apache 2.0 licensed. Please see the LICENSE file.
 ## License
 
 [Apache License 2.0](https://gitee.com/mindspore/mindspore/blob/master/LICENSE)
-
-## FAQ
-
-- **Q: How to resolve the lack of memory while using `PYNATIVE_MODE` with errors such as *Failed to alloc memory pool memory*?**
-
-  **A**: `PYNATIVE_MODE` usually requires more memory than `GRAPH_MODE`, especially in training process which have to deal with back propagation. You could try using smaller batch size.

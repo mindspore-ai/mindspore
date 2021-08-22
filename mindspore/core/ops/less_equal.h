@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLessEqual = "LessEqual";
-class MS_CORE_API LessEqual : public PrimitiveC {
+class LessEqual : public PrimitiveC {
  public:
   LessEqual() : PrimitiveC(kNameLessEqual) { InitIOName({"x", "y"}, {"output"}); }
   ~LessEqual() = default;

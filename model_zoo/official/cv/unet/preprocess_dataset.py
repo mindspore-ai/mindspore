@@ -19,7 +19,7 @@ Images within one folder is an image, the image file named `"image.png"`, the ma
 import os
 import cv2
 import numpy as np
-from src.model_utils.config import config
+from model_zoo.official.cv.unet.src.model_utils.config import config
 
 def annToMask(ann, height, width):
     """Convert annotation to RLE and then to binary mask."""

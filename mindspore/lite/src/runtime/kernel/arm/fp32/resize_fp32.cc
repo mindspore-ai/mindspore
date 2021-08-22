@@ -37,8 +37,6 @@ constexpr int kResizeSizeDouble = 2;
 }  // namespace
 
 int ResizeCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = ResizeBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
@@ -117,30 +115,29 @@ int ResizeCPUKernel::MallocTmpBuffer() {
 
   // malloc memory for x, y coordinates
   {
-    coordinate_.x_lefts_ = reinterpret_cast<int *>(malloc(static_cast<int>(sizeof(int)) * x_len));
+    coordinate_.x_lefts_ = reinterpret_cast<int *>(malloc(sizeof(int) * x_len));
     CHECK_MALLOC_RES(coordinate_.x_lefts_, RET_NULL_PTR)
-    coordinate_.y_tops_ = reinterpret_cast<int *>(malloc(static_cast<int>(sizeof(int)) * y_len));
+    coordinate_.y_tops_ = reinterpret_cast<int *>(malloc(sizeof(int) * y_len));
     CHECK_MALLOC_RES(coordinate_.y_tops_, RET_NULL_PTR)
     if (method_ == static_cast<int>(schema::ResizeMethod_LINEAR)) {
-      coordinate_.x_rights_ = reinterpret_cast<int *>(malloc(static_cast<int>(sizeof(int)) * x_len));
+      coordinate_.x_rights_ = reinterpret_cast<int *>(malloc(sizeof(int) * x_len));
       CHECK_MALLOC_RES(coordinate_.x_rights_, RET_NULL_PTR)
-      coordinate_.y_bottoms_ = reinterpret_cast<int *>(malloc(static_cast<int>(sizeof(int)) * y_len));
+      coordinate_.y_bottoms_ = reinterpret_cast<int *>(malloc(sizeof(int) * y_len));
       CHECK_MALLOC_RES(coordinate_.y_bottoms_, RET_NULL_PTR)
     }
   }
 
   // malloc memory for weights of x, y axes
   {
-    x_weights_ = reinterpret_cast<float *>(malloc(static_cast<int>(sizeof(float)) * x_weight_len));
+    x_weights_ = reinterpret_cast<float *>(malloc(sizeof(float) * x_weight_len));
     CHECK_MALLOC_RES(x_weights_, RET_NULL_PTR)
-    y_weights_ = reinterpret_cast<float *>(malloc(static_cast<int>(sizeof(float)) * y_weight_len));
+    y_weights_ = reinterpret_cast<float *>(malloc(sizeof(float) * y_weight_len));
     CHECK_MALLOC_RES(y_weights_, RET_NULL_PTR)
   }
 
   {
-    line_buffer_ =
-      reinterpret_cast<float *>(malloc(static_cast<int>(sizeof(float)) * x_len * in_tensors_.at(0)->Channel() *
-                                       kResizeSizeDouble * op_parameter_->thread_num_));
+    line_buffer_ = reinterpret_cast<float *>(
+      malloc(sizeof(float) * x_len * in_tensors_.at(0)->Channel() * kResizeSizeDouble * op_parameter_->thread_num_));
     CHECK_MALLOC_RES(line_buffer_, RET_NULL_PTR)
   }
   return RET_OK;

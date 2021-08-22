@@ -44,10 +44,11 @@ uint32_t DecodeAndResizeJpeg(SoftDpProcsessInfo *soft_dp_process_info) {
   }
 
   // use vpc interface to resize and convert RGB, give user output buf and output size.
-  auto crop = SoftDpCropInfo{.left = 0,
-                             .right = static_cast<uint32_t>(vpc_input_info.real_width - 1),
-                             .up = 0,
-                             .down = static_cast<uint32_t>(vpc_input_info.real_height - 1)};
+  SoftDpCropInfo crop;
+  crop.left = 0;
+  crop.right = vpc_input_info.real_width - 1;
+  crop.up = 0;
+  crop.down = vpc_input_info.real_height - 1;
 
   VpcInfo output;
   output.addr = soft_dp_process_info->output_buffer;

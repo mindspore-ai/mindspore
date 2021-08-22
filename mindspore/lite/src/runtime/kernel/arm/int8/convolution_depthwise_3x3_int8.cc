@@ -60,13 +60,13 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   PackNCHWToNHWCInt8(origin_weight, tmp_weight, 1, weight_tensor->Height() * weight_tensor->Width(),
                      weight_tensor->Batch());
 
-  packed_weight_ = reinterpret_cast<int16_t *>(malloc(static_cast<size_t>(pack_weight_size) * sizeof(int16_t)));
+  packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     free(tmp_weight);
     return RET_ERROR;
   }
-  bool filter_per_channel = static_cast<bool>(conv_param_->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL);
+  bool filter_per_channel = conv_param_->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
   if (filter_per_channel) {
     for (int i = 0; i < weight_tensor->Height() * weight_tensor->Width(); i++) {
       for (int c = 0; c < channel; c++) {
@@ -87,16 +87,16 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   }
   free(tmp_weight);
 
-  bias_data_ = reinterpret_cast<int32_t *>(malloc(static_cast<size_t>(channel) * sizeof(int32_t)));
+  bias_data_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, static_cast<size_t>(channel) * sizeof(int32_t));
+  memset(bias_data_, 0, channel * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->MutableData());
-    memcpy(bias_data_, ori_bias, static_cast<size_t>(bias_tensor->ElementsNum()) * sizeof(int32_t));
+    memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(int32_t));
   }
   return RET_OK;
 }
@@ -153,8 +153,7 @@ int ConvDw3x3Int8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 
 int ConvolutionDepthwise3x3Int8CPUKernel::InitBuffer() {
   int buffer_size = kConvDepthwise3x3BufferSize * conv_param_->thread_num_;
-  buffer_ =
-    reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(static_cast<size_t>(buffer_size) * sizeof(int8_t)));
+  buffer_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(buffer_size * sizeof(int8_t)));
   if (buffer_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;

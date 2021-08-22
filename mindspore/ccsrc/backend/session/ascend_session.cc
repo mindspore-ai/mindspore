@@ -381,7 +381,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
         MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
       }
       if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
-          AnfAlgo::IsParameterWeight(input_param) || kernel_graph->IsUpdatedParameter(input_param)) {
+          AnfAlgo::IsParameterWeight(input_param)) {
         tensor->set_device_address(device_address);
       }
       if (kernel_graph->IsUpdatedParameter(input_param)) {
@@ -523,14 +523,30 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   InitRuntimeResource();
   // multiple graph handle
   if (graph_id == final_graph_id_) {
-    MS_LOG(EXCEPTION) << "Unexpected graph id:" << graph_id << ", final_graph_id_:" << final_graph_id_;
+    if (!graph->executable()) {
+      return;
+    }
+    SetFinalGraphSummaryFlag(graph);
+    // OptChildGraphs
+    auto graph_order = GetGraphOrder(final_graph_id_);
+    auto &graph_type = GetGraphOrderType(final_graph_id_);
+    for (size_t i = 0; i < graph_order.size(); i++) {
+      if (!(graph_type[i] == BRANCH_END || graph_type[i] == BRANCH_START)) {
+        auto child_graph = GetGraph(graph_order[i]);
+        CompileChildGraph(child_graph);
+      }
+    }
+    SetSummaryNodes(graph.get());
+    // merge child graph
+    MergeGraphExecOrder();
+  } else {
+    auto single_graph = GetGraph(graph_id);
+    MS_EXCEPTION_IF_NULL(single_graph);
+    CompileChildGraph(single_graph);
+    // set the distinction label of single graph
+    single_graph->set_stream_distinction_label(graph_id);
+    single_graph->UpdateExecuteKernelStreamLabel();
   }
-  auto single_graph = GetGraph(graph_id);
-  MS_EXCEPTION_IF_NULL(single_graph);
-  CompileChildGraph(single_graph);
-  // set the distinction label of single graph
-  single_graph->set_stream_distinction_label(graph_id);
-  single_graph->UpdateExecuteKernelStreamLabel();
   // adjust execution order because  merge child graph and other special operations
   AdjustKernel(graph);
 #if ENABLE_CPU && ENABLE_D
@@ -552,7 +568,6 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   } else {
     // alloc memory, including static memory and dynamic memory
     MemoryAlloc(graph.get());
-    AnfAlgo::CacheAddrForGraph(graph);
     // generate and load task info to device if it is sink mode
     Load(graph);
   }
@@ -628,12 +643,15 @@ void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelG
   MS_LOG(INFO) << "HardwareOptimize Finish";
 }
 
-KernelGraphPtr AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                                          const std::vector<tensor::TensorPtr> &input_tensors,
-                                          const std::vector<int64_t> &tensors_mask) {
-  auto it = run_op_graphs_.find(graph_info);
-  if (it != run_op_graphs_.end()) {
-    return it->second;
+bool AscendSession::GraphCacheExist(const GraphInfo &graph_info) const {
+  return run_op_graphs_.find(graph_info) != run_op_graphs_.end();
+}
+
+void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                                const std::vector<tensor::TensorPtr> &input_tensors,
+                                const std::vector<int64_t> &tensors_mask) {
+  if (GraphCacheExist(graph_info)) {
+    return;
   }
 
   const auto &graph = PreBuildOp(op_run_info, input_tensors, tensors_mask);
@@ -643,11 +661,7 @@ KernelGraphPtr AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const Gr
   // build kernel
   RunOpAdjustKernel(graph);
   BuildKernel(graph);
-  auto enable_op_graph_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-  if (enable_op_graph_cache) {
-    run_op_graphs_[graph_info] = graph;
-  }
-  return graph;
+  run_op_graphs_[graph_info] = graph;
 }
 
 void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
@@ -655,7 +669,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
                               const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
+  BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
 
   // wait for allreduce
@@ -664,11 +678,13 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
       tensor->WaitDevice();
     }
   }
+  // Run op
+  auto graph = run_op_graphs_[graph_info];
+  MS_EXCEPTION_IF_NULL(graph);
   // malloc mem
   RunOpRemoveNopNode(graph);
   RunOpMemoryAlloc(*input_tensors, graph.get());
   RunOpGenKernelEvent(graph.get());
-  AnfAlgo::CacheAddrForGraph(graph);
   // Build dynamic kernel
   if (op_run_info->is_dynamic_shape) {
     BuildDynamicKernel(graph);
@@ -790,10 +806,7 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   // Record single op graphs in run_op_graphs_ so that these graphs can be reused in BuildOpImpl
   for (const auto &graph_item : single_op_graphs) {
     RunOpMemoryClear(graph_item.first.get());
-    auto enable_op_graph_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-    if (enable_op_graph_cache) {
-      run_op_graphs_[graph_item.second] = graph_item.first;
-    }
+    run_op_graphs_[graph_item.second] = graph_item.first;
     MS_LOG(DEBUG) << "Pre build op finished, graph info: " << graph_item.second;
   }
   built_graph_id_.insert(graph_id);
@@ -850,10 +863,9 @@ void AscendSession::InitRuntimeResource() {
   if (!runtime_instance->Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
+  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
   auto env_rank_id = common::GetEnv("RANK_ID");
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
+  if (!(env_table_file.empty() || env_rank_id.empty())) {
     // get actual rank id if it's distribution training case.
     rank_id_ = GetRankId();
   }

@@ -17,8 +17,8 @@
 #ifndef SOFT_DP_H
 #define SOFT_DP_H
 
-#include <cstdint>
-#include "minddata/dataset/kernels/image/soft_dvpp/utils/external_soft_dp.h"
+#include <stdint.h>
+#include "./external_soft_dp.h"
 
 enum JpegdToVpcFormat {
   INPUT_VPC_UNKNOWN = -1,

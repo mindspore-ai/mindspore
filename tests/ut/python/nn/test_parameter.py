@@ -200,12 +200,6 @@ def test_parameter_lazy_init():
     assert isinstance(para.data, Tensor)
     assert np.array_equal(para.data.asnumpy(), np.ones((1, 2, 3)))
 
-    para = Parameter(initializer('ones', [1, 2, 3], mstype.complex64), 'test1')
-    assert isinstance(para.data, Tensor)
-    para = para.init_data()
-    assert isinstance(para.data, Tensor)
-    assert np.array_equal(para.data.asnumpy(), np.ones((1, 2, 3)))
-
     # Call init_data() after set_data is set.
     para = Parameter(initializer('ones', [1, 2, 3], mstype.float32), 'test2')
     assert isinstance(para.data, Tensor)

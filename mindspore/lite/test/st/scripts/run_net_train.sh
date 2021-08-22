@@ -49,8 +49,8 @@ function Run_Converter() {
     # Convert mindspore train models:
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
-        local model_prefix=${line_array[0]}_train
         parse_line convert
+        local model_prefix=${line_array[0]}_train
         if [[ "$?" == "1" ]]; then continue; fi
         if [[ $model_name == \#* ]]; then
           continue
@@ -91,23 +91,6 @@ function Run_Converter() {
         fi
     done < ${models_ms_train_config}
     return ${fail}
-}
-
-function should_run_example() {
-  ret=0
-  while read line; do
-    LFS=" " read -r -a line_array <<< ${line}
-    model_name=${line_array[0]}
-    if [[ $model_name == \#* ]]; then
-      continue
-    fi
-    if [[ $model_name == "$1" ]]; then
-      if [[ ${line_array[1]} == "code_example" ]]; then
-        ret=1
-      fi
-    fi
-  done < ${models_ms_train_config}
-  return $ret
 }
 
 function parse_line() {
@@ -155,9 +138,6 @@ function parse_line() {
              fi
              check_convert=1
             ;;
-          "code_example")
-             ret=1
-             ;;
           *)
             check=`echo "${line_array[i]}" | grep -E '^\-?[0-9]*\.?[0-9]+$'`
             if [ "${check}" != "" ] ; then
@@ -228,9 +208,9 @@ function Run_x86() {
             --virtualBatch=${virtual_batch} \
             --lossName=${loss_name} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86'${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86_'${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result='x86'${log_suffix}': '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86_'${log_suffix}': '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
             fail=1
         fi
     done < ${models_ms_train_config}
@@ -371,6 +351,7 @@ ENDM
 }
 
 function Run_CodeExamples() {
+    ls ${basepath}/../../
     fail=0
     target="x86"
     tarball_path=${x86_path}/mindspore-lite-${version}-linux-x64.tar.gz
@@ -379,13 +360,10 @@ function Run_CodeExamples() {
       tarball_path=${arm64_path}/mindspore-lite-${version_arm64}-android-aarch64.tar.gz
       export ANDROID_SERIAL=${device_id}
     fi
-    should_run_example "train_lenet_java"
-    should_run=$?
-
     export PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/converter/converter/:$PATH
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${x86_path}/mindspore-lite-${version}-linux-x64/tools/converter/lib/:${x86_path}/mindspore-lite-${version}-linux-x64/tools/converter/third_party/glog/lib
 
-    if [[ "$should_run" == "1" && ($backend == "all" || $backend == "x86-all" || $backend == "x86_train" || $backend == "x86-java") ]]; then
+    if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_train" || $backend == "x86-java" ]]; then
       cd ${basepath}/../../examples/train_lenet_java || exit 1
       chmod 777 ./prepare_and_run.sh
       ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -m ${models_path}/code_example.mindir >> ${run_code_examples_log_file}
@@ -399,47 +377,38 @@ function Run_CodeExamples() {
       cd -
     fi
 
-    if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen_and_train" || $backend == "arm64_train" ]]; then
-
-      should_run_example "unified_api"
-      should_run=$?
-      if [[ "$should_run" == "1" ]]; then
-        cd ${basepath}/../../examples/unified_api || exit 1
-        chmod 777 ./prepare_and_run.sh
-        chmod 777 ./*/*.sh
-        ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
-        accurate=$(tail -20 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
-        if [ $accurate -eq 1 ]; then
-          echo "Unified API Trained and reached accuracy" >> ${run_code_examples_log_file}
-          echo 'code_examples: unified_api pass' >> ${run_benchmark_train_result_file}
-        else
-          echo "Unified API demo failure" >> ${run_code_examples_log_file}
-          echo 'code_examples: unified_api failed' >> ${run_benchmark_train_result_file}
-          fail=1
-        fi
-        rm -rf package*/dataset
-        cd -
+    if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen&train" || $backend == "arm64_train" ]]; then
+      cd ${basepath}/../../examples/unified_api || exit 1
+      chmod 777 ./prepare_and_run.sh
+      chmod 777 ./*/*.sh
+      ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
+      accurate=$(tail -20 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
+      if [ $accurate -eq 1 ]; then
+        echo "Unified API Trained and reached accuracy" >> ${run_code_examples_log_file}
+        echo 'code_examples: unified_api pass' >> ${run_benchmark_train_result_file}
+      else
+        echo "Unified API demo failure" >> ${run_code_examples_log_file}
+        echo 'code_examples: unified_api failed' >> ${run_benchmark_train_result_file}
+        fail=1
       fi
+      rm -rf package*/dataset
+      cd -
 
-      should_run_example "train_lenet"
-      should_run=$?
-      if [[ "$should_run" == "1" ]]; then
-        cd ${basepath}/../../examples/train_lenet || exit 1
-        chmod 777 ./prepare_and_run.sh
-        chmod 777 ./*/*.sh
-        ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
-        accurate=$(tail -10 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
-        if [ $accurate -eq 1 ]; then
-          echo "Lenet Trained and reached accuracy" >> ${run_code_examples_log_file}
-          echo 'code_examples: train_lenet pass' >> ${run_benchmark_train_result_file}
-        else
-          echo "Train Lenet demo failure" >> ${run_code_examples_log_file}
-          echo 'code_examples: train_lenet failed' >> ${run_benchmark_train_result_file}
-          fail=1
-        fi
-        rm -rf package*/dataset
-        cd -
+      cd ${basepath}/../../examples/train_lenet || exit 1
+      chmod 777 ./prepare_and_run.sh
+      chmod 777 ./*/*.sh
+      ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
+      accurate=$(tail -10 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
+      if [ $accurate -eq 1 ]; then
+        echo "Lenet Trained and reached accuracy" >> ${run_code_examples_log_file}
+        echo 'code_examples: train_lenet pass' >> ${run_benchmark_train_result_file}
+      else
+        echo "Train Lenet demo failure" >> ${run_code_examples_log_file}
+        echo 'code_examples: train_lenet failed' >> ${run_benchmark_train_result_file}
+        fail=1
       fi
+      rm -rf package*/dataset
+      cd -
     fi
     return ${fail}
 }
@@ -627,24 +596,24 @@ echo "Push files to benchmark_train_test folder and run benchmark_train"
 benchmark_train_test_path=${basepath}/benchmark_train_test
 rm -rf ${benchmark_train_test_path}
 mkdir -p ${benchmark_train_test_path}
-cp -a ${ms_models_path}/*.ms ${benchmark_train_test_path}
+cp -a ${ms_models_path}/*.ms ${benchmark_train_test_path} || exit 1
 
 isFailed=0
-if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen&train" ]]; then
     # Run on x86
     echo "Start Run x86 ..."
     Run_x86 &
     Run_x86_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "x86-java" || $backend == "codegen_and_train" || $backend == "arm64_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "x86-java" || $backend == "codegen&train" || $backend == "arm64_train" ]]; then
     # Run Code Examples 
     echo "Start Code Examples ..."
     Run_CodeExamples &
     Run_CodeExamples_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $backend == "codegen&train" ]]; then
     # Run on arm64
     echo "Start Run arm64 ..."
     Run_arm arm64
@@ -652,7 +621,7 @@ if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $
 #   Run_arm64_PID=$!
 #   sleep 1
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $backend == "codegen&train" ]]; then
     # Run on arm32
     echo "Start Run arm32 ..."
     Run_arm arm32
@@ -661,7 +630,7 @@ if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $
 #   sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen&train" ]]; then
     wait ${Run_x86_PID}
     Run_x86_status=$?
     if [[ ${Run_x86_status} != 0 ]];then
@@ -670,7 +639,7 @@ if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $ba
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "x86-java" || $backend == "codegen_and_train" || $backend == "arm64_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "x86-java" || $backend == "codegen&train" || $backend == "arm64_train" ]]; then
     wait ${Run_CodeExamples_PID}
     Run_CodeExamples_status=$?
     if [[ ${Run_CodeExamples_status} != 0 ]];then
@@ -681,7 +650,7 @@ if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $ba
 fi
 
 
-if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $backend == "codegen&train" ]]; then
 #   wait ${Run_arm64_PID}
 #   Run_arm64_status=$?
     if [[ ${Run_arm64_status} != 0 ]];then
@@ -690,7 +659,7 @@ if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $backend == "codegen_and_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $backend == "codegen&train" ]]; then
 #   wait ${Run_arm32_PID}
 #   Run_arm32_status=$?
     if [[ ${Run_arm32_status} != 0 ]];then

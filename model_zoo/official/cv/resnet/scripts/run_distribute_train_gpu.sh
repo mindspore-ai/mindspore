@@ -34,7 +34,7 @@ get_real_path(){
 }
 
 PATH1=$(get_real_path $1)
-CONFIG_FILE=$(get_real_path $2)
+CONFIG_FILE=$2
 
 if [ $# == 3 ]
 then 
@@ -80,7 +80,7 @@ rm -rf ./train_parallel
 mkdir ./train_parallel
 cp ../*.py ./train_parallel
 cp *.sh ./train_parallel
-cp -r ../config/*.yaml ./train_parallel
+cp -r ../*.yaml ./train_parallel
 cp -r ../src ./train_parallel
 cd ./train_parallel || exit
 

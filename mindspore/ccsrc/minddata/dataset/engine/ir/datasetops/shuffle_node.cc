@@ -66,18 +66,8 @@ Status ShuffleNode::ValidateParams() {
 Status ShuffleNode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["buffer_size"] = shuffle_size_;
-  args["reset_each_epoch"] = reset_every_epoch_;
+  args["reshuffle_each_epoch"] = reset_every_epoch_;
   *out_json = args;
-  return Status::OK();
-}
-
-Status ShuffleNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
-                              std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("buffer_size") != json_obj.end(), "Failed to find buffer_size");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("reset_each_epoch") != json_obj.end(), "Failed to find reset_each_epoch");
-  int32_t buffer_size = json_obj["buffer_size"];
-  bool reset_every_epoch = json_obj["reset_each_epoch"];
-  *result = std::make_shared<ShuffleNode>(ds, buffer_size, reset_every_epoch);
   return Status::OK();
 }
 }  // namespace dataset

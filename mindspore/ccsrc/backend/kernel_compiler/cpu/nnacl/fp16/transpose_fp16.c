@@ -18,8 +18,8 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-void Fp16TransposeDim2(const float16_t *in_data, float16_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void Fp16TransposeDim2(const float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int output0 = output_shape[0];
@@ -33,8 +33,8 @@ void Fp16TransposeDim2(const float16_t *in_data, float16_t *out_data, const int 
   }
 }
 
-void Fp16TransposeDim3(const float16_t *in_data, float16_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void Fp16TransposeDim3(const float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -56,8 +56,8 @@ void Fp16TransposeDim3(const float16_t *in_data, float16_t *out_data, const int 
   }
 }
 
-void Fp16TransposeDim4(const float16_t *in_data, float16_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void Fp16TransposeDim4(const float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -88,8 +88,8 @@ void Fp16TransposeDim4(const float16_t *in_data, float16_t *out_data, const int 
   }
 }
 
-void Fp16TransposeDim5(const float16_t *in_data, float16_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void Fp16TransposeDim5(const float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -127,8 +127,8 @@ void Fp16TransposeDim5(const float16_t *in_data, float16_t *out_data, const int 
   }
 }
 
-void Fp16TransposeDim6(const float16_t *in_data, float16_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void Fp16TransposeDim6(const float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -174,10 +174,10 @@ void Fp16TransposeDim6(const float16_t *in_data, float16_t *out_data, const int 
 }
 
 void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                       const TransposeParameter *param, int task_id, int thread_num) {
-  const int *perm = param->perm_;
-  const int *strides = param->strides_;
-  const int *out_strides = param->out_strides_;
+                       TransposeParameter *param, int task_id, int thread_num) {
+  int *perm = param->perm_;
+  int *strides = param->strides_;
+  int *out_strides = param->out_strides_;
   int num_axes = param->num_axes_;
   size_t data_size = (*out_strides) * output_shape[0];
   size_t offset_size = UP_DIV(data_size, thread_num);
@@ -202,14 +202,13 @@ void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int 
   }
 }
 
-int DoTransposeFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                    const TransposeParameter *param) {
+int DoTransposeFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape, TransposeParameter *param) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_ERR;
   }
-  const int *perm = param->perm_;
-  const int *strides = param->strides_;
-  const int *out_strides = param->out_strides_;
+  int *perm = param->perm_;
+  int *strides = param->strides_;
+  int *out_strides = param->out_strides_;
   int data_size = param->data_num_ * sizeof(float16_t);
   int num_axes = param->num_axes_;
 

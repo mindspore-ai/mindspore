@@ -111,7 +111,7 @@ class KernelGraph : public FuncGraph {
   CNodePtr NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, const CNodePtr &ori_cnode = nullptr);
   void CreateKernelInfoFromNewParameter(const CNodePtr &cnode);
   CNodePtr NewCNode(const CNodePtr &cnode);
-  void ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const;
+  void ResetAssignInputFeaatureMapFlag(const CNodePtr &cnode) const;
   ParameterPtr NewParameter(const ParameterPtr &parameter = nullptr);
   ParameterPtr NewParameter(const abstract::AbstractBasePtr &abstract);
   ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value);
@@ -341,10 +341,6 @@ class KernelGraph : public FuncGraph {
   void set_is_all_nop_node(bool is_all_nop_node) { is_all_nop_node_ = is_all_nop_node; }
   std::map<AnfWithOutIndex, AnfWithOutIndex> graph_output_map() { return graph_output_to_front_node_map_; }
 
-  // The interface to set/get the graph GIL flag.
-  void set_is_need_gil(bool flag) { is_need_gil_ = flag; }
-  bool is_need_gil() { return is_need_gil_; }
-
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
@@ -450,9 +446,6 @@ class KernelGraph : public FuncGraph {
 
   // If all the nodes of graph is the nop node.
   bool is_all_nop_node_{false};
-
-  // Indicate whether the kernels in the graphs acquire Python GIL.
-  bool is_need_gil_{false};
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

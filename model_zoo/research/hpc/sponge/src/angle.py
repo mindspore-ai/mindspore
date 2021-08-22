@@ -13,46 +13,12 @@
 # limitations under the License.
 # ============================================================================
 '''Angle'''
-
-
 class Angle:
     '''Angle'''
-
     def __init__(self, controller):
-        self.module_name = "angle"
-        self.h_atom_a = []
-        self.h_atom_b = []
-        self.h_atom_c = []
-        self.h_angle_k = []
-        self.h_angle_theta0 = []
-        self.angle_numbers = 0
         if controller.amber_parm is not None:
             file_path = controller.amber_parm
             self.read_information_from_amberfile(file_path)
-            self.is_initialized = 1
-        else:
-            self.read_in_file(controller)
-
-    def read_in_file(self, controller):
-        """read_in_file"""
-        print("START INITIALIZING ANGLE:")
-        name = self.module_name + "_in_file"
-        if name in controller.Command_Set:
-            path = controller.Command_Set[name]
-            file = open(path, 'r')
-            context = file.readlines()
-            self.angle_numbers = int(context[0].strip())
-            print("    angle_numbers is ", self.angle_numbers)
-            for i in range(self.angle_numbers):
-                val = list(map(float, context[i + 1].strip().split()))
-                self.h_atom_a.append(int(val[0]))
-                self.h_atom_b.append(int(val[1]))
-                self.h_atom_c.append(int(val[2]))
-                self.h_angle_k.append(val[3])
-                self.h_angle_theta0.append(val[4])
-            self.is_initialized = 1
-            file.close()
-        print("END INITIALIZING ANGLE")
 
     def read_information_from_amberfile(self, file_path):
         '''read amber file'''
@@ -98,9 +64,9 @@ class Angle:
                         information.extend(value)
                         count += len(value)
                 for _ in range(self.angle_with_H_numbers):
-                    self.h_atom_a[angle_count] = int(information[angle_count * 4 + 0] / 3)
-                    self.h_atom_b[angle_count] = int(information[angle_count * 4 + 1] / 3)
-                    self.h_atom_c[angle_count] = int(information[angle_count * 4 + 2] / 3)
+                    self.h_atom_a[angle_count] = information[angle_count * 4 + 0] / 3
+                    self.h_atom_b[angle_count] = information[angle_count * 4 + 1] / 3
+                    self.h_atom_c[angle_count] = information[angle_count * 4 + 2] / 3
                     self.h_type[angle_count] = information[angle_count * 4 + 3] - 1
                     angle_count += 1
 
@@ -120,9 +86,9 @@ class Angle:
                         information.extend(value)
                         count += len(value)
                 for _ in range(self.angle_without_H_numbers):
-                    self.h_atom_a[angle_count] = int(information[(angle_count - self.angle_with_H_numbers) * 4 + 0] / 3)
-                    self.h_atom_b[angle_count] = int(information[(angle_count - self.angle_with_H_numbers) * 4 + 1] / 3)
-                    self.h_atom_c[angle_count] = int(information[(angle_count - self.angle_with_H_numbers) * 4 + 2] / 3)
+                    self.h_atom_a[angle_count] = information[(angle_count - self.angle_with_H_numbers) * 4 + 0] / 3
+                    self.h_atom_b[angle_count] = information[(angle_count - self.angle_with_H_numbers) * 4 + 1] / 3
+                    self.h_atom_c[angle_count] = information[(angle_count - self.angle_with_H_numbers) * 4 + 2] / 3
                     self.h_type[angle_count] = information[(angle_count - self.angle_with_H_numbers) * 4 + 3] - 1
                     angle_count += 1
                 break

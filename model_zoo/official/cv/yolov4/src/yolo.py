@@ -184,12 +184,12 @@ class YOLOv4(nn.Cell):
         con6 = self.conv6(con5)
         con7 = self.conv7(con6)
 
-        ups1 = P.ResizeNearestNeighbor((img_hight // 16, img_width // 16))(con7)
+        ups1 = P.ResizeNearestNeighbor((img_hight / 16, img_width / 16))(con7)
         con8 = self.conv8(feature_map2)
         con9 = self.concat((ups1, con8))
         con10, _ = self.backblock0(con9)
         con11 = self.conv9(con10)
-        ups2 = P.ResizeNearestNeighbor((img_hight // 8, img_width // 8))(con11)
+        ups2 = P.ResizeNearestNeighbor((img_hight / 8, img_width / 8))(con11)
         con12 = self.conv10(feature_map1)
         con13 = self.concat((ups2, con12))
         con14, small_object_output = self.backblock1(con13)
@@ -515,8 +515,7 @@ class TrainingWrapper(nn.Cell):
         grads = self.grad(self.network, weights)(*args, sens)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))
 
 
 class Giou(nn.Cell):

@@ -78,18 +78,11 @@ class FlopsParser:
             op_name = self._get_op_name(result)
             if op_name in op_name_set or op_name == "":
                 continue
-            if op_name not in op_avg_time_dict:
-                logger.warning("Op name {op_name} is not exist in op average time dict.")
-                continue
             # Convert the unit of task_fops to MFLOPs(1e6).
             task_fops = self._compute_task_flops(result) * 1e-6
             op_avg_time = op_avg_time_dict[op_name]
             # Time unit of op_avg_time is ms.
             # The unit of gflop_per_second is GFLOPS(1e9).
-            if float(op_avg_time) == 0.0:
-                raise ValueError("All operators take 0 ms.")
-            if peak_flops == 0:
-                raise ValueError("The frequency of an operator is 0.")
             gflop_per_second = task_fops / float(op_avg_time)
             flops_utilization = (gflop_per_second * 1e9 / peak_flops) * 100
             self._flops_summary['FLOPs'] += task_fops
@@ -177,9 +170,9 @@ class FlopsParser:
         # These formula is provided by HISI profiling.
         # a cube_fp16 instruction has (16**3)*2 float point operation.
         # a cube_fp16 instruction has 16*16*32*2 float point operation.
-        cube_fops = cube_fp16_exec * (16 ** 3) * 2 + cube_int8_exec * 16 * 16 * 32 * 2
-        vec_fops = vec_fp32 * 32 + vec_fp16_128lane_exec * 128 + \
-                   vec_fp16_64lane_exec * 64 + vec_int32_exec * 64 + vec_misc_exec * 32
+        cube_fops = cube_fp16_exec*(16**3)*2 + cube_int8_exec*16*16*32*2
+        vec_fops = vec_fp32*32 + vec_fp16_128lane_exec*128 + \
+                   vec_fp16_64lane_exec*64 + vec_int32_exec*64 + vec_misc_exec*32
         task_fops = cube_fops + vec_fops
 
         return task_fops
@@ -238,14 +231,14 @@ class FlopsParser:
             suffix_name = "(recompute_Gradients)"
         else:
             suffix_name = f"({top_level_scope})"
-        scope_list = list(map(lambda x: x + suffix_name, scope_list))
+        scope_list = list(map(lambda x: x+suffix_name, scope_list))
         scope_list[0] = top_level_scope
 
         # Add root node (refers to total flops).
         scope_list.insert(0, "Total")
         scope_depth = len(scope_list)
         for idx in range(scope_depth - 1):
-            key_name = scope_list[idx] + " " + scope_list[idx + 1]
+            key_name = scope_list[idx] + " " + scope_list[idx+1]
             self._flops_each_scope.setdefault(key_name, 0)
             self._flops_each_scope[key_name] += task_fops
 

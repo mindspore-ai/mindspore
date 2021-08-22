@@ -20,7 +20,7 @@
 #include "backend/optimizer/common/pass.h"
 #include "tools/converter/converter_flags.h"
 
-using mindspore::converter::FmkType;
+using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
 class RemoveUnusedCastOpPass : public Pass {
  public:
@@ -30,7 +30,7 @@ class RemoveUnusedCastOpPass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  FmkType fmk_type = converter::kFmkTypeTf;
+  FmkType fmk_type = lite::converter::FmkType_TF;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_REMOVE_UNUSED_CAST_PASS_H_

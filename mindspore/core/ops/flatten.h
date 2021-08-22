@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFlatten = "Flatten";
-class MS_CORE_API Flatten : public PrimitiveC {
+class Flatten : public PrimitiveC {
  public:
   Flatten() : PrimitiveC(kNameFlatten) {}
   ~Flatten() = default;

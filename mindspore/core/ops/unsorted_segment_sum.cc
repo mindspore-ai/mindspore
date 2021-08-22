@@ -31,9 +31,6 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
   auto prim_name = primitive->name();
 
   // Infer type
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   // Infer shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];

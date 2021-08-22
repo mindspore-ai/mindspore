@@ -27,7 +27,6 @@
 
 #include "backend/optimizer/graph_kernel/model/node.h"
 #include "backend/optimizer/graph_kernel/model/op_node.h"
-#include "backend/optimizer/graph_kernel/model/op_register.h"
 
 namespace mindspore {
 namespace opt {
@@ -108,15 +107,36 @@ NodePtr LiteGraph::GraphBuilder::Emit(const std::string &op, const NodePtrList &
 
 NodePtr LiteGraph::GraphBuilder::Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs,
                                     const DAttrs &attrs, std::string node_name) {
-  PrimOpPtr op_ptr = CreateOp(op, node_name);
-  op_ptr->SetInputs(inputs);
-  op_ptr->SetAttrs(attrs);
+  auto op_ptr = Emit(op, inputs, attrs, node_name);
   op_ptr->SetBaseInfo(baseinfo);
-  return graph_->Add(op_ptr);
+  return op_ptr;
 }
 
 PrimOpPtr LiteGraph::GraphBuilder::CreateOp(const std::string &op, const std::string &node_name) {
-  return OpRegistry::Instance().NewOp(op, node_name);
+  static std::map<std::string, std::function<PrimOpPtr(const std::string &, const std::string &)>> creators;
+  if (creators.empty()) {
+    creators = {{"Add", Elemwise},
+                {"Sub", Elemwise},
+                {"RealDiv", Elemwise},
+                {"Mul", Elemwise},
+                {"Log", Elemwise},
+                {"Exp", Elemwise},
+                {"Pow", Elemwise},
+                {"Sqrt", Elemwise},
+                {"Rsqrt", Elemwise},
+                {"Neg", Elemwise},
+                {"Reciprocal", Elemwise},
+                {"Abs", Elemwise},
+                {"BroadcastTo", BroadcastTo},
+                {"Reshape", Reshape},
+                {"ReduceSum", Reduce},
+                {"ReduceMax", Reduce},
+                {"ReduceMin", Reduce},
+                {"Conv2D", Conv2d}};
+  }
+  auto iter = creators.find(op);
+  auto creator = (iter == creators.end() ? Opaque : iter->second);
+  return creator(op, node_name);
 }
 }  // namespace graphkernel
 }  // namespace opt

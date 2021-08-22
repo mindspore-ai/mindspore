@@ -31,12 +31,8 @@ Status HwcToChwOp::OutputShape(const std::vector<TensorShape> &inputs, std::vect
   outputs.clear();
   TensorShape in = inputs[0];
   TensorShape out = TensorShape{in[2], in[0], in[1]};
-  if (inputs[0].Rank() == 3) {
-    (void)outputs.emplace_back(out);
-  }
-  if (!outputs.empty()) {
-    return Status::OK();
-  }
+  if (inputs[0].Rank() == 3) outputs.emplace_back(out);
+  if (!outputs.empty()) return Status::OK();
   return Status(
     StatusCode::kMDUnexpectedError,
     "HWC2CHW: invalid input shape, expected 3D input, but got input dimension is:" + std::to_string(inputs[0].Rank()));

@@ -95,13 +95,13 @@ class ConfusionMatrix(Metric):
             ValueError: If the number of the inputs is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The ConfusionMatrix needs 2 inputs (y_pred, y), but got {}.'.format(len(inputs)))
+            raise ValueError('ConfusionMatrix need 2 inputs (y_pred, y), but got {}.'.format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
 
         if not (y_pred.ndim == y.ndim or y_pred.ndim == y.ndim + 1):
-            raise ValueError("The y_pred and y should have the same number of dimensions, or the dimension of y_pred "
+            raise ValueError("y_pred and y should have the same number of dimensions, or the dimension of y_pred "
                              "equals the dimension of y add 1.")
 
         if y_pred.ndim == y.ndim + 1:
@@ -165,9 +165,9 @@ class ConfusionMatrixMetric(Metric):
                            "fall out", "false discovery rate", "false omission rate", "prevalence threshold",
                            "threat score", "accuracy", "balanced accuracy", "f1 score",
                            "matthews correlation coefficient", "fowlkes mallows index", "informedness", "markedness"].
-        calculation_method (bool): If true, the measurement for each sample will be calculated first.
-                                   If not, the confusion matrix of all samples will be accumulated first.
-                                   As for classification task, 'calculation_method' should be False. Default: False.
+        calculation_method (bool): If true, the measurement for each sample is calculated first. If it is false, the
+                                   confusion matrix of all samples is accumulated first. As for classification task,
+                                   'calculation_method' should be False. Default: False.
         decrease (str): Define the mode to reduce the calculation result of one batch of data. Decrease is used only if
                         calculation_method is True. Default: "mean". Choose from:
                         ["none", "mean", "sum", "mean_batch", "sum_batch", "mean_channel", "sum_channel"].
@@ -233,7 +233,7 @@ class ConfusionMatrixMetric(Metric):
             ValueError: If the number of the inputs is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The ConfusionMatrixMetric needs 2 inputs (y_pred, y), but got {}.'.format(len(inputs)))
+            raise ValueError('ConfusionMatrixMetric need 2 inputs (y_pred, y), but got {}.'.format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
@@ -261,8 +261,7 @@ class ConfusionMatrixMetric(Metric):
 
         if self.calculation_method is True:
             if self._class_num == 0:
-                raise RuntimeError("The ConfusionMatrixMetric must have at least one example "
-                                   "before it can be computed.")
+                raise RuntimeError("ConfusionMatrixMetric must have at least one example before it can be computed.")
 
             return self._total_num / self._class_num
 
@@ -279,8 +278,8 @@ class _ConfusionMatrix:
                              output. Default: True.
         metric_name (str): The names of indicators are in the following range. Of course, you can also set the industry
                            common aliases for these indicators.
-        calculation_method (bool): If true, the measurement for each sample will be calculated first. If not, the
-                                   confusion matrix for each image (the output of function '_get_confusion_matrix')
+        calculation_method (bool): If true, the measurement for each sample is calculated first. If it is false, the
+                                   confusion  matrix for each image (the output of function '_get_confusion_matrix')
                                    will be returned. In this way, users should achieve the confusion matrixes for all
                                    images during an epochand then use '_compute_confusion_matrix_metric' to calculate
                                    the metric. Default: False.
@@ -311,11 +310,11 @@ class _ConfusionMatrix:
             ValueError: when `y_pred` has less than two dimensions.
         """
         if not np.all(y.astype(np.uint8) == y):
-            raise ValueError("The y should be a binarized ndarray.")
+            raise ValueError("y should be a binarized ndarray.")
 
         dims = y_pred.ndim
         if dims < 2:
-            raise ValueError("The y_pred should have at least two dimensions.")
+            raise ValueError("y_pred should have at least two dimensions.")
 
         if dims == 2 or (dims == 3 and y_pred.shape[-1] == 1):
             if self.calculation_method:
@@ -617,7 +616,8 @@ def _compute_confusion_matrix_metric(metric_name, confusion_matrix):
                         "mcc": _calculate_mcc(tp, fp, tn, fn),
                         "fm": _calculate_fm(tp, fp, p),
                         "bm": _calculate_bm(tp, tn, p, n),
-                        "mk": _calculate_mk(tp, fp, tn, fn)}
+                        "mk": _calculate_mk(tp, fp, tn, fn)
+                        }
     numerator, denominator = metric_name_dict.get(metric)
 
     if isinstance(denominator, np.ndarray):
@@ -685,7 +685,8 @@ def _check_metric_name(metric_name):
                         "bm": "bm",
                         "markedness": "mk",
                         "deltap": "mk",
-                        "mk": "mk"}
+                        "mk": "mk"
+                        }
 
     metric_name_info = metric_name_dict.get(metric_name)
 

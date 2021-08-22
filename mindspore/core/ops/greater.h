@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGreater = "Greater";
-class MS_CORE_API Greater : public PrimitiveC {
+class Greater : public PrimitiveC {
  public:
   Greater() : PrimitiveC(kNameGreater) { InitIOName({"x", "y"}, {"output"}); }
   ~Greater() = default;

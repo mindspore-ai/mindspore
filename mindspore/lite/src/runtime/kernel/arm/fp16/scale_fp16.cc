@@ -48,7 +48,6 @@ int ScaleFp16CPUKernel::Init() {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << in_tensors_.size() << " is given.";
     return RET_ERROR;
   }
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -102,12 +101,9 @@ int ScaleFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int ScaleFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-  MS_ASSERT(input_tensor != nullptr);
-  MS_ASSERT(output_tensor != nullptr);
-  input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-  output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
-  MS_ASSERT(input_ != nullptr);
-  MS_ASSERT(output_ != nullptr);
+  input_ = reinterpret_cast<float16_t *>(input_tensor->MutableData());
+  output_ = reinterpret_cast<float16_t *>(output_tensor->MutableData());
+
   auto ret = InitScaleOffset();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp16 InitScaleOffset failed.";

@@ -89,7 +89,7 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
   # 运行分布式训练示例
   python3 train.py > train.log 2>&1 & --dataset_path /path/dataset --pre_ckpt_path /path/pretrained_path --isModelArts False
   OR
-  bash run_distribute_train.sh /path/dataset /path/pretrain_path /path/rank_table
+  bash run_distribute_train.sh /path/dataset /path/pretrain_path 8
 
   # 运行评估示例
   python3 eval.py > eval.log 2>&1 & --dataset_path /path/dataset --ckpt_path /path/ckpt
@@ -242,7 +242,7 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
   ```bash
   python3 train.py > train.log 2>&1 & --dataset_path /path/dataset --pre_ckpt_path /path/pretrained_path --isModelArts False
   OR
-  bash run_distribute_train.sh /path/dataset /path/pretrain_path /path/rank_table
+  bash run_distribute_train.sh /path/dataset /path/pretrain_path 8
   ```
 
   上述shell脚本将在后台运行分布训练。您可以通过train_parallel[X]/log文件查看结果。采用以下方式达到损失值：

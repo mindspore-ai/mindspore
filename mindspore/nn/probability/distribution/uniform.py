@@ -170,11 +170,10 @@ class Uniform(Distribution):
         self.uniform = C.uniform
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = 'low = {}, high = {}'.format(self.low, self.high)
+            s = f'low = {self.low}, high = {self.high}'
         else:
-            s = 'batch_shape = {}'.format(self._broadcast_shape)
+            s = f'batch_shape = {self._broadcast_shape}'
         return s
 
     @property

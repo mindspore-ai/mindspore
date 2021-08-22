@@ -70,7 +70,7 @@ class LstmGpuKernel : public GpuKernel {
     auto cy_addr = GetDeviceAddress<T>(outputs, 2);
     auto reserved_addr = GetDeviceAddress<T>(outputs, 3);
     auto states_addr = GetDeviceAddress<T>(outputs, 4);
-    void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+    void *workspace_addr = GetDeviceAddress<T>(workspace, 0);
 
     if (!states_init_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(

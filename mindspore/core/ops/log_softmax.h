@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogSoftmax = "LogSoftmax";
-class MS_CORE_API LogSoftmax : public PrimitiveC {
+class LogSoftmax : public PrimitiveC {
  public:
   LogSoftmax() : PrimitiveC(kNameLogSoftmax) { InitIOName({"x"}, {"output"}); }
   ~LogSoftmax() = default;

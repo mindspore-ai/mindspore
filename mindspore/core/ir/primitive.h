@@ -38,7 +38,7 @@ enum PrimType {
   kPrimTypePyCheck  // Primitive operator with input args checking method
 };
 
-class MS_CORE_API Primitive : public Named {
+class Primitive : public Named {
  public:
   explicit Primitive(const std::string &name, const bool is_base = true, const PrimType prim_type = kPrimTypeBuiltIn);
   Primitive(const std::string &name, const std::unordered_map<std::string, ValuePtr> &attrs);
@@ -142,7 +142,7 @@ inline std::ostream &operator<<(std::ostream &os, const PrimitivePtr &p) {
   return os;
 }
 
-struct MS_CORE_API PrimitiveEqual {
+struct PrimitiveEqual {
   bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
     MS_EXCEPTION_IF_NULL(t1);
     MS_EXCEPTION_IF_NULL(t2);
@@ -150,14 +150,14 @@ struct MS_CORE_API PrimitiveEqual {
   }
 };
 
-struct MS_CORE_API PrimitiveHasher {
+struct PrimitiveHasher {
   std::size_t operator()(PrimitivePtr const &prim) const {
     MS_EXCEPTION_IF_NULL(prim);
     return prim->Hash();
   }
 };
 
-struct MS_CORE_API PrimitiveTotalEqual {
+struct PrimitiveTotalEqual {
   bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
     MS_EXCEPTION_IF_NULL(t1);
     MS_EXCEPTION_IF_NULL(t2);

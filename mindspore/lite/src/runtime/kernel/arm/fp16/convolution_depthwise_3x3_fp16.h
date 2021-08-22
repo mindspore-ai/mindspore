@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
 
 #ifdef ENABLE_ARM
 #include <vector>
@@ -28,23 +28,23 @@ class ConvolutionDepthwise3x3Fp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwise3x3Fp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
-                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
-  ~ConvolutionDepthwise3x3Fp16CPUKernel() override {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+  ~ConvolutionDepthwise3x3Fp16CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
+  int InitWeightBias();
   int Execute(int task_id);
+  int Eval() override;
 
  private:
-  void PackWeight() override;
-  int MallocWeightBiasData() override;
+  float16_t *packed_weight_ = nullptr;
   float16_t *input_ptr_ = nullptr;
   float16_t *output_ptr_ = nullptr;
   float16_t *buffer_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP16_H_

@@ -24,7 +24,6 @@ namespace mindspore::dataset {
 PullBasedIteratorConsumer::PullBasedIteratorConsumer() { tree_adapter_lite_ = std::make_unique<TreeAdapterLite>(); }
 
 Status PullBasedIteratorConsumer::Init(std::shared_ptr<DatasetNode> root) {
-  RETURN_UNEXPECTED_IF_NULL(root);
   return tree_adapter_lite_->BuildTree(std::move(root));
 }
 

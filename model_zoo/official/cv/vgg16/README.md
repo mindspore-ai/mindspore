@@ -27,7 +27,6 @@
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
-        - [Post Training Quantization](#post-training-quantization)
     - [Model Description](#model-description)
         - [Performance](#performance)
             - [Training Performance](#training-performance)
@@ -529,40 +528,6 @@ Inference result is saved in current path, you can find result like this in acc.
 
 ```bash
 'acc': 0.92
-```
-
-### [Post Training Quantization](#contents)
-
-Relative executing script files reside in the directory "ascend310_quant_infer". Please implement following steps sequentially to complete post quantization.
-Current quantization project bases on CIFAR-10 dataset.
-
-1. Generate data of .bin format required for AIR model inference at Ascend310 platform.
-
-```shell
-python export_bin.py --config_path [YMAL CONFIG PATH] --data_dir [DATA DIR] --result_path [RESULT PATH]
-```
-
-2. Export quantized AIR model.
-
-Post quantization of model requires special toolkits for exporting quantized AIR model. Please refer to [official website](https://www.hiascend.com/software/cann/community).
-
-```shell
-python post_quant.py --config_path [YMAL CONFIG PATH] --ckpt_file [CKPT_PATH] --data_dir [DATASET PATH]
-```
-
-The quantized AIR file will be stored as "./results/vgg_quant.air".
-
-3. Implement inference at Ascend310 platform.
-
-```shell
-# Ascend310 quant inference
-bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH]
-```
-
-Inference result is saved in current path, you can find result like this in acc.log file.
-
-```bash
-'acc': 0.91
 ```
 
 ## [Model Description](#contents)

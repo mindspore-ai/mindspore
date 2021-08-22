@@ -75,11 +75,6 @@ MS_REG_CPU_KERNEL(
   MirrorPadCPUKernel);
 
 MS_REG_CPU_KERNEL(
-  MirrorPad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-  MirrorPadCPUKernel);
-
-MS_REG_CPU_KERNEL(
   MirrorPad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
   MirrorPadCPUKernel);
 
@@ -91,11 +86,6 @@ MS_REG_CPU_KERNEL(
 MS_REG_CPU_KERNEL(
   MirrorPad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  MirrorPadCPUKernel);
-
-MS_REG_CPU_KERNEL(
-  MirrorPad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
   MirrorPadCPUKernel);
 
 MS_REG_CPU_KERNEL(

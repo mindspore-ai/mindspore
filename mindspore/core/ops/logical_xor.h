@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalXor = "LogicalXor";
-class MS_CORE_API LogicalXor : public PrimitiveC {
+class LogicalXor : public PrimitiveC {
  public:
   LogicalXor() : PrimitiveC(kNameLogicalXor) {}
   ~LogicalXor() = default;

@@ -20,7 +20,6 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <complex>
 
 #include "pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
@@ -79,15 +78,9 @@ static TypeId GetDataType(const py::buffer_info &buf) {
       case '?':
         return TypeId::kNumberTypeBool;
     }
-  } else if (buf.format.size() >= 2) {
+  } else if (buf.format.size() >= 2 && buf.format.back() == 'w') {
     // Support np.str_ dtype, format: {x}w. {x} is a number that means the maximum length of the string items.
-    if (buf.format.back() == 'w') {
-      return TypeId::kObjectTypeString;
-    } else if (buf.format == "Zf") {
-      return TypeId::kNumberTypeComplex64;
-    } else if (buf.format == "Zd") {
-      return TypeId::kNumberTypeComplex128;
-    }
+    return TypeId::kObjectTypeString;
   }
   MS_LOG(WARNING) << "Unsupported DataType format " << buf.format << ", item size " << buf.itemsize;
   return TypeId::kTypeUnknown;
@@ -121,10 +114,6 @@ static std::string GetPyTypeFormat(TypeId data_type) {
       return py::format_descriptor<bool>::format();
     case TypeId::kObjectTypeString:
       return py::format_descriptor<uint8_t>::format();
-    case TypeId::kNumberTypeComplex64:
-      return py::format_descriptor<std::complex<float>>::format();
-    case TypeId::kNumberTypeComplex128:
-      return py::format_descriptor<std::complex<double>>::format();
     default:
       MS_LOG(WARNING) << "Unsupported DataType " << data_type << ".";
       return "";

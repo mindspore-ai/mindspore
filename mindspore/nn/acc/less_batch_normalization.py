@@ -81,7 +81,6 @@ class CommonHeadLastFN(Cell):
         x = self.multiplier * x
         return x
 
-
 class LessBN(Cell):
     """
     Reduce the number of BN automatically to improve the network performance

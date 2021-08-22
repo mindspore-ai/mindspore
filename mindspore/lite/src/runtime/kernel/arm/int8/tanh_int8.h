@@ -46,7 +46,7 @@ class TanhInt8CPUKernel : public InnerKernel {
   int element_size_{0};
   int thread_count_{0};
   int thread_stride_{0};
-  TanhQuantParameter tanh_quant_ = {};
+  TanhQuantParameter tanh_quant_;
 };
 }  // namespace mindspore::kernel
 

@@ -63,7 +63,7 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
     prim::kPrimTranspose,
 #if ENABLE_D
     prim::kPrimMatMul,
-    prim::kPrimTransData,
+    prim::KPrimTransData,
     prim::kPrimBatchMatMul,
 #elif ENABLE_GPU
     prim::kPrimACos,
@@ -99,7 +99,6 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
     prim::kPrimSelect,
     prim::kPrimSign,
     prim::kPrimSin,
-    prim::kPrimStridedSlice,
 #endif
   };
   const auto &flags = context::GraphKernelFlags::GetInstance();
@@ -159,7 +158,7 @@ class Graph {
         auto iter = node_idx_map.find(inp);
         if (iter != node_idx_map.end()) {
           // At the beginning, cluster_id is equal to node_id
-          (void)inputs_.insert(iter->second);
+          inputs_.insert(iter->second);
         }
       }
     }
@@ -170,8 +169,8 @@ class Graph {
       max_node_id_ = std::max(other_cluster->max_node_id_, max_node_id_);
       cluster_size_ += other_cluster->cluster_size_;
       basic_op_cnt_ += other_cluster->basic_op_cnt_;
-      (void)std::for_each(other_cluster->inputs_.begin(), other_cluster->inputs_.end(),
-                          [this](size_t inp) { (void)this->inputs_.insert(inp); });
+      std::for_each(other_cluster->inputs_.begin(), other_cluster->inputs_.end(),
+                    [this](size_t inp) { this->inputs_.insert(inp); });
       other_cluster->Clean();
     }
 
@@ -189,13 +188,13 @@ class Graph {
   Graph(const AnfNodePtrList &nodes, const std::unordered_map<AnfNodePtr, size_t> &node_idx_map) {
     clusters_.reserve(nodes.size());
     for (size_t i = 0; i < nodes.size(); i++) {
-      (void)clusters_.emplace_back(i, nodes[i], node_idx_map);
+      clusters_.emplace_back(i, nodes[i], node_idx_map);
     }
   }
   ~Graph() = default;
 
   // find the representative of the cluster
-  size_t Find(size_t node_id) {
+  int Find(size_t node_id) {
     size_t &pre_id = clusters_[node_id].cluster_id_;
     return (pre_id == clusters_[pre_id].cluster_id_) ? pre_id : (pre_id = Find(pre_id));
   }
@@ -222,7 +221,7 @@ class Graph {
   size_t GetClusterMaxNodeId(size_t cluster_id) { return clusters_[Find(cluster_id)].max_node_id_; }
 
   using VisitFunc = std::function<IncludeType(size_t)>;
-  void Dfs(size_t node_id, const VisitFunc &visitor) {
+  void Dfs(size_t node_id, VisitFunc visitor) {
     ++seen_;
     return DepthFirstSearch(Find(node_id), visitor);
   }
@@ -247,12 +246,12 @@ class Graph {
       size_t new_id = Find(*iter);
       if (new_id != *iter) {
         iter = inputs.erase(iter);
-        (void)inputs.insert(new_id);
+        inputs.insert(new_id);
       } else {
         ++iter;
       }
     }
-    (void)inputs.erase(i);
+    inputs.erase(i);
   }
 
   void DepthFirstSearch(size_t cluster_id, const VisitFunc &visitor) {
@@ -290,9 +289,9 @@ class CircleChecker {
         RemoveCircleNodesFromCandidates();
       }
     }
-    (void)candidates->erase(std::remove_if(candidates->begin(), candidates->end(),
-                                           [this](size_t c) { return this->candidates_.count(c) == 0; }),
-                            candidates->end());
+    candidates->erase(std::remove_if(candidates->begin(), candidates->end(),
+                                     [this](size_t c) { return this->candidates_.count(c) == 0; }),
+                      candidates->end());
   }
 
  private:
@@ -320,7 +319,7 @@ class CircleChecker {
         if (done.count(node_id) || acyclic_nodes_.count(node_id) || visited_circle_nodes.count(node_id)) {
           return EXCLUDE;
         }
-        (void)done.insert(node_id);
+        done.insert(node_id);
         if (candidates_.count(node_id)) {
           has_circle = true;
           circle_nodes_.push_back(node_id);
@@ -348,7 +347,7 @@ class CircleChecker {
   void RemoveCircleNodesFromCandidates() {
     auto remove_from_candidates = [this](size_t node_id) {
       if (candidates_.count(node_id)) {
-        (void)candidates_.erase(node_id);
+        candidates_.erase(node_id);
         return FOLLOW;
       }
       return EXCLUDE;
@@ -358,6 +357,7 @@ class CircleChecker {
     }
   }
 
+ private:
   GraphPtr graph_;               // bind the global graph
   std::set<size_t> candidates_;  // bind the input candidates
   std::vector<size_t> circle_nodes_;
@@ -388,12 +388,12 @@ std::vector<size_t> GraphKernelCluster::FindCandidates(size_t basenode_id) {
 
 bool GraphKernelCluster::Process(const FuncGraphPtr &func_graph) {
   bool changed = false;
-  for (int i = SizeToInt(nodes_.size()) - 1; i >= 0; i--) {
+  for (int i = nodes_.size() - 1; i >= 0; i--) {
     // if the node has been clustered, it has tried to find its previous nodes, so it's unnecessary to try again.
-    if (graph_->GetSize(IntToSize(i)) > 1) {
+    if (graph_->GetSize(i) > 1) {
       continue;
     }
-    auto candidates = FindCandidates(IntToSize(i));
+    auto candidates = FindCandidates(i);
     CircleChecker(graph_).RemoveCircle(&candidates);
     RemoveWildGetitem(&candidates);
     if (candidates.empty()) continue;
@@ -425,11 +425,11 @@ bool GraphKernelCluster::Process(const FuncGraphPtr &func_graph) {
 void GraphKernelCluster::CreateFuncGraph(const FuncGraphPtr &func_graph, const std::vector<size_t> &nodes_id) {
   AnfNodePtrList old_nodes;
   AnfNodePtr new_node;
-  (void)std::transform(nodes_id.begin(), nodes_id.end(), std::back_inserter(old_nodes),
-                       [this](size_t id) { return this->nodes_[id]; });
+  std::transform(nodes_id.begin(), nodes_id.end(), std::back_inserter(old_nodes),
+                 [this](size_t id) { return this->nodes_[id]; });
   std::tie(new_node, std::ignore) = FuseNodesToSubGraph(old_nodes, func_graph, "fusion");
   std::shared_ptr<Pass> eliminate_getitem_pass = std::make_shared<opt::GetitemTuple>();
-  (void)eliminate_getitem_pass->Run(AnfAlgo::GetCNodeFuncGraphPtr(new_node));
+  eliminate_getitem_pass->Run(AnfAlgo::GetCNodeFuncGraphPtr(new_node));
   if (context::GraphKernelFlags::GetInstance().dump_as_text) {
     DumpClusterInfo(old_nodes, new_node);
   }
@@ -488,9 +488,9 @@ void GraphKernelCluster::RemoveWildGetitem(std::vector<size_t> *candidates) {
     ++iter;
   }
   if (changed) {
-    (void)candidates->erase(std::remove_if(candidates->begin(), candidates->end(),
-                                           [&candidates_set](size_t c) { return candidates_set.count(c) == 0; }),
-                            candidates->end());
+    candidates->erase(std::remove_if(candidates->begin(), candidates->end(),
+                                     [&candidates_set](size_t c) { return candidates_set.count(c) == 0; }),
+                      candidates->end());
   }
 }
 

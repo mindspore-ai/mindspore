@@ -20,7 +20,6 @@
 #include <vector>
 #include "ir/dtype/type.h"
 #include "ir/anf.h"
-#include "debug/common.h"
 
 namespace mindspore {
 enum LocDumpMode { kOff = 0, kTopStack = 1, kWholeStack = 2 };

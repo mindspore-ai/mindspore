@@ -39,7 +39,6 @@
 #include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
-#include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
@@ -116,10 +115,8 @@
 #include "minddata/dataset/kernels/ir/vision/resize_with_bbox_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgba_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgba_to_rgb_ir.h"
-#include "minddata/dataset/kernels/ir/vision/rgb_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgb_to_gray_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
-#include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
@@ -145,7 +142,7 @@ class Serdes {
   /// \param[in] filename The file name. If specified, save the generated JSON string into the file
   /// \param[out] out_json The result json string
   /// \return Status The status code returned
-  static Status SaveToJSON(std::shared_ptr<DatasetNode> node, const std::string &filename, nlohmann::json *out_json);
+  Status SaveToJSON(std::shared_ptr<DatasetNode> node, const std::string &filename, nlohmann::json *out_json);
 
   /// \brief function to de-serialize JSON file to IR tree
   /// \param[in] json_filepath input path of json file
@@ -153,30 +150,18 @@ class Serdes {
   /// \return Status The status code returned
   static Status Deserialize(std::string json_filepath, std::shared_ptr<DatasetNode> *ds);
 
-  /// \brief Helper function to construct IR tree, separate zip and other operations
-  /// \param[in] json_obj The JSON object to be deserialized
-  /// \param[out] ds Shared pointer of a DatasetNode object containing the deserialized IR tree
-  /// \return Status The status code returned
-  static Status ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
-
-  /// \brief Helper functions for creating sampler, separate different samplers and call the related function
-  /// \param[in] json_obj The JSON object to be deserialized
-  /// \param[out] sampler Deserialized sampler
-  /// \return Status The status code returned
-  static Status ConstructSampler(nlohmann::json json_obj, std::shared_ptr<SamplerObj> *sampler);
-
-  /// \brief helper function to construct tensor operations
-  /// \param[in] json_obj json object of operations to be deserilized
-  /// \param[out] vector of tensor operation pointer
-  /// \return Status The status code returned
-  static Status ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shared_ptr<TensorOperation>> *result);
-
  protected:
   /// \brief Helper function to save JSON to a file
   /// \param[in] json_string The JSON string to be saved to the file
   /// \param[in] file_name The file name
   /// \return Status The status code returned
-  static Status SaveJSONToFile(nlohmann::json json_string, const std::string &file_name);
+  Status SaveJSONToFile(nlohmann::json json_string, const std::string &file_name);
+
+  /// \brief Helper function to construct IR tree, separate zip and other operations
+  /// \param[in] json_obj The JSON object to be deserialized
+  /// \param[out] ds Shared pointer of a DatasetNode object containing the deserialized IR tree
+  /// \return Status The status code returned
+  static Status ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
 
   /// \brief Function to determine type of the node - dataset node if no dataset exists or operation node
   /// \param[in] child_ds children datasets that is already created
@@ -200,6 +185,89 @@ class Serdes {
   /// \return Status The status code returned
   static Status CreateDatasetOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
                                            std::string op_type, std::shared_ptr<DatasetNode> *result);
+
+  /// \brief Helper functions for creating sampler, separate different samplers and call the related function
+  /// \param[in] json_obj The JSON object to be deserialized
+  /// \param[out] sampler Deserialized sampler
+  /// \return Status The status code returned
+  static Status ConstructSampler(nlohmann::json json_obj, std::shared_ptr<SamplerObj> *sampler);
+
+  /// \brief helper function to construct tensor operations
+  /// \param[in] operations operations to be deserilized
+  /// \param[out] vector of tensor operation pointer
+  /// \return Status The status code returned
+  static Status ConstructTensorOps(nlohmann::json operations, std::vector<std::shared_ptr<TensorOperation>> *result);
+
+  /// \brief Helper functions for different datasets
+  /// \param[in] json_obj The JSON object to be deserialized
+  /// \param[out] ds Deserialized dataset
+  /// \return Status The status code returned
+  static Status CreateCelebADatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateCifar10DatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateCifar100DatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateCLUEDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateCocoDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateCSVDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateImageFolderDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateManifestDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateMnistDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateTextFileDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateTFRecordDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateVOCDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+
+  /// \brief Helper functions for different operations
+  /// \param[in] ds dataset node constructed
+  /// \param[in] json_obj The JSON object to be deserialized
+  /// \param[out] result Deserialized dataset after the operation
+  /// \return Status The status code returned
+  static Status CreateBatchOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
+                                         std::shared_ptr<DatasetNode> *result);
+  static Status CreateMapOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
+                                       std::shared_ptr<DatasetNode> *result);
+  static Status CreateProjectOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
+                                           std::shared_ptr<DatasetNode> *result);
+  static Status CreateRenameOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
+                                          std::shared_ptr<DatasetNode> *result);
+  static Status CreateRepeatOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
+                                          std::shared_ptr<DatasetNode> *result);
+  static Status CreateShuffleOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
+                                           std::shared_ptr<DatasetNode> *result);
+  static Status CreateSkipOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
+                                        std::shared_ptr<DatasetNode> *result);
+  static Status CreateTakeOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
+                                        std::shared_ptr<DatasetNode> *result);
+
+  /// \brief Helper functions for different samplers
+  /// \param[in] json_obj The JSON object to be deserialized
+  /// \param[out] sampler Deserialized sampler
+  /// \return Status The status code returned
+  static Status ConstructDistributedSampler(nlohmann::json json_obj, int64_t num_samples,
+                                            std::shared_ptr<SamplerObj> *sampler);
+  static Status ConstructPKSampler(nlohmann::json json_obj, int64_t num_samples, std::shared_ptr<SamplerObj> *sampler);
+  static Status ConstructRandomSampler(nlohmann::json json_obj, int64_t num_samples,
+                                       std::shared_ptr<SamplerObj> *sampler);
+  static Status ConstructSequentialSampler(nlohmann::json json_obj, int64_t num_samples,
+                                           std::shared_ptr<SamplerObj> *sampler);
+  static Status ConstructSubsetRandomSampler(nlohmann::json json_obj, int64_t num_samples,
+                                             std::shared_ptr<SamplerObj> *sampler);
+  static Status ConstructWeightedRandomSampler(nlohmann::json json_obj, int64_t num_samples,
+                                               std::shared_ptr<SamplerObj> *sampler);
+
+  /// \brief Helper functions to construct children samplers
+  /// \param[in] json_obj The JSON object to be deserialized
+  /// \param[in] parent_sampler given parent sampler
+  /// \param[out] sampler sampler constructed - parent sampler with children samplers added
+  /// \return Status The status code returned
+  static Status ChildSamplerFromJson(nlohmann::json json_obj, std::shared_ptr<SamplerObj> parent_sampler,
+                                     std::shared_ptr<SamplerObj> *sampler);
+
+  /// \brief Helper functions for vision operations, which requires tensor operations as input
+  /// \param[in] op_params operation parameters for the operation
+  /// \param[out] operation deserialized operation
+  /// \return Status The status code returned
+  static Status BoundingBoxAugmentFromJson(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+  static Status RandomSelectSubpolicyFromJson(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+  static Status UniformAugFromJson(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
   /// \brief Helper function to map the function pointers
   /// \return map of key to function pointer

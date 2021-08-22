@@ -19,6 +19,7 @@ import mindspore
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 from mindspore.ops import ResizeNearestNeighbor
 from mindspore import Tensor, ParameterTuple, Parameter
 from mindspore.common.initializer import initializer, TruncatedNormal
@@ -409,8 +410,7 @@ class TrainStepWrap(nn.Cell):
         loss = self.network(image, label)
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(image, label, sens)
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))
 
 
 def get_AdvancedEast_net(args):

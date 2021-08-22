@@ -112,11 +112,10 @@ class Gumbel(TransformedDistribution):
         return self._scale
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            str_info = 'loc = {}, scale = {}'.format(self._loc, self._scale)
+            str_info = f'loc = {self._loc}, scale = {self._scale}'
         else:
-            str_info = 'batch_shape = {}'.format(self._broadcast_shape)
+            str_info = f'batch_shape = {self._broadcast_shape}'
         return str_info
 
     def _get_dist_type(self):

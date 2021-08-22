@@ -21,10 +21,6 @@ namespace mindspore::lite {
 int ActivationTensorRT::IsSupport(const schema::Primitive *primitive,
                                   const std::vector<mindspore::MSTensor> &in_tensors,
                                   const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != 1) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -66,7 +62,6 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   activation_layer->setName(op_name_.c_str());
-  activation_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(activation_layer->getOutput(0));
 
   return RET_OK;

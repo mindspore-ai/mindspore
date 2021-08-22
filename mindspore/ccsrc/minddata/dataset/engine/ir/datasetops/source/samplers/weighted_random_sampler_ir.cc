@@ -63,20 +63,6 @@ Status WeightedRandomSamplerObj::to_json(nlohmann::json *const out_json) {
   return Status::OK();
 }
 
-#ifndef ENABLE_ANDROID
-Status WeightedRandomSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples,
-                                           std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("weights") != json_obj.end(), "Failed to find weights");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("replacement") != json_obj.end(), "Failed to find replacement");
-  std::vector<double> weights = json_obj["weights"];
-  bool replacement = json_obj["replacement"];
-  *sampler = std::make_shared<WeightedRandomSamplerObj>(weights, num_samples, replacement);
-  // Run common code in super class to add children samplers
-  RETURN_IF_NOT_OK(SamplerObj::from_json(json_obj, sampler));
-  return Status::OK();
-}
-#endif
-
 Status WeightedRandomSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   *sampler = std::make_shared<dataset::WeightedRandomSamplerRT>(weights_, num_samples_, replacement_);
   Status s = BuildChildren(sampler);

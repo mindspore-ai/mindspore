@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchNormGrad = "BatchNormGrad";
-class MS_CORE_API BatchNormGrad : public PrimitiveC {
+class BatchNormGrad : public PrimitiveC {
  public:
   BatchNormGrad() : PrimitiveC(kNameBatchNormGrad) {}
   ~BatchNormGrad() = default;

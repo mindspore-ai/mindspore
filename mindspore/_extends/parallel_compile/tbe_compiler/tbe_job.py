@@ -71,13 +71,12 @@ def _get_message(msg, args):
 class TbeJob:
     """ Tbe compilation job """
 
-    def __init__(self, source_id, job_id, job_type, content, fusion_op_name, json_str, sys_info):
+    def __init__(self, source_id, job_id, job_type, content, json_str, sys_info):
         self.source_id = source_id
         self.id = job_id
         self.type = JobType(job_type)
         self.status = JobStatus.JOB_INITIAL
         self.content = content
-        self.fusion_op_name = fusion_op_name
         self.result = ""
         self.process_info = []
         self.json_string = json_str
@@ -150,8 +149,8 @@ class TbeJob:
         result["source_id"] = self.source_id
         result["job_id"] = self.id
         result["job_type"] = self.type.value
-        result["fusion_op_name"] = self.fusion_op_name
         result["result"] = self.result
+        self.debug("Resp result:{}".format(json.dumps(result)))
         process_info = []
         for info in self.process_info:
             msg = {"index": info.index, "level": info.level.value, "message": info.info}

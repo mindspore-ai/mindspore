@@ -101,7 +101,7 @@ int TransposeOpenCLKernel::Prepare() {
   kernel_name += "_NHWC4";
 
   std::string source = transpose_source;
-  const std::string program_name = "transpose";
+  std::string program_name = "transpose";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -113,45 +113,32 @@ int TransposeOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
-int TransposeOpenCLKernel::SetConstArgs() {
+void TransposeOpenCLKernel::SetConstArgs() {
   size_t n = tensor_size_.N;
   size_t h = tensor_size_.H;
   size_t w = tensor_size_.W;
   size_t c = tensor_size_.C;
   int arg_idx = 2;
   cl_int4 shape = {static_cast<int>(n), static_cast<int>(h), static_cast<int>(w), static_cast<int>(c)};
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, shape) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, shape);
   if (type_ == TransposeType::GENERAL) {
     int de_perm[4];  // output to input perm
     for (int i = 0; i < 4; i++) {
       de_perm[perm_4d_[i]] = i;
     }
     cl_int4 de_perm_cl = {de_perm[0], de_perm[1], de_perm[2], de_perm[3]};
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, de_perm_cl) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, de_perm_cl);
     GpuTensorInfo in_shape = GpuTensorInfo(in_tensors_[0]);
     cl_int4 in_shape_int4 = {static_cast<cl_int>(in_shape.N), static_cast<cl_int>(in_shape.H),
                              static_cast<cl_int>(in_shape.W), static_cast<cl_int>(in_shape.C)};
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_shape_int4) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_shape_int4);
   }
-  return RET_OK;
 }
 
 void TransposeOpenCLKernel::SetGlobalLocal() {
@@ -174,18 +161,9 @@ void TransposeOpenCLKernel::SetGlobalLocal() {
 int TransposeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

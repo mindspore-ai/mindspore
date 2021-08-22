@@ -35,12 +35,12 @@ void SGDCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 void SGDCPUKernel<T>::CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  // inputs: param, grad, lr, accum, momentum, stat
+  // inputs: params, grad, lr, accum, momentum, stat
   if (inputs.size() != kInputSize) {
     MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but SGD needs 6 inputs.";
   }
 
-  // output: output_param
+  // output: param
   if (outputs.size() != kOutputSize) {
     MS_LOG(EXCEPTION) << "Output number is " << outputs.size() << ", but SGD needs 1 outputs.";
   }
@@ -60,20 +60,18 @@ bool SGDCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::v
   auto output_param = reinterpret_cast<T *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(T);
 
-  auto task = [this, &param, &grad, &lr, &accum, &momentum, &stat, &output_param](size_t start, size_t end) {
-    T ZERO = static_cast<T>(0);
-    T ONE = static_cast<T>(1);
+  auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       T grad_new = grad[i];
-      if (weight_decay_ > static_cast<float>(0.0)) {
+      if (weight_decay_ > 0) {
         grad_new += param[i] * static_cast<T>(weight_decay_);
       }
-      if (momentum[0] > ZERO) {
-        if (stat[i] > ZERO) {
+      if (momentum[0] > static_cast<T>(0)) {
+        if (stat[i] > static_cast<T>(0)) {
           accum[i] = grad_new;
-          stat[i] = ZERO;
+          stat[i] = static_cast<T>(0);
         } else {
-          accum[i] = accum[i] * momentum[0] + (ONE - static_cast<T>(dampening_)) * grad_new;
+          accum[i] = accum[i] * momentum[0] + static_cast<T>(1.0 - dampening_) * grad_new;
         }
         if (nesterov_) {
           grad_new += accum[i] * momentum[0];

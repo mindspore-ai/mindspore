@@ -37,19 +37,18 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   memset(split_param, 0, sizeof(SplitParameter));
   split_param->op_parameter_.type_ = schema::PrimitiveType_Split;
   split_param->num_split_ = split_prim->numberSplit();
-  if (split_param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int)) ||
-      split_param->num_split_ <= 0) {
-    MS_LOG(ERROR) << "The value of split_param->num_split_ is out of range.";
+  if (split_param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
+    MS_LOG(ERROR) << "The value of split_param->num_split_ is too big";
     free(split_param);
     return nullptr;
   }
-  int *split_sizes = reinterpret_cast<int *>(malloc(static_cast<size_t>(split_param->num_split_) * sizeof(int)));
+  int *split_sizes = reinterpret_cast<int *>(malloc(split_param->num_split_ * sizeof(int)));
   if (split_sizes == nullptr) {
     MS_LOG(ERROR) << "malloc split size of SplitParameter failed.";
     free(split_param);
     return nullptr;
   }
-  memset(split_sizes, 0, static_cast<size_t>(split_param->num_split_) * sizeof(int));
+  memset(split_sizes, 0, split_param->num_split_ * sizeof(int));
   split_param->split_sizes_ = split_sizes;
   auto split_sizes_vector_ = split_prim->sizeSplits();
   if (split_sizes_vector_ != nullptr) {

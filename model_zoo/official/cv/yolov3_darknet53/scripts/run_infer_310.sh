@@ -80,7 +80,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --per_batch_size=1 --result_path=./result_Files --img_path=$data_path --annFile=$anno_path &> acc.log
+    python3.7 ../postprocess.py --result_path=./result_Files --img_path=$data_path --annFile=$anno_path &> acc.log
 }
 
 compile_app

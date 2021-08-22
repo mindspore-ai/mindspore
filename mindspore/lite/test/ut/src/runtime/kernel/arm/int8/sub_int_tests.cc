@@ -75,7 +75,6 @@ TEST_F(TestSubInt8, SubInt8) {
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
   out_tensor.set_data(nullptr);
-  delete kernel;
 }
 
 TEST_F(TestSubInt8, SubInt8T2) {
@@ -126,6 +125,5 @@ TEST_F(TestSubInt8, SubInt8T2) {
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
   out_tensor.set_data(nullptr);
-  delete kernel;
 }
 }  // namespace mindspore

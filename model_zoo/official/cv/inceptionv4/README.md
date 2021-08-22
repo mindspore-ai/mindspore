@@ -1,4 +1,4 @@
-# InceptionV4
+# InceptionV4 for Ascend/GPU
 
 - [InceptionV4 Description](#InceptionV4-description)
 - [Model Architecture](#model-architecture)

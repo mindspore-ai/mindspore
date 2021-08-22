@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_WEIGHT_DECODER_H_
-#define MINDSPORE_LITE_SRC_WEIGHT_DECODER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEQUANT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEQUANT_H_
 
 #include <map>
 #include <utility>
@@ -30,11 +30,7 @@
 #include "src/tensor.h"
 
 static constexpr int kPerTensor = 1;
-static constexpr int kBitNum1 = 1;
-static constexpr int kBitNum8 = 8;
-static constexpr int kBitNum16 = 16;
 
-#ifndef WEIGHT_DECODE_CLIP
 namespace mindspore::lite {
 
 template <typename T>
@@ -126,16 +122,18 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor);
 
 class WeightDecoder {
  public:
-  static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type);
-
-  static int UnPack(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
-
- private:
-  static int DequantTensor(Tensor *tensor, bool channel_first = true, TypeId dst_data_type = kNumberTypeFloat32);
+  static constexpr int kBitNum1 = 1;
+  static constexpr int kBitNum8 = 8;
+  static constexpr int kBitNum16 = 16;
 
   static int UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
   static int DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
+
+  static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type);
+
+ private:
+  static int DequantTensor(Tensor *tensor, bool channel_first = true, TypeId dst_data_type = kNumberTypeFloat32);
 
   template <typename ST, typename DT = float>
   static DT *DequantData(lite::Tensor *input_tensor, bool channel_first = true) {
@@ -287,5 +285,5 @@ class WeightDecoder {
   }
 };
 }  // namespace mindspore::lite
-#endif
-#endif  // MINDSPORE_LITE_SRC_WEIGHT_DECODER_H_
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEQUANT_H_

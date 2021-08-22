@@ -35,8 +35,8 @@ int GatherNdInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   if (input->shape_size_ > MAX_SHAPE_SIZE || indices->shape_size_ > MAX_SHAPE_SIZE) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
-  int in_rank = (int)(input->shape_size_);
-  int indices_rank = (int)(indices->shape_size_);
+  int in_rank = input->shape_size_;
+  int indices_rank = indices->shape_size_;
   if (indices->shape_[indices_rank - 1] > in_rank) {
     return NNACL_OK;
   }

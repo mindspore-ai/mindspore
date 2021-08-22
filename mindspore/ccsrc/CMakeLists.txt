@@ -297,14 +297,20 @@ if(MODE_ASCEND_ALL)
                 ${ASCEND_DRIVER_BACK_PATH})
     find_library(DATATRANSFER datatransfer HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
                 ${ASCEND_DRIVER_BACK_PATH})
-    find_library(PROFILING msprofiler ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(PROFILING msprofiler_fwkacl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(ACL ascendcl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(PLATFORM platform ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPTILING optiling ${ASCEND_OPP_PATH} ${ASCEND_TOOLKIT_OPP_PATH})
     find_library(OPT_FEATURE opt_feature ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
+    add_library(ms_profile SHARED
+                ${CMAKE_CURRENT_SOURCE_DIR}/runtime/device/ascend/profiling/profiling_callback_register.cc)
+    set_target_properties(ms_profile PROPERTIES LINKER_LANGUAGE CXX)
+    target_link_options(ms_profile PRIVATE -Wl,-init,common_log_init)
+    target_link_libraries(ms_profile -Wl,--start-group -Wl,--whole-archive ${PROFILING} -Wl,--no-whole-archive
+                          mindspore::protobuf -Wl,--end-group)
     target_link_libraries(mindspore ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER} -Wl,--no-as-needed
-      ${OPTILING} ${PLATFORM} ${ACL} ${OPT_FEATURE} ${PROFILING})
+      ${OPTILING} ${PLATFORM} ${ACL} ${OPT_FEATURE})
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece
@@ -319,7 +325,7 @@ endif()
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set_property(SOURCE "pipeline/jit/init.cc" PROPERTY
             COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PIPELINE)
-pybind11_add_module(_c_expression NO_EXTRAS "pipeline/jit/init.cc" NO_EXTRAS)
+pybind11_add_module(_c_expression "pipeline/jit/init.cc")
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -369,6 +375,9 @@ else()
         proto_input -Wl,--no-whole-archive)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
     target_link_libraries(_c_expression PRIVATE mindspore_gvar)
+    if(MODE_ASCEND_ALL)
+        target_link_libraries(_c_expression PRIVATE -Wl,--no-as-needed ms_profile)
+    endif()
 endif()
 
 if(USE_GLOG)

@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTile = prim::kTile;
-class MS_CORE_API Tile : public PrimitiveC {
+class Tile : public PrimitiveC {
  public:
   Tile() : PrimitiveC(kNameTile) { InitIOName({"x", "multiples"}, {"output"}); }
   explicit Tile(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "multiples"}, {"output"}); }

@@ -70,7 +70,6 @@ class FusionBasePass : public Pass {
   bool CheckEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
   bool CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
   bool CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
-  size_t GetNotUpdateStateUserNums(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
   FusionIdAllocatorPtr fusion_id_allocator;
 };
 }  // namespace opt

@@ -27,12 +27,12 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/format_utils.h"
 
-using mindspore::converter::FmkType;
+using mindspore::lite::converter::FmkType;
 namespace mindspore {
 namespace opt {
 class NodeInferShape {
  public:
-  explicit NodeInferShape(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false)
+  explicit NodeInferShape(FmkType fmk_type = lite::converter::FmkType_MS, bool train_flag = false)
       : fmk_type_(fmk_type), train_flag_(train_flag) {}
   virtual ~NodeInferShape() = default;
   void Init(FmkType fmk_type, bool train_flag) {
@@ -54,7 +54,7 @@ class NodeInferShape {
   STATUS SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, const std::vector<lite::Tensor *> &outputs, int status);
   abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
   abstract::AbstractBasePtr ConvertTensorListToAbstract(lite::Tensor *tensor);
-  FmkType fmk_type_{converter::kFmkTypeMs};
+  FmkType fmk_type_{lite::converter::FmkType_MS};
   bool train_flag_{false};
 };
 }  // namespace opt

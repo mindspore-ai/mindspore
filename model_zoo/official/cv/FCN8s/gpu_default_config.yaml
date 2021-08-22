@@ -21,7 +21,6 @@ image_std: [57.375, 57.120, 58.395]
 ignore_label: 255
 num_classes: 21
 model: "FCN8s"
-parallel_mode: "data_parallel"
 
 # ======================================================================================
 # Training options

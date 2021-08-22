@@ -101,11 +101,10 @@ class ScalarAffine(Bijector):
         return self._shift
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            str_info = 'scale = {}, shift = {}'.format(self.scale, self.shift)
+            str_info = f'scale = {self.scale}, shift = {self.shift}'
         else:
-            str_info = 'batch_shape = {}'.format(self.batch_shape)
+            str_info = f'batch_shape = {self.batch_shape}'
         return str_info
 
     def _forward(self, x):

@@ -148,7 +148,7 @@ void NetRunner::InitAndFigureInputs() {
   context->MutableDeviceInfo().push_back(cpu_context);
 
   graph_ = new mindspore::Graph();
-  auto status = mindspore::Serialization::Load(ms_file_, mindspore::kMindIR, graph_);
+  auto status = mindspore::Serialization::Load(ms_file_, mindspore::kFlatBuffer, graph_);
   if (status != mindspore::kSuccess) {
     std::cout << "Error " << status << " during serialization of graph " << ms_file_;
     MS_ASSERT(status != mindspore::kSuccess);

@@ -43,7 +43,7 @@ AlbumOp::AlbumOp(int32_t num_wkrs, std::string file_dir, int32_t queue_size, boo
       curr_row_(0) {
   // Set the column name map (base class field)
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->Column(i).Name()] = i;
+    column_name_id_map_[data_schema_->column(i).name()] = i;
   }
   io_block_queues_.Init(num_workers_, queue_size);
 }
@@ -70,8 +70,8 @@ Status AlbumOp::PrescanEntry() {
   }
   MS_LOG(INFO) << "Album folder Path found: " << folder_path_ << ".";
 
-  while (dirItr->HasNext()) {
-    Path file = dirItr->Next();
+  while (dirItr->hasNext()) {
+    Path file = dirItr->next();
     if (extensions_.empty() || extensions_.find(file.Extension()) != extensions_.end()) {
       (void)image_rows_.push_back(file.toString().substr(dirname_offset_));
     } else {
@@ -118,7 +118,7 @@ bool AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
   return true;
 }
 
-Status AlbumOp::LoadImageTensor(const std::string &image_file_path, int32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col_num, TensorRow *row) {
   TensorPtr image;
   std::ifstream fs;
   fs.open(image_file_path, std::ios::binary | std::ios::in);
@@ -168,7 +168,7 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, int32_t col_
   return Status::OK();
 }
 
-Status AlbumOp::LoadStringArrayTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadStringArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
   std::vector<std::string> data = json_obj;
 
   MS_LOG(INFO) << "String array label found: " << data << ".";
@@ -178,7 +178,7 @@ Status AlbumOp::LoadStringArrayTensor(const nlohmann::json &json_obj, int32_t co
   return Status::OK();
 }
 
-Status AlbumOp::LoadStringTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadStringTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
   std::string data = json_obj;
   // now we iterate over the elements in json
 
@@ -189,10 +189,10 @@ Status AlbumOp::LoadStringTensor(const nlohmann::json &json_obj, int32_t col_num
   return Status::OK();
 }
 
-Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
   TensorPtr label;
   // consider templating this function to handle all ints
-  if (data_schema_->Column(col_num).Type() == DataType::DE_INT64) {
+  if (data_schema_->column(col_num).type() == DataType::DE_INT64) {
     std::vector<int64_t> data;
 
     // Iterate over the integer list and add those values to the output shape tensor
@@ -201,7 +201,7 @@ Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, int32_t col_n
     (void)std::transform(items.begin(), items.end(), std::back_inserter(data), [](it_type j) { return j.value(); });
 
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &label));
-  } else if (data_schema_->Column(col_num).Type() == DataType::DE_INT32) {
+  } else if (data_schema_->column(col_num).type() == DataType::DE_INT32) {
     std::vector<int32_t> data;
 
     // Iterate over the integer list and add those values to the output shape tensor
@@ -212,16 +212,16 @@ Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, int32_t col_n
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &label));
   } else {
     RETURN_STATUS_UNEXPECTED("Invalid data, column type in data_schema is neither int32 nor int64, it is " +
-                             data_schema_->Column(col_num).Type().ToString());
+                             data_schema_->column(col_num).type().ToString());
   }
   row->push_back(std::move(label));
   return Status::OK();
 }
 
-Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
   TensorPtr float_array;
   // consider templating this function to handle all ints
-  if (data_schema_->Column(col_num).Type() == DataType::DE_FLOAT64) {
+  if (data_schema_->column(col_num).type() == DataType::DE_FLOAT64) {
     std::vector<double> data;
 
     // Iterate over the integer list and add those values to the output shape tensor
@@ -230,7 +230,7 @@ Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, int32_t col
     (void)std::transform(items.begin(), items.end(), std::back_inserter(data), [](it_type j) { return j.value(); });
 
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &float_array));
-  } else if (data_schema_->Column(col_num).Type() == DataType::DE_FLOAT32) {
+  } else if (data_schema_->column(col_num).type() == DataType::DE_FLOAT32) {
     std::vector<float> data;
 
     // Iterate over the integer list and add those values to the output shape tensor
@@ -241,15 +241,14 @@ Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, int32_t col
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &float_array));
   } else {
     RETURN_STATUS_UNEXPECTED("Invalid data, column type in data_schema is neither float32 nor float64, it is " +
-                             data_schema_->Column(col_num).Type().ToString());
+                             data_schema_->column(col_num).type().ToString());
   }
   row->push_back(std::move(float_array));
   return Status::OK();
 }
 
-Status AlbumOp::LoadIDTensor(const std::string &file, int32_t col_num, TensorRow *row) {
-  RETURN_UNEXPECTED_IF_NULL(row);
-  if (data_schema_->Column(col_num).Type() == DataType::DE_STRING) {
+Status AlbumOp::LoadIDTensor(const std::string &file, uint32_t col_num, TensorRow *row) {
+  if (data_schema_->column(col_num).type() == DataType::DE_STRING) {
     TensorPtr id;
     RETURN_IF_NOT_OK(Tensor::CreateScalar<std::string>(file, &id));
     row->push_back(std::move(id));
@@ -264,10 +263,10 @@ Status AlbumOp::LoadIDTensor(const std::string &file, int32_t col_num, TensorRow
   return Status::OK();
 }
 
-Status AlbumOp::LoadEmptyTensor(int32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadEmptyTensor(uint32_t col_num, TensorRow *row) {
   // hack to get the file name without extension, the 1 is to get rid of the backslash character
   TensorPtr empty_tensor;
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({0}), data_schema_->Column(col_num).Type(), &empty_tensor));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({0}), data_schema_->column(col_num).type(), &empty_tensor));
   row->push_back(std::move(empty_tensor));
   return Status::OK();
 }
@@ -276,13 +275,13 @@ Status AlbumOp::LoadEmptyTensor(int32_t col_num, TensorRow *row) {
 // So we actually have to check what type we want to fill the tensor with.
 // Float64 doesn't work with reinterpret cast here. Otherwise we limit the float in the schema to
 // only be float32, seems like a weird limitation to impose
-Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
   TensorPtr float_tensor;
-  if (data_schema_->Column(col_num).Type() == DataType::DE_FLOAT64) {
+  if (data_schema_->column(col_num).type() == DataType::DE_FLOAT64) {
     double data = json_obj;
     MS_LOG(INFO) << "double found: " << json_obj << ".";
     RETURN_IF_NOT_OK(Tensor::CreateScalar<double>(data, &float_tensor));
-  } else if (data_schema_->Column(col_num).Type() == DataType::DE_FLOAT32) {
+  } else if (data_schema_->column(col_num).type() == DataType::DE_FLOAT32) {
     float data1 = json_obj;
     RETURN_IF_NOT_OK(Tensor::CreateScalar<float>(data1, &float_tensor));
     MS_LOG(INFO) << "float found: " << json_obj << ".";
@@ -292,13 +291,13 @@ Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, int32_t col_num,
 }
 
 // Loads a tensor with int value, we have to cast the value to type specified in the schema.
-Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
   TensorPtr int_tensor;
-  if (data_schema_->Column(col_num).Type() == DataType::DE_INT64) {
+  if (data_schema_->column(col_num).type() == DataType::DE_INT64) {
     int64_t data = json_obj;
     MS_LOG(INFO) << "int64 found: " << json_obj << ".";
     RETURN_IF_NOT_OK(Tensor::CreateScalar<int64_t>(data, &int_tensor));
-  } else if (data_schema_->Column(col_num).Type() == DataType::DE_INT32) {
+  } else if (data_schema_->column(col_num).type() == DataType::DE_INT32) {
     int32_t data = json_obj;
     RETURN_IF_NOT_OK(Tensor::CreateScalar<int32_t>(data, &int_tensor));
     MS_LOG(INFO) << "int32 found: " << json_obj << ".";
@@ -350,35 +349,35 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
 Status AlbumOp::loadColumnData(const std::string &file, int32_t index, nlohmann::json js, TensorRow *row) {
   int32_t i = index;
   // special case to handle
-  if (data_schema_->Column(i).Name() == "id") {
+  if (data_schema_->column(i).name() == "id") {
     // id is internal, special case to load from file
     return LoadIDTensor(file, i, row);
   }
   // find if key does not exist, insert placeholder nullptr if not found
-  if (js.find(data_schema_->Column(i).Name()) == js.end()) {
+  if (js.find(data_schema_->column(i).name()) == js.end()) {
     // iterator not found, push nullptr as placeholder
-    MS_LOG(INFO) << "Pushing empty tensor for column: " << data_schema_->Column(i).Name() << ".";
+    MS_LOG(INFO) << "Pushing empty tensor for column: " << data_schema_->column(i).name() << ".";
     return LoadEmptyTensor(i, row);
   }
-  nlohmann::json column_value = js.at(data_schema_->Column(i).Name());
-  MS_LOG(INFO) << "This column is: " << data_schema_->Column(i).Name() << ".";
+  nlohmann::json column_value = js.at(data_schema_->column(i).name());
+  MS_LOG(INFO) << "This column is: " << data_schema_->column(i).name() << ".";
   bool is_array = column_value.is_array();
   // load single string
-  if (column_value.is_string() && data_schema_->Column(i).Type() == DataType::DE_STRING) {
+  if (column_value.is_string() && data_schema_->column(i).type() == DataType::DE_STRING) {
     return LoadStringTensor(column_value, i, row);
   }
   // load string array
-  if (is_array && data_schema_->Column(i).Type() == DataType::DE_STRING) {
+  if (is_array && data_schema_->column(i).type() == DataType::DE_STRING) {
     return LoadStringArrayTensor(column_value, i, row);
   }
   // load image file
-  if (column_value.is_string() && data_schema_->Column(i).Type() != DataType::DE_STRING) {
+  if (column_value.is_string() && data_schema_->column(i).type() != DataType::DE_STRING) {
     std::string image_file_path = column_value;
     return LoadImageTensor(image_file_path, i, row);
   }
   // load float value
-  bool judge_float = (data_schema_->Column(i).Type() == DataType::DE_FLOAT32) ||
-                     (data_schema_->Column(i).Type() == DataType::DE_FLOAT64);
+  bool judge_float = (data_schema_->column(i).type() == DataType::DE_FLOAT32) ||
+                     (data_schema_->column(i).type() == DataType::DE_FLOAT64);
   if (!is_array && judge_float) {
     return LoadFloatTensor(column_value, i, row);
   }
@@ -388,15 +387,15 @@ Status AlbumOp::loadColumnData(const std::string &file, int32_t index, nlohmann:
   }
   // int value
   if (!is_array &&
-      (data_schema_->Column(i).Type() == DataType::DE_INT64 || data_schema_->Column(i).Type() == DataType::DE_INT32)) {
+      (data_schema_->column(i).type() == DataType::DE_INT64 || data_schema_->column(i).type() == DataType::DE_INT32)) {
     return LoadIntTensor(column_value, i, row);
   }
   // int array
   if (is_array &&
-      (data_schema_->Column(i).Type() == DataType::DE_INT64 || data_schema_->Column(i).Type() == DataType::DE_INT32)) {
+      (data_schema_->column(i).type() == DataType::DE_INT64 || data_schema_->column(i).type() == DataType::DE_INT32)) {
     return LoadIntArrayTensor(column_value, i, row);
   } else {
-    MS_LOG(WARNING) << "Value type for column: " << data_schema_->Column(i).Name() << " is not supported.";
+    MS_LOG(WARNING) << "Value type for column: " << data_schema_->column(i).name() << " is not supported.";
     return Status::OK();
   }
 }
@@ -439,7 +438,7 @@ Status AlbumOp::ComputeColMap() {
   // Set the column name map (base class field)
   if (column_name_id_map_.empty()) {
     for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->Column(i).Name()] = i;
+      column_name_id_map_[data_schema_->column(i).name()] = i;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

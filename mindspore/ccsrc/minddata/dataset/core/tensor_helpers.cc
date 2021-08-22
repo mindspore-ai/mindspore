@@ -16,8 +16,6 @@
 #include <string>
 #include <vector>
 #include "minddata/dataset/core/tensor_helpers.h"
-#include "minddata/dataset/util/log_adapter.h"
-#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -25,10 +23,6 @@ namespace dataset {
 void IndexGeneratorHelper(int8_t depth, std::vector<dsize_t> *numbers,
                           const std::vector<mindspore::dataset::SliceOption> &slice_list,
                           std::vector<std::vector<dsize_t>> *matrix) {
-  if (numbers == nullptr || matrix == nullptr) {
-    MS_LOG(ERROR) << "Invalid input pointer, can't be NULL";
-    return;
-  }
   // for loop changes if its an index instead of a slice object
   if (depth > 0) {
     int8_t new_depth = depth - 1;

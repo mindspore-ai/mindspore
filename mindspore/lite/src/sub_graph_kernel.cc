@@ -16,9 +16,7 @@
 
 #include "src/sub_graph_kernel.h"
 #include "src/tensor.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
@@ -104,21 +102,17 @@ int SubGraphKernel::ReSize() {
     for (auto &output : outputs) {
       output->FreeData();
     }
-    int ret;
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-    ret = lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders(),
-                                 schema_version_);
+    auto ret =
+      lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders());
     if (ret == lite::RET_NOT_SUPPORT) {
-#endif
       auto parameter = kernel->op_parameter();
       if (parameter == nullptr) {
         MS_LOG(ERROR) << "kernel(" << kernel->name() << ")'s op_parameter is nullptr!";
         return RET_ERROR;
       }
       ret = lite::KernelInferShape(inputs, outputs, parameter);
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
     }
-#endif
+
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
@@ -150,9 +144,9 @@ void SubGraphKernel::InitInputTensorInitRefCount() {
   }
 }
 
-void SubGraphKernel::InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) {
+void SubGraphKernel::InitOutTensorInitRefCount() {
   for (auto *node : nodes_) {
-    node->InitOutTensorInitRefCount(mask_kernels);
+    node->InitOutTensorInitRefCount();
   }
 }
 
@@ -227,6 +221,14 @@ int CpuSubGraph::Prepare() {
 
 int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(this->Context()->allocator.get() != nullptr);
+#ifdef SUPPORT_GPU
+  // In heterogeneous scenarios of CPU and GPU, call MutableData to MapBuffer(synchronize data).
+  if (this->Context()->IsGpuEnabled()) {
+    for (auto tensor : this->in_tensors()) {
+      tensor->MutableData();
+    }
+  }
+#endif
 
   for (auto *kernel : nodes_) {
     MS_ASSERT(kernel != nullptr);

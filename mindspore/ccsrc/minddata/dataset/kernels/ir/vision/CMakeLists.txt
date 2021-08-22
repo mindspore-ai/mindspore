@@ -2,7 +2,6 @@ file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc"
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 
 set(DATASET_KERNELS_IR_VISION_SRC_FILES
-        adjust_gamma_ir.cc
         affine_ir.cc
         auto_contrast_ir.cc
         bounding_box_augment_ir.cc

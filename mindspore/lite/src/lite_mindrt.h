@@ -27,9 +27,7 @@
 #include "async/future.h"
 #include "src/sub_graph_kernel.h"
 #include "src/cpu_info.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
 
 namespace mindspore::lite {
 
@@ -95,18 +93,15 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   std::unordered_map<Tensor *, Tensor *> isolate_input_map_{}; /* <calculate-tensor,  src-input-tensor> */
 
  private:
-  void ReplaceNodeInTensor(kernel::LiteKernel *kernel, Tensor *old_tensor, Tensor *new_tensor);
   void IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors);
   void MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
+  void MoveTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
   void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void SetInputData(Tensor *dst_tensor, Tensor *src_tensor);
   int CastInputData(Tensor *dst_tensor, Tensor *src_tensor);
   bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
   int CastTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  void MoveTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
   int CastTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
-#endif
 
  private:
   kernel::LiteKernel *partial_node_ = nullptr;
@@ -116,7 +111,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 #endif
 };
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 class LiteSwitchOpActor : public LiteOpActor {
  public:
   explicit LiteSwitchOpActor(kernel::LiteKernel *kernel) : LiteOpActor(kernel) {}
@@ -152,7 +146,6 @@ class LiteSwitchOpActor : public LiteOpActor {
   std::vector<OpDataPtr<Tensor>> true_branch_outputs_data_;
   std::vector<OpDataPtr<Tensor>> false_branch_outputs_data_;
 };
-#endif
 
 int MindrtInit();
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &);

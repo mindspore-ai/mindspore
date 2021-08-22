@@ -138,8 +138,10 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
         else:
             cond = self.less_equal(self.base, flag_sum)
 
-        self.optimizer(grads)
-        return (loss, cond, scaling_sens)
+        opt = self.optimizer(grads)
+
+        ret = (loss, cond, scaling_sens)
+        return F.depend(ret, opt)
 
 
 class BuildTrainNetworkV2(nn.Cell):

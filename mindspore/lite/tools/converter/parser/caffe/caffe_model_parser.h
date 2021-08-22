@@ -28,7 +28,7 @@
 
 using STATUS = int;
 namespace mindspore::lite {
-class CaffeModelParser : public converter::ModelParser {
+class CaffeModelParser : public ModelParser {
  public:
   CaffeModelParser();
 
@@ -56,6 +56,10 @@ class CaffeModelParser : public converter::ModelParser {
 
   std::string GetOriginLayerName(const std::string &layer_name);
 
+  STATUS WeightFormatTransform(const FuncGraphPtr &graph);
+
+  STATUS HardCodeCaffe(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info, const FuncGraphPtr &graph);
+
   STATUS ConvertGraphInputsOfLayer();
 
   STATUS ConvertGraphInputsOfDim();
@@ -66,7 +70,7 @@ class CaffeModelParser : public converter::ModelParser {
   caffe::NetParameter caffe_weight_;
   std::unordered_map<std::string, caffe::LayerParameter> caffe_layers_;
   std::unordered_map<std::string, AnfNodePtr> nodes_;
-  schema::QuantType quant_type_ = schema::QuantType_QUANT_NONE;
+  QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 };
 }  // namespace mindspore::lite
 

@@ -30,7 +30,6 @@ from .proximal_ada_grad import ProximalAdagrad
 from .lazyadam import LazyAdam
 from .ada_grad import Adagrad
 from .thor import thor
-from .adafactor import AdaFactor
 
 __all__ = ['Optimizer', 'Momentum', 'LARS', 'Adam', 'AdamWeightDecay', 'LazyAdam', 'AdamOffload',
-           'Lamb', 'SGD', 'FTRL', 'RMSProp', 'ProximalAdagrad', 'Adagrad', 'thor', 'AdaFactor']
+           'Lamb', 'SGD', 'FTRL', 'RMSProp', 'ProximalAdagrad', 'Adagrad', 'thor']

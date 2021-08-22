@@ -263,9 +263,9 @@ void RowMajor2Col12Major_arm32(const float *src_c, float *dst_c, size_t col) {
 void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   const float *src_r = src_ptr;
   float *dst_r = dst_ptr;
-  int ri = 0;
+  size_t ri = 0;
   for (; ri < (row / C12NUM * C12NUM); ri += C12NUM) {
-    int ci = 0;
+    size_t ci = 0;
     for (; ci < (col / C4NUM * C4NUM); ci += C4NUM) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C12NUM;
@@ -340,7 +340,7 @@ void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col)
     for (; ci < col; ci++) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C12NUM;
-      for (int i = 0; i < C12NUM; i++) {
+      for (size_t i = 0; i < C12NUM; i++) {
         dst_c[i] = src_c[i * col];
       }
     }
@@ -348,15 +348,16 @@ void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col)
     dst_r += C12NUM * col;
   }
   for (; ri < row; ri++, dst_r++, src_r += col) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C12NUM] = src_r[i];
     }
   }
   for (; ri < UP_ROUND(row, C12NUM); ri++, dst_r++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C12NUM] = 0;
     }
   }
+  return;
 }
 
 #ifdef ENABLE_ARM64
@@ -531,20 +532,20 @@ void RowMajor2Col8Major_arm32(const float *src_c, float *dst_c, size_t col) {
 #endif
 #endif
 void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  int row8 = row / C8NUM * C8NUM;
+  size_t row8 = row / C8NUM * C8NUM;
 #ifdef ENABLE_ARM64
-  int col_skip = col / C8NUM * C8NUM;
+  size_t col_skip = col / C8NUM * C8NUM;
   int skip_size = C8NUM;
 #else
-  int col_skip = col / C4NUM * C4NUM;
+  size_t col_skip = col / C4NUM * C4NUM;
   int skip_size = C4NUM;
 #endif
   const float *src_r = src_ptr;
   float *dst_r = dst_ptr;
 
-  int ri = 0;
+  size_t ri = 0;
   for (; ri < row8; ri += C8NUM) {
-    int ci = 0;
+    size_t ci = 0;
     for (; ci < col_skip; ci += skip_size) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C8NUM;
@@ -592,7 +593,7 @@ void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) 
     for (; ci < col; ci++) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C8NUM;
-      for (int i = 0; i < C8NUM; i++) {
+      for (size_t i = 0; i < C8NUM; i++) {
         dst_c[i] = src_c[i * col];
       }
     }
@@ -600,28 +601,29 @@ void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) 
     dst_r += C8NUM * col;
   }
   for (; ri < row; ri++, src_r += col, dst_r++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C8NUM] = src_r[i];
     }
   }
 
   for (; ri < UP_ROUND(row, C8NUM); ri++, dst_r++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C8NUM] = 0;
     }
   }
+  return;
 }
 
 void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  int row16 = row / C16NUM * C16NUM;
-  int col_skip = col / C4NUM * C4NUM;
+  size_t row16 = row / C16NUM * C16NUM;
+  size_t col_skip = col / C4NUM * C4NUM;
   int skip_size = C4NUM;
   const float *src_r = src_ptr;
   float *dst_r = dst_ptr;
 
-  int ri = 0;
+  size_t ri = 0;
   for (; ri < row16; ri += C16NUM) {
-    int ci = 0;
+    size_t ci = 0;
     for (; ci < col_skip; ci += skip_size) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C16NUM;
@@ -634,7 +636,7 @@ void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col)
     for (; ci < col; ci++) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C16NUM;
-      for (int i = 0; i < C16NUM; i++) {
+      for (size_t i = 0; i < C16NUM; i++) {
         dst_c[i] = src_c[i * col];
       }
     }
@@ -642,20 +644,21 @@ void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col)
     dst_r += C16NUM * col;
   }
   for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C16NUM] = src_r[i];
     }
     src_r += col;
     dst_r += 1;
   }
 
-  int total_row = UP_ROUND(row, C16NUM);
+  size_t total_row = UP_ROUND(row, C16NUM);
   for (; ri < total_row; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C16NUM] = 0;
     }
     dst_r += 1;
   }
+  return;
 }
 
 void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col) {
@@ -677,15 +680,15 @@ void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col)
 }
 
 void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  int totalRow = UP_ROUND(row, C6NUM);
-  int row6 = row / C6NUM * C6NUM;
-  int col8 = col / C8NUM * C8NUM;
+  size_t totalRow = UP_ROUND(row, C6NUM);
+  size_t row6 = row / C6NUM * C6NUM;
+  size_t col8 = col / C8NUM * C8NUM;
   const float *src_r = src_ptr;
   float *dst_r = dst_ptr;
 
-  int ri = 0;
+  size_t ri = 0;
   for (; ri < row6; ri += C6NUM) {
-    int ci = 0;
+    size_t ci = 0;
     for (; ci < col8; ci += C8NUM) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C6NUM;
@@ -750,7 +753,7 @@ void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col) 
     for (; ci < col; ci++) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C6NUM;
-      for (int i = 0; i < C6NUM; i++) {
+      for (size_t i = 0; i < C6NUM; i++) {
         dst_c[i] = src_c[i * col];
       }
     }
@@ -759,7 +762,7 @@ void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col) 
   }
 
   for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C6NUM] = src_r[i];
     }
     src_r += col;
@@ -767,29 +770,30 @@ void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col) 
   }
 
   for (; ri < totalRow; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C6NUM] = 0;
     }
     dst_r += 1;
   }
+  return;
 }
 
 void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) {
-  int total_row = UP_ROUND(row, C4NUM);
-  int row4 = row / C4NUM * C4NUM;
-  int col4 = col / C4NUM * C4NUM;
+  size_t total_row = UP_ROUND(row, C4NUM);
+  size_t row4 = row / C4NUM * C4NUM;
+  size_t col4 = col / C4NUM * C4NUM;
   const float *src_r = src_ptr;
   float *dst_r = dst_ptr;
 
-  int ri = 0;
+  size_t ri = 0;
   for (; ri < row4; ri += C4NUM) {
-    int ci = 0;
+    size_t ci = 0;
     for (; ci < col4; ci += C4NUM) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C4NUM;
 
 #ifdef ENABLE_ARM32
-      int stride = col * 4;
+      size_t stride = col * 4;
       asm volatile(
         "mov r10, %[src_c]\n"
         "mov r12, %[dst_c]\n"
@@ -836,8 +840,8 @@ void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
       _mm_storeu_ps(dst_c + 8, dst2);
       _mm_storeu_ps(dst_c + 12, dst3);
 #else
-      for (size_t tr = 0; tr < C4NUM; tr++) {
-        for (size_t tc = 0; tc < C4NUM; tc++) {
+      for (int tr = 0; tr < C4NUM; tr++) {
+        for (int tc = 0; tc < C4NUM; tc++) {
           dst_c[tc * C4NUM + tr] = src_c[tr * col + tc];
         }
       }
@@ -846,7 +850,7 @@ void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
     for (; ci < col; ci++) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C4NUM;
-      for (int i = 0; i < C4NUM; i++) {
+      for (size_t i = 0; i < C4NUM; i++) {
         dst_c[i] = src_c[i * col];
       }
     }
@@ -854,7 +858,7 @@ void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
     dst_r += C4NUM * col;
   }
   for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C4NUM] = src_r[i];
     }
     src_r += col;
@@ -862,11 +866,12 @@ void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
   }
 
   for (; ri < total_row; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C4NUM] = 0;
     }
     dst_r += 1;
   }
+  return;
 }
 
 #ifndef ENABLE_ARM

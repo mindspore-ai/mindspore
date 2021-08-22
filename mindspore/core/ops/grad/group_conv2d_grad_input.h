@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGroupConv2DGradInput = "GroupConv2DGradInput";
-class MS_CORE_API GroupConv2DGradInput : public PrimitiveC {
+class GroupConv2DGradInput : public PrimitiveC {
  public:
   GroupConv2DGradInput() : PrimitiveC(kNameGroupConv2DGradInput) {}
   ~GroupConv2DGradInput() = default;

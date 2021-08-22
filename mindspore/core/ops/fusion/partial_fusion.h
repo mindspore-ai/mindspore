@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePartialFusion = "PartialFusion";
-class MS_CORE_API PartialFusion : public PrimitiveC {
+class PartialFusion : public PrimitiveC {
  public:
   PartialFusion() : PrimitiveC(kNamePartialFusion) {}
   ~PartialFusion() = default;

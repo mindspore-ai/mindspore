@@ -23,50 +23,50 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-void ConvolutionDepthwiseFp16CPUKernel::PackWeight() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
-  MS_ASSERT(origin_weight != nullptr);
-  PackNCHWToNHWCFp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_), 1,
-                     weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch(), 0, 0);
+ConvolutionDepthwiseFp16CPUKernel::~ConvolutionDepthwiseFp16CPUKernel() {
+  if (packed_weight_ != nullptr) {
+    free(packed_weight_);
+    packed_weight_ = nullptr;
+  }
 }
 
-int ConvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
+int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
+  // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int channel = weight_tensor->Batch();
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
-  if (!op_parameter_->is_train_session_) {
+  auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
+  if (packed_weight_ == nullptr) {
+    packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
     if (packed_weight_ == nullptr) {
-      packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
-      if (packed_weight_ == nullptr) {
-        MS_LOG(ERROR) << "Malloc buffer failed.";
-        return RET_ERROR;
-      }
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
     }
   }
+  PackNCHWToNHWCFp16(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
+                     weight_tensor->Batch(), 0, 0);
+
   if (bias_data_ == nullptr) {
-    bias_data_ = malloc(channel * sizeof(float16_t));
+    bias_data_ = reinterpret_cast<float16_t *>(malloc(channel * sizeof(float16_t)));
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
   }
   memset(bias_data_, 0, channel * sizeof(float16_t));
+  if (in_tensors_.size() == kInputSize2) {
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
+    auto ori_bias = reinterpret_cast<float16_t *>(bias_tensor->data_c());
+    memcpy(bias_data_, ori_bias, bias_tensor->Size());
+  }
   return RET_OK;
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  if (op_parameter_->is_train_session_) {
-    auto weight_tensor = in_tensors_.at(kWeightIndex);
-    int channel = weight_tensor->Batch();
-    int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
-    set_workspace_size(pack_weight_size * sizeof(float16_t));
-  }
-  auto ret = InitConvWeightBias();
+  auto ret = InitWeightBias();
   if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp16 InitConvWeightBias failed.";
+    MS_LOG(ERROR) << "Convolution depthwise fp16 InitWeightBias failed.";
     return RET_ERROR;
   }
 
@@ -94,8 +94,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
     MS_LOG(ERROR) << "Convolution depthwise Fp16 get null tensor data!";
     return RET_ERROR;
   }
-  ConvDwFp16(output_ptr, input_ptr, reinterpret_cast<float16_t *>(packed_weight_),
-             reinterpret_cast<float16_t *>(bias_data_), conv_param_, task_id);
+  ConvDwFp16(output_ptr, input_ptr, packed_weight_, reinterpret_cast<float16_t *>(bias_data_), conv_param_, task_id);
   return RET_OK;
 }
 
@@ -110,9 +109,13 @@ static int ConvDwFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sc
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Run() {
-  if (RepackWeight() != RET_OK) {
-    MS_LOG(ERROR) << "Repack weight failed.";
-    return RET_ERROR;
+  if (IsTrainable() && (IsTrain() || IsRepack())) {
+    auto ret = InitWeightBias();
+    if (ret != 0) {
+      MS_LOG(ERROR) << "Convolution depthwise fp16 repack weight failure";
+      return RET_ERROR;
+    }
+    is_repack_ = false;
   }
   auto ret = ParallelLaunch(this->ms_context_, ConvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
@@ -121,4 +124,10 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
   return ret;
 }
 
+int ConvolutionDepthwiseFp16CPUKernel::Eval() {
+  if (IsTrainable()) {
+    is_repack_ = true;
+  }
+  return InnerKernel::Eval();
+}
 }  // namespace mindspore::kernel

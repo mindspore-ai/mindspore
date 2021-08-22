@@ -93,37 +93,19 @@ int ScaleOpenCLKernel::InitWeights() {
   ImageSize img_size;
   GetImageSize(0, &img_size);
   img_size.dtype = scale_dtype == kNumberTypeFloat16 ? CL_HALF_FLOAT : CL_FLOAT;
-  MS_ASSERT(scale_tensor->data_c());
-  MS_ASSERT(offset_tensor->data_c());
 
   if (broadcast_flag_) {
     img_size.height = 1;
     img_size.width = UP_DIV(scale_tensor->shape()[0], C4NUM);
     scale_ptr_ = allocator->Malloc(img_size, scale_tensor->data_c());
-    if (scale_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc failed.";
-      return RET_ERROR;
-    }
     offset_ptr_ = allocator->Malloc(img_size, offset_tensor->data_c());
-    if (offset_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc failed.";
-      return RET_ERROR;
-    }
     return RET_OK;
   }
 
   if (in_tensor->format() == scale_tensor->format()) {
     if (in_tensor->data_type() == scale_tensor->data_type()) {
       scale_ptr_ = allocator->Malloc(img_size, scale_tensor->data_c());
-      if (scale_ptr_ == nullptr) {
-        MS_LOG(ERROR) << "Malloc failed.";
-        return RET_ERROR;
-      }
       offset_ptr_ = allocator->Malloc(img_size, offset_tensor->data_c());
-      if (offset_ptr_ == nullptr) {
-        MS_LOG(ERROR) << "Malloc failed.";
-        return RET_ERROR;
-      }
     } else {
       MS_LOG(ERROR) << "Unsupported data type transpose from " << scale_tensor->data_type() << "to "
                     << in_tensor->data_type();
@@ -139,15 +121,7 @@ int ScaleOpenCLKernel::InitWeights() {
       PackNHWCToNHWC4(scale_tensor->data_c(), scale.data(), src_is_fp16, fp16_enable, image2d_info);
       PackNHWCToNHWC4(offset_tensor->data_c(), offset.data(), src_is_fp16, fp16_enable, image2d_info);
       scale_ptr_ = allocator->Malloc(img_size, scale.data());
-      if (scale_ptr_ == nullptr) {
-        MS_LOG(ERROR) << "Malloc failed.";
-        return RET_ERROR;
-      }
       offset_ptr_ = allocator->Malloc(img_size, offset.data());
-      if (offset_ptr_ == nullptr) {
-        MS_LOG(ERROR) << "Malloc failed.";
-        return RET_ERROR;
-      }
     } else {
       MS_LOG(ERROR) << "Unsupported data type transpose from " << scale_tensor->data_type() << "to "
                     << in_tensor->data_type();
@@ -201,7 +175,7 @@ int ScaleOpenCLKernel::Prepare() {
   } else {
     kernel_name += "_BUF";
   }
-  const std::string program_name = "Scale";
+  std::string program_name = "Scale";
   std::string source = GetActDefines() + scale_source;
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
@@ -219,86 +193,44 @@ int ScaleOpenCLKernel::Prepare() {
   return RET_OK;
 }
 
-int ScaleOpenCLKernel::SetKernelArg(int *idx) {
+int ScaleOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->name() << " Running!";
+  auto *param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
   int arg_idx = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   if (weight_vector_flag_) {
     void *scale = scale_ptr_ == nullptr ? in_tensors_[1]->data_c() : scale_ptr_;
     void *offset = offset_ptr_ == nullptr ? in_tensors_[2]->data_c() : offset_ptr_;
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale) != CL_SUCCESS) {
-      return RET_ERROR;
-    }
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, offset) != CL_SUCCESS) {
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, offset);
   } else {
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
       float scale = static_cast<float *>(in_tensors_[1]->data_c())[0];
       float offset = static_cast<float *>(in_tensors_[2]->data_c())[0];
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale) != CL_SUCCESS) {
-        return RET_ERROR;
-      }
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, offset) != CL_SUCCESS) {
-        return RET_ERROR;
-      }
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale);
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, offset);
     } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
       float16_t scale = static_cast<float16_t *>(in_tensors_[1]->data_c())[0];
       float16_t offset = static_cast<float16_t *>(in_tensors_[2]->data_c())[0];
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(scale)) != CL_SUCCESS) {
-        return RET_ERROR;
-      }
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(offset)) != CL_SUCCESS) {
-        return RET_ERROR;
-      }
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(scale));
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(offset));
     } else {
       MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[1]->data_type();
       return RET_ERROR;
     }
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape) != CL_SUCCESS) {
-    return RET_ERROR;
-  }
-  *idx = arg_idx;
-  return RET_OK;
-}
-
-int ScaleOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " Running!";
-  auto *param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
-  int arg_idx = 0;
-
-  if (SetKernelArg(&arg_idx) != RET_OK) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
   if (weight_vector_flag_ && broadcast_flag_) {
     if (broadcast_H_flag_) {
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[1]->shape()[0]) != CL_SUCCESS) {
-        MS_LOG(ERROR) << "SetKernelArg failed.";
-        return RET_ERROR;
-      }
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[1]->shape()[0]);
     } else {
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, UP_DIV(in_tensors_[1]->shape()[0], C4NUM)) != CL_SUCCESS) {
-        MS_LOG(ERROR) << "SetKernelArg failed.";
-        return RET_ERROR;
-      }
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, UP_DIV(in_tensors_[1]->shape()[0], C4NUM));
     }
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, param->activation_type_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, param->activation_type_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

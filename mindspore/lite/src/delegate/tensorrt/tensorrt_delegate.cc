@@ -69,6 +69,9 @@ int TensorRTDelegate::Init() {
   op_func_lists_.clear();
   op_func_lists_ = {
     {schema::PrimitiveType_Activation, GetTensorRTOp<ActivationTensorRT>},
+    {schema::PrimitiveType_Unsqueeze, GetTensorRTOp<ShuffleTensorRT>},
+    {schema::PrimitiveType_Squeeze, GetTensorRTOp<ShuffleTensorRT>},
+    {schema::PrimitiveType_Reshape, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_Concat, GetTensorRTOp<ConcateTensorRT>},
     {schema::PrimitiveType_Conv2DFusion, GetTensorRTOp<ConvolutionTensorRT>},
     {schema::PrimitiveType_Conv2dTransposeFusion, GetTensorRTOp<DeconvolutionTensorRT>},
@@ -78,20 +81,14 @@ int TensorRTDelegate::Init() {
     {schema::PrimitiveType_AddFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_MulFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Eltwise, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_Gather, GetTensorRTOp<GatherTensorRT>},
-    {schema::PrimitiveType_MatMul, GetTensorRTOp<MatMulTensorRT>},
-    {schema::PrimitiveType_AvgPoolFusion, GetTensorRTOp<PoolTensorRT>},
-    {schema::PrimitiveType_PadFusion, GetTensorRTOp<PadTensorRT>},
+    {schema::PrimitiveType_Transpose, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_ReduceFusion, GetTensorRTOp<ReduceTensorRT>},
+    {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
+    {schema::PrimitiveType_MatMul, GetTensorRTOp<MatMulTensorRT>},
     {schema::PrimitiveType_ScaleFusion, GetTensorRTOp<ScaleTensorRT>},
     {schema::PrimitiveType_StridedSlice, GetTensorRTOp<SliceTensorRT>},
-    {schema::PrimitiveType_Shape, GetTensorRTOp<ShapeTensorRT>},
-    {schema::PrimitiveType_Unsqueeze, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Squeeze, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Reshape, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Transpose, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Flatten, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
+    {schema::PrimitiveType_AvgPoolFusion, GetTensorRTOp<PoolTensorRT>},
+    {schema::PrimitiveType_PadFusion, GetTensorRTOp<PadTensorRT>},
   };
   return RET_OK;
 }

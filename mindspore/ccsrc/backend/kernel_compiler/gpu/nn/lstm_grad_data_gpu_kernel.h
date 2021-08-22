@@ -75,7 +75,7 @@ class LstmGradDataGpuKernel : public GpuKernel {
     auto dx_addr = GetDeviceAddress<T>(outputs, 0);
     auto dhx_addr = GetDeviceAddress<T>(outputs, 1);
     auto dcx_addr = GetDeviceAddress<T>(outputs, 2);
-    void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+    void *workspace_addr = GetDeviceAddress<T>(workspace, 0);
 
     if (!states_init_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(

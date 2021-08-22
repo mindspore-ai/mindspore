@@ -79,7 +79,7 @@ int TransposeInt8CPUKernel::DoTranspose(int task_id) {
   return RET_OK;
 }
 
-void TransposeInt8CPUKernel::GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor,
+void TransposeInt8CPUKernel::GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor,
                                                   const TransposeParameter *param) {
   auto out_shape = out_tensor->shape();
   if (in_tensor->shape().size() == DIMENSION_4D && param->perm_[0] == 0 && param->perm_[1] == 2 &&

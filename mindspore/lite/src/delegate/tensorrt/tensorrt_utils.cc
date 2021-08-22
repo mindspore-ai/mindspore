@@ -108,7 +108,7 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
   return constant_tensor->getOutput(0);
 }
 
-nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value) {
+nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, void *value) {
   nvinfer1::Dims dims = ConvertCudaDims(1, shape_size);
   nvinfer1::Weights weights{nvinfer1::DataType::kFLOAT, value, 1};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);

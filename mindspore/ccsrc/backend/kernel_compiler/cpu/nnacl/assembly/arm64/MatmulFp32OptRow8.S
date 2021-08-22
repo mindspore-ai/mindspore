@@ -29,27 +29,10 @@ asm_function MatmulFloatNeon64OptRow8
 
     mov x21, #48 // sizeof(float) * 12
     mul x17, x5, x21 // block stride of lhs/rhs: sizeof(float) * 12 * depth
-    cmp x9, #3 // c4
-    beq C4Stride
     cbnz x9, NoC8Steps
     mov x11, x2
     mov x21, #32
     mul x16, x6, x21 // row * 8 * sizeof(float)
-    b NoC8Steps
-C4Stride:
-    mov x18, #32 // 8 * sizeof(float)
-    mov x22, #4
-    mul x8, x8, x22 // stride * sizeof(float), in c4 stride == row
-    mul x8, x8, x22 // col stride
-    // col >= 4 , block stride 128, otherwise 8 * 4 * col
-    cmp x7, #4
-    bge C4StrideCommon
-    mul x18, x18, x7 // block stride
-    b LoopRowStart
-C4StrideCommon:
-    mov x18, #128 // block stride
-    b LoopRowStart
-
 NoC8Steps:
     cmp x9, #2
     bne NoWinoSteps
@@ -62,10 +45,6 @@ NoWinoSteps:
     mov x21, #4
     mul x8, x8, x21
 
-LoopRowStart:
-    cmp x9, #3
-    bne LoopRow8
-    mov x20, x2
 LoopRow8:
     mov x14, x1 // reload rhs ptr
     mov x13, x7 // reload rhs col
@@ -73,12 +52,7 @@ LoopRow8:
 
     LoopCol8:
         cbz x9, NoReloadDst8
-        cmp x9, #3
-        beq C4ReloadDst8
         mov x11, x2
-        b NoReloadDst8
-    C4ReloadDst8:
-        mov x11, x20
     NoReloadDst8:
         mov x10, x0 // reload lhs ptr
         mov x19, x5 // reload depth
@@ -280,8 +254,6 @@ LoopRow8:
         Write:
             cmp x9, #2
             beq WriteWino
-            cmp x9, #3
-            beq WriteC4
             cbz x9, WriteC8
             cmp x13, #1
             beq Write1
@@ -585,312 +557,7 @@ LoopRow8:
             beq WriteEnd
             st1 {v22.4s, v23.4s}, [x11], x8
             add x11, x11, #32
-            b WriteEnd
-        WriteC4:
-            cmp x13, #1
-            beq C4Write1
-            cmp x13, #2
-            beq C4Write2
-            cmp x13, #3
-            beq C4Write3
-            cmp x13, #4
-            beq C4Write4
-            cmp x13, #5
-            beq C4Write5
-            cmp x13, #6
-            beq C4Write6
-            cmp x13, #7
-            beq C4Write7
-            b C4Write8
-        C4Write1:
-            str s8, [x11], #4
-            cmp x6, #1
-            beq WriteEnd
-            str s10, [x11], #4
-            cmp x6, #2
-            beq WriteEnd
-            str s12, [x11], #4
-            cmp x6, #3
-            beq WriteEnd
-            str s14, [x11], #4
-            cmp x6, #4
-            beq WriteEnd
-            str s16, [x11], #4
-            cmp x6, #5
-            beq WriteEnd
-            str s18, [x11], #4
-            cmp x6, #6
-            beq WriteEnd
-            str s20, [x11], #4
-            cmp x6, #7
-            beq WriteEnd
-            str s22, [x11], #4
-            b WriteEnd
-        C4Write2:
-            st1 {v8.2s}, [x11], #8
-            cmp x6, #1
-            beq WriteEnd
-            st1 {v10.2s}, [x11], #8
-            cmp x6, #2
-            beq WriteEnd
-            st1 {v12.2s}, [x11], #8
-            cmp x6, #3
-            beq WriteEnd
-            st1 {v14.2s}, [x11], #8
-            cmp x6, #4
-            beq WriteEnd
-            st1 {v16.2s}, [x11], #8
-            cmp x6, #5
-            beq WriteEnd
-            st1 {v18.2s}, [x11], #8
-            cmp x6, #6
-            beq WriteEnd
-            st1 {v20.2s}, [x11], #8
-            cmp x6, #7
-            beq WriteEnd
-            st1 {v22.2s}, [x11], #8
-            b WriteEnd
-        C4Write3:
-            add x19, x11, #8
-            st1 {v8.2s}, [x11]
-            add x11, x11, #12
-            st1 {v8.s}[2], [x19]
-            add x19, x19, #12
-            cmp x6, #1
-            beq WriteEnd
-            st1 {v10.2s}, [x11]
-            add x11, x11, #12
-            st1 {v10.s}[2], [x19]
-            add x19, x19, #12
-            cmp x6, #2
-            beq WriteEnd
-            st1 {v12.2s}, [x11]
-            add x11, x11, #12
-            st1 {v12.s}[2], [x19]
-            add x19, x19, #12
-            cmp x6, #3
-            beq WriteEnd
-            st1 {v14.2s}, [x11]
-            add x11, x11, #12
-            st1 {v14.s}[2], [x19]
-            add x19, x19, #12
-            cmp x6, #4
-            beq WriteEnd
-            st1 {v16.2s}, [x11]
-            add x11, x11, #12
-            st1 {v16.s}[2], [x19]
-            add x19, x19, #12
-            cmp x6, #5
-            beq WriteEnd
-            st1 {v18.2s}, [x11]
-            add x11, x11, #12
-            st1 {v18.s}[2], [x19]
-            add x19, x19, #12
-            cmp x6, #6
-            beq WriteEnd
-            st1 {v20.2s}, [x11]
-            add x11, x11, #12
-            st1 {v20.s}[2], [x19]
-            add x19, x19, #12
-            cmp x6, #7
-            beq WriteEnd
-            st1 {v22.2s}, [x11]
-            st1 {v22.s}[2], [x19]
-            b WriteEnd
-        C4Write4:
-            st1 {v8.4s}, [x11], #16
-            cmp x6, #1
-            beq WriteEnd
-            st1 {v10.4s}, [x11], #16
-            cmp x6, #2
-            beq WriteEnd
-            st1 {v12.4s}, [x11], #16
-            cmp x6, #3
-            beq WriteEnd
-            st1 {v14.4s}, [x11], #16
-            cmp x6, #4
-            beq WriteEnd
-            st1 {v16.4s}, [x11], #16
-            cmp x6, #5
-            beq WriteEnd
-            st1 {v18.4s}, [x11], #16
-            cmp x6, #6
-            beq WriteEnd
-            st1 {v20.4s}, [x11], #16
-            cmp x6, #7
-            beq WriteEnd
-            st1 {v22.4s}, [x11], #16
-            b WriteEnd
-        C4Write5:
-            add x19, x11, #16
-            st1 {v8.4s}, [x11]
-            add x11, x11, #20
-            str s9, [x19]
-            add x19, x19, #20
-            cmp x6, #1
-            beq WriteEnd
-            st1 {v10.4s}, [x11]
-            add x11, x11, #20
-            str s11, [x19]
-            add x19, x19, #20
-            cmp x6, #2
-            beq WriteEnd
-            st1 {v12.4s}, [x11]
-            add x11, x11, #20
-            str s13, [x19]
-            add x19, x19, #20
-            cmp x6, #3
-            beq WriteEnd
-            st1 {v14.4s}, [x11]
-            add x11, x11, #20
-            str s15, [x19]
-            add x19, x19, #20
-            cmp x6, #4
-            beq WriteEnd
-            st1 {v16.4s}, [x11]
-            add x11, x11, #20
-            str s17, [x19]
-            add x19, x19, #20
-            cmp x6, #5
-            beq WriteEnd
-            st1 {v18.4s}, [x11]
-            add x11, x11, #20
-            str s19, [x19]
-            add x19, x19, #20
-            cmp x6, #6
-            beq WriteEnd
-            st1 {v20.4s}, [x11]
-            add x11, x11, #20
-            str s21, [x19]
-            add x19, x19, #20
-            cmp x6, #7
-            beq WriteEnd
-            st1 {v22.4s}, [x11]
-            str s23, [x19]
-            b WriteEnd
-        C4Write6:
-            add x19, x11, #16
-            st1 {v8.4s}, [x11]
-            add x11, x11, #24
-            st1 {v9.2s}, [x19]
-            add x19, x19, #24
-            cmp x6, #1
-            beq WriteEnd
-            st1 {v10.4s}, [x11]
-            add x11, x11, #24
-            st1 {v11.2s}, [x19]
-            add x19, x19, #24
-            cmp x6, #2
-            beq WriteEnd
-            st1 {v12.4s}, [x11]
-            add x11, x11, #24
-            st1 {v13.2s}, [x19]
-            add x19, x19, #24
-            cmp x6, #3
-            beq WriteEnd
-            st1 {v14.4s}, [x11]
-            add x11, x11, #24
-            st1 {v15.2s}, [x19]
-            add x19, x19, #24
-            cmp x6, #4
-            beq WriteEnd
-            st1 {v16.4s}, [x11]
-            add x11, x11, #24
-            st1 {v17.2s}, [x19]
-            add x19, x19, #24
-            cmp x6, #5
-            beq WriteEnd
-            st1 {v18.4s}, [x11]
-            add x11, x11, #24
-            st1 {v19.2s}, [x19]
-            add x19, x19, #24
-            cmp x6, #6
-            beq WriteEnd
-            st1 {v20.4s}, [x11]
-            add x11, x11, #24
-            st1 {v21.2s}, [x19]
-            add x19, x19, #24
-            cmp x6, #7
-            beq WriteEnd
-            st1 {v22.4s}, [x11]
-            st1 {v23.2s}, [x19]
-            b WriteEnd
-        C4Write7:
-            add x19, x11, #16
-            add x16, x11, #24
-            mov x10, #28
-            st1 {v8.4s}, [x11], x10
-            st1 {v9.2s}, [x19], x10
-            st1 {v9.s}[2], [x16], x10
-            cmp x6, #1
-            beq WriteEnd
-            st1 {v10.4s}, [x11], x10
-            st1 {v11.2s}, [x19], x10
-            st1 {v11.s}[2], [x16], x10
-            cmp x6, #2
-            beq WriteEnd
-            st1 {v12.4s}, [x11], x10
-            st1 {v13.2s}, [x19], x10
-            st1 {v13.s}[2], [x16], x10
-            cmp x6, #3
-            beq WriteEnd
-            st1 {v14.4s}, [x11], x10
-            st1 {v15.2s}, [x19], x10
-            st1 {v15.s}[2], [x16], x10
-            cmp x6, #4
-            beq WriteEnd
-            st1 {v16.4s}, [x11], x10
-            st1 {v17.2s}, [x19], x10
-            st1 {v17.s}[2], [x16], x10
-            cmp x6, #5
-            beq WriteEnd
-            st1 {v18.4s}, [x11], x10
-            st1 {v19.2s}, [x19], x10
-            st1 {v19.s}[2], [x16], x10
-            cmp x6, #6
-            beq WriteEnd
-            st1 {v20.4s}, [x11], x10
-            st1 {v21.2s}, [x19], x10
-            st1 {v21.s}[2], [x16], x10
-            cmp x6, #7
-            beq WriteEnd
-            st1 {v22.4s}, [x11], x10
-            st1 {v23.2s}, [x19], x10
-            st1 {v23.s}[2], [x16], x10
-            b WriteEnd
-        C4Write8:
-            add x19, x11, x8
-            add x20, x19, x8
-            st1 {v8.4s}, [x11], #16
-            st1 {v9.4s}, [x19], #16
-            cmp x6, #1
-            beq WriteEnd
-            st1 {v10.4s}, [x11], #16
-            st1 {v11.4s}, [x19], #16
-            cmp x6, #2
-            beq WriteEnd
-            st1 {v12.4s}, [x11], #16
-            st1 {v13.4s}, [x19], #16
-            cmp x6, #3
-            beq WriteEnd
-            st1 {v14.4s}, [x11], #16
-            st1 {v15.4s}, [x19], #16
-            cmp x6, #4
-            beq WriteEnd
-            st1 {v16.4s}, [x11], #16
-            st1 {v17.4s}, [x19], #16
-            cmp x6, #5
-            beq WriteEnd
-            st1 {v18.4s}, [x11], #16
-            st1 {v19.4s}, [x19], #16
-            cmp x6, #6
-            beq WriteEnd
-            st1 {v20.4s}, [x11], #16
-            st1 {v21.4s}, [x19], #16
-            cmp x6, #7
-            beq WriteEnd
-            st1 {v22.4s}, [x11], #16
-            st1 {v23.4s}, [x19], #16
+
         WriteEnd:
             subs x13, x13, #8 // rhs col - 8
             bgt LoopCol8
@@ -898,15 +565,10 @@ LoopRow8:
 LoopColEnd:
         add x0, x0, x17
         cbz x9, C8DstStep
-        cmp x9, #3
-        beq C4DstStep
         mov x21, #4
         mul x21, x21, x7
         sub x11, x11, x21
         mov x2, x11
-        b NoDstStep
-    C4DstStep:
-        add x2, x2, x18
         b NoDstStep
     C8DstStep:
         add x2, x2, #384

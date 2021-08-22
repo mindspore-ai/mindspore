@@ -74,10 +74,6 @@ void GroupConvolutionBaseCPUKernel::FreeSubKernel() {
     sub_conv = nullptr;
   }
   group_convs_.clear();
-  if (group_conv_creator_ != nullptr) {
-    delete group_conv_creator_;
-    group_conv_creator_ = nullptr;
-  }
 }
 
 int GroupConvolutionBaseCPUKernel::PreProcess() {
@@ -134,7 +130,6 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
       MS_LOG(ERROR) << "group conv out tensor malloc data failed.";
       return ret;
     }
-    output->ResetRefCount();
   }
   return RET_OK;
 }

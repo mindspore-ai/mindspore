@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHSigmoid = "HSigmoid";
-class MS_CORE_API HSigmoid : public PrimitiveC {
+class HSigmoid : public PrimitiveC {
  public:
   HSigmoid() : PrimitiveC(kNameHSigmoid) { InitIOName({"input_x"}, {"output"}); }
   ~HSigmoid() = default;

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLshProjection = "LshProjection";
-class MS_CORE_API LshProjection : public PrimitiveC {
+class LshProjection : public PrimitiveC {
  public:
   LshProjection() : PrimitiveC(kNameLshProjection) {}
   ~LshProjection() = default;

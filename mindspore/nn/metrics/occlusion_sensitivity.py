@@ -35,7 +35,7 @@ class OcclusionSensitivity(Metric):
 
     For a given result, the output probability is the probability of a region.
 
-    The higher the value in the output image is, the greater the decline of certainty, indicating that
+    The higher the value in the output image, the greater the decline of certainty, indicating that
     the occluded area is more important in the decision-making process.
 
     Args:
@@ -96,8 +96,7 @@ class OcclusionSensitivity(Metric):
             b_box_min = b_box_max = None
         else:
             if len(b_box) != 2 * len(im_shape):
-                raise ValueError("The bounding box should contain upper and lower "
-                                 "for all dimensions (except batch number)")
+                raise ValueError("Bounding box should contain upper and lower for all dimensions (except batch number)")
 
             b_box_min = np.array(b_box[::2])
             b_box_max = np.array(b_box[1::2])
@@ -131,7 +130,7 @@ class OcclusionSensitivity(Metric):
 
         Inputs:
             - **model** (nn.Cell) - classification model to use for inference.
-            - **y_pred** (Union[Tensor, list, np.ndarray]) - image to test. Should be a tensor consisting of 1 batch,
+            - **y_pred** (Union[Tensor, list, np.ndarray]) - image to test. Should be tensor consisting of 1 batch,
               can be 2- or 3D.
             - **label** (Union[int, Tensor]) - classification label to check for changes (normally the true label,
               but doesn't have to be
@@ -142,8 +141,7 @@ class OcclusionSensitivity(Metric):
             RuntimeError: If the number of labels is different from the number of batches.
         """
         if len(inputs) != 3:
-            raise ValueError('The occlusion_sensitivity needs 3 inputs (model, y_pred, y), '
-                             'but got {}'.format(len(inputs)))
+            raise ValueError('occlusion_sensitivity need 3 inputs (model, y_pred, y), but got {}'.format(len(inputs)))
 
         model = inputs[0]
         y_pred = self._convert_data(inputs[1])

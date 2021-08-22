@@ -26,7 +26,7 @@
 #include "tools/converter/ops/ops_def.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-using mindspore::converter::FmkType;
+using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
 using AimFunc = std::function<bool(const AnfNodePtr &)>;
 class FunctionalizeControlOpPass : public Pass {

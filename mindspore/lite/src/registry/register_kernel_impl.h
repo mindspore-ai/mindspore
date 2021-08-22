@@ -25,7 +25,10 @@
 #include <set>
 #include "include/registry/register_kernel.h"
 
-namespace mindspore::registry {
+using mindspore::schema::PrimitiveType_MAX;
+using mindspore::schema::PrimitiveType_MIN;
+
+namespace mindspore::lite {
 class RegistryKernelImpl {
  public:
   RegistryKernelImpl() = default;
@@ -36,30 +39,33 @@ class RegistryKernelImpl {
     return &instance;
   }
 
-  Status RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
-                         const std::string &type, registry::CreateKernel creator);
+  int GetFuncIndex(const kernel::KernelDesc &desc);
 
-  Status RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
-                   registry::CreateKernel creator);
+  int RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type, const std::string &type,
+                      kernel::CreateKernel creator);
 
-  virtual registry::CreateKernel GetProviderCreator(const schema::Primitive *primitive, registry::KernelDesc *desc);
+  int RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int type,
+                kernel::CreateKernel creator);
 
-  const std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>> &kernel_creators() {
+  virtual kernel::CreateKernel GetProviderCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc);
+
+  const std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> &kernel_creators() {
     return kernel_creators_;
   }
 
  protected:
-  std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>> kernel_creators_;
+  static const int data_type_length_{kNumberTypeEnd - kNumberTypeBegin + 1};
+  static const int op_type_length_{PrimitiveType_MAX - PrimitiveType_MIN + 1};
+  std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> kernel_creators_;
   // keys:provider, arch, type
-  std::map<std::string, std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>>>
+  std::map<std::string, std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>>>
     custom_kernel_creators_;
 
  private:
   std::mutex lock_;
 
-  registry::CreateKernel GetCustomKernelCreator(const schema::Primitive *primitive, registry::KernelDesc *desc);
-  int GetFuncIndex(const registry::KernelDesc &desc);
+  kernel::CreateKernel GetCustomKernelCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc);
 };
-}  // namespace mindspore::registry
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_REGISTRY_REGISTER_KERNEL_IMPL_H_

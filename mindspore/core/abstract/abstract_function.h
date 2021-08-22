@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace abstract {
-class MS_CORE_API AbstractFuncAtom : public AbstractFunction {
+class AbstractFuncAtom : public AbstractFunction {
  public:
   AbstractFuncAtom() = default;
   ~AbstractFuncAtom() override = default;
@@ -42,7 +42,7 @@ class MS_CORE_API AbstractFuncAtom : public AbstractFunction {
   std::size_t hash() const override { return tid(); }
 };
 
-class MS_CORE_API AbstractFuncUnion : public AbstractFunction {
+class AbstractFuncUnion : public AbstractFunction {
  public:
   explicit AbstractFuncUnion(const AbstractFuncAtomPtrList &func_list);
   AbstractFuncUnion(const AbstractFunctionPtr &first, const AbstractFunctionPtr &second);
@@ -63,7 +63,7 @@ class MS_CORE_API AbstractFuncUnion : public AbstractFunction {
   AbstractFuncAtomPtrList func_list_;
 };
 
-class MS_CORE_API PrimitiveAbstractClosure : public AbstractFuncAtom {
+class PrimitiveAbstractClosure : public AbstractFuncAtom {
  public:
   // Represents a Primitive.
   // prim: The primitive
@@ -96,7 +96,7 @@ class MS_CORE_API PrimitiveAbstractClosure : public AbstractFuncAtom {
 };
 using PrimitiveAbstractClosurePtr = std::shared_ptr<PrimitiveAbstractClosure>;
 
-class MS_CORE_API FuncGraphAbstractClosure : public AbstractFuncAtom {
+class FuncGraphAbstractClosure : public AbstractFuncAtom {
  public:
   // Represents a Graph in a certain Context.
   // context: The context, or Context.empty()
@@ -140,7 +140,7 @@ class MS_CORE_API FuncGraphAbstractClosure : public AbstractFuncAtom {
 };
 using FuncGraphAbstractClosurePtr = std::shared_ptr<FuncGraphAbstractClosure>;
 
-class MS_CORE_API MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
+class MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
  public:
   explicit MetaFuncGraphAbstractClosure(const MetaFuncGraphPtr &meta_func_graph,
                                         const AnfNodePtr &tracking_id = nullptr, const ScopePtr &scope = kDefaultScope)
@@ -173,7 +173,7 @@ class MS_CORE_API MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
 };
 using MetaFuncGraphAbstractClosurePtr = std::shared_ptr<MetaFuncGraphAbstractClosure>;
 
-class MS_CORE_API PartialAbstractClosure : public AbstractFuncAtom {
+class PartialAbstractClosure : public AbstractFuncAtom {
  public:
   // Represents a partial application.
   // args_spec_list: The first few arguments of that function
@@ -204,7 +204,7 @@ class MS_CORE_API PartialAbstractClosure : public AbstractFuncAtom {
 };
 using PartialAbstractClosurePtr = std::shared_ptr<PartialAbstractClosure>;
 
-class MS_CORE_API JTransformedAbstractClosure : public AbstractFuncAtom {
+class JTransformedAbstractClosure : public AbstractFuncAtom {
  public:
   // Represents a Function transformed through the application of J.
   explicit JTransformedAbstractClosure(const AbstractFuncAtomPtr &fn) : fn_(fn) {}
@@ -222,7 +222,7 @@ class MS_CORE_API JTransformedAbstractClosure : public AbstractFuncAtom {
   AbstractFuncAtomPtr fn_;
 };
 
-class MS_CORE_API VirtualAbstractClosure : public AbstractFuncAtom {
+class VirtualAbstractClosure : public AbstractFuncAtom {
  public:
   // Represents some function with an explicitly fixed type signature.
   // args_spec_list: The arguments as abstract value given to the function
@@ -251,7 +251,7 @@ class MS_CORE_API VirtualAbstractClosure : public AbstractFuncAtom {
 };
 using VirtualAbstractClosurePtr = std::shared_ptr<VirtualAbstractClosure>;
 
-class MS_CORE_API TypedPrimitiveAbstractClosure : public AbstractFuncAtom {
+class TypedPrimitiveAbstractClosure : public AbstractFuncAtom {
  public:
   // Represents a Primitive with an explicitly fixed type signature.
   // args_spec_list: The arguments as abstract value given to the Primitive
@@ -280,7 +280,7 @@ class MS_CORE_API TypedPrimitiveAbstractClosure : public AbstractFuncAtom {
 };
 
 // Represents a function that can't be called.
-class MS_CORE_API DummyAbstractClosure : public AbstractFuncAtom {
+class DummyAbstractClosure : public AbstractFuncAtom {
  public:
   DummyAbstractClosure() = default;
   ~DummyAbstractClosure() override = default;
@@ -292,14 +292,14 @@ class MS_CORE_API DummyAbstractClosure : public AbstractFuncAtom {
   std::string ToString() const override { return "DummyAbstractClosure()"; }
 };
 
-struct MS_CORE_API AbstractFunctionHasher {
+struct AbstractFunctionHasher {
   std::size_t operator()(const AbstractFunctionPtr &t) const {
     std::size_t hash = t->hash();
     return hash;
   }
 };
 
-struct MS_CORE_API AbstractFunctionEqual {
+struct AbstractFunctionEqual {
   bool operator()(const AbstractFunctionPtr &lhs, const AbstractFunctionPtr &rhs) const { return *lhs == *rhs; }
 };
 }  // namespace abstract

@@ -31,7 +31,6 @@ namespace mindspore {
 class ModelConverter {
  public:
   ModelConverter() : options_(nullptr) {}
-  ~ModelConverter() = default;
 
   Buffer LoadMindIR(const FuncGraphPtr &func_graph);
 
@@ -41,9 +40,9 @@ class ModelConverter {
   transform::DfGraphPtr ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph);
   Buffer BuildAirModel(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &init_options,
                        const std::map<std::string, std::string> &build_options);
-  Buffer LoadAscendIRInner(const Buffer &model_data);
-
   AclModelOptions *options_;
+
+  Buffer LoadAscendIRInner(const Buffer &model_data);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXXAPI_SESSION_ACL_MODEL_CONVERTER_H

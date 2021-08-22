@@ -378,7 +378,7 @@ YOLOv5 on 118K images(The annotation and data format must be the same as coco201
 | outputs                    | heatmaps                                                    |
 | Loss                       | 53                                                          |
 | Speed                      | 1p 55 img/s 8p 440 img/s(shape=640)                         |
-| Total time                 | 24h(8pcs)                                                         |
+| Total time                 | 80h                                                         |
 | Checkpoint for Fine tuning | 58M (.ckpt file)                                            |
 | Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/>|
 

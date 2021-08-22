@@ -13,24 +13,17 @@
 # limitations under the License.
 # ============================================================================
 '''Neighbor List'''
-
-
 class neighbor_list:
     '''Neighbor List'''
-
     def __init__(self, controller, atom_numbers, box_length):
-        self.CONSTANT_UINT_MAX_FLOAT = 4294967296.0
-        print("START INITIALIZING NEIGHBOR LIST:")
-        self.module_name = "neighbor_list"
-        self.refresh_interval = 20 if "refresh_interval" not in controller.Command_Set else int(
-            controller.Command_Set["refresh_interval"])
+        self.refresh_interval = 20 if "neighbor_list_refresh_interval" not in controller.Command_Set else int(
+            controller.Command_Set["neighbor_list_refresh_interval"])
         self.max_atom_in_grid_numbers = 64 if "max_atom_in_grid_numbers" not in controller.Command_Set else int(
             controller.Command_Set["max_atom_in_grid_numbers"])
         self.max_neighbor_numbers = 800 if "max_neighbor_numbers" not in controller.Command_Set else int(
             controller.Command_Set["max_neighbor_numbers"])
-
         self.skin = 2.0 if "skin" not in controller.Command_Set else float(controller.Command_Set["skin"])
-        self.cutoff = 10.0 if "cutoff" not in controller.Command_Set else float(controller.Command_Set["cutoff"])
+        self.cutoff = 10.0 if "cut" not in controller.Command_Set else float(controller.Command_Set["cut"])
         self.cutoff_square = self.cutoff * self.cutoff
         self.cutoff_with_skin = self.cutoff + self.skin
         self.half_cutoff_with_skin = 0.5 * self.cutoff_with_skin
@@ -38,16 +31,14 @@ class neighbor_list:
         self.half_skin_square = 0.25 * self.skin * self.skin
         self.atom_numbers = atom_numbers
         self.box_length = box_length
-        self.update_volume()
-
-        self.initial_neighbor_grid()
-        self.not_first_time = 0
-        self.is_initialized = 1
-        self.refresh_count = [0]
 
         if controller.amber_parm is not None:
             file_path = controller.amber_parm
             self.read_information_from_amberfile(file_path)
+
+        self.Initial_Neighbor_Grid()
+        self.not_first_time = 0
+        self.refresh_count = [0]
 
     def read_information_from_amberfile(self, file_path):
         '''read amber file'''
@@ -126,23 +117,20 @@ class neighbor_list:
                     self.excluded_list.extend(tmp_list)
                 break
 
-    def initial_neighbor_grid(self):
+    def Initial_Neighbor_Grid(self):
         '''init neighbor grid'''
         half_cutoff = self.half_cutoff_with_skin
         self.Nx = int(self.box_length[0] / half_cutoff)
         self.Ny = int(self.box_length[1] / half_cutoff)
         self.Nz = int(self.box_length[2] / half_cutoff)
         self.grid_N = [self.Nx, self.Ny, self.Nz]
-        self.grid_length = [self.box_length[0] / self.Nx,
-                            self.box_length[1] / self.Ny,
-                            self.box_length[2] / self.Nz]
+        self.grid_length = [self.box_length[0] / self.Nx, self.box_length[1] / self.Ny, self.box_length[2] / self.Nz]
         self.grid_length_inverse = [1.0 / self.grid_length[0], 1.0 / self.grid_length[1], 1.0 / self.grid_length[2]]
-
         self.Nxy = self.Nx * self.Ny
         self.grid_numbers = self.Nz * self.Nxy
+
         self.atom_numbers_in_grid_bucket = [0] * self.grid_numbers
         self.bucket = [-1] * (self.grid_numbers * self.max_atom_in_grid_numbers)
-
         self.pointer = []
         temp_grid_serial = [0] * 125
         for i in range(self.grid_numbers):
@@ -172,11 +160,3 @@ class neighbor_list:
                         count += 1
             temp_grid_serial = sorted(temp_grid_serial)
             self.pointer.extend(temp_grid_serial)
-
-    def update_volume(self):
-        self.quarter_crd_to_uint_crd_cof = [0.25 * self.CONSTANT_UINT_MAX_FLOAT / self.box_length[0],
-                                            0.25 * self.CONSTANT_UINT_MAX_FLOAT / self.box_length[1],
-                                            0.25 * self.CONSTANT_UINT_MAX_FLOAT / self.box_length[2]]
-        self.uint_dr_to_dr_cof = [1.0 / self.CONSTANT_UINT_MAX_FLOAT * self.box_length[0],
-                                  1.0 / self.CONSTANT_UINT_MAX_FLOAT * self.box_length[1],
-                                  1.0 / self.CONSTANT_UINT_MAX_FLOAT * self.box_length[2]]

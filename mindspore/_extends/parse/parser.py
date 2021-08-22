@@ -159,17 +159,12 @@ def resolve_symbol(namespace, symbol):
         if getattr(resolve_, "__hash__") is None:
             return resolve_
 
-        # Raise NotImplementedError when parsing the numpy methods, but not the numpy constant.
-        if namespace.name == "numpy" and isinstance(resolve_, (types.FunctionType, types.MethodType, types.ModuleType)):
-            raise NotImplementedError(
-                f"MindSpore does not support to use the numpy methods in the function construct with the graph mode.")
-
         # If need trope the obj
         if resolve_ in convert_object_map:
             resolve_ = convert_object_map.get(resolve_)
             logger.debug("convert resolve = %r", resolve_)
             if resolve_ == NO_IMPLEMENT:
-                raise NotImplementedError(f"Not support for `{symbol}`.")
+                raise NotImplementedError(f"Not support for `{symbol}`")
     except Exception as e:
         if isinstance(e, NotImplementedError):
             raise e

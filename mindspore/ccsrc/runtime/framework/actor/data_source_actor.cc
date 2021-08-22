@@ -27,11 +27,6 @@
 namespace mindspore {
 namespace runtime {
 void DataSourceActor::Init() {
-  // Check device contexts number.
-  if (device_contexts_.size() < device::kDeviceContextsNumOne) {
-    MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
-  }
-
   // Init output data.
   for (auto &data_arrow : output_data_arrows_) {
     MS_EXCEPTION_IF_NULL(data_arrow);
@@ -103,11 +98,6 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *const context) {
 }
 
 void DeviceQueueDataSourceActor::Init() {
-  // Check device contexts number.
-  if (device_contexts_.size() != device::kDeviceContextsNumOne) {
-    MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
-  }
-
   // Init output data.
   for (auto &data_arrow : output_data_arrows_) {
     MS_EXCEPTION_IF_NULL(data_arrow);
@@ -136,18 +126,17 @@ void DeviceQueueDataSourceActor::FillDataBuffer() {
 
 void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.back();
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0], context,
-        GetAID());
+  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_context_, context, GetAID());
 }
 
 void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.front();
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0], context);
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_context_, context);
 }
 
 void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  MS_EXCEPTION_IF_NULL(device_context_);
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
   }
@@ -162,8 +151,8 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 
   // Copy data from device queue by data kernel launching.
   try {
-    auto ret = device_contexts_[0]->LaunchKernel(data_kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                                 launch_info_.outputs_);
+    auto ret = device_context_->LaunchKernel(data_kernel_, launch_info_.inputs_, launch_info_.workspaces_,
+                                             launch_info_.outputs_);
     if (!ret) {
       std::string error_info = "Launch kernel failed: " + data_kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
@@ -189,7 +178,7 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  Async(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context, &GetAID());
+  Async(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_context_, context, &GetAID());
 }
 
 void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
@@ -208,7 +197,7 @@ void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const conte
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) {
   if (recorder_aid_ != nullptr) {
     Async(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(), &launch_info_,
-          device_contexts_[0], context);
+          device_context_, context);
   }
 }
 
@@ -305,7 +294,7 @@ void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const context
   }
 }
 
-size_t HostQueueDataSourceActor::FetchNodePosition(const AnfNodePtr &data_node) const {
+size_t HostQueueDataSourceActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
   const auto &iter = data_node_position_map_.find(data_node);
   if (iter == data_node_position_map_.end()) {
     MS_LOG(EXCEPTION) << "Data node: " << data_node->fullname_with_scope() << " is not exist.";

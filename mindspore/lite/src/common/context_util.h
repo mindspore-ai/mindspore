@@ -25,6 +25,7 @@
 namespace mindspore {
 namespace lite {
 mindspore::Context *MSContextFromContext(const lite::Context *context);
+std::set<std::string> ProvidersFromMSContext(const mindspore::Context *context);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_COMMON_CONTEXT_UTIL_H_

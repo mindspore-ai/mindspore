@@ -413,8 +413,7 @@ class TrainOneStepGenerator(nn.Cell):
         grads = self.grad(self.network, self.weights)(real_x, c_org, c_trg,
                                                       attr_diff, sens)
         grads = self.grad_reducer(grads)
-        self.optimizer(grads)
-        return (loss_G, fake_x, loss_G,
+        return (ops.depend(loss_G, self.optimizer(grads)), fake_x, loss_G,
                 loss_fake_G, loss_cls_G, loss_rec_G, loss_adv_G)
 
 
@@ -452,6 +451,5 @@ class TrainOneStepDiscriminator(nn.Cell):
         grads = self.grad(self.network, self.weights)(real_x, c_org, c_trg,
                                                       attr_diff, alpha, sens)
         grads = self.grad_reducer(grads)
-        self.optimizer(grads)
-        return (loss_D, loss_D, loss_real_D,
+        return (ops.depend(loss_D, self.optimizer(grads)), loss_D, loss_real_D,
                 loss_fake_D, loss_cls_D, loss_gp_D, loss_adv_D, attr_diff)

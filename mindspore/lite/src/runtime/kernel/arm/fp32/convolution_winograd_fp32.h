@@ -30,20 +30,27 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   ConvolutionWinogradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                int output_unit, float *origin_weight, float *origin_bias)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias),
-        output_unit_(output_unit) {}
-  ~ConvolutionWinogradCPUKernel() override {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
+        output_unit_(output_unit),
+        origin_weight_(origin_weight),
+        origin_bias_(origin_bias) {}
+  ~ConvolutionWinogradCPUKernel() override {
+    if (trans_weight_ != nullptr) {
+      free(trans_weight_);
+      trans_weight_ = nullptr;
+    }
+  };
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
   int RunImpl(int task_id);
+  int InitWeightBias();
   int InitTmpBuffer();
   int ConfigInputOutput();
   int WinogradFilterTransform(const float *weight_data, float *matrix_g, const float *matrix_gt, int oc_block);
 
  private:
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
   void FreeTmpBuffer() {
     if (trans_input_ != nullptr) {
       ctx_->allocator->Free(trans_input_);
@@ -67,12 +74,13 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int output_unit_{0};
   int oc_block_{0};
   int tile_num_{0};
+  float *origin_weight_;  // do not free
+  float *origin_bias_;    // do not free
   float *tmp_data_ = nullptr;
   float *trans_input_ = nullptr;
   float *gemm_out_ = nullptr;
   float *col_buffer_ = nullptr;
-  float matrix_g_[64];
-  float matrix_gt_[64];
+  float *trans_weight_ = nullptr;
   TmpBufferAddress tmp_buffer_address_list_[4] = {nullptr};
   InputTransFunc in_func_ = nullptr;
   OutputTransFunc out_func_ = nullptr;

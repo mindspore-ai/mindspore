@@ -29,6 +29,7 @@
 
 namespace mindspore {
 namespace runtime {
+
 void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_,
                        const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
                        const AID *from_aid) {

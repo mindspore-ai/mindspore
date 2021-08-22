@@ -16,22 +16,165 @@
 #include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/base/minimal_filtering_generator.h"
-#include "nnacl/base/conv_common_base.h"
 #include "nnacl/errorcode.h"
+
+#define MIN_UNIT 2
+#define MAX_UNIT 8
 
 static InputTransFunc InputTransFuncList[] = {
   NULL, NULL, NULL, NULL, InputTransform4x4Unit, NULL, InputTransform6x6Unit, NULL, InputTransform8x8Unit};
 
-static OutputTransFunc OutputTransFuncList[] = {
-  OutputTransform4x2Unit,      OutputTransform4x3Unit,      OutputTransform4x2ReluUnit,  OutputTransform4x3ReluUnit,
-  OutputTransform4x2Relu6Unit, OutputTransform4x3Relu6Unit, OutputTransform6x2Unit,      OutputTransform6x3Unit,
-  OutputTransform6x4Unit,      OutputTransform6x5Unit,      OutputTransform6x2ReluUnit,  OutputTransform6x3ReluUnit,
-  OutputTransform6x4ReluUnit,  OutputTransform6x5ReluUnit,  OutputTransform6x2Relu6Unit, OutputTransform6x3Relu6Unit,
-  OutputTransform6x4Relu6Unit, OutputTransform6x5Relu6Unit, OutputTransform8x2Unit,      OutputTransform8x3Unit,
-  OutputTransform8x4Unit,      OutputTransform8x5Unit,      OutputTransform8x6Unit,      OutputTransform8x7Unit,
-  OutputTransform8x2ReluUnit,  OutputTransform8x3ReluUnit,  OutputTransform8x4ReluUnit,  OutputTransform8x5ReluUnit,
-  OutputTransform8x6ReluUnit,  OutputTransform8x7ReluUnit,  OutputTransform8x2Relu6Unit, OutputTransform8x3Relu6Unit,
-  OutputTransform8x4Relu6Unit, OutputTransform8x5Relu6Unit, OutputTransform8x6Relu6Unit, OutputTransform8x7Relu6Unit};
+static OutputTransFunc OutputTransFuncList4[] = {NULL, NULL, OutputTransform4x2Unit, OutputTransform4x3Unit};
+
+static OutputTransFunc OutputTransFuncReluList4[] = {NULL, NULL, OutputTransform4x2ReluUnit,
+                                                     OutputTransform4x3ReluUnit};
+static OutputTransFunc OutputTransFuncRelu6List4[] = {NULL, NULL, OutputTransform4x2Relu6Unit,
+                                                      OutputTransform4x3Relu6Unit};
+
+static OutputTransFunc OutputTransFuncList6[] = {
+  NULL, NULL, OutputTransform6x2Unit, OutputTransform6x3Unit, OutputTransform6x4Unit, OutputTransform6x5Unit};
+
+static OutputTransFunc OutputTransFuncReluList6[] = {NULL,
+                                                     NULL,
+                                                     OutputTransform6x2ReluUnit,
+                                                     OutputTransform6x3ReluUnit,
+                                                     OutputTransform6x4ReluUnit,
+                                                     OutputTransform6x5ReluUnit};
+
+static OutputTransFunc OutputTransFuncRelu6List6[] = {NULL,
+                                                      NULL,
+                                                      OutputTransform6x2Relu6Unit,
+                                                      OutputTransform6x3Relu6Unit,
+                                                      OutputTransform6x4Relu6Unit,
+                                                      OutputTransform6x5Relu6Unit};
+
+static OutputTransFunc OutputTransFuncList8[] = {NULL,
+                                                 NULL,
+                                                 OutputTransform8x2Unit,
+                                                 OutputTransform8x3Unit,
+                                                 OutputTransform8x4Unit,
+                                                 OutputTransform8x5Unit,
+                                                 OutputTransform8x6Unit,
+                                                 OutputTransform8x7Unit};
+
+static OutputTransFunc OutputTransFuncReluList8[] = {NULL,
+                                                     NULL,
+                                                     OutputTransform8x2ReluUnit,
+                                                     OutputTransform8x3ReluUnit,
+                                                     OutputTransform8x4ReluUnit,
+                                                     OutputTransform8x5ReluUnit,
+                                                     OutputTransform8x6ReluUnit,
+                                                     OutputTransform8x7ReluUnit};
+
+static OutputTransFunc OutputTransFuncRelu6List8[] = {NULL,
+                                                      NULL,
+                                                      OutputTransform8x2Relu6Unit,
+                                                      OutputTransform8x3Relu6Unit,
+                                                      OutputTransform8x4Relu6Unit,
+                                                      OutputTransform8x5Relu6Unit,
+                                                      OutputTransform8x6Relu6Unit,
+                                                      OutputTransform8x7Relu6Unit};
+
+void GeneralInputTransformUnit(const float *src_data, float *dst_data, const float *matrix_b, const float *matrix_bt,
+                               int src_step, int dst_step, int in_unit) {
+  int len = in_unit * in_unit;
+  if (len > MAX_LEN) return;
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[MAX_LEN];
+  MS_FLOAT32X4 t[MAX_LEN];
+  MS_FLOAT32X4 m[MAX_LEN];
+  MS_FLOAT32X4 vec_b[MAX_LEN];
+  MS_FLOAT32X4 vec_bt[MAX_LEN];
+  for (int i = 0; i < len; i++) {
+    src[i] = MS_LDQ_F32(src_data + i * src_step);
+    vec_b[i] = MS_MOVQ_F32(matrix_b[i]);
+    vec_bt[i] = MS_MOVQ_F32(matrix_bt[i]);
+  }
+  MatrixMultiplyVec(vec_bt, src, t, NULL, in_unit, in_unit, in_unit);
+  MatrixMultiplyVec(t, vec_b, m, NULL, in_unit, in_unit, in_unit);
+  for (int i = 0; i < len; i++) {
+    MS_STQ_F32(dst_data + i * dst_step, m[i]);
+  }
+#else
+  float src[MAX_LEN];
+  float t[MAX_LEN];
+  float m[MAX_LEN];
+  for (int i = 0; i < C4NUM; ++i) {
+    for (int j = 0; j < len; ++j) {
+      src[j] = src_data[i + j * src_step];
+    }
+    MatrixMultiply(matrix_bt, src, t, in_unit, in_unit, in_unit);
+    MatrixMultiply(t, matrix_b, m, in_unit, in_unit, in_unit);
+    for (int k = 0; k < len; ++k) {
+      dst_data[i + k * dst_step] = m[k];
+    }
+  }
+#endif
+}
+
+void GeneralOutputTransformUnit(const float *src_data, float *dst_data, const float *bias_data, const float *matrix_a,
+                                const float *matrix_at, int src_step, int dst_step, int in_unit, int out_unit) {
+  int src_len = in_unit * in_unit;
+  if (src_len > MAX_LEN) {
+    return;
+  }
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[MAX_LEN];
+  MS_FLOAT32X4 t[MAX_LEN];
+  MS_FLOAT32X4 m[MAX_LEN];
+  MS_FLOAT32X4 vec_a[MAX_LEN];
+  MS_FLOAT32X4 vec_at[MAX_LEN];
+  int tmp_len = in_unit * out_unit;
+  if (tmp_len > MAX_LEN) {
+    return;
+  }
+  if (out_unit * out_unit > MAX_LEN) {
+    return;
+  }
+
+  for (int i = 0; i < tmp_len; i++) {
+    vec_a[i] = MS_MOVQ_F32(matrix_a[i]);
+    vec_at[i] = MS_MOVQ_F32(matrix_at[i]);
+  }
+  for (int i = 0; i < src_len; i++) {
+    src[i] = MS_LDQ_F32(src_data + i * src_step);
+  }
+  MatrixMultiplyVec(vec_at, src, t, NULL, out_unit, in_unit, in_unit);
+  MatrixMultiplyVec(t, vec_a, m, bias_data, out_unit, in_unit, out_unit);
+  if ((out_unit - 1) * out_unit + out_unit - 1 > MAX_LEN) {
+    return;
+  }
+  for (int i = 0; i < out_unit; i++) {
+    int dst_k_offset = i * dst_step * C4NUM;
+    int m_k_offset = i * out_unit;
+    for (int j = 0; j < out_unit; j++) {
+      MS_STQ_F32(dst_data + dst_k_offset + j * C4NUM, m[m_k_offset + j]);
+    }
+  }
+#else
+  float src[MAX_LEN];
+  float t[MAX_LEN];
+  float m[MAX_LEN];
+  for (int i = 0; i < C4NUM; ++i) {
+    // load source data
+    for (int j = 0; j < src_len; ++j) {
+      src[j] = src_data[i + j * src_step];
+    }
+    // AT * x * A
+    MatrixMultiply(matrix_at, src, t, out_unit, in_unit, in_unit);
+    MatrixMultiply(t, matrix_a, m, out_unit, in_unit, out_unit);
+
+    // store output
+    for (int k = 0; k < out_unit; ++k) {
+      int dst_k_offset = k * dst_step * C4NUM;
+      int m_k_offset = k * out_unit;
+      for (int j = 0; j < out_unit; ++j) {
+        dst_data[i + dst_k_offset + j * C4NUM] = m[j + m_k_offset] + bias_data[i];
+      }
+    }
+  }
+#endif
+}
 
 InputTransFunc GetInputTransFunc(int input_unit) { return InputTransFuncList[input_unit]; }
 
@@ -288,23 +431,33 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
 }
 
 OutputTransFunc GetOutputTransFunc(int input_unit, int output_unit, ActType act_type) {
-  if (!CheckWinogradInputOutputUnit(input_unit, output_unit)) {
+  if (input_unit == 4 && output_unit < 4) {
+    if (act_type == ActType_Relu) {
+      return OutputTransFuncReluList4[output_unit];
+    } else if (act_type == ActType_Relu6) {
+      return OutputTransFuncRelu6List4[output_unit];
+    } else {
+      return OutputTransFuncList4[output_unit];
+    }
+  } else if (input_unit == 6 && output_unit < 6) {
+    if (act_type == ActType_Relu) {
+      return OutputTransFuncReluList6[output_unit];
+    } else if (act_type == ActType_Relu6) {
+      return OutputTransFuncRelu6List6[output_unit];
+    } else {
+      return OutputTransFuncList6[output_unit];
+    }
+  } else if (input_unit == 8 && output_unit < 8) {
+    if (act_type == ActType_Relu) {
+      return OutputTransFuncReluList8[output_unit];
+    } else if (act_type == ActType_Relu6) {
+      return OutputTransFuncRelu6List8[output_unit];
+    } else {
+      return OutputTransFuncList8[output_unit];
+    }
+  } else {
     return NULL;
   }
-  int in_index = (input_unit - 4) / 2;
-  int index = 0;
-  for (int i = 0; i < in_index; i++) {
-    index += ((i * 2 + 4) - 2) * 3;
-  }
-  int act_index;
-  if (act_type == ActType_Relu) {
-    act_index = 1;
-  } else if (act_type == ActType_Relu6) {
-    act_index = 2;
-  } else {
-    act_index = 0;
-  }
-  return OutputTransFuncList[index + (input_unit - 2) * act_index + output_unit - 2];
 }
 
 void OutputTransform4x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
@@ -3696,3 +3849,57 @@ void OutputTransform8x7Relu6Unit(const float *src_data, float *dst_data, const f
   }
 }
 #endif
+
+// Reference to the paper "Fast Algorithms for Convolutional Neural Networks"
+// Utilize cost model to compute performance gain.
+// If the gain is greater than got from Im2col, winograd algorithm will be chosen.
+int SelectOutputUnit(const ConvParameter *conv_param) {
+  int kernel_h = conv_param->kernel_h_;
+  int kernel_w = conv_param->kernel_w_;
+  int in_c = conv_param->input_channel_;
+  int out_w = conv_param->output_w_;
+  int out_h = conv_param->output_h_;
+  int out_c = conv_param->output_channel_;
+  if (conv_param->op_parameter_.thread_num_ == 0) {
+    return NNACL_PARAM_INVALID;
+  }
+  int unit2 = UP_DIV(out_w * out_h, C12NUM * conv_param->op_parameter_.thread_num_);
+  int max_out_unit = (int)(sqrtf((float)unit2));
+  max_out_unit = max_out_unit < MAX_UNIT ? max_out_unit : MAX_UNIT;
+  max_out_unit = max_out_unit > MIN_UNIT ? max_out_unit : MIN_UNIT;
+
+  int unit = 0;
+  float max_rate = 0.0f;
+  float common_cost = (float)out_h * out_w * in_c * out_c * kernel_h * kernel_w;
+
+  for (int i = MIN_UNIT; i <= max_out_unit; ++i) {
+    int input_unit = i + kernel_w - 1;
+    if (!GetOutputTransFunc(input_unit, i, ActType_No)) {
+      continue;
+    }
+    float penalty = ((float)input_unit * input_unit) / ((float)kernel_h * kernel_w) * 0.12f;
+    float wino_cost = ((2 + out_c) * (float)input_unit * input_unit * in_c + ((float)input_unit + i) * i * out_c) *
+                      UP_DIV(out_w, i) * UP_DIV(out_h, i);
+    float reduce_rate = common_cost / wino_cost - penalty;
+    if (reduce_rate > max_rate) {
+      max_rate = reduce_rate;
+      unit = i;
+    }
+  }
+  if (max_rate < 1.0f) {
+    return 1;
+  }
+  // If output_unit is 1, then it is conventional convolution
+  return unit;
+}
+
+bool CheckIfUseWinograd(int *output_unit, const ConvParameter *conv_param) {
+  if (conv_param->kernel_w_ == conv_param->kernel_h_ && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
+      conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ != 1) {
+    *output_unit = SelectOutputUnit(conv_param);
+    if (*output_unit > 1) {
+      return true;
+    }
+  }
+  return false;
+}

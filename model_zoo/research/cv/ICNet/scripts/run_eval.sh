@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 4 ]
+if [ $# != 3 ]
 then
-    echo "Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PROJECT_PATH] [DEVICE_ID]"
+    echo "Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PROJECT_PATH]"
 exit 1
 fi
 
@@ -53,7 +53,7 @@ fi
 
 ulimit -u unlimited
 export DEVICE_NUM=1
-export DEVICE_ID=$4
+export DEVICE_ID=0
 export RANK_SIZE=1
 export RANK_ID=0
 
@@ -68,6 +68,6 @@ cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start evaluation for device $DEVICE_ID"
-python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 --project_path=$PATH3 --device=$4 &> log &
+python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 --project_path=$PATH3 &> log &
 
 cd ..

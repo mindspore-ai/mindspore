@@ -21,7 +21,7 @@
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "nnacl/op_base.h"
 
-using mindspore::converter::FmkType;
+using mindspore::lite::converter::FmkType;
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore {
 namespace opt {

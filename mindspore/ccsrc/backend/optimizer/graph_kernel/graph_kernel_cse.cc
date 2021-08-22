@@ -78,8 +78,8 @@ bool GraphKernelBackendCSE::CheckEqualKernelBuildInfo(const AnfNodePtr &main, co
     return BackendCSE::CheckEqualKernelBuildInfo(main, node);
   }
 
-  auto main_kernel_info = dynamic_cast<device::KernelInfo *>(main->kernel_info());
-  auto node_kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto main_kernel_info = static_cast<device::KernelInfo *>(main->kernel_info());
+  auto node_kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   if (main_kernel_info == nullptr && node_kernel_info == nullptr) {
     return true;
   }

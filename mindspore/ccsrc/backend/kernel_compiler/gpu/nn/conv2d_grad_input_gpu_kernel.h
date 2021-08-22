@@ -74,11 +74,14 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     T *dy = GetDeviceAddress<T>(inputs, 0);
     T *w = GetDeviceAddress<T>(inputs, 1);
     T *dx = GetDeviceAddress<T>(outputs, 0);
-    T *work_space = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+    T *work_space = nullptr;
+    if (workspace_size_ != 0) {
+      work_space = GetDeviceAddress<T>(workspace, 0);
+    }
 
     const float alpha = 1;
     if (use_pad_) {
-      T *padded = GetPossiblyNullDeviceAddress<T>(workspace, 1);
+      T *padded = GetDeviceAddress<T>(workspace, 1);
 
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_,

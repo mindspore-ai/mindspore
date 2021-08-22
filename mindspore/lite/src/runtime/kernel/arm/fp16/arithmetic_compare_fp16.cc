@@ -66,8 +66,6 @@ ArithmeticCompareOptFuncFp16 GetOptimizedArithmeticCompareFun(int primitive_type
 }
 
 int ArithmeticCompareFP16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -164,7 +162,7 @@ int ArithmeticCompareFP16CPUKernel::Run() {
 
   input0_fp16_ = ConvertInputFp32toFp16(in_tensors_.at(0), static_cast<const lite::InnerContext *>(this->ms_context_));
   input1_fp16_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->ms_context_));
-  output_fp16_ = reinterpret_cast<uint8_t *>(output_tensor->data_c());
+  output_fp16_ = reinterpret_cast<uint8_t *>(output_tensor->MutableData());
   if (input0_fp16_ == nullptr || input1_fp16_ == nullptr || output_fp16_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     FreeTmpBuffer();

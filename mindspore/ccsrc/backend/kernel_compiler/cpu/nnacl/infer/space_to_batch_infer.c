@@ -38,7 +38,7 @@ int SpaceToBatchInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   }
 
   int *block_shape = param->block_sizes_;
-  int block_shape_size = param->m_;
+  size_t block_shape_size = param->m_;
   int *paddings = param->paddings_;
   int padding_left = 0;
   int padding_right = 0;

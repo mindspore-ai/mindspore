@@ -42,13 +42,7 @@ OpParameter *PopulateAdderParameter(const void *prim) {
   auto pad_list = value->pad_list();
   auto dilation = value->dilation();
   if (kernel_size == nullptr || stride == nullptr || pad_list == nullptr || dilation == nullptr) {
-    MS_LOG(ERROR) << "exist attr is nullptr";
-    free(param);
-    return nullptr;
-  }
-  if (kernel_size->size() < kMinShapeSizeTwo || stride->size() < kMinShapeSizeTwo ||
-      pad_list->size() < kMinShapeSizeFour || dilation->size() < kMinShapeSizeTwo) {
-    MS_LOG(ERROR) << "exist attr size is invalid.";
+    MS_LOG(ERROR) << "nullptr";
     free(param);
     return nullptr;
   }
@@ -59,8 +53,8 @@ OpParameter *PopulateAdderParameter(const void *prim) {
   param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
   param->pad_u_ = static_cast<int>(*(pad_list->begin()));
   param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
-  param->pad_l_ = static_cast<int>(*(pad_list->begin() + kOffsetTwo));
-  param->pad_r_ = static_cast<int>(*(pad_list->begin() + kOffsetThree));
+  param->pad_l_ = static_cast<int>(*(pad_list->begin() + 2));
+  param->pad_r_ = static_cast<int>(*(pad_list->begin() + 3));
   param->dilation_h_ = static_cast<int>(*(dilation->begin()));
   param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
   param->input_channel_ = static_cast<int>(value->in_channel());

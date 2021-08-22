@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGLU = prim::kGLU;
-class MS_CORE_API GLU : public PrimitiveC {
+class GLU : public PrimitiveC {
  public:
   GLU() : PrimitiveC(kNameGLU) { InitIOName({"x"}, {"output"}); }
   ~GLU() = default;

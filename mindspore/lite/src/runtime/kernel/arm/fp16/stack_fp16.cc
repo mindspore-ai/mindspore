@@ -73,8 +73,6 @@ void StackFp16CPUKernel::FreeBuffer() {
 }
 
 int StackFp16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   data_type_size_ = sizeof(float16_t);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -116,9 +114,7 @@ int StackFp16CPUKernel::Run() {
   // if output tensor is fp32, we need to transform
   if (malloc_out_) {
     auto out_tensor = out_tensors_.at(0);
-    MS_ASSERT(out_tensor != nullptr);
-    MS_ASSERT(out_tensor->data_c() != nullptr);
-    Float16ToFloat32(out_buffer_, reinterpret_cast<float *>(out_tensor->data_c()), out_tensor->ElementsNum());
+    Float16ToFloat32(out_buffer_, reinterpret_cast<float *>(out_tensor->MutableData()), out_tensor->ElementsNum());
   }
   FreeBuffer();
   return RET_OK;

@@ -34,7 +34,7 @@
 #include "ir/dtype/type.h"
 
 namespace mindspore {
-class MS_CORE_API TypeAnything : public Type {
+class TypeAnything : public Type {
  public:
   TypeAnything() : Type(kMetaTypeAnything) {}
   ~TypeAnything() override {}
@@ -46,7 +46,7 @@ class MS_CORE_API TypeAnything : public Type {
 };
 using TypeAnythingPtr = std::shared_ptr<TypeAnything>;
 
-class MS_CORE_API TypeNone : public Type {
+class TypeNone : public Type {
  public:
   TypeNone() : Type(kMetaTypeNone) {}
   ~TypeNone() override {}
@@ -59,7 +59,7 @@ class MS_CORE_API TypeNone : public Type {
 };
 using TypeNonePtr = std::shared_ptr<TypeNone>;
 
-class MS_CORE_API TypeNull : public Type {
+class TypeNull : public Type {
  public:
   TypeNull() : Type(kMetaTypeNull) {}
   ~TypeNull() override {}
@@ -71,7 +71,7 @@ class MS_CORE_API TypeNull : public Type {
 };
 using TypeNullPtr = std::shared_ptr<TypeNull>;
 
-class MS_CORE_API TypeEllipsis : public Type {
+class TypeEllipsis : public Type {
  public:
   TypeEllipsis() : Type(kMetaTypeEllipsis) {}
   ~TypeEllipsis() override {}
@@ -84,10 +84,10 @@ class MS_CORE_API TypeEllipsis : public Type {
 };
 using TypeEllipsisPtr = std::shared_ptr<TypeEllipsis>;
 
-MS_CORE_API extern const TypePtr kTypeNone;
-MS_CORE_API extern const TypePtr kTypeNull;
-MS_CORE_API extern const TypePtr kTypeEllipsis;
-MS_CORE_API extern const TypePtr kAnyType;
+extern const TypePtr kTypeNone;
+extern const TypePtr kTypeNull;
+extern const TypePtr kTypeEllipsis;
+extern const TypePtr kAnyType;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_EMPTY_H_

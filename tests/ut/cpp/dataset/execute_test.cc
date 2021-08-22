@@ -19,9 +19,7 @@
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/execute.h"
 #include "minddata/dataset/include/dataset/transforms.h"
-#include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/vision.h"
-#include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/text.h"
 #include "utils/log_adapter.h"
 
@@ -34,132 +32,8 @@ class MindDataTestExecute : public UT::DatasetOpTesting {
  protected:
 };
 
-TEST_F(MindDataTestExecute, TestAllpassBiquadWithEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAllpassBiquadWithEager.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> allpass_biquad_01 = std::make_shared<audio::AllpassBiquad>(44100, 200);
-  mindspore::dataset::Execute Transform01({allpass_biquad_01});
-  // Filtered waveform by allpassbiquad
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_TRUE(s01.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestAllpassBiquadWithWrongArg) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAllpassBiquadWithWrongArg.";
-  std::vector<double> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  // Check Q
-  MS_LOG(INFO) << "Q is zero.";
-  std::shared_ptr<TensorTransform> allpass_biquad_op = std::make_shared<audio::AllpassBiquad>(44100, 200, 0);
-  mindspore::dataset::Execute Transform01({allpass_biquad_op});
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_FALSE(s01.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestAdjustGammaEager3Channel) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustGammaEager3Channel.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto adjust_gamma_op = vision::AdjustGamma(0.1, 1.0);
-
-  auto transform = Execute({decode, adjust_gamma_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-TEST_F(MindDataTestExecute, TestAdjustGammaEager1Channel) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustGammaEager1Channel.";
-  auto m1 = ReadFileToTensor("data/dataset/apple.jpg");
-  // Transform params
-  auto decode = vision::Decode();
-  auto rgb2gray = vision::RGB2GRAY();
-  auto adjust_gamma_op = vision::AdjustGamma(0.1, 1.0);
-
-  auto transform = Execute({decode, rgb2gray, adjust_gamma_op});
-  Status rc = transform(m1, &m1);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-TEST_F(MindDataTestExecute, TestAmplitudeToDB) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDB.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 2, 2, 3}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> amplitude_to_db_op = std::make_shared<audio::AmplitudeToDB>();
-  // apply amplitude_to_db
-  mindspore::dataset::Execute trans({amplitude_to_db_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongArgs) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDBWrongArgs.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> amplitude_to_db_op =
-    std::make_shared<audio::AmplitudeToDB>(ScaleType::kPower, 1.0, -1e-10, 80.0);
-  // apply amplitude_to_db
-  mindspore::dataset::Execute trans({amplitude_to_db_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongInput) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDBWrongInput.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({20}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> amplitude_to_db_op = std::make_shared<audio::AmplitudeToDB>();
-  // apply amplitude_to_db
-  mindspore::dataset::Execute trans({amplitude_to_db_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
-}
-
 TEST_F(MindDataTestExecute, TestComposeTransforms) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComposeTransforms.";
+  MS_LOG(INFO) << "Doing TestComposeTransforms.";
 
   // Read images
   auto image = ReadFileToTensor("data/dataset/apple.jpg");
@@ -193,80 +67,6 @@ TEST_F(MindDataTestExecute, TestCrop) {
   EXPECT_EQ(rc, Status::OK());
   EXPECT_EQ(image.Shape()[0], 10);
   EXPECT_EQ(image.Shape()[1], 15);
-}
-
-TEST_F(MindDataTestExecute, TestFrequencyMasking) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestFrequencyMasking.";
-  std::shared_ptr<Tensor> input_tensor_;
-  TensorShape s = TensorShape({6, 2});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input_tensor_));
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
-  std::shared_ptr<TensorTransform> frequency_masking_op = std::make_shared<audio::FrequencyMasking>(true, 2);
-  mindspore::dataset::Execute transform({frequency_masking_op});
-  Status status = transform(input_tensor, &input_tensor);
-  EXPECT_TRUE(status.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestTimeMasking) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTimeMasking.";
-  std::shared_ptr<Tensor> input_tensor_;
-  TensorShape s = TensorShape({2, 6});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input_tensor_));
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
-  std::shared_ptr<TensorTransform> time_masking_op = std::make_shared<audio::TimeMasking>(true, 2);
-  mindspore::dataset::Execute transform({time_masking_op});
-  Status status = transform(input_tensor, &input_tensor);
-  EXPECT_TRUE(status.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestTimeStretchEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTimeStretchEager.";
-  std::shared_ptr<Tensor> input_tensor_;
-  // op param
-  int freq = 4;
-  int hop_length = 20;
-  float rate = 1.3;
-  int frame_num = 10;
-  // create tensor
-  TensorShape s = TensorShape({2, freq, frame_num, 2});
-  // init input vec
-  std::vector<float> input_vec(2 * freq * frame_num * 2);
-  for (int ind = 0; ind < input_vec.size(); ind++) {
-    input_vec[ind] = std::rand() % (1000) / (1000.0f);
-  }
-  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor_));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
-  std::shared_ptr<TensorTransform> time_stretch_op = std::make_shared<audio::TimeStretch>(hop_length, freq, rate);
-
-  // apply timestretch
-  mindspore::dataset::Execute Transform({time_stretch_op});
-  Status status = Transform(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestTimeStretchParamCheck) {
-  MS_LOG(INFO) << "Doing MindDataTestTimeStretch-TestTimeStretchParamCheck.";
-  // Create an input
-  std::shared_ptr<Tensor> input_tensor_;
-  std::shared_ptr<Tensor> output_tensor;
-  TensorShape s = TensorShape({1, 4, 3, 2});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f,
-                        1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}),
-    s, &input_tensor_));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
-
-  std::shared_ptr<TensorTransform> time_stretch1 = std::make_shared<audio::TimeStretch>(4, 512, -2);
-  mindspore::dataset::Execute Transform1({time_stretch1});
-  Status status = Transform1(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
-
-  std::shared_ptr<TensorTransform> time_stretch2 = std::make_shared<audio::TimeStretch>(4, -512, 2);
-  mindspore::dataset::Execute Transform2({time_stretch2});
-  status = Transform2(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
 }
 
 TEST_F(MindDataTestExecute, TestTransformInput1) {
@@ -498,7 +298,7 @@ TEST_F(MindDataTestExecute, TestResizeWithBBox) {
 }
 
 TEST_F(MindDataTestExecute, TestBandBiquadWithEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandBiquadWithEager.";
+  MS_LOG(INFO) << "Basic Function Test With Eager.";
   // Original waveform
   std::vector<float> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
@@ -517,7 +317,7 @@ TEST_F(MindDataTestExecute, TestBandBiquadWithEager) {
 }
 
 TEST_F(MindDataTestExecute, TestBandBiquadWithWrongArg) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandBiquadWithWrongArg.";
+  MS_LOG(INFO) << "Wrong Arg.";
   std::vector<double> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
     1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
@@ -533,126 +333,4 @@ TEST_F(MindDataTestExecute, TestBandBiquadWithWrongArg) {
   mindspore::dataset::Execute Transform01({band_biquad_op});
   Status s01 = Transform01(input_02, &input_02);
   EXPECT_FALSE(s01.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestBandpassBiquadWithEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandpassBiquadWithEager.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> bandpass_biquad_01 = std::make_shared<audio::BandpassBiquad>(44100, 200);
-  mindspore::dataset::Execute Transform01({bandpass_biquad_01});
-  // Filtered waveform by bandpassbiquad
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_TRUE(s01.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestBandpassBiquadWithWrongArg) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandpassBiquadWithWrongArg.";
-  std::vector<double> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  // Check Q
-  MS_LOG(INFO) << "Q is zero.";
-  std::shared_ptr<TensorTransform> bandpass_biquad_op = std::make_shared<audio::BandpassBiquad>(44100, 200, 0);
-  mindspore::dataset::Execute Transform01({bandpass_biquad_op});
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_FALSE(s01.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestBandrejectBiquadWithEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandrejectBiquadWithEager.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> bandreject_biquad_01 = std::make_shared<audio::BandrejectBiquad>(44100, 200);
-  mindspore::dataset::Execute Transform01({bandreject_biquad_01});
-  // Filtered waveform by bandrejectbiquad
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_TRUE(s01.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestBandrejectBiquadWithWrongArg) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandrejectBiquadWithWrongArg.";
-  std::vector<double> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  // Check Q
-  MS_LOG(INFO) << "Q is zero.";
-  std::shared_ptr<TensorTransform> bandreject_biquad_op = std::make_shared<audio::BandrejectBiquad>(44100, 200, 0);
-  mindspore::dataset::Execute Transform01({bandreject_biquad_op});
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_FALSE(s01.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestAngleEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAngleEager.";
-  std::vector<double> origin = {1.143, 1.3123, 2.632, 2.554, -1.213, 1.3, 0.456, 3.563};
-  TensorShape input_shape({4, 2});
-  std::shared_ptr<Tensor> de_tensor;
-  Tensor::CreateFromVector(origin, input_shape, &de_tensor);
-
-  std::shared_ptr<TensorTransform> angle = std::make_shared<audio::Angle>();
-  auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
-  mindspore::dataset::Execute Transform({angle});
-  Status s = Transform(input, &input);
-
-  ASSERT_TRUE(s.IsOk());
-}
-
-TEST_F(MindDataTestExecute, TestRGB2BGREager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRGB2BGREager.";
-
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto rgb2bgr_op = vision::RGB2BGR();
-
-  auto transform = Execute({decode, rgb2bgr_op});
-  Status rc = transform(image, &image);
-
-  EXPECT_EQ(rc, Status::OK());
-}
-
-TEST_F(MindDataTestExecute, TestComplexNormEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComplexNormEager.";
-  // testing
-  std::shared_ptr<Tensor> input_tensor_;
-  Tensor::CreateFromVector(std::vector<float>({1.0, 1.0, 2.0, 3.0, 4.0, 4.0}), TensorShape({3, 2}), &input_tensor_);
-
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
-  std::shared_ptr<TensorTransform> complex_norm_01 = std::make_shared<audio::ComplexNorm>(4.0);
-
-  // Filtered waveform by complexnorm
-  mindspore::dataset::Execute Transform01({complex_norm_01});
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_TRUE(s01.IsOk());
 }

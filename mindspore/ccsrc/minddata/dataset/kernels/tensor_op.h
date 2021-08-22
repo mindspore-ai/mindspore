@@ -53,7 +53,6 @@ namespace dataset {
 constexpr char kTensorOp[] = "TensorOp";
 
 // image
-constexpr char kAdjustGammaOp[] = "AdjustGammaOp";
 constexpr char kAffineOp[] = "AffineOp";
 constexpr char kAutoContrastOp[] = "AutoContrastOp";
 constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";
@@ -138,17 +137,7 @@ constexpr char kRandomSelectSubpolicyOp[] = "RandomSelectSubpolicyOp";
 constexpr char kSentencepieceTokenizerOp[] = "SentencepieceTokenizerOp";
 
 // audio
-constexpr char kAllpassBiquadOp[] = "AllpassBiquadOp";
-constexpr char kAmplitudeToDBOp[] = "AmplitudeToDBOp";
-constexpr char kAngleOp[] = "AngleOp";
 constexpr char kBandBiquadOp[] = "BandBiquadOp";
-constexpr char kBandpassBiquadOp[] = "BandpassBiquadOp";
-constexpr char kBandrejectBiquadOp[] = "BandrejectBiquadOp";
-constexpr char kBassBiquadOp[] = "BassBiquadOp";
-constexpr char kComplexNormOp[] = "ComplexNormOp";
-constexpr char kFrequencyMaskingOp[] = "FrequencyMaskingOp";
-constexpr char kTimeMaskingOp[] = "TimeMaskingOp";
-constexpr char kTimeStretchOp[] = "TimeStretchOp";
 
 // data
 constexpr char kConcatenateOp[] = "ConcatenateOp";

@@ -62,7 +62,6 @@ ExecutionTree::~ExecutionTree() {
 // provides it with a link to the tree. A node cannot form any relationships (parent/child) with
 // other nodes unless they are associated with the same tree.
 Status ExecutionTree::AssociateNode(const std::shared_ptr<DatasetOp> &op) {
-  RETURN_UNEXPECTED_IF_NULL(op);
   // If we are already a part of the tree, no-op
   if (op->tree_ == this) {
     return Status::OK();
@@ -89,7 +88,6 @@ Status ExecutionTree::AssociateNode(const std::shared_ptr<DatasetOp> &op) {
 
 // Sets the root node of the tree
 Status ExecutionTree::AssignRoot(const std::shared_ptr<DatasetOp> &op) {
-  RETURN_UNEXPECTED_IF_NULL(op);
   // Tree must be in building state before we can assign root to it
   if (tree_state_ != kDeTStateBuilding) {
     std::string err_msg =
@@ -123,9 +121,6 @@ void ExecutionTree::Print(std::ostream &out, const std::shared_ptr<DatasetOp> &o
 // A helper functions for doing the recursive printing
 void ExecutionTree::PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp> &dataset_op, std::string indent,
                               bool last, bool detailed) const {
-  if (dataset_op == nullptr) {
-    return;
-  }
   // Decide which printer to use based on detailed arg.
   if (!detailed) {
     out << indent << "+- " << *dataset_op;

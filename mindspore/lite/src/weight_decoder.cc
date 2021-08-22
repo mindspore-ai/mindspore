@@ -20,13 +20,11 @@
 #include "src/huffman_decode.h"
 
 namespace mindspore::lite {
-constexpr int kBit8 = 8;
-constexpr int kBit32 = 32;
 std::vector<bool> StringToBitVector(const std::string &str) {
-  std::vector<bool> vec(str.size() * kBit8);
+  std::vector<bool> vec(str.size() * 8);
   size_t index = 0;
   for (auto ch : str) {
-    for (size_t shift = kBit8; shift > 0; shift--) {
+    for (size_t shift = 8; shift > 0; shift--) {
       vec[index++] = (ch >> (shift - 1)) & 0x1;
     }
   }
@@ -49,7 +47,7 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) 
   if (unique_value_cnt == 0) {
     unique_value_cnt = 1 << bit_num;
   }
-  // parse unique_value_set
+  // parse unique_value_set;
   std::vector<int> unique_values;
   for (size_t i = 0; i < unique_value_cnt; i++) {
     int unique_value = 0;
@@ -83,7 +81,7 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) 
     return RET_NULL_PTR;
   }
   auto dst_data = dst_tensor->data_c();
-  if (bit_num <= kBit8) {
+  if (bit_num <= 8) {
     ret = UnIndexTensorData<int8_t>(unique_values, unique_value_index_vec, dst_data, dst_tensor->Size());
   } else {
     ret = UnIndexTensorData<int16_t>(unique_values, unique_value_index_vec, dst_data, dst_tensor->Size());
@@ -104,15 +102,15 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   size_t index = 0;
   // parse coor_best_bit
   size_t coor_best_bit = 0;
-  for (size_t i = 0; i < kBit8; i++) {
+  for (size_t i = 0; i < 8; i++) {
     bool bit = bit_vec[index++];
-    coor_best_bit |= bit << (kBit8 - i - 1);
+    coor_best_bit |= bit << (8 - i - 1);
   }
   // parse nz_cnt
   size_t nz_cnt = 0;
-  for (size_t i = 0; i < kBit32; i++) {
+  for (size_t i = 0; i < 32; i++) {
     bool bit = bit_vec[index++];
-    nz_cnt |= bit << (kBit32 - i - 1);
+    nz_cnt |= bit << (32 - i - 1);
   }
   // parse unique_value cnt
   size_t unique_value_cnt = 0;
@@ -169,7 +167,7 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   }
   auto dst_data = dst_tensor->data_c();
 
-  if (bit_num <= kBit8) {
+  if (bit_num <= 8) {
     ret = UnSparseTensorData<int8_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.quantParams(),
                                      elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
   } else {
@@ -297,22 +295,6 @@ int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *d
     MS_LOG(ERROR) << "Unsupported bit number: " << origin_bit;
     return RET_NOT_SUPPORT;
   }
-}
-
-int WeightDecoder::UnPack(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
-  STATUS ret = RET_OK;
-  if (src_tensor.enableHuffmanCode()) {
-    ret = WeightDecoder::DecodeHuffmanCode(src_tensor, dst_tensor);
-    if (ret != RET_OK && ret != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Decode huffman code failed: " << ret;
-    }
-  } else {
-    ret = WeightDecoder::UnPackToInt(src_tensor, dst_tensor);
-    if (ret != RET_OK && ret != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Unpack to int8 failed: " << ret;
-    }
-  }
-  return ret;
 }
 
 int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors,

@@ -4,9 +4,8 @@
 .align 5
 
 //void MatmulInt8DpOpt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep4, const int *a_sums,
-//                     const int *bias, int act_min, int act_max, int out_zp, const int32_t *multiplier,
-//                     const int32_t *left_shift, const int32_t *right_shift, size_t stride, size_t filter_peroc,
-//                     const int32_t *filter_zp)
+//                     const int *bias, int act_min, int act_max, int out_zp, int32_t *multiplier, int32_t *left_shift,
+//                     int32_t *right_shift, size_t stride, size_t filter_peroc, int32_t *filter_zp)
 
 // x0: a(left matrix ptr)
 // x1: b(right matrix ptr)

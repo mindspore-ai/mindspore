@@ -101,7 +101,6 @@ TEST_F(TestMulInt8, Mul_quant0) {
   delete input_tensor2;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestMulInt8, Mul_quant0_thread0) {
@@ -175,7 +174,6 @@ TEST_F(TestMulInt8, Mul_quant0_thread0) {
   delete input_tensor2;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestMulInt8, Mul_quant1) {
@@ -249,7 +247,6 @@ TEST_F(TestMulInt8, Mul_quant1) {
   delete input_tensor2;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestMulInt8, Mul_quant1_thread1) {
@@ -323,7 +320,6 @@ TEST_F(TestMulInt8, Mul_quant1_thread1) {
   delete input_tensor2;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestMulInt8, test) {
@@ -397,7 +393,6 @@ TEST_F(TestMulInt8, test) {
   delete input_tensor2;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 }  // namespace mindspore

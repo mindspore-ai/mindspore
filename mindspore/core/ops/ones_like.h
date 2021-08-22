@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API OnesLike : public PrimitiveC {
+class OnesLike : public PrimitiveC {
  public:
   OnesLike() : PrimitiveC(prim::kPrimOnesLike->name()) {}
   ~OnesLike() = default;

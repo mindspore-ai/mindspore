@@ -36,9 +36,7 @@
 #include "debug/common.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
-#include "pipeline/jit/base.h"
 #include "utils/log_adapter.h"
-#include "utils/comm_manager.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
@@ -135,14 +133,12 @@ class AnalyzeFailExporter : public AnfExporter {
 
   bool ExportFuncGraph(const std::string &filename, const TraceCNodeEvalStack &node_config_stack);
 
- protected:
+ private:
   void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                    std::map<AnfNodePtr, int> *const apply_map) override;
-
- private:
   std::string GetNodeType(const AnfNodePtr &nd) override;
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
-  AnfNodeConfigPtr GetForwardConfig(const AnfNodeConfigPtr &cfg);
+  AnfNodeConfigPtr GetFordwardConfig(const AnfNodeConfigPtr &cfg);
   void ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
   void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
   std::unordered_map<FuncGraphPtr, TaggedNodeMap> CreateTaggedNodeMap(
@@ -161,7 +157,7 @@ std::unordered_map<FuncGraphPtr, TaggedNodeMap> AnalyzeFailExporter::CreateTagge
     MS_EXCEPTION_IF_NULL(node_config);
 
     // Record new config in set.
-    auto new_config = GetForwardConfig(node_config);
+    auto new_config = GetFordwardConfig(node_config);
     if (new_config != node_config) {
       MS_LOG(DEBUG) << "The node_config is forwarded, old config: " << node_config->ToString()
                     << ", new_config: " << new_config->ToString();
@@ -222,7 +218,7 @@ AbstractBasePtr AnalyzeFailExporter::GetNodeAbstract(const AnfNodePtr &node) {
   return nullptr;
 }
 
-AnfNodeConfigPtr AnalyzeFailExporter::GetForwardConfig(const AnfNodeConfigPtr &cfg) {
+AnfNodeConfigPtr AnalyzeFailExporter::GetFordwardConfig(const AnfNodeConfigPtr &cfg) {
   MS_EXCEPTION_IF_NULL(cfg);
   MS_EXCEPTION_IF_NULL(engine_);
   AnfNodeConfigPtr cur_cfg = cfg;
@@ -246,7 +242,7 @@ void AnalyzeFailExporter::ProcessFuncGraphCall(const CNodePtr &node, std::string
   try {
     FuncGraphPtr dummy_call_func_graph = nullptr;
     auto cfg = engine_->MakeConfig(node, current_context_, dummy_call_func_graph);
-    cfg = GetForwardConfig(cfg);
+    cfg = GetFordwardConfig(cfg);
     cnode = dyn_cast<CNode>(cfg->node());
   } catch (const std::exception &e) {
     MS_LOG(INFO) << "Exception: " << e.what();
@@ -350,16 +346,9 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     MS_LOG(DEBUG) << "Node configs is empty";
     return false;
   }
-  auto real_filepath = Common::GetRealPath(filename);
-  if (!real_filepath.has_value()) {
-    MS_LOG(ERROR) << "The export ir path: " << filename << " is not illegal.";
-    return false;
-  }
-  ChangeFileMode(real_filepath.value(), S_IWUSR);
-  std::ofstream ofs(real_filepath.value());
+  std::ofstream ofs(filename);
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << real_filepath.value() << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open file '" << filename << "' failed!";
     return false;
   }
 
@@ -400,24 +389,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
         << " internal frames).\n";
   }
   ofs.close();
-  ChangeFileMode(real_filepath.value(), S_IRUSR);
   return true;
-}
-
-std::string GetEvalFailDatPath() {
-  std::string path;
-  auto ms_om_path = common::GetEnv("MS_OM_PATH");
-  if (!ms_om_path.empty()) {
-    path = ms_om_path;
-  } else {
-    path = ".";
-  }
-  path += "/rank_" + std::to_string(GetRank()) + "/om/analyze_fail.dat";
-  auto realpath = Common::GetRealPath(path);
-  if (!realpath.has_value()) {
-    MS_EXCEPTION(ValueError) << "Get real path failed. path=" << path;
-  }
-  return realpath.value();
 }
 
 void GetEvalStackInfo(std::ostringstream &oss) {
@@ -427,7 +399,17 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     MS_LOG(INFO) << "Length of analysis information stack is empty.";
     return;
   }
-  std::string file_name = GetEvalFailDatPath();
+  string file_name = "analyze_fail.dat";
+  auto ms_om_path = common::GetEnv("MS_OM_PATH");
+  if (!ms_om_path.empty()) {
+    auto path = ms_om_path + "/" + file_name;
+    auto realpath = Common::GetRealPath(path);
+    if (!realpath.has_value()) {
+      MS_EXCEPTION(ValueError) << "Get real path failed. path=" << path;
+    }
+    file_name = realpath.value();
+  }
+
   auto ret = OutputAnalyzedGraphWithType(file_name);
   oss << "\nThe function call stack";
   if (ret) {

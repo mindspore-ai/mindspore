@@ -43,13 +43,6 @@ constexpr size_t kThirdDataIndex = 2;
 constexpr size_t kFourthDataIndex = 3;
 constexpr size_t kBitWidth = 32;
 constexpr size_t kPerSegNum = 4;
-constexpr size_t kFirstDataStride = 1;
-constexpr size_t kSecondDataStride = 2;
-constexpr size_t kThirdDataStride = 3;
-constexpr size_t kFirstRandNum = 0;
-constexpr size_t kSecondRandNum = 1;
-constexpr size_t kThirdRandNum = 2;
-constexpr size_t kFourthRandNum = 3;
 }  // namespace
 
 class PhiloxRandom {
@@ -191,10 +184,10 @@ void GetPhiloxRandomFloat(float *data, size_t length, int seed, int seed2) {
     for (size_t i = 1; i < length / kPerSegNum; i++) {
       philoxRandom.Skip(0);
       randNum = philoxRandom.operator()();
-      data[kPerSegNum * i] = uint32ToFloat(randNum[kFirstRandNum]);
-      data[kPerSegNum * i + kFirstDataStride] = uint32ToFloat(randNum[kSecondRandNum]);
-      data[kPerSegNum * i + kSecondDataStride] = uint32ToFloat(randNum[kThirdRandNum]);
-      data[kPerSegNum * i + kThirdDataStride] = uint32ToFloat(randNum[kFourthRandNum]);
+      data[kPerSegNum * i] = uint32ToFloat(randNum[0]);
+      data[kPerSegNum * i + 1] = uint32ToFloat(randNum[1]);
+      data[kPerSegNum * i + 2] = uint32ToFloat(randNum[2]);
+      data[kPerSegNum * i + 3] = uint32ToFloat(randNum[3]);
     }
     philoxRandom.Skip(0);
     randNum = philoxRandom.operator()();
@@ -204,11 +197,7 @@ void GetPhiloxRandomFloat(float *data, size_t length, int seed, int seed2) {
   }
 }
 
-int UniformRealCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  return RET_OK;
-}
+int UniformRealCPUKernel::Init() { return RET_OK; }
 
 int UniformRealCPUKernel::ReSize() { return RET_OK; }
 

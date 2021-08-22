@@ -24,26 +24,151 @@
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
 #include "src/runtime/infer_manager.h"
-#include "mindspore/core/ops/switch.h"
-#include "mindspore/core/ops/call.h"
-#include "mindspore/core/ops/fusion/partial_fusion.h"
 
 namespace mindspore {
 namespace lite {
 constexpr size_t kInitialSize = 1024;
-std::vector<CNodePtr> GetInputCNode(const CNodePtr &cnode) {
-  if (cnode == nullptr) {
-    return {};
-  }
-  std::vector<CNodePtr> inputs;
-  for (const auto &input : cnode->inputs()) {
-    if (input == nullptr || !utils::isa<CNodePtr>(input)) {
-      continue;
-    }
-    inputs.emplace_back(utils::cast<CNodePtr>(input));
-  }
-  return inputs;
-}
+
+static const std::vector<schema::PrimitiveType> nhwcOpList = {schema::PrimitiveType_Conv2DBackpropFilterFusion,
+                                                              schema::PrimitiveType_Conv2DBackpropInputFusion,
+                                                              schema::PrimitiveType_AvgPoolGrad,
+                                                              schema::PrimitiveType_MaxPoolGrad,
+                                                              schema::PrimitiveType_BiasAddGrad,
+                                                              schema::PrimitiveType_BatchNormGrad,
+                                                              schema::PrimitiveType_ApplyMomentum,
+                                                              schema::PrimitiveType_SGD,
+                                                              schema::PrimitiveType_Adam,
+                                                              schema::PrimitiveType_ResizeGrad,
+                                                              schema::PrimitiveType_AvgPoolFusion,
+                                                              schema::PrimitiveType_MaxPoolFusion,
+                                                              schema::PrimitiveType_Conv2DFusion,
+                                                              schema::PrimitiveType_Conv2dTransposeFusion,
+                                                              schema::PrimitiveType_LRN,
+                                                              schema::PrimitiveType_Resize,
+                                                              schema::PrimitiveType_BatchNorm,
+                                                              schema::PrimitiveType_FusedBatchNorm,
+                                                              schema::PrimitiveType_PReLUFusion,
+                                                              schema::PrimitiveType_BiasAdd,
+                                                              schema::PrimitiveType_SpaceToDepth,
+                                                              schema::PrimitiveType_DepthToSpace,
+                                                              schema::PrimitiveType_TopKFusion,
+                                                              schema::PrimitiveType_BatchToSpace,
+                                                              schema::PrimitiveType_SpaceToBatch,
+                                                              schema::PrimitiveType_SpaceToBatchND};
+
+static const std::vector<schema::PrimitiveType> nchwOpList = {schema::PrimitiveType_InstanceNorm};
+
+static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
+  schema::PrimitiveType_AvgPoolGrad,    schema::PrimitiveType_MaxPoolGrad,
+  schema::PrimitiveType_ActivationGrad, schema::PrimitiveType_Conv2DBackpropFilterFusion,
+  schema::PrimitiveType_BatchNormGrad,  schema::PrimitiveType_ResizeGrad};
+
+// index {} mean all inputs need insert
+static std::unordered_map<schema::PrimitiveType, std::vector<int>> extNhwcInsertIndex = {
+  {schema::PrimitiveType_BatchNormGrad, {0, 1}},
+  {schema::PrimitiveType_Conv2DBackpropFilterFusion, {0, 1}},
+  {schema::PrimitiveType_ApplyMomentum, {3}},
+  {schema::PrimitiveType_SGD, {1}},
+  {schema::PrimitiveType_Adam, {9}}};
+
+static const std::vector<schema::PrimitiveType> fp32FullOpList = {
+  schema::PrimitiveType_Concat, schema::PrimitiveType_AddFusion,
+  schema::PrimitiveType_Floor};  // fp32 ops support C4 and nhwc in fp32
+
+static const std::vector<schema::PrimitiveType> int8NeedNhwcOpList = {};
+
+static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveType_Conv2DFusion,
+                                                              schema::PrimitiveType_Conv2dTransposeFusion,
+                                                              schema::PrimitiveType_AddFusion,
+                                                              schema::PrimitiveType_Transpose,
+                                                              schema::PrimitiveType_AvgPoolFusion,
+                                                              schema::PrimitiveType_MaxPoolFusion,
+                                                              schema::PrimitiveType_Concat,
+                                                              schema::PrimitiveType_Softmax,
+                                                              schema::PrimitiveType_Reshape,
+                                                              schema::PrimitiveType_Activation,
+                                                              schema::PrimitiveType_Resize,
+                                                              schema::PrimitiveType_FullConnection,
+                                                              schema::PrimitiveType_ArgMaxFusion,
+                                                              schema::PrimitiveType_ArgMinFusion,
+                                                              schema::PrimitiveType_BatchNorm,
+                                                              schema::PrimitiveType_FusedBatchNorm,
+                                                              schema::PrimitiveType_BiasAdd,
+                                                              schema::PrimitiveType_DivFusion,
+                                                              schema::PrimitiveType_MulFusion,
+                                                              schema::PrimitiveType_SliceFusion,
+                                                              schema::PrimitiveType_Split,
+                                                              schema::PrimitiveType_Squeeze,
+                                                              schema::PrimitiveType_SubFusion,
+                                                              schema::PrimitiveType_StridedSlice,
+                                                              schema::PrimitiveType_TopKFusion,
+                                                              schema::PrimitiveType_Unsqueeze,
+                                                              schema::PrimitiveType_MatMul,
+                                                              schema::PrimitiveType_PadFusion,
+                                                              schema::PrimitiveType_ScaleFusion,
+                                                              schema::PrimitiveType_Cast,
+                                                              schema::PrimitiveType_Shape,
+                                                              schema::PrimitiveType_ExpandDims,
+                                                              schema::PrimitiveType_BatchToSpace,
+                                                              schema::PrimitiveType_BatchToSpaceND,
+                                                              schema::PrimitiveType_ReduceFusion,
+                                                              schema::PrimitiveType_Round,
+                                                              schema::PrimitiveType_Floor,
+                                                              schema::PrimitiveType_Ceil,
+                                                              schema::PrimitiveType_Abs,
+                                                              schema::PrimitiveType_Sin,
+                                                              schema::PrimitiveType_Cos,
+                                                              schema::PrimitiveType_Log,
+                                                              schema::PrimitiveType_Sqrt,
+                                                              schema::PrimitiveType_Rsqrt,
+                                                              schema::PrimitiveType_Square,
+                                                              schema::PrimitiveType_LogicalNot,
+                                                              schema::PrimitiveType_SpaceToBatch,
+                                                              schema::PrimitiveType_SpaceToBatchND,
+                                                              schema::PrimitiveType_DepthToSpace,
+                                                              schema::PrimitiveType_PowFusion,
+                                                              schema::PrimitiveType_GatherNd,
+                                                              schema::PrimitiveType_LeakyRelu,
+                                                              schema::PrimitiveType_Gather,
+                                                              schema::PrimitiveType_Equal,
+                                                              schema::PrimitiveType_NotEqual,
+                                                              schema::PrimitiveType_LessEqual,
+                                                              schema::PrimitiveType_Greater,
+                                                              schema::PrimitiveType_GreaterEqual,
+                                                              schema::PrimitiveType_Eltwise,
+                                                              schema::PrimitiveType_DetectionPostProcess,
+                                                              schema::PrimitiveType_Crop,
+                                                              schema::PrimitiveType_PriorBox,
+                                                              schema::PrimitiveType_QuantDTypeCast,
+                                                              schema::PrimitiveType_LayerNormFusion,
+                                                              schema::PrimitiveType_L2NormalizeFusion};
+
+static const std::vector<schema::PrimitiveType> needInsertOpList = {
+  schema::PrimitiveType_Eltwise,       schema::PrimitiveType_Activation,   schema::PrimitiveType_Concat,
+  schema::PrimitiveType_PowFusion,     schema::PrimitiveType_StridedSlice, schema::PrimitiveType_AddFusion,
+  schema::PrimitiveType_AddN,          schema::PrimitiveType_Split,        schema::PrimitiveType_SliceFusion,
+  schema::PrimitiveType_Crop,          schema::PrimitiveType_MulFusion,    schema::PrimitiveType_Maximum,
+  schema::PrimitiveType_ActivationGrad};
+
+static const std::unordered_map<int, int> nc2NhAxisMap = {{0, 0}, {1, -1}, {2, 1}, {3, 2}};
+
+std::unordered_map<int, int> GetNc2NhAxisMap() { return nc2NhAxisMap; }
+
+std::vector<schema::PrimitiveType> GetInsertOpList() { return needInsertOpList; }
+
+std::vector<schema::PrimitiveType> Getfp32FullOpList() { return fp32FullOpList; }
+
+std::vector<schema::PrimitiveType> GetNhwcOpList() { return nhwcOpList; }
+
+std::vector<schema::PrimitiveType> GetNchwOpList() { return nchwOpList; }
+
+std::unordered_map<schema::PrimitiveType, std::vector<int>> GetExtNhwcIndexes() { return extNhwcInsertIndex; }
+
+std::vector<schema::PrimitiveType> GetNhwcAllInputOpList() { return nhwcOpAllInputList; }
+
+std::vector<schema::PrimitiveType> GetUint8NhwcOpList() { return int8NeedNhwcOpList; }
+
+std::vector<schema::PrimitiveType> GetInt8OpList() { return int8OpList; }
 
 const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb) {
   if (primitive_t == nullptr || fbb == nullptr) {
@@ -339,76 +464,5 @@ size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_
   }
 }
 
-bool IsPartialFusion(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return false;
-  }
-  if (node->isa<mindspore::CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
-    auto vnode_value = cnode->input(0)->cast<ValueNodePtr>()->value();
-    return GetValue<NamedPtr>(vnode_value)->name() == "PartialFusion";
-  }
-  return false;
-}
-
-bool IsCall(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return false;
-  }
-  if (!utils::isa<CNodePtr>(node)) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  if (cnode->inputs().empty()) {
-    return false;
-  }
-  auto cnode_first_input = cnode->input(0);
-  if (utils::isa<CNodePtr>(cnode_first_input)) {
-    return true;
-  }
-  if (utils::isa<ValueNode>(cnode_first_input)) {
-    auto vnode = cnode_first_input->cast<ValueNodePtr>();
-    return GetValueNode<FuncGraphPtr>(vnode) != nullptr;
-  }
-  return false;
-}
-
-bool IsSwitch(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return false;
-  }
-  if (!utils::isa<CNodePtr>(node)) {
-    return false;
-  }
-  return opt::CheckPrimitiveType(node, prim::kPrimSwitch);
-}
-
-bool IsMakeTuple(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return false;
-  }
-  if (!utils::isa<CNodePtr>(node)) {
-    return false;
-  }
-  return opt::CheckPrimitiveType(node, prim::kPrimMakeTuple);
-}
-
-ValueNodePtr GetPartialFusionPrim() {
-  auto partial_prim = std::make_shared<mindspore::ops::PartialFusion>();
-  ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
-  return partial_anf_prim;
-}
-
-ValueNodePtr GetSwitchAnfPrim() {
-  auto switch_prim = std::make_shared<mindspore::ops::Switch>();
-  ValueNodePtr switch_anf_prim = NewValueNode(switch_prim);
-  return switch_anf_prim;
-}
-
-ValueNodePtr GetCallAnfPrim() {
-  auto call_prim = std::make_shared<mindspore::ops::Call>();
-  ValueNodePtr call_anf_prim = NewValueNode(call_prim);
-  return call_anf_prim;
-}
 }  // namespace lite
 }  // namespace mindspore

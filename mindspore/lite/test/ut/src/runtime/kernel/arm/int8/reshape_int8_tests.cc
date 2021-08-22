@@ -90,7 +90,6 @@ TEST_F(TestReshapeInt8, reshape_quant0) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestReshapeInt8, reshape_quant1_thread2) {
@@ -153,7 +152,6 @@ TEST_F(TestReshapeInt8, reshape_quant1_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 }  // namespace mindspore

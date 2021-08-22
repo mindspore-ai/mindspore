@@ -164,7 +164,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     }
     // receive convert model result from child
     CreateBufferCall call = [&buffer_ret](size_t msg_len) -> uint8_t * {
-      (void)buffer_ret.ResizeData(msg_len);
+      buffer_ret.ResizeData(msg_len);
       return reinterpret_cast<uint8_t *>(buffer_ret.MutableData());
     };
     status = multi_process->ReceiveMsg(call);
@@ -179,7 +179,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     // receive original model from parent
     Buffer model;
     CreateBufferCall call = [&model](size_t msg_len) -> uint8_t * {
-      (void)model.ResizeData(msg_len);
+      model.ResizeData(msg_len);
       return reinterpret_cast<uint8_t *>(model.MutableData());
     };
     auto status = multi_process->ReceiveMsg(call);

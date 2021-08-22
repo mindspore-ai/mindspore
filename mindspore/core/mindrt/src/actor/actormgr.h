@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_MINDRT_SRC_ACTOR_ACTORMGR_H
 #define MINDSPORE_CORE_MINDRT_SRC_ACTOR_ACTORMGR_H
 
-#include <atomic>
 #include <set>
 #include <utility>
 #include <map>
@@ -48,30 +47,32 @@ class ActorMgr {
     (void)ActorMgr::GetActorMgrRef()->Send(AID(to), std::move(msg));
   }
 
-  ActorThreadPool *GetActorThreadPool() { return inner_pool_; }
-
   ActorMgr();
   ~ActorMgr();
 
   void Finalize();
-  // initialize actor manager resource, do not create inner thread pool by default
-  void Initialize(bool use_inner_pool = false, size_t actor_thread_num = 1, size_t max_thread_num = 1);
-
+  void Initialize() {}
   void RemoveActor(const std::string &name);
   ActorBase *GetActor(const AID &id);
   const std::string GetUrl(const std::string &protocol = "tcp");
   void AddUrl(const std::string &protocol, const std::string &url);
   void AddIOMgr(const std::string &protocol, const std::shared_ptr<IOMgr> &ioMgr);
   int Send(const AID &to, std::unique_ptr<MessageBase> &&msg, bool remoteLink = false, bool isExactNotRemote = false);
-  AID Spawn(const ActorReference &actor, bool shareThread = true, bool start = true);
+  AID Spawn(ActorReference &actor, bool shareThread = true, bool start = true);
   void Terminate(const AID &id);
   void TerminateAll();
   void Wait(const AID &pid);
   inline const std::string &GetDelegate() const { return delegate; }
 
   inline void SetDelegate(const std::string &d) { delegate = d; }
-
-  void SetActorReady(const ActorReference &actor) const;
+  inline void SetActorReady(std::shared_ptr<ActorBase> &actor) const {
+    auto pool = actor->pool_;
+    if (pool == nullptr) {
+      MS_LOG(ERROR) << "ThreadPool is nullptr, actor: " << actor->GetAID().Name();
+      return;
+    }
+    pool->PushActorToQueue(actor.get());
+  }
   void SetActorStatus(const AID &pid, bool start);
 
  private:
@@ -82,13 +83,6 @@ class ActorMgr {
       return false;
     }
   }
-  // in order to avoid being initialized many times
-  std::atomic_bool initialized_{false};
-
-  // actor manager support running on inner thread pool,
-  // or running on other thread pool created independently externally
-  ActorThreadPool *inner_pool_{nullptr};
-
   // Map of all local spawned and running processes.
   std::map<std::string, ActorReference> actors;
 #ifndef MS_COMPILE_IOS

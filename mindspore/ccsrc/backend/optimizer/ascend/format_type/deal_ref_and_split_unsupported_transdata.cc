@@ -120,7 +120,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::AddAdditionalToRefOutput(const Fun
   // insert trans
   if (origin_format != cur_format && cur_shape.size() > 1) {
     auto kernel_select = std::make_shared<KernelSelect>();
-    final_node = NewTransOpNode(func_graph, final_node, kernel_select, false, prim::kPrimTransData->name());
+    final_node = NewTransOpNode(func_graph, final_node, kernel_select, false, prim::KPrimTransData->name());
     RefreshKernelBuildInfo(cur_format, origin_format, final_node, {}, cur_type);
     final_node = SplitTransdataIfNotSupported(func_graph, final_node);
     final_index = 0;
@@ -288,7 +288,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::SplitTransdataIfNotSupported(const
   builder_info_to_default->SetOutputsFormat({kOpFormat_DEFAULT});
   builder_info_to_special_foramt->SetInputsFormat({kOpFormat_DEFAULT});
   std::vector<AnfNodePtr> next_trans_node_inputs = {
-    NewValueNode(std::make_shared<Primitive>(prim::kPrimTransData->name())), cnode};
+    NewValueNode(std::make_shared<Primitive>(prim::KPrimTransData->name())), cnode};
   MS_EXCEPTION_IF_NULL(func_graph);
   auto next_trans_node = func_graph->NewCNode(next_trans_node_inputs);
   next_trans_node->set_abstract(cnode->abstract());

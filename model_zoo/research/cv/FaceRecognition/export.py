@@ -23,7 +23,7 @@ from mindspore.train.serialization import export, load_checkpoint, load_param_in
 from src.backbone.resnet import get_backbone
 from model_utils.config import config
 from model_utils.moxing_adapter import moxing_wrapper
-from model_utils.device_adapter import get_device_id
+
 
 def modelarts_pre_process():
     '''modelarts pre process function.'''
@@ -41,8 +41,8 @@ def run_export():
     config.backbone = config.export_backbone
     config.use_drop = config.export_use_drop
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False,
-                        device_id=get_device_id())
+    devid = 0
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
 
     network = get_backbone(config)
 

@@ -61,6 +61,7 @@ class Backend {
   virtual bool GetCond(const BaseRef &c, bool *value);
   virtual bool GetIndex(const BaseRef &c, int64_t *value);
   virtual GraphId CompileGraph(NotNull<FuncGraphPtr> fg) { return kInvalidGraphId; }
+  virtual void Link(GraphId) {}
   virtual void SetDebugger() {}
 
   bool is_multi_graph_sink() const { return is_multi_graph_sink_; }
@@ -81,6 +82,7 @@ class MsBackend : public Backend {
   VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target = "");
 
   VectorRef MsSimuRunGraph(const GraphId &g);
+  void Link(GraphId) override;
   GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
   VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
   void ClearSessionGraphs();
@@ -137,12 +139,7 @@ class MindRTBackend : public Backend {
   // Construct the GraphCompilerInfo by the compilation results of graph, used in PyNative mode.
   std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const ActorInfo &actor_info,
                                                                 const std::vector<int64_t> *tensors_mask,
-                                                                const std::vector<tensor::TensorPtr> *input_tensors,
-                                                                bool need_erase);
-
-  // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
-  // so the latest single op cache should be erased when cache list size exceeds threshold value.
-  void EraseSingleOpCache(const ActorInfo &actor_info, const KernelGraphPtr &graph);
+                                                                const std::vector<tensor::TensorPtr> *input_tensors);
 
   // Split complete kernel graph to single op graph in PyNative back
   // propagation, then compile and run single op graph.
@@ -161,7 +158,7 @@ class MindRTBackend : public Backend {
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;
 
-  FuncGraph *root_graph_;
+  FuncGraphPtr root_graph_;
   GraphPartitionPtr graph_partition_;
   std::shared_ptr<GraphCompiler> graph_compiler_;
   std::string device_name_;

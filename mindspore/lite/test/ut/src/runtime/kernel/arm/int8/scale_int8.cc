@@ -55,7 +55,6 @@ class TestScaleInt8 : public mindspore::CommonTest {
 };
 
 void TestScaleInt8::TearDown() {
-  delete kernel_;
   in_tensor_.set_data(nullptr);
   scale_tensor_.set_data(nullptr);
   bias_tensor_.set_data(nullptr);

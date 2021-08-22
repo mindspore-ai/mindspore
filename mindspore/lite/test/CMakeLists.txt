@@ -100,7 +100,6 @@ set(TEST_LITE_SRC
         ${KERNEL_OP_SRC}
         ${LITE_DIR}/src/runtime/inner_allocator.cc
         ${LITE_DIR}/src/runtime/infer_manager.cc
-        ${LITE_DIR}/src/runtime/runtime_pass.cc
         ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/ms_tensor.cc
         ${LITE_DIR}/src/tensorlist.cc
@@ -125,7 +124,6 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/utils.cc
         ${LITE_DIR}/src/common/dynamic_library_loader.cc
         ${LITE_DIR}/src/common/string_util.cc
-        ${LITE_DIR}/src/common/lite_utils.cc
         ${LITE_DIR}/src/common/quant_utils.cc
         ${LITE_DIR}/src/delegate/delegate.cc
         ${LITE_DIR}/src/errorcode.cc
@@ -134,15 +132,6 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/train/train_populate_parameter.cc
         ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
         )
-
-# Avoid multiple definitions
-if(MSLITE_ENABLE_CONVERTER STREQUAL "off")
-    set(TEST_LITE_SRC
-            ${TEST_LITE_SRC}
-            ${LITE_DIR}/tools/converter/quantizer/fse_decoder.cc
-            ${LITE_DIR}/tools/converter/quantizer/fse_bit_stream.cc
-            )
-endif()
 
 file(GLOB KERNEL_REG_SRC ${LITE_DIR}/src/registry/*.cc)
 set(TEST_LITE_SRC ${TEST_LITE_SRC} ${KERNEL_REG_SRC})
@@ -171,7 +160,7 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
             )
 endif()
 
-if(MSLITE_ENABLE_MINDRT)
+if(ENABLE_MINDRT)
     include_directories(${CORE_DIR}/mindrt/)
     include_directories(${CORE_DIR}/mindrt/src/)
     set(TEST_LITE_SRC ${TEST_LITE_SRC}
@@ -211,6 +200,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/converter/converter_flags.cc
             ${LITE_DIR}/tools/converter/converter.cc
             ${LITE_DIR}/tools/converter/export_model.cc
+            ${LITE_DIR}/tools/converter/dump_graph.cc
             ${LITE_DIR}/tools/converter/optimizer_manager.cc
             ${LITE_DIR}/tools/converter/parser/parser_utils.cc
             ${LITE_DIR}/tools/optimizer/common/node_pass_extends.cc
@@ -218,6 +208,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
             ${LITE_DIR}/tools/optimizer/common/format_utils.cc
             ${LITE_DIR}/tools/optimizer/common/multiple_pattern_process_pass.cc
+            ${LITE_DIR}/tools/optimizer/format/conv_weight_format.cc
             ${LITE_DIR}/tools/optimizer/format/delete_redundant_transpose.cc
             ${LITE_DIR}/tools/optimizer/format/to_format_base.cc
             ${LITE_DIR}/tools/optimizer/format/to_nchw_format.cc
@@ -233,11 +224,11 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/multi_head_attention_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/reshape_reshape_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/constant_folding_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/quant_dtype_cast_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/norm_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/batchmatmul_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/sigmoid_mul_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_conv_fusion.cc
-            ${LITE_DIR}/tools/optimizer/fusion/conv_pad_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_tuplegetitem_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tflite_lstm_cell_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_lstm_cell_fusion.cc
@@ -267,7 +258,6 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/transpose_strategy.cc
             ${LITE_DIR}/tools/optimizer/graph/reduce_same_act_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/split_one_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/specify_graph_input_format.cc
             ${LITE_DIR}/tools/optimizer/fisson/eliminate_concat_split.cc
             ${LITE_DIR}/tools/optimizer/fisson/fisson_util.cc
             ${LITE_DIR}/tools/optimizer/fisson/iter_node_outputs.cc
@@ -288,14 +278,12 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/common/storage.cc
             ${LITE_DIR}/tools/converter/parser/inputs_adjust.cc
             ${LITE_DIR}/tools/converter/parser/unify_format.cc
-            ${LITE_DIR}/tools/converter/parser/lstm_adjust_pass.cc
             ${LITE_DIR}/tools/converter/parser/unused_node_remove_pass.cc
             ${LITE_DIR}/tools/converter/parser/conv1d_inout_adjust.cc
             ${LITE_DIR}/tools/converter/parser/tf_bidirection_gru_cf_fusion.cc
             ${LITE_DIR}/tools/converter/import/mindspore_importer.cc
             ${LITE_DIR}/tools/converter/import/primitive_adjust.cc
             ${LITE_DIR}/tools/converter/import/mindir_adjust.cc
-            ${LITE_DIR}/tools/converter/import/mindir_control_flow_adjust.cc
             )
 endif()
 ### train
@@ -313,7 +301,6 @@ file(GLOB_RECURSE TEST_CASE_KERNEL_SRC
         ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
         ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
         ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
-        ${TEST_DIR}/ut/src/runtime/runtime_pass_tests.cc
         ${TEST_DIR}/ut/nnacl/infer/*.cc
         )
 

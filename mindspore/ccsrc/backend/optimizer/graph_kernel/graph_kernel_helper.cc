@@ -207,7 +207,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
         v_replace.begin(), v_replace.end(),
         [&tensor](const std::pair<tensor::TensorPtr, AnfNodePtrList> &vl) { return vl.first->ValueEqual(*tensor); });
       if (tensor_iter == v_replace.end()) {
-        (void)v_replace.emplace_back(tensor, AnfNodePtrList{tnode});
+        v_replace.emplace_back(tensor, AnfNodePtrList{tnode});
       } else {
         tensor_iter->second.push_back(tnode);
       }
@@ -613,7 +613,7 @@ void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
 }
 
 std::string GetFormat(const AnfNodePtr &node) {
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto kernel_build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(kernel_build_info);
@@ -801,16 +801,16 @@ void OpListFilter(std::vector<PrimitivePtr> *ops, const std::vector<std::string>
   auto new_prim = [](const std::string &name) { return std::make_shared<Primitive>(name); };
   if (!enable_ops_only.empty()) {
     ops->clear();
-    (void)std::transform(enable_ops_only.begin(), enable_ops_only.end(), std::back_inserter(*ops), new_prim);
+    std::transform(enable_ops_only.begin(), enable_ops_only.end(), std::back_inserter(*ops), new_prim);
   } else {
     if (!enable_ops.empty()) {
-      (void)std::transform(enable_ops.begin(), enable_ops.end(), std::back_inserter(*ops), new_prim);
+      std::transform(enable_ops.begin(), enable_ops.end(), std::back_inserter(*ops), new_prim);
     }
     if (!disable_ops.empty()) {
       auto iter = std::remove_if(ops->begin(), ops->end(), [&disable_ops](const PrimitivePtr &p) {
         return std::find(disable_ops.begin(), disable_ops.end(), p->name()) != disable_ops.end();
       });
-      (void)ops->erase(iter, ops->end());
+      ops->erase(iter, ops->end());
     }
   }
 }

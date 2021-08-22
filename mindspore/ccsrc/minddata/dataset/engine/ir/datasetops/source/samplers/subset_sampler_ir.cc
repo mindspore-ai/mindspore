@@ -72,17 +72,6 @@ Status SubsetSamplerObj::to_json(nlohmann::json *const out_json) {
   return Status::OK();
 }
 
-#ifndef ENABLE_ANDROID
-Status SubsetSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples, std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("indices") != json_obj.end(), "Failed to find indices");
-  std::vector<int64_t> indices = json_obj["indices"];
-  *sampler = std::make_shared<SubsetSamplerObj>(indices, num_samples);
-  // Run common code in super class to add children samplers
-  RETURN_IF_NOT_OK(SamplerObj::from_json(json_obj, sampler));
-  return Status::OK();
-}
-#endif
-
 std::shared_ptr<SamplerObj> SubsetSamplerObj::SamplerCopy() {
   auto sampler = std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
   for (const auto &child : children_) {

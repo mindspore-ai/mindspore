@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResizeBilinear = "ResizeBilinear";
-class MS_CORE_API ResizeBilinear : public PrimitiveC {
+class ResizeBilinear : public PrimitiveC {
  public:
   ResizeBilinear() : PrimitiveC(kNameResizeBilinear) {}
   ~ResizeBilinear() = default;

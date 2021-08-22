@@ -32,7 +32,6 @@
 #include "utils/utils.h"
 #include "frontend/parallel/context.h"
 #include "debug/env_config_parser.h"
-#include "runtime/device/pynative_profiling.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -483,12 +482,9 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
     for (size_t j = i + 1; j < kernels.size(); ++j) {
       auto &child = kernels[j];
       MS_EXCEPTION_IF_NULL(child);
-      if (AnfAlgo::IsCommunicationOp(child)) {
-        continue;
-      }
       auto input_size = child->inputs().size() - 1;
       for (size_t k = 0; k < input_size; ++k) {
-        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0, true);
+        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0);
         if (kernel_index.first == kernel) {
           found_nearest_child = true;
           break;
@@ -621,6 +617,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
   if (addr_size.empty()) {
     return;
   }
+
   if (type == kSomasReuseDynamicMem) {
     bool not_reuse = KernelMemNotReuse(node);
     if (not_reuse) {
@@ -698,7 +695,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   std::vector<tensor::TensorPtr> tensors;
   TensorValueToTensor(node_value, &tensors);
   // Graph id should be passed to record static memory if profiling is enabled.
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(value_node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(value_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   uint32_t graph_id = kernel_info->graph_id();
   for (const auto &tensor : tensors) {
@@ -712,7 +709,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
                              value_node.get());
       continue;
     }
-    size_t tensor_size = LongToSize(tensor->data().nbytes());
+    size_t tensor_size = tensor->data().nbytes();
     auto node_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
     TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
     if (output_type_id == kTypeUnknown) {
@@ -967,47 +964,6 @@ void KernelRuntime::LaunchKernelEvent(const std::vector<std::vector<std::functio
   }
 }
 
-bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_mod, const std::string &op_name,
-                                                      const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &workspace,
-                                                      const std::vector<AddressPtr> &outputs, void *stream) {
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  MS_EXCEPTION_IF_NULL(stream);
-  float cost_time = 0;
-  auto start = CreateDeviceTimeEvent();
-  auto end = CreateDeviceTimeEvent();
-  MS_EXCEPTION_IF_NULL(start);
-  MS_EXCEPTION_IF_NULL(end);
-  start->set_record_stream(stream);
-  end->set_record_stream(stream);
-  start->RecordEvent();
-  bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
-  end->RecordEvent();
-  start->SyncEvent();
-  end->SyncEvent();
-  start->ElapsedTime(&cost_time, end.get());
-  auto launch_end_time = GetTime();
-  auto &profiler_inst = PynativeProfiler::GetInstance();
-  double launch_start_time = launch_end_time - cost_time / kBasicTimeTransferUnit;
-  auto op_launch_start_time_end_time = std::make_pair(launch_start_time, launch_end_time);
-  profiler_inst.SetOpNameAndLaunchTime(std::make_pair(op_name, op_launch_start_time_end_time));
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Launch kernel failed, kernel name is : " << op_name;
-  }
-  return ret;
-}
-
-void KernelRuntime::DebugStreamSync(const CNodePtr &kernel) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto enable_sync_run = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-  if (enable_sync_run) {
-    if (!SyncStream()) {
-      MS_LOG(EXCEPTION) << "Op " << kernel->fullname_with_scope() << " run failed!";
-    }
-  }
-}
-
 bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
   const auto &kernels = graph.execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernel_list;
@@ -1059,37 +1015,18 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
       AddressPtrList kernel_inputs;
       AddressPtrList kernel_workspaces;
       AddressPtrList kernel_outputs;
-      auto ms_context = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(ms_context);
-      if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
-        GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
-      } else {
-        kernel_inputs = kernel_mod->GetInputsAddr();
-        kernel_workspaces = kernel_mod->GetWorkSpacesAddr();
-        kernel_outputs = kernel_mod->GetOutputsAddr();
-      }
+      GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
       bool ret;
       if (AnfAlgo::IsCommunicationOp(kernel)) {
-        if (pynative_mode_profiling_flag_) {
-          ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
-                                                  kernel_workspaces, kernel_outputs, communication_stream_);
-        } else {
-          ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, communication_stream_);
-        }
+        ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, communication_stream_);
       } else {
-        if (pynative_mode_profiling_flag_) {
-          ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
-                                                  kernel_workspaces, kernel_outputs, stream_);
-        } else {
-          ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
-        }
+        ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
       }
       if (!ret) {
         MS_LOG(ERROR) << "Launch kernel failed.";
         return false;
       }
       KernelLaunchProfiling(kernel->fullname_with_scope());
-      DebugStreamSync(kernel);
     }
     LaunchKernelEvent(kernel_post_run_events, i);
   }
@@ -1114,8 +1051,52 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph) {
   return true;
 }
 
-void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
+void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &,
+                                              const std::unordered_set<ValueNodePtr> &, const std::vector<CNodePtr> &) {
   MS_LOG(INFO) << "Clear graph:" << graph_id << " runtime resource";
+}
+
+void KernelRuntime::ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
+                                       const std::unordered_set<ValueNodePtr> &value_nodes,
+                                       const std::vector<CNodePtr> &execution_order) {
+  // clear input parameter output address.
+  for (const auto &input_node : inputs) {
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (!input_node->isa<Parameter>()) {
+      continue;
+    }
+    auto parameter = input_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    parameter->DecreaseUsedGraphCount();
+    // Only the parameter has no graph used, then clear the output address.
+    if (parameter->used_graph_count() != 0) {
+      continue;
+    }
+    size_t output_num = AnfAlgo::GetOutputTensorNum(input_node);
+    for (size_t index = 0; index < output_num; ++index) {
+      if (!AnfAlgo::OutputAddrExist(input_node, index)) {
+        continue;
+      }
+      AnfAlgo::SetOutputAddr(nullptr, index, input_node.get());
+    }
+  }
+  // clear input value node output address.
+  for (const auto &value_node : value_nodes) {
+    if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
+      continue;
+    }
+    AnfAlgo::SetOutputAddr(nullptr, 0, value_node.get());
+  }
+  // clear cnode output address.
+  for (const auto &cnode : execution_order) {
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    for (size_t index = 0; index < output_num; ++index) {
+      if (!AnfAlgo::OutputAddrExist(cnode, index)) {
+        continue;
+      }
+      AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
+    }
+  }
 }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))

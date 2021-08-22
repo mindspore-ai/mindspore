@@ -347,7 +347,7 @@ template <typename T>
 AbstractBasePtr FromValue(const T &value, bool broaden = false) {
   return FromValueInside(MakeValue(value), broaden);
 }
-EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine);
+
 EvalResultPtr EvalOnePrim(const PrimitivePtr &p, const AbstractBasePtrList &arg_specs);
 }  // namespace abstract
 }  // namespace mindspore

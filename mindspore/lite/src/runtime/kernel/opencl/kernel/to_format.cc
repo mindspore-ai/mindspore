@@ -42,18 +42,11 @@ int ToFormatOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-int ToFormatOpenCLKernel::SetConstArgs() {
+void ToFormatOpenCLKernel::SetConstArgs() {
   cl_int4 shape{(cl_int)N_, (cl_int)H_, (cl_int)W_, (cl_int)C_};
   cl_int4 gsize{(cl_int)(N_ * H_), (cl_int)W_, (cl_int)UP_DIV(C_, C4NUM), 1};
-  if (ocl_runtime_->SetKernelArg(kernel_, 2, gsize) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, 3, shape) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  ocl_runtime_->SetKernelArg(kernel_, 2, gsize);
+  ocl_runtime_->SetKernelArg(kernel_, 3, shape);
 }
 
 void ToFormatOpenCLKernel::SetGlobalLocal() {
@@ -77,7 +70,7 @@ int ToFormatOpenCLKernel::Prepare() {
   kernel_name += dtype_str[in_tensor->data_type()] + "_" + dtype_str[out_tensor->data_type()];
   this->set_name(kernel_name);
 
-  const std::string program_name = "to_format";
+  std::string program_name = "to_format";
   std::string source = to_format_source;
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
@@ -96,10 +89,7 @@ int ToFormatOpenCLKernel::Prepare() {
   C_ = output.C;
 
   SetGlobalLocal();
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -108,18 +98,9 @@ int ToFormatOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   auto src_mem_type = (out_mem_type_ == MemType::IMG) ? lite::opencl::MemType::BUF : lite::opencl::MemType::IMG;
   auto dst_mem_type = out_mem_type_;
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c(), src_mem_type) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c(), dst_mem_type) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c(), src_mem_type);
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c(), dst_mem_type);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

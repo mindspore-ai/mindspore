@@ -25,7 +25,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 
-using mindspore::converter::FmkType;
+using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
 
 constexpr const int POS_INVALID = -1;

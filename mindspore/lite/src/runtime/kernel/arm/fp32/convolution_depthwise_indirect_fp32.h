@@ -27,25 +27,26 @@ class ConvolutionDepthwiseIndirectCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwiseIndirectCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
-                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDepthwiseIndirectCPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
+  int InitWeightBias();
   int Execute(int task_id);
+  int Eval() override;
 
  private:
   int MallocIndirectBuffer();
   int MallocPackedInput();
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
+  void PackWeight();
   int step_w = 0;
   int step_h = 0;
   float **indirect_buffer_ = nullptr;
   float *zero_ptr_ = nullptr;
+  float *packed_weight_ = nullptr;
   float *output_ptr_ = nullptr;
   float *packed_input_ = nullptr;
 };

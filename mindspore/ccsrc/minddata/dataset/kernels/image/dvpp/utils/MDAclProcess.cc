@@ -13,14 +13,13 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
-
-#include <thread>
-#include <sys/stat.h>
-#include <sys/time.h>
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
+#include "MDAclProcess.h"
+#include <sys/time.h>
+#include <thread>
+#include <sys/stat.h>
 
 namespace {
 const int BUFFER_SIZE = 2048;

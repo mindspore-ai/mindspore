@@ -46,6 +46,7 @@ class ProfilerException(Exception):
         self.message = message
         self.http_code = http_code
 
+
     @property
     def error_code(self):
         """

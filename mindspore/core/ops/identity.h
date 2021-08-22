@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIdentity = "Identity";
-class MS_CORE_API Identity : public PrimitiveC {
+class Identity : public PrimitiveC {
  public:
   Identity() : PrimitiveC(kNameIdentity) {}
   ~Identity() = default;

@@ -83,8 +83,8 @@ Status VOCOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
     std::shared_ptr<Tensor> image, target;
     const std::string kTargetFile =
       folder_path_ + std::string(kSegmentationClassFolder) + image_id + std::string(kSegmentationExtension);
-    RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->Column(0), &image));
-    RETURN_IF_NOT_OK(ReadImageToTensor(kTargetFile, data_schema_->Column(1), &target));
+    RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
+    RETURN_IF_NOT_OK(ReadImageToTensor(kTargetFile, data_schema_->column(1), &target));
     (*trow) = TensorRow(row_id, {std::move(image), std::move(target)});
     path_list = {kImageFile, kTargetFile};
   } else if (task_type_ == TaskType::Detection) {
@@ -92,7 +92,7 @@ Status VOCOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
     TensorRow annotation;
     const std::string kAnnotationFile =
       folder_path_ + std::string(kAnnotationsFolder) + image_id + std::string(kAnnotationExtension);
-    RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->Column(0), &image));
+    RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadAnnotationToTensor(kAnnotationFile, &annotation));
     trow->setId(row_id);
     trow->push_back(std::move(image));
@@ -326,7 +326,7 @@ Status VOCOp::ComputeColMap() {
   // Set the column name map (base class field)
   if (column_name_id_map_.empty()) {
     for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->Column(i).Name()] = i;
+      column_name_id_map_[data_schema_->column(i).name()] = i;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceAll = "ReduceAll";
-class MS_CORE_API ReduceAll : public Reduce {
+class ReduceAll : public Reduce {
  public:
   ReduceAll() : Reduce(kNameReduceAll) { InitIOName({"input_x", "axis"}, {"y"}); }
   ~ReduceAll() = default;

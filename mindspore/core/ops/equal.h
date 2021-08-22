@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEqual = prim::kEqual;
-class MS_CORE_API Equal : public PrimitiveC {
+class Equal : public PrimitiveC {
  public:
   Equal() : PrimitiveC(prim::kPrimEqual->name()) { InitIOName({"x", "y"}, {"output"}); }
   ~Equal() = default;

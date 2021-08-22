@@ -45,23 +45,17 @@ CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProt
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
   context_ = ms_context;
-
-  lite::InnerContext *lite_context = new lite::InnerContext();
-  auto status = A2L_ConvertContext(ms_context.get(), lite_context);
+  lite::Context lite_context;
+  auto status = A2L_ConvertContext(ms_context.get(), &lite_context);
   if (status != kSuccess) {
     return status;
   }
 
-  auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
+  auto session = std::shared_ptr<session::LiteSession>(
+    session::LiteSession::CreateSession(static_cast<const char *>(model_data), data_size, &lite_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
-  }
-
-  auto ret = lite::LiteSession::CreateSessionByBuf(static_cast<const char *>(model_data), data_size, session.get());
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init session failed";
-    return kLiteError;
   }
 
   session_.swap(session);
@@ -71,21 +65,15 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
-  lite::InnerContext *lite_context = new lite::InnerContext();
-  auto status = A2L_ConvertContext(ms_context.get(), lite_context);
+  lite::Context lite_context;
+  auto status = A2L_ConvertContext(ms_context.get(), &lite_context);
   if (status != kSuccess) {
     return status;
   }
 
-  auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
+  auto session = std::shared_ptr<session::LiteSession>(lite::LiteSession::CreateSession(model_path, &lite_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
-    return kLiteNullptr;
-  }
-
-  auto ret = lite::LiteSession::CreateSessionByPath(model_path, session.get());
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init session failed";
     return kLiteError;
   }
 
@@ -106,8 +94,8 @@ Status ModelImpl::Build() {
     return kLiteNullptr;
   }
 
-  lite::InnerContext *lite_context = new lite::InnerContext();
-  auto status = A2L_ConvertContext(context_.get(), lite_context);
+  lite::Context model_context;
+  auto status = A2L_ConvertContext(context_.get(), &model_context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Failed to convert Context to Lite Context";
     return status;
@@ -115,7 +103,7 @@ Status ModelImpl::Build() {
 
   auto create_callback = CreateTrainSessionCallbackHolder();
   if (create_callback != nullptr) {
-    auto session = create_callback(graph_->graph_data_, cfg_, lite_context);
+    auto session = create_callback(graph_->graph_data_, cfg_, &model_context);
     if (session != nullptr) {
       session_ = session;
       MS_LOG(DEBUG) << "Build model success.";
@@ -128,8 +116,7 @@ Status ModelImpl::Build() {
     MS_LOG(ERROR) << "Lite model has been freed.";
     return kLiteError;
   }
-
-  auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
+  auto session = std::shared_ptr<session::LiteSession>(session::LiteSession::CreateSession(&model_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
@@ -223,7 +210,6 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     }
     old_data.push_back(input->data());
     if (input->data_type() == kObjectTypeString) {
-#ifndef STRING_KERNEL_CLIP
       std::vector<int32_t> shape = TruncateShape(user_input.Shape(), input->data_type(), user_input.DataSize(), false);
       if (shape.empty() && !(user_input.Shape().empty())) {
         ResetTensorData(old_data, input_tensors);
@@ -232,10 +218,6 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       }
       input->set_shape(shape);
       input->set_data(user_input.MutableData());
-#else
-      MS_LOG(ERROR) << unsupport_string_tensor_log;
-      return kLiteError;
-#endif
     } else {
       if (user_input.MutableData() != input->data()) {
         if (input->Size() != user_input.DataSize()) {
@@ -278,6 +260,7 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
   }
   res.resize(inputs.size());
   for (size_t i = 0; i < inputs.size(); i++) {
+    inputs[i]->MutableData();  // prepare data
     auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(inputs[i]));
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
@@ -454,21 +437,4 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
   auto ret = session_->Resize(inner_input, truncated_shape);
   return static_cast<StatusCode>(ret);
 }
-
-session::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) {
-  auto session = new (std::nothrow) lite::LiteSession();
-  if (session == nullptr) {
-    MS_LOG(ERROR) << "create session failed";
-    return nullptr;
-  }
-
-  auto ret = session->Init(context);
-  if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "init session failed";
-    delete session;
-    return nullptr;
-  }
-  return session;
-}
-
 }  // namespace mindspore

@@ -40,7 +40,7 @@ constexpr auto kReduceScatter = "ReduceScatter";
 constexpr auto kAllToAllv = "AllToAllv";
 
 /* Correspondence between data_type and hcom data type in Ascend */
-static map<int64_t, HcclDataType> kConstOpHcomDataTypeMap = {
+static map<int64_t, HcclDataType> CONST_OP_HCOM_DATA_TYPE_MAP = {
   {TypeId::kNumberTypeFloat32, HCCL_DATA_TYPE_FP32},
   {TypeId::kNumberTypeFloat16, HCCL_DATA_TYPE_FP16},
   {TypeId::kNumberTypeInt8, HCCL_DATA_TYPE_INT8},
@@ -48,7 +48,7 @@ static map<int64_t, HcclDataType> kConstOpHcomDataTypeMap = {
 };
 
 /* Correspondence between data_type and occupied byte size in hcom */
-static map<HcclDataType, uint32_t> kConstOpHcomDataTypeSizeMap = {
+static map<HcclDataType, uint32_t> CONST_OP_HCOM_DATA_TYPE_SIZE_MAP = {
   {HCCL_DATA_TYPE_FP32, sizeof(float)},
   {HCCL_DATA_TYPE_FP16, sizeof(float) / 2},
   {HCCL_DATA_TYPE_INT8, sizeof(int8_t)},
@@ -66,8 +66,6 @@ class HcomUtil {
                            const vector<vector<size_t>> &shape_list, uint64_t *total_count);
   static bool GetHcomOperationType(const AnfNodePtr &anf_node, HcclReduceOp *op_type);
   static bool GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id);
-  static bool GetHcomSrcRank(const AnfNodePtr &anf_node, uint32_t *src_rank);
-  static bool GetHcomDestRank(const AnfNodePtr &anf_node, uint32_t *dest_rank);
   static void GetHcomGroup(NotNull<const AnfNodePtr &> anf_node, NotNull<std::string *> group);
   static bool GetHcomReceiveType(const AnfNodePtr &anf_node, TypeId *receive_type);
 };

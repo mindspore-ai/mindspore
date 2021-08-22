@@ -67,7 +67,7 @@ def get_input_data_batch_slice_map(input_ids, eod_id, rank, dis, eod_reset):
 
 
 def create_dataset(batch_size, data_path, device_num=1, rank=0, drop=True, full_batch=False, data_start_index=0,
-                   eod_reset=False, eod_id=9, column_name='input_ids', epoch=1, num_samples=None):
+                   eod_reset=False, eod_id=9, column_name='input_ids', epoch=1):
     """
     Create dataset
 
@@ -99,8 +99,7 @@ def create_dataset(batch_size, data_path, device_num=1, rank=0, drop=True, full_
     data.sort()
 
     # Load data files and preprocess
-    dataset = ds.MindDataset(data[data_start_index:], columns_list=[column_name],
-                             shuffle=False, num_samples=num_samples)
+    dataset = ds.MindDataset(data[data_start_index:], columns_list=[column_name], shuffle=False)
     type_cast_op = C.TypeCast(mstype.int32)
     type_cast_op_float = C.TypeCast(mstype.float16)
 

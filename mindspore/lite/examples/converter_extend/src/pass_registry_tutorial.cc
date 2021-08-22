@@ -94,12 +94,9 @@ bool PassTutorial::Run(const FuncGraphPtr &func_graph) {
   }
   return true;
 }
-}  // namespace opt
 
-namespace lite {
 // register customed Pass
-using mindspore::registry::POSITION_BEGIN;
-REG_PASS(PassTutorial, opt::PassTutorial)
+REG_PASS(PassTutorial, PassTutorial)
 REG_SCHEDULED_PASS(POSITION_BEGIN, {"PassTutorial"})
-}  // namespace lite
+}  // namespace opt
 }  // namespace mindspore

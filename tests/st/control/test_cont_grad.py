@@ -23,7 +23,6 @@ from mindspore import nn
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-
 # from tests.vm_impl.math_ops_vm_impl import *
 # from tests.vm_impl.vm_interface import *
 # from tests.vm_impl import *
@@ -55,9 +54,8 @@ def test_while_grad():
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -65,16 +63,15 @@ def test_while_grad():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(graph_output[1].asnumpy(), pynative_output[1].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(graph_output[2].asnumpy(), pynative_output[2].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_const_param_grad():
     class MyWhileNet(nn.Cell):
@@ -96,8 +93,7 @@ def test_while_with_const_param_grad():
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
-
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor([1.1], dtype=ms.float32)
@@ -108,10 +104,9 @@ def test_while_with_const_param_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect_one, 0.0001, 0.0001)
     assert np.allclose(graph_output[1].asnumpy(), expect_two, 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_variable_grad():
     class MyWhileNet(nn.Cell):
@@ -133,8 +128,7 @@ def test_while_with_variable_grad():
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
-
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor([1.1], dtype=ms.float32)
@@ -145,10 +139,9 @@ def test_while_with_variable_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect_one, 0.0001, 0.0001)
     assert np.allclose(graph_output[1].asnumpy(), expect_two, 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_param_forward():
     class MyWhileNet(nn.Cell):
@@ -167,9 +160,8 @@ def test_while_with_param_forward():
                 out = out + x + self.param
                 idx = idx + 1
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     net = MyWhileNet()
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(2), dtype=ms.int32)
@@ -178,14 +170,12 @@ def test_while_with_param_forward():
     expect = np.array([[[6, 8], [10, 12]], [[19, 22], [25, 28]]], dtype=np.int32)
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_endless_case():
     """endless case when optimization"""
-
     class MyWhileNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -200,23 +190,21 @@ def test_while_endless_case():
                 out = out + part
                 idx = idx + 1
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     net = MyWhileNet()
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(2), dtype=ms.int32)
     x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_param_grad():
     class MyWhileNet(nn.Cell):
@@ -244,8 +232,7 @@ def test_while_with_param_grad():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -255,10 +242,9 @@ def test_while_with_param_grad():
     expect = np.array([[[2, 2], [2, 2]], [[2, 2], [2, 2]]], dtype=np.int32)
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_param_forward_with_const_branch():
     class MyWhileNet(nn.Cell):
@@ -278,9 +264,8 @@ def test_while_with_param_forward_with_const_branch():
                     out = out + idx + self.param
                 idx = idx + 1
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = while_net
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -288,18 +273,16 @@ def test_while_with_param_forward_with_const_branch():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_opt_endless():
     """endless during optimization case"""
-
     class MyWhileNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -325,9 +308,8 @@ def test_while_opt_endless():
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -335,7 +317,7 @@ def test_while_opt_endless():
     x = Tensor(np.ones([2, 2, 2]).astype(np.float32) * 3, dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
@@ -361,9 +343,8 @@ def test_no_while_call():
             else:
                 out = out + idx + self.param
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = while_net
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -371,14 +352,13 @@ def test_no_while_call():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_param_grad_with_const_branch():
     class MyWhileNet(nn.Cell):
@@ -407,9 +387,8 @@ def test_while_with_param_grad_with_const_branch():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -417,10 +396,9 @@ def test_while_with_param_grad_with_const_branch():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
-
 
 @pytest.mark.skip(reason="not supported yet")
 @pytest.mark.level0
@@ -457,9 +435,8 @@ def test_for_while_with_param_grad_with_const_branch():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -467,14 +444,13 @@ def test_for_while_with_param_grad_with_const_branch():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_for_while_with_param_grad_basic():
     class MyWhileNet(nn.Cell):
@@ -503,9 +479,8 @@ def test_for_while_with_param_grad_basic():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -513,14 +488,13 @@ def test_for_while_with_param_grad_basic():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_for_while_with_param_grad_normal():
     class MyWhileNet(nn.Cell):
@@ -549,9 +523,8 @@ def test_for_while_with_param_grad_normal():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -559,14 +532,13 @@ def test_for_while_with_param_grad_normal():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_param_basic_grad():
     class MyWhileNet(nn.Cell):
@@ -592,9 +564,8 @@ def test_while_with_param_basic_grad():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -602,14 +573,13 @@ def test_while_with_param_basic_grad():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_param_basic_grad_mul():
     class MyWhileNet(nn.Cell):
@@ -635,9 +605,8 @@ def test_while_with_param_basic_grad_mul():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -645,14 +614,13 @@ def test_while_with_param_basic_grad_mul():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_param_basic_grad_two():
     class MyWhileNet(nn.Cell):
@@ -679,9 +647,8 @@ def test_while_with_param_basic_grad_two():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -689,15 +656,14 @@ def test_while_with_param_basic_grad_two():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(graph_output[1].asnumpy(), pynative_output[1].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_with_param_basic_grad_three():
     class MyWhileNet(nn.Cell):
@@ -725,9 +691,8 @@ def test_while_with_param_basic_grad_three():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -735,16 +700,15 @@ def test_while_with_param_basic_grad_three():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(graph_output[1].asnumpy(), pynative_output[1].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(graph_output[2].asnumpy(), pynative_output[2].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_if_with_param_grad():
     class MyWhileNet(nn.Cell):
@@ -773,9 +737,8 @@ def test_while_if_with_param_grad():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -783,10 +746,9 @@ def test_while_if_with_param_grad():
     x = Tensor(np.ones([2, 2, 2]).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
-
 
 @pytest.mark.skip(reason="not supported yet")
 @pytest.mark.level0
@@ -816,9 +778,8 @@ def test_while_with_param_grad_not_enter_while():
 
         def construct(self, a, b, c):
             return grad_by_list(self.net, self.weights)(a, b, c)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(3), dtype=ms.int32)
@@ -826,14 +787,13 @@ def test_while_with_param_grad_not_enter_while():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_with_param_if_by_if_forward():
     class MyIfByIfNet(nn.Cell):
@@ -850,13 +810,12 @@ def test_with_param_if_by_if_forward():
             else:
                 out = out + x
             if a == b:
-                out = out + x * 3 + self.param
+                out = out + x*3 + self.param
             else:
-                out = out + x * 2
+                out = out + x*2
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -864,14 +823,13 @@ def test_with_param_if_by_if_forward():
     x = Tensor(np.ones([2, 2, 2]).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_with_param_if_by_if_grad_inputs():
     class MyIfByIfNet(nn.Cell):
@@ -886,7 +844,7 @@ def test_with_param_if_by_if_grad_inputs():
             if a < b:
                 out = out + x + self.param * 4
             if a == b:
-                out = out + x * 3 + self.param * 3
+                out = out + x*3 + self.param * 3
             return out
 
     class GradNet(nn.Cell):
@@ -896,9 +854,8 @@ def test_with_param_if_by_if_grad_inputs():
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -906,16 +863,15 @@ def test_with_param_if_by_if_grad_inputs():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(graph_output[1].asnumpy(), pynative_output[1].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(graph_output[2].asnumpy(), pynative_output[2].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_with_param_if_by_if_grad_parameter():
     class MyIfByIfNet(nn.Cell):
@@ -930,7 +886,7 @@ def test_with_param_if_by_if_grad_parameter():
             if a < b:
                 out = out + x + self.param * 2
             if a == b:
-                out = out + x * 3 + self.param
+                out = out + x*3 + self.param
             return out
 
     class GradNet(nn.Cell):
@@ -941,9 +897,8 @@ def test_with_param_if_by_if_grad_parameter():
 
         def construct(self, *inputs):
             return grad_by_list(self.net, self.weights)(*inputs)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -951,14 +906,13 @@ def test_with_param_if_by_if_grad_parameter():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_with_param_if_by_if_grad_param_excute_null():
     class MyIfByIfNet(nn.Cell):
@@ -982,9 +936,8 @@ def test_with_param_if_by_if_grad_param_excute_null():
 
         def construct(self, *inputs):
             return grad_by_list(self.net, self.weights)(*inputs)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     idx = Tensor(np.array(4), dtype=ms.int32)
@@ -992,14 +945,13 @@ def test_with_param_if_by_if_grad_param_excute_null():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_by_if_return_inside_grad():
     class MyIfByIfNet(nn.Cell):
@@ -1025,9 +977,8 @@ def test_if_by_if_return_inside_grad():
 
         def construct(self, *inputs):
             return grad_by_list(self.net, self.weights)(*inputs)
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     idx = Tensor(np.array(1), dtype=ms.int32)
@@ -1035,14 +986,13 @@ def test_if_by_if_return_inside_grad():
     x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_by_if_forward():
     class MyIfByIfNet(nn.Cell):
@@ -1069,9 +1019,8 @@ def test_if_by_if_forward():
             a = a * b
             out = a + b + x
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1079,18 +1028,16 @@ def test_if_by_if_forward():
     x = Tensor(np.array(4), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_by_if_forward_control_tuple_switch():
     """tuple_get from  switch op will generate new switch inside to eliminate tuple_get"""
-
     class Branch3Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -1105,7 +1052,6 @@ def test_if_by_if_forward_control_tuple_switch():
             else:
                 b = self.add(a, x)
             return a, b, x
-
     class Branch2Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -1140,9 +1086,8 @@ def test_if_by_if_forward_control_tuple_switch():
             a = a * b
             out = a + b + x
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1150,14 +1095,13 @@ def test_if_by_if_forward_control_tuple_switch():
     x = Tensor(np.array(0), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_by_if_forward_control_inside_net():
     class Branch3Net(nn.Cell):
@@ -1176,7 +1120,6 @@ def test_if_by_if_forward_control_inside_net():
             a = a * b
             out = a + b + x
             return out
-
     class Branch2Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -1209,9 +1152,8 @@ def test_if_by_if_forward_control_inside_net():
                 a = self.sub(a, b)
             out = self.net(a, b, x)
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1219,10 +1161,9 @@ def test_if_by_if_forward_control_inside_net():
     x = Tensor(np.array(0), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -1253,9 +1194,8 @@ def test_if_by_if_forward_use_namespace():
             a = a * b
             out = a + b + x
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1263,10 +1203,9 @@ def test_if_by_if_forward_use_namespace():
     x = Tensor(np.array(0), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -1301,9 +1240,8 @@ def test_if_by_if_forward_use_global_op():
             a = a * b
             out = a + b + x
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1311,10 +1249,9 @@ def test_if_by_if_forward_use_global_op():
     x = Tensor(np.array(0), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -1336,9 +1273,8 @@ def test_for_with_if_by_if_forward():
             a = a * b
             out = a + b + x
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1346,10 +1282,9 @@ def test_for_with_if_by_if_forward():
     x = Tensor(np.array(0), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -1373,9 +1308,8 @@ def test_for_with_if_by_if_forward_namespace():
             a = a * b
             out = a + b + x
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1383,7 +1317,7 @@ def test_for_with_if_by_if_forward_namespace():
     x = Tensor(np.array(0), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
 
@@ -1421,9 +1355,8 @@ def test_if_by_if_forward_const_branch_inner():
             a = a * b
             out = a + b + x
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1431,10 +1364,9 @@ def test_if_by_if_forward_const_branch_inner():
     x = Tensor(np.array(0), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -1469,9 +1401,8 @@ def test_if_by_if_forward_all_const_branch():
             a = a * b
             out = a + b + x
             return out
-
     # graph mode
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1479,14 +1410,13 @@ def test_if_by_if_forward_all_const_branch():
     x = Tensor(np.array(0), dtype=ms.float32)
     graph_output = net(idx, end, x)
     # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_output = net(idx, end, x)
     assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_if_const_grad():
     class MyNet(nn.Cell):
@@ -1520,9 +1450,8 @@ def test_if_const_grad():
     net(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_if_by_if_const_grad():
     class MyNet(nn.Cell):
@@ -1560,9 +1489,8 @@ def test_if_by_if_const_grad():
     net(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_while_const_grad():
     class MyNet(nn.Cell):
@@ -1594,9 +1522,8 @@ def test_while_const_grad():
     net(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_if_by_while_const_grad():
     class MyNet(nn.Cell):

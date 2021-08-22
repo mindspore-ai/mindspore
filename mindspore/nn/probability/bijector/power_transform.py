@@ -95,12 +95,12 @@ class PowerTransform(Bijector):
         return self._power
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            str_info = 'power = {}'.format(self.power)
+            str_info = f'power = {self.power}'
         else:
-            str_info = 'batch_shape = {}'.format(self.batch_shape)
+            str_info = f'batch_shape = {self.batch_shape}'
         return str_info
+
 
     def _forward(self, x):
         """

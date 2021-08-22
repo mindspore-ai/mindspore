@@ -29,7 +29,6 @@
 #include "include/api/cell.h"
 #include "include/lite_session.h"
 #include "src/cxx_api/graph/graph_data.h"
-#include "src/inner_context.h"
 
 template <class T>
 void clearVectorOfPointers(std::vector<T> *v) {
@@ -45,7 +44,7 @@ namespace mindspore {
 
 typedef std::shared_ptr<session::LiteSession>(CreateTrainSessionProto)(std::shared_ptr<Graph::GraphData> graph_data,
                                                                        std::shared_ptr<TrainCfg> cfg,
-                                                                       lite::InnerContext *context);
+                                                                       lite::Context *context);
 CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto = nullptr);
 
 namespace session {
@@ -66,8 +65,6 @@ class ModelImpl {
 
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
                  const MSKernelCallBack &after);
-
-  static session::LiteSession *CreateLiteSession(lite::InnerContext *context);
 
   std::vector<MSTensor> GetInputs();
   std::vector<MSTensor> GetOutputs();

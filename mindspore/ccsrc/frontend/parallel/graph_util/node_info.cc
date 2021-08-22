@@ -24,7 +24,6 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel.h"
-#include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -320,7 +319,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
     return false;
   }
   auto node_op_info = cnode->user_data<OperatorInfo>();
-  if (IsParallelCareNode(cnode) && (node_op_info != nullptr) && !IsPrimitiveCNode(cnode, prim::kPrimReshape)) {
+  if (IsParallelCareNode(cnode) && (node_op_info != nullptr)) {
     *pre_operator_info = node_op_info;
     *out_index = 0;
     return true;
@@ -359,7 +358,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
 // Find next node of Reshape, then obtain its strategy_cost_ vector to get its layout vector.
 // if reshape's output connect to several primitive, return the first layout found
 bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index,
-                                  bool *is_next_reshape, size_t curr_depth) {
+                                  size_t curr_depth) {
   if (curr_depth > MAX_RECURSIVE_DEPTH) {
     MS_LOG(WARNING) << "When finding Reshape's next node, exceeded the max recursive depth: " << MAX_RECURSIVE_DEPTH;
     return false;
@@ -374,10 +373,6 @@ bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_o
     if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
       continue;
     }
-    if (IsPrimitiveCNode(use_apply, prim::kPrimReshape)) {
-      *is_next_reshape = true;
-      continue;
-    }
     ValueNodePtr prim_anf_node = use_apply->input(0)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(prim_anf_node);
     PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();
@@ -389,7 +384,6 @@ bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_o
     auto op_info = use_apply->user_data<OperatorInfo>();
     if (IsParallelCareNode(use_apply) && (op_info != nullptr)) {
       MS_LOG(INFO) << "FindReshapeNextNodeStraCosts success prim " << node_prim->name();
-      *is_next_reshape = false;
       *next_operator_info = op_info;
       *in_index = node_pair.second - 1;
       return true;
@@ -397,7 +391,7 @@ bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_o
     MS_LOG(DEBUG) << "FindReshapeNextNodeStraCosts failed prim " << node_prim->name() << "  "
                   << IsParallelCareNode(use_apply) << "   " << (op_info != nullptr);
 
-    if (FindReshapeNextNodeStraCosts(use_apply, next_operator_info, in_index, is_next_reshape, ++curr_depth)) {
+    if (FindReshapeNextNodeStraCosts(use_apply, next_operator_info, in_index, ++curr_depth)) {
       return true;
     }
   }

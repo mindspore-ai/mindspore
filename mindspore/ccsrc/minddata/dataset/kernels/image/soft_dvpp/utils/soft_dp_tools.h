@@ -40,7 +40,11 @@ T1 AlignDown(T1 num, T2 align) {
 
 template <typename T>
 bool IsInTheScope(T num, T left_point, T right_point) {
-  return num >= left_point && num <= right_point;
+  if (num >= left_point && num <= right_point) {
+    return true;
+  }
+
+  return false;
 }
 
 template <typename T>

@@ -189,7 +189,7 @@ Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     }
     cv::cvtColor(img_mat, img_mat, static_cast<int>(cv::COLOR_BGR2RGB));
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(img_mat, 3, &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(img_mat, &output_cv));
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
@@ -600,7 +600,7 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     if (mode == InterpolationMode::kCubicPil) {
       cv::Mat input_roi = cv_in(roi);
       std::shared_ptr<CVTensor> input_image;
-      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_roi, input_cv->Rank(), &input_image));
+      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_roi, &input_image));
       LiteMat imIn, imOut;
       std::shared_ptr<Tensor> output_tensor;
       TensorShape new_shape = TensorShape({target_height, target_width, 3});
@@ -676,7 +676,7 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       // use memcpy and don't compute the new shape since openCV has a rounding problem
       cv::warpAffine(input_img, output_img, rot, bbox.size(), GetCVInterpolationMode(interpolation),
                      cv::BORDER_CONSTANT, fill_color);
-      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_img, input_cv->Rank(), &output_cv));
+      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_img, &output_cv));
       RETURN_UNEXPECTED_IF_NULL(output_cv);
     }
     *output = std::static_pointer_cast<Tensor>(output_cv);
@@ -872,64 +872,6 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
   return Status::OK();
 }
 
-Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &gamma,
-                   const float &gain) {
-  try {
-    int num_channels = 1;
-    if (input->Rank() < 2) {
-      RETURN_STATUS_UNEXPECTED("AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>.");
-    }
-    if (input->Rank() > 2) {
-      num_channels = input->shape()[-1];
-    }
-    if (num_channels != 1 && num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("AdjustGamma: channel of input image should be 1 or 3.");
-    }
-    if (input->type().IsFloat()) {
-      for (auto itr = input->begin<float>(); itr != input->end<float>(); itr++) {
-        *itr = pow((*itr) * gain, gamma);
-        *itr = std::min(std::max((*itr), 0.0f), 1.0f);
-      }
-      *output = input;
-
-    } else {
-      std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-      if (!input_cv->mat().data) {
-        RETURN_STATUS_UNEXPECTED("AdjustGamma: load image failed.");
-      }
-      cv::Mat input_img = input_cv->mat();
-      std::shared_ptr<CVTensor> output_cv;
-      RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
-      uchar LUT[256] = {};
-      for (int i = 0; i < 256; i++) {
-        float f = i / 255.0;
-        f = pow(f, gamma);
-        LUT[i] = static_cast<uchar>(floor(std::min(f * (255.0 + 1 - 1e-3) * gain, 255.0)));
-      }
-      if (input_img.channels() == 1) {
-        cv::MatIterator_<uchar> it = input_img.begin<uchar>();
-        cv::MatIterator_<uchar> it_end = input_img.end<uchar>();
-        for (; it != it_end; ++it) {
-          *it = LUT[(*it)];
-        }
-      } else {
-        cv::MatIterator_<cv::Vec3b> it = input_img.begin<cv::Vec3b>();
-        cv::MatIterator_<cv::Vec3b> it_end = input_img.end<cv::Vec3b>();
-        for (; it != it_end; ++it) {
-          (*it)[0] = LUT[(*it)[0]];
-          (*it)[1] = LUT[(*it)[1]];
-          (*it)[2] = LUT[(*it)[2]];
-        }
-      }
-      output_cv->mat() = input_img * 1;
-      *output = std::static_pointer_cast<Tensor>(output_cv);
-    }
-  } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("AdjustGamma: " + std::string(e.what()));
-  }
-  return Status::OK();
-}
-
 Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &cutoff,
                     const std::vector<uint32_t> &ignore) {
   try {
@@ -999,7 +941,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     cv::merge(image_result, result);
     result.convertTo(result, input_cv->mat().type());
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     RETURN_IF_NOT_OK((*output)->Reshape(input_cv->shape()));
   } catch (const cv::Exception &e) {
@@ -1100,7 +1042,7 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     cv::Mat result;
     cv::merge(image_result, result);
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     RETURN_IF_NOT_OK((*output)->Reshape(input_cv->shape()));
   } catch (const cv::Exception &e) {
@@ -1196,7 +1138,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
       cv::copyMakeBorder(input_cv->mat(), out_image, pad_top, pad_bottom, pad_left, pad_right, b_type);
     }
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_image, input_cv->Rank(), &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_image, &output_cv));
     // pad the dimension if shape information is only 2 dimensional, this is grayscale
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->Rank() == DEFAULT_IMAGE_RANK && num_channels == MIN_IMAGE_CHANNELS &&
@@ -1255,53 +1197,14 @@ Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
 Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
-    auto input_type = input->type();
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("RgbToBgr: load image failed.");
-    }
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
     if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("RgbToBgr: input tensor is not in shape of <H,W,C> or channel is not 3.");
+      RETURN_STATUS_UNEXPECTED("RgbToBgr: image shape is not <H,W,C> or channel is not 3.");
     }
-
-    cv::Mat image = input_cv->mat().clone();
-    if (input_type == DataType::DE_FLOAT16 || input_type == DataType::DE_INT16 || input_type == DataType::DE_UINT16) {
-      for (int i = 0; i < input_cv->mat().rows; ++i) {
-        cv::Vec3s *p1 = input_cv->mat().ptr<cv::Vec3s>(i);
-        cv::Vec3s *p2 = image.ptr<cv::Vec3s>(i);
-        for (int j = 0; j < input_cv->mat().cols; ++j) {
-          p2[j][2] = p1[j][0];
-          p2[j][1] = p1[j][1];
-          p2[j][0] = p1[j][2];
-        }
-      }
-    } else if (input_type == DataType::DE_FLOAT32 || input_type == DataType::DE_INT32) {
-      for (int i = 0; i < input_cv->mat().rows; ++i) {
-        cv::Vec3f *p1 = input_cv->mat().ptr<cv::Vec3f>(i);
-        cv::Vec3f *p2 = image.ptr<cv::Vec3f>(i);
-        for (int j = 0; j < input_cv->mat().cols; ++j) {
-          p2[j][2] = p1[j][0];
-          p2[j][1] = p1[j][1];
-          p2[j][0] = p1[j][2];
-        }
-      }
-    } else if (input_type == DataType::DE_FLOAT64) {
-      for (int i = 0; i < input_cv->mat().rows; ++i) {
-        cv::Vec3d *p1 = input_cv->mat().ptr<cv::Vec3d>(i);
-        cv::Vec3d *p2 = image.ptr<cv::Vec3d>(i);
-        for (int j = 0; j < input_cv->mat().cols; ++j) {
-          p2[j][2] = p1[j][0];
-          p2[j][1] = p1[j][1];
-          p2[j][0] = p1[j][2];
-        }
-      }
-    } else {
-      cv::cvtColor(input_cv->mat(), image, cv::COLOR_RGB2BGR);
-    }
-
+    TensorShape out_shape = TensorShape({input_cv->shape()[0], input_cv->shape()[1], 3});
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(image, input_cv->Rank(), &output_cv));
-
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(out_shape, input_cv->type(), &output_cv));
+    cv::cvtColor(input_cv->mat(), output_cv->mat(), static_cast<int>(cv::COLOR_RGB2BGR));
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
@@ -1380,7 +1283,7 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     cv::GaussianBlur(input_cv->mat(), output_cv_mat, cv::Size(kernel_x, kernel_y), static_cast<double>(sigma_x),
                      static_cast<double>(sigma_y));
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_cv_mat, input_cv->Rank(), &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_cv_mat, &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
@@ -1453,9 +1356,8 @@ Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::share
     for (int i = 0; i < num_height; ++i) {
       for (int j = 0; j < num_width; ++j) {
         std::shared_ptr<CVTensor> patch_cv;
-        cv::Rect rect(j * patch_w, i * patch_h, patch_w, patch_h);
-        cv::Mat patch(out_img(rect));
-        RETURN_IF_NOT_OK(CVTensor::CreateFromMat(patch, input_cv->Rank(), &patch_cv));
+        cv::Rect patch(j * patch_w, i * patch_h, patch_w, patch_h);
+        RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_img(patch), &patch_cv));
         (*output).push_back(std::static_pointer_cast<Tensor>(patch_cv));
       }
     }

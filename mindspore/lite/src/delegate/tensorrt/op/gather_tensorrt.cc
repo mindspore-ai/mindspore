@@ -22,10 +22,6 @@ constexpr int AXIS_INDEX = 2;
 
 int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != 3) {
     MS_LOG(ERROR) << "invalid input tensor size: " << in_tensors.size();
     return RET_ERROR;
@@ -65,7 +61,6 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   gather_layer->setName(op_name_.c_str());
-  gather_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(gather_layer->getOutput(0));
   return RET_OK;
 }

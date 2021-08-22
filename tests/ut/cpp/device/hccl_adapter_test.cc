@@ -83,12 +83,6 @@ class TestHcclAdapter : public UT::Common {
   std::string format_ = "NCHW";
 };
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 2p, send to rank 1, and recv nothing
-/// Expectation: send count 0 1
-///             send offset 0 0
-///              recv count 0 0
-///             recv offset 0 0
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_only_send) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -106,12 +100,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_only_send) {
   EXPECT_EQ(calc.GetRecvDispls(), std::vector<int64_t>({0, 0}));
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 2p, send nothing, and recv from rank 0 and rank 1
-/// Expectation: send count 0 0
-///             send offset 0 0
-///              recv count 1 1
-///             recv offset 0 128
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_only_recv) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -129,12 +117,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_only_recv) {
   EXPECT_EQ(calc.GetRecvDispls(), std::vector<int64_t>({0, 128}));
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 4p, send to rank1,2,3, and recv nothing
-/// Expectation: send count 0 1 1 1
-///             send offset 0 0 128 256
-///              recv count 0 0 0 0
-///             recv offset 0 0 0 0
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_only_send) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -153,12 +135,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_only_send) {
   EXPECT_EQ(calc.GetRecvDispls(), std::vector<int64_t>({0, 0, 0, 0}));
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 4p, send to rank1,3, and recv nothing
-/// Expectation: send count 0 1 0 1
-///             send offset 0 0 128 128
-///              recv count 0 0 0 0
-///             recv offset 0 0 0 0
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_only_send_2) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -177,12 +153,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_only_send_2) {
   EXPECT_EQ(calc.GetRecvDispls(), std::vector<int64_t>({0, 0, 0, 0}));
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 2p, send to rank1, and recv from rank1
-/// Expectation: send count 0 1
-///             send offset 0 0
-///              recv count 0 1
-///             recv offset 0 0
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_exchange) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -200,12 +170,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_exchange) {
   EXPECT_EQ(calc.GetRecvDispls(), std::vector<int64_t>({0, 0}));
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 2p, send to rank0, and recv from rank0
-/// Expectation: send count 1 0
-///             send offset 0 128
-///              recv count 1 0
-///             recv offset 0 128
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_send_to_self) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -223,12 +187,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_send_to_self) {
   EXPECT_EQ(calc.GetRecvDispls(), std::vector<int64_t>({0, 128}));
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 4p, send to rank0123, and recv from rank0123
-/// Expectation: send count 1 1 1 1
-///             send offset 0 128 256 384
-///              recv count 1 1 1 1
-///             recv offset 0 128 256 384
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_all_to_all) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -247,12 +205,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_all_to_all) {
   EXPECT_EQ(calc.GetRecvDispls(), std::vector<int64_t>({0, 128, 256, 384}));
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 4p, send to rank0123, and recv from rank0123, but recv order is wrong
-/// Expectation: send count 1 1 1 1
-///             send offset 0 128 256 384
-///              recv count 1 1 1 1
-///             recv offset 256 128 384 0
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_all_in_all_in_wrong_order) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -271,12 +223,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_all_in_all_in_wrong_orde
   EXPECT_EQ(calc.GetRecvDispls(), std::vector<int64_t>({256, 128, 384, 0}));
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 4p, send to rank123, and recv from nothing, but send order is wrong
-/// Expectation: send count 0 1 1 1
-///             send offset 0 128 256 0
-///              recv count 0 0 0 0
-///             recv offset 0 0 0 0
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_only_send_in_wrong_order) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -295,9 +241,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_only_send_in_wrong_order
   EXPECT_EQ(calc.GetRecvDispls(), std::vector<int64_t>({0, 0, 0, 0}));
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 2p, rank id over valid range
-/// Expectation: throw exception
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_invalid_rank_id) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -311,9 +254,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_invalid_rank_id) {
   ASSERT_ANY_THROW(calc.CalcOpParam());
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 2p, has 2 outputs but only 1 recv_rank_ids is set
-/// Expectation: throw exception
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_invalid_rank_id_2) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);
@@ -327,9 +267,6 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_invalid_rank_id_2) {
   ASSERT_ANY_THROW(calc.CalcOpParam());
 }
 
-/// Feature: AllToAllvCalcParam
-/// Description: on 2p, rank id over valid range
-/// Expectation: throw exception
 TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_wrong_order_and_invalid_rank_id) {
   auto graph = std::make_shared<FuncGraph>();
   ASSERT_TRUE(graph != nullptr);

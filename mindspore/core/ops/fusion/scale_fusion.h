@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScaleFusion = "ScaleFusion";
-class MS_CORE_API ScaleFusion : public Scale {
+class ScaleFusion : public Scale {
  public:
   ScaleFusion() : Scale(kNameScaleFusion) {}
   ~ScaleFusion() = default;

@@ -38,7 +38,7 @@ class TestAllToAllUnifyMindIr : public BackendCommon {
 TEST_F(TestAllToAllUnifyMindIr, test_neighbor_exchange) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_neighbor_exchange", "before");
   ASSERT_TRUE(g != nullptr);
-  std::vector<int64_t> shp_x{2, 2};
+  std::vector<int64_t> shp_x{2, 3};
   auto x_abstract = std::make_shared<abstract::AbstractTuple>(
     AbstractBasePtrList{std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x)});
   AbstractBasePtrList args_spec_list{x_abstract};

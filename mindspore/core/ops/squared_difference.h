@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSquaredDifference = "SquaredDifference";
-class MS_CORE_API SquaredDifference : public PrimitiveC {
+class SquaredDifference : public PrimitiveC {
  public:
   SquaredDifference() : PrimitiveC(kNameSquaredDifference) { InitIOName({"x", "y"}, {"output"}); }
   ~SquaredDifference() = default;

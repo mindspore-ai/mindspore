@@ -18,7 +18,7 @@
 
 // fp16 common winograd
 void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data, int cal_num,
-                                int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
+                                int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
                                 InputTransFp16Func func) {
 #ifdef ENABLE_ARM64
   const int tile_num = 16;
@@ -125,9 +125,9 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
   }  // cal_tile_num loop
 }
 
-void WinogradOutputNHWCTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
-                                     int cal_num, int out_tile_index, int output_unit_num,
-                                     const ConvParameter *conv_param, OutputTransFp16Func func) {
+void WinogradOutputTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
+                                 int cal_num, int out_tile_index, int output_unit_num, ConvParameter *conv_param,
+                                 OutputTransFp16Func func) {
   int output_unit = conv_param->output_unit_;
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
@@ -166,51 +166,9 @@ void WinogradOutputNHWCTransformFp16(const float16_t *gemm_out, float16_t *tmp_o
   }
 }
 
-void WinogradOutputNC4HW4TransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
-                                       int cal_num, int out_tile_index, int output_unit_num,
-                                       const ConvParameter *conv_param, OutputTransFp16Func func) {
-  int output_unit = conv_param->output_unit_;
-  int output_w = conv_param->output_w_;
-  int output_h = conv_param->output_h_;
-  int plane = output_w * output_h;
-  int output_channel = conv_param->output_channel_;
-  int oc8 = UP_DIV(output_channel, C8NUM);
-  int input_unit = conv_param->input_unit_;
-  if (output_unit_num == 0) {
-    return;
-  }
-  for (int i = 0; i < cal_num; i++) {
-    int dst_x_s = out_tile_index % output_unit_num;
-    int dst_y_s = out_tile_index / output_unit_num;
-    int r_w = output_w - dst_x_s * output_unit;
-    r_w = r_w > output_unit ? output_unit : r_w;
-    int r_h = output_h - dst_y_s * output_unit;
-    r_h = r_h > output_unit ? output_unit : r_h;
-    int tmp_ix = dst_x_s * output_unit;
-    dst_x_s = tmp_ix > output_w ? output_w : tmp_ix;
-    int tmp_iy = dst_y_s * output_unit;
-    dst_y_s = tmp_iy > output_h ? output_h : tmp_iy;
-
-    int src_tile_offset = i * oc8 * C8NUM * input_unit * input_unit;
-    int dst_tile_offset = dst_x_s + dst_y_s * output_w;
-
-    for (int j = 0; j < oc8; j++) {
-      int r_c = output_channel - j * C8NUM;
-      r_c = r_c > C8NUM ? C8NUM : r_c;
-      int src_oc8_offset = src_tile_offset + j * input_unit * input_unit * C8NUM;
-      int dst_oc8_offset = (dst_tile_offset + plane * j) * C8NUM;
-      const float16_t *src_ptr = gemm_out + src_oc8_offset;
-      const float16_t *bias_ptr = bias_data + j * C8NUM;
-      float16_t *dst_ptr = tmp_out_data + dst_oc8_offset;
-      func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w, r_c, r_w, r_h, r_c);
-    }
-    out_tile_index++;
-  }
-}
-
-int WinogradWeightTransformFp16(const float16_t *weight_data, float16_t *winograd_data, const float *matrix_g,
-                                const float *matrix_gt, int oc_block, int input_unit, int kernel_unit,
-                                int filter_channel, int filter_batch, bool pack) {
+int WinogradWeightTransformFp16(const float16_t *weight_data, float16_t *winograd_data, float *matrix_g,
+                                float *matrix_gt, int oc_block, int input_unit, int kernel_unit, int filter_channel,
+                                int filter_batch, bool pack) {
   // original weight format : ohwi
   int oc_block_num = UP_DIV(filter_batch, oc_block);
   int block_stride = filter_channel * oc_block;

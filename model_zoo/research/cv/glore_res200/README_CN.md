@@ -93,7 +93,7 @@
 
 ```python
 # 分布式训练
-用法:bash run_distribute_train.sh [DATASET_PATH] [RANK_TABLE]
+用法:bash run_distribute_train.sh [DATASET_PATH] [RANK_SIZE]
 
 # 单机训练
 用法:bash run_standalone_train.sh [DATASET_PATH] [DEVICE_ID]
@@ -155,7 +155,7 @@
 
 ```text
 "class_num":1000,                # 数据集类数
-"batch_size":80,                 # 输入张量的批次大小
+"batch_size":128,                # 输入张量的批次大小
 "loss_scale":1024,               # 损失等级
 "momentum":0.08,                 # 动量优化器
 "weight_decay":0.0002,           # 权重衰减
@@ -203,7 +203,7 @@
 
 ```text
 # 分布式训练
-用法:bash run_distribute_train.sh [DATASET_PATH] [RANK_TABLE]
+用法:bash run_distribute_train.sh [DATASET_PATH] [RANK_SIZE]
 
 # 单机训练
 用法:bash run_standalone_train.sh [DATASET_PATH] [DEVICE_ID]
@@ -292,15 +292,15 @@ result:{'top_1 acc':0.802303685897436}
 | 模型版本              | Glore_resnet200                             |Glore_resnet200                     |
 | 资源                   | Ascend 910；CPU：2.60GHz，192核；内存：2048G |GPU-V100(SXM2)                     |
 | 上传日期              | 2021-03-34                                   |2021-05-25                         |
-| MindSpore版本          | 1.3.0                                   |1.2.0                          |
+| MindSpore版本          | 1.1.1                                   |1.2.0                          |
 | 数据集                    | ImageNet2012                             | ImageNet2012                      |
-| 训练参数        | epoch=150, steps per epoch=2001, batch_size = 80  |epoch=150, steps per epoch=2502, batch_size = 64 |
+| 训练参数        | epoch=150, steps per epoch=1251, batch_size = 128  |epoch=150, steps per epoch=2502, batch_size = 64 |
 | 优化器                  | NAG                                        | NAG                                           |
 | 损失函数              | SoftmaxCrossEntropyExpand                    |SoftmaxCrossEntropyExpand          |
 | 输出                    | 概率                                       |概率                               |
-| 损失                       |0.8068262                                |0.55614954                        |
-| 速度                      | 400.343毫秒/步（8卡）                     |912.211 毫秒/步（8卡）             |
-| 总时长                 | 33时35分钟                                   |94时08分                          |
+| 损失                       |0.7068262                                |0.55614954                        |
+| 速度                      | 630.343毫秒/步（8卡）                     |912.211 毫秒/步（8卡）             |
+| 总时长                 | 33时45分钟                                   |94时08分                          |
 | 参数(M)             | 70.6                                           |70.6
 | 微调检查点| 807.57M（.ckpt文件）                                      |808.28(.ckpt)
 | 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/glore_res200) |
@@ -314,9 +314,9 @@ result:{'top_1 acc':0.802303685897436}
 | 模型版本       | Glore_resnet200              |  Glore_resnet200           |
 | 资源            | Ascend 910                |   GPU                       |
 | 上传日期       | 2021-3-24                  |2021-05-25                    |
-| MindSpore版本   | 1.3.0                 |1.2.0                    |
-| 数据集             | 120万张图像              |120万张图像                   |
-| batch_size          | 80                   |64                          |
+| MindSpore版本   | 1.1.1                 |1.2.0                    |
+| 数据集             | 12万张图像              |12万张图像                   |
+| batch_size          | 128                   |64                          |
 | 输出             | 概率                     |概率                         |
 | 准确性            | 8卡: 80.23%             |8卡：80.603%                 |
 

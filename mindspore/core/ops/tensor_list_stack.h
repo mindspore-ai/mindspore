@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListStack = "TensorListStack";
-class MS_CORE_API TensorListStack : public PrimitiveC {
+class TensorListStack : public PrimitiveC {
  public:
   TensorListStack() : PrimitiveC(kNameTensorListStack) {}
   ~TensorListStack() = default;

@@ -46,10 +46,7 @@
 
 namespace mindspore {
 namespace compile {
-bool Backend::GetCond(const BaseRef &c, bool *const value) {
-  mindspore::ScopedLongRunning long_running;
-  return BaseRefToBool(c, value);
-}
+bool Backend::GetCond(const BaseRef &c, bool *const value) { return BaseRefToBool(c, value); }
 bool Backend::GetIndex(const BaseRef &c, int64_t *const value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
 
 Backend::Backend(const std::string &name) : name_(name) {
@@ -292,6 +289,14 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   return outputs;
 }
 
+void MsBackend::Link(GraphId graph_id) {
+  MS_EXCEPTION_IF_NULL(target_sess_);
+  if (graph_id == kInvalidGraphId) {
+    graph_id = target_sess_->GetFinalRunGraph();
+  }
+  target_sess_->BuildGraph(graph_id);
+}
+
 MsBackend::MsBackend(const std::string &name, const std::string &target, uint32_t device_id) : Backend(name) {
   convert_fn_ = std::bind(&MsBackend::MsConvert, this, std::placeholders::_1, std::placeholders::_2);
   target_sess_ = session::SessionFactory::Get().Create(target);
@@ -359,9 +364,8 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
 const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto root_graph = WrapPrimitives(func_graph);
-  MS_EXCEPTION_IF_NULL(root_graph);
-  root_graph_ = root_graph.get();
+  root_graph_ = WrapPrimitives(func_graph);
+  MS_EXCEPTION_IF_NULL(root_graph_);
   // Register a summary callback function, which is called in the final stages of summary.
   graph_compiler_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
 
@@ -373,11 +377,11 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   // Compile root graph.
   graph_id_to_device_context_.clear();
   control_nodes_.clear();
-  CompileGraph(root_graph);
+  CompileGraph(root_graph_);
 
   // Compile sub graphs.
-  MS_EXCEPTION_IF_NULL(root_graph->manager());
-  FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
+  MS_EXCEPTION_IF_NULL(root_graph_->manager());
+  FuncGraphSet sub_graphs = root_graph_->manager()->func_graphs();
   for (auto sub_graph : sub_graphs) {
     if (sub_graph != func_graph && sub_graph != nullptr) {
       CompileGraph(sub_graph);
@@ -385,7 +389,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   }
 
   // Construct the graph compiler info.
-  auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
+  auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph_);
 
   if (real_execution_mode_ == kGraphMode) {
     // Transform graph to actor DAG, and schedule the actor DAG.
@@ -482,10 +486,7 @@ const ActorInfo &MindRTBackend::CompileGraph(const OpRunInfo &op_run_info, const
   graph_info_to_device_context_.clear();
   graph_info_to_device_context_[graph_info] = device_context;
 
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-  auto graph_compiler_info = ConstructGraphCompilerInfo(actor_info, tensors_mask, input_tensors, !enable_cache);
+  auto graph_compiler_info = ConstructGraphCompilerInfo(actor_info, tensors_mask, input_tensors);
   const auto actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
   runtime::GraphScheduler::GetInstance().Schedule(actor_set);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
@@ -777,7 +778,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
 }
 
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs) {
-  MS_LOG(DEBUG) << "Run actor begin, actor name: " << actor_info;
+  MS_LOG(INFO) << "Run actor begin, actor name: " << actor_info;
   MS_EXCEPTION_IF_NULL(root_graph_);
   if (IsGraphOutputValueNodeOrParameter(root_graph_->output(), args, outputs)) {
     return;
@@ -977,13 +978,13 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   std::vector<std::vector<int64_t> *> tensors_mask;
   std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
-                                             root_graph->parameters(), parser, outputs_order, outputs_num, name, false,
+                                             root_graph->parameters(), parser, outputs_order, outputs_num, name,
                                              runtime::GraphExecutionStrategy::kPipeline);
 }
 
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   const ActorInfo &actor_info, const std::vector<int64_t> *tensors_mask,
-  const std::vector<tensor::TensorPtr> *input_tensors, bool need_erase) {
+  const std::vector<tensor::TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   std::vector<KernelGraphPtr> graphs;
   std::vector<DeviceContext *> device_contexts;
@@ -1012,31 +1013,8 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   auto parser = std::make_shared<ControlNodeParser>();
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
                                              std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), parser,
-                                             outputs_order, outputs_order.size(), actor_info, need_erase,
+                                             outputs_order, outputs_order.size(), actor_info,
                                              runtime::GraphExecutionStrategy::kStep);
-}
-
-void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const KernelGraphPtr &graph) {
-  if (graph_info_to_device_context_.empty()) {
-    MS_LOG(EXCEPTION) << "The map graph_info_to_device_context_ is empty.";
-  }
-  const auto &graph_info = graph_info_to_device_context_.begin()->first;
-  graph_compiler_->EraseSingleOpCache(graph_info, graph->graph_id());
-  actor_to_graph_compiler_info_.erase(actor_info);
-}
-
-void DebugStreamSync(const GraphCompilerInfo &graph_compiler_info) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto enable_sync_run = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-  if (enable_sync_run) {
-    if (!graph_compiler_info.device_contexts_.empty()) {
-      MS_EXCEPTION_IF_NULL(graph_compiler_info.device_contexts_[0]);
-      if (!graph_compiler_info.device_contexts_[0]->SyncStream()) {
-        MS_LOG(EXCEPTION) << "Sync stream failed!";
-      }
-    }
-  }
 }
 
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info,
@@ -1078,9 +1056,6 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
 
-  // Debug for pynative
-  DebugStreamSync(graph_compiler_info);
-
   // Fetch outputs.
   const auto &graph = graph_compiler_info.graphs_.front();
   MS_EXCEPTION_IF_NULL(graph);
@@ -1109,10 +1084,6 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
   // Update device address for input and output of graph.
   UpdateOutputDeviceAddress(output_nodes, graph_compiler_info.device_contexts_.front());
   UpdateInputDeviceAddress(graph);
-
-  if (graph_compiler_info.need_erase_) {
-    EraseSingleOpCache(actor_info, graph);
-  }
 }
 }  // namespace compile
 }  // namespace mindspore

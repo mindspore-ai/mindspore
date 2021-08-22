@@ -5,7 +5,6 @@
 - [PSENet示例](#psenet示例)
     - [概述](#概述)
 - [数据集](#数据集)
-- [预训练模型](#预训练模型)
 - [环境要求](#环境要求)
 - [快速入门](#快速入门)
     - [脚本说明](#脚本说明)
@@ -15,7 +14,9 @@
             - [分布式训练](#分布式训练)
         - [评估过程](#评估过程)
             - [运行测试代码](#运行测试代码)
-            - [结果](#结果)
+                - [ICDAR2015评估脚本](#icdar2015评估脚本)
+                - [用法](#用法)
+                - [结果](#结果)
         - [推理过程](#推理过程)
             - [导出MindIR](#导出mindir)
             - [在Ascend310执行推理](#在ascend310执行推理)
@@ -47,21 +48,6 @@
 训练集：包括约4500个可读单词的1000张图像。
 测试集：约2000个可读单词。
 
-下载得到的训练和推理数据解压后备用，不需要转为mindrecord数据
-
-# 预训练模型
-
-下载pytorch的预训练模型: [resnet50-19c8e357.pth](https://download.pytorch.org/models/resnet50-19c8e357.pth)
-将pytorch模型转为mindspore模型
-
-```shell
-cd src
-
-python psenet_model_torch2mindspore.py --torch_file=/path_to_model/resnet50-19c8e357.pth --output_path=../
-```
-
-执行完成，src的上层目录得到文件pretrained_model.ckpt文件，用于接下来的训练
-
 # 环境要求
 
 - 硬件：昇腾处理器（Ascend）
@@ -76,99 +62,34 @@ python psenet_model_torch2mindspore.py --torch_file=/path_to_model/resnet50-19c8
 - 安装[pyblind11](https://github.com/pybind/pybind11)
 - 安装[Opencv3.4](https://docs.opencv.org/3.4.9/)
 
-```shell
-# 使用pip安装pybind11
-pip install pybind11
-
-# 使用源码安装opencv3.4.9
-wget https://github.com/opencv/opencv/archive/3.4.9.zip
-unzip 3.4.9.zip
-cd opencv-3.4.9
-mkdir build
-cd build
-cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_WEBP=OFF ..
-make -j4 # -j指定线程数，用户根据机器配置修改参数
-make install
-
-# opencv安装在/usr/local目录下，将该目录添加到环境变量中
-export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/usr/local/include
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
-```
-
 # 快速入门
 
 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
 
-```shell
+```python
 # 分布式训练运行示例
-# 第一个参数为rank_table文件，第二个参数为生成的预训练模型，第三个参数为下载的训练数据集
-bash scripts/run_distribute_train.sh [RANK_FILE] [PRETRAINED_PATH] [TRAIN_ROOT_DIR]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 
-# 进入路径，运行Makefile
+# 下载opencv库
+download pyblind11, opencv3.4
+
+# 安装pyblind11 opencv3.4
+setup pyblind11(install the library by the pip command)
+setup opencv3.4(compile source code install the library)
+
+# 单击[此处](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization)下载评估方法
+# 点击"我的方法"按钮，下载评估脚本
+
+# 输入路径，运行Makefile，找到产品文件
 cd ./src/ETSNET/pse/;make clean&&make
 
 # 运行test.py
-python test.py --ckpt [CKPK_PATH] --TEST_ROOT_DIR [TEST_DATA_DIR]
+python test.py --ckpt pretrained_model.ckpt --TEST_ROOT_DIR [test root path]
 
-# 具体见评估过程
+
 download script.py
 # 运行评估示例
 bash scripts/run_eval_ascend.sh
-```
-
-- 如果要在modelarts上进行模型的训练，可以参考modelarts的[官方指导文档](https://support.huaweicloud.com/modelarts/) 开始进行模型的训练和推理，具体操作如下：
-
-```ModelArts
-#  在ModelArts上使用分布式训练示例:
-#  数据集存放方式
-
-#  ├── ICDAR2015                                                    # dir
-#    ├── train                                                      # train dir
-#       ├── ic15                                                    # train_dataset dir
-#           ├── ch4_training_images
-#           ├── ch4_training_localization_transcription_gt
-#       ├── train_predtrained                                       # predtrained dir
-#    ├── eval                                                       # eval dir
-#       ├── ic15                                                    # eval dataset dir
-#           ├── ch4_test_images
-#           ├── challenge4_Test_Task1_GT
-#       ├── checkpoint                                              # ckpt files dir
-
-# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
-#       a. 设置 "enable_modelarts=True"
-#          设置 "run_distribute=True"
-#          设置 "TRAIN_MODEL_SAVE_PATH=/cache/train/outputs/"
-#          设置 "TRAIN_ROOT_DIR=/cache/data/ic15/"
-#          设置 "pre_trained=/cache/data/train_predtrained/pred file name" 如果没有预训练权重 pre_trained=""
-
-#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
-#          在modelarts的界面上设置方法a所需要的参数
-#          注意：路径参数不需要加引号
-
-# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
-# (3) 在modelarts的界面上设置代码的路径 "/path/psenet"。
-# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
-# (5) 在modelarts的界面上设置模型的数据路径 ".../ICDAR2015/train"(选择ICDAR2015/train文件夹路径) ,
-# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
-# (6) 开始模型的训练。
-
-# 在modelarts上使用模型推理的示例
-# (1) 把训练好的模型地方到桶的对应位置。
-# (2) 选择a或者b其中一种方式。
-#        a.设置 "enable_modelarts=True"
-#          设置 "TEST_ROOT_DIR=/cache/data/ic15"
-#          设置 "ckpt=/cache/data/checkpoint/ckpt file"
-
-#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
-#          在modelarts的界面上设置方法a所需要的参数
-#          注意：路径参数不需要加引号
-
-# (3) 设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
-# (4) 在modelarts的界面上设置代码的路径 "/path/psenet"。
-# (5) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
-# (6) 在modelarts的界面上设置模型的数据路径 "../ICDAR2015/eval"(选择ICDAR2015/eval文件夹路径) ,
-# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
-# (7) 开始模型的推理。
 ```
 
 ## 脚本说明
@@ -232,8 +153,7 @@ bash scripts/run_eval_ascend.sh
   请遵循链接中的说明：[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)
 
 ```shell
-# 第一个参数为rank_table文件，第二个参数为生成的预训练模型，第三个参数为下载的训练数据集
-bash scripts/run_distribute_train.sh [RANK_FILE] [PRETRAINED_PATH] [TRAIN_ROOT_DIR]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 ```
 
 上述shell脚本将在后台运行分布训练。可以通过`device[X]/test_*.log`文件查看结果。
@@ -253,24 +173,81 @@ device_1/log:epcoh： 2, step: 40，loss is 0.76629
 
 ### 运行测试代码
 
-```shell
-# 第一个参数为训练得到的模型文件，第二个参数为下载得到的推理数据集
-python test.py --ckpt [CKPK_PATH] --TEST_ROOT_DIR [TEST_DATA_DIR]
+```test
+python test.py --ckpt [CKPK PATH] --TEST_ROOT_DIR [TEST DATA DIR]
 
-# 单击[此处](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization)下载评估方法
-# 点击"My Methods"按钮，选择Offline evaluation -> Evaluation Scripts
-# 下载完成后，将数据放在/path_to_data路径
-mkdir eval_ic15
-ln -s /path_to_data/script_test_ch4_t1_e1-1577983151.zip eval_ic15/script_test_ch4_t1_e1-1577983151.zip
-
-cd eval_ic15
-unzip script_test_ch4_t1_e1-1577983151.zip
-cd ..
-
-bash ./script/run_eval_ascend.sh
 ```
 
-### 结果
+- 如果要在modelarts上进行模型的训练，可以参考modelarts的[官方指导文档](https://support.huaweicloud.com/modelarts/) 开始进行模型的训练和推理，具体操作如下：
+
+```ModelArts
+#  在ModelArts上使用分布式训练示例:
+#  数据集存放方式
+
+#  ├── ICDAR2015                                                    # dir
+#    ├── train                                                      # train dir
+#       ├── ic15                                                    # train_dataset dir
+#           ├── ch4_training_images
+#           ├── ch4_training_localization_transcription_gt
+#       ├── train_predtrained                                       # predtrained dir
+#    ├── eval                                                       # eval dir
+#       ├── ic15                                                    # eval dataset dir
+#           ├── ch4_test_images
+#           ├── challenge4_Test_Task1_GT
+#       ├── checkpoint                                              # ckpt files dir
+
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "run_distribute=True"
+#          设置 "TRAIN_MODEL_SAVE_PATH=/cache/train/outputs/"
+#          设置 "TRAIN_ROOT_DIR=/cache/data/ic15/"
+#          设置 "pre_trained=/cache/data/train_predtrained/pred file name" 如果没有预训练权重 pre_trained=""
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/psenet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../ICDAR2015/train"(选择ICDAR2015/train文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选择a或者b其中一种方式。
+#        a.设置 "enable_modelarts=True"
+#          设置 "TEST_ROOT_DIR=/cache/data/ic15"
+#          设置 "ckpt=/cache/data/checkpoint/ckpt file"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (3) 设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/psenet"。
+# (5) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (6) 在modelarts的界面上设置模型的数据路径 "../ICDAR2015/eval"(选择ICDAR2015/eval文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (7) 开始模型的推理。
+```
+
+### ICDAR2015评估脚本
+
+#### 用法
+
+第一步：单击[此处](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization)下载评估方法。  
+
+第二步：单击"我的方法"按钮，下载评估脚本。
+
+第三步：建议将评估方法根符号链接到$MINDSPORE/model_zoo/psenet/eval_ic15/。如果您的文件夹结构不同，您可能需要更改评估脚本文件中的相应路径。  
+
+```shell
+bash ./script/run_eval_ascend.sh.sh  
+```
+
+#### 结果
 
 Calculated!{"precision": 0.8147966668299853，"recall"：0.8006740491092923，"hmean"：0.8076736279747451，"AP"：0}
 
@@ -340,8 +317,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
 | 损失函数 | LossCallBack |
 | 输出 | 概率 |
 | 损失 | 0.35 |
-| 训练参数 | batch_size = 4 |
-| 速度 | 1卡：444毫秒/步(fps: 9.0)；8卡：446毫秒/步(fps: 71) |
+| 速度 | 1卡：444毫秒/步；8卡：446毫秒/步
 | 总时间 | 1卡：75.48小时；8卡：7.11小时|
 | 参数(M) | 27.36 |
 | 微调检查点 | 109.44M （.ckpt file） |

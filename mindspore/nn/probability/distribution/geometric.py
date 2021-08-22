@@ -165,11 +165,10 @@ class Geometric(Distribution):
         self.uniform = C.uniform
 
     def extend_repr(self):
-        """Display instance object as string."""
         if not self.is_scalar_batch:
-            s = 'batch_shape = {}'.format(self._broadcast_shape)
+            s = f'batch_shape = {self._broadcast_shape}'
         else:
-            s = 'probs = {}'.format(self.probs)
+            s = f'probs = {self.probs}'
         return s
 
     @property

@@ -25,7 +25,8 @@
 #include "include/registry/model_parser_registry.h"
 #include "utils/log_adapter.h"
 
-namespace mindspore::converter {
+namespace mindspore::lite {
+using namespace schema;
 class ModelParser {
  public:
   ModelParser() = default;
@@ -49,6 +50,6 @@ ModelParser *LiteModelParserCreator() {
   }
   return parser;
 }
-}  // namespace mindspore::converter
+}  // namespace mindspore::lite
 
 #endif

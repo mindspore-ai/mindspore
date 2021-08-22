@@ -220,7 +220,6 @@ union PrimitiveType {
     Affine,
     Attention,
     LSTMGrad,
-    ScatterNdUpdate,
 }
 
 table Abs {
@@ -1212,7 +1211,4 @@ table Affine {
 }
 
 table Attention {
-}
-
-table ScatterNdUpdate {
 }

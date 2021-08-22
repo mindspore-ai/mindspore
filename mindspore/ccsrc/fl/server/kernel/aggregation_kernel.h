@@ -67,8 +67,6 @@ class AggregationKernel : public CPUKernel {
   // Reinitialize aggregation kernel after scaling operations are done.
   virtual bool ReInitForScaling() { return true; }
 
-  virtual bool ReInitForUpdatingHyperParams(size_t) { return true; }
-
   // Setter and getter of kernels parameters information.
   void set_params_info(const ParamsInfo &params_info) { params_info_ = params_info; }
   const std::vector<std::string> &input_names() { return params_info_.inputs_names(); }

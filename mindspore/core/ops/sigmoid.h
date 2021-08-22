@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSigmoid = "Sigmoid";
-class MS_CORE_API Sigmoid : public PrimitiveC {
+class Sigmoid : public PrimitiveC {
  public:
   Sigmoid() : PrimitiveC(kNameSigmoid) { InitIOName({"x"}, {"output"}); }
   ~Sigmoid() = default;

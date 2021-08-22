@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.1-cudnn8-devel-ubuntu18.04
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 
 MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
@@ -43,7 +43,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     libnuma-dev
 
 # Configure cuDNN (v7.6.5)
-RUN ln -s /usr/lib/x86_64-linux-gnu/libcudnn.so.8.0.5 /usr/local/cuda/lib64/libcudnn.so
+RUN ln -s /usr/lib/x86_64-linux-gnu/libcudnn.so.7.6.5 /usr/local/cuda/lib64/libcudnn.so
 
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
@@ -62,11 +62,8 @@ RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
     && make install -j4 \
     && rm -f /usr/local/bin/python \
     && rm -f /usr/local/bin/pip \
-    && rm -f /usr/local/lib/libpython3.7m.so.1.0 \
     && ln -s ${PYTHON_ROOT_PATH}/bin/python3.7 /usr/local/bin/python \
     && ln -s ${PYTHON_ROOT_PATH}/bin/pip3.7 /usr/local/bin/pip \
-    && ln -s ${PYTHON_ROOT_PATH}/lib/libpython3.7m.so.1.0 /usr/local/lib/libpython3.7m.so.1.0 \
-    && ldconfig \
     && rm -rf /tmp/cpython-3.7.5 \
     && rm -f /tmp/v3.7.5.tar.gz
 

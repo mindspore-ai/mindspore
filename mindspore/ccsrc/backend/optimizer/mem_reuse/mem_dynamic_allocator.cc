@@ -47,17 +47,14 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(size_t
   }
   std::lock_guard<std::mutex> locker(mutex_);
   // Remove the pre-alloc memory.
-  const auto &mem_block = FindMemBlock(device_addr);
+  auto mem_block = FindMemBlock(device_addr);
   MS_EXCEPTION_IF_NULL(mem_block);
-  const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
+  auto iter = mem_block->block_all_mem_buf_map_.find(device_addr);
   if (iter == mem_block->block_all_mem_buf_map_.end()) {
     MS_LOG(EXCEPTION) << "Can't find the device address[" << device_addr << "].";
   }
   auto mem_buf = iter->second;
   MS_EXCEPTION_IF_NULL(mem_buf);
-  if (mem_buf->size_ < total_size) {
-    MS_LOG(EXCEPTION) << "The size of membuf is less than total_size.";
-  }
   auto rest_size = mem_buf->size_ - total_size;
   (void)mem_block->block_all_mem_buf_map_.erase(iter);
   // Split the pre-alloc memory into continuous memory by the size list.
@@ -82,7 +79,7 @@ size_t DynamicMemPoolBestFit::AlignMemorySize(size_t size) const {
 }
 
 DeviceMemPtr DynamicMemPoolBestFit::FindIdleMemBuf(size_t size) {
-  const auto &iter = global_idle_mem_buf_map_.lower_bound(size);
+  auto iter = global_idle_mem_buf_map_.lower_bound(size);
   if (iter != global_idle_mem_buf_map_.end()) {
     auto mem_buf = iter->second;
     MS_EXCEPTION_IF_NULL(mem_buf);
@@ -123,8 +120,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size) {
   mem_alloc_unit_size_ = DYNAMIC_MEM_ALLOC_UNIT_SIZE;
   auto mem_block = std::make_shared<DynamicMemBlock>(device_addr, real_alloc_size);
   MS_EXCEPTION_IF_NULL(mem_block);
-  const auto &iter =
-    std::upper_bound(global_mem_block_list_.begin(), global_mem_block_list_.end(), device_addr, CmpMemBlock);
+  auto iter = std::upper_bound(global_mem_block_list_.begin(), global_mem_block_list_.end(), device_addr, CmpMemBlock);
   (void)global_mem_block_list_.insert(iter, mem_block);
   // Add new memory buf
   auto mem_buf = std::make_shared<DynamicMemBuf>(device_addr, kMemBufUsed, real_alloc_size);
@@ -167,12 +163,9 @@ bool DynamicMemPoolBestFit::IsDivide(size_t tensor_size, size_t mem_buf_size) co
 
 void DynamicMemPoolBestFit::DivideMemBuf(size_t size, const DynamicMemBufPtr &mem_buf) {
   MS_EXCEPTION_IF_NULL(mem_buf);
-  const auto &mem_block = FindMemBlock(mem_buf->device_addr_);
+  auto mem_block = FindMemBlock(mem_buf->device_addr_);
   MS_EXCEPTION_IF_NULL(mem_block);
   // Divide new memory buf
-  if (mem_buf->size_ < size) {
-    MS_LOG(EXCEPTION) << "The size of membuf is less than size.";
-  }
   size_t newbuf_size = mem_buf->size_ - size;
   mem_buf->size_ = size;
   DeviceMemPtr newbuf_addr = AddressOffset(mem_buf->device_addr_, size);
@@ -191,8 +184,7 @@ bool DynamicMemPoolBestFit::CmpMemBlock(const DeviceMemPtr &device_addr, const D
 
 DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
-  auto &&iter =
-    std::upper_bound(global_mem_block_list_.begin(), global_mem_block_list_.end(), device_addr, CmpMemBlock);
+  auto iter = std::upper_bound(global_mem_block_list_.begin(), global_mem_block_list_.end(), device_addr, CmpMemBlock);
   if (iter != global_mem_block_list_.begin()) {
     return *(--iter);
   }
@@ -202,7 +194,7 @@ DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr &devic
 void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
   std::lock_guard<std::mutex> locker(mutex_);
-  const auto &mem_block = FindMemBlock(device_addr);
+  auto mem_block = FindMemBlock(device_addr);
   if (mem_block == nullptr) {
     // May be destroy the memory pool first, then destroy the address, so this is normal case.
     MS_LOG(DEBUG) << "Can't find the mem_block of the device address[" << device_addr << "].";
@@ -214,7 +206,7 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
 void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(device_addr);
-  const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
+  auto iter = mem_block->block_all_mem_buf_map_.find(device_addr);
   if (iter == mem_block->block_all_mem_buf_map_.end()) {
     MS_LOG(EXCEPTION) << "Can't find the device address[" << device_addr << "].";
   }
@@ -224,9 +216,6 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
     MS_LOG(EXCEPTION) << "Find the mem_buf is not used, mem_buf_address[" << mem_buf->device_addr_ << "].";
   }
   mem_buf->status_ = kMemBufIdle;
-  if (total_used_mem_statistics_ < mem_buf->size_) {
-    MS_LOG(EXCEPTION) << "The total used mem size is less than the size of membuf.";
-  }
   total_used_mem_statistics_ -= mem_buf->size_;
   // Combine backward(combine the next_mem_buf to mem_buf)
   auto next_iter = iter;
@@ -265,7 +254,7 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
 
 void DynamicMemPoolBestFit::EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
-  auto &&iter = global_idle_mem_buf_map_.equal_range(size);
+  auto iter = global_idle_mem_buf_map_.equal_range(size);
   while (iter.first != iter.second) {
     MS_EXCEPTION_IF_NULL(iter.first->second);
     // Remove map of the idle memory buf by size and device address
@@ -283,7 +272,7 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
   MS_LOG(INFO) << "The dynamic memory pool total size is " << total_mem_statistics_ << ", total used size is "
                << total_used_mem_statistics_ << ", used peak size is " << used_mem_peak_statistics_ << ".";
   for (auto iter = global_mem_block_list_.begin(); iter != global_mem_block_list_.end(); ++iter) {
-    auto &device_addr = (*iter)->device_addr_base_;
+    auto device_addr = (*iter)->device_addr();
     if (device_addr != nullptr) {
       if (!FreeDeviceMem(device_addr)) {
         MS_LOG(EXCEPTION) << "Free device memory[" << device_addr << "] error.";

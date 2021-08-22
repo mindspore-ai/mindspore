@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLinSpace = "LinSpace";
-class MS_CORE_API LinSpace : public PrimitiveC {
+class LinSpace : public PrimitiveC {
  public:
   LinSpace() : PrimitiveC(kNameLinSpace) { InitIOName({"start", "stop", "num"}, {"output"}); }
   ~LinSpace() = default;

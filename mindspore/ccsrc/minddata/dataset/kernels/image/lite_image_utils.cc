@@ -182,8 +182,6 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   } catch (std::runtime_error &e) {
     return DestroyDecompressAndReturnError(e.what());
   }
-  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - crop_w) > crop_x, "invalid crop width");
-  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - crop_h) > crop_y, "invalid crop height");
   if (crop_x == 0 && crop_y == 0 && crop_w == 0 && crop_h == 0) {
     crop_w = cinfo.output_width;
     crop_h = cinfo.output_height;
@@ -192,7 +190,6 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     return DestroyDecompressAndReturnError("Decode: invalid crop size");
   }
   const int mcu_size = cinfo.min_DCT_scaled_size;
-  CHECK_FAIL_RETURN_UNEXPECTED(mcu_size != 0, "Invalid data.");
   unsigned int crop_x_aligned = (crop_x / mcu_size) * mcu_size;
   unsigned int crop_w_aligned = crop_w + crop_x - crop_x_aligned;
   try {
@@ -209,13 +206,8 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(ts, DataType(DataType::DE_UINT8), &output_tensor));
   const int buffer_size = output_tensor->SizeInBytes();
   JSAMPLE *buffer = reinterpret_cast<JSAMPLE *>(&(*output_tensor->begin<uint8_t>()));
-  // stride refers to output tensor, which has 3 components at most
-  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - skipped_scanlines) > crop_h,
-                               "Invalid crop height.");
   const int max_scanlines_to_read = skipped_scanlines + crop_h;
   // stride refers to output tensor, which has 3 components at most
-  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / crop_w) > kOutNumComponents,
-                               "Invalid crop width.");
   const int stride = crop_w * kOutNumComponents;
   // offset is calculated for scanlines read from the image, therefore
   // has the same number of components as the image
@@ -254,8 +246,6 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
     RETURN_STATUS_UNEXPECTED("Crop: image datatype is not float32 or uint8");
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - y) > h, "Invalid crop height.");
-  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - x) > w, "Invalid crop width.");
   // account for integer overflow
   if (y < 0 || (y + h) > input->shape()[0] || (y + h) < 0) {
     RETURN_STATUS_UNEXPECTED(
@@ -420,10 +410,7 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, int32_t img_orientation,
                       TensorRow *outputs) {
   outputs->resize(3);
-  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() > 0,
-                               "Invalid input, should greater than 0, but got " + std::to_string(inputs.size()));
   std::shared_ptr<Tensor> input = inputs[0];
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 3, "Invalid input shape, should be greater than 3 dimensions.");
   LiteMat lite_mat_src(input->shape()[1], input->shape()[0], input->shape()[2],
                        const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                        GetLiteCVDataType(input->type()));
@@ -550,15 +537,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 
     std::shared_ptr<Tensor> output_tensor;
 
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - lite_mat_rgb.width_) > pad_left,
-                                 "Invalid pad width.");
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - lite_mat_rgb.width_ + pad_left) > pad_right,
-                                 "Invalid pad width.");
     int pad_width = lite_mat_rgb.width_ + pad_left + pad_right;
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - lite_mat_rgb.height_) > pad_top,
-                                 "Invalid pad height.");
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - lite_mat_rgb.height_ + pad_top) > pad_bottom,
-                                 "Invalid pad height.");
     int pad_height = lite_mat_rgb.height_ + pad_top + pad_bottom;
     TensorShape new_shape = TensorShape({pad_height, pad_width, input->shape()[2]});
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
@@ -742,13 +721,11 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     }
     int height = 0;
     int width = 0;
-    CHECK_FAIL_RETURN_UNEXPECTED(mat.size() <= 6, "Invalid mat shape.");
     double M[6] = {};
     for (int i = 0; i < mat.size(); i++) {
       M[i] = static_cast<double>(mat[i]);
     }
 
-    CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 3, "Invalid input shape, should be 3.");
     LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));

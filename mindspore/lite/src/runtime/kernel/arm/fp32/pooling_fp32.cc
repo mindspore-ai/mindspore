@@ -30,8 +30,6 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore::kernel {
 int PoolingCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = PoolingBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PoolingBase Init failed.";

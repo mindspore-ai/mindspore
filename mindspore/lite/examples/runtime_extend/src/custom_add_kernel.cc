@@ -20,21 +20,16 @@
 #include <vector>
 #include "src/custom_common.h"
 #include "include/errorcode.h"
-#include "include/registry/register_kernel_interface.h"
+#include "include/registry/kernel_interface.h"
 #include "include/registry/register_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-namespace {
-const auto kFloat32 = DataType::kNumberTypeFloat32;
-}
 class CustomAddKernel : public Kernel {
  public:
   CustomAddKernel(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
                   const schema::Primitive *primitive, const mindspore::Context *ctx)
       : Kernel(inputs, outputs, primitive, ctx) {}
-  ~CustomAddKernel() = default;
-
   // Prepare will be called during graph compilation
   int Prepare() override { return lite::RET_OK; }
 
@@ -62,13 +57,12 @@ class CustomAddKernel : public Kernel {
   // if output shape exists value -1, need to be inferred before applying memory for output tensor.
   int PreProcess() {
     if (common::CheckOutputs(outputs_) != lite::RET_OK) {
-      auto status =
-        registry::RegisterKernelInterface::GetKernelInterface({}, primitive_)->Infer(&inputs_, &outputs_, primitive_);
-      if (status != kSuccess) {
+      auto ret = RegisterKernelInterface::GetKernelInterface({}, primitive_)->Infer(&inputs_, &outputs_, primitive_);
+      if (ret != lite::RET_OK) {
         std::cerr << "infer failed." << std::endl;
         return lite::RET_ERROR;
       }
-      auto ret = ReSize();
+      ret = ReSize();
       if (ret != lite::RET_OK) {
         std::cerr << "resize failed." << std::endl;
         return ret;
@@ -111,6 +105,6 @@ std::shared_ptr<Kernel> CustomAddCreator(const std::vector<MSTensor> &inputs, co
                                          const schema::Primitive *primitive, const mindspore::Context *ctx) {
   return std::make_shared<CustomAddKernel>(inputs, outputs, primitive, ctx);
 }
-REGISTER_CUSTOM_KERNEL(CPU, Tutorial, kFloat32, Custom_Add, CustomAddCreator)
+REGISTER_CUSTOM_KERNEL(CPU, Tutorial, kNumberTypeFloat32, Custom_Add, CustomAddCreator)
 }  // namespace kernel
 }  // namespace mindspore

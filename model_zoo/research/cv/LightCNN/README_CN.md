@@ -103,11 +103,11 @@ LightCNN适用于有大量噪声的人脸识别数据集，提出了maxout 的�
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 - 生成config json文件用于8卡训练。
     - [简易教程](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)
-    - 详细配置方法请参照[官网教程](https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_ascend.html#id3)。
+    - 详细配置方法请参照[官网教程](https://www.mindspore.cn/tutorial/training/zh-CN/r1.2/advanced_use/distributed_training_ascend.html#id4)。
 
 # 快速入门
 
@@ -439,7 +439,7 @@ python3 eval_blfur.py \
 [3]: https://drive.google.com/file/d/0ByNaVHFekDPRbFg1YTNiMUxNYXc/view?usp=sharing
 [4]: https://hyper.ai/datasets/5543
 [5]: https://pan.baidu.com/s/1eR6vHFO
-[6]: https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_mixed_precision.html
+[6]: https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_mixed_precision.html
 [7]: http://www.cbsr.ia.ac.cn/users/scliao/projects/blufr/BLUFR.zip
 [8]: https://github.com/AlfredXiangWu/face_verification_experiment/blob/master/code/lfw_pairs.mat
 [9]: https://github.com/AlfredXiangWu/face_verification_experiment/blob/master/results/LightenedCNN_B_lfw.mat

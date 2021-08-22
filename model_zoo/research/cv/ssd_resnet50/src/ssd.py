@@ -457,8 +457,7 @@ class TrainingWrapper(nn.Cell):
         if self.use_global_norm:
             grads = self.hyper_map(F.partial(grad_scale, F.scalar_to_array(self.sens)), grads)
             grads = C.clip_by_global_norm(grads)
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))
 
 class SsdInferWithDecoder(nn.Cell):
     """

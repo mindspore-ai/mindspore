@@ -46,7 +46,6 @@ class GpuItemConnector : public Connector<std::vector<device::DataItemGpu>> {
   }
 
   Status Pop(int32_t worker_id, std::vector<device::DataItemGpu> *result) noexcept override {
-    RETURN_UNEXPECTED_IF_NULL(result);
     {
       MS_ASSERT(worker_id < num_consumers_);
       std::unique_lock<std::mutex> lock(m_);

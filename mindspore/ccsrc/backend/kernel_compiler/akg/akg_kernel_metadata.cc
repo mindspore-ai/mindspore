@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/akg/akg_kernel_metadata.h"
+#include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/common_utils.h"

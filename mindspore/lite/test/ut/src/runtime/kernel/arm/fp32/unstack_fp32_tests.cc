@@ -77,7 +77,6 @@ TEST_F(TestUnstackFp32, Unstack) {
   out_tensor1.set_data(nullptr);
   out_tensor2.set_data(nullptr);
   out_tensor3.set_data(nullptr);
-  delete kernel;
 }
 
 TEST_F(TestUnstackFp32, Unstack2) {
@@ -125,6 +124,5 @@ TEST_F(TestUnstackFp32, Unstack2) {
   out_tensor0.set_data(nullptr);
   out_tensor1.set_data(nullptr);
   out_tensor2.set_data(nullptr);
-  delete kernel;
 }
 }  // namespace mindspore

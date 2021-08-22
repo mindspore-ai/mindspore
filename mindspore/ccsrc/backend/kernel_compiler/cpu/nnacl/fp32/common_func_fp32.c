@@ -21,10 +21,10 @@ void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_p
   if (size == 0) {
     return;
   }
-  for (size_t oc = 0; oc < output_channel; oc++) {
+  for (int oc = 0; oc < output_channel; oc++) {
     int oc_div = oc / size;
     int oc_mod = oc % size;
-    for (int hw = 0; hw < (int)plane_size; hw++) {
+    for (int hw = 0; hw < plane_size; hw++) {
       int src_index = oc_div * size * plane_stride + hw * size + oc_mod;
       int dst_index = hw * oc_stride + oc;
       float value = src_ptr_[src_index];

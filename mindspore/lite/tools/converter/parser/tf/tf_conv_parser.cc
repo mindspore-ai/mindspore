@@ -68,14 +68,6 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
 
   auto pad_mode = ParsePadMode(tf_op);
   prim->set_pad_mode(pad_mode);
-  if (pad_mode == PadMode::PAD) {
-    std::vector<int64_t> explicit_paddings;
-    if (ParseExplicitPaddings(tf_op, format, &explicit_paddings) != RET_OK) {
-      MS_LOG(ERROR) << "parse explicit paddings attr failed";
-      return nullptr;
-    }
-    prim->set_pad_list(explicit_paddings);
-  }
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {

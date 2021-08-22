@@ -571,8 +571,9 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
 
   if (dst.IsEmpty()) {
     dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
-  } else if (src.width_ != dst.width_ || src.height_ != dst.height_ || src.channel_ != dst.channel_ ||
-             dst.data_type_ != LDataType::FLOAT32) {
+  } else if (src.width_ != dst.width_ || src.height_ != dst.height_ || src.channel_ != dst.channel_) {
+    return false;
+  } else if (dst.data_type_ != LDataType::FLOAT32) {
     return false;
   }
 
@@ -661,16 +662,24 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
 }
 
 static bool CheckZero(const std::vector<float> &vs) {
-  return std::any_of(vs.begin(), vs.end(), [](const float &v) { return Equal(v, 0.0f); });
+  for (int i = 0; i < vs.size(); i++) {
+    if (Equal(vs[i], 0.0f)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 static bool CheckZero(const std::vector<size_t> &vs) {
-  return std::any_of(vs.begin(), vs.end(), [](const float &v) { return v == 0; });
+  for (int i = 0; i < vs.size(); i++) {
+    if (vs[i] == 0) return true;
+  }
+  return false;
 }
 
 static bool CheckMeanAndStd(const LiteMat &src, LiteMat &dst, int channel, const std::vector<float> &mean,
                             const std::vector<float> &std) {
-  if (mean.empty() && std.empty()) {
+  if (mean.size() == 0 && std.size() == 0) {
     return false;
   }
   if (src.data_type_ != LDataType::FLOAT32) {
@@ -926,8 +935,8 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
   LDataType data_type = mv[0].data_type_;
 
   // The arrays in list must be single-channel
-  if (std::any_of(mv.begin(), mv.end(), [](const LiteMat &m) { return m.channel_ != 1; })) {
-    return false;
+  for (int i = 0; i < mv.size(); i++) {
+    if (mv[i].channel_ != 1) return false;
   }
 
   for (int i = 1; i < mv.size(); i++) {
@@ -953,23 +962,16 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
 
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r) {
-  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (top < 0 || bottom < 0 || left < 0 || right < 0) {
     return false;
   }
-  if (src.width_ > std::numeric_limits<int>::max() - left ||
-      src.width_ + left > std::numeric_limits<int>::max() - right) {
-    return false;
-  }
-  if (src.height_ > std::numeric_limits<int>::max() - top ||
-      src.height_ + top > std::numeric_limits<int>::max() - bottom) {
+  if (src.IsEmpty()) {
     return false;
   }
   int dst_width = src.width_ + left + right;
   int dst_height = src.height_ + top + bottom;
   if (dst.IsEmpty()) {
     dst.Init(dst_width, dst_height, src.channel_, src.data_type_);
-    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   } else if (dst.width_ != dst_width || dst.height_ != dst_height || src.channel_ != dst.channel_) {
     return false;
   } else if (src.data_type_ != dst.data_type_) {
@@ -989,7 +991,7 @@ bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int ri
   return true;
 }
 
-std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig config) {
+std::vector<std::vector<float>> GetDefaultBoxes(BoxesConfig config) {
   size_t size = config.num_default.size();
   if (size <= 1 || config.feature_size.size() != size || config.steps.size() != size ||
       config.aspect_rations.size() != size) {
@@ -1013,7 +1015,7 @@ std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig config) {
   }
   scales.push_back(1.0f);
   std::vector<std::vector<float>> default_boxes;
-  for (auto i = 0; i < config.feature_size.size(); i++) {
+  for (int i = 0; i < config.feature_size.size(); i++) {
     float sk1 = scales[i];
     float sk2 = scales[i + 1];
     float sk3 = sqrt(sk1 * sk2);
@@ -1067,10 +1069,10 @@ void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std:
 
 std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std::vector<float> &all_scores, float thres,
                           int max_boxes) {
-  size_t boxes_num = all_boxes.size();
+  int boxes_num = all_boxes.size();
   std::vector<float> areas(boxes_num);
   std::vector<int> order(boxes_num);
-  for (auto i = 0; i < boxes_num; i++) {
+  for (int i = 0; i < boxes_num; i++) {
     if (all_boxes[i].size() < 4) {
       return {};
     }
@@ -1107,7 +1109,6 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
       }
     }
     std::vector<int> new_order;
-    new_order.reserve(inds.size());
     for (int k = 0; k < inds.size(); k++) {
       new_order.push_back(order[inds[k]]);
     }
@@ -1543,9 +1544,8 @@ bool GetAffineTransformImpl(LiteMat &src, LiteMat &dst) {
     }
 
     if (std::abs(src.ptr<double>(k)[i]) < DBL_EPSILON * 100) {
-      dst.Init(1, 6, LDataType(LDataType::DOUBLE));
-      (void)memset(dst.data_ptr_, 0, 6 * sizeof(double));
-      RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
+      double x[6] = {0};
+      dst.Init(1, 6, x, LDataType(LDataType::DOUBLE));
       return false;
     }
     if (k != i) {

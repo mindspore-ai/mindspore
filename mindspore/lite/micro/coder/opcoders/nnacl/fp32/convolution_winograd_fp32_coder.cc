@@ -146,8 +146,8 @@ int ConvolutionWinogradFP32Coder::InitWeightBias() {
   if (input_unit_ == DIMENSION_8D) {
     coef = 0.5f;
   }
-  ret = CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, coef, output_unit_, kernel_unit_);
-  MS_CHECK_RET_CODE(ret, "CookToomFilter failed!");
+  CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, coef, output_unit_, kernel_unit_);
+
   auto out_channel_size = static_cast<size_t>(out_channel);
   auto weight_data = reinterpret_cast<float *>(filter_tensor_->MutableData());
   ret = WinogradFilterTransform(weight_data, matrix_g, matrix_gt, oc_block);
@@ -228,7 +228,6 @@ int ConvolutionWinogradFP32Coder::DoCode(CoderContext *const context) {
             "common_func_fp32.c",
             "fixed_point.c",
             "winograd_utils.c",
-            "conv_common_base.c",
             "minimal_filtering_generator.c",
           });
   if (target_ == kARM32A) {

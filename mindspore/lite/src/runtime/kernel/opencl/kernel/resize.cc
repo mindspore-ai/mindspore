@@ -64,7 +64,7 @@ int ResizeOpenCLKernel::Prepare() {
   }
   kernel_name += "_NHWC4";
   std::string source = resize_source;
-  const std::string program_name = "Resize";
+  std::string program_name = "Resize";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -75,10 +75,7 @@ int ResizeOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
@@ -90,7 +87,7 @@ float ResizeOpenCLKernel::getResizeScaleFactor(int input_size, int output_size) 
            : static_cast<float>(input_size) / static_cast<float>(output_size);
 }
 
-int ResizeOpenCLKernel::SetConstArgs() {
+void ResizeOpenCLKernel::SetConstArgs() {
   auto in_shape = in_tensors_[0]->shape();
   auto out_shape = out_tensors_[0]->shape();
   int n = out_shape[0];
@@ -104,19 +101,9 @@ int ResizeOpenCLKernel::SetConstArgs() {
   cl_int4 out_size = {n, h, w, c4};
   cl_float2 scale = {scale_h, scale_w};
   int arg_idx = 2;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_size) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_size) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale);
 }
 
 void ResizeOpenCLKernel::SetGlobalLocal() {
@@ -129,18 +116,9 @@ void ResizeOpenCLKernel::SetGlobalLocal() {
 int ResizeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 
@@ -148,10 +126,7 @@ int ResizeOpenCLKernel::PreProcess() {
   if (type() == PrimitiveType_Resize && !InferShapeDone() && in_tensors_.size() == INPUT_TENSOR_SIZE_2) {
     auto shape_tensor = in_tensors_[1];
     if (!shape_tensor->IsConst()) {
-      if (!ocl_runtime_->SyncCommandQueue()) {
-        MS_LOG(ERROR) << "SyncCommandQueue failed.";
-        return RET_ERROR;
-      }
+      ocl_runtime_->SyncCommandQueue();
       shape_tensor->MutableData();
     }
   }

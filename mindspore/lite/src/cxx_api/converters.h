@@ -21,7 +21,6 @@
 #include "include/api/status.h"
 #include "include/api/types.h"
 #include "include/lite_types.h"
-#include "src/inner_context.h"
 
 namespace mindspore {
 
@@ -60,7 +59,7 @@ inline bool IsAffinityModeValid(int affinity_mode) {
   return affinity_mode >= lite::NO_BIND && affinity_mode <= lite::MID_CPU;
 }
 
-Status A2L_ConvertContext(Context *a_context, lite::InnerContext *l_context);
+Status A2L_ConvertContext(Context *a_context, lite::Context *l_context);
 
 Status A2L_ConvertConfig(const TrainCfg *a_train_cfg, lite::TrainCfg *l_train_cfg);
 }  // namespace mindspore

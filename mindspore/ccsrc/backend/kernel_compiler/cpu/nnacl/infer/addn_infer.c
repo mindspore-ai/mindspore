@@ -56,13 +56,13 @@ int AddnInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   for (size_t d = 0; d < inputs[max_dims_idx]->shape_size_; ++d) {
     size_t max_dim = 0;
     for (size_t i = 0; i < inputs_size; ++i) {
-      size_t shift = max_dims - (size_t)(inputs[i]->shape_size_);
-      size_t dim = (i < shift) ? 1 : (size_t)(inputs[i]->shape_[d]);
+      size_t shift = max_dims - inputs[i]->shape_size_;
+      size_t dim = (i < shift) ? 1 : inputs[i]->shape_[d];
       if (dim > max_dim) {
         max_dim = dim;
       }
     }
-    output->shape_[d] = (int)(max_dim);  // set the biggest dimension in the output tensor
+    output->shape_[d] = max_dim;  // set the biggest dimension in the output tensor
   }
 
   return NNACL_OK;

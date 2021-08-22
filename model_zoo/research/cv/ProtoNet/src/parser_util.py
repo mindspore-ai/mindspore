@@ -49,7 +49,7 @@ def get_parser():
     parser.add_argument('-exp', '--experiment_root',
                         type=str,
                         help='root where to store models, losses and accuracies',
-                        default='.' + os.sep + 'output')
+                        default='..' + os.sep + 'output')
 
     parser.add_argument('-nep', '--epochs',
                         type=int,

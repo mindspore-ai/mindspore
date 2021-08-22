@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_FP32_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_FP32_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_H_
 
 #include <vector>
 #include "src/inner_kernel.h"
@@ -28,18 +28,27 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   ConvolutionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx, float *origin_weight,
                        float *origin_bias)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias) {}
-  ~ConvolutionCPUKernel() override {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
+        origin_weight_(origin_weight),
+        origin_bias_(origin_bias) {}
+  ~ConvolutionCPUKernel() override {
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+  }
 
   int Init() override;
+  virtual int InitWeightBias();
   int InitTmpBuffer();
   int ReSize() override;
   int Run() override;
   virtual int RunImpl(int task_id);
 
+  int Eval() override;
+
  protected:
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
+  void PackWeight();
   void FreeTmpBuffer() {
     if (packed_input_ != nullptr) {
       ctx_->allocator->Free(packed_input_);
@@ -52,9 +61,12 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   }
 
  protected:
+  float *origin_weight_;  // do not free
+  float *origin_bias_;    // do not free
+  float *packed_weight_ = nullptr;
   float *packed_input_ = nullptr;
   float *col_major_input_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_FP32_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_H_

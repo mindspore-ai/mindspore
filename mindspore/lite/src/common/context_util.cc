@@ -103,5 +103,17 @@ mindspore::Context *MSContextFromContext(const lite::Context *context) {
   }
   return ms_context;
 }
+
+std::set<std::string> ProvidersFromMSContext(const mindspore::Context *context) {
+  std::set<std::string> providers;
+  if (context == nullptr) {
+    return providers;
+  }
+  auto &device_infos = const_cast<mindspore::Context *>(context)->MutableDeviceInfo();
+  for (auto &device_info : device_infos) {
+    providers.emplace(device_info->GetProvider());
+  }
+  return providers;
+}
 }  // namespace lite
 }  // namespace mindspore

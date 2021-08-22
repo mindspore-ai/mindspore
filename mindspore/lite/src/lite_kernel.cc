@@ -38,18 +38,15 @@ bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   });
 }
 
-void LiteKernel::InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) {
+void LiteKernel::InitOutTensorInitRefCount() {
   for (auto *tensor : this->out_tensors()) {
     MS_ASSERT(tensor != nullptr);
     size_t init_ref_count = 0;
     for (auto *post_kernel : this->out_kernels_) {
-      if ((mask_kernels == nullptr) ||
-          std::find(mask_kernels->begin(), mask_kernels->end(), post_kernel) != mask_kernels->end()) {
-        auto &post_in_tensors = post_kernel->in_tensors();
-        init_ref_count += std::count_if(
-          post_in_tensors.begin(), post_in_tensors.end(),
-          [&tensor](const lite::Tensor *post_kernel_in_tensor) { return post_kernel_in_tensor == tensor; });
-      }
+      auto &post_in_tensors = post_kernel->in_tensors();
+      init_ref_count +=
+        std::count_if(post_in_tensors.begin(), post_in_tensors.end(),
+                      [&tensor](const lite::Tensor *post_kernel_in_tensor) { return post_kernel_in_tensor == tensor; });
     }
     tensor->set_init_ref_count(init_ref_count);
   }

@@ -370,64 +370,6 @@ struct SquaredDifferenceFunc {
 };
 
 template <typename T>
-struct TruncateDivFunc {
-  __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    T res = static_cast<T>(static_cast<double>(lhs) / static_cast<double>(rhs));
-    return res;
-  }
-};
-
-template <>
-struct TruncateDivFunc<half> {
-  __device__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
-    float res = __half2float(lhs) / __half2float(rhs);
-    return __float2half_rn(res);
-  }
-};
-
-template <>
-struct TruncateDivFunc<half2> {
-  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
-    float2 l = __half22float2(lhs);
-    float2 r = __half22float2(rhs);
-    float2 res;
-    res.x = l.x / r.x;
-    res.y = l.y / r.y;
-    return __float22half2_rn(res);
-  }
-};
-
-template <typename T>
-struct TruncateModFunc {
-  __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    T res = static_cast<T>(lhs - static_cast<int>(lhs / rhs) * rhs);
-    return res;
-  }
-};
-
-template <>
-struct TruncateModFunc<half> {
-  __device__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
-    float l = __half2float(lhs);
-    float r = __half2float(rhs);
-    float res = l - static_cast<int>(l / r) * r;
-    return __float2half_rn(res);
-  }
-};
-
-template <>
-struct TruncateModFunc<half2> {
-  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
-    float2 l = __half22float2(lhs);
-    float2 r = __half22float2(rhs);
-    float2 res;
-    res.x = l.x - static_cast<int>(l.x / r.x) * r.x;
-    res.y = l.y - static_cast<int>(l.y / r.y) * r.y;
-    return __float22half2_rn(res);
-  }
-};
-
-template <typename T>
 struct Atan2Func {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return atan2f(lhs, rhs); }
 };
@@ -552,10 +494,6 @@ void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, c
       return ElewiseArithKernel<T, DivNoNanFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_SQUARED_DIFFERENCE:
       return ElewiseArithKernel<T, SquaredDifferenceFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_TRUNCATEDIV:
-      return ElewiseArithKernel<T, TruncateDivFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_TRUNCATEMOD:
-      return ElewiseArithKernel<T, TruncateModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_MOD:
       return ElewiseArithKernel<T, ModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_FLOORMOD:
@@ -838,16 +776,6 @@ void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     case BROADCAST_TYPE_SQUARED_DIFFERENCE:
       return BroadcastArithKernel<T, SquaredDifferenceFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
-        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
-        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_TRUNCATEDIV:
-      return BroadcastArithKernel<T, TruncateDivFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
-        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
-        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
-    case BROADCAST_TYPE_TRUNCATEMOD:
-      return BroadcastArithKernel<T, TruncateModFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);

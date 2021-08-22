@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTopKFusion = "TopKFusion";
-class MS_CORE_API TopKFusion : public TopK {
+class TopKFusion : public TopK {
  public:
   TopKFusion() : TopK(kNameTopKFusion) {}
   ~TopKFusion() = default;

@@ -75,7 +75,7 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // The switch actor run when receive the input control.
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context);
   // The switch actor run when receive the input branch id.
-  void CollectBranchId(const int branch_id, OpContext<DeviceTensor> *const context);
+  void CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context);
   // Parse the input node information of the switch actor according to node_.
   void ParseInput(const ControlNodeParserPtr &parser);
   // Add input for all branches.
@@ -96,18 +96,18 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // Initialize the size of the vector members.
   void InitVectorSize(const size_t num);
   // Get index from DeviceTensor.
-  size_t GetIndex(const OpContext<DeviceTensor> *const context);
+  size_t GetIndex(OpContext<DeviceTensor> *context);
   // Add input for the branch.
   void AddInput(const AnfNodePtr &node, size_t branch);
   void AddInput(const KernelWithIndex node_with_index, const size_t branch);
 
   // Check whether satisfy the condition for send outputs.
-  bool CheckLaunchCondition(OpContext<DeviceTensor> *const context) const;
+  bool CheckLaunchCondition(OpContext<DeviceTensor> *context) const;
   // Fetch the args of switch branch.
-  void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
-  void SendOutput(OpContext<DeviceTensor> *const context);
+  void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
+  void SendOutput(OpContext<DeviceTensor> *context);
   // Erase input data and input controls when finish switch launch.
-  void EraseInput(OpContext<DeviceTensor> *const context);
+  void EraseInput(OpContext<DeviceTensor> *context);
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context);
 
   // Collect all the backend inputs of switch actor.

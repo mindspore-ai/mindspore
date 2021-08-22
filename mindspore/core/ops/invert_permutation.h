@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameInvertPermutation = "InvertPermutation";
-class MS_CORE_API InvertPermutation : public PrimitiveC {
+class InvertPermutation : public PrimitiveC {
  public:
   InvertPermutation() : PrimitiveC(kNameInvertPermutation) {}
   ~InvertPermutation() = default;

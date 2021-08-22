@@ -40,9 +40,7 @@ int RangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  if (GetElementNum(inputs[0]) < 1 || GetElementNum(inputs[1]) < 1 || GetElementNum(inputs[2]) < 1) {
-    return NNACL_ERR;
-  }
+
   int shape_size = 0;
   if (inputs_size == 3) {
     if ((inputs[0]->data_ == NULL) || (inputs[1]->data_ == NULL) || (inputs[2]->data_ == NULL)) {

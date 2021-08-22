@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReciprocal = prim::kReciprocal;
-class MS_CORE_API Reciprocal : public PrimitiveC {
+class Reciprocal : public PrimitiveC {
  public:
   Reciprocal() : PrimitiveC(prim::kPrimReciprocal->name()) { InitIOName({"x"}, {"y"}); }
   ~Reciprocal() = default;

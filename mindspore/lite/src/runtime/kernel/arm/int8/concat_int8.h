@@ -57,7 +57,7 @@ class ConcatInt8CPUKernel : public InnerKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  void DoExecute(int task_id);
+  int DoExecute(int task_id);
 
  private:
   int64_t before_axis_size = 0;

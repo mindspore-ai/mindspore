@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSmoothL1LossGrad = "SmoothL1LossGrad";
-class MS_CORE_API SmoothL1LossGrad : public PrimitiveC {
+class SmoothL1LossGrad : public PrimitiveC {
  public:
   SmoothL1LossGrad() : PrimitiveC(kNameSmoothL1LossGrad) {}
   ~SmoothL1LossGrad() = default;

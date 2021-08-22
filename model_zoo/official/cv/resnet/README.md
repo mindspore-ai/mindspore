@@ -202,19 +202,6 @@ If you want to run in modelarts, please check the official documentation of [mod
 .
 └──resnet
   ├── README.md
-  ├── config                               # parameter configuration
-    ├── resnet18_cifar10_config.yaml
-    ├── resnet18_cifar10_config_gpu.yaml
-    ├── resnet18_imagenet2012_config.yaml
-    ├── resnet18_imagenet2012_config_gpu.yaml
-    ├── resnet34_imagenet2012_config.yaml
-    ├── resnet50_cifar10_config.yaml
-    ├── resnet50_imagenet2012_Acc_config.yaml     # High performance version: The performance is improved by more than 10% and the precision decrease less than 1%
-    ├── resnet50_imagenet2012_Ascend_Thor_config.yaml
-    ├── resnet50_imagenet2012_config.yaml
-    ├── resnet50_imagenet2012_GPU_Thor_config.yaml
-    ├── resnet101_imagenet2012_config.yaml
-    └── se-resnet50_imagenet2012_config.yaml
   ├── scripts
     ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
     ├── run_parameter_server_train.sh      # launch ascend parameter server training(8 pcs)
@@ -239,6 +226,16 @@ If you want to run in modelarts, please check the official documentation of [mod
        ├──device_adapter.py                # device adapter
        ├──local_adapter.py                 # local adapter
        ├──moxing_adapter.py                # moxing adapter
+  ├── resnet18_cifar10_config.yaml         # parameter configuration
+  ├── resnet18_imagenet2012_config.yaml    # parameter configuration
+  ├── resnet34_imagenet2012_config.yaml    # parameter configuration
+  ├── resnet50_cifar10_config.yaml         # parameter configuration
+  ├── resnet50_imagenet2012_Acc_config.yaml # parameter configuration
+  ├── resnet50_imagenet2012_Ascend_Thor_config.yaml # parameter configuration
+  ├── resnet50_imagenet2012_config.yaml    # parameter configuration
+  ├── resnet50_imagenet2012_GPU_Thor_config.yaml # parameter configuration
+  ├── resnet101_imagenet2012_config.yaml   # parameter configuration
+  ├── se-resnet50_imagenet2012_config.yaml # parameter configuration
   ├── export.py                            # export model for inference
   ├── mindspore_hub_conf.py                # mindspore hub interface
   ├── eval.py                              # eval net
@@ -716,42 +713,42 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 
 #### ResNet18 on CIFAR-10
 
-| Parameters                 | Ascend 910                                                   | GPU |
-| -------------------------- | -------------------------------------- | -------------------------------------- |
-| Model Version              | ResNet18                                                |  ResNet18 |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |  PCIE V100-32G        |
-| uploaded Date              | 02/25/2021 (month/day/year)                          | 07/23/2021 (month/day/year)  |
-| MindSpore Version          | 1.1.1                                                       | 1.3.0 |
-| Dataset                    | CIFAR-10                                                    | CIFAR-10 |
-| Training Parameters        | epoch=90, steps per epoch=195, batch_size = 32             | epoch=90, steps per epoch=195, batch_size = 32      |
-| Optimizer                  | Momentum                                                         | Momentum                                   |
-| Loss Function              | Softmax Cross Entropy                                       | Softmax Cross Entropy                             |
-| outputs                    | probability                                                 | probability               |
-| Loss                       | 0.0002519517                                                    |  0.0015517382    |
-| Speed                      | 13 ms/step（8pcs）                     | 29 ms/step（8pcs） |
-| Total time                 | 4 mins                          | 11 minds    |
-| Parameters (M)             | 11.2                                                        | 11.2          |
-| Checkpoint for Fine tuning | 86M (.ckpt file)                                         | 85.4 (.ckpt file)     |
+| Parameters                 | Ascend 910                                                   |
+| -------------------------- | -------------------------------------- |
+| Model Version              | ResNet18                                                |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
+| uploaded Date              | 02/25/2021 (month/day/year)                          |
+| MindSpore Version          | 1.1.1                                                       |
+| Dataset                    | CIFAR-10                                                    |
+| Training Parameters        | epoch=90, steps per epoch=195, batch_size = 32             |
+| Optimizer                  | Momentum                                                         |
+| Loss Function              | Softmax Cross Entropy                                       |
+| outputs                    | probability                                                 |
+| Loss                       | 0.0002519517                                                    |
+| Speed                      | 13 ms/step（8pcs）                     |
+| Total time                 | 4 mins                          |
+| Parameters (M)             | 11.2                                                        |
+| Checkpoint for Fine tuning | 86M (.ckpt file)                                         |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
 
 #### ResNet18 on ImageNet2012
 
-| Parameters                 | Ascend 910                                                   | GPU |
-| -------------------------- | -------------------------------------- | -------------------------------------- |
-| Model Version              | ResNet18                                                | ResNet18     |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  | PCIE V100-32G   |
-| uploaded Date              | 02/25/2021 (month/day/year)  ；                        | 07/23/2021 (month/day/year)  |
-| MindSpore Version          | 1.1.1                                                       | 1.3.0 |
-| Dataset                    | ImageNet2012                                                    | ImageNet2012 |
-| Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             | epoch=90, steps per epoch=625, batch_size = 256             |
-| Optimizer                  | Momentum                                                         | Momentum  |
-| Loss Function              | Softmax Cross Entropy                                       | Softmax Cross Entropy    |
-| outputs                    | probability                                                 | probability              |
-| Loss                       | 2.15702                                                   | 2.168664 |
-| Speed                      | 110ms/step（8pcs）  (may need to set_numa_enbale in dataset.py)                    | 107 ms/step（8pcs）                |
-| Total time                 | 110 mins                        | 130 mins            |
-| Parameters (M)             | 11.7                                                       | 11.7 |
-| Checkpoint for Fine tuning | 90M (.ckpt file)                                         |  90M (.ckpt file)                                         |
+| Parameters                 | Ascend 910                                                   |
+| -------------------------- | -------------------------------------- |
+| Model Version              | ResNet18                                                |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
+| uploaded Date              | 02/25/2021 (month/day/year)  ；                        |
+| MindSpore Version          | 1.1.1                                                       |
+| Dataset                    | ImageNet2012                                                    |
+| Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             |
+| Optimizer                  | Momentum                                                         |
+| Loss Function              | Softmax Cross Entropy                                       |
+| outputs                    | probability                                                 |
+| Loss                       | 2.15702                                                   |
+| Speed                      | 110ms/step（8pcs）  (may need to set_numa_enbale in dataset.py)                    |
+| Total time                 | 110 mins                        |
+| Parameters (M)             | 11.7                                                       |
+| Checkpoint for Fine tuning | 90M (.ckpt file)                                         |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
 
 #### ResNet50 on CIFAR-10

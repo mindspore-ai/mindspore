@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -178,8 +179,6 @@ Status ToDevice::Stop() {
 }
 
 Status ToDevice::GetDataInfo(std::vector<DataType> *const types, std::vector<TensorShape> *const shapes) {
-  RETURN_UNEXPECTED_IF_NULL(types);
-  RETURN_UNEXPECTED_IF_NULL(shapes);
   // tree_.root() must be DeviceQueueOp
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
@@ -219,13 +218,8 @@ Status SaveToDisk::ValidateParams() {
     MS_LOG(ERROR) << err;
     RETURN_STATUS_SYNTAX_ERROR(err);
   }
-  std::string real_path;
-  if (Path::RealPath(dir.ParentPath(), real_path).IsError()) {
-    std::string err_msg = "CreateSaver failed, can not get real dataset path: " + dir.ParentPath();
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  if (access(dir.ParentPath().c_str(), R_OK) == -1) {
+  auto parent_path = dir.ParentPath();
+  if (!parent_path.empty() && access(common::SafeCStr(parent_path), R_OK) == -1) {
     std::string err_msg = "CreateSaver failed, no access to specified dataset path: " + dataset_path_;
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -256,15 +250,15 @@ Status SaveToDisk::Save() {
   auto mr_header = std::make_shared<mindrecord::ShardHeader>();
   auto mr_writer = std::make_unique<mindrecord::ShardWriter>();
   std::vector<std::string> blob_fields;
-  if (mindrecord::SUCCESS != mindrecord::ShardWriter::Initialize(&mr_writer, file_names)) {
-    RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardWriter, please check above `ERROR` level message.");
+  if (mindrecord::SUCCESS != mindrecord::ShardWriter::initialize(&mr_writer, file_names)) {
+    RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardWriter.");
   }
 
   std::unordered_map<std::string, int32_t> column_name_id_map;
   for (auto el : tree_adapter_->GetColumnNameMap()) {
     std::string column_name = el.first;
-    (void)std::transform(column_name.begin(), column_name.end(), column_name.begin(),
-                         [](unsigned char c) { return ispunct(c) ? '_' : c; });
+    std::transform(column_name.begin(), column_name.end(), column_name.begin(),
+                   [](unsigned char c) { return ispunct(c) ? '_' : c; });
     column_name_id_map[column_name] = el.second;
   }
 
@@ -287,21 +281,17 @@ Status SaveToDisk::Save() {
       RETURN_IF_NOT_OK(FetchMetaFromTensorRow(column_name_id_map, row, &mr_json, &index_fields));
       MS_LOG(INFO) << "Schema of saved mindrecord: " << mr_json.dump();
       if (mindrecord::SUCCESS !=
-          mindrecord::ShardHeader::Initialize(&mr_header, mr_json, index_fields, blob_fields, mr_schema_id)) {
+          mindrecord::ShardHeader::initialize(&mr_header, mr_json, index_fields, blob_fields, mr_schema_id)) {
         RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardHeader.");
       }
-      if (mindrecord::SUCCESS != mr_writer->SetShardHeader(mr_header)) {
-        RETURN_STATUS_UNEXPECTED("Error: failed to set header of ShardWriter.");
-      }
+      mr_writer->SetShardHeader(mr_header);
       first_loop = false;
     }
     // construct data
     if (!row.empty()) {  // write data
       RETURN_IF_NOT_OK(FetchDataFromTensorRow(row, column_name_id_map, &row_raw_data, &row_bin_data));
       std::shared_ptr<std::vector<uint8_t>> output_bin_data;
-      if (mindrecord::SUCCESS != mr_writer->MergeBlobData(blob_fields, row_bin_data, &output_bin_data)) {
-        RETURN_STATUS_UNEXPECTED("Error: failed to merge blob data of ShardWriter.");
-      }
+      mr_writer->MergeBlobData(blob_fields, row_bin_data, &output_bin_data);
       std::map<std::uint64_t, std::vector<nlohmann::json>> raw_data;
       raw_data.insert(
         std::pair<uint64_t, std::vector<nlohmann::json>>(mr_schema_id, std::vector<nlohmann::json>{row_raw_data}));
@@ -309,16 +299,12 @@ Status SaveToDisk::Save() {
       if (output_bin_data != nullptr) {
         bin_data.emplace_back(*output_bin_data);
       }
-      if (mindrecord::SUCCESS != mr_writer->WriteRawData(raw_data, bin_data)) {
-        RETURN_STATUS_UNEXPECTED("Error: failed to write raw data to ShardWriter.");
-      }
+      mr_writer->WriteRawData(raw_data, bin_data);
     }
   } while (!row.empty());
 
-  if (mindrecord::SUCCESS != mr_writer->Commit()) {
-    RETURN_STATUS_UNEXPECTED("Error: failed to commit ShardWriter.");
-  }
-  if (mindrecord::SUCCESS != mindrecord::ShardIndexGenerator::Finalize(file_names)) {
+  mr_writer->Commit();
+  if (mindrecord::SUCCESS != mindrecord::ShardIndexGenerator::finalize(file_names)) {
     RETURN_STATUS_UNEXPECTED("Error: failed to finalize ShardIndexGenerator.");
   }
   return Status::OK();
@@ -421,7 +407,7 @@ Status SaveToDisk::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
   return Status::OK();
 }
 
-inline Status ValidateInputParams(nlohmann::json *row_raw_data,
+static Status ValidateInputParams(nlohmann::json *row_raw_data,
                                   std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> *row_bin_data,
                                   const std::unordered_map<std::string, int32_t> &column_name_id_map) {
   if (row_raw_data == nullptr) {
@@ -438,8 +424,6 @@ inline Status ValidateInputParams(nlohmann::json *row_raw_data,
 
 Status SaveToDisk::FetchFloatData(std::shared_ptr<Tensor> tensor, std::string column_name, nlohmann::json *row_raw_data,
                                   std::unique_ptr<std::vector<uint8_t>> *data_ptr) {
-  RETURN_UNEXPECTED_IF_NULL(row_raw_data);
-  RETURN_UNEXPECTED_IF_NULL(data_ptr);
   auto column_type = tensor->type();
   Status s;
   if (column_type == DataType::DE_FLOAT32) {
@@ -458,9 +442,6 @@ Status SaveToDisk::FetchFloatData(std::shared_ptr<Tensor> tensor, std::string co
 
 Status SaveToDisk::FetchItemData(std::shared_ptr<Tensor> tensor, std::string column_name, nlohmann::json *row_raw_data,
                                  std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> *row_bin_data) {
-  RETURN_UNEXPECTED_IF_NULL(tensor);
-  RETURN_UNEXPECTED_IF_NULL(row_raw_data);
-  RETURN_UNEXPECTED_IF_NULL(row_bin_data);
   auto column_type = tensor->type();
   Status s;
   std::unique_ptr<std::vector<uint8_t>> data_ptr;
@@ -511,6 +492,7 @@ Status SaveToDisk::FetchItemData(std::shared_ptr<Tensor> tensor, std::string col
     RETURN_IF_NOT_OK(tensor->GetItemAt(&sv, {}));  // assume scalar string tensor
     std::string ss(sv);
     (*row_raw_data)[column_name] = std::move(ss);
+    return Status::OK();
   } else {
     RETURN_STATUS_UNEXPECTED("Got unexpected type when casting data.");
   }
@@ -524,8 +506,6 @@ Status SaveToDisk::FetchDataFromTensorRow(const TensorRow &row,
                                           const std::unordered_map<std::string, int32_t> &column_name_id_map,
                                           nlohmann::json *row_raw_data,
                                           std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> *row_bin_data) {
-  RETURN_UNEXPECTED_IF_NULL(row_raw_data);
-  RETURN_UNEXPECTED_IF_NULL(row_bin_data);
   Status s;
   s = ValidateInputParams(row_raw_data, row_bin_data, column_name_id_map);
   if (s.IsError()) {
@@ -545,11 +525,9 @@ template <typename T, typename S>
 Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &shape, const int64_t num_of_elements,
                                    std::unique_ptr<T> *data, std::unique_ptr<std::vector<uint8_t>> *data_ptr,
                                    std::unique_ptr<S> *s, bool need_convert) {
-  RETURN_UNEXPECTED_IF_NULL(src);
-  RETURN_UNEXPECTED_IF_NULL(data);
-  RETURN_UNEXPECTED_IF_NULL(data_ptr);
-  RETURN_UNEXPECTED_IF_NULL(s);
-
+  if (nullptr == src) {
+    RETURN_STATUS_UNEXPECTED("Error: buffer of Tensor is NULL.");
+  }
   *data_ptr = std::make_unique<std::vector<uint8_t>>(num_of_elements * sizeof(T));
   if (need_convert) {
     auto tmp_ptr = std::make_unique<std::vector<uint8_t>>(num_of_elements * sizeof(S));
@@ -582,32 +560,25 @@ TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), first_row_obt
 }
 
 Status TreeGetters::Init(std::shared_ptr<DatasetNode> d) {
-  RETURN_UNEXPECTED_IF_NULL(d);
   root_ = std::move(d);
   return Status::OK();
 }
 
-Status TreeGetters::GetRow(TensorRow *row) {
-  RETURN_UNEXPECTED_IF_NULL(row);
-  return tree_adapter_->GetNext(row);
-}
+Status TreeGetters::GetRow(TensorRow *row) { return tree_adapter_->GetNext(row); }
 
 Status TreeGetters::GetOutputTypes(std::vector<DataType> *types) {
-  RETURN_UNEXPECTED_IF_NULL(types);
   RETURN_IF_NOT_OK(GetFirstRowShapeAndType());
   *types = first_row_type_;
   return Status::OK();
 }
 
 Status TreeGetters::GetOutputShapes(std::vector<TensorShape> *shapes) {
-  RETURN_UNEXPECTED_IF_NULL(shapes);
   RETURN_IF_NOT_OK(GetFirstRowShapeAndType());
   *shapes = first_row_shape_;
   return Status::OK();
 }
 
 Status TreeGetters::GetBatchSize(int64_t *batch_size) {
-  RETURN_UNEXPECTED_IF_NULL(batch_size);
   RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   RETURN_UNEXPECTED_IF_NULL(root);
@@ -617,7 +588,6 @@ Status TreeGetters::GetBatchSize(int64_t *batch_size) {
 }
 
 Status TreeGetters::GetRepeatCount(int64_t *repeat_count) {
-  RETURN_UNEXPECTED_IF_NULL(repeat_count);
   RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   RETURN_UNEXPECTED_IF_NULL(root);
@@ -626,7 +596,6 @@ Status TreeGetters::GetRepeatCount(int64_t *repeat_count) {
 }
 
 Status TreeGetters::GetNumClasses(int64_t *num_classes) {
-  RETURN_UNEXPECTED_IF_NULL(num_classes);
   RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   RETURN_UNEXPECTED_IF_NULL(root);
@@ -635,7 +604,6 @@ Status TreeGetters::GetNumClasses(int64_t *num_classes) {
 }
 
 Status TreeGetters::GetColumnNames(std::vector<std::string> *output) {
-  RETURN_UNEXPECTED_IF_NULL(output);
   RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   RETURN_UNEXPECTED_IF_NULL(root);
@@ -652,7 +620,6 @@ Status TreeGetters::GetColumnNames(std::vector<std::string> *output) {
 }
 
 Status TreeGetters::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
-  RETURN_UNEXPECTED_IF_NULL(output_class_indexing);
   RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   RETURN_UNEXPECTED_IF_NULL(root);
@@ -704,7 +671,6 @@ Status DatasetSizeGetter::Init(std::shared_ptr<DatasetNode> d) {
   return Status::OK();
 }
 Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *dataset_size) {
-  RETURN_UNEXPECTED_IF_NULL(dataset_size);
   std::shared_ptr<TreeAdapter> tree_adapter = std::make_shared<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
   tree_adapters_.push_back(tree_adapter);
   RETURN_IF_NOT_OK(tree_adapter->Compile(ir_node, 1));
@@ -719,7 +685,6 @@ Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *
   return Status::OK();
 }
 Status DatasetSizeGetter::GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *row) {
-  RETURN_UNEXPECTED_IF_NULL(row);
   return tree_adapter->GetNext(row);
 }
 Status DatasetSizeGetter::Terminate() {

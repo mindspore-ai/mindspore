@@ -44,7 +44,7 @@ class NLLLossGpuKernel : public GpuKernel {
     T *loss_device = GetDeviceAddress<T>(outputs, 0);
     S *total_weight_device = GetDeviceAddress<S>(outputs, 1);
 
-    T *tmp_loss_device = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+    T *tmp_loss_device = GetDeviceAddress<T>(workspace, 0);
     S *tmp_target_weight_device = GetDeviceAddress<S>(workspace, 1);
 
     NLLLoss(n_, c_, reduction_, input_device, target_device, weight_device, loss_device, total_weight_device,

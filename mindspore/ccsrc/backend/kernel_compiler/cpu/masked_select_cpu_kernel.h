@@ -52,26 +52,6 @@ MS_REG_CPU_KERNEL_T(
   MaskedSelect,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
   MaskedSelectCPUKernel, int);
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt16),
-  MaskedSelectCPUKernel, int16_t);
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
-  MaskedSelectCPUKernel, int64_t);
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat16),
-  MaskedSelectCPUKernel, float16);
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat64),
-  MaskedSelectCPUKernel, double);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_CPU_KERNEL_H_

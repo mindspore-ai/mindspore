@@ -15,6 +15,11 @@
  */
 #include "backend/optimizer/graph_kernel/raise_reduction_precision.h"
 
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <memory>
+
 #include "base/core_ops.h"
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"

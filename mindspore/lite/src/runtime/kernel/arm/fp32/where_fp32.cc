@@ -32,8 +32,6 @@ namespace mindspore::kernel {
 constexpr uint32_t kSingleNum = 1;
 constexpr uint32_t kTripleNum = 3;
 int WhereCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   where_param_->op_parameter_.thread_num_ = thread_count_;
   return RET_OK;
 }
@@ -71,12 +69,11 @@ int WhereCPUKernel::RunWithSingleInput() {
   MS_ASSERT(input);
   condition_ = reinterpret_cast<bool *>(input->data_c());
   where_param_->condition_num_ = input->ElementsNum();
-  where_param_->rank_ = static_cast<int>(input->shape().size());
+  where_param_->rank_ = input->shape().size();
   int strides[8];
   ComputeStrides(in_tensors_.at(0)->shape().data(), strides, where_param_->rank_);
 
-  auto data = ms_context_->allocator->Malloc(where_param_->condition_num_ * where_param_->rank_ *
-                                             static_cast<int>(sizeof(int32_t)));
+  auto data = ms_context_->allocator->Malloc(where_param_->condition_num_ * where_param_->rank_ * sizeof(int32_t));
   if (data == nullptr) {
     MS_LOG(ERROR) << "macllov data is error!";
     return RET_ERROR;
@@ -107,7 +104,7 @@ int WhereCPUKernel::RunWithSingleInput() {
     MS_LOG(ERROR) << "malloc out tensor failed.";
     return RET_ERROR;
   }
-  memcpy(out_data, result, true_num * where_param_->rank_ * static_cast<int>(sizeof(int32_t)));
+  memcpy(out_data, result, true_num * where_param_->rank_ * sizeof(int32_t));
   ms_context_->allocator->Free(data);
   return RET_OK;
 }
@@ -161,9 +158,6 @@ int WhereCPUKernel::Run() {
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Where op run failed.";
-  }
-  for (auto *output : this->out_tensors()) {
-    output->ResetRefCount();
   }
   return ret;
 }

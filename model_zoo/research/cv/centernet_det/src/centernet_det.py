@@ -250,8 +250,9 @@ class CenterNetWithoutLossScaleCell(nn.Cell):
         weights = self.weights
         loss = self.network(image, hm, reg_mask, ind, wh, reg)
         grads = self.grad(self.network, weights)(image, hm, reg_mask, ind, wh, reg)
-        self.optimizer(grads)
-        return loss
+        succ = self.optimizer(grads)
+        ret = loss
+        return ops.depend(ret, succ)
 
 
 class CenterNetWithLossScaleCell(nn.Cell):
@@ -319,9 +320,12 @@ class CenterNetWithLossScaleCell(nn.Cell):
         else:
             cond = self.less_equal(self.base, flag_sum)
         overflow = cond
-        if not overflow:
-            self.optimizer(grads)
-        return (loss, cond, scaling_sens)
+        if overflow:
+            succ = False
+        else:
+            succ = self.optimizer(grads)
+        ret = (loss, cond, scaling_sens)
+        return ops.depend(ret, succ)
 
 
 class CenterNetDetEval(nn.Cell):

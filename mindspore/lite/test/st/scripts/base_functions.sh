@@ -133,7 +133,7 @@ function Run_Benchmark() {
       model_info=`echo ${line_info}|awk -F ' ' '{print $1}'`
       spec_acc_limit=`echo ${line_info}|awk -F ' ' '{print $2}'`
       model_name=`echo ${model_info}|awk -F ';' '{print $1}'`
-      input_config=`echo ${model_info} | awk -F ';' '{print $2}'`
+      input_num=`echo ${model_info} | awk -F ';' '{print $2}'`
       input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
       spec_threads=`echo ${model_info} | awk -F ';' '{print $4}'`
       extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
@@ -146,21 +146,18 @@ function Run_Benchmark() {
       if [[ $6 == "arm64" && $7 == "CPU" && ! ${cfg_file_name} =~ "fp16" ]]; then
         benchmark_mode="calib+loop"
       fi
-      # adjust precision mode
+      # adjust file name
+      infix=""
       mode="fp32"
       if [[ ${cfg_file_name} =~ "fp16" ]]; then
         mode="fp16"
-      fi
-      # adjust file name
-      infix=""
-      if [[ ${cfg_file_name} =~ "bit" ]]; then
+      elif [[ ${cfg_file_name} =~ "bit" ]]; then
         infix="_${cfg_file##*_}"
         infix=${infix%.*}
       elif [[ ${cfg_file_name} =~ "_train" ]]; then
         infix="_train"
       elif [[ ${cfg_file_name} =~ "_weightquant" ]]; then
         infix="_weightquant"
-        benchmark_mode="calib"
       elif [[ ${cfg_file_name} =~ "_posttraining" ]]; then
         model_name=${model_name}"_posttraining"
       elif [[ ${cfg_file_name} =~ "_process_only" ]]; then
@@ -172,24 +169,13 @@ function Run_Benchmark() {
       input_files=""
       output_file=""
       data_path=$3"/input_output/"
-      if [[ ${input_config} == "" || ${input_config} == 1 ]]; then
+      if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
         input_files=${data_path}'input/'${model_name}'.ms.bin'
       else
-        input_num=`echo ${input_config} | awk -F ':' '{print $1}'`
-        input_seq=`echo ${input_config} | awk -F ':' '{print $2}'`
-        if [[ ${input_seq} == "" ]]; then
-          for i in $(seq 1 $input_num)
-          do
-            input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$i','
-          done
-        else
-          for i in $(seq 1 $input_num)
-          do
-            cur_input_num=${input_seq%%,*}
-            input_seq=${input_seq#*,}
-            input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$cur_input_num','
-          done
-        fi
+        for i in $(seq 1 $input_num)
+        do
+          input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$i','
+        done
       fi
       output_file=${data_path}'output/'${model_name}'.ms.out'
       # adjust threads
@@ -211,9 +197,6 @@ function Run_Benchmark() {
       enableFp16="false"
       if [[ ${mode} == "fp16" ]]; then
         enableFp16="true"
-      fi
-      if [[ ${extra_info} =~ "calib_only" ]]; then
-        benchmark_mode="calib"
       fi
       # start running benchmark
       echo "---------------------------------------------------------" >> "$4"

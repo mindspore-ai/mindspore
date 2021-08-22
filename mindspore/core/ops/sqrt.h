@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSqrt = "Sqrt";
-class MS_CORE_API Sqrt : public PrimitiveC {
+class Sqrt : public PrimitiveC {
  public:
   Sqrt() : PrimitiveC(kNameSqrt) { InitIOName({"x"}, {"output"}); }
   ~Sqrt() = default;

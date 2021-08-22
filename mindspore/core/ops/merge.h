@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMerge = "Merge";
-class MS_CORE_API Merge : public PrimitiveC {
+class Merge : public PrimitiveC {
  public:
   Merge() : PrimitiveC(kNameMerge) {}
   ~Merge() = default;

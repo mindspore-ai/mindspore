@@ -21,10 +21,6 @@ namespace mindspore::lite {
 int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
                                    const std::vector<mindspore::MSTensor> &in_tensors,
                                    const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   std::map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> element_wise_ops = {
     {schema::PrimitiveType_AddFusion, nvinfer1::ElementWiseOperation::kSUM},
     {schema::PrimitiveType_PowFusion, nvinfer1::ElementWiseOperation::kPOW},
@@ -65,13 +61,6 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "invalid output tensort size: " << out_tensors.size();
     return RET_ERROR;
   }
-
-  // if constant tensor is scalar, it needs to know another input tensor's shape to broadcast
-  if (in_tensors[0].Shape()[0] == -1 && in_tensors[1].Shape().size() == 0) {
-    MS_LOG(ERROR) << "invalid all input tensor shape unknown for: " << op_name_;
-    return RET_ERROR;
-  }
-
   return RET_OK;
 }
 
@@ -80,25 +69,23 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "network or input tensor size is invalid";
     return RET_ERROR;
   }
-  first_in_tensor_index_ = strcmp(tensorrt_in_tensors_[0]->getName(), in_tensors_[0].Name().c_str()) == 0 ? 0 : 1;
-  // add elementwise
-  if (this->tensorrt_in_tensors_.size() != 2) {
-    // create ITensor from MS constant tensor of index 1 - first_in_tensor_index_
-    nvinfer1::ITensor *constant_input = nullptr;
-    if (this->in_tensors_[1 - first_in_tensor_index_].Shape().size() == 0) {
-      constant_input = lite::ConvertScalarToITensor(network, this->in_tensors_[first_in_tensor_index_].Shape().size(),
-                                                    in_tensors_[1 - first_in_tensor_index_].Data().get());
-    } else {
-      constant_input = lite::ConvertConstantTensor(network, in_tensors_[1 - first_in_tensor_index_]);
-    }
-    if (constant_input == nullptr) {
-      MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << op_name_;
+  // create ITensor from MS scalar
+  if (this->in_tensors_[1].Shape().size() == 0) {
+    nvinfer1::ITensor *scalar_input =
+      lite::ConvertScalarToITensor(network, this->in_tensors_[0].Shape().size(), this->in_tensors_[1].MutableData());
+    if (scalar_input == nullptr) {
+      MS_LOG(ERROR) << "create Itensor from scalar failed";
       return RET_ERROR;
     }
-    this->AddInnerInTensors(constant_input);
+    this->AddInnerInTensors(scalar_input);
   }
-  nvinfer1::IElementWiseLayer *cal_layer = network->addElementWise(
-    *tensorrt_in_tensors_[first_in_tensor_index_], *tensorrt_in_tensors_[1 - first_in_tensor_index_], element_wise_op_);
+  // add elementwise
+  if (this->tensorrt_in_tensors_.size() != 2) {
+    MS_LOG(ERROR) << "invalid inner in tensors cnt: " << this->tensorrt_in_tensors_.size();
+    return RET_ERROR;
+  }
+  nvinfer1::IElementWiseLayer *cal_layer =
+    network->addElementWise(*tensorrt_in_tensors_[0], *tensorrt_in_tensors_[1], element_wise_op_);
 
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addElementWise failed for TensorRT.";

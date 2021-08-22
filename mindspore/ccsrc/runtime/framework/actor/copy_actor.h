@@ -32,12 +32,18 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 
 // The copy actor is used to receive the device tensors and control info to copy data between input device tensor and
-// output device tensor. The processing flow is RunOpData/RunOpControl -> CheckRunningCondition -> SendMemoryAllocReq
+// output device tensor. The processing flow is RunOpData/RunOpControl -> CheckCopyCondition -> SendMemoryAllocReq
 // -> OnMemoryAllocFinish -> Copy -> SendMemoryFreeReq -> SendOutput.
 class CopyActor : public MemoryAwareActor {
  public:
   CopyActor(const std::string &name, const AID &memory_manager_aid)
-      : MemoryAwareActor(name, KernelTransformType::kCopyActor, nullptr, memory_manager_aid), output_(nullptr) {}
+      : MemoryAwareActor(name),
+        memory_manager_aid_(memory_manager_aid),
+        input_datas_num_(0),
+        input_controls_num_(0),
+        input_device_context_(nullptr),
+        output_device_context_(nullptr),
+        output_(nullptr) {}
   ~CopyActor() override = default;
 
   void Init() override;
@@ -56,15 +62,34 @@ class CopyActor : public MemoryAwareActor {
  private:
   friend class GraphScheduler;
 
+  // Check whether satisfy the condition for copy.
+  bool CheckCopyCondition(OpContext<DeviceTensor> *const context) const;
   // Fetch the device tensor for copy.
   void FetchDeviceTensor(OpContext<DeviceTensor> *const context);
 
   // Send output data and output controls when finish copy.
   void SendOutput(OpContext<DeviceTensor> *const context) const;
+  // Erase input data and input controls when finish copy.
+  void EraseInput(OpContext<DeviceTensor> *const context);
 
-  // The input device tensor is saved from the input data or fetched by device_tensor_store_keys_.
+  // The id of memory manager actor. Send message to it for alloc and free memory during the copy.
+  const AID memory_manager_aid_;
+
+  // The dependent input data number.
+  size_t input_datas_num_;
+  // The dependent input controls number.
+  size_t input_controls_num_;
+
+  // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
+  std::pair<size_t, AnfNode *> device_tensor_store_key_;
+
+  // The device interface for copy.
+  const DeviceContext *input_device_context_;
+  const DeviceContext *output_device_context_;
+
+  // The input device tensor is saved from the input data or fetched by device_tensor_store_key_.
   std::vector<DeviceTensor *> input_device_tensor_;
-  // The output device tensor is saved from the output or fetched by device_tensor_store_keys_.
+  // The output device tensor is saved from the output or fetched by device_tensor_store_key_.
   std::vector<DeviceTensor *> output_device_tensor_;
 
   //  The output_data_ corresponds to the output_data_arrows_ one by one.

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLayerNormFusion = "LayerNormFusion";
-class MS_CORE_API LayerNormFusion : public LayerNorm {
+class LayerNormFusion : public LayerNorm {
  public:
   LayerNormFusion() : LayerNorm(kNameLayerNormFusion) {}
   ~LayerNormFusion() = default;

@@ -148,6 +148,7 @@ std::shared_ptr<ops::MatMul> BuildMatMulPrim(const CNodePtr &stack_cnode) {
   matmul_cvalue->AddAttr("quant_params", quant_params_holder);
   return matmul_cvalue;
 }
+
 }  // namespace
 const BaseRef BatchMatMulFusion::DefinePattern() const {
   auto pack_var = std::make_shared<CondVar>(IsStackNode);

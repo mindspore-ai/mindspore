@@ -28,7 +28,7 @@ class Exponential(Distribution):
     Example class: Exponential Distribution.
 
     Args:
-        rate (float, list, numpy.ndarray, Tensor): The inverse scale. Default: None.
+        rate (float, list, numpy.ndarray, Tensor): The inverse scale.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Exponential'.
@@ -156,11 +156,10 @@ class Exponential(Distribution):
         self.uniform = C.uniform
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = 'rate = {}'.format(self.rate)
+            s = f'rate = {self.rate}'
         else:
-            s = 'batch_shape = {}'.format(self._broadcast_shape)
+            s = f'batch_shape = {self._broadcast_shape}'
         return s
 
     @property

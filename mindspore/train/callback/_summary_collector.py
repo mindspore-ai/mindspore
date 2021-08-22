@@ -150,8 +150,8 @@ class SummaryCollector(Callback):
         >>> import mindspore.nn as nn
         >>> from mindspore import context
         >>> from mindspore.train.callback import SummaryCollector
-        >>> from mindspore import Model
-        >>> from mindspore.nn import Accuracy
+        >>> from mindspore.train import Model
+        >>> from mindspore.nn.metrics import Accuracy
         >>>
         >>> if __name__ == '__main__':
         ...     # If the device_target is GPU, set the device_target to "GPU"

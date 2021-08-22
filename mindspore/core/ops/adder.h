@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdder = "Adder";
-class MS_CORE_API Adder : public PrimitiveC {
+class Adder : public PrimitiveC {
  public:
   explicit Adder(const std::string &k_name = kNameAdder) : PrimitiveC(k_name) {}
   ~Adder() = default;

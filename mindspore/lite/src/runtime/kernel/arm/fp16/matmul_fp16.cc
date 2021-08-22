@@ -19,7 +19,6 @@
 #include "src/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
-using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMul;
 
@@ -55,8 +54,6 @@ void MatmulFP16CPUKernel::InitBShape() {
 }
 
 int MatmulFP16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
   row_tile_ = C4NUM;
 #else

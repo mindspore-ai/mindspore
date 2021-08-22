@@ -25,7 +25,6 @@
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
-#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/common_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_broadcast_selecter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_reduce_selecter.h"
@@ -35,7 +34,6 @@
 #include "backend/session/kernel_build_client.h"
 #include "nlohmann/json.hpp"
 #include "utils/convert_utils_base.h"
-#include "utils/json_operation_utils.h"
 
 namespace mindspore::kernel {
 constexpr auto kName = "name";
@@ -260,24 +258,13 @@ bool TbeKernelSelect::TbeCheckSupported(const KernelBuildInfoIter &kernel_build_
   // replace kernel_info with current kernel info
   auto kernel_build_info_tmp = AnfAlgo::GetSelectKernelBuildInfo(cnode_ptr_);
   AnfAlgo::SetSelectKernelBuildInfo(*kernel_build_info_iter, cnode_ptr_.get());
-  std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
-  bool ret = true;
-  if (!old_build.empty()) {
-    nlohmann::json kernel_json;
-    TbeKernelJsonCreator creator(CHECK_SUPPORTED);
-    ret = creator.GenTbeSingleKernelJson(cnode_ptr_, &kernel_json);
-    if (!ret) {
-      MS_LOG(EXCEPTION) << "Gen tbe single kernel json for check support failed.";
-    }
-    ret = AscendKernelBuildClient::Instance().CheckSupported(kernel_json.dump());
-  } else {
-    auto build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    MS_EXCEPTION_IF_NULL(build_manager);
-    if (!build_manager->AscendOpCheckSupported(cnode_ptr_)) {
-      MS_LOG(WARNING) << "Tbe check supported failed";
-      ret = false;
-    }
+  nlohmann::json kernel_json;
+  TbeKernelJsonCreator creator(CHECK_SUPPORTED);
+  bool ret = creator.GenTbeSingleKernelJson(cnode_ptr_, &kernel_json);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Gen tbe single kernel json for check support failed.";
   }
+  ret = AscendKernelBuildClient::Instance().CheckSupported(kernel_json.dump());
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_tmp, cnode_ptr_.get());
   return ret;
 }
@@ -429,28 +416,19 @@ std::vector<std::string> TbeKernelSelect::SplitStrToVec(const std::string &op_se
 }
 
 std::string TbeKernelSelect::OpSelectFormat() {
+  nlohmann::json kernel_json;
   std::string res_json_str;
-  std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
-  if (!old_build.empty()) {
-    nlohmann::json kernel_json;
-    TbeKernelJsonCreator creator(OP_SELECT_FORMAT);
-    bool ret = creator.GenTbeSingleKernelJson(cnode_ptr_, &kernel_json);
-    if (!ret) {
-      MS_LOG(EXCEPTION) << "GenTbeSingleKernelJson failed.";
-    }
-    res_json_str = AscendKernelBuildClient::Instance().SelectFormat(kernel_json.dump());
-    if (res_json_str.empty()) {
-      MS_LOG(EXCEPTION) << "Op select format error, input args: " << kernel_json.dump();
-    }
-    if (res_json_str.find("TBEException") != std::string::npos) {
-      MS_LOG(EXCEPTION) << "Dynamic op select failed: " << res_json_str << ", input args: " << kernel_json.dump();
-    }
-  } else {
-    MS_LOG(INFO) << "Format select for node:[" << AnfAlgo::GetCNodeName(cnode_ptr_) << ", "
-                 << cnode_ptr_->fullname_with_scope() << "].";
-    auto build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    MS_EXCEPTION_IF_NULL(build_manager);
-    res_json_str = build_manager->AscendOpSelectFormat(cnode_ptr_);
+  TbeKernelJsonCreator creator(OP_SELECT_FORMAT);
+  bool ret = creator.GenTbeSingleKernelJson(cnode_ptr_, &kernel_json);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "GenTbeSingleKernelJson failed.";
+  }
+  res_json_str = AscendKernelBuildClient::Instance().SelectFormat(kernel_json.dump());
+  if (res_json_str.empty()) {
+    MS_LOG(EXCEPTION) << "Op select format error, input args: " << kernel_json.dump();
+  }
+  if (res_json_str.find("TBEException") != std::string::npos) {
+    MS_LOG(EXCEPTION) << "Dynamic op select failed: " << res_json_str << ", input args: " << kernel_json.dump();
   }
   return res_json_str;
 }
@@ -493,10 +471,7 @@ void TbeKernelSelect::CreateNewOpInfo(const mindspore::kernel::OpInfo &op_info,
   MS_EXCEPTION_IF_NULL(op_info_new);
   auto op_seclect_json = OpSelectFormat();
   if (!op_seclect_json.empty()) {
-    nlohmann::json json_obj;
-    if (!ParseJson(op_seclect_json, &json_obj)) {
-      MS_LOG(EXCEPTION) << "Parse op_select_json error.";
-    }
+    nlohmann::json json_obj = nlohmann::json::parse(op_seclect_json);
     if (!json_obj.is_object()) {
       MS_LOG(EXCEPTION) << "JsonStr is not an object, the jsonStr is:" << op_seclect_json;
     }

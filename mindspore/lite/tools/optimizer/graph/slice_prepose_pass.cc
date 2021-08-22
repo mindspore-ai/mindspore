@@ -401,10 +401,6 @@ bool SlicePreposePass::SiblingsAreSameSlice(const FuncGraphPtr &graph, const Nod
 
   auto first_slice_cnode = slices.front();
   auto first_slice_node = GetSlice(first_slice_cnode);
-  if (first_slice_node == nullptr) {
-    MS_LOG(ERROR) << "GetSlice return nullptr";
-    return false;
-  }
   auto first_axes = first_slice_node->get_axes();
   auto first_begin = GetSliceBeginAndSize(first_slice_cnode, SliceBeginIndex);
   auto first_size = GetSliceBeginAndSize(first_slice_cnode, SliceSizeIndex);
@@ -1411,7 +1407,7 @@ bool SlicePreposePass::DoPrepose(const FuncGraphPtr &graph, const CNodePtr &slic
 }
 
 bool SlicePreposePass::Run(const FuncGraphPtr &graph) {
-  if (fmk_type != converter::kFmkTypeTf && fmk_type != converter::kFmkTypeTflite) {
+  if (fmk_type != lite::converter::FmkType_TF && fmk_type != lite::converter::FmkType_TFLITE) {
     MS_LOG(INFO) << "The framework type of model should be tf/tflite.";
     return false;
   }

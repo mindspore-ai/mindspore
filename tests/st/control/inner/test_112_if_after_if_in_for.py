@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.ops import composite as C
@@ -20,6 +19,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 
 grad_all = C.GradOperation(get_all=True)
+context.set_context(device_target="Ascend")
 
 
 class IfAfterIfInForNet(nn.Cell):
@@ -124,56 +124,35 @@ def control_flow_if_after_if_in_for(input_net, x):
     context.set_context(mode=context.GRAPH_MODE)
     net = input_net()
     grad_net = GradNet(net)
-
-    forward_net = input_net()
-    graph_forward_res = forward_net(x)
+    graph_forward_res = net(x)
     graph_backward_res = grad_net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     net = input_net()
     grad_net = GradNet(net)
-
-    forward_net = input_net()
-    pynative_forward_res = forward_net(x)
+    pynative_forward_res = net(x)
     pynative_backward_res = grad_net(x)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
-@pytest.mark.skip(reason="ME EvalCNode error")
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_if_after_if_in_for():
     x = Tensor(2, mstype.int32)
     control_flow_if_after_if_in_for(IfAfterIfInForNet, x)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_if_after_if_in_for_01():
     x = Tensor(2, mstype.int32)
     control_flow_if_after_if_in_for(IfAfterIfInForNet1, x)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_if_after_if_in_for_02():
     x = Tensor(2, mstype.int32)
     control_flow_if_after_if_in_for(IfAfterIfInForNet2, x)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_if_after_if_in_for_03():
     x = Tensor(2, mstype.int32)
     control_flow_if_after_if_in_for(IfAfterIfInForNet3, x)

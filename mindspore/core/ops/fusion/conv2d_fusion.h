@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DFusion = "Conv2DFusion";
-class MS_CORE_API Conv2DFusion : public Conv2D {
+class Conv2DFusion : public Conv2D {
  public:
   Conv2DFusion() : Conv2D(kNameConv2DFusion) {}
   ~Conv2DFusion() = default;

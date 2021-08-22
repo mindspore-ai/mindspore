@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAssert = "Assert";
-class MS_CORE_API Assert : public PrimitiveC {
+class Assert : public PrimitiveC {
  public:
   Assert() : PrimitiveC(kNameAssert) {}
   ~Assert() = default;

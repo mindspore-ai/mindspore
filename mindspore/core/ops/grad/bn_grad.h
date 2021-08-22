@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBNGrad = "BNGrad";
-class MS_CORE_API BNGrad : public PrimitiveC {
+class BNGrad : public PrimitiveC {
  public:
   BNGrad() : PrimitiveC(kNameBNGrad) {}
   ~BNGrad() = default;

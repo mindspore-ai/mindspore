@@ -353,10 +353,10 @@ class Softplus(Primitive):
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
-        TypeError: If the dtype of `input_x` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``  ``GPU`` ``CPU``
+        ``Ascend``  ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
@@ -2076,7 +2076,6 @@ class Conv2DBackpropInput(Primitive):
         self.init_prim_io_names(inputs=['out_backprop', 'filter', 'input_sizes'], outputs=['output'])
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
-        self.add_prim_attr('kernel_size', self.kernel_size)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
@@ -2659,53 +2658,6 @@ class SmoothL1Loss(PrimitiveWithInfer):
         return prediction
 
 
-class SoftMarginLoss(Primitive):
-    r"""
-    SoftMarginLoss operation.
-
-    Creates a criterion that optimizes a two-class classification
-    logistic loss between input tensor :math:`x` and target tensor :math:`y`
-    (containing 1 or -1).
-
-    .. math::
-        \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
-
-    Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
-
-    Inputs:
-        - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth data, with the same type and shape as `logits`.
-
-    Outputs:
-        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
-        Otherwise, a scalar value will be returned.
-
-    Raises:
-        TypeError: If `logits` or `labels` is not a Tensor.
-        TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
-        ValueError: If shape of `logits` is not the same as `labels`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> loss = ops.SoftMarginLoss()
-        >>> logits = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
-        >>> labels = Tensor(np.array([[-1, 1], [1, -1]]), mindspore.float32)
-        >>> output = loss(logits, labels)
-        >>> print(output)
-        0.6764238
-    """
-
-    @prim_attr_register
-    def __init__(self, reduction="mean"):
-        """Initialize SoftMarginLoss"""
-        self.init_prim_io_names(inputs=['predict', 'label'], outputs=['loss'])
-        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
-
-
 class L2Loss(PrimitiveWithInfer):
     """
     Calculates half of the L2 norm of a tensor without using the `sqrt`.
@@ -2726,7 +2678,7 @@ class L2Loss(PrimitiveWithInfer):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
@@ -4145,7 +4097,7 @@ class MirrorPad(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> # case1: mode="REFLECT"
+        # case1: mode="REFLECT"
         >>> class Net(nn.Cell):
         ...    def __init__(self, mode):
         ...        super(Net, self).__init__()
@@ -8654,6 +8606,7 @@ class SoftShrink(Primitive):
         x + \lambda, & \text{ if } x < -\lambda \\
         0, & \text{ otherwise }
         \end{cases}
+
     Args:
         lambd: the :math:`\lambda` must be no less than zero value for the Softshrink formulation. Default: 0.5.
 
@@ -8687,49 +8640,3 @@ class SoftShrink(Primitive):
         """Initialize SoftShrink"""
         validator.check_value_type("lambd", lambd, [float], self.name)
         validator.check_number("lambd", lambd, 0, Rel.GE, self.name)
-
-
-class HShrink(Primitive):
-    r"""
-    Applies the hard shrinkage function element-wise, each element complies the follow function:
-
-    .. math::
-        \text{HardShrink}(x) =
-        \begin{cases}
-        x, & \text{ if } x > \lambda \\
-        x, & \text{ if } x < -\lambda \\
-        0, & \text{ otherwise }
-        \end{cases}
-
-    Args:
-        lambd (float): The value for the HardShrink formulation. Default: 0.5
-
-    Inputs:
-        - **input_x** (Tensor) - The input of HardShrink with data type of float16 or float32.
-
-    Outputs:
-        Tensor, the same shape and data type as the input.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Raises:
-        TypeError: If `lambd` is not a float.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-
-    Examples:
-        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mstype.float32)
-        >>> hshrink = P.HShrink()
-        >>> output = hshrink(input_x)
-        >>> print(output)
-        [[ 0.      1.      2.    ]
-        [ 0.      0.     -2.1233]]
-    """
-
-    @prim_attr_register
-    def __init__(self, lambd=0.5):
-        """Initialize HShrink"""
-        validator.check_value_type('lambd', lambd, [float], self.name)
-        if lambd < 0.0:
-            lambd = 0.0
-            self.add_prim_attr('lambd', lambd)

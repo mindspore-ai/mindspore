@@ -25,7 +25,7 @@
 #include <vector>
 #include <algorithm>
 #include "ir/anf.h"
-#include "frontend/optimizer/ad/prim_bprop_optimizer.h"
+#include "pipeline/jit/prim_bprop_optimizer.h"
 #include "frontend/optimizer/ad/adjoint.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/ad/kpynative.h"
@@ -90,11 +90,8 @@ FuncGraphPtr GetZerosLike(const abstract::AbstractBasePtrList &args_spec) {
   MS_EXCEPTION_IF_NULL(specialized_zeros_like_fg);
   auto opted_zeros_like_fg = ZerosLikePrimOptPass(resource);
   MS_EXCEPTION_IF_NULL(opted_zeros_like_fg);
-  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-  if (enable_grad_cache) {
-    zeros_like_funcgraph_cache[args_spec] = BasicClone(opted_zeros_like_fg);
-  }
-  return opted_zeros_like_fg;
+  zeros_like_funcgraph_cache[args_spec] = opted_zeros_like_fg;
+  return BasicClone(opted_zeros_like_fg);
 }
 
 FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
@@ -149,11 +146,8 @@ FuncGraphPtr GetOnesLike(const abstract::AbstractBasePtrList &args_spec) {
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   auto specialized_ones_like_fg = pipeline::Renormalize(resource, ones_like_fg, args_spec);
   MS_EXCEPTION_IF_NULL(specialized_ones_like_fg);
-  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-  if (enable_grad_cache) {
-    ones_like_funcgraph_cache[args_spec] = BasicClone(specialized_ones_like_fg);
-  }
-  return specialized_ones_like_fg;
+  ones_like_funcgraph_cache[args_spec] = specialized_ones_like_fg;
+  return BasicClone(specialized_ones_like_fg);
 }
 
 AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out) {
@@ -365,8 +359,8 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
   SetOutput(weights, grad_inputs, grad_weights);
   // Replace Parameter of primal funcgraph  with parameter of tape_;
   ReplacePrimalParameter(weights, has_sens_arg);
-  auto save_graphs_flg = MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs_flg) {
+
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     DumpIR("before_final_opt.ir", tape_);
   }
   return tape_;
@@ -651,7 +645,7 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
 FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &cnode, const ValuePtrList &op_args,
                                     const ValuePtr &out) {
   auto optimized_bprop_fg =
-    PrimBpropOptimizer::GetPrimBpropOptimizerInst().OptimizeBPropFuncGraph(bprop_fg, cnode, op_args, out);
+    pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().OptimizeBPropFuncGraph(bprop_fg, cnode, op_args, out);
   return optimized_bprop_fg;
 }
 

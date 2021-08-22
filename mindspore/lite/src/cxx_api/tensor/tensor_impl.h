@@ -62,11 +62,9 @@ class MSTensor::Impl {
                                                        const std::vector<int64_t> &shape, const void *data,
                                                        size_t data_len);
 
-#ifndef STRING_KERNEL_CLIP
   static std::shared_ptr<Impl> MS_API StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str);
 
   static std::vector<std::string> MS_API TensorImplToStrings(const std::shared_ptr<Impl> &impl);
-#endif
 
   virtual const std::string &Name() const {
     static std::string empty = "";
@@ -206,7 +204,7 @@ class MSTensor::Impl {
     auto lite_quant_params = lite_tensor_->quant_params();
     std::vector<QuantParam> quant_params;
     for (size_t i = 0; i < lite_quant_params.size(); i++) {
-      QuantParam param{};
+      QuantParam param;
       param.bit_num = lite_quant_params[i].bitNum;
       param.scale = lite_quant_params[i].scale;
       param.zero_point = lite_quant_params[i].zeroPoint;
@@ -222,11 +220,11 @@ class MSTensor::Impl {
     }
     std::vector<lite::LiteQuantParam> lite_quant_params;
     for (size_t i = 0; i < quant_params.size(); i++) {
-      lite::LiteQuantParam lite_param{};
-      lite_param.bitNum = quant_params[i].bit_num;
-      lite_param.scale = quant_params[i].scale;
-      lite_param.zeroPoint = quant_params[i].zero_point;
-      lite_quant_params.push_back(lite_param);
+      lite::LiteQuantParam lite_arg;
+      lite_arg.bitNum = quant_params[i].bit_num;
+      lite_arg.scale = quant_params[i].scale;
+      lite_arg.zeroPoint = quant_params[i].zero_point;
+      lite_quant_params.push_back(lite_arg);
     }
     lite_tensor_->set_quant_params(lite_quant_params);
   }

@@ -20,7 +20,7 @@
 
 #include "nnacl/crop_parameter.h"
 
-void Fp16Crop(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
+void Fp16Crop(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   int input_dim = para->input_dim_;
   switch (input_dim) {
     case 1:
@@ -40,7 +40,7 @@ void Fp16Crop(const float16_t *input, float16_t *output, int task_id, const Crop
   }
 }
 
-void Fp16Crop1D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
+void Fp16Crop1D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   const int out_batch = para->out_shape_[0];
   const int thread_count = para->thread_count_;
   int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_batch, thread_count) : out_batch;
@@ -57,7 +57,7 @@ void Fp16Crop1D(const float16_t *input, float16_t *output, int task_id, const Cr
   memcpy(out_ptr, in_ptr, sizeof(float16_t) * out_dist_stride);
 }
 
-void Fp16Crop2D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
+void Fp16Crop2D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   const int in_height = para->in_shape_[1];
   const int out_batch = para->out_shape_[0];
   const int out_height = para->out_shape_[1];
@@ -79,7 +79,7 @@ void Fp16Crop2D(const float16_t *input, float16_t *output, int task_id, const Cr
   }
 }
 
-void Fp16Crop3D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
+void Fp16Crop3D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   const int in_height = para->in_shape_[1];
   const int in_width = para->in_shape_[2];
 
@@ -113,7 +113,7 @@ void Fp16Crop3D(const float16_t *input, float16_t *output, int task_id, const Cr
   }
 }
 
-void Fp16Crop4D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
+void Fp16Crop4D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   const int in_height = para->in_shape_[1];
   const int in_width = para->in_shape_[2];
   const int in_channel = para->in_shape_[3];

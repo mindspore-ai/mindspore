@@ -1444,14 +1444,14 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
             axes along which to operate. By default, flattened input is used. If
             this is a tuple of ints, the minimum is selected over multiple axes,
             instead of a single axis or all the axes as before.
-        keepdims (bool, optional): defaults to False.
+        keepdims (boolean, optional): defaults to False.
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
-        initial (Number, optional):
+        initial (scalar, optional):
             The maximum value of an output element. Must be present to allow
             computation on empty slice.
-        where (bool Tensor, optional): defaults to True.
+        where (boolean Tensor, optional): defaults to True.
             A boolean array which is broadcasted to match the dimensions of array,
             and selects elements to include in the reduction. If non-default value
             is passed, initial must also be provided.
@@ -2234,7 +2234,7 @@ def convolve(a, v, mode='full'):
         a, v = v, a
         a_size, v_size = v_size, a_size
     v = v[::-1]
-    return _compute_1d_conv(a, v, mode).astype(final_dtype)
+    return _compute_1D_conv(a, v, mode).astype(final_dtype)
 
 
 def _handle_weights(weights, num_samples):
@@ -3923,23 +3923,6 @@ def _gradient_along_axis(f, h, axis):
     return a_grad / h
 
 
-def check_gradient_arguments(f, axis, edge_order):
-    """check arguments for gradient"""
-    if edge_order != 1:
-        _raise_unimplemented_error("edge_order != 1 not implemented")
-    if not isinstance(f, Tensor):
-        f = asarray_const(f)
-    if f.dtype != mstype.float64:
-        f = f.astype(mstype.float32)
-    if axis is None:
-        axis = F.make_range(f.ndim)
-    else:
-        _check_axis_type(axis, True, True, True)
-        axis = _canonicalize_axis(axis, f.ndim)
-        axis = (axis,) if isinstance(axis, int) else axis
-    return f, axis, edge_order
-
-
 def gradient(f, *varargs, axis=None, edge_order=1):
     """
     Returns the gradient of a N-dimensional array.
@@ -3986,7 +3969,18 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         [1.  1.  1. ]]
     """
     # This implementation was adapted from Numpy and jax.numpy
-    f, axis, edge_order = check_gradient_arguments(f, axis, edge_order)
+    if edge_order != 1:
+        _raise_unimplemented_error("edge_order != 1 not implemented")
+    if not isinstance(f, Tensor):
+        f = asarray_const(f)
+    if f.dtype != mstype.float64:
+        f = f.astype(mstype.float32)
+    if axis is None:
+        axis = F.make_range(f.ndim)
+    else:
+        _check_axis_type(axis, True, True, True)
+        axis = _canonicalize_axis(axis, f.ndim)
+        axis = (axis,) if isinstance(axis, int) else axis
 
     len_axes = len(axis)
     n = len(varargs)
@@ -4376,7 +4370,7 @@ def interp(x, xp, fp, left=None, right=None):
         >>> print(np.interp(3.14, xp, fp, right=UNDEF))
         -99.0
     """
-    # implement period once sort is supported
+    # TODO implement period once sort is supported
     x, xp, fp = _to_tensor(x, xp, fp)
     if F.rank(xp) != 1 or F.rank(fp) != 1:
         _raise_value_error('xp and fp must be 1-d sequences')
@@ -4384,6 +4378,7 @@ def interp(x, xp, fp, left=None, right=None):
     if fp.size != size:
         _raise_value_error('the y-coordinates must have the same length as `xp`')
 
+    shape = F.shape(x)
     xp = xp.astype(mstype.float32)
     fp = fp.astype(mstype.float32)
 
@@ -4397,17 +4392,20 @@ def interp(x, xp, fp, left=None, right=None):
     y_1 = F.gather_nd(fp, indices_1)
     res = (y_0*(x_1 - x) + y_1*(x - x_0))/(x_1 - x_0)
     res = F.select(F.equal(x_0, x_1), y_0, res)
-
+    # where x < xp[0], y = left or xp[0]
+    # where x > xp[-1], y = right or xp[-1]
     idx_0 = _to_tensor([0])
     idx_last = _to_tensor([size - 1])
     if left is None:
         left = F.gather_nd(fp, idx_0)
-    left = full(F.shape(x), left, mstype.float32)
+    left = full(shape, left, mstype.float32)
     if right is None:
         right = F.gather_nd(fp, idx_last)
-    right = full(F.shape(x), right, mstype.float32)
-    res = F.select(F.tensor_lt(x, F.gather_nd(xp, idx_0)), left, res)
-    res = F.select(F.tensor_gt(x, F.gather_nd(xp, idx_last)), right, res)
+    right = full(shape, right, mstype.float32)
+    choose_left = F.tensor_lt(x, F.gather_nd(xp, idx_0))
+    choose_right = F.tensor_gt(x, F.gather_nd(xp, idx_last))
+    res = F.select(choose_left, left, res)
+    res = F.select(choose_right, right, res)
     return res
 
 
@@ -4725,31 +4723,6 @@ def _factor_flattened_hist(nbin):
     return factor
 
 
-def _get_histogramdd_count(ndim, bin_edges, sample, weights):
-    """Returns count for histogramdd."""
-    data_indices = []
-    nbin = ()
-    flattened_bin_size = 1
-    for i in F.make_range(ndim):
-        data_to_bins = searchsorted(bin_edges[i], sample[:, i], 'right')
-        bin_size = _type_convert(int, bin_edges[i].size)
-        data_to_bins = where_(sample[:, i] == bin_edges[i][-1], _to_tensor(bin_size - 1), data_to_bins)
-        data_indices.append(data_to_bins)
-        nbin += (bin_size + 1,)
-        flattened_bin_size *= (bin_size + 1)
-
-    factor = F.reshape(_to_tensor(_factor_flattened_hist(nbin)), (ndim, 1))
-    stacked_indices = stack(data_indices) * factor
-    if _get_device() == 'Ascend':
-        stacked_indices = F.cast(stacked_indices, mstype.float32)
-    flattened_hist = F.reduce_sum(stacked_indices.astype(mstype.float32), 0)
-    count = bincount(flattened_hist.astype(mstype.int32), weights, length=flattened_bin_size)
-    count = F.reshape(count, nbin)
-    slices = _list_comprehensions(ndim, F.make_slice(1, -1, 1), True)
-    count = count[slices]
-    return count
-
-
 def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pylint: disable=redefined-builtin
     """
     Computes the multidimensional histogram of some data.
@@ -4850,7 +4823,26 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
         bin_edges.append(edges)
         dedges.append(diff(edges))
 
-    count = _get_histogramdd_count(ndim, bin_edges, sample, weights)
+    data_indices = []
+    nbin = ()
+    flattened_bin_size = 1
+    for i in F.make_range(ndim):
+        data_to_bins = searchsorted(bin_edges[i], sample[:, i], 'right')
+        bin_size = _type_convert(int, bin_edges[i].size)
+        data_to_bins = where_(sample[:, i] == bin_edges[i][-1], _to_tensor(bin_size - 1), data_to_bins)
+        data_indices.append(data_to_bins)
+        nbin += (bin_size + 1,)
+        flattened_bin_size *= (bin_size + 1)
+
+    factor = F.reshape(_to_tensor(_factor_flattened_hist(nbin)), (ndim, 1))
+    stacked_indices = stack(data_indices) * factor
+    if _get_device() == 'Ascend':
+        stacked_indices = F.cast(stacked_indices, mstype.float32)
+    flattened_hist = F.reduce_sum(stacked_indices.astype(mstype.float32), 0)
+    count = bincount(flattened_hist.astype(mstype.int32), weights, length=flattened_bin_size)
+    count = F.reshape(count, nbin)
+    slices = _list_comprehensions(ndim, F.make_slice(1, -1, 1), True)
+    count = count[slices]
 
     if density:
         s = F.reduce_sum(count.astype(mstype.float32))
@@ -5087,7 +5079,7 @@ def polysub(a1, a2):
         >>> print(np.polysub([2, 10, -2], [3, 10, -4]))
         [-1  0  2]
     """
-    return polyadd(a1, F.neg_tensor(_to_tensor(a2)))
+    return polyadd(a1, -_to_tensor(a2))
 
 
 def polyval(p, x):
@@ -5493,48 +5485,51 @@ def ravel_multi_index(multi_index, dims, mode='clip', order='C'):
     return sum_((multi_index * strides).astype('float32'), axis=0)
 
 
-def _vector_norm(x, _ord, axis, keepdims):
+def _vector_norm(x, ord, axis, keepdims): # pylint: disable=redefined-builtin
     """Returns norm of a vector."""
-    if _in(_ord, ('fro', 'nuc')):
+    if _in(ord, ('fro', 'nuc')):
         _raise_value_error('Frobenius norm and nuclear norm are only defined for vectors')
-    if _ord is None:
-        _ord = 2
-    if _ord == inf:
+    if ord is None:
+        ord = 2
+    if ord == inf:
         res = P.ReduceMax(keepdims)(absolute(x), axis)
-    elif _ord == -inf:
+    elif ord == -inf:
         res = P.ReduceMin(keepdims)(absolute(x), axis)
-    elif _ord == 0:
+    elif ord == 0:
         res = P.ReduceSum(keepdims)(F.not_equal(x, 0).astype(mstype.float32), axis)
     else:
-        res = power(P.ReduceSum(keepdims)(power(absolute(x), _ord), axis), 1./_ord)
+        res = power(P.ReduceSum(keepdims)(power(absolute(x), ord), axis), 1./ord)
     return res
 
 
-def _matrix_norm(x, _ord, axis, keepdims):
+def _matrix_norm(x, ord, axis, keepdims): # pylint: disable=redefined-builtin
     """Returns norm of a matrix."""
-    if _ord == 0:
+    if ord == 0:
         _raise_value_error('for 0 axis, norm is defined only for 2-D matrices')
-    if _ord == 'nuc':
+    if ord == 'nuc':
         _raise_unimplemented_error('nuclear norm is not implemented')
-    if _in(_ord, (2, -2)):
+    if _in(ord, (2, -2)):
         _raise_unimplemented_error('2-norm is not implemented for matrices')
-    if _in(_ord, (None, 'fro')):
-        return F.sqrt(P.ReduceSum(keepdims)(F.square(x), axis))
-    axis0, axis1 = axis
-    if not keepdims:
-        if _check_is_inf(_abs(_ord)) and axis0 > axis1:
-            axis0 -= 1
-        elif _abs(_ord) == 1 and axis1 > axis0:
-            axis1 -= 1
-    if _check_is_inf(_ord):
-        return P.ReduceMax(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis1), axis0)
-    if _check_is_inf(_ord, True):
-        return P.ReduceMin(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis1), axis0)
-    if _ord == 1:
-        return P.ReduceMax(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis0), axis1)
-    if _ord == -1:
-        return P.ReduceMin(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis0), axis1)
-    return _raise_value_error('invalid norm order for matrices')
+    if _in(ord, (None, 'fro')):
+        res = F.sqrt(P.ReduceSum(keepdims)(F.square(x), axis))
+    else:
+        axis0, axis1 = axis
+        if not keepdims:
+            if _check_is_inf(_abs(ord)) and axis0 > axis1:
+                axis0 -= 1
+            elif _abs(ord) == 1 and axis1 > axis0:
+                axis1 -= 1
+        if _check_is_inf(ord):
+            res = P.ReduceMax(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis1), axis0)
+        elif _check_is_inf(ord, True):
+            res = P.ReduceMin(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis1), axis0)
+        elif ord == 1:
+            res = P.ReduceMax(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis0), axis1)
+        elif ord == -1:
+            res = P.ReduceMin(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis0), axis1)
+        else:
+            return _raise_value_error('invalid norm order for matrices')
+    return res
 
 
 def norm(x, ord=None, axis=None, keepdims=False): # pylint: disable=redefined-builtin
@@ -5832,11 +5827,11 @@ def correlate(a, v, mode='valid'):
     v = v.astype(promote_dtype)
     if a.size < v.size:
         a, v = v, a
-        return _compute_1d_conv(a, v, mode)[::-1]
-    return _compute_1d_conv(a, v, mode)
+        return _compute_1D_conv(a, v, mode)[::-1]
+    return _compute_1D_conv(a, v, mode)
 
 
-def _compute_1d_conv(a, v, mode):
+def _compute_1D_conv(a, v, mode):
     """Returns a 1-D sequence which is the cross-correlate of two 1-D sequences (`a` and `v`)."""
     v_size = F.shape_mul(v.shape)
     if mode not in ('same', 'full', 'valid'):

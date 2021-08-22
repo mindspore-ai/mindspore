@@ -25,14 +25,14 @@
 
 namespace mindspore {
 namespace {
-constexpr uint64_t kSharedMemorySize = 100ull << 20;  // 100 MB
+uint64_t kSharedMemorySize = 100ull << 20;  // 100 MB
 }
 
 MultiProcess::MultiProcess() = default;
 
 MultiProcess::~MultiProcess() = default;
 
-Status MultiProcess::MainProcess(const ProcessFuncCall &parent_process, const ProcessFuncCall &child_process) {
+Status MultiProcess::MainProcess(ProcessFuncCall parent_process, ProcessFuncCall child_process) {
   MS_EXCEPTION_IF_NULL(parent_process);
   MS_EXCEPTION_IF_NULL(child_process);
   Status ret;
@@ -61,8 +61,7 @@ Status MultiProcess::MainProcess(const ProcessFuncCall &parent_process, const Pr
   }
   constexpr size_t kMsgStructNum = 2;
   shmat_data_addr_ = shmat_addr_ + sizeof(MessageFlag) * kMsgStructNum;
-  shmat_data_max_size_ =
-    memory_size_ - (reinterpret_cast<uintptr_t>(shmat_data_addr_) - reinterpret_cast<uintptr_t>(shmat_addr_));
+  shmat_data_max_size_ = memory_size_ - (shmat_data_addr_ - shmat_addr_);
   MS_LOG_INFO << "Shm addr " << (uint64_t)shmat_addr_;
   if (pid == 0) {
     ChildProcess(child_process);
@@ -86,7 +85,7 @@ Status MultiProcess::MainProcess(const ProcessFuncCall &parent_process, const Pr
         child_exited = true;
         break;
       }
-      (void)sleep(1);
+      sleep(1);
     }
     if (!child_exited) {
       MS_LOG(WARNING) << "Child process " << pid << " has been killed but waitpid failed.";
@@ -96,7 +95,7 @@ Status MultiProcess::MainProcess(const ProcessFuncCall &parent_process, const Pr
   return ret;
 }
 
-Status MultiProcess::ParentProcess(const ProcessFuncCall &parent_process) {
+Status MultiProcess::ParentProcess(ProcessFuncCall parent_process) {
   auto parent_msg = reinterpret_cast<MessageFlag *>(shmat_addr_);
   auto child_msg = reinterpret_cast<MessageFlag *>(shmat_addr_ + sizeof(MessageFlag));
   send_msg_ = parent_msg;
@@ -113,12 +112,12 @@ Status MultiProcess::ParentProcess(const ProcessFuncCall &parent_process) {
     ret = kMEFailed;
   }
   stopped_ = true;
-  send_msg_->stop = 1;
+  send_msg_->stop = true;
   heartbeat_thread.join();
   return ret;
 }
 
-void MultiProcess::ChildProcess(const ProcessFuncCall &child_process) {
+void MultiProcess::ChildProcess(ProcessFuncCall child_process) {
   auto parent_msg = reinterpret_cast<MessageFlag *>(shmat_addr_);
   auto child_msg = reinterpret_cast<MessageFlag *>(shmat_addr_ + sizeof(MessageFlag));
   send_msg_ = child_msg;
@@ -139,30 +138,26 @@ void MultiProcess::ChildProcess(const ProcessFuncCall &child_process) {
 }
 
 Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
-  MS_EXCEPTION_IF_NULL(buffer);
   MS_LOG_INFO << "Start to send message to peer process, msg len " << msg_len;
   send_msg_->msg_total_len = msg_len;
   uint64_t cur_offset = 0;
   while (msg_len > cur_offset) {
     uint64_t sub_msg_len = std::min(msg_len - cur_offset, shmat_data_max_size_);
-    if (sub_msg_len == 0) {
-      MS_LOG(ERROR) << "Invalid message len " << sub_msg_len;
-      return kMEFailed;
-    }
+
     auto ret =
       memcpy_s(shmat_data_addr_, shmat_data_max_size_, static_cast<const uint8_t *>(buffer) + cur_offset, sub_msg_len);
     if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy_s failed, ret = " << ret;
+      MS_LOG(INFO) << "memcpy_s failed, ret = " << ret;
       return kMEFailed;
     }
     cur_offset += sub_msg_len;
 
     send_msg_->msg_len = sub_msg_len;
-    send_msg_->read_finish_flag = 0;
-    send_msg_->read_ready_flag = 1;
+    send_msg_->read_finish_flag = false;
+    send_msg_->read_ready_flag = true;
     MS_LOG_INFO << "Send start " << cur_offset << ", msg len " << sub_msg_len << ", total len " << msg_len;
     while (!send_msg_->read_finish_flag && !peer_stopped_) {
-      (void)usleep(1000);  // 1ms
+      usleep(1000);  // 1ms
     }
     if (peer_stopped_) {
       if (!send_msg_->read_finish_flag) {
@@ -176,14 +171,14 @@ Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
   return kSuccess;
 }
 
-Status MultiProcess::ReceiveMsg(const CreateBufferCall &create_buffer_call) {
+Status MultiProcess::ReceiveMsg(CreateBufferCall create_buffer_call) {
   uint64_t cur_offset = 0;
   uint8_t *msg_buffer = nullptr;
   uint64_t msg_len = 0;
   do {
     MS_LOG_INFO << "Receive start from " << cur_offset;
     while (!receive_msg_->read_ready_flag && !peer_stopped_) {
-      (void)usleep(1000);  // 1ms
+      usleep(1000);  // 1ms
     }
     if (peer_stopped_) {
       return kMEFailed;
@@ -198,8 +193,8 @@ Status MultiProcess::ReceiveMsg(const CreateBufferCall &create_buffer_call) {
       return kMEFailed;
     }
     cur_offset += receive_msg_->msg_len;
-    receive_msg_->read_ready_flag = 0;
-    receive_msg_->read_finish_flag = 1;
+    receive_msg_->read_ready_flag = false;
+    receive_msg_->read_finish_flag = true;
     MS_LOG_INFO << "Receive end, current length " << cur_offset << ", total length " << msg_len << std::endl;
   } while (msg_len > cur_offset);
   return kSuccess;
@@ -230,7 +225,7 @@ void MultiProcess::HeartbeatThreadFuncInner() {
       }
     }
     send_msg_->heartbeat += 1;
-    (void)usleep(100000);  // sleep 100 ms
+    usleep(100000);  // sleep 100 ms
   }
 }
 }  // namespace mindspore

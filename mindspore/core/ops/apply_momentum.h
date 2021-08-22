@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyMomentum = "ApplyMomentum";
-class MS_CORE_API ApplyMomentum : public PrimitiveC {
+class ApplyMomentum : public PrimitiveC {
  public:
   ApplyMomentum() : PrimitiveC(kNameApplyMomentum) {
     InitIOName({"variable", "accumulation", "learning_rate", "gradient", "momentum"}, {"output"});

@@ -59,13 +59,6 @@ if __name__ == '__main__':
     train_net = TrainOneStepCell(loss_netD=d_loss_net, loss_netG=g_loss_net, optimizerD=d_opt, optimizerG=g_opt, sens=1)
     train_net.set_train()
 
-    if not os.path.isdir(args.train_fakeimg_dir):
-        os.makedirs(args.train_fakeimg_dir)
-    if not os.path.isdir(args.loss_show_dir):
-        os.makedirs(args.loss_show_dir)
-    if not os.path.isdir(args.ckpt_dir):
-        os.makedirs(args.ckpt_dir)
-
     # Training loop
     G_losses = []
     D_losses = []

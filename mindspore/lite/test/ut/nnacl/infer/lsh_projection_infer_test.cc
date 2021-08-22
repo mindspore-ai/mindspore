@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "nnacl/infer/string/lsh_projection_infer.h"
+#include "nnacl/infer/lsh_projection_infer.h"
 
 namespace mindspore {
 

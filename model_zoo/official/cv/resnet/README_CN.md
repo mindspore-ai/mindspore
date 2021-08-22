@@ -188,19 +188,6 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
 .
 └──resnet
   ├── README.md
-  ├── config                              # 参数配置
-    ├── resnet18_cifar10_config.yaml
-    ├── resnet18_cifar10_config_gpu.yaml
-    ├── resnet18_imagenet2012_config.yaml
-    ├── resnet18_imagenet2012_config_gpu.yaml
-    ├── resnet34_imagenet2012_config.yaml
-    ├── resnet50_cifar10_config.yaml
-    ├── resnet50_imagenet2012_Acc_config.yaml     # 高性能版本：性能提高超过10%而精度下降少于1%
-    ├── resnet50_imagenet2012_Ascend_Thor_config.yaml
-    ├── resnet50_imagenet2012_config.yaml
-    ├── resnet50_imagenet2012_GPU_Thor_config.yaml
-    ├── resnet101_imagenet2012_config.yaml
-    ├── se-resnet50_imagenet2012_config.yaml
   ├── scripts
     ├── run_distribute_train.sh            # 启动Ascend分布式训练（8卡）
     ├── run_parameter_server_train.sh      # 启动Ascend参数服务器训练(8卡)
@@ -222,6 +209,17 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
        ├── device_adapter.py               # 设备配置
        ├── local_adapter.py                # 本地设备配置
        └── moxing_adapter.py               # modelarts设备配置
+  ├── resnet18_cifar10_config.yaml         # 参数配置
+  ├── resnet18_imagenet2012_config.yaml    # 参数配置
+  ├── resnet34_imagenet2012_config.yaml    # 参数配置
+  ├── resnet50_cifar10_config.yaml         # 参数配置
+  ├── resnet50_imagenet2012_Acc_config.yaml # 参数配置
+  ├── resnet50_imagenet2012_Ascend_Thor_config.yaml # 参数配置
+  ├── resnet50_imagenet2012_config.yaml    # 参数配置
+  ├── resnet50_imagenet2012_GPU_Thor_config.yaml # 参数配置
+  ├── resnet101_imagenet2012_config.yaml   # 参数配置
+  ├── se-resnet50_imagenet2012_config.yaml # 参数配置
+  ├── eval.py                              # 评估网络
   ├── eval.py                              # 评估网络
   └── train.py                             # 训练网络
 ```
@@ -676,42 +674,42 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 
 #### CIFAR-10上的ResNet18
 
-| 参数                 | Ascend 910                                                   | GPU |
-| -------------------------- | -------------------------------------- | -------------------------------------- |
-| 模型版本              | ResNet18                                                | ResNet18 |
-| 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8  | PCIE V100-32G        |
-| 上传日期              | 2021-02-25                          | 2021-07-23     |
-| MindSpore版本          | 1.1.1                                                       | 1.3.0                |
-| 数据集                    | CIFAR-10                                                    | CIFAR-10           |
-| 训练参数        | epoch=90, steps per epoch=195, batch_size = 32             | epoch=90, steps per epoch=195, batch_size = 32  |
-| 优化器                  | Momentum                                                         | Momentum|
-| 损失函数              | Softmax交叉熵                                       | Softmax交叉熵 |
-| 输出                    | 概率                                                 | 概率 |
-| 损失                       | 0.0002519517                                                   | 0.0015517382    |
-| 速度                      | 13毫秒/步（8卡）                     | 29毫秒/步（8卡）       |
-| 总时长                 | 4分钟                          | 11分钟       |
-| 参数(M)             | 11.2                                                         | 11.2                         |
+| 参数                 | Ascend 910                                                   |
+| -------------------------- | -------------------------------------- |
+| 模型版本              | ResNet18                                                |
+| 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8  |
+| 上传日期              | 2021-02-25                          |
+| MindSpore版本          | 1.1.1                                                       |
+| 数据集                    | CIFAR-10                                                    |
+| 训练参数        | epoch=90, steps per epoch=195, batch_size = 32             |
+| 优化器                  | Momentum                                                         |
+| 损失函数              | Softmax交叉熵                                       |
+| 输出                    | 概率                                                 |
+| 损失                       | 0.0002519517                                                   |
+| 速度                      | 13毫秒/步（8卡）                     |
+| 总时长                 | 4分钟                          |
+| 参数(M)             | 11.2                                                         |
 | 微调检查点 | 86（.ckpt文件）                                         |
 | 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
 
 #### ImageNet2012上的ResNet18
 
-| 参数                 | Ascend 910                                                   | GPU |
-| -------------------------- | -------------------------------------- | -------------------------------------- |
-| 模型版本              | ResNet18                                               | RESNET18 |
-| 资源                   |  Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 |  PCIE V100-32G        |
-| 上传日期              | 2020-04-01  ;                        | 2021-07-23 |
-| MindSpore版本          | 1.1.1                                                       | 1.3.0 |
-| 数据集                    | ImageNet2012                                                    | ImageNet2012           |
-| 训练参数        | epoch=90, steps per epoch=626, batch_size = 256             |  epoch=90, steps per epoch=625, batch_size = 256  |
-| 优化器                  | Momentum                                                         |  Momentum|
-| 损失函数              | Softmax交叉熵                                       | Softmax交叉熵 |
-| 输出                    | 概率                                                 |  概率 |
-| 损失                       | 2.15702                                                       | 2.168664 |
-| 速度                      | 110毫秒/步（8卡） (可能需要在datasetpy中增加set_numa_enbale绑核操作)                    | 107毫秒/步（8卡） |
-| 总时长                 | 110分钟                          | 130分钟       |
-| 参数(M)             | 11.7                                                         | 11.7 |
-| 微调检查点| 90M（.ckpt文件）                                         |  90M（.ckpt文件） |
+| 参数                 | Ascend 910                                                   |
+| -------------------------- | -------------------------------------- |
+| 模型版本              | ResNet18                                               |
+| 资源                   |  Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 |
+| 上传日期              | 2020-04-01  ;                        |
+| MindSpore版本          | 1.1.1                                                       |
+| 数据集                    | ImageNet2012                                                    |
+| 训练参数        | epoch=90, steps per epoch=626, batch_size = 256             |
+| 优化器                  | Momentum                                                         |
+| 损失函数              | Softmax交叉熵                                       |
+| 输出                    | 概率                                                 |
+| 损失                       | 2.15702                                                       |
+| 速度                      | 110毫秒/步（8卡） (可能需要在datasetpy中增加set_numa_enbale绑核操作)                    |
+| 总时长                 | 110分钟                          |
+| 参数(M)             | 11.7                                                         |
+| 微调检查点| 90M（.ckpt文件）                                         |
 | 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
 
 #### CIFAR-10上的ResNet50

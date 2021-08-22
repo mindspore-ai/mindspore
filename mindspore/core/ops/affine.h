@@ -29,7 +29,7 @@ constexpr auto kNameAffine = "Affine";
 constexpr auto kAffineContext = "context";
 constexpr auto kAffineOutputDim = "output_dim";
 
-class MS_CORE_API Affine : public PrimitiveC {
+class Affine : public PrimitiveC {
  public:
   Affine() : PrimitiveC(kNameAffine) { InitIOName({"x1", "x2"}, {"outputs"}); }
   ~Affine() = default;

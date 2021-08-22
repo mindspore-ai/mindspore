@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include <math.h>
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
-#include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/fp32_grad/activation_grad.h"
 #include "nnacl/errorcode.h"
 
@@ -108,30 +107,6 @@ int GeluGrad(const float *src0, const float *src1, size_t length, float *dst) {
   for (size_t i = 0; i < length; ++i) {
     dst[i] = src0[i] * ((0.5 * (1.0 + erf(src1[i] / 1.4142135623730951))) +
                         (src1[i] * exp(-0.5 * src1[i] * src1[i]) / 2.5066282746));
-  }
-  return NNACL_OK;
-}
-
-int SoftplusGrad(const float *src0, const float *src1, int length, float *dst) {
-  int i = 0;
-#if defined(ENABLE_AVX)
-  for (; i <= length - C8NUM; i += C8NUM) {
-    simd_exp_avx(-(MS_LD256_F32(src1 + i)), dst + i);
-    MS_ST256_F32(dst + i,
-                 MS_DIV256_F32(MS_LD256_F32(src0 + i), MS_ADD256_F32(MS_MOV256_F32(1.0f), MS_LD256_F32(dst + i))));
-  }
-#endif
-
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-  for (; i <= length - C4NUM; i += C4NUM) {
-    simd_exp(MS_SUBQ_F32(MS_MOVQ_F32(0.0f), MS_LDQ_F32(src1 + i)), dst + i);
-    MS_STQ_F32(dst + i, MS_DIVQ_F32(MS_LDQ_F32(src0 + i), MS_ADDQ_F32(MS_MOVQ_F32(1.0f), MS_LDQ_F32(dst + i))));
-  }
-#endif
-
-  for (; i < length; ++i) {
-    single_exp(-src1[i], dst + i);
-    dst[i] = src0[i] / (1.0f + dst[i]);
   }
   return NNACL_OK;
 }

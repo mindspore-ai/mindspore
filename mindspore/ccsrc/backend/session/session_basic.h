@@ -176,7 +176,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
                             const FuncGraphManagerPtr &front_func_graph_manager,
                             const std::shared_ptr<KernelGraph> &backend_graph);
-  std::string AddPartialParametersMap(const AnfNodePtr &partial_node);
+  std::string AddPartialParametersMap(const FuncGraphManagerPtr &front_func_graph_manager,
+                                      const AnfNodePtr &partial_node);
   void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                          std::map<AnfNodePtr, size_t> *parameter_index);
   void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,
@@ -217,11 +218,9 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                 const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {}
   virtual void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {}
   void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
-  virtual KernelGraphPtr BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                                     const std::vector<tensor::TensorPtr> &input_tensors,
-                                     const std::vector<int64_t> &tensors_mask) {
-    return nullptr;
-  }
+  virtual void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                           const std::vector<tensor::TensorPtr> &input_tensors,
+                           const std::vector<int64_t> &tensors_mask) {}
   virtual void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                          std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                          const std::vector<int64_t> &tensors_mask) {}

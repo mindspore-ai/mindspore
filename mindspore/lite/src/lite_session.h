@@ -30,12 +30,8 @@
 #include "schema/model_generated.h"
 #include "src/executor.h"
 #include "src/tensor.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
-#ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
-#endif
 #if GPU_OPENCL
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
@@ -51,10 +47,7 @@ class LiteSession : public session::LiteSession {
 
   static session::LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
 
-  static int CreateSessionByBuf(const char *model_buf, size_t size, session::LiteSession *session);
-  static int CreateSessionByPath(const std::string &model_path, session::LiteSession *session);
-
-  virtual int Init(InnerContext *context);
+  virtual int Init(const Context *context);
 
   void BindThread(bool if_bind) override;
 

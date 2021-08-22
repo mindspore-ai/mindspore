@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnpack = "Unpack";
-class MS_CORE_API Unpack : public PrimitiveC {
+class Unpack : public PrimitiveC {
  public:
   Unpack() : PrimitiveC(kNameUnpack) {}
   ~Unpack() = default;

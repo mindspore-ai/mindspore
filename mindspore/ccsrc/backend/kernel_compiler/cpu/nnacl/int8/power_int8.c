@@ -16,7 +16,7 @@
 
 #include "nnacl/int8/power_int8.h"
 
-int PowerInt8(const int8_t *input, const int8_t *exp_ptr, int8_t *output, int count, const PowerParameter *param) {
+int PowerInt8(const int8_t *input, const int8_t *exp_ptr, int8_t *output, int count, PowerParameter *param) {
   double input_scale = param->quant_arg_.in_args_.scale_;
   int input_zp = param->quant_arg_.in_args_.zp_;
   double output_scale = param->quant_arg_.out_args_.scale_;
