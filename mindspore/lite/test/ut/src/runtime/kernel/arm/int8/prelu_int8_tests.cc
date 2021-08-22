@@ -93,7 +93,6 @@ TEST_F(TestPreluInt8, prelu_1) {
   output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete ctx;
-  delete kernel;
 }
 
 }  // namespace mindspore

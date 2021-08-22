@@ -26,7 +26,6 @@
 #include <iostream>
 #include <utility>
 #include <string>
-#include <stdexcept>
 
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "mindspore/core/ir/value.h"
@@ -86,8 +85,6 @@ class Node : public NodeBase {
   void SetInput(size_t i, const NodePtr &new_input);
   void SetInputs(const NodePtrList &inputs);
   void ReplaceWith(const NodePtr &other_node);
-  void SetAttrs(const DAttrs &attrs) { attrs_ = attrs; }
-  void SetAttr(const std::string &key, const ValuePtr &value) { attrs_[key] = value; }
 
   template <typename T>
   T *As() {
@@ -148,15 +145,6 @@ class OutputNode : public Node {
   OutputNode() : Node({{1}, TypeId::kNumberTypeBegin, kOpFormat_DEFAULT}, "") {}
   void Dump(std::ostringstream &os) const override { ; }
   NType NodeType() override { return NType::Output; }
-};
-
-class GKException : public std::exception {
- public:
-  explicit GKException(const std::string &message) : msg_(message) {}
-  const char *what() const noexcept override { return msg_.c_str(); }
-
- protected:
-  std::string msg_;
 };
 }  // namespace graphkernel
 }  // namespace opt

@@ -28,7 +28,7 @@ int TransferStridedSliceAttr(Model::Node *node, std::vector<schema::Tensor *> *d
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
   MS_ASSERT(prim != nullptr);
-  int inputs_size = static_cast<int>(node->input_indices_.size());
+  int inputs_size = node->input_indices_.size();
 
   auto param = prim->value_as_StridedSlice();
   if (param == nullptr) {

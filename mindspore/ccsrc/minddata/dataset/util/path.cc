@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <new>
 #include <sstream>
+#include <utility>
 
 #include "./securec.h"
 #include "utils/ms_utils.h"
@@ -323,7 +324,7 @@ Path::DirIterator::DirIterator(Path *f) : dir_(f), dp_(nullptr), entry_(nullptr)
   dp_ = opendir(f->toString().c_str());
 }
 
-bool Path::DirIterator::HasNext() {
+bool Path::DirIterator::hasNext() {
   do {
     entry_ = readdir(dp_);
     if (entry_) {
@@ -336,25 +337,7 @@ bool Path::DirIterator::HasNext() {
   return (entry_ != nullptr);
 }
 
-Path Path::DirIterator::Next() { return (*(this->dir_) / Path(entry_->d_name)); }
-
-Status Path::RealPath(const std::string &path, std::string &realpath_str) {
-  char real_path[PATH_MAX] = {0};
-  // input_path is only file_name
-#if defined(_WIN32) || defined(_WIN64)
-  CHECK_FAIL_RETURN_UNEXPECTED(path.length() < PATH_MAX,
-                               "The length of path: " + path + " exceeds limit: " + std::to_string(PATH_MAX));
-  auto ret = _fullpath(real_path, common::SafeCStr(path), PATH_MAX);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret != nullptr, "The file " + path + " does not exist.");
-#else
-  CHECK_FAIL_RETURN_UNEXPECTED(path.length() < NAME_MAX,
-                               "The length of path: " + path + " exceeds limit: " + std::to_string(NAME_MAX));
-  auto ret = realpath(common::SafeCStr(path), real_path);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret != nullptr, "The file " + path + " does not exist.");
-#endif
-  realpath_str = std::string(real_path);
-  return Status::OK();
-}
+Path Path::DirIterator::next() { return (*(this->dir_) / Path(entry_->d_name)); }
 
 std::ostream &operator<<(std::ostream &os, const Path &s) {
   os << s.path_;

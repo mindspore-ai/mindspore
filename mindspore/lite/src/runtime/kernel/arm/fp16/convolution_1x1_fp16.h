@@ -31,12 +31,15 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseCPUKernel {
   Convolution1x1FP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx, void *origin_weight,
                               void *origin_bias)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
+        origin_weight_(origin_weight),
+        origin_bias_(origin_bias) {}
   ~Convolution1x1FP16CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
 
  public:
   int RunOc(int task_id);
@@ -46,14 +49,16 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseCPUKernel {
   void FreeTmpBuffer();
   int InitConv1x1Param();
   int InitMatmulParam();
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
+  int InitWeightBias();
 
  private:
   bool pre_trans_input_ = false;
   bool multi_thread_by_hw_ = false;
   int thread_count_ = 1;
   int thread_stride_ = 0;
+  void *origin_weight_;  // do not free
+  void *origin_bias_;    // do not free
+  float16_t *weight_ptr_ = nullptr;
   float16_t *input_ptr_ = nullptr;
   float16_t *pack_input_ = nullptr;
   float16_t *output_ptr_ = nullptr;

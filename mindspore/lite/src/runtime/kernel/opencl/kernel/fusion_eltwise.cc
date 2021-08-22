@@ -164,8 +164,8 @@ bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
 
 int FusionEltwiseOpenCLKernel::Prepare() {
   std::string source = Codegen();
-  const std::string program_name = "FusionEltwise\n" + source;
-  const std::string kernel_name = "FusionEltwise";
+  std::string program_name = "FusionEltwise\n" + source;
+  std::string kernel_name = "FusionEltwise";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -181,16 +181,9 @@ int FusionEltwiseOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  ret = InitWeights();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "InitWeights failed.";
-    return ret;
-  }
+  InitWeights();
   SetGlobalLocal();
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   return RET_OK;
 }
 
@@ -224,14 +217,7 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
         size_t num = tensor_info.ElementsNum;
         size_t size = tensor_info.Image2DSize;
         void *buffer = allocator->Malloc(size, lite::opencl::MemType::BUF);
-        if (buffer == nullptr) {
-          MS_LOG(ERROR) << "Malloc failed.";
-          return RET_ERROR;
-        }
-        if (allocator->MapBuffer(buffer, CL_MAP_WRITE, nullptr, true) == nullptr) {
-          MS_LOG(ERROR) << "Map Buffer failed.";
-          return RET_ERROR;
-        }
+        allocator->MapBuffer(buffer, CL_MAP_WRITE, nullptr, true);
         memset(buffer, 0x00, size);
         if (tensor->data_type() == kNumberTypeFloat16) {
           if (use_fp16) {
@@ -246,10 +232,7 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
             CopyNumber<float32_t, float32_t>(buffer, tensor->data_c(), num);
           }
         }
-        if (allocator->UnmapBuffer(buffer) != RET_OK) {
-          MS_LOG(ERROR) << "UnmapBuffer failed.";
-          return RET_ERROR;
-        }
+        allocator->UnmapBuffer(buffer);
         buffer_weights_.push_back(buffer);
       }
     }
@@ -264,7 +247,7 @@ void FusionEltwiseOpenCLKernel::SetGlobalLocal() {
   AlignGlobalLocal(global_size_, local_size_);
 }
 
-int FusionEltwiseOpenCLKernel::SetConstArgs() {
+void FusionEltwiseOpenCLKernel::SetConstArgs() {
   auto output = GpuTensorInfo(out_tensors_.front());
   cl_int4 output_shape = {static_cast<cl_int>(output.N), static_cast<cl_int>(output.H), static_cast<cl_int>(output.W),
                           static_cast<cl_int>(output.C)};
@@ -277,32 +260,18 @@ int FusionEltwiseOpenCLKernel::SetConstArgs() {
       if (IsScalar(in_tensor->shape())) {
         if (ocl_runtime_->GetFp16Enable()) {
           auto value = static_cast<float16_t>(scalar_weights_[scalar_idx++]);
-          if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, *(reinterpret_cast<cl_half *>(&value))) != CL_SUCCESS) {
-            MS_LOG(ERROR) << "SetKernelArg failed.";
-            return RET_ERROR;
-          }
+          ocl_runtime_->SetKernelArg(kernel_, arg_idx, *(reinterpret_cast<cl_half *>(&value)));
         } else {
-          if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, scalar_weights_[scalar_idx++]) != CL_SUCCESS) {
-            MS_LOG(ERROR) << "SetKernelArg failed.";
-            return RET_ERROR;
-          }
+          ocl_runtime_->SetKernelArg(kernel_, arg_idx, scalar_weights_[scalar_idx++]);
         }
       } else {
-        if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, buffer_weights_[buffer_idx++], lite::opencl::MemType::BUF) !=
-            CL_SUCCESS) {
-          MS_LOG(ERROR) << "SetKernelArg failed.";
-          return RET_ERROR;
-        }
+        ocl_runtime_->SetKernelArg(kernel_, arg_idx, buffer_weights_[buffer_idx++], lite::opencl::MemType::BUF);
       }
     }
     arg_idx++;  // for act input
   }
   arg_idx++;  // for output
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, output_shape) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx, output_shape);
 }
 
 int FusionEltwiseOpenCLKernel::Run() {
@@ -310,21 +279,12 @@ int FusionEltwiseOpenCLKernel::Run() {
   int arg_idx = 0;
   for (auto *in_tensor : in_tensors_) {
     if (!in_tensor->IsConst()) {
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, in_tensor->data_c()) != CL_SUCCESS) {
-        MS_LOG(ERROR) << "SetKernelArg failed.";
-        return RET_ERROR;
-      }
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx, in_tensor->data_c());
     }
     arg_idx++;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, out_tensors_.front()->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx, out_tensors_.front()->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

@@ -187,8 +187,8 @@ class TransformerTrainOneStepCell(nn.TrainOneStepCell):
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
-        self.optimizer(grads)
-        return loss
+        succ = self.optimizer(grads)
+        return F.depend(loss, succ)
 
 
 grad_scale = C.MultitypeFuncGraph("grad_scale")
@@ -277,9 +277,12 @@ class TransformerTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell)
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
-        if not overflow:
-            self.optimizer(grads)
-        return (loss, cond, scaling_sens)
+        if overflow:
+            succ = False
+        else:
+            succ = self.optimizer(grads)
+        ret = (loss, cond, scaling_sens)
+        return F.depend(ret, succ)
 
 
 cast = P.Cast()
@@ -441,7 +444,9 @@ class TransformerTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
         accu_overflow = self.select(overflow, self.one, self.zero)
         self.accu_overflow = self.select(is_accu_step, accu_overflow, self.zero)
 
-        if not is_accu_step:
+        if is_accu_step:
+            succ = False
+        else:
             # apply grad reducer on grads
             grads = self.grad_reducer(self.accu_grads)
             scaling = scaling_sens * self.degree * self.accumulation_steps
@@ -458,7 +463,10 @@ class TransformerTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
             overflow = self.reshape(overflow, (()))
             if sens is None:
                 overflow = self.loss_scaling_manager(self.loss_scale, overflow)
-            if not overflow:
-                self.optimizer(grads)
+            if overflow:
+                succ = False
+            else:
+                succ = self.optimizer(grads)
 
-        return (mean_loss, overflow, scaling_sens)
+        ret = (mean_loss, overflow, scaling_sens)
+        return F.depend(ret, succ)

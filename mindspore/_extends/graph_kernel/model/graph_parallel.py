@@ -17,8 +17,6 @@ from .model import PrimLib
 
 
 class ParalGain:
-    """Paral Gain"""
-
     def __init__(self, fusion_type, bottleneck, gain, block_assign, type_info):
         self.fusion_type = fusion_type
         self.bottleneck = bottleneck
@@ -43,9 +41,7 @@ class ScheduleAnalyzer:
         self.ops = graph.ops
         self.dom_op = [out.op for out in outputs]
 
-    @staticmethod
-    def prod(shape):
-        """Compute shape product"""
+    def prod(self, shape):
         res = shape[0]
         for i in range(1, len(shape)):
             res = res * shape[i]
@@ -258,7 +254,7 @@ class ScheduleAnalyzer:
         fusion_type = "block_fusion"
         type_info = None
 
-        activate_pipeline_optimization = False  # Disable pipeline optimization for now.
+        activate_pipeline_optimization = False # Disable pipeline optimization for now.
         if activate_pipeline_optimization:
             pipeline_info = ScheduleAnalyzer.pipeline_fusion_analyze(
                 blocks, op_sizes, exclude_gid)
@@ -291,5 +287,4 @@ def block_parallel_estimate(graphs):
 
 
 def parallel_estimate(graphs):
-    """Estimate parallel gain"""
     return block_parallel_estimate(graphs)

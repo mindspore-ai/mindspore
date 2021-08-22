@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCast = "Cast";
-class MS_CORE_API Cast : public PrimitiveC {
+class Cast : public PrimitiveC {
  public:
   Cast() : PrimitiveC(kNameCast) { InitIOName({"x", "dst_type"}, {"output"}); }
   ~Cast() = default;

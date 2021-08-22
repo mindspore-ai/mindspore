@@ -29,7 +29,6 @@
         - [导出MindIR](#导出mindir)
         - [在Ascend310执行推理](#在ascend310执行推理)
         - [结果](#结果)
-        - [训练后量化推理](#训练后量化推理)
     - [模型描述](#模型描述)
         - [性能](#性能)
             - [训练性能](#训练性能)
@@ -532,39 +531,6 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_NAME] [DATASET_PATH] [NEED_PREPROCE
 
 ```bash
 'acc': 0.92
-```
-
-### [训练后量化推理](#contents)
-
-训练后量化推理的相关执行脚本文件在"ascend310_quant_infer"目录下，依次执行以下步骤实现训练后量化推理。本训练后量化工程基于CIFAR-10数据集。
-
-1、生成Ascend310平台AIR模型推理需要的.bin格式数据。
-
-```shell
-python export_bin.py --config_path [YMAL CONFIG PATH] --data_dir [DATA DIR] --result_path [RESULT PATH]
-```
-
-2、导出训练后量化的AIR格式模型。
-
-导出训练后量化模型需要配套的量化工具包，参考[官方地址](https://www.hiascend.com/software/cann/community)
-
-```shell
-python post_quant.py --config_path [YMAL_CONFIG_PATH] --ckpt_file [CKPT_PATH] --data_dir [DATASET PATH]
-```
-
-导出的模型会存储在./result/vgg_quant.air。
-
-3、在Ascend310执行推理量化模型。
-
-```shell
-# Ascend310 inference
-bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH]
-```
-
-推理结果保存在脚本执行的当前路径，可以在acc.log中看到精度计算结果。
-
-```bash
-'acc': 0.91
 ```
 
 ## 模型描述

@@ -24,7 +24,7 @@ class MinimumGrad(Expander):
     def _check(self):
         if not self.attrs.get('grad_x', True) and not self.attrs.get('grad_y', True):
             raise GKException("both grad_x and grad_y are False.")
-        return super(MinimumGrad, self)._check()
+        return super()._check()
 
     def _expand(self, graph_builder):
         input_x, input_y, input_dout = self.inputs
@@ -34,8 +34,7 @@ class MinimumGrad(Expander):
         dx = graph_builder.emit('Mul', [le_result, input_dout])
         dy = graph_builder.emit('Sub', [input_dout, dx])
 
-        # for minimumgrad op,  output_shape should be equal to input_shape,
-        # but some elementwise operating may broadcast input_shape
+        # for minimumgrad op,  output_shape should be equal to input_shape, but some elementwise operating may broadcast input_shape
         # then output_shape not equal to original input_shape, so need to reduce output to let them equal
         reduce_axis_x = self.get_reduce_axis(input_x.shape, dx.shape)
         reduce_axis_y = self.get_reduce_axis(input_y.shape, dy.shape)

@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSubGrad = "SubGrad";
-class MS_CORE_API SubGrad : public PrimitiveC {
+class SubGrad : public PrimitiveC {
  public:
   SubGrad() : PrimitiveC(kNameSubGrad) {}
   ~SubGrad() = default;

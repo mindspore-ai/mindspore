@@ -6,7 +6,6 @@ if(ENABLE_ACL)
     add_subdirectory(dvpp)
 endif()
 add_library(kernels-image OBJECT
-    adjust_gamma_op.cc
     affine_op.cc
     auto_contrast_op.cc
     bounding_box.cc

@@ -131,7 +131,7 @@ int ElementOptMulAccFp16(const float16_t *input0, const float16_t input1, float1
   return NNACL_OK;
 }
 
-void UpdataStateFp16(float16_t *cell_state, const float16_t *forget_gate, const float16_t *input_gate,
+void UpdataStateFp16(float16_t *cell_state, float16_t *forget_gate, const float16_t *input_gate,
                      const float16_t *cell_gate, float16_t *state_buffer, int batch, int hidden_size,
                      float16_t zoneout) {
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {  // zoneout * old_cell_state

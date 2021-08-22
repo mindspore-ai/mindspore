@@ -52,10 +52,10 @@ std::set<int64_t> GetUniqReduceAxes(const AnfNodePtr &node, bool is_ascend = fal
   auto axis_vec = GetReduceAxis(node);
   if (axis_vec.empty()) {
     for (size_t i = 0; i < src_shape_vec.size(); ++i) {
-      axis_vec.emplace_back(i);
+      axis_vec.push_back(i);
     }
   } else {
-    (void)std::transform(axis_vec.begin(), axis_vec.end(), axis_vec.begin(), [&src_shape_vec](int64_t axis) -> int64_t {
+    std::transform(axis_vec.begin(), axis_vec.end(), axis_vec.begin(), [&src_shape_vec](int64_t axis) -> int64_t {
       return axis < 0 ? axis + SizeToLong(src_shape_vec.size()) : axis;
     });
   }
@@ -81,7 +81,7 @@ bool HaveReduceInPredecessors(const AnfNodePtr &node) {
     }
 
     auto n_inputs = n->cast<CNodePtr>()->inputs();
-    (void)std::for_each(n_inputs.cbegin() + 1, n_inputs.cend(), [&st](const AnfNodePtr &n) -> void { st.push(n); });
+    std::for_each(n_inputs.cbegin() + 1, n_inputs.cend(), [&st](const AnfNodePtr &n) -> void { st.push(n); });
   }
 
   return false;
@@ -175,9 +175,9 @@ bool AtomicAddCheckerGPU::SuitableForAtomicAdd(const AnfNodePtr &node) {
   // For reduce whose last dim is reduced (including all-reduce),
   // it is suitable for atomic add only the reduce num is greater than or equal to 1024.
   if (axis_set.count(src_shape_vec.size() - 1) != 0) {
-    size_t reduce_size = std::accumulate(
-      axis_set.begin(), axis_set.end(), LongToSize(1),
-      [&src_shape_vec](size_t size, int64_t axis) { return size * LongToSize(src_shape_vec[LongToSize(axis)]); });
+    size_t reduce_size =
+      std::accumulate(axis_set.begin(), axis_set.end(), LongToSize(1),
+                      [&src_shape_vec](size_t size, int64_t axis) { return size * LongToSize(src_shape_vec[axis]); });
     return reduce_size >= 1024;
   }
 
@@ -212,8 +212,8 @@ bool AtomicAddCheckerAscend::SuitableForAtomicAdd(const AnfNodePtr &node) {
   }
 
   // If the non-reduce axis cannot make full use of multi-core, enable atomic addition
-  constexpr auto processor_core_num = 32LL;
-  auto start_non_reduce_dim = 1LL;
+  auto processor_core_num = 32;
+  auto start_non_reduce_dim = 1;
   for (size_t i = 0; i < src_shape_vec.size(); ++i) {
     auto dim = src_shape_vec[i];
     if (reduce_axis_set.count(i)) {
@@ -230,7 +230,7 @@ bool AtomicAddCheckerAscend::SuitableForAtomicAdd(const AnfNodePtr &node) {
 
 void AtomicCleanInsertter::CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) {
   // Change kernel build info.
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(composite_node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(composite_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const auto &origin_kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
   auto origin_inputs_format = origin_kernel_build_info->GetAllInputFormats();
@@ -448,8 +448,8 @@ std::vector<std::pair<AnfNodePtr, int> > AtomicCleanInsertter::FindOriginCNodeUs
   std::vector<std::pair<AnfNodePtr, int> > reduce_user_nodes;
   if (real_output_num_ <= 1) {
     auto users = mng->node_users()[composite_node];
-    (void)std::transform(users.cbegin(), users.cend(), std::back_inserter(reduce_user_nodes),
-                         [](const std::pair<AnfNodePtr, int> &pair) { return pair; });
+    std::transform(users.cbegin(), users.cend(), std::back_inserter(reduce_user_nodes),
+                   [](const std::pair<AnfNodePtr, int> &pair) { return pair; });
   } else {
     std::vector<std::pair<AnfNodePtr, int> > getitem_user_nodes;
     auto users = mng->node_users()[composite_node];
@@ -491,7 +491,7 @@ std::vector<std::pair<AnfNodePtr, int> > AtomicCleanInsertter::FindOriginCNodeUs
     for (auto &pair : getitem_user_nodes) {
       // Directory to find real user.
       auto real_users = mng->node_users()[pair.first];
-      (void)reduce_user_nodes.insert(reduce_user_nodes.end(), real_users.begin(), real_users.end());
+      reduce_user_nodes.insert(reduce_user_nodes.end(), real_users.begin(), real_users.end());
     }
   }
 
@@ -513,7 +513,7 @@ void AtomicCleanInsertter::ProcessOriginCNodeUser(const KernelGraphPtr &main_gra
     auto user_cnode = user_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(user_cnode);
     user_cnode->set_input(IntToSize(index), load_node);
-    (void)to_process_order_.emplace_back(composite_node, user_node);
+    to_process_order_.emplace_back(composite_node, user_node);
   }
 }
 

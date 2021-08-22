@@ -54,7 +54,7 @@ checkopts()
           continue
         elif [[ "X${DEVICE}" == "Xnpu" ]]; then
           MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-android-aarch64"
-          MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/android/npu/${MINDSPORE_FILE}"
+          MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/android/${MINDSPORE_FILE}"
           SUPPORT_NPU="on"
         else
           echo "Unknown DEVICE option ${OPTARG}!"
@@ -89,10 +89,10 @@ if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
   wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
 fi
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/libmindspore-lite.a ${BASEPATH}/lib
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include ${BASEPATH}/
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/lib/libmindspore-lite.a ${BASEPATH}/lib
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/include ${BASEPATH}/
 if [[ "X${DEVICE}" == "Xnpu" ]]; then
-    cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/third_party/hiai_ddk/lib/*.so ${BASEPATH}/lib
+    cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/third_party/hiai_ddk/lib/*.so ${BASEPATH}/lib
 fi
 cd ${BASEPATH}/build || exit
 cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19" \

@@ -53,7 +53,7 @@ class Quantizer {
 
   virtual STATUS DoQuantize(FuncGraphPtr func_graph) = 0;
 
-  converter::Flags flags;
+  mindspore::lite::converter::Flags flags;
 
  protected:
   FuncGraphPtr funcGraph = nullptr;

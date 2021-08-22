@@ -45,7 +45,7 @@ class PadCPUKernel : public InnerKernel {
   virtual int RunMirrorPadImpl(int task_id);
 
  private:
-  int CheckPaddings(const int *paddings, int length, const int *input_shape, int mode);
+  int CheckPaddings(int *paddings, int length, int *input_shape, int mode);
   void CalculateStrides();
   int ExtendShape(int *shape, int length, const int *ori_shape, int rank) const;
   int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length) const;
@@ -55,8 +55,8 @@ class PadCPUKernel : public InnerKernel {
   int HandleMirrorPad();
   int CopyPaddingFromInput();
   PadParameter *pad_param_ = nullptr;
-  int in_[DEFAULT_PAD_NDIMS] = {0};
-  int out_[DEFAULT_PAD_NDIMS] = {0};
+  int in_[4] = {0};
+  int out_[4] = {0};
   std::vector<MirrorPadBlock> mirror_pad_block_;
 };
 

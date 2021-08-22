@@ -93,16 +93,6 @@ class MapNode : public DatasetNode {
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
 
-#ifndef ENABLE_ANDROID
-  /// \brief Function for read dataset operation from json
-  /// \param[in] json_obj The JSON object to be deserialized
-  /// \param[in] ds dataset node constructed
-  /// \param[out] result Deserialized dataset after the operation
-  /// \return Status The status code returned
-  static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
-                          std::shared_ptr<DatasetNode> *result);
-#endif
-
   /// \brief Base-class override for GetDatasetSize
   /// \param[in] size_getter Shared pointer to DatasetSizeGetter
   /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting

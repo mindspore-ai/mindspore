@@ -59,14 +59,12 @@ using debugger::WatchpointHit;
 namespace mindspore {
 
 static constexpr auto g_chunk_size = 1024 * 1024 * 3;
-static constexpr int32_t heartbeat_period_second = 30;
 DebuggerPtr Debugger::debugger_ = nullptr;
 std::mutex Debugger::instance_lock_;
 
 Debugger::Debugger()
     : grpc_client_(nullptr),
       debug_services_(nullptr),
-      heartbeat_thread_(nullptr),
       device_id_(0),
       device_target_(""),
       num_step_(0),
@@ -79,7 +77,6 @@ Debugger::Debugger()
       is_dataset_graph_(false),
       partial_memory_(false),
       initial_suspend_(true),
-      enable_heartbeat_(false),
       not_dataset_graph_sum_(0),
       version_("") {
   CheckDebuggerEnabledParam();
@@ -116,7 +113,7 @@ void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   device_id_ = device_id;
   MS_LOG(INFO) << "Debugger got device_target: " << device_target;
   device_target_ = device_target;
-  version_ = "1.4.0";
+  version_ = "1.3.0";
 }
 
 bool IsTypeDebuggerSupported(TypeId type) {
@@ -132,11 +129,9 @@ void Debugger::EnableDebugger() {
   // reset some of the class members
   num_step_ = 0;
   debugger_enabled_ = false;
-  enable_heartbeat_ = false;
   partial_memory_ = false;
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
-  heartbeat_thread_ = nullptr;
 
   // see if dump using debugger backend is enabled
   bool dump_enabled = CheckDebuggerDumpEnabled();
@@ -152,22 +147,8 @@ void Debugger::EnableDebugger() {
   }
 
   if (debugger_enabled_) {
-    // configure grpc host
-    std::string env_host_str = common::GetEnv("MS_DEBUGGER_HOST");
-    std::string host;
-    if (!env_host_str.empty()) {
-      if (CheckIp(env_host_str)) {
-        MS_LOG(INFO) << "Getenv MS_DEBUGGER_HOST: " << env_host_str;
-        host = env_host_str;
-      } else {
-        debugger_enabled_ = false;
-        MS_EXCEPTION(ValueError) << "Environment variable MS_DEBUGGER_HOST isn't a valid IP address. "
-                                    "Please set environment variable MS_DEBUGGER_HOST=x.x.x.x to a valid IP";
-      }
-    } else {
-      MS_LOG(INFO) << "Environment variable MS_DEBUGGER_HOST doesn't exist. Using default debugger host: localhost";
-      host = "localhost";
-    }
+    std::string host = "localhost";
+
     // configure grpc port
     std::string env_port_str = common::GetEnv("MS_DEBUGGER_PORT");
     std::string port;
@@ -189,8 +170,6 @@ void Debugger::EnableDebugger() {
     }
     // initialize grpc client
     grpc_client_ = std::make_unique<GrpcClient>(host, port);
-    // initialize sending heartbeat
-    heartbeat_thread_ = std::make_unique<std::thread>([=]() { SendHeartbeat(heartbeat_period_second); });
   }
   debug_services_ = std::make_unique<DebugServices>();
 }
@@ -582,37 +561,6 @@ GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   ModelProto model = GetDebuggerFuncGraphProto(graph_ptr);
   return model.graph();
 }
-
-void Debugger::SendHeartbeat(int32_t period) {
-  int num_heartbeat_fail = 0;
-  const int max_num_heartbeat_fail = 5;
-  const int retry_milliseconds = 500;
-
-  Heartbeat heartbeat;
-  heartbeat.set_message("Debugger is alive");
-  heartbeat.set_period(heartbeat_period_second);
-
-  SetEnableHeartbeat(CheckDebuggerEnabled());
-  while (enable_heartbeat_) {
-    EventReply reply = grpc_client_->SendHeartbeat(heartbeat);
-
-    if (reply.status() != reply.OK) {
-      MS_LOG(ERROR) << "Error: SendHeartbeat failed";
-      num_heartbeat_fail++;
-      if (num_heartbeat_fail >= max_num_heartbeat_fail) {
-        MS_LOG(ERROR) << "Maximum number of failure for SendHeartbeat reached : exiting training session.";
-        SetEnableHeartbeat(false);
-        break;
-      } else {
-        MS_LOG(ERROR) << "Number of consecutive SendHeartbeat fail:" << num_heartbeat_fail;
-        std::this_thread::sleep_for(std::chrono::milliseconds(retry_milliseconds));
-      }
-    } else {
-      std::this_thread::sleep_for(std::chrono::milliseconds(period * 1000));
-    }
-  }
-}
-
 void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
   if (SendMetadata(true)) {
     // send graph to Mindinsight server
@@ -944,15 +892,9 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
   }
   return tensor_list;
 }
-
 void Debugger::Exit() {
   // clear resource before exit
-  // debugger will notify main thread to exit because main thread can only exit at step boundary.
-  SetEnableHeartbeat(false);
-  if (heartbeat_thread_ && heartbeat_thread_->joinable()) {
-    heartbeat_thread_->join();
-    MS_LOG(INFO) << "Join Heartbeat thread.";
-  }
+  // debugger will notify main thread to exit because main thread can only exit at step boundary
   pipeline::ExecutorPy::DebugTerminate(true);
 }
 
@@ -1143,8 +1085,6 @@ bool GetMiVersionMatched(const EventReply &reply) { return reply.version_matched
 
 bool Debugger::partial_memory() const { return partial_memory_; }
 
-void Debugger::SetEnableHeartbeat(bool enabled) { enable_heartbeat_ = enabled; }
-
 void Debugger::SetCurNode(const std::string &cur_name) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
@@ -1178,17 +1118,6 @@ bool Debugger::CheckPort(const std::string &port) const {
   }
   if (num < min_port_num) return false;
   return true;
-}
-
-bool Debugger::CheckIp(const std::string &host) const {
-  std::regex reg_ip(
-    "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])"
-    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
-    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
-    "[.](25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])");
-  std::smatch smat;
-  std::string host_str = host;
-  return std::regex_match(host_str, smat, reg_ip);
 }
 
 uint32_t Debugger::GetFirstRunGraphId() const { return rungraph_id_list_.front(); }
@@ -1240,13 +1169,13 @@ void Debugger::LoadParametersAndConst() {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   MS_EXCEPTION_IF_NULL(graph_ptr_);
   // load parameters
-  MS_LOG(INFO) << "Start to load Parameters for graph " << graph_ptr_->graph_id();
+  MS_LOG(INFO) << "Start to load Parameters!";
   const auto &parameters = graph_ptr_->inputs();
   for (auto &item : parameters) {
     LoadSingleAnfnode(item, PARAMETER_OUTPUT_INDEX);
   }
   // load value nodes
-  // get all constant values from the graph
+  // get all constant avlues from the graph
   MS_LOG(INFO) << "Start to load value nodes!";
   const auto value_nodes = graph_ptr_->graph_value_nodes();
   for (auto &item : value_nodes) {
@@ -1264,7 +1193,7 @@ void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
     LoadSingleAnfnode(item, PARAMETER_OUTPUT_INDEX);
   }
   // load value nodes
-  // get all constant values from the graph
+  // get all constant avlues from the graph
   MS_LOG(INFO) << "Start to load value nodes for graph " << graph->graph_id();
   const auto value_nodes = graph_ptr_->graph_value_nodes();
   for (auto &item : value_nodes) {

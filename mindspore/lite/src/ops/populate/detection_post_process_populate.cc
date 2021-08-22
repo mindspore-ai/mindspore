@@ -19,6 +19,7 @@ using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore {
 namespace lite {
+constexpr auto kScaleMinSize = 4;
 OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
@@ -42,15 +43,15 @@ OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
     free(param);
     return nullptr;
   }
-  if (scale->size() < kMinShapeSizeFour) {
+  if (scale->size() < kScaleMinSize) {
     MS_LOG(ERROR) << "Invalid scale shape size " << scale->size();
     free(param);
     return nullptr;
   }
   param->h_scale_ = *(scale->begin());
   param->w_scale_ = *(scale->begin() + 1);
-  param->x_scale_ = *(scale->begin() + kOffsetTwo);
-  param->y_scale_ = *(scale->begin() + kOffsetThree);
+  param->x_scale_ = *(scale->begin() + 2);
+  param->y_scale_ = *(scale->begin() + 3);
   param->nms_iou_threshold_ = value->nms_iou_threshold();
   param->nms_score_threshold_ = value->nms_score_threshold();
   param->max_detections_ = value->max_detections();

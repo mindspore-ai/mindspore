@@ -27,6 +27,10 @@ DeconvolutionDepthwiseFp16CPUKernel::~DeconvolutionDepthwiseFp16CPUKernel() {
     delete sliding_;
     sliding_ = nullptr;
   }
+  if (packed_weight_ != nullptr) {
+    free(packed_weight_);
+    packed_weight_ = nullptr;
+  }
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::InitSlideParam() {
@@ -65,55 +69,48 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitPackedInputOutput() {
   return RET_OK;
 }
 
-int DeconvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
+int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
+  // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
+  auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
 
-  if (!op_parameter_->is_train_session_) {
-    packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
-    if (packed_weight_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
+  packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
+  if (packed_weight_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
   }
+  PackNCHWFp16ToNC8HW8Fp16(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
+                           weight_tensor->Batch());
 
-  bias_data_ = malloc(C8NUM * OC8 * sizeof(float16_t));
+  bias_data_ = reinterpret_cast<float16_t *>(malloc(C8NUM * OC8 * sizeof(float16_t)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
   memset(bias_data_, 0, C8NUM * OC8 * sizeof(float16_t));
+  if (in_tensors_.size() == kInputSize2) {
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
+    auto ori_bias = reinterpret_cast<float16_t *>(bias_tensor->data_c());
+    memcpy(bias_data_, ori_bias, bias_tensor->Size());
+  }
+
   conv_param_->thread_num_ = MSMIN(thread_count_, OC8);
   return RET_OK;
 }
 
-void DeconvolutionDepthwiseFp16CPUKernel::PackWeight() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
-  MS_ASSERT(origin_weight != nullptr);
-  PackNCHWFp16ToNC8HW8Fp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_),
-                           1, weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());
-}
-
 int DeconvolutionDepthwiseFp16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  if (op_parameter_->is_train_session_) {
-    auto weight_tensor = in_tensors_.at(kWeightIndex);
-    int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
-    int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
-    set_workspace_size(pack_weight_size * sizeof(float16_t));
-  }
   sliding_ = new (std::nothrow) SlidingWindowParam;
   if (sliding_ == nullptr) {
     MS_LOG(ERROR) << "new SlidingWindowParam fail!";
     return RET_ERROR;
   }
 
-  auto ret = InitConvWeightBias();
+  auto ret = InitWeightBias();
   if (ret != 0) {
-    MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitConvWeightBias failed.";
+    MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitWeightBias failed.";
     return RET_ERROR;
   }
   if (!InferShapeDone()) {
@@ -136,8 +133,8 @@ int DeconvolutionDepthwiseFp16CPUKernel::ReSize() {
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
-  DeconvDwC8Fp16(packed_output_, packed_input_, reinterpret_cast<float16_t *>(packed_weight_),
-                 reinterpret_cast<float16_t *>(bias_data_), conv_param_, sliding_, task_id);
+  DeconvDwC8Fp16(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float16_t *>(bias_data_), conv_param_,
+                 sliding_, task_id);
   return RET_OK;
 }
 
@@ -160,10 +157,6 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   if (ret != 0) {
     MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitPackedInputOutput failed.";
     FreePackedInputOutput();
-    return RET_ERROR;
-  }
-  if (RepackWeight() != RET_OK) {
-    MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }
 

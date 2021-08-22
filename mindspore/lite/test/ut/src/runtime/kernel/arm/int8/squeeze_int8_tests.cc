@@ -90,6 +90,5 @@ TEST_F(TestSqueezeInt8, Squeeze_1d_axis0_offset0_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 }  // namespace mindspore

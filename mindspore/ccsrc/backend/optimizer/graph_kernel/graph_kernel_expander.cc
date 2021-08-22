@@ -35,7 +35,6 @@
 #include "pybind_api/ir/primitive_py.h"
 #include "runtime/device/kernel_info.h"
 #include "vm/segment_runner.h"
-#include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 
 namespace mindspore {
 namespace opt {
@@ -83,7 +82,6 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimSigmoidGrad,
     prim::kPrimSigmoidCrossEntropyWithLogits,
     prim::kPrimSigmoidCrossEntropyWithLogitsGrad,
-    prim::kPrimSlice,
     prim::kPrimSoftmax,
     prim::kPrimSoftmaxCrossEntropyWithLogits,
     prim::kPrimSquaredDifference,
@@ -100,14 +98,14 @@ std::vector<PrimitivePtr> GetExpandOps() {
 }
 }  // namespace
 
-bool PyExpander::ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
+bool DefaultExpander::ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
   DumpOption dump_option;
   dump_option.extract_opinfo_from_anfnode = true;
   kernel::AkgKernelJsonGenerator json_generator(dump_option);
   return json_generator.CollectJson(node, kernel_json);
 }
 
-FuncGraphPtr PyExpander::CreateExpandFuncGraph(const CNodePtr &node) {
+FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
   nlohmann::json kernel_json;
   if (!ExpandJsonInfo(node, &kernel_json)) {
     MS_LOG(ERROR) << "Expand json info to: " << node->DebugString(2) << " failed, ori_json:\n" << kernel_json.dump();
@@ -132,36 +130,7 @@ FuncGraphPtr PyExpander::CreateExpandFuncGraph(const CNodePtr &node) {
   return JsonDescToAnf(kernel_desc_str);
 }
 
-FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
-  auto expander_ptr = expanders::OpExpanderFactory::Instance().GetExpander(AnfAlgo::GetCNodeName(node));
-  if (expander_ptr == nullptr) {
-    return PyExpander::CreateExpandFuncGraph(node);
-  }
-  expanders::BaseInfoList inputs(node->size() - 1);
-  expanders::BaseInfoList outputs(AnfAlgo::GetOutputTensorNum(node));
-  for (size_t i = 0; i < inputs.size(); i++) {
-    auto shape = AnfAlgo::GetInputDeviceShape(node, i);
-    std::transform(shape.begin(), shape.end(), std::back_inserter(inputs[i].shape), SizeToLong);
-    inputs[i].type = AnfAlgo::GetInputDeviceDataType(node, i);
-    inputs[i].format = AnfAlgo::GetInputFormat(node, i);
-  }
-  for (size_t i = 0; i < outputs.size(); i++) {
-    auto shape = AnfAlgo::GetOutputDeviceShape(node, i);
-    std::transform(shape.begin(), shape.end(), std::back_inserter(outputs[i].shape), SizeToLong);
-    outputs[i].type = AnfAlgo::GetOutputDeviceDataType(node, i);
-    outputs[i].format = AnfAlgo::GetOutputFormat(node, i);
-  }
-  auto &attrs = AnfAlgo::GetCNodePrimitive(node)->attrs();
-  try {
-    auto litegraph = expander_ptr->Run(inputs, outputs, attrs, kernel::GetStrProcessorFromContext());
-    return LiteGraph2AnfGraph(litegraph);
-  } catch (const graphkernel::GKException &e) {
-    MS_LOG(INFO) << e.what() << ", undo expanding this op";
-    return nullptr;
-  }
-}
-
-AnfNodePtr PyExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node) {
+AnfNodePtr DefaultExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node) {
   auto func_graph = old_node->func_graph();
   std::vector<AnfNodePtr> inputs(old_node->inputs().begin() + 1, old_node->inputs().end());
   AnfNodePtrList kernel_nodes;
@@ -176,7 +145,7 @@ AnfNodePtr PyExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func_grap
   return graph_kernel_node;
 }
 
-AnfNodePtr PyExpander::Run(const AnfNodePtr &node) {
+AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto new_func_graph = CreateExpandFuncGraph(cnode);
@@ -224,10 +193,10 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
       continue;
     }
 
-    MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope();
+    MS_LOG(INFO) << "Expanding node: " << node->fullname_with_scope();
     auto new_node = GetExpander(node)->Run(node);
     if (new_node == nullptr) {
-      MS_LOG(DEBUG) << "Skipped node: " << node->fullname_with_scope();
+      MS_LOG(INFO) << "Skipped node: " << node->fullname_with_scope();
       continue;
     }
     (void)mng->Replace(node, new_node);
@@ -235,7 +204,6 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-
 bool GraphKernelComplexExpander::CanExpand(const CNodePtr &node) const {
   bool has_complex = false;
   auto all_inputs_type = AnfAlgo::GetAllInputDeviceTypes(node);

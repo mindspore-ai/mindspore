@@ -16,6 +16,13 @@
 
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_build.h"
 
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -27,20 +34,18 @@
 namespace mindspore {
 namespace kernel {
 KernelPackPtr AkgAscendKernelBuilder::AkgSearchCache(const std::string &kernel_name) {
-  return tbe::TbeUtils::SearchCache(kernel_name, true);
+  return tbe::TbeUtils::SearchCache(kernel_name, kProcessorAiCore);
 }
 
 KernelPackPtr AkgAscendKernelBuilder::AkgInsertCache(const std::string &kernel_name) {
-  return tbe::TbeUtils::InsertCache(kernel_name, kProcessorAiCore, true);
+  return tbe::TbeUtils::InsertCache(kernel_name, kProcessorAiCore);
 }
 
 void AkgAscendKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
                                              const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
   auto kernel_mod_ptr = std::make_shared<AkgKernelMod>(kernel_pack);
-  auto kernel_json_info = kernel_pack->kernel_json_info();
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
-  kernel_mod_ptr->SetWorkspaceSizeList(kernel_json_info.workspaces);
   AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
 }
 

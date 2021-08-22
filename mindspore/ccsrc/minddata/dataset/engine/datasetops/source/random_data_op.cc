@@ -267,8 +267,8 @@ Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
 
   // Create a tensor for each column, then add the tensor to the row
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    const ColDescriptor current_col = data_schema_->Column(i);
-    std::vector<dsize_t> current_shape = current_col.Shape().AsVector();
+    const ColDescriptor current_col = data_schema_->column(i);
+    std::vector<dsize_t> current_shape = current_col.shape().AsVector();
     std::unique_ptr<TensorShape> new_shape = nullptr;
     std::unique_ptr<unsigned char[]> buf = nullptr;
     std::shared_ptr<Tensor> new_tensor = nullptr;
@@ -282,7 +282,7 @@ Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
     }
 
     new_shape = std::make_unique<TensorShape>(current_shape);
-    int64_t size_in_bytes = new_shape->NumOfElements() * current_col.Type().SizeInBytes();
+    int64_t size_in_bytes = new_shape->NumOfElements() * current_col.type().SizeInBytes();
 
     // Generate a random byte of data.  This may cause some funny data for things like doubles,floats, bools
     // however the random data op is not too concerned about the physical data itself.
@@ -296,7 +296,7 @@ Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Failed to set random bytes for a tensor.");
     }
 
-    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(*new_shape, current_col.Type(), buf.get(), &new_tensor));
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(*new_shape, current_col.type(), buf.get(), &new_tensor));
 
     // Add this tensor to the tensor row for output
     (*new_row).push_back(std::move(new_tensor));

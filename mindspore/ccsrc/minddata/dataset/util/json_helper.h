@@ -70,20 +70,13 @@ class JsonHelper {
       Path in = Path(in_file);
       nlohmann::json js;
       if (in.Exists()) {
-        RETURN_IF_NOT_OK(RealPath(in_file));
-        try {
-          std::ifstream in_stream(in_file);
-          MS_LOG(INFO) << "Filename: " << in_file << ".";
-          in_stream >> js;
-          in_stream.close();
-        } catch (const std::exception &err) {
-          RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + in_file +
-                                   ", please delete it and try again!");
-        }
+        std::ifstream in(in_file);
+        MS_LOG(INFO) << "Filename: " << in_file << ".";
+        in >> js;
+        in.close();
       }
       js[key] = value;
       MS_LOG(INFO) << "Write outfile is: " << js << ".";
-
       if (out_file == "") {
         std::ofstream o(in_file, std::ofstream::trunc);
         o << js;
@@ -114,16 +107,10 @@ class JsonHelper {
       Path in = Path(in_file);
       nlohmann::json js;
       if (in.Exists()) {
-        RETURN_IF_NOT_OK(RealPath(in_file));
-        try {
-          std::ifstream in_stream(in_file);
-          MS_LOG(INFO) << "Filename: " << in_file << ".";
-          in_stream >> js;
-          in_stream.close();
-        } catch (const std::exception &err) {
-          RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + in_file +
-                                   ", please delete it and try again!");
-        }
+        std::ifstream in(in_file);
+        MS_LOG(INFO) << "Filename: " << in_file << ".";
+        in >> js;
+        in.close();
       }
       js[key] = value;
       MS_LOG(INFO) << "Write outfile is: " << js << ".";
@@ -174,9 +161,7 @@ class JsonHelper {
   template <typename T>
   Status WriteBinFile(const std::string &in_file, T *data, size_t length) {
     try {
-      std::string real_in_file;
-      RETURN_IF_NOT_OK(Path::RealPath(in_file, real_in_file));
-      std::ofstream o(real_in_file, std::ios::binary | std::ios::out);
+      std::ofstream o(in_file, std::ios::binary | std::ios::out);
       if (!o.is_open()) {
         RETURN_STATUS_UNEXPECTED("Error opening Bin file to write");
       }
@@ -200,7 +185,7 @@ class JsonHelper {
   size_t DumpData(const unsigned char *tensor_addr, const size_t &tensor_size, void *addr, const size_t &buffer_size);
 
   /// \brief Helper function to delete key in json file
-  /// \note This function will return okay even if key not found
+  /// note This function will return okay even if key not found
   /// \param[in] in_file Json file to remove key from
   /// \param[in] key The key to remove
   /// \return Status The status code returned
@@ -210,16 +195,10 @@ class JsonHelper {
   /// \param out - The output stream to write output to
   void Print(std::ostream &out) const;
 
-  /// \brief Helper function to check real path
-  /// \note This function will return okay even if key not found
-  /// \param[in] path Path to Json file
-  /// \return Status The status code returned
-  Status RealPath(const std::string &path);
-
   /// \brief << Stream output operator overload
-  /// \note This allows you to write the debug print info using stream operators
+  /// \notes This allows you to write the debug print info using stream operators
   /// \param out Reference to the output stream being overloaded
-  /// \param dh Reference to the DataSchema to display
+  /// \param ds Reference to the DataSchema to display
   /// \return The output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, const JsonHelper &dh) {
     dh.Print(out);

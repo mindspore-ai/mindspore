@@ -24,7 +24,7 @@
 #ifdef ENABLE_NEON
 
 int16x4_t DoClacSumHalfWord(int32x4_t scaled_input0, int32x4_t scaled_input1, int32x4_t left_shift_out_vec,
-                            int32x4_t output_multiplier_vec, const SubQuantArg *para) {
+                            int32x4_t output_multiplier_vec, SubQuantArg *para) {
   int32x4_t raw_data = vsubq_s32(scaled_input0, scaled_input1);
 
   raw_data = RoundingDivideByPOTInt32x4(vqrdmulhq_s32(vmulq_s32(raw_data, left_shift_out_vec), output_multiplier_vec),
@@ -35,14 +35,14 @@ int16x4_t DoClacSumHalfWord(int32x4_t scaled_input0, int32x4_t scaled_input1, in
   return vqmovn_s32(raw_data);
 }
 
-void SubInt8NEON(const int8_t *input0_data, const int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
-                 const SubQuantArg *para, int *index) {
+void SubInt8NEON(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
+                 SubQuantArg *para, int *index) {
   int32x4_t left_shift_result0_vec = vdupq_n_s32(para->left_shift_result0_);
   int32x4_t left_shift_result1_vec = vdupq_n_s32(para->left_shift_result1_);
   int32x4_t input0_multiplier_vec = vdupq_n_s32(para->input0_multiplier_);
   int32x4_t input1_multiplier_vec = vdupq_n_s32(para->input1_multiplier_);
   int32x4_t output_multiplier_vec = vdupq_n_s32(para->output_multiplier_);
-  int32x4_t left_shift_out_vec = vdupq_n_s32((1 << (size_t)para->left_shift_out_));
+  int32x4_t left_shift_out_vec = vdupq_n_s32((1 << para->left_shift_out_));
   int32x4_t right_shift0_vec = vdupq_n_s32(-para->right_shift0_);
   int32x4_t right_shift1_vec = vdupq_n_s32(-para->right_shift1_);
 

@@ -35,8 +35,6 @@ def test_dtype_to_nptype():
     assert ms.dtype_to_nptype(ms.float16) == np.float16
     assert ms.dtype_to_nptype(ms.float32) == np.float32
     assert ms.dtype_to_nptype(ms.float64) == np.float64
-    assert ms.dtype_to_nptype(ms.complex64) == np.complex64
-    assert ms.dtype_to_nptype(ms.complex128) == np.complex128
 
 
 def test_dtype_to_pytype():
@@ -53,8 +51,6 @@ def test_dtype_to_pytype():
     assert ms.dtype_to_pytype(ms.float16) == float
     assert ms.dtype_to_pytype(ms.float32) == float
     assert ms.dtype_to_pytype(ms.float64) == float
-    assert ms.dtype_to_pytype(ms.complex64) == complex
-    assert ms.dtype_to_pytype(ms.complex128) == complex
     assert ms.dtype_to_pytype(ms.list_) == list
     assert ms.dtype_to_pytype(ms.tuple_) == tuple
     assert ms.dtype_to_pytype(ms.string) == str
@@ -97,12 +93,6 @@ def test_dtype():
     assert me_type == ms.bool_
     me_type = dtype.get_py_obj_dtype(x)
     assert me_type == ms.bool_
-
-    x = 0.1+3j
-    me_type = dtype.get_py_obj_dtype(type(x))
-    assert me_type == ms.complex128
-    me_type = dtype.get_py_obj_dtype(x)
-    assert me_type == ms.complex128
 
     # support str
     # x = "string type"

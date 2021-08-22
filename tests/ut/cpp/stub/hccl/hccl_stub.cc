@@ -131,24 +131,6 @@ HcclResult HcclCommInitRootInfo(uint32_t nRanks, const HcclRootInfo *rootInfo, u
   return HCCL_SUCCESS;
 }
 
-/**
- * @brief Get the rank size of this comm.
- *
- * @param comm A pointer identifying the communication resource based on.
- * @param rankSize  A pointer identifying the rank size.
- * @return HcclResult
- */
-HcclResult HcclGetRankSize(HcclComm comm, uint32_t *rankSize) { return HCCL_SUCCESS; }
-
-/**
- * @brief Get the rank id of this comm.
- *
- * @param comm A pointer identifying the communication resource based on.
- * @param rankSize  A pointer identifying the rank id.
- * @return HcclResult
- */
-HcclResult HcclGetRankId(HcclComm comm, uint32_t *rank) { return HCCL_SUCCESS; }
-
 HcclResult HcclAllReduce(void *sendBuf, void *recvBuf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
                                 HcclComm comm, aclrtStream stream) {
   return HCCL_SUCCESS;

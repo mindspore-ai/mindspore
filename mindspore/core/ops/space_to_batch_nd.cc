@@ -89,7 +89,7 @@ std::vector<int64_t> SpaceToBatchND::get_block_shape() const {
   return GetValue<std::vector<int64_t>>(GetAttr(kBlockShape));
 }
 
-void SpaceToBatchND::Init(const std::vector<int64_t> block_shape, const std::vector<std::vector<int64_t>> paddings) {
+void SpaceToBatchND::Init(std::vector<int64_t> block_shape, std::vector<std::vector<int64_t>> paddings) {
   this->set_paddings(paddings);
   this->set_block_shape(block_shape);
 }

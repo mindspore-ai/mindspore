@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameActivationGrad = "ActivationGrad";
-class MS_CORE_API ActivationGrad : public PrimitiveC {
+class ActivationGrad : public PrimitiveC {
  public:
   ActivationGrad() : PrimitiveC(kNameActivationGrad) {}
   ~ActivationGrad() = default;

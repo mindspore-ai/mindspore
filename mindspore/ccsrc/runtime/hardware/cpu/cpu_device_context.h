@@ -35,8 +35,6 @@ class CPUDeviceContext : public DeviceContext {
 
   void Initialize() override;
 
-  void Destroy() override;
-
   bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
   void FreeMemory(DeviceAddress *const &address) const override;
 

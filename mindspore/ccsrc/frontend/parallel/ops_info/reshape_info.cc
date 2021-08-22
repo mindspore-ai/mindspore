@@ -443,8 +443,7 @@ std::vector<StrategyPtr> ReshapeInfo::GenerateOpStrategies(int64_t) {
 
 Status ReshapeInfo::GenetateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
                                           const std::vector<std::shared_ptr<StrategyWithCost>> &next_stra_costs,
-                                          int64_t out_index, int64_t in_index, bool is_prev_param,
-                                          bool is_next_reshape) {
+                                          int64_t out_index, int64_t in_index, bool is_prev_param) {
   is_generating_costs_ = true;
   for (auto pre_stra_cost : pre_stra_costs) {
     std::vector<TensorInfo> pre_out_tensor_infos;
@@ -467,12 +466,7 @@ Status ReshapeInfo::GenetateStrategyCosts(const std::vector<std::shared_ptr<Stra
     }
     Strategys stra_inputs = {stra};
     StrategyPtr reshape_stra = std::make_shared<Strategy>(pre_stra_cost->strategy_ptr->GetInputStage(), stra_inputs);
-    if (is_next_reshape) {
-      SetOutputLayout(pre_out_tensor_info.tensor_layout());
-      ResetQueueMember();
-      InferTensorInfoByLayout();
-      SetCostForReshape(reshape_stra);
-    } else if (next_stra_costs.empty()) {
+    if (next_stra_costs.empty()) {
       if (Init(nullptr) == FAILED) {
         MS_LOG(ERROR) << "Failure:operator reshape init failed";
         return FAILED;
@@ -487,7 +481,6 @@ Status ReshapeInfo::GenetateStrategyCosts(const std::vector<std::shared_ptr<Stra
         return FAILED;
       }
       TensorInfo next_in_tensor_info = next_in_tensor_infos[LongToSize(in_index)];
-
       SetOutputLayout(next_in_tensor_info.tensor_layout());
       ResetQueueMember();
       InferTensorInfoByLayout();

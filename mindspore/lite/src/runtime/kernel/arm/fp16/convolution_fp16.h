@@ -28,19 +28,26 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseCPUKernel {
   ConvolutionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx, void *origin_weight,
                            void *origin_bias)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias) {}
-  ~ConvolutionFP16CPUKernel() override {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
+        origin_weight_(origin_weight),
+        origin_bias_(origin_bias) {}
+  ~ConvolutionFP16CPUKernel() override {
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+  }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
   int RunImpl(int task_id);
+  int InitWeightBias();
   int InitTmpBuffer();
   void AdjustNumberOfThread();
 
  private:
-  void PackWeight() override;
-  int MallocWeightBiasData() override;
   void FreeTmpBuffer() {
     if (packed_input_ != nullptr) {
       ctx_->allocator->Free(packed_input_);
@@ -51,7 +58,10 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseCPUKernel {
       col_major_input_ = nullptr;
     }
   }
+  void *origin_weight_;  // do not free
+  void *origin_bias_;    // do not free
   float16_t *packed_input_ = nullptr;
+  float16_t *packed_weight_ = nullptr;
   float16_t *col_major_input_ = nullptr;
   int col_tile_;
   int row_tile_;

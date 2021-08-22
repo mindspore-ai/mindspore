@@ -65,6 +65,5 @@ TEST_F(TestUniformRealFp32, UniformReal) {
     std::cout << output_data0[i] << " ";
   }
   out_tensor0.set_data(nullptr);
-  delete kernel;
 }
 }  // namespace mindspore

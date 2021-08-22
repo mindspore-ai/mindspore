@@ -1,4 +1,4 @@
-# Copyright 2020-21 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ from numpy import random
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
-from mindspore import context
 
 from src.model_utils.config import config
 
@@ -265,7 +264,7 @@ def impad_to_multiple_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mas
 
 def imnormalize_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     """imnormalize operation for image"""
-    img_data = mmcv.imnormalize(img, np.array([123.675, 116.28, 103.53]), np.array([58.395, 57.12, 57.375]), True)
+    img_data = mmcv.imnormalize(img, [123.675, 116.28, 103.53], [58.395, 57.12, 57.375], True)
     img_data = img_data.astype(np.float32)
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num, gt_mask)
 
@@ -285,15 +284,10 @@ def flip_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
 
 def transpose_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     """transpose operation for image"""
-    if context.get_context("device_target") == "CPU":
-        platform_dtype = np.float32
-    else:
-        platform_dtype = np.float16
-
     img_data = img.transpose(2, 0, 1).copy()
-    img_data = img_data.astype(platform_dtype)
-    img_shape = img_shape.astype(platform_dtype)
-    gt_bboxes = gt_bboxes.astype(platform_dtype)
+    img_data = img_data.astype(np.float16)
+    img_shape = img_shape.astype(np.float16)
+    gt_bboxes = gt_bboxes.astype(np.float16)
     gt_label = gt_label.astype(np.int32)
     gt_num = gt_num.astype(np.bool)
     gt_mask_data = gt_mask.astype(np.bool)

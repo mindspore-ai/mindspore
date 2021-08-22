@@ -26,7 +26,6 @@ from mindspore.train.model import Model, ParallelMode
 from mindspore import dtype as mstype
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.communication.management import init
-from mindspore.communication import management as MutiDev
 from mindspore.parallel import _cost_model_context as cost_model_context
 from mindspore.parallel import set_algo_parameters
 
@@ -141,26 +140,22 @@ if __name__ == "__main__":
 
     model = Model(train_net, optimizer=optimizer)
 
-    time_cb = TimeMonitor(data_size=train_dataset.get_dataset_size())
-    loss_cb = LossMonitor()
-    cb = [time_cb, loss_cb]
     config_ck = CheckpointConfig(
-        save_checkpoint_steps=60, keep_checkpoint_max=5)
+        save_checkpoint_steps=60, keep_checkpoint_max=20)
     if args.modelarts:
         ckpt_cb = ModelCheckpoint(prefix="ArcFace-", config=config_ck,
                                   directory='/cache/train_output/')
-        cb.append(ckpt_cb)
     else:
-        if args.device_num == 8 and MutiDev.get_rank() % 8 == 0:
-            ckpt_cb = ModelCheckpoint(prefix="ArcFace-", config=config_ck,
-                                      directory=args.train_url)
-            cb.append(ckpt_cb)
-        if args.device_num == 1:
-            ckpt_cb = ModelCheckpoint(prefix="ArcFace-", config=config_ck,
-                                      directory=args.train_url)
-            cb.append(ckpt_cb)
-
-    model.train(train_epoch, train_dataset, callbacks=cb, dataset_sink_mode=True)
+        ckpt_cb = ModelCheckpoint(prefix="ArcFace-", config=config_ck,
+                                  directory=args.train_url)
+    time_cb = TimeMonitor(data_size=train_dataset.get_dataset_size())
+    loss_cb = LossMonitor()
+    cb = [ckpt_cb, time_cb, loss_cb]
+    if args.device_id == 0 or args.device_num == 1:
+        model.train(train_epoch, train_dataset,
+                    callbacks=cb, dataset_sink_mode=True)
+    else:
+        model.train(train_epoch, train_dataset, dataset_sink_mode=True)
     if args.modelarts:
         mox.file.copy_parallel(
             src_url='/cache/train_output', dst_url=args.train_url)

@@ -35,11 +35,14 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   Convolution1x1CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                           float *origin_weight, float *origin_bias)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
+        origin_weight_(origin_weight),
+        origin_bias_(origin_bias) {}
   ~Convolution1x1CPUKernel();
   int Init() override;
   int Run() override;
   int ReSize() override;
+  int Eval() override;
 
  public:
   int DoConv1x1(int task_id);
@@ -47,11 +50,11 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   int InitConv1x1Param();
+  int InitConv1x1BiasWeight();
   void InitConv1x1MatmulParam();
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
   void FreeTmpBuffer();
   void PackMatmulInput(const float *src_ptr, float *dst_ptr, int row, int col) const;
+  void PackWeight();
 
  private:
   MatMulParameter *matmul_param_ = nullptr;
@@ -59,6 +62,9 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   bool multi_thread_by_hw_ = false;
   int thread_count_ = 0;
   int thread_stride_ = 0;
+  float *origin_weight_;  // do not free
+  float *origin_bias_;    // do not free
+  float *weight_ptr_ = nullptr;
   float *pack_input_ = nullptr;
   float *input_ptr_ = nullptr;
   float *output_ptr_ = nullptr;

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, SummaryCollector, TimeMonitor
 from mindspore import context, Parameter
 from mindspore.context import ParallelMode
-from mindspore.communication import management as MultiDevice
+from mindspore.communication import management as MultiAscend
 from mindspore.train.serialization import load_checkpoint
 from mindspore.common import set_seed
 
@@ -63,7 +63,7 @@ def _train(model, config,
         epoch_size = pre_training_dataset.get_repeat_count()
         print("epoch size ", epoch_size)
         if os.getenv("RANK_SIZE") is not None and int(os.getenv("RANK_SIZE")) > 1:
-            print(f" | Rank {MultiDevice.get_rank()} Call model train.")
+            print(f" | Rank {MultiAscend.get_rank()} Call model train.")
         model.train(config.epochs, pre_training_dataset,
                     callbacks=callbacks, dataset_sink_mode=config.dataset_sink_mode)
 
@@ -203,10 +203,10 @@ def _build_training_pipeline(config,
 
     rank_size = os.getenv('RANK_SIZE')
     callbacks = [time_cb, loss_monitor]
-    if rank_size is not None and int(rank_size) > 1 and MultiDevice.get_rank() % 8 == 0:
+    if rank_size is not None and int(rank_size) > 1 and MultiAscend.get_rank() % 8 == 0:
         ckpt_callback = ModelCheckpoint(
             prefix=config.ckpt_prefix,
-            directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(MultiDevice.get_rank())),
+            directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(os.getenv('DEVICE_ID'))),
             config=ckpt_config)
         callbacks.append(ckpt_callback)
         summary_callback = SummaryCollector(summary_dir="./summary", collect_freq=50)
@@ -215,7 +215,7 @@ def _build_training_pipeline(config,
     if rank_size is None or int(rank_size) == 1:
         ckpt_callback = ModelCheckpoint(
             prefix=config.ckpt_prefix,
-            directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(config.device_id)),
+            directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(os.getenv('DEVICE_ID'))),
             config=ckpt_config)
         callbacks.append(ckpt_callback)
         summary_callback = SummaryCollector(summary_dir="./summary", collect_freq=50)
@@ -231,10 +231,10 @@ def _build_training_pipeline(config,
 
 def _setup_parallel_env():
     context.reset_auto_parallel_context()
-    MultiDevice.init()
+    MultiAscend.init()
     context.set_auto_parallel_context(
         parallel_mode=ParallelMode.DATA_PARALLEL,
-        device_num=MultiDevice.get_group_size(),
+        device_num=MultiAscend.get_group_size(),
         gradients_mean=True
     )
 
@@ -253,22 +253,22 @@ def train_parallel(config):
         data_files=config.pre_train_dataset,
         batch_size=config.batch_size,
         sink_mode=config.dataset_sink_mode,
-        rank_size=MultiDevice.get_group_size(),
-        rank_id=MultiDevice.get_rank()
+        rank_size=MultiAscend.get_group_size(),
+        rank_id=MultiAscend.get_rank()
     ) if config.pre_train_dataset else None
     fine_tune_dataset = load_dataset(
         data_files=config.fine_tune_dataset,
         batch_size=config.batch_size,
         sink_mode=config.dataset_sink_mode,
-        rank_size=MultiDevice.get_group_size(),
-        rank_id=MultiDevice.get_rank()
+        rank_size=MultiAscend.get_group_size(),
+        rank_id=MultiAscend.get_rank()
     ) if config.fine_tune_dataset else None
     test_dataset = load_dataset(
         data_files=config.test_dataset,
         batch_size=config.batch_size,
         sink_mode=config.dataset_sink_mode,
-        rank_size=MultiDevice.get_group_size(),
-        rank_id=MultiDevice.get_rank()
+        rank_size=MultiAscend.get_group_size(),
+        rank_id=MultiAscend.get_rank()
     ) if config.test_dataset else None
 
     _build_training_pipeline(config=config,
@@ -359,12 +359,17 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
     '''run train.'''
+    device_id = os.getenv('DEVICE_ID', None)
+    if device_id is None:
+        raise RuntimeError("`DEVICE_ID` can not be None.")
+
+    device_id = int(device_id)
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend",
+                        reserve_class_name_in_scope=True, device_id=device_id)
+    _rank_size = os.getenv('RANK_SIZE')
+
     _config = get_config(default_config)
     _config.pre_train_dataset = default_config.pre_train_dataset
-
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target=_config.device_target,
-                        reserve_class_name_in_scope=True, device_id=_config.device_id)
-    _rank_size = os.getenv('RANK_SIZE')
     set_seed(_config.random_seed)
     if _rank_size is not None and int(_rank_size) > 1:
         train_parallel(_config)

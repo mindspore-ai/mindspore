@@ -73,6 +73,5 @@ TEST_F(TestHSwishInt8, HSwish) {
 
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
-  delete kernel;
 }
 }  // namespace mindspore

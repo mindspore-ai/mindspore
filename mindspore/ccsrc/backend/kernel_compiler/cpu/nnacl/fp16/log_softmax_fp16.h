@@ -27,7 +27,7 @@ extern "C" {
 #endif
 void LogSoftmaxLastAxisFp16(const float16_t *src, float16_t *dst, float16_t *exp_data, int batch, int channel);
 void LogSoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *sum_data,
-                    const SoftmaxParameter *parameter);
+                    SoftmaxParameter *parameter);
 #ifdef __cplusplus
 }
 #endif

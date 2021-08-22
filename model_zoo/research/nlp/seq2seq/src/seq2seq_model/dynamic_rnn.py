@@ -90,6 +90,7 @@ class DynamicRNNNet(nn.Cell):
         self.cast = P.Cast()
         self.concat = P.Concat(axis=0)
         self.get_shape = P.Shape()
+        self.print = P.Print()
         self.net = DynamicRNNCell(num_setp=seq_length,
                                   batch_size=batchsize,
                                   word_embed_dim=word_embed_dim,

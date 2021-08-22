@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCustomExtractFeatures = "CustomExtractFeatures";
-class MS_CORE_API CustomExtractFeatures : public PrimitiveC {
+class CustomExtractFeatures : public PrimitiveC {
  public:
   CustomExtractFeatures() : PrimitiveC(kNameCustomExtractFeatures) {}
   ~CustomExtractFeatures() = default;

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.ops import composite as C
@@ -20,6 +19,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 
 grad_all = C.GradOperation(get_all=True)
+context.set_context(device_target="Ascend")
 
 
 class IfAfterIfNet(nn.Cell):
@@ -93,28 +93,6 @@ class IfAfterIfNet3(nn.Cell):
         return x
 
 
-# Add a while to run with vm in ascend
-class IfAfterIfNet4(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
-
-    def construct(self, x, y):
-        while x < 0:
-            x = x + 1
-        out = x * y + self.func(self.param_b)
-        if self.param_a > self.param_b:
-            out += 5
-        return out
-
-    def func(self, x):
-        if self.param_a > self.param_b:
-            x += 5
-        self.param_b += 4
-        return x
-
-
 class GradNet(nn.Cell):
     def __init__(self, net):
         super(GradNet, self).__init__()
@@ -129,75 +107,39 @@ def control_flow_if_after_if(input_net, x, y):
     context.set_context(mode=context.GRAPH_MODE)
     net = input_net()
     grad_net = GradNet(net)
-
-    forward_net = input_net()
-    graph_forward_res = forward_net(x, y)
+    graph_forward_res = net(x, y)
     graph_backward_res = grad_net(x, y)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     net = input_net()
     grad_net = GradNet(net)
-
-    forward_net = input_net()
-    pynative_forward_res = forward_net(x, y)
+    pynative_forward_res = net(x, y)
     pynative_backward_res = grad_net(x, y)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_if_after_if():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
     control_flow_if_after_if(IfAfterIfNet, x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_if_after_if_01():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
     control_flow_if_after_if(IfAfterIfNet1, x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_if_after_if_02():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
     control_flow_if_after_if(IfAfterIfNet2, x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-# Now in ascend result is not correct
-# @pytest.mark.platform_arm_ascend_training
-# @pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_if_after_if_03():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
     control_flow_if_after_if(IfAfterIfNet3, x, y)
-
-
-@pytest.mark.skip(reason="Result is not correct in multigraph sink.")
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_if_04():
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    control_flow_if_after_if(IfAfterIfNet4, x, y)

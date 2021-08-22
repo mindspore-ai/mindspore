@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2dTransposeFusion = "Conv2dTransposeFusion";
-class MS_CORE_API Conv2dTransposeFusion : public Conv2DTranspose {
+class Conv2dTransposeFusion : public Conv2DTranspose {
  public:
   Conv2dTransposeFusion() : Conv2DTranspose(kNameConv2dTransposeFusion) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});

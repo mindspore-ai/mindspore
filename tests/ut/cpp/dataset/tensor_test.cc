@@ -303,8 +303,7 @@ TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
   m.at<uint8_t>(1, 0) = 30;
   m.at<uint8_t>(1, 1) = 40;
   std::shared_ptr<CVTensor> cvt;
-  TensorShape shape{2, 2};
-  CVTensor::CreateFromMat(m, 2, &cvt);
+  CVTensor::CreateFromMat(m, &cvt);
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t);
   t->SetItemAt<uint8_t>({0, 0}, 10);
@@ -319,7 +318,7 @@ TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
   m2.at<uint8_t>(2) = 30;
   m2.at<uint8_t>(3) = 40;
   std::shared_ptr<CVTensor> cvt2;
-  CVTensor::CreateFromMat(m2, 2, &cvt2);
+  CVTensor::CreateFromMat(m2, &cvt2);
   std::shared_ptr<Tensor> t2;
   Tensor::CreateEmpty(TensorShape({4}), DataType(DataType::DE_UINT8), &t2);
   t2->SetItemAt<uint8_t>({0}, 10);
@@ -361,7 +360,7 @@ TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {
   m.at<int32_t>(1, 1) = 50;
   m.at<int32_t>(1, 2) = 60;
   std::shared_ptr<CVTensor> cvt;
-  CVTensor::CreateFromMat(m, 2, &cvt);
+  CVTensor::CreateFromMat(m, &cvt);
   cv::Mat mat;
   cvt->MatAtIndex({1}, &mat);
   cv::Mat m2(3, 1, CV_32S);
@@ -369,17 +368,17 @@ TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {
   m2.at<int32_t>(1) = 50;
   m2.at<int32_t>(2) = 60;
   std::shared_ptr<CVTensor> cvt2;
-  CVTensor::CreateFromMat(mat, 2, &cvt2);
+  CVTensor::CreateFromMat(mat, &cvt2);
   std::shared_ptr<CVTensor> cvt3;
-  CVTensor::CreateFromMat(m2, 2, &cvt3);
+  CVTensor::CreateFromMat(m2, &cvt3);
 
   ASSERT_TRUE(*cvt2 == *cvt3);
   cvt->MatAtIndex({0}, &mat);
   m2.at<int32_t>(0) = 10;
   m2.at<int32_t>(1) = 20;
   m2.at<int32_t>(2) = 30;
-  CVTensor::CreateFromMat(mat, 2, &cvt2);
-  CVTensor::CreateFromMat(m2, 2, &cvt3);
+  CVTensor::CreateFromMat(mat, &cvt2);
+  CVTensor::CreateFromMat(m2, &cvt3);
   ASSERT_TRUE(*cvt2 == *cvt3);
 }
 
@@ -536,4 +535,45 @@ TEST_F(MindDataTestTensorDE, TensorEmpty) {
   ASSERT_TRUE(t2->HasData());
   t2->Invalidate();
   ASSERT_TRUE(!t2->HasData());
+}
+
+TEST_F(MindDataTestTensorDE, TestTensorJson) {
+  MS_LOG(INFO) << "Doing TestTensor.";
+  std::vector<uint64_t> labels = {1, 1, 2};
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(labels, &input);
+  nlohmann::json out_json;
+  input->to_json(&out_json);
+
+  std::shared_ptr<Tensor> check;
+  std::stringstream ss;
+  ss << out_json["shape"];
+  std::string shape = ss.str();
+  ss.str("");
+  ss << out_json["type"];
+  std::string type = ss.str();
+  ss.str("");
+  ss << out_json["data"];
+  std::string data = ss.str();
+  ss.str("");
+
+  ASSERT_TRUE('"' + input->shape().ToString() + '"' == shape);
+  ASSERT_TRUE('"' + input->type().ToString() + '"' == type);
+
+  std::string input_data;
+  input_data.push_back('"');
+  input_data.push_back('[');
+  for (int i = 0; i < labels.size(); i++) {
+    input_data += std::to_string(labels[i]);
+    if (i < labels.size() - 1) {
+      input_data.push_back(',');
+    }
+  }
+  input_data.push_back(']');
+  input_data.push_back('"');
+
+  std::cout << input_data << std::endl;
+  std::cout << data << std::endl;
+
+  ASSERT_TRUE(input_data == data);
 }

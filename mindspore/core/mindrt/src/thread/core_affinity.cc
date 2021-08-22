@@ -248,31 +248,21 @@ int CoreAffinity::InitHardwareCoreInfo() {
   return THREAD_OK;
 }
 
-std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) {
-  std::vector<int> bind_id;
+int CoreAffinity::InitBindCoreId(size_t thread_num, BindMode bind_mode) {
   if (core_num_ != sorted_id_.size()) {
     THREAD_ERROR("init sorted core id failed");
-    return bind_id;
+    return THREAD_ERROR;
   }
+  bind_id_.clear();
   if (bind_mode == Power_Higher || bind_mode == Power_NoBind) {
     for (size_t i = 0; i < thread_num; ++i) {
-      bind_id.push_back(sorted_id_[i % core_num_]);
+      bind_id_.push_back(sorted_id_[i % core_num_]);
     }
   } else if (bind_mode == Power_Middle) {
     for (size_t i = 0; i < thread_num; ++i) {
-      bind_id.push_back(sorted_id_[(i + higher_num_) % core_num_]);
+      bind_id_.push_back(sorted_id_[(i + higher_num_) % core_num_]);
     }
   } else {
-    return bind_id;
-  }
-  return bind_id;
-}
-void CoreAffinity::SetCoreId(const std::vector<int> &core_list) { bind_id_ = core_list; }
-
-int CoreAffinity::InitBindCoreId(size_t thread_num, BindMode bind_mode) {
-  bind_id_.clear();
-  bind_id_ = GetCoreId(thread_num, bind_mode);
-  if (bind_id_.empty()) {
     return THREAD_ERROR;
   }
   return THREAD_OK;

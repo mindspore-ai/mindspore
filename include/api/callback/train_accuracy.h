@@ -24,6 +24,12 @@
 #include "include/api/callback/callback.h"
 #include "include/api/metrics/accuracy.h"
 
+#ifdef _WIN32
+#define MS_API __declspec(dllexport)
+#else
+#define MS_API __attribute__((visibility("default")))
+#endif
+
 using GraphPoint = std::pair<int, float>;
 
 namespace mindspore {

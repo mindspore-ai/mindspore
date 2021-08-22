@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGreaterEqual = "GreaterEqual";
-class MS_CORE_API GreaterEqual : public PrimitiveC {
+class GreaterEqual : public PrimitiveC {
  public:
   GreaterEqual() : PrimitiveC(kNameGreaterEqual) {}
   ~GreaterEqual() = default;

@@ -18,13 +18,10 @@
 #include "nnacl/fp16/reduce_fp16.h"
 #include "nnacl/errorcode.h"
 
-int ReduceMeanFp16(int outer_size, int inner_size, int axis_size, const float16_t *src_data, float16_t *dst_data,
-                   int tid, int thread_num) {
+int ReduceMeanFp16(const int outer_size, const int inner_size, const int axis_size, const float16_t *src_data,
+                   float16_t *dst_data, const int tid, const int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
-  }
-  if (axis_size == 0) {
-    return NNACL_ERR;
   }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {

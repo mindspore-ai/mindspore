@@ -25,7 +25,7 @@ namespace ops {
 
 constexpr auto kNameTensorArray = "TensorArray";
 
-class MS_CORE_API TensorArray : public PrimitiveC {
+class TensorArray : public PrimitiveC {
  public:
   TensorArray() : PrimitiveC(kNameTensorArray) { InitIOName({"size"}, {"handle", "flow"}); }
   ~TensorArray() = default;

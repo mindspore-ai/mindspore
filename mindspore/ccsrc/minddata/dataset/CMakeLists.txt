@@ -93,7 +93,6 @@ add_dependencies(engine-gnn core)
 add_dependencies(engine core)
 add_dependencies(callback core)
 add_dependencies(audio-kernels core)
-add_dependencies(audio-ir core)
 add_dependencies(audio-ir-kernels core)
 add_dependencies(text core)
 add_dependencies(text-kernels core)
@@ -157,7 +156,6 @@ set(submodules
         $<TARGET_OBJECTS:engine-cache-client>
         $<TARGET_OBJECTS:engine>
         $<TARGET_OBJECTS:audio-kernels>
-        $<TARGET_OBJECTS:audio-ir>
         $<TARGET_OBJECTS:audio-ir-kernels>
         $<TARGET_OBJECTS:text>
         $<TARGET_OBJECTS:text-kernels>
@@ -267,7 +265,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     else()
         target_link_libraries(_c_dataengine PRIVATE ${SECUREC_LIBRARY})
     endif()
-    target_link_options(_c_dataengine PRIVATE -Wl,--allow-multiple-definition)
 else()
     set(ICU_LIB mindspore::icuuc mindspore::icudata mindspore::icui18n)
     if(ENABLE_PYTHON)

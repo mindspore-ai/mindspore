@@ -123,11 +123,9 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     std::vector<int64_t> axis;
     switch (conv2d_node->get_format()) {
       case mindspore::Format::NWC:
-        conv2d_node->set_format(mindspore::NHWC);
         axis = {1};
         break;
       case mindspore::Format::NCW:
-        conv2d_node->set_format(mindspore::NCHW);
         axis = {2};
         break;
       default:

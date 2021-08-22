@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API DynamicBroadcastGradientArgs : public PrimitiveC {
+class DynamicBroadcastGradientArgs : public PrimitiveC {
  public:
   DynamicBroadcastGradientArgs() : PrimitiveC(prim::kPrimDynamicBroadcastGradientArgs->name()) {}
   ~DynamicBroadcastGradientArgs() = default;

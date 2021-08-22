@@ -32,8 +32,7 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeConvolutionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
-                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DeConvolutionCPUKernel() override;
   int Init() override;
   int Run() override;
@@ -46,8 +45,7 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int InitRunBuf();
   void FreeRunBuf();
   int InitParam();
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
+  int InitWeightBias();
 
  private:
   MatMulParameter *matmul_param_ = nullptr;
@@ -57,11 +55,13 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int thread_count_ = 1;
   int thread_stride_ = 0;
   int row_tile_ = 0;
+  float *weight_ptr_ = nullptr;
   float *pack_input_ = nullptr;
   float *pack_output_ = nullptr;
   float *tmp_buffer_ = nullptr;
   float *input_ptr_ = nullptr;
   float *output_ptr_ = nullptr;
+  float *bias_ptr = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DECONVOLUTION_H_

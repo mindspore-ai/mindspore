@@ -46,11 +46,14 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *filter_addr = GetDeviceAddress<T>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *work_space = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+    T *work_space = nullptr;
+    if (workspace_size_ != 0) {
+      work_space = GetDeviceAddress<T>(workspace, 0);
+    }
 
     const float alpha = 1;
     if (use_pad_) {
-      T *padded = GetPossiblyNullDeviceAddress<T>(workspace, 1);
+      T *padded = GetDeviceAddress<T>(workspace, 1);
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                   cudnnConvolutionBackwardData(cudnn_handle_, &alpha, filter_desc_, filter_addr,
                                                                input_desc_, input_addr, conv_desc_, algo_, work_space,

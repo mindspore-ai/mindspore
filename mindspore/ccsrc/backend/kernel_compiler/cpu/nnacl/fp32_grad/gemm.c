@@ -231,7 +231,7 @@ static void RowMajor2Col12MajorStride(const float *src_ptr, float *dst_ptr, size
     for (; ci < col; ci++) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C12NUM;
-      for (int i = 0; i < C12NUM; i++) {
+      for (size_t i = 0; i < C12NUM; i++) {
         dst_c[i] = src_c[i * lead];
       }
     }
@@ -240,7 +240,7 @@ static void RowMajor2Col12MajorStride(const float *src_ptr, float *dst_ptr, size
   }
 
   for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C12NUM] = src_r[i];
     }
     src_r += lead;
@@ -248,11 +248,12 @@ static void RowMajor2Col12MajorStride(const float *src_ptr, float *dst_ptr, size
   }
 
   for (; ri < row_up_12; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C12NUM] = 0;
     }
     dst_r += 1;
   }
+  return;
 }
 #endif
 
@@ -260,10 +261,10 @@ static void RowMajor2Col8MajorStride(const float *src_ptr, float *dst_ptr, size_
   size_t row8 = row / C8NUM * C8NUM;
 #ifdef ENABLE_ARM64
   size_t col_skip = col / C8NUM * C8NUM;
-  size_t skip_size = C8NUM;
+  int skip_size = C8NUM;
 #else
   size_t col_skip = col / C4NUM * C4NUM;
-  size_t skip_size = C4NUM;
+  int skip_size = C4NUM;
 #endif
   const float *src_r = src_ptr;
   float *dst_r = dst_ptr;
@@ -449,7 +450,7 @@ static void RowMajor2Col8MajorStride(const float *src_ptr, float *dst_ptr, size_
     for (; ci < col; ci++) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C8NUM;
-      for (int i = 0; i < C8NUM; i++) {
+      for (size_t i = 0; i < C8NUM; i++) {
         dst_c[i] = src_c[i * lead];
       }
     }
@@ -457,7 +458,7 @@ static void RowMajor2Col8MajorStride(const float *src_ptr, float *dst_ptr, size_
     dst_r += C8NUM * col;
   }
   for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C8NUM] = src_r[i];
     }
     src_r += lead;

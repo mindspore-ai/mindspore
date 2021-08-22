@@ -654,10 +654,8 @@ The result will be as follows:
 
 - Export on local
 
-We only support export with fine-tuned downstream task model and yaml config file, because the pretrained model is useless in inferences task.
-
 ```shell
-python export.py --config_path [../../*.yaml] --export_ckpt_file [CKPT_PATH] --export_file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [../../*.yaml] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 - Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
@@ -688,7 +686,8 @@ python export.py --config_path [../../*.yaml] --export_ckpt_file [CKPT_PATH] --e
 # You will see bert_ner.mindir under {Output file path}.
 ```
 
-The `export_ckpt_file` parameter is required, and `file_format` should be in ["AIR", "MINDIR"]
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 
 ### [Inference Process](#contents)
 
@@ -787,16 +786,3 @@ In run_pretrain.py, we set a random seed to make sure that each node has the sam
 # [ModelZoo Homepage](#contents)
 
 Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
-
-# FAQ
-
-Refer to the [ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/model_zoo#FAQ) for some common question.
-
-- **Q: How to resolve the continually overflow?**
-
-  **A**: Continually overflow is usually caused by using too high learning rate.
-  You could try lower `learning_rate` to use lower base learning rate or higher `power` to make learning rate decrease faster in config yaml.
-
-- **Q: Why the training process failed with error for the shape can not match?**
-  **A**: This is usually caused by the config `seq_length` of model can't match the dataset. You could check and modified the `seq_length` in yaml config according to the dataset you used.
-  The parameter of model won't change with `seq_length`, the shapes of parameter only depends on model config `max_position_embeddings`.

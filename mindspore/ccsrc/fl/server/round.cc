@@ -102,21 +102,6 @@ bool Round::ReInitForScaling(uint32_t server_num) {
   return true;
 }
 
-bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t updated_time_window) {
-  time_window_ = updated_time_window;
-  threshold_count_ = updated_threshold_count;
-  if (check_count_) {
-    if (!DistributedCountService::GetInstance().ReInitCounter(name_, threshold_count_)) {
-      MS_LOG(ERROR) << "Reinitializing count for " << name_ << " failed.";
-      return false;
-    }
-  }
-
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_, false);
-  kernel_->InitKernel(threshold_count_);
-  return true;
-}
-
 void Round::BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
   kernel_ = kernel;
@@ -129,9 +114,10 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   MS_ERROR_IF_NULL_WO_RET_VAL(message);
   MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
   MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
-
-  std::string reason = "";
-  if (!IsServerAvailable(&reason)) {
+  // If the server is still in the process of scaling, refuse the request.
+  if (Server::GetInstance().IsSafeMode()) {
+    MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
+    std::string reason = "The cluster is in safemode.";
     if (!communicator_->SendResponse(reason.c_str(), reason.size(), message)) {
       MS_LOG(ERROR) << "Sending response failed.";
       return;
@@ -139,7 +125,6 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
     return;
   }
 
-  Iteration::GetInstance().running_round_num_++;
   AddressPtr input = std::make_shared<Address>();
   AddressPtr output = std::make_shared<Address>();
   MS_ERROR_IF_NULL_WO_RET_VAL(input);
@@ -148,7 +133,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   input->size = message->len();
   bool ret = kernel_->Launch({input}, {}, {output});
   if (output->size == 0) {
-    reason = "The output of the round " + name_ + " is empty.";
+    std::string reason = "The output of the round " + name_ + " is empty.";
     MS_LOG(WARNING) << reason;
     if (!communicator_->SendResponse(reason.c_str(), reason.size(), message)) {
       MS_LOG(ERROR) << "Sending response failed.";
@@ -164,10 +149,9 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
 
   // Must send response back no matter what value Launch method returns.
   if (!ret) {
-    reason = "Launching round kernel of round " + name_ + " failed.";
-    Iteration::GetInstance().NotifyNext(false, reason);
+    std::string reason = "Launching round kernel of round " + name_ + " failed.";
+    Iteration::GetInstance().MoveToNextIteration(false, reason);
   }
-  Iteration::GetInstance().running_round_num_--;
   return;
 }
 
@@ -185,11 +169,12 @@ bool Round::check_timeout() const { return check_timeout_; }
 size_t Round::time_window() const { return time_window_; }
 
 void Round::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
   MS_LOG(INFO) << "Round " << name_ << " first count event is triggered.";
   // The timer starts only after the first count event is triggered by DistributedCountService.
   if (check_timeout_) {
-    MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
     iter_timer_->Start(std::chrono::milliseconds(time_window_));
   }
 
@@ -199,41 +184,18 @@ void Round::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &m
 }
 
 void Round::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
   MS_LOG(INFO) << "Round " << name_ << " last count event is triggered.";
   // Same as the first count event, the timer must be stopped by DistributedCountService.
   if (check_timeout_) {
-    MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
     iter_timer_->Stop();
   }
 
   // Some kernels override the OnLastCountEvent method.
   kernel_->OnLastCountEvent(message);
   return;
-}
-
-bool Round::IsServerAvailable(std::string *reason) {
-  MS_ERROR_IF_NULL_W_RET_VAL(reason, false);
-  // After one instance is completed, the model should be accessed by clients.
-  if (Iteration::GetInstance().instance_state() == InstanceState::kFinish && name_ == "getModel") {
-    return true;
-  }
-
-  // If the server state is Disable or Finish, refuse the request.
-  if (Iteration::GetInstance().instance_state() == InstanceState::kDisable ||
-      Iteration::GetInstance().instance_state() == InstanceState::kFinish) {
-    MS_LOG(WARNING) << "The server's training job is disabled or finished, please retry " + name_ + " later.";
-    *reason = ps::kJobNotAvailable;
-    return false;
-  }
-
-  // If the server is still in the process of scaling, reject the request.
-  if (Server::GetInstance().IsSafeMode()) {
-    MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
-    *reason = ps::kClusterSafeMode;
-    return false;
-  }
-  return true;
 }
 }  // namespace server
 }  // namespace fl

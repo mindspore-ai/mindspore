@@ -16,19 +16,7 @@
 
 root=$PWD
 save_path=$root/output/centerface/
-if [ ! -d $save_path ]
-then
-    echo "error: save_path=$save_path is not a dir"
-exit 1
-fi
-
 ground_truth_path=$1
-if [ ! -d $ground_truth_path ]
-then
-    echo "error: ground_truth_path=$ground_truth_path is not a dir"
-exit 1
-fi
-
 #for i in $(seq start_epoch end_epoch+1)
 for i in $(seq 89 200)
 do

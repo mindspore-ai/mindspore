@@ -126,7 +126,7 @@ int Cropper::GetModelOps() {
 
 int Cropper::GetModelFiles() {
   if (!this->flags_->model_file_.empty()) {
-    auto files = StrSplit(this->flags_->model_file_, std::string(kDelimComma));
+    auto files = StringSplit(this->flags_->model_file_, std::string(kDelimComma));
     for (const auto &file : files) {
       if (ValidFileSuffix(file, "ms") != RET_OK) {
         return RET_INPUT_PARAM_INVALID;
@@ -177,7 +177,7 @@ int Cropper::GetOpMatchFiles() {
   while (!in_file.eof()) {
     in_file.getline(buf, kBufSize);
     std::string buf_str = buf;
-    auto mapping = StrSplit(buf_str, kDelimComma);
+    auto mapping = StringSplit(buf_str, kDelimComma);
     if (!mapping.empty()) {
       std::string primitive = mapping.at(0);
       std::string type = mapping.at(1);

@@ -23,7 +23,6 @@
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
-        - [Post Training Quantization](#post-training-quantization)
     - [Model Description](#model-description)
         - [Performance](#performance)
             - [Evaluation Performance](#evaluation-performance)
@@ -540,52 +539,6 @@ Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.515
 Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.293
 Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.659
 mAP: 0.33880018942412393
-```
-
-### [Post Training Quantization](#contents)
-
-Relative executing script files reside in the directory "ascend310_quant_infer". Please implement following steps sequentially to complete post quantization.
-Current quantization project bases on COCO2017 dataset.
-
-1. Generate data of .bin format required for AIR model inference at Ascend310 platform.
-
-```shell
-python export_bin.py --config_path [YMAL CONFIG PATH] --coco_root [COCO DATA DIR] --mindrecord_dir [MINDRECORD PATH]
-```
-
-2. Export quantized AIR model.
-
-Post quantization of model requires special toolkits for exporting quantized AIR model. Please refer to [official website](https://www.hiascend.com/software/cann/community).
-
-```shell
-python post_quant.py --config_path [YMAL CONFIG PATH] --checkpoint_path [CKPT_PATH] --coco_root [COCO DATA DIR] --mindrecord_dir [MINDRECORD PATH]
-```
-
-The quantized AIR file will be stored as "./results/ssd_quant.air".
-
-3. Implement inference at Ascend310 platform.
-
-```shell
-# Ascend310 quant inference
-bash run_quant_infer.sh [AIR_PATH] [IMAGE_DATA] [IMAGE_ID] [IMAGE_SHAPE] [ANN_FILE]
-```
-
-Inference result is saved in current path, you can find result like this in acc.log file.
-
-```bash
-Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.237
-Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.386
-Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.240
-Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.042
-Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.200
-Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.425
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.255
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.404
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.441
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.136
-Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.455
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.707
-mAP: 0.23657619676441116
 ```
 
 ## [Model Description](#contents)

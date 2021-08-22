@@ -143,15 +143,15 @@ class DataType {
   constexpr bool operator!=(const Type a) const { return type_ != a; }
 
   // Disable this usage `if(d)` where d is of type DataType
-  /// \return return nothing since we deiable this function.
+  /// \return
   operator bool() = delete;
 
   // To be used in Switch/case
-  /// \return data type internal.
+  /// \return
   operator Type() const { return type_; }
 
   // The number of bytes needed to store one value of this type
-  /// \return the number of bytes of the type.
+  /// \return
   uint8_t SizeInBytes() const;
 
 #ifndef ENABLE_ANDROID

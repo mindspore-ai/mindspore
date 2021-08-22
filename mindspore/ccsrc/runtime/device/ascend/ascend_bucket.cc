@@ -124,8 +124,8 @@ void AscendBucket::LaunchAllReduce() {
     MS_LOG(EXCEPTION) << "allreduce input have different dtype";
   }
 
-  auto iter = kConstOpHcomDataTypeMap.find(type);
-  if (iter == kConstOpHcomDataTypeMap.end()) {
+  auto iter = CONST_OP_HCOM_DATA_TYPE_MAP.find(type);
+  if (iter == CONST_OP_HCOM_DATA_TYPE_MAP.end()) {
     MS_LOG(EXCEPTION) << "unknown data type:" << type;
   }
 

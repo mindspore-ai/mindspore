@@ -297,9 +297,7 @@ STATUS FunctionalizeWhile::CondSubgraphAddNodes() {
     } else {
       cond_sub_func_graph_->AddNode(node);
     }
-    if (!utils::isa<ValueNodePtr>(node)) {
-      node->set_func_graph(cond_sub_func_graph_);
-    }
+    node->set_func_graph(cond_sub_func_graph_);
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
@@ -369,7 +367,8 @@ STATUS FunctionalizeWhile::IdentifyCondSubgraphOutput() {
 
 STATUS FunctionalizeWhile::BuildCondGraph() {
   cond_subgraph_name_ = FunctionalizeControlOpPass::NodeClusterName(loop_cond_node_) + "_cond";
-  cond_sub_func_graph_ = FunctionalizeControlOpPass::NewFuncGraph(cond_subgraph_name_, converter::kFmkTypeTf);
+  cond_sub_func_graph_ =
+    FunctionalizeControlOpPass::NewFuncGraph(cond_subgraph_name_, mindspore::lite::converter::FmkType_TF);
   if (cond_sub_func_graph_ == nullptr) {
     MS_LOG(ERROR) << "new cond_sub_func_graph_ return nullptr";
     return RET_NULL_PTR;
@@ -420,9 +419,7 @@ STATUS FunctionalizeWhile::BodySubgraphAddNodes() {
     } else {
       body_sub_func_graph_->AddNode(node);
     }
-    if (!utils::isa<ValueNodePtr>(node)) {
-      node->set_func_graph(body_sub_func_graph_);
-    }
+    node->set_func_graph(body_sub_func_graph_);
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
@@ -526,7 +523,8 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
 
 STATUS FunctionalizeWhile::BuildBodyGraph() {
   body_subgraph_name_ = FunctionalizeControlOpPass::NodeClusterName(loop_cond_node_) + "_body";
-  body_sub_func_graph_ = FunctionalizeControlOpPass::NewFuncGraph(body_subgraph_name_, converter::kFmkTypeTf);
+  body_sub_func_graph_ =
+    FunctionalizeControlOpPass::NewFuncGraph(body_subgraph_name_, mindspore::lite::converter::FmkType_TF);
   if (body_sub_func_graph_ == nullptr) {
     MS_LOG(ERROR) << "new body_sub_func_graph_ return nullptr";
     return RET_NULL_PTR;

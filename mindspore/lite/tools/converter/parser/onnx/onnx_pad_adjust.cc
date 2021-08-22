@@ -98,8 +98,8 @@ bool OnnxPadAdjust::Run(const FuncGraphPtr &func_graph) {
     if (!input_node->isa<CNode>()) {
       continue;
     }
-    // reshape the padding of pad operator to 2 x i.
-    std::vector<int> shape_pre = {2, -1};
+    // reshape the padding of pad operator to 2 x 4.
+    std::vector<int> shape_pre = {2, 4};
     auto reshape_pre = NewReshapeOpNode(func_graph, input_node, shape_pre);
     if (reshape_pre == nullptr) {
       MS_LOG(ERROR) << "create reshape failed.";

@@ -58,20 +58,20 @@ def _check_full_batch():
 
 def _need_to_full():
     """Check whether to convert input to full shape or tensor."""
-    if _get_parallel_mode() not in ("semi_auto_parallel", "auto_parallel"):
-        return False
     dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
-    if dataset_strategy and dataset_strategy not in ("data_parallel", "full_batch"):
+    if dataset_strategy:
         return True
-    return not _get_full_batch()
+    parallel_mode = _get_parallel_mode()
+    full_batch = _get_full_batch()
+    need = ((parallel_mode in ("semi_auto_parallel", "auto_parallel"))
+            and (not full_batch))
+    return need
 
 
 def _to_full_shapes(shapes, device_num):
     """Expanding batch dimension according to device_num, adapt to mindspore minddata graph solution."""
     new_shapes = []
-    dataset_strategy = ()
-    if context.get_auto_parallel_context("dataset_strategy") not in ("data_parallel", "full_batch"):
-        dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
+    dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
     if dataset_strategy:
         if len(shapes) != len(dataset_strategy):
             raise ValueError("The input shapes size {} is not equal to "
@@ -108,9 +108,7 @@ def _to_full_tensor(elem, global_device_num, global_rank, scaling_sens=None):
     if stage_rank >= device_num:
         raise ValueError("The global rank must be smaller than device number, the global rank is {}, "
                          "the device num is {}".format(stage_rank, device_num))
-    dataset_strategy = ()
-    if context.get_auto_parallel_context("dataset_strategy") not in ("data_parallel", "full_batch"):
-        dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
+    dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
     if elem and dataset_strategy:
         if len(elem) != len(dataset_strategy):
             raise ValueError("The input size {} is not equal to "

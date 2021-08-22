@@ -63,8 +63,9 @@ int ReduceFp16CPUKernel::Init() {
 }
 
 int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
-  return reducer_(outer_size_, inner_size_, axis_size_, fp16_src_data_, fp16_dst_data_, task_id,
-                  op_parameter_->thread_num_);
+  auto ret =
+    reducer_(outer_size_, inner_size_, axis_size_, fp16_src_data_, fp16_dst_data_, task_id, op_parameter_->thread_num_);
+  return ret;
 }
 
 static int ReduceFp16Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
@@ -85,9 +86,7 @@ int ReduceFp16CPUKernel::Run() {
   }
 
   auto in_tensor = in_tensors_.at(0);
-  MS_ASSERT(in_tensor != nullptr);
-  fp16_src_data_ = reinterpret_cast<float16_t *>(in_tensor->data_c());
-  MS_ASSERT(fp16_src_data_ != nullptr);
+  fp16_src_data_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
   for (size_t i = 0; i < data_buffers_.size(); ++i) {
     fp16_dst_data_ = data_buffers_.at(i);
     outer_size_ = outer_sizes_.at(i);

@@ -81,27 +81,27 @@ class ColDescriptor {
 
   /// \brief getter function
   /// \return The column's DataType
-  DataType Type() const { return type_; }
+  DataType type() const { return type_; }
 
   /// \brief getter function
   /// \return The column's rank
-  int32_t Rank() const { return rank_; }
+  int32_t rank() const { return rank_; }
 
   /// \brief getter function
   /// \return The column's name
-  std::string Name() const { return col_name_; }
+  std::string name() const { return col_name_; }
 
   /// \brief getter function
   /// \return The column's shape
-  TensorShape Shape() const;
+  TensorShape shape() const;
 
   /// \brief getter function
   /// \return TF if the column has an assigned fixed shape.
-  bool HasShape() const { return tensor_shape_ != nullptr; }
+  bool hasShape() const { return tensor_shape_ != nullptr; }
 
   /// \brief getter function
   /// \return The column's tensor implementation type
-  TensorImpl GetTensorImpl() const { return tensor_impl_; }
+  TensorImpl tensorImpl() const { return tensor_impl_; }
 
  private:
   DataType type_;                              // The columns type
@@ -153,7 +153,7 @@ class DataSchema {
 
   /// \brief getter
   /// \return The reference to a ColDescriptor to get (const version)
-  const ColDescriptor &Column(int32_t idx) const;
+  const ColDescriptor &column(int32_t idx) const;
 
   /// \brief getter
   /// \return The number of columns in the schema
@@ -163,7 +163,7 @@ class DataSchema {
 
   /// \brief getter
   /// \return The number of rows read from schema
-  int64_t NumRows() const { return num_rows_; }
+  int64_t num_rows() const { return num_rows_; }
 
   static const char DEFAULT_DATA_SCHEMA_FILENAME[];
 

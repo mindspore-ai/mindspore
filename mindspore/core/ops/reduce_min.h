@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceMin = "ReduceMin";
-class MS_CORE_API ReduceMin : public Reduce {
+class ReduceMin : public Reduce {
  public:
   ReduceMin() : Reduce(kNameReduceMin) { InitIOName({"input_x", "axis"}, {"y"}); }
   ~ReduceMin() = default;

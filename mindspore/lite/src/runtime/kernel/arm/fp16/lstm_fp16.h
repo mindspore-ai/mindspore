@@ -49,7 +49,7 @@ class LstmFp16CPUKernel : public InnerKernel {
   float16_t *input_bias_ = nullptr;
   float16_t *state_bias_ = nullptr;
 
-  float16_t *buffer_[6] = {0};
+  float16_t *buffer_[6];
   const int gate_num = 4;
   const int packed_input_index = 0;
   const int input_gate_index = 1;

@@ -332,13 +332,13 @@ class DebugServices {
   std::mutex overflow_wp_lock_;
 
   // to keep track of watchpoints that have been checked already for a tensor in current step
-  std::unordered_map<std::string, std::set<int32_t>> wp_id_cache_;
-  std::unordered_map<unsigned int, watchpoint_t> watchpoint_table_;
+  std::unordered_map<std::string, std::set<int32_t>> wp_id_cache;
+  std::unordered_map<unsigned int, watchpoint_t> watchpoint_table;
   // key is the iteration path, value is vector of op_names which have overflowed
-  std::unordered_map<std::string, std::vector<std::string>> overflow_ops_;
-  std::string net_name_;
-  std::string dump_dir_;
-  bool is_sync_mode_;
+  std::unordered_map<std::string, std::vector<std::string>> overflow_ops;
+  std::string net_name;
+  std::string dump_dir;
+  bool is_sync_mode;
 
   std::shared_ptr<TensorLoader> tensor_loader_;
 };

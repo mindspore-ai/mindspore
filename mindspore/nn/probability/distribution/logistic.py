@@ -173,11 +173,10 @@ class Logistic(Distribution):
         return self.select(too_small, too_small_value, self.select(too_large, too_large_value, y))
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = 'location = {}, scale = {}'.format(self._loc, self._scale)
+            s = f'location = {self._loc}, scale = {self._scale}'
         else:
-            s = 'batch_shape = {}'.format(self._broadcast_shape)
+            s = f'batch_shape = {self._broadcast_shape}'
         return s
 
     @property
@@ -292,7 +291,6 @@ class Logistic(Distribution):
         value = self.cast(value, self.dtype)
         loc, scale = self._check_param_type(loc, scale)
         z = (value - loc) / scale
-        # pylint: disable=E1130
         return -self.softplus(-z)
 
     def _survival_function(self, value, loc=None, scale=None):
@@ -329,7 +327,6 @@ class Logistic(Distribution):
         value = self.cast(value, self.dtype)
         loc, scale = self._check_param_type(loc, scale)
         z = (value - loc) / scale
-        # pylint: disable=E1130
         return -self.softplus(z)
 
     def _sample(self, shape=(), loc=None, scale=None):

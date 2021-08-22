@@ -29,11 +29,9 @@ cd ${BUILD_PATH}/mindspore/tests/ut/cpp
 export LD_LIBRARY_PATH=${BUILD_PATH}/mindspore/googletest/googlemock/gtest:${PROJECT_PATH}/mindspore:\
 ${PROJECT_PATH}/mindspore/lib:${PROJECT_PATH}/graphengine/third_party/prebuild/x86_64:\
 ${PROJECT_PATH}/graphengine/third_party/prebuild/aarch64:${LD_LIBRARY_PATH}
-export PYTHONPATH=${PROJECT_PATH}/tests/ut/cpp/python_input:$PYTHONPATH:${PROJECT_PATH}:${PROJECT_PATH}/tests/ut/python
+export PYTHONPATH=${PROJECT_PATH}/tests/ut/cpp/python_input:$PYTHONPATH:${PROJECT_PATH}
 export GLOG_v=2
 export GC_COLLECT_IN_CELL=1
-## set op info config path
-export MINDSPORE_OP_INFO_PATH=${PROJECT_PATH}/config/op_info.config
 
 ## prepare data for dataset & mindrecord
 cp -fr $PROJECT_PATH/tests/ut/data ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/

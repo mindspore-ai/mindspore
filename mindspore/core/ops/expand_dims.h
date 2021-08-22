@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExpandDims = "ExpandDims";
-class MS_CORE_API ExpandDims : public PrimitiveC {
+class ExpandDims : public PrimitiveC {
  public:
   ExpandDims() : PrimitiveC(kNameExpandDims) { InitIOName({"x", "axis"}, {"output"}); }
   ~ExpandDims() = default;

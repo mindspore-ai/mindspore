@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTileFusion = "TileFusion";
-class MS_CORE_API TileFusion : public Tile {
+class TileFusion : public Tile {
  public:
   TileFusion() : Tile(kNameTileFusion) {}
   ~TileFusion() = default;

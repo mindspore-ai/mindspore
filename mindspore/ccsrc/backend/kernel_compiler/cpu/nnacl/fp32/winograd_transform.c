@@ -45,7 +45,7 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
     int dst_plane_offset = c * in_channel;
     for (int ic = 0; ic < ic4; ic++) {
       // clear tmp buffer
-      memset(tmp_data, 0, input_unit * input_unit * C4NUM * (int)(sizeof(float)));
+      memset(tmp_data, 0, input_unit * input_unit * C4NUM * sizeof(float));
 
       int real_c = in_channel - ic * C4NUM;
       real_c = real_c > C4NUM ? C4NUM : real_c;
@@ -87,7 +87,7 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
       // input transform
       const int tile_num = C12NUM;
       int dst_ic4_offset = dst_plane_offset + ic * C4NUM;
-      int dst_step = tile_num * in_channel;
+      size_t dst_step = tile_num * in_channel;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
       func(tmp_data, trans_input_ptr, C4NUM, dst_step, real_c);
     }
@@ -95,9 +95,9 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
   }  // cal_tile_num loop
 }
 
-void WinogradOutputNHWCTransform(const float *gemm_out, float *out_data, const float *bias_data, int cal_num,
-                                 int out_tile_index, int output_unit_num, const ConvParameter *conv_param,
-                                 OutputTransFunc func) {
+void WinogradOutputTransform(const float *gemm_out, float *out_data, const float *bias_data, int cal_num,
+                             int out_tile_index, int output_unit_num, const ConvParameter *conv_param,
+                             OutputTransFunc func) {
   int output_unit = conv_param->output_unit_;
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
@@ -133,50 +133,6 @@ void WinogradOutputNHWCTransform(const float *gemm_out, float *out_data, const f
       const float *bias_ptr = bias_data + j * C4NUM;
       float *dst_ptr = out_data + dst_oc4_offset;
       func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w, output_channel, r_w, r_h, r_c);
-    }
-    out_tile_index++;
-  }
-}
-
-void WinogradOutputNC4HW4Transform(const float *gemm_out, float *out_data, const float *bias_data, int cal_num,
-                                   int out_tile_index, int output_unit_num, const ConvParameter *conv_param,
-                                   OutputTransFunc func) {
-  int output_unit = conv_param->output_unit_;
-  int output_w = conv_param->output_w_;
-  int output_h = conv_param->output_h_;
-  int output_plane = output_w * output_h;
-  int output_channel = conv_param->output_channel_;
-  int oc4 = UP_DIV(output_channel, C4NUM);
-  int oc8 = UP_DIV(output_channel, C8NUM);
-  int input_unit = conv_param->input_unit_;
-  NNACL_CHECK_ZERO_RETURN(output_unit_num);
-
-  for (int i = 0; i < cal_num; i++) {
-    int dst_x_s = out_tile_index % output_unit_num;
-    int dst_y_s = out_tile_index / output_unit_num;
-    int r_w = output_w - dst_x_s * output_unit;
-    r_w = r_w > output_unit ? output_unit : r_w;
-    int r_h = output_h - dst_y_s * output_unit;
-    r_h = r_h > output_unit ? output_unit : r_h;
-    int tmp_ix = dst_x_s * output_unit;
-    dst_x_s = tmp_ix > output_w ? output_w : tmp_ix;
-    int tmp_iy = dst_y_s * output_unit;
-    dst_y_s = tmp_iy > output_h ? output_h : tmp_iy;
-
-    int src_tile_offset = i * oc8 * C8NUM * input_unit * input_unit;
-    int dst_tile_offset = dst_x_s + dst_y_s * output_w;
-
-    for (int j = 0; j < oc4; j++) {
-      int c8_block = j / 2;
-      int c8_res = j % 2;
-      int r_c = output_channel - j * C4NUM;
-      r_c = r_c > C4NUM ? C4NUM : r_c;
-      int src_oc4_offset = src_tile_offset + c8_block * input_unit * input_unit * C8NUM + c8_res * C4NUM;
-      int dst_oc4_offset = (dst_tile_offset + output_plane * j) * C4NUM;
-      const float *src_ptr = gemm_out + src_oc4_offset;
-      const float *bias_ptr = bias_data + j * C4NUM;
-      float *dst_ptr = out_data + dst_oc4_offset;
-      func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w, r_c, r_w, r_h, r_c);
     }
     out_tile_index++;
   }

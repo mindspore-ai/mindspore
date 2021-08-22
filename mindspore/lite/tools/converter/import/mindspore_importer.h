@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_LITE_TOOLS_IMPORT_MINDSPORE_IMPORTER_H_
 #define MINDSPORE_LITE_TOOLS_IMPORT_MINDSPORE_IMPORTER_H_
 
-#include <set>
 #include <string>
 #include "tools/converter/converter_flags.h"
 #include "load_mindir/load_model.h"
@@ -31,7 +30,9 @@ class MindsporeImporter {
 
  private:
   STATUS Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const converter::Flags &flag);
-  schema::QuantType quant_type_ = schema::QuantType_QUANT_NONE;
+  STATUS WeightFormatTransform(const FuncGraphPtr &graph);
+  STATUS HardCodeMindir(const CNodePtr &conv_node, const FuncGraphPtr &graph);
+  QuantType quant_type_ = schema::QuantType_QUANT_NONE;
   size_t Hex2ByteArray(const std::string &hex_str, unsigned char *byte_array, size_t max_len);
 };
 

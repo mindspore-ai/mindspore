@@ -118,16 +118,6 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
     if (!CheckHash(json_f, bin_f, js)) {
       return false;
     }
-
-    // cuda json file may have workspace information
-    if (js.find("workspace") != js.end()) {
-      auto workspace = js.at("workspace");
-      std::vector<size_t> sizes = workspace.at("size");
-      for (auto size : sizes) {
-        kernel_json_info_.workspaces.push_back(size);
-      }
-    }
-
     return true;
   }
 
@@ -197,7 +187,7 @@ void KernelPack::ParseKernelJson(const nlohmann::json &js) {
   kernel_json_info_.sha256 = js["sha256"];
 }
 
-bool KernelPack::LoadKernelMeta(const std::string &json_f) {
+bool KernelPack::LoadKernelMeta(const std::string &json_f, const std::string &processor) {
   if (json_f.length() <= strlen(kJsonSuffix)) {
     MS_LOG(ERROR) << "please check json path.";
     return false;

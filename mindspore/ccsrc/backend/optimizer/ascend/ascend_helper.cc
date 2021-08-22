@@ -197,7 +197,7 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
                                       : trans::IsNeedPadding(input_format, input_node_out_shape.size());
   if (!need_padding) {
     // don't need padding insert transdata only
-    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, prim::kPrimTransData->name());
+    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, prim::KPrimTransData->name());
     trans_node = trans_data;
   } else if (is_insert_input) {
     // if need padding & is input need insert a transdata
@@ -205,13 +205,13 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
     auto padding_shape = trans::PaddingShape(input_node_out_shape, AnfAlgo::GetInputFormat(node, insert_index),
                                              AnfAlgo::GetInputReshapeType(node, insert_index));
     auto reshape_node = CreateReshapeNode(func_graph, input_node, kernel_select, padding_shape);
-    trans_data = NewTransOpNode(func_graph, reshape_node, kernel_select, need_padding, prim::kPrimTransData->name());
+    trans_data = NewTransOpNode(func_graph, reshape_node, kernel_select, need_padding, prim::KPrimTransData->name());
     trans_node = trans_data;
     trans_data->set_abstract(input_node->abstract());
   } else {
     // if need padding & is output need insert a transdata
     // node -> transdata[padding shape] -> reshape[ori_shape]
-    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, prim::kPrimTransData->name());
+    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, prim::KPrimTransData->name());
     auto reshape_node = CreateReshapeNode(func_graph, trans_data, kernel_select, input_node_out_shape);
     trans_node = reshape_node;
   }

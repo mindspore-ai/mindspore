@@ -58,10 +58,8 @@ int BiasAddCPUFp16Kernel::Run() {
       is_repack_ = false;
     }
   }
-  auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
-  MS_ASSERT(in != nullptr);
-  MS_ASSERT(out != nullptr);
+  auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->MutableData());
+  auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   MS_ASSERT(ms_context_->allocator != nullptr);
   auto tile_in = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(data_size * sizeof(float16_t)));
@@ -72,10 +70,10 @@ int BiasAddCPUFp16Kernel::Run() {
     ms_context_->allocator->Free(tile_bias);
     return RET_NULL_PTR;
   }
-  auto ret = BroadcastAddFp16(in, bias_data_, tile_in, tile_bias, out, data_size, bias_param_);
+  BroadcastAddFp16(in, bias_data_, tile_in, tile_bias, out, data_size, bias_param_);
   ms_context_->allocator->Free(tile_in);
   ms_context_->allocator->Free(tile_bias);
-  return ret;
+  return RET_OK;
 }
 
 BiasAddCPUFp16Kernel::~BiasAddCPUFp16Kernel() {
@@ -95,7 +93,7 @@ int BiasAddCPUFp16Kernel::GetBiasData() {
         return RET_NULL_PTR;
       }
     }
-    auto bias = reinterpret_cast<float *>(bias_tensor_->data_c());
+    auto bias = reinterpret_cast<float *>(bias_tensor_->MutableData());
     if (bias == nullptr) {
       MS_LOG(ERROR) << "bias is nullptr!";
       return RET_NULL_PTR;
@@ -104,7 +102,7 @@ int BiasAddCPUFp16Kernel::GetBiasData() {
       bias_data_[i] = static_cast<float16_t>(bias[i]);
     }
   } else {
-    bias_data_ = reinterpret_cast<float16_t *>(bias_tensor_->data_c());
+    bias_data_ = reinterpret_cast<float16_t *>(bias_tensor_->MutableData());
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "bias_data_ is nullptr";
       return RET_NULL_PTR;
@@ -114,8 +112,6 @@ int BiasAddCPUFp16Kernel::GetBiasData() {
 }
 
 int BiasAddCPUFp16Kernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   bias_tensor_ = in_tensors_.at(1);
   MS_ASSERT(bias_tensor_ != nullptr);
   if (!InferShapeDone()) {

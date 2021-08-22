@@ -140,54 +140,6 @@ def test_slice_patches_exception_01():
         logger.info("Got an exception in SlicePatches: {}".format(str(e)))
         assert "Input fill_value is not within" in str(e)
 
-def test_slice_patches_06():
-    image = np.random.randint(0, 255, (158, 126, 1)).astype(np.int32)
-    slice_patches_op = c_vision.SlicePatches(2, 8)
-    patches = slice_patches_op(image)
-    assert len(patches) == 16
-    assert patches[0].shape == (79, 16, 1)
-
-def test_slice_patches_07():
-    image = np.random.randint(0, 255, (158, 126)).astype(np.int32)
-    slice_patches_op = c_vision.SlicePatches(2, 8)
-    patches = slice_patches_op(image)
-    assert len(patches) == 16
-    assert patches[0].shape == (79, 16)
-
-def test_slice_patches_08():
-    np_data = np.random.randint(0, 255, (1, 56, 82, 256)).astype(np.uint8)
-    dataset = ds.NumpySlicesDataset(np_data, column_names=["image"])
-    slice_patches_op = c_vision.SlicePatches(2, 2)
-    dataset = dataset.map(input_columns=["image"], output_columns=["img0", "img1", "img2", "img3"],
-                          column_order=["img0", "img1", "img2", "img3"],
-                          operations=slice_patches_op)
-    for item in dataset.create_dict_iterator(output_numpy=True):
-        patch_shape = item['img0'].shape
-        assert patch_shape == (28, 41, 256)
-
-def test_slice_patches_09():
-    image = np.random.randint(0, 255, (56, 82, 256)).astype(np.uint8)
-    slice_patches_op = c_vision.SlicePatches(4, 3, mode.SliceMode.PAD)
-    patches = slice_patches_op(image)
-    assert len(patches) == 12
-    assert patches[0].shape == (14, 28, 256)
-
-def skip_test_slice_patches_10():
-    image = np.random.randint(0, 255, (7000, 7000, 255)).astype(np.uint8)
-    slice_patches_op = c_vision.SlicePatches(10, 13, mode.SliceMode.DROP)
-    patches = slice_patches_op(image)
-    assert patches[0].shape == (700, 538, 255)
-
-def skip_test_slice_patches_11():
-    np_data = np.random.randint(0, 255, (1, 7000, 7000, 256)).astype(np.uint8)
-    dataset = ds.NumpySlicesDataset(np_data, column_names=["image"])
-    slice_patches_op = c_vision.SlicePatches(10, 13, mode.SliceMode.DROP)
-    cols = ['img' + str(x) for x in range(10*13)]
-    dataset = dataset.map(input_columns=["image"], output_columns=cols,
-                          column_order=cols, operations=slice_patches_op)
-    for item in dataset.create_dict_iterator(output_numpy=True):
-        patch_shape = item['img0'].shape
-        assert patch_shape == (700, 538, 256)
 
 def slice_patches(image, num_h, num_w, pad_or_drop, fill_value):
     """ help function which slice patches with numpy """
@@ -222,8 +174,4 @@ if __name__ == "__main__":
     test_slice_patches_03(plot=True)
     test_slice_patches_04(plot=True)
     test_slice_patches_05(plot=True)
-    test_slice_patches_06()
-    test_slice_patches_07()
-    test_slice_patches_08()
-    test_slice_patches_09()
     test_slice_patches_exception_01()

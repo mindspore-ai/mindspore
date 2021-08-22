@@ -92,38 +92,20 @@ def pad_arg_name(arg_name):
     return arg_name
 
 
-def check_value(value, valid_range, arg_name="", left_open_interval=False, right_open_interval=False):
+def check_value(value, valid_range, arg_name=""):
     """
-    Validates a value is within a desired range with left and right interval open or close.
+    Validates a value is within a desired range [inclusive, inclusive].
 
-    :param value: the value to be validated.
-    :param valid_range: the desired range.
-    :param arg_name: name of the variable to be validated.
-    :param left_open_interval: True for left interval open and False for close.
-    :param right_open_interval: True for right interval open and False for close.
+    :param value: the value to be validated
+    :param valid_range: the desired range
+    :param arg_name: arg_name: arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
     arg_name = pad_arg_name(arg_name)
-    if not left_open_interval and not right_open_interval:
-        if value < valid_range[0] or value > valid_range[1]:
-            raise ValueError(
-                "Input {0}is not within the required interval of [{1}, {2}].".format(arg_name, valid_range[0],
-                                                                                     valid_range[1]))
-    elif left_open_interval and not right_open_interval:
-        if value <= valid_range[0] or value > valid_range[1]:
-            raise ValueError(
-                "Input {0}is not within the required interval of ({1}, {2}].".format(arg_name, valid_range[0],
-                                                                                     valid_range[1]))
-    elif not left_open_interval and right_open_interval:
-        if value < valid_range[0] or value >= valid_range[1]:
-            raise ValueError(
-                "Input {0}is not within the required interval of [{1}, {2}).".format(arg_name, valid_range[0],
-                                                                                     valid_range[1]))
-    else:
-        if value <= valid_range[0] or value >= valid_range[1]:
-            raise ValueError(
-                "Input {0}is not within the required interval of ({1}, {2}).".format(arg_name, valid_range[0],
-                                                                                     valid_range[1]))
+    if value < valid_range[0] or value > valid_range[1]:
+        raise ValueError(
+            "Input {0}is not within the required interval of [{1}, {2}].".format(arg_name, valid_range[0],
+                                                                                 valid_range[1]))
 
 
 def check_value_cutoff(value, valid_range, arg_name=""):
@@ -135,7 +117,11 @@ def check_value_cutoff(value, valid_range, arg_name=""):
     :param arg_name: arg_name: arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
-    check_value(value, valid_range, arg_name, False, True)
+    arg_name = pad_arg_name(arg_name)
+    if value < valid_range[0] or value >= valid_range[1]:
+        raise ValueError(
+            "Input {0}is not within the required interval of [{1}, {2}).".format(arg_name, valid_range[0],
+                                                                                 valid_range[1]))
 
 
 def check_value_ratio(value, valid_range, arg_name=""):
@@ -147,7 +133,11 @@ def check_value_ratio(value, valid_range, arg_name=""):
     :param arg_name: arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
-    check_value(value, valid_range, arg_name, True, False)
+    arg_name = pad_arg_name(arg_name)
+    if value <= valid_range[0] or value > valid_range[1]:
+        raise ValueError(
+            "Input {0}is not within the required interval of ({1}, {2}].".format(arg_name, valid_range[0],
+                                                                                 valid_range[1]))
 
 
 def check_value_normalize_std(value, valid_range, arg_name=""):
@@ -159,7 +149,11 @@ def check_value_normalize_std(value, valid_range, arg_name=""):
     :param arg_name: arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
-    check_value(value, valid_range, arg_name, True, False)
+    arg_name = pad_arg_name(arg_name)
+    if value <= valid_range[0] or value > valid_range[1]:
+        raise ValueError(
+            "Input {0}is not within the required interval of ({1}, {2}].".format(arg_name, valid_range[0],
+                                                                                 valid_range[1]))
 
 
 def check_range(values, valid_range, arg_name=""):
@@ -191,12 +185,10 @@ def check_positive(value, arg_name=""):
         raise ValueError("Input {0}must be greater than 0.".format(arg_name))
 
 
-def check_int32_not_zero(value, arg_name=""):
+def check_not_zero(value, arg_name=""):
     arg_name = pad_arg_name(arg_name)
-    type_check(value, (int,), arg_name)
-    if value < INT32_MIN or value > INT32_MAX or value == 0:
-        raise ValueError(
-            "Input {0}is not within the required interval of [-2147483648, 0) and (0, 2147483647].".format(arg_name))
+    if value == 0:
+        raise ValueError("Input {0}can not be 0.".format(arg_name))
 
 
 def check_odd(value, arg_name=""):
@@ -216,18 +208,6 @@ def check_2tuple(value, arg_name=""):
     """
     if not (isinstance(value, tuple) and len(value) == 2):
         raise ValueError("Value {0} needs to be a 2-tuple.".format(arg_name))
-
-
-def check_int32(value, arg_name=""):
-    """
-    Validates the value of a variable is within the range of int32.
-
-    :param value: the value of the variable
-    :param arg_name: name of the variable to be validated
-    :return: Exception: when the validation fails, nothing otherwise.
-    """
-    type_check(value, (int,), arg_name)
-    check_value(value, [INT32_MIN, INT32_MAX], arg_name)
 
 
 def check_uint8(value, arg_name=""):
@@ -266,6 +246,11 @@ def check_pos_uint32(value, arg_name=""):
     check_value(value, [POS_INT_MIN, UINT32_MAX])
 
 
+def check_int32(value, arg_name=""):
+    type_check(value, (int,), arg_name)
+    check_value(value, [INT32_MIN, INT32_MAX], arg_name)
+
+
 def check_pos_int32(value, arg_name=""):
     """
     Validates the value of a variable is within the range of int32.
@@ -299,7 +284,7 @@ def check_pos_int64(value, arg_name=""):
     :return: Exception: when the validation fails, nothing otherwise.
     """
     type_check(value, (int,), arg_name)
-    check_value(value, [POS_INT_MIN, INT64_MAX])
+    check_value(value, [UINT64_MIN, INT64_MAX])
 
 
 def check_float32(value, arg_name=""):
@@ -332,7 +317,7 @@ def check_pos_float32(value, arg_name=""):
     :param arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
-    check_value(value, [UINT32_MIN, FLOAT_MAX_INTEGER], arg_name, True)
+    check_value(value, [UINT32_MIN, FLOAT_MAX_INTEGER], arg_name)
 
 
 def check_pos_float64(value, arg_name=""):
@@ -343,29 +328,7 @@ def check_pos_float64(value, arg_name=""):
     :param arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
-    check_value(value, [UINT64_MIN, DOUBLE_MAX_INTEGER], arg_name, True)
-
-
-def check_non_negative_float32(value, arg_name=""):
-    """
-    Validates the value of a variable is within the range of non negative float32.
-
-    :param value: the value of the variable
-    :param arg_name: name of the variable to be validated
-    :return: Exception: when the validation fails, nothing otherwise.
-    """
-    check_value(value, [UINT32_MIN, FLOAT_MAX_INTEGER], arg_name)
-
-
-def check_non_negative_float64(value, arg_name=""):
-    """
-    Validates the value of a variable is within the range of non negative float64.
-
-    :param value: the value of the variable
-    :param arg_name: name of the variable to be validated
-    :return: Exception: when the validation fails, nothing otherwise.
-    """
-    check_value(value, [UINT32_MIN, DOUBLE_MAX_INTEGER], arg_name)
+    check_value(value, [UINT64_MIN, DOUBLE_MAX_INTEGER], arg_name)
 
 
 def check_valid_detype(type_):
@@ -518,6 +481,8 @@ def check_filename(path):
 
     if filename.startswith(' ') or filename.endswith(' '):
         raise ValueError("filename should not start/end with space.")
+
+    return True
 
 
 def check_dir(dataset_dir):

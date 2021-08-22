@@ -73,7 +73,7 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
   } else {
     block_size_.C = block_size_.H = block_size_.W = 1;
   }
-  const std::string program_name = "DepthwiseConv2d";
+  std::string program_name = "DepthwiseConv2d";
   std::string source = depthwise_conv2d_source;
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
@@ -94,10 +94,7 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
     return ret;
   }
   SetGlobalLocal();
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(out_mem_type_);
   return RET_OK;
 }
@@ -111,7 +108,6 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   auto out_info = GpuTensorInfo(out_tensors_[0]);
   // weight: o, h, w, i; o == group, i == 1
   void *origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data_c() : stored_weight_;
-  MS_ASSERT(origin_weight);
   int CO4 = UP_DIV(out_info.C, C4NUM);
   int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
 
@@ -157,12 +153,10 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
     ImageSize img_size{(size_t)plane_out / C4NUM, (size_t)out_info.N * CO4, img_dtype};
     packed_weight_ = allocator->Malloc(img_size, temp_filter.data());
-
   } else {
     packed_weight_ = allocator->Malloc(pack_weight_size, temp_filter.data());
   }
   if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
     return RET_ERROR;
   }
   FreeStoredData(stored_weight_);
@@ -201,20 +195,17 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
     dst_type = is_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32;
     auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
-    MS_ASSERT(src_data);
     ConvertBias(src_data, temp_bias.data(), element_size, dtype_size, src_type, dst_type);
   }
   bias_data_ = allocator->Malloc(bias_size, temp_bias.data());
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
     return RET_ERROR;
   }
-
   FreeStoredData(stored_bias_);
   return RET_OK;
 }
 
-int DepthwiseConv2dOpenCLKernel::SetConstArgs() {
+void DepthwiseConv2dOpenCLKernel::SetConstArgs() {
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto in_info = GpuTensorInfo(in_tensors_[0]);
   auto out_info = GpuTensorInfo(out_tensors_[0]);
@@ -231,47 +222,16 @@ int DepthwiseConv2dOpenCLKernel::SetConstArgs() {
   cl_int4 dst_size = {(cl_int)out_info.W, (cl_int)out_info.H, (cl_int)CO4, (cl_int)out_info.N};
 
   int arg_cnt = 2;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, packed_weight_, filter_type_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, kernel_size) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, stride) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padding) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dilation) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].first) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].second) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, packed_weight_, filter_type_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, kernel_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, stride);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padding);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dilation);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].first);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].second);
 }
 
 void DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
@@ -326,18 +286,9 @@ int DepthwiseConv2dOpenCLKernel::StoreConstData() {
 
 int DepthwiseConv2dOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_[0]->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 }  // namespace mindspore::kernel

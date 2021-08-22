@@ -27,15 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceSum = "ReduceSum";
-class MS_CORE_API ReduceSum : public Reduce {
+class ReduceSum : public Reduce {
  public:
-  ReduceSum() : Reduce(kNameReduceSum) { InitIOName({"x", "axis"}, {"y"}); }
+  ReduceSum() : Reduce(kNameReduceSum) { InitIOName({"input_x", "axis"}, {"y"}); }
   ~ReduceSum() = default;
   MS_DECLARE_PARENT(ReduceSum, Reduce);
   void Init() {}
 };
-AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

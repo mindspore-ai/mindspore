@@ -318,11 +318,8 @@ AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePt
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 2);
   AbstractListPtr list = CheckArg<AbstractList>(op_name, args_spec_list, 0);
-  AbstractBasePtr item = dyn_cast<AbstractBase>(args_spec_list[1]);
-  MS_EXCEPTION_IF_NULL(item);
-  auto new_list = AbstractBasePtrList(list->elements());
-  new_list.emplace_back(item);
-  return std::make_shared<AbstractList>(new_list);
+  (void)AbstractJoin(list->elements());
+  return list;
 }
 
 AbstractBasePtr InferImplTupleLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

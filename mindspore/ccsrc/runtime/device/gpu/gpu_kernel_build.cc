@@ -33,7 +33,6 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   bool already_check_nvcc = false;
   std::vector<AnfNodePtr> akg_nodes;
   for (const auto &kernel : kernels) {
-    MS_EXCEPTION_IF_NULL(kernel);
     std::string kernel_name = session::AnfRuntimeAlgorithm::GetCNodeName(kernel);
     if (kernel_name == prim::kPrimTupleGetItem->name() || kernel_name == prim::kPrimMakeTuple->name() ||
         kernel_name == prim::kPrimDepend->name() || kernel_name == prim::kPrimStateSetItem->name()) {
@@ -42,7 +41,8 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
 
     if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
       if (!bin_map->initialized()) {
-        bin_map->Initialize();
+        auto pid = mindspore::kernel::GpuKernelBuildClient::Instance().AkgGetPid();
+        bin_map->Initialize(pid);
       }
       if (!already_check_nvcc) {
         already_check_nvcc = true;

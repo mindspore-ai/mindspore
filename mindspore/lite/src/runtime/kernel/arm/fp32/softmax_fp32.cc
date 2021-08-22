@@ -30,8 +30,6 @@ using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
 int SoftmaxCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = SoftmaxBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;

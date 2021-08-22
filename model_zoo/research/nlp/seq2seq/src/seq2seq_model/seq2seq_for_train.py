@@ -23,7 +23,8 @@ from mindspore.common.tensor import Tensor
 from mindspore import Parameter
 from mindspore.common import dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore.communication.management import get_group_size
+from mindspore.context import ParallelMode
+from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 
 from .seq2seq import Seq2seqModel
 
@@ -31,31 +32,43 @@ from .seq2seq import Seq2seqModel
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 5.0
 
-clip_grad = C.MultitypeFuncGraph("clip_grad")
-
-
-@clip_grad.register("Number", "Number", "Tensor")
-def _clip_grad(clip_type, clip_value, grad):
+class ClipGradients(nn.Cell):
     """
     Clip gradients.
 
-    Inputs:
-        clip_type (int): The way to clip, 0 for 'value', 1 for 'norm'.
-        clip_value (float): Specifies how much to clip.
-        grad (tuple[Tensor]): Gradients.
+    Args:
+        grads (list): List of gradient tuples.
+        clip_type (Tensor): The way to clip, 'value' or 'norm'.
+        clip_value (Tensor): Specifies how much to clip.
 
-    Outputs:
-        tuple[Tensor], clipped gradients.
+    Returns:
+        List, a list of clipped_grad tuples.
     """
-    if clip_type not in (0, 1):
-        return grad
-    dt = F.dtype(grad)
-    if clip_type == 0:
-        new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
-                                   F.cast(F.tuple_to_array((clip_value,)), dt))
-    else:
-        new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
-    return new_grad
+    def __init__(self):
+        super(ClipGradients, self).__init__()
+        self.clip_by_norm = nn.ClipByNorm()
+        self.cast = P.Cast()
+        self.dtype = P.DType()
+
+    def construct(self,
+                  grads,
+                  clip_type,
+                  clip_value):
+        """Defines the gradients clip."""
+        if clip_type not in (0, 1):
+            return grads
+
+        new_grads = ()
+        for grad in grads:
+            dt = self.dtype(grad)
+            if clip_type == 0:
+                t = C.clip_by_value(grad, self.cast(F.tuple_to_array((-clip_value,)), dt),
+                                    self.cast(F.tuple_to_array((clip_value,)), dt))
+            else:
+                t = self.clip_by_norm(grad, self.cast(F.tuple_to_array((clip_value,)), dt))
+            new_grads = new_grads + (t,)
+
+        return new_grads
 
 class PredLogProbs(nn.Cell):
     """
@@ -225,7 +238,8 @@ grad_overflow = P.FloatStatus()
 def _tensor_grad_overflow(grad):
     return grad_overflow(grad)
 
-class Seq2seqTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
+
+class Seq2seqTrainOneStepWithLossScaleCell(nn.Cell):
     """
     Encapsulation class of seq2seq network training.
 
@@ -240,18 +254,49 @@ class Seq2seqTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
     Returns:
         Tuple[Tensor, Tensor, Tensor], loss, overflow, sen.
     """
+
     def __init__(self, network, optimizer, scale_update_cell=None):
-        super(Seq2seqTrainOneStepWithLossScaleCell, self).__init__(network, optimizer, scale_update_cell)
-        self.cast = P.Cast()
-        self.degree = 1
+
+        super(Seq2seqTrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
+        self.network = network
+        self.network.set_grad()
+        self.network.add_flags(defer_inline=True)
+        self.weights = optimizer.parameters
+        self.optimizer = optimizer
+        self.grad = C.GradOperation(get_by_list=True,
+                                    sens_param=True)
+        self.reducer_flag = False
+        self.all_reduce = P.AllReduce()
+
+        self.parallel_mode = _get_parallel_mode()
+        if self.parallel_mode not in ParallelMode.MODE_LIST:
+            raise ValueError("Parallel mode does not support: ", self.parallel_mode)
+        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
+            self.reducer_flag = True
+        self.grad_reducer = None
         if self.reducer_flag:
-            self.degree = get_group_size()
-            self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
+            mean = _get_gradients_mean()
+            degree = _get_device_num()
+            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
+        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
+        self.clip_gradients = ClipGradients()
+        self.cast = P.Cast()
+        self.alloc_status = P.NPUAllocFloatStatus()
+        self.get_status = P.NPUGetFloatStatus()
+        self.clear_before_grad = P.NPUClearFloatStatus()
+        self.reduce_sum = P.ReduceSum(keep_dims=False)
+        self.base = Tensor(1, mstype.float32)
+        self.less_equal = P.LessEqual()
+        self.hyper_map = C.HyperMap()
 
         self.loss_scale = None
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
-            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
+            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(),
+                                               dtype=mstype.float32), name="loss_scale")
+        self.add_flags(has_effect=True)
+
+        self.loss_scalar = P.ScalarSummary()
 
     def construct(self,
                   source_eos_ids,
@@ -286,13 +331,14 @@ class Seq2seqTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
                             target_ids,
                             label_ids,
                             label_weights)
+        # Alloc status.
+        init = self.alloc_status()
+        # Clear overflow buffer.
+        self.clear_before_grad(init)
         if sens is None:
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
-
-        status, scaling_sens = self.start_overflow_check(loss, scaling_sens)
-
         grads = self.grad(self.network, weights)(source_ids,
                                                  source_mask,
                                                  target_ids,
@@ -300,12 +346,22 @@ class Seq2seqTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
                                                  label_weights,
                                                  self.cast(scaling_sens,
                                                            mstype.float32))
-        # apply grad reducer on grads
-        grads = self.grad_reducer(grads)
-        grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
-        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
 
-        cond = self.get_overflow_status(status, grads)
+        grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
+        grads = self.clip_gradients(grads, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE)
+        if self.reducer_flag:
+            # Apply grad reducer on grads.
+            grads = self.grad_reducer(grads)
+        self.get_status(init)
+        flag_sum = self.reduce_sum(init, (0,))
+
+        if self.is_distributed:
+            # Sum overflow flag over devices.
+            flag_reduce = self.all_reduce(flag_sum)
+            cond = self.less_equal(self.base, flag_reduce)
+        else:
+            cond = self.less_equal(self.base, flag_sum)
+
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
@@ -313,5 +369,8 @@ class Seq2seqTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
             succ = False
         else:
             succ = self.optimizer(grads)
+
+        self.loss_scalar("loss", loss)
+
         ret = (loss, cond, scaling_sens)
         return F.depend(ret, succ)

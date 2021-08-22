@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
+
 #include "minddata/dataset/kernels/ir/vision/rgb_to_bgr_ir.h"
 
 #include "minddata/dataset/kernels/image/rgb_to_bgr_op.h"
+
+#include "minddata/dataset/kernels/ir/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -32,11 +36,6 @@ std::string RgbToBgrOperation::Name() const { return kRgbToBgrOperation; }
 Status RgbToBgrOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> RgbToBgrOperation::Build() { return std::make_shared<RgbToBgrOp>(); }
-
-Status RgbToBgrOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  *operation = std::make_shared<vision::RgbToBgrOperation>();
-  return Status::OK();
-}
 
 }  // namespace vision
 }  // namespace dataset

@@ -44,7 +44,7 @@ class GatherNdInt8CPUKernel : public InnerKernel {
   int *in_offset_ = nullptr;
   int8_t *in_ptr_ = nullptr;
   int8_t *out_ptr_ = nullptr;
-  GatherQuantArg param_ = {};
+  GatherQuantArg param_;
 };
 }  // namespace mindspore::kernel
 

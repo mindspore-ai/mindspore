@@ -25,10 +25,11 @@
 #define DP_EVENT 0x10000
 #define DP_DEBUG_LEVEL (DP_EVENT | DP_ERR | DP_WARNING | DP_INFO | DP_DEBUG)
 
+#include <vector>
+#include <string>
+
 #if defined(DVPP_UTST) || defined(DEBUG)
 #include <stdio.h>
-#include <string>
-#include <vector>
 
 #define DP_LOG(model, level, format, ...)                              \
   do {                                                                 \
@@ -66,8 +67,6 @@
 
 #include <securec.h>
 #include <cstdio>
-#include <vector>
-#include <string>
 #include "glog/logging.h"
 
 template <typename... Args>

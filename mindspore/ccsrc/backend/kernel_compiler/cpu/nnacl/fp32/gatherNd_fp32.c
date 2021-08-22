@@ -21,7 +21,7 @@
 int GatherNd(const float *input, float *output, const int *in_offset, int area, int count) {
   int i = 0;
   for (i = 0; i < count; i++) {
-    (void)memcpy(output + area * i, input + in_offset[i], (size_t)(area) * sizeof(float));
+    (void)memcpy(output + area * i, input + in_offset[i], area * sizeof(float));
   }
   return NNACL_OK;
 }

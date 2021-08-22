@@ -18,7 +18,7 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int DoSplitWithOverlapParallel(char *in_data, char **out_data, int slice_idx, const SplitWithOverlapParameter *param,
+int DoSplitWithOverlapParallel(char *in_data, char **out_data, int slice_idx, SplitWithOverlapParameter *param,
                                const int *start_indices, const int *end_indices) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_NULL_PTR;

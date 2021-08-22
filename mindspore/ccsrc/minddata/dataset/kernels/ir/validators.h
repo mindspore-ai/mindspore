@@ -36,9 +36,6 @@ Status ValidateIntScalarPositive(const std::string &op_name, const std::string &
 // Helper function to positive float scalar
 Status ValidateFloatScalarPositive(const std::string &op_name, const std::string &scalar_name, float scalar);
 
-// Helper function to non-negative float scalar
-Status ValidateFloatScalarNonNegative(const std::string &op_name, const std::string &scalar_name, float scalar);
-
 // Helper function to validate scalar
 template <typename T>
 Status ValidateScalar(const std::string &op_name, const std::string &scalar_name, const T scalar,

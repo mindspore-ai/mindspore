@@ -71,10 +71,6 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
     }
     if (!shape.empty() && shape.size() != perm.size()) {
       MS_LOG(DEBUG) << "transpose node need to be deleted.";
-      if (UpdateNodeFormat(func_graph, cnode) != lite::RET_OK) {
-        MS_LOG(ERROR) << "update cnode format failed.";
-        return lite::RET_ERROR;
-      }
       manager->Replace(node, cnode->input(1));
     }
   }
@@ -129,33 +125,6 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
     if ((pre_perm == kNH2NC && post_perm == kNC2NH) || (pre_perm == kNC2NH && post_perm == kNH2NC)) {
       func_graph->manager()->Replace(cnode, pre_cnode->input(1));
     }
-  }
-  return lite::RET_OK;
-}
-
-STATUS DeleteRedundantTranspose::UpdateNodeFormat(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
-  if (prim->GetAttr(ops::kFormat) == nullptr) {
-    return lite::RET_OK;
-  }
-  auto format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-  auto node_users = manager->node_users()[cnode];
-  for (auto &node_user : node_users) {
-    if (node_user.second != 1) {
-      continue;
-    }
-    if (!utils::isa<CNode>(node_user.first)) {
-      MS_LOG(ERROR) << "post node is not cnode, which is invalid.";
-      return lite::RET_ERROR;
-    }
-    auto post_cnode = node_user.first->cast<CNodePtr>();
-    auto post_prim = GetValueNode<PrimitivePtr>(post_cnode->input(0));
-    MS_ASSERT(post_prim != nullptr);
-    post_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(format));
   }
   return lite::RET_OK;
 }

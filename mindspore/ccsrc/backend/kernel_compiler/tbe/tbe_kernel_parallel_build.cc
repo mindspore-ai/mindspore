@@ -21,7 +21,6 @@
 #include <vector>
 #include <string>
 #include "utils/ms_context.h"
-#include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
@@ -30,7 +29,6 @@
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "utils/trace_base.h"
-#include "utils/json_operation_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,6 +56,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     if (AnfAlgo::GetKernelMod(anf_node) != nullptr) {
       continue;
     }
+    const std::string &processor = tbe::GetProcessor(anf_node);
     nlohmann::json kernel_json;
     TbeKernelJsonCreator creator(SINGLE_BUILD);
     if (!creator.GenTbeSingleKernelJson(anf_node, &kernel_json)) {
@@ -71,7 +70,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     (void)TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list, anf_node);
     // search cache
     const std::string &json_name = creator.json_name();
-    if (build_manger->SearchInCache(json_name, input_size_list, output_size_list, anf_node.get()) &&
+    if (build_manger->SearchInCache(json_name, processor, input_size_list, output_size_list, anf_node.get()) &&
         ((!offline_tune.empty() && offline_tune != "true") || tune_mode == "NO_TUNE")) {
       continue;
     }
@@ -107,24 +106,10 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
 
 ParallelBuildManager::~ParallelBuildManager() { ResetTaskInfo(); }
 
-void ParallelBuildManager::SavePreBuildTaskInfo(int32_t task_id, const AnfNodePtr &anf_node,
-                                                const std::string &json_name) {
-  MS_LOG(DEBUG) << "SavePreBuildTaskInfo, task id: " << task_id;
-  struct KernelBuildTaskInfo task_info;
-  task_info.node = anf_node;
-  task_info.json_name = json_name;
-  if (anf_node == nullptr) {
-    task_info.processor = tbe::kProcessorAiCore;
-  } else {
-    task_info.processor = tbe::GetProcessor(anf_node);
-  }
-  pre_build_task_map_[task_id] = task_info;
-}
-
 void ParallelBuildManager::SaveTaskInfo(int32_t task_id, const mindspore::AnfNodePtr &anf_node,
                                         const std::string &json_name, const std::vector<size_t> &input_size_list,
                                         const std::vector<size_t> &output_size_list, int64_t scope_id) {
-  MS_LOG(DEBUG) << "SaveTaskInfo, task id: " << task_id;
+  MS_LOG(INFO) << "SaveTaskInfo, task id: " << task_id;
   struct KernelBuildTaskInfo task_info;
   task_info.node = anf_node;
   task_info.json_name = json_name;
@@ -145,23 +130,28 @@ bool ParallelBuildManager::IsAllTaskFinish() const {
 }
 
 void ParallelBuildManager::PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result) {
-  MS_LOG(DEBUG) << "can find pre task_id : " << task_id << " result:" << pre_build_result;
-  auto task_iter = pre_build_task_map_.find(task_id);
-  if (task_iter == pre_build_task_map_.end()) {
+  auto task_iter = pre_task_map_.find(task_id);
+  if (task_iter == pre_task_map_.end()) {
     MS_EXCEPTION(ArgumentError) << "can find pre task_id:" << task_id;
   }
-  nlohmann::json result;
-  if (!ParseJson(pre_build_result, &result)) {
-    MS_LOG(EXCEPTION) << "Parse prebuild result error.";
+  auto node = task_iter->second;
+  auto builder =
+    std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+  std::string start_flag = "fusion_pattern_start";
+  std::string end_flag = "fusion_pattern_end";
+  auto start = pre_build_result.find(start_flag);
+  auto end = pre_build_result.find(end_flag);
+  if (start != std::string::npos && end != std::string::npos && end >= start) {
+    std::string result = pre_build_result.substr(start + start_flag.size(), end - start - start_flag.size());
+    if (result.empty()) {
+      (void)pre_task_map_.erase(task_iter);
+      return;
+    }
+    transform(result.begin(), result.end(), result.begin(), ::toupper);
+    AnfAlgo::SetNodeAttr(kAttrFusionType, MakeValue(result), node);
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
   }
-  auto fusion_name = GetJsonValue<std::string>(result, "op_pattern");
-  auto fusion_type = kernel::GetFusionTypeByName(fusion_name);
-  auto output_data_desc = GetJsonValue<nlohmann::json>(result, "op_params");
-
-  auto node = task_iter->second.node;
-  AnfAlgo::SetFusionType(node, fusion_type);
-  AnfAlgo::SetOutputDataDesc(node, {output_data_desc});
-  (void)pre_build_task_map_.erase(task_iter);
+  (void)pre_task_map_.erase(task_iter);
 }
 
 std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t task_id, const std::string &build_ret,
@@ -186,25 +176,9 @@ std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t
   auto kernel_mod = GenKernelMod(task_iter->second.input_size_list, task_iter->second.output_size_list, kernel_pack);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   if (set_kernel_mod) {
-    auto cur_node = task_iter->second.node;
-    MS_EXCEPTION_IF_NULL(cur_node);
-    if (AnfAlgo::IsDynamicShape(cur_node) && (build_ret.empty() || build_ret.find("vars") == std::string::npos)) {
-      MS_LOG(EXCEPTION) << "Build failed. The build result of dynamic shape op [" << AnfAlgo::GetCNodeName(cur_node)
-                        << "] should not be empty, or can not find key ['vars'] in the result. build_res:[" << build_ret
-                        << "].";
-    }
-    AnfAlgo::SetKernelMod(kernel_mod, cur_node.get());
-    MS_LOG(INFO) << json_name << ": save compile info to json file, compile_info:" << build_ret;
-    std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
-    if (!old_build.empty()) {
-      AnfAlgo::SetNodeAttr(kAttrCompileInfo, MakeValue(build_ret), cur_node);
-    } else {
-      bool save_flag = true;
-      TbeUtils::SaveCompileInfo(json_name, build_ret, &save_flag);
-      if (!save_flag) {
-        MS_LOG(EXCEPTION) << "Save json file failed, compile_info:" << build_ret;
-      }
-    }
+    AnfAlgo::SetKernelMod(kernel_mod, task_iter->second.node.get());
+    AnfAlgo::SetNodeAttr(kAttrCompileInfo, MakeValue(build_ret), task_iter->second.node);
+    MS_LOG(INFO) << "Set Node Attr compile_info:" << build_ret;
   }
   auto ret = std::make_pair(task_iter->second.scope_id, kernel_mod);
   (void)task_map_.erase(task_iter);
@@ -239,8 +213,8 @@ void ParallelBuildManager::SaveSameFusionOpInfo(const int64_t scope_id, const st
 
 bool ParallelBuildManager::GenSameOpKernelMod() const {
   for (const auto &task_info : same_op_list_) {
-    bool ret =
-      SearchInCache(task_info.json_name, task_info.input_size_list, task_info.output_size_list, task_info.node.get());
+    bool ret = SearchInCache(task_info.json_name, task_info.processor, task_info.input_size_list,
+                             task_info.output_size_list, task_info.node.get());
     if (!ret) {
       MS_LOG(INFO) << "can't find " << task_info.json_name << " in cache.";
       return false;
@@ -252,7 +226,7 @@ bool ParallelBuildManager::GenSameOpKernelMod() const {
 bool ParallelBuildManager::GenSameFusionOpKernelMod(std::map<int64_t, KernelModPtr> *kernel_mode_ret) const {
   bool ret = true;
   for (const auto &task_info : same_op_list_) {
-    auto kernel_pack = TbeUtils::SearchCache(task_info.json_name);
+    auto kernel_pack = TbeUtils::SearchCache(task_info.json_name, tbe::kProcessorAiCore);
     if (kernel_pack != nullptr) {
       auto kernel_mode = GenKernelMod(task_info.input_size_list, task_info.output_size_list, kernel_pack);
       if (kernel_mode != nullptr) {
@@ -266,9 +240,10 @@ bool ParallelBuildManager::GenSameFusionOpKernelMod(std::map<int64_t, KernelModP
   return ret;
 }
 
-bool ParallelBuildManager::SearchInCache(const std::string &json_name, const std::vector<size_t> &input_size_list,
+bool ParallelBuildManager::SearchInCache(const std::string &json_name, const std::string &processor,
+                                         const std::vector<size_t> &input_size_list,
                                          const std::vector<size_t> &output_size_list, mindspore::AnfNode *node) const {
-  auto cached_kernel_pack = TbeUtils::SearchCache(json_name);
+  auto cached_kernel_pack = TbeUtils::SearchCache(json_name, processor);
   if (cached_kernel_pack != nullptr) {
     auto kernel_mod_ptr = GenKernelMod(input_size_list, output_size_list, cached_kernel_pack);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
@@ -297,19 +272,18 @@ int ParallelBuildManager::StartCompileOp(const nlohmann::json &kernel_json) {
   return AscendKernelBuildClient::Instance().TbeStart(kernel_json.dump(), tune_mode);
 }
 
-std::string ParallelBuildManager::ProcessTbeJob(const nlohmann::json &kernel_json) {
-  return AscendKernelBuildClient::Instance().TbeSendJob(kernel_json.dump());
-}
-
 bool ParallelBuildManager::WaitOne(int *task_id, std::string *task_result, std::string *pre_build_result) {
   MS_EXCEPTION_IF_NULL(task_id);
   return AscendKernelBuildClient::Instance().TbeWait(task_id, task_result, pre_build_result);
 }
 
 void ParallelBuildManager::ResetTaskInfo() noexcept {
+  if (task_map_.empty()) {
+    MS_LOG(INFO) << "All tasks are compiled success.";
+    return;
+  }
   task_map_.clear();
   same_op_list_.clear();
-  pre_build_task_map_.clear();
 }
 
 AnfNodePtr ParallelBuildManager::GetAnfNodeByTaskID(int32_t task_id) {

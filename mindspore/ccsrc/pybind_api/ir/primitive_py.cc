@@ -271,18 +271,18 @@ py::function PrimitivePy::GetComputeFunction() const {
   static const char *const compute_func_name = "vm_impl";
 
   if (py::hasattr(python_obj_, compute_func_name)) {
-    MS_LOG(DEBUG) << name() << " compute_func_name";
+    MS_LOG(INFO) << name() << " compute_func_name";
     py::function fn = python_obj_.attr(compute_func_name).cast<py::function>();
     return fn;
   }
 
   static const std::string vm_module = "mindspore.ops.vm_impl_registry";
   static const std::string get_vm_impl_fn = "get_vm_impl_fn";
-  MS_LOG(DEBUG) << name() << ": get_vm_impl_fn";
+  MS_LOG(INFO) << name() << ": get_vm_impl_fn";
   py::function get_fn = parse::python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
   py::function vm_fn = get_fn(python_obj_);
   if (py::isinstance<py::none>(vm_fn)) {
-    MS_LOG(DEBUG) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();
+    MS_LOG(INFO) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();
     vm_fn = mindspore::GetComputeFunction(Primitive::name());
   }
   return vm_fn;

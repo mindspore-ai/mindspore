@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMulGrad = "MulGrad";
-class MS_CORE_API MulGrad : public PrimitiveC {
+class MulGrad : public PrimitiveC {
  public:
   MulGrad() : PrimitiveC(kNameMulGrad) {}
   ~MulGrad() = default;

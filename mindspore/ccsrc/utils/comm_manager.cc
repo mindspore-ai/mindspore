@@ -16,9 +16,6 @@
 
 #include "utils/comm_manager.h"
 #include "utils/convert_utils.h"
-#include "utils/ms_context.h"
-#include "frontend/parallel/context.h"
-#include "frontend/parallel/group_manager.h"
 
 #ifndef NO_DLIB
 #include "runtime/hccl_adapter/hccl_adapter.h"
@@ -177,28 +174,4 @@ bool CommManager::GetRankSize(const string &group, unsigned int *rank_size) cons
 
 bool CommManager::DestroyGroup(const string &group) const { return true; }
 #endif
-
-uint32_t GetRank() {
-  uint32_t rank_id = 0;
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string world_group;
-  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (backend == kAscendDevice) {
-    world_group = parallel::HCCL_WORLD_GROUP;
-  } else if (backend == kGPUDevice) {
-    world_group = parallel::NCCL_WORLD_GROUP;
-  } else {
-    // Other backends like CPU not support parallel, return rank_id with default 0.
-    return rank_id;
-  }
-  auto parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  if (parallel_context->parallel_mode() != parallel::STAND_ALONE) {
-    if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
-      MS_LOG(EXCEPTION) << "Get rank id failed.";
-    }
-  }
-  return rank_id;
-}
 }  // namespace mindspore

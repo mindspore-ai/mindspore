@@ -89,7 +89,6 @@ TEST_F(TestArithmeticSelfInt8, floor_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, floor_quant1_thread2) {
@@ -152,7 +151,6 @@ TEST_F(TestArithmeticSelfInt8, floor_quant1_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, round_quant0_thread2) {
@@ -215,7 +213,6 @@ TEST_F(TestArithmeticSelfInt8, round_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, round_quant1_thread2) {
@@ -278,7 +275,6 @@ TEST_F(TestArithmeticSelfInt8, round_quant1_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, ceil_quant0_thread2) {
@@ -341,7 +337,6 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, ceil_quant1_thread2) {
@@ -404,7 +399,6 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant1_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, abs_quant0_thread0) {
@@ -467,7 +461,6 @@ TEST_F(TestArithmeticSelfInt8, abs_quant0_thread0) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, abs_quant1_thread2) {
@@ -530,7 +523,6 @@ TEST_F(TestArithmeticSelfInt8, abs_quant1_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, sin_quant0_thread2) {
@@ -593,7 +585,6 @@ TEST_F(TestArithmeticSelfInt8, sin_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, cos_quant0_thread2) {
@@ -656,7 +647,6 @@ TEST_F(TestArithmeticSelfInt8, cos_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, log_quant0_thread2) {
@@ -719,7 +709,6 @@ TEST_F(TestArithmeticSelfInt8, log_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, sqrt_quant0_thread2) {
@@ -782,7 +771,6 @@ TEST_F(TestArithmeticSelfInt8, sqrt_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, rsqrt_quant0_thread2) {
@@ -845,7 +833,6 @@ TEST_F(TestArithmeticSelfInt8, rsqrt_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, square_quant0_thread2) {
@@ -908,7 +895,6 @@ TEST_F(TestArithmeticSelfInt8, square_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, square_quant1_thread2) {
@@ -971,7 +957,6 @@ TEST_F(TestArithmeticSelfInt8, square_quant1_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestArithmeticSelfInt8, logical_not_quant0_thread2) {
@@ -1034,7 +1019,6 @@ TEST_F(TestArithmeticSelfInt8, logical_not_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 }  // namespace mindspore

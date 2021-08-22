@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/common/string_util.h"
 #include <algorithm>
+#include "src/common/string_util.h"
 #include "include/ms_tensor.h"
 
 namespace mindspore {
@@ -52,10 +52,10 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
     MS_LOG(ERROR) << "tensor is nullptr.";
     return RET_ERROR;
   }
-  size_t num = string_buffer.size();
+  int32_t num = string_buffer.size();
   std::vector<int32_t> offset(num + 1);
   offset[0] = 4 * (num + 2);
-  for (size_t i = 0; i < num; i++) {
+  for (int i = 0; i < num; i++) {
     offset[i + 1] = offset[i] + string_buffer[i].len;
   }
   std::vector<int> shape = {offset[num]};
@@ -71,10 +71,10 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
   char *string_data = reinterpret_cast<char *>(data);
 
   string_info[0] = num;
-  for (size_t i = 0; i <= num; i++) {
+  for (int i = 0; i <= num; i++) {
     string_info[i + 1] = offset[i];
   }
-  for (size_t i = 0; i < num; i++) {
+  for (int i = 0; i < num; i++) {
     memcpy(string_data + offset[i], string_buffer[i].data, string_buffer[i].len);
   }
   return RET_OK;
@@ -85,11 +85,11 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
     MS_LOG(ERROR) << "tensor is nullptr.";
     return RET_ERROR;
   }
-  size_t num = string_buffer.size();
+  int32_t num = string_buffer.size();
   std::vector<int32_t> offset(num + 1);
   offset[0] = 4 * (num + 2);
   std::vector<int> len(num);
-  for (size_t i = 0; i < num; i++) {
+  for (int i = 0; i < num; i++) {
     len[i] = 0;
     for (int j = 0; j < static_cast<int>(string_buffer[i].size()); j++) {
       len[i] += string_buffer[i][j].len;
@@ -109,10 +109,10 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
   auto *string_data = reinterpret_cast<char *>(data);
 
   string_info[0] = num;
-  for (size_t i = 0; i <= num; i++) {
+  for (int i = 0; i <= num; i++) {
     string_info[i + 1] = offset[i];
   }
-  for (size_t i = 0; i < num; i++) {
+  for (int i = 0; i < num; i++) {
     auto *dst = string_data + offset[i];
     for (auto string_part : string_buffer[i]) {
       memcpy(dst, string_part.data, string_part.len);
@@ -130,6 +130,32 @@ int GetStringCount(Tensor *tensor) {
     return RET_ERROR;
   }
   return GetStringCount(tensor->MutableData());
+}
+
+int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor) {
+  if (tensor == nullptr) {
+    return RET_PARAM_INVALID;
+  }
+  std::vector<StringPack> all_pack;
+  for (auto &input : inputs) {
+    StringPack pack = {static_cast<int>(input.length()), input.data()};
+    all_pack.push_back(pack);
+  }
+  return WriteStringsToTensor(static_cast<Tensor *>(tensor), all_pack);
+}
+
+std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
+  if (tensor == nullptr) {
+    return {""};
+  }
+  const void *ptr = static_cast<const Tensor *>(tensor)->data_c();
+  std::vector<StringPack> all_pack = ParseStringBuffer(ptr);
+  std::vector<std::string> result(all_pack.size());
+  std::transform(all_pack.begin(), all_pack.end(), result.begin(), [](StringPack &pack) {
+    std::string str(pack.data, pack.len);
+    return str;
+  });
+  return result;
 }
 
 // Some primes between 2^63 and 2^64

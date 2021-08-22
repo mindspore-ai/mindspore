@@ -113,9 +113,6 @@ class GraphCompiler {
   // Execute graph summary.
   void Summary(const std::vector<KernelGraphPtr> &graphs) const;
 
-  // Remove single op kernel graph cache and output nodes cache.
-  void EraseSingleOpCache(const GraphInfo &graph_info, const GraphId &graph_id);
-
  private:
   DISABLE_COPY_AND_ASSIGN(GraphCompiler);
 

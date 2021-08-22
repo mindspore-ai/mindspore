@@ -101,13 +101,6 @@ class Zero(Initializer):
 
     Returns:
         Array, an array after being assigned.
-
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer, Zero
-        >>> tensor1 = initializer(Zero(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('zeros', [1, 2, 3], mindspore.float32)
     """
     def _initialize(self, arr):
         _assignment(arr, 0)
@@ -123,13 +116,6 @@ class One(Initializer):
 
     Returns:
         Array, assigned array.
-
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer, One
-        >>> tensor1 = initializer(One(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('ones', [1, 2, 3], mindspore.float32)
     """
     def _initialize(self, arr):
         _assignment(arr, 1)
@@ -250,21 +236,11 @@ class XavierUniform(Initializer):
     - where :math:`n_{in}` is the number of input units in the weight tensor.
     - where :math:`n_{out}` is the number of output units in the weight tensor.
 
-    For details of XavierUniform algorithm, please check
-    `<http://proceedings.mlr.press/v9/glorot10a.html>`_.
-
     Args:
         gain (float): An optional scaling factor. Default: 1.
 
     Returns:
         Array, assigned array.
-
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer, XavierUniform
-        >>> tensor1 = initializer(XavierUniform(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('xavier_uniform', [1, 2, 3], mindspore.float32)
     """
     def __init__(self, gain=1):
         super(XavierUniform, self).__init__(gain=gain)
@@ -289,7 +265,7 @@ class HeUniform(Initializer):
         boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}
 
     Args:
-        negative_slope (int, float, bool): The negative slope of the rectifier used after this layer
+        negative_slope (int, float, bool): The negativa slope of the rectifier used after this layer
             (only used when `nonlinearity` is 'leaky_relu'). Default: 0.
         mode (str): Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the
             variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes
@@ -299,13 +275,6 @@ class HeUniform(Initializer):
 
     Returns:
         Array, assigned array.
-
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer, HeUniform
-        >>> tensor1 = initializer(HeUniform(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('he_uniform', [1, 2, 3], mindspore.float32)
     """
     def __init__(self, negative_slope=0, mode='fan_in', nonlinearity='leaky_relu'):
         super(HeUniform, self).__init__(negative_slope=negative_slope, mode=mode, nonlinearity=nonlinearity)
@@ -330,7 +299,7 @@ class HeNormal(Initializer):
     N(0, sigma).
 
     Args:
-        negative_slope (int, float, bool): The negative slope of the rectifier used after this layer
+        negative_slope (int, float, bool): The negativa slope of the rectifier used after this layer
             (only used when `nonlinearity` is 'leaky_relu'). Default: 0.
         mode (str): Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the
             variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes
@@ -340,13 +309,6 @@ class HeNormal(Initializer):
 
     Returns:
         Array, assigned array.
-
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer, HeNormal
-        >>> tensor1 = initializer(HeNormal(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('he_normal', [1, 2, 3], mindspore.float32)
     """
     def __init__(self, negative_slope=0, mode='fan_in', nonlinearity='leaky_relu'):
         super(HeNormal, self).__init__(negative_slope=negative_slope, mode=mode, nonlinearity=nonlinearity)
@@ -372,13 +334,6 @@ class Constant(Initializer):
 
     Returns:
         Array, an array after being assigned.
-
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer
-        >>> tensor1 = initializer(0, [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer(5, [1, 2, 3], mindspore.float32)
     """
     def __init__(self, value):
         super(Constant, self).__init__(value=value)
@@ -399,13 +354,6 @@ class Uniform(Initializer):
 
     Returns:
         Array, uniform array.
-
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer, Uniform
-        >>> tensor1 = initializer(Uniform(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('uniform', [1, 2, 3], mindspore.float32)
     """
     def __init__(self, scale=0.07):
         super(Uniform, self).__init__(scale=scale)
@@ -428,13 +376,6 @@ class Normal(Initializer):
 
     Returns:
         Array, normal array.
-
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer, Normal
-        >>> tensor1 = initializer(Normal(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('normal', [1, 2, 3], mindspore.float32)
     """
     def __init__(self, sigma=0.01, mean=0.0):
         super(Normal, self).__init__(sigma=sigma, mean=mean)
@@ -459,13 +400,6 @@ class TruncatedNormal(Initializer):
 
     Returns:
         Array, truncated normal array.
-
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import initializer, TruncatedNormal
-        >>> tensor1 = initializer(TruncatedNormal(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('truncatedNormal', [1, 2, 3], mindspore.float32)
     """
     def __init__(self, sigma=0.01):
         super(TruncatedNormal, self).__init__(sigma=sigma)
@@ -501,9 +435,9 @@ def initializer(init, shape=None, dtype=mstype.float32):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, One
-        >>> tensor1 = initializer('ones', [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer(One(), [1, 2, 3], mindspore.float32)
-        >>> tensor3 = initializer(0, [1, 2, 3], mindspore.float32)
+        >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
+        >>> tensor = initializer(One(), [1, 2, 3], mindspore.float32)
+        >>> tensor = initializer(0, [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
         raise TypeError("Unsupported init type '{}'.".format(type(init)))

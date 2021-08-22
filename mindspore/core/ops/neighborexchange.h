@@ -25,7 +25,9 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNeighborExchange = "NeighborExchange";
-class MS_CORE_API NeighborExchange : public PrimitiveC {
+constexpr auto RecvShapes = "recv_shapes";
+constexpr auto RecvType = "recv_type";
+class NeighborExchange : public PrimitiveC {
  public:
   NeighborExchange() : PrimitiveC(kNameNeighborExchange) {}
   ~NeighborExchange() = default;

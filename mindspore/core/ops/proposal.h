@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameProposal = "Proposal";
-class MS_CORE_API Proposal : public PrimitiveC {
+class Proposal : public PrimitiveC {
  public:
   Proposal() : PrimitiveC(kNameProposal) {}
   ~Proposal() = default;

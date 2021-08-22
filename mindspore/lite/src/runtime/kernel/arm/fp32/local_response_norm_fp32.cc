@@ -27,11 +27,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LRN;
 
 namespace mindspore::kernel {
-int LocalResponseNormCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  return RET_OK;
-}
+int LocalResponseNormCPUKernel::Init() { return RET_OK; }
 
 int LocalResponseNormCPUKernel::ReSize() { return RET_OK; }
 

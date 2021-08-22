@@ -48,9 +48,9 @@ Status ResizePreserveAROperation::to_json(nlohmann::json *out_json) {
 }
 
 Status ResizePreserveAROperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("height") != op_params.end(), "Failed to find height");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("width") != op_params.end(), "Failed to find width");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("img_orientation") != op_params.end(), "Failed to find img_orientation");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("height") != op_params.end(), "Fail to find height");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("width") != op_params.end(), "Fail to find width");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("img_orientation") != op_params.end(), "Fail to find img_orientation");
   int32_t height = op_params["height"];
   int32_t width = op_params["width"];
   int32_t img_orientation = op_params["img_orientation"];

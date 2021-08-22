@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGRU = "GRU";
-class MS_CORE_API GRU : public PrimitiveC {
+class GRU : public PrimitiveC {
  public:
   GRU() : PrimitiveC(kNameGRU) {
     InitIOName({"x", "weight_input", "weight_hidden", "bias_input", "bias_hidden", "seq_length", "init_h"},

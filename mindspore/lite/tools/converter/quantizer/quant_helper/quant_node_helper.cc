@@ -142,4 +142,5 @@ QuantHelperRegister::~QuantHelperRegister() {
   }
   this->register_map_.clear();
 }
+
 }  // namespace mindspore::lite

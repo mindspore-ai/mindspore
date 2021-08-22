@@ -19,65 +19,59 @@
 #include "src/common/version_manager.h"
 #include "src/common/log_adapter.h"
 
-using mindspore::registry::CreateKernel;
-using mindspore::registry::KernelDesc;
-using mindspore::schema::PrimitiveType_MAX;
-using mindspore::schema::PrimitiveType_MIN;
-namespace mindspore::registry {
+using mindspore::kernel::CreateKernel;
+using mindspore::kernel::KernelDesc;
+
+namespace mindspore::lite {
 namespace {
-static const auto kKernelMaxNum =
-  (static_cast<int>(DataType::kNumberTypeEnd) - static_cast<int>(DataType::kNumberTypeBegin) - 1) *
-  (PrimitiveType_MAX - PrimitiveType_MIN);
-static const auto kDataTypeLen =
-  static_cast<int>(DataType::kNumberTypeEnd) - static_cast<int>(DataType::kNumberTypeBegin) - 1;
-static const auto kOpTypeLen = PrimitiveType_MAX - PrimitiveType_MIN;
+static const int kKernelMaxNum = (kNumberTypeEnd - kNumberTypeBegin - 1) * (PrimitiveType_MAX - PrimitiveType_MIN);
 }  // namespace
 
-int RegistryKernelImpl::GetFuncIndex(const KernelDesc &desc) {
-  if (desc.data_type >= DataType::kNumberTypeEnd) {
+int RegistryKernelImpl::GetFuncIndex(const kernel::KernelDesc &desc) {
+  if (desc.data_type >= kNumberTypeEnd) {
     return -1;
   }
-  int data_type_index = static_cast<int>(desc.data_type) - static_cast<int>(DataType::kNumberTypeBegin) - 1;
+  int data_type_index = static_cast<int>(desc.data_type) - kNumberTypeBegin - 1;
   if (data_type_index < 0) {
     return -1;
   }
-  return data_type_index * kOpTypeLen + desc.type;
+  return data_type_index * op_type_length_ + desc.type;
 }
 
-Status RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
-                                           const std::string &type, CreateKernel creator) {
-  if (data_type >= DataType::kNumberTypeEnd) {
-    MS_LOG(ERROR) << "invalid data_type: " << static_cast<int>(data_type) << "!provider: " << provider;
-    return kLiteError;
+int RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
+                                        const std::string &type, CreateKernel creator) {
+  if (data_type >= kNumberTypeEnd) {
+    MS_LOG(ERROR) << "invalid data_type: " << data_type << "!provider: " << provider;
+    return RET_ERROR;
   }
   std::unique_lock<std::mutex> lock(lock_);
   if (custom_kernel_creators_[provider][arch][type] == nullptr) {
     custom_kernel_creators_[provider][arch][type] =
-      reinterpret_cast<CreateKernel *>(calloc(kDataTypeLen, sizeof(CreateKernel)));
+      reinterpret_cast<CreateKernel *>(calloc(data_type_length_, sizeof(CreateKernel)));
     if (custom_kernel_creators_[provider][arch][type] == nullptr) {
       MS_LOG(ERROR) << "malloc custom kernel creator fail!provider: " << provider << ", arch: " << arch;
-      return kLiteError;
+      return RET_ERROR;
     }
   }
 
-  int data_type_index = static_cast<int>(data_type) - static_cast<int>(DataType::kNumberTypeBegin) - 1;
-  if (data_type_index < 0 || data_type_index >= kDataTypeLen) {
-    MS_LOG(ERROR) << "invalid data_type: " << static_cast<int>(data_type) << "!provider: " << provider;
-    return kLiteError;
+  int data_type_index = data_type - kNumberTypeBegin - 1;
+  if (data_type_index < 0 || data_type_index >= data_type_length_) {
+    MS_LOG(ERROR) << "invalid data_type: " << data_type << "!provider: " << provider;
+    return RET_ERROR;
   }
   custom_kernel_creators_[provider][arch][type][data_type_index] = creator;
-  return kSuccess;
+  return RET_OK;
 }
 
-Status RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
-                                     registry::CreateKernel creator) {
+int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int type,
+                                  kernel::CreateKernel creator) {
   std::unique_lock<std::mutex> lock(lock_);
   auto iter = kernel_creators_.find(provider);
   if (iter == kernel_creators_.end()) {
     kernel_creators_[provider][arch] = reinterpret_cast<CreateKernel *>(calloc(kKernelMaxNum, sizeof(CreateKernel)));
     if (kernel_creators_[provider][arch] == nullptr) {
       MS_LOG(ERROR) << "malloc kernel creator buffer fail! provider: " << provider << ",arch:" << arch;
-      return kLiteError;
+      return RET_ERROR;
     }
   } else {
     auto iter_arch = iter->second.find(arch);
@@ -85,7 +79,7 @@ Status RegistryKernelImpl::RegKernel(const std::string &arch, const std::string 
       iter->second[arch] = reinterpret_cast<CreateKernel *>(calloc(kKernelMaxNum, sizeof(CreateKernel)));
       if (iter->second[arch] == nullptr) {
         MS_LOG(ERROR) << "malloc kernel creator buffer fail! provider: " << provider << ",arch:" << arch;
-        return kLiteError;
+        return RET_ERROR;
       }
     }
   }
@@ -93,18 +87,17 @@ Status RegistryKernelImpl::RegKernel(const std::string &arch, const std::string 
   KernelDesc desc = {data_type, type, arch, provider};
   int index = GetFuncIndex(desc);
   if (index >= kKernelMaxNum || index < 0) {
-    MS_LOG(ERROR) << "invalid kernel key, arch " << arch << ", data_type" << static_cast<int>(data_type) << ",op type "
-                  << type;
-    return kLiteError;
+    MS_LOG(ERROR) << "invalid kernel key, arch " << arch << ", data_type" << data_type << ",op type " << type;
+    return RET_ERROR;
   }
 
   kernel_creators_[provider][arch][index] = creator;
-  return kSuccess;
+  return RET_OK;
 }
 
-registry::CreateKernel RegistryKernelImpl::GetCustomKernelCreator(const schema::Primitive *primitive,
-                                                                  KernelDesc *desc) {
-  int data_type_index = static_cast<int>(desc->data_type) - static_cast<int>(DataType::kNumberTypeBegin) - 1;
+kernel::CreateKernel RegistryKernelImpl::GetCustomKernelCreator(const schema::Primitive *primitive,
+                                                                kernel::KernelDesc *desc) {
+  int data_type_index = static_cast<int>(desc->data_type) - kNumberTypeBegin - 1;
   if (data_type_index < 0) {
     return nullptr;
   }
@@ -132,8 +125,9 @@ registry::CreateKernel RegistryKernelImpl::GetCustomKernelCreator(const schema::
   return nullptr;
 }
 
-registry::CreateKernel RegistryKernelImpl::GetProviderCreator(const schema::Primitive *primitive, KernelDesc *desc) {
-  registry::CreateKernel creator = nullptr;
+kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const schema::Primitive *primitive,
+                                                            kernel::KernelDesc *desc) {
+  kernel::CreateKernel creator = nullptr;
   std::unique_lock<std::mutex> lock(lock_);
   if (desc->type == schema::PrimitiveType_Custom) {
     return GetCustomKernelCreator(primitive, desc);
@@ -179,4 +173,4 @@ RegistryKernelImpl::~RegistryKernelImpl() {
     }
   }
 }
-}  // namespace mindspore::registry
+}  // namespace mindspore::lite

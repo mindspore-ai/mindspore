@@ -25,7 +25,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/lite_session.h"
-#include "include/registry/register_kernel_interface.h"
+#include "include/registry/kernel_interface.h"
 #include "include/registry/register_kernel.h"
 
 using mindspore::kernel::Kernel;
@@ -39,7 +39,6 @@ namespace mindspore {
 namespace {
 const char *const kKeyName = "test_key";
 const char *const kTestData = "test_data";
-constexpr auto kFloat32 = DataType::kNumberTypeFloat32;
 }  // namespace
 
 class TestData {
@@ -111,12 +110,12 @@ class TestCustomOpInfer : public KernelInterface {
  public:
   TestCustomOpInfer() = default;
   ~TestCustomOpInfer() = default;
-  Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-               const schema::Primitive *primitive) override {
+  int Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
+            const schema::Primitive *primitive) override {
     (*outputs)[0].SetFormat((*inputs)[0].format());
     (*outputs)[0].SetDataType((*inputs)[0].DataType());
     (*outputs)[0].SetShape((*inputs)[0].Shape());
-    return kSuccess;
+    return RET_OK;
   }
 };
 
@@ -129,7 +128,7 @@ std::shared_ptr<Kernel> TestCustomAddCreator(const std::vector<MSTensor> &inputs
 std::shared_ptr<KernelInterface> CustomAddInferCreator() { return std::make_shared<TestCustomOpInfer>(); }
 }  // namespace
 
-REGISTER_CUSTOM_KERNEL(CPU, BuiltInTest, kFloat32, Add, TestCustomAddCreator)
+REGISTER_CUSTOM_KERNEL(CPU, BuiltInTest, kNumberTypeFloat32, Add, TestCustomAddCreator)
 REGISTER_CUSTOM_KERNEL_INTERFACE(BuiltInTest, Add, CustomAddInferCreator)
 
 class TestRegistryCustomOp : public mindspore::CommonTest {

@@ -17,7 +17,7 @@
 #include <algorithm>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
-#include "src/common/log_util.h"
+#include "src/common/utils.h"
 #ifdef SUPPORT_NPU
 #include "include/HiAiModelManagerType.h"
 #endif
@@ -28,8 +28,6 @@
 namespace mindspore::lite {
 namespace {
 constexpr int kDefaultParallelNum = 2;
-const constexpr int kMaxLiteContextDeviceNums = 2;
-const constexpr int kMaxInnerContextDeviceNums = 3;
 }  // namespace
 
 InnerContext::InnerContext(const Context *context) {
@@ -47,49 +45,24 @@ InnerContext::InnerContext(const Context *context) {
 }
 
 void InnerContext::SetContextDevice(const Context *context) {
-  MS_ASSERT(context->device_list_.size() <= kMaxLiteContextDeviceNums);
-
-  this->device_list_.clear();
-
-  /* user set order for different device */
-  if (context->device_list_.size() < kMaxLiteContextDeviceNums) {
-    this->device_list_.push_back(context->device_list_.front());
-    return;
-  }
-
-  /* keep compatibility :
-   * if user set CPU & NPU/GPU
-   * NPU/GPU higher priority */
   bool isUserSetNPU = context->device_list_.end() !=
-                      std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                      std::find_if(context->device_list_.begin(), context->device_list_.end(),
                                    [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
   bool isUserSetGPU = context->device_list_.end() !=
-                      std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                      std::find_if(context->device_list_.begin(), context->device_list_.end(),
                                    [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
-  if (isUserSetGPU == false && isUserSetNPU == false) {
-    return;
-  }
-
-  /* add GPU/NPU first */
+  this->device_list_.clear();
   for (auto &device_ctx : context->device_list_) {
-    if (device_ctx.device_type_ != DT_CPU) {
+    // npu/gpu server would use one core so we don't bind core to avoid competition.
+    // If user does not set npu/gpu device, we still bind core.
+    if (device_ctx.device_type_ == DT_CPU && (isUserSetNPU || (isUserSetGPU && !enable_parallel_))) {
+      auto cpu_ctx = device_ctx;
+      cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
+      this->device_list_.push_back(cpu_ctx);
+    } else {
       this->device_list_.push_back(device_ctx);
     }
   }
-
-  /* add CPU */
-  for (auto &device_ctx : context->device_list_) {
-    if (device_ctx.device_type_ == DT_CPU) {
-      if (isUserSetNPU || (isUserSetGPU && enable_parallel_ == false)) {
-        auto cpu_ctx = device_ctx;
-        cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
-        this->device_list_.push_back(cpu_ctx);
-      } else {
-        this->device_list_.push_back(device_ctx);
-      }
-    }
-  }
-  return;
 }
 
 int InnerContext::Init() {
@@ -99,21 +72,16 @@ int InnerContext::Init() {
   }
   if (this->thread_pool_ == nullptr && this->IsCpuEnabled()) {
     int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
-
+    thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_);
+    if (thread_pool_ == nullptr) {
+      MS_LOG(ERROR) << "Create ThreadPool failed";
+      return RET_NULL_PTR;
+    }
     if (this->affinity_core_list_.empty()) {
-      auto bind_mode = static_cast<BindMode>(this->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_);
-      thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, bind_mode);
-      if (thread_pool_ == nullptr) {
-        MS_LOG(ERROR) << "Create ThreadPool failed";
-        return RET_NULL_PTR;
-      }
+      thread_pool_->SetCpuAffinity(
+        static_cast<BindMode>(this->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_));
     } else {
-      thread_pool_ =
-        ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, this->affinity_core_list_);
-      if (thread_pool_ == nullptr) {
-        MS_LOG(ERROR) << "Create ThreadPool failed";
-        return RET_NULL_PTR;
-      }
+      thread_pool_->SetCpuAffinity(this->affinity_core_list_);
     }
   }
   if (this->allocator == nullptr) {
@@ -147,6 +115,7 @@ int InnerContext::Init() {
 
 InnerContext::~InnerContext() {
   if (this->thread_pool_ != nullptr) {
+    thread_pool_->SetCpuAffinity(static_cast<BindMode>(NO_BIND));
     delete thread_pool_;
     this->thread_pool_ = nullptr;
   }
@@ -157,7 +126,7 @@ int InnerContext::IsValid() const {
     MS_LOG(ERROR) << "Device list is empty.";
     return RET_NOT_SUPPORT;
   }
-  if (this->device_list_.size() > kMaxInnerContextDeviceNums) {
+  if (this->device_list_.size() > 2) {
     MS_LOG(ERROR) << "Not support device list more than 2.";
     return RET_NOT_SUPPORT;
   }
@@ -232,6 +201,7 @@ bool InnerContext::IsGpuEnabled() const {
 
 bool InnerContext::IsNpuEnabled() const {
 #ifdef SUPPORT_NPU
+  //  return IsUserSetNpu() && npu_manager_->IsSupportNPU();
   return IsUserSetNpu();
 #else
   return false;

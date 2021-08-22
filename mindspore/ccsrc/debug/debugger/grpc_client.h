@@ -27,7 +27,6 @@ using debugger::Chunk;
 using debugger::EventListener;
 using debugger::EventReply;
 using debugger::GraphProto;
-using debugger::Heartbeat;
 using debugger::Metadata;
 using debugger::TensorProto;
 using debugger::WatchpointHit;
@@ -60,8 +59,6 @@ class GrpcClient {
   EventReply SendWatchpointHits(const std::list<WatchpointHit> &watchpoints);
 
   std::vector<std::string> ChunkString(std::string str, int graph_size);
-
-  EventReply SendHeartbeat(const Heartbeat &heartbeat);
 
  private:
   std::unique_ptr<EventListener::Stub> stub_;

@@ -55,7 +55,6 @@ int BiasAddFP32Coder::DoCode(CoderContext *ctx) {
   arithmetic_parameter_->broadcasting_ = false;
   arithmetic_parameter_->ndim_ = dims.size();
   arithmetic_parameter_->activation_type_ = 0;
-  MS_CHECK_TRUE(dims.size() <= DIMENSION_10D, "dims.size() must not be greater than 10!");
   for (size_t i = 0; i < dims.size(); i++) {
     arithmetic_parameter_->in_shape0_[i] = dims[i];
   }

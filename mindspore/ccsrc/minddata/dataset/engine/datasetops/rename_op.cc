@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/rename_op.h"
 
-#include <set>
 #include <vector>
 #include <unordered_map>
 
@@ -53,7 +52,6 @@ Status RenameOp::ComputeColMap() {
     std::unordered_map<std::string, int32_t> new_col_name_id_map = {};
     // parameter for input check
     size_t found = 0;
-    std::set<std::string> new_col_name;
 
     // iterate over all the pairs and if there is a name match with rename, rename the column and add it to new map
     // by doing it this way we recreate a new ColNameIdMap and allow for switching
@@ -69,27 +67,12 @@ Status RenameOp::ComputeColMap() {
         found += 1;
         int index = std::distance(in_columns_.begin(), it);
         MS_LOG(DEBUG) << "Rename operator index found " << index << " value " << id << ".";
-        if (new_col_name.find(out_columns_[index]) != new_col_name.end()) {
-          std::string err_msg(
-            "rename operation does not support rename one column name into another already exist column name, existed"
-            " column name is: " +
-            out_columns_[index] + ".");
-          RETURN_STATUS_UNEXPECTED(err_msg);
-        }
+
         new_col_name_id_map[out_columns_[index]] = id;
-        new_col_name.insert(out_columns_[index]);
       } else {
         // not found
-        if (new_col_name.find(name) != new_col_name.end()) {
-          std::string err_msg(
-            "rename operation does not support rename one column name into another already exist column name, existed"
-            " column name is: " +
-            name + ".");
-          RETURN_STATUS_UNEXPECTED(err_msg);
-        }
         MS_LOG(DEBUG) << "Rename operator index not found: " << id << " is the column id.";
         new_col_name_id_map[name] = id;
-        new_col_name.insert(name);
       }
     }
     // only checks number of renamed columns have been found, this input check doesn't check everything

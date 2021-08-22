@@ -41,17 +41,15 @@ DETensor::DETensor(std::shared_ptr<dataset::DeviceTensor> device_tensor_impl, bo
     : device_tensor_impl_(device_tensor_impl), name_("MindDataDeviceTensor"), is_device_(is_device) {
   // The sequence of shape_ is (width, widthStride, height, heightStride) in Dvpp module
   // We need to add [1]widthStride and [3]heightStride, which are actual YUV image shape, into shape_ attribute
-  if (device_tensor_impl && device_tensor_impl->GetYuvStrideShape().size() > 0) {
-    uint8_t flag = 0;
-    for (auto &i : device_tensor_impl->GetYuvStrideShape()) {
-      if (flag % 2 == 1) {
-        int64_t j = static_cast<int64_t>(i);
-        shape_.emplace_back(j);
-      }
-      ++flag;
+  uint8_t flag = 0;
+  for (auto &i : device_tensor_impl->GetYuvStrideShape()) {
+    if (flag % 2 == 1) {
+      int64_t j = static_cast<int64_t>(i);
+      shape_.emplace_back(j);
     }
-    std::reverse(shape_.begin(), shape_.end());
+    ++flag;
   }
+  std::reverse(shape_.begin(), shape_.end());
   MS_LOG(INFO) << "This is a YUV420 format image, one pixel takes 1.5 bytes. Therefore, the shape of"
                << " image is in (H, W) format. You can search for more information about YUV420 format";
 }
@@ -78,7 +76,7 @@ size_t DETensor::DataSize() const {
   }
 #endif
   EXCEPTION_IF_NULL(tensor_impl_);
-  return static_cast<size_t>(tensor_impl_->SizeInBytes());
+  return static_cast<uint32_t>(tensor_impl_->SizeInBytes());
 }
 
 const std::vector<int64_t> &DETensor::Shape() const { return shape_; }

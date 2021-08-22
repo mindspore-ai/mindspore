@@ -1,4 +1,4 @@
-# Copyright 2020-21 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ from mindspore.ops import composite as C
 from mindspore import ParameterTuple
 from mindspore.train.callback import Callback
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore import context
 from src.maskrcnn_mobilenetv1.mask_rcnn_mobilenetv1 import Mask_Rcnn_Mobilenetv1
 
 time_stamp_init = False
@@ -98,8 +97,6 @@ class LossCallBack(Callback):
             time_stamp_current = time.time()
             total_loss = self.loss_sum/self.count
 
-            print("%lu epoch: %s step: %s total_loss: %.5f" %
-                  (time_stamp_current - time_stamp_first, cb_params.cur_epoch_num, cur_step_in_epoch, total_loss))
             loss_file = open("./loss_{}.log".format(self.rank_id), "a+")
             loss_file.write("%lu epoch: %s step: %s total_loss: %.5f" %
                             (time_stamp_current - time_stamp_first, cb_params.cur_epoch_num, cur_step_in_epoch,
@@ -167,10 +164,7 @@ class TrainOneStepCell(nn.Cell):
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
-        if context.get_context("device_target") == "CPU":
-            self.sens = Tensor((np.ones((1,)) * sens).astype(np.float32))
-        else:
-            self.sens = Tensor((np.ones((1,)) * sens).astype(np.float16))
+        self.sens = Tensor((np.ones((1,)) * sens).astype(np.float16))
         self.reduce_flag = reduce_flag
         self.hyper_map = C.HyperMap()
         if reduce_flag:
@@ -183,8 +177,7 @@ class TrainOneStepCell(nn.Cell):
         if self.reduce_flag:
             grads = self.grad_reducer(grads)
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))
 
 class MaskRcnn_Mobilenetv1_Infer(nn.Cell):
     def __init__(self, config):

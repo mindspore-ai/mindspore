@@ -293,11 +293,6 @@ class EvaluatorCacheMgr {
 // AnalysisCache
 class AnalysisResultCacheMgr {
  public:
-  using AnalysisConfigResultMap =
-    std::unordered_map<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
-  using AnalysisConfigResultCache = NormalCache<AnfNodeConfigPtr, EvalResultPtr, AnalysisConfigResultMap>;
-  using const_iterator = typename AnalysisConfigResultCache::const_iterator;
-
   ~AnalysisResultCacheMgr() = default;
   AnalysisResultCacheMgr(const AnalysisResultCacheMgr &) = delete;
   AnalysisResultCacheMgr &operator=(const AnalysisResultCacheMgr &) = delete;
@@ -311,14 +306,17 @@ class AnalysisResultCacheMgr {
   AbstractBasePtr GetSwitchValue(const AnfNodeConfigPtr &conf);
   AbstractBasePtr TryGetSwitchValue(const AnfNodeConfigPtr &conf);
   void SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &vale);
-  const_iterator begin() { return cache_.begin(); }
-  const_iterator end() { return cache_.end(); }
 
  private:
   using AnalysisConfigAsyncResultMap =
     std::unordered_map<AnfNodeConfigPtr, AsyncAbstractPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
   using AnalysisConfigAsyncResultCache =
     MultiThreadCache<AnfNodeConfigPtr, AsyncAbstractPtr, AnalysisConfigAsyncResultMap>;
+
+  using AnalysisConfigResultMap =
+    std::unordered_map<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
+  using AnalysisConfigResultCache = NormalCache<AnfNodeConfigPtr, EvalResultPtr, AnalysisConfigResultMap>;
+
   AnalysisResultCacheMgr() = default;
   static AnalysisResultCacheMgr instance_;
   std::mutex lock_;

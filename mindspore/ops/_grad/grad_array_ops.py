@@ -202,7 +202,7 @@ def get_bprop_squeeze(self):
 @bprop_getters.register(P.Flatten)
 def get_bprop_flatten(self):
     """Generate bprop for Flatten"""
-    flatten_grad = P.Reshape()
+    flatten_grad = G.FlattenGrad()
 
     def bprop(x, out, dout):
         dx = flatten_grad(dout, shape_op(x))
@@ -264,13 +264,9 @@ def get_bprop_embedding_lookup(self):
     def bprop_sparse(x, indices, offset, out, dout):
         x_shp = shape_op(x)
         new_indices = sub_op(indices, offset)
-        indices_size = size_op(new_indices)
-        if indices_size > 0:
-            # Reshape the 'new_indices'
-            new_indices_shape_changed = (indices_size,)
-            new_indices = reshape_op(new_indices, new_indices_shape_changed)
-        else:
-            new_indices_shape_changed = ()
+        # Reshape the 'new_indices'
+        new_indices_shape_changed = (size_op(new_indices),)
+        new_indices = reshape_op(new_indices, new_indices_shape_changed)
         x_shp_tail = x_shp[1:]
         actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
         # Reshape the 'actual_dout' on device

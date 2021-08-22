@@ -31,16 +31,13 @@
 #include "ops/mul.h"
 #include "ops/sub.h"
 #include "ops/strided_slice.h"
-#include "ops/reduce_sum.h"
 #include "abstract/abstract_function.h"
 #include "abstract/infer_functions.h"
-#include "utils/ms_context.h"
 #include "ops/tile.h"
 
 namespace mindspore {
 namespace abstract {
 std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
-  const auto kReduceSum = prim::kPrimReduceSum->name();
   const auto kUnsortedSegmentSum = prim::kPrimUnsortedSegmentSum->name();
   const auto kUnsortedSegmentMin = prim::kPrimUnsortedSegmentMin->name();
   const auto kUnsortedSegmentMax = prim::kPrimUnsortedSegmentMax->name();
@@ -52,13 +49,6 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
     {kUnsortedSegmentSum, {2}}, {kUnsortedSegmentMin, {2}}, {kUnsortedSegmentMax, {2}}, {kGather, {2}},
     {kGatherV2, {2}},           {kDynamicShape, {0}},       {kRange, {0, 1, 2}},
   };
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device == kAscendDevice) {
-    dynamic_shape_depends.insert({kReduceSum, {1}});
-  }
-
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Invalid inputs";
@@ -204,7 +194,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimNotEqual, {ops::NotEqualInfer, nullptr, true}},
     {prim::kPrimLog, {ops::LogInfer, nullptr, true}},
     {prim::kPrimReciprocal, {ops::ReciprocalInfer, nullptr, true}},
-    {prim::kPrimReduceSum, {ops::ReduceSumInfer, nullptr, true}},
+    {prim::kPrimReduceSum, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceMean, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceAll, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceAny, {InferImplReduceFunc, nullptr, true}},
@@ -235,7 +225,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimConcat, {InferImplConcat, nullptr, true}},
     {prim::kPrimArgMaxWithValue, {InferImplArgMaxWithValue, nullptr, true}},
     {prim::kPrimFusedSparseAdam, {InferImplFusedSparseAdam, nullptr, true}},
-    {prim::kPrimTransData, {InferImplTransData, nullptr, true}},
+    {prim::KPrimTransData, {InferImplTransData, nullptr, true}},
   };
   return prim_backend_eval_implement_map;
 }

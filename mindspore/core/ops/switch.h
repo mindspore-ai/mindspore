@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSwitch = "Switch";
-class MS_CORE_API Switch : public PrimitiveC {
+class Switch : public PrimitiveC {
  public:
   Switch() : PrimitiveC(kNameSwitch) {}
   ~Switch() = default;

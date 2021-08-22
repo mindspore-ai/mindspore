@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogGrad = "LogGrad";
-class MS_CORE_API LogGrad : public PrimitiveC {
+class LogGrad : public PrimitiveC {
  public:
   LogGrad() : PrimitiveC(kNameLogGrad) {}
   ~LogGrad() = default;

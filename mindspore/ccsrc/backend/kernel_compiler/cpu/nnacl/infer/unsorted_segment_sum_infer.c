@@ -35,7 +35,7 @@ int UnsortedSegmentSumInferShape(const TensorC *const *inputs, size_t inputs_siz
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   ShapePush(output_shape, &output_shape_size, num_segments);
-  for (int index = (int)(segment_id->shape_size_); index < (int)(x->shape_size_); index++) {
+  for (int index = segment_id->shape_size_; index < (int)(x->shape_size_); index++) {
     if (output_shape_size >= MAX_SHAPE_SIZE) {
       return NNACL_ERR;
     }

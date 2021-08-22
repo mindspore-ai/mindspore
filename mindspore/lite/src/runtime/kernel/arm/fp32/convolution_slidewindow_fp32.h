@@ -27,9 +27,19 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
   ConvolutionSWCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                          float *origin_weight, float *origin_bias)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
+        ori_weight_data_(origin_weight),
+        ori_bias_data_(origin_bias) {}
 
   ~ConvolutionSWCPUKernel() override {
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+    if (packed_bias_ != nullptr) {
+      free(packed_bias_);
+      packed_bias_ = nullptr;
+    }
     if (slidingWindow_param_ != nullptr) {
       delete slidingWindow_param_;
       slidingWindow_param_ = nullptr;
@@ -40,11 +50,10 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
+  int InitWeightBias();
   int InitTmpBuffer();
 
  private:
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
   void FreeTmpBuffer() {
     if (output_data_ != nullptr && oc_res_ != 0) {
       ctx_->allocator->Free(output_data_);
@@ -59,6 +68,10 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
   int in_tile_ = 0;      // input channel algin
   int oc_res_ = 0;
   int ic_res_ = 0;
+  float *ori_weight_data_ = nullptr;
+  float *ori_bias_data_ = nullptr;
+  float *packed_weight_ = nullptr;
+  float *packed_bias_ = nullptr;
   float *output_data_ = nullptr;
   float *input_data_ = nullptr;
   SlidingWindowParam *slidingWindow_param_ = nullptr;

@@ -30,7 +30,7 @@ TEST_F(TestCxxApiLiteModel, test_build_context_uninitialized_FAILED) {
   Model model;
   Graph graph;
 
-  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kFlatBuffer, &graph) == kSuccess);
   auto status = model.Build(GraphCell(graph), nullptr, nullptr);
   ASSERT_TRUE(status != kSuccess);
   auto err_mst = status.GetErrDescription();
@@ -53,7 +53,7 @@ TEST_F(TestCxxApiLiteModel, test_build_SUCCES) {
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
 
-  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kFlatBuffer, &graph) == kSuccess);
   ASSERT_TRUE(model.Build(GraphCell(graph), context, nullptr) == kSuccess);
 }
 
@@ -69,7 +69,7 @@ TEST_F(TestCxxApiLiteModel, test_train_mode_SUCCES) {
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
 
-  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kFlatBuffer, &graph) == kSuccess);
   ASSERT_TRUE(model.Build(GraphCell(graph), context, nullptr) == kSuccess);
   ASSERT_TRUE(model.SetTrainMode(true) == kSuccess);
   ASSERT_TRUE(model.GetTrainMode() == true);
@@ -88,7 +88,7 @@ TEST_F(TestCxxApiLiteModel, test_outputs_SUCCESS) {
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
 
-  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kFlatBuffer, &graph) == kSuccess);
   ASSERT_TRUE(model.Build(GraphCell(graph), context, nullptr) == kSuccess);
   auto outputs = model.GetOutputs();
   ASSERT_GT(outputs.size(), 0);
@@ -109,7 +109,7 @@ TEST_F(TestCxxApiLiteModel, test_metrics_SUCCESS) {
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
 
-  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kFlatBuffer, &graph) == kSuccess);
   ASSERT_TRUE(model.Build(GraphCell(graph), context, nullptr) == kSuccess);
   AccuracyMetrics ac;
   ASSERT_TRUE(model.InitMetrics({&ac}) == kSuccess);

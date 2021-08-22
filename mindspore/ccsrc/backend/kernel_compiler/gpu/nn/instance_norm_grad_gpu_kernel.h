@@ -78,7 +78,10 @@ class InstanceNormGradGpuKernel : public GpuKernel {
     float *ws_gamma = GetDeviceAddress<float>(workspace, 0);
     float *ws_dgamma = GetDeviceAddress<float>(workspace, 1);
     float *ws_dbeta = GetDeviceAddress<float>(workspace, 2);
-    void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 3);
+    void *workspace_addr = nullptr;
+    if (workspace_size_ != 0) {
+      workspace_addr = GetDeviceAddress<T>(workspace, 3);
+    }
 
     size_t N = input_shape_[0];
     size_t C = input_shape_[1];

@@ -86,7 +86,7 @@ int ArithmeticSelfOpenCLKernel::Prepare() {
     kernel_name += std::string(schema::EnumNamePrimitiveType(type())) + "_NHWC4";
   }
   MS_LOG(DEBUG) << "execute kernel name : " << kernel_name;
-  const std::string program_name = "ArithmeticSelf";
+  std::string program_name = "ArithmeticSelf";
   if (!ocl_runtime_->LoadSource(program_name, arithmeticself_source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -98,27 +98,15 @@ int ArithmeticSelfOpenCLKernel::Prepare() {
     return ret;
   }
   SetGlobalLocal();
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   return RET_OK;
 }
 
 int ArithmeticSelfOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

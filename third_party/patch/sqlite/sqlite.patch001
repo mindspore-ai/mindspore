@@ -1,6 +1,6 @@
-diff -Npur sqlite-version-3.32.2-new/src/expr.c sqlite-version-3.32.2/src/expr.c
---- sqlite-version-3.32.2-new/src/expr.c	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/src/expr.c	2021-08-04 11:57:45.029230992 -0400
+diff -Npur sqlite-version-3.32.2/src/expr.c sqlite-version-3.32.2-patched/src/expr.c
+--- sqlite-version-3.32.2/src/expr.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/expr.c	2021-04-29 04:06:04.544208700 -0400
 @@ -3813,6 +3813,7 @@ expr_code_doover:
        AggInfo *pAggInfo = pExpr->pAggInfo;
        struct AggInfo_col *pCol;
@@ -32,9 +32,9 @@ diff -Npur sqlite-version-3.32.2-new/src/expr.c sqlite-version-3.32.2/src/expr.c
      int i;
      struct SrcCount *p = pWalker->u.pSrcCount;
      SrcList *pSrc = p->pSrc;
-diff -Npur sqlite-version-3.32.2-new/src/global.c sqlite-version-3.32.2/src/global.c
---- sqlite-version-3.32.2-new/src/global.c	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/src/global.c	2021-08-04 11:57:45.033230992 -0400
+diff -Npur sqlite-version-3.32.2/src/global.c sqlite-version-3.32.2-patched/src/global.c
+--- sqlite-version-3.32.2/src/global.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/global.c	2021-04-29 04:06:04.544208700 -0400
 @@ -300,6 +300,11 @@ sqlite3_uint64 sqlite3NProfileCnt = 0;
  int sqlite3PendingByte = 0x40000000;
  #endif
@@ -47,9 +47,9 @@ diff -Npur sqlite-version-3.32.2-new/src/global.c sqlite-version-3.32.2/src/glob
  #include "opcodes.h"
  /*
  ** Properties of opcodes.  The OPFLG_INITIALIZER macro is
-diff -Npur sqlite-version-3.32.2-new/src/resolve.c sqlite-version-3.32.2/src/resolve.c
---- sqlite-version-3.32.2-new/src/resolve.c	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/src/resolve.c	2021-08-04 11:57:45.033230992 -0400
+diff -Npur sqlite-version-3.32.2/src/resolve.c sqlite-version-3.32.2-patched/src/resolve.c
+--- sqlite-version-3.32.2/src/resolve.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/resolve.c	2021-04-29 04:06:04.545208700 -0400
 @@ -1715,6 +1715,14 @@ static int resolveSelectStep(Walker *pWa
            return WRC_Abort;
          }
@@ -65,9 +65,9 @@ diff -Npur sqlite-version-3.32.2-new/src/resolve.c sqlite-version-3.32.2/src/res
      }
  #endif
  
-diff -Npur sqlite-version-3.32.2-new/src/select.c sqlite-version-3.32.2/src/select.c
---- sqlite-version-3.32.2-new/src/select.c	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/src/select.c	2021-08-04 12:27:34.737267443 -0400
+diff -Npur sqlite-version-3.32.2/src/select.c sqlite-version-3.32.2-patched/src/select.c
+--- sqlite-version-3.32.2/src/select.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/select.c	2021-04-29 04:07:21.458212191 -0400
 @@ -15,20 +15,6 @@
  #include "sqliteInt.h"
  
@@ -89,27 +89,7 @@ diff -Npur sqlite-version-3.32.2-new/src/select.c sqlite-version-3.32.2/src/sele
  ** An instance of the following object is used to record information about
  ** how to process the DISTINCT keyword, to simplify passing that information
  ** into the selectInnerLoop() routine.
-@@ -2717,9 +2703,7 @@ static int multiSelect(
-                           selectOpName(p->op)));
-         rc = sqlite3Select(pParse, p, &uniondest);
-         testcase( rc!=SQLITE_OK );
--        /* Query flattening in sqlite3Select() might refill p->pOrderBy.
--        ** Be sure to delete p->pOrderBy, therefore, to avoid a memory leak. */
--        sqlite3ExprListDelete(db, p->pOrderBy);
-+        assert( p->pOrderBy==0 );
-         pDelete = p->pPrior;
-         p->pPrior = pPrior;
-         p->pOrderBy = 0;
-@@ -4105,7 +4089,7 @@ static int flattenSubquery(
-     ** We look at every expression in the outer query and every place we see
-     ** "a" we substitute "x*3" and every place we see "b" we substitute "y+10".
-     */
--    if( pSub->pOrderBy ){
-+    if( pSub->pOrderBy && (pParent->selFlags & SF_NoopOrderBy)==0 ){
-       /* At this point, any non-zero iOrderByCol values indicate that the
-       ** ORDER BY column expression is identical to the iOrderByCol'th
-       ** expression returned by SELECT statement pSub. Since these values
-@@ -4426,11 +4410,14 @@ static int pushDownWhereTerms(
+@@ -4426,11 +4412,14 @@ static int pushDownWhereTerms(
  ){
    Expr *pNew;
    int nChng = 0;
@@ -125,7 +105,7 @@ diff -Npur sqlite-version-3.32.2-new/src/select.c sqlite-version-3.32.2/src/sele
  #endif
  
  #ifdef SQLITE_DEBUG
-@@ -5553,7 +5540,9 @@ static void explainSimpleCount(
+@@ -5553,7 +5542,9 @@ static void explainSimpleCount(
  static int havingToWhereExprCb(Walker *pWalker, Expr *pExpr){
    if( pExpr->op!=TK_AND ){
      Select *pS = pWalker->u.pSelect;
@@ -136,7 +116,7 @@ diff -Npur sqlite-version-3.32.2-new/src/select.c sqlite-version-3.32.2/src/sele
        sqlite3 *db = pWalker->pParse->db;
        Expr *pNew = sqlite3Expr(db, TK_INTEGER, "1");
        if( pNew ){
-@@ -5766,6 +5755,9 @@ int sqlite3Select(
+@@ -5766,6 +5757,9 @@ int sqlite3Select(
    }
    if( sqlite3AuthCheck(pParse, SQLITE_SELECT, 0, 0, 0) ) return 1;
    memset(&sAggInfo, 0, sizeof(sAggInfo));
@@ -146,15 +126,7 @@ diff -Npur sqlite-version-3.32.2-new/src/select.c sqlite-version-3.32.2/src/sele
  #if SELECTTRACE_ENABLED
    SELECTTRACE(1,pParse,p, ("begin processing:\n", pParse->addrExplain));
    if( sqlite3SelectTrace & 0x100 ){
-@@ -5787,6 +5779,7 @@ int sqlite3Select(
-     sqlite3ExprListDelete(db, p->pOrderBy);
-     p->pOrderBy = 0;
-     p->selFlags &= ~SF_Distinct;
-+    p->selFlags |= SF_NoopOrderBy;
-   }
-   sqlite3SelectPrep(pParse, p, 0);
-   if( pParse->nErr || db->mallocFailed ){
-@@ -5804,19 +5797,6 @@ int sqlite3Select(
+@@ -5804,19 +5798,6 @@ int sqlite3Select(
      generateColumnNames(pParse, p);
    }
  
@@ -174,7 +146,7 @@ diff -Npur sqlite-version-3.32.2-new/src/select.c sqlite-version-3.32.2/src/sele
    pTabList = p->pSrc;
    isAgg = (p->selFlags & SF_Aggregate)!=0;
    memset(&sSort, 0, sizeof(sSort));
-@@ -6144,7 +6124,7 @@ int sqlite3Select(
+@@ -6144,7 +6125,7 @@ int sqlite3Select(
    if( (p->selFlags & (SF_Distinct|SF_Aggregate))==SF_Distinct 
     && sqlite3ExprListCompare(sSort.pOrderBy, pEList, -1)==0
  #ifndef SQLITE_OMIT_WINDOWFUNC
@@ -183,7 +155,7 @@ diff -Npur sqlite-version-3.32.2-new/src/select.c sqlite-version-3.32.2/src/sele
  #endif
    ){
      p->selFlags &= ~SF_Distinct;
-@@ -6791,6 +6771,14 @@ int sqlite3Select(
+@@ -6791,6 +6772,14 @@ int sqlite3Select(
  select_end:
    sqlite3ExprListDelete(db, pMinMaxOrderBy);
    sqlite3DbFree(db, sAggInfo.aCol);
@@ -198,9 +170,9 @@ diff -Npur sqlite-version-3.32.2-new/src/select.c sqlite-version-3.32.2/src/sele
    sqlite3DbFree(db, sAggInfo.aFunc);
  #if SELECTTRACE_ENABLED
    SELECTTRACE(0x1,pParse,p,("end processing\n"));
-diff -Npur sqlite-version-3.32.2-new/src/sqliteInt.h sqlite-version-3.32.2/src/sqliteInt.h
---- sqlite-version-3.32.2-new/src/sqliteInt.h	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/src/sqliteInt.h	2021-08-04 12:28:22.825268422 -0400
+diff -Npur sqlite-version-3.32.2/src/sqliteInt.h sqlite-version-3.32.2-patched/src/sqliteInt.h
+--- sqlite-version-3.32.2/src/sqliteInt.h	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/sqliteInt.h	2021-04-29 04:06:04.547208700 -0400
 @@ -976,7 +976,12 @@ typedef INT16_TYPE LogEst;
  */
  #if defined(SQLITE_ENABLE_SELECTTRACE)
@@ -239,15 +211,7 @@ diff -Npur sqlite-version-3.32.2-new/src/sqliteInt.h sqlite-version-3.32.2/src/s
  ** The datatype ynVar is a signed integer, either 16-bit or 32-bit.
  ** Usually it is 16-bits.  But if SQLITE_MAX_VARIABLE_NUMBER is greater
  ** than 32767 we have to make it 32-bit.  16-bit is preferred because
-@@ -3105,6 +3125,7 @@ struct Select {
- #define SF_WhereBegin    0x0080000 /* Really a WhereBegin() call.  Debug Only */
- #define SF_WinRewrite    0x0100000 /* Window function rewrite accomplished */
- #define SF_View          0x0200000 /* SELECT statement is a view */
-+#define SF_NoopOrderBy   0x0400000 /* ORDER BY is ignored for this query */
- 
- /*
- ** The results of a SELECT can be distributed in several ways, as defined
-@@ -4546,10 +4567,11 @@ extern const unsigned char sqlite3UpperT
+@@ -4546,10 +4566,11 @@ extern const unsigned char sqlite3UpperT
  extern const unsigned char sqlite3CtypeMap[];
  extern SQLITE_WSD struct Sqlite3Config sqlite3Config;
  extern FuncDefHash sqlite3BuiltinFunctions;
@@ -260,9 +224,9 @@ diff -Npur sqlite-version-3.32.2-new/src/sqliteInt.h sqlite-version-3.32.2/src/s
  #ifdef VDBE_PROFILE
  extern sqlite3_uint64 sqlite3NProfileCnt;
  #endif
-diff -Npur sqlite-version-3.32.2-new/src/test1.c sqlite-version-3.32.2/src/test1.c
---- sqlite-version-3.32.2-new/src/test1.c	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/src/test1.c	2021-08-04 11:57:45.037230992 -0400
+diff -Npur sqlite-version-3.32.2/src/test1.c sqlite-version-3.32.2-patched/src/test1.c
+--- sqlite-version-3.32.2/src/test1.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/test1.c	2021-04-29 04:06:04.548208700 -0400
 @@ -8164,7 +8164,7 @@ int Sqlitetest1_Init(Tcl_Interp *interp)
  #endif
  #endif
@@ -272,9 +236,9 @@ diff -Npur sqlite-version-3.32.2-new/src/test1.c sqlite-version-3.32.2/src/test1
  #endif
  
    for(i=0; i<sizeof(aCmd)/sizeof(aCmd[0]); i++){
-diff -Npur sqlite-version-3.32.2-new/src/window.c sqlite-version-3.32.2/src/window.c
---- sqlite-version-3.32.2-new/src/window.c	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/src/window.c	2021-08-04 11:57:45.041230992 -0400
+diff -Npur sqlite-version-3.32.2/src/window.c sqlite-version-3.32.2-patched/src/window.c
+--- sqlite-version-3.32.2/src/window.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/window.c	2021-04-29 04:06:04.548208700 -0400
 @@ -942,7 +942,7 @@ static int sqlite3WindowExtraAggFuncDept
  */
  int sqlite3WindowRewrite(Parse *pParse, Select *p){
@@ -284,13 +248,13 @@ diff -Npur sqlite-version-3.32.2-new/src/window.c sqlite-version-3.32.2/src/wind
      Vdbe *v = sqlite3GetVdbe(pParse);
      sqlite3 *db = pParse->db;
      Select *pSub = 0;             /* The subquery */
-diff -Npur sqlite-version-3.32.2-new/test/having.test sqlite-version-3.32.2/test/having.test
---- sqlite-version-3.32.2-new/test/having.test	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/test/having.test	2021-08-04 11:57:45.041230992 -0400
+diff -Npur sqlite-version-3.32.2/test/having.test sqlite-version-3.32.2-patched/test/having.test
+--- sqlite-version-3.32.2/test/having.test	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/test/having.test	2021-04-29 04:08:11.785214475 -0400
 @@ -154,5 +154,24 @@ do_execsql_test 4.3 {
    SELECT a, sum(b) FROM t3 WHERE nondeter(a) GROUP BY a
  } {1 4 2 2}
- 
+
 +#-------------------------------------------------------------------------
 +reset_db
 +do_execsql_test 5.0 {
@@ -310,41 +274,11 @@ diff -Npur sqlite-version-3.32.2-new/test/having.test sqlite-version-3.32.2/test
 +    SELECT x FROM t2 WHERE a=2 GROUP BY y HAVING 0
 +  ) FROM t1;
 +} {b {}}
- 
+
  finish_test
-diff -Npur sqlite-version-3.32.2-new/test/selectA.test sqlite-version-3.32.2/test/selectA.test
---- sqlite-version-3.32.2-new/test/selectA.test	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/test/selectA.test	2021-08-04 12:29:43.021270055 -0400
-@@ -1446,5 +1446,26 @@ do_execsql_test 6.1 {
-   SELECT * FROM (SELECT a FROM t1 UNION SELECT b FROM t2) WHERE a=a;
- } {12345}
- 
-+# 2020-06-15 ticket 8f157e8010b22af0
-+#
-+reset_db
-+do_execsql_test 7.1 {
-+  CREATE TABLE t1(c1);     INSERT INTO t1 VALUES(12),(123),(1234),(NULL),('abc');
-+  CREATE TABLE t2(c2);     INSERT INTO t2 VALUES(44),(55),(123);
-+  CREATE TABLE t3(c3,c4);  INSERT INTO t3 VALUES(66,1),(123,2),(77,3);
-+  CREATE VIEW t4 AS SELECT c3 FROM t3;
-+  CREATE VIEW t5 AS SELECT c3 FROM t3 ORDER BY c4;
-+}
-+do_execsql_test 7.2 {
-+  SELECT * FROM t1, t2 WHERE c1=(SELECT 123 INTERSECT SELECT c2 FROM t4) AND c1=123;
-+} {123 123}
-+do_execsql_test 7.3 {
-+  SELECT * FROM t1, t2 WHERE c1=(SELECT 123 INTERSECT SELECT c2 FROM t5) AND c1=123;
-+} {123 123}
-+do_execsql_test 7.4 {
-+  CREATE TABLE a(b);
-+  CREATE VIEW c(d) AS SELECT b FROM a ORDER BY b;
-+  SELECT sum(d) OVER( PARTITION BY(SELECT 0 FROM c JOIN a WHERE b =(SELECT b INTERSECT SELECT d FROM c) AND b = 123)) FROM c;
-+} {}
- 
- finish_test
-diff -Npur sqlite-version-3.32.2-new/test/window1.test sqlite-version-3.32.2/test/window1.test
---- sqlite-version-3.32.2-new/test/window1.test	2020-06-04 08:58:43.000000000 -0400
-+++ sqlite-version-3.32.2/test/window1.test	2021-08-04 11:57:45.041230992 -0400
+diff -Npur sqlite-version-3.32.2/test/window1.test sqlite-version-3.32.2-patched/test/window1.test
+--- sqlite-version-3.32.2/test/window1.test	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/test/window1.test	2021-04-29 04:06:04.549208700 -0400
 @@ -1743,5 +1743,47 @@ do_execsql_test 53.0 {
                 WHERE a.c);
  } {4 4 4 4}

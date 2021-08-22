@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalAnd = "LogicalAnd";
-class MS_CORE_API LogicalAnd : public PrimitiveC {
+class LogicalAnd : public PrimitiveC {
  public:
   LogicalAnd() : PrimitiveC(kNameLogicalAnd) { InitIOName({"x", "y"}, {"output"}); }
   ~LogicalAnd() = default;

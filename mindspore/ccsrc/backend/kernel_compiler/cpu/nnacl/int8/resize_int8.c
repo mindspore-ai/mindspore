@@ -173,8 +173,8 @@ int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_dat
       for (x = 0; x < output_shape[2]; x++) {
         int input_x = 0;
         ComputeNearestNeighborInt(x, in_w, new_width, align_corners, &input_x);
-        int in_offset = Offset(input_shape, batch, input_y, input_x, 0);
-        int out_offset = Offset(output_shape, batch, y, x, 0);
+        int in_offset = offset(input_shape, batch, input_y, input_x, 0);
+        int out_offset = offset(output_shape, batch, y, x, 0);
         memcpy(output_data + out_offset, input_data + in_offset, c * sizeof(int8_t));
       }
     }
@@ -214,8 +214,8 @@ int ResizeNearestNeighborInt8(const int8_t *input_data, int8_t *output_data, con
         int input_x = 0;
         ComputeNearestNeighborInt(x, in_w, new_width, align_corners, &input_x);
         for (c = 0; c < output_shape[3]; c++) {
-          int in_offset = Offset(input_shape, batch, input_y, input_x, c);
-          int out_offset = Offset(output_shape, batch, y, x, c);
+          int in_offset = offset(input_shape, batch, input_y, input_x, c);
+          int out_offset = offset(output_shape, batch, y, x, c);
 
           int32_t out_value = MultiplyByQuantizedMultiplier(
                                 input_data[in_offset] - quant_in->zp_, multiplier->multiplier_,

@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
@@ -22,11 +21,8 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+context.set_context(device_target="Ascend")
+
 def test_for_after_while_in_if_01():
     class ForAfterWhileInIfNet(nn.Cell):
         def __init__(self):
@@ -82,28 +78,20 @@ def test_for_after_while_in_if_01():
     context.set_context(mode=context.GRAPH_MODE)
     for_after_while_in_if_net = ForAfterWhileInIfNet()
     net = GradNet(for_after_while_in_if_net)
-
-    forward_net = ForAfterWhileInIfNet()
-    graph_forward_res = forward_net(x, y)
+    graph_forward_res = for_after_while_in_if_net(x, y)
     graph_backward_res = net(x, y)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_after_while_in_if_net = ForAfterWhileInIfNet()
     net = GradNet(for_after_while_in_if_net)
-
-    forward_net = ForAfterWhileInIfNet()
-    pynative_forward_res = forward_net(x, y)
+    pynative_forward_res = for_after_while_in_if_net(x, y)
     pynative_backward_res = net(x, y)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_for_after_while_in_if_02():
     class ForAfterWhileInIfNet(nn.Cell):
         def __init__(self):
@@ -150,18 +138,14 @@ def test_for_after_while_in_if_02():
     context.set_context(mode=context.GRAPH_MODE)
     for_after_while_in_if_net = ForAfterWhileInIfNet()
     net = GradNet(for_after_while_in_if_net)
-
-    forward_net = ForAfterWhileInIfNet()
-    graph_forward_res = forward_net(x, y)
+    graph_forward_res = for_after_while_in_if_net(x, y)
     graph_backward_res = net(x, y)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_after_while_in_if_net = ForAfterWhileInIfNet()
     net = GradNet(for_after_while_in_if_net)
-
-    forward_net = ForAfterWhileInIfNet()
-    pynative_forward_res = forward_net(x, y)
+    pynative_forward_res = for_after_while_in_if_net(x, y)
     pynative_backward_res = net(x, y)
 
     assert graph_forward_res == pynative_forward_res

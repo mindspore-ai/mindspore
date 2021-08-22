@@ -30,7 +30,7 @@ get_real_path(){
 
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
-CONFIG_FILE=$(get_real_path $3)
+CONFIG_FILE=$3
 
 
 if [ ! -d $PATH1 ]
@@ -58,7 +58,7 @@ fi
 mkdir ./eval
 cp ../*.py ./eval
 cp *.sh ./eval
-cp -r ../config/*.yaml ./eval
+cp -r ../*.yaml ./eval
 cp -r ../src ./eval
 cd ./eval || exit
 env > env.log

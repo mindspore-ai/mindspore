@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRound = "Round";
-class MS_CORE_API Round : public PrimitiveC {
+class Round : public PrimitiveC {
  public:
   Round() : PrimitiveC(kNameRound) { InitIOName({"input_x"}, {"output"}); }
   ~Round() = default;

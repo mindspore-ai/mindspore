@@ -17,6 +17,7 @@
 #include <fstream>
 #include <numeric>
 #include "sys/stat.h"
+#include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
 
@@ -30,10 +31,6 @@ OpDetailInfo::OpDetailInfo(const std::shared_ptr<OpInfo> op_info, float proporti
   auto op_type_end_iter = op_full_name_.rfind('-');
   op_type_ = op_full_name_.substr(op_type_begin_iter, op_type_end_iter - op_type_begin_iter);
   op_name_ = op_full_name_.substr(op_type_begin_iter);
-  if (op_info->op_count == 0) {
-    MS_LOG(ERROR) << "The num of operations can not be 0.";
-    return;
-  }
   op_avg_time_ = op_info->op_host_cost_time / op_info->op_count;
 }
 
@@ -42,10 +39,6 @@ void DataSaver::ParseOpInfo(const OpInfoMap &op_info_maps) {
   float total_time_sum = GetTotalOpTime(op_info_maps);
   for (auto item : op_info_maps) {
     op_timestamps_map_[item.first] = item.second.start_duration;
-    if (total_time_sum == 0.0) {
-      MS_LOG(ERROR) << "The total operation times can not be 0.";
-      return;
-    }
     float proportion = item.second.op_host_cost_time / total_time_sum;
     auto op_info = std::make_shared<OpInfo>(item.second);
     if (op_info == nullptr) {
@@ -59,10 +52,6 @@ void DataSaver::ParseOpInfo(const OpInfoMap &op_info_maps) {
   // update average time of op type
   for (auto &op_type : op_type_infos_) {
     // device_infos: <type_name, op_type_info>
-    if (op_type.second.count_ == 0) {
-      MS_LOG(ERROR) << "The num of operation type can not be 0.";
-      return;
-    }
     op_type.second.avg_time_ = op_type.second.total_time_ / op_type.second.count_;
   }
   MS_LOG(DEBUG) << "Get " << op_detail_infos_.size() << " operation items.";

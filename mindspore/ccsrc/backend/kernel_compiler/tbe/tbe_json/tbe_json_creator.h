@@ -48,7 +48,6 @@ class TbeJsonCreator {
   virtual bool GenJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) { return false; }
   virtual bool GenJson(const FusionScopeInfo &fusion_scope_info, nlohmann::json *fusion_json) { return false; }
   std::string GetJsonName() { return json_name_; }
-  size_t GetJsonHash() { return json_hash_; }
 
  protected:
   bool GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
@@ -73,7 +72,6 @@ class TbeJsonCreator {
 
  private:
   std::string json_name_;
-  size_t json_hash_;
 };
 
 }  // namespace mindspore::kernel

@@ -184,7 +184,7 @@
     for (int i = dims - 1; i > 0; --i) {                                                               \
       *(size + i - 1) = *(size + i) * output_shape[i];                                                 \
     }                                                                                                  \
-    for (int idx = 0; idx < (*size) * output_shape[0]; ++idx) {                                        \
+    for (size_t idx = 0; idx < (*size) * output_shape[0]; ++idx) {                                     \
       int pos = idx;                                                                                   \
       int output_idx = 0;                                                                              \
       int input_idx = 0;                                                                               \
@@ -215,7 +215,7 @@
       return;                                                                                        \
     }                                                                                                \
     count = MSMIN(offset_size, count);                                                               \
-    for (int idx = task_offset; idx < task_offset + count; ++idx) {                                  \
+    for (size_t idx = task_offset; idx < task_offset + count; ++idx) {                               \
       int pos = idx;                                                                                 \
       int output_idx = 0;                                                                            \
       int input_idx = 0;                                                                             \

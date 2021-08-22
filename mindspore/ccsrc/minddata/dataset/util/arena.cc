@@ -42,7 +42,6 @@ ArenaImpl::ArenaImpl(void *ptr, size_t sz) : size_in_bytes_(sz), ptr_(ptr) {
 }
 
 Status ArenaImpl::Allocate(size_t n, void **p) {
-  RETURN_UNEXPECTED_IF_NULL(p);
   if (n == 0) {
     *p = nullptr;
     return Status::OK();
@@ -84,10 +83,6 @@ std::pair<std::pair<uint64_t, uint64_t>, bool> ArenaImpl::FindPrevBlk(uint64_t a
 }
 
 void ArenaImpl::Deallocate(void *p) {
-  if (p == nullptr) {
-    MS_LOG(ERROR) << "The pointer[p] is null.";
-    return;
-  }
   auto *q = get_base_addr(p);
   MemHdr hdr(0, 0);
   MemHdr::getHdr(q, &hdr);
@@ -152,8 +147,8 @@ bool ArenaImpl::BlockEnlarge(uint64_t *addr, uint64_t old_sz, uint64_t new_sz) {
 }
 
 Status ArenaImpl::FreeAndAlloc(void **pp, size_t old_sz, size_t new_sz) {
-  RETURN_UNEXPECTED_IF_NULL(pp);
-  RETURN_UNEXPECTED_IF_NULL(*pp);
+  MS_ASSERT(pp);
+  MS_ASSERT(*pp);
   void *p = nullptr;
   void *q = *pp;
   RETURN_IF_NOT_OK(Allocate(new_sz, &p));
@@ -168,8 +163,8 @@ Status ArenaImpl::FreeAndAlloc(void **pp, size_t old_sz, size_t new_sz) {
 }
 
 Status ArenaImpl::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
-  RETURN_UNEXPECTED_IF_NULL(pp);
-  RETURN_UNEXPECTED_IF_NULL(*pp);
+  MS_ASSERT(pp);
+  MS_ASSERT(*pp);
   uint64_t actual_size = static_cast<uint64_t>(new_sz) + ARENA_WALL_OVERHEAD_SZ;
   if (actual_size > this->get_max_size()) {
     RETURN_STATUS_UNEXPECTED("Request size too big : " + std::to_string(new_sz));
@@ -216,10 +211,6 @@ int ArenaImpl::PercentFree() const {
   uint64_t sz = 0;
   for (auto &it : tr_) {
     sz += it.priority;
-  }
-  if (size_in_bytes_ == 0) {
-    MS_LOG(ERROR) << "size_in_bytes_ can not be zero.";
-    return 0;
   }
   double ratio = static_cast<double>(sz * ARENA_BLK_SZ) / static_cast<double>(size_in_bytes_);
   return static_cast<int>(ratio * 100.0);

@@ -21,7 +21,6 @@ ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
 export RANK_TABLE_FILE=$PATH1
-export HCCL_CONNECT_TIMEOUT=1200
 
 for ((i = 0; i < ${DEVICE_NUM}; i++)); do
   let deviceID=$i

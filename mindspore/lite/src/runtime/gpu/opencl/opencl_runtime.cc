@@ -210,7 +210,6 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
 #endif
   if (context_ == nullptr || ret != CL_SUCCESS) {
     delete device_;
-    device_ = nullptr;
     MS_LOG(ERROR) << "Context create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
@@ -219,8 +218,6 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
   if (default_command_queue_ == nullptr || ret != CL_SUCCESS) {
     delete device_;
     delete context_;
-    device_ = nullptr;
-    context_ = nullptr;
     MS_LOG(ERROR) << "Command Queue create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
@@ -230,9 +227,6 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
     delete device_;
     delete context_;
     delete default_command_queue_;
-    device_ = nullptr;
-    context_ = nullptr;
-    default_command_queue_ = nullptr;
     MS_LOG(ERROR) << "Profiling command Queue create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
@@ -297,10 +291,6 @@ int OpenCLRuntime::Init() {
     delete context_;
     delete default_command_queue_;
     delete profiling_command_queue_;
-    device_ = nullptr;
-    context_ = nullptr;
-    default_command_queue_ = nullptr;
-    profiling_command_queue_ = nullptr;
     MS_LOG(ERROR) << "Command OpenCL allocator failed!";
     return RET_ERROR;
   }
@@ -315,9 +305,7 @@ int OpenCLRuntime::Uninit() {
   if (init_state_ != InitSuccess) {
     return RET_OK;
   }
-  if (StoreCache() != RET_OK) {
-    MS_LOG(ERROR) << "StoreCache failed!";
-  }
+  StoreCache();
   program_map_.clear();
   delete default_command_queue_;
   delete profiling_command_queue_;
@@ -586,15 +574,12 @@ void *OpenCLRuntime::MapBuffer(const cl::Buffer &buffer, int flags, size_t size,
 
 int OpenCLRuntime::MapBuffer(void *host_ptr, int flags, size_t size, cl::CommandQueue *command_queue, bool sync) const {
   if (GetSVMCapabilities() & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
-    return RET_ERROR;
+    return RET_OK;
   }
   if (command_queue == nullptr) {
     command_queue = default_command_queue_;
   }
-  if (clEnqueueSVMMap(command_queue->get(), sync, flags, host_ptr, size, 0, nullptr, nullptr) != CL_SUCCESS) {
-    return RET_ERROR;
-  }
-  return RET_OK;
+  return clEnqueueSVMMap(command_queue->get(), sync, flags, host_ptr, size, 0, nullptr, nullptr);
 }
 
 void *OpenCLRuntime::MapBuffer(const cl::Image2D &buffer, bool sync, int flags, const std::vector<size_t> &region,
@@ -735,17 +720,17 @@ void OpenCLRuntime::LoadCache() {
   MS_LOG(INFO) << "Init opencl cache success";
 }
 
-int OpenCLRuntime::StoreCache() {
+void OpenCLRuntime::StoreCache() {
   if (!enable_cache_) {
-    return RET_OK;
+    return;
   }
   if (!flush_cache_) {
-    return RET_OK;
+    return;
   }
   auto fbb = std::make_unique<flatbuffers::FlatBufferBuilder>();
   if (fbb == nullptr) {
     MS_LOG(ERROR) << "new opencl FlatBufferBuilder fail";
-    return RET_ERROR;
+    return;
   }
   std::vector<flatbuffers::Offset<schema::ProgramBinary>> program_binarys;
   for (const auto &kv : program_map_) {
@@ -768,12 +753,8 @@ int OpenCLRuntime::StoreCache() {
   auto gpu_cache = schema::CreateGpuCache(*fbb, name, version, data);
   fbb->Finish(gpu_cache);
   uint8_t *buf = fbb->GetBufferPointer();
-  if (WriteToBin(cache_path_, reinterpret_cast<void *>(buf), fbb->GetSize()) != RET_OK) {
-    MS_LOG(ERROR) << "WriteToBin failed.";
-    return RET_ERROR;
-  }
+  WriteToBin(cache_path_, reinterpret_cast<void *>(buf), fbb->GetSize());
   MS_LOG(INFO) << "store opencl cache ok, size=" << fbb->GetSize();
-  return RET_OK;
 }
 
 cl::Buffer *OpenCLRuntime::CreateSharedMemoryBuffer(size_t size, void *host_ptr) {

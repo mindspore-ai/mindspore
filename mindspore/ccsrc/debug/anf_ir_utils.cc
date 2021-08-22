@@ -606,8 +606,7 @@ void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPt
 
   std::ofstream ofs(filename);
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << filename << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open file '" << filename << "' failed!";
     return;
   }
 
@@ -632,7 +631,7 @@ void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph) {
     return;
   }
 
-  auto filepath = GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
+  auto filepath = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
   auto real_filepath = Common::GetRealPath(filepath);
   if (!real_filepath.has_value()) {
     MS_LOG(ERROR) << "The export ir path: " << filepath << " is not illegal.";

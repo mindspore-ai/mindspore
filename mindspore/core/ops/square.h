@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSquare = "Square";
-class MS_CORE_API Square : public PrimitiveC {
+class Square : public PrimitiveC {
  public:
   Square() : PrimitiveC(kNameSquare) { InitIOName({"input_x"}, {"y"}); }
   ~Square() = default;

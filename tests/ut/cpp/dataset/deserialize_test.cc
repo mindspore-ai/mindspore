@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <nlohmann/json.hpp>
 #include "common/common.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/vision.h"
 #include "minddata/dataset/include/dataset/transforms.h"
-#include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::DatasetNode;
@@ -33,15 +33,14 @@ class MindDataTestDeserialize : public UT::DatasetOpTesting {
 
 void compare_dataset(std::shared_ptr<DatasetNode> ds) {
   nlohmann::json out_json;
-  ASSERT_OK(Serdes::SaveToJSON(ds, "dataset_pipeline.json", &out_json));
+  std::make_shared<Serdes>()->SaveToJSON(ds, "dataset_pipeline.json", &out_json);
   // output the deserialized out_json to ds1 and then out_json1
   std::shared_ptr<DatasetNode> ds1;
   ASSERT_OK(Serdes::Deserialize("dataset_pipeline.json", &ds1));
   EXPECT_NE(ds1, nullptr);
-
   // check original and deserialized dataset are the same
   nlohmann::json out_json1;
-  ASSERT_OK(Serdes::SaveToJSON(ds1, "dataset_pipeline_1.json", &out_json1));
+  std::make_shared<Serdes>()->SaveToJSON(ds1, "dataset_pipeline_1.json", &out_json1);
   std::stringstream json_ss;
   json_ss << out_json;
   std::stringstream json_ss1;
@@ -306,21 +305,6 @@ TEST_F(MindDataTestDeserialize, TestDeserializeManifest) {
   std::shared_ptr<DatasetCache> cache = nullptr;
   std::shared_ptr<DatasetNode> ds =
     std::make_shared<ManifestNode>(data_file, "train", sampler, class_indexing, false, cache);
-  std::vector<int32_t> coordinates = {50, 50};
-  std::vector<int32_t> size = {224, 224};
-  std::shared_ptr<TensorOperation> operation1 = std::make_shared<vision::CropOperation>(coordinates, size);
-  std::shared_ptr<TensorOperation> operation2 = std::make_shared<vision::RgbToBgrOperation>();
-  std::shared_ptr<TensorOperation> operation3 = std::make_shared<vision::RgbToGrayOperation>();
-  std::shared_ptr<TensorOperation> operation4 =
-    std::make_shared<vision::SlicePatchesOperation>(5, 5, SliceMode::kDrop, 1);
-  std::shared_ptr<TensorOperation> operation5 = std::make_shared<vision::VerticalFlipOperation>();
-  std::vector<std::shared_ptr<TensorOperation>> operations;
-  operations.push_back(operation1);
-  operations.push_back(operation2);
-  operations.push_back(operation3);
-  operations.push_back(operation4);
-  operations.push_back(operation5);
-  ds = std::make_shared<MapNode>(ds, operations);
   ds = std::make_shared<BatchNode>(ds, 2, false);
   compare_dataset(ds);
 }
@@ -449,53 +433,4 @@ TEST_F(MindDataTestDeserialize, TestDeserializeInvalidJson) {
   // check the invalid json object would return error
   ASSERT_ERROR(Serdes::Deserialize("./data/dataset/testDataset1/datasetTestInvalidJson.json", &ds));
   EXPECT_EQ(ds, nullptr);
-}
-
-TEST_F(MindDataTestDeserialize, TestDeserializeFill) {
-  MS_LOG(INFO) << "Doing MindDataTestDeserialize-Fill.";
-  std::vector<std::string> dataset_files = {"./data/dataset/testTextFileDataset/1.txt"};
-  std::shared_ptr<DatasetCache> cache = nullptr;
-  std::shared_ptr<DatasetNode> ds = std::make_shared<TextFileNode>(dataset_files, 2, ShuffleMode::kFiles, 1, 0, cache);
-  std::shared_ptr<Tensor> fill_value;
-  ASSERT_OK(Tensor::CreateScalar(true, &fill_value));
-  std::shared_ptr<TensorOperation> operation1 = std::make_shared<transforms::FillOperation>(fill_value);
-  std::shared_ptr<TensorOperation> operation2 = std::make_shared<text::ToNumberOperation>("int32_t");
-  std::vector<std::shared_ptr<TensorOperation>> ops = {operation1, operation2};
-  ds = std::make_shared<MapNode>(ds, ops);
-  ds = std::make_shared<TransferNode>(ds, "queue", "type", 1, true, 10, true);
-  compare_dataset(ds);
-}
-
-TEST_F(MindDataTestDeserialize, TestDeserializeTensor) {
-  MS_LOG(INFO) << "Doing MindDataTestDeserialize-Tensor.";
-  std::shared_ptr<Tensor> test_tensor;
-  std::vector<float> input = {1.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1.2, 0.7, 0.8, 0.9, 1.0, 2.0, 1.3, 3.0, 4.0};
-  ASSERT_OK(Tensor::CreateFromVector(input, TensorShape{3, 5}, &test_tensor));
-  nlohmann::json json_obj;
-  ASSERT_OK(test_tensor->to_json(&json_obj));
-  std::shared_ptr<Tensor> test_tensor1;
-  ASSERT_OK(Tensor::from_json(json_obj, &test_tensor1));
-  nlohmann::json json_obj1;
-  ASSERT_OK(test_tensor1->to_json(&json_obj1));
-  std::stringstream json_ss;
-  json_ss << json_obj;
-  std::stringstream json_ss1;
-  json_ss1 << json_obj1;
-  EXPECT_EQ(json_ss.str(), json_ss1.str());
-}
-
-// Helper function to get the session id from SESSION_ID env variable
-Status GetSessionFromEnv(session_id_type *session_id);
-
-TEST_F(MindDataTestDeserialize, DISABLED_TestDeserializeCache) {
-  MS_LOG(INFO) << "Doing MindDataTestDeserialize-Cache.";
-  std::string data_dir = "./data/dataset/testCache";
-  std::string usage = "all";
-  session_id_type env_session;
-  ASSERT_TRUE(GetSessionFromEnv(&env_session));
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false, "127.0.0.1", 50052, 1, 1);
-
-  std::shared_ptr<SamplerObj> sampler = std::make_shared<SequentialSamplerObj>(0, 10);
-  std::shared_ptr<DatasetNode> ds = std::make_shared<Cifar10Node>(data_dir, usage, sampler, some_cache);
-  compare_dataset(ds);
 }

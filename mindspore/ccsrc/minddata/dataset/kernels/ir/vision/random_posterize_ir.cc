@@ -81,7 +81,7 @@ Status RandomPosterizeOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomPosterizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("bits") != op_params.end(), "Failed to find bits");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("bits") != op_params.end(), "Fail to find bits");
   std::vector<uint8_t> bit_range = op_params["bits"];
   *operation = std::make_shared<vision::RandomPosterizeOperation>(bit_range);
   return Status::OK();

@@ -25,7 +25,7 @@ namespace ops {
 
 constexpr auto kNameTensorArrayRead = "TensorArrayRead";
 
-class MS_CORE_API TensorArrayRead : public PrimitiveC {
+class TensorArrayRead : public PrimitiveC {
  public:
   TensorArrayRead() : PrimitiveC(kNameTensorArrayRead) { InitIOName({"handle", "index", "flow_in"}, {"tensor"}); }
   ~TensorArrayRead() = default;

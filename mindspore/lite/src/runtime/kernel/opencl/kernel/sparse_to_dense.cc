@@ -37,19 +37,11 @@ int SparseToDenseOpenCLKernel::InitOutputToDefault() {
   cl_float4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
   auto src_data = out_tensors_[0]->data_c();
-  MS_ASSERT(src_data);
-  if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
-    MS_LOG(ERROR) << "GetImageSize failed.";
-    return RET_ERROR;
-  }
+  allocator_->GetImageSize(src_data, &img_size);
   auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
-  if (ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region) !=
-      CL_SUCCESS) {
-    MS_LOG(ERROR) << "enqueueFillImage failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region);
   return RET_OK;
 }
 
@@ -60,7 +52,6 @@ int SparseToDenseOpenCLKernel::InitWeights() {
   for (int i = 0; i < weight_tensor->shape().size(); ++i) {
     size *= weight_tensor->shape()[i];
   }
-  MS_ASSERT(weight_tensor->data_c());
   if (weight_scalar_) {
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
       weight_scalar_ = static_cast<float>(*reinterpret_cast<float16_t *>(weight_tensor->data_c()));
@@ -71,14 +62,7 @@ int SparseToDenseOpenCLKernel::InitWeights() {
     auto sizeof_FLT = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
     size_t weight_size = UP_ROUND(size, C4NUM) * sizeof_FLT;
     weight_vector_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
-    if (weight_vector_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc failed.";
-      return RET_ERROR;
-    }
-    if (allocator->MapBuffer(weight_vector_, CL_MAP_WRITE, nullptr, true) == nullptr) {
-      MS_LOG(ERROR) << "Map Buffer failed.";
-      return RET_ERROR;
-    }
+    allocator->MapBuffer(weight_vector_, CL_MAP_WRITE, nullptr, true);
     memset(weight_vector_, 0x00, weight_size);
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
       if (enable_fp16_) {
@@ -101,10 +85,7 @@ int SparseToDenseOpenCLKernel::InitWeights() {
         memcpy(weight_vector_, weight_tensor->data_c(), size * sizeof_FLT);
       }
     }
-    if (allocator->UnmapBuffer(weight_vector_) != RET_OK) {
-      MS_LOG(ERROR) << "UnmapBuffer failed.";
-      return RET_ERROR;
-    }
+    allocator->UnmapBuffer(weight_vector_);
   }
   return RET_OK;
 }
@@ -134,7 +115,7 @@ int SparseToDenseOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-int SparseToDenseOpenCLKernel::SetConstArgs() {
+void SparseToDenseOpenCLKernel::SetConstArgs() {
   auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
   GpuTensorInfo img_info(out_tensors_[0]);
   size_t dtype = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
@@ -143,27 +124,11 @@ int SparseToDenseOpenCLKernel::SetConstArgs() {
   auto out_shape_temp = out_tensors_[0]->shape();
   cl_int4 out_shape = {out_n_, out_h_, out_w_, UP_DIV(out_c_, C4NUM)};
   int arg_cn = 3;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, default_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, inshapeindex1_dim) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, default_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, inshapeindex1_dim);
 }
 
 void SparseToDenseOpenCLKernel::SetGlobalLocal() {
@@ -179,9 +144,9 @@ int SparseToDenseOpenCLKernel::Prepare() {
   input_dim_ = in_tensors_[0]->shape().size();
   inshapeindex1_dim = in_tensors_[0]->shape()[1];
   weight_scalar_ = in_tensors_[2]->IsScalar();
-  const std::string kernel_name = "SparseToDense" + std::string(weight_scalar_ ? "Scalar" : "Vector");
+  std::string kernel_name = "SparseToDense" + std::string(weight_scalar_ ? "Scalar" : "Vector");
   std::string source = sparse_to_dense_source;
-  const std::string program_name = "SparseToDense";
+  std::string program_name = "SparseToDense";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -205,23 +170,11 @@ int SparseToDenseOpenCLKernel::Prepare() {
     } else {
       default_ = *reinterpret_cast<float *>(input_tensor3->data_c());
     }
-    MS_ASSERT(default_);
   }
-  ret = InitWeights();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "InitWeights failed.";
-    return ret;
-  }
-  ret = InferShapeTo4D();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "InferShapeTo4D failed.";
-    return ret;
-  }
+  InitWeights();
+  InferShapeTo4D();
   SetGlobalLocal();
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -257,36 +210,16 @@ int SparseToDenseOpenCLKernel::InferShapeTo4D() {
 
 int SparseToDenseOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  int ret = InitOutputToDefault();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "InitOutputToDefault failed.";
-    return ret;
-  }
+  InitOutputToDefault();
   int arg_cn = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF) !=
-      CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
   if (!weight_scalar_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_vector_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_vector_, lite::opencl::MemType::BUF);
   } else {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_scalar_) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_scalar_);
   }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

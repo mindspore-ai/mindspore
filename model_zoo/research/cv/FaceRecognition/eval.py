@@ -20,7 +20,6 @@ from pprint import pformat
 import numpy as np
 import cv2
 
-from mindspore.common import dtype as mstype
 import mindspore.dataset.transforms.py_transforms as transforms
 import mindspore.dataset.vision.py_transforms as vision
 import mindspore.dataset as de
@@ -128,6 +127,7 @@ def get_model(args):
     net = get_backbone(args)
     if args.fp16:
         net.add_flags_recursive(fp16=True)
+
     if args.weight.endswith('.ckpt'):
         param_dict = load_checkpoint(args.weight)
         param_dict_new = {}
@@ -143,8 +143,6 @@ def get_model(args):
     else:
         args.logger.info('ERROR, not support file:{}, please check weight in config.py'.format(args.weight))
         return 0
-    if args.device_target == 'GPU':
-        net.to_float(mstype.float32)
     net.set_train(False)
     return net
 

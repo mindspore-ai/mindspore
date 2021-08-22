@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScale = "Scale";
-class MS_CORE_API Scale : public PrimitiveC {
+class Scale : public PrimitiveC {
  public:
   Scale() : PrimitiveC(kNameScale) {}
   explicit Scale(const std::string k_name) : PrimitiveC(k_name) {}

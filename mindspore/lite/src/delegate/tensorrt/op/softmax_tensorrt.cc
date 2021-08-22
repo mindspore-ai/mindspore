@@ -19,10 +19,6 @@
 namespace mindspore::lite {
 int SoftMaxTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (primitive->value_type() == schema::PrimitiveType::PrimitiveType_LogSoftmax) {
     with_log_ = true;
     auto softmax_op = primitive->value_as_LogSoftmax();

@@ -225,7 +225,7 @@ Status TextFileOp::ComputeColMap() {
   // Set the column name mapping (base class field)
   if (column_name_id_map_.empty()) {
     for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->Column(i).Name()] = i;
+      column_name_id_map_[data_schema_->column(i).name()] = i;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

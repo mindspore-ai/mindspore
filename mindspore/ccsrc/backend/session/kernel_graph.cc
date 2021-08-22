@@ -470,7 +470,7 @@ void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
   }
 }
 
-void KernelGraph::ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const {
+void KernelGraph::ResetAssignInputFeaatureMapFlag(const CNodePtr &cnode) const {
   if (kOpAssignKernelNameList.find(AnfAlgo::GetCNodeName(cnode)) == kOpAssignKernelNameList.end()) {
     MS_LOG(EXCEPTION) << "Only supported to change the node [Assign , AssignSub, AssignAdd] node's input feature map "
                          "flag but got the node :"
@@ -482,7 +482,7 @@ void KernelGraph::ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const {
     return;
   }
   if (!AnfAlgo::IsFeatureMapOutput(input_node) && AnfAlgo::IsFeatureMapOutput(assign_value_node)) {
-    auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
+    auto kernel_info = static_cast<device::KernelInfo *>(input_node->kernel_info());
     kernel_info->set_feature_map_flag(true);
   }
 }
@@ -493,7 +493,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   node->set_kernel_info(kernel_info);
   if (node->isa<CNode>()) {
     if (kOpAssignKernelNameList.find(AnfAlgo::GetCNodeName(node)) != kOpAssignKernelNameList.end()) {
-      ResetAssignInputFeatureMapFlag(node->cast<CNodePtr>());
+      ResetAssignInputFeaatureMapFlag(node->cast<CNodePtr>());
     }
 #if defined(__APPLE__)
     std::vector<int> feature_map_input_indexs;
@@ -581,6 +581,7 @@ ParameterPtr KernelGraph::NewParameter(const abstract::AbstractBasePtr &abstract
 ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(value_node);
   auto new_value_node = MakeValueNode(value_node)->cast<ValueNodePtr>();
+  new_value_node->set_func_graph(shared_from_this()->cast<FuncGraphPtr>());
   AnfAlgo::SetGraphId(graph_id_, new_value_node.get());
   return new_value_node;
 }
@@ -590,6 +591,7 @@ ValueNodePtr KernelGraph::NewValueNode(const AbstractBasePtr &abstract, const Va
   MS_EXCEPTION_IF_NULL(value);
   ValueNodePtr new_value_node = std::make_shared<ValueNode>(value);
   new_value_node->set_abstract(abstract);
+  new_value_node->set_func_graph(shared_from_this()->cast<FuncGraphPtr>());
   SetKernelInfoForNode(new_value_node);
   AnfAlgo::SetGraphId(graph_id(), new_value_node.get());
   return new_value_node;
@@ -694,8 +696,9 @@ AnfNodePtr KernelGraph::TransTupleToMakeTuple(const AnfNodePtr &node) {
   } else if (node->isa<ValueNode>()) {
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    auto make_tuple = TransValueNodeTuple(value_node->abstract(), value_node->value());
-    if (!RemoveValueNodeFromGraph(value_node)) {
+    auto cur_graph = value_node->func_graph()->cast<KernelGraphPtr>();
+    auto make_tuple = cur_graph->TransValueNodeTuple(value_node->abstract(), value_node->value());
+    if (!cur_graph->RemoveValueNodeFromGraph(value_node)) {
       MS_LOG(WARNING) << "Failed to remove the value_node " << value_node->DebugString();
     }
     return make_tuple;
@@ -1344,9 +1347,6 @@ void KernelGraph::SetOptimizerFlag() {
   for (const auto &cnode : execution_order_) {
     MS_EXCEPTION_IF_NULL(cnode);
     auto node_name = AnfAlgo::GetCNodeName(cnode);
-    if (AnfAlgo::HasNodeAttr(kAttrAsync, cnode) && AnfAlgo::GetNodeAttr<bool>(cnode, kAttrAsync)) {
-      continue;
-    }
     if (kOptOperatorSet.find(node_name) != kOptOperatorSet.end()) {
       has_optimizer_ = true;
     } else if (node_name.find("Assign") == string::npos) {
@@ -1359,9 +1359,7 @@ void KernelGraph::SetOptimizerFlag() {
         continue;
       }
       auto param = real_node->cast<ParameterPtr>();
-      auto abstract = param->abstract();
-      MS_EXCEPTION_IF_NULL(abstract);
-      if (abstract->isa<abstract::AbstractRef>()) {
+      if (AnfAlgo::IsParameterWeight(param)) {
         has_optimizer_ = true;
         (void)updated_parameters_.insert(param);
       }
@@ -1380,7 +1378,8 @@ KernelGraph::~KernelGraph() {
         kernel_mod->ReleaseResource();
       }
     }
-    device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_);
+    device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_, *inputs_, graph_value_nodes_,
+                                                                execution_order_);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "KernelGraph call destructor failed: " << e.what();
   } catch (...) {

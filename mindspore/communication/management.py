@@ -232,7 +232,8 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         This method should be used after init().
 
     Args:
-        group (str): The communication group to work on. The group is created by create_group.
+        group (str): The communication group to work on. The group is created by create_group
+                     or the default world communication group.
         group_rank_id (int): A rank ID in the communication group.
 
     Returns:
@@ -268,7 +269,8 @@ def get_group_rank_from_world_rank(world_rank_id, group):
 
     Args:
         world_rank_id (int): A rank ID in the world communication group.
-        group (str): The communication group to work on. The group is created by create_group.
+        group (str): The communication group to work on. The group is created by create_group
+                     or the default world communication group.
 
     Returns:
         int, the rank ID in the user communication group.

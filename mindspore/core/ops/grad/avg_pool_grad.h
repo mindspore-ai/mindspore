@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPoolGrad = "AvgPoolGrad";
-class MS_CORE_API AvgPoolGrad : public PoolGrad {
+class AvgPoolGrad : public PoolGrad {
  public:
   AvgPoolGrad() : PoolGrad(kNameAvgPoolGrad) { InitIOName({"x_origin", "out_origin", "grad"}, {"output"}); }
   ~AvgPoolGrad() = default;

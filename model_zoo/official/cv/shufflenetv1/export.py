@@ -38,7 +38,7 @@ if config.device_target == "Ascend":
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def model_export():
-    net = ShuffleNetV1(model_size=config.model_size, n_class=config.num_classes)
+    net = ShuffleNetV1(model_size=config.model_size)
 
     param_dict = load_checkpoint(config.ckpt_path)
     load_param_into_net(net, param_dict)

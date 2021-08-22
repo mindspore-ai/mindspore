@@ -43,7 +43,6 @@ class ImageBatchFormat(IntEnum):
     NHWC = 0
     NCHW = 1
 
-
 class SliceMode(IntEnum):
     PAD = 0
     DROP = 1

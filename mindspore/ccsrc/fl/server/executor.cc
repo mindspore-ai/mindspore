@@ -51,18 +51,6 @@ bool Executor::ReInitForScaling() {
   return true;
 }
 
-bool Executor::ReInitForUpdatingHyperParams(size_t aggr_threshold) {
-  aggregation_count_ = aggr_threshold;
-  auto result = std::find_if(param_aggrs_.begin(), param_aggrs_.end(), [this](auto param_aggr) {
-    return !param_aggr.second->ReInitForUpdatingHyperParams(aggregation_count_);
-  });
-  if (result != param_aggrs_.end()) {
-    MS_LOG(ERROR) << "Reinitializing aggregator of " << result->first << " for scaling failed.";
-    return false;
-  }
-  return true;
-}
-
 bool Executor::initialized() const { return initialized_; }
 
 bool Executor::HandlePush(const std::string &param_name, const UploadData &upload_data) {
@@ -243,9 +231,6 @@ bool Executor::IsWeightAggrDone(const std::vector<std::string> &param_names) {
     std::unique_lock<std::mutex> lock(mtx);
     auto &param_aggr = param_aggrs_[name];
     MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
-    if (!param_aggr->requires_aggr()) {
-      continue;
-    }
     if (!param_aggr->IsAggregationDone()) {
       MS_LOG(DEBUG) << "Update model for " << name << " is not done yet.";
       return false;
@@ -280,8 +265,6 @@ std::map<std::string, AddressPtr> Executor::GetModel() {
   return model;
 }
 
-const std::vector<std::string> &Executor::param_names() const { return param_names_; }
-
 bool Executor::Unmask() {
 #ifdef ENABLE_ARMOUR
   auto model = GetModel();
@@ -291,17 +274,7 @@ bool Executor::Unmask() {
 #endif
 }
 
-void Executor::set_unmasked(bool unmasked) { unmasked_ = unmasked; }
-
-bool Executor::unmasked() const {
-  std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
-  if (encrypt_type == ps::kPWEncryptType) {
-    return unmasked_.load();
-  } else {
-    // If the algorithm of pairwise encrypt is not enabled, consider_ unmasked flag as true.
-    return true;
-  }
-}
+const std::vector<std::string> &Executor::param_names() const { return param_names_; }
 
 std::string Executor::GetTrainableParamName(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -340,10 +313,10 @@ bool Executor::InitParamAggregator(const FuncGraphPtr &func_graph) {
     param_aggrs_[param_name] = param_aggr;
     parameter_mutex_[param_name];
     if (!param_aggr->Init(cnode, aggregation_count_)) {
-      MS_LOG(EXCEPTION) << "Initializing parameter aggregator for " << param_name << " failed.";
+      MS_LOG(EXCEPTION) << "Initializing parameter aggregator failed for " << param_name;
       return false;
     }
-    MS_LOG(DEBUG) << "Initializing parameter aggregator for param_name " << param_name << " success.";
+    MS_LOG(DEBUG) << "Initializing control flow for param_name " << param_name << " success.";
   }
   return true;
 }

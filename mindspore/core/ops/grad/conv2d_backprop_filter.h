@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropFilter = "Conv2DBackpropFilter";
-class MS_CORE_API Conv2DBackpropFilter : public PrimitiveC {
+class Conv2DBackpropFilter : public PrimitiveC {
  public:
   Conv2DBackpropFilter() : PrimitiveC(kNameConv2DBackpropFilter) {
     InitIOName({"out_backprop", "input", "filter_sizes"}, {"output"});

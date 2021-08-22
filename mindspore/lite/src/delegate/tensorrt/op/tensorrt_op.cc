@@ -42,15 +42,4 @@ void TensorRTOp::set_out_ops(const std::vector<TensorRTOp *> &out_ops) { this->o
 const std::vector<TensorRTOp *> &TensorRTOp::in_ops() const { return this->in_ops_; }
 
 const std::vector<TensorRTOp *> &TensorRTOp::out_ops() const { return this->out_ops_; }
-
-bool TensorRTOp::IsShapeKnown() {
-  if (this->in_tensors_[0].Shape().size() == 0) {
-    return false;
-  } else {
-    if (this->in_tensors_[0].Shape()[0] == -1) {
-      return false;
-    }
-  }
-  return true;
-}
 }  // namespace mindspore::lite

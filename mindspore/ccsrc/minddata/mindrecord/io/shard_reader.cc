@@ -101,7 +101,6 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
     sqlite3 *db = nullptr;
     auto ret3 = VerifyDataset(&db, file);
     if (ret3 != SUCCESS) {
-      sqlite3_close(db);
       return FAILED;
     }
 
@@ -155,7 +154,6 @@ MSRStatus ShardReader::VerifyDataset(sqlite3 **db, const string &file) {
   auto rc = sqlite3_open_v2(common::SafeCStr(file + ".db"), db, SQLITE_OPEN_READONLY, nullptr);
   if (rc != SQLITE_OK) {
     MS_LOG(ERROR) << "Invalid file, failed to open database: " << file + ".db, error: " << sqlite3_errmsg(*db);
-    sqlite3_close(*db);
     return FAILED;
   }
   MS_LOG(DEBUG) << "Opened database successfully";
@@ -179,7 +177,6 @@ MSRStatus ShardReader::VerifyDataset(sqlite3 **db, const string &file) {
       return FAILED;
     }
   }
-  sqlite3_free(errmsg);
   return SUCCESS;
 }
 
@@ -403,19 +400,16 @@ MSRStatus ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::str
       }
     } catch (std::out_of_range &e) {
       MS_LOG(ERROR) << "Out of range: " << e.what();
-      fs->close();
       return FAILED;
     } catch (std::invalid_argument &e) {
       MS_LOG(ERROR) << "Invalid argument: " << e.what();
-      fs->close();
       return FAILED;
     } catch (...) {
       MS_LOG(ERROR) << "Exception was caught while convert label to json.";
-      fs->close();
       return FAILED;
     }
   }
-  fs->close();
+
   return SUCCESS;
 }  // namespace mindrecord
 
@@ -505,7 +499,6 @@ void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string
   for (int i = 0; i < static_cast<int>(columns.size()); ++i) {
     category_ptr->emplace(columns[i][0]);
   }
-  sqlite3_free(errmsg);
 }
 
 ROW_GROUPS ShardReader::ReadAllRowGroup(const std::vector<std::string> &columns) {
@@ -884,9 +877,7 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabels(int page_id, int 
       sqlite3_free(errmsg);
     }
     std::vector<json> ret;
-    for (unsigned int i = 0; i < labels_ptr->size(); ++i) {
-      (void)ret.emplace_back(json{});
-    }
+    for (unsigned int i = 0; i < labels_ptr->size(); ++i) ret.emplace_back(json{});
     for (unsigned int i = 0; i < labels_ptr->size(); ++i) {
       json construct_json;
       for (unsigned int j = 0; j < columns.size(); ++j) {
@@ -938,8 +929,8 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
   std::string sql = "SELECT DISTINCT " + ret.second + " FROM INDEXES";
   std::vector<std::thread> threads = std::vector<std::thread>(shard_count);
   auto category_ptr = std::make_shared<std::set<std::string>>();
-  sqlite3 *db = nullptr;
   for (int x = 0; x < shard_count; x++) {
+    sqlite3 *db = nullptr;
     int rc = sqlite3_open_v2(common::SafeCStr(file_paths_[x] + ".db"), &db, SQLITE_OPEN_READONLY, nullptr);
     if (SQLITE_OK != rc) {
       MS_LOG(ERROR) << "Invalid file, failed to open database: " << file_paths_[x] + ".db, error: "
@@ -948,10 +939,10 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
     }
     threads[x] = std::thread(&ShardReader::GetClassesInShard, this, db, x, sql, category_ptr);
   }
+
   for (int x = 0; x < shard_count; x++) {
     threads[x].join();
   }
-  sqlite3_close(db);
   return category_ptr->size();
 }
 

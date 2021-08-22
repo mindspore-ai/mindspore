@@ -152,7 +152,7 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
 
     Returns:
         tuple[Tensor], a clipped Tensor. It has the same data type as `x` and each Tensor in the output tuple is the
-        same as the original input shape.
+          same as the original input shape.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -161,7 +161,7 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
         >>> x1 = np.array([[2., 3.], [1., 2.]]).astype(np.float32)
         >>> x2 = np.array([[1., 4.], [3., 1.]]).astype(np.float32)
         >>> input_x = (Tensor(x1), Tensor(x2))
-        >>> out = ops.clip_by_global_norm(input_x, 1.0)
+        >>> out = clip_by_global_norm(input_x, 1.0)
         >>> print(out)
         (Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 2.98142403e-01,  4.47213590e-01],

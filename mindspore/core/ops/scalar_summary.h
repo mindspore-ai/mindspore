@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API ScalarSummary : public PrimitiveC {
+class ScalarSummary : public PrimitiveC {
  public:
   ScalarSummary() : PrimitiveC(prim::kPrimScalarSummary->name()) {}
   ~ScalarSummary() = default;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_SUB_GRAPH_KERNEL_H_
-#define MINDSPORE_LITE_SRC_SUB_GRAPH_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_SUB_GRAPH_H
+#define MINDSPORE_LITE_SRC_SUB_GRAPH_H
 
 #include <atomic>
 #include <utility>
@@ -26,7 +26,6 @@
 #include "src/lite_kernel.h"
 #include "src/executor.h"
 #include "src/common/log_adapter.h"
-#include "src/common/version_manager.h"
 #include "src/cpu_info.h"
 #ifdef ENABLE_ARM64
 #include "src/common/utils.h"
@@ -102,7 +101,7 @@ class SubGraphKernel : public LiteKernel {
   // called after Run
   int ReSize() override;
 
-  void InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) override;
+  void InitOutTensorInitRefCount() override;
 
   void InitInputTensorInitRefCount();
 
@@ -110,15 +109,13 @@ class SubGraphKernel : public LiteKernel {
 
   std::string ToString() const override;
 
-  std::vector<LiteKernel *> &nodes() { return this->nodes_; }
+  std::vector<LiteKernel *> nodes() { return this->nodes_; }
 
   void DropNode(LiteKernel *node);
 
   std::vector<LiteKernel *> in_nodes() { return this->in_nodes_; }
 
   std::vector<LiteKernel *> out_nodes() { return this->out_nodes_; }
-
-  void SetSchemaVersion(int schema_version) { schema_version_ = schema_version; }
 
  protected:
   std::vector<LiteKernel *> nodes_{};
@@ -127,7 +124,6 @@ class SubGraphKernel : public LiteKernel {
   // exit nodes in nodes
   std::vector<LiteKernel *> out_nodes_{};
   mindspore::lite::Executor *executor_ = nullptr;
-  int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
 };
 
 class CpuSubGraph : public SubGraphKernel {
@@ -230,4 +226,4 @@ class CustomSubGraph : public SubGraphKernel {
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_H

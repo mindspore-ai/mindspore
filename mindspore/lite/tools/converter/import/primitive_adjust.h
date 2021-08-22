@@ -24,7 +24,7 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-using mindspore::converter::FmkType;
+using mindspore::lite::converter::FmkType;
 namespace mindspore {
 namespace lite {
 typedef int (*PrimitiveAdjustCreator)(const CNodePtr &value_node);
@@ -71,7 +71,7 @@ class PrimitiveAdjust {
   bool Run(const FuncGraphPtr &func_graph);
 
  protected:
-  FmkType fmk_type_ = FmkType::kFmkTypeMs;
+  FmkType fmk_type_ = FmkType::FmkType_MS;
 };
 }  // namespace lite
 }  // namespace mindspore

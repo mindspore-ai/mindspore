@@ -22,13 +22,11 @@
 #include "utils/utils.h"
 
 namespace mindspore {
-namespace {
 bool IsPyNativeMode() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
 }
-}  // namespace
 
 bool HcomUtil::GetKernelInputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_intput_shape_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -69,8 +67,8 @@ bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> 
     } else {
       type_ptr = AnfAlgo::GetInputDeviceDataType(anf_node, i);
     }
-    auto iter = kConstOpHcomDataTypeMap.find(type_ptr);
-    if (iter == kConstOpHcomDataTypeMap.end()) {
+    auto iter = CONST_OP_HCOM_DATA_TYPE_MAP.find(type_ptr);
+    if (iter == CONST_OP_HCOM_DATA_TYPE_MAP.end()) {
       MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << type_ptr;
     }
     data_type_list->emplace_back(iter->second);
@@ -104,8 +102,8 @@ bool HcomUtil::GetHcclOpSize(const HcclDataType &data_type, const vector<size_t>
 
 bool HcomUtil::GetHcomTypeSize(const HcclDataType &data_type, uint32_t *size) {
   MS_EXCEPTION_IF_NULL(size);
-  auto iter = kConstOpHcomDataTypeSizeMap.find(data_type);
-  if (iter == kConstOpHcomDataTypeSizeMap.end()) {
+  auto iter = CONST_OP_HCOM_DATA_TYPE_SIZE_MAP.find(data_type);
+  if (iter == CONST_OP_HCOM_DATA_TYPE_SIZE_MAP.end()) {
     MS_LOG(ERROR) << "HcomUtil::HcomDataTypeSize, No DataTypeSize!";
     return false;
   }
@@ -125,7 +123,6 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
   uint32_t type_size = 4;
   size_t size = AnfAlgo::GetInputTensorNum(anf_node);
   auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::GetCNodeName(anf_node) == kReceiveOpName) {
     size = AnfAlgo::GetOutputTensorNum(anf_node);
   }
@@ -143,8 +140,8 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
       int64_t rank_size;
       auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
       MS_EXCEPTION_IF_NULL(primitive);
-      if (primitive->GetAttr(kAttrRankSize) != nullptr) {
-        rank_size = GetValue<int64_t>(primitive->GetAttr(kAttrRankSize));
+      if (primitive->GetAttr("rank_size") != nullptr) {
+        rank_size = GetValue<int64_t>(primitive->GetAttr("rank_size"));
       } else {
         MS_LOG(ERROR) << "Get rank size failed";
         return false;
@@ -184,11 +181,11 @@ bool HcomUtil::GetHcomOperationType(const AnfNodePtr &anf_node, HcclReduceOp *op
   MS_EXCEPTION_IF_NULL(op_type);
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
-  if (primitive->GetAttr(kAttrOp) == nullptr) {
+  if (primitive->GetAttr("op") == nullptr) {
     MS_LOG(ERROR) << "Get HCOM_ATTR_REDUCE_TYPE fail, not support!";
     return false;
   }
-  auto hcom_op_type = GetValue<std::string>(primitive->GetAttr(kAttrOp));
+  auto hcom_op_type = GetValue<std::string>(primitive->GetAttr("op"));
   if (hcom_op_type == "min") {
     *op_type = HCCL_REDUCE_MIN;
   } else if (hcom_op_type == "max") {
@@ -209,38 +206,10 @@ bool HcomUtil::GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id) {
   MS_EXCEPTION_IF_NULL(root_id);
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
-  if (primitive->GetAttr(kAttrRootRank) != nullptr) {
-    *root_id = (uint32_t)GetValue<int64_t>(primitive->GetAttr(kAttrRootRank));
+  if (primitive->GetAttr("root_rank") != nullptr) {
+    *root_id = (uint32_t)GetValue<int64_t>(primitive->GetAttr("root_rank"));
   } else {
     MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_ROOT_INDEX fail, not support!";
-    return false;
-  }
-  return true;
-}
-
-bool HcomUtil::GetHcomSrcRank(const AnfNodePtr &anf_node, uint32_t *src_rank) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(src_rank);
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  if (primitive->GetAttr("src_rank") != nullptr) {
-    *src_rank = static_cast<uint32_t>(GetValue<int64_t>(primitive->GetAttr("src_rank")));
-  } else {
-    MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_SRC_RANK fail, not support!";
-    return false;
-  }
-  return true;
-}
-
-bool HcomUtil::GetHcomDestRank(const AnfNodePtr &anf_node, uint32_t *dest_rank) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(dest_rank);
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  if (primitive->GetAttr("dest_rank") != nullptr) {
-    *dest_rank = static_cast<uint32_t>(GetValue<int64_t>(primitive->GetAttr("dest_rank")));
-  } else {
-    MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_DEST_RANK fail, not support!";
     return false;
   }
   return true;
@@ -263,7 +232,7 @@ bool HcomUtil::GetHcomReceiveType(const AnfNodePtr &anf_node, TypeId *receive_ty
 void HcomUtil::GetHcomGroup(NotNull<const AnfNodePtr &> anf_node, NotNull<std::string *> group) {
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
-  auto attr = primitive->GetAttr(kAttrGroup);
+  auto attr = primitive->GetAttr("group");
   if (attr != nullptr) {
     *group = GetValue<std::string>(attr);
   } else {

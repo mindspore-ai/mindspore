@@ -30,6 +30,7 @@
 #include "nnacl/conv_parameter.h"
 
 namespace mindspore::lite {
+constexpr int kDefaultDeviceType = -1;
 constexpr int kDefaultSubGraphSize = 2;
 constexpr int kDefaultFirstSubgraph = 0;
 constexpr int kDefaultSecondSubgraph = 1;

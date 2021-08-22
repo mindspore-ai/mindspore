@@ -36,8 +36,8 @@ class SGDCPUKernel : public CPUKernel {
 
  private:
   static void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  float dampening_{0.0};
-  float weight_decay_{0.0};
+  float dampening_;
+  float weight_decay_;
   bool nesterov_{true};
 };
 

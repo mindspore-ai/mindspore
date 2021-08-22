@@ -177,4 +177,5 @@ class TensorList : public Tensor {
   int max_elements_num_ = -1;
 };
 }  // namespace mindspore::lite
+
 #endif  // MINDSPORE_LITE_SRC_TENSORLIST_H_

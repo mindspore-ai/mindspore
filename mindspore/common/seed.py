@@ -59,8 +59,10 @@ def set_seed(seed):
     Examples:
         >>> import numpy as np
         >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor, set_seed, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import set_seed
         >>> from mindspore.common.initializer import initializer
+        >>> from mindspore.common.parameter import Parameter
         >>>
         >>> # Note: (1) Please make sure the code is running in PYNATIVE MODE;
         >>> # (2) Because Composite-level ops need parameters to be Tensors, for below examples,

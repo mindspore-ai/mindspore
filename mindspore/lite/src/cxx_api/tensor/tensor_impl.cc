@@ -24,7 +24,6 @@
 #include <functional>
 #include "src/cxx_api/tensor_utils.h"
 #include "src/tensor.h"
-#include "include/lite_utils.h"
 
 namespace mindspore {
 using mindspore::lite::RET_OK;
@@ -56,7 +55,6 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImpl(const std::stri
   return impl;
 }
 
-#ifndef STRING_KERNEL_CLIP
 std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::string &name,
                                                                     const std::vector<std::string> &str) {
   auto lite_tensor = new (std::nothrow) lite::Tensor();
@@ -91,5 +89,4 @@ std::vector<std::string> MSTensor::Impl::TensorImplToStrings(const std::shared_p
   }
   return lite::MSTensorToStrings(lite_tensor);
 }
-#endif
 }  // namespace mindspore

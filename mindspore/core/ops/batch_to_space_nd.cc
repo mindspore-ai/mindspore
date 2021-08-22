@@ -92,7 +92,7 @@ std::vector<int64_t> BatchToSpaceND::get_block_shape() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void BatchToSpaceND::Init(const std::vector<int64_t> block_shape, const std::vector<std::vector<int64_t>> crops) {
+void BatchToSpaceND::Init(std::vector<int64_t> block_shape, std::vector<std::vector<int64_t>> crops) {
   this->set_crops(crops);
   this->set_block_shape(block_shape);
 }

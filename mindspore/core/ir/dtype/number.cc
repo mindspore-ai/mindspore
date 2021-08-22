@@ -46,10 +46,4 @@ Float::Float(const int nbits) : Number(FloatBitsToTypeId(nbits), nbits, false) {
     MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
-
-Complex::Complex(const int nbits) : Number(ComplexBitsToTypeId(nbits), nbits, false) {
-  if (nbits != 64 && nbits != 128) {
-    MS_LOG(EXCEPTION) << "Wrong number of bits.";
-  }
-}
 }  // namespace mindspore

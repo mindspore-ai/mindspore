@@ -2,7 +2,6 @@
 
 - [PSENet Description](#PSENet-description)
 - [Dataset](#dataset)
-- [Pretrained Model](#Pretrained-model)
 - [Features](#features)
     - [Mixed Precision](#mixed-precision)
 - [Environment Requirements](#environment-requirements)
@@ -16,7 +15,6 @@
         - [Distributed GPU Training](#distributed-gpu-training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
-        - [Result](#result)
     - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
@@ -50,19 +48,6 @@ Dataset used: [ICDAR2015](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalizatio
 A training set of 1000 images containing about 4500 readable words
 A testing set containing about 2000 readable words
 
-unzip dataset files and needn't transform to mindrecord.
-
-# [Pretrained Model](#contents)
-
-download pytorch pretrained model: [resnet50-19c8e357.pth](https://download.pytorch.org/models/resnet50-19c8e357.pth)
-transform pytorch model to mindspore model
-
-```shell
-cd src
-
-python psenet_model_torch2mindspore.py --torch_file=/path_to_model/resnet50-19c8e357.pth --output_path=../
-```
-
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend or GPU）
@@ -76,99 +61,32 @@ python psenet_model_torch2mindspore.py --torch_file=/path_to_model/resnet50-19c8
 - install [pyblind11](https://github.com/pybind/pybind11)
 - install [Opencv3.4](https://docs.opencv.org/3.4.9/)
 
-```shell
-# install pybind11
-pip install pybind11
-
-# install opencv3.4.9
-wget https://github.com/opencv/opencv/archive/3.4.9.zip
-unzip 3.4.9.zip
-cd opencv-3.4.9
-mkdir build
-cd build
-cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_WEBP=OFF ..
-make -j4 # -j specifies the number of threads, the user can modify the parameters according to the machine configuration
-make install
-
-# export environment variables
-export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/usr/local/include
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
-```
-
 # [Quick Start](#contents)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-```shell
+```python
 # run distributed training example
 bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 
-#enter the path ,run Makefile
+#download opencv library
+download pyblind11, opencv3.4
+
+#install pyblind11 opencv3.4
+setup pyblind11(install the library by the pip command)
+setup opencv3.4(compile source code install the library)
+
+#enter the path ,run Makefile to product file
 cd ./src/ETSNET/pse/;make
 
 #run test.py
 python test.py --ckpt pretrained_model.ckpt --TEST_ROOT_DIR [test root path]
 
-#go to Evaluation Process for details
+#download eval method from [here](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization).
+#click "My Methods" button,then download Evaluation Scripts
 download script.py
 # run evaluation example
 bash scripts/run_eval_ascend.sh
-```
-
-- running on ModelArts
-- If you want to train the model on modelarts, you can refer to the [official guidance document] of modelarts (https://support.huaweicloud.com/modelarts/)
-
-```python
-#  Example of using distributed training on modelarts :
-#  Data set storage method
-
-#  ├── ICDAR2015                                                    # dir
-#    ├── train                                                      # train dir
-#       ├── ic15                                                    # train_dataset dir
-#           ├── ch4_training_images
-#           ├── ch4_training_localization_transcription_gt
-#       ├── train_predtrained                                       # predtrained dir
-#    ├── eval                                                       # eval dir
-#       ├── ic15                                                    # eval dataset dir
-#           ├── ch4_test_images
-#           ├── challenge4_Test_Task1_GT
-#       ├── checkpoint                                              # ckpt files dir
-
-# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
-#       a. set "enable_modelarts=True" 。
-#          set "run_distribute=True"
-#          set "TRAIN_MODEL_SAVE_PATH=/cache/train/outputs_imagenet/"
-#          set "TRAIN_ROOT_DIR=/cache/data/ic15/"
-#          set "pre_trained=/cache/data/train_predtrained/pred file name" Without pre-training weights  train_pretrained=""
-
-#       b. add "enable_modelarts=True" Parameters are on the interface of modearts。
-#          Set the parameters required by method a on the modelarts interface
-#          Note: The path parameter does not need to be quoted
-
-# (2) Set the path of the network configuration file  "_config_path=/The path of config in default_config.yaml/"
-# (3) Set the code path on the modelarts interface "/path/psenet"。
-# (4) Set the model's startup file on the modelarts interface "train.py" 。
-# (5) Set the data path of the model on the modelarts interface ".../ICDAR2015/train"(choices ICDAR2015/train Folder path) ,
-# The output path of the model "Output file path" and the log path of the model "Job log path" 。
-# (6) start trainning the model。
-
-# Example of using model inference on modelarts
-# (1) Place the trained model to the corresponding position of the bucket。
-# (2) chocie a or b。
-#       a. set "enable_modelarts=True" 。
-#          set "TEST_ROOT_DIR=/cache/data/ic15/"
-#          set "ckpt=/cache/data/checkpoint/ckpt file"
-
-#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
-#          Set the parameters required by method a on the modelarts interface
-#          Note: The path parameter does not need to be quoted
-
-# (3) Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
-# (4) Set the code path on the modelarts interface "/path/psenet"。
-# (5) Set the model's startup file on the modelarts interface "eval.py" 。
-# (6) Set the data path of the model on the modelarts interface ".../ICDAR2015/eval"(choices ICDAR2015/eval Folder path) ,
-# The output path of the model "Output file path" and the log path of the model "Job log path"  。
-# (7) Start model inference。
 ```
 
 # [Script Description](#contents)
@@ -238,7 +156,7 @@ Major parameters in default_config.yaml are:
   Please follow the instructions in the link below: <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
 
 ```shell
-bash scripts/run_distribute_train.sh [RANK_FILE] [PRETRAINED_PATH] [TRAIN_ROOT_DIR]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 ```
 
 rank_table_file which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -277,27 +195,66 @@ time: 2021-07-24 04:01:07, epoch: 90, step: 31, loss is 0.58495
 
 ### run test code
 
-```shell
-python test.py --ckpt [CKPK_PATH] --TEST_ROOT_DIR [TEST_DATA_DIR]
-
-# click [Here](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization) to download evaluation scripts
-# choose My Methods -> Offline evaluation -> Evaluation Scripts
-# download data and put it in /path_to_data
-mkdir eval_ic15
-ln -s /path_to_data/script_test_ch4_t1_e1-1577983151.zip eval_ic15/script_test_ch4_t1_e1-1577983151.zip
-
-cd eval_ic15
-unzip script_test_ch4_t1_e1-1577983151.zip
-cd ..
-
-sh ./script/run_eval_ascend.sh
+```test
 python test.py --ckpt [CKPK PATH] --TEST_ROOT_DIR [TEST DATA DIR]
 
 ```
 
-### [Result](#contents)
+- running on ModelArts
+- If you want to train the model on modelarts, you can refer to the [official guidance document] of modelarts (https://support.huaweicloud.com/modelarts/)
 
-Calculated!{"precision": 0.8147966668299853，"recall"：0.8006740491092923，"hmean"：0.8076736279747451，"AP"：0}
+```python
+#  Example of using distributed training on modelarts :
+#  Data set storage method
+
+#  ├── ICDAR2015                                                    # dir
+#    ├── train                                                      # train dir
+#       ├── ic15                                                    # train_dataset dir
+#           ├── ch4_training_images
+#           ├── ch4_training_localization_transcription_gt
+#       ├── train_predtrained                                       # predtrained dir
+#    ├── eval                                                       # eval dir
+#       ├── ic15                                                    # eval dataset dir
+#           ├── ch4_test_images
+#           ├── challenge4_Test_Task1_GT
+#       ├── checkpoint                                              # ckpt files dir
+
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
+#       a. set "enable_modelarts=True" 。
+#          set "run_distribute=True"
+#          set "TRAIN_MODEL_SAVE_PATH=/cache/train/outputs_imagenet/"
+#          set "TRAIN_ROOT_DIR=/cache/data/ic15/"
+#          set "pre_trained=/cache/data/train_predtrained/pred file name" Without pre-training weights  train_pretrained=""
+
+#       b. add "enable_modelarts=True" Parameters are on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (2) Set the path of the network configuration file  "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/psenet"。
+# (4) Set the model's startup file on the modelarts interface "train.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../ICDAR2015/train"(choices ICDAR2015/train Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path" 。
+# (6) start trainning the model。
+
+# Example of using model inference on modelarts
+# (1) Place the trained model to the corresponding position of the bucket。
+# (2) chocie a or b。
+#       a. set "enable_modelarts=True" 。
+#          set "TEST_ROOT_DIR=/cache/data/ic15/"
+#          set "ckpt=/cache/data/checkpoint/ckpt file"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (3) Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (4) Set the code path on the modelarts interface "/path/psenet"。
+# (5) Set the model's startup file on the modelarts interface "eval.py" 。
+# (6) Set the data path of the model on the modelarts interface ".../ICDAR2015/eval"(choices ICDAR2015/eval Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+# (7) Start model inference。
+```
 
 ### Eval Script for ICDAR2015
 
@@ -385,9 +342,8 @@ The `res` folder is generated in the upper-level directory. For details about th
 | Loss Function              | LossCallBack                                                |
 | outputs                    | probability                                                 |
 | Loss                       | 0.35                                                        |
-| Parameters                 | batch_size = 4                                              |
-| Speed                      | 1pc: 444 ms/step(fps: 9.0);  8pcs: 446 ms/step(fps: 71)     |
-| Total time                 | 1pc: 75.48 h;  8pcs: 7.11 h                                 |
+| Speed                      | 1pc: 444 ms/step;  8pcs: 446 ms/step                        |
+| Total time                 | 1pc: 75.48 h;  8pcs: 7.11 h                                |
 | Parameters (M)             | 27.36                                                       |
 | Checkpoint for Fine tuning | 109.44M (.ckpt file)                                        |
 | Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/psenet> |

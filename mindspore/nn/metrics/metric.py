@@ -89,18 +89,18 @@ class Metric(metaclass=ABCMeta):
         elif isinstance(data, np.ndarray):
             pass
         else:
-            raise TypeError('The input data type must be a tensor, list or numpy.ndarray')
+            raise TypeError('Input data type must be tensor, list or numpy.ndarray')
         return data
 
     def _check_onehot_data(self, data):
         """
-        Whether input data is one-hot encoding.
+        Whether input data are one-hot encoding.
 
         Args:
             data (numpy.array): Input data.
 
         Returns:
-            bool, return true, if input data is one-hot encoding.
+            bool, return true, if input data are one-hot encoding.
         """
         if data.ndim > 1 and np.equal(data ** 2, data).all():
             shp = (data.shape[0],) + data.shape[2:]
@@ -139,13 +139,13 @@ class Metric(metaclass=ABCMeta):
 
     @property
     def indexes(self):
-        """The `_indexes` is a private attribute, and you can retrieve it by `self.indexes`.
+        """The `_indexes` is a private attributes, and you can retrieve it by `self.indexes`.
         """
         return getattr(self, '_indexes', None)
 
     def set_indexes(self, indexes):
         """
-        The `_indexes` is a private attribute and you can modify it by this function.
+        The `_indexes` is a private attributes, and you can modify it by this function.
         This allows you to determine the order of logits and labels to be calculated in the
         inputs, specially when you call the method `update` within this metrics.
 
@@ -183,7 +183,7 @@ class Metric(metaclass=ABCMeta):
         Evaluate input data once.
 
         Args:
-            inputs (tuple): The first item is a predict array, the second item is a target array.
+            inputs (tuple): The first item is predict array, the second item is target array.
 
         Returns:
             Float, compute result.
@@ -262,10 +262,10 @@ class EvaluationBase(Metric):
                                  'got y_pred shape is {} and y shape is {}'.format(y_pred.shape, y.shape))
         else:
             if y_pred.ndim != y.ndim:
-                raise ValueError('{} case, dims of y_pred must be equal to dims of y, but got y_pred: {} '
+                raise ValueError('{} case, dims of y_pred need equal with dims of y, but got y_pred: {} '
                                  'dims and y: {} dims.'.format(self._type, y_pred.ndim, y.ndim))
             if y_pred.shape != y.shape:
-                raise ValueError('{} case, y_pred shape must be equal to y shape, but got y_pred: {} and y: {}'.
+                raise ValueError('{} case, y_pred shape need equal with y shape, but got y_pred: {} and y: {}'.
                                  format(self._type, y_pred.shape, y.shape))
 
     def _check_value(self, y_pred, y):
@@ -296,7 +296,7 @@ class EvaluationBase(Metric):
             All subclasses must override this interface.
 
         Args:
-            inputs: The first item is a predicted array and the second item is a target array.
+            inputs: The first item is predicted array and the second item is target array.
         """
         raise NotImplementedError
 

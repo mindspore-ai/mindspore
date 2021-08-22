@@ -58,11 +58,8 @@ RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
     && make install -j4 \
     && rm -f /usr/local/bin/python \
     && rm -f /usr/local/bin/pip \
-    && rm -f /usr/local/lib/libpython3.7m.so.1.0 \
     && ln -s ${PYTHON_ROOT_PATH}/bin/python3.7 /usr/local/bin/python \
     && ln -s ${PYTHON_ROOT_PATH}/bin/pip3.7 /usr/local/bin/pip \
-    && ln -s ${PYTHON_ROOT_PATH}/lib/libpython3.7m.so.1.0 /usr/local/lib/libpython3.7m.so.1.0 \
-    && ldconfig \
     && rm -rf /tmp/cpython-3.7.5 \
     && rm -f /tmp/v3.7.5.tar.gz
 

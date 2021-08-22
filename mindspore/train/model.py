@@ -274,8 +274,6 @@ class Model:
 
     def _update_metrics(self, outputs):
         """Update metrics local values."""
-        if isinstance(outputs, Tensor):
-            outputs = (outputs,)
         if not isinstance(outputs, tuple):
             raise ValueError("The `outputs` is not tuple.")
 
@@ -367,8 +365,6 @@ class Model:
                                                                         dataset_sink_mode=True,
                                                                         sink_size=sink_size)
             self._train_network = train_network
-            if context.get_auto_parallel_context("pipeline_stages") > 1 and valid_dataset:
-                self._train_network.add_flags_recursive(is_first_iteration=True)
             for inputs in train_dataset_helper:
                 self._train_network.compile(*inputs)
                 break
@@ -382,8 +378,6 @@ class Model:
                                                                        dataset=valid_dataset,
                                                                        dataset_sink_mode=True)
             self._eval_network = eval_network
-            if context.get_auto_parallel_context("pipeline_stages") > 1:
-                self._eval_network.add_flags_recursive(is_first_iteration=False)
             for inputs in valid_dataset_helper:
                 self._eval_network.compile(*inputs)
                 break
@@ -598,8 +592,6 @@ class Model:
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
             If sink_size > 0, each epoch the dataset can be traversed unlimited times until you get sink_size
             elements of the dataset. Next epoch continues to traverse from the end position of the previous traversal.
-            The interface builds the computational graphs and then executes the computational graphs.
-            However, when the 'model.build' is executed first, it only performs the graphs execution.
 
         Args:
             epoch (int): Generally, total number of iterations on the data per epoch.
@@ -623,7 +615,8 @@ class Model:
                              Default: -1.
 
         Examples:
-            >>> from mindspore import Model, nn, FixedLossScaleManager
+            >>> from mindspore import Model, nn
+            >>> from mindspore.train.loss_scale_manager import FixedLossScaleManager
             >>>
             >>> # For details about how to build the dataset, please refer to the tutorial
             >>> # document on the official website.
@@ -654,42 +647,6 @@ class Model:
                     callbacks=callbacks,
                     dataset_sink_mode=dataset_sink_mode,
                     sink_size=sink_size)
-
-    def build(self, train_dataset=None, valid_dataset=None, sink_size=-1):
-        """
-        Build computational graphs and data graphs with the sink mode.
-
-        .. warning::
-            This is an experimental prototype that is subject to change and/or deletion.
-
-        Note:
-            Pre-build process only supports `GRAPH_MODE` and `Ascend` target currently.
-            The interface builds the computational graphs, when the interface is executed first,
-            'model.train' only performs the graphs execution.
-            It only support dataset sink mode.
-
-        Args:
-            train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
-                                     initialized. Default: None.
-            valid_dataset (Dataset): An evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
-                                     will be initialized, and `metrics` in `Model` can not be None. Default: None.
-            sink_size (int): Control the amount of data in each sink. Default: -1.
-
-        Examples:
-            >>> from mindspore import Model, nn, FixedLossScaleManager
-            >>>
-            >>> # For details about how to build the dataset, please refer to the tutorial
-            >>> # document on the official website.
-            >>> dataset = create_custom_dataset()
-            >>> net = Net()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-            >>> loss_scale_manager = FixedLossScaleManager()
-            >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-            >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
-            >>> model.build(dataset)
-            >>> model.train(2, dataset)
-        """
-        self._init(train_dataset, valid_dataset, sink_size)
 
     def _eval_dataset_sink_process(self, valid_dataset, list_callback=None, cb_params=None):
         """
@@ -915,9 +872,10 @@ class Model:
             >>> # mindspore.cn.
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import Model, context, Tensor, nn, FixedLossScaleManager
+            >>> from mindspore import Model, context, Tensor, nn
             >>> from mindspore.context import ParallelMode
             >>> from mindspore.communication import init
+            >>> from mindspore.train.loss_scale_manager import FixedLossScaleManager
             >>>
             >>> context.set_context(mode=context.GRAPH_MODE)
             >>> init()

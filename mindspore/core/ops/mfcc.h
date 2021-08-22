@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMfcc = "Mfcc";
-class MS_CORE_API Mfcc : public PrimitiveC {
+class Mfcc : public PrimitiveC {
  public:
   Mfcc() : PrimitiveC(kNameMfcc) {}
   ~Mfcc() = default;

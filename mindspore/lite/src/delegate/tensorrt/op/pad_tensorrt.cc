@@ -23,10 +23,6 @@ namespace mindspore::lite {
 int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
                            const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != 2 && in_tensors.size() != 3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -102,7 +98,6 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   transpose_layer_out->setName((op_name_ + "_transpose2NHWC").c_str());
-  transpose_layer_out->getOutput(0)->setName(out_tensors_[0].Name().c_str());
 
   this->AddInnerOutTensors(transpose_layer_out->getOutput(0));
   return RET_OK;

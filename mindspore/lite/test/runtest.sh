@@ -12,13 +12,6 @@ mkdir -pv ${CUR_DIR}/do_test
 # prepare data for ut
 cd ${CUR_DIR}/do_test
 cp ${BUILD_DIR}/test/lite-test ./
-cp ${BUILD_DIR}/googletest/googlemock/gtest/libgtest.so ./
-tar -xzf ../../../../output/mindspore-lite-*.tar.gz --strip-components=3 --wildcards *runtime/lib/*.so* || true
-tar -xzf ../../../../output/mindspore-lite-*.tar.gz --strip-components=4 --wildcards *converter/lib/*.so* || true
-tar -xzf ../../../../output/mindspore-lite-*.tar.gz --strip-components=5 --wildcards *libjpeg-turbo/lib/*.so* || true
-ls -l *.so*
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./
-
 cp -r ${CUR_DIR}/ut/src/runtime/kernel/arm/test_data/* ./
 cp -r ${CUR_DIR}/ut/tools/converter/parser/tflite/test_data/* ./
 # prepare data for dataset
@@ -91,6 +84,3 @@ echo 'run mindrt parallel ut test'
 
 echo 'user set output tensors st test'
 ./lite-test --gtest_filter="GraphTest.UserSetGraphOutput*"
-
-echo 'runtime pass'
-./lite-test --gtest_filter="RuntimePass.*"

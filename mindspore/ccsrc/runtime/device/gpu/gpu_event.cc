@@ -42,19 +42,5 @@ void GpuEvent::RecordEvent() {
   need_wait_ = true;
 }
 
-void GpuEvent::SyncEvent() {
-  MS_EXCEPTION_IF_NULL(event_);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventSynchronize(event_), "cudaEventSynchronize failed");
-}
-
-void GpuEvent::ElapsedTime(float *cost_time, DeviceEvent *other) {
-  MS_EXCEPTION_IF_NULL(event_);
-  auto gpu_event = static_cast<GpuEvent *>(other);
-  MS_EXCEPTION_IF_NULL(gpu_event);
-  MS_EXCEPTION_IF_NULL(gpu_event->event_);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventElapsedTime(cost_time, event_, gpu_event->event_),
-                                     "cudaEventElapsedTime failed");
-}
-
 bool GpuEvent::NeedWait() { return need_wait_; }
 }  // namespace mindspore::device::gpu

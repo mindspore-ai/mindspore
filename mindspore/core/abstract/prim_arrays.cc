@@ -140,7 +140,7 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
 
   auto shape = input->shape();
   MS_EXCEPTION_IF_NULL(shape);
-  if (shape->shape().size() != 1) {
+  if (shape->shape().empty()) {
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
   }
   ShapeVector ids_shape = {Shape::SHP_ANY};

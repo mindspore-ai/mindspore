@@ -29,10 +29,6 @@ EpochCtrlPass::InjectionFinder::InjectionFinder(std::shared_ptr<DatasetNode> nod
 
 // Performs finder work for BuildVocabOp that has special rules about epoch control injection
 Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(node);
-  RETURN_UNEXPECTED_IF_NULL(modified);
-  CHECK_FAIL_RETURN_UNEXPECTED(node->Children().size() > 0,
-                               "Invalid data, the node of child should greater than zero.");
   // The injection is at the child of the root node
   injection_point_ = node->Children()[0];
   num_epochs_ = node->num_epochs();
@@ -41,8 +37,6 @@ Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, boo
 
 // Performs finder work for BuildVocabOp that has special rules about epoch control injection
 Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(node);
-  RETURN_UNEXPECTED_IF_NULL(modified);
   injection_point_ = nullptr;
   return Status::OK();
 }
@@ -50,18 +44,12 @@ Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<BuildVocabNode> nod
 #ifndef ENABLE_ANDROID
 // Performs finder work for BuildSentencePieceVocabNode that has special rules about epoch control injection
 Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(node);
-  RETURN_UNEXPECTED_IF_NULL(modified);
   injection_point_ = nullptr;
   return Status::OK();
 }
 #endif
 
 Status EpochCtrlPass::InjectionFinder::VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(node);
-  RETURN_UNEXPECTED_IF_NULL(modified);
-  CHECK_FAIL_RETURN_UNEXPECTED(node->Children().size() > 0,
-                               "Invalid data, the node of child should greater than zero.");
   // Assumption: There is only one TransferNode in a pipeline. This assumption is not validated here.
   // Move the injection point to the child of this node.
   injection_point_ = node->Children()[0];
@@ -73,8 +61,6 @@ EpochCtrlPass::EpochCtrlPass() {}
 
 // Runs an injection pass to inject in operators needed at the pre pass stage
 Status EpochCtrlPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(root_ir);
-  RETURN_UNEXPECTED_IF_NULL(modified);
   MS_LOG(INFO) << "Pre pass: Injection pass started.";
 
   // First, run the finder to perform any injection info before we can go ahead to drive the op injection work.

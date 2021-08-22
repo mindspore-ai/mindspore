@@ -13,8 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Quantization module, including base class of the quantizer, the quantization aware training algorithm,
-and quantization utils.
+Compression quant module.
 """
 
 from .quantizer import OptimizeOption

@@ -182,7 +182,7 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
                                const std::vector<tensor::TensorPtr> &input_tensors,
                                std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
   auto &node = node_output_pair.first;
-  size_t output_index = node_output_pair.second;
+  int output_index = SizeToInt(node_output_pair.second);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
   auto tensor_from_input = GetNodeOutputTensorFromInputs(node_output_pair, graph, input_tensors);
@@ -432,49 +432,6 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
       MS_LOG(EXCEPTION) << "The input tensor's shape: " << tensor_shape
                         << " is not equal to expected shape: " << input_shape << " for input[" << input_index
                         << "] of kernel: " << AnfAlgo::GetCNodeName(kernel);
-    }
-  }
-}
-
-void UpdateGraphAquireGilAttr(const NotNull<KernelGraphPtr> &root_graph) {
-  for (const auto &cnode : root_graph->execution_order()) {
-    if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPyFunc)) {
-      MS_LOG(INFO) << "The Graph require GIL. Graph id: " << root_graph->graph_id();
-      root_graph->set_is_need_gil(true);
-      return;
-    }
-  }
-  return;
-}
-
-bool ExistGraphCaller(const AnfNodePtr &partial_node) {
-  MS_EXCEPTION_IF_NULL(partial_node);
-  auto partial_cnode = partial_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(partial_cnode);
-  auto partial_graph = GetValueNode<FuncGraphPtr>(partial_cnode->input(kFirstDataInputIndex));
-  MS_EXCEPTION_IF_NULL(partial_graph);
-  auto graph_nodes = TopoSort(partial_graph->get_return());
-  return std::any_of(graph_nodes.begin(), graph_nodes.end(), IsValueNode<FuncGraph>);
-}
-
-// 1. Convert the node to make_tuple if the node is a ValueNode<ValueTuple> and it's the input of 'return' node.
-// 2. Set the return of graph if node is "Return" node.
-void SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
-    constexpr auto kReturnInputIdx = 1;
-    auto return_node = node->cast<CNodePtr>();
-    graph->set_return(return_node);
-    auto graph_output = return_node->input(kReturnInputIdx);
-    MS_EXCEPTION_IF_NULL(graph_output);
-
-    // If return's input is value node, then the graph has no kernel, and the pass 'trans tuple to make_tuple' cannot
-    // match this pattern because that pass begin with output node but return node. So we add transform value tuple
-    // to make_tuple here.
-    if (AnfAlgo::IsTupleOutput(graph_output) && graph_output->isa<ValueNode>()) {
-      return_node->set_input(kReturnInputIdx, graph->TransTupleToMakeTuple(graph_output));
     }
   }
 }
@@ -1146,7 +1103,6 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   UnifyMindIR(graph);
   // Update Graph Dynamic Shape Attr
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
-  UpdateGraphAquireGilAttr(NOT_NULL(graph));
   opt::BackendCommonOptimization(graph);
   graph->SetInputNodes();
   SetInputNodeUsage(graph, manager);
@@ -1495,7 +1451,9 @@ bool SessionBasic::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph 
   new_cnode->set_fullname_with_scope(fullname);
   new_cnode->set_scope(cnode->scope());
   graph->FrontBackendlMapAdd(node, new_cnode);
-  SetReturnNode(new_cnode, graph);
+  if (AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimReturn)) {
+    graph->set_return(new_cnode);
+  }
   return true;
 }
 
@@ -1608,8 +1566,8 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
     if (AnfAlgo::IsDynamicShape(node)) {
       const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
       ShapeVector int_shape;
-      (void)std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
-      (void)tensor->set_shape(int_shape);
+      std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
+      tensor->set_shape(int_shape);
     }
     if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
       tensor->data_sync(false);
@@ -1638,18 +1596,8 @@ std::vector<tensor::TensorPtr> SessionBasic::GetInputNeedLockTensors(const Graph
   if (!graph->has_optimizer()) {
     return {};
   }
-  auto input_nodes = graph->inputs();
-  bool check_monad = false;
-  if (input_nodes.size() == inputs.size()) {
-    check_monad = true;
-  }
   std::vector<tensor::TensorPtr> result;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    if (check_monad && HasAbstractMonad(input_nodes[i])) {
-      continue;
-    }
-    auto &tensor = inputs[i];
-    MS_EXCEPTION_IF_NULL(tensor);
+  for (auto &tensor : inputs) {
     if (!tensor->IsGraphOutput()) {
       result.emplace_back(tensor);
     }
@@ -1920,7 +1868,8 @@ AnfNodePtr GetSupportedInternalNode(const AnfNodePtr &front_node) {
 
 constexpr auto kMixTarget = "MixTarget";
 constexpr auto kNoTarget = "NoTarget";
-std::string SessionBasic::AddPartialParametersMap(const AnfNodePtr &partial_node) {
+std::string SessionBasic::AddPartialParametersMap(const FuncGraphManagerPtr &front_func_graph_manager,
+                                                  const AnfNodePtr &partial_node) {
   MS_EXCEPTION_IF_NULL(partial_node);
   auto iter = partial_target_map_.find(partial_node);
   if (iter != partial_target_map_.end()) {
@@ -1932,12 +1881,11 @@ std::string SessionBasic::AddPartialParametersMap(const AnfNodePtr &partial_node
   MS_EXCEPTION_IF_NULL(partial_graph);
   auto parameters = partial_graph->parameters();
   auto partial_inputs = partial_cnode->inputs();
-  const size_t kNonParameterNum = 2;
-  if (parameters.size() + kNonParameterNum != partial_inputs.size()) {
+  if (parameters.size() + 2 != partial_inputs.size()) {
     return kMixTarget;
   }
   for (size_t i = 0; i < parameters.size(); ++i) {
-    partial_parameters_map_[parameters[i]] = partial_inputs[kNonParameterNum + i];
+    partial_parameters_map_[parameters[i]] = partial_inputs[2 + i];
   }
   auto graph_nodes = TopoSort(partial_graph->get_return());
   std::string graph_target = kNoTarget;
@@ -1957,7 +1905,7 @@ std::string SessionBasic::AddPartialParametersMap(const AnfNodePtr &partial_node
       break;
     }
   }
-  (void)partial_target_map_.emplace(std::pair<AnfNodePtr, std::string>(partial_node, graph_target));
+  (void)partial_target_map_.insert({partial_node, graph_target});
   return graph_target;
 }
 
@@ -1988,9 +1936,8 @@ void SessionBasic::HandleInternalOutput(const AnfNodePtr &input_front_node, cons
   if (internal_output) {
     auto users = ExtendNodeUsers(front_func_graph_manager, front_node);
     for (auto &user : users) {
-      if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice &&
-          !ExistGraphCaller(user)) {
-        auto partial_target = AddPartialParametersMap(user);
+      if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice) {
+        auto partial_target = AddPartialParametersMap(front_func_graph_manager, user);
         if (partial_target != kNoTarget && partial_target != kernel_target) {
           unique_target = false;
         }
@@ -2151,6 +2098,9 @@ KernelGraphPtr SessionBasic::NewKernelGraph() {
 AnfNodePtr SessionBasic::FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) {
   MS_EXCEPTION_IF_NULL(push_node);
   for (auto &node : node_list) {
+    if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+      continue;
+    }
     if (node != nullptr && node->isa<CNode>()) {
       for (auto input : node->cast<CNodePtr>()->inputs()) {
         if (push_node == AnfAlgo::VisitKernel(input, 0).first) {
@@ -2683,7 +2633,6 @@ uint32_t GetRankId() {
   uint32_t rank_id = 0;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-
   std::string world_group;
   std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (backend == kAscendDevice) {
@@ -2692,7 +2641,6 @@ uint32_t GetRankId() {
     world_group = kNcclWorldGroup;
   } else {
     MS_LOG(ERROR) << "Invalid backend: " << backend;
-    return rank_id;
   }
   if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
     MS_LOG(INFO) << "Failed to get rank id.";

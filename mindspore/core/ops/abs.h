@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAbs = "Abs";
-class MS_CORE_API Abs : public PrimitiveC {
+class Abs : public PrimitiveC {
  public:
   Abs() : PrimitiveC(kNameAbs) { InitIOName({"input_x"}, {"output"}); }
   ~Abs() = default;

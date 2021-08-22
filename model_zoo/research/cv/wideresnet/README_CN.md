@@ -55,14 +55,12 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 - 下载数据集，目录结构如下：
 
 ```text
-└─train
+└─cifar-10-batches-bin
     ├─data_batch_1.bin                  # 训练数据集
     ├─data_batch_2.bin                  # 训练数据集
     ├─data_batch_3.bin                  # 训练数据集
     ├─data_batch_4.bin                  # 训练数据集
     ├─data_batch_5.bin                  # 训练数据集
-    └─test_batch.bin                    # 评估数据集
-└─eval
     └─test_batch.bin                    # 评估数据集
 ```
 
@@ -84,22 +82,14 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 
 ```Shell
 # 分布式训练
-用法：
-cd scripts
-bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
+用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：
-cd scripts
-bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
+用法：sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 运行评估示例
-用法：
-cd scripts
-bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
+用法：sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
-
-若没有[PRETRAINED_CKPT_PATH]，使用 “” 作为参数运行脚本。
 
 # 脚本说明
 
@@ -159,18 +149,12 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
 
 ```Shell
 # 分布式训练
-用法：
-cd scripts
-bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
+用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：
-cd scripts
-bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
+用法：sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 ```
-
-若没有[PRETRAINED_CKPT_PATH]，使用 “” 作为参数运行脚本。
 
 分布式训练需要提前创建JSON格式的HCCL配置文件。
 
@@ -219,16 +203,12 @@ epoch: 4 step: 195, loss is 1.221174
 
 ```Shell
 # 评估
-用法：
-cd scripts
-bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
+Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ```Shell
 # 评估示例
-用法：
-cd scripts
-bash run_eval.sh  /cifar10  WideResNet_best.ckpt
+sh  run_eval.sh  /cifar10  WideResNet_best.ckpt
 ```
 
 训练过程中可以生成检查点。
@@ -276,9 +256,3 @@ dataset.py中设置了“create_dataset”函数内的种子，同时还使用�
 # ModelZoo主页
 
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
-
-# FAQ
-
-优先参考[ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/model_zoo#FAQ)来查找一些常见的公共问题。
-
-- **Q: 使用PYNATIVE_MODE发生内存溢出怎么办？** **A**：内存溢出通常是因为PYNATIVE_MODE需要更多的内存， 将batch size设置为16降低内存消耗，可进行网络训练。

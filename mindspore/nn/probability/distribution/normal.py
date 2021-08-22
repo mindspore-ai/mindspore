@@ -164,11 +164,10 @@ class Normal(Distribution):
         self.sqrt = P.Sqrt()
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = 'mean = {}, standard deviation = {}'.format(self._mean_value, self._sd_value)
+            s = f'mean = {self._mean_value}, standard deviation = {self._sd_value}'
         else:
-            s = 'batch_shape = {}'.format(self._broadcast_shape)
+            s = f'batch_shape = {self._broadcast_shape}'
         return s
 
     def _get_dist_type(self):

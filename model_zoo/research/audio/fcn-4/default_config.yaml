@@ -6,7 +6,7 @@ checkpoint_url: ""
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
-device_target: "Ascend"
+device_target: Ascend
 enable_profiling: False
 
 # ==============================================================================

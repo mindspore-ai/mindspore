@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConcat = "Concat";
-class MS_CORE_API Concat : public PrimitiveC {
+class Concat : public PrimitiveC {
  public:
   Concat() : PrimitiveC(kNameConcat) {}
   ~Concat() = default;

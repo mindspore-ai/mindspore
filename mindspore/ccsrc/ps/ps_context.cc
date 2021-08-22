@@ -270,7 +270,6 @@ void PSContext::GenerateResetterRound() {
   bool is_parameter_server_mode = false;
   bool is_federated_learning_mode = false;
   bool is_mixed_training_mode = false;
-  bool use_pairwise_encrypt = (encrypt_type_ == kPWEncryptType);
 
   if (server_mode_ == kServerModePS) {
     is_parameter_server_mode = true;
@@ -286,7 +285,7 @@ void PSContext::GenerateResetterRound() {
 
   binary_server_context = ((unsigned int)is_parameter_server_mode << 0) |
                           ((unsigned int)is_federated_learning_mode << 1) |
-                          ((unsigned int)is_mixed_training_mode << 2) | ((unsigned int)use_pairwise_encrypt << 3);
+                          ((unsigned int)is_mixed_training_mode << 2) | ((unsigned int)secure_aggregation_ << 3);
   if (kServerContextToResetRoundMap.count(binary_server_context) == 0) {
     resetter_round_ = ResetterRound::kNoNeedToReset;
   } else {

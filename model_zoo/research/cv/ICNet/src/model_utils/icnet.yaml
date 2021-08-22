@@ -1,7 +1,7 @@
 ### 1.Model
 model:
   name: "icnet"
-  backbone: "resnet50v1"
+  backbone: "resnet50"
   base_size: 1024    # during augmentation, shorter size will be resized between [base_size*0.5, base_size*2.0]
   crop_size: 960     # end of augmentation, crop to training
 

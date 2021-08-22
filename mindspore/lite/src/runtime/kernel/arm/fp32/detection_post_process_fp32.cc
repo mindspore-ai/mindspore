@@ -27,7 +27,6 @@ using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore::kernel {
 int DetectionPostProcessCPUKernel::GetInputData() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   if ((in_tensors_.at(0)->data_type() != kNumberTypeFloat32 && in_tensors_.at(0)->data_type() != kNumberTypeFloat) ||
       (in_tensors_.at(1)->data_type() != kNumberTypeFloat32 && in_tensors_.at(1)->data_type() != kNumberTypeFloat)) {
     MS_LOG(ERROR) << "Input data type error";

@@ -43,8 +43,6 @@ class CoreAffinity {
   int BindThreads(const std::vector<Worker *> &workers, const std::vector<int> &core_list);
   int BindThreads(const std::vector<Worker *> &workers, BindMode bind_mode);
   int BindProcess(BindMode bind_mode) const;
-  std::vector<int> GetCoreId(size_t thread_num, BindMode bind_mode);
-  void SetCoreId(const std::vector<int> &core_list);
 
  private:
 #ifdef BIND_CORE

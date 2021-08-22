@@ -23,11 +23,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoDequantizeInt8ToFp16(const int8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size);
-int DoQuantizeFp16ToInt8(const float16_t *real_values, int8_t *quant_values, float scale, int32_t zp, int size);
+int DoDequantizeInt8ToFp16(int8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size);
+int DoQuantizeFp16ToInt8(float16_t *real_values, int8_t *quant_values, float scale, int32_t zp, int size);
 
-int DoDequantizeUInt8ToFp16(const uint8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size);
-int DoQuantizeFp16ToUInt8(const float16_t *real_values, uint8_t *quant_values, float scale, int32_t zp, int size);
+int DoDequantizeUInt8ToFp16(uint8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size);
+int DoQuantizeFp16ToUInt8(float16_t *real_values, uint8_t *quant_values, float scale, int32_t zp, int size);
 #ifdef __cplusplus
 }
 #endif

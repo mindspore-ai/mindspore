@@ -25,7 +25,6 @@
 #include "coder/allocator/allocator.h"
 #include "include/errorcode.h"
 #include "src/lite_kernel.h"
-#include "src/common/version_manager.h"
 #include "securec/include/securec.h"
 #include "coder/opcoders/op_coder_register.h"
 #include "coder/log.h"
@@ -76,8 +75,6 @@ class OperatorCoder {
 
   const std::vector<Tensor *> initial_parameters() const { return initial_parameters_; }
 
-  void SetSchemaVersion(int schema_version) { schema_version_ = schema_version; }
-
   // context
   virtual int Prepare(CoderContext *const context) = 0;
 
@@ -101,7 +98,6 @@ class OperatorCoder {
 
   bool support_parallel_{false};
   int thread_num_{1};
-  int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
 
  private:
   size_t node_index_{0};
@@ -118,16 +114,12 @@ class OperatorCoder {
 template <typename T>
 std::unique_ptr<OperatorCoder> CPUOpCoderCreator(const std::vector<Tensor *> &in_tensors,
                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
-                                                 size_t node_index, Target target, int schema_version) {
+                                                 size_t node_index, Target target) {
   if (node == nullptr) {
     MS_LOG(ERROR) << "node is null";
     return nullptr;
   }
   std::unique_ptr<T> coder = std::make_unique<T>(in_tensors, out_tensors, node, node_index, target);
-  if (coder == nullptr) {
-    return nullptr;
-  }
-  coder->SetSchemaVersion(schema_version);
   return coder;
 }
 }  // namespace mindspore::lite::micro

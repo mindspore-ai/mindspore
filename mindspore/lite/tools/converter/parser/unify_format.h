@@ -19,24 +19,20 @@
 
 #include "tools/optimizer/format/to_format_base.h"
 
-using mindspore::converter::FmkType;
+using mindspore::lite::converter::FmkType;
 namespace mindspore {
 namespace lite {
 class UnifyFormatToNHWC : public opt::ToFormatBase {
  public:
-  explicit UnifyFormatToNHWC(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
-                             schema::QuantType quant_type = schema::QuantType_QUANT_NONE)
-      : ToFormatBase(fmk_type, train_flag), quant_type_(quant_type) {}
+  explicit UnifyFormatToNHWC(FmkType fmk_type = lite::converter::FmkType_MS, bool train_flag = false)
+      : ToFormatBase(fmk_type, train_flag) {}
   ~UnifyFormatToNHWC() override = default;
 
  private:
-  STATUS GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) override;
+  void GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) override;
   void SetSensitiveOps() override;
   bool DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ShapeVector &shape) override;
   bool DecideWhetherInferShapeForNewNode() override;
-  STATUS DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
-                                         schema::Format *dst_format) override;
-  schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
 };
 }  // namespace lite
 }  // namespace mindspore

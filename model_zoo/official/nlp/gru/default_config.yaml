@@ -36,8 +36,6 @@ scale_factor: 2
 scale_window: 2000
 warmup_ratio: 0.333333
 teacher_force_ratio: 0.5
-compute_type: mstype.float16
-dtype: mstype.float32
 
 run_distribute: False
 dataset_path: ""

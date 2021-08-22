@@ -42,7 +42,7 @@
 
 ## Description
 
-"Squeeze-and-Excitation" (SE) block adaptively recalibrates channel-wise feature responses by explicitly modelling interdependencies between channels.
+something should be written here.
 
 ## Paper
 

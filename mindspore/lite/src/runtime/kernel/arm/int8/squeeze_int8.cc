@@ -64,7 +64,7 @@ int SqueezeInt8CPUKernel::Init() {
   auto quant_params = output_tensor->quant_params();
   MS_ASSERT(quant_params.size() == 1);
   quant_squeeze_param_->out_quant_args_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
-  if (quant_squeeze_param_->out_quant_args_ == nullptr) {
+  if (quant_squeeze_param_->in_quant_args_ == nullptr) {
     MS_LOG(ERROR) << "malloc QuantArg failed";
     if (quant_squeeze_param_ != nullptr) {
       if (quant_squeeze_param_->in_quant_args_ != nullptr) {
@@ -97,11 +97,15 @@ int SqueezeInt8CPUKernel::Run() {
 
 int SqueezeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto Squeeze = reinterpret_cast<SqueezeInt8CPUKernel *>(cdata);
-  Squeeze->DoExecute(task_id);
+  auto ret = Squeeze->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SqueezeInt8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
-void SqueezeInt8CPUKernel::DoExecute(int task_id) {
+int SqueezeInt8CPUKernel::DoExecute(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   MS_ASSERT(input_tensor);
   auto out_tensor = out_tensors_.at(kOutputIndex);
@@ -113,6 +117,7 @@ void SqueezeInt8CPUKernel::DoExecute(int task_id) {
 
   int num = input_tensor->ElementsNum();
   SqueezeInt8(input_data, output_data, quant_squeeze_param_, num, task_id, op_parameter_->thread_num_);
+  return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Squeeze, LiteKernelCreator<SqueezeInt8CPUKernel>)

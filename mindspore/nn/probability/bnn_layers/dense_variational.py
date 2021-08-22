@@ -78,7 +78,6 @@ class _DenseVariational(Cell):
         return outputs
 
     def extend_repr(self):
-        """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, weight_mean={}, weight_std={}, has_bias={}' \
             .format(self.in_channels, self.out_channels, self.weight_posterior.mean,
                     self.weight_posterior.untransformed_std, self.has_bias)
@@ -90,7 +89,6 @@ class _DenseVariational(Cell):
         return s
 
     def apply_variational_bias(self, inputs):
-        """Calculate bias."""
         bias_posterior_tensor = self.bias_posterior("sample")
         return self.bias_add(inputs, bias_posterior_tensor)
 
@@ -198,7 +196,6 @@ class DenseReparam(_DenseVariational):
         )
 
     def apply_variational_weight(self, inputs):
-        """Calculate weight."""
         weight_posterior_tensor = self.weight_posterior("sample")
         outputs = self.matmul(inputs, weight_posterior_tensor)
         return outputs
@@ -295,7 +292,6 @@ class DenseLocalReparam(_DenseVariational):
         self.normal = Normal()
 
     def apply_variational_weight(self, inputs):
-        """Calculate weight."""
         mean = self.matmul(inputs, self.weight_posterior("mean"))
         std = self.sqrt(self.matmul(self.square(inputs), self.square(self.weight_posterior("sd"))))
         weight_posterior_affine_tensor = self.normal("sample", mean=mean, sd=std)

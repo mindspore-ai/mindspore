@@ -25,7 +25,7 @@ from mindspore.nn.optim import Lamb
 from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
-from mindspore.train.callback import LossMonitor
+from mindspore.train.callback import LossMonitor, SummaryCollector
 from mindspore import context, Parameter
 from mindspore.context import ParallelMode
 from mindspore.communication import management as MultiAscend
@@ -44,7 +44,7 @@ parser = argparse.ArgumentParser(description='Seq2seq train entry point.')
 
 parser.add_argument("--is_modelarts", type=ast.literal_eval, default=False, help="model config json file path.")
 parser.add_argument("--data_url", type=str, default=None, help="pre-train dataset address.")
-parser.add_argument('--train_url', type=str, default=None, help='Location of training outputs.')
+parser.add_argument('--train_url', required=True, default=None, help='Location of training outputs.')
 parser.add_argument("--config", type=str, required=True, help="model config json file path.")
 parser.add_argument("--pre_train_dataset", type=str, required=True, help="pre-train dataset address.")
 args = parser.parse_args()
@@ -52,7 +52,7 @@ if args.is_modelarts:
     import moxing as mox
 context.set_context(
     mode=context.GRAPH_MODE,
-    save_graphs=False,
+    save_graphs=True,
     device_target="Ascend",
     reserve_class_name_in_scope=True)
 
@@ -217,16 +217,16 @@ def _build_training_pipeline(config: Seq2seqConfig,
         scale_update_cell=scale_manager.get_update_cell()
     )
     net_with_grads.set_train(True)
-    model = Model(net_with_grads)
+    model = Model(net_with_grads, amp_level="O2")
     loss_monitor = LossCallBack(config)
     dataset_size = dataset.get_dataset_size()
     time_cb = TimeMonitor(data_size=dataset_size)
-    ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset.get_dataset_size(),
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=config.save_ckpt_steps,
                                    keep_checkpoint_max=config.keep_ckpt_max)
 
     rank_size = os.getenv('RANK_SIZE')
     callbacks = [time_cb, loss_monitor]
-    callbacks.append(LossMonitor())
+    callbacks.append(LossMonitor(1642))
 
     if rank_size is not None and int(rank_size) > 1 and MultiAscend.get_rank() % 8 == 0:
         ckpt_callback = ModelCheckpoint(
@@ -234,6 +234,8 @@ def _build_training_pipeline(config: Seq2seqConfig,
             directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(os.getenv('DEVICE_ID'))),
             config=ckpt_config)
         callbacks.append(ckpt_callback)
+        summary_callback = SummaryCollector(summary_dir="./summary", collect_freq=50)
+        callbacks.append(summary_callback)
 
     if rank_size is None or int(rank_size) == 1:
         ckpt_callback = ModelCheckpoint(
@@ -241,6 +243,8 @@ def _build_training_pipeline(config: Seq2seqConfig,
             directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(os.getenv('DEVICE_ID'))),
             config=ckpt_config)
         callbacks.append(ckpt_callback)
+        summary_callback = SummaryCollector(summary_dir="./summary", collect_freq=50)
+        callbacks.append(summary_callback)
 
     print(f" | ALL SET, PREPARE TO TRAIN.")
     _train(model=model, config=config,

@@ -63,7 +63,7 @@ def gen_data(inputA_np, inputB_np, grad_=None):
     return output
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_tensor_grad_4d():

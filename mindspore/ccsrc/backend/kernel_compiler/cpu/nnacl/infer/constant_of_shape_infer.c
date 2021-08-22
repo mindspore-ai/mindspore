@@ -37,7 +37,7 @@ int ConstantOfShapeInferShape(const TensorC *const *inputs, size_t inputs_size, 
     return NNACL_ERR;
   }
   int out_shape[MAX_SHAPE_SIZE];
-  int out_shape_size = size;
+  size_t out_shape_size = size;
   switch (in_tensor->data_type_) {
     case kNumberTypeInt32: {
       int32_t *in_data = (int32_t *)(in_tensor->data_);

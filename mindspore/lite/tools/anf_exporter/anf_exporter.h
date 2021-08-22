@@ -31,7 +31,6 @@
 #include "tools/converter/converter_context.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/common/node_util.h"
 
 using mindspore::ops::PrimitiveC;
 
@@ -47,6 +46,7 @@ class AnfExporter {
  public:
   AnfExporter() = default;
   virtual ~AnfExporter() = default;
+  void set_train_flag(bool train_flag) { train_flag_ = train_flag; }
   schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false, bool copy_primitive = false,
                              bool train_flag = false);
   void SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
@@ -74,6 +74,8 @@ class AnfExporter {
              const size_t &subgraph_index, const bool &keep_graph, const bool &copy_primitive);
   int ExportSubgraph(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                      bool keep_graph, bool copy_primitive, const std::shared_ptr<AnfNode> &partial_anode = nullptr);
+  static ValueNodePtr GetPartialAnfPrim();
+  static ValueNodePtr GetCallAnfPrim();
   static CNodePtr CreateCallCnode(const FuncGraphPtr &fg, const AnfNodePtr &cnode);
   static CNodePtr CreatePartialCnode(const FuncGraphPtr &fg, const AnfNodePtr &node);
   bool HasExported(const FuncGraphPtr &func_graph);
@@ -81,8 +83,8 @@ class AnfExporter {
                         const bool &copy_primitive, const CNodePtr &partial_cnode,
                         const std::unique_ptr<schema::CNodeT> &schema_cnode);
   std::list<CNodePtr> InsertCallNode(const FuncGraphPtr &func_graph);
-  int SetMetaGraphInput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int SetMetaGraphOutput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
+  bool IsCall(const AnfNodePtr node);
   int CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const AnfNodePtr &input);
 
  private:
@@ -92,10 +94,8 @@ class AnfExporter {
   std::map<FuncGraphPtr, size_t> fg_subgraph_map_;
   std::vector<AnfNodePtr> graph_inputs_;
   std::set<AnfNodePtr> graph_inputs_has_exported_;
-  std::map<AnfNodePtr, int> graph_inputs_map_;
   uint32_t node_idx_ = 0;
   bool train_flag_ = false;
-  bool reorder_input_ = false;
 };
 // by default, copy_primitive is false, which means that the MetaGraph and func_graph share the same schema::PrimitiveT.
 // but in PostQuantization, the func_graph need to transfer to MetaGraph first and do MetaGraph pass, which may modify

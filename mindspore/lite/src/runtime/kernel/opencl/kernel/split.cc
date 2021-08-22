@@ -32,7 +32,6 @@ namespace mindspore::kernel {
 int SplitOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto src_data = in_tensors_[0]->data_c();
-  MS_ASSERT(src_data);
   cl::Image2D *in_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
   if (in_image == nullptr) {
     MS_LOG(ERROR) << "RunAxis0 in_image can not be nullptr";
@@ -41,12 +40,8 @@ int SplitOpenCLKernel::RunAxis0() {
   auto src_area = cl::array<cl::size_type, 3U>{0, 0, 0};
   for (int i = 0; i < out_tensors_.size(); i++) {
     auto dst_data = out_tensors_[i]->data_c();
-    MS_ASSERT(dst_data);
     ImageSize img_size;
-    if (allocator_->GetImageSize(dst_data, &img_size) != RET_OK) {
-      MS_LOG(ERROR) << "GetImageSize failed.";
-      return RET_ERROR;
-    }
+    allocator_->GetImageSize(dst_data, &img_size);
     auto dst_area = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
     cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
@@ -54,10 +49,7 @@ int SplitOpenCLKernel::RunAxis0() {
       MS_LOG(ERROR) << "RunAxis0 out_image can not be nullptr";
       return RET_ERROR;
     }
-    if (ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*in_image, *out_image, src_area, dst_area, region) !=
-        CL_SUCCESS) {
-      MS_LOG(WARNING) << "enqueueCopyImage failed.";
-    }
+    ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*in_image, *out_image, src_area, dst_area, region);
     src_area[1] += region[1];
   }
   return RET_OK;
@@ -101,32 +93,23 @@ int SplitOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-int SplitOpenCLKernel::AlignSplitSizes(SplitParameter *param, const std::vector<int> &in_shape) {
+void SplitOpenCLKernel::AlignSplitSizes(SplitParameter *param, const std::vector<int> &in_shape) {
   auto allocator = ocl_runtime_->GetAllocator();
   int shape_dim = in_shape.at(param->split_dim_);
   if (num_split_ == 1) {
     size_t num_split = UP_DIV(shape_dim, param->split_sizes_[0]);
     split_sizes_ = reinterpret_cast<int *>(allocator->Malloc(num_split * sizeof(int), lite::opencl::MemType::BUF));
-    if (split_sizes_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc failed.";
-      return RET_ERROR;
-    }
     for (int i = 0; i < num_split - 1; ++i) {
       split_sizes_[i] = (i + 1) * param->split_sizes_[0];
     }
   } else {
     int sum = 0;
     split_sizes_ = reinterpret_cast<int *>(allocator->Malloc(num_split_ * sizeof(int), lite::opencl::MemType::BUF));
-    if (split_sizes_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc failed.";
-      return RET_ERROR;
-    }
     for (int i = 0; i < num_split_ - 1; ++i) {
       sum += param->split_sizes_[i];
       split_sizes_[i] = sum;
     }
   }
-  return RET_OK;
 }
 
 int SplitOpenCLKernel::Prepare() {
@@ -146,10 +129,7 @@ int SplitOpenCLKernel::Prepare() {
       }
     }
   }
-  if (AlignSplitSizes(param, in_shape) != RET_OK) {
-    MS_LOG(ERROR) << "AlignSplitSizes failed.";
-    return RET_ERROR;
-  }
+  AlignSplitSizes(param, in_shape);
   std::string kernel_name = "split_out";
   kernel_name += std::to_string(num_split_);
   kernel_name += "_axis" + std::to_string(split_dim_);
@@ -158,7 +138,7 @@ int SplitOpenCLKernel::Prepare() {
   }
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
   std::string source = split_source;
-  const std::string program_name = "split";
+  std::string program_name = "split";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -171,15 +151,12 @@ int SplitOpenCLKernel::Prepare() {
     return ret;
   }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   SetGlobalLocal();
   return RET_OK;
 }
 
-int SplitOpenCLKernel::SetConstArgs() {
+void SplitOpenCLKernel::SetConstArgs() {
   int arg_cn = out_tensors_.size() + 2;
   cl_int4 shape = {};
   for (int i = 0; i < in_tensors_[0]->shape().size(); ++i) {
@@ -189,10 +166,7 @@ int SplitOpenCLKernel::SetConstArgs() {
   if (Align_) {
     in_shape_.s[3] = UP_DIV(in_shape_.s[3], C4NUM);
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_);
 
   for (int i = 0; i < out_tensors_.size(); ++i) {
     cl_int4 temp = {};
@@ -203,21 +177,13 @@ int SplitOpenCLKernel::SetConstArgs() {
     if (Align_) {
       out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
     }
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
   }
-  if (!Align_) {
-    GpuTensorInfo img_info(in_tensors_.at(0));
-    size_t dtype = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
-    stride_w = img_info.RowPitch() / dtype;
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
+  GpuTensorInfo img_info(in_tensors_.at(0));
+  size_t dtype = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
+  stride_w = img_info.RowPitch() / dtype;
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w);
+  return;
 }
 
 void SplitOpenCLKernel::SetGlobalLocal() {
@@ -234,40 +200,20 @@ void SplitOpenCLKernel::SetGlobalLocal() {
 
 int SplitOpenCLKernel::Run() {
   if (split_dim_ == 0) {
-    int ret = RunAxis0();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "RunAxis0 failed.";
-      return ret;
-    }
+    RunAxis0();
     return RET_OK;
   }
   int arg_cn = 0;
   if (Align_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());
   } else {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c(), lite::opencl::MemType::BUF) !=
-        CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c(), lite::opencl::MemType::BUF);
   }
   for (int i = 0; i < out_tensors_.size(); ++i) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(i)->data_c()) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(i)->data_c());
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, split_sizes_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, split_sizes_, lite::opencl::MemType::BUF);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

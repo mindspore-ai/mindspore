@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdd = prim::kAdd;
-class MS_CORE_API Add : public PrimitiveC {
+class Add : public PrimitiveC {
  public:
   Add() : PrimitiveC(kNameAdd) { InitIOName({"x", "y"}, {"output"}); }
   explicit Add(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }

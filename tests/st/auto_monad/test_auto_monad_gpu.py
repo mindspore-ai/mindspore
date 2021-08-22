@@ -136,7 +136,7 @@ def test_side_effect_castall():
     inputs1 = np.random.randn(5, 5)
     inputs2 = np.random.randn(5, 5)
     net(Tensor(inputs1, ms.float32), Tensor(inputs2, ms.float32))
-    result = find_files('./rank_0/ir_dump/hwopt*cast_all*.ir', 'CastAll')
+    result = find_files('hwopt*cast_all*.ir', 'CastAll')
     assert result == '2'
 
 
@@ -226,7 +226,7 @@ class SideEffectTwoAssignTwoAddnDependencyNet(Cell):
         return grad_out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ctrl_while_by_while_and_if_in_first_while():
@@ -262,7 +262,7 @@ def test_ctrl_while_by_while_and_if_in_first_while():
     net(input_me_a)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ctrl_while_by_while_and_while_in_first_while():
@@ -348,9 +348,9 @@ def test_ir_fusion_inplace_bn_conv_conv():
                                   keep_batchnorm_fp32=False)
     net.set_train()
     net(Tensor(input_np), Tensor(label))
-    find_accum = find_files("./rank_0/ir_dump/hwopt*cudnn_inplace*ir",
+    find_accum = find_files("hwopt*cudnn_inplace*ir",
                             "inplace_algo: accumulation")
-    find_cover = find_files("./rank_0/ir_dump/hwopt*cudnn_inplace*ir",
+    find_cover = find_files("hwopt*cudnn_inplace*ir",
                             "inplace_algo: cover")
     assert find_accum == '1'
     assert find_cover == '1'
@@ -372,7 +372,7 @@ def find_newest_validateir_file(folder_path):
 
 
 def read_file():
-    filename = find_newest_validateir_file('./rank_0/ir_dump/')
+    filename = find_newest_validateir_file('./')
     with open((os.path.join(filename)), 'r') as f:
         content = f.read()
     clean_all_ir_files('./')

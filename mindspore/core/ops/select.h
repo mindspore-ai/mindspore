@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSelect = "Select";
-class MS_CORE_API Select : public PrimitiveC {
+class Select : public PrimitiveC {
  public:
   Select() : PrimitiveC(kNameSelect) { InitIOName({"condition", "x", "y"}, {"output"}); }
   ~Select() = default;

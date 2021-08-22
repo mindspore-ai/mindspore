@@ -91,23 +91,6 @@ After dataset preparation, you can start training and evaluation as follows:
       VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
     ```
 
-- running on GPU
-
-    ```bash
-    # run training example
-    cd ./scripts
-    bash run_standalone_train_gpu.sh PRE_TRAIN_DATASET DEVICE_ID
-
-    # run distributed training example
-    cd ./scripts
-    bash run_distributed_train_gpu.sh PRE_TRAIN_DATASET
-
-    # run evaluation example
-    cd ./scripts
-    bash run_standalone_eval_gpu.sh TEST_DATASET EXISTED_CKPT_PATH \
-      VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET DEVICE_ID
-    ```
-
 - ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
 
     ```bash
@@ -223,15 +206,10 @@ The GNMT network script and code result are as follows:
   │      ├──optimizer.py                     // Optimizer.
   ├── scripts
   │   ├──run_distributed_train_ascend.sh     // Shell script for distributed train on ascend.
-  │   ├──run_distributed_train_gpu.sh        // Shell script for distributed train on GPU.  
   │   ├──run_standalone_eval_ascend.sh       // Shell script for standalone eval on ascend.
-  │   ├──run_standalone_eval_gpu.sh          // Shell script for standalone eval on GPU.
   │   ├──run_standalone_train_ascend.sh      // Shell script for standalone eval on ascend.
-  │   ├──run_standalone_train_gpu.sh         // Shell script for standalone eval on GPU.
-  ├── default_config.yaml                    // Configurations for train on ascend.
-  ├── default_config_gpu.yaml                // Configurations for train on GPU.
-  ├── default_test_config.yaml               // Configurations for eval on ascend.
-  ├── default_test_config_gpu.yaml           // Configurations for eval on GPU.
+  ├── default_config.yaml                    // Configurations for train
+  ├── default_test_config.yaml               // Configurations for eval
   ├── create_dataset.py                      // Dataset preparation.
   ├── eval.py                                // Infer API entry.
   ├── export.py                              // Export checkpoint file into air models.
@@ -284,96 +262,49 @@ For more configuration details, please refer the script `./default_config.yaml` 
 
 ## Training Process
 
-- running on Ascend
+For a pre-trained model, configure the following options in the `./default_config.yaml` file:
 
-    For a pre-trained model, configure the following options in the `./default_config.yaml` file:
+- Select an optimizer ('momentum/adam/lamb' is available).
+- Specify `ckpt_prefix` and `ckpt_path` in `checkpoint_path` to save the model file.
+- Set other parameters, including dataset configuration and network configuration.
+- If a pre-trained model exists, assign `existed_ckpt` to the path of the existing model during fine-tuning.
 
-    - Select an optimizer ('momentum/adam/lamb' is available).
-    - Specify `ckpt_prefix` and `ckpt_path` in `checkpoint_path` to save the model file.
-    - Set other parameters, including dataset configuration and network configuration.
-    - If a pre-trained model exists, assign `existed_ckpt` to the path of the existing model during fine-tuning.
+Start task training on a single device and run the shell script `scripts/run_standalone_train_ascend.sh`:
 
-    Start task training on a single device and run the shell script `scripts/run_standalone_train_ascend.sh`:
+```bash
+cd ./scripts
+bash run_standalone_train_ascend.sh PRE_TRAIN_DATASET
+```
 
-    ```bash
-    cd ./scripts
-    bash run_standalone_train_ascend.sh PRE_TRAIN_DATASET
-    ```
+In this script, the `PRE_TRAIN_DATASET` is the dataset address.
 
-    In this script, the `PRE_TRAIN_DATASET` is the dataset address.
+Run `scripts/run_distributed_train_ascend.sh` for distributed training of GNMTv2 model.
+Task training on multiple devices and run the following command in bash to be executed in `scripts/`.:
 
-    Run `scripts/run_distributed_train_ascend.sh` for distributed training of GNMTv2 model.
-    Task training on multiple devices and run the following command in bash to be executed in `scripts/`.:
+```bash
+cd ./scripts
+bash run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
+```
 
-    ```bash
-    cd ./scripts
-    bash run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
-    ```
-
-    Note: the `RANK_TABLE_ADDR` is the hccl_json file assigned when distributed training is running.
-    Currently, inconsecutive device IDs are not supported in `scripts/run_distributed_train_ascend.sh`. The device ID must start from 0 in the `RANK_TABLE_ADDR` file.
-
-- running on GPU
-
-    For a pre-trained model, configure the following options in the `./default_config_gpu.yaml` file:
-
-    - Select an optimizer ('momentum/adam/lamb' is available).
-    - Specify `ckpt_prefix` and `ckpt_path` in `checkpoint_path` to save the model file.
-    - Set other parameters, including dataset configuration and network configuration.
-    - If a pre-trained model exists, assign `existed_ckpt` to the path of the existing model during fine-tuning.
-
-    Start task training on a single device and run the shell script `scripts/run_standalone_train_gpu.sh`:
-
-    ```bash
-    cd ./scripts
-    bash run_standalone_train_gpu.sh PRE_TRAIN_DATASET DEVICE_ID
-    ```
-
-    In this script, the `PRE_TRAIN_DATASET` is the dataset address.
-
-    Run `scripts/run_distributed_train_gpu.sh` for distributed training of GNMTv2 model.
-    Task training on multiple devices and run the following command in bash to be executed in `scripts/`.:
-
-    ```bash
-    cd ./scripts
-    bash run_distributed_train_ascend.sh PRE_TRAIN_DATASET
-    ```
-
-    Currently, inconsecutive device IDs are not supported in `scripts/run_distributed_train_gpu.sh`. The device ID must start from 0 to 7.
+Note: the `RANK_TABLE_ADDR` is the hccl_json file assigned when distributed training is running.
+Currently, inconsecutive device IDs are not supported in `scripts/run_distributed_train_ascend.sh`. The device ID must start from 0 in the `RANK_TABLE_ADDR` file.
 
 ## Inference Process
 
-- running on Ascend
+For inference using a trained model on multiple hardware platforms, such as Ascend 910.
+Set options in `./default_config.yaml`.
 
-    For inference using a trained model on multiple hardware platforms, such as Ascend 910.
-    Set options in `./default_test_config.yaml`.
+Run the shell script `scripts/run_standalone_eval_ascend.sh` to process the output token ids to get the BLEU scores.
 
-    Run the shell script `scripts/run_standalone_eval_ascend.sh` to process the output token ids to get the BLEU scores.
+```bash
+cd ./scripts
+bash run_standalone_eval_ascend.sh
+bash run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
+  VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
+```
 
-    ```bash
-    cd ./scripts
-    bash run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
-      VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
-    ```
-
-    The `TEST_DATASET` is the address of inference dataset, and `EXISTED_CKPT_PATH` is the path of the model file generated during training process.
-    The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code address and the `TEST_TARGET` are the path of answers.
-
-- running on GPU
-
-    For inference using a trained model on GPU.
-    Set options in `./default_test_config_gpu.yaml`.
-
-    Run the shell script `scripts/run_standalone_eval_gpu.sh` to process the output token ids to get the BLEU scores.
-
-    ```bash
-    cd ./scripts
-    bash run_standalone_eval_gpu.sh TEST_DATASET EXISTED_CKPT_PATH \
-      VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET DEVICE_ID
-    ```
-
-    The `TEST_DATASET` is the address of inference dataset, and `EXISTED_CKPT_PATH` is the path of the model file generated during training process.
-    The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code address and the `TEST_TARGET` are the path of answers.
+The `TEST_DATASET` is the address of inference dataset, and `EXISTED_CKPT_PATH` is the path of the model file generated during training process.
+The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code address and the `TEST_TARGET` are the path of answers.
 
 # [Model Description](#contents)
 
@@ -381,36 +312,36 @@ For more configuration details, please refer the script `./default_config.yaml` 
 
 ### Training Performance
 
-| Parameters                 | Ascend                                                         |GPU                                                         |
-| -------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
-| Resource                   | Ascend 910; OS Euler2.8                                                      | NV SMX2 V100-32G                                                      |
-| uploaded Date              | 11/06/2020 (month/day/year)                                    | 08/05/2021 (month/day/year)                                    |
-| MindSpore Version          | 1.0.0                                                          | 1.3.0                                                          |
-| Dataset                    | WMT English-German for training                                | WMT English-German for training                                |
-| Training Parameters        | epoch=6, batch_size=128                                        | epoch=8, batch_size=128                                        |
-| Optimizer                  | Adam                                                           | Adam                                                           |
-| Loss Function              | Softmax Cross Entropy                                          | Softmax Cross Entropy                                          |
-| outputs                    | probability                                                    | probability                                                    |
-| Speed                      | 344ms/step (8pcs)                                              | 620 ms/step (1pcs)                                              |
-| Total Time                 | 7800s (8pcs)                                                   | 17079s (1pcs)                                                   |
-| Loss                       | 63.35                                                          | 55.42                                                         |
-| Params (M)                 | 613                                                            | 613                                                           |
-| Checkpoint for inference   | 1.8G (.ckpt file)                                              | 1.8G (.ckpt file)                                              |
-| Scripts                    | [gnmt_v2](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/gnmt_v2) | [gnmt_v2](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/gnmt_v2) |
+| Parameters                 | Ascend                                                         |
+| -------------------------- | -------------------------------------------------------------- |
+| Resource                   | Ascend 910; OS Euler2.8                                                      |
+| uploaded Date              | 11/06/2020 (month/day/year)                                    |
+| MindSpore Version          | 1.0.0                                                          |
+| Dataset                    | WMT English-German for training                                |
+| Training Parameters        | epoch=6, batch_size=128                                        |
+| Optimizer                  | Adam                                                           |
+| Loss Function              | Softmax Cross Entropy                                          |
+| outputs                    | probability                                                    |
+| Speed                      | 344ms/step (8pcs)                                              |
+| Total Time                 | 7800s (8pcs)                                                   |
+| Loss                       | 63.35                                                          |
+| Params (M)                 | 613                                                            |
+| Checkpoint for inference   | 1.8G (.ckpt file)                                              |
+| Scripts                    | [gnmt_v2](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/gnmt_v2) |
 
 ### Inference Performance
 
-| Parameters          | Ascend                      | GPU                      |
-| ------------------- | --------------------------- | --------------------------- |
-| Resource            | Ascend 910; OS Euler2.8                   | NV SMX2 V100-32G                   |
-| Uploaded Date       | 11/06/2020 (month/day/year) | 08/05/2021 (month/day/year) |
-| MindSpore Version   | 1.0.0                       | 1.3.0                       |
-| Dataset             | WMT newstest2014            | WMT newstest2014            |
-| batch_size          | 128                         | 128                         |
-| Total Time          | 1560s                       | 180s                       |
-| outputs             | probability                 | probability                 |
-| Accuracy            | BLEU Score= 24.05           | BLEU Score= 24.4           |
-| Model for inference | 1.8G (.ckpt file)           | 1.8G (.ckpt file)           |
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Resource            | Ascend 910; OS Euler2.8                   |
+| Uploaded Date       | 11/06/2020 (month/day/year) |
+| MindSpore Version   | 1.0.0                       |
+| Dataset             | WMT newstest2014            |
+| batch_size          | 128                         |
+| Total Time          | 1560s                       |
+| outputs             | probability                 |
+| Accuracy            | BLEU Score= 24.05           |
+| Model for inference | 1.8G (.ckpt file)           |
 
 # [Random Situation Description](#contents)
 

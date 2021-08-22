@@ -67,13 +67,13 @@ class EpochCtrlNode : public RepeatNode {
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status Accept(IRNodePass *const p, bool *const modified) override;
+  Status Accept(IRNodePass *p, bool *const modified) override;
 
   /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
+  Status AcceptAfter(IRNodePass *p, bool *const modified) override;
 };
 
 }  // namespace dataset

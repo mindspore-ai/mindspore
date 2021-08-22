@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace opt {
 class DynamicGRUV2GradFission : public PatternProcessPass {
  public:
   explicit DynamicGRUV2GradFission(bool multigraph = true)
-      : PatternProcessPass("dynamic_gru_v2_grad_fission", multigraph) {}
+      : PatternProcessPass("dynamic_gru_grad_v2_fission", multigraph) {}
   ~DynamicGRUV2GradFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;

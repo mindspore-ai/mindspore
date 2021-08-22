@@ -507,7 +507,7 @@ class SideEffectControlFlowAssignDependTwoIfNet(Cell):
         return grad_out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -675,9 +675,10 @@ class SideEffectControlFlowAssignDependWhileNet(Cell):
         return grad_out
 
 
+# Now the case can't pass because the GPU RT problem, so only run on Ascend current time.
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_side_effect_grad_control_flow_assign_depend_while_net():
     context.set_context(mode=context.GRAPH_MODE)

@@ -19,18 +19,14 @@ import math
 class Particle_Mesh_Ewald():
     '''PME'''
     def __init__(self, controller, md_info):
-        self.module_name = "PME"
-        self.CONSTANT_Pi = 3.1415926535897932
-        self.cutoff = 10.0 if "cutoff" not in controller.Command_Set else float(controller.Command_Set["cutoff"])
-        self.tolerance = 0.00001 if "Direct_Tolerance" not in controller.Command_Set else float(
-            controller.Command_Set["Direct_Tolerance"])
+        self.cutoff = 10.0 if "cut" not in controller.Command_Set else float(controller.Command_Set["cut"])
+        self.tolerance = 0.00001 if "PME_Direct_Tolerance" not in controller.Command_Set else float(
+            controller.Command_Set["PME_Direct_Tolerance"])
         self.fftx = -1 if "fftx" not in controller.Command_Set else int(controller.Command_Set["fftx"])
         self.ffty = -1 if "ffty" not in controller.Command_Set else int(controller.Command_Set["ffty"])
         self.fftz = -1 if "fftz" not in controller.Command_Set else int(controller.Command_Set["fftz"])
         self.atom_numbers = md_info.atom_numbers
         self.box_length = md_info.box_length
-
-        self.volume = self.box_length[0] * self.box_length[1] * self.box_length[1]
 
         if self.fftx < 0:
             self.fftx = self.Get_Fft_Patameter(self.box_length[0])
@@ -38,21 +34,8 @@ class Particle_Mesh_Ewald():
             self.ffty = self.Get_Fft_Patameter(self.box_length[1])
         if self.fftz < 0:
             self.fftz = self.Get_Fft_Patameter(self.box_length[2])
-        print("    fftx: ", self.fftx)
-        print("    ffty: ", self.ffty)
-        print("    fftz: ", self.fftz)
-        print("pme cutoff", self.cutoff)
-        print("pme tolerance", self.tolerance)
-        self.PME_Nall = self.fftx * self.ffty * self.fftz
-        self.PME_Nin = self.ffty * self.fftz
-        self.PME_Nfft = self.fftx * self.ffty * (int(self.fftz / 2) + 1)
-        self.PME_inverse_box_vector = [self.fftx / self.box_length[0],
-                                       self.ffty / self.box_length[1],
-                                       self.fftz / self.box_length[2]]
 
         self.beta = self.Get_Beta(self.cutoff, self.tolerance)
-        self.neutralizing_factor = -0.5 * self.CONSTANT_Pi / (self.beta * self.beta * self.volume)
-        self.is_initialized = 1
 
     def Get_Beta(self, cutoff, tolerance):
         '''GET BETA'''

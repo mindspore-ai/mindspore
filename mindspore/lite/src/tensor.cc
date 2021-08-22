@@ -316,9 +316,7 @@ void Tensor::FreeData() {
     this->data_ = nullptr;
   } else {
     allocator_->Free(this->data_);
-    if (!IS_STATIC_ALLOCATOR(allocator_) || (allocator_->RefCount(this->data_) != 0)) {
-      this->data_ = nullptr;
-    }
+    this->data_ = nullptr;
   }
 }
 

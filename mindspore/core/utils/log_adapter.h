@@ -25,7 +25,6 @@
 #include <map>
 #include <thread>
 #include <functional>
-#include "utils/visible.h"
 #include "utils/overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG
@@ -45,7 +44,7 @@ static constexpr size_t GetRelPathPos() noexcept {
 }
 
 namespace mindspore {
-MS_CORE_API extern std::map<void **, std::thread *> acl_handle_map;
+extern std::map<void **, std::thread *> acl_handle_map __attribute__((visibility("default")));
 #define FILE_NAME                                                                             \
   (sizeof(__FILE__) > GetRelPathPos() ? static_cast<const char *>(__FILE__) + GetRelPathPos() \
                                       : static_cast<const char *>(__FILE__))
@@ -147,13 +146,25 @@ enum SubModuleId : int {
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
 #endif
 
-MS_EXPORT const std::string GetSubModuleName(SubModuleId module_id);
+#if defined(_WIN32) || defined(_WIN64)
+extern const std::string GetSubModuleName(SubModuleId module_id) __attribute__((dllexport));
+#else
+extern const std::string GetSubModuleName(SubModuleId module_id) __attribute__((visibility("default")));
+#endif
 
 const char *EnumStrForMsLogLevel(MsLogLevel level);
 
-MS_EXPORT std::string GetTimeString();
+#if defined(_WIN32) || defined(_WIN64)
+extern std::string GetTimeString() __attribute__((dllexport));
+#else
+extern std::string GetTimeString() __attribute__((visibility("default")));
+#endif
 
-MS_EXPORT extern int g_ms_submodule_log_levels[];
+#if defined(_WIN32) || defined(_WIN64)
+extern int g_ms_submodule_log_levels[] __attribute__((dllexport));
+#else
+extern int g_ms_submodule_log_levels[] __attribute__((visibility("default")));
+#endif
 
 class LogWriter {
  public:
@@ -165,8 +176,8 @@ class LogWriter {
       : location_(location), log_level_(log_level), submodule_(submodule), exception_type_(excp_type) {}
   ~LogWriter() = default;
 
-  MS_CORE_API void operator<(const LogStream &stream) const noexcept;
-  MS_CORE_API void operator^(const LogStream &stream) const __attribute__((noreturn));
+  void operator<(const LogStream &stream) const noexcept __attribute__((visibility("default")));
+  void operator^(const LogStream &stream) const __attribute__((noreturn, visibility("default")));
 
   static void set_exception_handler(ExceptionHandler exception_handler) { exception_handler_ = exception_handler; }
   static void set_trace_provider(TraceProvider trace_provider) { trace_provider_ = trace_provider; }

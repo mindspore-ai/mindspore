@@ -37,7 +37,7 @@ class Recall(EvaluationBase):
         In the multi-label cases, the elements of :math:`y` and :math:`y_{pred}` must be 0 or 1.
 
     Args:
-        eval_type (str): The metric to calculate the recall over a dataset, for classification or
+        eval_type (str): Metric to calculate the recall over a dataset, for classification or
                          multilabel. Default: 'classification'.
 
     Examples:
@@ -91,7 +91,7 @@ class Recall(EvaluationBase):
             ValueError: If the number of input is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The recall needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError('Recall need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         if self._type == 'classification' and y_pred.ndim == y.ndim and self._check_onehot_data(y):
@@ -102,8 +102,8 @@ class Recall(EvaluationBase):
         if self._class_num == 0:
             self._class_num = y_pred.shape[1]
         elif y_pred.shape[1] != self._class_num:
-            raise ValueError('The class number does not match, the last input data contains {} classes, '
-                             'but the current data contains {} classes'.format(self._class_num, y_pred.shape[1]))
+            raise ValueError('Class number not match, last input data contain {} classes, but current data contain {} '
+                             'classes'.format(self._class_num, y_pred.shape[1]))
 
         class_num = self._class_num
         if self._type == "classification":
@@ -140,7 +140,7 @@ class Recall(EvaluationBase):
             Float, the computed result.
         """
         if self._class_num == 0:
-            raise RuntimeError('The input number of samples can not be 0.')
+            raise RuntimeError('Input number of samples can not be 0.')
 
         validator.check_value_type("average", average, [bool], self.__class__.__name__)
         result = self._true_positives / (self._actual_positives + self.eps)

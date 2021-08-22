@@ -151,9 +151,6 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
     if (unit.use_winograd_) {
-      if (unit.winograd_.kh_ >= DECONV_WINOGRAD_BUFFER_COUNT) {
-        return RET_ERROR;
-      }
       if (deconv_param_->a_buffer_[unit.winograd_.kh_].buf_init_ == false) {
         deconv_param_->a_buffer_[unit.winograd_.kh_].buf_init_ = true;
 
@@ -240,13 +237,7 @@ int DeConvWgPostFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sca
 
 int DeConvWinogradFp16CPUKernel::InitComputeParam() {
   auto weight_tensor = in_tensors_.at(1);
-  auto shape = weight_tensor->shape();
-  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-    MS_LOG(WARNING) << "The shape of weight tensor is invalid.";
-    valid_weight_shape_ = false;
-    return RET_OK;
-  }
-  valid_weight_shape_ = true;
+
   conv_param_->input_channel_ = weight_tensor->Batch();
   conv_param_->output_channel_ = weight_tensor->Channel();
   conv_param_->kernel_w_ = weight_tensor->Width();
@@ -327,11 +318,7 @@ int DeConvWinogradFp16CPUKernel::InitDataParam() {
   /* unit data : weight & winograd data */
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
-  if (origin_weight == nullptr) {
-    MS_LOG(WARNING) << "The weight data is nullptr, will init data parameter in runtime.";
-    is_repack_ = true;
-    return RET_OK;
-  }
+  MS_ASSERT(origin_weight != nullptr);
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param_->compute_units_[i];
     auto ret = PackDeConvWgDataFp16(origin_weight, unit, conv_param_, deconv_param_);
@@ -362,19 +349,6 @@ int DeConvWinogradFp16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "ConvolutionBaseCPUKernel init failed!";
     return ret;
   }
-  if (!valid_weight_shape_) {
-    if (InitComputeParam() != RET_OK) {
-      MS_LOG(ERROR) << "InitComputeParam error!";
-      return RET_ERROR;
-    } else if (!valid_weight_shape_) {
-      return RET_OK;
-    }
-    if (InitDataParam() != RET_OK) {
-      MS_LOG(ERROR) << "InitDataParam error!";
-      return RET_ERROR;
-    }
-  }
-
   ret = InitParameter();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitParameter failed!";
@@ -384,8 +358,6 @@ int DeConvWinogradFp16CPUKernel::ReSize() {
 }
 
 int DeConvWinogradFp16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   deconv_param_ = new (std::nothrow) DeConvParam();
   if (deconv_param_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
@@ -396,14 +368,16 @@ int DeConvWinogradFp16CPUKernel::Init() {
     wg.dest_buffer_ = nullptr;
     wg.middle_buffer_ = nullptr;
   }
-
-  if (InitComputeParam() != RET_OK) {
-    MS_LOG(ERROR) << "InitDataParam error!";
-    return RET_ERROR;
+  int error_code = InitComputeParam();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "InitComputeParam error! ret: " << error_code;
+    return error_code;
   }
-  if (valid_weight_shape_ && InitDataParam() != RET_OK) {
-    MS_LOG(ERROR) << "InitDataParam error!";
-    return RET_ERROR;
+
+  error_code = InitDataParam();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "InitWeightBias error! ret: " << error_code;
+    return error_code;
   }
 
   if (!InferShapeDone()) {
@@ -420,21 +394,6 @@ int DeConvWinogradFp16CPUKernel::Run() {
   MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {
     MS_LOG(ERROR) << "Deconvolution Winograd Fp16 get null tensor data!";
-    return RET_ERROR;
-  }
-
-  if (!valid_weight_shape_) {
-    if (InitComputeParam() != RET_OK) {
-      MS_LOG(ERROR) << "InitDataParam error!";
-      return RET_ERROR;
-    }
-    if (!valid_weight_shape_ || InitParameter() != RET_OK) {
-      MS_LOG(ERROR) << "InitDataParam error!";
-      return RET_ERROR;
-    }
-  }
-  if (IsRepack() && InitDataParam() != RET_OK) {
-    MS_LOG(ERROR) << "InitDataParam error!";
     return RET_ERROR;
   }
 

@@ -129,9 +129,7 @@ std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
   std::vector<int64_t> x{SizeToLong(x_num)};
 
   auto x_shape_value = std::make_shared<tensor::Tensor>(type_x, x);
-  // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
-  // address size will be wrong in the dynamic shape scenario.
-  x_shape_value->set_device_address(address_x, false);
+  x_shape_value->set_device_address(address_x);
   x_shape_value->data_sync();
 
   auto x_value = reinterpret_cast<int64_t *>(x_shape_value->data_c());

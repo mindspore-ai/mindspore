@@ -179,7 +179,7 @@ def test_parser_switch_layer_inputs_tuple():
     assert np.allclose(goodout.asnumpy(), netout.asnumpy(), 0, 0)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

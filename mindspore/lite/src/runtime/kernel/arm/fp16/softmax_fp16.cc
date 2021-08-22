@@ -78,8 +78,8 @@ int SoftmaxFp16CPUKernel::DoSoftmaxLastAxis(int task_id) {
   int end = MSMIN(begin + unit, out_plane_size_);
   int channel = softmax_param_->input_shape_[softmax_param_->axis_];
   int offset = begin * channel;
-  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data_c());
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->MutableData());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->MutableData());
   SoftmaxLastAxisFp16(input_ptr + offset, output_ptr + offset, end - begin, channel);
   return RET_OK;
 }
@@ -102,14 +102,14 @@ int SoftmaxFp16CPUKernel::Run() {
     return ret;
   } else {
     auto input_tensor = in_tensors_.at(0);
-    MS_ASSERT(input_tensor != nullptr);
+    MS_ASSERT(input_tensor);
     auto output_tensor = out_tensors_.at(0);
-    MS_ASSERT(output_tensor != nullptr);
+    MS_ASSERT(output_tensor);
     input_fp16_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-    MS_ASSERT(input_fp16_ != nullptr);
+    MS_ASSERT(input_fp16_);
     output_fp16_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
-    MS_ASSERT(output_fp16_ != nullptr);
-    MS_ASSERT(sum_data_ != nullptr);
+    MS_ASSERT(output_fp16_);
+    MS_ASSERT(sum_data_);
     SoftmaxFp16(input_fp16_, output_fp16_, sum_data_, softmax_param_);
   }
   return RET_OK;

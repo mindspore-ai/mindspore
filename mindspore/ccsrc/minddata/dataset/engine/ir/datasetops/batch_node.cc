@@ -169,19 +169,5 @@ Status BatchNode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
-Status BatchNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
-                            std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("batch_size") != json_obj.end(), "Failed to find batch_size");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("drop_remainder") != json_obj.end(), "Failed to find drop_remainder");
-  int32_t batch_size = json_obj["batch_size"];
-  bool drop_remainder = json_obj["drop_remainder"];
-  *result = std::make_shared<BatchNode>(ds, batch_size, drop_remainder);
-  (*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
-  return Status::OK();
-}
-
 }  // namespace dataset
 }  // namespace mindspore

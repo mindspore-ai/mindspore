@@ -20,7 +20,6 @@ from mindspore import log as logger
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
 
-
 class HWTSLogParser:
     """
     The Parser for hwts log files.
@@ -113,8 +112,8 @@ class HWTSLogParser:
 
                 if int(task_id) < 25000:
                     task_id = str(stream_id) + "_" + str(task_id)
-                result_data += ("%-14s %-4s %-8s %-9s %-8s %-15s %s\n" % (log_type[int(ms_type, 2)], cnt, core_id,
-                                                                          blk_id, task_id, syscnt, stream_id))
+                result_data += ("%-14s %-4s %-8s %-9s %-8s %-15s %s\n" %(log_type[int(ms_type, 2)], cnt, core_id,
+                                                                         blk_id, task_id, syscnt, stream_id))
 
         fwrite_format(self._output_filename, data_source=self._dst_file_title, is_start=True)
         fwrite_format(self._output_filename, data_source=self._dst_file_column_title)

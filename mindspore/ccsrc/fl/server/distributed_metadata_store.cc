@@ -50,7 +50,7 @@ void DistributedMetadataStore::RegisterMetadata(const std::string &name, const P
   uint32_t stored_rank = router_->Find(name);
   if (local_rank_ == stored_rank) {
     if (metadata_.count(name) != 0) {
-      MS_LOG(WARNING) << "The metadata for " << name << " is already registered.";
+      MS_LOG(ERROR) << "The metadata for " << name << " is already registered.";
       return;
     }
 

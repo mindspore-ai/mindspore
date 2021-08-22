@@ -159,7 +159,7 @@ build_lite() {
         pkg_name=mindspore-lite-${VERSION_STR}-ios-aarch64
         cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="arm64" -DENABLE_BITCODE=0                   \
               -DCMAKE_BUILD_TYPE="Release" -DBUILD_MINDDATA="" -DPLATFORM_ARM64="on" -DENABLE_NEON="on" -DENABLE_FP16="on" \
-              -DMSLITE_ENABLE_TRAIN="off" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off"        \
+              -DMSLITE_ENABLE_TRAIN="off" -DENABLE_MINDRT="on" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off"        \
               -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp -G Xcode ..
       else
         checkndk
@@ -176,7 +176,7 @@ build_lite() {
         pkg_name=mindspore-lite-${VERSION_STR}-ios-aarch32
         cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="armv7;armv7s" -DENABLE_BITCODE=0     \
               -DCMAKE_BUILD_TYPE="Release" -DBUILD_MINDDATA="" -DPLATFORM_ARM32="on" -DENABLE_NEON="on"             \
-              -DMSLITE_ENABLE_TRAIN="off" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off" \
+              -DMSLITE_ENABLE_TRAIN="off" -DENABLE_MINDRT="on" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off" \
               -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp -G Xcode ..
       else
         checkndk
@@ -371,7 +371,7 @@ build_aar() {
 
     cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/app/libs
     ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/app
-    ${LITE_JAVA_PATH}/java/gradlew assembleRelease  -p ${LITE_JAVA_PATH}/java/app
+    ${LITE_JAVA_PATH}/java/gradlew build  -p ${LITE_JAVA_PATH}/java/app
     ${LITE_JAVA_PATH}/java/gradlew publish -PLITE_VERSION=${VERSION_STR} -p ${LITE_JAVA_PATH}/java/app
 
     cd ${LITE_JAVA_PATH}/java/app/build

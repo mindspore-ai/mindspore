@@ -1,10 +1,10 @@
 if(MSVC)
     set(flatbuffers_CXXFLAGS "${CMAKE_CXX_FLAGS}")
-    set(flatbuffers_CFLAGS "${CMAKE_C_FLAGS}")
+    set(flatbuffers_CFLAGS "${CMAKE_CXX_FLAGS}")
     set(flatbuffers_LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 else()
-    set(flatbuffers_CXXFLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -fstack-protector-strong")
-    set(flatbuffers_CFLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -fstack-protector-strong")
+    set(flatbuffers_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+    set(flatbuffers_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 endif()
 
 if(WIN32)

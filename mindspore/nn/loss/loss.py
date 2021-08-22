@@ -76,8 +76,8 @@ class LossBase(Cell):
 
         Args:
             weights (Union[float, Tensor]): Optional `Tensor` whose rank is either 0, or the same rank as inputs,
-                and must be broadcastable to inputs (i.e., all dimensions must be either `1`,
-                or the same as the corresponding inputs dimension).
+            and must be broadcastable to inputs (i.e., all dimensions must be either `1`,
+            or the same as the corresponding inputs dimension).
         """
         input_dtype = x.dtype
         x = self.cast(x, mstype.float32)
@@ -434,53 +434,6 @@ class SmoothL1Loss(LossBase):
         _check_is_tensor('logits', base, self.cls_name)
         _check_is_tensor('labels', target, self.cls_name)
         return self.smooth_l1_loss(base, target)
-
-
-class SoftMarginLoss(LossBase):
-    r"""
-    A loss class for two-class classification problems.
-
-    SoftMarginLoss creates a criterion that optimizes a two-class classification
-    logistic loss between input tensor :math:`x` and target tensor :math:`y`
-    (containing 1 or -1).
-
-    .. math::
-        \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
-
-    Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
-
-    Inputs:
-        - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth data, with the same type and shape as `logits`.
-
-    Outputs:
-        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
-        Otherwise, a scalar value will be returned.
-
-    Raises:
-        TypeError: If `logits` or `labels` is not a Tensor.
-        TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
-        ValueError: If shape of `logits` is not the same as `labels`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> loss = ops.SoftMarginLoss()
-        >>> logits = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
-        >>> labels = Tensor(np.array([[-1, 1], [1, -1]]), mindspore.float32)
-        >>> output = loss(logits, labels)
-        >>> print(output)
-        0.6764238
-    """
-    def __init__(self, reduction='mean'):
-        super(SoftMarginLoss, self).__init__()
-        self.soft_margin_loss = P.SoftMarginLoss(reduction)
-
-    def construct(self, base, target):
-        return self.soft_margin_loss(base, target)
 
 
 class SoftmaxCrossEntropyWithLogits(LossBase):
@@ -1329,10 +1282,10 @@ class FocalLoss(LossBase):
                 convert_weight = self.squeeze(convert_weight)
             log_probability = log_probability * convert_weight
 
-        weight = F.pows(-1 * probability + 1.0, self.gamma)
+        weight = F.pows(-probability + 1.0, self.gamma)
         if target.shape[1] == 1:
-            loss = (-1 * weight * log_probability).mean(axis=1)
+            loss = (-weight * log_probability).mean(axis=1)
         else:
-            loss = (-1 * weight * targets * log_probability).mean(axis=-1)
+            loss = (-weight * targets * log_probability).mean(axis=-1)
 
         return self.get_loss(loss)

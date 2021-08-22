@@ -44,25 +44,25 @@ def create_quant_config(quant_observer=(nn.FakeQuantWithMinMaxObserver, nn.FakeQ
                         narrow_range=(False, False),
                         mode="DEFAULT"):
     r"""
-    Config the observer type of weights and data flow with quant parameters.
+    Config the observer type of weights and data flow with quant params.
 
     Args:
         quant_observer (Union[Observer, list, tuple]): The types of observer for quantization. The first element
-            applies to weights and the second applies to data flow. Currently, only
+            applies to weights and second applies to data flow. Currently, only
             :class:`FakeQuantWithMinMaxObserver` supported.
             Default: (nn.FakeQuantWithMinMaxObserver, nn.FakeQuantWithMinMaxObserver).
         quant_delay (Union[int, list, tuple]): Number of steps after which weights and activations are quantized
-            during train and eval. The first element represents weights and the second element represents data flow.
+            during train and eval. The first element represents weights and second element represents data flow.
             Default: (0, 0).
-        quant_dtype (Union[QuantDtype, list, tuple]): Datatype used to quantize weights and activations. The first
-            element represents weights and the second element represents data flow.
+        quant_dtype (Union[QuantDtype, list, tuple]): Datatype to use for quantize weights and activations. The first
+            element represents weights and second element represents data flow.
             Default: (QuantDtype.INT8, QuantDtype.INT8).
         per_channel (Union[bool, list, tuple]):  Quantization granularity based on layer or on channel. If `True`
-            then base on per channel, otherwise base on per layer. The first element represents weights
-            and the second element represents data flow, and the second element must be `False` now.
+            then base on per channel otherwise base on per layer. The first element represents weights
+            and second element represents data flow, and second element must be `False` now.
             Default: (False, False).
         symmetric (Union[bool, list, tuple]): Whether the quantization algorithm is symmetric or not. If `True` then
-            base on symmetric, otherwise base on asymmetric. The first element represents weights and the second
+            base on symmetric otherwise base on asymmetric. The first element represents weights and second
             element represents data flow. Default: (False, False).
         narrow_range (Union[bool, list, tuple]): Whether the quantization algorithm uses narrow range or not.
             The first element represents weights and the second element represents data flow.
@@ -147,17 +147,17 @@ class QuantizationAwareTraining(Quantizer):
         freeze_bn (int): Number of steps after which BatchNorm OP parameters fixed to global mean and variance.
             Default: 1e7.
         quant_delay (Union[int, list, tuple]): Number of steps after which weights and activations are quantized
-            during train and eval. The first element represents weights and the second element represents data flow.
+            during train and eval. The first element represents weights and second element represents data flow.
             Default: (0, 0).
-        quant_dtype (Union[QuantDtype, list, tuple]): Datatype used to quantize weights and activations. The first
-            element represents weights and the second element represents data flow. It is necessary to consider the
+        quant_dtype (Union[QuantDtype, list, tuple]): Datatype to use for quantize weights and activations. The first
+            element represents weights and second element represents data flow. It is necessary to consider the
             precision support of hardware devices in the practical quantization infer scenario.
             Default: (QuantDtype.INT8, QuantDtype.INT8).
         per_channel (Union[bool, list, tuple]):  Quantization granularity based on layer or on channel. If `True`
-            then base on per channel, otherwise base on per layer. The first element represents weights and the
-            second element represents data flow, and the second element must be `False` now. Default: (False, False).
+            then base on per channel otherwise base on per layer. The first element represents weights and second
+            element represents data flow, and second element must be `False` now. Default: (False, False).
         symmetric (Union[bool, list, tuple]): Whether the quantization algorithm is symmetric or not. If `True` then
-            base on symmetric, otherwise base on asymmetric. The first element represents weights and the second
+            base on symmetric otherwise base on asymmetric. The first element represents weights and second
             element represents data flow. Default: (False, False).
         narrow_range (Union[bool, list, tuple]): Whether the quantization algorithm uses narrow range or not.
             The first element represents weights and the second element represents data flow.
@@ -165,8 +165,8 @@ class QuantizationAwareTraining(Quantizer):
         optimize_option (Union[OptimizeOption, list, tuple]): Specifies the quant algorithm and options, currently
             only support `QAT` and `LEARNED_SCALE` (Note that, if both `QAT` and `LEARNED_SCALE` are configured,
             `LEARNED_SCALE` has a higher priority. `LEARNED_SCALE` currently only work under some constraints, which
-            includes: freeze_bn=0, quant_delay=0, symmetric=True, narrow_range=True, More specifically, for operators
-            such as Relu and Relu6, which only have positive values, we add a negative truncation to optimize this
+            includes: freeze_bn=0, quant_delay=0, symmetric=Ture, narrow_range=True, More specifically, for operators
+            such as ReLu and ReLu6, which only have positive values, we add a negative truncation to optimize this
             scenario, and narrow_range will automatically match to False). Default: OptimizeOption.QAT.
         one_conv_fold (bool): Whether to use one conv bn fold ops for simulation inference operation. Default: True.
 

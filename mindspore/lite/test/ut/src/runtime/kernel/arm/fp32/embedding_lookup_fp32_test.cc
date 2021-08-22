@@ -81,14 +81,6 @@ TEST_F(TestEmbeddingLookupFp32, ElTest) {
     std::cout << out[i] << ' ';
   }
   std::cout << std::endl;
-  for (unsigned int i = 0; i < inputs_.size(); i++) {
-    delete inputs_[i];
-  }
-  for (unsigned int i = 0; i < outputs_.size(); i++) {
-    delete outputs_[i];
-  }
-  delete el;
-  delete ctx;
 }
 
 }  // namespace mindspore

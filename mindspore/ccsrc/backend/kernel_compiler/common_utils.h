@@ -55,7 +55,8 @@ using KernelMetaPtr = std::shared_ptr<KernelMetaInfo>;
 class KernelMeta {
  public:
   KernelMeta() = default;
-  void Initialize();
+  void Initialize(int pid);
+  void RemoveKernelCache();
   std::string Search(const std::string &kernel_name) const;
   bool Insert(const std::string &kernel_name, const std::string &kernel_json);
   std::string kernel_meta_path() const { return kernel_meta_path_; }
@@ -143,7 +144,6 @@ size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &
 std::vector<int64_t> CalDimOffset(const std::vector<int64_t> &input_shape);
 size_t GetCopySize(const std::vector<int64_t> &dim_offset, const std::vector<int64_t> &start,
                    const std::vector<int64_t> &stop);
-size_t UnitSizeInBytes(const mindspore::TypeId &t);
 }  // namespace kernel
 }  // namespace mindspore
 

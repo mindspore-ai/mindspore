@@ -118,9 +118,7 @@ int B(const float *poly_array, float *matrix_b, int in_unit) {
   float matrix_t[MAX_LEN];   // n * in_unit
 
   T(poly_array, matrix_t, n);
-  if (LT(poly_array, matrix_lt, n) != NNACL_OK) {
-    return NNACL_ERR;
-  }
+  LT(poly_array, matrix_lt, n);
   MatrixTranspose(matrix_lt, matrix_l, n, n);
   MatrixMultiply(matrix_l, matrix_t, matrix_b, n, n, in_unit);
   matrix_b[in_unit * in_unit - 1] = 1;

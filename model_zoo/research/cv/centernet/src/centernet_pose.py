@@ -232,8 +232,9 @@ class CenterNetWithoutLossScaleCell(nn.Cell):
         grads = self.grad(self.network, weights)(image, hm, reg_mask, ind, wh, kps,
                                                  kps_mask, reg, hm_hp, hp_offset,
                                                  hp_ind, hp_mask)
-        self.optimizer(grads)
-        return loss
+        succ = self.optimizer(grads)
+        ret = loss
+        return ops.depend(ret, succ)
 
 
 class CenterNetWithLossScaleCell(nn.Cell):
@@ -308,8 +309,9 @@ class CenterNetWithLossScaleCell(nn.Cell):
         else:
             cond = self.less_equal(self.base, flag_sum)
 
-        self.optimizer(grads)
-        return (loss, cond, scaling_sens)
+        succ = self.optimizer(grads)
+        ret = (loss, cond, scaling_sens)
+        return ops.depend(ret, succ)
 
 class CenterNetMultiPoseEval(nn.Cell):
     """

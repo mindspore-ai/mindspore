@@ -30,7 +30,7 @@ get_real_path(){
 
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
-CONFIG_FILE=$(get_real_path $3)
+CONFIG_FILE=$3
 
 
 if [ ! -d $PATH1 ]
@@ -56,7 +56,7 @@ then
     rm -rf ./infer
 fi
 mkdir ./infer
-cp ../config/*.yaml ./infer
+cp ../*.yaml ./infer
 cp ../*.py ./infer
 cp *.sh ./infer
 cp -r ../src ./infer

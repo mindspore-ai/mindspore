@@ -22,7 +22,6 @@
     - [推理过程](#推理过程)
         - [用法](#用法)
         - [结果](#结果)
-    - [训练后量化推理](#训练后量化推理)
 - [模型说明](#模型说明)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -535,51 +534,6 @@ Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.588
 Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.410
 Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.636
 Average Recall    (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.716
-```
-
-## [训练后量化推理](#contents)
-
-训练后量化推理的相关执行脚本文件在"ascend310_quant_infer"目录下，依次执行以下步骤实现训练后量化推理。本训练后量化工程基于COCO2017数据集。
-
-1、生成Ascend310平台AIR模型推理需要的.bin格式数据。
-
-```shell
-python export_bin.py --config_path [YMAL CONFIG PATH] --data_dir [DATA DIR] --annFile [ANNOTATION FILE PATH]
-```
-
-2、导出训练后量化的AIR格式模型。
-
-导出训练后量化模型需要配套的量化工具包，参考[官方地址](https://www.hiascend.com/software/cann/community)
-
-```shell
-python post_quant.py --config_path [YMAL CONFIG PATH] --ckpt_file [CKPT_PATH] --data_dir [DATASET PATH] --annFile [ANNOTATION FILE PATH]
-```
-
-导出的模型会存储在./result/yolov4_quant.air。
-
-3、在Ascend310执行推理量化模型。
-
-```shell
-# Ascend310 quant inference
-bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [IMAGE_ID] [IMAGE_SHAPE] [ANN_FILE]
-```
-
-推理结果保存在脚本执行的当前路径，可以在acc.log中看到精度计算结果。
-
-```bash
-=============coco eval result=========
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.433
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.633
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.467
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.273
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.475
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.555
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.329
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.532
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.568
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.395
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.611
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.690
 ```
 
 # [模型说明](#目录)

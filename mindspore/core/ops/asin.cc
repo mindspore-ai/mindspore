@@ -32,7 +32,6 @@ AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto infer_shape = std::make_shared<abstract::Shape>(x_shape);
 
-  MS_EXCEPTION_IF_NULL(input_args[0]);
   // Infer Type
   auto dtype = input_args[0]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt32};

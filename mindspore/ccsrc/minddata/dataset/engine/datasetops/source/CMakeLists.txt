@@ -16,7 +16,6 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     album_op.cc
     mappable_leaf_op.cc
     nonmappable_leaf_op.cc
-    flickr_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES

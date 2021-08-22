@@ -9,7 +9,7 @@ endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/JSON-for-Modern-CPP/repository/archive/v3.6.1.zip")
-    set(MD5 "36ea0d9a709c6667b2798a62f6b197ae")
+    set(MD5 "5bda78ce308e6cfcf614dcf1d5ff27a7")
     set(INCLUDE "./include")
 else()
     set(REQ_URL "https://github.com/nlohmann/json/releases/download/v3.6.1/include.zip")

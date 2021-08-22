@@ -71,10 +71,10 @@ int AdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2,
              size_t start, size_t end, bool use_nesterov);
 int AdamDeltaFp32(float *delta, float *m, float *v, float lr, float beta1, float beta2, float epsilon,
                   const float *gradient, size_t start, size_t end, bool use_nesterov);
-size_t AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon,
-                           float decay, const float *gradient, size_t start, size_t end);
-size_t FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
-                     const int16_t *gradient16, size_t start, size_t end);
+int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
+                        const float *gradient, size_t start, size_t end);
+int FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
+                  const int16_t *gradient16, size_t start, size_t end);
 #ifdef __cplusplus
 }
 #endif

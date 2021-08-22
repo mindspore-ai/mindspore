@@ -23,14 +23,6 @@
 namespace mindspore::opt {
 namespace {
 const auto &p1 = std::placeholders::_1;
-const size_t kWeightQueryIndex = 4;
-const size_t kWeightKeyIndex = 5;
-const size_t kWeightValueIndex = 6;
-const size_t kWeightPosIndex = 7;
-const size_t kWeightOutputIndex = 10;
-const size_t kStackParamSize = 2;
-const size_t kInputSize = 16;
-const size_t kOutputSize = 2;
 }  // namespace
 
 TfliteRelPosMultiHeadAttentionFusion::TfliteRelPosMultiHeadAttentionFusion(const string &name, bool multigraph)
@@ -45,7 +37,7 @@ TfliteRelPosMultiHeadAttentionFusion::TfliteRelPosMultiHeadAttentionFusion(const
   output_prim_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimFullConnection));
   pos_prim_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimFullConnection));
 
-  for (size_t i = 0; i < kStackParamSize; i++) {
+  for (size_t i = 0; i < 2; i++) {
     query_stack_params_.emplace_back(std::make_shared<Var>());
     key_stack_params_.emplace_back(std::make_shared<Var>());
     value_stack_params_.emplace_back(std::make_shared<Var>());
@@ -165,38 +157,38 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
     MS_LOG(ERROR) << "Build attention primitive failed.";
     return nullptr;
   }
-  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSize, kOutputSize);
+  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(16, 1);
   auto query_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[query_prim_]));
   auto query_quant_param_holder = query_prim->GetAttr("quant_params");
   if (query_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
-      kWeightQueryIndex, query_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
+      4, query_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
   }
   auto key_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[key_prim_]));
   auto key_quant_param_holder = key_prim->GetAttr("quant_params");
   if (key_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
-      kWeightKeyIndex, key_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
+      5, key_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
   }
   auto value_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[value_prim_]));
   auto value_quant_param_holder = value_prim->GetAttr("quant_params");
   if (value_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
-      kWeightValueIndex, value_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
+      6, value_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
   }
 
   auto pos_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[pos_prim_]));
   auto pos_quant_param_holder = pos_prim->GetAttr("quant_params");
   if (pos_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
-      kWeightPosIndex, pos_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
+      7, pos_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
   }
 
   auto output_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[output_prim_]));
   auto output_quant_param_holder = output_prim->GetAttr("quant_params");
   if (output_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
-      kWeightOutputIndex, output_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
+      10, output_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
   }
 
   attention_prim->AddAttr("quant_params", quant_params_holder);
@@ -281,7 +273,7 @@ const VectorRef TfliteRelPosMultiHeadAttentionFusion::DefineProcessInputPattern(
     result = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), result, bias});
   }
 
-  MS_ASSERT(stack_params.size() == kStackParamSize);
+  MS_ASSERT(stack_params.size() == 2);
   auto stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStack)), std::make_shared<Var>(),
                           std::make_shared<Var>(), stack_params.at(0), stack_params.at(1)});
   result = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), result, stack});

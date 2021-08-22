@@ -58,8 +58,8 @@ class BiasAddGradGpuKernel : public GpuKernel {
                                  "cudaMemcpyAsync failed.");
     } else {
       if (use_cudnn_) {  // shared memory not satisfied or num_dim > 4
-        T *indices_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
-        T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 1);
+        T *indices_addr = GetDeviceAddress<T>(workspace, 0);
+        T *workspace_addr = GetDeviceAddress<T>(workspace, 1);
         const float alpha = 1;
         const float beta = 0;
         CHECK_CUDNN_RET_WITH_EXCEPT(

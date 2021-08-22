@@ -16,91 +16,57 @@
 
 import os
 import argparse
-import timeit
 import gym
-import numpy as np
 from mindspore import context
 from mindspore.common import set_seed
 from mindspore.train.serialization import save_checkpoint
 from src.config import config_dqn as cfg
-from src.config_gpu import config_dqn as cfg_gpu
 from src.agent import Agent
 
 parser = argparse.ArgumentParser(description='MindSpore dqn Example')
-parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
+parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU'],
                     help='device where the code will be implemented (default: Ascend)')
 parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
                     path where the trained ckpt file')
 args = parser.parse_args()
 set_seed(1)
 
-def save_ckpt(path, model, ckpt_name):
-    """
-    save ckpt file
-    """
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    ckpt_name = path + ckpt_name
-    save_checkpoint(model, ckpt_name)
-
 
 if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
     if args.device_target == 'GPU':
-        cfg = cfg_gpu
-
-    env = gym.make(cfg.game)
-    env = env.unwrapped
+        # Enable graph kernel
+        context.set_context(enable_graph_kernel=True, graph_kernel_flags="--enable_parallel_fusion")
+    env = gym.make('CartPole-v1')
     cfg.state_space_dim = env.observation_space.shape[0]
     cfg.action_space_dim = env.action_space.n
-    cfg.env_a_shape = 0 if isinstance(env.action_space.sample(),
-                                      int) else env.action_space.sample().shape
     agent = Agent(**cfg)
+    agent.load_dict()
 
-    rewards = []
-    count = 0
-    times = []
-
-    print('\nCollecting experience...')
-    for episode in range(400):
-        s = env.reset()
+    for episode in range(300):
+        s0 = env.reset()
         total_reward = 1
-        ep_r = 0
         while True:
-            start = timeit.default_timer()
-            a, flag = agent.act(s)
-            s_, r, done_, _ = env.step(a)
+            a0 = agent.act(s0)
+            s1, r1, done, _ = env.step(a0)
 
-            # modify the reward
-            x, x_dot, theta, theta_dot = s_
-            r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
-            r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
-            r = r1 + r2
+            if done:
+                r1 = -1
 
-            if flag:
-                end = timeit.default_timer()
-                differences = end - start
-                times.append(differences)
-                count += 1
-                    # pass
+            agent.put(s0, a0, r1, s1)
 
-            agent.store_transition(s, a, r, s_)
-            ep_r += r
-            if agent.memory_counter > cfg.memory_capacity:
-                agent.learn()
-                if done_:
-                    print("episode", episode, "total_reward", round(ep_r, 2))
-                    rewards.append(round(ep_r, 2))
-            if done_:
+            if done:
                 break
-            s = s_
-    env.close()
-    save_ckpt(os.path.realpath(args.ckpt_path), agent.policy_net, "/dqn.ckpt")
-    rewards_numpy = np.array(rewards)
 
-    times.remove(min(times))
-    times.remove(max(times))
-    times_numpy = np.array(times)
+            total_reward += r1
+            s0 = s1
+            agent.learn()
+        agent.load_dict()
+        print("episode", episode, "total_reward", total_reward)
 
-    print(rewards_numpy.mean(), times_numpy.mean())
+    path = os.path.realpath(args.ckpt_path)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    ckpt_name = path + "/dqn.ckpt"
+    save_checkpoint(agent.policy_net, ckpt_name)

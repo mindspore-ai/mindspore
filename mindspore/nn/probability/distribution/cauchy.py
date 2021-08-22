@@ -173,11 +173,10 @@ class Cauchy(Distribution):
 
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            str_info = 'location = {}, scale = {}'.format(self._loc, self._scale)
+            str_info = f'location = {self._loc}, scale = {self._scale}'
         else:
-            str_info = 'batch_shape = {}'.format(self._broadcast_shape)
+            str_info = f'batch_shape = {self._broadcast_shape}'
         return str_info
 
     @property
@@ -250,7 +249,6 @@ class Cauchy(Distribution):
         value = self.cast(value, self.dtype)
         loc, scale = self._check_param_type(loc, scale)
         z = (value - loc) / scale
-        # pylint: disable=E1130
         log_unnormalized_prob = - self.log1p(self.sq(z))
         log_normalization = self.log(np.pi * scale)
         return log_unnormalized_prob - log_normalization

@@ -30,7 +30,7 @@ get_real_path(){
 
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
-CONFIG_FILE=$(get_real_path $3)
+CONFIG_FILE=$3
 
 if [ $# == 4 ]
 then 
@@ -71,7 +71,7 @@ export DEVICE_ID=0
 export RANK_ID=0
 rm -rf ./sched
 mkdir ./sched
-cp ../config/*.yaml ./sched
+cp ../*.yaml ./sched
 cp ../*.py ./sched
 cp *.sh ./sched
 cp -r ../src ./sched
@@ -97,7 +97,7 @@ do
     export RANK_ID=$i
     rm -rf ./server_$i
     mkdir ./server_$i
-    cp ../config/*.yaml ./server_$i
+    cp ../*.yaml ./server_$i
     cp ../*.py ./server_$i
     cp *.sh ./server_$i
     cp -r ../src ./server_$i
@@ -125,7 +125,7 @@ do
     export RANK_ID=$i
     rm -rf ./worker_$i
     mkdir ./worker_$i
-    cp ../config/*.yaml ./worker_$i
+    cp ../*.yaml ./worker_$i
     cp ../*.py ./worker_$i
     cp *.sh ./worker_$i
     cp -r ../src ./worker_$i

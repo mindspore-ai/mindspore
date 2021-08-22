@@ -258,7 +258,7 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
   }
 
   RETURN_IF_NOT_OK(
-    Tensor::CreateEmpty(TensorShape({1, (uint32_t)image_label.second.size()}), data_schema_->Column(1).Type(), &label));
+    Tensor::CreateEmpty(TensorShape({1, (uint32_t)image_label.second.size()}), data_schema_->column(1).type(), &label));
   RETURN_IF_NOT_OK(label->Zero());
   for (uint32_t index = 0; index < image_label.second.size(); index++) {
     if (image_label.second[index] == 1) {
@@ -294,7 +294,7 @@ Status CelebAOp::ComputeColMap() {
   // Set the column name map (base class field)
   if (column_name_id_map_.empty()) {
     for (int32_t index = 0; index < data_schema_->NumColumns(); index++) {
-      column_name_id_map_[data_schema_->Column(index).Name()] = index;
+      column_name_id_map_[data_schema_->column(index).name()] = index;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

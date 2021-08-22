@@ -33,22 +33,22 @@ class StrassenOpenCLKernel : public MatMulOpenCLKernel {
   int Run() override;
   int Prepare() override;
   int InitWeights() override;
-  int SetConstArgs() override;
+  void SetConstArgs() override;
   void SetGlobalLocal() override;
 
   // strassen
  private:
-  int AllocatorMemoryForStrassen(int NumA, int NumB);
-  int DoStrassen(void *data, void *weight, void *result, const int size, const int depth, const int threshold);
-  int StrassenSetGlobalLocal(size_t strassen_size, int type_flag);
-  int StrassenSetConstArgs(cl::Kernel *kernel, int index, int strassen_size, bool is_matmul_kernel);
-  int StrassenDataFilled(cl::Kernel *kernel, void *input, void *output, const int size, cl_int2 offset,
-                         lite::opencl::MemType mem_type);
-  int StrassenAddSub(cl::Kernel *kernel, void *input, void *output, const int size, cl_int4 offset, int flag,
-                     lite::opencl::MemType mem_type);
-  int StrassenBackResult(cl::Kernel *kernel, void *input1, void *input2, void *input3, void *input4, void *input5,
-                         void *input6, void *input7, void *output, const int size);
-  int StrassenRunMmatmul(void *input, void *weight, void *output, const int size);
+  void AllocatorMemoryForStrassen(int NumA, int NumB);
+  void DoStrassen(void *data, void *weight, void *result, const int size, const int depth, const int threshold);
+  void StrassenSetGlobalLocal(size_t strassen_size, int type_flag);
+  void StrassenSetConstArgs(cl::Kernel *kernel, int index, int strassen_size, bool is_matmul_kernel);
+  void StrassenDataFilled(cl::Kernel *kernel, void *input, void *output, const int size, cl_int2 offset,
+                          lite::opencl::MemType mem_type);
+  void StrassenAddSub(cl::Kernel *kernel, void *input, void *output, const int size, cl_int4 offset, int flag,
+                      lite::opencl::MemType mem_type);
+  void StrassenBackResult(cl::Kernel *kernel, void *input1, void *input2, void *input3, void *input4, void *input5,
+                          void *input6, void *input7, void *output, const int size);
+  void StrassenRunMmatmul(void *input, void *weight, void *output, const int size);
   cl::Kernel kernel_IMG_add_sub_2;
   cl::Kernel MatMul_StrassenBUFFilled;
   cl::Kernel MatMul_StrassenIMGFilled;

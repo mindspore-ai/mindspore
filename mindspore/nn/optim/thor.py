@@ -113,10 +113,13 @@ def _check_param(momentum, frequency, lr, cls_name):
 
 
 def caculate_device_shape(matrix_dim, channel, is_a):
+    ll = (0)
     if is_a:
         if channel // C0 == 0:
             matrix_dim = (matrix_dim / channel) * C0
-    ll = (int(matrix_dim // C0), int(matrix_dim // C0), C0, C0), int(matrix_dim)
+        ll = (int(matrix_dim // C0), int(matrix_dim // C0), C0, C0), int(matrix_dim)
+    else:
+        ll = (int(matrix_dim // C0), int(matrix_dim // C0), C0, C0), int(matrix_dim)
     return ll
 
 

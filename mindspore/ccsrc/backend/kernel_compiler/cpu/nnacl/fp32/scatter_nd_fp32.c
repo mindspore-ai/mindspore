@@ -23,7 +23,7 @@ int DoScatterND(float *output_ptr, const float *update, int *output_unit_offsets
     return NNACL_ERR;
   }
   for (int i = 0; i < num_units; i++) {
-    (void)memcpy(output_ptr + output_unit_offsets[i], update + unit_size * i, (size_t)(unit_size) * sizeof(float));
+    (void)memcpy(output_ptr + output_unit_offsets[i], update + unit_size * i, unit_size * sizeof(float));
   }
   return NNACL_OK;
 }

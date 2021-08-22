@@ -50,7 +50,7 @@ TEST_F(MindDataTestDataHelper, MindDataTestHelper) {
   std::string file_path = datasets_root_path_ + "/testAlbum/images/1.json";
   DataHelper dh; 
   std::vector<std::string> new_label = {"3", "4"};
-  Status rc = dh.UpdateArray(file_path, "label", new_label);
+  Status rc = dh.UpdateArray(file_path, "label", new_label); 
   if (rc.IsError()) {
     MS_LOG(ERROR) << "Return code error detected during label update: "  << ".";
     EXPECT_TRUE(false);

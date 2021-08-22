@@ -29,7 +29,7 @@ int FillInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   SetDataTypeFormat(output, input);
   const TensorC *dst_shape_tensor = inputs[1];
   const int32_t *dst_shape = (int32_t *)(dst_shape_tensor->data_);
-  int num_dims = 1;
+  size_t num_dims = 1;
   for (size_t i = 0; i < dst_shape_tensor->shape_size_; ++i) {
     num_dims *= dst_shape_tensor->shape_[i];
   }
@@ -44,7 +44,7 @@ int FillInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   }
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
-  for (int i = 0; i < num_dims; i++) {
+  for (size_t i = 0; i < num_dims; i++) {
     ShapePush(output_shape, &output_shape_size, dst_shape[i]);
   }
   SetShapeArray(output, output_shape, output_shape_size);

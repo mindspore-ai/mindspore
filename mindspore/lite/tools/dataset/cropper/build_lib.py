@@ -124,8 +124,7 @@ def main():
     if not user_ops:
         warnings.warn('No MindData Ops detected in your code...')
         remove_unused_objects([], [], all_object_files)
-        with os.fdopen(os.open(os.path.join(OBJECTS_DIR, ALL_DEPS_FILENAME), os.O_WRONLY | os.O_CREAT, 0o660),
-                       "w+") as _:
+        with open(os.path.join(OBJECTS_DIR, ALL_DEPS_FILENAME), 'w') as _:
             pass
         exit(0)
 
@@ -142,8 +141,7 @@ def main():
     remove_unused_objects(final_deps, ESSENTIAL_OBJECTS, all_object_files)
 
     # write all dependencies to the file (for extracting external ones)
-    with os.fdopen(os.open(os.path.join(OBJECTS_DIR, ALL_DEPS_FILENAME), os.O_WRONLY | os.O_CREAT, 0o660),
-                   "w+") as fout:
+    with open(os.path.join(OBJECTS_DIR, ALL_DEPS_FILENAME), 'w') as fout:
         fout.write("\n".join(unique_deps) + '\n')
 
 

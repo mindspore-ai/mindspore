@@ -25,7 +25,7 @@ void SpliceFp32(const float *src_data, int src_row, int src_col, const SplicePar
       forward_index++;
       const float *tmp_src_data = src_data + r_off * src_col;
       float *tmp_dst_data = dst_row_data + off * src_col;
-      memcpy(tmp_dst_data, tmp_src_data, (size_t)(src_col) * sizeof(float));
+      memcpy(tmp_dst_data, tmp_src_data, src_col * sizeof(float));
     }
   }
 }

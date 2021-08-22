@@ -34,7 +34,6 @@ GIGABYTES = 1024 * 1024 * 1024
 
 class MemoryUsageParser:
     """MemoryUsageParser to parse memory raw data."""
-
     def __init__(self, profiling_dir, device_id):
         self._profiling_dir = profiling_dir
         self._device_id = device_id
@@ -164,7 +163,6 @@ class MemoryUsageParser:
 
 class GraphMemoryParser:
     """Parse memory usage data for each graph."""
-
     def __init__(self, graph_proto, points, framework):
         self.graph = None
         self.nodes = OrderedDict()
@@ -240,7 +238,7 @@ class GraphMemoryParser:
             if index == 0:
                 node.mem_change = self._mem_change[index] - self.graph.static_mem
             else:
-                node.mem_change = self._mem_change[index] - self._mem_change[index - 1]
+                node.mem_change = self._mem_change[index] - self._mem_change[index-1]
 
             self._update_nodes(node)
             self._update_tensor_source(node)
@@ -310,7 +308,7 @@ class GraphMemoryParser:
             elif life_long == 'LifeLongGraphStart':  # lifetime is from graph start to tensor end
                 if life_end is not None and life_end >= 0:
                     tensor.life_start = 0
-                    self._update_mem_change(size, 0, life_end + 1, tensor_id)
+                    self._update_mem_change(size, 0, life_end+1, tensor_id)
                 else:
                     logger.info('Cannot locate lifetime end for tensor: %s', tensor_id)
             elif life_long == 'LifeLongGraphEnd':  # lifetime is from tensor start to graph end
@@ -321,7 +319,7 @@ class GraphMemoryParser:
                     logger.info('Cannot locate lifetime start for tensor: %s', tensor_id)
             elif life_long == 'LifeLongNone':  # lifetime is from tensor start to tensor end
                 if life_start is not None and life_end is not None and life_start <= life_end:
-                    self._update_mem_change(size, life_start, life_end + 1, tensor_id)
+                    self._update_mem_change(size, life_start, life_end+1, tensor_id)
                 else:
                     logger.info('Cannot locate lifetime start or end for tensor: %s', tensor_id)
 

@@ -212,8 +212,7 @@ void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstr
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  std::string filename =
-    GetSaveGraphsPathName("somas_tensor_relation_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path);
+  std::string filename = save_graphs_path + "/" + "somas_tensor_relation_" + std::to_string(graph->graph_id()) + ".ir";
   std::ostringstream oss;
   for (size_t tid1 = 0; tid1 < pConstraints->size(); tid1++) {
     oss << 't' << tid1 << ' ';
@@ -233,8 +232,7 @@ void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph, const Ten
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  std::string filename =
-    GetSaveGraphsPathName("somas_solver_input_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path);
+  std::string filename = save_graphs_path + "/" + "somas_solver_input_" + std::to_string(graph->graph_id()) + ".ir";
   std::ostringstream oss;
   for (auto &t : tensors) {
     oss << "T " << t.second->index_ << " " << t.second->size_ << " " << t.second->lifelong_ << std::endl;
@@ -266,7 +264,7 @@ void SomasSolverPre::SolverOutputLog(const session::KernelGraph *graph, const Te
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   std::string out_filename =
-    GetSaveGraphsPathName("somas_solver_output_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path);
+    save_graphs_path + "/" + "somas_solver_output_" + std::to_string(graph->graph_id()) + ".ir";
   std::ostringstream oss;
   constexpr size_t contiguous_left = 1;
   constexpr size_t contiguous_mid = 2;

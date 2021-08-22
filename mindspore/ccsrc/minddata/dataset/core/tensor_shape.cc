@@ -40,7 +40,7 @@ bool multi_ok(dsize_t x, dsize_t y) {
 }
 
 dsize_t TensorShape::NumOfElements() const {
-  if (!known() && strides_.size() < 1) {
+  if (!known()) {
     return 0;
   }
   return strides_[0];
@@ -216,9 +216,12 @@ py::list TensorShape::AsPyList() {
 #endif
 
 TensorShape TensorShape::Squeeze() const {
-  std::vector<dsize_t> new_shape(raw_shape_.size());
-  auto it = std::copy_if(raw_shape_.begin(), raw_shape_.end(), new_shape.begin(), [](auto s) { return s != 1; });
-  new_shape.resize(std::distance(new_shape.begin(), it));
+  std::vector<dsize_t> new_shape;
+  for (auto s : AsVector()) {
+    if (s != 1) {
+      new_shape.push_back(s);
+    }
+  }
   return TensorShape(new_shape);
 }
 
@@ -227,7 +230,6 @@ std::vector<dsize_t> TensorShape::Strides() const { return std::vector<dsize_t>{
 // Name: ToFlatIndex()
 // Description: convert a vector style index to number, used to access memory internal use only
 Status TensorShape::ToFlatIndex(const std::vector<dsize_t> &index, dsize_t *flat_index) const {
-  RETURN_UNEXPECTED_IF_NULL(flat_index);
   if (index.size() != raw_shape_.size()) {
     std::stringstream ss;
     ss << "Index size (" << index.size() << ") does not match the shape size (" << raw_shape_.size() << ").";

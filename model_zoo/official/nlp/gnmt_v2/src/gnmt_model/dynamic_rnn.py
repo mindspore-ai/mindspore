@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import numpy as np
 import mindspore.ops.operations as P
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-from mindspore import context
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 
@@ -42,6 +41,7 @@ class DynamicRNNCell(nn.Cell):
                  hidden_size=1024,
                  initializer_range=0.1):
         super(DynamicRNNCell, self).__init__()
+        self.rnn = P.DynamicRNN()
         self.num_step = num_setp
         self.batch_size = batch_size
         self.input_size = word_embed_dim
@@ -57,32 +57,15 @@ class DynamicRNNCell(nn.Cell):
         self.dynamicRNN_h = Tensor(np.zeros((1, self.batch_size, self.hidden_size)), mstype.float32)
         self.dynamicRNN_c = Tensor(np.zeros((1, self.batch_size, self.hidden_size)), mstype.float32)
         self.cast = P.Cast()
-        self.is_ascend = context.get_context("device_target") == "Ascend"
-        if self.is_ascend:
-            self.compute_type = mstype.float16
-            self.rnn = P.DynamicRNN()
-        else:
-            self.compute_type = mstype.float32
-            self.lstm = nn.LSTM(self.input_size,
-                                self.hidden_size,
-                                num_layers=1,
-                                has_bias=True,
-                                batch_first=False,
-                                dropout=0,
-                                bidirectional=False)
 
     def construct(self, x, init_h=None, init_c=None):
-        """DynamicRNNCell Network."""
+        w = self.cast(self.dynamicRNN_w, mstype.float16)
+        b = self.cast(self.dynamicRNN_b, mstype.float16)
         if init_h is None or init_c is None:
-            init_h = self.cast(self.dynamicRNN_h, self.compute_type)
-            init_c = self.cast(self.dynamicRNN_c, self.compute_type)
-        if self.is_ascend:
-            w = self.cast(self.dynamicRNN_w, self.compute_type)
-            b = self.cast(self.dynamicRNN_b, self.compute_type)
-            output, hn, cn = self.rnn(x, w, b, None, init_h, init_c)
-        else:
-            output, (hn, cn) = self.lstm(x, (init_h, init_c))
-        return output, hn, cn
+            init_h = self.cast(self.dynamicRNN_h, mstype.float16)
+            init_c = self.cast(self.dynamicRNN_c, mstype.float16)
+        out = self.rnn(x, w, b, None, init_h, init_c)
+        return out[0], out[1], out[2]
 
 
 class DynamicRNNNet(nn.Cell):
@@ -111,18 +94,13 @@ class DynamicRNNNet(nn.Cell):
                                   batch_size=batchsize,
                                   word_embed_dim=word_embed_dim,
                                   hidden_size=hidden_size)
-        self.is_ascend = context.get_context("device_target") == "Ascend"
-        if self.is_ascend:
-            self.compute_type = mstype.float16
-        else:
-            self.compute_type = mstype.float32
 
     def construct(self, inputs, init_state=None):
         """DynamicRNN Network."""
-        inputs = self.cast(inputs, self.compute_type)
+        inputs = self.cast(inputs, mstype.float16)
         if init_state is not None:
-            init_h = self.cast(init_state[0:1, :, :], self.compute_type)
-            init_c = self.cast(init_state[-1:, :, :], self.compute_type)
+            init_h = self.cast(init_state[0:1, :, :], mstype.float16)
+            init_c = self.cast(init_state[-1:, :, :], mstype.float16)
             out, state_h, state_c = self.net(inputs, init_h, init_c)
         else:
             out, state_h, state_c = self.net(inputs)

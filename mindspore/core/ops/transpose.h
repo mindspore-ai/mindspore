@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTranspose = prim::kTranspose;
-class MS_CORE_API Transpose : public PrimitiveC {
+class Transpose : public PrimitiveC {
  public:
   Transpose() : PrimitiveC(prim::kTranspose) { InitIOName({"x", "perm"}, {"output"}); }
   ~Transpose() = default;

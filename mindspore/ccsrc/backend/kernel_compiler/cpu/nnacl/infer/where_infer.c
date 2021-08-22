@@ -38,14 +38,14 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     return NNACL_INPUT_TENSOR_ERROR;
   }
 
-  const TensorC *input0 = inputs[0];
-  const TensorC *input1 = inputs[1];
-  const TensorC *input2 = inputs[2];
-  SetDataTypeFormat(output, input1);
+  SetDataTypeFormat(output, input);
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 
+  const TensorC *input0 = inputs[0];
+  const TensorC *input1 = inputs[1];
+  const TensorC *input2 = inputs[2];
   int num = GetElementNum(input0);
   int num1 = GetElementNum(input1);
   int num2 = GetElementNum(input2);
@@ -53,9 +53,6 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   int axisout = 0;
   size_t temp = 0;
   for (size_t j = 0; j < input0->shape_size_; j++) {
-    if (j >= MAX_SHAPE_SIZE) {
-      return NNACL_ERR;
-    }
     if (input0->shape_[j] == input1->shape_[j] && input0->shape_[j] != input2->shape_[j]) {
       axisout = j;
       break;
@@ -71,6 +68,7 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     temp += 1;
     if (temp == input0->shape_size_) {
       SetShapeTensor(output, input);
+      output->data_type_ = input->data_type_;
       return NNACL_OK;
     }
   }

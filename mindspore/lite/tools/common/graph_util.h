@@ -46,8 +46,6 @@ using OpDefCopyer = std::function<std::unique_ptr<schema::CNodeT>(schema::CNodeT
 
 OpDefCopyer GetSimpleOpCopyer();
 
-int SetFuncGraphOutput(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &outputs);
-
 std::vector<size_t> GetInputNodeIdx(const schema::MetaGraphT &graphT, const size_t &nodeIdx, int inputIndexIdx = -1);
 
 std::vector<size_t> GetInputNodeIdx(const schema::MetaGraphT &graphT, const schema::CNodeT &node,

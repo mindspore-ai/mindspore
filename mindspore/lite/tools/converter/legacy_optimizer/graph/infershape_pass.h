@@ -26,7 +26,7 @@
 #include "tools/converter/optimizer.h"
 #include "tools/converter/converter_flags.h"
 
-using mindspore::converter::kFmkTypeTf;
+using mindspore::lite::converter::FmkType_TF;
 using mindspore::schema::TensorT;
 namespace mindspore {
 namespace lite {
@@ -59,7 +59,7 @@ class InferShapePass : public GraphPass {
   void InitInferTensor(MetaGraphT *graph);
   int InferSubgraph(const int &subgraph_index, MetaGraphT *graph);
 
-  converter::FmkType fmk_type_ = kFmkTypeTf;
+  lite::converter::FmkType fmk_type_ = FmkType_TF;
   std::vector<InferTensor> tensors_ = {};
 };
 }  // namespace lite

@@ -27,7 +27,7 @@ from collections import defaultdict
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import context
+import mindspore.context as context
 from mindspore import log as logger
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.print_pb2 import Print
@@ -275,6 +275,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             data = param["data"].asnumpy().reshape(-1)
             data_list[key].append(data)
 
+    if not isinstance(ckpt_file_name, str):
+        raise ValueError("The ckpt_file_name must be string.")
     ckpt_file_name = os.path.realpath(ckpt_file_name)
     if async_save:
         thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list, enc_key, enc_mode), name="asyn_save_ckpt")
@@ -329,7 +331,8 @@ def load(file_name, **kwargs):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, export, load
+        >>> from mindspore import Tensor
+        >>> from mindspore.train import export, load
         >>>
         >>> net = nn.Conv2d(1, 1, kernel_size=3, weight_init="ones")
         >>> input = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
@@ -599,6 +602,8 @@ def _save_graph(network, file_name):
     """
     logger.info("Execute the process of saving graph.")
 
+    if not isinstance(file_name, str):
+        raise ValueError("The ckpt_file_name must be string.")
     file_name = os.path.realpath(file_name)
     graph_pb = network.get_func_graph_proto()
     if graph_pb:
@@ -690,8 +695,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     Export the MindSpore prediction model to a file in the specified format.
 
     Note:
-        1. When exporting to AIR、ONNX format, the size of a single tensor can not exceed 2GB.
-        2. When `file_name` does not have a suffix, the system will automatically add according to the `file_format`.
+        When exporting to AIR、ONNX format, the size of a single tensor can not exceed 2GB.
 
     Args:
         net (Cell): MindSpore network.
@@ -700,9 +704,12 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
 
             - AIR: Ascend Intermediate Representation. An intermediate representation format of Ascend model.
+              Recommended suffix for output file is '.air'.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
+              Recommended suffix for output file is '.onnx'.
             - MINDIR: MindSpore Native Intermediate Representation for Anf. An intermediate representation format
               for MindSpore models.
+              Recommended suffix for output file is '.mindir'.
 
         kwargs (dict): Configuration options dictionary.
 
@@ -712,7 +719,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               Default: 127.5.
             - std_dev (float): The variance of input data after preprocessing,
               used for quantizing the first layer of network. Default: 127.5.
-            - enc_key (byte): Byte type key used for encryption. Tha valid length is 16, 24, or 32.
+            - enc_key (str): Byte type key used for encryption. Tha valid length is 16, 24, or 32.
             - enc_mode (str): Specifies the encryption mode, take effect when enc_key is set.
               Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
 
@@ -726,8 +733,11 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
-    Validator.check_file_name_by_regular(file_name)
+    if not isinstance(file_name, str):
+        raise ValueError("Args file_name {} must be string, please check it".format(file_name))
     file_name = os.path.realpath(file_name)
+
+    Validator.check_file_name_by_regular(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     if 'enc_key' in kwargs.keys():
         if file_format != 'MINDIR':
@@ -824,6 +834,7 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
         if os.path.exists(data_path):
             shutil.rmtree(data_path)
         os.makedirs(data_path, exist_ok=True)
+        os.chmod(data_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         index = 0
         graphproto = graph_proto()
         data_size = 0
@@ -1188,7 +1199,9 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, merge_sliced_parameter, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore.common.parameter import Parameter
+        >>> from mindspore.train import merge_sliced_parameter
         >>>
         >>> sliced_parameters = [
         ...                      Parameter(Tensor(np.array([0.00023915, 0.00013939, -0.00098059])),

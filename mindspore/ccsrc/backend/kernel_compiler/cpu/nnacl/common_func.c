@@ -16,19 +16,15 @@
 
 #include "nnacl/common_func.h"
 
-int Offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3) {
+int offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3) {
   return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3] + dim3;
 }
 
-int OffsetComm(const int *shape, const int dim0, const int dim1, const int dim2) {
+int offsetComm(const int *shape, const int dim0, const int dim1, const int dim2) {
   return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3];
 }
 
-int Offset4d(const int *shape, const int *dims) { return Offset(shape, dims[0], dims[1], dims[2], dims[3]); }
-
-int Offset6d(const int *shape, const int *dims) {
-  return ((OffsetComm(shape, dims[0], dims[1], dims[2]) + dims[3]) * shape[4] + dims[4]) * shape[5];
-}
+int offset4d(const int *shape, const int *dims) { return offset(shape, dims[0], dims[1], dims[2], dims[3]); }
 
 int8_t MinInt8(int8_t a, int8_t b) { return b ^ ((a ^ b) & -(a < b)); }
 

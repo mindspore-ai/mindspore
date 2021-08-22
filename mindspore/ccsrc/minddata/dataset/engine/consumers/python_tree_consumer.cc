@@ -20,7 +20,6 @@
 
 namespace mindspore::dataset {
 Status PythonIteratorConsumer::GetNextAsList(py::list *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<TensorPtr> row;
   {
     py::gil_scoped_release gil_release;
@@ -33,7 +32,6 @@ Status PythonIteratorConsumer::GetNextAsList(py::list *out) {
 }
 
 Status PythonIteratorConsumer::GetNextAsDict(py::dict *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> vec;
   Status s;
   {
@@ -66,8 +64,6 @@ Status PythonTreeGetters::GetRow(TensorRow *const r) {
   return TreeGetters::GetRow(r);
 }
 Status PythonDatasetSizeGetter::GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *r) {
-  RETURN_UNEXPECTED_IF_NULL(tree_adapter);
-  RETURN_UNEXPECTED_IF_NULL(r);
   py::gil_scoped_release gil_release;
   return DatasetSizeGetter::GetRow(tree_adapter, r);
 }

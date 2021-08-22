@@ -167,11 +167,11 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
       num++;
       auto lhs = std::static_pointer_cast<List>(item.second);
       if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The elements[" << (num - 1) << "] has wrong type, expected a List, but got "
+        MS_LOG(EXCEPTION) << "The elements[" << num - 1 << "] has wrong type, expected a List, but got "
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        MS_LOG(ERROR) << "The elements[" << (num - 1) << "] has different length, expected " << size << ", but got "
+        MS_LOG(ERROR) << "The elements[" << num - 1 << "] has different length, expected " << size << ", but got "
                       << lhs->elements().size();
         return true;
       }
@@ -225,11 +225,11 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
       num++;
       auto lhs = std::static_pointer_cast<Tuple>(item.second);
       if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The elements[" << (num - 1) << "] has wrong type, expected a Tuple, but got "
+        MS_LOG(EXCEPTION) << "The elements[" << num - 1 << "] has wrong type, expected a Tuple, but got "
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        MS_LOG(ERROR) << "The elements[" << (num - 1) << "] has different length, expected " << size << ", but got "
+        MS_LOG(ERROR) << "The elements[" << num - 1 << "] has different length, expected " << size << ", but got "
                       << lhs->elements().size();
         return true;
       }

@@ -18,8 +18,8 @@ import os
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import mindspore.common.dtype as mstype
-from mindspore.ops import composite as C
 from mindspore.ops import functional as F
+from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.nn import Dropout
 from mindspore.nn.optim import Adam
@@ -346,7 +346,7 @@ class PredictWithSigmoid(nn.Cell):
         self.sigmoid = P.Sigmoid()
 
     def construct(self, batch_ids, batch_wts, labels):
-        logits, _, _, _, _, = self.network(batch_ids, batch_wts)
+        logits, _, _, = self.network(batch_ids, batch_wts)
         pred_probs = self.sigmoid(logits)
 
         return logits, pred_probs, labels

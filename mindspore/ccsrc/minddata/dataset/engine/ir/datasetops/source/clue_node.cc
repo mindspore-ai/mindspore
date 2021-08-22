@@ -249,29 +249,6 @@ Status CLUENode::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
-Status CLUENode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Failed to find task");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
-  std::vector<std::string> dataset_files = json_obj["dataset_dir"];
-  std::string task = json_obj["task"];
-  std::string usage = json_obj["usage"];
-  int64_t num_samples = json_obj["num_samples"];
-  ShuffleMode shuffle = static_cast<ShuffleMode>(json_obj["shuffle"]);
-  int32_t num_shards = json_obj["num_shards"];
-  int32_t shard_id = json_obj["shard_id"];
-  std::shared_ptr<DatasetCache> cache = nullptr;
-  RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
-  *ds = std::make_shared<CLUENode>(dataset_files, task, usage, num_samples, shuffle, num_shards, shard_id, cache);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
-  return Status::OK();
-}
 // Note: The following two functions are common among NonMappableSourceNode and should be promoted to its parent
 // class. CLUE by itself is a non-mappable dataset that does not support sampling. However, if a cache operator is
 // injected at some other place higher in the tree, that cache can inherit this sampler from the leaf, providing

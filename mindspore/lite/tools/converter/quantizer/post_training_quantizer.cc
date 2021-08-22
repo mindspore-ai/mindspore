@@ -580,9 +580,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
       quant_min_t = -(1 << (unsigned int)(bit_num_t - 1));
     }
   }
-  auto weight_quant_type = perchanel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
   auto status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_PostTraining, quant_max_t, quant_min_t, bit_num_t,
-                                    weight_quant_type, kNumberTypeInt8);
+                                    perchanel, kNumberTypeInt8);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -1455,10 +1454,7 @@ KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
         auto tensor = beforeInputs[0];
         MS_ASSERT(tensor != nullptr);
         auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-        if (lite_tensor == nullptr) {
-          MS_LOG(ERROR) << "Before inputs is not a lite::Tensor";
-          return false;
-        }
+        MS_ASSERT(lite_tensor != nullptr);
         if (tensor->data_type() != kNumberTypeInt8) {
           MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
           return false;
@@ -1517,10 +1513,7 @@ KernelCallBack PostTrainingQuantizer::GetInt8AfterCallBack() {
       auto tensor = afterOutputs[0];
       MS_ASSERT(tensor != nullptr);
       auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-      if (lite_tensor == nullptr) {
-        MS_LOG(ERROR) << "Before inputs is not a lite::Tensor";
-        return false;
-      }
+      MS_ASSERT(lite_tensor != nullptr);
       if (tensor->data_type() != kNumberTypeInt8) {
         MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
         return false;

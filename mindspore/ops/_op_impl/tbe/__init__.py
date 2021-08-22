@@ -150,7 +150,6 @@ from .logical_or import _logical_or_tbe
 from .reduce_max import _reduce_max_tbe
 from .reduce_min import _reduce_min_tbe
 from .reduce_sum import _reduce_sum_tbe
-from .reduce_sum_ds import _reduce_sum_ds_tbe
 from .round import _round_tbe
 from .tanh import _tanh_tbe
 from .tanh_grad import _tanh_grad_tbe
@@ -220,8 +219,6 @@ from .arg_max_with_value import _arg_max_with_value_tbe
 from .arg_min_with_value import _arg_min_with_value_tbe
 from .smooth_l1_loss import _smooth_l1_loss_tbe
 from .smooth_l1_loss_grad import _smooth_l1_loss_grad_tbe
-from .soft_margin_loss import _soft_margin_loss_tbe
-from .soft_margin_loss_grad import _soft_margin_loss_grad_tbe
 from .fused_mul_add import _fused_mul_add_tbe
 from .fused_mul_add_n import _fused_mul_add_n_tbe
 from .fused_mul_apply_momentum import _fused_mul_apply_momentum_tbe
@@ -289,6 +286,7 @@ from .reciprocal_grad import _reciprocal_grad_tbe
 from .sqrt_grad import _sqrt_grad_tbe
 from .sqrt_grad_ds import _sqrt_grad_ds_tbe
 from .rsqrt_grad import _rsqrt_grad_tbe
+from .flatten_grad import _flatten_grad_tbe
 from .scatter_add import _scatter_add_tbe
 from .scatter_add_ds import _scatter_add_ds_tbe
 from .atan2 import _atan2_tbe
@@ -325,7 +323,6 @@ from .basic_lstm_cell_input_grad import _basic_lstm_cell_input_grad_tbe
 from .dynamic_rnn import _dynamic_rnn_tbe
 from .dynamic_gru_v2 import _dynamic_gru_v2_tbe
 from .gru_v2_hidden_grad import _gru_v2_hidden_grad_tbe
-from .gru_v2_hidden_grad_cell import _gru_v2_hidden_grad_cell_tbe
 from .lstm_input_grad import _lstm_input_grad_tbe
 from .confusion_matrix import _confusion_matrix_tbe
 from .broadcast_to import _broadcast_to_tbe
@@ -393,10 +390,7 @@ from .not_equal_ds import _not_ds_equal_tbe
 from .reciprocal_ds import _reciprocal_ds_tbe
 from .ctc_loss_v2 import _ctc_loss_v2_tbe
 from .ctc_loss_v2_grad import _ctc_loss_v2_grad_tbe
-from .roll import _roll_tbe
 from .soft_shrink import _soft_shrink_tbe
 from .soft_shrink_grad import _soft_shrink_grad_tbe
 from .hsigmoid_grad import _hsigmoid_grad_tbe
 from .hsigmoid import _hsigmoid_tbe
-from .hshrink import _hshrink_tbe
-from .hshrink_grad import _hshrink_grad_tbe

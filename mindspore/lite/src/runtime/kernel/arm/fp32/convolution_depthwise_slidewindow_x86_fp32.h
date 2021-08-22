@@ -27,29 +27,32 @@ class ConvolutionDepthwiseSWCPUKernelX86 : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwiseSWCPUKernelX86(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
-                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDepthwiseSWCPUKernelX86() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
+  int InitWeightBias();
   int Execute(int task_id);
+  int Eval() override;
 
  private:
   void FreePackedInputOutput();
   int InitPackedInputOutput();
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
+  void PackWeight();
   int oc_tile_ = C8NUM;  // in x86 avx
   SlidingWindowParam *sliding_ = nullptr;
+  float *packed_weight_ = nullptr;
+  float *packed_bias_ = nullptr;
   float *packed_input_ = nullptr;
   float *packed_output_ = nullptr;
+  float *origin_weight_ = nullptr;
   bool input_need_align_ = false;
   bool output_need_align_ = false;
 };
 }  // namespace mindspore::kernel
 
-#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_X86_FP32_H_
+#endif

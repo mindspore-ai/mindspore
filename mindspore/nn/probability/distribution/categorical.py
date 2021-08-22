@@ -171,11 +171,10 @@ class Categorical(Distribution):
         return self._probs
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = 'probs = {}'.format(self.probs)
+            s = f'probs = {self.probs}'
         else:
-            s = 'batch_shape = {}'.format(self._broadcast_shape)
+            s = f'batch_shape = {self._broadcast_shape}'
         return s
 
     def _get_dist_type(self):

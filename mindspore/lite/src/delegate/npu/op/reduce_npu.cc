@@ -45,7 +45,7 @@ int ReduceNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
   }
   if (reduce_mode_ == schema::ReduceMode_ReduceMean) {
     auto reduce_mean = new (std::nothrow) hiai::op::ReduceMean(name_);
-    if (reduce_mean == nullptr) {
+    if (reduce_ == nullptr) {
       MS_LOG(ERROR) << "New reduce operator for op " << name_ << " failed.";
       return RET_ERROR;
     }

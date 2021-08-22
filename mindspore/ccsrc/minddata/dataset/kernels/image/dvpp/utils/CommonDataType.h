@@ -18,7 +18,7 @@
 #ifndef ENABLE_DVPP_INTERFACE
 #define ENABLE_DVPP_INTERFACE
 #endif
-#include <cstdio>
+#include <stdio.h>
 #include <iostream>
 #include <memory>
 #include <vector>

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFullConnection = "FullConnection";
-class MS_CORE_API FullConnection : public PrimitiveC {
+class FullConnection : public PrimitiveC {
  public:
   FullConnection() : PrimitiveC(kNameFullConnection) { InitIOName({"x1", "x2", "b"}, {"output"}); }
   ~FullConnection() = default;

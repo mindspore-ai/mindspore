@@ -22,9 +22,6 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/engine/serdes.h"
-#endif
 
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
@@ -73,7 +70,7 @@ Status MnistNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
 }
 
 // Get the shard id of node
-Status MnistNode::GetShardId(int32_t *const shard_id) {
+Status MnistNode::GetShardId(int32_t *shard_id) {
   *shard_id = sampler_->ShardId();
 
   return Status::OK();
@@ -114,24 +111,5 @@ Status MnistNode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
-#ifndef ENABLE_ANDROID
-Status MnistNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
-  std::string dataset_dir = json_obj["dataset_dir"];
-  std::string usage = json_obj["usage"];
-  std::shared_ptr<SamplerObj> sampler;
-  RETURN_IF_NOT_OK(Serdes::ConstructSampler(json_obj["sampler"], &sampler));
-  std::shared_ptr<DatasetCache> cache = nullptr;
-  RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
-  *ds = std::make_shared<MnistNode>(dataset_dir, usage, sampler, cache);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
-  return Status::OK();
-}
-#endif
 }  // namespace dataset
 }  // namespace mindspore

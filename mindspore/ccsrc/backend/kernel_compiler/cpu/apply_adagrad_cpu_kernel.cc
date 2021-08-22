@@ -76,10 +76,27 @@ void ApplyAdagradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   // multithreading
   size_t length = inputs[0]->size / sizeof(T);
-  auto task = [this, &var, &accum, lr, gradient](size_t start, size_t end) {
-    LaunchApplyAdagrad(var, accum, lr, gradient, start, end);
-  };
-  CPUKernelUtils::ParallelForAutoSearch(task, length, &parallel_search_info_);
+  size_t max_thread_num = std::thread::hardware_concurrency();
+  size_t use_thread_num = length < 128 * max_thread_num ? std::ceil(length / 128.0) : max_thread_num;
+  std::vector<std::thread> threads;
+  threads.reserve(use_thread_num);
+  size_t start = 0;
+  const size_t batch_size = (length + use_thread_num - 1) / use_thread_num;
+
+  if (batch_size == 0) {
+    MS_LOG(EXCEPTION) << "Error occur in launch kernel";
+    return;
+  }
+  while (start < length) {
+    size_t end = (start + batch_size) > length ? length : (start + batch_size);
+    threads.emplace_back(
+      std::thread(&ApplyAdagradCPUKernel::LaunchApplyAdagrad<T *>, this, var, accum, lr, gradient, start, end));
+    start += batch_size;
+  }
+
+  for (auto &it : threads) {
+    it.join();
+  }
 
   // Copy result to output tensor
   auto output_var = reinterpret_cast<T *>(outputs[0]->addr);

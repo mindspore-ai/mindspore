@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGeLU = prim::kGeLU;
-class MS_CORE_API GeLU : public PrimitiveC {
+class GeLU : public PrimitiveC {
  public:
   GeLU() : PrimitiveC(kNameGeLU) { InitIOName({"x"}, {"output"}); }
   ~GeLU() = default;

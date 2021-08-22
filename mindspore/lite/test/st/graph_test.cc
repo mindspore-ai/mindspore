@@ -82,7 +82,7 @@ TEST_F(GraphTest, UserSetGraphOutput1) {
     string name = out_data.first;
     void *data = out_data.second;
     float *fp32_data = reinterpret_cast<float *>(data);
-    if (name == "output") {
+    if (name == "Stack-8") {
       output_count++;
       ASSERT_LE(fabs(fp32_data[0] - (0.115831)), 0.01);
       ASSERT_LE(fabs(fp32_data[1] - (0.113074)), 0.01);
@@ -90,7 +90,7 @@ TEST_F(GraphTest, UserSetGraphOutput1) {
       ASSERT_LE(fabs(fp32_data[3] - (0.346307)), 0.01);
       ASSERT_LE(fabs(fp32_data[4] - (-0.15687)), 0.01);
     }
-    if (name == "output2") {
+    if (name == "Stack-10") {
       output_count++;
       ASSERT_LE(fabs(fp32_data[0] - (0.06387864)), 0.01);
       ASSERT_LE(fabs(fp32_data[1] - (0.22883008)), 0.01);
@@ -98,7 +98,7 @@ TEST_F(GraphTest, UserSetGraphOutput1) {
       ASSERT_LE(fabs(fp32_data[3] - (0.04586578)), 0.01);
       ASSERT_LE(fabs(fp32_data[4] - (0.06820235)), 0.01);
     }
-    if (name == "output3") {
+    if (name == "Stack-13") {
       output_count++;
       ASSERT_LE(fabs(fp32_data[0] - (-0.1617176)), 0.01);
       ASSERT_LE(fabs(fp32_data[1] - (-0.3828573)), 0.01);

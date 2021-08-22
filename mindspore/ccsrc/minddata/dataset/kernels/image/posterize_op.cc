@@ -46,8 +46,7 @@ Status PosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
                                  input->type().ToString());
   cv::LUT(in_image, lut_vector, output_img);
   std::shared_ptr<CVTensor> result_tensor;
-
-  RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_img, input_cv->Rank(), &result_tensor));
+  RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_img, &result_tensor));
   *output = std::static_pointer_cast<Tensor>(result_tensor);
   return Status::OK();
 }

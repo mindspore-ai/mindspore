@@ -35,7 +35,7 @@ get_real_path(){
 
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
-CONFIG_FILE=$(get_real_path $3)
+CONFIG_FILE=$3
 
 if [ $# == 4 ]
 then 
@@ -101,7 +101,7 @@ do
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
     cp *.sh ./train_parallel$i
-    cp -r ../config/*.yaml ./train_parallel$i
+    cp -r ../*.yaml ./train_parallel$i
     cp -r ../src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"

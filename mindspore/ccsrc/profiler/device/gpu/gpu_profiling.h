@@ -135,7 +135,6 @@ class GPUProfiler : public Profiler {
   std::string ProfileDataPath() const { return profile_data_path_; }
 
  private:
-  void SingleOpLaunchTimeProcess(float op_time_elapsed);
   void OpsParser();
   void EventLog(const Event &event);
   void ClearInst() override;

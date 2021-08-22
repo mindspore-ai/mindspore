@@ -1,7 +1,7 @@
 file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "common/*.cc"
     "kernel_info.cc" "executor/dynamic_kernel.cc" "executor/executor_callback.cc" "kernel_runtime.cc"
     "memory_manager.cc" "kernel_runtime_manager.cc" "convert_tensor_utils.cc"
-    "bucket.cc" "launch_kernel.cc" "launch_mul.cc" "pynative_profiling.cc"
+    "bucket.cc" "launch_kernel.cc" "launch_mul.cc"
 )
 
 if("${ENABLE_HIDDEN}" STREQUAL "OFF")
@@ -42,7 +42,7 @@ if(ENABLE_MPI)
     if(ENABLE_GPU)
         set_property(SOURCE "gpu/mpi/mpi_initializer.cc"
             PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
-        pybind11_add_module(_ms_mpi NO_EXTRAS "gpu/mpi/mpi_initializer.cc")
+        pybind11_add_module(_ms_mpi "gpu/mpi/mpi_initializer.cc")
         target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
     endif()
 

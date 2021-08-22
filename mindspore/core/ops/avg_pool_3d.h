@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API AvgPool3D : public PrimitiveC {
+class AvgPool3D : public PrimitiveC {
  public:
   AvgPool3D() : PrimitiveC(prim::kPrimAvgPool3D->name()) { InitIOName({"input"}, {"output"}); }
   ~AvgPool3D() = default;

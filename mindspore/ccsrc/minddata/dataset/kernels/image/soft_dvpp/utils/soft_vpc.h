@@ -34,7 +34,7 @@ class SoftVpc {
  public:
   SoftVpc();
 
-  ~SoftVpc() = default;
+  ~SoftVpc() {}
 
   /*
    * @brief : vpc Cropping and Scaling APIs.

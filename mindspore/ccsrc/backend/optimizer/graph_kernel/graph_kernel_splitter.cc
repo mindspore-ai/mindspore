@@ -425,12 +425,7 @@ class AreaGraph {
         AnfNodePtrList getitem_inputs = {NewValueNode(prim::kPrimTupleGetItem), main_cnodes[input_area], idx};
         TraceGuard g_sub(std::make_shared<TraceOpt>(main_cnodes[input_area]->debug_info()));
         auto getitem_node = main_func_graph->NewCNode(getitem_inputs);
-        auto abs_tuple = dyn_cast<abstract::AbstractTuple>(main_cnodes[input_area]->abstract());
-        if (idx_val < SizeToLong(abs_tuple->size())) {
-          getitem_node->set_abstract(abs_tuple->elements()[idx_val]);
-        } else {
-          getitem_node->set_abstract(main_cnodes[input_area]->abstract());
-        }
+        getitem_node->set_abstract(main_cnodes[input_area]->abstract());
         main_cnode_inputs.emplace_back(getitem_node);
       } else {
         main_cnode_inputs.emplace_back(main_cnodes[input_area]);
@@ -798,12 +793,12 @@ class CostModelSplitSchemer : public SplitSchemer {
       need_inline_.clear();
       return;
     } else if (split_plan_.size() == 1 && !NeedInline(0)) {
-      // In this case, the CostModel decided to keep the whole graph unchanged.
+      /*In this case, the CostModel decided to keep the whole graph unchanged.*/
       split_plan_.clear();
       need_inline_.clear();
       return;
     } else {
-      MS_LOG(DEBUG) << "CostModel split succeeded. The kernel is split to " << split_plan_.size() << " parts.";
+      MS_LOG(INFO) << "CostModel split succeeded. The kernel is split to " << split_plan_.size() << " parts.";
     }
     MapNodeGroup();
     GroupReturnNode();
@@ -894,11 +889,11 @@ class CostModelSplitSchemer : public SplitSchemer {
 };
 
 bool TrySplit(const CNodePtr &sub_root_cnode) {
-  MS_LOG(DEBUG) << "Split process node: " << sub_root_cnode->fullname_with_scope();
+  MS_LOG(INFO) << "Split process node: " << sub_root_cnode->fullname_with_scope();
   auto splitter = Splitter::MakeSplitter(sub_root_cnode, std::make_shared<CostModelSplitSchemer>());
   MS_EXCEPTION_IF_NULL(splitter);
   bool result = splitter->Split();
-  MS_LOG(DEBUG) << "Split node completed, result: " << result;
+  MS_LOG(INFO) << "Split node completed, result: " << result;
   return result;
 }
 }  // namespace

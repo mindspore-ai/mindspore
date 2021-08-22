@@ -23,9 +23,6 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/engine/serdes.h"
-#endif
 
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
@@ -172,7 +169,6 @@ Status VOCNode::to_json(nlohmann::json *out_json) {
   args["usage"] = usage_;
   args["class_indexing"] = class_index_;
   args["decode"] = decode_;
-  args["extra_metadata"] = extra_metadata_;
   if (cache_ != nullptr) {
     nlohmann::json cache_args;
     RETURN_IF_NOT_OK(cache_->to_json(&cache_args));
@@ -181,38 +177,5 @@ Status VOCNode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
-#ifndef ENABLE_ANDROID
-Status VOCNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Failed to find task");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Failed to find class_indexing");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extra_metadata") != json_obj.end(), "Failed to find extra_metadata");
-  std::string dataset_dir = json_obj["dataset_dir"];
-  std::string task = json_obj["task"];
-  std::string usage = json_obj["usage"];
-  std::map<std::string, int32_t> class_indexing;
-  nlohmann::json class_map = json_obj["class_indexing"];
-  for (const auto &class_map_child : class_map) {
-    std::string class_ = class_map_child[0];
-    int32_t indexing = class_map_child[1];
-    class_indexing.insert({class_, indexing});
-  }
-  bool decode = json_obj["decode"];
-  std::shared_ptr<SamplerObj> sampler;
-  RETURN_IF_NOT_OK(Serdes::ConstructSampler(json_obj["sampler"], &sampler));
-  bool extra_metadata = json_obj["extra_metadata"];
-  std::shared_ptr<DatasetCache> cache = nullptr;
-  RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
-  *ds = std::make_shared<VOCNode>(dataset_dir, task, usage, class_indexing, decode, sampler, cache, extra_metadata);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
-  return Status::OK();
-}
-#endif
 }  // namespace dataset
 }  // namespace mindspore

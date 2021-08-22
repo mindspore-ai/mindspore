@@ -27,10 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-
-// Transform operations for performing data transformation.
-namespace transforms {
-
 // Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kComposeOperation[] = "Compose";
 constexpr char kConcatenateOperation[] = "Concatenate";
@@ -46,6 +42,9 @@ constexpr char kRandomChoiceOperation[] = "RandomChoice";
 constexpr char kTypeCastOperation[] = "TypeCast";
 constexpr char kUniqueOperation[] = "Unique";
 constexpr char kPluginOperation[] = "Plugin";
+
+// Transform operations for performing data transformation.
+namespace transforms {
 /* ####################################### Derived TensorOperation classes ################################# */
 
 class ComposeOperation : public TensorOperation {
@@ -110,8 +109,6 @@ class FillOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
-  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
-
  private:
   std::shared_ptr<Tensor> fill_value_;
 };
@@ -147,8 +144,6 @@ class OneHotOperation : public TensorOperation {
   std::string Name() const override { return kOneHotOperation; }
 
   Status to_json(nlohmann::json *out_json) override;
-
-  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   int32_t num_classes_;
@@ -252,8 +247,6 @@ class TypeCastOperation : public TensorOperation {
   std::string Name() const override { return kTypeCastOperation; }
 
   Status to_json(nlohmann::json *out_json) override;
-
-  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   DataType data_type_;

@@ -52,8 +52,7 @@ int ConvDw(float *output_data, const float *input_data, const float *weight_data
       int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih_origin, conv_param->dilation_h_));
 
       for (int ow = 0; ow < conv_param->output_w_; ow++) {
-        memcpy(dst_data + ow * conv_param->output_channel_, bias_data,
-               conv_param->output_channel_ * (int)(sizeof(float)));
+        memcpy(dst_data + ow * conv_param->output_channel_, bias_data, conv_param->output_channel_ * sizeof(float));
       }
       for (int kh = start_kh; kh < end_kh; kh++) {
         int ih = ih_origin + conv_param->dilation_w_ * kh;
@@ -356,6 +355,14 @@ bool CheckConvDwUse3X3(const ConvParameter *conv_param) {
 }
 
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+bool CheckConvDw1DWinograd(const ConvParameter *conv_param, int thread_num) {
+  return conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 && conv_param->stride_w_ == 1 &&
+         conv_param->stride_h_ == 1 && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
+         conv_param->pad_u_ == 1 && conv_param->pad_d_ == 1 && conv_param->pad_l_ == 1 && conv_param->pad_r_ == 1 &&
+         conv_param->input_channel_ == conv_param->output_channel_ && conv_param->output_w_ >= 4 &&
+         conv_param->output_h_ >= thread_num * 4;  // better had more than 4 rows for each thread
+}
+
 static void ConvDw3x3RowLeft(const float *src, float *line, int lw, int channel) {
   MS_FLOAT32X4 v0, v1, v2, v3;
   v0 = MS_MOVQ_F32(0.0f);
@@ -757,10 +764,10 @@ void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, c
                            int output_width, int input_stride, bool relu, bool relu6, int kernel) {
   do {
     float **in = input;
-    size_t c = (size_t)channels;
+    size_t c = channels;
     const float *w = weights;
     float *out = output;
-    memcpy(out, bias, channels * (int)sizeof(float));
+    memcpy(out, bias, channels * sizeof(float));
     for (; c >= C4NUM; c -= C4NUM) {
       for (int i = 0; i < C4NUM; i++) {
         for (int k = 0; k < kernel; k++) {

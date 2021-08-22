@@ -92,6 +92,36 @@ def check_mnist_cifar_dataset(method):
     return new_method
 
 
+def check_libri_speech_dataset(method):
+    """A wrapper that wraps a parameter checker around the original LirbiSpeechDataset."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle']
+
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        usage = param_dict.get('usage')
+        if usage is not None:
+            check_valid_str(usage, ['dev-clean', 'dev-other', 'test-clean','test-other', 'train-clean-100', 'train-clean-360','train-other-500'], "usage")
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_manifestdataset(method):
     """A wrapper that wraps a parameter checker around the original Dataset(ManifestDataset)."""
 
@@ -284,7 +314,7 @@ def check_save(method):
         nreq_param_str = ['file_name', 'file_type']
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         if (param_dict.get('num_files') <= 0 or param_dict.get('num_files') > 1000):
-            raise ValueError("num_files should between 0 and 1000.")
+            raise ValueError("num_files should between {} and {}.".format(1, 1000))
         validate_dataset_param_value(nreq_param_str, param_dict, str)
         if param_dict.get('file_type') != 'mindrecord':
             raise ValueError("{} dataset format is not supported.".format(param_dict.get('file_type')))
@@ -375,9 +405,7 @@ def check_generatordataset(method):
             try:
                 iter(source)
             except TypeError:
-                raise TypeError("Input `source` function of GeneratorDataset should be callable, iterable or random"
-                                " accessible, commonly it should implement one of the method like yield, __getitem__ or"
-                                " __next__(__iter__).")
+                raise TypeError("source should be callable, iterable or random accessible.")
 
         column_names = param_dict.get('column_names')
         if column_names is not None:
@@ -391,7 +419,7 @@ def check_generatordataset(method):
                 raise ValueError("schema should be a path to schema file or a schema object.")
 
         # check optional argument
-        nreq_param_int = ["max_rowsize", "num_samples", "num_parallel_workers", "num_shards", "shard_id"]
+        nreq_param_int = ["num_samples", "num_parallel_workers", "num_shards", "shard_id"]
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         nreq_param_list = ["column_types"]
         validate_dataset_param_value(nreq_param_list, param_dict, list)
@@ -463,11 +491,11 @@ def check_pad_info(key, val):
         type_check(val, (tuple,), "value in pad_info")
 
         if val[0] is not None:
-            type_check(val[0], (list,), "shape in pad_info")
+            type_check(val[0], (list,), "pad_shape")
 
             for dim in val[0]:
                 if dim is not None:
-                    check_pos_int32(dim, "dim of shape in pad_info")
+                    check_pos_int32(dim, "dim in pad_shape")
         if val[1] is not None:
             type_check(val[1], (int, float, str, bytes), "pad_value")
 
@@ -682,7 +710,7 @@ def check_repeat(method):
         type_check(count, (int, type(None)), "repeat")
         if isinstance(count, int):
             if (count <= 0 and count != -1) or count > INT32_MAX:
-                raise ValueError("count should be either -1 or positive integer, range[1, INT32_MAX].")
+                raise ValueError("count should be either -1 or positive integer.")
         return method(self, *args, **kwargs)
 
     return new_method
@@ -696,7 +724,7 @@ def check_skip(method):
         [count], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(count, (int,), "count")
-        check_value(count, (0, INT32_MAX), "count")
+        check_value(count, (-1, INT32_MAX), "count")
 
         return method(self, *args, **kwargs)
 
@@ -711,8 +739,7 @@ def check_take(method):
         [count], _ = parse_user_args(method, *args, **kwargs)
         type_check(count, (int,), "count")
         if (count <= 0 and count != -1) or count > INT32_MAX:
-            raise ValueError("count should be either -1 or within the required interval of ({}, {}], got {}."
-                             .format(0, INT32_MAX, count))
+            raise ValueError("count should be either -1 or positive integer.")
 
         return method(self, *args, **kwargs)
 
@@ -743,9 +770,14 @@ def check_device_send(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [send_epoch_end, create_data_info_queue], _ = parse_user_args(method, *args, **kwargs)
-        type_check(send_epoch_end, (bool,), "send_epoch_end")
-        type_check(create_data_info_queue, (bool,), "create_data_info_queue")
+        param, param_dict = parse_user_args(method, *args, **kwargs)
+        para_list = list(param_dict.keys())
+        if "prefetch_size" in para_list:
+            if param[0] is not None:
+                check_pos_int32(param[0], "prefetch_size")
+            type_check(param[1], (bool,), "send_epoch_end")
+        else:
+            type_check(param[0], (bool,), "send_epoch_end")
 
         return method(self, *args, **kwargs)
 
@@ -838,6 +870,7 @@ def check_schema(method):
         [schema_file], _ = parse_user_args(method, *args, **kwargs)
 
         if schema_file is not None:
+            type_check(schema_file, (str,), "schema_file")
             check_file(schema_file)
 
         return method(self, *args, **kwargs)
@@ -946,44 +979,6 @@ def check_csvdataset(method):
 
         cache = param_dict.get('cache')
         check_cache_option(cache)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_flowers102dataset(method):
-    """A wrapper that wraps a parameter checker around the original Dataset(Flowers102Dataset)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        _, param_dict = parse_user_args(method, *args, **kwargs)
-
-        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
-        nreq_param_bool = ['shuffle', 'decode']
-
-        dataset_dir = param_dict.get('dataset_dir')
-        check_dir(dataset_dir)
-
-        check_dir(os.path.join(dataset_dir, "jpg"))
-
-        check_file(os.path.join(dataset_dir, "imagelabels.mat"))
-        check_file(os.path.join(dataset_dir, "setid.mat"))
-
-        usage = param_dict.get('usage')
-        if usage is not None:
-            check_valid_str(usage, ["train", "valid", "test", "all"], "usage")
-
-        task = param_dict.get('task')
-        if task is not None:
-            check_valid_str(task, ["Classification", "Segmentation"], "task")
-        if task == "Segmentation":
-            check_dir(os.path.join(dataset_dir, "segmim"))
-
-        validate_dataset_param_value(nreq_param_int, param_dict, int)
-        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
-
-        check_sampler_shuffle_shard_options(param_dict)
 
         return method(self, *args, **kwargs)
 
@@ -1143,7 +1138,7 @@ def check_gnn_get_all_neighbors(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [node_list, neighbour_type, _], _ = parse_user_args(method, *args, **kwargs)
+        [node_list, neighbour_type], _ = parse_user_args(method, *args, **kwargs)
 
         check_gnn_list_or_ndarray(node_list, 'node_list')
         type_check(neighbour_type, (int,), "neighbour_type")
@@ -1298,7 +1293,7 @@ def check_numpyslicesdataset(method):
 
         data = param_dict.get("data")
         column_names = param_dict.get("column_names")
-        if data is None or len(data) == 0:  # pylint: disable=len-as-condition
+        if not data:
             raise ValueError("Argument data cannot be empty")
         type_check(data, (list, tuple, dict, np.ndarray), "data")
         if isinstance(data, tuple):
@@ -1363,65 +1358,6 @@ def check_to_device_send(method):
         if num_epochs is not None:
             type_check(num_epochs, (int,), "num_epochs")
             check_value(num_epochs, [-1, INT32_MAX], "num_epochs")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_flickr_dataset(method):
-    """A wrapper that wraps a parameter checker around the original Dataset(Flickr8k, Flickr30k)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        _, param_dict = parse_user_args(method, *args, **kwargs)
-
-        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
-        nreq_param_bool = ['shuffle', 'decode']
-
-        dataset_dir = param_dict.get('dataset_dir')
-        annotation_file = param_dict.get('annotation_file')
-        check_dir(dataset_dir)
-        check_file(annotation_file)
-
-        validate_dataset_param_value(nreq_param_int, param_dict, int)
-        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
-
-        check_sampler_shuffle_shard_options(param_dict)
-
-        cache = param_dict.get('cache')
-        check_cache_option(cache)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_sb_dataset(method):
-    """A wrapper that wraps a parameter checker around the original Semantic Boundaries Dataset."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        _, param_dict = parse_user_args(method, *args, **kwargs)
-
-        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
-        nreq_param_bool = ['shuffle', 'decode']
-
-        dataset_dir = param_dict.get('dataset_dir')
-        check_dir(dataset_dir)
-
-        usage = param_dict.get('usage')
-        if usage is not None:
-            check_valid_str(usage, ["train", "val", "train_noval", "all"], "usage")
-
-        task = param_dict.get('task')
-        if task is not None:
-            check_valid_str(task, ["Boundaries", "Segmentation"], "task")
-
-        validate_dataset_param_value(nreq_param_int, param_dict, int)
-        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
-
-        check_sampler_shuffle_shard_options(param_dict)
 
         return method(self, *args, **kwargs)
 

@@ -27,8 +27,7 @@ using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::kernel {
 int PowerFp16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_ASSERT(in_tensors_.size() == 2);
   exp_tensor_ = in_tensors_[1];
   MS_ASSERT(exp_tensor_ != nullptr);
   if (exp_tensor_->IsConst()) {
@@ -51,7 +50,7 @@ int PowerFp16CPUKernel::GetExpData() {
       MS_LOG(ERROR) << "exp_data_ is nullptr";
       return RET_NULL_PTR;
     }
-    auto exp = reinterpret_cast<float *>(exp_tensor_->data_c());
+    auto exp = reinterpret_cast<float *>(exp_tensor_->MutableData());
     if (exp == nullptr) {
       MS_LOG(ERROR) << "exp is nullptr!";
       return RET_NULL_PTR;
@@ -60,7 +59,7 @@ int PowerFp16CPUKernel::GetExpData() {
       exp_data_[i] = (float16_t)(exp[i]);
     }
   } else {
-    exp_data_ = reinterpret_cast<float16_t *>(exp_tensor_->data_c());
+    exp_data_ = reinterpret_cast<float16_t *>(exp_tensor_->MutableData());
     if (exp_data_ == nullptr) {
       MS_LOG(ERROR) << "exp_data_ is nullptr";
       return RET_NULL_PTR;
@@ -96,8 +95,10 @@ int PowerFp16CPUKernel::Run() {
 }
 
 int PowerFp16CPUKernel::RunImpl(int task_id) {
-  auto x_addr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto x_addr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->MutableData());
+  MS_ASSERT(x_addr);
+  auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
+  MS_ASSERT(output_addr);
   auto size = in_tensors_.at(0)->ElementsNum();
   int stride = UP_DIV(size, thread_count_);
   int len = MSMIN(stride, size - stride * task_id);

@@ -78,8 +78,7 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
   if (op_parameter_->is_train_session_) {
     a_pack_ptr_ = reinterpret_cast<float *>(workspace());
   } else {
-    a_pack_ptr_ = reinterpret_cast<float *>(
-      ms_context_->allocator->Malloc(static_cast<size_t>(matrix_a_pack_size_) * sizeof(float)));
+    a_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
   }
   if (a_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc a_pack_ptr_ failed";
@@ -95,8 +94,7 @@ int MatmulFp32BaseCPUKernel::InitBufferB() {
   if (op_parameter_->is_train_session_) {
     b_pack_ptr_ = reinterpret_cast<float *>(workspace()) + matrix_a_pack_size_;
   } else {
-    b_pack_ptr_ = reinterpret_cast<float *>(
-      ms_context_->allocator->Malloc(static_cast<size_t>(matrix_b_pack_size_) * sizeof(float)));
+    b_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_b_pack_size_ * sizeof(float)));
   }
   if (b_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc b_pack_ptr_ failed";
@@ -128,9 +126,9 @@ int MatmulFp32BaseCPUKernel::CalBroadCastBiasDataElements() {
 int MatmulFp32BaseCPUKernel::InitBiasData() {
   if (in_tensors_.size() == 3) {
     auto bias_tensor = in_tensors_[2];
-    size_t max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), col_tile_);
+    int max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), col_tile_);
     // malloc addr need to aligned to 32 bytes
-    bias_ptr_ = reinterpret_cast<float *>(malloc(max_bias_data * static_cast<int>(sizeof(float))));
+    bias_ptr_ = reinterpret_cast<float *>(malloc(max_bias_data * sizeof(float)));
     if (bias_ptr_ == nullptr) {
       MS_LOG(ERROR) << "malloc bias_ptr_ failed";
       return RET_ERROR;
@@ -140,12 +138,12 @@ int MatmulFp32BaseCPUKernel::InitBiasData() {
       max_bias_data = CalBroadCastBiasDataElements();
       float broadcast_data = (reinterpret_cast<float *>(bias_tensor->data_c()))[0];
       // broadcast bias data
-      for (size_t i = 0; i < max_bias_data; ++i) {
+      for (int i = 0; i < max_bias_data; ++i) {
         bias_ptr_[i] = broadcast_data;
       }
     } else {
-      memset(bias_ptr_, 0, max_bias_data * static_cast<int>(sizeof(float)));
-      memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * static_cast<int>(sizeof(float)));
+      memset(bias_ptr_, 0, max_bias_data * sizeof(float));
+      memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(float));
     }
   }
   return RET_OK;
@@ -153,7 +151,7 @@ int MatmulFp32BaseCPUKernel::InitBiasData() {
 
 int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) {
   if (vec_matmul_) {
-    memcpy(a_pack_ptr_, src_ptr, params_->batch * params_->deep_ * static_cast<int>(sizeof(float)));
+    memcpy(a_pack_ptr_, src_ptr, params_->batch * params_->deep_ * sizeof(float));
     return RET_OK;
   }
 
@@ -178,9 +176,9 @@ int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) {
 #ifdef ENABLE_AVX
         RowMajor2Col32Major(src_data, dst, params_->deep_, params_->col_);
 #elif defined(ENABLE_ARM64)
-        memcpy(dst, src_data, params_->col_ * params_->deep_ * static_cast<int>(sizeof(float)));
+        memcpy(dst, src_data, params_->col_ * params_->deep_ * sizeof(float));
 #else
-        memcpy(dst, src_data, params_->col_ * params_->deep_ * static_cast<int>(sizeof(float)));
+        memcpy(dst, src_data, params_->col_ * params_->deep_ * sizeof(float));
 #endif
       } else {
 #ifdef ENABLE_AVX
@@ -272,8 +270,6 @@ int MatmulFp32BaseCPUKernel::FloatRun(int task_id) const {
 }
 
 int MatmulFp32BaseCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_AVX
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row6Major : RowMajor2Col6Major;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col16Major : RowMajor2Row16Major;
@@ -321,14 +317,12 @@ int MatmulFp32BaseCPUKernel::Init() {
     // only copy weight data
     // resize or run to pack
     auto b_tensor = in_tensors_.at(1);
-    src_b_ = reinterpret_cast<float *>(
-      malloc(params_->batch * params_->deep_ * params_->col_ * static_cast<int>(sizeof(float))));
+    src_b_ = reinterpret_cast<float *>(malloc(params_->batch * params_->deep_ * params_->col_ * sizeof(float)));
     if (src_b_ == nullptr) {
       MS_LOG(ERROR) << "matmul fp16 src_b_ is failed!";
       return RET_ERROR;
     }
-    memcpy(src_b_, b_tensor->data_c(),
-           params_->batch * params_->deep_ * params_->col_ * static_cast<int>(sizeof(float)));
+    memcpy(src_b_, b_tensor->data_c(), params_->batch * params_->deep_ * params_->col_ * sizeof(float));
   }
   return RET_OK;
 }
@@ -350,7 +344,7 @@ int MatmulFp32BaseCPUKernel::ReSize() {
     return RET_ERROR;
   }
   if (op_parameter_->is_train_session_) {
-    set_workspace_size((matrix_a_pack_size_ + matrix_b_pack_size_) * static_cast<int>(sizeof(float)));
+    set_workspace_size((matrix_a_pack_size_ + matrix_b_pack_size_) * sizeof(float));
   }
 
   if (params_->b_const_ && src_b_ != nullptr) {
@@ -386,8 +380,8 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
     int out_channel = params_->col_;
     int oc_block_num = UP_DIV(out_channel, col_tile_);
     MS_ASSERT(ms_context_->allocator != nullptr);
-    output_data_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(
-      params_->batch * params_->row_ * oc_block_num * col_tile_ * static_cast<int>(sizeof(float))));
+    output_data_ = reinterpret_cast<float *>(
+      ms_context_->allocator->Malloc(params_->batch * params_->row_ * oc_block_num * col_tile_ * sizeof(float)));
     if (output_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc tmp output data failed.";
       return RET_NULL_PTR;
@@ -404,7 +398,6 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 int MatmulFp32BaseCPUKernel::Run() {
   if (!params_->a_const_) {
     auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
-    CHECK_NULL_RETURN(a_ptr);
     if (RET_OK != InitBufferA()) {
       return RET_ERROR;
     }
@@ -416,7 +409,6 @@ int MatmulFp32BaseCPUKernel::Run() {
   }
   if (!params_->b_const_) {
     auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
-    CHECK_NULL_RETURN(b_ptr);
     if (RET_OK != InitBufferB()) {
       FreeResizeBufA();
       return RET_ERROR;

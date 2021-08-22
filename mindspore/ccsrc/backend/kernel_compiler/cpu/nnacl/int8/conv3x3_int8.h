@@ -37,9 +37,9 @@ extern "C" {
 void Conv3x3Int8FilterTransform(const int16_t *weight_data, int16_t *trans_weight, int iC8, int output_channel,
                                 int kernel_plane);
 
-void Conv3x3Int8(const int16_t *input_data, const int16_t *transed_weight, const int32_t *bias_data,
-                 int8_t *output_data, int16_t *tile_buffer, int16_t *block_unit_buffer, int32_t *tmp_dst_buffer,
-                 int8_t *tmp_out, int task_id, const ConvParameter *conv_param);
+void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bias_data, int8_t *output_data,
+                 int16_t *tile_buffer, int16_t *block_unit_buffer, int32_t *tmp_dst_buffer, int8_t *tmp_out,
+                 int task_id, const ConvParameter *conv_param);
 
 #ifdef __cplusplus
 }

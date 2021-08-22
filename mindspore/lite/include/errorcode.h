@@ -27,7 +27,7 @@ using STATUS = int;
 /* Success */
 constexpr int RET_OK = 0; /**< No error occurs. */
 
-/* Common error code, range: [-1, -100) */
+/* Common error code, range: [-1, -100）*/
 constexpr int RET_ERROR = -1;             /**< Common error code. */
 constexpr int RET_NULL_PTR = -2;          /**< NULL pointer returned.*/
 constexpr int RET_PARAM_INVALID = -3;     /**< Invalid parameter.*/
@@ -58,7 +58,7 @@ constexpr int RET_FORMAT_ERR = -400; /**< Failed to checking tensor format. */
 constexpr int RET_INFER_ERR = -500;     /**< Failed to infer shape. */
 constexpr int RET_INFER_INVALID = -501; /**< Invalid infer shape before runtime. */
 
-/* User input param error code, range: [-600, 700) */
+/* User input param error code, range: [-600, 700)*/
 constexpr int RET_INPUT_PARAM_INVALID = -600; /**< Invalid input param by user. */
 
 /// \brief Print description of errorcode.

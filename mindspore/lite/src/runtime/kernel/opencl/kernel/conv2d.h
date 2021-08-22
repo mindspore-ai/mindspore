@@ -53,7 +53,7 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   int Prepare() override;
   int InitWeights() override;
-  int SetConstArgs() override;
+  void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Run() override;
 
@@ -78,8 +78,8 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
  protected:
   void InitAttrs();
   virtual int BuildKernel();
-  virtual int InitFilter();
-  int InitBias();
+  virtual void InitFilter();
+  void InitBias();
   bool use_fp16_{false};
   size_t sizeof_FLT_{4};
   ConvParameter *param_{nullptr};

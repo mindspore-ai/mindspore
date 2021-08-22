@@ -807,7 +807,7 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_
   }
 }
 
-void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, const ConvParameter *conv_param) {
+void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvParameter *conv_param) {
   int in_batch = conv_param->input_batch_;
   int in_channel = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
@@ -849,8 +849,7 @@ void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, const Co
   }
 }
 
-void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight_data,
-                        const ConvParameter *conv_param) {
+void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight_data, ConvParameter *conv_param) {
   // origin weight format : ohwi
   int input_channel = conv_param->input_channel_;
   int ic8 = input_channel / C8NUM * C8NUM;
@@ -961,7 +960,7 @@ void PackDepthwiseInt8Input(const int8_t *src, int16_t *dst, const ConvParameter
 }
 
 void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
-                             const ConvQuantArg *quant_qrg) {
+                             ConvQuantArg *quant_qrg) {
   int weight_zp = quant_qrg->filter_quant_args_[0].zp_;
   for (int c = 0; c < channel; c++) {
     if (quant_qrg->per_channel_ & FILTER_PER_CHANNEL) {
@@ -980,7 +979,7 @@ void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight
 }
 
 void PackDeconvDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
-                                   const ConvQuantArg *quant_qrg) {
+                                   ConvQuantArg *quant_qrg) {
   int weight_zp = quant_qrg->filter_quant_args_[0].zp_;
   for (int c = 0; c < channel; c++) {
     if (quant_qrg->per_channel_ & FILTER_PER_CHANNEL) {

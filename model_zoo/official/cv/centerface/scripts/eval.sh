@@ -16,19 +16,7 @@
 
 root=$PWD
 save_path=$root/output/centerface/
-if [ ! -d $save_path ]
-then
-    echo "error: save_path=$save_path is not a dir"
-exit 1
-fi
-
 ground_truth_path=$1
-if [ ! -d $ground_truth_path ]
-then
-    echo "error: ground_truth_path=$ground_truth_path is not a dir"
-exit 1
-fi
-
 echo "start eval"
 python ../dependency/evaluate/eval.py --pred=$save_path --gt=$ground_truth_path
 echo "end eval"

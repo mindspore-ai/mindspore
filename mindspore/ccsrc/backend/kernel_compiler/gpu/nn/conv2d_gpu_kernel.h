@@ -46,7 +46,10 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *filter_addr = GetDeviceAddress<T>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+    T *workspace_addr = nullptr;
+    if (workspace_size_ != 0) {
+      workspace_addr = GetDeviceAddress<T>(workspace, 0);
+    }
 
     const float alpha = 1;
     const float beta = 0;

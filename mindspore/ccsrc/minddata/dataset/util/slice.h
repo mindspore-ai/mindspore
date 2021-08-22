@@ -105,7 +105,7 @@ class WritableSlice : public ReadableSlice {
   WritableSlice &operator=(const WritableSlice &lhs) {
     if (this != &lhs) {
       mutable_data_ = lhs.mutable_data_;
-      (void)ReadableSlice::operator=(lhs);
+      ReadableSlice::operator=(lhs);
     }
     return *this;
   }
@@ -119,7 +119,7 @@ class WritableSlice : public ReadableSlice {
     if (this != &lhs) {
       mutable_data_ = lhs.mutable_data_;
       lhs.mutable_data_ = nullptr;
-      (void)ReadableSlice::operator=(std::move(lhs));
+      ReadableSlice::operator=(std::move(lhs));
     }
     return *this;
   }

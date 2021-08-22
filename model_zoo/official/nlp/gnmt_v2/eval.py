@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 import pickle
 import os
 import time
-from mindspore import context
 
 from src.gnmt_model import infer
 from src.gnmt_model.bleu_calculate import bleu_calculate
@@ -84,12 +83,6 @@ def run_eval():
     '''run eval.'''
     _config = get_config(default_config)
     result = infer(_config)
-    context.set_context(
-        mode=context.GRAPH_MODE,
-        save_graphs=False,
-        device_target=_config.device_target,
-        device_id=_config.device_id,
-        reserve_class_name_in_scope=False)
 
     with open(_config.output, "wb") as f:
         pickle.dump(result, f, 1)

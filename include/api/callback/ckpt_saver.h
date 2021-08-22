@@ -22,6 +22,12 @@
 #include <memory>
 #include "include/api/callback/callback.h"
 
+#ifdef _WIN32
+#define MS_API __declspec(dllexport)
+#else
+#define MS_API __attribute__((visibility("default")))
+#endif
+
 namespace mindspore {
 
 class CkptSaver: public TrainCallBack {

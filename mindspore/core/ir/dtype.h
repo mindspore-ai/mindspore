@@ -42,9 +42,9 @@
 /* namespace to support intermediate representation definition */
 namespace mindspore {
 // Only few type supported now.
-MS_CORE_API TypePtr TypeIdToType(TypeId id);
+TypePtr TypeIdToType(TypeId id);
 
-class MS_CORE_API String : public Object {
+class String : public Object {
  public:
   String() : Object(kObjectTypeString, false) {}
   ~String() override = default;
@@ -59,7 +59,7 @@ class MS_CORE_API String : public Object {
 };
 using StringPtr = std::shared_ptr<String>;
 
-class MS_CORE_API Keyword : public Object {
+class Keyword : public Object {
  public:
   Keyword() : Object(kObjectTypeKeyword, false), key_(""), value_(nullptr) {}
   Keyword(const std::string &key, const TypePtr &value) : Object(kObjectTypeKeyword, false), key_(key), value_(value) {}
@@ -83,7 +83,7 @@ class MS_CORE_API Keyword : public Object {
 };
 using KeywordPtr = std::shared_ptr<Keyword>;
 
-class MS_CORE_API Slice : public Object {
+class Slice : public Object {
  public:
   Slice() : Object(kObjectTypeSlice), start_(nullptr), stop_(nullptr), step_(nullptr) {}
   Slice(const TypePtr &start, const TypePtr &stop, const TypePtr &step)
@@ -110,7 +110,7 @@ class MS_CORE_API Slice : public Object {
 };
 using SlicePtr = std::shared_ptr<Slice>;
 
-class MS_CORE_API Function : public Object {
+class Function : public Object {
  public:
   Function();
   Function(const std::vector<TypePtr> &args, const TypePtr retval);
@@ -135,7 +135,7 @@ class MS_CORE_API Function : public Object {
 };
 using FunctionPtr = std::shared_ptr<Function>;
 
-class MS_CORE_API JTagged : public Object {
+class JTagged : public Object {
  public:
   JTagged() : Object(kObjectTypeJTagged) {}
   explicit JTagged(const TypePtr &subtype) : Object(kObjectTypeJTagged, false), subtype_(subtype) {}
@@ -153,7 +153,7 @@ class MS_CORE_API JTagged : public Object {
 };
 using JTaggedPtr = std::shared_ptr<JTagged>;
 
-class MS_CORE_API SymbolicKeyType : public Object {
+class SymbolicKeyType : public Object {
  public:
   SymbolicKeyType() : Object(kObjectTypeSymbolicKeyType) {}
   ~SymbolicKeyType() override = default;
@@ -165,7 +165,7 @@ class MS_CORE_API SymbolicKeyType : public Object {
   std::string DumpText() const override { return "SymType"; }
 };
 
-class MS_CORE_API EnvType : public Object {
+class EnvType : public Object {
  public:
   EnvType() : Object(kObjectTypeEnvType) {}
   ~EnvType() override = default;
@@ -177,7 +177,7 @@ class MS_CORE_API EnvType : public Object {
 };
 using EnvTypePtr = std::shared_ptr<EnvType>;
 
-class MS_CORE_API TypeType : public Type {
+class TypeType : public Type {
  public:
   TypeType() : Type(kMetaTypeTypeType) {}
   ~TypeType() override = default;
@@ -190,7 +190,7 @@ class MS_CORE_API TypeType : public Type {
 };
 using TypeTypePtr = std::shared_ptr<TypeType>;
 
-class MS_CORE_API Problem : public Type {
+class Problem : public Type {
  public:
   Problem() : Type(kMetaTypeProblem), kind_(Named("unknown")) {}
   explicit Problem(const Named &kind) : Type(kMetaTypeProblem), kind_(kind) {}
@@ -209,7 +209,7 @@ class MS_CORE_API Problem : public Type {
 };
 using ProblemPtr = std::shared_ptr<Problem>;
 
-class MS_CORE_API External : public Type {
+class External : public Type {
  public:
   External() : Type(kMetaTypeExternal) {}
   ~External() override = default;
@@ -230,39 +230,39 @@ TypePtr Clone(const T &t) {
   return t.Clone();
 }
 
-MS_CORE_API TypePtr StringToType(const std::string &type_name);
+TypePtr StringToType(const std::string &type_name);
 
 // Judge whether x is predicate or is a subclass of predicate.
-MS_CORE_API bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type);
+bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type);
 
 // Whether t1 is identity or a subclass of t2.
-MS_CORE_API bool IsSubType(TypePtr const &t1, TypePtr const &t2 = nullptr);
+bool IsSubType(TypePtr const &t1, TypePtr const &t2 = nullptr);
 
-struct MS_CORE_API TypeHasher {
+struct TypeHasher {
   std::size_t operator()(TypePtr const &type) const;
 };
-struct MS_CORE_API TypeListHasher {
+struct TypeListHasher {
   std::size_t operator()(const TypePtrList &type_list) const;
 };
-struct MS_CORE_API TypeEqual {
+struct TypeEqual {
   bool operator()(TypePtr const &t1, TypePtr const &t2) const;
 };
-struct MS_CORE_API TypeListEqual {
+struct TypeListEqual {
   bool operator()(TypePtrList const &lhs, TypePtrList const &rhs) const;
 };
 
-MS_CORE_API extern const TypePtr kTypeExternal;
-MS_CORE_API extern const TypePtr kTypeEnv;
-MS_CORE_API extern const TypePtr kTypeType;
-MS_CORE_API extern const TypePtr kString;
-MS_CORE_API extern const TypePtr kList;
-MS_CORE_API extern const TypePtr kTuple;
-MS_CORE_API extern const TypePtr kDict;
-MS_CORE_API extern const TypePtr kSlice;
-MS_CORE_API extern const TypePtr kKeyword;
-MS_CORE_API extern const TypePtr kTensorType;
-MS_CORE_API extern const TypePtr kTensorTypeFP16;
-MS_CORE_API extern const TypePtr kTensorTypeFP32;
+extern const TypePtr kTypeExternal;
+extern const TypePtr kTypeEnv;
+extern const TypePtr kTypeType;
+extern const TypePtr kString;
+extern const TypePtr kList;
+extern const TypePtr kTuple;
+extern const TypePtr kDict;
+extern const TypePtr kSlice;
+extern const TypePtr kKeyword;
+extern const TypePtr kTensorType;
+extern const TypePtr kTensorTypeFP16;
+extern const TypePtr kTensorTypeFP32;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_H_

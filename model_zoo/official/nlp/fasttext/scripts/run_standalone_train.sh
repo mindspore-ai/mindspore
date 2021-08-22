@@ -16,21 +16,9 @@
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "sh run_standalone_train.sh DATASET_PATH"
-echo "for example: sh run_standalone_train.sh /home/workspace/ag 0 ag"
+echo "for example: sh run_standalone_train.sh /home/workspace/ag"
 echo "It is better to use absolute path."
-echo "Please pay attention that the dataset should corresponds to dataset_name"
 echo "=============================================================================================================="
-if [[ $# -lt 3 ]]; then
-  echo "Usage: bash run_standalone_train.sh [DATA_PATH] [DEVICE_ID] [DATANAME]
-  DATANAME can choose from [ag, dbpedia, yelp_p]"
-exit 1
-fi
-
-if [ $3 != "ag" ] && [ $3 != "dbpedia" ] && [ $3 != "yelp_p" ]
-then
-  echo "Unrecognized dataset name, the name can choose from [ag, dbpedia, yelp_p]"
-exit 1
-fi
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -41,20 +29,10 @@ get_real_path(){
 }
 
 DATASET=$(get_real_path $1)
+echo $DATASET
 DATANAME=$(basename $DATASET)
+echo $DATANAME
 DEVICEID=$2
-if [ $# -ge 1 ]; then
-  if [ $3 == 'ag' ]; then
-    DATANAME='ag'
-  elif [ $3 == 'dbpedia' ]; then
-    DATANAME='dbpedia'
-  elif [ $3 == 'yelp_p' ]; then
-    DATANAME='yelp_p'
-  else
-    echo "Unrecognized dataset name"
-    exit 1
-  fi
-fi
 
 config_path="./${DATANAME}_config.yaml"
 echo "config path is : ${config_path}"

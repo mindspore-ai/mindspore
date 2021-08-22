@@ -133,61 +133,55 @@ class ParameterProcess:
 
         if isinstance(origin_params_copy[0], Parameter):
             group_params = [{"params": parameters}]
-            return group_params
-
-        group_params = []
-        params_name = [param.name for param in parameters]
-        new_params_count = copy.deepcopy(params_name)
-        new_params_clone = {}
-        max_key_number = 0
-        for group_param in origin_params_copy:
-            if 'order_params' in group_param.keys():
+        else:
+            group_params = []
+            params_name = [param.name for param in parameters]
+            new_params_count = copy.deepcopy(params_name)
+            new_params_clone = {}
+            max_key_number = 0
+            for group_param in origin_params_copy:
+                if 'order_params' in group_param.keys():
+                    new_group_param = copy.deepcopy(group_param)
+                    new_group_param['order_params'] = parameters
+                    group_params.append(new_group_param)
+                    continue
+                params_value = []
+                for param in group_param['params']:
+                    if param.name in params_name:
+                        index = params_name.index(param.name)
+                        params_value.append(parameters[index])
+                        new_params_count.remove(param.name)
                 new_group_param = copy.deepcopy(group_param)
-                new_group_param['order_params'] = parameters
+                new_group_param['params'] = params_value
                 group_params.append(new_group_param)
-                continue
-            params_value = []
-            for param in group_param['params']:
-                if param.name in params_name:
-                    index = params_name.index(param.name)
+                if len(group_param.keys()) > max_key_number:
+                    max_key_number = len(group_param.keys())
+                    new_params_clone = copy.deepcopy(group_param)
+            if new_params_count:
+                params_value = []
+                for param in new_params_count:
+                    index = params_name.index(param)
                     params_value.append(parameters[index])
-                    new_params_count.remove(param.name)
-            new_group_param = copy.deepcopy(group_param)
-            new_group_param['params'] = params_value
-            group_params.append(new_group_param)
-            if len(group_param.keys()) > max_key_number:
-                max_key_number = len(group_param.keys())
-                new_params_clone = copy.deepcopy(group_param)
-        if new_params_count:
-            params_value = []
-            for param in new_params_count:
-                index = params_name.index(param)
-                params_value.append(parameters[index])
-            if new_params_clone:
-                new_params_clone['params'] = params_value
-                group_params.append(new_params_clone)
-            else:
-                group_params.append({"params": params_value})
+                if new_params_clone:
+                    new_params_clone['params'] = params_value
+                    group_params.append(new_params_clone)
+                else:
+                    group_params.append({"params": params_value})
         return group_params
 
-
 _gradient_accumulation_op = C.MultitypeFuncGraph("gradient_accumulation_op")
-
 
 @_gradient_accumulation_op.register("Int64", "Tensor", "Tensor")
 def _cumulative_grad(accumulation_step, cumulative_grad, grad):
     """Apply gradient accumulation to cumulative grad."""
     return P.AssignAdd()(cumulative_grad, grad / accumulation_step)
 
-
 _gradient_clear_op = C.MultitypeFuncGraph("gradient_clear_op")
-
 
 @_gradient_clear_op.register("Tensor")
 def  _clear_grad(cumulative_grad):
     zero_grad = P.ZerosLike()(cumulative_grad)
     return F.assign(cumulative_grad, zero_grad)
-
 
 class GradientAccumulation(Cell):
     """

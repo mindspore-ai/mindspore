@@ -141,15 +141,7 @@ class KernelBuildClient {
   std::shared_ptr<DuplexPipe> dp_;
 };
 
-static std::string GetScriptFilePath(const std::string cmd_env, const std::string &cmd_script,
-                                     const std::string &server_script) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto server_dir = ms_context->get_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR);
-  if (!server_dir.empty()) {
-    return server_dir + server_script;
-  }
-
+static std::string GetScriptFilePath(const std::string cmd_env, const std::string &cmd_script) {
   std::string cmd = cmd_env;
   (void)cmd.append(1, ' ').append(cmd_script);
   FILE *fpipe = popen(cmd.c_str(), "r");
@@ -204,8 +196,6 @@ class AscendKernelBuildClient : public KernelBuildClient {
     "print('[~]' + path)"
     "\"";
 
-  constexpr inline static auto kServerScript = "kernel_build_server_ascend.py";
-
   // Receive the response from server
   constexpr inline static auto kFailed = "-1";
 
@@ -231,7 +221,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
 
   std::string GetScript() override {
     auto env = GetPyExe();
-    return GetScriptFilePath(env, kGetPathScript, kServerScript);
+    return GetScriptFilePath(env, kGetPathScript);
   }
 
   // Before building.
@@ -269,7 +259,9 @@ class GpuKernelBuildClient : public KernelBuildClient {
     "print('[~]' + path)"
     "\"";
 
-  constexpr inline static auto kServerScript = "kernel_build_server_gpu.py";
+  // Send building request to server
+  constexpr inline static auto kAkgPid = "AKG/PID";
+  constexpr inline static auto kAkgCompileOp = "AKG/COMPILE";  // Compile a single op
 
   static GpuKernelBuildClient &Instance() {
     static GpuKernelBuildClient instance;
@@ -280,8 +272,13 @@ class GpuKernelBuildClient : public KernelBuildClient {
 
   std::string GetScript() override {
     auto env = GetPyExe();
-    return GetScriptFilePath(env, kGetPathScript, kServerScript);
+    return GetScriptFilePath(env, kGetPathScript);
   }
+
+  // Fetch pid(pid_t) from remote.
+  int AkgGetPid();
+  // Run AKG building.
+  bool AkgCompileSingle(const std::string json);
 
   GpuKernelBuildClient(const GpuKernelBuildClient &) = delete;
   GpuKernelBuildClient &operator=(const GpuKernelBuildClient &) = delete;

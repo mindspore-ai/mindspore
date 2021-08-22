@@ -106,30 +106,6 @@ Status DistributedSamplerObj::to_json(nlohmann::json *const out_json) {
   *out_json = args;
   return Status::OK();
 }
-
-#ifndef ENABLE_ANDROID
-Status DistributedSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples,
-                                        std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("seed") != json_obj.end(), "Failed to find seed");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("offset") != json_obj.end(), "Failed to find offset");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("even_dist") != json_obj.end(), "Failed to find even_dist");
-  int64_t num_shards = json_obj["num_shards"];
-  int64_t shard_id = json_obj["shard_id"];
-  bool shuffle = json_obj["shuffle"];
-  uint32_t seed = json_obj["seed"];
-  int64_t offset = json_obj["offset"];
-  bool even_dist = json_obj["even_dist"];
-  *sampler =
-    std::make_shared<DistributedSamplerObj>(num_shards, shard_id, shuffle, num_samples, seed, offset, even_dist);
-  // Run common code in super class to add children samplers
-  RETURN_IF_NOT_OK(SamplerObj::from_json(json_obj, sampler));
-  return Status::OK();
-}
-#endif
-
 std::shared_ptr<SamplerObj> DistributedSamplerObj::SamplerCopy() {
   auto sampler =
     std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_, even_dist_);

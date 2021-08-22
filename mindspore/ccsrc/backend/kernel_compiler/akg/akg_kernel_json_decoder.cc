@@ -15,6 +15,12 @@
  */
 #include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
 
+#include <algorithm>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <map>
+#include <vector>
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"

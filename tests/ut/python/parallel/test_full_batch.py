@@ -71,8 +71,7 @@ def all_to_all_common(strategy1):
 
     context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
     context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8,
-                                      dataset_strategy="full_batch")
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8, full_batch=True)
     predict = Tensor(np.ones([256, 128]), dtype=ms.float32)
     label = Tensor(np.ones([256]), dtype=ms.int32)
     dataset = Dataset(predict, label, 2)

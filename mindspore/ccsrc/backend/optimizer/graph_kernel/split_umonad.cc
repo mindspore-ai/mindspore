@@ -37,7 +37,7 @@ const BaseRef SplitAssign::DefinePattern() const {
 
 bool CanSplit(const AnfNodePtr &node) { return IsPrimitiveCNode(node, prim::kPrimAssign); }
 
-AnfNodePtr ProcessNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t input_idx) {
+AnfNodePtr ProcessNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int input_idx) {
   MS_EXCEPTION_IF_NULL(node);
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -46,14 +46,16 @@ AnfNodePtr ProcessNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, s
   AbstractBasePtr original_abstract = cnode->abstract()->Clone();
   auto original_inputs = cnode->inputs();
 
+  int input_node_size = cnode->size() - 1;
   // Create depend node
-  AnfNodePtrList depend_inputs = {NewValueNode(prim::kPrimDepend), original_inputs[input_idx], original_inputs.back()};
+  AnfNodePtrList depend_inputs = {NewValueNode(prim::kPrimDepend), original_inputs[input_idx],
+                                  original_inputs[input_node_size]};
   auto depend_cnode = func_graph->NewCNode(depend_inputs);
   depend_cnode->set_abstract(original_inputs[input_idx]->abstract());
   depend_cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   // Create new node, delete U from inputs.
   AnfNodePtrList new_inputs = {cnode->input(0)};
-  for (size_t i = 1; i + 1 < cnode->size(); i++) {
+  for (int i = 1; i < input_node_size; i++) {
     if (i == input_idx) {
       new_inputs.push_back(depend_cnode);
     } else {
@@ -75,12 +77,21 @@ const AnfNodePtr SplitAssign::Process(const FuncGraphPtr &func_graph, const AnfN
 AnfNodePtr OpUMonadExpander::Run(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  // assume the UMonad node is the last input
-  if (cnode->size() > 1 && HasAbstractUMonad(cnode->inputs().back())) {
+
+  bool has_umonad = false;
+  for (unsigned int i = 1; i < cnode->size(); i++) {
+    if (HasAbstractUMonad(cnode->input(i))) {
+      has_umonad = true;
+      break;
+    }
+  }
+  if (has_umonad) {
     auto new_node = ProcessNode(node->func_graph(), node, input_idx_);
     return DefaultExpander::Run(new_node);
   }
+
   return DefaultExpander::Run(node);
 }
+
 }  // namespace opt
 }  // namespace mindspore

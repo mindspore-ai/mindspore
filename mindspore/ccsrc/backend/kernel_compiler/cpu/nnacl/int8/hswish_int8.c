@@ -39,7 +39,7 @@ int HSwishInt8(const int8_t *src, int length, int8_t *dst, HswishQuantArg *arg) 
     if (arg->relu6_multiplier_exponent < 0) {
       relu6_value = RoundingDivideByPOT(relu6_value, -arg->relu6_multiplier_exponent);
     }
-    relu6_value = (size_t)(relu6_value + (1 << 15)) >> 1;
+    relu6_value = (relu6_value + (1 << 15)) >> 1;
     const int16_t preshift_output_value =
       SaturatingRoundingDoublingHighMulInt16(relu6_value, input_value_on_preshift_output_scale);
 

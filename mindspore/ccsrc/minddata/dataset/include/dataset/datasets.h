@@ -1091,64 +1091,6 @@ inline std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_f
                                       cache);
 }
 
-class FlickrDataset : public Dataset {
- public:
-  explicit FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
-                         const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
-  explicit FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
-                         const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
-  explicit FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
-                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
-  ~FlickrDataset() = default;
-};
-
-/// \brief Function to create a FlickrDataset
-/// \notes The generated dataset has two columns ["image", "annotation"]
-/// \param[in] dataset_dir The dataset dir to be read
-/// \param[in] annotation_file The annotation file to be read
-/// \param[in] decode Decode the images after reading (default=false).
-/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
-///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
-/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-/// \return Shared pointer to the current FlickrDataset
-inline std::shared_ptr<FlickrDataset> Flickr(
-  const std::string &dataset_dir, const std::string &annotation_file, bool decode = false,
-  const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
-  const std::shared_ptr<DatasetCache> &cache = nullptr) {
-  return std::make_shared<FlickrDataset>(StringToChar(dataset_dir), StringToChar(annotation_file), decode, sampler,
-                                         cache);
-}
-
-/// \brief Function to create a FlickrDataset
-/// \notes The generated dataset has two columns ["image", "annotation"]
-/// \param[in] dataset_dir The dataset dir to be read
-/// \param[in] annotation_file The annotation file to be read
-/// \param[in] decode Decode the images after reading.
-/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
-/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-/// \return Shared pointer to the current FlickrDataset
-inline std::shared_ptr<FlickrDataset> Flickr(const std::string &dataset_dir, const std::string &annotation_file,
-                                             bool decode, const Sampler *sampler,
-                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
-  return std::make_shared<FlickrDataset>(StringToChar(dataset_dir), StringToChar(annotation_file), decode, sampler,
-                                         cache);
-}
-
-/// \brief Function to create a FlickrDataset
-/// \notes The generated dataset has two columns ["image", "annotation"]
-/// \param[in] dataset_dir The dataset dir to be read
-/// \param[in] annotation_file The annotation file to be read
-/// \param[in] decode Decode the images after reading.
-/// \param[in] sampler Sampler object used to choose samples from the dataset.
-/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-/// \return Shared pointer to the current FlickrDataset
-inline std::shared_ptr<FlickrDataset> Flickr(const std::string &dataset_dir, const std::string &annotation_file,
-                                             bool decode, const std::reference_wrapper<Sampler> sampler,
-                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
-  return std::make_shared<FlickrDataset>(StringToChar(dataset_dir), StringToChar(annotation_file), decode, sampler,
-                                         cache);
-}
-
 class ImageFolderDataset : public Dataset {
  public:
   explicit ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode,
@@ -1576,6 +1518,60 @@ std::shared_ptr<RandomDataDataset> RandomData(const int32_t &total_rows = 0, con
   }
   return ds;
 }
+
+class LibriSpeechDataset : public Dataset {
+ public:
+  explicit LibriSpeechDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                        const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  explicit LibriSpeechDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                        const std::shared_ptr<DatasetCache> &cache);
+  explicit LibriSpeechDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                        const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  ~LibriSpeechDataset() = default;
+};
+
+/// \brief Function to create a LibriSpeechDataset.
+/// \note The generated dataset has two columns ["audio", "samplerate", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of LibriSpeech, can be "training", "validation", "testing" or "all" (default = "all").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the LibriSpeechDataset.
+inline std::shared_ptr<LibriSpeechDataset> LibriSpeech(const std::string &dataset_dir, const std::string &usage = "all",
+                                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LibriSpeechDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+
+/// \brief Function to create a LibriSpeechDataset.
+/// \note The generated dataset has two columns ["audio", "samplerate", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of LibriSpeech, can be "training", "validation", "testing" or "all" (default = "all").
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the LibriSpeechDataset.
+inline std::shared_ptr<LibriSpeechDataset> LibriSpeech(const std::string &dataset_dir, const std::string &usage,
+                                           const Sampler *sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LibriSpeechDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+
+/// \brief Function to create a LibriSpeechDataset.
+/// \note The generated dataset has two columns ["audio", "samplerate", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of LibriSpeech, can be "training", "validation", "testing" or "all" (default = "all").
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the LibriSpeechDataset.
+inline std::shared_ptr<LibriSpeechDataset> LibriSpeech(const std::string &dataset_dir, const std::string &usage,
+                                           const std::reference_wrapper<Sampler> sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LibriSpeechDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
 
 class TextFileDataset : public Dataset {
  public:

@@ -22,7 +22,6 @@ import time
 import threading
 from collections import namedtuple
 from types import FunctionType
-
 from mindspore import log as logger
 from mindspore._c_expression import MSContext, ms_ctx_param
 from mindspore._checkparam import args_type_check, Validator
@@ -354,11 +353,11 @@ def set_auto_parallel_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
-        If a program has tasks on different parallel modes, before setting a new parallel mode for the
-        next task, interface mindspore.context.reset_auto_parallel_context() should be called to reset
+        If a program has tasks with different parallel modes, then before setting new parallel mode for the
+        next task, interface mindspore.context.reset_auto_parallel_context() needs to be called to reset
         the configuration.
-        Setting or changing parallel modes must be called before creating any Initializer, otherwise,
-        it may have RuntimeError when compiling the network.
+        Setting or changing parallel modes must be called before any creating Initializer, otherwise,
+        RuntimeError may be raised when compiling the network.
 
     Some configurations are parallel mode specific, see the below table for details:
 
@@ -370,7 +369,7 @@ def set_auto_parallel_context(**kwargs):
     gradients_mean               auto_parallel_search_mode
     parallel_mode                strategy_ckpt_load_file
     all_reduce_fusion_config     strategy_ckpt_save_file
-    enable_parallel_optimizer    dataset_strategy
+    enable_parallel_optimizer    full_batch
                \                 pipeline_stages
                \                 grad_accumulation_step
     ===========================  ===========================
@@ -380,8 +379,9 @@ def set_auto_parallel_context(**kwargs):
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
         gradients_mean (bool): Whether to perform mean operator after allreduce of gradients.
                      "stand_alone" do not support gradients_mean. Default: False.
-        gradient_fp32_sync (bool): Run allreduce of gradients in fp32. "stand_alone", "data_parallel"
-                     and "hybrid_parallel" do not support gradient_fp32_sync. Default: True.
+        gradient_fp32_sync (bool): Run allreduce of gradients in fp32.
+                     "stand_alone", "data_parallel" and "hybrid_parallel" do not support
+                     gradient_fp32_sync. Default: True.
         parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
                      "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Default: "stand_alone".
 
@@ -391,7 +391,8 @@ def set_auto_parallel_context(**kwargs):
 
                      - hybrid_parallel: Achieves data parallelism and model parallelism manually.
 
-                     - semi_auto_parallel: Achieves data and model parallelism by setting parallel strategies.
+                     - semi_auto_parallel: Achieves data parallelism and model parallelism by
+                       setting parallel strategies.
 
                      - auto_parallel: Achieving parallelism automatically.
         auto_parallel_search_mode (str): There are two kinds of shard strategy search modes, "recursive_programming"
@@ -409,21 +410,17 @@ def set_auto_parallel_context(**kwargs):
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
-                       should be set as True. Default: False. The interface is not be recommended currently,
-                       it is better using 'dataset_strategy' to replace it.
-        dataset_strategy Union[str, tuple]: Dataset sharding strategy. Default: "data_parallel".
-                       dataset_strategy="data_parallel" is equal to full_batch=False, dataset_strategy="full_batch" is
-                       equal to full_batch=True. For dataset load into net by model parallel strategy likes
-                       ds_stra ((1, 8), (1, 8)), it requires using set_auto_parallel_context(dataset_strategy=ds_stra).
+                       should be set with True. Default: False.
         enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
                        data parallel training in the benefit of time and memory saving. Currently, auto and semi auto
                        parallel mode support all optimizers in both Ascend and GPU. Data parallel mode only supports
                        `Lamb` and `AdamWeightDecay` in Ascend . Default: False.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
-        pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
-                         distributed alone the pipeline. The total devices will be divided into 'pipeline_stags' stages.
-                        Currently this could only be used when parallel mode semi_auto_parallel is enabled. Default: 1.
+        pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
+                        the devices are distributed alone the pipeline. The total devices will be divided into
+                        'pipeline_stags' stages. This currently could only be used when
+                        parallel mode semi_auto_parallel is enabled. Default: 1.
         grad_accumulation_step (int): Set the accumulation steps of gradients in auto and semi auto parallel mode.
                         This should be a positive int. Default: 1.
 
@@ -440,12 +437,13 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
         >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
         >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
-        >>> context.set_auto_parallel_context(dataset_strategy=((1, 8), (1, 8)))
+        >>> context.set_auto_parallel_context(full_batch=True)
         >>> context.set_auto_parallel_context(enable_parallel_optimizer=False)
         >>> context.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
         >>> context.set_auto_parallel_context(pipeline_stages=2)
     """
     _set_auto_parallel_context(**kwargs)
+
 
 def get_auto_parallel_context(attr_key):
     """
@@ -522,14 +520,14 @@ def set_context(**kwargs):
     Set context for running environment.
 
     Context should be configured before running your program. If there is no configuration,
-    it will be automatically obtained according to the device target by default. GRAPH_MODE or
+    it will automatic acquisition according to device target by default. GRAPH_MODE or
     PYNATIVE_MODE can be set by `mode` attribute and both modes support all backends, default
     mode is GRAPH_MODE.
 
-    When the `save_graphs` attribute is set as True, attribute of `save_graphs_path` is used to set the
+    When the `save_graphs` attribute is set to True, attribute of `save_graphs_path` is used to set the
     intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
     For other configurations and arguments, please refer to the corresponding module
-    description. Additionally, the configuration is optional and can be enabled when needed.
+    description, the configuration is optional and can be enabled when needed.
 
     Note:
         Attribute name is required for setting attributes.
@@ -581,7 +579,7 @@ def set_context(**kwargs):
               equivalently by setting opt_level greater than 0.
             - dump_as_text: dump detail info as text files. Default: false.
 
-            More options can refer to the implementation code.
+            More options can be referred from the implementation code.
             These options can also be set by environment variable `MS_GRAPH_KERNEL_FLAGS`, without modifying
             network source code. For example, `export MS_GRAPH_KERNEL_FLAGS="--opt_level=2 --dump_as_text"`.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
@@ -599,15 +597,15 @@ def set_context(**kwargs):
         profiling_options (str): Set profiling collection options, operators can profiling data here.
             The values of profiling collection options are as follows, supporting the collection of multiple data.
 
-            - output: The saving path of the profiling collection result. The directory specified by this
-              parameter should be created in advance in the training environment (container or host side) and ensure
+            - output: the saving the path of the profiling collection result file. The directory spectified by this
+              parameter needs to be created in advance on the training environment (container or host side) and ensure
               that the running user configured during installation has read and write permissions.It supports the
               configuration of absolute or relative paths(relative to the current path when executing the command line).
               The absolute path configuration starts with '/', for example:/home/data/output.
-              The relative path configuration starts with the directory name,for example:output.
+              The relative path configuration directly starts with the directory name,for example:output.
 
             - training_trace: collect iterative trajectory data, that is, the training task and software information of
-              the AI software stack, to realize performance analysis of the training task, focusing on data
+              the AI software stack, to achieve performance analysis of the training task, focusing on data
               enhancement, forward and backward calculation, gradient aggregation update and other related data.
               The value is on/off.
 
@@ -642,7 +640,7 @@ def set_context(**kwargs):
         max_device_memory (str): Sets the maximum memory available for devices.
             Currently, it is only supported on GPU. The format is "xxGB". Default: "1024GB".
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
-            a file by default, and turns off printing to the screen. If the file exists already, add a timestamp
+            a file by default, and turns off printing to the screen. If the file already exists, add a timestamp
             suffix to the file. Default: ''.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
             For details of sparsity and sparse tensor, please check
@@ -654,7 +652,7 @@ def set_context(**kwargs):
             RL: rl_tune;
             GA: ga_tune;
             RL,GA: rl_tune/ga_tune(Automatic selection).
-            - rl_tune: Reinforcement Learning tune.
+            - rl_tune: Reinforecement Learning tune.
             - ga_tune: Genetic Algorithm tune.
         grad_for_scalar (bool): Whether to get gradient for scalar. If set, the gradient of scalar input parameter
             can be calculated. Now, only part of the scalar operators support this calculation. Default: False.
@@ -662,8 +660,8 @@ def set_context(**kwargs):
             This is an experimental prototype that is subject to change and/or deletion.
         load_compile_cache (bool): Whether to use the cache of the graph compiled by frontend.
             When it is true, the graph compilation will skip the frontend compilation process. It means that
-            you should make sure the network has not been changed since the last execution. By now, we have
-            not support automatically checking the changes yet. Default: False.
+            you should make sure the network has not been changed since the last execution. Currently we have
+            not support automatic checking the changes yet. Default: False.
             This is an experimental prototype that is subject to change and/or deletion.
 
     Raises:
@@ -717,7 +715,7 @@ def set_context(**kwargs):
 def get_context(attr_key):
     """
     Get context attribute value according to the input key.
-    If some attributes are not set, they will be automatically obtained.
+    If some attribute are not set, it will be automatically obtained.
 
     Args:
         attr_key (str): The key of the attribute.

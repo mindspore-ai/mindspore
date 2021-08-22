@@ -30,7 +30,7 @@ constexpr int kAnfPopulaterInputNumTwo = 2;
 
 lite::STATUS UpdateConv2DParamPass::UpdateCommonConv2D(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
-  if (fmk_type_ != converter::kFmkTypeTf) {
+  if (fmk_type_ != lite::converter::FmkType_TF) {
     return lite::RET_OK;
   }
   auto conv = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode->input(0));

@@ -57,14 +57,6 @@ void CPUDeviceContext::Initialize() {
   initialized_ = true;
 }
 
-void CPUDeviceContext::Destroy() {
-  // Release memory.
-  if (mem_manager_ != nullptr) {
-    mem_manager_->FreeDeviceMemory();
-    mem_manager_ = nullptr;
-  }
-}
-
 bool CPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(mem_manager_);

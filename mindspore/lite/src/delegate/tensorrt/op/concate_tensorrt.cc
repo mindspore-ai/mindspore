@@ -20,10 +20,6 @@
 namespace mindspore::lite {
 int ConcateTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() < 1) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -45,6 +41,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "concate_op convert failed";
     return RET_ERROR;
   }
+  MS_LOG(INFO) << "in tensort size of concate: " << tensorrt_in_tensors_.size();
   if (tensorrt_in_tensors_.size() != in_tensors_.size()) {
     MS_LOG(ERROR) << "concate_op in tensor is invalid";
     return RET_ERROR;
@@ -67,7 +64,6 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     concate_layer->setAxis(axis);
   }
   concate_layer->setName(op_name_.c_str());
-  concate_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(concate_layer->getOutput(0));
 
   return RET_OK;

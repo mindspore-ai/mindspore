@@ -20,7 +20,7 @@ import mindspore
 from mindspore.nn import Cell
 from mindspore import context
 from mindspore.context import ParallelMode
-from mindspore.communication.management import init, get_group_size, get_rank
+from mindspore.communication.management import init
 from mindspore.nn.optim import Momentum
 from mindspore.train.model import Model
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
@@ -42,11 +42,7 @@ from model_utils.device_adapter import get_device_id, get_device_num, get_rank_i
 
 mindspore.common.seed.set_seed(1)
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False,
-                    reserve_class_name_in_scope=False, enable_graph_kernel=config.device_target == "GPU")
-if config.device_target == 'Ascend':
-    context.set_context(enable_auto_mixed_precision=False)
-if config.device_target != 'GPU' or not config.is_distributed:
-    context.set_context(device_id=get_device_id())
+                    device_id=get_device_id(), reserve_class_name_in_scope=False, enable_auto_mixed_precision=False)
 
 class DistributedHelper(Cell):
     '''DistributedHelper'''
@@ -179,38 +175,15 @@ def modelarts_pre_process():
 
     config.ckpt_path = os.path.join(config.output_path, str(get_rank_id()), config.ckpt_path)
 
-def model_context():
-    """set context for facerecognition"""
-    if config.is_distributed:
-        parallel_mode = ParallelMode.HYBRID_PARALLEL if config.device_target == 'Ascend' else ParallelMode.DATA_PARALLEL
-    else:
-        parallel_mode = ParallelMode.STAND_ALONE
-    if config.is_distributed:
-        if config.device_target == 'Ascend':
-            context.set_auto_parallel_context(parallel_mode=parallel_mode,
-                                              device_num=config.world_size, gradients_mean=True)
-            init()
-            config.local_rank = get_rank_id()
-            config.world_size = get_device_num()
-        elif config.device_target == 'GPU':
-            init()
-            device_num = get_group_size()
-            context.reset_auto_parallel_context()
-            context.set_auto_parallel_context(device_num=device_num,
-                                              parallel_mode=parallel_mode,
-                                              gradients_mean=True)
-            config.world_size = get_group_size()
-            config.local_rank = get_rank()
-        else:
-            pass
-
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
     '''run train function.'''
-    model_context()
+    config.local_rank = get_rank_id()
+    config.world_size = get_device_num()
     log_path = os.path.join(config.ckpt_path, 'logs')
     config.logger = get_logger(log_path, config.local_rank)
+
     support_train_stage = ['base', 'beta']
     if config.train_stage.lower() not in support_train_stage:
         config.logger.info('your train stage is not support.')
@@ -219,6 +192,13 @@ def run_train():
     if not os.path.exists(config.data_dir):
         config.logger.info('ERROR, data_dir is not exists, please set data_dir in config.py')
         raise ValueError('ERROR, data_dir is not exists, please set data_dir in config.py')
+
+    parallel_mode = ParallelMode.HYBRID_PARALLEL if config.is_distributed else ParallelMode.STAND_ALONE
+    context.set_auto_parallel_context(parallel_mode=parallel_mode,
+                                      device_num=config.world_size, gradients_mean=True)
+    if config.is_distributed:
+        init()
+
     if config.local_rank % 8 == 0:
         if not os.path.exists(config.ckpt_path):
             os.makedirs(config.ckpt_path)
@@ -280,7 +260,7 @@ def run_train():
                                             scale_window=2000)
     if config.device_target == "Ascend":
         model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=scale_manager)
-    elif config.device_target in ("CPU", "GPU"):
+    elif config.device_target == "CPU":
         model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=None)
 
     save_checkpoint_steps = config.ckpt_steps

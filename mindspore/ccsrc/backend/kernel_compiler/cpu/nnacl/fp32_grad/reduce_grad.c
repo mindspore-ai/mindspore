@@ -64,11 +64,11 @@ void ReduceSumByAxes(const float *input, const int *input_dims, float *output, c
     if (output_dims[idx] != input_dims[idx]) same_shape = 0;
   }
   if (same_shape) {
-    memcpy(output, input, (size_t)(num_outputs) * sizeof(float));
+    memcpy(output, input, num_outputs * sizeof(float));
     return;
   }
 
-  memset(output, 0, (size_t)(num_outputs) * sizeof(float));  // zero output
+  memset(output, 0, num_outputs * sizeof(float));  // zero output
 
   int input_iter[8] = {0};
   int axes[5] = {0};

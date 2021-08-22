@@ -13,21 +13,14 @@
 # limitations under the License.
 
 import numpy as np
-import pytest
+
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.context import set_auto_parallel_context, ParallelMode
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
-import mindspore.ops as P
-from mindspore.parallel.nn import TransformerEncoder, TransformerDecoder, Transformer, TransformerOpParallelConfig, \
-    VocabEmbedding, CrossEntropyLoss, OpParallelConfig, EmbeddingOpParallelConfig
-from mindspore.nn import Dense as Linear
-from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
-from mindspore.nn.optim import AdamWeightDecay
-from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell, TrainOneStepCell
-from mindspore.nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
+from mindspore.nn.parallel import TransformerEncoder, TransformerDecoder, Transformer, TransformerParallelConfig,\
+    VocabEmbedding
 from mindspore.train import Model
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -55,159 +48,39 @@ class Dataset(MindData):
         self.index = 0
 
 
-config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, vocab_emb_dp=False)
-pipeline_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, pipeline_stage=4,
-                                              micro_batch_num=4, vocab_emb_dp=False)
-
-
-class NetWithLossFiveInputs(nn.Cell):
-    def __init__(self, network):
-        super(NetWithLossFiveInputs, self).__init__()
-        self.loss = VirtualLoss()
-        self.network = network
-
-    def construct(self, x1, x2, x3, x4, x5):
-        predict, _, _ = self.network(x1, x2, x3, x4, x5)
-        return self.loss(predict)
-
-
-def run_total_transformer_model_head(e_layer,
-                                     d_layer,
-                                     arg_parallel_config):
-    dp = arg_parallel_config.data_parallel
-    mp = arg_parallel_config.model_parallel
-    pp = arg_parallel_config.pipeline_stage
-    if dp * mp * pp != 1:
-        set_auto_parallel_context(device_num=8,
-                                  full_batch=True,
-                                  global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
-
-    class Net(nn.Cell):
-        def __init__(self, en_layer, de_layer, parallel_config):
-            super(Net, self).__init__()
-            self.embedding = VocabEmbedding(vocab_size=240, embedding_size=20,
-                                            parallel_config=config.embedding_dp_mp_config)
-            self.network = Transformer(encoder_layers=en_layer,
-                                       decoder_layers=de_layer,
-                                       batch_size=2,
-                                       src_seq_length=20,
-                                       tgt_seq_length=10,
-                                       hidden_size=64,
-                                       num_heads=8,
-                                       ffn_hidden_size=64,
-                                       parallel_config=parallel_config)
-            self.head = Linear(in_channels=64, out_channels=200)
-            self.loss = CrossEntropyLoss(parallel_config=config.dp_mp_config)
-
-        def construct(self, x1, x2, x3, x4, x5, y, mask):
-            predict, _, _ = self.network(x1, x2, x3, x4, x5)
-            predict = P.Reshape()(predict, (-1, F.shape(predict)[-1]))
-            return self.loss(predict, y, mask)
-
-    encoder_input_value = Tensor(np.ones((2, 20, 64)), mstype.float32)
-    encoder_input_mask = Tensor(np.ones((2, 20, 20)), mstype.float16)
-    decoder_input_value = Tensor(np.ones((2, 10, 64)), mstype.float32)
-    decoder_input_mask = Tensor(np.ones((2, 10, 10)), mstype.float16)
-    memory_mask = Tensor(np.ones((2, 10, 20)), mstype.float16)
-    seq = 20
-    if d_layer > 0:
-        seq = 10
-    label = Tensor(np.ones((2 * seq,)), mstype.int32)
-    input_mask = Tensor(np.ones((2 * seq,)), mstype.float32)
-    net = Net(en_layer=e_layer, de_layer=d_layer, parallel_config=arg_parallel_config)
-    params = net.trainable_params()
-    optimizer = AdamWeightDecay(params)
-    dataset = Dataset(encoder_input_value, encoder_input_mask, decoder_input_value, decoder_input_mask,
-                      memory_mask, label, input_mask)
-    net_with_grad = TrainOneStepCell(net, optimizer=optimizer)
-    model = Model(net_with_grad)
-
-    model.train(1, dataset, dataset_sink_mode=False)
-
-
 def test_transformer_model():
-    set_auto_parallel_context(device_num=8, global_rank=0,
-                              full_batch=True,
-                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    class NetWithLoss(nn.Cell):
+        def __init__(self, network):
+            super(NetWithLoss, self).__init__()
+            self.loss = VirtualLoss()
+            self.network = network
+
+        def construct(self, x1, x2, x3, x4, x5):
+            predict, _, _ = self.network(x1, x2, x3, x4, x5)
+            return self.loss(predict)
+
+    config = TransformerParallelConfig(dp=1, mp=8)
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     net = Transformer(encoder_layers=1,
                       decoder_layers=2,
-                      batch_size=2,
-                      src_seq_length=20,
-                      tgt_seq_length=10,
                       hidden_size=64,
                       num_heads=8,
                       ffn_hidden_size=64,
+                      src_seq_length=20,
+                      tgt_seq_length=20,
                       parallel_config=config)
 
     encoder_input_value = Tensor(np.ones((2, 20, 64)), mstype.float32)
-    encoder_input_mask = Tensor(np.ones((2, 20, 20)), mstype.float16)
+    encoder_input_mask = Tensor(np.ones((2, 1, 20, 20)), mstype.float16)
     decoder_input_value = Tensor(np.ones((2, 10, 64)), mstype.float32)
-    decoder_input_mask = Tensor(np.ones((2, 10, 10)), mstype.float16)
-    memory_mask = Tensor(np.ones((2, 10, 20)), mstype.float16)
-    net = NetWithLossFiveInputs(net)
-    params = net.trainable_params()
-    optimizer = AdamWeightDecay(params)
+    decoder_input_mask = Tensor(np.ones((2, 1, 10, 10)), mstype.float16)
+    memory_mask = Tensor(np.ones((2, 1, 10, 20)), mstype.float16)
+    net = NetWithLoss(net)
+
     dataset = Dataset(encoder_input_value, encoder_input_mask, decoder_input_value, decoder_input_mask,
                       memory_mask)
-    net_with_grad = TrainOneStepCell(net, optimizer=optimizer)
-    model = Model(net_with_grad)
 
-    model.train(1, dataset, dataset_sink_mode=False)
-
-
-def test_transformer_model_head_parallel_only_encoder():
-    local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
-    run_total_transformer_model_head(e_layer=2, d_layer=0, arg_parallel_config=local_config)
-
-
-def test_transformer_model_head_parallel():
-    local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
-    run_total_transformer_model_head(e_layer=1, d_layer=1, arg_parallel_config=local_config)
-
-
-def test_transformer_model_head_parallel_decoder():
-    local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
-    with pytest.raises(ValueError):
-        run_total_transformer_model_head(e_layer=0, d_layer=1, arg_parallel_config=local_config)
-
-
-def test_transformer_model_head_stand_alone():
-    local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=1)
-    run_total_transformer_model_head(e_layer=2, d_layer=2, arg_parallel_config=local_config)
-
-
-def test_pipeline_single_transformer():
-    set_auto_parallel_context(device_num=32,
-                              full_batch=True,
-                              pipeline_stages=pipeline_config.pipeline_stage, global_rank=0,
-                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
-
-    net = Transformer(batch_size=4 // pipeline_config.micro_batch_num,
-                      src_seq_length=20,
-                      tgt_seq_length=10,
-                      encoder_layers=2,
-                      decoder_layers=2,
-                      hidden_size=64,
-                      num_heads=8,
-                      ffn_hidden_size=64,
-                      parallel_config=pipeline_config)
-
-    encoder_input_value = Tensor(np.ones((4, 20, 64)), mstype.float32)
-    encoder_input_mask = Tensor(np.ones((4, 20, 20)), mstype.float16)
-    decoder_input_value = Tensor(np.ones((4, 10, 64)), mstype.float32)
-    decoder_input_mask = Tensor(np.ones((4, 10, 10)), mstype.float16)
-    memory_mask = Tensor(np.ones((4, 10, 20)), mstype.float16)
-    net = NetWithLossFiveInputs(net)
-    net = PipelineCell(net, pipeline_config.micro_batch_num)
-    net = _VirtualDatasetCell(net)
-    params = net.infer_param_pipeline_stage()
-    optimizer = AdamWeightDecay(params)
-    dataset = Dataset(encoder_input_value, encoder_input_mask, decoder_input_value, decoder_input_mask,
-                      memory_mask)
-    update_cell = DynamicLossScaleUpdateCell(loss_scale_value=1024, scale_factor=2, scale_window=1000)
-    net_with_grad = _TrainPipelineWithLossScaleCell(net, optimizer=optimizer,
-                                                    scale_sense=update_cell)
-    model = Model(net_with_grad)
+    model = Model(net)
 
     model.train(1, dataset, dataset_sink_mode=False)
 
@@ -223,19 +96,17 @@ def test_encoder():
             predict, _ = self.network(x1, x2)
             return self.loss(predict)
 
-    set_auto_parallel_context(device_num=8,
-                              full_batch=True,
-                              global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    config = TransformerParallelConfig(dp=1, mp=8)
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     net = TransformerEncoder(num_layers=2,
-                             batch_size=2,
-                             seq_length=16,
                              hidden_size=8,
                              ffn_hidden_size=64,
+                             seq_length=16,
                              num_heads=8,
                              parallel_config=config)
 
     encoder_input_value = Tensor(np.ones((2, 16, 8)), mstype.float32)
-    encoder_input_mask = Tensor(np.ones((2, 16, 16)), mstype.float16)
+    encoder_input_mask = Tensor(np.ones((2, 1, 16, 16)), mstype.float16)
 
     net = NetWithLoss(net)
 
@@ -257,22 +128,19 @@ def test_decoder():
             predict, _, _ = self.network(x1, x2, x3, x4)
             return self.loss(predict)
 
-    set_auto_parallel_context(device_num=8,
-                              full_batch=True,
-                              global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    config = TransformerParallelConfig(dp=1, mp=8)
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     net = TransformerDecoder(num_layers=1,
-                             batch_size=8,
                              hidden_size=16,
                              ffn_hidden_size=8,
                              num_heads=8,
-                             src_seq_length=20,
-                             tgt_seq_length=10,
+                             seq_length=10,
                              parallel_config=config)
 
-    encoder_input_value = Tensor(np.ones((8, 20, 16)), mstype.float32)
-    decoder_input_value = Tensor(np.ones((8, 10, 16)), mstype.float32)
-    decoder_input_mask = Tensor(np.ones((8, 10, 10)), mstype.float16)
-    memory_mask = Tensor(np.ones((8, 10, 20)), mstype.float16)
+    encoder_input_value = Tensor(np.ones((2, 20, 16)), mstype.float32)
+    decoder_input_value = Tensor(np.ones((2, 10, 16)), mstype.float32)
+    decoder_input_mask = Tensor(np.ones((2, 1, 10, 10)), mstype.float16)
+    memory_mask = Tensor(np.ones((2, 1, 10, 20)), mstype.float16)
 
     net = NetWithLoss(net)
 
@@ -283,6 +151,7 @@ def test_decoder():
 
 
 def test_vocabembedding_dp_true():
+    config = TransformerParallelConfig(dp=1, mp=8)
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
 
     class NetWithLoss(nn.Cell):
@@ -295,7 +164,15 @@ def test_vocabembedding_dp_true():
             predict, _ = self.network(x1)
             return self.loss(predict)
 
-    net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=config.embedding_dp_mp_config)
+    class GradWrap(nn.Cell):
+        def __init__(self, network):
+            super(GradWrap, self).__init__()
+            self.network = network
+
+        def construct(self, x1):
+            return grad_all(self.network)(x1)
+
+    net = VocabEmbedding(vocab_size=100, embedding_size=16, parallel_config=config)
     net = NetWithLoss(net)
     encoder_input_value = Tensor(np.ones((2, 64)), mstype.int32)
     dataset = Dataset(encoder_input_value)
@@ -305,6 +182,7 @@ def test_vocabembedding_dp_true():
 
 
 def test_vocabembedding_dp_false():
+    config = TransformerParallelConfig(dp=1, mp=8, vocab_emb_dp=False)
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
 
     class NetWithLoss(nn.Cell):
@@ -317,109 +195,18 @@ def test_vocabembedding_dp_false():
             predict, _ = self.network(x1)
             return self.loss(predict)
 
-    net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=config.embedding_dp_mp_config)
+    class GradWrap(nn.Cell):
+        def __init__(self, network):
+            super(GradWrap, self).__init__()
+            self.network = network
+
+        def construct(self, x1):
+            return grad_all(self.network)(x1)
+
+    net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=config)
     net = NetWithLoss(net)
     encoder_input_value = Tensor(np.ones((2, 64)), mstype.int32)
     dataset = Dataset(encoder_input_value)
 
     model = Model(net)
     model.train(1, dataset, dataset_sink_mode=False)
-
-
-def test_parallel_cross_entroy_loss_semi_auto_parallel():
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
-
-    class NetWithLoss(nn.Cell):
-        def __init__(self, network, config_setting):
-            super(NetWithLoss, self).__init__()
-            self.loss = CrossEntropyLoss(config_setting)
-            self.network = network
-
-        def construct(self, x1, x2, x3):
-            predict, _ = self.network(x1)
-            predict = P.Reshape()(predict, (-1, 16))
-            return self.loss(predict, x2, x3)
-
-    net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=config.embedding_dp_mp_config)
-    net = NetWithLoss(net, config.dp_mp_config)
-    embed_ids = Tensor(np.ones((2, 64)), mstype.int32)
-    labels = Tensor(np.ones((2 * 64,)), mstype.int32)
-    input_mask = Tensor(np.ones((2 * 64,)), mstype.float32)
-    dataset = Dataset(embed_ids, labels, input_mask)
-
-    model = Model(net)
-    model.train(1, dataset, dataset_sink_mode=False)
-
-
-def test_transformer_parallel_config():
-    parallel_test_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=3)
-
-    with pytest.raises(TypeError):
-        parallel_test_config.data_parallel = False
-
-    with pytest.raises(ValueError):
-        parallel_test_config.data_parallel = 0
-
-    with pytest.raises(TypeError):
-        parallel_test_config.model_parallel = False
-
-    with pytest.raises(ValueError):
-        parallel_test_config.model_parallel = 0
-
-    with pytest.raises(TypeError):
-        parallel_test_config.pipeline_stage = False
-
-    with pytest.raises(ValueError):
-        parallel_test_config.pipeline_stage = 0
-
-    with pytest.raises(TypeError):
-        parallel_test_config.micro_batch_num = False
-
-    with pytest.raises(ValueError):
-        parallel_test_config.micro_batch_num = 0
-
-    with pytest.raises(TypeError):
-        parallel_test_config.gradient_aggregation_group = False
-
-    with pytest.raises(ValueError):
-        parallel_test_config.gradient_aggregation_group = 0
-
-    with pytest.raises(TypeError):
-        parallel_test_config.recompute = 1
-
-    parallel_test_config.recompute = False
-
-    assert not parallel_test_config.recompute
-
-
-def test_parallel_config():
-    parallel_test_config = OpParallelConfig(data_parallel=1, model_parallel=3)
-
-    with pytest.raises(ValueError):
-        parallel_test_config.data_parallel = 0
-
-    with pytest.raises(TypeError):
-        parallel_test_config.model_parallel = False
-
-    with pytest.raises(ValueError):
-        parallel_test_config.model_parallel = 0
-
-    assert parallel_test_config.model_parallel == 3
-
-
-def test_embedding_parallel_config():
-    parallel_test_config = EmbeddingOpParallelConfig(data_parallel=1, model_parallel=3, vocab_emb_dp=False)
-
-    with pytest.raises(ValueError):
-        parallel_test_config.data_parallel = 0
-
-    with pytest.raises(TypeError):
-        parallel_test_config.model_parallel = False
-
-    with pytest.raises(ValueError):
-        parallel_test_config.model_parallel = 0
-
-    with pytest.raises(TypeError):
-        parallel_test_config.vocab_emb_dp = 0
-
-    assert not parallel_test_config.vocab_emb_dp

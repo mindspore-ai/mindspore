@@ -128,7 +128,7 @@ class HausdorffDistance(Metric):
             result = tuple(tup)
 
         if result is None:
-            raise ValueError(f"The sequence length should be {dim}, but got {len(tup)}.")
+            raise ValueError(f"Sequence must have length {dim}, but got {len(tup)}.")
 
         return result
 
@@ -172,7 +172,7 @@ class HausdorffDistance(Metric):
         box_end = list()
         for i in range(data.ndim):
             if nonzero_idx[i].size <= 0:
-                raise ValueError("Did not find nonzero index at the spatial dim {}".format(i))
+                raise ValueError("did not find nonzero index at the spatial dim {}".format(i))
             box_start.append(max(0, np.min(nonzero_idx[i]) - margin[i]))
             box_end.append(min(data.shape[i], np.max(nonzero_idx[i]) + margin[i] + 1))
         return box_start, box_end
@@ -195,7 +195,7 @@ class HausdorffDistance(Metric):
         if 0 <= self.percentile <= 100:
             return np.percentile(surface_distance, self.percentile)
 
-        raise ValueError(f"The percentile value should be between 0 and 100, but got {self.percentile}.")
+        raise ValueError(f"percentile should be a value between 0 and 100, get {self.percentile}.")
 
     def _get_surface_distance(self, y_pred_edges, y_edges):
         """
@@ -268,7 +268,7 @@ class HausdorffDistance(Metric):
         self._is_update = True
 
         if len(inputs) != 3:
-            raise ValueError('The HausdorffDistance needs 3 inputs (y_pred, y, label), but got {}'.format(len(inputs)))
+            raise ValueError('HausdorffDistance need 3 inputs (y_pred, y, label), but got {}'.format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])

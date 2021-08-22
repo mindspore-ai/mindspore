@@ -31,7 +31,6 @@ namespace dataset {
 Status JsonHelper::CreateAlbum(const std::string &in_dir, const std::string &out_dir) {
   // in check
   Path base_dir = Path(in_dir);
-  RETURN_IF_NOT_OK(RealPath(in_dir));
   if (!base_dir.IsDirectory() || !base_dir.Exists()) {
     RETURN_STATUS_UNEXPECTED("Input dir is not a directory or doesn't exist");
   }
@@ -42,8 +41,8 @@ Status JsonHelper::CreateAlbum(const std::string &in_dir, const std::string &out
   // iterate over in dir and create json for all images
   uint64_t index = 0;
   auto dir_it = Path::DirIterator::OpenDirectory(&base_dir);
-  while (dir_it->HasNext()) {
-    Path v = dir_it->Next();
+  while (dir_it->hasNext()) {
+    Path v = dir_it->next();
     // check if found file fits image extension
 
     // create json file in output dir with the path
@@ -51,12 +50,6 @@ Status JsonHelper::CreateAlbum(const std::string &in_dir, const std::string &out
     RETURN_IF_NOT_OK(UpdateValue(out_file, "image", v.toString(), out_file));
     index++;
   }
-  return Status::OK();
-}
-
-Status JsonHelper::RealPath(const std::string &path) {
-  std::string real_path;
-  RETURN_IF_NOT_OK(Path::RealPath(path, real_path));
   return Status::OK();
 }
 
@@ -72,16 +65,10 @@ Status JsonHelper::UpdateArray(const std::string &in_file, const std::string &ke
     Path in = Path(in_file);
     nlohmann::json js;
     if (in.Exists()) {
-      RETURN_IF_NOT_OK(RealPath(in_file));
-      try {
-        std::ifstream in_stream(in_file);
-        MS_LOG(INFO) << "Filename: " << in_file << ".";
-        in_stream >> js;
-        in_stream.close();
-      } catch (const std::exception &err) {
-        RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + in_file +
-                                 ", please delete it and try again!");
-      }
+      std::ifstream in_stream(in_file);
+      MS_LOG(INFO) << "Filename: " << in_file << ".";
+      in_stream >> js;
+      in_stream.close();
     }
     js[key] = value;
     MS_LOG(INFO) << "Write outfile is: " << js << ".";
@@ -107,18 +94,12 @@ Status JsonHelper::RemoveKey(const std::string &in_file, const std::string &key,
     Path in = Path(in_file);
     nlohmann::json js;
     if (in.Exists()) {
-      RETURN_IF_NOT_OK(RealPath(in_file));
-      try {
-        std::ifstream in_stream(in_file);
-        MS_LOG(INFO) << "Filename: " << in_file << ".";
-        in_stream >> js;
-        in_stream.close();
-      } catch (const std::exception &err) {
-        RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + in_file +
-                                 ", please delete it and try again!");
-      }
+      std::ifstream in_stream(in_file);
+      MS_LOG(INFO) << "Filename: " << in_file << ".";
+      in_stream >> js;
+      in_stream.close();
     }
-    (void)js.erase(key);
+    js.erase(key);
     MS_LOG(INFO) << "Write outfile is: " << js << ".";
     if (out_file == "") {
       std::ofstream o(in_file, std::ofstream::trunc);

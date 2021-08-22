@@ -484,7 +484,6 @@ bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
 }
 
 CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
-  MS_EXCEPTION_IF_NULL(func_graph);
   auto idx = NewValueNode(SizeToLong(output_idx));
   MS_EXCEPTION_IF_NULL(idx);
   auto imm = std::make_shared<Int64Imm>(SizeToLong(output_idx));
@@ -714,17 +713,8 @@ AbstractBasePtrList RectifyAbstractFromRegAttr(const PrimitivePtr &primitive,
   if (!opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(primitive->name(), &reg)) {
     return input_abstract;
   }
-  if (AnfAlgo::HasDynamicShapeFlag(primitive)) {
-    return input_abstract;
-  }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device == kGPUDevice) {
-    if (DynamicShapeConstInputToAttrGPU.find(primitive->name()) != DynamicShapeConstInputToAttrGPU.end()) {
-      return input_abstract;
-    }
-  } else if (DynamicShapeConstInputToAttr.find(primitive->name()) != DynamicShapeConstInputToAttr.end()) {
+  if (AnfAlgo::HasDynamicShapeFlag(primitive) ||
+      DynamicShapeConstInputToAttr.find(primitive->name()) != DynamicShapeConstInputToAttr.end()) {
     return input_abstract;
   }
   auto convert_input_list = reg.GetConstInputAttrInfo();
@@ -916,34 +906,21 @@ ValueNodePtr MakeValueNode(const ValueNodePtr &value_node) {
   return new_value_node;
 }
 
-void TransferDependOrUpdateState(const CNodePtr &old_node, const FuncGraphPtr &graph, const CNodePtr &new_node) {
+void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const CNodePtr &new_node) {
   MS_EXCEPTION_IF_NULL(old_node);
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   // Find BatchNorm's output which is a Depend or UpdateState.
-  auto node_users = manager->node_users()[old_node];
-  for (const auto &node_index : node_users) {
+  for (const auto &node_index : manager->node_users()[old_node]) {
     AnfNodePtr output = node_index.first;
+    size_t index = IntToSize(node_index.second);
     MS_EXCEPTION_IF_NULL(output);
     if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimDepend) ||
         AnfAlgo::CheckPrimitiveType(output, prim::kPrimUpdateState)) {
-      auto output_cnode = output->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(output_cnode);
-      auto inputs = output_cnode->inputs();
-      std::vector<AnfNodePtr> new_inputs{output_cnode->input(0)};
-      for (size_t i = 1; i < inputs.size(); i++) {
-        auto input = inputs[i];
-        if (input == old_node) {
-          new_inputs.emplace_back(new_node);
-        } else {
-          new_inputs.emplace_back(input);
-        }
-      }
-      auto new_output = graph->NewCNode(new_inputs);
-      new_output->set_abstract(output->abstract());
-      new_output->set_scope(output->scope());
-      manager->Replace(output, new_output);
+      auto depend = output->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(depend);
+      depend->set_input(index, new_node);
     }
   }
 }

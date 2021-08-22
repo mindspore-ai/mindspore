@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API Softplus : public PrimitiveC {
+class Softplus : public PrimitiveC {
  public:
   Softplus() : PrimitiveC(prim::kPrimSoftplus->name()) { InitIOName({"x"}, {"output"}); }
   ~Softplus() = default;

@@ -19,10 +19,10 @@ from functools import wraps
 import numpy as np
 from mindspore._c_dataengine import TensorOp, TensorOperation
 
-from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER, \
-    check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
-    parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, \
-    check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32
+from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
+    check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, parse_user_args, type_check, \
+    type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, check_value_cutoff, check_value_ratio, \
+    check_odd
 from .utils import Inter, Border, ImageBatchFormat, SliceMode
 
 
@@ -143,7 +143,7 @@ def check_degrees(degrees):
     """Check if the degrees is legal."""
     type_check(degrees, (int, float, list, tuple), "degrees")
     if isinstance(degrees, (int, float)):
-        check_non_negative_float32(degrees, "degrees")
+        check_pos_float32(degrees, "degrees")
     elif isinstance(degrees, (list, tuple)):
         if len(degrees) == 2:
             type_check_list(degrees, (int, float), "degrees")
@@ -783,22 +783,6 @@ def check_bounding_box_augment_cpp(method):
         if transform and getattr(transform, 'parse', None):
             transform = transform.parse()
         type_check(transform, (TensorOp, TensorOperation), "transform")
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_adjust_gamma(method):
-    """Wrapper method to check the parameters of AdjustGamma ops (Python and C++)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [gamma, gain], _ = parse_user_args(method, *args, **kwargs)
-        type_check(gamma, (float, int), "gamma")
-        check_value(gamma, (0, FLOAT_MAX_INTEGER))
-        if gain is not None:
-            type_check(gain, (float, int), "gain")
-            check_value(gain, (FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER))
         return method(self, *args, **kwargs)
 
     return new_method

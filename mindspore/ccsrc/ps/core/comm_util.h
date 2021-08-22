@@ -37,14 +37,6 @@
 #include <event2/listener.h>
 #include <event2/util.h>
 
-#include <openssl/ssl.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <assert.h>
-#include <openssl/pkcs12.h>
-#include <openssl/bio.h>
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -57,7 +49,6 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
@@ -112,18 +103,6 @@ class CommUtil {
 
   // Parse the configuration file according to the key.
   static std::string ParseConfig(const Configuration &config, const std::string &key);
-
-  // verify valid of certificate time
-  static bool VerifyCertTime(const X509 *cert, int64_t time = 0);
-  // verify valid of equip certificate with CRL
-  static bool VerifyCRL(const X509 *cert, const std::string &crl_path);
-  // Check the common name of the certificate
-  static bool VerifyCommonName(const X509 *cert, const std::string &ca_path);
-  // The string is divided according to delim
-  static std::vector<std::string> Split(const std::string &s, char delim);
-  // Check the cipher list of the certificate
-  static bool VerifyCipherList(const std::vector<std::string> &list);
-  static void InitOpenSSLEnv();
 
  private:
   static std::random_device rd;

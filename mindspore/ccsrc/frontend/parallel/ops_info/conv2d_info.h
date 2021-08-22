@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "ir/value.h"
-#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
@@ -58,11 +57,9 @@ class Conv2DInfo : public OperatorInfo {
   void InferSendRecvFlag();
   void InferOverlapShapes();
   void InferStridedSliceAttrs();
-  std::string ReplaceNodeName();
-  AnfNodePtr GenerateConv2DNode(const AnfNodePtr &new_input, const CNodePtr &cnode);
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
-  OperatorAttrs CreateNeighborExchangeAttrs(const CNodePtr &cnode);
-  OperatorAttrs CreateConv2DAttrs();
+  OperatorAttrs CreatNeighborExchangeAttrs(const CNodePtr &cnode);
+  OperatorAttrs CreatConv2DAttrs();
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 
   int64_t out_channel_ = 1;
@@ -109,16 +106,10 @@ class Conv2DInfo : public OperatorInfo {
   Shapes send_shapes_;
   Shapes recv_shapes_;
 
-  GenerateGraph gen_g_ = GenerateGraph(attrs_);
-
   virtual Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
   virtual void InferNewPadList();
   virtual int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
-
- private:
-  Status CheckHWStrategySameMode(int64_t h_strategy, int64_t w_strategy);
-  Status CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy);
 };
 
 class Conv2DBackpropInputInfo : public Conv2DInfo {

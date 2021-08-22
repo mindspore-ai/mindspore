@@ -60,6 +60,10 @@ class MS_API Benchmark : public BenchmarkBase {
 
   int CompareOutput() override;
 
+  tensor::MSTensor *GetTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
+
+  tensor::MSTensor *GetTensorByNodeShape(const std::vector<size_t> &node_shape);
+
   int CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
                                      int *total_size);
 

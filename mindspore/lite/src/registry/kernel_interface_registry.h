@@ -22,11 +22,11 @@
 #include <memory>
 #include <mutex>
 #include <set>
-#include "include/registry/register_kernel_interface.h"
+#include "include/registry/kernel_interface.h"
 #include "include/model.h"
 
 namespace mindspore {
-namespace registry {
+namespace lite {
 class KernelInterfaceRegistry {
  public:
   static KernelInterfaceRegistry *Instance() {
@@ -36,8 +36,8 @@ class KernelInterfaceRegistry {
 
   std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
                                                               const schema::Primitive *primitive);
-  Status CustomReg(const std::string &provider, const std::string &op_type, registry::KernelInterfaceCreator creator);
-  Status Reg(const std::string &provider, int op_type, registry::KernelInterfaceCreator creator);
+  int CustomReg(const std::string &provider, const std::string &op_type, kernel::KernelInterfaceCreator creator);
+  int Reg(const std::string &provider, int op_type, kernel::KernelInterfaceCreator creator);
   virtual ~KernelInterfaceRegistry();
 
  private:
@@ -49,13 +49,13 @@ class KernelInterfaceRegistry {
 
   std::mutex mutex_;
   // key: provider
-  std::map<std::string, registry::KernelInterfaceCreator *> kernel_creators_;
+  std::map<std::string, kernel::KernelInterfaceCreator *> kernel_creators_;
   std::map<std::string, std::map<int, std::shared_ptr<kernel::KernelInterface>>> kernel_interfaces_;
   // key: provider        key: custom type
-  std::map<std::string, std::map<std::string, registry::KernelInterfaceCreator>> custom_creators_;
+  std::map<std::string, std::map<std::string, kernel::KernelInterfaceCreator>> custom_creators_;
   std::map<std::string, std::map<std::string, std::shared_ptr<kernel::KernelInterface>>> custom_kernels_;
 };
-}  // namespace registry
+}  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_REGISTRY_KERNEL_INTERFACE_REGISTRY_H_

@@ -42,10 +42,9 @@ Status SharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
     ///                              1, 5, 1,
     ///                              1, 1, 1
 
-    const float filterMid = 5.0;
-    const float filterSum = 13.0;
+    float filterSum = 13.0;
     cv::Mat filter = cv::Mat(3, 3, CV_32F, cv::Scalar::all(1.0 / filterSum));
-    filter.at<float>(1, 1) = filterMid / filterSum;
+    filter.at<float>(1, 1) = 5.0 / filterSum;
 
     /// applying filter on channels
     cv::Mat result = cv::Mat();
@@ -64,7 +63,7 @@ Status SharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
     cv::addWeighted(input_img, alpha_, result, 1.0 - alpha_, 0.0, result);
 
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, &output_cv));
     RETURN_UNEXPECTED_IF_NULL(output_cv);
 
     *output = std::static_pointer_cast<Tensor>(output_cv);

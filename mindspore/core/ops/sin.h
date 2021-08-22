@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSin = "Sin";
-class MS_CORE_API Sin : public PrimitiveC {
+class Sin : public PrimitiveC {
  public:
   Sin() : PrimitiveC(kNameSin) {}
   ~Sin() = default;

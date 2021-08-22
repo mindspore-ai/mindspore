@@ -24,7 +24,7 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::ImageSize;
 
 namespace mindspore::kernel {
-void OpenCLKernel::AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local) {
+int OpenCLKernel::AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local) {
   std::vector<size_t> internal_global_ws = global;
   for (size_t i = 0; i < local.size(); ++i) {
     internal_global_ws.at(i) = UP_ROUND(global.at(i), local.at(i));
@@ -50,12 +50,16 @@ void OpenCLKernel::AlignGlobalLocal(const std::vector<size_t> &global, const std
     if (!local.empty()) {
       local_range_ = cl::NDRange(local.at(0), local.at(1));
     }
-  } else if (global.size() >= 3) {
+  } else if (global.size() == 3) {
     global_range_ = cl::NDRange(internal_global_ws.at(0), internal_global_ws.at(1), internal_global_ws.at(2));
     if (!local.empty()) {
       local_range_ = cl::NDRange(local.at(0), local.at(1), local.at(2));
     }
+  } else {
+    MS_LOG(ERROR) << "Not supported NDRange!";
+    return RET_ERROR;
   }
+  return RET_OK;
 }
 
 int OpenCLKernel::GetImageSize(size_t idx, lite::opencl::ImageSize *img_size) {
@@ -108,17 +112,11 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
   auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
   auto runtime = runtime_wrapper.GetInstance();
   auto allocator = runtime->GetAllocator();
-  if (!runtime->SyncCommandQueue()) {
-    MS_LOG(ERROR) << "SyncCommandQueue failed.";
-  }
+  runtime->SyncCommandQueue();
   if (mem_type == lite::opencl::MemType::BUF) {
-    if (allocator->MapBuffer(tensor->data_c(), CL_MAP_READ, nullptr, true) == nullptr) {
-      MS_LOG(ERROR) << "Map Buffer failed.";
-    }
+    allocator->MapBuffer(tensor->data_c(), CL_MAP_READ, nullptr, true);
     memcpy(data.data(), tensor->data_c(), img_info.OriginSize);
-    if (allocator->UnmapBuffer(tensor->data_c()) != RET_OK) {
-      MS_LOG(ERROR) << "UnmapBuffer failed.";
-    }
+    allocator->UnmapBuffer(tensor->data_c());
   } else {
     runtime->ReadImage(tensor->data_c(), data.data());
   }
@@ -183,7 +181,6 @@ int OpenCLKernel::PreProcess() {
       }
     }
     output->set_allocator(allocator);
-    output->ResetRefCount();
   }
   return RET_OK;
 }

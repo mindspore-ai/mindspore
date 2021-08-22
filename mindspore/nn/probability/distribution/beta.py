@@ -181,11 +181,10 @@ class Beta(Distribution):
         self.lbeta = nn.LBeta()
 
     def extend_repr(self):
-        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = 'concentration1 = {}, concentration0 = {}'.format(self._concentration1, self._concentration0)
+            s = f'concentration1 = {self._concentration1}, concentration0 = {self._concentration0}'
         else:
-            s = 'batch_shape = {}'.format(self._broadcast_shape)
+            s = f'batch_shape = {self._broadcast_shape}'
         return s
 
     @property

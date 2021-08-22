@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnstack = "Unstack";
-class MS_CORE_API Unstack : public PrimitiveC {
+class Unstack : public PrimitiveC {
  public:
   Unstack() : PrimitiveC(kNameUnstack) {}
   ~Unstack() = default;

@@ -26,6 +26,26 @@
 
 namespace mindspore {
 namespace lite {
+std::vector<std::string> StringSplit(std::string str, const std::string &pattern) {
+  std::vector<std::string> result;
+  if (str.empty()) {
+    return result;
+  }
+  std::string::size_type pos;
+  str += pattern;
+  auto size = str.size();
+
+  for (size_t i = 0; i < size; i++) {
+    pos = str.find(pattern, i);
+    if (pos < size) {
+      std::string s = str.substr(i, pos - i);
+      result.push_back(s);
+      i = pos + pattern.size() - 1;
+    }
+  }
+  return result;
+}
+
 uint64_t GetTimeUs() {
 #ifdef SUPPORT_MSVC
   FILETIME ft;
@@ -51,22 +71,18 @@ std::string RemoveSubStr(const std::string &from, const std::string &sub_str, Re
     MS_LOG(ERROR) << "string is empty";
     return "";
   }
-  if (sub_str.length() > from.length()) {
-    MS_LOG(ERROR) << "sub_str is longer than from";
-    return "";
-  }
   if (mode == PREFIX) {
     if (from.substr(0, sub_str.length()) == sub_str) {
-      result = from.substr(sub_str.length());
+      result = from.substr(sub_str.size());
     }
   } else if (mode == SUFFIX) {
-    if (from.rfind(sub_str) == from.length() - sub_str.length()) {
-      result = from.substr(0, from.length() - sub_str.length());
+    if (from.rfind(sub_str) == from.size() - sub_str.size()) {
+      result = from.substr(0, from.size() - sub_str.size());
     }
   } else {
     size_t index;
     while ((index = result.find(sub_str)) != std::string::npos) {
-      result = result.erase(index, sub_str.length());
+      result = result.erase(index, sub_str.size());
     }
   }
 
@@ -149,5 +165,6 @@ bool IsSupportSDot() {
 #endif
   return status;
 }
+
 }  // namespace lite
 }  // namespace mindspore

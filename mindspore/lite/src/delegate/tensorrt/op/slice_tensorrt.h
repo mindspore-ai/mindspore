@@ -20,8 +20,6 @@
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 
 namespace mindspore::lite {
-constexpr int BEGIN_INDEX = 1;
-constexpr int STRIDE_INDEX = 3;
 class SliceTensorRT : public TensorRTOp {
  public:
   SliceTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,

@@ -36,7 +36,7 @@ class CauchyMean(nn.Cell):
 
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_probability_cauchy_mean_loc_scale_rand_2_ndarray():
@@ -61,7 +61,7 @@ class CauchyProb(nn.Cell):
         return out1, out2, out3, out4, out5, out6
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_probability_cauchy_prob_cdf_loc_scale_rand_4_ndarray():

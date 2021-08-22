@@ -31,7 +31,6 @@
 #include "src/common/version_manager.h"
 #include "src/runtime/infer_manager.h"
 #include "src/scheduler.h"
-#include "src/lite_model.h"
 #include "include/errorcode.h"
 #include "include/model.h"
 #include "src/common/file_utils.h"
@@ -57,7 +56,7 @@ void CoderSession::EndCode() {
     context_->set_code_blocks(blocks);
   }
   if (config->code_mode() == Train) {
-    Train::TransformGraphForTrain(context_.get(), op_coders_, schema_version_);
+    Train::TransformGraphForTrain(context_.get(), op_coders_);
   }
 }
 
@@ -204,18 +203,18 @@ OpParameter *CoderSession::GenParameterAndInfer(const Model::Node *node, const s
                                                 std::vector<lite::Tensor *> *outputs) const {
   auto primitive = node->primitive_;
   MS_CHECK_PTR_RET_NULL(primitive);
-  auto parame_gen =
-    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(primitive, schema_version_), schema_version_);
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  auto parame_gen = PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(primitive), schema_version);
   MS_CHECK_PTR_RET_NULL(parame_gen);
   auto parameter = parame_gen(primitive);
   MS_CHECK_PTR_RET_NULL(parameter);
   auto ret = KernelInferShape(inputs, *outputs, parameter);
   if (ret == RET_INFER_INVALID) {
     MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name_
-                 << ", type: " << GetPrimitiveTypeName(primitive, schema_version_) << "flag set to false.";
+                 << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive)) << "flag set to false.";
   } else if (ret != RET_OK) {
     MS_LOG(ERROR) << "InferShape failed, name: " << node->name_
-                  << ", type: " << GetPrimitiveTypeName(primitive, schema_version_);
+                  << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
     return nullptr;
   }
   return parameter;
@@ -227,7 +226,6 @@ int CoderSession::CreateOpCoders() {
     MS_LOG(ERROR) << "Graph model is nullptr";
     return RET_ERROR;
   }
-  schema_version_ = reinterpret_cast<const lite::LiteModel *>(model)->GetSchemaVersion();
   Configurator *config = Configurator::GetInstance();
   Target code_target = config->target();
   CodeMode code_mode = config->code_mode();
@@ -292,7 +290,7 @@ int CoderSession::CreateOpCoders() {
                                                 .mode(code_mode)
                                                 .input_indices(input_indices)
                                                 .output_indices(output_indices)
-                                                .build(schema_version_);
+                                                .build();
     if (op_coder == nullptr) {
       coder_graph_->DumpUnSupportLayer(code_target);
       return RET_ERROR;

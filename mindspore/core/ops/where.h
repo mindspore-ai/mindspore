@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameWhere = "Where";
-class MS_CORE_API Where : public PrimitiveC {
+class Where : public PrimitiveC {
  public:
   Where() : PrimitiveC(kNameWhere) { InitIOName({"condition"}, {"output"}); }
   ~Where() = default;

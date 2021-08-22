@@ -223,7 +223,7 @@ MSRStatus ShardIndexGenerator::CreateShardNameTable(sqlite3 *db, const std::stri
   sql = "INSERT INTO SHARD_NAME (NAME) VALUES (:SHARD_NAME);";
   sqlite3_stmt *stmt = nullptr;
   if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
-    if (stmt != nullptr) {
+    if (stmt) {
       (void)sqlite3_finalize(stmt);
     }
     MS_LOG(ERROR) << "SQL error: could not prepare statement, sql: " << sql;
@@ -499,6 +499,7 @@ ROW_DATA ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, 
         in.seekg(page_size_ * (cur_raw_page->GetPageID()) + header_size_ + cur_raw_page_offset, std::ios::beg);
       if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
         MS_LOG(ERROR) << "File seekg failed";
+        in.close();
         return {FAILED, {}};
       }
 
@@ -510,6 +511,7 @@ ROW_DATA ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, 
           auto &io_read = in.read(reinterpret_cast<char *>(&schema_size), kInt64Len);
           if (!io_read.good() || io_read.fail() || io_read.bad()) {
             MS_LOG(ERROR) << "File read failed";
+            in.close();
             return {FAILED, {}};
           }
 
@@ -596,21 +598,15 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, std::pair
     auto sql = GenerateRawSQL(fields_);
     if (sql.first != SUCCESS) {
       MS_LOG(ERROR) << "Generate raw SQL failed";
-      in.close();
-      sqlite3_close(db.second);
       return FAILED;
     }
     auto data = GenerateRowData(shard_no, blob_id_to_page_id, raw_page_id, in);
     if (data.first != SUCCESS) {
       MS_LOG(ERROR) << "Generate raw data failed";
-      in.close();
-      sqlite3_close(db.second);
       return FAILED;
     }
     if (BindParameterExecuteSQL(db.second, sql.second, data.second) == FAILED) {
       MS_LOG(ERROR) << "Execute SQL failed";
-      in.close();
-      sqlite3_close(db.second);
       return FAILED;
     }
     MS_LOG(INFO) << "Insert " << data.second.size() << " rows to index db.";
@@ -694,7 +690,7 @@ void ShardIndexGenerator::DatabaseWriter() {
     shard_no = task_++;
   }
 }
-MSRStatus ShardIndexGenerator::Finalize(const std::vector<std::string> file_names) {
+MSRStatus ShardIndexGenerator::finalize(const std::vector<std::string> file_names) {
   if (file_names.empty()) {
     MS_LOG(ERROR) << "Mindrecord files is empty.";
     return FAILED;

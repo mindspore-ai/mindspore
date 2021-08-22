@@ -71,7 +71,7 @@ def train(net, data, label):
     assert res
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_lenet():

@@ -18,7 +18,7 @@
 #include "nnacl/fp16/quant_dtype_cast_fp16.h"
 #include "nnacl/errorcode.h"
 
-int DoDequantizeInt8ToFp16(const int8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size) {
+int DoDequantizeInt8ToFp16(int8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size) {
   if (quant_values == NULL || real_values == NULL) {
     return NNACL_PARAM_INVALID;
   }
@@ -29,7 +29,7 @@ int DoDequantizeInt8ToFp16(const int8_t *quant_values, float16_t *real_values, f
   return NNACL_OK;
 }
 
-int DoQuantizeFp16ToInt8(const float16_t *real_values, int8_t *quant_values, float scale, int32_t zp, int size) {
+int DoQuantizeFp16ToInt8(float16_t *real_values, int8_t *quant_values, float scale, int32_t zp, int size) {
   if (quant_values == NULL || real_values == NULL) {
     return NNACL_PARAM_INVALID;
   }
@@ -51,7 +51,7 @@ int DoQuantizeFp16ToInt8(const float16_t *real_values, int8_t *quant_values, flo
   return NNACL_OK;
 }
 
-int DoDequantizeUInt8ToFp16(const uint8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size) {
+int DoDequantizeUInt8ToFp16(uint8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size) {
   uint8_t zp_ = (uint8_t)zp;
   if (quant_values == NULL || real_values == NULL) {
     return NNACL_PARAM_INVALID;
@@ -63,7 +63,7 @@ int DoDequantizeUInt8ToFp16(const uint8_t *quant_values, float16_t *real_values,
   return NNACL_OK;
 }
 
-int DoQuantizeFp16ToUInt8(const float16_t *real_values, uint8_t *quant_values, float scale, int32_t zp, int size) {
+int DoQuantizeFp16ToUInt8(float16_t *real_values, uint8_t *quant_values, float scale, int32_t zp, int size) {
   if (quant_values == NULL || real_values == NULL) {
     return NNACL_PARAM_INVALID;
   }

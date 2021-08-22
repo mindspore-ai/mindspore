@@ -23,7 +23,6 @@
 #include <string>
 #include <memory>
 #include "profiler/device/profiling.h"
-#include "utils/log_adapter.h"
 namespace mindspore {
 namespace profiler {
 struct OpDetailInfo {
@@ -74,14 +73,6 @@ struct OpType {
   std::string GetGpuHeader() const { return "op_type,type_occurrences,total_time(us),total_proportion,avg_time(us)"; }
 
   void OutputCpuOpTypeInfo(std::ostream &os) const {
-    if (step_ == 0) {
-      MS_LOG(ERROR) << "The run step can not be 0.";
-      return;
-    }
-    if (count_ == 0) {
-      MS_LOG(ERROR) << "The num of operation type can not be 0.";
-      return;
-    }
     os << op_type_ << ',' << count_ << ',' << count_ / step_ << ',' << total_time_ << ',' << total_time_ / count_ << ','
        << proportion_ << std::endl;
   }

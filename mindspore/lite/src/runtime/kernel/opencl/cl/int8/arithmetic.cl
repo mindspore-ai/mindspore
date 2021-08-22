@@ -14,6 +14,6 @@ __kernel void ElementAddInt8(__read_only image2d_t input_a, __read_only image2d_
   float4 real_a = convert_float4(a - zero_point.x) * scale.x;
   float4 real_b = convert_float4(b - zero_point.y) * scale.y;
   int4 result = convert_int4(round((real_a + real_b) / scale.z)) + zero_point.z;
-  result = clamp(result, (int)(act_min), (int)(act_max));
+  result = clamp(result, (FLT)(act_min), (FLT)(act_max));
   write_imagei(output, (int2)(X, Y), result);
 }

@@ -56,9 +56,7 @@ void CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) const
       if (offsets_size == 1) {
         crop_offset = crop_para->offset_[0];
       } else if (offsets_size > 1) {
-        if (i - axis < CROP_OFFSET_MAX_SIZE) {
-          crop_offset = crop_para->offset_[i - axis];
-        }
+        crop_offset = crop_para->offset_[i - axis];
       }
     }
     crop_para->in_offset_[i] = crop_offset;

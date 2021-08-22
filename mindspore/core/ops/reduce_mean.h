@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceMean = "ReduceMean";
-class MS_CORE_API ReduceMean : public Reduce {
+class ReduceMean : public Reduce {
  public:
   ReduceMean() : Reduce(kNameReduceMean) { InitIOName({"input_x", "axis"}, {"y"}); }
   ~ReduceMean() = default;

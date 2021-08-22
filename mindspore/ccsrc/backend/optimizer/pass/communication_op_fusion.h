@@ -51,18 +51,6 @@ class CommunicationOpFusion : public Pass {
   size_t groups_ = 1;
 };
 
-class SendFusion : public CommunicationOpFusion {
- public:
-  explicit SendFusion(size_t groups = 1) : CommunicationOpFusion("send_fusion", kHcomSendOpName, groups) {}
-  ~SendFusion() override = default;
-};
-
-class RecvFusion : public CommunicationOpFusion {
- public:
-  explicit RecvFusion(size_t groups = 1) : CommunicationOpFusion("recv_fusion", kReceiveOpName, groups) {}
-  ~RecvFusion() override = default;
-};
-
 class AllReduceFusion : public CommunicationOpFusion {
  public:
   explicit AllReduceFusion(size_t groups = 1) : CommunicationOpFusion("all_reduce_fusion", kAllReduceOpName, groups) {}

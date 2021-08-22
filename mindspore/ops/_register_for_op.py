@@ -47,12 +47,3 @@ class Registry(UserDict):
                 if key in self:
                     fn = self[prim_obj.name]
         return fn
-
-class PyFuncRegistry(UserDict):
-    def register(self, key, value):
-        self[key] = value
-
-    def get(self, key):
-        if key not in self:
-            raise ValueError(f"Python function with key{key} not registered.")
-        return self[key]

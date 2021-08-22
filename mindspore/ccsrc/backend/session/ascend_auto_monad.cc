@@ -91,7 +91,7 @@ void DumpExecuteOrder(NotNull<KernelGraphPtr> kg) {
     return;
   }
   std::string filename = "ascend_execute_order_" + std::to_string(kg->graph_id()) + ".dat";
-  auto filepath = GetSaveGraphsPathName(filename);
+  auto filepath = pipeline::GetSaveGraphsPathName(filename);
   if (filepath.size() >= PATH_MAX) {
     MS_LOG(ERROR) << "File path: " << filepath << " is too long.";
     return;
@@ -1735,7 +1735,7 @@ class ExecuteOrderGenerator {
                            return {p.first.first, {p.first.second, p.second.first, p.second.second}};
                          });
     auto validate_ref_parameter = [](AnfNodePtr node) -> AnfNodePtr {
-      if (node->isa<CNode>() && AnfAlgo::CheckPrimitiveType(node, prim::kPrimTransData)) {
+      if (node->isa<CNode>() && AnfAlgo::CheckPrimitiveType(node, prim::KPrimTransData)) {
         auto cnode = node->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
         auto first_input = cnode->input(kFirstDataInputIndex);

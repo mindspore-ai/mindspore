@@ -43,7 +43,7 @@ int CopyData(float *input_data, const int *ids, float *output_data, int num,
     parameter->is_regulated_[ids[num]] = true;
   }
 
-  memcpy(out_data, in_data, sizeof(float) * (size_t)(parameter->layer_size_));
+  memcpy(out_data, in_data, sizeof(float) * parameter->layer_size_);
   return NNACL_OK;
 }
 
@@ -52,7 +52,7 @@ int EmbeddingLookup(float *input_data, const int *ids, float *output_data, const
   if (parameter->op_parameter_.thread_num_ == 0) {
     return NNACL_PARAM_INVALID;
   }
-  for (int i = task_id; i < parameter->ids_size_; i += parameter->op_parameter_.thread_num_) {
+  for (size_t i = task_id; i < parameter->ids_size_; i += parameter->op_parameter_.thread_num_) {
     int ret = CopyData(input_data, ids, output_data, i, parameter);
     if (ret != NNACL_OK) {
       return ret;

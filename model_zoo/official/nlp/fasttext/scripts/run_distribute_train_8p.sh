@@ -17,9 +17,8 @@
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "sh run_distributed_train.sh DATASET_PATH RANK_TABLE_PATH"
-echo "for example: sh run_distributed_train.sh /home/workspace/ag /home/workspace/rank_table_file.json ag"
+echo "for example: sh run_distributed_train.sh /home/workspace/ag /home/workspace/rank_table_file.json"
 echo "It is better to use absolute path."
-echo "Please pay attention that the dataset should corresponds to dataset_name"
 echo "=============================================================================================================="
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -29,15 +28,11 @@ get_real_path(){
   fi
 }
 
-if [ $3 != "ag" ] && [ $3 != "dbpedia" ] && [ $3 != "yelp_p" ]
-then
-  echo "Unrecognized dataset name, the name can choose from [ag, dbpedia, yelp_p]"
-exit 1
-fi
-
 DATASET=$(get_real_path $1)
 echo $DATASET
+DATANAME=$(basename $DATASET)
 RANK_TABLE_PATH=$(get_real_path $2)
+echo $DATANAME
 if [ ! -d $DATASET ]
 then
   echo "Error: DATA_PATH=$DATASET is not a file"
@@ -52,19 +47,6 @@ export RANK_TABLE_FILE=$RANK_TABLE_PATH
 echo $RANK_TABLE_FILE
 export RANK_SIZE=8
 export DEVICE_NUM=8
-
-if [ $# -ge 1 ]; then
-  if [ $3 == 'ag' ]; then
-    DATANAME='ag'
-  elif [ $3 == 'dbpedia' ]; then
-    DATANAME='dbpedia'
-  elif [ $3 == 'yelp_p' ]; then
-    DATANAME='yelp_p'
-  else
-    echo "Unrecognized dataset name,he name can choose from [ag, dbpedia, yelp_p]"
-    exit 1
-  fi
-fi
 
 config_path="./${DATANAME}_config.yaml"
 echo "config path is : ${config_path}"

@@ -50,7 +50,6 @@ pip install gym
 ```python
 ├── dqn
   ├── README.md              # descriptions about DQN
-  ├── README_CH.md              # descriptions about DQN in Chinese
   ├── scripts
   │   ├──run_standalone_eval_ascend.sh        # shell script for evaluation with Ascend
   │   ├──run_standalone_eval_gpu.sh         # shell script for evaluation with GPU
@@ -87,7 +86,7 @@ pip install gym
       GPU: python train.py --device_target GPU --ckpt_path ckpt > log.txt 2>&1 &  
 
   shell:
-      Ascend: bash run_standalone_train_ascend.sh ckpt
+      Ascend:bash run_standalone_train_ascend.sh ckpt
       GPU: bash run_standalone_train_gpu.sh ckpt
 ```
 
@@ -96,29 +95,29 @@ pip install gym
 ```shell
 # evaluat example
   python
-      Ascend: python eval.py --device_target Ascend --ckpt_path ./ckpt/dqn.ckpt
-      GPU: python eval.py --device_target GPU --ckpt_path ./ckpt/dqn.ckpt
+      Ascend: python eval.py --device_target Ascend --ckpt_path .ckpt/checkpoint_dqn.ckpt
+      GPU: python eval.py --device_target GPU --ckpt_path .ckpt/checkpoint_dqn.ckpt
 
   shell:
-      Ascend: bash run_standalone_eval_ascend.sh ./ckpt/dqn.ckpt
-      GPU: bash run_standalone_eval_gpu.sh ./ckpt/dqn.ckpt
+      Ascend: bash run_standalone_eval_ascend.sh .ckpt/checkpoint_dqn.ckpt
+      GPU: bash run_standalone_eval_gpu.sh .ckpt/checkpoint_dqn.ckpt
 ```
 
 ## [Performance](#content)
 
 ### Inference Performance
 
-| parameter                 | Ascend                                                          |GPU             |
-| -------------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |GPU             |
-| uploaded Date              | 03/10/2021 (month/day/year)                                 | 07/28/2021 (month/day/year)                   |
-| MindSpore Version          | 1.1.0                                                    | 1.2.0                                                       |
-| Training Parameters        | batch_size = 512, lr=0.001                                  | batch_size = 32, lr=0.01                                  |
-| Optimizer                  | RMSProp                                        |Adam                                      |
-| Loss Function              | MSELoss                                        |MSELoss                                                     |
-| outputs                    | Reward                                                 | Reward                                                 |
-| Params (M)                 | 7.3k                                                       | 7.3k                                                       |
-| Scripts                    | <<<https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn>>> | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn |
+| Parameters                 | DQN                                                         |
+| -------------------------- | ----------------------------------------------------------- |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
+| uploaded Date              | 03/10/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.1.0                                                       |
+| Training Parameters        | batch_size = 512, lr=0.001                                  |
+| Optimizer                  | RMSProp                                                     |
+| Loss Function              | MSELoss                                                     |
+| outputs                    | probability                                                 |
+| Params (M)                 | 7.3k                                                       |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn |
 
 ## [Description of Random Situation](#content)
 

@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExpFusion = "ExpFusion";
-class MS_CORE_API ExpFusion : public Exp {
+class ExpFusion : public Exp {
  public:
   ExpFusion() : Exp(kNameExpFusion) { InitIOName({"x"}, {"y"}); }
   ~ExpFusion() = default;

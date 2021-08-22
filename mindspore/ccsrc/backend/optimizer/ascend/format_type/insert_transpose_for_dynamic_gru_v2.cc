@@ -37,7 +37,7 @@ const BaseRef InsertTransposeForDynamicGRUV2::DefinePattern() const {
   MS_EXCEPTION_IF_NULL(X1);
   MS_EXCEPTION_IF_NULL(Xs);
   return VectorRef(
-    {prim::kPrimDynamicGRUV2, X1, VectorRef({prim::kPrimTransData, VectorRef({prim::kPrimReshape, X})}), Xs});
+    {prim::kPrimDynamicGRUV2, X1, VectorRef({prim::KPrimTransData, VectorRef({prim::kPrimReshape, X})}), Xs});
 }
 
 CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
@@ -62,7 +62,7 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transpose_node);
       // trans hwcn to output_format
       new_transdata_node =
-        NewTransOpNode(func_graph, new_transpose_node, kernel_select, false, prim::kPrimTransData->name());
+        NewTransOpNode(func_graph, new_transpose_node, kernel_select, false, prim::KPrimTransData->name());
       RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transdata_node, padding_axis);
       new_transdata_node->set_abstract(transdata_node->abstract());
       new_node = new_transdata_node;

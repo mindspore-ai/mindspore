@@ -21,7 +21,7 @@ from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.ops import composite as C, operations as P
+from mindspore.ops import composite as C, functional as F, operations as P
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
@@ -114,8 +114,7 @@ class TrainOneStepCell(nn.Cell):
         weights = self.weights
         loss = self.network(data)
         grads = self.grad(self.network, weights)(data, sens)
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))
 
 
 def loss_scale_manager_sens(strategy1, sens):

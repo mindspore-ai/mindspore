@@ -70,23 +70,11 @@ PYBIND_REGISTER(DatasetNode, 1, ([](const py::module *m) {
                         return zip;
                       },
                       py::arg("datasets"))
-                    .def("to_json",
-                         [](std::shared_ptr<DatasetNode> self, const std::string &json_filepath) {
-                           nlohmann::json args;
-                           THROW_IF_ERROR(Serdes::SaveToJSON(self, json_filepath, &args));
-                           return args.dump();
-                         })
-                    .def_static("from_json_file",
-                                [](const std::string &json_filepath) {
-                                  std::shared_ptr<DatasetNode> output;
-                                  THROW_IF_ERROR(Serdes::Deserialize(json_filepath, &output));
-                                  return output;
-                                })
-                    .def_static("from_json_string", [](const std::string &json_string) {
-                      std::shared_ptr<DatasetNode> output;
-                      nlohmann::json json_obj = nlohmann::json::parse(json_string);
-                      THROW_IF_ERROR(Serdes::ConstructPipeline(json_obj, &output));
-                      return output;
+                    .def("to_json", [](std::shared_ptr<DatasetNode> self, const std::string &json_filepath) {
+                      nlohmann::json args;
+                      auto serdas = std::make_shared<Serdes>();
+                      THROW_IF_ERROR(serdas->SaveToJSON(self, json_filepath, &args));
+                      return args.dump();
                     });
                 }));
 

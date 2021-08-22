@@ -31,7 +31,7 @@ class FullConnectionOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
   int CheckSpecs() override;
   int InitWeights() override;
-  int SetConstArgs() override;
+  void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Tune() override { return lite::RET_OK; }
   int StoreConstData() override;

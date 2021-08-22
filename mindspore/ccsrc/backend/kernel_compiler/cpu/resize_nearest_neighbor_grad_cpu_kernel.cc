@@ -20,6 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
+
 void ResizeNearestNeighborGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);

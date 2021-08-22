@@ -61,27 +61,27 @@ Status PyDSCallback::ExecutePyfunc(py::function f, const CallbackParam &cb_param
   }
   return Status::OK();
 }
-void PyDSCallback::setBegin(const py::function &f) {
+void PyDSCallback::setBegin(py::function f) {
   begin_func_ = f;
   begin_needed_ = true;
 }
-void PyDSCallback::setEnd(const py::function &f) {
+void PyDSCallback::setEnd(py::function f) {
   end_func_ = f;
   end_needed_ = true;
 }
-void PyDSCallback::setEpochBegin(const py::function &f) {
+void PyDSCallback::setEpochBegin(py::function f) {
   epoch_begin_func_ = f;
   epoch_begin_needed_ = true;
 }
-void PyDSCallback::setEpochEnd(const py::function &f) {
+void PyDSCallback::setEpochEnd(py::function f) {
   epoch_end_func_ = f;
   epoch_end_needed_ = true;
 }
-void PyDSCallback::setStepBegin(const py::function &f) {
+void PyDSCallback::setStepBegin(py::function f) {
   step_begin_func_ = f;
   step_begin_needed_ = true;
 }
-void PyDSCallback::setStepEnd(const py::function &f) {
+void PyDSCallback::setStepEnd(py::function f) {
   step_end_func_ = f;
   step_end_needed_ = true;
 }

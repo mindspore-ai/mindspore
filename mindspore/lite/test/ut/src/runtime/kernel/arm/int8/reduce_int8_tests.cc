@@ -57,7 +57,6 @@ class TestReduceInt8 : public mindspore::CommonTest {
 };
 
 void TestReduceInt8::TearDown() {
-  delete kernel_;
   in_tensor_.set_data(nullptr);
   out_tensor_.set_data(nullptr);
 }

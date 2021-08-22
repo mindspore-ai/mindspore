@@ -28,19 +28,19 @@ class ConvolutionDepthwise3x3CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwise3x3CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
-                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
-  ~ConvolutionDepthwise3x3CPUKernel() override {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+  ~ConvolutionDepthwise3x3CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
+  int InitWeightBias();
   int Execute(int task_id);
+  int Eval() override;
 
  private:
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
+  float *packed_weight_ = nullptr;
   float *input_ptr_ = nullptr;
   float *output_ptr_ = nullptr;
   float *buffer_ = nullptr;

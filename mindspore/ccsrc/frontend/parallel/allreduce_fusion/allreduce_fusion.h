@@ -23,7 +23,6 @@
 #include "frontend/parallel/allreduce_fusion/allreduce_graph.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
-#include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {
 namespace parallel {

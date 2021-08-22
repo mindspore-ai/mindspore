@@ -84,7 +84,7 @@ int MatMulOpenCLKernel::Prepare() {
   std::map<int, std::string> dims2str = {{2, "_2d"}, {3, "_4d"}, {4, "_4d"}};
   kernel_name += dims2str[dims];
   std::string source = matmul_source;
-  const std::string program_name = "MatMul";
+  std::string program_name = "MatMul";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -95,16 +95,13 @@ int MatMulOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
-int MatMulOpenCLKernel::PadWeight(std::vector<int> weight_shape_4d, int ci, int co) {
+void MatMulOpenCLKernel::PadWeight(std::vector<int> weight_shape_4d, int ci, int co) {
   auto allocator = ocl_runtime_->GetAllocator();
   int a = weight_shape_4d[0];
   int b = weight_shape_4d[1];
@@ -112,15 +109,7 @@ int MatMulOpenCLKernel::PadWeight(std::vector<int> weight_shape_4d, int ci, int 
   int co4 = UP_DIV(co, C4NUM);
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   padWeight_ = allocator->Malloc(a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size, lite::opencl::MemType::BUF);
-  if (padWeight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
-    return RET_ERROR;
-  }
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
-  if (padWeight_ == nullptr) {
-    MS_LOG(ERROR) << "Map Buffer failed.";
-    return RET_ERROR;
-  }
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);
   memset(padWeight_, 0x00, a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size);
@@ -168,7 +157,6 @@ int MatMulOpenCLKernel::PadWeight(std::vector<int> weight_shape_4d, int ci, int 
       }
     }
   }
-  return RET_OK;
 }
 
 int MatMulOpenCLKernel::InitWeights() {
@@ -197,10 +185,7 @@ int MatMulOpenCLKernel::InitWeights() {
 
   PadWeight(weight_shape_4d, ci, CO_);
 
-  if (allocator->UnmapBuffer(padWeight_) != RET_OK) {
-    MS_LOG(ERROR) << "UnmapBuffer failed.";
-    return RET_ERROR;
-  }
+  allocator->UnmapBuffer(padWeight_);
   FreeStoredData(stored_weight_);
   return InitBias();
 }
@@ -219,15 +204,7 @@ int MatMulOpenCLKernel::InitBias() {
   }
   lite::opencl::ImageSize img_size{im_dst_x, im_dst_y, img_dtype};
   bias_ = allocator->Malloc(img_size);
-  if (bias_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
-    return RET_ERROR;
-  }
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
-  if (bias_ == nullptr) {
-    MS_LOG(ERROR) << "Map Buffer failed.";
-    return RET_ERROR;
-  }
   memset(bias_, 0x00, co4 * C4NUM * dtype_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
@@ -243,10 +220,7 @@ int MatMulOpenCLKernel::InitBias() {
       memcpy(bias_, src_data, CO_ * dtype_size);
     }
   }
-  if (allocator->UnmapBuffer(bias_) != RET_OK) {
-    MS_LOG(ERROR) << "UnmapBuffer failed.";
-    return RET_ERROR;
-  }
+  allocator->UnmapBuffer(bias_);
   FreeStoredData(stored_bias_);
   return RET_OK;
 }
@@ -261,54 +235,29 @@ void MatMulOpenCLKernel::SetGlobalLocal() {
   AlignGlobalLocal(global_size_, local_size_);
 }
 
-int MatMulOpenCLKernel::SetConstArgs() {
+void MatMulOpenCLKernel::SetConstArgs() {
   int arg_count = 2;
   cl_int4 in_shape = {inShape[0], inShape[1], inShape[2], inShape[3]};
   cl_int4 out_shape = {outShape[0], outShape[1], outShape[2], outShape[3]};
   if (act_weight_) {
     arg_count++;
   } else {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
 }
 
 int MatMulOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_count = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
   if (act_weight_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[1]->data_c()) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[1]->data_c());
   }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

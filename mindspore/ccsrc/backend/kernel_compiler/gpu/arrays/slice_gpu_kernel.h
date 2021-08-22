@@ -146,7 +146,7 @@ class SliceGpuFwdKernel : public GpuKernel {
     begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
 
     for (size_t i = 0; i < input_shape.size(); i++) {
-      if (i >= size_.size() || input_shape[i] <= 0 || size_[i] <= 0) {
+      if (input_shape[i] <= 0 || size_[i] <= 0) {
         MS_LOG(WARNING) << "Slice output is null.";
         is_null_input_ = true;
       }

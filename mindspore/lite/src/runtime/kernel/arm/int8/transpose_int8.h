@@ -44,8 +44,7 @@ class TransposeInt8CPUKernel : public InnerKernel {
   int DoTranspose(int task_id);
 
  private:
-  void GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor,
-                            const TransposeParameter *param);
+  void GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor, const TransposeParameter *param);
   TransposeParameter *transpose_param_;
   TransposeFunc NHNCTransposeFunc_ = nullptr;
   int8_t *in_ptr_ = nullptr;

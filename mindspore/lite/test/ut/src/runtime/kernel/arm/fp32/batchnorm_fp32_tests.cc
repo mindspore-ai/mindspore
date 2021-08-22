@@ -77,7 +77,6 @@ TEST_F(TestBatchnormFp32, BNTest) {
   input1_tensor.set_data(nullptr);
   input2_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
-  delete kernel;
 }
 
 TEST_F(TestBatchnormFp32, FusedBNTest) {
@@ -138,7 +137,6 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
   input3.set_data(nullptr);
   input4.set_data(nullptr);
   output0.set_data(nullptr);
-  delete kernel;
 }
 
 TEST_F(TestBatchnormFp32, easyTest) {
@@ -190,7 +188,6 @@ TEST_F(TestBatchnormFp32, easyTest) {
   input1.set_data(nullptr);
   input2.set_data(nullptr);
   output0.set_data(nullptr);
-  delete kernel;
 }
 
 }  // namespace mindspore

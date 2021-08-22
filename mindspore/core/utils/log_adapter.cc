@@ -34,7 +34,7 @@ static std::string GetProcName() {
 #else
   const std::string appname = "?";
 #endif
-  // sometimes, the app name is an absolute path, it is too long
+  // some times, the appname is an absolute path, its too long
   std::string app_name(appname);
   std::size_t pos = app_name.rfind("/");
   if (pos == std::string::npos) {
@@ -420,49 +420,27 @@ __attribute__((constructor)) void common_log_init(void) {
 void common_log_init(void) {
 #endif
 #ifdef USE_GLOG
-  // Do not use glog predefined log prefix
+  // do not use glog predefined log prefix
   FLAGS_log_prefix = false;
-  // Write log to files real-time
   FLAGS_logbufsecs = 0;
-  // Set default log level to WARNING
+  // set default log level to WARNING
   if (mindspore::GetEnv("GLOG_v").empty()) {
     FLAGS_v = mindspore::WARNING;
   }
 
-  // Set default log file mode to 0640
+  // set default log file mode to 0640
   if (mindspore::GetEnv("GLOG_logfile_mode").empty()) {
     FLAGS_logfile_mode = 0640;
   }
-  // Set default log file max size to 50 MB
-  FLAGS_max_log_size = 50;
-  std::string max_log_size = mindspore::GetEnv("GLOG_max_log_size");
-  if (!max_log_size.empty()) {
-    FLAGS_max_log_size = std::stoi(max_log_size);
-  }
   std::string logtostderr = mindspore::GetEnv("GLOG_logtostderr");
-  // Default print log to screen
+  // default print log to screen
   if (logtostderr.empty()) {
     FLAGS_logtostderr = true;
-  } else if (logtostderr == "0") {
-    if (mindspore::GetEnv("GLOG_log_dir").empty()) {
-      MS_LOG(ERROR) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
-      // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
-      exit(EXIT_FAILURE);
-    } else {
-      // Set log dir from GLOG_log_dir with RANK_ID or OMPI_COMM_WORLD_RANK.
-      std::string rank_id = mindspore::GetEnv("RANK_ID");
-      std::string gpu_rank_id = mindspore::GetEnv("OMPI_COMM_WORLD_RANK");
-      std::string rank = "0";
-      if ((!rank_id.empty() && gpu_rank_id.empty()) || (!rank_id.empty() && !gpu_rank_id.empty())) {
-        rank = rank_id;
-      } else if (rank_id.empty() && !gpu_rank_id.empty()) {
-        rank = gpu_rank_id;
-      }
-      FLAGS_log_dir = mindspore::GetEnv("GLOG_log_dir") + "/rank_" + rank + "/logs";
-    }
+  } else if (logtostderr == "0" && mindspore::GetEnv("GLOG_log_dir").empty()) {
+    MS_LOG(EXCEPTION) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
   }
 
-  // Default GLOG_stderrthreshold level to WARNING
+  // default GLOG_stderrthreshold level to WARNING
   auto threshold = mindspore::GetEnv("GLOG_stderrthreshold");
   FLAGS_stderrthreshold = mindspore::GetThresholdLevel(threshold);
 

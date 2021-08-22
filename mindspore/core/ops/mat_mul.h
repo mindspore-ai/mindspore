@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatMul = "MatMul";
-class MS_CORE_API MatMul : public PrimitiveC {
+class MatMul : public PrimitiveC {
  public:
   MatMul() : PrimitiveC(kNameMatMul) { InitIOName({"x1", "x2"}, {"output"}); }
   ~MatMul() = default;

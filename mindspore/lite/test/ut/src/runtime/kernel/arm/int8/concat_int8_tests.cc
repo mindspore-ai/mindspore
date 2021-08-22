@@ -102,7 +102,6 @@ TEST_F(TestConcatInt8, Concat1_axis0) {
   delete input_tensor2;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestConcatInt8, Concat1_axis1_thread2) {
@@ -178,7 +177,6 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2) {
   delete input_tensor2;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 TEST_F(TestConcatInt8, Concat1_axis1_thread2_quant1) {
@@ -254,7 +252,6 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2_quant1) {
   delete input_tensor2;
   delete output0_tensor;
   delete ctx;
-  delete kernel;
 }
 
 }  // namespace mindspore

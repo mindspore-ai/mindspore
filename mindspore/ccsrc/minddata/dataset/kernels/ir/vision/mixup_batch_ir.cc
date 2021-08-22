@@ -47,7 +47,7 @@ Status MixUpBatchOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status MixUpBatchOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("alpha") != op_params.end(), "Failed to find alpha");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("alpha") != op_params.end(), "Fail to find alpha");
   float alpha = op_params["alpha"];
   *operation = std::make_shared<vision::MixUpBatchOperation>(alpha);
   return Status::OK();

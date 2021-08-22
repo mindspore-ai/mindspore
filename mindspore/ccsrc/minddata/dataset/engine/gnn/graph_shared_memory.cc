@@ -17,8 +17,6 @@
 #include "minddata/dataset/engine/gnn/graph_shared_memory.h"
 
 #include <string>
-#include "debug/common.h"
-#include "utils/ms_utils.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -53,9 +51,7 @@ GraphSharedMemory::~GraphSharedMemory() {
 Status GraphSharedMemory::CreateSharedMemory() {
   if (memory_key_ == -1) {
     // ftok to generate unique key
-    auto realpath = Common::GetRealPath(mr_file_);
-    CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + mr_file_);
-    memory_key_ = ftok(common::SafeCStr(realpath.value()), kGnnSharedMemoryId);
+    memory_key_ = ftok(mr_file_.data(), kGnnSharedMemoryId);
     CHECK_FAIL_RETURN_UNEXPECTED(memory_key_ != -1, "Failed to get key of shared memory. file_name:" + mr_file_);
     std::stringstream stream;
     stream << std::hex << memory_key_;
@@ -93,7 +89,6 @@ Status GraphSharedMemory::DeleteSharedMemory() {
 
 Status GraphSharedMemory::SharedMemoryImpl(const int &shmflg) {
   // shmget returns an identifier in shmid
-  CHECK_FAIL_RETURN_UNEXPECTED(memory_size_ >= 0, "Invalid memory size, should be greater than zero.");
   int shmid = shmget(memory_key_, memory_size_, shmflg);
   CHECK_FAIL_RETURN_UNEXPECTED(shmid != -1, "Failed to get shared memory. key=0x" + memory_key_str_);
 
@@ -108,7 +103,6 @@ Status GraphSharedMemory::SharedMemoryImpl(const int &shmflg) {
 Status GraphSharedMemory::InsertData(const uint8_t *data, int64_t len, int64_t *offset) {
   CHECK_FAIL_RETURN_UNEXPECTED(data, "Input data is nullptr.");
   CHECK_FAIL_RETURN_UNEXPECTED(len > 0, "Input len is invalid.");
-  CHECK_FAIL_RETURN_UNEXPECTED(offset, "Input offset is nullptr.");
 
   std::lock_guard<std::mutex> lck(mutex_);
   CHECK_FAIL_RETURN_UNEXPECTED((memory_size_ - memory_offset_ >= len),

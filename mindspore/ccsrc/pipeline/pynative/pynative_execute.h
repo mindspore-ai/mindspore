@@ -42,6 +42,7 @@
 
 namespace mindspore::pynative {
 namespace py = pybind11;
+using CellId = std::string;
 using MsFunctionGradCache = std::unordered_map<std::string, std::pair<FuncGraphPtr, FuncGraphPtr>>;
 using OpInfoWithTensorId = std::unordered_map<std::string, std::vector<std::string>>;
 using TensorIdWithTensorObject = std::unordered_map<std::string, std::vector<tensor::TensorPtr>>;
@@ -67,8 +68,7 @@ class TopCellInfo {
         grad_order_(grad_order),
         resource_(std::move(r)),
         df_builder_(std::move(df)),
-        cell_id_(std::move(cellid)),
-        alread_run_cell_id_(cell_id_ + std::to_string(is_topest_)) {}
+        cell_id_(std::move(cellid)) {}
 
   bool is_init_kpynative() const { return is_init_kpynative_; }
   void set_init_kpynative(bool init) { is_init_kpynative_ = init; }
@@ -90,10 +90,9 @@ class TopCellInfo {
   size_t op_num() const { return op_num_; }
   void set_op_num(size_t op_num) { op_num_ = op_num; }
   std::string &cell_id() { return cell_id_; }
-  std::string &already_run_cell_id() { return alread_run_cell_id_; }
   std::string &input_args_id() { return input_args_id_; }
   std::string &all_op_info() { return all_op_info_; }
-  void set_input_args_id(const std::string &input_args_id) { input_args_id_ = input_args_id; }
+  void set_input_args_id(const std::string &input_args_id) { input_args_id_ = std::move(input_args_id); }
   std::unordered_set<std::string> &sub_cell_list() { return sub_cell_list_; }
   bool IsSubCell(const std::string &cell_id) const;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
@@ -125,7 +124,6 @@ class TopCellInfo {
   FuncGraphPtr df_builder_{nullptr};
   ad::KPynativeCellPtr k_pynative_cell_ptr_{nullptr};
   std::string cell_id_;
-  std::string alread_run_cell_id_;
   std::string input_args_id_;
   std::string all_op_info_;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
@@ -175,9 +173,7 @@ class GradExecutor {
   TopCellInfoPtr top_cell() const;
   void CheckNeedCompileGraph();
   TopCellInfoPtr GetTopCell(const string &cell_id) const;
-  void EnableOpGraphCache(bool is_enable);
   bool need_renormalize() const { return need_renormalize_; }
-  bool enable_op_cache() const { return enable_op_cache_; }
   void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   bool grad_flag() const { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
@@ -237,7 +233,7 @@ class GradExecutor {
   FuncGraphPtr GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
                              const std::vector<AnfNodePtr> &weights, size_t arg_size, const py::args &args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
-  abstract::AbstractBasePtrList GetArgsSpec(const py::list &args, const FuncGraphPtr &bprop_graph);
+  abstract::AbstractBasePtrList GetArgsSpec(const py::args &args, const FuncGraphPtr &bprop_graph);
   // Manage resource for construct forward graph.
   std::string &graph_phase() { return graph_phase_; }
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
@@ -246,15 +242,15 @@ class GradExecutor {
                                       const std::vector<int64_t> &index_sequence, bool is_param = false);
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
                                   bool is_param = false);
-  void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param) const {
+  void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param) {
     top_cell()->graph_info_map()[g]->params[id] = param;
   }
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
-                                int64_t index = -1) const {
+                                int64_t index = -1) {
     top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
   }
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
-                                const std::vector<int64_t> &index) const {
+                                const std::vector<int64_t> &index) {
     top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, index);
   }
   void CreateMakeTupleNodeForMultiOut(const FuncGraphPtr &curr_g, const py::object &out, const std::string &out_id);
@@ -263,10 +259,8 @@ class GradExecutor {
   bool grad_flag_{false};
   bool need_renormalize_{false};
   bool grad_is_running_{false};
-  bool enable_op_cache_{true};
   int custom_bprop_cell_count_{0};
   size_t grad_order_{0};
-  size_t top_cell_switch_counts_{0};
 
   // The graph phase is used to obtain backend graph that is complied by ms_function
   std::string graph_phase_;
@@ -286,7 +280,7 @@ class GradExecutor {
   // Use vector for keep order
   std::vector<TopCellInfoPtr> top_cell_list_;
   // Record all top cell which has been ran
-  std::unordered_map<std::string, TopCellInfoPtr> already_run_top_cell_;
+  std::map<CellId, TopCellInfoPtr> already_run_top_cell_;
   // Use vector for keep order
   ForwardExecutorWeakPtr forward_executor_;
 };
@@ -358,8 +352,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   void set_grad_flag(bool flag);
   void set_graph_phase(const std::string &graph_phase);
-  void set_py_exe_path(const py::object &py_exe_path);
-  void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);
   void GradMsFunction(const py::object &out, const py::args &args);
   void NewGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);

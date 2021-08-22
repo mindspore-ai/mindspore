@@ -16,7 +16,7 @@
 ##############train models#################
 python train.py
 '''
-import os
+
 from mindspore import context, nn
 from mindspore.train import Model
 from mindspore.common import set_seed
@@ -34,7 +34,6 @@ from src.loss import BCELoss
 
 def modelarts_pre_process():
     pass
-
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train(model, dataset_direct, filename, columns_list, num_consumer=4,
@@ -59,12 +58,8 @@ def train(model, dataset_direct, filename, columns_list, num_consumer=4,
 if __name__ == "__main__":
     set_seed(1)
 
-    config.checkpoint_path = os.path.abspath(config.checkpoint_path)
-    context.set_context(device_target=config.device_target, mode=context.GRAPH_MODE)
+    context.set_context(device_target='Ascend', mode=context.GRAPH_MODE, device_id=get_device_id())
     context.set_context(enable_auto_mixed_precision=config.mixed_precision)
-    if config.device_target == 'Ascend':
-        context.set_context(device_id=get_device_id())
-
     network = MusicTaggerCNN(in_classes=[1, 128, 384, 768, 2048],
                              kernel_size=[3, 3, 3, 3, 3],
                              padding=[0] * 5,

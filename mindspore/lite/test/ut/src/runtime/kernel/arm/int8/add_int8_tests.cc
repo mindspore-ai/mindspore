@@ -73,6 +73,5 @@ TEST_F(TestQuantizedAdd, Add) {
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
   out_tensor.set_data(nullptr);
-  delete kernel;
 }
 }  // namespace mindspore

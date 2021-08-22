@@ -71,7 +71,7 @@ int MultiplyByMultiplierAndRightShift(int32_t value, int32_t multiplier, int32_t
   return RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(value, multiplier), right_shift);
 }
 
-int FractionsBits(int integer_bits) { return 8 * (int)(sizeof(int32_t)) - 1 - integer_bits; }
+int FractionsBits(int integer_bits) { return 8 * sizeof(int32_t) - 1 - integer_bits; }
 
 int FixedPoint_One(int integer_bits, int fractions_bits) {
   return (integer_bits == 0 ? INT32_MAX : ((1) << (uint32_t)(integer_bits == 0 ? 0 : fractions_bits)));
@@ -129,7 +129,7 @@ int SaturatingRoundingMultiplyByPOT(int32_t x, int exponent) {
   if (exponent > 0) {
     const int min = INT32_MIN;
     const int max = INT32_MAX;
-    const int scalar_int_bits = 8 * (int)(sizeof(int32_t));
+    const int scalar_int_bits = 8 * sizeof(int32_t);
     const int threshold = ((1 << (uint32_t)(scalar_int_bits - 1 - exponent)) - 1);
     const int positive_mask = x > threshold ? BitNot(0) : 0;
     const int negative_mask = x < -threshold ? BitNot(0) : 0;

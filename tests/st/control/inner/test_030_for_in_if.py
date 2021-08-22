@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
@@ -22,12 +21,8 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
+context.set_context(device_target="Ascend")
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_in_if_01():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -61,28 +56,19 @@ def test_for_in_if_01():
     context.set_context(mode=context.GRAPH_MODE)
     for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-
-    forward_net = ForInIfNet()
-    graph_forward_res = forward_net(x)
+    graph_forward_res = for_in_if_net(x)
     graph_backward_res = net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-
-    forward_net = ForInIfNet()
-    pynative_forward_res = forward_net(x)
+    pynative_forward_res = for_in_if_net(x)
     pynative_backward_res = net(x)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_in_if_02():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -114,34 +100,26 @@ def test_for_in_if_02():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([10], mstype.float32)
+    x = Tensor([10], mstype.int32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-
-    forward_net = ForInIfNet()
-    graph_forward_res = forward_net(x)
+    graph_forward_res = for_in_if_net(x)
     graph_backward_res = net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-
-    forward_net = ForInIfNet()
-    pynative_forward_res = forward_net(x)
+    pynative_forward_res = for_in_if_net(x)
     pynative_backward_res = net(x)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_for_in_if_03():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -174,35 +152,26 @@ def test_for_in_if_03():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([10], mstype.float32)
+    x = Tensor([10], mstype.int32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-
-    forward_net = ForInIfNet()
-    graph_forward_res = forward_net(x)
+    graph_forward_res = for_in_if_net(x)
     graph_backward_res = net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-
-    forward_net = ForInIfNet()
-    pynative_forward_res = forward_net(x)
+    pynative_forward_res = for_in_if_net(x)
     pynative_backward_res = net(x)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
-@pytest.mark.skip(reason="Ascend control multi sink result error")
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_for_in_if_04():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -238,28 +207,20 @@ def test_for_in_if_04():
     context.set_context(mode=context.GRAPH_MODE)
     for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-
-    forward_net = ForInIfNet()
-    graph_forward_res = forward_net(x)
+    graph_forward_res = for_in_if_net(x)
     graph_backward_res = net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
-    forward_net = ForInIfNet()
-    pynative_forward_res = forward_net(x)
     for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-    expect_backward_res = net(x)
+    pynative_forward_res = for_in_if_net(x)
+    pynative_backward_res = net(x)
 
     assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == expect_backward_res
+    assert graph_backward_res == pynative_backward_res
 
-@pytest.mark.skip(reason="Ascend control multi sink result error")
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_for_in_if_05():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -297,19 +258,15 @@ def test_for_in_if_05():
     context.set_context(mode=context.GRAPH_MODE)
     for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-
-    forward_net = ForInIfNet()
-    graph_forward_res = forward_net(x)
+    graph_forward_res = for_in_if_net(x)
     graph_backward_res = net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_in_if_net = ForInIfNet()
-
-    pynative_forward_res = for_in_if_net(x)
-    for_in_if_net = ForInIfNet()
     net = GradNet(for_in_if_net)
-    expect_backward_res = net(x)
+    pynative_forward_res = for_in_if_net(x)
+    pynative_backward_res = net(x)
 
     assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == expect_backward_res
+    assert graph_backward_res == pynative_backward_res

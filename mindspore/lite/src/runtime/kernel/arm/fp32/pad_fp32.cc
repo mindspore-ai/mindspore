@@ -28,11 +28,9 @@ using mindspore::schema::PrimitiveType_PadFusion;
 namespace mindspore::kernel {
 namespace {
 constexpr size_t kMirrorPadInputSize = 2;
-constexpr size_t kPadCommonInputSize = 2;
+constexpr size_t kPadMaxInputSize = 2;
 }  // namespace
 int PadCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -42,30 +40,30 @@ int PadCPUKernel::Init() {
 int PadCPUKernel::ReSize() {
   auto input = in_tensors_.at(0);
   auto rank = input->shape().size();
-  if (rank > DEFAULT_PAD_NDIMS) {
-    MS_LOG(ERROR) << "Pad input rank should <= " << DEFAULT_PAD_NDIMS << ", got " << rank;
+  if (rank > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "Pad input rank should <= " << COMM_SHAPE_SIZE << ", got " << rank;
     return RET_ERROR;
   }
   auto output = out_tensors_.at(0);
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
-    auto ret = ExtendShape(in_, DEFAULT_PAD_NDIMS, input->shape().data(), rank);
+    auto ret = ExtendShape(in_, COMM_SHAPE_SIZE, input->shape().data(), rank);
     if (ret != RET_OK) {
       return ret;
     }
-    ret = ExtendShape(out_, DEFAULT_PAD_NDIMS, output->shape().data(), rank);
+    ret = ExtendShape(out_, COMM_SHAPE_SIZE, output->shape().data(), rank);
     if (ret != RET_OK) {
       return ret;
     }
-    if (pad_param_->padding_length < MAX_PAD_SIZE) {
-      int ori_paddings[MAX_PAD_SIZE];
+    if (pad_param_->padding_length < MAX_SHAPE_SIZE) {
+      int ori_paddings[MAX_SHAPE_SIZE];
       for (auto i = 0; i < pad_param_->padding_length; ++i) {
         ori_paddings[i] = pad_param_->paddings_[i];
       }
-      ret = ExtendPaddings(pad_param_->paddings_, MAX_PAD_SIZE, ori_paddings, pad_param_->padding_length);
+      ret = ExtendPaddings(pad_param_->paddings_, MAX_SHAPE_SIZE, ori_paddings, pad_param_->padding_length);
       if (ret != RET_OK) {
         return ret;
       }
-      pad_param_->padding_length = MAX_PAD_SIZE;
+      pad_param_->padding_length = MAX_SHAPE_SIZE;
     }
   }
   return RET_OK;
@@ -73,17 +71,19 @@ int PadCPUKernel::ReSize() {
 
 void PadCPUKernel::InitMirrorPadBlock() {
   mirror_pad_block_.clear();
-  std::vector<int> left_pads(DEFAULT_PAD_NDIMS);
-  for (size_t i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
+  std::vector<int> left_pads(COMM_SHAPE_SIZE);
+  for (size_t i = 0; i < COMM_SHAPE_SIZE; ++i) {
     left_pads[i] = pad_param_->paddings_[2 * i];
   }
+
   std::vector<int> input_separate_dims;
   std::vector<int> output_separate_dims;
   std::vector<int> separate_offset;
+
   /* init separate dims */
   int cur_input = 1;
   int cur_output = 1;
-  for (size_t i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
+  for (size_t i = 0; i < COMM_SHAPE_SIZE; ++i) {
     if (cur_input > 1) {
       input_separate_dims.emplace_back(cur_input);
       output_separate_dims.emplace_back(cur_output);
@@ -100,18 +100,22 @@ void PadCPUKernel::InitMirrorPadBlock() {
     output_separate_dims.emplace_back(cur_output);
     separate_offset.emplace_back(0);
   }
+
   /* init separate stride */
   std::vector<int> output_separate_stride;
   output_separate_stride.resize(output_separate_dims.size());
   GetStride(output_separate_stride.data(), output_separate_dims.data(), output_separate_dims.size());
+
   /* init separate stride */
   std::vector<int> remain_stride;
   remain_stride.resize(0);
   int remain_size = GetStride(remain_stride.data(), output_separate_dims.data(), remain_stride.size());
+
   std::vector<int> right_pads(separate_offset.size());
   for (size_t i = 0; i < right_pads.size(); ++i) {
     right_pads[i] = output_separate_dims[i] - input_separate_dims[i] - separate_offset[i];
   }
+
   /* init pad region */
   std::vector<int> pad_region;
   for (size_t i = remain_stride.size(); i < output_separate_stride.size(); ++i) {
@@ -125,27 +129,30 @@ void PadCPUKernel::InitMirrorPadBlock() {
     }
     pad_region.emplace_back(r);
   }
+
   std::vector<int> pad_region_stride(pad_region.size());
   int region_size = GetStride(pad_region_stride.data(), pad_region.data(), pad_region.size());
-  int remain_dim_offset = static_cast<int>(remain_stride.size());
+  int remain_dim_offset = remain_stride.size();
+
   std::vector<int> pad_cord(pad_region.size());
+
   for (int pos = 0; pos < remain_size; ++pos) {
     const int dst_basic_offset = 0;
+
     for (int index = 1; index < region_size; ++index) {
       int dst_offset = dst_basic_offset;
+
       int value = index;
       for (size_t i = 0; i < pad_region.size() && pad_region_stride[i] != 0; ++i) {
         pad_cord[i] = value / pad_region_stride[i];
         value = value % pad_region_stride[i];
       }
+
       MirrorPadBlock block;
-      const int size_offset = DEFAULT_PAD_NDIMS - static_cast<int>(pad_region.size());
+      const int size_offset = COMM_SHAPE_SIZE - static_cast<int>(pad_region.size());
       for (size_t i = 0; i < pad_region.size(); ++i) {
         int di = size_offset + i;
         int si = remain_dim_offset + i;
-        if (di > DEFAULT_PAD_NDIMS) {
-          continue;
-        }
         switch (pad_cord[i]) {
           case 0:
             dst_offset += separate_offset[si] * output_separate_stride[si];
@@ -175,6 +182,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
       mirror_pad_block_.push_back(std::move(block));
     }
   }
+  return;
 }
 
 int PadCPUKernel::ExtendShape(int *shape, int length, const int *ori_shape, int rank) const {
@@ -249,7 +257,7 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
     Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
 
     /* calculate region part */
-    for (size_t i = task_id; i < mirror_pad_block_.size(); i += static_cast<size_t>(op_parameter_->thread_num_)) {
+    for (size_t i = task_id; i < mirror_pad_block_.size(); i += op_parameter_->thread_num_) {
       auto block = mirror_pad_block_[i];
 
       for (int a = 0; a < block.size_[0]; a++) {
@@ -257,14 +265,8 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
         for (int b = 0; b < block.size_[1]; b++) {
           int out_b_index = out_a_index + b * block.out_stride_[1];
           for (int c = 0; c < block.size_[2]; ++c) {
-            int out_c_index = out_b_index + c * block.out_stride_[2];
-            for (int d = 0; d < block.size_[3]; ++d) {
-              int out_d_index = out_c_index + d * block.out_stride_[3];
-              for (int e = 0; e < block.size_[4]; ++e) {
-                int output_index = out_d_index + e * block.out_stride_[4];
-                MirrorPad(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[5]);
-              }
-            }
+            int output_index = out_b_index + c * block.out_stride_[2];
+            MirrorPad(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[3]);
           }
         }
       }
@@ -280,7 +282,7 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
   return RET_OK;
 }
 
-int PadCPUKernel::CheckPaddings(const int *paddings, int length, const int *input_shape, int mode) {
+int PadCPUKernel::CheckPaddings(int *paddings, int length, int *input_shape, int mode) {
   if (paddings == nullptr || input_shape == nullptr) {
     return RET_NULL_PTR;
   }
@@ -308,8 +310,8 @@ int PadCPUKernel::CheckPaddings(const int *paddings, int length, const int *inpu
 }
 
 int PadCPUKernel::CopyPaddingFromInput() {
-  if (in_tensors_.size() < kMirrorPadInputSize) {
-    MS_LOG(ERROR) << "Pad Reflect or Symmetric mode need at least 2 inputs, got " << in_tensors_.size();
+  if (in_tensors_.size() != kMirrorPadInputSize) {
+    MS_LOG(ERROR) << "Pad Reflect or Symmetric mode need 2 inputs, got " << in_tensors_.size();
     return RET_ERROR;
   }
   auto padding_tensor = in_tensors_.at(1);
@@ -325,28 +327,28 @@ int PadCPUKernel::CopyPaddingFromInput() {
     return RET_ERROR;
   }
 
-  auto ret = ExtendShape(in_, DEFAULT_PAD_NDIMS, input_shape.data(), rank);
+  auto ret = ExtendShape(in_, COMM_SHAPE_SIZE, input_shape.data(), rank);
   if (ret != RET_OK) {
     return ret;
   }
-  ret = ExtendPaddings(pad_param_->paddings_, MAX_PAD_SIZE, paddings, padding_tensor->ElementsNum());
+  ret = ExtendPaddings(pad_param_->paddings_, MAX_SHAPE_SIZE, paddings, padding_tensor->ElementsNum());
   if (ret != RET_OK) {
     return ret;
   }
-  pad_param_->padding_length = MAX_PAD_SIZE;
+  pad_param_->padding_length = MAX_SHAPE_SIZE;
   return RET_OK;
 }
 
 void PadCPUKernel::CalculateStrides() {
-  pad_param_->in_strides[DEFAULT_PAD_NDIMS - 1] = 1;
-  for (auto i = DEFAULT_PAD_NDIMS - 2; i >= 0; --i) {
+  pad_param_->in_strides[COMM_SHAPE_SIZE - 1] = 1;
+  for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
     pad_param_->in_strides[i] = in_[i + 1] * pad_param_->in_strides[i + 1];
   }
-  for (auto i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
+  for (auto i = 0; i < COMM_SHAPE_SIZE; ++i) {
     out_[i] = in_[i] + pad_param_->paddings_[i * 2] + pad_param_->paddings_[i * 2 + 1];
   }
-  pad_param_->out_strides[DEFAULT_PAD_NDIMS - 1] = 1;
-  for (auto i = DEFAULT_PAD_NDIMS - 2; i >= 0; --i) {
+  pad_param_->out_strides[COMM_SHAPE_SIZE - 1] = 1;
+  for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
     pad_param_->out_strides[i] = out_[i + 1] * pad_param_->out_strides[i + 1];
   }
 }
@@ -356,7 +358,7 @@ int PadCPUKernel::HandleMirrorPad() {
   if (in_tensors_.size() == 1) {
     auto input_shape = in_tensors_.at(0)->shape();
     int rank = static_cast<int>(input_shape.size());
-    ret = ExtendShape(in_, DEFAULT_PAD_NDIMS, input_shape.data(), rank);
+    ret = ExtendShape(in_, COMM_SHAPE_SIZE, input_shape.data(), rank);
     if (ret != RET_OK) {
       return ret;
     }
@@ -366,7 +368,7 @@ int PadCPUKernel::HandleMirrorPad() {
       return ret;
     }
   }
-  ret = CheckPaddings(pad_param_->paddings_, DEFAULT_PAD_NDIMS, in_, pad_param_->pad_mode_);
+  ret = CheckPaddings(pad_param_->paddings_, COMM_SHAPE_SIZE, in_, pad_param_->pad_mode_);
   if (ret != RET_OK) {
     return ret;
   }
@@ -389,7 +391,7 @@ int PadCPUKernel::Run() {
   }
   int error_code = 0;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
-    if (in_tensors_.size() >= kPadCommonInputSize) {
+    if (in_tensors_.size() == kPadMaxInputSize) {
       error_code = CopyPaddingFromInput();
       if (error_code != RET_OK) {
         MS_LOG(ERROR) << "Pad run error, error_code[" << error_code << "]";
@@ -400,7 +402,7 @@ int PadCPUKernel::Run() {
     int output_size = output->ElementsNum();
     auto output_data = reinterpret_cast<float *>(output->data_c());
     if (abs(pad_param_->constant_value_ - 0.0f) < 1e-5) {
-      memset(output_data, 0, static_cast<size_t>(output_size) * sizeof(float));
+      memset(output_data, 0, output_size * sizeof(float));
     } else {
       for (auto i = 0; i < output_size; ++i) {
         output_data[i] = pad_param_->constant_value_;

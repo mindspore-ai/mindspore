@@ -51,7 +51,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
                                  size_t curr_depth);
 
 bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index,
-                                  bool *is_next_reshape, size_t curr_depth);
+                                  size_t curr_depth);
 void SetUserAttrs(const std::unordered_map<std::string, ValuePtr> &origin_prim_attrs, PrimitivePtr self_prim);
 }  // namespace parallel
 }  // namespace mindspore

@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/device_resource.h"
@@ -31,8 +30,7 @@ namespace mindspore {
 namespace dataset {
 class DvppNormalizeOp : public TensorOp {
  public:
-  explicit DvppNormalizeOp(std::vector<float> mean, std::vector<float> std)
-      : mean_(std::move(mean)), std_(std::move(std)) {}
+  explicit DvppNormalizeOp(std::vector<float> mean, std::vector<float> std) : mean_(mean), std_(std) {}
 
   ~DvppNormalizeOp() = default;
 

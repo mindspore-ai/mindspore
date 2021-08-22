@@ -46,8 +46,8 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   transpose_param_.strides_[num_axes - 1] = 1;
   transpose_param_.out_strides_[num_axes - 1] = 1;
   for (int i = num_axes - 2; i >= 0; i--) {
-    transpose_param_.strides_[i] = SizeToInt(input_shape_[i + 1]) * transpose_param_.strides_[i + 1];
-    transpose_param_.out_strides_[i] = SizeToInt(output_shape_[i + 1]) * transpose_param_.out_strides_[i + 1];
+    transpose_param_.strides_[i] = input_shape_[i + 1] * transpose_param_.strides_[i + 1];
+    transpose_param_.out_strides_[i] = output_shape_[i + 1] * transpose_param_.out_strides_[i + 1];
   }
   launch_map_[kNumberTypeInt8] = &TransposeCPUFwdKernel::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &TransposeCPUFwdKernel::LaunchKernel<int16_t>;
@@ -87,7 +87,7 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
   size_t data_count = (inputs[0]->size) / sizeof(T);
   if (axes_.size() <= DIMENSION_6D && data_count < MAX_TRANSPOSE_SERIAL_SIZE) {
-    int res = static_cast<int>(NNACL_ERR);
+    int res = NNACL_ERR;
     if constexpr (std::is_same_v<T, int8_t>) {
       res = DoTransposeInt8(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, int16_t>) {
@@ -121,7 +121,7 @@ template <typename T>
 void TransposeCPUFwdKernel::ParallelRun(const T *input_addr, T *output_addr, const int *output_shape, size_t count) {
   auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   const float block_size = 128.0;
-  size_t thread_num = count < block_size * max_thread_num ? FloatToSize(std::ceil(count / block_size)) : max_thread_num;
+  size_t thread_num = count < block_size * max_thread_num ? std::ceil(count / block_size) : max_thread_num;
   std::vector<common::Task> tasks;
   std::function<void(const T *, T *, const int *, TransposeParameter *, int, int)> TransposeDims;
 
@@ -147,13 +147,13 @@ void TransposeCPUFwdKernel::ParallelRun(const T *input_addr, T *output_addr, con
     TransposeDims = &TransposeDimsBool;
   }
   for (int task_id = 0; task_id < SizeToInt(thread_num); ++task_id) {
-    auto task = [this, &TransposeDims, &input_addr, &output_addr, &output_shape, task_id, thread_num]() {
+    auto task = [&, task_id, thread_num]() {
       TransposeDims(input_addr, output_addr, output_shape, &transpose_param_, task_id, SizeToInt(thread_num));
       return common::SUCCESS;
     };
-    (void)tasks.emplace_back(task);
+    tasks.emplace_back(task);
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 }  // namespace kernel
 }  // namespace mindspore

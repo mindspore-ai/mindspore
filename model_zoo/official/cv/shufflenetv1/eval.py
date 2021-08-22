@@ -39,7 +39,7 @@ def test():
     # step_size = dataset.get_dataset_size()
 
     # define net
-    net = shufflenetv1(model_size=config.model_size, n_class=config.num_classes)
+    net = shufflenetv1(model_size=config.model_size)
 
     # load checkpoint
     param_dict = load_checkpoint(config.ckpt_path)

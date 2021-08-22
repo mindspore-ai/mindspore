@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTan = "Tan";
-class MS_CORE_API Tan : public PrimitiveC {
+class Tan : public PrimitiveC {
  public:
   Tan() : PrimitiveC(kNameTan) {}
   ~Tan() = default;

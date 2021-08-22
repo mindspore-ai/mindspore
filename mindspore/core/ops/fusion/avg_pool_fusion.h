@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPoolFusion = "AvgPoolFusion";
-class MS_CORE_API AvgPoolFusion : public AvgPool {
+class AvgPoolFusion : public AvgPool {
  public:
   AvgPoolFusion() : AvgPool(kNameAvgPoolFusion) { InitIOName({"x"}, {"output"}); }
   ~AvgPoolFusion() = default;

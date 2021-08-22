@@ -23,11 +23,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Fp16Crop(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
-void Fp16Crop1D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
-void Fp16Crop2D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
-void Fp16Crop3D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
-void Fp16Crop4D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
+void Fp16Crop(const float16_t *input, float16_t *output, int task_id, CropParameter *para);
+void Fp16Crop1D(const float16_t *input, float16_t *output, int task_id, CropParameter *para);
+void Fp16Crop2D(const float16_t *input, float16_t *output, int task_id, CropParameter *para);
+void Fp16Crop3D(const float16_t *input, float16_t *output, int task_id, CropParameter *para);
+void Fp16Crop4D(const float16_t *input, float16_t *output, int task_id, CropParameter *para);
 #ifdef __cplusplus
 }
 #endif

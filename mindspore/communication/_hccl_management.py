@@ -16,8 +16,6 @@
 """HCCL management API"""
 import ctypes
 import os
-from mindspore import context
-from .._c_expression import get_hccl_rank_id, get_hccl_rank_size
 
 MAX_GROUP_NAME_LEN = 127
 MAX_RANK_NUM = 4096
@@ -151,10 +149,6 @@ def get_rank_size(group="hccl_world_group"):
     Returns:
         An integer scalar with the num of ranks.
     """
-
-    if context.get_context("mode") == context.PYNATIVE_MODE:
-        return get_hccl_rank_size()
-
     check_group(group)
     c_group = c_str(group)
     c_rank_size = ctypes.c_uint()
@@ -172,10 +166,6 @@ def get_rank_id(group="hccl_world_group"):
     Returns:
         An integer scalar with the rank id of the calling process.
     """
-
-    if context.get_context("mode") == context.PYNATIVE_MODE:
-        return get_hccl_rank_id()
-
     check_group(group)
     c_group = c_str(group)
     c_rank_id = ctypes.c_uint()
@@ -184,7 +174,6 @@ def get_rank_id(group="hccl_world_group"):
         raise RuntimeError('Get rank id error.')
 
     return c_rank_id.value
-
 
 
 def get_local_rank_size(group="hccl_world_group"):

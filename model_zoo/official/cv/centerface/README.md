@@ -151,7 +151,10 @@ ls ./dataset/centerface/images/train/images # img_dir
 
     ```python
     # enter script dir, train CenterFace
-    bash train_distribute_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [PRETRAINED_BACKBONE] [ANNOTATIONS] [DATASET]
+    bash train_distribute_gpu.sh
+    # after training
+    mkdir ./model
+    cp train_distribute_gpu/output/*/*.ckpt ./model # cp model to [MODEL_PATH]
     ```
 
 step5: test
@@ -183,7 +186,7 @@ ls ./dataset/centerface/ground_truth/val.mat # annot_path
 
     ```bash
     # test CenterFace
-    bash test_distribute_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [CKPT_PATH] [DATASET] [GROUND_TRUTH_MAT]
+    bash test_distribute GPU
     ```
 
 step6: eval
@@ -318,14 +321,10 @@ bash eval_all.sh [ground_truth_path]
         ├── scripts
         │   ├──run_infer_310.sh          // shell script for infer on ascend310
         │   ├──eval.sh                   // evaluate a single testing result
-        │   ├──eval.sh                   // evaluate a single testing result
         │   ├──eval_all.sh               // choose a range of testing results to evaluate
         │   ├──test.sh                   // testing a single model
-        │   ├──test_gpu.sh               // testing a single model on GPU
         │   ├──test_distribute.sh        // testing a range of models
-        │   ├──test_distribute_gpu.sh    // testing a range of models on GPU
         │   ├──test_and_eval.sh          // test then evaluate a single model
-        │   ├──test_and_eval_gpu.sh      // test then evaluate a single model on GPU
         │   ├──train_standalone.sh       // train in ascend with single npu
         │   ├──train_standalone_gpu.sh   // train on GPU with single npu
         │   ├──train_distribute.sh       // train in ascend with multi npu
@@ -520,9 +519,12 @@ Major parameters eval.py as follows:
     # or use the command as follow:
     #   USE_DEVICE_ID: your device
     #   PRETRAINED_BACKBONE: your pretrained model path
+    #   DATASET: dataset path
     #   ANNOTATIONS: annotation path
-    #   DATASET: image dataset path
-    bash train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [ANNOTATIONS] [DATASET]
+    #   images: img_dir in dataset path
+    bash train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    # after training
+    cp train_standalone_gpu/output/*/*.ckpt [MODEL_PATH]
     ```
 
     - Multi-device (recommended)
@@ -534,7 +536,9 @@ Major parameters eval.py as follows:
     # or use symbolic link as quick start
     # or use the command as follow, most are the same as train_standalone_gpu.sh, the different is DEVICE_NUM
     #   DEVICE_NUM: for multi-device only, number of devices
-    bash train_distribute_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [PRETRAINED_BACKBONE] [ANNOTATIONS] [DATASET]
+    bash train_distribute_gpu.sh [DEVICE_NUM] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    # after training
+    cp train_distribute_gpu/output/*/*.ckpt [MODEL_PATH]
     ```
 
     After training with 8 device, the loss value will be achieved as follows:
@@ -577,21 +581,15 @@ mkdir [SAVE_PATH]
     ```python
     # you need to change the parameter in test.sh
     # or use symbolic link as quick start
-    - On Ascend
     # or use the command as follow:
+    #   DEVICE_TARGET: device where the code will be implemented. Either Ascend or GPU (default: Ascend)
     #   MODEL_PATH: ckpt path saved during training
     #   DATASET: img dir
     #   GROUND_TRUTH_MAT: ground_truth file, mat type
     #   SAVE_PATH: save_path for evaluate
     #   DEVICE_ID: use device id
     #   CKPT: test model name
-    bash test.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]
-    - On GPU
-    # or use the command as follow:
-    #   CKPT: test model name
-    #   DATASET: img dir
-    #   GROUND_TRUTH_MAT: ground_truth file, mat type
-    bash test_gpu.sh [DEVICE_ID] [CKPT] [DATASET] [GROUND_TRUTH_MAT]
+    bash test.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]
     ```
 
 2. test many out ckpt for user to choose the best one
@@ -599,20 +597,13 @@ mkdir [SAVE_PATH]
     ```python
     # you need to change the parameter in test.sh
     # or use symbolic link as quick start
-    - On Ascend
     # or use the command as follow, most are the same as test.sh, the different are:
+    #   DEVICE_TARGET: device where the code will be implemented. Either Ascend or GPU (default: Ascend)
     #   DEVICE_NUM: training device number
     #   STEPS_PER_EPOCH: steps for each epoch
     #   START: start loop number, used to calculate first epoch number
     #   END: end loop number, used to calculate last epoch number
-    bash test_distribute.sh [MODEL_PATH] [DATASET][GROUND_TRUTH_MAT] [SAVE_PATH][DEVICE_NUM] [STEPS_PER_EPOCH][START] [END]
-    - On GPU
-    # or use the command as follow, most are the same as test.sh, the different are:
-    #   DEVICE_NUM: training device number
-    #   CKPT_PATH: test model path
-    #   DATASET: img dir
-    #   GROUND_TRUTH_MAT: ground_truth file, mat type
-    bash test_distribute_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [CKPT_PATH] [DATASET] [GROUND_TRUTH_MAT]
+    bash test_distribute.sh [DEVICE_TARGET][MODEL_PATH] [DATASET][GROUND_TRUTH_MAT] [SAVE_PATH][DEVICE_NUM] [STEPS_PER_EPOCH][START] [END]
     ```
 
 =======
@@ -657,14 +648,11 @@ cd ../../../scripts;
 3. test+eval
 
     ```python
-    - On Ascend
     # you need to change the parameter in test_and_eval.sh
     # or use symbolic link as quick start, default eval the ckpt saved in ./scripts/output/centerface/999
     # or use the command as follow, most are the same as test.sh, the different are:
     #   GROUND_TRUTH_PATH: ground truth path
-    bash test_and_eval.sh [MODEL_PATH] [DATASET][GROUND_TRUTH_MAT] [SAVE_PATH][CKPT] [GROUND_TRUTH_PATH]
-    - On GPU
-    bash test_and_eval_gpu.sh [DEVICE_ID] [CKPT] [DATASET] [GROUND_TRUTH_MAT]
+    bash test_and_eval.sh [DEVICE_TARGET][MODEL_PATH] [DATASET][GROUND_TRUTH_MAT] [SAVE_PATH][CKPT] [GROUND_TRUTH_PATH]
     ```
 
 - Running on Ascend

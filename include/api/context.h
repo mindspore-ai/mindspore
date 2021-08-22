@@ -38,19 +38,12 @@ class Allocator;
 class Delegate;
 class DeviceInfoContext;
 
-/// \brief Context is used to store environment variables during execution.
 class MS_API Context {
  public:
   Context();
   ~Context() = default;
 
-  /// \brief Set the number of threads at runtime. This option is only valid for MindSpore Lite.
-  ///
-  /// \param[in] thread_num the number of threads at runtime.
   void SetThreadNum(int32_t thread_num);
-  /// \brief Get the current thread number setting.
-  ///
-  /// \return The current thread number setting.
   int32_t GetThreadNum() const;
 
   /// \brief Set the thread affinity to CPU cores.
@@ -67,10 +60,6 @@ class MS_API Context {
   void SetDelegate(const std::shared_ptr<Delegate> &delegate);
   std::shared_ptr<Delegate> GetDelegate() const;
 
-  /// \brief Get a mutable reference of DeviceInfoContext vector in this context. Only MindSpore Lite supports
-  /// heterogeneous scenarios with multiple members in the vector.
-  ///
-  /// \return Mutable reference of DeviceInfoContext vector in this context.
   std::vector<std::shared_ptr<DeviceInfoContext>> &MutableDeviceInfo();
 
  private:
@@ -78,24 +67,14 @@ class MS_API Context {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief DeviceInfoContext defines different device contexts.
 class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoContext> {
  public:
   struct Data;
 
   DeviceInfoContext();
   virtual ~DeviceInfoContext() = default;
-
-  /// \brief Get the type of this DeviceInfoContext.
-  ///
-  /// \return Type of this DeviceInfoContext.
   virtual enum DeviceType GetDeviceType() const = 0;
 
-  /// \brief A similar function to RTTI is provided when the -fno-rtti compilation option is turned on, which converts
-  /// DeviceInfoContext to a shared pointer of type T, and returns nullptr if the conversion fails.
-  ///
-  /// \param T Type
-  /// \return A pointer of type T after conversion. If the conversion fails, it will be nullptr.
   template <class T>
   std::shared_ptr<T> Cast() {
     static_assert(std::is_base_of<DeviceInfoContext, T>::value, "Wrong cast type.");
@@ -105,89 +84,41 @@ class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoC
 
     return std::static_pointer_cast<T>(shared_from_this());
   }
-  /// \brief obtain provider's name
-  ///
-  /// \return provider's name.
+
   std::string GetProvider() const;
-  /// \brief set provider's name.
-  ///
-  /// \param[in] provider define the provider's name.
   void SetProvider(const std::string &provider);
-  /// \brief obtain provider's device type.
-  ///
-  /// \return provider's device type.
+
   std::string GetProviderDevice() const;
-  /// \brief set provider's device type.
-  ///
-  /// \param[in] device define the provider's device type.EG: CPU.
   void SetProviderDevice(const std::string &device);
-  /// \brief set memory allocator.
-  ///
-  /// \param[in] allocator define the memory allocator which can be defined by user.
+
   void SetAllocator(const std::shared_ptr<Allocator> &allocator);
-  /// \brief obtain memory allocator.
-  ///
-  /// \return memory allocator.
   std::shared_ptr<Allocator> GetAllocator() const;
 
  protected:
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Derived from DeviceInfoContext, The configuration of the model running on the CPU. This option is only valid
-/// for MindSpore Lite.
 class MS_API CPUDeviceInfo : public DeviceInfoContext {
  public:
-  /// \brief Get the type of this DeviceInfoContext.
-  ///
-  /// \return Type of this DeviceInfoContext.
   enum DeviceType GetDeviceType() const override { return DeviceType::kCPU; };
 
-  /// \brief Set enables to perform the float16 inference
-  ///
-  /// \param[in] is_fp16 Enable float16 inference or not.
   void SetEnableFP16(bool is_fp16);
-  /// \brief Get enables to perform the float16 inference
-  ///
-  /// \return Whether enable float16 inference.
   bool GetEnableFP16() const;
 };
 
-/// \brief Derived from DeviceInfoContext, The configuration of the model running on the NPU. This option is only valid
-/// for MindSpore Lite.
 class MS_API KirinNPUDeviceInfo : public DeviceInfoContext {
  public:
-  /// \brief Get the type of this DeviceInfoContext.
-  ///
-  /// \return Type of this DeviceInfoContext.
   enum DeviceType GetDeviceType() const override { return DeviceType::kKirinNPU; };
 
-  /// \brief Set the NPU frequency.
-  ///
-  /// \param[in] frequency Can be set to 1 (low power consumption), 2 (balanced), 3 (high performance), 4 (extreme
-  /// performance), default as 3.
   void SetFrequency(int frequency);
-  /// \brief Get the NPU frequency.
-  ///
-  /// \return NPU frequency
   int GetFrequency() const;
 };
 
-/// \brief Derived from DeviceInfoContext, The configuration of the model running on the GPU.
 class MS_API GPUDeviceInfo : public DeviceInfoContext {
  public:
-  /// \brief Get the type of this DeviceInfoContext.
-  ///
-  /// \return Type of this DeviceInfoContext.
   enum DeviceType GetDeviceType() const override { return DeviceType::kGPU; };
 
-  /// \brief Set device id.
-  ///
-  /// \param[in] device_id The device id.
   void SetDeviceID(uint32_t device_id);
-  /// \brief Get the device id.
-  ///
-  /// \return The device id.
   uint32_t GetDeviceID() const;
 
   void SetGpuTrtInferMode(bool gpu_trt_infer_mode);
@@ -196,15 +127,8 @@ class MS_API GPUDeviceInfo : public DeviceInfoContext {
   inline void SetPrecisionMode(const std::string &precison_mode);
   inline std::string GetPrecisionMode() const;
 
-  /// \brief Set enables to perform the float16 inference
-  ///
-  /// \param[in] is_fp16 Enable float16 inference or not.
   void SetEnableFP16(bool is_fp16);
-  /// \brief Get enables to perform the float16 inference
-  ///
-  /// \return Whether enable float16 inference.
   bool GetEnableFP16() const;
-
  private:
   void SetPrecisionMode(const std::vector<char> &precision_mode);
   std::vector<char> GetPrecisionModeChar() const;
@@ -215,113 +139,52 @@ void GPUDeviceInfo::SetPrecisionMode(const std::string &precision_mode) {
 }
 std::string GPUDeviceInfo::GetPrecisionMode() const { return CharToString(GetPrecisionModeChar()); }
 
-/// \brief Derived from DeviceInfoContext, The configuration of the model running on the Ascend910. This option is
-/// invalid for MindSpore Lite.
 class MS_API Ascend910DeviceInfo : public DeviceInfoContext {
  public:
-  /// \brief Get the type of this DeviceInfoContext.
-  ///
-  /// \return Type of this DeviceInfoContext.
   enum DeviceType GetDeviceType() const override { return DeviceType::kAscend910; };
 
-  /// \brief Set device id.
-  ///
-  /// \param[in] device_id The device id.
   void SetDeviceID(uint32_t device_id);
-  /// \brief Get the device id.
-  ///
-  /// \return The device id.
   uint32_t GetDeviceID() const;
 };
 
-/// \brief Derived from DeviceInfoContext, The configuration of the model running on the Ascend310. This option is
-/// invalid for MindSpore Lite.
 class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
  public:
-  /// \brief Get the type of this DeviceInfoContext.
-  ///
-  /// \return Type of this DeviceInfoContext.
   enum DeviceType GetDeviceType() const override { return DeviceType::kAscend310; };
 
-  /// \brief Set device id.
-  ///
-  /// \param[in] device_id The device id.
   void SetDeviceID(uint32_t device_id);
-  /// \brief Get the device id.
-  ///
-  /// \return The device id.
   uint32_t GetDeviceID() const;
 
   inline void SetDumpConfigPath(const std::string &cfg_path);
   inline std::string GetDumpConfigPath() const;
 
-  /// \brief Set AIPP configuration file path.
-  ///
-  /// \param[in] cfg_path AIPP configuration file path.
+  // aipp config file
   inline void SetInsertOpConfigPath(const std::string &cfg_path);
-  /// \brief Get AIPP configuration file path.
-  ///
-  /// \return AIPP configuration file path.
   inline std::string GetInsertOpConfigPath() const;
 
-  /// \brief Set format of model inputs.
-  ///
-  /// \param[in] format Optional "NCHW", "NHWC", etc.
+  // nchw or nhwc
   inline void SetInputFormat(const std::string &format);
-  /// \brief Get format of model inputs.
-  ///
-  /// \return The format of model inputs.
   inline std::string GetInputFormat() const;
 
-  /// \brief Set shape of model inputs.
-  ///
-  /// \param[in] shape e.g. "input_op_name1: 1,2,3,4;input_op_name2: 4,3,2,1".
+  // Mandatory while dynamic batch: e.g. "input_op_name1: 1,2,3,4;input_op_name2: 4,3,2,1"
   inline void SetInputShape(const std::string &shape);
-  /// \brief Get shape of model inputs.
-  ///
-  /// \return The shape of model inputs.
   inline std::string GetInputShape() const;
 
-  /// \brief Set shape of model inputs.
-  ///
-  /// \param[in] shape e.g. {{1, {1,2,3,4}}, {2, {4,3,2,1}}} means the first input shape 1,2,3,4 and the second input
-  /// shape 4,3,2,1.
   void SetInputShapeMap(const std::map<int, std::vector<int>> &shape);
-  /// \brief Get shape of model inputs.
-  ///
-  /// \return The shape of model inputs.
   std::map<int, std::vector<int>> GetInputShapeMap() const;
 
   void SetDynamicBatchSize(const std::vector<size_t> &dynamic_batch_size);
   inline std::string GetDynamicBatchSize() const;
 
-  /// \brief Set type of model outputs.
-  ///
-  /// \param[in] output_type FP32, UINT8 or FP16, default as FP32.
+  // FP32, UINT8 or FP16, default as FP32
   void SetOutputType(enum DataType output_type);
-  /// \brief Get type of model outputs.
-  ///
-  /// \return The set type of model outputs.
   enum DataType GetOutputType() const;
 
-  /// \brief Set precision mode of model.
-  ///
-  /// \param[in] precision_mode Optional "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" and
-  /// "allow_mix_precision", "force_fp16" is set as default
+  // "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
   inline void SetPrecisionMode(const std::string &precision_mode);
-  /// \brief Get precision mode of model.
-  ///
-  /// \return The set type of model outputs
   inline std::string GetPrecisionMode() const;
 
-  /// \brief Set op select implementation mode.
-  ///
-  /// \param[in] op_select_impl_mode Optional "high_performance" and "high_precision", "high_performance" is set as
-  /// default.
+  // Optional "high_performance" and "high_precision", "high_performance" is set as default
   inline void SetOpSelectImplMode(const std::string &op_select_impl_mode);
-  /// \brief Get op select implementation mode.
-  ///
-  /// \return The set op select implementation mode.
   inline std::string GetOpSelectImplMode() const;
 
   inline void SetFusionSwitchConfigPath(const std::string &cfg_path);

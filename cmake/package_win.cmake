@@ -42,6 +42,7 @@ set(opencv_LIBPATH ${opencv_LIBPATH}/../bin/)
 set(jpeg_turbo_LIBPATH ${jpeg_turbo_LIBPATH}/../bin/)
 set(sqlite_LIBPATH ${sqlite_LIBPATH}/../bin/)
 set(tinyxml2_LIBPATH ${tinyxml2_LIBPATH}/../bin/)
+set(ffmpeg_LIBPATH ${ffmpeg_LIBPATH}/../bin/)
 
 message("offline debugger does not support windows system temporarily")
 
@@ -94,6 +95,18 @@ if(ENABLE_MINDDATA)
   file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/libtinyxml2.dll)
   install(
     FILES ${TINYXML2_LIB_LIST}
+    DESTINATION ${INSTALL_LIB_DIR}
+    COMPONENT mindspore
+  )
+  file(GLOB_RECURSE FFMPEG_LIB_LIST
+    ${ffmpeg_LIBPATH}/libavcodec*
+    ${ffmpeg_LIBPATH}/libavformat*
+    ${ffmpeg_LIBPATH}/libavutil*
+    ${ffmpeg_LIBPATH}/libswresample*
+    ${ffmpeg_LIBPATH}/libswscale*
+    )
+  install(
+    FILES ${FFMPEG_LIB_LIST}
     DESTINATION ${INSTALL_LIB_DIR}
     COMPONENT mindspore
   )

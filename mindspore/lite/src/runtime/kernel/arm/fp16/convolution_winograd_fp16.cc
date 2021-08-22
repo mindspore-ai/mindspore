@@ -20,19 +20,18 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ConvolutionWinogradFP16CPUKernel::WinogradFilterTransformFp16(const float16_t *weight_data, const float *matrix_g,
-                                                                  const float *matrix_gt, int oc_block) {
+int ConvolutionWinogradFP16CPUKernel::WinogradFilterTransformFp16(const float16_t *weight_data, float *matrix_g,
+                                                                  float *matrix_gt, int oc_block) {
   if (oc_block == 0) {
     MS_LOG(ERROR) << "Divide by zero";
     return RET_ERROR;
   }
 
-  return WinogradWeightTransformFp16(weight_data, reinterpret_cast<float16_t *>(packed_weight_), matrix_g, matrix_gt,
-                                     oc_block, input_unit_, kernel_unit_, conv_param_->input_channel_,
-                                     conv_param_->output_channel_, true);
+  return WinogradWeightTransformFp16(weight_data, trans_weight_, matrix_g, matrix_gt, oc_block, input_unit_,
+                                     kernel_unit_, conv_param_->input_channel_, conv_param_->output_channel_, true);
 }
 
-int ConvolutionWinogradFP16CPUKernel::MallocWeightBiasData() {
+int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int in_channel = weight_tensor->Channel();
   int out_channel = weight_tensor->Batch();
@@ -40,18 +39,19 @@ int ConvolutionWinogradFP16CPUKernel::MallocWeightBiasData() {
   conv_param_->output_channel_ = out_channel;
   int oc_block_num = UP_DIV(out_channel, col_tile_);
   // init weight
+  // set data
   auto trans_matrix_data_size = input_unit_ * input_unit_ * in_channel * oc_block_num * col_tile_ * sizeof(float16_t);
-  if (!op_parameter_->is_train_session_) {
-    if (packed_weight_ == nullptr) {
-      packed_weight_ = malloc(trans_matrix_data_size);
-      if (packed_weight_ == nullptr) {
-        MS_LOG(ERROR) << "malloc packed_weight_ failed.";
-        return RET_ERROR;
-      }
+  if (trans_weight_ == nullptr) {
+    trans_weight_ = reinterpret_cast<float16_t *>(malloc(trans_matrix_data_size));
+    if (trans_weight_ == nullptr) {
+      MS_LOG(ERROR) << "malloc trans_weight_ failed.";
+      return RET_ERROR;
     }
-    memset(packed_weight_, 0, trans_matrix_data_size);
   }
+  memset(trans_weight_, 0, trans_matrix_data_size);
 
+  float matrix_g[64];
+  float matrix_gt[64];
   float matrix_a[64];
   float matrix_at[64];
   float matrix_b[64];
@@ -61,12 +61,19 @@ int ConvolutionWinogradFP16CPUKernel::MallocWeightBiasData() {
     coef = 0.5f;
   }
   auto ret =
-    CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g_, matrix_gt_, coef, output_unit_, kernel_unit_);
+    CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, coef, output_unit_, kernel_unit_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "get matrix g from CookToomFilter failed.";
     return ret;
   }
+  void *weight_origin_tmp = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  ret = WinogradFilterTransformFp16(reinterpret_cast<float16_t *>(weight_origin_tmp), matrix_g, matrix_gt, col_tile_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "winograd filter transform failed.";
+    return ret;
+  }
 
+  // init bias
   if (bias_data_ == nullptr) {
     bias_data_ = malloc(oc_block_num * col_tile_ * sizeof(float16_t));
     if (bias_data_ == nullptr) {
@@ -75,14 +82,12 @@ int ConvolutionWinogradFP16CPUKernel::MallocWeightBiasData() {
     }
   }
   memset(bias_data_, 0, oc_block_num * col_tile_ * sizeof(float16_t));
+  if (in_tensors_.size() == kInputSize2) {
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
+    void *bias_origin_tmp = IsTrainable() ? bias_tensor->data_c() : origin_bias_;
+    memcpy(bias_data_, bias_origin_tmp, out_channel * sizeof(float16_t));
+  }
   return RET_OK;
-}
-
-void ConvolutionWinogradFP16CPUKernel::PackWeight() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *weight_origin = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
-  MS_ASSERT(weight_origin != nullptr);
-  WinogradFilterTransformFp16(reinterpret_cast<float16_t *>(weight_origin), matrix_g_, matrix_gt_, col_tile_);
 }
 
 int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
@@ -138,28 +143,18 @@ int ConvolutionWinogradFP16CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionWinogradFP16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   col_tile_ = C8NUM;
 #ifdef ENABLE_ARM64
   row_tile_ = C16NUM;
 #else
   row_tile_ = C12NUM;
 #endif
-  if (op_parameter_->is_train_session_) {
-    auto weight_tensor = in_tensors_.at(kWeightIndex);
-    int in_channel = weight_tensor->Channel();
-    int out_channel = weight_tensor->Batch();
-    int oc_block_num = UP_DIV(out_channel, col_tile_);
-    auto trans_matrix_data_size = input_unit_ * input_unit_ * in_channel * oc_block_num * col_tile_ * sizeof(float16_t);
-    set_workspace_size(trans_matrix_data_size);
-  }
   kernel_unit_ = conv_param_->kernel_h_;
   input_unit_ = output_unit_ + kernel_unit_ - 1;
   conv_param_->input_unit_ = input_unit_;
   conv_param_->output_unit_ = output_unit_;
 
-  auto ret = InitConvWeightBias();
+  auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
@@ -200,7 +195,6 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "AdjustNumberOfThread failed.";
     return ret;
   }
-  conv_param_->out_format_ = out_tensors_[0]->format();
   return RET_OK;
 }
 
@@ -213,9 +207,8 @@ int ConvolutionWinogradFP16CPUKernel::RunImpl(int task_id) {
     MS_LOG(ERROR) << "Convolution Winograd Fp16 get null tensor data!";
     return RET_ERROR;
   }
-  ConvWinogardFp16(input_ptr, reinterpret_cast<float16_t *>(packed_weight_),
-                   reinterpret_cast<const float16_t *>(bias_data_), output_ptr, tmp_buffer_address_list_, task_id,
-                   conv_param_, in_func_, out_func_);
+  ConvWinogardFp16(input_ptr, trans_weight_, reinterpret_cast<const float16_t *>(bias_data_), output_ptr,
+                   tmp_buffer_address_list_, task_id, conv_param_, in_func_, out_func_);
   return RET_OK;
 }
 
@@ -236,9 +229,13 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  if (RepackWeight() != RET_OK) {
-    MS_LOG(ERROR) << "Repack weight failed.";
-    return RET_ERROR;
+  if (IsTrainable() && (IsTrain() || IsRepack())) {
+    ret = InitWeightBias();
+    if (ret != 0) {
+      MS_LOG(ERROR) << "ConvolutionWinogradFP16 repack weight failure";
+      return RET_ERROR;
+    }
+    is_repack_ = false;
   }
   ret = ParallelLaunch(this->ms_context_, ConvolutionWinogradFp16Impl, this, thread_count_);
   if (ret != RET_OK) {
@@ -248,4 +245,10 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   return ret;
 }
 
+int ConvolutionWinogradFP16CPUKernel::Eval() {
+  if (IsTrainable()) {
+    is_repack_ = true;
+  }
+  return InnerKernel::Eval();
+}
 }  // namespace mindspore::kernel

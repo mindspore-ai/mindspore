@@ -18,7 +18,7 @@ network config setting, will be used in train.py
 from easydict import EasyDict
 config1 = EasyDict({
     "class_num": 1000,
-    "batch_size": 80,
+    "batch_size": 128,
     "loss_scale": 1024,
     "momentum": 0.08,
     "weight_decay": 0.0002,

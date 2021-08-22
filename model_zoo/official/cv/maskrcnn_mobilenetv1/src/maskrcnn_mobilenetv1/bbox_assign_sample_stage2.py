@@ -1,4 +1,4 @@
-# Copyright 2020-21 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
-from mindspore import context
 
 class BboxAssignSampleForRcnn(nn.Cell):
     """
@@ -79,12 +78,8 @@ class BboxAssignSampleForRcnn(nn.Cell):
         self.tile = P.Tile()
 
         # Check
-        if context.get_context("device_target") == "CPU":
-            self.check_gt_one = Tensor(np.array(-1 * np.ones((self.num_gts, 4)), dtype=np.float32))
-            self.check_anchor_two = Tensor(np.array(-2 * np.ones((self.num_bboxes, 4)), dtype=np.float32))
-        else:
-            self.check_gt_one = Tensor(np.array(-1 * np.ones((self.num_gts, 4)), dtype=np.float16))
-            self.check_anchor_two = Tensor(np.array(-2 * np.ones((self.num_bboxes, 4)), dtype=np.float16))
+        self.check_gt_one = Tensor(np.array(-1 * np.ones((self.num_gts, 4)), dtype=np.float16))
+        self.check_anchor_two = Tensor(np.array(-2 * np.ones((self.num_bboxes, 4)), dtype=np.float16))
 
         # Init tensor
         self.assigned_gt_inds = Tensor(np.array(-1 * np.ones(num_bboxes), dtype=np.int32))
@@ -96,13 +91,8 @@ class BboxAssignSampleForRcnn(nn.Cell):
         self.gt_ignores = Tensor(np.array(-1 * np.ones(self.num_gts), dtype=np.int32))
         self.range_pos_size = Tensor(np.arange(self.num_expected_pos).astype(np.float16))
         self.check_neg_mask = Tensor(np.array(np.ones(self.num_expected_neg - self.num_expected_pos), dtype=np.bool))
-
-        if context.get_context("device_target") == "CPU":
-            self.bboxs_neg_mask = Tensor(np.zeros((self.num_expected_neg, 4), dtype=np.float32))
-            self.labels_neg_mask = Tensor(np.array(np.zeros(self.num_expected_neg), dtype=np.int32))
-        else:
-            self.bboxs_neg_mask = Tensor(np.zeros((self.num_expected_neg, 4), dtype=np.float16))
-            self.labels_neg_mask = Tensor(np.array(np.zeros(self.num_expected_neg), dtype=np.uint8))
+        self.bboxs_neg_mask = Tensor(np.zeros((self.num_expected_neg, 4), dtype=np.float16))
+        self.labels_neg_mask = Tensor(np.array(np.zeros(self.num_expected_neg), dtype=np.uint8))
 
         self.reshape_shape_pos = (self.num_expected_pos, 1)
         self.reshape_shape_neg = (self.num_expected_neg, 1)

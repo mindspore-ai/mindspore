@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGetNext = prim::kGetNext;
-class MS_CORE_API GetNext : public PrimitiveC {
+class GetNext : public PrimitiveC {
  public:
   GetNext() : PrimitiveC(prim::kPrimGetNext->name()) {}
   ~GetNext() = default;

@@ -419,7 +419,7 @@ std::string GetVirtualNodeTargetFromInputs(const AnfNodePtr &node) {
     }
     std::string first_input_target = kTargetUnDefined;
     bool has_diff_target =
-      std::any_of(std::rbegin(real_inputs), std::rend(real_inputs), [&first_input_target](const AnfNodePtr &n) {
+      std::any_of(std::begin(real_inputs), std::end(real_inputs), [&first_input_target](const AnfNodePtr &n) {
         auto target = GetOriginNodeTarget(n);
         if (target == kTargetUnDefined) {
           return false;

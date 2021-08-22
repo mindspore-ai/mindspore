@@ -55,7 +55,7 @@ int BatchToSpaceNDOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-int BatchToSpaceNDOpenCLKernel::SetConstArgs() {
+void BatchToSpaceNDOpenCLKernel::SetConstArgs() {
   auto param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
@@ -66,23 +66,10 @@ int BatchToSpaceNDOpenCLKernel::SetConstArgs() {
   cl_int4 paddings = {param->crops_[0], param->crops_[1], param->crops_[2], param->crops_[3]};
 
   int arg_cnt = 2;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, block_size) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, paddings) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, block_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, paddings);
 }
 
 void BatchToSpaceNDOpenCLKernel::SetGlobalLocal() {
@@ -95,9 +82,9 @@ void BatchToSpaceNDOpenCLKernel::SetGlobalLocal() {
 }
 
 int BatchToSpaceNDOpenCLKernel::Prepare() {
-  const std::string kernel_name = "batch_to_space_nd_NHWC4";
+  std::string kernel_name = "batch_to_space_nd_NHWC4";
   std::string source = batch_to_space_nd_source;
-  const std::string program_name = "batch_to_space_nd";
+  std::string program_name = "batch_to_space_nd";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -109,28 +96,16 @@ int BatchToSpaceNDOpenCLKernel::Prepare() {
     return ret;
   }
   SetGlobalLocal();
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
-  }
+  SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
 int BatchToSpaceNDOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c()) != CL_SUCCESS) {
-    MS_LOG(ERROR) << "SetKernelArg failed.";
-    return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-    MS_LOG(ERROR) << "RunKernel failed.";
-    return RET_ERROR;
-  }
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
 
   return RET_OK;
 }

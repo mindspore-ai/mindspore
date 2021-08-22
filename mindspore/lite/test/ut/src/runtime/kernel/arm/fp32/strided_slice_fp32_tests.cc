@@ -164,7 +164,6 @@ TEST_F(TestStridedSliceFp32, StridedSlice3) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
   delete ctx;
-  delete kernel;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 2, 0.000001));
   input_tensor.set_data(nullptr);
@@ -218,7 +217,6 @@ TEST_F(TestStridedSliceFp32, StridedSlice4) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
   delete ctx;
-  delete kernel;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 4, 0.000001));
   input_tensor.set_data(nullptr);
@@ -279,7 +277,6 @@ TEST_F(TestStridedSliceFp32, StridedSlice5) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
   delete ctx;
-  delete kernel;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 12, 0.000001));
   input_tensor.set_data(nullptr);
@@ -340,7 +337,6 @@ TEST_F(TestStridedSliceFp32, StridedSlice6) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
   delete ctx;
-  delete kernel;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 8, 0.000001));
   input_tensor.set_data(nullptr);
@@ -393,7 +389,6 @@ TEST_F(TestStridedSliceFp32, StridedSlice7) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
   delete ctx;
-  delete kernel;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 1, 0.000001));
   input_tensor.set_data(nullptr);
@@ -454,7 +449,6 @@ TEST_F(TestStridedSliceFp32, StridedSlice8) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
   delete ctx;
-  delete kernel;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 5, 0.000001));
   input_tensor.set_data(nullptr);
@@ -608,7 +602,6 @@ TEST_F(TestStridedSliceFp32, StridedSlice9) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
   delete ctx;
-  delete kernel;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 490, 0.000001));
   input_tensor.set_data(nullptr);

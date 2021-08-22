@@ -25,7 +25,6 @@
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
-#include "utils/profile.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -340,10 +339,6 @@ void GPUProfiler::OpsParser() {
   std::sort(order_vec.begin(), order_vec.end(), cmp_func);
 
   for (auto iter = order_vec.begin(); iter != order_vec.end(); iter++) {
-    if (iter->second.op_count == 0) {
-      MS_LOG(ERROR) << "The num of operations can not be 0.";
-      return;
-    }
     MS_LOG(DEBUG) << "GPU_profiler"
                   << "," << iter->first << "," << iter->second.op_count << "," << iter->second.op_kernel_count << ","
                   << iter->second.op_kernel_api_count << ","
@@ -447,12 +442,6 @@ void GPUProfiler::OpDataProducerBegin(const std::string op_name, void *stream) {
   }
 }
 
-void GPUProfiler::SingleOpLaunchTimeProcess(float op_time_elapsed) {
-  auto launch_end_time = GetTime();
-  double launch_start_time = launch_end_time - op_time_elapsed / kTimeUnit / kTimeUnit;
-  SetSingleOpLaunchTime(std::make_pair(launch_start_time, launch_end_time));
-}
-
 void GPUProfiler::OpDataProducerEnd() {
   float op_time_elapsed = 0;
   if (sync_enable_flag_) {
@@ -466,11 +455,9 @@ void GPUProfiler::OpDataProducerEnd() {
     CHECK_CUDA_RET_WITH_ERROR(cudaEventDestroy(op_event_stop_), "cudaEventDestroy  op event stop failed");
     op_time_elapsed = op_time_elapsed * kTimeUnit;
     op_host_time_stop_ = GetHostTimeStamp();
-    SingleOpLaunchTimeProcess(op_time_elapsed);
   } else {
     op_host_time_stop_ = GetHostTimeStamp();
     op_time_elapsed = (op_host_time_stop_ - op_host_time_start_) / kTimeUnit;
-    SingleOpLaunchTimeProcess(op_time_elapsed);
   }
   MS_LOG(DEBUG) << "Host Time Elapsed(us)," << op_name_ << "," << op_time_elapsed;
   Profiler::SetRunTimeData(op_name_, op_time_elapsed);

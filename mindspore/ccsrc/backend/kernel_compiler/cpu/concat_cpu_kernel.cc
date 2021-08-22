@@ -74,7 +74,7 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
       }
     }
   };
-  ParallelLaunchAutoSearch(task, before_axis, this, &parallel_search_info_);
+  CPUKernelUtils::ParallelForAutoSearch(task, before_axis, &parallel_search_info_);
   return true;
 }
 

@@ -320,23 +320,18 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
 
-  MS_LOG(INFO) << "Get graph outputs before optimizer, graph id: " << graph->graph_id();
-  auto outputs_before_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
-
   // Execute optimization pass.
+  auto outputs_before_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
   device_context->OptimizeGraph(graph);
+  auto outputs_after_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
+  // Update the output map of kernel graph by modified output nodes.
+  graph->UpdateGraphOutputMap(outputs_before_optimizer, outputs_after_optimizer);
 
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   device_context->CreateKernel(graph->execution_order());
 
-  // Adjust kernel graph before run graph.
   device_context->PreprocessBeforeRunGraph(graph);
-
-  MS_LOG(INFO) << "Get graph outputs after optimizer, graph id: " << graph->graph_id();
-  auto outputs_after_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
-  // Update the output map of kernel graph by modified output nodes.
-  graph->UpdateGraphOutputMap(outputs_before_optimizer, outputs_after_optimizer);
 
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     // Create device address for all anf nodes of graph.
@@ -526,11 +521,6 @@ void GraphCompiler::Summary(const std::vector<KernelGraphPtr> &graphs) const {
   for (const auto &graph : graphs) {
     session_->Summary(graph.get());
   }
-}
-
-void GraphCompiler::EraseSingleOpCache(const GraphInfo &graph_info, const GraphId &graph_id) {
-  run_op_graphs_.erase(graph_info);
-  run_op_graph_output_nodes_.erase(graph_id);
 }
 }  // namespace runtime
 }  // namespace mindspore

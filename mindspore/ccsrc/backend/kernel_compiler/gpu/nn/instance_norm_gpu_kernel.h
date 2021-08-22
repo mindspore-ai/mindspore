@@ -75,7 +75,10 @@ class InstanceNormGpuKernel : public GpuKernel {
     float *ws_beta = GetDeviceAddress<float>(workspace, 1);
     float *ws_mean = GetDeviceAddress<float>(workspace, 2);
     float *ws_var = GetDeviceAddress<float>(workspace, 3);
-    T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 4);
+    T *workspace_addr = nullptr;
+    if (workspace_size_ != 0) {
+      workspace_addr = GetDeviceAddress<T>(workspace, 4);
+    }
 
     size_t N = input_shape_[0];
     size_t C = input_shape_[1];

@@ -192,7 +192,7 @@ bool TbeJsonCreator::GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *
 
 void TbeJsonCreator::GenFusionOpName(nlohmann::json *kernel_json, std::string prefix) {
   json_name_.clear();
-  json_hash_ = GenJsonHash((*kernel_json));
+  size_t hash_id = GenJsonHash((*kernel_json));
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   json_name_ = std::move(prefix);
@@ -203,7 +203,7 @@ void TbeJsonCreator::GenFusionOpName(nlohmann::json *kernel_json, std::string pr
       json_name_.append("_");
     }
   }
-  json_name_ = json_name_ + std::to_string(json_hash_) + "_" + std::to_string(device_id);
+  json_name_ = json_name_ + std::to_string(hash_id) + "_" + std::to_string(device_id);
   MS_LOG(DEBUG) << "Generate Json name: " << json_name_;
   (*kernel_json)[kJFusionOpName] = json_name_;
 }
@@ -231,7 +231,7 @@ size_t TbeJsonCreator::GenJsonHash(nlohmann::json tbe_json) {
       DeleteDescName(&op.at(kJInputDesc));
     }
   }
-  return std::hash<std::string>()(op_lists.dump());
+  return std::hash<std::string>()(tbe_json.dump());
 }
 
 void TbeJsonCreator::AddOpNameForComputeNode(nlohmann::json *kernel_json) {
@@ -346,8 +346,8 @@ void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx
   GenDesJsonCommon(output_desc);
   std::vector<int64_t> shape;
   std::vector<int64_t> ori_shape;
-  shape = TbeJsonUtils::GetOutputDeviceShapeForTbeBuild(anf_node, node_out_idx);
-  ori_shape = TbeJsonUtils::GetOutputOriShapeForTbeBuild(anf_node, node_out_idx);
+  AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputDeviceShape(anf_node, node_out_idx), NOT_NULL(&shape));
+  AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputInferShape(anf_node, node_out_idx), NOT_NULL(&ori_shape));
   if (shape.empty()) {
     shape.emplace_back(1);
   }

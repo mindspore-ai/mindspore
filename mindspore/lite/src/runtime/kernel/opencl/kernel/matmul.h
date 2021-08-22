@@ -32,7 +32,7 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
   int CheckSpecs() override;
   int InitWeights() override;
-  int SetConstArgs() override;
+  void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Tune() override { return lite::RET_OK; }
   int InitBias();
@@ -54,7 +54,7 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   std::vector<int> outShape{std::vector<int>(MAX_DIMS, 1)};
 
  private:
-  int PadWeight(std::vector<int> weight_shape_4d, int ci, int co);
+  void PadWeight(std::vector<int> weight_shape_4d, int ci, int co);
 };
 }  // namespace mindspore::kernel
 

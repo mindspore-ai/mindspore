@@ -28,9 +28,6 @@ OpenCLAllocator::~OpenCLAllocator() { Clear(); }
 
 void OpenCLAllocator::SetContext(const AllocatorContext &ctx) {
   lock_flag_ = ctx.lockFlag;
-  if (ctx.shiftFactor < 0) {
-    MS_LOG(ERROR) << "shiftFactor from AllocatorContext is invalid negative.";
-  }
   shift_factor_ = ctx.shiftFactor;
 }
 
@@ -81,8 +78,7 @@ void *OpenCLAllocator::CreateBuffer(size_t size, void *data, size_t flags, cl::B
   MS_ASSERT(host_ptr);
   if (host_ptr == nullptr) {
     delete *buffer;
-    buffer = nullptr;
-    MS_LOG(ERROR) << "Map buffer failed, can not found buffer.";
+    MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << *buffer << ", host_ptr=" << host_ptr;
     return nullptr;
   }
   cl::Memory *mem = *buffer;
@@ -112,15 +108,12 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const ImageSize &img_size, voi
   }
   if (*image == nullptr) {
     delete *buffer;
-    *buffer = nullptr;
     MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << mindspore::kernel::CLErrorCode(ret) << ")";
     return nullptr;
   }
   if (ret != CL_SUCCESS) {
     delete *buffer;
     delete *image;
-    *buffer = nullptr;
-    *image = nullptr;
     MS_LOG(ERROR) << "Create OpenCL Image2D  (ERROR CODE: " << mindspore::kernel::CLErrorCode(ret) << ")";
     return nullptr;
   }
@@ -132,8 +125,6 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const ImageSize &img_size, voi
     if (host_ptr == nullptr) {
       delete *buffer;
       delete *image;
-      *buffer = nullptr;
-      *image = nullptr;
       MS_LOG(ERROR) << "Map image failed, can not found image :" << *image << ", host_ptr=" << host_ptr;
       return nullptr;
     }

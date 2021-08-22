@@ -39,14 +39,9 @@ class SystemPool : public MemoryPool {
 
   Status Allocate(size_t n, void **pp) override { return DeMalloc(n, pp, false); }
 
-  void Deallocate(void *p) override {
-    if (p != nullptr) {
-      free(p);
-    }
-  }
+  void Deallocate(void *p) override { free(p); }
 
   Status Reallocate(void **p, size_t old_sz, size_t new_sz) override {
-    RETURN_UNEXPECTED_IF_NULL(p);
     if (old_sz >= new_sz) {
       // Do nothing if we shrink.
       return Status::OK();

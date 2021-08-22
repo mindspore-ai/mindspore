@@ -620,27 +620,7 @@ std::vector<int64_t> FracZDeviceShapeWithGroups(const std::vector<int64_t> &shap
   return device_shape;
 }
 
-std::vector<size_t> FracNZDeviceShape(const std::vector<size_t> &shape) {
-  if (shape.size() == 1 && (shape[0] == 1 || shape[0] % kCubeSize == 0)) {
-    // For [1] and [1024] shape we can trait it as NZ shape
-    return shape;
-  }
-  std::vector<size_t> device_shape;
-  if (shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "Format FRACTAL_NZ is not support shape " << shape.size();
-  } else {
-    (void)std::copy(shape.begin(), shape.end() - 2, std::back_inserter(device_shape));
-  }
-  auto h1 = (shape[shape.size() - 2] - 1) / kCubeSize + 1;
-  auto w1 = (shape[shape.size() - 1] - 1) / kCubeSize + 1;
-  device_shape.push_back(w1);
-  device_shape.push_back(h1);
-  device_shape.push_back(kCubeSize);
-  device_shape.push_back(kCubeSize);
-  return device_shape;
-}
-
-std::vector<int64_t> FracNZDeviceDynamicShape(const std::vector<int64_t> &shape) {
+std::vector<int64_t> TransShapeToFracNZ(const std::vector<int64_t> &shape) {
   std::vector<int64_t> device_shape;
   if (shape.size() == 1 && (shape[0] == 1 || shape[0] % kCubeSize == 0)) {
     // For [1] and [1024] shape we can trait it as NZ shape
@@ -662,21 +642,7 @@ std::vector<int64_t> FracNZDeviceDynamicShape(const std::vector<int64_t> &shape)
   return device_shape;
 }
 
-std::vector<size_t> FracNZLSTMDeviceShape(const std::vector<size_t> &shape) {
-  const size_t c0 = 4;
-  const size_t h = shape.at(kN) / c0;
-  const size_t i = shape.at(kC) - h;
-  const size_t first = DivCeil(i, kCubeSize) + DivCeil(h, kCubeSize);
-  const size_t second = c0 * DivCeil(h, kCubeSize);
-  std::vector<size_t> device_shape;
-  device_shape.push_back(first);
-  device_shape.push_back(second);
-  device_shape.push_back(kCubeSize);
-  device_shape.push_back(kCubeSize);
-  return device_shape;
-}
-
-std::vector<int64_t> FracNZLSTMDeviceDynamicShape(const std::vector<int64_t> &shape) {
+std::vector<int64_t> TransShapeToFracNZLSTM(const std::vector<int64_t> &shape) {
   std::vector<int64_t> device_shape;
   const int64_t c0 = 4;
   const int64_t h_shape = shape.at(kN);
@@ -727,8 +693,8 @@ bool IsNeedPadding(const std::string &format, const size_t shape_size) {
   if (shape_size == 0) {
     return false;
   }
-  if (format == kOpFormat_DEFAULT || format == kOpFormat_NCHW ||
-      kNoPaddingFormatSet.find(format) != kNoPaddingFormatSet.end()) {
+  if (format == kOpFormat_DEFAULT || format == kOpFormat_FRAC_NZ || format == kOpFormat_ChannelLast ||
+      format == kOpFormat_NCHW) {
     return false;
   } else if (shape_size < kNchwDims) {
     return true;
@@ -833,9 +799,7 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
                                                                     {kOpFormat_NCDHW, NcdhwDeviceShape},
                                                                     {kOpFormat_ChannelLast, ChannelLastDeviceShape},
                                                                     {kOpFormat_NDC1HWC0, Ndc1hwc0DeviceShape},
-                                                                    {kOpFormat_FRACTAL_Z_3D, Fracz3DDeviceShape},
-                                                                    {kOpFormat_FRAC_NZ, FracNZDeviceShape},
-                                                                    {kOpFormat_FRACTAL_ZN_LSTM, FracNZLSTMDeviceShape}};
+                                                                    {kOpFormat_FRACTAL_Z_3D, Fracz3DDeviceShape}};
 
   if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
     return shape;
@@ -844,8 +808,37 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
     return FracZDeviceShapeWithGroups(shape, groups);
   }
   auto temp_shape = shape;
-  if (kNoPaddingFormatSet.find(format) == kNoPaddingFormatSet.end() && format != kOpFormat_FRACTAL_ZN_LSTM &&
-      shape.size() != kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+  std::vector<size_t> device_shape;
+  if (format == kOpFormat_FRAC_NZ) {
+    if (shape.size() == 1 && (shape[0] == 1 || shape[0] % kCubeSize == 0)) {
+      // For [1] and [1024] shape we can trait it as NZ shape
+      return shape;
+    }
+    if (shape.size() < 2) {
+      MS_LOG(EXCEPTION) << "Format" << format << " is not support shape " << shape.size();
+    } else {
+      (void)std::copy(shape.begin(), shape.end() - 2, std::back_inserter(device_shape));
+    }
+    auto h1 = (shape[shape.size() - 2] - 1) / kCubeSize + 1;
+    auto w1 = (shape[shape.size() - 1] - 1) / kCubeSize + 1;
+    device_shape.push_back(w1);
+    device_shape.push_back(h1);
+    device_shape.push_back(kCubeSize);
+    device_shape.push_back(kCubeSize);
+    return device_shape;
+  } else if (format == kOpFormat_FRACTAL_ZN_LSTM) {
+    const size_t c0 = 4;
+    const size_t h = shape.at(kN) / c0;
+    const size_t i = shape.at(kC) - h;
+    const size_t first = DivCeil(i, kCubeSize) + DivCeil(h, kCubeSize);
+    const size_t second = c0 * DivCeil(h, kCubeSize);
+    device_shape.push_back(first);
+    device_shape.push_back(second);
+    device_shape.push_back(kCubeSize);
+    device_shape.push_back(kCubeSize);
+    return device_shape;
+  }
+  if (format != kOpFormat_ChannelLast && shape.size() != kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
     MS_LOG(WARNING) << "Get Device Shape using a shape size is less than 4 ,should be Padding shape by Default firstly";
     temp_shape = PaddingShapeTo4dDefault(shape);
   }
@@ -874,9 +867,7 @@ std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const
     {kOpFormat_NCDHW, NcdhwDeviceDynamicShape},
     {kOpFormat_ChannelLast, ChannelLastDeviceDynamicShape},
     {kOpFormat_NDC1HWC0, Ndc1hwc0DeviceDynamicShape},
-    {kOpFormat_FRACTAL_Z_3D, Fracz3DDeviceDynamicShape},
-    {kOpFormat_FRAC_NZ, FracNZDeviceDynamicShape},
-    {kOpFormat_FRACTAL_ZN_LSTM, FracNZLSTMDeviceDynamicShape}};
+    {kOpFormat_FRACTAL_Z_3D, Fracz3DDeviceDynamicShape}};
 
   if (format == kOpFormat_ND || format == kOpFormat_DEFAULT || format == kOpFormat_NCHW) {
     return shape;
@@ -885,8 +876,12 @@ std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const
     return FracZDeviceShapeWithGroups(shape, groups);
   }
   auto temp_shape = shape;
-  if (kNoPaddingFormatSet.find(format) == kNoPaddingFormatSet.end() && format != kOpFormat_FRACTAL_ZN_LSTM &&
-      shape.size() != kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+  if (format == kOpFormat_FRAC_NZ) {
+    return TransShapeToFracNZ(shape);
+  } else if (format == kOpFormat_FRACTAL_ZN_LSTM) {
+    return TransShapeToFracNZLSTM(shape);
+  }
+  if (format != kOpFormat_ChannelLast && shape.size() != kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
     MS_LOG(WARNING) << "Get Device Shape using a shape size is less than 4 ,should be Padding shape by Default firstly";
     temp_shape = PaddingShapeTo4dDefault(shape);
   }
@@ -1018,7 +1013,7 @@ bool NchwTo4D(const FormatArgs &args, void *result) {
       for (size_t hi = 0; hi < h; hi++) {
         for (size_t wi = 0; wi < w; wi++) {
           auto src_idx = ni * c * h * w + ci * h * w + hi * w + wi;
-          size_t dst_idx = 0;
+          auto dst_idx = 0;
           if (args.device_format == kOpFormat_NHWC) {
             dst_idx = ni * h * w * c + hi * w * c + wi * c + ci;
           } else if (args.device_format == kOpFormat_HWCN) {
@@ -1050,7 +1045,7 @@ bool ToNchw(const FormatArgs &args, void *result) {
       for (size_t hi = 0; hi < h; hi++) {
         for (size_t wi = 0; wi < w; wi++) {
           auto dst_idx = ni * c * h * w + ci * h * w + hi * w + wi;
-          size_t src_idx = 0;
+          auto src_idx = 0;
           if (args.device_format == kOpFormat_NHWC) {
             src_idx = ni * h * w * c + hi * w * c + wi * c + ci;
           } else if (args.device_format == kOpFormat_HWCN) {
@@ -1224,7 +1219,6 @@ bool NchwToNc1hwc04(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans format from nchw to Nc1hwc04.";
   return NchwToNc1hwc0(args, result);
 }
-
 bool Nc1hwc04ToNchw(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans format from Nc1hwc04 to nchw.";
   return Nc1hwc0ToNchw(args, result);
@@ -1807,7 +1801,7 @@ bool NchwFracZTransWithGroups(const FormatArgs &args, void *result, bool to_devi
   auto c_dim = args.host_shape[kC];
   auto h_dim = args.host_shape[kH];
   auto w_dim = args.host_shape[kW];
-  const size_t d_dim = 1;
+  size_t d_dim = 1;
   size_t group_size = LongToSize(groups);
   auto cin_ori = c_dim;
   auto cout_ori = n_dim / group_size;

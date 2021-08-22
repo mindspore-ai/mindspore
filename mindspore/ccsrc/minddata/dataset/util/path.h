@@ -32,9 +32,9 @@ class Path {
 
     ~DirIterator();
 
-    bool HasNext();
+    bool hasNext();
 
-    Path Next();
+    Path next();
 
    private:
     explicit DirIterator(Path *f);
@@ -115,8 +115,6 @@ class Path {
   Status TruncateFile(int fd) const;
 
   std::string Basename();
-
-  static Status RealPath(const std::string &path, std::string &realpath_str);  // NOLINT
 
   friend std::ostream &operator<<(std::ostream &os, const Path &s);
 

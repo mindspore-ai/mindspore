@@ -24,10 +24,33 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-constexpr static int kMaxNumOfDevices = 3;
+constexpr static int kMaxNumOfDevices = 2;
 
-Status AddCpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
-  auto cpu_context = device->Cast<CPUDeviceInfo>();
+Status A2L_ConvertContext(Context *a_context, lite::Context *l_context) {
+  if ((a_context == nullptr) || (l_context == nullptr)) {
+    MS_LOG(ERROR) << "Invalid context pointers.";
+    return kLiteNullptr;
+  }
+
+  auto device_list = a_context->MutableDeviceInfo();
+  if (device_list.size() == 0) {
+    MS_LOG(ERROR) << "Invalid device list.";
+    return kLiteInputParamInvalid;
+  }
+  if (device_list.size() > kMaxNumOfDevices) {
+    MS_LOG(ERROR) << "Only CPU/CPU & GPU/CPU & NPU mode is supported.";
+    return kLiteInputParamInvalid;
+  }
+  l_context->thread_num_ = a_context->GetThreadNum();
+  l_context->enable_parallel_ = a_context->GetEnableParallel();
+  l_context->affinity_core_list_ = a_context->GetThreadAffinityCoreList();
+  l_context->device_list_.clear();
+  if (device_list[0]->GetDeviceType() != kCPU) {
+    MS_LOG(ERROR) << "CPU context must be enabled and in the first place of device list.";
+    return kLiteInputParamInvalid;
+  }
+
+  auto cpu_context = device_list[0]->Cast<CPUDeviceInfo>();
   l_context->allocator = cpu_context->GetAllocator();
   if (l_context->allocator == nullptr) {
     l_context->allocator = Allocator::Create();
@@ -50,65 +73,22 @@ Status AddCpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInf
   cpu_info.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode};
   l_context->device_list_.push_back({lite::DT_CPU, cpu_info, cpu_context->GetProvider(),
                                      cpu_context->GetProviderDevice(), cpu_context->GetAllocator()});
-  return kSuccess;
-}
-
-Status AddGpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
-  lite::DeviceInfo device_info = {0};
-  auto gpu_context = device->Cast<GPUDeviceInfo>();
-  device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};
-  l_context->device_list_.push_back({lite::DT_GPU, device_info, gpu_context->GetProvider(),
-                                     gpu_context->GetProviderDevice(), gpu_context->GetAllocator()});
-  return kSuccess;
-}
-
-Status AddNpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
-  lite::DeviceInfo device_info = {0};
-  auto npu_context = device->Cast<KirinNPUDeviceInfo>();
-  device_info.npu_device_info_ = {npu_context->GetFrequency()};
-  l_context->device_list_.push_back({lite::DT_NPU, device_info});
-  return kSuccess;
-}
-
-Status A2L_ConvertContext(Context *a_context, lite::InnerContext *l_context) {
-  if ((a_context == nullptr) || (l_context == nullptr)) {
-    MS_LOG(ERROR) << "Invalid context pointers.";
-    return kLiteNullptr;
-  }
-
-  auto device_list = a_context->MutableDeviceInfo();
-  if (device_list.size() == 0) {
-    MS_LOG(ERROR) << "Invalid device list.";
-    return kLiteInputParamInvalid;
-  }
-  if (device_list.size() > kMaxNumOfDevices) {
-    MS_LOG(ERROR) << "Device support Max: " << kMaxNumOfDevices;
-    return kLiteInputParamInvalid;
-  }
-  l_context->thread_num_ = a_context->GetThreadNum();
-  l_context->enable_parallel_ = a_context->GetEnableParallel();
-  l_context->affinity_core_list_ = a_context->GetThreadAffinityCoreList();
-  l_context->device_list_.clear();
-
-  Status error_code;
-  for (auto device : device_list) {
-    if (device->GetDeviceType() == kCPU) {
-      error_code = AddCpuDevice(a_context, l_context, device.get());
-    } else if (device->GetDeviceType() == kGPU) {
-      error_code = AddGpuDevice(a_context, l_context, device.get());
-    } else if (device->GetDeviceType() == kKirinNPU) {
-      error_code = AddNpuDevice(a_context, l_context, device.get());
+  if (device_list.size() == kMaxNumOfDevices) {
+    lite::DeviceInfo device_info = {0};
+    if (device_list[1]->GetDeviceType() == kGPU) {
+      auto gpu_context = device_list[1]->Cast<GPUDeviceInfo>();
+      device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};
+      l_context->device_list_.push_back({lite::DT_GPU, device_info, gpu_context->GetProvider(),
+                                         gpu_context->GetProviderDevice(), gpu_context->GetAllocator()});
+    } else if (device_list[1]->GetDeviceType() == kKirinNPU) {
+      auto npu_context = device_list[1]->Cast<KirinNPUDeviceInfo>();
+      device_info.npu_device_info_ = {npu_context->GetFrequency()};
+      l_context->device_list_.push_back({lite::DT_NPU, device_info});
     } else {
       MS_LOG(ERROR) << "Invalid device.";
       return kLiteInputParamInvalid;
     }
-
-    if (error_code != kSuccess) {
-      MS_LOG(ERROR) << "Add device failed!";
-      return error_code;
-    }
   }
-
   l_context->delegate = a_context->GetDelegate();
   return kSuccess;
 }

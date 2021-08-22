@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "ir/anf.h"
-#include "runtime/framework/graph_scheduler.h"
-#include "actor/actormgr.h"
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
@@ -64,7 +62,6 @@ const char DELTA[] = "delta";
 const char SORTED[] = "sorted";
 const char ADJ_ST[] = "adjoint_st";
 const char ADJ_dT[] = "adjoint_dt";
-const char PERIODS[] = "periods";
 
 enum OperateType {
   ADD = 0,
@@ -122,7 +119,6 @@ enum OperateType {
   ATAN2,
   RINT,
   ROUND,
-  EXP,
   IDENTITY,
 };
 
@@ -156,19 +152,6 @@ class CPUKernel : public kernel::KernelMod {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   ParallelSearchInfo parallel_search_info_;
-
-  template <typename T>
-  inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
-    if (index >= addr_list.size()) {
-      MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
-    }
-
-    if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {
-      MS_LOG(EXCEPTION) << "The device address is empty, address index: " << index;
-    }
-
-    return reinterpret_cast<T *>(addr_list[index]->addr);
-  }
 };
 
 class CPUKernelUtils {
@@ -226,12 +209,6 @@ class TransposeIterator {
   std::vector<size_t> axes_;
   size_t pos_{0};
 };
-
-ActorThreadPool *GetActorMgrInnerThreadPool();
-void ParallelLaunch(const CTask &task, size_t count, float block_size = 128.0, Content content = nullptr);
-void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
-                              ParallelSearchInfo *parallel_search_info);
-
 }  // namespace kernel
 }  // namespace mindspore
 

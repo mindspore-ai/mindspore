@@ -16,9 +16,10 @@
 import os
 # os.system("pip3 install subword-nmt")
 # os.system("pip3 install sacremoses")
-import ast
+
 import argparse
 import pickle
+import moxing as mox
 from mindspore.common import dtype as mstype
 from mindspore import context
 
@@ -29,14 +30,19 @@ from src.dataset.tokenizer import Tokenizer
 
 is_modelarts = False
 
+if is_modelarts:
+    parser = argparse.ArgumentParser(description='seq2seq')
+    parser.add_argument("--config", type=str, required=True,
+                        help="model config json file path.")
+    parser.add_argument("--data_url", type=str, required=True,
+                        help="data address.")
+    parser.add_argument("--train_url", type=str, required=True,
+                        help="output address.")
+
 
 parser = argparse.ArgumentParser(description='seq2seq')
 parser.add_argument("--config", type=str, required=True,
                     help="model config json file path.")
-parser.add_argument("--data_url", type=str, default=None,
-                    help="data address.")
-parser.add_argument("--train_url", type=str, default=None,
-                    help="output address.")
 parser.add_argument("--test_dataset", type=str, required=True,
                     help="test dataset address.")
 parser.add_argument("--existed_ckpt", type=str, required=True,
@@ -51,11 +57,6 @@ parser.add_argument("--test_tgt", type=str, required=True,
 parser.add_argument("--output", type=str, required=False,
                     default="./output.npz",
                     help="result file path.")
-parser.add_argument("--is_modelarts", type=ast.literal_eval, default=False,
-                    help="running on modelarts")
-args, _ = parser.parse_known_args()
-if args.is_modelarts:
-    import moxing as mox
 
 context.set_context(
     mode=context.GRAPH_MODE,
@@ -77,10 +78,11 @@ def _check_args(config):
 
 
 if __name__ == '__main__':
+    args, _ = parser.parse_known_args()
     _check_args(args.config)
     _config = get_config(args.config)
 
-    if args.is_modelarts:
+    if is_modelarts:
         mox.file.copy_parallel(src_url=args.data_url, dst_url='/cache/dataset_menu/')
         _config.test_dataset = '/cache/dataset_menu/newstest2014.en.mindrecord'
         _config.existed_ckpt = '/cache/dataset_menu/seq2seq-7_1642.ckpt'
@@ -101,7 +103,7 @@ if __name__ == '__main__':
     scores = bleu_calculate(tokenizer, result_npy_addr, test_tgt)
     print(f"BLEU scores is :{scores}")
 
-    if args.is_modelarts:
+    if is_modelarts:
         result_npy_addr = output
         vocab = '/cache/dataset_menu/vocab.bpe.32000'
         bpe_codes = '/cache/dataset_menu/bpe.32000'

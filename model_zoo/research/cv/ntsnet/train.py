@@ -24,7 +24,7 @@ from mindspore.communication.management import init, get_rank, get_group_size
 from src.config import config
 from src.dataset import create_dataset_train
 from src.lr_generator import get_lr
-from src.network import NTS_NET, WithLossCell, LossCallBack, NtsnetModelCheckpoint
+from src.network import NTS_NET, WithLossCell, LossCallBack, ModelCheckpoint
 
 parser = argparse.ArgumentParser(description='ntsnet train running')
 parser.add_argument("--run_modelart", type=ast.literal_eval, default=False, help="Run on modelArt, default is false.")
@@ -113,9 +113,8 @@ if __name__ == '__main__':
                                       keep_checkpoint_max=config.keep_checkpoint_max)
         save_checkpoint_path = os.path.join(local_output_url, "ckpt_" + str(rank) + "/")
 
-        ckpoint_cb = NtsnetModelCheckpoint(prefix=config.prefix, directory=save_checkpoint_path, ckconfig=ckptconfig,
-                                           device_num=device_num, device_id=device_id, args=args,
-                                           run_modelart=run_modelart)
+        ckpoint_cb = ModelCheckpoint(prefix=config.prefix, directory=save_checkpoint_path, ckconfig=ckptconfig,
+                                     device_num=device_num, device_id=device_id, args=args, run_modelart=run_modelart)
         cb += [ckpoint_cb]
 
     model = Model(oneStepNTSNet, amp_level="O3", keep_batchnorm_fp32=False)

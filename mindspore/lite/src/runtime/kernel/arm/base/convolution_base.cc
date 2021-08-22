@@ -18,6 +18,7 @@
 #include <cfloat>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
+#include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -46,17 +47,7 @@ void ConvolutionBaseCPUKernel::FreeAlignedData(void **ptr) {
 }
 
 ConvolutionBaseCPUKernel::~ConvolutionBaseCPUKernel() {
-  if (addr_map.find(reinterpret_cast<uintptr_t>(packed_weight_)) != addr_map.end()) {
-    FreeAlignedData(reinterpret_cast<void **>(&packed_weight_));
-  } else if (!op_parameter_->is_train_session_) {
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-      packed_weight_ = nullptr;
-    }
-  }
-  if (addr_map.find(reinterpret_cast<uintptr_t>(bias_data_)) != addr_map.end()) {
-    FreeAlignedData(reinterpret_cast<void **>(&bias_data_));
-  } else if (bias_data_ != nullptr) {
+  if (bias_data_ != nullptr) {
     free(bias_data_);
     bias_data_ = nullptr;
   }
@@ -116,52 +107,6 @@ int ConvolutionBaseCPUKernel::Init() {
   conv_param_->output_w_ = output->Width();
   conv_param_->output_channel_ = output->Channel();
   conv_param_->thread_num_ = op_parameter_->thread_num_;
-  return RET_OK;
-}
-
-int ConvolutionBaseCPUKernel::InitConvWeightBias() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
-  auto shape = weight_tensor->shape();
-  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-    MS_LOG(WARNING) << "The shape of weight tensor is not ready, the weight and bias would be inited in runtime.";
-    return lite::RET_OK;
-  }
-  if (MallocWeightBiasData() != RET_OK) {
-    MS_LOG(ERROR) << "Malloc data for bias and weight failed.";
-    return lite::RET_ERROR;
-  }
-
-  if (in_tensors_.size() == kInputSize2) {
-    memcpy(bias_data_, origin_bias_, in_tensors_.at(kBiasIndex)->Size());
-  } else {
-    MS_ASSERT(in_tensors_.size() == kInputSize1);
-  }
-  if (!op_parameter_->is_train_session_) {
-    if (origin_weight_ != nullptr) {
-      PackWeight();
-    } else {
-      is_repack_ = true;
-      MS_LOG(WARNING) << "The weight is nullptr, will pack in runtime.";
-    }
-  }
-  return lite::RET_OK;
-}
-
-int ConvolutionBaseCPUKernel::RepackWeight() {
-  origin_weight_ = origin_weight_ != nullptr ? origin_weight_ : in_tensors_.at(kWeightIndex)->data_c();
-  if (packed_weight_ == nullptr && InitConvWeightBias() != RET_OK) {
-    MS_LOG(ERROR) << "Malloc data for bias and weight failed.";
-    return lite::RET_ERROR;
-  }
-  if (IsRepack() || (op_parameter_->is_train_session_)) {
-    if (op_parameter_->is_train_session_) {
-      packed_weight_ = reinterpret_cast<float *>(workspace());
-      memset(packed_weight_, 0, workspace_size());
-    } else {
-      is_repack_ = false;
-    }
-    PackWeight();
-  }
   return RET_OK;
 }
 

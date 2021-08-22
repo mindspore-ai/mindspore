@@ -83,7 +83,7 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     (!out_tensors_.front()->quant_params().empty() && out_tensors_.front()->quant_params().front().inited)
       ? out_tensors_.front()->quant_params().front()
       : in_tensors_.front()->quant_params().front();
-  int ret = RET_ERROR;
+  int ret = RET_OK;
   if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
     ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
                                  quant_arg.zeroPoint, num_unit_thread);
@@ -195,9 +195,6 @@ int QuantDTypeCastCPUKernel::Run() {
     if (float32_ptr_ == nullptr || uint8_ptr_ == nullptr) {
       return RET_NULL_PTR;
     }
-  } else {
-    MS_LOG(ERROR) << "Not support";
-    return RET_ERROR;
   }
 
   auto ret = ParallelLaunch(this->ms_context_, QuantDTypeCastRun, this, thread_n_num_);

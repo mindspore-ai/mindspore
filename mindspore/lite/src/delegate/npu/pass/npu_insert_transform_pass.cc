@@ -25,9 +25,9 @@ using mindspore::lite::RET_OK;
 namespace mindspore {
 enum InsertState { InsertNone, PreInsert, PostInsert, BothInsert };
 std::set<mindspore::schema::PrimitiveType> insert_nodes = {
-  schema::PrimitiveType_Concat,       schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
-  schema::PrimitiveType_Activation,   schema::PrimitiveType_Split,     schema::PrimitiveType_PadFusion,
-  schema::PrimitiveType_StridedSlice, schema::PrimitiveType_MulFusion};
+  schema::PrimitiveType_Concat,      schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
+  schema::PrimitiveType_Activation,  schema::PrimitiveType_Split,     schema::PrimitiveType_PadFusion,
+  schema::PrimitiveType_StridedSlice};
 
 // this pass goal is to minimize subgraphs generated
 // by inserting nchw2nhwc or nhwc2nchw before or after the operator (e.g. concat, add, etc..) together with
@@ -167,7 +167,8 @@ int NPUInsertTransformPass::InsertNode(NPUOp *op, NPUOp *post_op, size_t post_in
   } else {
     // post_op nullptr mean output, we remain graph output tensor name unchanged
     auto graph_output_name = in_tensor.Name();
-    nc2nh_tensor->SetTensorName(graph_output_name + "_after_" + name_);
+    in_tensor.SetTensorName(graph_output_name + "_before_" + name_);
+    nc2nh_tensor->SetTensorName(graph_output_name);
   }
   return RET_OK;
 }

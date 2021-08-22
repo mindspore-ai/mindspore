@@ -35,9 +35,7 @@
 #include "include/api/kernel.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/inner_kernel.h"
-#ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
-#endif
 
 namespace mindspore::kernel {
 enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kDelegate, kKernelArch_MIN = kCPU, kKernelArch_MAX = kAPU };
@@ -49,9 +47,8 @@ struct KernelKey {
   int type = 0;
   std::string kernel_arch;
   std::string provider{kBuiltin};
-#ifndef DELEGATE_CLIP
   std::shared_ptr<Delegate> delegate = nullptr;
-#endif
+
   bool operator<(const KernelKey &dst) const {
     if (provider != dst.provider) {
       return provider < dst.provider;
@@ -241,7 +238,7 @@ class LiteKernel {
     }
   }
 
-  void set_in_tensor(lite::Tensor *in_tensor, size_t index) {
+  void set_in_tensor(lite::Tensor *in_tensor, int index) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensor(in_tensor, index);
@@ -267,7 +264,7 @@ class LiteKernel {
     }
   }
 
-  virtual void set_out_tensor(lite::Tensor *out_tensor, size_t index) {
+  virtual void set_out_tensor(lite::Tensor *out_tensor, int index) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_out_tensor(out_tensor, index);
@@ -330,7 +327,7 @@ class LiteKernel {
 
   virtual bool IsReady(const std::vector<lite::Tensor *> &in_tensor);
 
-  virtual void InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels = nullptr);
+  virtual void InitOutTensorInitRefCount();
 
   KernelKey desc() const { return desc_; }
 
@@ -356,7 +353,7 @@ class LiteKernel {
   mutable std::vector<lite::Tensor *> mutable_out_tensors_;
   bool is_model_output_ = false;
   SubGraphType subgraph_type_ = kNotSubGraph;
-  const lite::InnerContext *context_ = nullptr;
+  const lite::InnerContext *context_;
 };
 
 typedef InnerKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
@@ -381,4 +378,4 @@ kernel::InnerKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs
 }
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_LITE_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_INNER_KERNEL_H_

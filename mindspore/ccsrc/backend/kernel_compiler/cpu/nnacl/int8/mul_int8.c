@@ -27,10 +27,10 @@ int16x4_t ClacSumHalfWordMul(int16x4_t scaled_input0, int16x4_t scaled_input1, i
   return vqmovn_s32(raw_sum);
 }
 
-void MulInt8NEON(const int8_t *input0_data, const int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
-                 const MulQuantArg *quant_arg, int *index) {
+void MulInt8NEON(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
+                 MulQuantArg *quant_arg, int *index) {
   int32x4_t output_multiplier_vec = vdupq_n_s32(quant_arg->output_multiplier_);
-  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << (size_t)quant_arg->shift_left_);
+  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << quant_arg->shift_left_);
   int32x4_t right_shift_out_vec = vdupq_n_s32(-quant_arg->shift_right_);
   int16x8_t out_zp_vec = vdupq_n_s16(quant_arg->out_quant_arg_.zp_);
   int8x16_t out_min_vec = vdupq_n_s8(quant_arg->output_activation_min_);
@@ -104,8 +104,8 @@ void MulInt8NEON(const int8_t *input0_data, const int8_t *input1_data, int8_t *o
 }
 #endif
 
-void FastMul(const int8_t *input0_data, const int8_t *input1_data, int8_t *output_data, int depth,
-             int64_t real_dst_count, bool input1_broad, const MulQuantArg *quant_arg) {
+void FastMul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int depth, int64_t real_dst_count,
+             bool input1_broad, MulQuantArg *quant_arg) {
   // input0 need broadcast
   int32_t zp1 = quant_arg->in_quant_args_[0].zp_;
   int32_t zp2 = quant_arg->in_quant_args_[1].zp_;
@@ -215,8 +215,8 @@ void FastMul(const int8_t *input0_data, const int8_t *input1_data, int8_t *outpu
   return;
 }
 
-void Mul(const int8_t *input0_data, const int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
-         const MulQuantArg *quant_arg) {
+void Mul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
+         MulQuantArg *quant_arg) {
   int index = 0;
 #ifdef ENABLE_NEON
   MulInt8NEON(input0_data, input1_data, output_data, real_dst_count, quant_arg, &index);

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDiv = "Div";
-class MS_CORE_API Div : public PrimitiveC {
+class Div : public PrimitiveC {
  public:
   Div() : PrimitiveC(kNameDiv) { InitIOName({"x", "y"}, {"output"}); }
   explicit Div(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }

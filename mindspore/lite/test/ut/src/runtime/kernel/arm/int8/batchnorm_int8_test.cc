@@ -126,7 +126,6 @@ TEST_F(TestBatchnormInt8, FusedTest) {
   input3_tensor.set_data(nullptr);
   input4_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
-  delete kernel;
   MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
 }
 
@@ -208,7 +207,6 @@ TEST_F(TestBatchnormInt8, BNTest) {
   input1_tensor.set_data(nullptr);
   input2_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
-  delete kernel;
   MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
 }
 

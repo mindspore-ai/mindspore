@@ -71,13 +71,13 @@ Status EpochCtrlNode::ValidateParams() {
 }
 
 // Visitor accepting method for IRNodePass
-Status EpochCtrlNode::Accept(IRNodePass *const p, bool *const modified) {
+Status EpochCtrlNode::Accept(IRNodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<EpochCtrlNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status EpochCtrlNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+Status EpochCtrlNode::AcceptAfter(IRNodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<EpochCtrlNode>(), modified);
 }

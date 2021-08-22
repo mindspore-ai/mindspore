@@ -20,7 +20,6 @@
 
 #include "ir/func_graph.h"
 #include "proto/mind_ir.pb.h"
-#include "debug/common.h"
 
 namespace mindspore {
 std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);

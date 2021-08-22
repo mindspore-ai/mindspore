@@ -39,14 +39,17 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
       fp16_conv_kernel_ = nullptr;
     }
   }
-  void *CopyData(const lite::Tensor *tensor);
+  void *CopyData(lite::Tensor *tensor);
   void FreeCopiedData();
   int Init() override;
   int ReSize() override;
   int Run() override {
     fp16_conv_kernel_->set_name(name_);
-    fp16_conv_kernel_->set_workspace(workspace());
     return fp16_conv_kernel_->Run();
+  }
+  int Eval() override {
+    InnerKernel::Eval();
+    return fp16_conv_kernel_->Eval();
   }
   int Train() override {
     InnerKernel::Train();
@@ -56,12 +59,8 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
     InnerKernel::SetTrainable(trainable);
     return fp16_conv_kernel_->SetTrainable(trainable);
   }
-  size_t workspace_size() override {
-    InnerKernel::workspace_size();
-    return fp16_conv_kernel_->workspace_size();
-  }
 
-  void set_in_tensor(lite::Tensor *in_tensor, size_t index) override {
+  void set_in_tensor(lite::Tensor *in_tensor, int index) override {
     MS_ASSERT(index < in_tensors_.size());
     this->in_tensors_[index] = in_tensor;
     if (fp16_conv_kernel_ != nullptr) {
@@ -69,7 +68,7 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
     }
   }
 
-  void set_out_tensor(lite::Tensor *out_tensor, size_t index) override {
+  void set_out_tensor(lite::Tensor *out_tensor, int index) override {
     MS_ASSERT(index < out_tensors_.size());
     this->out_tensors_[index] = out_tensor;
     if (fp16_conv_kernel_ != nullptr) {

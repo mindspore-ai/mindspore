@@ -20,7 +20,6 @@
 
 #include <string>
 #include <memory>
-#include <algorithm>
 
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/parse/resolve.h"
@@ -330,10 +329,10 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
 
 // A block should be marked matured if its predecessor blocks have been processed
 void FunctionBlock::Mature() {
-  const auto &graph_params = func_graph_->parameters();
-  for (auto &param_itr : graph_params) {
-    MS_EXCEPTION_IF_NULL(param_itr);
-    auto param = param_itr->cast<ParameterPtr>();
+  const auto &graphParamVec = func_graph_->parameters();
+  for (auto &paramItr : graphParamVec) {
+    MS_EXCEPTION_IF_NULL(paramItr);
+    auto param = paramItr->cast<ParameterPtr>();
     if (phi_nodes_.find(param) != phi_nodes_.cend()) {
       SetPhiArgument(param);
     }
@@ -357,7 +356,7 @@ CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
 }
 
 // Perform a jump from this block to target block
-void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args) {
+void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(target_block);
   if (func_graph_->get_return() != nullptr) {
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
@@ -365,7 +364,9 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector
   }
   std::vector<AnfNodePtr> input_nodes;
   input_nodes.emplace_back(NewValueNode(target_block->func_graph()));
-  (void)std::copy(args.begin(), args.end(), std::back_inserter(input_nodes));
+  if (node != nullptr) {
+    input_nodes.emplace_back(node);
+  }
 
   CNodePtr jump = func_graph_->NewCNodeInOrder(input_nodes);
   jumps_[target_block.get()] = jump;

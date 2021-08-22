@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLpNormalization = "LpNormalization";
-class MS_CORE_API LpNormalization : public PrimitiveC {
+class LpNormalization : public PrimitiveC {
  public:
   LpNormalization() : PrimitiveC(kNameLpNormalization) {}
   ~LpNormalization() = default;

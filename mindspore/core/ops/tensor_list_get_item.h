@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListGetItem = "TensorListGetItem";
-class MS_CORE_API TensorListGetItem : public PrimitiveC {
+class TensorListGetItem : public PrimitiveC {
  public:
   TensorListGetItem() : PrimitiveC(kNameTensorListGetItem) {}
   ~TensorListGetItem() = default;

@@ -5,8 +5,7 @@
 
 //void MatmulInt8DpNeon64(const int8_t *a, const int8_t *b, int8_t *dst, int row8, int col8, int deep4, 
 //                      const int *a_sums, const int *bias, int act_min, int act_max, int out_zp,
-//                      const int *multiplier, const int *left_shift, const int *right_shift, int row,
-//                      int col, int stride, int peroc);
+//                      int *multiplier, int *left_shift, int *right_shift, int row, int col, int stride, int peroc);
 
 // x0: a(left matrix ptr)
 // x1: b(right matrix ptr)

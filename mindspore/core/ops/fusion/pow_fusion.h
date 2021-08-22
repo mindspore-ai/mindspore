@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePowFusion = "PowFusion";
-class MS_CORE_API PowFusion : public Pow {
+class PowFusion : public Pow {
  public:
   PowFusion() : Pow(kNamePowFusion) {}
   ~PowFusion() = default;

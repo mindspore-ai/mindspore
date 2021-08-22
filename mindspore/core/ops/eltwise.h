@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEltwise = "Eltwise";
-class MS_CORE_API Eltwise : public PrimitiveC {
+class Eltwise : public PrimitiveC {
  public:
   Eltwise() : PrimitiveC(kNameEltwise) {}
   ~Eltwise() = default;

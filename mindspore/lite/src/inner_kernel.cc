@@ -71,42 +71,7 @@ int InnerKernel::PreProcess() {
       MS_LOG(ERROR) << "MallocData failed";
       return ret;
     }
-    output->ResetRefCount();
   }
   return RET_OK;
-}
-
-int InnerKernel::Execute() {
-  auto ret = PreProcess();
-  if (lite::RET_OK != ret) {
-    MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
-    return ret;
-  }
-
-  // Support ZeroShape
-  size_t zero_shape_num = 0;
-  for (auto tensor : this->out_tensors()) {
-    for (size_t i = 0; i < tensor->shape().size(); i++) {
-      if (tensor->shape()[i] == 0) {
-        zero_shape_num++;
-        break;
-      }
-    }
-  }
-
-  if (zero_shape_num != this->out_tensors().size()) {
-    ret = Run();
-    if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel failed, name: " << this->name();
-      return ret;
-    }
-  }
-
-  ret = PostProcess();
-  if (lite::RET_OK != ret) {
-    MS_LOG(ERROR) << "run kernel PostProcess failed, name: " << this->name();
-    return ret;
-  }
-  return lite::RET_OK;
 }
 }  // namespace mindspore::kernel

@@ -23,8 +23,7 @@ class Invert(Bijector):
 
     Args:
         bijector (Bijector): Base Bijector.
-        name (str): The name of the Bijector. Default: "". When name is set to "", it is actually
-            'Invert' + bijector.name.
+        name (str): The name of the Bijector. Default: 'Invert' + bijector.name.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -68,29 +67,16 @@ class Invert(Bijector):
 
     @property
     def bijector(self):
-        """Return base bijector."""
         return self._bijector
 
     def inverse(self, y):
-        """
-        Forward transformation: transform the input value to another distribution.
-        """
         return self.bijector("forward", y)
 
     def forward(self, x):
-        """
-        Inverse transformation: transform the input value back to the original distribution.
-        """
         return self.bijector("inverse", x)
 
     def inverse_log_jacobian(self, y):
-        """
-        Logarithm of the derivative of the forward transformation.
-        """
         return self.bijector("forward_log_jacobian", y)
 
     def forward_log_jacobian(self, x):
-        """
-        Logarithm of the derivative of the inverse transformation.
-        """
         return self.bijector("inverse_log_jacobian", x)

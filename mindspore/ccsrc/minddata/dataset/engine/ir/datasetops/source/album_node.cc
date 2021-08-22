@@ -83,7 +83,7 @@ Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
 }
 
 // Get the shard id of node
-Status AlbumNode::GetShardId(int32_t *const shard_id) {
+Status AlbumNode::GetShardId(int32_t *shard_id) {
   *shard_id = sampler_->ShardId();
 
   return Status::OK();
@@ -106,8 +106,8 @@ Status AlbumNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_
   }
   std::set<std::string> extensions = {".json", ".JSON"};
 
-  while (dirItr->HasNext()) {
-    Path file = dirItr->Next();
+  while (dirItr->hasNext()) {
+    Path file = dirItr->next();
     if (extensions.empty() || extensions.find(file.Extension()) != extensions.end()) {
       num_rows += 1;
     }

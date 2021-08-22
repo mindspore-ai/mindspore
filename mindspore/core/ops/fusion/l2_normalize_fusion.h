@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameL2NormalizeFusion = "L2NormalizeFusion";
-class MS_CORE_API L2NormalizeFusion : public L2Normalize {
+class L2NormalizeFusion : public L2Normalize {
  public:
   L2NormalizeFusion() : L2Normalize(kNameL2NormalizeFusion) {}
   ~L2NormalizeFusion() = default;

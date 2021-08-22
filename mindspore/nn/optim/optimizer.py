@@ -218,7 +218,7 @@ class Optimizer(Cell):
         else:
             self.use_parallel = False
         if self.use_parallel:
-            if self.cls_name not in ["Lamb", "AdamWeightDecay", "AdaFactor"]:
+            if self.cls_name not in ["Lamb", "AdamWeightDecay"]:
                 raise RuntimeError("Parallel optimizer does not support optimizer {}".format(self.cls_name))
             self.dev_num = _get_device_num()
             if self.dev_num > self.param_length:

@@ -1,8 +1,5 @@
 # 目录
 
-<!-- TOC -->
-
-- [目录](#目录)
 - [Inception_ResNet_v2描述](#Inception_ResNet_v2描述)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
@@ -26,8 +23,6 @@
             - [推理性能](#推理性能)
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
-
-<!-- /TOC -->
 
 # Inception_ResNet_v2描述
 
@@ -62,12 +57,12 @@ Inception_ResNet_v2的总体网络架构如下：
 # 环境要求
 
 - 硬件（Ascend）
-- 使用Ascend来搭建硬件环境。
+    - 使用Ascend来搭建硬件环境。
 - 框架
-- [MindSpore](https://www.mindspore.cn/install)
+    - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
-- [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
-- [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
 
 # 脚本说明
 
@@ -82,13 +77,13 @@ Inception_ResNet_v2的总体网络架构如下：
     ├─run_distribute_train_ascend.sh    # launch distributed training with ascend platform(8p)
     └─run_eval_ascend.sh                # launch evaluating with ascend platform
   ├─src
-    ├─config.py                       # parameter configuration
-    ├─dataset.py                      # data preprocessing
-    ├─inception_resnet_v2.py.py       # network definition
-    └─callback.py                     # eval callback function
-  ├─eval.py                           # eval net
-  ├─export.py                         # export checkpoint, surpport .onnx, .air, .mindir convert
-  └─train.py                          # train net
+    ├─config.py                         # parameter configuration
+    ├─dataset.py                        # data preprocessing
+    ├─inception_resnet_v2.py.py         # network definition
+    └─callback.py                       # eval callback function
+  ├─eval.py                             # eval net
+  ├─export.py                           # export checkpoint, surpport .onnx, .air, .mindir convert
+  └─train.py                            # train net
 ```
 
 ## 脚本参数
@@ -126,12 +121,12 @@ Major parameters in train.py and config.py are:
 
     ```bash
     # distribute training example(8p)
-    bash scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_PATH DATA_DIR
+    bash scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_DIR
     # standalone training
     bash scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
     ```
 
-> 注：RANK_TABLE_FILE可参考[链接](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/distributed_training_ascend.html)。device_ip可以通过[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)获取
+> 注：RANK_TABLE_FILE可参考[链接](https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_ascend.html)。device_ip可以通过[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)获取
 
 ### 结果
 
@@ -196,7 +191,8 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 | 损失函数              | Softmax交叉熵                            |
 | 输出                    | 概率                                    |
 | 损失                       | 1.98                                           |
-| 总时长（8卡）            | 24小时                                            |
+| 速度 | 1卡：556 img/秒；8卡：4430 img/秒 |
+| 总时长            | 8卡：24小时                                         |
 
 #### 推理性能
 

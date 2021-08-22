@@ -525,7 +525,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
 }
 
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(kernel_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto kernel_build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(kernel_build_info);

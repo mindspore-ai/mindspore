@@ -32,9 +32,6 @@ int LinSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  if (GetElementNum(inputs[2]) < 1) {
-    return NNACL_ERR;
-  }
   int *num = (int *)(inputs[2]->data_);
   if (num == NULL) {
     return NNACL_INFER_INVALID;

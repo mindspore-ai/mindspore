@@ -18,7 +18,6 @@
 #include <string.h>
 #include "nnacl/infer/infer_register.h"
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape) {
   // This function will create a new tensors_
   // Your must to set shape(param2: tensor_shape) and data_type_(tensors_data_type_ = param1: dtype) of each tensor in
@@ -36,7 +35,7 @@ int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector 
     return NNACL_NULL_PTR;
   }
   memset(tensor_list->tensors_, 0, tensor_list->element_num_ * sizeof(TensorC));
-  for (size_t i = 0; i < tensor_list->element_num_; ++i) {
+  for (int i = 0; i < tensor_list->element_num_; ++i) {
     tensor_list->tensors_[i].format_ = Format_NHWC;
     tensor_list->tensors_[i].data_type_ = dtype;
     ShapeSet(tensor_list->tensors_[i].shape_, &(tensor_list->tensors_[i].shape_size_), tensor_shape->shape_[i],
@@ -70,7 +69,6 @@ bool TensorListIsFullyDefined(const int *shape, size_t shape_size) {
   }
   return true;
 }
-#endif
 
 int CheckAugmentNull(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      const OpParameter *parameter) {
@@ -159,7 +157,7 @@ void SetShapeTensor(TensorC *dst, const TensorC *src) {
 }
 
 void SetShapeArray(TensorC *dst, const int *src, size_t src_size) {
-  for (size_t i = 0; i < src_size && i < MAX_SHAPE_SIZE; i++) {
+  for (size_t i = 0; i < src_size; i++) {
     dst->shape_[i] = src[i];
   }
   dst->shape_size_ = src_size;
@@ -288,26 +286,19 @@ int GetDimensionSize(const TensorC *tensor, const size_t index) {
 }
 
 void ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size_t src_shape_size) {
-  size_t i = 0;
-  for (; i < src_shape_size && i < MAX_SHAPE_SIZE; i++) {
+  for (size_t i = 0; i < src_shape_size; i++) {
     dst_shape[i] = src_shape[i];
   }
-  *dst_shape_size = i;
+  *dst_shape_size = src_shape_size;
 }
 
 void ShapePush(int *shape, size_t *shape_size, int value) {
-  if (*shape_size >= MAX_SHAPE_SIZE) {
-    return;
-  }
   shape[*shape_size] = value;
   *shape_size = *shape_size + 1;
 }
 
 int ShapeInsert(int *shape, size_t *shape_size, int index, int value) {
   if (index < 0 || index > *shape_size) {
-    return NNACL_ERR;
-  }
-  if (*shape_size >= MAX_SHAPE_SIZE) {
     return NNACL_ERR;
   }
   for (int i = *shape_size; i > index; i--) {
@@ -334,7 +325,7 @@ bool ShapeEqual(const int *shape0, size_t shape0_size, const int *shape1, size_t
   if (shape0_size != shape1_size) {
     return false;
   }
-  for (size_t i = 0; i < shape0_size; i++) {
+  for (int i = 0; i < shape0_size; i++) {
     if (shape0[i] != shape1[i]) {
       return false;
     }
@@ -410,6 +401,96 @@ int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   return NNACL_OK;
 }
 
+int VectorCInit(VectorC *vc, size_t per_malloc_size) {
+  if (per_malloc_size == 0) {
+    return NNACL_ERR;
+  }
+  vc->data_ = (int *)malloc(per_malloc_size * sizeof(int));
+  if (vc->data_ == NULL) {
+    return NNACL_ERR;
+  }
+  vc->size_ = 0;
+  vc->max_size_ = per_malloc_size;
+  vc->per_malloc_size_ = per_malloc_size;
+  return NNACL_OK;
+}
+
+int VectorCSet(VectorC *vc, const int *src_shape, size_t src_shape_size) {
+  if (src_shape_size == 0) {
+    vc->size_ = 0;
+  } else {
+    free(vc->data_);
+    if (vc->per_malloc_size_ == 0) {
+      return NNACL_ERR;
+    }
+    vc->max_size_ = (src_shape_size / vc->per_malloc_size_ + 1) * vc->per_malloc_size_;
+    vc->data_ = (int *)malloc(sizeof(int) * vc->max_size_);
+    if (vc->data_ == NULL) {
+      return NNACL_ERR;
+    }
+    for (size_t i = 0; i < src_shape_size; i++) {
+      vc->data_[i] = src_shape[i];
+    }
+    vc->size_ = src_shape_size;
+  }
+  return NNACL_OK;
+}
+
+int VectorCPush(VectorC *vc, int value) {
+  if (vc->size_ + 1 > vc->max_size_) {
+    int *tmp = (int *)malloc(vc->per_malloc_size_ * sizeof(int) + vc->max_size_ * sizeof(int));
+    if (tmp == NULL) {
+      return NNACL_ERR;
+    }
+    memcpy(tmp, vc->data_, vc->size_ * sizeof(int));
+    free(vc->data_);
+    vc->data_ = tmp;
+    vc->max_size_ = vc->max_size_ + vc->per_malloc_size_;
+  }
+  vc->data_[vc->size_] = value;
+  vc->size_++;
+  return NNACL_OK;
+}
+
+int VectorCInsert(VectorC *vc, int index, int value) {
+  if (vc->size_ + 1 > vc->max_size_) {
+    int *tmp = (int *)malloc(vc->per_malloc_size_ * sizeof(int) + vc->max_size_ * sizeof(int));
+    if (tmp == NULL) {
+      return NNACL_ERR;
+    }
+    memcpy(tmp, vc->data_, vc->size_ * sizeof(int));
+    free(vc->data_);
+    vc->data_ = tmp;
+    vc->max_size_ = vc->max_size_ + vc->per_malloc_size_;
+  }
+  memmove(vc->data_ + index + 1, vc->data_ + index, (vc->size_ - index) * sizeof(int));
+  vc->data_[index] = value;
+  vc->size_++;
+  return NNACL_OK;
+}
+
+void VectorCErase(VectorC *vc, int index) {
+  memmove(vc->data_ + index, vc->data_ + index + 1, (vc->size_ - index - 1) * sizeof(int));
+  vc->size_--;
+}
+
+bool VectorCEqual(const VectorC *vc1, const VectorC *vc2) {
+  if (vc1->size_ != vc2->size_) {
+    return false;
+  }
+  for (size_t i = 0; i < vc1->size_; i++) {
+    if (vc1->data_[i] != vc2->data_[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void VectorCFree(VectorC *vc) {
+  free(vc->data_);
+  vc->data_ = NULL;
+}
+
 bool InferFlag(const TensorC *const *inputs, size_t inputs_size) {
   if (inputs == NULL) {
     return false;
@@ -418,22 +499,18 @@ bool InferFlag(const TensorC *const *inputs, size_t inputs_size) {
     if (inputs[i] == NULL) {
       return false;
     }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     if (inputs[i]->data_type_ == kObjectTypeTensorType) {
       TensorListC *input_tensor_list = (TensorListC *)inputs[i];
       if (input_tensor_list->shape_value_ == -1) {
         return false;
       }
     } else {
-#endif
       for (size_t j = 0; j < inputs[i]->shape_size_; ++j) {
         if (inputs[i]->shape_[j] == -1) {
           return false;
         }
       }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
-#endif
   }
   return true;
 }

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameElu = "Elu";
-class MS_CORE_API Elu : public PrimitiveC {
+class Elu : public PrimitiveC {
  public:
   Elu() : PrimitiveC(kNameElu) {}
   ~Elu() = default;

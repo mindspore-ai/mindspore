@@ -431,7 +431,6 @@ int NPUFusionPass::Run(NPUGraph *subgraph) {
           ret = StridedSliceFusion(cur_op);
           continue;
         case schema::PrimitiveType_AddFusion:
-        case schema::PrimitiveType_MulFusion:
         case schema::PrimitiveType_Activation:
         case schema::PrimitiveType_Eltwise:
           i -= cur_op->in_ops().size();

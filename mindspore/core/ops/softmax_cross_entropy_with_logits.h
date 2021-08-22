@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftmaxCrossEntropyWithLogits = "SoftmaxCrossEntropyWithLogits";
-class MS_CORE_API SoftmaxCrossEntropyWithLogits : public PrimitiveC {
+class SoftmaxCrossEntropyWithLogits : public PrimitiveC {
  public:
   SoftmaxCrossEntropyWithLogits() : PrimitiveC(kNameSoftmaxCrossEntropyWithLogits) {}
   ~SoftmaxCrossEntropyWithLogits() = default;

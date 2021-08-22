@@ -248,8 +248,7 @@ static session::LiteSession *CreateTransferSessionInt(const char *model_buf_back
     return nullptr;
   }
 
-  mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
-  auto ret = session->Init(inner_context, cfg);
+  auto ret = session->Init(context, cfg);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "init transfer session failed";
     delete session;

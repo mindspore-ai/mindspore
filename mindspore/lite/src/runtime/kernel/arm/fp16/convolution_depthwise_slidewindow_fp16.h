@@ -37,22 +37,22 @@ class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwiseSWFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
-                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDepthwiseSWFp16CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
 
   int InitPackedInputOutput();
+  int InitWeightBias();
   int Execute(int task_id);
 
  private:
-  void PackWeight() override;
-  int MallocWeightBiasData() override;
   void FreePackedInputOutput();
   SlidingWindowParam *sliding_ = nullptr;
+  float16_t *packed_weight_ = nullptr;
   float16_t *packed_input_ = nullptr;
   float16_t *packed_output_ = nullptr;
   bool need_align_ = false;

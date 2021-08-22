@@ -34,11 +34,9 @@ class EnvConfigParser {
   void Parse();
   std::string ConfigPath() const { return config_file_; }
 
-#ifdef ENABLE_DUMP_IR
   bool HasRdrSetting() const { return has_rdr_setting_; }
   bool RdrEnabled() const { return rdr_enabled_; }
   std::string RdrPath() const { return rdr_path_; }
-#endif
   bool GetSysMemreuse() { return sys_memreuse_; }
   void SetSysMemreuse(bool set_memreuse) { sys_memreuse_ = set_memreuse; }
 
@@ -50,12 +48,10 @@ class EnvConfigParser {
   std::string config_file_{""};
   bool already_parsed_{false};
 
-#ifdef ENABLE_DUMP_IR
   // rdr
   bool rdr_enabled_{false};
   bool has_rdr_setting_{false};
   std::string rdr_path_{"./rdr/"};
-#endif
 
   // memreuse
   bool sys_memreuse_{true};
@@ -67,11 +63,9 @@ class EnvConfigParser {
   std::optional<nlohmann::detail::iter_impl<const nlohmann::json>> CheckJsonKeyExist(const nlohmann::json &content,
                                                                                      const std::string &setting_key,
                                                                                      const std::string &key) const;
-#ifdef ENABLE_DUMP_IR
   void ParseRdrSetting(const nlohmann::json &content);
   void ParseRdrPath(const nlohmann::json &content);
   void ParseRdrEnable(const nlohmann::json &content);
-#endif
   void ParseMemReuseSetting(const nlohmann::json &content);
   void ParseSysMemReuse(const nlohmann::json &content);
 

@@ -35,10 +35,9 @@ from dependency.evaluate.eval import evaluation
 
 dev_id = get_device_id()
 context.set_context(mode=context.GRAPH_MODE,
-                    device_target=config.device_target, save_graphs=False)
+                    device_target=config.device_target, save_graphs=False, device_id=dev_id)
 
 if config.device_target == "Ascend":
-    context.set_context(device_id=dev_id)
     context.set_context(enable_auto_mixed_precision=False)
 
 def modelarts_process():
@@ -66,7 +65,7 @@ def test_centerface():
         else:
             ckpt_name = config.ckpt_name
 
-        test_model = config.test_model + "/" + ckpt_name
+        test_model = config.test_model + ckpt_name
         if not test_model:
             print('load_model {} none'.format(test_model))
             continue
@@ -113,8 +112,8 @@ def test_centerface():
             if not os.path.exists(save_path + im_dir):
                 os.makedirs(save_path + im_dir)
                 print('save_path + im_dir={}'.format(save_path + im_dir))
-            for num, file_obj in enumerate(file_list_item):
-                im_name = file_obj[0][0]
+            for num, file in enumerate(file_list_item):
+                im_name = file[0][0]
                 zip_name = '%s/%s.jpg' % (im_dir, im_name)
                 img_path = os.path.join(config.data_dir, zip_name)
                 print('img_path={}'.format(img_path))

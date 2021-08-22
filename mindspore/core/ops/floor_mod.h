@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFloorMod = "FloorMod";
-class MS_CORE_API FloorMod : public PrimitiveC {
+class FloorMod : public PrimitiveC {
  public:
   FloorMod() : PrimitiveC(kNameFloorMod) { InitIOName({"x", "y"}, {"output"}); }
   ~FloorMod() = default;

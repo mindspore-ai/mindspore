@@ -41,7 +41,6 @@ GraphDataImpl::GraphDataImpl(std::string dataset_file, int32_t num_workers, bool
 GraphDataImpl::~GraphDataImpl() {}
 
 Status GraphDataImpl::GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
   auto itr = node_type_map_.find(node_type);
   if (itr == node_type_map_.end()) {
     std::string err_msg = "Invalid node type:" + std::to_string(node_type);
@@ -55,7 +54,6 @@ Status GraphDataImpl::GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> *o
 template <typename T>
 Status GraphDataImpl::CreateTensorByVector(const std::vector<std::vector<T>> &data, DataType type,
                                            std::shared_ptr<Tensor> *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
   if (!type.IsCompatible<T>()) {
     RETURN_STATUS_UNEXPECTED("Data type not compatible");
   }
@@ -98,7 +96,6 @@ Status GraphDataImpl::ComplementVector(std::vector<std::vector<T>> *data, size_t
 }
 
 Status GraphDataImpl::GetAllEdges(EdgeType edge_type, std::shared_ptr<Tensor> *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
   auto itr = edge_type_map_.find(edge_type);
   if (itr == edge_type_map_.end()) {
     std::string err_msg = "Invalid edge type:" + std::to_string(edge_type);
@@ -113,7 +110,6 @@ Status GraphDataImpl::GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list
   if (edge_list.empty()) {
     RETURN_STATUS_UNEXPECTED("Input edge_list is empty");
   }
-  RETURN_UNEXPECTED_IF_NULL(out);
 
   std::vector<std::vector<NodeIdType>> node_list;
   node_list.reserve(edge_list.size());
@@ -160,7 +156,6 @@ Status GraphDataImpl::GetAllNeighbors(const std::vector<NodeIdType> &node_list, 
                                       const OutputFormat &format, std::shared_ptr<Tensor> *out) {
   CHECK_FAIL_RETURN_UNEXPECTED(!node_list.empty(), "Input node_list is empty.");
   RETURN_IF_NOT_OK(CheckNeighborType(neighbor_type));
-  RETURN_UNEXPECTED_IF_NULL(out);
 
   std::vector<std::vector<NodeIdType>> neighbors;
 
@@ -256,7 +251,6 @@ Status GraphDataImpl::GetSampledNeighbors(const std::vector<NodeIdType> &node_li
   for (const auto &type : neighbor_types) {
     RETURN_IF_NOT_OK(CheckNeighborType(type));
   }
-  RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<std::vector<NodeIdType>> neighbors_vec(node_list.size());
   for (size_t node_idx = 0; node_idx < node_list.size(); ++node_idx) {
     std::shared_ptr<Node> input_node;
@@ -291,7 +285,6 @@ Status GraphDataImpl::NegativeSample(const std::vector<NodeIdType> &data, const 
                                      size_t *start_index, const std::unordered_set<NodeIdType> &exclude_data,
                                      int32_t samples_num, std::vector<NodeIdType> *out_samples) {
   CHECK_FAIL_RETURN_UNEXPECTED(!data.empty(), "Input data is empty.");
-  RETURN_UNEXPECTED_IF_NULL(start_index);
   size_t index = *start_index;
   for (size_t i = index; i < shuffled_ids.size(); ++i) {
     ++index;
@@ -312,7 +305,6 @@ Status GraphDataImpl::GetNegSampledNeighbors(const std::vector<NodeIdType> &node
   CHECK_FAIL_RETURN_UNEXPECTED(!node_list.empty(), "Input node_list is empty.");
   RETURN_IF_NOT_OK(CheckSamplesNum(samples_num));
   RETURN_IF_NOT_OK(CheckNeighborType(neg_neighbor_type));
-  RETURN_UNEXPECTED_IF_NULL(out);
 
   const std::vector<NodeIdType> &all_nodes = node_type_map_[neg_neighbor_type];
   std::vector<NodeIdType> shuffled_id(all_nodes.size());
@@ -329,9 +321,9 @@ Status GraphDataImpl::GetNegSampledNeighbors(const std::vector<NodeIdType> &node
     std::vector<NodeIdType> neighbors;
     RETURN_IF_NOT_OK(node->GetAllNeighbors(neg_neighbor_type, &neighbors));
     std::unordered_set<NodeIdType> exclude_nodes;
-    (void)std::transform(neighbors.begin(), neighbors.end(),
-                         std::insert_iterator<std::unordered_set<NodeIdType>>(exclude_nodes, exclude_nodes.begin()),
-                         [](const NodeIdType node) { return node; });
+    std::transform(neighbors.begin(), neighbors.end(),
+                   std::insert_iterator<std::unordered_set<NodeIdType>>(exclude_nodes, exclude_nodes.begin()),
+                   [](const NodeIdType node) { return node; });
     neg_neighbors_vec[node_idx].emplace_back(node->id());
     if (all_nodes.size() > exclude_nodes.size()) {
       while (neg_neighbors_vec[node_idx].size() < samples_num + 1) {
@@ -363,7 +355,6 @@ Status GraphDataImpl::GetNegSampledNeighbors(const std::vector<NodeIdType> &node
 Status GraphDataImpl::RandomWalk(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path,
                                  float step_home_param, float step_away_param, NodeIdType default_node,
                                  std::shared_ptr<Tensor> *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
   RETURN_IF_NOT_OK(random_walk_.Build(node_list, meta_path, step_home_param, step_away_param, default_node));
   std::vector<std::vector<NodeIdType>> walks;
   RETURN_IF_NOT_OK(random_walk_.SimulateWalk(&walks));
@@ -372,7 +363,6 @@ Status GraphDataImpl::RandomWalk(const std::vector<NodeIdType> &node_list, const
 }
 
 Status GraphDataImpl::GetNodeDefaultFeature(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) {
-  RETURN_UNEXPECTED_IF_NULL(out_feature);
   auto itr = default_node_feature_map_.find(feature_type);
   if (itr == default_node_feature_map_.end()) {
     std::string err_msg = "Invalid feature type:" + std::to_string(feature_type);
@@ -384,7 +374,6 @@ Status GraphDataImpl::GetNodeDefaultFeature(FeatureType feature_type, std::share
 }
 
 Status GraphDataImpl::GetEdgeDefaultFeature(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) {
-  RETURN_UNEXPECTED_IF_NULL(out_feature);
   auto itr = default_edge_feature_map_.find(feature_type);
   if (itr == default_edge_feature_map_.end()) {
     std::string err_msg = "Invalid feature type:" + std::to_string(feature_type);
@@ -401,7 +390,6 @@ Status GraphDataImpl::GetNodeFeature(const std::shared_ptr<Tensor> &nodes,
     RETURN_STATUS_UNEXPECTED("Input nodes is empty");
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!feature_types.empty(), "Input feature_types is empty");
-  RETURN_UNEXPECTED_IF_NULL(out);
   TensorRow tensors;
   for (const auto &f_type : feature_types) {
     std::shared_ptr<Feature> default_feature;
@@ -448,7 +436,6 @@ Status GraphDataImpl::GetNodeFeatureSharedMemory(const std::shared_ptr<Tensor> &
   if (!nodes || nodes->Size() == 0) {
     RETURN_STATUS_UNEXPECTED("Input nodes is empty");
   }
-  RETURN_UNEXPECTED_IF_NULL(out);
   TensorShape shape = nodes->shape().AppendDim(2);
   std::shared_ptr<Tensor> fea_tensor;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, DataType(DataType::DE_INT64), &fea_tensor));
@@ -491,7 +478,6 @@ Status GraphDataImpl::GetEdgeFeature(const std::shared_ptr<Tensor> &edges,
     RETURN_STATUS_UNEXPECTED("Input edges is empty");
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!feature_types.empty(), "Input feature_types is empty");
-  RETURN_UNEXPECTED_IF_NULL(out);
   TensorRow tensors;
   for (const auto &f_type : feature_types) {
     std::shared_ptr<Feature> default_feature;
@@ -534,7 +520,6 @@ Status GraphDataImpl::GetEdgeFeatureSharedMemory(const std::shared_ptr<Tensor> &
   if (!edges || edges->Size() == 0) {
     RETURN_STATUS_UNEXPECTED("Input edges is empty");
   }
-  RETURN_UNEXPECTED_IF_NULL(out);
   TensorShape shape = edges->shape().AppendDim(2);
   std::shared_ptr<Tensor> fea_tensor;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, DataType(DataType::DE_INT64), &fea_tensor));
@@ -569,15 +554,14 @@ Status GraphDataImpl::Init() {
 }
 
 Status GraphDataImpl::GetMetaInfo(MetaInfo *meta_info) {
-  RETURN_UNEXPECTED_IF_NULL(meta_info);
   meta_info->node_type.resize(node_type_map_.size());
-  (void)std::transform(node_type_map_.begin(), node_type_map_.end(), meta_info->node_type.begin(),
-                       [](auto itr) { return itr.first; });
+  std::transform(node_type_map_.begin(), node_type_map_.end(), meta_info->node_type.begin(),
+                 [](auto itr) { return itr.first; });
   std::sort(meta_info->node_type.begin(), meta_info->node_type.end());
 
   meta_info->edge_type.resize(edge_type_map_.size());
-  (void)std::transform(edge_type_map_.begin(), edge_type_map_.end(), meta_info->edge_type.begin(),
-                       [](auto itr) { return itr.first; });
+  std::transform(edge_type_map_.begin(), edge_type_map_.end(), meta_info->edge_type.begin(),
+                 [](auto itr) { return itr.first; });
   std::sort(meta_info->edge_type.begin(), meta_info->edge_type.end());
 
   for (const auto &node : node_type_map_) {
@@ -610,7 +594,6 @@ Status GraphDataImpl::GetMetaInfo(MetaInfo *meta_info) {
 
 #ifdef ENABLE_PYTHON
 Status GraphDataImpl::GraphInfo(py::dict *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
   MetaInfo meta_info;
   RETURN_IF_NOT_OK(GetMetaInfo(&meta_info));
   (*out)["node_type"] = py::cast(meta_info.node_type);
@@ -633,7 +616,6 @@ Status GraphDataImpl::LoadNodeAndEdge() {
 }
 
 Status GraphDataImpl::GetNodeByNodeId(NodeIdType id, std::shared_ptr<Node> *node) {
-  RETURN_UNEXPECTED_IF_NULL(node);
   auto itr = node_id_map_.find(id);
   if (itr == node_id_map_.end()) {
     std::string err_msg = "Invalid node id:" + std::to_string(id);
@@ -645,7 +627,6 @@ Status GraphDataImpl::GetNodeByNodeId(NodeIdType id, std::shared_ptr<Node> *node
 }
 
 Status GraphDataImpl::GetEdgeByEdgeId(EdgeIdType id, std::shared_ptr<Edge> *edge) {
-  RETURN_UNEXPECTED_IF_NULL(edge);
   auto itr = edge_id_map_.find(id);
   if (itr == edge_id_map_.end()) {
     std::string err_msg = "Invalid edge id:" + std::to_string(id);
@@ -701,7 +682,6 @@ Status GraphDataImpl::RandomWalkBase::Build(const std::vector<NodeIdType> &node_
 }
 
 Status GraphDataImpl::RandomWalkBase::Node2vecWalk(const NodeIdType &start_node, std::vector<NodeIdType> *walk_path) {
-  RETURN_UNEXPECTED_IF_NULL(walk_path);
   // Simulate a random walk starting from start node.
   auto walk = std::vector<NodeIdType>(1, start_node);  // walk is an vector
   // walk simulate
@@ -742,7 +722,6 @@ Status GraphDataImpl::RandomWalkBase::Node2vecWalk(const NodeIdType &start_node,
 }
 
 Status GraphDataImpl::RandomWalkBase::SimulateWalk(std::vector<std::vector<NodeIdType>> *walks) {
-  RETURN_UNEXPECTED_IF_NULL(walks);
   for (int32_t i = 0; i < num_walks_; ++i) {
     for (const auto &node : node_list_) {
       std::vector<NodeIdType> walk;
@@ -755,7 +734,6 @@ Status GraphDataImpl::RandomWalkBase::SimulateWalk(std::vector<std::vector<NodeI
 
 Status GraphDataImpl::RandomWalkBase::GetNodeProbability(const NodeIdType &node_id, const NodeType &node_type,
                                                          std::shared_ptr<StochasticIndex> *node_probability) {
-  RETURN_UNEXPECTED_IF_NULL(node_probability);
   // Generate alias nodes
   std::shared_ptr<Node> node;
   RETURN_IF_NOT_OK(graph_->GetNodeByNodeId(node_id, &node));
@@ -771,7 +749,6 @@ Status GraphDataImpl::RandomWalkBase::GetNodeProbability(const NodeIdType &node_
 Status GraphDataImpl::RandomWalkBase::GetEdgeProbability(const NodeIdType &src, const NodeIdType &dst,
                                                          uint32_t meta_path_index,
                                                          std::shared_ptr<StochasticIndex> *edge_probability) {
-  RETURN_UNEXPECTED_IF_NULL(edge_probability);
   // Get the alias edge setup lists for a given edge.
   std::shared_ptr<Node> src_node;
   RETURN_IF_NOT_OK(graph_->GetNodeByNodeId(src, &src_node));
@@ -783,8 +760,6 @@ Status GraphDataImpl::RandomWalkBase::GetEdgeProbability(const NodeIdType &src, 
   std::vector<NodeIdType> dst_neighbors;
   RETURN_IF_NOT_OK(dst_node->GetAllNeighbors(meta_path_[meta_path_index + 1], &dst_neighbors, true));
 
-  CHECK_FAIL_RETURN_UNEXPECTED(step_home_param_ != 0, "Invalid data, step home parameter can't be zero.");
-  CHECK_FAIL_RETURN_UNEXPECTED(step_away_param_ != 0, "Invalid data, step away parameter can't be zero.");
   std::sort(dst_neighbors.begin(), dst_neighbors.end());
   std::vector<float> non_normalized_probability;
   for (const auto &dst_nbr : dst_neighbors) {

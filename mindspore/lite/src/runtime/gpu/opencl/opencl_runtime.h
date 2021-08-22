@@ -203,7 +203,7 @@ class OpenCLRuntime {
   // for cache
  private:
   void LoadCache();
-  int StoreCache();
+  void StoreCache();
 #ifdef MS_OPENCL_BINARY_CACHE
   bool enable_cache_{true};
 #else

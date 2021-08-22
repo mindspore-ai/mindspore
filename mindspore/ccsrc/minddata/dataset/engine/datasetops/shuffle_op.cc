@@ -124,7 +124,7 @@ Status ShuffleOp::operator()() {
     RETURN_IF_NOT_OK(InitShuffleBuffer());
 
     // This is our main loop exit condition, when the iterator has no more data completely.
-    if (child_iterator_->EofHandled()) {
+    if (child_iterator_->eof_handled()) {
       RETURN_IF_NOT_OK(out_connector_->SendEOF());
       break;
     }
@@ -214,7 +214,7 @@ Status ShuffleOp::InitShuffleBuffer() {
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
-  if (child_iterator_->EofHandled()) {
+  if (child_iterator_->eof_handled()) {
     MS_LOG(DEBUG) << "Shuffle operator init picked up EOF. No more epochs.";
     RETURN_IF_NOT_OK(out_connector_->SendEOF());
     return Status::OK();

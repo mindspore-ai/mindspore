@@ -28,12 +28,12 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSpaceToBatchND = "SpaceToBatchND";
-class MS_CORE_API SpaceToBatchND : public PrimitiveC {
+class SpaceToBatchND : public PrimitiveC {
  public:
   SpaceToBatchND() : PrimitiveC(kNameSpaceToBatchND) {}
   ~SpaceToBatchND() = default;
   MS_DECLARE_PARENT(SpaceToBatchND, PrimitiveC);
-  void Init(const std::vector<int64_t> block_shape, const std::vector<std::vector<int64_t>> paddings);
+  void Init(std::vector<int64_t> block_shape, const std::vector<std::vector<int64_t>> paddings);
   void set_paddings(const std::vector<std::vector<int64_t>> paddings);
   void set_block_shape(std::vector<int64_t> block_shape);
   std::vector<int64_t> get_block_shape() const;

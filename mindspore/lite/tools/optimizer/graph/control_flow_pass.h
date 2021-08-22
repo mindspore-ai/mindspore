@@ -33,6 +33,9 @@ class ControlFlowPass : public Pass {
   bool Run(const FuncGraphPtr &fg) override;
 
  private:
+  // utility function
+  static ValueNodePtr GetSwitchAnfPrim();
+  static ValueNodePtr GetPartialAnfPrim();
   void ReplaceNode(const FuncGraphPtr &fg, const std::unordered_map<AnfNodePtr, AnfNodePtr> &replace_pairs);
   void VisitedNodesUsedByAfterParts(const std::set<AnfNodePtr> &visited_nodes,
                                     const std::vector<AnfNodePtr> &remain_nodes,

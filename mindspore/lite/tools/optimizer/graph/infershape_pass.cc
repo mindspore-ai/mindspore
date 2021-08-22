@@ -15,80 +15,9 @@
  */
 
 #include "tools/optimizer/graph/infershape_pass.h"
-#include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace opt {
-namespace {
-int GetCNodeCertainInputFormat(const CNodePtr cnode, int index, mindspore::Format *format) {
-  MS_ASSERT(cnode != nullptr && format != nullptr);
-  auto origin_inputs = cnode->inputs();
-  lite::RemoveIfDepend(cnode);
-  lite::RemoveIfMakeTuple(cnode);
-  RemoveIfMonad(cnode);
-  if (index <= 0 || static_cast<size_t>(index) >= cnode->size()) {
-    MS_LOG(ERROR) << "input index out of range";
-    cnode->set_inputs(origin_inputs);
-    return lite::RET_ERROR;
-  }
-  if (!utils::isa<CNode>(cnode->input(index))) {
-    cnode->set_inputs(origin_inputs);
-    return lite::RET_NO_CHANGE;
-  }
-  auto real_cnode = cnode->input(index)->cast<CNodePtr>();
-  if (CheckPrimitiveType(real_cnode, prim::kPrimTupleGetItem)) {
-    real_cnode = real_cnode->input(1)->cast<CNodePtr>();
-  }
-  cnode->set_inputs(origin_inputs);
-  MS_ASSERT(real_cnode != nullptr);
-  auto primitive = GetValueNode<PrimitivePtr>(real_cnode->input(0));
-  MS_ASSERT(primitive != nullptr);
-  if (primitive->GetAttr(ops::kFormat) == nullptr) {
-    MS_LOG(ERROR) << "cnode has no format attr. " << real_cnode->fullname_with_scope();
-    return lite::RET_ERROR;
-  }
-  *format = static_cast<mindspore::Format>(GetValue<int64_t>(primitive->GetAttr(ops::kFormat)));
-  if (CheckPrimitiveType(real_cnode, prim::kPrimTranspose)) {
-    std::vector<int> perm;
-    if (GetTransposePerm(real_cnode, &perm) != lite::RET_OK) {
-      MS_LOG(ERROR) << "get transpose perm failed.";
-      return lite::RET_ERROR;
-    }
-    if (perm.size() != 4) {
-      return RET_OK;
-    }
-    if (perm == kNH2NC && *format == mindspore::NHWC) {
-      *format = mindspore::NCHW;
-    } else if (perm == kNC2NH && *format == mindspore::NCHW) {
-      *format = mindspore::NHWC;
-    }
-  }
-  return lite::RET_OK;
-}
-
-int ModifySubGraphInputCNodeFormat(const FuncGraphPtr &sub_graph, const ParameterPtr &certain_input,
-                                   mindspore::Format format) {
-  MS_ASSERT(sub_graph != nullptr && certain_input != nullptr);
-  auto manager = sub_graph->manager();
-  MS_ASSERT(manager != nullptr);
-  auto node_users = manager->node_users()[certain_input];
-  for (auto &node_user : node_users) {
-    if (node_user.second != 1) {
-      continue;
-    }
-    auto post_cnode = node_user.first->cast<CNodePtr>();
-    if (post_cnode == nullptr) {
-      MS_LOG(ERROR) << "post node is not cnode, which is invalid.";
-      return lite::RET_ERROR;
-    }
-    auto primitive = GetValueNode<PrimitivePtr>(post_cnode->input(0));
-    MS_ASSERT(primitive != nullptr);
-    primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(format));
-  }
-  return lite::RET_OK;
-}
-}  // namespace
-
 bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func_graph is nullptr.";
@@ -123,10 +52,6 @@ bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
     auto cnode = node->cast<CNodePtr>();
     if (IsSpecialType(cnode)) {
       continue;
-    }
-    if (lite::IsCall(cnode) || lite::IsPartialFusion(node)) {
-      all_op_can_infer = false;
-      return all_op_can_infer;
     }
     if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
@@ -180,7 +105,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
         return false;
       }
       SetSubGraphOutput(cnode, sub_func_graph);
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
@@ -223,14 +148,6 @@ void InferShapePass::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr 
       auto out_prim = GetValueNode<PrimitivePtr>(out_cnode->input(0));
       if (out_prim->GetAttr(opt::kInferDone) == nullptr || !GetValue<bool>(out_prim->GetAttr(opt::kInferDone))) {
         param_node->abstract()->set_shape(std::make_shared<abstract::Shape>(shape_vec));
-      }
-      mindspore::Format format = mindspore::NHWC;
-      if (GetCNodeCertainInputFormat(cnode, index, &format) != lite::RET_OK) {
-        MS_LOG(DEBUG) << "has no change for current control node." << cnode->fullname_with_scope();
-        continue;
-      }
-      if (ModifySubGraphInputCNodeFormat(sub_graph, param_node, format) != lite::RET_OK) {
-        MS_LOG(DEBUG) << "modify subgraph input cnode format failed." << cnode->func_graph_as_var();
       }
     } else {
       lite::DataInfo data_info;

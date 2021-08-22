@@ -16,14 +16,14 @@
 import argparse
 import time
 
+from src.simulation import Simulation
+from src.mdnn import Mdnn, TransCrdToCV
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore import load_checkpoint
-from src.mdnn import Mdnn, TransCrdToCV
-from src.simulation import Simulation
 
 parser = argparse.ArgumentParser(description='SPONGE Controller')
-parser.add_argument('--i', type=str, default=None, help='Input .in file')
+parser.add_argument('--i', type=str, default=None, help='Input file')
 parser.add_argument('--amber_parm', type=str, default=None, help='Paramter file in AMBER type')
 parser.add_argument('--c', type=str, default=None, help='Initial coordinates file')
 parser.add_argument('--r', type=str, default="restrt", help='')
@@ -36,7 +36,6 @@ parser.add_argument('--checkpoint', type=str, default="", help='Checkpoint file'
 args_opt = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU", device_id=args_opt.device_id, save_graphs=False)
-# context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", device_id=args_opt.device_id, save_graphs=False)
 
 if __name__ == "__main__":
     simulation = Simulation(args_opt)
@@ -54,8 +53,7 @@ if __name__ == "__main__":
         if steps == simulation.md_info.step_limit - 1:
             print_step = 0
         temperature, total_potential_energy, sigma_of_bond_ene, sigma_of_angle_ene, sigma_of_dihedral_ene, \
-        nb14_lj_energy_sum, nb14_cf_energy_sum, LJ_energy_sum, ee_ene, _, _, _, _ = simulation(Tensor(steps),
-                                                                                               Tensor(print_step))
+        nb14_lj_energy_sum, nb14_cf_energy_sum, LJ_energy_sum, ee_ene, _ = simulation(Tensor(steps), Tensor(print_step))
 
         if steps == 0:
             compiler_time = time.time()

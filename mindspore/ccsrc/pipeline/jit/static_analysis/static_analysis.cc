@@ -359,6 +359,7 @@ void AnalysisEngine::Clear() {
   root_context_ = nullptr;
 }
 
+namespace {
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine) {
   // Custom Primitive with python infer_shape, infer_type
   MS_EXCEPTION_IF_NULL(prim);
@@ -395,8 +396,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
       engine->prim_py_evaluators_[prim_py] = evaluator;
       return evaluator;
     }
-    MS_LOG(ERROR) << "The primitive with python evaluator should be a python primitive.";
-    return nullptr;
+    MS_LOG(EXCEPTION) << "The primitive with python evaluator should be a python primitive.";
   }
 
   // return a default evaluator
@@ -416,10 +416,11 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     }
   }
   if (evaluator == nullptr) {
-    MS_LOG(DEBUG) << "The evaluator of the primitive is not defined (" << prim->name() << ").";
+    MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << prim->name() << ").";
   }
   return evaluator;
 }
+}  // namespace
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
@@ -429,9 +430,6 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbs
   }
   auto primitive = func->prim();
   auto evaluator = GetPrimEvaluator(primitive, shared_from_this());
-  if (evaluator == nullptr) {
-    MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
-  }
   evaluators_[func] = evaluator;
   return evaluator;
 }
@@ -1014,9 +1012,7 @@ AbstractBasePtr FromValueInside(const ValuePtr &value, bool broaden) {
 
 EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs) {
   auto evaluator = GetPrimEvaluator(primitive, nullptr);
-  if (evaluator == nullptr) {
-    MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
-  }
+  MS_EXCEPTION_IF_NULL(evaluator);
   if (!evaluator->isa<TrivialPrimEvaluator>()) {
     MS_LOG(EXCEPTION) << "Prim " << primitive->ToString() << " should build a TrivialPrimEvaluator, but "
                       << evaluator->ToString();

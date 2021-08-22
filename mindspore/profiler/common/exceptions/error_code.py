@@ -15,6 +15,7 @@
 """Profiler error code and messages."""
 from enum import unique, Enum
 
+
 _GENERAL_MASK = 0b00001 << 7
 _PARSER_MASK = 0b00010 << 7
 _ANALYSER_MASK = 0b00011 << 7
@@ -22,7 +23,6 @@ _ANALYSER_MASK = 0b00011 << 7
 
 class ProfilerMgrErrors(Enum):
     """Enum definition for profiler errors"""
-
 
 @unique
 class ProfilerErrors(ProfilerMgrErrors):
@@ -51,6 +51,8 @@ class ProfilerErrors(ProfilerMgrErrors):
     FILTER_CONDITION_ERROR = 6 | _ANALYSER_MASK
     COLUMN_NOT_SUPPORT_SORT_ERROR = 7 | _ANALYSER_MASK
     PIPELINE_OP_NOT_EXIST_ERROR = 8 | _ANALYSER_MASK
+
+
 
 
 @unique

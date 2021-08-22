@@ -30,7 +30,7 @@ class Expander {
 };
 using ExpanderPtr = std::shared_ptr<Expander>;
 
-class PyExpander : public Expander {
+class DefaultExpander : public Expander {
  public:
   AnfNodePtr Run(const AnfNodePtr &node) override;
 
@@ -39,12 +39,6 @@ class PyExpander : public Expander {
   virtual AnfNodePtr CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node);
   virtual FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node);
 };
-
-class DefaultExpander : public PyExpander {
- protected:
-  FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node) override;
-};
-
 class ComplexOpExpander : public DefaultExpander {
  protected:
   bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);

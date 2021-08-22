@@ -12,16 +12,14 @@ SET(DE_UT_SRCS
         btree_test.cc
         buddy_test.cc
         build_vocab_test.cc
-        c_api_audio_a_to_q_test.cc
-        c_api_audio_r_to_z_test.cc
         c_api_cache_test.cc
         c_api_dataset_album_test.cc
+        c_api_audio_a_to_q_test.cc
         c_api_dataset_cifar_test.cc
         c_api_dataset_clue_test.cc
         c_api_dataset_coco_test.cc
         c_api_dataset_config_test.cc
         c_api_dataset_csv_test.cc
-        c_api_dataset_flickr_test.cc
         c_api_dataset_iterator_test.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc

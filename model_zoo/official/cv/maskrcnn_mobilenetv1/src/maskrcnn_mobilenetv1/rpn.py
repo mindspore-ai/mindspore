@@ -1,4 +1,4 @@
-# Copyright 2020-21 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from mindspore.ops import operations as P
 from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore.common.initializer import initializer
-from mindspore import context
 from .bbox_assign_sample import BboxAssignSample
 
 
@@ -101,10 +100,6 @@ class RPN(nn.Cell):
                  cls_out_channels):
         super(RPN, self).__init__()
         cfg_rpn = config
-        if context.get_context("device_target") == "CPU":
-            self.platform_mstype = mstype.float32
-        else:
-            self.platform_mstype = mstype.float16
         self.num_bboxes = cfg_rpn.num_bboxes
         self.slice_index = ()
         self.feature_anchor_shape = ()
@@ -185,7 +180,7 @@ class RPN(nn.Cell):
         for i in range(num_layers):
             rpn_layer.append(RpnRegClsBlock(in_channels, feat_channels, num_anchors, cls_out_channels, \
                                             weight_conv, bias_conv, weight_cls, \
-                                            bias_cls, weight_reg, bias_reg).to_float(self.platform_mstype))
+                                            bias_cls, weight_reg, bias_reg).to_float(mstype.float16))
 
         for i in range(1, num_layers):
             rpn_layer[i].rpn_conv.weight = rpn_layer[0].rpn_conv.weight
@@ -253,9 +248,9 @@ class RPN(nn.Cell):
                                                                                            mstype.bool_),
                                                                                  anchor_using_list, gt_valids_i)
 
-                bbox_weight = self.cast(bbox_weight, self.platform_mstype)
-                label = self.cast(label, self.platform_mstype)
-                label_weight = self.cast(label_weight, self.platform_mstype)
+                bbox_weight = self.cast(bbox_weight, mstype.float16)
+                label = self.cast(label, mstype.float16)
+                label_weight = self.cast(label_weight, mstype.float16)
 
                 for j in range(self.num_layers):
                     begin = self.slice_index[j]

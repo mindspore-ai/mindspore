@@ -37,9 +37,7 @@ class LiteKernelUtil {
 
   static int SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   static bool IsSwitchCall(kernel::LiteKernel *kernel);
-#endif
 
   static kernel::LiteKernel *GetInputsSpecificNode(const kernel::LiteKernel *kernel,
                                                    const schema::PrimitiveType &primitive_type);

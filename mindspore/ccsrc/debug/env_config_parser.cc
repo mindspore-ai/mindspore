@@ -23,19 +23,16 @@
 #include "utils/convert_utils_base.h"
 
 namespace {
-#ifdef ENABLE_DUMP_IR
 constexpr auto ENV_RDR_ENABLE = "MS_RDR_ENABLE";
 constexpr auto ENV_RDR_PATH = "MS_RDR_PATH";
 constexpr auto KEY_RDR_SETTINGS = "rdr";
 constexpr auto KEY_PATH = "path";
 constexpr auto KEY_ENABLE = "enable";
-#endif
 constexpr auto KEY_MEM_REUSE_SETTINGS = "sys";
 constexpr auto KEY_MEM_REUSE = "mem_reuse";
 }  // namespace
 
 namespace mindspore {
-#ifdef ENABLE_DUMP_IR
 std::optional<bool> GetRdrEnableFromEnv() {
   // get environment variable to configure RDR
   std::string env_enable_str = common::GetEnv(ENV_RDR_ENABLE);
@@ -65,7 +62,6 @@ std::optional<std::string> GetRdrPathFromEnv() {
   }
   return std::nullopt;
 }
-#endif
 
 bool EnvConfigParser::CheckJsonStringType(const nlohmann::json &content, const std::string &setting_key,
                                           const std::string &key) const {
@@ -95,7 +91,6 @@ std::string EnvConfigParser::GetIfstreamString(const std::ifstream &ifstream) co
 }
 
 void EnvConfigParser::ParseFromEnv() {
-#ifdef ENABLE_DUMP_IR
   // Get RDR seetings from environment variables
   auto rdr_enable_env = GetRdrEnableFromEnv();
   if (rdr_enable_env.has_value()) {
@@ -113,7 +108,6 @@ void EnvConfigParser::ParseFromEnv() {
       rdr_path_ = path;
     }
   }
-#endif
 }
 
 void EnvConfigParser::ParseFromFile() {
@@ -128,8 +122,7 @@ void EnvConfigParser::ParseFromFile() {
   std::ifstream json_file(config_file_);
   if (!json_file.is_open()) {
     MS_LOG(WARNING) << "Env config file:" << config_file_ << " open failed."
-                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context."
-                    << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
     return;
   }
 
@@ -148,9 +141,8 @@ void EnvConfigParser::ParseFromFile() {
   std::string cfg = ss.str();
   MS_LOG(INFO) << "Env config json:" << cfg;
 
-#ifdef ENABLE_DUMP_IR
+  // Parse rdr seetings from file
   ParseRdrSetting(j);
-#endif
   ParseMemReuseSetting(j);
 
   ConfigToString();
@@ -188,7 +180,6 @@ void EnvConfigParser::ParseSysMemReuse(const nlohmann::json &content) {
   sys_memreuse_ = content;
 }
 
-#ifdef ENABLE_DUMP_IR
 void EnvConfigParser::ParseRdrSetting(const nlohmann::json &content) {
   auto rdr_setting = content.find(KEY_RDR_SETTINGS);
   if (rdr_setting == content.end()) {
@@ -239,17 +230,14 @@ void EnvConfigParser::ParseRdrEnable(const nlohmann::json &content) {
   }
   rdr_enabled_ = content;
 }
-#endif
 
 void EnvConfigParser::ConfigToString() {
   std::string cur_config;
-#ifdef ENABLE_DUMP_IR
   cur_config.append("After parsed, rdr path: ");
   cur_config.append(rdr_path_);
   cur_config.append(", rdr_enable: ");
   std::string rdr_enable_flag = rdr_enabled_ ? "1" : "0";
   (void)cur_config.append(rdr_enable_flag);
-#endif
   MS_LOG(INFO) << cur_config;
 }
 }  // namespace mindspore

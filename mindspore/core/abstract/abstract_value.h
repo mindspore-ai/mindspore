@@ -43,7 +43,7 @@ using AbstractBasePtrList = std::vector<AbstractBasePtr>;
 
 // The base class for abstract value. The abstract value is used in evaluating
 // to express the type, shape, and value of the real value.
-class MS_CORE_API AbstractBase : public Base {
+class AbstractBase : public Base {
  public:
   using TraceNodeProvider = std::function<void(AnfNodePtr *node)>;
 
@@ -101,7 +101,7 @@ class MS_CORE_API AbstractBase : public Base {
   std::string value_desc_;  // store initial value description for error report
 };
 
-class MS_CORE_API AbstractScalar : public AbstractBase {
+class AbstractScalar : public AbstractBase {
  public:
   AbstractScalar() : AbstractBase(kAnyValue, kAnyType) {}
   explicit AbstractScalar(const ValuePtr &value, const TypePtr &type) : AbstractBase(value, type) {}
@@ -127,7 +127,7 @@ class MS_CORE_API AbstractScalar : public AbstractBase {
 };
 using AbstractScalarPtr = std::shared_ptr<AbstractScalar>;
 
-class MS_CORE_API AbstractType : public AbstractBase {
+class AbstractType : public AbstractBase {
  public:
   explicit AbstractType(const TypePtr &type) : AbstractBase(type, kTypeType) {
     if (type == nullptr) {
@@ -146,7 +146,7 @@ class MS_CORE_API AbstractType : public AbstractBase {
 };
 using AbstractTypePtr = std::shared_ptr<AbstractType>;
 
-class MS_CORE_API AbstractError : public AbstractBase {
+class AbstractError : public AbstractBase {
  public:
   explicit AbstractError(const StringImmPtr &err, const AnfNodePtr &node) : AbstractBase(err), node_(node) {
     if (err == nullptr || node == nullptr) {
@@ -181,7 +181,7 @@ class AbstractFuncAtom;
 using AbstractFuncAtomPtr = std::shared_ptr<AbstractFuncAtom>;
 using AbstractFuncAtomPtrList = std::vector<AbstractFuncAtomPtr>;
 
-class MS_CORE_API AbstractFunction : public AbstractBase {
+class AbstractFunction : public AbstractBase {
  public:
   AbstractFunction() = default;
   ~AbstractFunction() override = default;
@@ -215,7 +215,7 @@ class MS_CORE_API AbstractFunction : public AbstractBase {
 using AbstractFunctionPtrList = std::vector<AbstractFunctionPtr>;
 
 // Represents a key-value pair used in function's parameters.
-class MS_CORE_API AbstractKeywordArg : public AbstractBase {
+class AbstractKeywordArg : public AbstractBase {
  public:
   AbstractKeywordArg(const std::string &key, const AbstractBasePtr &argument) : arg_name_(key), arg_value_(argument) {}
   ~AbstractKeywordArg() override = default;
@@ -242,7 +242,7 @@ class MS_CORE_API AbstractKeywordArg : public AbstractBase {
 };
 using AbstractKeywordArgPtr = std::shared_ptr<AbstractKeywordArg>;
 
-class MS_CORE_API AbstractUndetermined : public AbstractBase {
+class AbstractUndetermined : public AbstractBase {
  public:
   // shape and type are all unknown
   AbstractUndetermined() : AbstractBase(kAnyValue) {}
@@ -291,7 +291,7 @@ class MS_CORE_API AbstractUndetermined : public AbstractBase {
   AbstractBasePtr element_;
 };
 
-class MS_CORE_API AbstractTensor : public AbstractUndetermined {
+class AbstractTensor : public AbstractUndetermined {
  public:
   // only element_ and value, shape track are valid member, type track are unknown.
   explicit AbstractTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
@@ -340,7 +340,7 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;
 
-class MS_CORE_API AbstractSequeue : public AbstractBase {
+class AbstractSequeue : public AbstractBase {
  public:
   explicit AbstractSequeue(const AbstractBasePtrList &elements) : elements_(elements) {}
   ~AbstractSequeue() override = default;
@@ -371,7 +371,7 @@ class MS_CORE_API AbstractSequeue : public AbstractBase {
 };
 using AbstractSequeuePtr = std::shared_ptr<AbstractSequeue>;
 
-class MS_CORE_API AbstractTuple : public AbstractSequeue {
+class AbstractTuple : public AbstractSequeue {
  public:
   explicit AbstractTuple(const AbstractBasePtrList &elements) : AbstractSequeue(elements) {}
 
@@ -400,7 +400,7 @@ class MS_CORE_API AbstractTuple : public AbstractSequeue {
 };
 using AbstractTuplePtr = std::shared_ptr<AbstractTuple>;
 
-class MS_CORE_API AbstractList : public AbstractSequeue {
+class AbstractList : public AbstractSequeue {
  public:
   explicit AbstractList(const AbstractBasePtrList &elements) : AbstractSequeue(elements) {}
 
@@ -430,7 +430,7 @@ class MS_CORE_API AbstractList : public AbstractSequeue {
 };
 using AbstractListPtr = std::shared_ptr<AbstractList>;
 
-class MS_CORE_API AbstractClass : public AbstractBase {
+class AbstractClass : public AbstractBase {
  public:
   AbstractClass(const Named &tag, const std::vector<AbstractAttribute> &attributes,
                 const std::unordered_map<std::string, ValuePtr> &methods)
@@ -462,7 +462,7 @@ class MS_CORE_API AbstractClass : public AbstractBase {
 };
 using AbstractClassPtr = std::shared_ptr<AbstractClass>;
 
-class MS_CORE_API AbstractDictionary : public AbstractBase {
+class AbstractDictionary : public AbstractBase {
  public:
   explicit AbstractDictionary(const std::vector<AbstractAttribute> &key_values) : key_values_(key_values) {}
   ~AbstractDictionary() override = default;
@@ -485,7 +485,7 @@ class MS_CORE_API AbstractDictionary : public AbstractBase {
 };
 using AbstractDictionaryPtr = std::shared_ptr<AbstractDictionary>;
 
-class MS_CORE_API AbstractSlice : public AbstractBase {
+class AbstractSlice : public AbstractBase {
  public:
   AbstractSlice(const AbstractBasePtr &start, const AbstractBasePtr &stop, const AbstractBasePtr &step)
       : start_(start), stop_(stop), step_(step) {}
@@ -513,7 +513,7 @@ class MS_CORE_API AbstractSlice : public AbstractBase {
 };
 using AbstractSlicePtr = std::shared_ptr<AbstractSlice>;
 
-class MS_CORE_API AbstractJTagged : public AbstractBase {
+class AbstractJTagged : public AbstractBase {
  public:
   explicit AbstractJTagged(const AbstractBasePtr &element) : element_(element) {}
 
@@ -536,7 +536,7 @@ class MS_CORE_API AbstractJTagged : public AbstractBase {
 };
 using AbstractJTaggedPtr = std::shared_ptr<AbstractJTagged>;
 
-class MS_CORE_API AbstractNone : public AbstractBase {
+class AbstractNone : public AbstractBase {
  public:
   AbstractNone() : AbstractBase() { set_type(std::make_shared<TypeNone>()); }
   ~AbstractNone() override = default;
@@ -554,7 +554,7 @@ class MS_CORE_API AbstractNone : public AbstractBase {
 using AbstractNonePtr = std::shared_ptr<AbstractNone>;
 
 // the un assigned state value for variable, which means the variable is not assigned
-class MS_CORE_API AbstractNull : public AbstractBase {
+class AbstractNull : public AbstractBase {
  public:
   AbstractNull() : AbstractBase(kNull) { set_type(std::make_shared<TypeNull>()); }
   ~AbstractNull() override = default;
@@ -569,7 +569,7 @@ class MS_CORE_API AbstractNull : public AbstractBase {
 using AbstractNullPtr = std::shared_ptr<AbstractNull>;
 
 // the timeout state value for variable, which means the variable is not assigned because it is  timeout
-class MS_CORE_API AbstractTimeOut : public AbstractBase {
+class AbstractTimeOut : public AbstractBase {
  public:
   AbstractTimeOut() : AbstractBase(kNull) { set_type(std::make_shared<TypeNull>()); }
   ~AbstractTimeOut() override = default;
@@ -583,7 +583,7 @@ class MS_CORE_API AbstractTimeOut : public AbstractBase {
 };
 using AbstractTimeOutPtr = std::shared_ptr<AbstractTimeOut>;
 
-class MS_CORE_API AbstractEllipsis : public AbstractBase {
+class AbstractEllipsis : public AbstractBase {
  public:
   AbstractEllipsis() : AbstractBase(kEllipsis) { set_type(std::make_shared<TypeEllipsis>()); }
   ~AbstractEllipsis() override = default;
@@ -597,7 +597,7 @@ class MS_CORE_API AbstractEllipsis : public AbstractBase {
 };
 using AbstractEllipsisPtr = std::shared_ptr<AbstractEllipsis>;
 
-class MS_CORE_API AbstractRefKey : public AbstractBase {
+class AbstractRefKey : public AbstractBase {
  public:
   AbstractRefKey() : AbstractBase(), ref_key_value_(nullptr) { set_type(std::make_shared<RefKeyType>()); }
   ~AbstractRefKey() override = default;
@@ -627,7 +627,7 @@ class MS_CORE_API AbstractRefKey : public AbstractBase {
 };
 using AbstractRefKeyPtr = std::shared_ptr<AbstractRefKey>;
 
-class MS_CORE_API AbstractRef : public AbstractTensor {
+class AbstractRef : public AbstractTensor {
  public:
   AbstractRef(const AbstractBasePtr &ref_key, const AbstractTensorPtr &ref_value);
   ~AbstractRef() override = default;
@@ -669,19 +669,19 @@ class MS_CORE_API AbstractRef : public AbstractTensor {
 };
 using AbstractRefPtr = std::shared_ptr<AbstractRef>;
 
-struct MS_CORE_API AbstractBasePtrListHasher {
+struct AbstractBasePtrListHasher {
   std::size_t operator()(const AbstractBasePtrList &args_spec_list) const;
 };
 
-struct MS_CORE_API AbstractBasePtrListEqual {
+struct AbstractBasePtrListEqual {
   bool operator()(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) const;
 };
 
-MS_CORE_API std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list);
-MS_CORE_API bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs);
+std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list);
+bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs);
 
 // RowTensor
-class MS_CORE_API AbstractRowTensor : public AbstractUndetermined {
+class AbstractRowTensor : public AbstractUndetermined {
  public:
   explicit AbstractRowTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractUndetermined(element, shape) {}
@@ -710,7 +710,7 @@ class MS_CORE_API AbstractRowTensor : public AbstractUndetermined {
 };
 
 // SparseTensor
-class MS_CORE_API AbstractSparseTensor : public AbstractUndetermined {
+class AbstractSparseTensor : public AbstractUndetermined {
  public:
   explicit AbstractSparseTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractUndetermined(element, shape) {}

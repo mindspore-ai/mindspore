@@ -20,8 +20,6 @@
 #include <string>
 #include <optional>
 #include "utils/contract.h"
-#include "utils/ms_context.h"
-#include "utils/comm_manager.h"
 
 namespace mindspore {
 static const int MAX_DIRECTORY_LENGTH = 1024;
@@ -41,25 +39,9 @@ class Common {
   static std::string AddId(const std::string &filename, const std::string &suffix);
   static bool SaveStringToFile(const std::string filename, const std::string string_info);
   static bool FileExists(const std::string &filepath);
-  static std::string CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path);
 
  private:
   static bool IsEveryFilenameValid(const std::string &path, size_t length_limit, const std::string &error_message);
 };
-
-inline std::string GetSaveGraphsPathName(const std::string &file_name, const std::string &save_path = "") {
-  std::string save_graphs_path;
-  if (save_path.empty()) {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    save_graphs_path = ms_context->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-    if (save_graphs_path.empty()) {
-      save_graphs_path = ".";
-    }
-  } else {
-    save_graphs_path = save_path;
-  }
-  return save_graphs_path + "/rank_" + std::to_string(GetRank()) + "/ir_dump/" + file_name;
-}
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_COMMON_H_

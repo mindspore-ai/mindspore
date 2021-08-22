@@ -42,7 +42,7 @@ bool FusionBuildTbeJsonCreator::GenJson(const FusionScopeInfo &fusion_scope_info
 
   std::vector<nlohmann::json> op_list_json;
   if (!GenOpListJson(fusion_scope_info, &op_list_json)) {
-    MS_LOG(WARNING) << "Fusion Error: generate fusion json failed.";
+    MS_LOG(ERROR) << "Generate fusion json failed.";
     return false;
   }
   (*fusion_json)[kJOpList] = op_list_json;
@@ -62,10 +62,6 @@ bool FusionBuildTbeJsonCreator::GenOpListJson(const FusionScopeInfo &fusion_scop
   MS_EXCEPTION_IF_NULL(fusion_json);
   MS_LOG(DEBUG) << "Start";
   if (!CheckInput(fusion_scope_info)) {
-    for (const auto &cnode : fusion_scope_info.compute_nodes) {
-      MS_LOG(WARNING) << "Fusion Error: check input failed, scope id: " << fusion_scope_info.scope_id
-                      << ", compute node: " << cnode->fullname_with_scope();
-    }
     return false;
   }
 
@@ -75,8 +71,8 @@ bool FusionBuildTbeJsonCreator::GenOpListJson(const FusionScopeInfo &fusion_scop
   for (const auto &compute_node : compute_nodes) {
     nlohmann::json compute_json;
     if (!GenComputeJson(compute_node, &compute_json)) {
-      MS_LOG(WARNING) << "Fusion Error: gen fusion compute json failed. node full name: "
-                      << compute_node->fullname_with_scope();
+      MS_LOG(ERROR) << "Fusion Error: gen fusion compute json failed. node full name: "
+                    << compute_node->fullname_with_scope();
       return false;
     }
     compute_json[kJOriName] = {fusion_scope_info.full_name};
@@ -103,7 +99,7 @@ bool FusionBuildTbeJsonCreator::CheckInput(const FusionScopeInfo &fusion_scope_i
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr) {
-      MS_LOG(WARNING) << "Fusion Error: fusion compute node must be cnode, but the node is " << cnode->DebugString();
+      MS_LOG(ERROR) << "Fusion error: fusion compute node must be cnode, but the node is " << cnode->DebugString();
       return false;
     }
     for (size_t i = 1; i < cnode->inputs().size(); ++i) {
@@ -115,8 +111,8 @@ bool FusionBuildTbeJsonCreator::CheckInput(const FusionScopeInfo &fusion_scope_i
     }
   }
   if (input_nodes.size() != input_size) {
-    MS_LOG(WARNING) << "Fusion Error: compute node input size: [ " << input_size
-                    << " ] is not equal to input nodes num: [ " << input_nodes.size() << " ].";
+    MS_LOG(ERROR) << "Fusion error: fusion scope error, compute node input size:" << input_size
+                  << ", input nodes num:" << input_nodes.size();
     return false;
   }
   MS_LOG(DEBUG) << "End";
@@ -222,19 +218,19 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
 bool FusionBuildTbeJsonCreator::CheckDynamicInput(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-    MS_LOG(WARNING) << "Fusion Error: cnode [ " << AnfAlgo::GetCNodeName(cnode) << "] has not attr dyn_input_sizes.";
+    MS_LOG(ERROR) << "Fusion error: cnode [ " << AnfAlgo::GetCNodeName(cnode) << "] has not attr dyn_input_sizes.";
     return false;
   }
   // for dynamic input number, dyn_input_sizes has the info of dynamic input num for each input.
   auto dyn_input_sizes = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
   if (dyn_input_sizes.size() != 1) {
-    MS_LOG(WARNING) << "Fusion Error: fusion build not support dynamic input size > 1";
+    MS_LOG(ERROR) << "Fusion error: fusion build not support dynamic input size > 1";
     return false;
   }
   auto real_input_size = cnode->inputs().size() - 1;
   if (LongToSize(dyn_input_sizes[0]) != real_input_size) {
-    MS_LOG(WARNING) << "Fusion Error: dyn_input_size" << dyn_input_sizes[0] << "not equal real_input_size"
-                    << real_input_size;
+    MS_LOG(ERROR) << "Fusion error: dyn_input_size" << dyn_input_sizes[0] << "not equal real_input_size"
+                  << real_input_size;
     return false;
   }
   return true;
@@ -250,9 +246,9 @@ bool FusionBuildTbeJsonCreator::GenOutputsJson(const AnfNodePtr &anf_node, nlohm
   if (AnfAlgo::HasNodeAttr(kAttrOutputUsedNum, cnode)) {
     auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, kAttrOutputUsedNum);
     if (output_used_nums.size() != output_size) {
-      MS_LOG(WARNING) << "Fusion Error: [" << AnfAlgo::GetCNodeName(anf_node) << " ]'s output tensor num("
-                      << output_size << ")"
-                      << " is not match output used num(" << output_used_nums.size() << ")";
+      MS_LOG(ERROR) << "Fusion error: [" << AnfAlgo::GetCNodeName(anf_node) << " ]'s output tenor num(" << output_size
+                    << ")"
+                    << " is not match output used num(" << output_used_nums.size() << ")";
       return false;
     }
     auto desc_output_index = GetDescOutputIndex(output_used_nums);
@@ -303,8 +299,7 @@ std::vector<size_t> FusionBuildTbeJsonCreator::GetDescOutputIndex(const std::vec
 
 bool FusionBuildTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
                                                         nlohmann::json *attrs_json) {
-  // just keep it
-  // tbe::TbeAdapter::CastAttrJsonPost(anf_node, attrs_json);
+  tbe::TbeAdapter::CastAttrJsonPost(anf_node, attrs_json);
   return true;
 }
 }  // namespace mindspore::kernel

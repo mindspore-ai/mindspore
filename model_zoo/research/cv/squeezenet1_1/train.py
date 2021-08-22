@@ -37,9 +37,9 @@ from src.dataset import create_dataset_imagenet as create_dataset
 parser = argparse.ArgumentParser(description='SqueezeNet1_1')
 parser.add_argument('--net', type=str, default='squeezenet', help='Model.')
 parser.add_argument('--dataset', type=str, default='imagenet', help='Dataset.')
-parser.add_argument('--run_cloudbrain', type=ast.literal_eval, default=False,
+parser.add_argument('--run_cloudbrain', type=ast.literal_eval, default=True,
                     help='Whether it is running on CloudBrain platform.')
-parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
+parser.add_argument('--run_distribute', type=bool, default=True, help='Run distribute')
 parser.add_argument('--device_num', type=int, default=1, help='Device num.')
 parser.add_argument('--dataset_path', type=str, default='', help='Dataset path')
 parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')

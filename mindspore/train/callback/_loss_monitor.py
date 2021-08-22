@@ -43,12 +43,6 @@ class LossMonitor(Callback):
         self._per_print_times = per_print_times
 
     def step_end(self, run_context):
-        """
-        Print training loss at the end of step.
-
-        Args:
-            run_context (RunContext): Context of the train running.
-        """
         cb_params = run_context.original_args()
         loss = cb_params.net_outputs
 

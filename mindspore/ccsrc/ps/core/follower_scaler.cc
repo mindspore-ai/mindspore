@@ -78,18 +78,10 @@ FollowerScaler::~FollowerScaler() {
   running_ = false;
   scale_out_cv_.notify_all();
   scale_in_cv_.notify_all();
-  if (process_before_scale_out_thread_.joinable()) {
-    process_before_scale_out_thread_.join();
-  }
-  if (process_before_scale_in_thread_.joinable()) {
-    process_before_scale_in_thread_.join();
-  }
-  if (process_after_scale_out_thread_.joinable()) {
-    process_after_scale_out_thread_.join();
-  }
-  if (process_after_scale_in_thread_.joinable()) {
-    process_after_scale_in_thread_.join();
-  }
+  process_before_scale_out_thread_.join();
+  process_before_scale_in_thread_.join();
+  process_after_scale_out_thread_.join();
+  process_after_scale_in_thread_.join();
 }
 
 void FollowerScaler::RegisterScaleEventCallbacks() {

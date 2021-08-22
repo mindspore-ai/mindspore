@@ -162,8 +162,6 @@ class ImageFolderDataset:
                     with open(cache_path, 'wb') as fw:
                         pickle.dump(cache, fw)
                     print('local dump cache:{}'.format(cache_path))
-                    with open(cache_path[:cache_path.rfind('.')] + 'txt', 'w') as _f:
-                        _f.write("Rank 0 dump data to cache_path:'{}' successfully!".format(cache_path))
             else:
                 with open(cache_path, 'wb') as fw:
                     pickle.dump(cache, fw)

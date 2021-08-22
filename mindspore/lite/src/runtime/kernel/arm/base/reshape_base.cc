@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/runtime/kernel/arm/base/reshape_base.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -32,27 +31,54 @@ using mindspore::schema::PrimitiveType_Squeeze;
 using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::kernel {
-int ReshapeBaseCPUKernel::Run() {
-  auto in_tensor = in_tensors().front();
-  auto out_tensor = out_tensors().front();
+int ReshapeBaseCPUKernel::Init() { return ReSize(); }
 
-  /*
-   * in_tensor : CPU-allocator ;  out_tensor : GPU-allocator
-   * out_tensor data_c can not change
-   * */
-  if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
-      op_parameter_->is_train_session_) {
-    memcpy(out_tensor->data_c(), in_tensor->data_c(), in_tensor->Size());
+int ReshapeBaseCPUKernel::ReSize() {
+  int in_data_size = in_tensors_.front()->Size();
+  int thread_num = op_parameter_->thread_num_;
+  if (thread_num == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
+  cal_max_num_per_thread_ = UP_DIV(in_data_size, thread_num);
+  return RET_OK;
+}
+
+int ReshapeBaseCPUKernel::RunImpl(int task_id) {
+  size_t start_index = task_id * cal_max_num_per_thread_;
+  if (start_index >= in_tensors_.front()->Size()) {
     return RET_OK;
   }
+  auto cur_in_ptr = input_ptr_ + start_index;
+  auto cur_out_ptr = output_ptr_ + start_index;
 
-  out_tensor->FreeData();
-  out_tensor->ResetRefCount();
+  size_t data_size = in_tensors_.front()->Size() - start_index;
+  data_size = data_size > cal_max_num_per_thread_ ? cal_max_num_per_thread_ : data_size;
+  memcpy(cur_out_ptr, cur_in_ptr, data_size);
+  return RET_OK;
+}
 
-  in_tensor->allocator()->IncRefCount(in_tensor->data(), out_tensor->ref_count());
+int ReshapeRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  auto reshape = reinterpret_cast<ReshapeBaseCPUKernel *>(cdata);
+  auto ret = reshape->RunImpl(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ReshapeRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    return ret;
+  }
+  return RET_OK;
+}
 
-  out_tensor->set_data(in_tensor->data_c());
-  out_tensor->set_own_data(in_tensor->own_data());
+int ReshapeBaseCPUKernel::Run() {
+  input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(kInputIndex)->data_c());
+  output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(kOutputIndex)->data_c());
+  if (input_ptr_ == nullptr || output_ptr_ == nullptr) {
+    return RET_NULL_PTR;
+  }
+  auto ret = ParallelLaunch(this->ms_context_, ReshapeRun, this, op_parameter_->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Reshape run error error_code[" << ret << "]";
+    return ret;
+  }
   return RET_OK;
 }
 

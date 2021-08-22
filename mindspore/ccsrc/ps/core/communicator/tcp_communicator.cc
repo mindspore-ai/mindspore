@@ -57,10 +57,7 @@ bool TcpCommunicator::Start() {
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
   server_node_->set_handler(tcp_msg_callback_);
 
-  if (!server_node_->Start()) {
-    MS_LOG(EXCEPTION) << "Starting server node failed.";
-    return false;
-  }
+  server_node_->Start();
   running_ = true;
   running_thread_ = std::thread([&]() {
     while (running_) {
@@ -72,14 +69,8 @@ bool TcpCommunicator::Start() {
 
 bool TcpCommunicator::Stop() {
   MS_EXCEPTION_IF_NULL(server_node_);
-  if (!server_node_->Finish()) {
-    MS_LOG(ERROR) << "Finishing server node failed.";
-    return false;
-  }
-  if (!server_node_->Stop()) {
-    MS_LOG(ERROR) << "Stopping server node failed.";
-    return false;
-  }
+  server_node_->Finish();
+  server_node_->Stop();
   running_ = false;
   return true;
 }
@@ -90,7 +81,6 @@ void TcpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const Mes
 }
 
 void TcpCommunicator::RegisterEventCallback(const core::ClusterEvent &event, const EventCallback &event_cb) {
-  MS_EXCEPTION_IF_NULL(server_node_);
   server_node_->RegisterEventCallback(event, event_cb);
 }
 

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBinaryCrossEntropyGrad = "BinaryCrossEntropyGrad";
-class MS_CORE_API BinaryCrossEntropyGrad : public PrimitiveC {
+class BinaryCrossEntropyGrad : public PrimitiveC {
  public:
   BinaryCrossEntropyGrad() : PrimitiveC(kNameBinaryCrossEntropyGrad) {}
   ~BinaryCrossEntropyGrad() = default;

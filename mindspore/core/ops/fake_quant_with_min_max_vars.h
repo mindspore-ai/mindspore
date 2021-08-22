@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFakeQuantWithMinMaxVars = "FakeQuantWithMinMaxVars";
-class MS_CORE_API FakeQuantWithMinMaxVars : public PrimitiveC {
+class FakeQuantWithMinMaxVars : public PrimitiveC {
  public:
   FakeQuantWithMinMaxVars() : PrimitiveC(kNameFakeQuantWithMinMaxVars) {}
   ~FakeQuantWithMinMaxVars() = default;

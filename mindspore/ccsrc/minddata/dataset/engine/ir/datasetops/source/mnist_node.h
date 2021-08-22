@@ -58,7 +58,7 @@ class MnistNode : public MappableSourceNode {
 
   /// \brief Get the shard id of node
   /// \return Status Status::OK() if get shard id successfully
-  Status GetShardId(int32_t *const shard_id) override;
+  Status GetShardId(int32_t *shard_id) override;
 
   /// \brief Base-class override for GetDatasetSize
   /// \param[in] size_getter Shared pointer to DatasetSizeGetter
@@ -77,14 +77,6 @@ class MnistNode : public MappableSourceNode {
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
-
-#ifndef ENABLE_ANDROID
-  /// \brief Function to read dataset in json
-  /// \param[in] json_obj The JSON object to be deserialized
-  /// \param[out] ds Deserialized dataset
-  /// \return Status The status code returned
-  static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
-#endif
 
   /// \brief Sampler getter
   /// \return SamplerObj of the current node

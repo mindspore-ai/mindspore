@@ -17,6 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_PARTIAL_FUSION_H_
 
 #include <vector>
+#include "src/runtime/kernel/arm/base/carry_data.h"
 #include "src/tensor.h"
 #include "src/lite_kernel.h"
 

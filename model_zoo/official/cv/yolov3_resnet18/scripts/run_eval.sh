@@ -27,4 +27,4 @@ export RANK_SIZE=1
 export DEVICE_ID=$1
 export RANK_ID=$1
 
-python eval.py --ckpt_path=$2 --eval_mindrecord_dir=$3 --image_dir=$4 --anno_path=$5
+python eval.py --ckpt_path=$2 --mindrecord_dir=$3 --image_dir=$4 --anno_path=$5

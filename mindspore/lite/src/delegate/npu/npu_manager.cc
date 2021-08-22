@@ -80,9 +80,9 @@ bool NPUManager::CheckDDKVersion() {
   auto client = std::make_shared<hiai::AiModelMngerClient>();
   if (client->GetVersion() != nullptr) {
     std::string version = client->GetVersion();
-    int ret = CompareVersion(version, "100.320.011.018");
-    if (ret <= 0) {
-      MS_LOG(WARNING) << "DDK Version " << version << " less than 100.320.011.018";
+    int ret = CompareVersion(version, "100.320.010.023");
+    if (ret < 0) {
+      MS_LOG(WARNING) << "DDK Version " << version << " less than 100.320.010.023";
       return false;
     }
   }

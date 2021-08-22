@@ -31,7 +31,7 @@ using abstract::AbstractBasePtr;
 using abstract::AbstractBasePtrList;
 // value for Cell
 
-class MS_CORE_API Cell : public Named {
+class Cell : public Named {
  public:
   explicit Cell(const std::string &name) : Named(name) {}
   MS_DECLARE_PARENT(Cell, Named);

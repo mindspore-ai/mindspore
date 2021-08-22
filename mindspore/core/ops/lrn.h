@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLRN = "LRN";
-class MS_CORE_API LRN : public PrimitiveC {
+class LRN : public PrimitiveC {
  public:
   LRN() : PrimitiveC(kNameLRN) { InitIOName({"x"}, {"y"}); }
   ~LRN() = default;

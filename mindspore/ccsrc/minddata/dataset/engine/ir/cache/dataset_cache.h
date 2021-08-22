@@ -35,10 +35,6 @@ class DatasetCache {
   virtual Status CreateCacheMergeOp(int32_t num_workers, int32_t connector_queue_size,
                                     std::shared_ptr<DatasetOp> *ds) = 0;
   virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
-
-#ifndef ENABLE_ANDROID
-  static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetCache> *cache);
-#endif
 };
 }  // namespace mindspore::dataset
 

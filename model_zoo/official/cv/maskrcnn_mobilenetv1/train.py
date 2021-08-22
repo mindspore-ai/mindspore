@@ -1,4 +1,4 @@
-# Copyright 2020-21 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -96,15 +96,13 @@ def modelarts_pre_process():
     config.pre_trained = os.path.join(config.output_path, config.pre_trained)
 
 
-context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
-if config.device_target == "Ascend":
-    context.set_context(device_id=config.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_maskrcnn_mobilenetv1():
     config.mindrecord_dir = os.path.join(config.coco_root, config.mindrecord_dir)
     print('config:\n', config)
-    print("Start training for maskrcnn_mobilenetv1!")
+    print("Start train for maskrcnn_mobilenetv1!")
     if not config.do_eval and config.run_distribute:
         rank = get_rank_id()
         device_num = get_device_num()

@@ -26,11 +26,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Shape;
 
 namespace mindspore::kernel {
-int ShapeCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  return RET_OK;
-}
+int ShapeCPUKernel::Init() { return RET_OK; }
 
 int ShapeCPUKernel::ReSize() { return RET_OK; }
 

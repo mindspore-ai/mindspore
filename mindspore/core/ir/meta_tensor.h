@@ -55,7 +55,7 @@ struct DeviceInfo {
 //
 // Includes the metadata information of a tensor, such as data type, shape
 // and so on. But it does not contain values of a tensor.
-class MS_CORE_API MetaTensor : public Value {
+class MetaTensor : public Value {
  public:
   // Construction
   MetaTensor();

@@ -131,7 +131,6 @@
 #include "ops/rsqrt.h"
 #include "ops/scale.h"
 #include "ops/scatter_nd.h"
-#include "ops/scatter_nd_update.h"
 #include "ops/select.h"
 #include "ops/sgd.h"
 #include "ops/shape.h"
@@ -463,7 +462,6 @@ FUNC_MSOP2SCHEMAOP_DECLARE(TensorArrayRead)
 FUNC_MSOP2SCHEMAOP_DECLARE(TensorArrayWrite)
 FUNC_MSOP2SCHEMAOP_DECLARE(Affine)
 FUNC_MSOP2SCHEMAOP_DECLARE(Attention)
-FUNC_MSOP2SCHEMAOP_DECLARE(ScatterNdUpdate)
 #endif
 }  // namespace mindspore::lite::ops
 #else

@@ -59,8 +59,8 @@ class L2NormalizeGpuKernel : public GpuKernel {
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *reduce_workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
-    T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 1);
+    T *reduce_workspace_addr = GetDeviceAddress<T>(workspace, 0);
+    T *workspace_addr = GetDeviceAddress<T>(workspace, 1);
 
     const float alpha = 1;
     const float beta = 0;

@@ -28,6 +28,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "pipeline/jit/base.h"
+#include "debug/common.h"
 #include "debug/trace.h"
 #include "utils/trace_base.h"
 
@@ -581,7 +582,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   if (graph == nullptr) {
     return;
   }
-  auto path = GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
+  auto path = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
   if (!target_file.empty()) {
     path = target_file;
   }
@@ -595,8 +596,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   std::ofstream fout(realpath.value());
   std::ostringstream buffer;
   if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!";
     return;
   }
 
@@ -638,8 +638,7 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
   std::ofstream fout(realpath.value());
   std::ostringstream buffer;
   if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!";
     return;
   }
 

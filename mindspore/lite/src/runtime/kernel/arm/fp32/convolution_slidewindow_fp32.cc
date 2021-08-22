@@ -28,6 +28,37 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+int ConvolutionSWCPUKernel::InitWeightBias() {
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = filter_tensor->Channel();
+  auto output_channel = filter_tensor->Batch();
+  int kernel_h = filter_tensor->Height();
+  int kernel_w = filter_tensor->Width();
+  conv_param_->input_channel_ = input_channel;
+  conv_param_->output_channel_ = output_channel;
+  int kernel_plane = kernel_h * kernel_w;
+  int oc_block_num = UP_DIV(output_channel, oc_tile_);
+  int pack_weight_size = oc_block_num * oc_tile_ * input_channel * kernel_plane;
+  packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
+  if (packed_weight_ == nullptr) {
+    MS_LOG(ERROR) << "malloc packed weight failed.";
+    return RET_NULL_PTR;
+  }
+  memset(packed_weight_, 0, pack_weight_size * sizeof(float));
+  PackNHWCToNXHWCXFp32(kernel_h, kernel_w, output_channel, oc_block_num, input_channel, packed_weight_,
+                       ori_weight_data_);
+  if (in_tensors_.size() == kInputSize2) {
+    packed_bias_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_tile_ * sizeof(float)));
+    if (packed_bias_ == nullptr) {
+      MS_LOG(ERROR) << "malloc bias failed.";
+      return RET_NULL_PTR;
+    }
+    memset(packed_bias_, 0, oc_block_num * oc_tile_ * sizeof(float));
+    memcpy(packed_bias_, ori_bias_data_, output_channel * sizeof(float));
+  }
+  return RET_OK;
+}
+
 int ConvolutionSWCPUKernel::Init() {
   oc_tile_ = C8NUM;
   oc_res_ = conv_param_->output_channel_ % oc_tile_;
@@ -36,18 +67,7 @@ int ConvolutionSWCPUKernel::Init() {
     in_tile_ = C8NUM;
     ic_res_ = conv_param_->input_channel_ % in_tile_;
   }
-  if (op_parameter_->is_train_session_) {
-    auto filter_tensor = in_tensors_.at(kWeightIndex);
-    auto input_channel = filter_tensor->Channel();
-    auto output_channel = filter_tensor->Batch();
-    int kernel_h = filter_tensor->Height();
-    int kernel_w = filter_tensor->Width();
-    int kernel_plane = kernel_h * kernel_w;
-    int oc_block_num = UP_DIV(output_channel, oc_tile_);
-    int pack_weight_size = oc_block_num * oc_tile_ * input_channel * kernel_plane;
-    set_workspace_size(pack_weight_size * sizeof(float));
-  }
-  auto ret = InitConvWeightBias();
+  auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
@@ -75,6 +95,7 @@ int ConvolutionSWCPUKernel::ReSize() {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
   }
+
   // init sliding window param
   slidingWindow_param_ = new (std::nothrow) SlidingWindowParam;
   if (slidingWindow_param_ == nullptr) {
@@ -87,11 +108,11 @@ int ConvolutionSWCPUKernel::ReSize() {
 
 int ConvolutionSWCPUKernel::RunImpl(int task_id) {
   if (conv_param_->kernel_w_ == 1 && conv_param_->kernel_h_ == 1) {
-    Conv1x1SWFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
-                  output_data_, task_id, conv_param_, slidingWindow_param_);
+    Conv1x1SWFp32(input_data_, packed_weight_, reinterpret_cast<float *>(packed_bias_), output_data_, task_id,
+                  conv_param_, slidingWindow_param_);
   } else {
-    ConvSWFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
-               output_data_, task_id, conv_param_, slidingWindow_param_);
+    ConvSWFp32(input_data_, packed_weight_, reinterpret_cast<float *>(packed_bias_), output_data_, task_id, conv_param_,
+               slidingWindow_param_);
   }
   return RET_OK;
 }
@@ -157,12 +178,6 @@ int ConvolutionSWCPUKernel::Run() {
     FreeTmpBuffer();
     return ret;
   }
-
-  if (RepackWeight() != RET_OK) {
-    MS_LOG(ERROR) << "Repack weight failed.";
-    return RET_ERROR;
-  }
-
   int error_code = ParallelLaunch(this->ms_context_, ConvolutionSWImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv error error_code[" << error_code << "]";
@@ -175,50 +190,6 @@ int ConvolutionSWCPUKernel::Run() {
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_, oc_tile_);
   }
   FreeTmpBuffer();
-  return RET_OK;
-}
-
-void ConvolutionSWCPUKernel::PackWeight() {
-  auto filter_tensor = in_tensors_.at(kWeightIndex);
-  auto input_channel = filter_tensor->Channel();
-  auto output_channel = filter_tensor->Batch();
-  int kernel_h = filter_tensor->Height();
-  int kernel_w = filter_tensor->Width();
-  int oc_block_num = UP_DIV(output_channel, oc_tile_);
-  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data_c() : origin_weight_;
-  MS_ASSERT(origin_weight != nullptr);
-  PackNHWCToNXHWCXFp32(kernel_h, kernel_w, output_channel, oc_block_num, input_channel,
-                       reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(origin_weight));
-}
-
-int ConvolutionSWCPUKernel::MallocWeightBiasData() {
-  auto filter_tensor = in_tensors_.at(kWeightIndex);
-  auto input_channel = filter_tensor->Channel();
-  auto output_channel = filter_tensor->Batch();
-  int kernel_h = filter_tensor->Height();
-  int kernel_w = filter_tensor->Width();
-  conv_param_->input_channel_ = input_channel;
-  conv_param_->output_channel_ = output_channel;
-  int kernel_plane = kernel_h * kernel_w;
-  int oc_block_num = UP_DIV(output_channel, oc_tile_);
-  int pack_weight_size = oc_block_num * oc_tile_ * input_channel * kernel_plane;
-  if (!op_parameter_->is_train_session_) {
-    packed_weight_ = malloc(pack_weight_size * sizeof(float));
-    if (packed_weight_ == nullptr) {
-      MS_LOG(ERROR) << "malloc packed weight failed.";
-      return RET_NULL_PTR;
-    }
-    memset(packed_weight_, 0, pack_weight_size * sizeof(float));
-  }
-
-  if (in_tensors_.size() == kInputSize2) {
-    bias_data_ = malloc(oc_block_num * oc_tile_ * sizeof(float));
-    if (bias_data_ == nullptr) {
-      MS_LOG(ERROR) << "malloc bias failed.";
-      return RET_NULL_PTR;
-    }
-    memset(bias_data_, 0, oc_block_num * oc_tile_ * sizeof(float));
-  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel

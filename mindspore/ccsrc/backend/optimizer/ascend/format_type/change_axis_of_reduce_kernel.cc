@@ -53,15 +53,6 @@ void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce
   }
 }
 
-void DynamicAttrUpdate(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto primitive = AnfAlgo::GetCNodePrimitive(node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto axis_attr = primitive->GetAttr(kAttrAxis);
-  AnfAlgo::SetNodeAttr(kAttrAxes, axis_attr, node);
-  AnfAlgo::EraseNodeAttr(kAttrAxis, node);
-}
-
 void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
   auto axis = kernel::GetReduceAttrAxis(cnode);
   std::vector<int64_t> convert_axis;
@@ -104,15 +95,9 @@ const AnfNodePtr ChangeAxisOfReduceKernel::Process(const FuncGraphPtr &, const A
   }
   auto convert_map = kReduceConvertMap.find(AnfAlgo::GetInputFormat(node, 0));
   if (convert_map == kReduceConvertMap.end()) {
-    if (AnfAlgo::IsDynamicShape(node)) {
-      DynamicAttrUpdate(node);
-    }
     return nullptr;
   }
   convert_map->second(node->cast<CNodePtr>());
-  if (AnfAlgo::IsDynamicShape(node)) {
-    DynamicAttrUpdate(node);
-  }
   return nullptr;
 }
 }  // namespace opt

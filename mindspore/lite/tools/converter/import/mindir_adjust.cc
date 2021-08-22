@@ -232,10 +232,6 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
     MS_LOG(ERROR) << "the cnode is invalid.";
     return lite::RET_NULL_PTR;
   }
-  if (utils::isa<CNodePtr>(cnode->input(0))) {
-    MS_LOG(INFO) << "call cnode no need to convert primitive.";
-    return lite::RET_NO_CHANGE;
-  }
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   if (value_node == nullptr || value_node->value() == nullptr) {
     MS_LOG(ERROR) << "value node is invalid.";
@@ -243,13 +239,8 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   }
   auto primitive = value_node->value()->cast<PrimitivePtr>();
   if (primitive == nullptr) {
-    if (utils::isa<FuncGraphPtr>(value_node->value())) {
-      MS_LOG(INFO) << "is a funcgraph.";
-      return lite::RET_NO_CHANGE;
-    } else {
-      MS_LOG(ERROR) << "the value is not primitive.";
-      return lite::RET_ERROR;
-    }
+    MS_LOG(ERROR) << "the value is not primitive.";
+    return lite::RET_ERROR;
   }
   auto inputs = cnode->inputs();
   inputs.erase(inputs.begin());
@@ -266,7 +257,7 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
 }
 
 bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
-  if (this->fmk_type_ != converter::kFmkTypeMs) {
+  if (this->fmk_type_ != lite::converter::FmkType_MS) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return lite::RET_OK;
   }

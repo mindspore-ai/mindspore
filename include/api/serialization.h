@@ -27,43 +27,13 @@
 #include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
-/// \brief The Serialization class is used to summarize methods for reading and writing model files.
+
 class MS_API Serialization {
  public:
-  /// \brief Loads a model file from memory buffer.
-  ///
-  /// \param[in] model_data A buffer filled by model file.
-  /// \param[in] data_size The size of the buffer.
-  /// \param[in] model_type The Type of model file, options are ModelType::kMindIR, ModelType::kOM.
-  /// \param[out] graph The output parameter, an object saves graph data.
-  /// \param[in] dec_key The decryption key, key length is 16, 24, or 32.
-  /// \param[in] dec_mode The decryption mode, optional options are AES-GCM, AES-CBC.
-  ///
-  /// \return Status.
   inline static Status Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
                             const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
-
-  /// \brief Loads a model file from path, is not supported on MindSpore Lite.
-  ///
-  /// \param[in] file The path of model file.
-  /// \param[in] model_type The Type of model file, options are ModelType::kMindIR, ModelType::kOM.
-  /// \param[out] graph The output parameter, an object saves graph data.
-  /// \param[in] dec_key The decryption key, key length is 16, 24, or 32.
-  /// \param[in] dec_mode The decryption mode, optional options are AES-GCM, AES-CBC.
-  ///
-  /// \return Status.
   inline static Status Load(const std::string &file, ModelType model_type, Graph *graph, const Key &dec_key = {},
                             const std::string &dec_mode = kDecModeAesGcm);
-
-  /// \brief Load multiple models from multiple files, MindSpore Lite does not provide this feature.
-  ///
-  /// \param[in] files The path of model files.
-  /// \param[in] model_type The Type of model file, options are ModelType::kMindIR, ModelType::kOM.
-  /// \param[out] graph The output parameter, an object saves graph data.
-  /// \param[in] dec_key The decryption key, key length is 16, 24, or 32.
-  /// \param[in] dec_mode The decryption mode, optional options are AES-GCM, AES-CBC.
-  ///
-  /// \return Status.
   inline static Status Load(const std::vector<std::string> &files, ModelType model_type, std::vector<Graph> *graphs,
                             const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
   static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);

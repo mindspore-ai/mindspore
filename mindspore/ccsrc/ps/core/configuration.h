@@ -45,20 +45,17 @@ class Configuration {
   // Determine whether the initialization has been completed.
   virtual bool IsInitialized() const = 0;
 
-  // Get configuration data from database or config file.
+  // Get configuration data from database or config file.The returned string is quoted
   virtual std::string Get(const std::string &key, const std::string &defaultvalue) const = 0;
 
-  // Get configuration data from database or config file.
+  // Get configuration data from database or config file.The returned string is not quoted
   virtual std::string GetString(const std::string &key, const std::string &defaultvalue) const = 0;
-
-  // Get configuration data from database or config file.
-  virtual int64_t GetInt(const std::string &key, int64_t default_value) const = 0;
 
   // Put configuration data to database or config file.
   virtual void Put(const std::string &key, const std::string &defaultvalue) = 0;
 
   // Determine whether the configuration item exists.
-  virtual bool Exists(const std::string &key) const = 0;
+  virtual bool Exists(const std::string &key) = 0;
 };
 }  // namespace core
 }  // namespace ps

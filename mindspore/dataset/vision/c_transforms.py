@@ -54,7 +54,7 @@ from .validators import check_prob, check_crop, check_center_crop, check_resize_
     check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
-    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
+    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches
 from ..transforms.c_transforms import TensorOperation
 
 
@@ -105,37 +105,6 @@ def parse_padding(padding):
     if isinstance(padding, list):
         padding = tuple(padding)
     return padding
-
-
-class AdjustGamma(ImageTensorOperation):
-    r"""
-    Apply gamma correction on input image. Input image is expected to be in [..., H, W, C] or [H, W] format.
-    .. math::
-        I_{\text{out}} = 255 \times \text{gain} \times \left(\frac{I_{\text{in}}}{255}\right)^{\gamma}
-
-    See `Gamma Correction`_ for more details.
-
-    .. _Gamma Correction: https://en.wikipedia.org/wiki/Gamma_correction
-
-    Args:
-        gamma (float): Non negative real number.
-            The output image pixel value is exponentially related to the input image pixel value.
-            gamma larger than 1 make the shadows darker,
-            while gamma smaller than 1 make dark regions lighter.
-        gain (float, optional): The constant multiplier (default=1).
-
-    Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.AdjustGamma(gamma=10.0, gain=1.0)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
-    """
-    @check_adjust_gamma
-    def __init__(self, gamma, gain=1):
-        self.gamma = gamma
-        self.gain = gain
-
-    def parse(self):
-        return cde.AdjustGammaOperation(self.gamma, self.gain)
 
 
 class AutoContrast(ImageTensorOperation):
@@ -1511,7 +1480,6 @@ class RgbToBgr(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
-        >>>
         >>> decode_op = c_vision.Decode()
         >>> rgb2bgr_op = c_vision.RgbToBgr()
         >>> transforms_list = [decode_op, rgb2bgr_op]

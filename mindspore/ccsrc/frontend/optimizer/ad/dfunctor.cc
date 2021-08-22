@@ -909,9 +909,9 @@ CNodePtr GetPrimalUser(const CNodePtr &j_user, const std::map<FuncGraphPtr, std:
   return primal_user;
 }
 
-static std::unordered_map<CNodePtr, std::vector<CNodePtr>> FindPrimalJPair(const FuncGraphManagerPtr &manager,
-                                                                           const FuncGraphPtr &primal_graph) {
-  std::vector<CNodePtr> j_users;
+static std::vector<std::pair<CNodePtr, CNodePtr>> FindPrimalJPair(const FuncGraphManagerPtr &manager,
+                                                                  const FuncGraphPtr &primal_graph) {
+  std::vector<std::pair<CNodePtr, CNodePtr>> primal_j_pair;
   std::map<FuncGraphPtr, std::vector<CNodePtr>> primal_map;
   const auto &node_user_map = manager->node_users();
   // Search primal graph user cnodes.
@@ -930,22 +930,20 @@ static std::unordered_map<CNodePtr, std::vector<CNodePtr>> FindPrimalJPair(const
       primal_map[fg] = {cnode};
     } else if (IsPrimitive(cnode->inputs().at(0), prim::kPrimJ)) {
       // To find J user.
-      j_users.emplace_back(GetJUser(node_user_map, cnode, index));
+      auto j_user = GetJUser(node_user_map, cnode, index);
+      (void)primal_j_pair.emplace_back(std::pair<CNodePtr, CNodePtr>(nullptr, j_user));
     }
   }
 
-  std::unordered_map<CNodePtr, std::vector<CNodePtr>> primal_user_to_j_users;
-  for (const auto &j_user : j_users) {
-    MS_EXCEPTION_IF_NULL(j_user);
+  for (auto &[primal_user, j_user] : primal_j_pair) {
     auto primal = GetPrimalUser(j_user, primal_map);
-    if (primal == nullptr) {
-      continue;
+    if (primal != nullptr) {
+      MS_LOG(DEBUG) << "Primal_J pair is found, where primal is: " << primal->DebugString()
+                    << " and J user is: " << j_user->DebugString();
+      primal_user = primal;
     }
-    MS_LOG(DEBUG) << "Primal_J pair is found, where primal is: " << primal->DebugString()
-                  << " and J user is: " << j_user->DebugString();
-    primal_user_to_j_users[primal].emplace_back(j_user);
   }
-  return primal_user_to_j_users;
+  return primal_j_pair;
 }
 
 static void RemovePrimalUpdateStates(const FuncGraphManagerPtr &manager, const CNodePtr &primal_call) {
@@ -1009,32 +1007,26 @@ void DFunctor::EliminatePrimalGraph() {
   // Find primal user and paired J user cnodes.
   auto manager = primal_graph_->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto primal_user_to_j_users = FindPrimalJPair(manager, primal_graph_);
-  for (const auto &iter : primal_user_to_j_users) {
-    auto primal_user = iter.first;
-    auto &j_users = iter.second;
-    MS_EXCEPTION_IF_NULL(primal_user);
-    if (j_users.size() == 1) {
-      // If both inputs are same except monads, we copy primal monad args to k graph
-      // so that they can be combined in CSE (common subexpression elimination) pass.
-      // Only do this when the size of j_users is 1 in order to keep the execution order.
-      const bool has_monad = CopyMonadArguments(primal_user, j_users[0]);
-      // Remove the UpdateState nodes after primal_user if need.
-      if (has_monad) {
-        RemovePrimalUpdateStates(manager, primal_user);
-      }
-    } else {
-      MS_LOG(INFO) << "There are multiple j users with the same primal user " << primal_user->DebugString();
+  auto prim_j_pair = FindPrimalJPair(manager, primal_graph_);
+  for (auto &[primal_user, j_user] : prim_j_pair) {
+    if (primal_user == nullptr || j_user == nullptr) {
+      // Skip if one of them not found.
+      return;
     }
 
     // Replace primal graph with k graph.
     auto k_vnode = NewValueNode(k_graph_);
     primal_user->set_input(0, k_vnode);
-    if (j_users.empty()) {
-      MS_LOG(EXCEPTION) << "The J nodes for primal graph " << primal_graph_->ToString()
-                        << " should be used by at least one other node.";
+    primal_user->set_abstract(j_user->abstract());
+
+    // If both inputs are same except monads, we copy primal monad args to k graph
+    // so that they can be combined in CSE (common subexpression elimination) pass.
+    const bool has_monad = CopyMonadArguments(primal_user, j_user);
+    // Remove the UpdateState nodes after primal_user if need.
+    if (has_monad) {
+      RemovePrimalUpdateStates(manager, primal_user);
     }
-    primal_user->set_abstract(j_users[0]->abstract());
+
     // Insert tuple_getitem after primal user cnode.
     auto construct_wrapper = primal_user->func_graph();
     auto tuple_getitem = NewValueNode(prim::kPrimTupleGetItem);

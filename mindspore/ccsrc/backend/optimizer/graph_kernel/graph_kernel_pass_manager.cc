@@ -15,6 +15,7 @@
  */
 #include "backend/optimizer/graph_kernel/graph_kernel_pass_manager.h"
 
+#include <string>
 #include <iomanip>
 
 #include "ir/anf.h"

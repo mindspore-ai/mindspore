@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDivFusion = "DivFusion";
-class MS_CORE_API DivFusion : public Div {
+class DivFusion : public Div {
  public:
   DivFusion() : Div(kNameDivFusion) {}
   ~DivFusion() = default;

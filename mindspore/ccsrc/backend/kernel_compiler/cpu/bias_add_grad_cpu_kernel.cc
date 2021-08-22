@@ -55,7 +55,7 @@ bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const s
     auto task = [&](size_t start, size_t end) {
       ReduceSumDim2Axis0(end - start, input_shape_[1], input_shape_[0], input_addr + start, output_addr + start);
     };
-    ParallelLaunchAutoSearch(task, input_shape_[1], this, &parallel_search_info_);
+    CPUKernelUtils::ParallelForAutoSearch(task, input_shape_[1], &parallel_search_info_);
   }
   return true;
 }

@@ -31,8 +31,7 @@ from .validators import check_prob, check_center_crop, check_five_crop, check_re
     check_normalize_py, check_normalizepad_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_ten_crop, check_num_channels, check_pad, check_rgb_to_hsv, check_hsv_to_rgb, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
-    check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast, check_rgb_to_bgr, \
-    check_adjust_gamma
+    check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast, check_rgb_to_bgr
 from .utils import Inter, Border
 from .py_transforms_util import is_pil
 
@@ -1376,6 +1375,7 @@ class RgbToBgr:
         return util.rgb_to_bgrs(rgb_imgs, self.is_hwc)
 
 
+
 class RgbToHsv:
     """
     Convert a NumPy RGB image or a batch of NumPy RGB images to HSV images.
@@ -1523,44 +1523,6 @@ class RandomSharpness:
         """
 
         return util.random_sharpness(img, self.degrees)
-
-
-class AdjustGamma:
-    """
-    Adjust gamma of the input PIL image.
-
-    Args:
-        gamma (float): Non negative real number, same as gamma in the equation.
-        gain (float, optional): The constant multiplier.
-
-    Examples:
-        >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>> transforms_list = Compose([py_vision.Decode(),
-        ...                            py_vision.AdjustGamma(),
-        ...                            py_vision.ToTensor()])
-        >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
-    """
-
-    @check_adjust_gamma
-    def __init__(self, gamma, gain=1.0):
-        self.gamma = gamma
-        self.gain = gain
-        self.random = False
-
-    def __call__(self, img):
-        """
-        Call method.
-
-        Args:
-            img (PIL image): Image to be augmented with AutoContrast.
-
-        Returns:
-            img (PIL image), Augmented image.
-        """
-
-        return util.adjust_gamma(img, self.gamma, self.gain)
 
 
 class AutoContrast:

@@ -60,8 +60,6 @@ class DenseGradAccumKernel : public AggregationKernel {
       MS_LOG(ERROR) << "The inputs number of DenseGradAccumKernel should be 2, but got " << inputs.size();
       return false;
     }
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[0], false);
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[1], false);
     MS_ERROR_IF_NULL_W_RET_VAL(inputs[0]->addr, false);
     MS_ERROR_IF_NULL_W_RET_VAL(inputs[1]->addr, false);
 

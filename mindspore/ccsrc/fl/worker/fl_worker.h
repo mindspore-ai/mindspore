@@ -35,16 +35,12 @@ using FBBuilder = flatbuffers::FlatBufferBuilder;
 // The step number for worker to judge whether to communicate with server.
 constexpr uint32_t kTrainBeginStepNum = 1;
 constexpr uint32_t kTrainEndStepNum = 0;
-constexpr uint32_t kOneStepPerIteration = 1;
 
 // The sleeping time of the worker thread before the networking is completed.
 constexpr uint32_t kWorkerSleepTimeForNetworking = 1000;
 
 // The time duration between retrying when server is in safemode.
 constexpr uint32_t kWorkerRetryDurationForSafeMode = 500;
-
-// The rank of the leader server.
-constexpr uint32_t kLeaderServerRank = 0;
 
 enum class IterationState {
   // This iteration is still in process.
@@ -71,9 +67,6 @@ class FLWorker {
   uint32_t worker_num() const;
   uint32_t rank_id() const;
   uint64_t worker_step_num_per_iteration() const;
-
-  // Check whether worker has exited.
-  bool running() const;
 
   // These methods set the worker's iteration state.
   void SetIterationRunning();
@@ -119,7 +112,7 @@ class FLWorker {
   void ProcessAfterScalingOut();
   void ProcessAfterScalingIn();
 
-  std::atomic_bool running_;
+  bool running_;
   uint32_t server_num_;
   uint32_t worker_num_;
   std::string scheduler_ip_;

@@ -27,8 +27,6 @@ namespace dataset {
 
 // this will become the RootNode:DatasetNode when it is turned on
 Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(root_ir);
-  RETURN_UNEXPECTED_IF_NULL(modified);
   uint8_t config = GlobalContext::config_manager()->get_auto_worker_config();
 
   OpWeightPass pass(kOpWeightConfigs[config < kOpWeightConfigs.size() ? config : 0]);
@@ -48,8 +46,6 @@ Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *con
   // get the maximum weight of all the ops, this value is used to ensure the ratio of num_workers between ops
   float max_weight = 0;
   for (const auto &p : pass.weight_profile_) max_weight = std::max(max_weight, p.second);
-
-  CHECK_FAIL_RETURN_UNEXPECTED(max_weight != 0, "Internal error, doesn't allow divide zero.");
   RETURN_IF_NOT_OK(pass.Run(root_ir, modified));
   constexpr size_t max_num_ops = 3;
   if (pass.parallel_ops_.size() > max_num_ops) {
@@ -57,7 +53,6 @@ Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *con
                     << "1 batch and 1 map. AutoNumWorker may not be optimal for usage on complex pipelines.";
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(pass.weight_sum_ != 0, "Internal error, doesn't allow divide zero.");
   for (auto &p : pass.parallel_ops_) {
     // get the num worker via the weight ratio
     int32_t num_workers = std::ceil((thread_cnt_ * p.second) / (pass.weight_sum_ * num_shards));

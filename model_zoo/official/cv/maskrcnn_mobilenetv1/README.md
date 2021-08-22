@@ -58,8 +58,8 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend/CPU）
-    - Prepare hardware environment with Ascend or CPU processor.
+- Hardware（Ascend）
+    - Prepare hardware environment with Ascend processor.
 - Framework
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below:
@@ -78,7 +78,7 @@ pip install mmcv=0.2.14
 
 1. Download the dataset COCO2017.
 
-2. Change the COCO_ROOT and other settings you need in `default_config.yaml`. The directory structure should look like the follows:
+2. Change the COCO_ROOT and other settings you need in `config.py`. The directory structure should look like the follows:
 
     ```
     .
@@ -90,31 +90,24 @@ pip install mmcv=0.2.14
       └─train2017
     ```
 
-    If you use your own dataset to train the network, **Select dataset to other when run script.**
+     If you use your own dataset to train the network, **Select dataset to other when run script.**
     Create a txt file to store dataset information organized in the way as shown as following:
 
     ```
     train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
     ```
 
-    Each row is an image annotation split by spaces. The first column is a relative path of image, followed by columns containing box and class information in the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), which can be set in `default_config.yaml`.
+    Each row is an image annotation split by spaces. The first column is a relative path of image, followed by columns containing box and class information in the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), which can be set in `config.py`.
 
 3. Execute train script.
     After dataset preparation, you can start training as follows:
 
-    ```bash
-    On Ascend:
-
+    ```
     # distributed training
     bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
 
     # standalone training
     bash run_standalone_train.sh [PRETRAINED_CKPT]
-
-    On CPU:
-
-    # standalone training
-    bash run_standalone_train_cpu.sh [PRETRAINED_PATH](optional)
     ```
 
     Note:
@@ -123,32 +116,27 @@ pip install mmcv=0.2.14
     3. For large models like maskrcnn_mobilenetv1, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
 
 4. Execute eval script.
+   After training, you can start evaluation as follows:
 
-    After training, you can start evaluation as follows:
+   ```bash
+   # Evaluation
+   bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+   ```
 
-    ```bash
-    # Evaluation on Ascend
-    bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
-
-    # Evaluation on CPU
-    bash run_eval_cpu.sh [ANN_FILE] [CHECKPOINT_PATH]
-    ```
-
-    Note:
-    1. VALIDATION_JSON_FILE is a label json file for evaluation.
+   Note:
+   1. VALIDATION_JSON_FILE is a label json file for evaluation.
 
 5. Execute inference script.
+   After training, you can start inference as follows:
 
-    After training, you can start inference as follows:
+   ```shell
+   # inference
+   bash run_infer_310.sh [MODEL_PATH] [DATA_PATH] [ANN_FILE_PATH]
+   ```
 
-    ```shell
-    # inference
-    bash run_infer_310.sh [MODEL_PATH] [DATA_PATH] [ANN_FILE_PATH]
-    ```
-
-    Note:
-    1. MODEL_PATH is a model file, exported by export script file.
-    2. ANN_FILE_PATH is a annotation file for inference.
+   Note:
+   1. MODEL_PATH is a model file, exported by export script file.
+   2. ANN_FILE_PATH is a annotation file for inference.
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
 
@@ -296,16 +284,14 @@ pip install mmcv=0.2.14
 
 ```shell
 .
-└─MaskRcnn_Mobilenetv1
+└─MaskRcnn
   ├─README.md                             # README
-  ├─ascend310_infer                       # application for 310 inference
+  ├─ascend310_infer                       #application for 310 inference
   ├─scripts                               # shell script
-    ├─run_standalone_train.sh             # training in standalone mode on Ascend(1pcs)
-    ├─run_standalone_train_cpu.sh         # training in standalone mode on CPU(1pcs)
-    ├─run_distribute_train.sh             # training in parallel mode on Ascend(8 pcs)
-    ├─run_infer_310.sh                    # shell script for 310 inference
-    ├─run_eval_cpu.sh                     # evaluation on CPU
-    └─run_eval.sh                         # evaluation on Ascend
+    ├─run_standalone_train.sh             # training in standalone mode(1pcs)
+    ├─run_distribute_train.sh             # training in parallel mode(8 pcs)
+    ├─run_infer_310.sh                    #shell script for 310 inference
+    └─run_eval.sh                         # evaluation
   ├─src
     ├─maskrcnn_mobilenetv1
       ├─__init__.py
@@ -320,18 +306,11 @@ pip install mmcv=0.2.14
       ├─mobilenetv1.py                    # backbone network
       ├─roi_align.py                      # roi align network
       └─rpn.py                            # reagion proposal network
-    ├─util.py                             # routine operation
-    ├─model_utils                         # network configuration
-      ├─__init__.py
-      ├─config.py                         # network configuration
-      ├─device_adapter.py                 # Get cloud ID
-      ├─local_adapter.py                  # Get local ID
-      ├─moxing_adapter.py                 # Parameter processing
+    ├─config.py                           # network configuration
     ├─dataset.py                          # dataset utils
     ├─lr_schedule.py                      # leanring rate geneatore
     ├─network_define.py                   # network define for maskrcnn_mobilenetv1
     └─util.py                             # routine operation
-  ├─default_config.yaml                   # default configuration settings
   ├─mindspore_hub_conf.py                 # mindspore hub interface
   ├─export.py                             #script to export AIR,MINDIR model
   ├─eval.py                               # evaluation scripts
@@ -344,18 +323,11 @@ pip install mmcv=0.2.14
 ### [Training Script Parameters](#contents)
 
 ```bash
-On Ascend:
-
 # distributed training
 Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 # standalone training
 Usage: bash run_standalone_train.sh [PRETRAINED_MODEL]
-
-On CPU:
-
-# standalone training
-Usage: bash run_standalone_train_cpu.sh [PRETRAINED_MODEL](optional)
 ```
 
 ### [Parameters Configuration](#contents)
@@ -502,27 +474,20 @@ Usage: bash run_standalone_train_cpu.sh [PRETRAINED_MODEL](optional)
 
 ## [Training Process](#contents)
 
-- Set options in `default_config.yaml`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/docs/programming_guide/en/master/dataset_sample.html) for more information about dataset.
+- Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/docs/programming_guide/en/master/dataset_sample.html) for more information about dataset.
 
 ### [Training](#content)
 
-- Run `run_standalone_train.sh` for non-distributed training of maskrcnn_mobilenetv1 model on Ascend.
+- Run `run_standalone_train.sh` for non-distributed training of maskrcnn_mobilenetv1 model.
 
 ```bash
 # standalone training
 bash run_standalone_train.sh [PRETRAINED_MODEL]
 ```
 
-- Run `run_standalone_train_cpu.sh` for non-distributed training of maskrcnn_mobilenetv1 model on CPU.
-
-```bash
-# standalone training
-bash run_standalone_train_cpu.sh [PRETRAINED_MODEL](optional)
-```
-
 ### [Distributed Training](#content)
 
-- Run `run_distribute_train.sh` for distributed training of Mask model on Ascend.
+- Run `run_distribute_train.sh` for distributed training of Mask model.
 
 ```bash
 bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
@@ -561,7 +526,7 @@ bash run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 ```
 
 > As for the COCO2017 dataset, VALIDATION_ANN_FILE_JSON is refer to the annotations/instances_val2017.json in the dataset directory.  
-> Checkpoint can be produced and saved in training process, whose folder name begins with "train/checkpoint" or "train_parallel*/checkpoint".
+> checkpoint can be produced and saved in training process, whose folder name begins with "train/checkpoint" or "train_parallel*/checkpoint".
 
 ### [Evaluation result](#content)
 

@@ -187,21 +187,29 @@ int MulInt8CPUKernel::Run() {
 
 int FastHWBroadcastMulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
-  mul->FastDoExecute(task_id);
+  auto ret = mul->FastDoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "FastHWBroadcastMulInt8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return lite::RET_OK;
 }
 
 int MulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
-  mul->DoExecute(task_id);
+  auto ret = mul->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "MulInt8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return lite::RET_OK;
 }
 
-void MulInt8CPUKernel::FastDoExecute(int task_id) {
+int MulInt8CPUKernel::FastDoExecute(int task_id) {
   int depth = out_tensors_.front()->Channel();
   int64_t real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
   if (real_dst_count <= 0) {
-    return;
+    return lite::RET_OK;
   }
   int8_t *cur_input0_data = input0_data_;
   int8_t *cur_input1_data = input1_data_ + task_id * count_unit_ * depth;
@@ -211,19 +219,20 @@ void MulInt8CPUKernel::FastDoExecute(int task_id) {
     cur_input1_data = input0_data_ + task_id * count_unit_ * depth;
   }
   FastMul(cur_input0_data, cur_input1_data, cur_output_data, depth, real_dst_count, input1_hw_broadcast_, quant_args_);
+  return RET_OK;
 }
 
-void MulInt8CPUKernel::DoExecute(int task_id) {
+int MulInt8CPUKernel::DoExecute(int task_id) {
   int64_t real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
   if (real_dst_count <= 0) {
-    return;
+    return lite::RET_OK;
   }
   int8_t *cur_input0_data = input0_data_ + task_id * count_unit_;
   int8_t *cur_input1_data = input1_data_ + task_id * count_unit_;
   int8_t *cur_output_data = output_data_ + task_id * count_unit_;
 
   Mul(cur_input0_data, cur_input1_data, cur_output_data, real_dst_count, quant_args_);
-  return;
+  return lite::RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_MulFusion, LiteKernelCreator<MulInt8CPUKernel>)

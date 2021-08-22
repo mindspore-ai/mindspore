@@ -81,7 +81,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   }
 
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
-  auto ret = rtSetDevice(static_cast<int32_t>(device_id));
+  auto ret = rtSetDevice(device_id);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
   }
@@ -111,7 +111,7 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     ms_context_ptr->DestroyTensorPrintThread();
 #endif
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto ret = rtDeviceReset(static_cast<int32_t>(device_id));
+    auto ret = rtDeviceReset(device_id);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
       return false;
@@ -362,8 +362,6 @@ struct DeviceTypeSetRegister {
 #endif
     });
   }
-  DeviceTypeSetRegister(DeviceTypeSetRegister &) = delete;
-  DeviceTypeSetRegister &operator=(const DeviceTypeSetRegister &) = delete;
   ~DeviceTypeSetRegister() = default;
 } device_type_set_regsiter;
 }  // namespace context

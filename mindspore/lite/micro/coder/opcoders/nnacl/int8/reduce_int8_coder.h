@@ -30,21 +30,7 @@ class ReduceInt8Coder final : public ReduceBaseCoder {
                   const Model::Node *node, size_t node_index, Target target)
       : ReduceBaseCoder(in_tensors, out_tensors, node, node_index, target) {}
 
-  ~ReduceInt8Coder() override {
-    begin_src_data_ = nullptr;
-    for (auto &arg : mean_multipliers_) {
-      delete arg;
-      arg = nullptr;
-    }
-    for (auto &arg : prod_multipliers_) {
-      delete arg;
-      arg = nullptr;
-    }
-    for (auto &arg : sum_square_multipliers_) {
-      delete arg;
-      arg = nullptr;
-    }
-  }
+  ~ReduceInt8Coder() override { begin_src_data_ = nullptr; }
 
   int Prepare(CoderContext *const context) override;
   int DoCode(CoderContext *const context) override;

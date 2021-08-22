@@ -40,16 +40,16 @@ int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, 
   if (inputs[2]->shape_size_ < 1 || inputs[2]->data_ == NULL) {
     return NNACL_ERR;
   }
-  size_t data_size = (size_t)inputs[2]->shape_[0];
-  if (data_size != 4) {
+  size_t shape_size = inputs[2]->shape_[0];
+  if (shape_size != 4) {
     return NNACL_ERR;
   }
   int shape[MAX_SHAPE_SIZE];
   const int nchw2nhwc[4] = {0, 2, 3, 1};
-  for (size_t i = 0; i < data_size; i++) {
+  for (int i = 0; i < shape_size; i++) {
     shape[i] = *((int *)(inputs[2]->data_) + nchw2nhwc[i]);
   }
-  SetShapeArray(out, shape, data_size);
+  SetShapeArray(out, shape, shape_size);
 
   return NNACL_OK;
 }
