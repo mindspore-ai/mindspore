@@ -35,6 +35,7 @@ class ConvTransformFusion : public PatternProcessPass {
   void CalNewWeightTensor(const CNodePtr &, const tensor::TensorPtr &, int, const float *) const;
   static void CalNewBiasTensor(float *, int, bool, const float *, const float *);
   void SetFmkType(FmkType type) { this->fmk_type_ = type; }
+  bool IsVariableWeightConv(const CNodePtr &conv_node) const;
 
  private:
   FmkType fmk_type_ = converter::kFmkTypeTf;
