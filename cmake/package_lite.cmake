@@ -353,6 +353,13 @@ elseif(WIN32)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${protobuf_LIBPATH}/libprotobuf.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        file(GLOB_RECURSE OPENCV_LIB_LIST
+                ${opencv_LIBPATH}/../bin/libopencv_core*
+                ${opencv_LIBPATH}/../bin/libopencv_imgcodecs*
+                ${opencv_LIBPATH}/../bin/libopencv_imgproc*
+                )
+        install(FILES ${OPENCV_LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+
         __install_micro_wrapper()
         __install_micro_codegen()
     endif()
@@ -493,6 +500,17 @@ else()
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+
+        install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.1
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_core.so.4.5
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.1
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgcodecs.so.4.5
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.1
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgproc.so.4.5
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+
         if(MSLITE_ENABLE_NNIE)
             install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
