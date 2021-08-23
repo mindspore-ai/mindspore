@@ -14,23 +14,24 @@
 # ============================================================================
 
 """train_criteo."""
-import os
-import json
 import argparse
+import json
+import os
 
 from mindspore import context, Tensor, ParameterTuple
-from mindspore.context import ParallelMode
 from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.context import ParallelMode
+from mindspore.nn import TrainOneStepCell
+from mindspore.nn.optim import Adam
+from mindspore.train import Model
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.nn.optim import Adam
-from mindspore.nn import TrainOneStepCell
-from mindspore.train import Model
 
-from src.deepspeech2 import DeepSpeechModel, NetWithLossClass
-from src.lr_generator import get_lr
 from src.config import train_config
 from src.dataset import create_dataset
+from src.deepspeech2 import DeepSpeechModel, NetWithLossClass
+from src.eval_callback import SaveCallback
+from src.lr_generator import get_lr
 
 parser = argparse.ArgumentParser(description='DeepSpeech2 training')
 parser.add_argument('--pre_trained_model_path', type=str, default='', help='Pretrained checkpoint path')
@@ -41,6 +42,7 @@ parser.add_argument('--device_target', type=str, default="GPU", choices=("GPU", 
 args = parser.parse_args()
 
 if __name__ == '__main__':
+
     rank_id = 0
     group_size = 1
     config = train_config
@@ -94,12 +96,18 @@ if __name__ == '__main__':
     callback_list = [TimeMonitor(steps_size), LossMonitor()]
 
     if args.is_distributed:
-        config.CheckpointConfig.ckpt_file_name_prefix = config.CheckpointConfig.ckpt_file_name_prefix + str(get_rank())
         config.CheckpointConfig.ckpt_path = os.path.join(config.CheckpointConfig.ckpt_path,
                                                          'ckpt_' + str(get_rank()) + '/')
-    config_ck = CheckpointConfig(save_checkpoint_steps=1,
-                                 keep_checkpoint_max=config.CheckpointConfig.keep_checkpoint_max)
-    ckpt_cb = ModelCheckpoint(prefix=config.CheckpointConfig.ckpt_file_name_prefix,
-                              directory=config.CheckpointConfig.ckpt_path, config=config_ck)
-    callback_list.append(ckpt_cb)
+        if rank_id == 0:
+
+            callback_update = SaveCallback(config.CheckpointConfig.ckpt_path)
+            callback_list += [callback_update]
+    else:
+        config_ck = CheckpointConfig(save_checkpoint_steps=5,
+                                     keep_checkpoint_max=config.CheckpointConfig.keep_checkpoint_max)
+        ckpt_cb = ModelCheckpoint(prefix=config.CheckpointConfig.ckpt_file_name_prefix,
+                                  directory=config.CheckpointConfig.ckpt_path, config=config_ck)
+
+        callback_list.append(ckpt_cb)
+    print(callback_list)
     model.train(config.TrainingConfig.epochs, ds_train, callbacks=callback_list, dataset_sink_mode=data_sink)

@@ -16,19 +16,22 @@
 Create train or eval dataset.
 """
 import math
+
 import numpy as np
 import mindspore.dataset.engine as de
 import librosa
 import soundfile as sf
 
-TRAIN_INPUT_PAD_LENGTH = 1501
+TRAIN_INPUT_PAD_LENGTH = 1250
 TRAIN_LABEL_PAD_LENGTH = 350
 TEST_INPUT_PAD_LENGTH = 3500
+
 
 class LoadAudioAndTranscript():
     """
     parse audio and transcript
     """
+
     def __init__(self,
                  audio_conf=None,
                  normalize=False,
@@ -89,12 +92,19 @@ class ASRDataset(LoadAudioAndTranscript):
             normalize: Apply standard mean and deviation Normalization to audio tensor
             batch_size (int): Dataset batch size (default=32)
         """
+
     def __init__(self, audio_conf=None,
                  manifest_filepath='',
                  labels=None,
                  normalize=False,
                  batch_size=32,
                  is_training=True):
+        # with open(manifest_filepath) as f:
+        #     json_file = json.load(f)
+        #
+        # self.root_path = json_file.get('root_path')
+        # wav_txts = json_file.get('samples')
+        # ids = [list(x.values()) for x in wav_txts]
         with open(manifest_filepath) as f:
             ids = f.readlines()
 
@@ -117,6 +127,7 @@ class ASRDataset(LoadAudioAndTranscript):
         batch_spect, batch_script, target_indices = [], [], []
         input_length = np.zeros(batch_size, np.float32)
         for data in batch_idx:
+            # audio_path, transcript_path = os.path.join(self.root_path, data[0]), os.path.join(self.root_path, data[1])
             audio_path, transcript_path = data[0], data[1]
             spect = self.parse_audio(audio_path)
             transcript = self.parse_transcript(transcript_path)
@@ -133,12 +144,20 @@ class ASRDataset(LoadAudioAndTranscript):
             targets = np.ones((self.batch_size, TRAIN_LABEL_PAD_LENGTH), dtype=np.int32) * self.blank_id
             for k, spect_, scripts_ in zip(range(batch_size), batch_spect, batch_script):
                 seq_length = np.shape(spect_)[1]
-                input_length[k] = seq_length
+
+                # input_length[k] = seq_length
                 script_length = len(scripts_)
                 targets[k, :script_length] = scripts_
                 for m in range(350):
                     target_indices.append([k, m])
-                inputs[k, 0, :, 0:seq_length] = spect_
+                if seq_length <= TRAIN_INPUT_PAD_LENGTH:
+                    input_length[k] = seq_length
+                    inputs[k, 0, :, 0:seq_length] = spect_[:, :seq_length]
+                else:
+                    maxstart = seq_length - TRAIN_INPUT_PAD_LENGTH
+                    start = np.random.randint(maxstart)
+                    input_length[k] = TRAIN_INPUT_PAD_LENGTH
+                    inputs[k, 0, :, 0:TRAIN_INPUT_PAD_LENGTH] = spect_[:, start:start + TRAIN_INPUT_PAD_LENGTH]
             targets = np.reshape(targets, (-1,))
         else:
             inputs = np.zeros((batch_size, 1, freq_size, TEST_INPUT_PAD_LENGTH), dtype=np.float32)
@@ -156,10 +175,12 @@ class ASRDataset(LoadAudioAndTranscript):
     def __len__(self):
         return self.size
 
+
 class DistributedSampler():
     """
     function to distribute and shuffle sample
     """
+
     def __init__(self, dataset, rank, group_size, shuffle=True, seed=0):
         self.dataset = dataset
         self.rank = rank
