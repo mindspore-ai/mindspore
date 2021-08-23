@@ -30,6 +30,7 @@
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "common/util/error_manager/error_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "utils/ms_context.h"
@@ -55,6 +56,7 @@ constexpr auto kSelectFormat = "SelectFormat";
 constexpr auto kFullySupported = "FULLY_SUPPORTED";
 constexpr auto kLevel = "level";
 constexpr auto kMessage = "message";
+constexpr auto kErrorCode = "errCode";
 constexpr auto kIndex = "index";
 constexpr auto kStatus = "status";
 constexpr auto kJobType = "job_type";
@@ -100,6 +102,27 @@ inline bool Order(const nlohmann::json &json1, const nlohmann::json &json2) {
   return json1[kIndex].dump() > json2[kIndex].dump();
 }
 
+void ReportToErrorManager(const string &message) {
+  nlohmann::json exception_message;
+  if (!ParseJson(message, &exception_message)) {
+    MS_LOG(EXCEPTION) << "Parse tbe exception message error.";
+  }
+  const auto &error_code = GetJsonValue<std::string>(exception_message, kErrorCode);
+  std::map<std::string, std::string> arg_map;
+  for (auto it = exception_message.begin(); it != exception_message.end(); it++) {
+    const std::string arg_key = it.key();
+    if (it.key() == kErrorCode) {
+      continue;
+    }
+    const auto &arg_value = GetJsonValue<std::string>(exception_message, arg_key);
+    arg_map[arg_key] = arg_value;
+  }
+  const auto report_ret = ErrorManager::GetInstance().ReportErrMessage(error_code, arg_map);
+  if (report_ret != 0) {
+    MS_LOG(WARNING) << "Report error message failed, raw error message: " << message;
+  }
+}
+
 void PrintInfo(const nlohmann::json &info, const std::string &job_name, const int job_id, int adjust_log_level) {
   auto level = GetJsonValue<int>(info, kLevel);
   level = level > adjust_log_level ? adjust_log_level : level;
@@ -112,6 +135,8 @@ void PrintInfo(const nlohmann::json &info, const std::string &job_name, const in
     MS_LOG(WARNING) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
   } else if (level == 3) {
     MS_LOG(ERROR) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
+  } else if (level == 4) {
+    ReportToErrorManager(message);
   }
 }
 
