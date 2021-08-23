@@ -24,6 +24,8 @@
 #include "mindspore/core/ir/anf.h"
 #include "hccl/hccl_types.h"
 #include "runtime/hccl_adapter/plugin/hccl_plugin.h"
+#include "runtime/device/ascend/distribute/ascend_collective.h"
+using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 
 namespace ge {
 class OpsKernelInfoStore;
@@ -82,6 +84,14 @@ class HcclAdapter {
   ~HcclAdapter() = default;
   void InitPlugin();
   void FinalizePlugin();
+
+  HcclComm GetHcomm(const std::string &group) const {
+    if (hccl_comm_ != nullptr) {
+      return hccl_comm_;
+    } else {
+      return HcclCollectiveGroup::instance().GetGroupComm(group);
+    }
+  }
 
   bool InitKernelInfoStore(uint32_t device_id, std::string_view rank_id, std::string_view rank_file);
   bool FinalizeKernelInfoStore();

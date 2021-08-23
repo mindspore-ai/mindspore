@@ -2073,6 +2073,24 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const A
   return device_shape;
 }
 
+void AnfRuntimeAlgorithm::GetAllVisitedCNode(const CNodePtr &anf_node, std::vector<AnfNodePtr> *used_kernels) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(used_kernels);
+  auto input_size = anf_node->inputs().size() - 1;
+  for (size_t i = 0; i < input_size; ++i) {
+    auto input = AnfAlgo::GetInputNode(anf_node, i);
+    if (!input->isa<CNode>()) {
+      continue;
+    }
+    auto input_cnode = input->cast<CNodePtr>();
+    if (!IsRealKernelCNode(input_cnode) || opt::IsNopNode(input_cnode)) {
+      GetAllVisitedCNode(input_cnode, used_kernels);
+    } else {
+      used_kernels->push_back(input);
+    }
+  }
+}
+
 void AnfRuntimeAlgorithm::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *result,
                                                std::set<AnfNodePtr> *visited) {
   MS_EXCEPTION_IF_NULL(anf_node);

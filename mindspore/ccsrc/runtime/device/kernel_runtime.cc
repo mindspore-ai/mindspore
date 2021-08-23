@@ -1008,6 +1008,32 @@ void KernelRuntime::DebugStreamSync(const CNodePtr &kernel) {
   }
 }
 
+bool KernelRuntime::LaunchKernel(const AnfNodePtr &kernel) {
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  AddressPtrList kernel_inputs;
+  AddressPtrList kernel_workspaces;
+  AddressPtrList kernel_outputs;
+  GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  bool ret;
+  if (AnfAlgo::IsCommunicationOp(kernel)) {
+    if (pynative_mode_profiling_flag_) {
+      ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
+                                              kernel_workspaces, kernel_outputs, communication_stream_);
+    } else {
+      ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, communication_stream_);
+    }
+  } else {
+    if (pynative_mode_profiling_flag_) {
+      ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
+                                              kernel_workspaces, kernel_outputs, stream_);
+    } else {
+      ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+    }
+  }
+  return ret;
+}
+
 bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
   const auto &kernels = graph.execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernel_list;
@@ -1042,8 +1068,6 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
     } else {
       auto &kernel = kernels[i];
       MS_EXCEPTION_IF_NULL(kernel);
-      auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-      MS_EXCEPTION_IF_NULL(kernel_mod);
 
       // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
       // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
@@ -1056,34 +1080,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
         }
         continue;
       }
-      AddressPtrList kernel_inputs;
-      AddressPtrList kernel_workspaces;
-      AddressPtrList kernel_outputs;
-      auto ms_context = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(ms_context);
-      if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
-        GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
-      } else {
-        kernel_inputs = kernel_mod->GetInputsAddr();
-        kernel_workspaces = kernel_mod->GetWorkSpacesAddr();
-        kernel_outputs = kernel_mod->GetOutputsAddr();
-      }
-      bool ret;
-      if (AnfAlgo::IsCommunicationOp(kernel)) {
-        if (pynative_mode_profiling_flag_) {
-          ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
-                                                  kernel_workspaces, kernel_outputs, communication_stream_);
-        } else {
-          ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, communication_stream_);
-        }
-      } else {
-        if (pynative_mode_profiling_flag_) {
-          ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
-                                                  kernel_workspaces, kernel_outputs, stream_);
-        } else {
-          ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
-        }
-      }
+      auto ret = LaunchKernel(kernel);
       if (!ret) {
         MS_LOG(ERROR) << "Launch kernel failed.";
         return false;
@@ -1096,7 +1093,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
   return true;
 }
 
-bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph) {
+bool KernelRuntime::LaunchKernels(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   if (!LaunchKernelMod(*graph)) {
     MS_LOG(ERROR) << "LaunchKernelMod failed!";

@@ -43,6 +43,9 @@ class AscendKernelRuntime : public KernelRuntime {
   uint32_t GetRankSize() override;
   bool LoadData(session::KernelGraph *graph) override;
   bool GenTask(const session::KernelGraph *graph);
+  void GenKernelEvents(const session::KernelGraph *graph) override;
+  void SetKernelModStream(const std::vector<CNodePtr> &kernels);
+  bool LaunchKernel(const AnfNodePtr &kernel) override;
   bool GenDynamicKernel(const session::KernelGraph *graph) override;
   bool RunDynamicKernelAsync(const session::KernelGraph *graph) override;
   bool LoadTask(const session::KernelGraph *graph);
@@ -104,6 +107,8 @@ class AscendKernelRuntime : public KernelRuntime {
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
   static std::map<std::string, uint32_t> overflow_tasks_;
   static std::vector<rtExceptionInfo> task_fail_infoes_;
+  std::map<uint32_t, void *> stream_id_map_;
+  std::map<std::string, uint32_t> group_stream_id_map_;
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);
