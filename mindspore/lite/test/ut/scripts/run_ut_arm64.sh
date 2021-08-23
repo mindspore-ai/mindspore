@@ -26,12 +26,12 @@ mkdir -p ${ut_test_path}
 
 run_ut_result_file=${basepath}/run_gpu_ut_result.txt
 echo ' ' > ${run_ut_result_file}
-run_gpu_ut_log_file=${basepath}/run_gpu_ut_log.txt
-echo 'run gpu ut logs: ' > ${run_gpu_ut_log_file}
+run_arm64_ut_log_file=${basepath}/run_gpu_ut_log.txt
+echo 'run arm64 ut logs: ' > ${run_arm64_ut_log_file}
 
-ut_gpu_config=${test_dir}/config/ut_gpu.cfg
+ut_arm64_config=${test_dir}/config/ut_arm64.cfg
 
-function Run_gpu_ut() {
+function Run_arm64_ut() {
     cp -a ${test_dir}/build/lite-test ${ut_test_path}/lite-test || exit 1
     cp -a ${test_dir}/build/*.so ${ut_test_path}/
     cp -r ${test_dir}/ut/src/runtime/kernel/opencl/test_data ${ut_test_path} || exit 1
@@ -50,24 +50,24 @@ function Run_gpu_ut() {
     # Run npu converted models:
     while read line; do
         echo 'cd  /data/local/tmp/ut_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/ut_test;./lite-test --gtest_filter='${line} >> "${run_gpu_ut_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/ut_test;./lite-test --gtest_filter='${line} >> "${run_arm64_ut_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/ut_test;./lite-test --gtest_filter='${line} >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_ut_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_ut_log_file}"
         if [ $? = 0 ]; then
-            run_result='arm64_gpu_ut: '${line}' pass'; echo ${run_result} >> ${run_ut_result_file}
+            run_result='arm64_ut: '${line}' pass'; echo ${run_result} >> ${run_ut_result_file}
         else
-            run_result='arm64_gpu_ut: '${line}' failed'; echo ${run_result} >> ${run_ut_result_file}; return 1
+            run_result='arm64_ut: '${line}' failed'; echo ${run_result} >> ${run_ut_result_file}; return 1
         fi
-    done < ${ut_gpu_config}
+    done < ${ut_arm64_config}
 }
 
-Run_gpu_ut
-Run_gpu_ut_status=$?
+Run_arm64_ut
+Run_arm64_ut_status=$?
 
 cat ${run_ut_result_file}
-if [[ $Run_gpu_ut_status == 1 ]]; then
+if [[ ${Run_arm64_ut_status} != 0 ]]; then
     cat adb_push_log.txt
-    cat ${run_gpu_ut_log_file}
+    cat ${run_arm64_ut_log_file}
     exit 1
 fi
 exit 0

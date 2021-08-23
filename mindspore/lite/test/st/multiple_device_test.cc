@@ -325,13 +325,8 @@ TEST_F(MultipleDeviceTest, OldApi2) {
     mindspore::session::LiteSession::CreateSession(content, size, context.get());
   ASSERT_NE(session, nullptr);
 
-  if (reinterpret_cast<mindspore::lite::LiteSession *>(session)->get_delegate() != nullptr) {
-    /* NPU > CPU */
-    CheckResult(reinterpret_cast<mindspore::lite::LiteSession *>(session)->get_kernels(), MultyDeviceMode1::NPU_CPU);
-  } else {
-    /* NPU not supported */
-    CheckResult(reinterpret_cast<mindspore::lite::LiteSession *>(session)->get_kernels(), MultyDeviceMode1::CPU);
-  }
+  /* NPU > CPU */
+  CheckResult(reinterpret_cast<mindspore::lite::LiteSession *>(session)->get_kernels(), MultyDeviceMode1::NPU_CPU);
 }
 
 TEST_F(MultipleDeviceTest, NewApi1) {
