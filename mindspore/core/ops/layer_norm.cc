@@ -111,7 +111,7 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
     (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
   } else {
     auto mean_var_shape_min = CalLayerNormMeanAndVarShape(begin_norm_axis, input_min_shape);
-    auto mean_var_shape_max = CalLayerNormMeanAndVarShape(begin_norm_axis, input_min_shape);
+    auto mean_var_shape_max = CalLayerNormMeanAndVarShape(begin_norm_axis, input_max_shape);
     (void)shapes_list.emplace_back(
       std::make_shared<abstract::Shape>(mean_var_shape, mean_var_shape_min, mean_var_shape_max));
     (void)shapes_list.emplace_back(

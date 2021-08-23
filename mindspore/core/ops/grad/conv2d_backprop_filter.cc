@@ -24,16 +24,16 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t DOUT_INDEX = 0;
-constexpr size_t X_INDEX = 1;
-constexpr size_t FILTERSIZE_INDEX = 2;
-constexpr size_t STRIDE_2D_SIZE = 2;
-constexpr size_t STRIDE_4D_SIZE = 4;
+constexpr size_t kDoutIndex = 0;
+constexpr size_t kInputIndex = 1;
+constexpr size_t kFilterSizeIdex = 2;
+constexpr size_t kStride2dSize = 2;
+constexpr size_t kStride4dSize = 4;
 
 void TransStrideTo4D(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, X_INDEX);
-  auto dout_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, DOUT_INDEX);
+  auto x_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex);
+  auto dout_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kDoutIndex);
 
   if (!x_shape->IsDynamic() && !dout_shape->IsDynamic()) {
     return;
@@ -41,7 +41,7 @@ void TransStrideTo4D(const PrimitivePtr &primitive, const std::vector<AbstractBa
   auto stride = primitive->GetAttr(kStride);
   MS_EXCEPTION_IF_NULL(stride);
   auto stride_value = GetValue<std::vector<int64_t>>(stride);
-  if (stride_value.size() == STRIDE_2D_SIZE) {
+  if (stride_value.size() == kStride2dSize) {
     std::vector<int64_t> stride_value_4d(stride_value);
     stride_value_4d.insert(stride_value_4d.begin(), 1);
     stride_value_4d.insert(stride_value_4d.begin(), 1);
@@ -57,7 +57,7 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
   abstract::ShapePtr ret_shape;
   TransStrideTo4D(primitive, input_args);
 
-  auto filter_size = input_args[FILTERSIZE_INDEX];
+  auto filter_size = input_args[kFilterSizeIdex];
   auto filter_size_v = filter_size->BuildValue();
   MS_EXCEPTION_IF_NULL(filter_size_v);
 
@@ -66,7 +66,7 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
       out_shape = CheckAndConvertUtils::CheckTensorIntValue("filter size", filter_size_v, prim_name);
       ret_shape = std::make_shared<abstract::Shape>(out_shape);
     } else {
-      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, FILTERSIZE_INDEX);
+      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kFilterSizeIdex);
       MS_EXCEPTION_IF_NULL(shape_ptr);
       auto shape_shape = shape_ptr->shape();
       if (shape_shape.size() != 1) {
@@ -114,8 +114,8 @@ TypePtr Conv2DBackpropFilterInferType(const PrimitivePtr &prim, const std::vecto
   auto prim_name = prim->name();
   // check
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[X_INDEX]->BuildType());
-  (void)types.emplace("doutput", input_args[DOUT_INDEX]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex]->BuildType());
+  (void)types.emplace("doutput", input_args[kDoutIndex]->BuildType());
   std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }
@@ -130,7 +130,7 @@ void Conv2DBackpropFilter::Init(const int64_t out_channel, const std::vector<int
   set_pad_mode(pad_mode);
   set_pad_list(pad_list);
   set_mode(mode);
-  if (stride.size() == STRIDE_4D_SIZE) {
+  if (stride.size() == kStride4dSize) {
     set_stride({stride[2], stride[3]});
   } else {
     set_stride(stride);

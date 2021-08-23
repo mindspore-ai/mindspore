@@ -28,13 +28,11 @@ namespace {
 abstract::TupleShapePtr LayerNormBetaGammaBackpropInferShape(const PrimitivePtr &primitive,
                                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto beta_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(primitive->name(), input_args, 2);
   ValuePtr gamma_value_ptr = primitive->GetAttr("shape_gamma");
   MS_EXCEPTION_IF_NULL(gamma_value_ptr);
   auto gamma_shape = GetValue<ShapeVector>(gamma_value_ptr);
-  auto gamma_shape_ptr =
-    std::make_shared<abstract::Shape>(gamma_shape, beta_shape_ptr->min_shape(), beta_shape_ptr->max_shape());
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{gamma_shape_ptr, beta_shape_ptr});
+  auto gamma_shape_ptr = std::make_shared<abstract::Shape>(gamma_shape);
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{gamma_shape_ptr, gamma_shape_ptr});
 }
 
 TypePtr LayerNormBetaGammaBackpropInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -47,7 +45,8 @@ TypePtr LayerNormBetaGammaBackpropInferType(const PrimitivePtr &prim, const std:
   const int64_t gamma_index = 2;
   (void)types.emplace("beta", input_args[beta_index]->BuildType());
   (void)types.emplace("gamma", input_args[gamma_index]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+  auto output_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+  return std::make_shared<Tuple>(std::vector<TypePtr>{output_type, output_type});
 }
 }  // namespace
 

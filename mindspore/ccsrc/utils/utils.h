@@ -669,7 +669,7 @@ const std::set<std::string> kNoPaddingFormatSet = {kOpFormat_ChannelLast, kOpFor
                                                    kOpFormat_ND_RNN_BIAS};
 
 const std::set<std::string> DynamicShapeConstInputToAttr = {
-  kCastOpName,       kExpandDimsOpName, kReshapeOpName,   kEmbeddingLookupOpName, kTransposeOpName, kReduceMinOpName,
+  kCastOpName,       kExpandDimsOpName, kReshapeOpName,   kEmbeddingLookupOpName, kReduceMinOpName,
   kReduceMeanOpName, kReduceMaxOpName,  kReduceAllOpName, kReduceAnyOpName,       kConcatOpName};
 
 const std::set<std::string> DynamicShapeConstInputToAttrGPU = {

@@ -40,6 +40,9 @@
 namespace mindspore {
 namespace abstract {
 std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
+  const auto kOneHot = prim::kPrimOneHot->name();
+  const auto kDropoutGenMask = prim::kPrimDropoutGenMask->name();
+  const auto kTranspose = prim::kPrimTranspose->name();
   const auto kReduceSum = prim::kPrimReduceSum->name();
   const auto kUnsortedSegmentSum = prim::kPrimUnsortedSegmentSum->name();
   const auto kUnsortedSegmentMin = prim::kPrimUnsortedSegmentMin->name();
@@ -50,16 +53,25 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   const auto kRange = prim::kPrimRange->name();
   const auto kConv2DBackpropFilter = prim::kPrimConv2DBackpropFilter->name();
   const auto kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
-  static std::map<std::string, std::vector<int64_t>> dynamic_shape_depends = {
-    {kUnsortedSegmentSum, {2}}, {kUnsortedSegmentMin, {2}}, {kUnsortedSegmentMax, {2}}, {kGather, {2}},
-    {kGatherV2, {2}},           {kDynamicShape, {0}},       {kRange, {0, 1, 2}},        {kConv2DBackpropFilter, {2}},
-    {kConv2DBackpropInput, {2}}};
+  // common dynamic shape depends
+  static std::map<std::string, std::vector<int64_t>> dynamic_shape_depends = {{kUnsortedSegmentSum, {2}},
+                                                                              {kUnsortedSegmentMin, {2}},
+                                                                              {kUnsortedSegmentMax, {2}},
+                                                                              {kGather, {2}},
+                                                                              {kGatherV2, {2}},
+                                                                              {kDynamicShape, {0}},
+                                                                              {kRange, {0, 1, 2}},
+                                                                              {kConv2DBackpropFilter, {2}},
+                                                                              {kConv2DBackpropInput, {2}},
+                                                                              {kOneHot, {1, 3}},
+                                                                              {kDropoutGenMask, {0}}};
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (device == kAscendDevice) {
     dynamic_shape_depends.insert({kReduceSum, {1}});
+    dynamic_shape_depends.insert({kTranspose, {1}});
   }
 
   MS_EXCEPTION_IF_NULL(cnode);

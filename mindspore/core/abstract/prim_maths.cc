@@ -18,6 +18,7 @@
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
 #include "utils/ms_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -278,7 +279,8 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
                                 const AbstractBasePtrList &args_spec_list) {
   constexpr auto kMatMulInputNum = 2;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kMatMulInputNum);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(args_spec_list.size()), kGreaterEqual,
+                                           kMatMulInputNum, op_name);
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
@@ -328,6 +330,14 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   TypePtr x_type = x->element()->GetTypeTrack();
   if (x_type->type_id() == TypeId::kNumberTypeInt8) {
     x_type = kInt32;
+  }
+  if (primitive->HasAttr("cast_type")) {
+    auto out_type = primitive->GetAttr("cast_type");
+    MS_EXCEPTION_IF_NULL(out_type);
+    if (!out_type->isa<Type>()) {
+      MS_EXCEPTION(ValueError) << "MatMul cast_type must be a `Type`";
+    }
+    x_type = out_type->cast<TypePtr>();
   }
   return std::make_shared<AbstractTensor>(x_type, std::make_shared<Shape>(ret_shape, ret_min_shape, ret_max_shape));
 }
@@ -400,6 +410,14 @@ AbstractBasePtr InferImplBatchMatMul(const AnalysisEnginePtr &, const PrimitiveP
   TypePtr x_type = x->element()->GetTypeTrack();
   if (x_type->type_id() == TypeId::kNumberTypeInt8) {
     x_type = kInt32;
+  }
+  if (primitive->HasAttr("cast_type")) {
+    auto out_type = primitive->GetAttr("cast_type");
+    MS_EXCEPTION_IF_NULL(out_type);
+    if (!out_type->isa<Type>()) {
+      MS_EXCEPTION(ValueError) << "MatMul cast_type must be a `Type`";
+    }
+    x_type = out_type->cast<TypePtr>();
   }
   return std::make_shared<AbstractTensor>(x_type, std::make_shared<Shape>(ret_shape, ret_min_shape, ret_max_shape));
 }

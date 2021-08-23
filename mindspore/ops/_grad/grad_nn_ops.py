@@ -55,12 +55,20 @@ def get_bprop_conv2d(self):
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     get_shape = P.Shape()
+    get_dyn_shape = P.DynamicShape()
 
     def bprop(x, w, out, dout):
-        dx = input_grad(dout, w, get_shape(x))
+        x_shape = get_shape(x)
+        w_shape = get_shape(w)
+        if -1 in x_shape:
+            x_shape = get_dyn_shape(x)
+        if -1 in w_shape:
+            w_shape = get_dyn_shape(w)
+        dx = input_grad(dout, w, x_shape)
+
         if env_force_bprop_seq == '1':
             x = F.depend(x, dx)
-        dw = filter_grad(dout, x, get_shape(w))
+        dw = filter_grad(dout, x, w_shape)
         return dx, dw
 
     return bprop
@@ -1078,12 +1086,17 @@ def get_bprop_conv2d_backprop_input(self):
         out_channel, self.kernel_size, pad_mode=self.pad_mode.lower(), pad=self.pad,
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
+    get_shape = P.Shape()
+    get_dyn_shape = P.DynamicShape()
 
     def bprop(x, w, f_sizes, out, dout):
+        w_shape = get_shape(w)
+        if -1 in w_shape:
+            w_shape = get_dyn_shape(w)
         dx = input_grad(dout, w)
         if env_force_bprop_seq == '1':
             x = F.depend(x, dx)
-        dw = filter_grad(x, dout, F.shape(w))
+        dw = filter_grad(x, dout, w_shape)
         return dx, dw, zeros_like(f_sizes)
 
     return bprop
