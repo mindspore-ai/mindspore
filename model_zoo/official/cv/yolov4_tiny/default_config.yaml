@@ -14,6 +14,10 @@ modelarts_dataset_unzip_name: "coco"
 
 # ==============================================================================
 # Train options
+train_img_dir: ""
+train_json_file: ""
+val_img_dir: ""
+val_json_file: ""
 data_dir: ""
 per_batch_size: 8
 pretrained_backbone: ""
@@ -124,6 +128,10 @@ checkpoint_filter_list: ['feature_map.yolo_tiny_head1.conv2.weight', 'feature_ma
 
 # Help description for each configuration
 # Train options
+train_img_dir: "Train image folder"
+train_json_file: "Train json filename"
+val_img_dir: "Validate image folder"
+val_json_file: "Validate json filename"
 data_dir: "Train dataset directory."
 per_batch_size: "Batch size for Training."
 pretrained_backbone: "The ckpt file of CspDarkNet53."

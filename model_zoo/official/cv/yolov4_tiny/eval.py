@@ -28,8 +28,8 @@ from src.eval_utils import apply_eval
 
 from model_utils.config import config
 
-config.data_root = os.path.join(config.data_dir, 'val2017')
-config.ann_val_file = os.path.join(config.data_dir, 'annotations/instances_val2017.json')
+config.data_root = os.path.join(config.data_dir, config.val_img_dir)
+config.ann_val_file = os.path.join(config.data_dir, config.val_json_file)
 
 
 def run_eval():
