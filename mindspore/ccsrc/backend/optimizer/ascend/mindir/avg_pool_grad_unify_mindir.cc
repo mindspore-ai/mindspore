@@ -62,7 +62,7 @@ int64_t windowed_output_size(int64_t input_size, int64_t ksize, int64_t stride, 
     *pad_before = pad_need / 2;
     *pad_after = pad_need - *pad_before;
   } else {
-    MS_LOG(EXCEPTION) << "The pad mode of AvgPoolGrad should be SAME or VALID.";
+    MS_LOG(EXCEPTION) << "The pad mode of AvgPoolGrad should be SAME or VALID, but got PAD";
   }
   return output;
 }
@@ -104,7 +104,8 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const std
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (x_shape.size() != kShapeDimNum || k_size.size() != kShapeDimNum || stride.size() != kShapeDimNum) {
-    MS_LOG(EXCEPTION) << "The dim of x_shape or kernel_size or strides of AvgPoolGrad should be 4.";
+    MS_LOG(EXCEPTION) << "The dim of x_shape, kernel_size and strides of AvgPoolGrad should be 4, but got x_shape:"
+                      << x_shape << ", kernel_size:" << k_size << ", strides:" << stride;
   }
   int64_t pad_top, pad_bottom, pad_left, pad_right;
   int64_t h_output =
@@ -158,7 +159,8 @@ ValueNodePtr CreateKernelMatrixValueNode(const FuncGraphPtr &func_graph, const s
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (x_shape.size() != kShapeDimNum || k_size.size() != kShapeDimNum) {
-    MS_LOG(EXCEPTION) << "The dim of x_shape or kernel_size of AvgPoolGrad should be 4.";
+    MS_LOG(EXCEPTION) << "The dim of x_shape and kernel_size of AvgPoolGrad should be 4, but got x_shape:" << x_shape
+                      << ", kernel_size:" << k_size;
   }
   std::vector<int64_t> kernel_shape = {1, x_shape[kDim1], k_size[kDim2], k_size[kDim3]};
   auto data_size = std::accumulate(kernel_shape.begin(), kernel_shape.end(), int64_t(1), std::multiplies<int64_t>());

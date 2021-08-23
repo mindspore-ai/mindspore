@@ -319,7 +319,8 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
   std::vector<AnfNodePtr> fusion_node_outputs;
   CreateMultipleOutputsOfAnfNode(graph, fusion_node, kAdamApplyOneWithDecayOutputNum, &fusion_node_outputs);
   if (fusion_node_outputs.size() != kAdamApplyOneWithDecayOutputNum) {
-    MS_LOG(ERROR) << "create multiple outputs for fusion node fail!";
+    MS_LOG(ERROR) << "Create multiple outputs for fusion node failed, should have " << kAdamApplyOneWithDecayOutputNum
+                  << " outputs, but got " << fusion_node_outputs.size() << " outputs.";
     return nullptr;
   }
 
