@@ -32,6 +32,13 @@ then
 exit 1
 fi
 
+get_real_path(){
+    if [ "${1:0:1}" == "/" ]; then
+        echo "$1"
+    else
+        echo "$(realpath -m $PWD/$1)"
+    fi
+}
 
 dataset_type='cifar10'
 if [ $# == 3 ]
@@ -43,6 +50,8 @@ then
     fi
     dataset_type=$3
 fi
+config_path=$(get_real_path "./${dataset_type}_config.yaml")
+echo "config path is : ${config_path}"
 
 export DEVICE_NUM=8
 export RANK_SIZE=8
@@ -62,15 +71,18 @@ do
     end=`expr $start \+ $gap`
     cmdopt=$start"-"$end
 
-    export DEVICE_ID=`expr $i \+ $start_idx`
+    device_id=`expr $i \+ $start_idx`
+    export DEVICE_ID=$device_id
     export RANK_ID=$i
     rm -rf ./train_parallel$DEVICE_ID
     mkdir ./train_parallel$DEVICE_ID
     cp $src_dir/*.py ./train_parallel$DEVICE_ID
+    cp $src_dir/*.yaml ./train_parallel$DEVICE_ID
     cp -r $src_dir/src ./train_parallel$DEVICE_ID
+    cp -r $src_dir/model_utils ./train_parallel$DEVICE_ID
     cd ./train_parallel$DEVICE_ID || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID, $dataset_type"
     env > env.log
-    taskset -c $cmdopt python train.py --data_path=$2 --device_target="Ascend" --device_id=$DEVICE_ID --is_distributed=1 --dataset=$dataset_type &> log &
+    taskset -c $cmdopt python train.py --config_path=$config_path --data_dir=$2 --device_target="Ascend" --is_distributed=1 --dataset=$dataset_type &> log &
     cd ..
 done
