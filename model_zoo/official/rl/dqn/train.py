@@ -88,7 +88,7 @@ if __name__ == "__main__":
             agent.store_transition(s, a, r, s_)
             ep_r += r
             if agent.memory_counter > cfg.memory_capacity:
-                agent.learn()
+                _ = agent.learn()
                 if done_:
                     print("episode", episode, "total_reward", round(ep_r, 2))
                     rewards.append(round(ep_r, 2))
