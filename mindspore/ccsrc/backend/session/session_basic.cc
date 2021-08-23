@@ -53,6 +53,7 @@
 #include "abstract/abstract_value.h"
 #endif
 #include "backend/session/session_factory.h"
+#include "backend/session/pynative_task_manager.h"
 
 namespace mindspore {
 namespace session {
@@ -1576,21 +1577,22 @@ void SessionBasic::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &para
 }
 
 void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
-                                 const std::vector<tensor::TensorPtr> &input_tensors) const {
+                                 const std::vector<tensor::TensorPtr> &input_tensors,
+                                 std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
-  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
+  MS_EXCEPTION_IF_NULL(tensor_to_node);
   KernelMapTensor node_to_tensor;
   auto anf_outputs = kernel_graph->outputs();
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
     MS_LOG(DEBUG) << "Update output[" << item->DebugString() << "]";
-    outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, &tensor_to_node, &node_to_tensor));
+    outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, tensor_to_node, &node_to_tensor));
   }
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  for (auto &item : tensor_to_node) {
+  for (auto &item : *tensor_to_node) {
     auto &tensor = item.first;
     auto &node = item.second.first;
     auto &output_index = item.second.second;
@@ -2223,6 +2225,8 @@ void SessionBasic::RunGraphImpl(const GraphId &graph_id, const std::vector<tenso
 
 void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                      VectorRef *outputs) {
+  MS_LOG(INFO) << "Clean task in Queue";
+  session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   MS_LOG(INFO) << "Start!";
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -2257,8 +2261,8 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     VectorRef op_outputs;
     PynativeProfiler::SetBackwardRunOpImplOpName(kernel->fullname_with_scope());
     PynativeProfiler::SetBackwardTimePoint("BackwardRunOpImpl", "Start");
-    RunOpImpl(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
-              input_tensor_info.input_tensors_mask);
+    RunOpImplOrigin(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
+                    input_tensor_info.input_tensors_mask);
     PynativeProfiler::SetBackwardTimePoint("BackwardRunOpImpl", "End");
     graph_output_info.graph_output_tensors.clear();
     // Handle inputs and outputs of current op
@@ -2273,7 +2277,7 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
 }
 
 void SessionBasic::EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask,
-                                        std::vector<tensor::TensorPtr> *input_tensors) {
+                                        std::vector<tensor::TensorPtr> *input_tensors) const {
   MS_EXCEPTION_IF_NULL(input_tensors);
   if (input_tensors->size() != tensors_mask.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size() << " should be equal to tensors mask size "
@@ -2331,7 +2335,7 @@ void SessionBasic::RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) const 
   }
 }
 
-void SessionBasic::RunOpHideNopNode(const KernelGraphPtr &kernel_graph) const {
+void SessionBasic::RunOpHideNopNode(const KernelGraphPtr &kernel_graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {

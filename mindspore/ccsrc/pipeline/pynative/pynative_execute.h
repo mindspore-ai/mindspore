@@ -377,6 +377,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void ClearRes();
   // Sync stream
   void Sync();
+  void ExecuteAllTask();
 
  private:
   PynativeExecutor() = default;

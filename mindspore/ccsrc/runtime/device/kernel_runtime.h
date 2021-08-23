@@ -55,8 +55,10 @@ class KernelRuntime {
   virtual uint32_t GetRankId() { MS_LOG(EXCEPTION) << "Not Implement"; }
   virtual uint32_t GetRankSize() { MS_LOG(EXCEPTION) << "Not Implement"; }
   virtual void AssignMemory(session::KernelGraph *graph);
-  void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, session::KernelGraph *graph);
+  void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, session::KernelGraph *graph,
+                         const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node = {});
   void RunOpClearMemory(const session::KernelGraph *graph) const;
+  void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors);
   static bool DumpDataEnabled();
   static bool DumpDataEnabledIteration();
   virtual bool LoadData(session::KernelGraph *graph);
@@ -105,6 +107,7 @@ class KernelRuntime {
   virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
+  void UpdateRefNodeOutputMem(const session::KernelGraph *graph);
 
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -118,8 +121,6 @@ class KernelRuntime {
   void AssignDynamicMemory(session::KernelGraph *graph);
   void AssignNodeOutputMem(MemType type, const AnfNodePtr &node, int index);
   void AssignWorkSpaceMem(MemType type, const AnfNodePtr &node);
-
-  void UpdateRefNodeOutputMem(const session::KernelGraph *graph);
 
   void AssignCommunicationNodeOutputMem(MemType type, const AnfNodePtr &node);
   void AssignCommunicationNodeInputMem(MemType type, const AnfNodePtr &node);
@@ -138,7 +139,8 @@ class KernelRuntime {
   void DebugStreamSync(const CNodePtr &kernel);
   static void GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs);
   void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph *graph);
-  void RunOpAssignOutputMemory(const AnfNodePtr &kernel);
+  void RunOpAssignOutputMemory(const AnfNodePtr &kernel,
+                               const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node = {});
   void RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel);
   void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, session::KernelGraph *graph);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);

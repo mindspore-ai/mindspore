@@ -309,7 +309,7 @@ def test_tesnsor_augassign_by_number():
         input_tensor_1d[number_index_1] *= value_tuple_mul_ele
     with pytest.raises(ValueError):
         input_tensor_3d[number_index_1] *= value_tuple_much_ele
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         input_tensor_1d[number_index_1] /= value_tuple_empty
 
     with pytest.raises(ValueError):

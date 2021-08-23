@@ -589,7 +589,7 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data.dim()
                                  2
                              )mydelimiter")
-                           .def("assign_value", &Tensor::AssignValue, R"mydelimiter(
+                           .def("assign_value_cpp", &Tensor::AssignValue, R"mydelimiter(
                              Assign another tensor value to this.
 
                              Arg:

@@ -30,6 +30,7 @@
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/session_factory.h"
+#include "backend/session/pynative_task_manager.h"
 
 namespace mindspore {
 namespace session {
@@ -44,6 +45,8 @@ class AscendSession : public SessionBasic {
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
   void SyncStream() override;
 
+  static void BatchBuildKernel(const std::vector<std::shared_ptr<SessionTask>> &build_tasks);
+
  protected:
   void UnifyMindIR(const KernelGraphPtr &graph) override;
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
@@ -57,9 +60,16 @@ class AscendSession : public SessionBasic {
                         VectorRef *const outputs) override;
   void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) override;
   void BuildGraphImpl(GraphId) override;
+
   KernelGraphPtr BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                              const std::vector<tensor::TensorPtr> &input_tensors,
                              const std::vector<int64_t> &tensors_mask) override;
+
+  void BindAddressToTensor(const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) const;
+  void RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+                       std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                       const std::vector<int64_t> &tensors_mask) override;
+
   void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info, std::vector<tensor::TensorPtr> *input_tensors,
                  VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
   void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
@@ -68,6 +78,7 @@ class AscendSession : public SessionBasic {
   std::string GetCommWorldGroup() override { return kHcclWorldGroup; }
   void ReportWarningMessage() override;
   void ReportErrorMessage() override;
+  void ExecuteAllTaskInQueue() override;
 
  private:
   // compile child graph when session have multiple child graphs
@@ -82,10 +93,13 @@ class AscendSession : public SessionBasic {
   void RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void AssignStream(NotNull<KernelGraphPtr> kernel_graph) const;
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-  void BuildKernel(const std::vector<CNodePtr> &kernels) const;
+  static void BuildKernel(const std::vector<CNodePtr> &kernels);
   void BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
+  void RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &input_tensors,
+                           const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                           KernelGraph *kernel_graph) const;
   void RunOpMemoryClear(const KernelGraph *kernel_graph) const;
   void RunOpGenKernelEvent(const KernelGraph *graph) const;
   void Load(const std::shared_ptr<KernelGraph> &kernel_graph) const;
@@ -123,6 +137,9 @@ class AscendSession : public SessionBasic {
                              const std::vector<tensor::TensorPtr> &graph_inputs,
                              const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
                              InputTensorInfo *input_tensor_info);
+  void PrepareForOutputTensor(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
+                              std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                              VectorRef *outputs) const;
   std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) override;
   // key is final_graph_id,value is child graph execute order of final graph
   std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
@@ -134,6 +151,11 @@ class AscendSession : public SessionBasic {
   GraphId final_graph_id_;
   // record graph ids of bp graphs that has been built in PyNative mode
   std::set<GraphId> built_graph_id_;
+
+  std::once_flag registered_;
+  void LaunchFunc(const KernelGraphPtr &graph, const std::vector<int64_t> &tensors_mask,
+                  const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node, bool is_dynamic_shape,
+                  const std::vector<tensor::TensorPtr> &input_tensors);
 };
 MS_REG_SESSION(kAscendDevice, AscendSession);
 }  // namespace session

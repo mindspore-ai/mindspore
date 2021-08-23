@@ -48,6 +48,9 @@ class CPUSession : public SessionBasic {
                              const std::vector<int64_t> &tensors_mask) override;
   void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info, std::vector<tensor::TensorPtr> *input_tensors,
                  VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
+  void RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+                       std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                       const std::vector<int64_t> &tensors_mask) override;
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                      const std::vector<tensor::TensorPtr> &inputs_const) const override;
 

@@ -2891,6 +2891,8 @@ void PynativeExecutor::ClearGrad(const py::object &cell, const py::args &args) {
 
 void PynativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear all res";
+  session::PynativeTaskManager::GetInstance().ClearAllResources();
+
   // Maybe exit in runop step
   auto ms_context = MsContext::GetInstance();
   if (ms_context != nullptr) {
@@ -2958,6 +2960,8 @@ void PynativeExecutor::Sync() {
   }
 }
 
+void PynativeExecutor::ExecuteAllTask() { session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks(); }
+
 REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                          (void)py::class_<PynativeExecutor, std::shared_ptr<PynativeExecutor>>(*m, "PynativeExecutor_")
                            .def_static("get_instance", &PynativeExecutor::GetInstance, "PynativeExecutor get_instance.")
@@ -2970,6 +2974,7 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("clear_cell", &PynativeExecutor::ClearCell, "pynative clear status.")
                            .def("clear_grad", &PynativeExecutor::ClearGrad, "pynative clear grad status.")
                            .def("sync", &PynativeExecutor::Sync, "pynative sync stream.")
+                           .def("execute_all_task", &PynativeExecutor::ExecuteAllTask, "clear all task")
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
                            .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
