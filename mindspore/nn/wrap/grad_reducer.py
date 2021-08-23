@@ -23,30 +23,33 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 
+
 reduce_opt = C.MultitypeFuncGraph("reduce_opt")
 
 
-def _init_allreduce_operators(length, split_indices):
+def _init_allreduce_operators(length, split_indices, group=GlobalComm.WORLD_COMM_GROUP):
     """ initialize allreduce communication operators"""
-    group = 1
+    fusion_type = 2 ** 10
+    split = 1
     fusion = ()
     for i in range(length):
-        fusion = fusion + (group,)
-        if split_indices[group - 1] <= i + 1:
-            if group >= len(split_indices):
+        fusion = fusion + (fusion_type,)
+        if split_indices[split - 1] <= i + 1:
+            if split >= len(split_indices):
                 continue
-            group = group + 1
+            fusion_type += split
+            split += 1
     index = tuple(range(1, length + 1))
     op_list = ()
     for i in range(length):
-        op = AllReduce('sum', GlobalComm.WORLD_COMM_GROUP)
+        op = AllReduce('sum', group)
         op.add_prim_attr('fusion', fusion[i])
         op.add_prim_attr('index', index[i])
         op_list = op_list + (op,)
     return op_list
 
 
-def _init_allreduce_operators_by_parameters(parameters, split_indices):
+def _init_allreduce_operators_by_parameters(parameters, split_indices, group, fusion_type=1):
     """ initialize allreduce communication operators by parameters"""
     op_list = ()
     param_fusion = False
@@ -62,14 +65,14 @@ def _init_allreduce_operators_by_parameters(parameters, split_indices):
             if comm_fusion != last_comm_fusion:
                 param_fusion = True
                 last_comm_fusion = comm_fusion
-        op = AllReduce('sum', GlobalComm.WORLD_COMM_GROUP)
+        op = AllReduce('sum', group)
         op.add_prim_attr('fusion', comm_fusion)
         op.add_prim_attr('index', index)
         index += 1
         op_list = op_list + (op,)
     if not param_fusion:
-        if split_indices and split_indices[-1] == len(parameters) - 1:
-            op_list = _init_allreduce_operators(len(parameters), split_indices)
+        if split_indices and fusion_type == 1:
+            op_list = _init_allreduce_operators(len(parameters), split_indices, group)
             param_fusion = True
         else:
             op_list = ()
@@ -364,7 +367,7 @@ class DistributedGradReducer(Cell):
         256.0
     """
 
-    def __init__(self, parameters, mean=True, degree=None, fusion_type=1):
+    def __init__(self, parameters, mean=True, degree=None, fusion_type=1, group=GlobalComm.WORLD_COMM_GROUP):
         super(DistributedGradReducer, self).__init__(auto_prefix=False)
         self.map_ = C.Map()
         if degree is None:
@@ -380,14 +383,15 @@ class DistributedGradReducer(Cell):
         split_indices = auto_parallel_context().get_all_reduce_fusion_split_indices()
         if is_parallel_optimizer and split_indices:
             self.split_fusion = True
-            self.op_list = _init_allreduce_operators(len(parameters), split_indices)
+            self.op_list = _init_allreduce_operators(len(parameters), split_indices, group)
         else:
             self.split_fusion = True
-            self.op_list, param_fusion = _init_allreduce_operators_by_parameters(parameters, split_indices)
+            self.op_list, param_fusion = _init_allreduce_operators_by_parameters(parameters, split_indices, group,
+                                                                                 fusion_type)
             if not param_fusion:
                 self.split_fusion = False
                 self.allreduce = AllReduce().add_prim_attr('fusion', fusion_type)
-        self.allgather = AllGather(GlobalComm.WORLD_COMM_GROUP)
+        self.allgather = AllGather(group)
         ps_filter = lambda x: x.is_param_ps
         self.ps_parameters = tuple(ps_filter(x) for x in parameters)
         self.enable_parameter_server = any(self.ps_parameters)

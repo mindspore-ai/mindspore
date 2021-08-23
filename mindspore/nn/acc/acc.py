@@ -24,10 +24,16 @@ __all__ = ["AutoAcc"]
 _acc_config_level = {
     "O0": {
         "less_bn": False,
-        "grad_freeze": False},
+        "grad_freeze": False,
+        "adasum": False},
     "O1": {
         "less_bn": True,
-        "grad_freeze": False}}
+        "grad_freeze": False,
+        "adasum": False},
+    "O2": {
+        "less_bn": True,
+        "grad_freeze": True,
+        "adasum": True}}
 
 
 class AutoAcc:
@@ -78,6 +84,8 @@ class AutoAcc:
                                               self._freeze_p, self._total_steps)
             network, optimizer = freeze_processer.freeze_generate(network, optimizer)
 
+        if self._acc_config["adasum"]:
+            setattr(optimizer, "adasum", True)
         return network, optimizer
 
     def network_auto_process_eval(self, network):
