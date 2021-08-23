@@ -279,8 +279,14 @@ int CoderSession::CreateOpCoders() {
       MS_LOG(ERROR) << "node: " << node->name_ << "has  no outputs tensor";
       return RET_ERROR;
     }
-    OpParameter *parameter = GenParameterAndInfer(node, inputs, &outputs);
-    MS_CHECK_PTR(parameter);
+
+    OpParameter *parameter = nullptr;
+    if (lite::KernelInferShape(inputs, outputs, node->primitive_, std::set<std::string>{}, schema_version_) ==
+        lite::RET_NOT_SUPPORT) {                                 // custom op infer
+      parameter = GenParameterAndInfer(node, inputs, &outputs);  // general ops infer
+      MS_CHECK_PTR(parameter);
+    }
+
     TypeId tensor_data_type = inputs.at(0)->data_type();
     std::unique_ptr<OperatorCoder> op_coder = builder.inputs(inputs)
                                                 .outputs(outputs)

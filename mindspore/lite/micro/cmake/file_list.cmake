@@ -122,8 +122,11 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/sigmoid_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/relux_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/div_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/transpose_int8_coder.cc
         #### nnacl dequant coder
         ${MICRO_DIR}/coder/opcoders/nnacl/dequant/de_quant.cc
+        #### custom
+        ${MICRO_DIR}/coder/opcoders/custom/custom_coder.cc
         )
 
 set(LITE_SRC
@@ -154,6 +157,11 @@ set(LITE_SRC
         ${LITE_DIR}/tools/common/flag_parser.cc
         )
 
+set(REGISTRY_SRC
+        ${MICRO_DIR}/coder/user_registry/user_kernel_register.cc
+        ${MICRO_DIR}/coder/user_registry/nnie_kernel_reg.cc
+        ${MICRO_DIR}/coder/user_registry/nnie_infer.cc
+        )
 
 list(APPEND FILE_SET ${CODER_SRC} ${CODER_OPCODERS_SRC} ${CODER_GENERATOR_SRC}
-        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${MINDSPORE_CORE})
+        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${MINDSPORE_CORE} ${REGISTRY_SRC})

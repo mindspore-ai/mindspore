@@ -65,6 +65,7 @@ else()
     string(REPLACE "-g" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
     string(REPLACE "-g" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
+string(APPEND CMAKE_EXE_LINKER_FLAGS " -Wl,--gc-sections")
 
 add_subdirectory(src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
