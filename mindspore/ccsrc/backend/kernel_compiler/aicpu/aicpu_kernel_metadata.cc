@@ -38,9 +38,7 @@ void AicpuMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<
     return;
   }
   // For compatibility with the current framework
-  if (op_name == kPrint || op_name == kGetNext || op_name == kPack || op_name == kMeshgrid ||
-      op_name == kStackInitOpName || op_name == kStackDestroyOpName || op_name == kStackPushOpName ||
-      op_name == kStackPopOpName || op_name == kDynamicStitch) {
+  if (op_name == kGetNext || kDynamicInputOps.find(op_name) != kDynamicInputOps.end()) {
     AicpuMetadataInfoForSpecialNodes(kernel_node, kernel_info_list);
     return;
   }
@@ -55,9 +53,7 @@ void AicpuMetadataInfoForSpecialNodes(const CNodePtr &kernel_node,
   std::vector<std::string> inputs_format{};
   std::vector<TypeId> inputs_type{};
   auto op_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (op_name == kPrint || op_name == kPack || op_name == kMeshgrid || op_name == kStackInitOpName ||
-      op_name == kStackDestroyOpName || op_name == kStackPushOpName || op_name == kStackPopOpName ||
-      op_name == kDynamicStitch) {
+  if (kDynamicInputOps.find(op_name) != kDynamicInputOps.end()) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       inputs_format.emplace_back(kOpFormat_DEFAULT);
