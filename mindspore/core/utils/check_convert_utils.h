@@ -313,6 +313,7 @@ class CheckAndConvertUtils {
                              const int64_t match_value, const std::string &prim_name);
   static TypePtr GetInputTensorType(const std::vector<AbstractBasePtr> &input_args, const size_t index,
                                     const std::string &prim_name);
+  static bool HasDynamicShapeInput(const AbstractBasePtrList &abs_list);
 
  private:
   static bool IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2);
