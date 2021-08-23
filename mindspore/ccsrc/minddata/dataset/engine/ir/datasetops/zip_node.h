@@ -76,6 +76,12 @@ class ZipNode : public DatasetNode {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
+  /// \brief Function to read dataset in json
+  /// \param[in] datasets A vector of datasets for Zip input
+  /// \param[out] result Deserialized dataset
+  /// \return Status The status code returned
+  static Status from_json(std::vector<std::shared_ptr<DatasetNode>> datasets, std::shared_ptr<DatasetNode> *result);
+
  private:
   std::vector<std::shared_ptr<DatasetNode>> datasets_;
 };

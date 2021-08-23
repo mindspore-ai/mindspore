@@ -397,7 +397,6 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCoco) {
 
 TEST_F(MindDataTestDeserialize, TestDeserializeTFRecord) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-TFRecord.";
-  std::string schema = "./data/dataset/testTFTestAllTypes/datasetSchema.json";
   int num_samples = 12;
   int32_t num_shards = 1;
   int32_t shard_id = 0;
@@ -405,6 +404,11 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTFRecord) {
   std::shared_ptr<DatasetCache> cache = nullptr;
   std::vector<std::string> columns_list = {};
   std::vector<std::string> dataset_files = {"./data/dataset/testTFTestAllTypes/test.data"};
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt32, {4}));
+  ASSERT_OK(schema->add_column("col2", mindspore::DataType::kNumberTypeInt64, {4}));
+
   std::shared_ptr<DatasetNode> ds =
     std::make_shared<TFRecordNode>(dataset_files, schema, columns_list, num_samples, ShuffleMode::kFiles, num_shards,
                                    shard_id, shard_equal_rows, cache);
@@ -425,7 +429,7 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTFRecord) {
   std::vector<std::string> dataset_files2 = {"./data/dataset/testTextFileDataset/1.txt"};
   std::shared_ptr<DatasetNode> ds_child2 =
     std::make_shared<TextFileNode>(dataset_files2, 2, ShuffleMode::kFiles, 1, 0, cache);
-  std::vector<std::shared_ptr<DatasetNode>> datasets = {ds_child1, ds_child2};
+  std::vector<std::shared_ptr<DatasetNode>> datasets = {ds, ds_child1, ds_child2};
   ds = std::make_shared<ZipNode>(datasets);
   compare_dataset(ds);
 }
@@ -497,5 +501,29 @@ TEST_F(MindDataTestDeserialize, DISABLED_TestDeserializeCache) {
 
   std::shared_ptr<SamplerObj> sampler = std::make_shared<SequentialSamplerObj>(0, 10);
   std::shared_ptr<DatasetNode> ds = std::make_shared<Cifar10Node>(data_dir, usage, sampler, some_cache);
+  compare_dataset(ds);
+}
+
+TEST_F(MindDataTestDeserialize, TestDeserializeConcatAlbumFlickr) {
+  MS_LOG(INFO) << "Doing MindDataTestDeserialize-ConcatAlbumFlickr.";
+  std::string dataset_dir = "./data/dataset/testAlbum";
+  std::vector<std::string> column_names = {"col1", "col2", "col3"};
+  bool decode = false;
+  std::shared_ptr<SamplerObj> sampler = std::make_shared<SequentialSamplerObj>(0, 10);
+  std::string data_schema = "./data/dataset/testAlbum/datasetSchema.json";
+  std::shared_ptr<DatasetNode> ds =
+    std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler, nullptr);
+  std::shared_ptr<TensorOperation> operation = std::make_shared<vision::AdjustGammaOperation>(0.5, 0.5);
+  std::vector<std::shared_ptr<TensorOperation>> ops = {operation};
+  ds = std::make_shared<MapNode>(ds, ops);
+  std::string dataset_path = "./data/dataset/testFlickrData/flickr30k/flickr30k-images";
+  std::string annotation_file = "./data/dataset/testFlickrData/flickr30k/test1.token";
+  std::shared_ptr<DatasetNode> ds_child1 =
+    std::make_shared<FlickrNode>(dataset_path, annotation_file, decode, sampler, nullptr);
+  std::vector<std::shared_ptr<DatasetNode>> datasets = {ds, ds_child1};
+  std::pair<int, int> pair = std::make_pair(1, 1);
+  std::vector<std::pair<int, int>> children_flag_and_nums = {pair};
+  std::vector<std::pair<int, int>> children_start_end_index = {pair};
+  ds = std::make_shared<ConcatNode>(datasets, sampler, children_flag_and_nums, children_start_end_index);
   compare_dataset(ds);
 }

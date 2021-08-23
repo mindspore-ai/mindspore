@@ -49,6 +49,15 @@ Status AdjustGammaOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status AdjustGammaOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("gamma") != op_params.end(), "Failed to find gamma");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("gain") != op_params.end(), "Failed to find gain");
+  float gamma = op_params["gamma"];
+  float gain = op_params["gain"];
+  *operation = std::make_shared<vision::AdjustGammaOperation>(gamma, gain);
+  return Status::OK();
+}
 #endif
 
 }  // namespace vision
