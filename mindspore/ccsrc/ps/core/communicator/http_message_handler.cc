@@ -29,6 +29,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 #include <functional>
 
@@ -52,11 +54,9 @@ void HttpMessageHandler::InitHttpMessage() {
   head_params_ = evhttp_request_get_input_headers(event_request_);
   resp_headers_ = evhttp_request_get_output_headers(event_request_);
   resp_buf_ = evhttp_request_get_output_buffer(event_request_);
-}
-
-void HttpMessageHandler::ParseUrl(const std::string &url) {
-  event_uri_ = evhttp_uri_parse(url.c_str());
-  MS_EXCEPTION_IF_NULL(event_uri_);
+  MS_EXCEPTION_IF_NULL(head_params_);
+  MS_EXCEPTION_IF_NULL(resp_headers_);
+  MS_EXCEPTION_IF_NULL(resp_buf_);
 }
 
 std::string HttpMessageHandler::GetHeadParam(const std::string &key) const {
@@ -82,6 +82,7 @@ void HttpMessageHandler::ParsePostParam() {
   const char *post_message = reinterpret_cast<const char *>(evbuffer_pullup(event_request_->input_buffer, -1));
   MS_EXCEPTION_IF_NULL(post_message);
   post_message_ = std::make_unique<std::string>(post_message, len);
+  MS_EXCEPTION_IF_NULL(post_message_);
   int ret = evhttp_parse_query_str(post_message_->c_str(), &post_params_);
   if (ret == -1) {
     MS_LOG(EXCEPTION) << "Parse post parameter failed!";
@@ -263,7 +264,7 @@ void HttpMessageHandler::SimpleResponse(int code, const HttpHeaders &headers, co
   evhttp_send_reply(event_request_, code, nullptr, resp_buf_);
 }
 
-void HttpMessageHandler::ErrorResponse(int code, RequestProcessResult result) {
+void HttpMessageHandler::ErrorResponse(int code, const RequestProcessResult &result) {
   nlohmann::json error_json = {{"error_message", result.StatusMessage()}};
   std::string out_error = error_json.dump();
   AddRespString(out_error);
@@ -282,6 +283,7 @@ void HttpMessageHandler::RespError(int nCode, const std::string &message) {
 
 void HttpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
   MS_EXCEPTION_IF_NULL(buffer);
+  MS_EXCEPTION_IF_NULL(body_);
   size_t dest_size = num;
   size_t src_size = num;
   int ret = memcpy_s(body_->data() + offset_, dest_size, buffer, src_size);
@@ -309,15 +311,19 @@ void HttpMessageHandler::set_request(const struct evhttp_request *req) {
 
 const struct evhttp_request *HttpMessageHandler::request() const { return event_request_; }
 
-void HttpMessageHandler::InitBodySize() { body_->resize(content_len()); }
+void HttpMessageHandler::InitBodySize() {
+  MS_EXCEPTION_IF_NULL(body_);
+  body_->resize(content_len());
+}
 
 std::shared_ptr<std::vector<char>> HttpMessageHandler::body() { return body_; }
 
-void HttpMessageHandler::set_body(const VectorPtr &body) { body_ = body; }
+void HttpMessageHandler::set_body(const std::shared_ptr<std::vector<char>> &body) { body_ = body; }
 
-const nlohmann::json &HttpMessageHandler::request_message() const { return request_message_; }
+nlohmann::json HttpMessageHandler::request_message() const { return request_message_; }
 
 RequestProcessResult HttpMessageHandler::ParseValueFromKey(const std::string &key, int32_t *const value) {
+  MS_EXCEPTION_IF_NULL(value);
   RequestProcessResult result(RequestProcessResultCode::kSuccess);
   if (!request_message_.contains(key)) {
     std::string message = "The json is not contain the key:" + key;
@@ -344,6 +350,7 @@ RequestProcessResult HttpMessageHandler::ParseValueFromKey(const std::string &ke
 
 RequestProcessResult HttpMessageHandler::ParseNodeIdsFromKey(const std::string &key,
                                                              std::vector<std::string> *const value) {
+  MS_EXCEPTION_IF_NULL(value);
   RequestProcessResult result(RequestProcessResultCode::kSuccess);
   if (!request_message_.contains(key)) {
     std::string message = "The json is not contain the key:" + key;
