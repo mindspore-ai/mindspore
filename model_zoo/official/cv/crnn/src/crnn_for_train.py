@@ -108,5 +108,5 @@ class TrainOneStepCellWithGradClip(Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
-        self.optimizer(grads)
+        loss = F.depend(loss, self.optimizer(grads))
         return loss

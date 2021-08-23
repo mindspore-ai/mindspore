@@ -67,7 +67,6 @@ rm -rf $WORKDIR
 mkdir $WORKDIR
 cp ./*.py $WORKDIR
 cp -r ./src $WORKDIR
-cp -r ./scripts $WORKDIR
 cp ./*yaml $WORKDIR
 cd $WORKDIR || exit
 

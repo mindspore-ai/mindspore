@@ -192,7 +192,6 @@ class CRNNV1(nn.Cell):
         self.reverse_seq4 = P.ReverseSequence(batch_dim=1, seq_dim=0)
         self.seq_length = Tensor(np.ones((self.batch_size), np.int32) * config.num_step, mstype.int32)
         self.concat1 = P.Concat(axis=2)
-        self.dropout = nn.Dropout(0.5)
         self.rnn_dropout = nn.Dropout(0.9)
         self.use_dropout = config.use_dropout
 
