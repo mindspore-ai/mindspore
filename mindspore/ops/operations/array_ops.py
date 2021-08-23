@@ -2282,7 +2282,7 @@ class Concat(PrimitiveWithInfer):
         - **input_x** (tuple, list) - A tuple or a list of input tensors.
           Suppose there are two tensors in this tuple or list, namely x1 and x2.
           To perform `Concat` in the axis 0 direction, except for the 0th axis, all other axes should be equal,
-          that is, :math:`x1.shape[1] == x2.shape[1], x1.shape[2] == x2.shape[2], ..., x1.shape[R] == x2.shape[R]',
+          that is, :math:`x1.shape[1] == x2.shape[1], x1.shape[2] == x2.shape[2], ..., x1.shape[R] == x2.shape[R]`,
           where the :math:`R' indicates the last axis.
 
     Outputs:
