@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp16/convolution_1x1_fp16.h"
 #include "nnacl/base/conv1x1_base.h"
+#include "nnacl/fp16/conv_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
@@ -66,6 +67,7 @@ int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
     }
     thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, col_tile_), thread_count_) * col_tile_;
   }
+  matmul_param_->op_parameter_.thread_num_ = thread_count_;
 
   if (pre_trans_input_) {
     input_ptr_ = reinterpret_cast<float16_t *>(malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(float16_t)));
@@ -116,8 +118,13 @@ void Convolution1x1FP16CPUKernel::PackWeight() {
   void *weight_origin = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
   MS_ASSERT(weight_origin != nullptr);
 #ifdef ENABLE_ARM64
-  RowMajor2Col16MajorFp16Opt(static_cast<const float16_t *>(weight_origin),
-                             reinterpret_cast<float16_t *>(packed_weight_), output_channel, input_channel);
+  if (out_tensors_.front()->format() == NC4HW4) {
+    ColMajor2Row8MajorFp16(weight_origin, reinterpret_cast<float16_t *>(packed_weight_), input_channel, output_channel,
+                           true);
+  } else {
+    RowMajor2Col16MajorFp16Opt(static_cast<const float16_t *>(weight_origin),
+                               reinterpret_cast<float16_t *>(packed_weight_), output_channel, input_channel);
+  }
 #else
   ColMajor2Row8MajorFp16(weight_origin, reinterpret_cast<float16_t *>(packed_weight_), input_channel, output_channel,
                          true);
@@ -128,8 +135,13 @@ int Convolution1x1FP16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
-  row_tile_ = C12NUM;
-  col_tile_ = C16NUM;
+  if (out_tensors_.front()->format() == NC4HW4) {
+    row_tile_ = C16NUM;
+    col_tile_ = C8NUM;
+  } else {
+    row_tile_ = C12NUM;
+    col_tile_ = C16NUM;
+  }
 #else
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
@@ -190,41 +202,53 @@ int Convolution1x1FP16CPUKernel::RunOc(int task_id) {
   }
 
   auto bias = (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float16_t *>(bias_data_) + thread_stride_ * task_id;
+
+  if (out_tensors_.front()->format() == NC4HW4) {
+    Conv1x1OutNc8hw8MultiThreadByWeightFp16(input_ptr_, pack_input_, reinterpret_cast<float16_t *>(packed_weight_),
+                                            reinterpret_cast<float16_t *>(bias_data_), output_ptr_, task_id,
+                                            matmul_param_);
+  } else {
 #ifdef ENABLE_ARM64
-  MatMul12x16Fp16Opt(pack_input_,
-                     reinterpret_cast<float16_t *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
-                     output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
-                     matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
+    MatMul12x16Fp16Opt(pack_input_,
+                       reinterpret_cast<float16_t *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
+                       output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
+                       matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
 #else
-  MatMul12x8A32Fp16(pack_input_,
-                    reinterpret_cast<float16_t *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
-                    output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
-                    matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
+    MatMul12x8A32Fp16(pack_input_,
+                      reinterpret_cast<float16_t *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
+                      output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
+                      matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
 #endif
+  }
   return RET_OK;
 }
 
 int Convolution1x1FP16CPUKernel::RunHw(int task_id) {
-  int res_stride = matmul_param_->row_ - task_id * thread_stride_;
-  int cur_hw_ = MSMIN(thread_stride_, res_stride);
-  if (cur_hw_ <= 0) {
-    return RET_OK;
-  }
+  if (out_tensors_.front()->format() == NC4HW4) {
+    Conv1x1OutNc8hw8MultiThreadByInputFp16(input_ptr_, pack_input_, reinterpret_cast<float16_t *>(packed_weight_),
+                                           reinterpret_cast<float16_t *>(bias_data_), output_ptr_, task_id,
+                                           matmul_param_);
+  } else {
+    int res_stride = matmul_param_->row_ - task_id * thread_stride_;
+    int cur_hw_ = MSMIN(thread_stride_, res_stride);
+    if (cur_hw_ <= 0) {
+      return RET_OK;
+    }
+    float16_t *thread_input_ptr = input_ptr_ + task_id * thread_stride_ * matmul_param_->deep_;
+    float16_t *thread_pack_input = pack_input_ + task_id * thread_stride_ * matmul_param_->deep_;
+    float16_t *thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
 
-  float16_t *thread_input_ptr = input_ptr_ + task_id * thread_stride_ * matmul_param_->deep_;
-  float16_t *thread_pack_input = pack_input_ + task_id * thread_stride_ * matmul_param_->deep_;
-  RowMajor2Col12MajorFp16Opt(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
-
-  float16_t *thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
+    RowMajor2Col12MajorFp16Opt(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
 #ifdef ENABLE_ARM64
-  MatMul12x16Fp16Opt(thread_pack_input, reinterpret_cast<float16_t *>(packed_weight_), thread_output_ptr,
-                     reinterpret_cast<float16_t *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_, cur_hw_,
-                     matmul_param_->col_, matmul_param_->col_, OutType_Nhwc);
+    MatMul12x16Fp16Opt(thread_pack_input, reinterpret_cast<float16_t *>(packed_weight_), thread_output_ptr,
+                       reinterpret_cast<float16_t *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_,
+                       cur_hw_, matmul_param_->col_, matmul_param_->col_, OutType_Nhwc);
 #else
-  MatMul12x8A32Fp16(thread_pack_input, reinterpret_cast<float16_t *>(packed_weight_), thread_output_ptr,
-                    reinterpret_cast<float16_t *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_, cur_hw_,
-                    matmul_param_->col_, matmul_param_->col_, OutType_Nhwc);
+    MatMul12x8A32Fp16(thread_pack_input, reinterpret_cast<float16_t *>(packed_weight_), thread_output_ptr,
+                      reinterpret_cast<float16_t *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_,
+                      cur_hw_, matmul_param_->col_, matmul_param_->col_, OutType_Nhwc);
 #endif
+  }
   return RET_OK;
 }
 
@@ -282,7 +306,15 @@ int Convolution1x1FP16CPUKernel::Run() {
     if (multi_thread_by_hw_) {
       ret = ParallelLaunch(this->ms_context_, Convolution1x1Fp16RunHw, this, thread_count_);
     } else {
-      RowMajor2Col12MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+      if (out_tensors_.front()->format() == NC4HW4) {
+#ifdef ENABLE_ARM64
+        RowMajor2Col16MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+#else
+        RowMajor2Col12MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+#endif
+      } else {
+        RowMajor2Col12MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+      }
       ret = ParallelLaunch(this->ms_context_, Convolution1x1Fp16RunOc, this, thread_count_);
     }
     if (ret != RET_OK) {

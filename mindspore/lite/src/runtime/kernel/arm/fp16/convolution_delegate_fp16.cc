@@ -149,9 +149,9 @@ kernel::InnerKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *
   return kernel;
 }
 
-kernel::InnerKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const lite::InnerContext *ctx, void *origin_weight, void *origin_bias) {
+kernel::InnerKernel *ConvolutionDelegateFP16CPUKernel::CpuConvFp16KernelSelect(
+  const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+  const lite::InnerContext *ctx, void *origin_weight, void *origin_bias) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   bool use_winograd = false;
   int out_unit;
@@ -173,6 +173,8 @@ kernel::InnerKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &
     free(op_parameter);
     return nullptr;
   }
+  kernel->set_name(this->name());
+
   // Once kernel is selected, init func will invoke InitWeightAndBias
   auto ret = kernel->Init();
   if (ret != RET_OK) {

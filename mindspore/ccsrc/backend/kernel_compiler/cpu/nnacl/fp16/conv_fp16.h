@@ -18,6 +18,7 @@
 
 #include <arm_neon.h>
 #include "nnacl/conv_parameter.h"
+#include "nnacl/matmul_parameter.h"
 #include "nnacl/fp16/winograd_utils_fp16.h"
 #include "nnacl/fp16/winograd_transform_fp16.h"
 
@@ -36,6 +37,14 @@ void ConvFp16(const float16_t *input_data, float16_t *packed_input, const float1
 void ConvOutNc8hw8Fp16(const float16_t *input_data, float16_t *packed_input, const float16_t *packed_weight,
                        const float16_t *bias_data, float16_t *col_major_input, float16_t *output_data, int task_id,
                        const ConvParameter *conv_param);
+
+void Conv1x1OutNc8hw8MultiThreadByInputFp16(const float16_t *input, float16_t *pack_input, const float16_t *weight,
+                                            const float16_t *bias, float16_t *output, int task_id,
+                                            const MatMulParameter *param);
+
+void Conv1x1OutNc8hw8MultiThreadByWeightFp16(const float16_t *input, float16_t *pack_input, const float16_t *weight,
+                                             const float16_t *bias, float16_t *output, int task_id,
+                                             const MatMulParameter *param);
 
 // fp16 convolution winograd
 void ConvWinogardFp16(const float16_t *input_data, const float16_t *trans_weight, const float16_t *bias_data,
