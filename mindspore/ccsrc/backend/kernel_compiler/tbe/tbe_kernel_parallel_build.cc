@@ -175,7 +175,8 @@ std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t
   auto kernel_pack = TbeUtils::InsertCache(json_name, processor);
   if (kernel_pack == nullptr) {
     if (set_kernel_mod) {
-      MS_EXCEPTION(ArgumentError) << "build kernel name:" << task_iter->second.json_name << " failed.";
+      MS_EXCEPTION(ArgumentError) << "Can not find .json file or the binary .o file for op "
+                                  << task_iter->second.json_name << ", go check the cache files in kernel_meta/";
     } else {
       MS_LOG(INFO) << "fusion build kernel name:" << task_iter->second.json_name << "failed.";
       auto fusion_kernel_mod = std::make_pair(task_iter->second.scope_id, nullptr);
