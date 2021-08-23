@@ -81,6 +81,8 @@ class LiteSession : public session::LiteSession {
 
   const std::vector<kernel::LiteKernel *> &get_kernels() const { return this->kernels_; }
 
+  const Delegate *get_delegate() const { return this->delegate_.get(); }
+
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
 

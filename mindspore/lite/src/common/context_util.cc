@@ -103,5 +103,37 @@ mindspore::Context *MSContextFromContext(const lite::Context *context) {
   }
   return ms_context;
 }
+
+bool DeviceTypePriority(const lite::Context *context, DeviceType dt1, DeviceType dt2) {
+  /* dt1 > dt2    true
+   * dt1 < dt2    false    */
+
+  if (context == nullptr) {
+    return false;
+  }
+  DeviceContextVector device_infos = context->device_list_;
+  for (DeviceContext device_info : device_infos) {
+    if (device_info.device_type_ == dt1) {
+      return true;
+    }
+    if (device_info.device_type_ == dt2) {
+      return false;
+    }
+  }
+  return false;
+}
+
+DeviceType KernelArchToDeviceType(kernel::KERNEL_ARCH kernel_arch) {
+  switch (kernel_arch) {
+    case kernel::KERNEL_ARCH::kCPU:
+      return DT_CPU;
+    case kernel::KERNEL_ARCH::kGPU:
+      return DT_GPU;
+    case kernel::KERNEL_ARCH::kNPU:
+      return DT_NPU;
+    default:
+      return DT_CPU;
+  }
+}
 }  // namespace lite
 }  // namespace mindspore

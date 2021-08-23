@@ -36,6 +36,7 @@
 #include "src/common/prim_util.h"
 #include "src/lite_model.h"
 #include "src/common/tensor_util.h"
+#include "src/common/context_util.h"
 #include "src/runtime/infer_manager.h"
 #ifndef RUNTIME_PASS_CLIP
 #include "src/runtime/runtime_pass.h"
@@ -122,6 +123,19 @@ int Scheduler::SchedulePreProcess() {
   return RET_OK;
 }
 
+int Scheduler::CheckCpuValid(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  if (context_->IsCpuEnabled() == true) {
+    return RET_OK;
+  }
+  for (auto kernel : *dst_kernels) {
+    if (kernel->desc().arch == kernel::KERNEL_ARCH::kCPU) {
+      MS_LOG(ERROR) << "kernel: " << kernel->name() << " only support in CPU.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   int check_input_ret = CheckInputParam(dst_kernels);
   if (check_input_ret != RET_OK) {
@@ -148,17 +162,18 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   SetSubgraphForPartialNode();
 #endif
 
-  if (delegate_ != nullptr) {
 #ifndef DELEGATE_CLIP
-    ret = ReplaceDelegateKernels(dst_kernels);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Repalce delegate kernels failed.";
-      return ret;
-    }
-#else
-    MS_LOG(ERROR) << unsupport_delegate_log;
-    return RET_ERROR;
+  ret = InitDelegateKernels(dst_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Repalce delegate kernels failed.";
+    return ret;
+  }
 #endif
+
+  ret = CheckCpuValid(dst_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "kernels invalid in set devices.";
+    return ret;
   }
 
   FindAllInoutKernels(*dst_kernels);
@@ -280,6 +295,67 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
     }
   }
   delete model;
+  return RET_OK;
+}
+
+int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  /* no delegate valid */
+  if (delegate_ == nullptr) {
+    return RET_OK;
+  }
+
+  /* tensor RT delegate  :  high Priority */
+  if (context_->delegate != nullptr) {
+    auto ret = ReplaceDelegateKernels(dst_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Tensor RT repalce delegate kernels failed.";
+      return ret;
+    }
+  }
+
+  /* NPU delegate  :  check Priority */
+  std::vector<kernel::LiteKernel *> src_kernels = *dst_kernels;
+  dst_kernels->clear();
+
+  while (!src_kernels.empty()) {
+    std::vector<kernel::LiteKernel *> tmp_kernels;
+    kernel::LiteKernel *remain_kernel = nullptr;
+
+    /* Loop for npu-subgraph */
+    while (!src_kernels.empty()) {
+      auto kernel = src_kernels.front();
+      VectorErase(&src_kernels, kernel);
+      bool priority_ret = DeviceTypePriority(context_, DT_NPU, KernelArchToDeviceType(kernel->desc().arch));
+      if (priority_ret == true) {
+        tmp_kernels.push_back(kernel);
+      } else {
+        remain_kernel = kernel;
+        break;
+      }
+    }
+
+    /* start current NPU-kernels replace */
+    if (tmp_kernels.empty()) {
+      if (remain_kernel != nullptr) {
+        dst_kernels->push_back(remain_kernel);
+        remain_kernel = nullptr;
+      }
+      continue;
+    }
+    auto ret = ReplaceDelegateKernels(&tmp_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "NPU delegate repalce delegate kernels failed.";
+      return ret;
+    }
+
+    dst_kernels->insert(dst_kernels->end(), tmp_kernels.begin(), tmp_kernels.end());
+    tmp_kernels.clear();
+    if (remain_kernel != nullptr) {
+      dst_kernels->push_back(remain_kernel);
+      remain_kernel = nullptr;
+    }
+  }
+
   return RET_OK;
 }
 #endif
@@ -819,8 +895,11 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   int kernel_thread_count = op_parameter->thread_num_;
   op_parameter->is_train_session_ = is_train_session_;
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
+
 #ifdef GPU_OPENCL
-  if (node->device_type_ == DT_GPU || node->device_type_ == kDefaultDeviceType) {
+  bool gpu_priority = DeviceTypePriority(context_, DT_GPU, DT_CPU);
+  bool use_gpu_kernel = node->device_type_ == DT_GPU || node->device_type_ == kDefaultDeviceType;
+  if (gpu_priority && use_gpu_kernel) {
     status = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
     if (status == RET_OK) {
       return kernel;

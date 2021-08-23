@@ -71,6 +71,7 @@ class Scheduler {
   int FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                     OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
                     kernel::LiteKernel **kernel);
+  int CheckCpuValid(std::vector<kernel::LiteKernel *> *dst_kernels);
 #ifdef GPU_OPENCL
   int FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                     OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel);
@@ -78,7 +79,6 @@ class Scheduler {
   int FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                          const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel);
 
-  int ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels);
   int InitKernels(std::vector<kernel::LiteKernel *> dst_kernels);
   kernel::LiteKernel *SchedulePartialToKernel(const lite::Model::Node *src_node);
   // schedule a partial node to a subgraph_kernel
@@ -117,6 +117,12 @@ class Scheduler {
   void SetSubgraphForPartialNode();
   bool IsControlFlowParttern(const std::vector<kernel::LiteKernel *> &kernels);
   int ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *kernels);
+#endif
+
+#ifndef DELEGATE_CLIP
+  /* delegate related */
+  int ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels);
 #endif
 
  protected:

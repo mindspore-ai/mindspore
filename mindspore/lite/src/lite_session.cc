@@ -916,14 +916,16 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }
 
 int LiteSession::InitGPURuntime() {
-  CpuBindMode cpu_bind_mode = this->context_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
-  ActorThreadPool *thread_pool = this->context_->thread_pool();
-  if (thread_pool == nullptr) {
-    MS_LOG(ERROR) << "thread pool is nullptr";
-    is_running_.store(false);
-    return RET_NULL_PTR;
+  if (context_->IsCpuEnabled()) {
+    CpuBindMode cpu_bind_mode = context_->GetCpuDeviceInfo()->cpu_bind_mode_;
+    ActorThreadPool *thread_pool = this->context_->thread_pool();
+    if (thread_pool == nullptr) {
+      MS_LOG(ERROR) << "thread pool is nullptr";
+      is_running_.store(false);
+      return RET_NULL_PTR;
+    }
+    thread_pool->SetProcessAffinity(static_cast<BindMode>(cpu_bind_mode));
   }
-  thread_pool->SetProcessAffinity(static_cast<BindMode>(cpu_bind_mode));
 #if GPU_OPENCL
   if (this->context_->IsGpuEnabled()) {
     opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeWrapper();
@@ -949,12 +951,19 @@ int LiteSession::InitGPURuntime() {
   }
 #endif
   // Setting the binding core will affect the opencl drive scheduling.
-  thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
+  if (context_->IsCpuEnabled()) {
+    ActorThreadPool *thread_pool = this->context_->thread_pool();
+    thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
+  }
   return RET_OK;
 }
 }  // namespace lite
 
 session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {
+  if (context == nullptr) {
+    return nullptr;
+  }
+
   auto session = new (std::nothrow) lite::LiteSession();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
@@ -1012,6 +1021,7 @@ int lite::LiteSession::CreateSessionByBuf(const char *model_buf, size_t size, se
   auto ret = session->CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
+    model->buf = nullptr;
     delete model;
     return RET_ERROR;
   }

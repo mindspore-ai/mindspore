@@ -40,6 +40,8 @@ struct InnerContext : public Context {
 
   bool IsCpuEnabled() const;
 
+  const CpuDeviceInfo *GetCpuDeviceInfo() const;
+
   bool IsGpuEnabled() const;
 
   bool IsNpuEnabled() const;

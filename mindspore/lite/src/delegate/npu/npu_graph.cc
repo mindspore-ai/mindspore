@@ -22,14 +22,6 @@
 #include "src/delegate/npu/transpose_kernel.h"
 namespace mindspore {
 NPUGraph::~NPUGraph() {
-  for (int i = 0; i < all_kernels_.size(); i++) {
-    for (auto output : all_kernels_[i]->outputs()) {
-      if (find(outputs_.begin(), outputs_.end(), output) != outputs_.end()) {
-        free(output.MutableData());
-        output.SetData(nullptr);
-      }
-    }
-  }
   for (auto *kernel : all_kernels_) {
     delete kernel;
   }
