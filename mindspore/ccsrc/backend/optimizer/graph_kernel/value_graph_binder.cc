@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
-#include <unordered_set>
+
 #include "frontend/optimizer/irpass.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"

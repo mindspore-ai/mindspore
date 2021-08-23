@@ -69,6 +69,13 @@ TEST_F(TestEluFp32, EluTest) {
   }
   std::cout << std::endl;
   delete ctx;
+  for (unsigned int i = 0; i < inputs_.size(); i++) {
+    delete inputs_[i];
+  }
+  for (unsigned int i = 0; i < outputs_.size(); i++) {
+    delete outputs_[i];
+  }
+  delete elu;
 }
 
 };  // namespace mindspore

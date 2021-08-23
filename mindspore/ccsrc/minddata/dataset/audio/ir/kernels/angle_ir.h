@@ -29,9 +29,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
-// Char arrays storing name of corresponding classes
+
 constexpr char kAngleOperation[] = "Angle";
 
 class AngleOperation : public TensorOperation {

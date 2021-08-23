@@ -21,7 +21,7 @@ from .metric import Metric, rearrange_inputs
 class Dice(Metric):
     r"""
     The Dice coefficient is a set similarity metric. It is used to calculate the similarity between two samples. The
-    value of the Dice coefficient is 1 when the segmentation result is the best and 0 when the segmentation result
+    value of the Dice coefficient is 1 when the segmentation result is the best and is 0 when the segmentation result
     is the worst. The Dice coefficient indicates the ratio of the area between two objects to the total area.
     The function is shown as follows:
 
@@ -73,17 +73,17 @@ class Dice(Metric):
 
         Raises:
             ValueError: If the number of the inputs is not 2.
-            RuntimeError: If y_pred and y should have different the dimension.
+            RuntimeError: If y_pred and y do not have the same shape.
         """
         if len(inputs) != 2:
-            raise ValueError('Dice need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError('The Dice needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         self._samples_num += y.shape[0]
 
         if y_pred.shape != y.shape:
-            raise RuntimeError('y_pred and y should have same the dimension, but the shape of y_pred is{}, '
+            raise RuntimeError('The y_pred and y should have the same shape, but the shape of y_pred is {}, '
                                'the shape of y is {}.'.format(y_pred.shape, y.shape))
 
         intersection = np.dot(y_pred.flatten(), y.flatten())
@@ -100,9 +100,9 @@ class Dice(Metric):
             Float, the computed result.
 
         Raises:
-            RuntimeError: If the total samples num is 0.
+            RuntimeError: If the total number of samples is 0.
         """
         if self._samples_num == 0:
-            raise RuntimeError('Total samples num must not be 0.')
+            raise RuntimeError('The total number of samples can not be 0.')
 
         return self._dice_coeff_sum / float(self._samples_num)

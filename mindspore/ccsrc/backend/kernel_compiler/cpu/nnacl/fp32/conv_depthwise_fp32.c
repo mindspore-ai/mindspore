@@ -356,14 +356,6 @@ bool CheckConvDwUse3X3(const ConvParameter *conv_param) {
 }
 
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
-bool CheckConvDw1DWinograd(const ConvParameter *conv_param, int thread_num) {
-  return conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 && conv_param->stride_w_ == 1 &&
-         conv_param->stride_h_ == 1 && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
-         conv_param->pad_u_ == 1 && conv_param->pad_d_ == 1 && conv_param->pad_l_ == 1 && conv_param->pad_r_ == 1 &&
-         conv_param->input_channel_ == conv_param->output_channel_ && conv_param->output_w_ >= 4 &&
-         conv_param->output_h_ >= thread_num * 4;  // better had more than 4 rows for each thread
-}
-
 static void ConvDw3x3RowLeft(const float *src, float *line, int lw, int channel) {
   MS_FLOAT32X4 v0, v1, v2, v3;
   v0 = MS_MOVQ_F32(0.0f);

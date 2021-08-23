@@ -25,46 +25,63 @@
 
 namespace mindspore {
 namespace opt {
-/// \brief PassPosition defined where to plae user's pass.
-enum MS_API PassPosition { POSITION_BEGIN = 0, POSITION_END = 1 };
-
 /// \brief P defined a basic interface.
 ///
 /// \note List public class and interface for reference.
 class MS_API Pass;
 using PassPtr = std::shared_ptr<Pass>;
+}  // namespace opt
+
+namespace registry {
+/// \brief PassPosition defined where to plae user's pass.
+enum MS_API PassPosition { POSITION_BEGIN = 0, POSITION_END = 1 };
 
 /// \brief PassRegistry defined registration of Pass.
 class MS_API PassRegistry {
  public:
   /// \brief Constructor of PassRegistry to register pass.
   ///
-  /// \param[in] pos Define where to replace the pass.
-  /// \param[in] pass Define user's defined pass.
-  PassRegistry(const std::string &pass_name, const PassPtr &pass);
+  /// \param[in] pass_name Define the name of the pass, a string which should guarantee uniqueness.
+  /// \param[in] pass Define pass instance.
+  PassRegistry(const std::string &pass_name, const opt::PassPtr &pass);
 
   /// \brief Constructor of PassRegistry to assign which passes are required for external extension.
   ///
-  /// \param[in position Define the place where assigned passes will run.
-  /// \param[in] assigned Define the name of passes assigned by user.
-  PassRegistry(PassPosition position, const std::vector<std::string> &assigned);
+  /// \param[in] position Define the place where assigned passes will run.
+  /// \param[in] names Define the names of the passes.
+  PassRegistry(PassPosition position, const std::vector<std::string> &names);
 
   /// \brief Destructor of PassRegistrar.
   ~PassRegistry() = default;
+
+  /// \brief Static method to obtain external scheduling task assigned by user.
+  ///
+  /// \param[in] position Define the place where assigned passes will run.
+  ///
+  /// \return Passes' Name Vector.
+  static std::vector<std::string> GetOuterScheduleTask(PassPosition position);
+
+  /// \brief Static method to obtain pass instance according to passes' name.
+  ///
+  /// \param[in] pass_names Define the name of passes.
+  ///
+  /// \return Pass Instance Vector.
+  static std::vector<opt::PassPtr> GetPassFromStoreRoom(const std::vector<std::string> &pass_names);
 };
 
 /// \brief Defined registering macro to register Pass, which called by user directly.
 ///
-/// \param[in] name Define name of user's pass, which is a string.
-/// \param[in] pass Define user's defined pass.
-#define REG_PASS(name, pass) static PassRegistry g_##name##PassReg(#name, std::make_shared<pass>());
+/// \param[in] name Define the name of the pass, a string which should guarantee uniqueness.
+/// \param[in] pass Define pass instance.
+#define REG_PASS(name, pass) \
+  static mindspore::registry::PassRegistry g_##name##PassReg(#name, std::make_shared<pass>());
 
 /// \brief Defined assigning macro to assign Passes, which called by user directly.
 ///
 /// \param[in] position Define the place where assigned passes will run.
-/// \param[in] assigned Define the name of passes assigned by user.
-#define REG_SCHEDULED_PASS(position, assigned) static PassRegistry g_##position(position, assigned);
-}  // namespace opt
+/// \param[in] names Define the names of the passes.
+#define REG_SCHEDULED_PASS(position, names) static mindspore::registry::PassRegistry g_##position(position, names);
+}  // namespace registry
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_PASS_REGISTRY_H_

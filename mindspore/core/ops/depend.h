@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDepend = "Depend";
-class Depend : public PrimitiveC {
+class MS_CORE_API Depend : public PrimitiveC {
  public:
   Depend() : PrimitiveC(kNameDepend) {}
   ~Depend() = default;

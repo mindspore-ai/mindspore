@@ -180,10 +180,11 @@ class Gamma(Distribution):
         self.igamma = nn.IGamma()
 
     def extend_repr(self):
+        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = f'concentration = {self._concentration}, rate = {self._rate}'
+            s = 'concentration = {}, rate = {}'.format(self._concentration, self._rate)
         else:
-            s = f'batch_shape = {self._broadcast_shape}'
+            s = 'batch_shape = {}'.format(self._broadcast_shape)
         return s
 
     @property

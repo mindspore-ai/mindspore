@@ -19,7 +19,9 @@
 #include <vector>
 #include "src/runtime/kernel/arm/base/carry_data.h"
 #include "src/tensor.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
+#endif
 
 // this file is useless when move create actor before schedule.
 namespace mindspore::kernel {

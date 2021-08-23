@@ -20,19 +20,20 @@
 
 #include <memory>
 #include "src/tensor.h"
-#include "src/tensorlist.h"
 #include "nnacl/tensor_c.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+#include "src/tensorlist.h"
 #include "nnacl/infer/common_infer.h"
+#endif
 #include "src/cxx_api/tensor/tensor_impl.h"
 
 namespace mindspore {
 namespace lite {
-int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out);
 int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out);
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in);
 int Tensor2TensorC(const Tensor *src, TensorC *dst);
 void TensorC2Tensor(const TensorC *src, Tensor *dst);
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 void FreeTensorListC(TensorListC *tensorListC);
 int TensorList2TensorListC(TensorList *src, TensorListC *dst);
 int TensorListC2TensorList(const TensorListC *src, TensorList *dst);

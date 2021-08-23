@@ -49,6 +49,7 @@ bool StartServerAction(const ResourcePtr &res);
 
 std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline();
+std::vector<ActionItem> MindIRPipeline();
 std::vector<ActionItem> BackendPipeline();
 std::vector<ActionItem> PServerPipeline();
 std::vector<ActionItem> ServerPipeline();

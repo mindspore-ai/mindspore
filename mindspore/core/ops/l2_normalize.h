@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameL2Normalize = "L2Normalize";
-class L2Normalize : public PrimitiveC {
+class MS_CORE_API L2Normalize : public PrimitiveC {
  public:
   explicit L2Normalize(const std::string &name = kNameL2Normalize) : PrimitiveC(name) {}
   ~L2Normalize() = default;

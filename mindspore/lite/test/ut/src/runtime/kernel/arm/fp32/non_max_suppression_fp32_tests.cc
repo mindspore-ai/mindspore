@@ -50,6 +50,7 @@ class TestNMSFp32 : public mindspore::CommonTest {
 };
 
 void TestNMSFp32::TearDown() {
+  delete kernel_;
   box_tensor_.set_data(nullptr);
   score_tensor_.set_data(nullptr);
   max_output_box_per_class_tensor_.set_data(nullptr);

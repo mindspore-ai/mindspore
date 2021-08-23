@@ -16,6 +16,9 @@
 
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
+#endif
 
 #include "minddata/dataset/core/config_manager.h"
 
@@ -73,5 +76,15 @@ Status SamplerObj::to_json(nlohmann::json *const out_json) {
   return Status::OK();
 }
 
+#ifndef ENABLE_ANDROID
+Status SamplerObj::from_json(nlohmann::json json_obj, std::shared_ptr<SamplerObj> *parent_sampler) {
+  for (nlohmann::json child : json_obj["child_sampler"]) {
+    std::shared_ptr<SamplerObj> child_sampler;
+    RETURN_IF_NOT_OK(Serdes::ConstructSampler(child, &child_sampler));
+    (*parent_sampler)->AddChildSampler(child_sampler);
+  }
+  return Status::OK();
+}
+#endif
 }  // namespace dataset
 }  // namespace mindspore

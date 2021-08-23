@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReverseSequence = "ReverseSequence";
-class ReverseSequence : public PrimitiveC {
+class MS_CORE_API ReverseSequence : public PrimitiveC {
  public:
   ReverseSequence() : PrimitiveC(kNameReverseSequence) { InitIOName({"x", "seq_lengths"}, {"y"}); }
   ~ReverseSequence() = default;

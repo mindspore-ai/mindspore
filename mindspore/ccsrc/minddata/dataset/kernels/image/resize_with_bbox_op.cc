@@ -35,9 +35,9 @@ Status ResizeWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   int32_t input_w = input[0]->shape()[1];
 
   output->resize(2);
-  (*output)[1] = std::move(input[1]);  // move boxes over to output
+  (*output)[1] = input[1];  // move boxes over to output
 
-  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input[0]));
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input[0]);
 
   RETURN_IF_NOT_OK(ResizeOp::Compute(std::static_pointer_cast<Tensor>(input_cv), &(*output)[0]));
 

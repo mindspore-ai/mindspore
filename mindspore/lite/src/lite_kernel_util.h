@@ -37,7 +37,7 @@ class LiteKernelUtil {
 
   static int SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
   static bool IsSwitchCall(kernel::LiteKernel *kernel);
 #endif
 

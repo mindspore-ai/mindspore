@@ -36,7 +36,6 @@ class ConvolutionDepthwiseSWCPUKernelX86 : public ConvolutionBaseCPUKernel {
   int Run() override;
 
   int Execute(int task_id);
-  int Eval() override;
 
  private:
   void FreePackedInputOutput();
@@ -52,5 +51,5 @@ class ConvolutionDepthwiseSWCPUKernelX86 : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_X86_FP32_H_
 #endif
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_X86_FP32_H_

@@ -78,6 +78,9 @@ class FlopsParser:
             op_name = self._get_op_name(result)
             if op_name in op_name_set or op_name == "":
                 continue
+            if op_name not in op_avg_time_dict:
+                logger.warning("Op name {op_name} is not exist in op average time dict.")
+                continue
             # Convert the unit of task_fops to MFLOPs(1e6).
             task_fops = self._compute_task_flops(result) * 1e-6
             op_avg_time = op_avg_time_dict[op_name]

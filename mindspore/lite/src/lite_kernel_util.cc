@@ -196,11 +196,13 @@ void LiteKernelUtil::InitTensorInitRefCount(const std::vector<kernel::LiteKernel
 
 int LiteKernelUtil::SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs) { return -1; }
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
+#ifndef DELEGATE_CLIP
   if (kernel->desc().delegate != nullptr) {
     return false;
   }
+#endif
   auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
   if (subgraph_kernel == nullptr) {
     return false;

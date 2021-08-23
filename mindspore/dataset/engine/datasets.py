@@ -41,6 +41,8 @@ import weakref
 import platform
 import psutil
 import numpy as np
+from scipy.io import loadmat
+from PIL import Image
 
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
@@ -58,10 +60,11 @@ from .queue import _SharedQueue
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, check_device_send, check_take, check_project, check_imagefolderdataset, \
     check_mnist_cifar_dataset, check_manifestdataset, check_tfrecorddataset, check_vocdataset, check_cocodataset, \
-    check_celebadataset, check_minddataset,check_cmu_arctic_dataset, check_generatordataset, check_sync_wait, check_zip_dataset, \
+    check_celebadataset, check_minddataset, check_generatordataset, check_sync_wait, check_zip_dataset, \
     check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
-    check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
+    check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
+    check_sb_dataset, check_flowers102dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -814,7 +817,7 @@ class Dataset:
             count (int): Number of elements in the dataset to be skipped.
 
         Returns:
-            SkipDataset, dataset skipped.
+            SkipDataset, dataset that containing rows like origin rows subtract skipped rows.
 
         Examples:
             >>> # dataset is an instance of Dataset object.
@@ -1709,8 +1712,11 @@ class Dataset:
                 (isinstance(num_batch, int) and num_batch <= 0):
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
-            raise RuntimeError("Sync_update batch size can only be positive, got : {}.".format(num_batch))
+            raise RuntimeError("Sync_update batch size can only be positive integer, got : {}.".format(num_batch))
         notifiers_dict = self.get_sync_notifiers()
+        if not isinstance(condition_name, str):
+            raise TypeError("Argument condition_name with value {} is not of type str, but got {}."
+                            .format(condition_name, type(condition_name)))
         if condition_name not in notifiers_dict:
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
@@ -2145,11 +2151,15 @@ class BatchDataset(Dataset):
         Per iterator bootstrap callback.
         """
         if self.python_multiprocessing:
+            if self.per_batch_map is None:
+                logger.warning("per_batch_map is None so python_multiprocessing does not work.")
+                return
             arg_q_list = []
             res_q_list = []
 
-            # Register clean zombie subprocesses signal here
-            signal.signal(signal.SIGCHLD, wait_child_processes)
+            if platform.system().lower() != 'windows':
+                # Register clean zombie subprocesses signal here
+                signal.signal(signal.SIGCHLD, wait_child_processes)
 
             # If user didn't specify num_parallel_workers, set it to default
             if self.num_parallel_workers is not None:
@@ -2647,7 +2657,8 @@ class MapDataset(Dataset):
 
             if callable_list:
                 # Register clean zombie subprocesses signal here
-                signal.signal(signal.SIGCHLD, wait_child_processes)
+                if platform.system().lower() != 'windows':
+                    signal.signal(signal.SIGCHLD, wait_child_processes)
 
                 # Construct pool with the callable list
                 # The callable list and _pyfunc_worker_init are used to pass lambda function in to subprocesses
@@ -3577,6 +3588,24 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
             logger.warning("Expected /dev/shm to exist.")
 
 
+def _watch_dog(pids, eof):
+    """
+    This thread is for get hang in SamplerFn.Process
+    """
+    exit_num = 0
+    while not eof.is_set():
+        for pid in pids:
+            if not psutil.pid_exists(pid):
+                exit_num += 1
+        if exit_num == 0:
+            continue
+        else:
+            ## multiprocessing.queue may hang in .get() forever when put() process was killed.
+            ## We have to exit main process otherwise main process will hang.
+            logger.error("The subprocess of GeneratorDataset may exit unexpected or be killed, main process will exit.")
+            os.kill(os.getpid(), signal.SIGTERM)
+
+
 class SamplerFn:
     """
     Multiprocessing or multithread generator function wrapper master process.
@@ -3591,8 +3620,9 @@ class SamplerFn:
         self.pid = []
         # Event for end of epoch
         if multi_process is True:
-            # Register clean zombie subprocesses signal here
-            signal.signal(signal.SIGCHLD, wait_child_processes)
+            if platform.system().lower() != 'windows':
+                # Register clean zombie subprocesses signal here
+                signal.signal(signal.SIGCHLD, wait_child_processes)
 
             try:
                 self.eof = multiprocessing.Event()
@@ -3628,6 +3658,10 @@ class SamplerFn:
                 worker = _GeneratorWorkerMt(dataset, self.eof)
                 worker.daemon = True
             self.workers.append(worker)
+        if multi_process is True:
+            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.pid, self.eof))
+            self.watch_dog.daemon = True
+            self.watch_dog.start()
 
     def process(self, indices):
         """
@@ -3649,6 +3683,9 @@ class SamplerFn:
         # Fetch results
         for i in range(len(indices)):
             if self.eof.is_set():
+                self._stop_subprocess()
+                return
+            if self.multi_process is True and not psutil.pid_exists(self.workers[i % self.num_worker].pid):
                 self._stop_subprocess()
                 return
             # Fetch result and put index
@@ -3675,7 +3712,9 @@ class SamplerFn:
             self.eof.set()
             self.need_join = False
             for w in self.workers:
-                w.join()
+                if psutil.pid_exists(w.pid):
+                    w.join()
+            self.watch_dog.join()
 
     def __del__(self):
         self._stop_subprocess()
@@ -4368,20 +4407,6 @@ class Cifar10Dataset(MappableDataset):
     def parse(self, children=None):
         return cde.Cifar10Node(self.dataset_dir, self.usage, self.sampler)
 
-
-class CmuArcticDataset(MappableDataset):
-
-    @check_cmu_arctic_dataset
-    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
-                 sampler=None, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
-                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
-
-        self.dataset_dir = dataset_dir
-        self.usage = replace_none(usage, "aew")
-
-    def parse(self, children=None):
-        return cde.CmuArcticNode(self.dataset_dir, self.usage, self.sampler)
 
 class Cifar100Dataset(MappableDataset):
     """
@@ -5423,6 +5448,232 @@ class CSVDataset(SourceDataset):
                            self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
 
 
+class _Flowers102Dataset:
+    """
+    Mainly for loading Flowers102 Dataset, and return one row each time.
+    """
+    def __init__(self, dataset_dir, task, usage, decode):
+        self.dataset_dir = os.path.realpath(dataset_dir)
+        self.task = task
+        self.usage = usage
+        self.decode = decode
+
+        if self.task == "Classification":
+            self.column_names = ["image", "label"]
+        else:
+            self.column_names = ["image", "segmentation", "label"]
+
+        labels_path = os.path.join(self.dataset_dir, "imagelabels.mat")
+        setid_path = os.path.join(self.dataset_dir, "setid.mat")
+        # minus one to transform 1~102 to 0 ~ 101
+        self.labels = (loadmat(labels_path)["labels"][0] - 1).astype(np.uint32)
+        self.setid = loadmat(setid_path)
+
+        if self.usage == 'train':
+            self.indices = self.setid["trnid"][0].tolist()
+        elif self.usage == 'test':
+            self.indices = self.setid["tstid"][0].tolist()
+        elif self.usage == 'valid':
+            self.indices = self.setid["valid"][0].tolist()
+        elif self.usage == 'all':
+            self.indices = self.setid["trnid"][0].tolist()
+            self.indices += self.setid["tstid"][0].tolist()
+            self.indices += self.setid["valid"][0].tolist()
+        else:
+            raise ValueError("Input usage is not within the valid set of ['train', 'valid', 'test', 'all'].")
+
+    def __getitem__(self, index):
+        # range: 1 ~ 8189
+        image_path = os.path.join(self.dataset_dir, "jpg", "image_" + str(self.indices[index]).zfill(5) + ".jpg")
+        if not os.path.exists(image_path):
+            raise RuntimeError("Can not find image file: " + image_path)
+
+        if self.decode is True:
+            image = np.asarray(Image.open(image_path).convert("RGB"))
+        else:
+            image = np.fromfile(image_path, dtype=np.uint8)
+
+        label = self.labels[self.indices[index] - 1]
+
+        if self.task == "Segmentation":
+            segmentation_path = \
+                os.path.join(self.dataset_dir, "segmim", "segmim_" + str(self.indices[index]).zfill(5) + ".jpg")
+            if not os.path.exists(segmentation_path):
+                raise RuntimeError("Can not find segmentation file: " + segmentation_path)
+            if self.decode is True:
+                segmentation = np.asarray(Image.open(segmentation_path).convert("RGB"))
+            else:
+                segmentation = np.fromfile(segmentation_path, dtype=np.uint8)
+            return image, segmentation, label
+
+        return image, label
+
+    def __len__(self):
+        return len(self.indices)
+
+
+class Flowers102Dataset(GeneratorDataset):
+    """
+    A source dataset for reading and parsing Flowers102 dataset.
+
+    The generated dataset has two columns :py:obj:`[image, label]` or three :py:obj:`[image, segmentation, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`segmentation` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar or a tensor of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        task (str): Specify the 'Classification' or 'Segmentation' task (default='Classification').
+        usage (str): Specify the 'train', 'valid', 'test' part or 'all' parts of dataset
+            (default='all', will read all samples).
+        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
+            (default=None, expected order behavior shown in the table).
+        decode (bool, optional): Whether or not to decode the images and segmentations after reading (default=False).
+        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
+            input is required (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            Random accessible input is required. When this argument is specified, 'num_samples' reflects the max
+            sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
+            when num_shards is also specified. Random accessible input is required.
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> flowers102_dataset_dir = "/path/to/flowers102_dataset_directory"
+        >>> dataset = ds.Flowers102Dataset(dataset_dir=flowers102_dataset_dir,
+        ...                                task="Classification",
+        ...                                usage="all",
+        ...                                decode=True)
+
+    About Flowers102 dataset:
+
+    Flowers102 dataset consists of 102 flower categories.
+    The flowers commonly occur in the United Kingdom.
+    Each class consists of between 40 and 258 images.
+
+    Here is the original Flowers102 dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── flowes102_dataset_dir
+             ├── imagelabels.mat
+             ├── setid.mat
+             ├── jpg
+                  ├── image_00001.jpg
+                  ├── image_00002.jpg
+                  ├── ...
+             ├── segmim
+                  ├── segmim_00001.jpg
+                  ├── segmim_00002.jpg
+                  ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @InProceedings{Nilsback08,
+          author       = "Maria-Elena Nilsback and Andrew Zisserman",
+          title        = "Automated Flower Classification over a Large Number of Classes",
+          booktitle    = "Indian Conference on Computer Vision, Graphics and Image Processing",
+          month        = "Dec",
+          year         = "2008",
+        }
+    """
+
+    @check_flowers102dataset
+    def __init__(self, dataset_dir, task="Classification", usage="all", num_samples=None, num_parallel_workers=1,
+                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
+        self.dataset_dir = os.path.realpath(dataset_dir)
+        self.task = replace_none(task, "Classification")
+        self.usage = replace_none(usage, "all")
+        self.decode = replace_none(decode, False)
+        dataset = _Flowers102Dataset(self.dataset_dir, self.task, self.usage, self.decode)
+        super().__init__(dataset, column_names=dataset.column_names, num_samples=num_samples,
+                         num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
+                         num_shards=num_shards, shard_id=shard_id)
+
+    def get_class_indexing(self):
+        """
+        Get the class index.
+
+        Returns:
+            dict, a str-to-int mapping from label name to index.
+        """
+        class_names = [
+            "pink primrose", "hard-leaved pocket orchid", "canterbury bells",
+            "sweet pea", "english marigold", "tiger lily", "moon orchid",
+            "bird of paradise", "monkshood", "globe thistle", "snapdragon",
+            "colt's foot", "king protea", "spear thistle", "yellow iris",
+            "globe-flower", "purple coneflower", "peruvian lily", "balloon flower",
+            "giant white arum lily", "fire lily", "pincushion flower", "fritillary",
+            "red ginger", "grape hyacinth", "corn poppy", "prince of wales feathers",
+            "stemless gentian", "artichoke", "sweet william", "carnation",
+            "garden phlox", "love in the mist", "mexican aster", "alpine sea holly",
+            "ruby-lipped cattleya", "cape flower", "great masterwort", "siam tulip",
+            "lenten rose", "barbeton daisy", "daffodil", "sword lily", "poinsettia",
+            "bolero deep blue", "wallflower", "marigold", "buttercup", "oxeye daisy",
+            "common dandelion", "petunia", "wild pansy", "primula", "sunflower",
+            "pelargonium", "bishop of llandaff", "gaura", "geranium", "orange dahlia",
+            "pink-yellow dahlia?", "cautleya spicata", "japanese anemone",
+            "black-eyed susan", "silverbush", "californian poppy", "osteospermum",
+            "spring crocus", "bearded iris", "windflower", "tree poppy", "gazania",
+            "azalea", "water lily", "rose", "thorn apple", "morning glory",
+            "passion flower", "lotus", "toad lily", "anthurium", "frangipani",
+            "clematis", "hibiscus", "columbine", "desert-rose", "tree mallow",
+            "magnolia", "cyclamen", "watercress", "canna lily", "hippeastrum",
+            "bee balm", "ball moss", "foxglove", "bougainvillea", "camellia", "mallow",
+            "mexican petunia", "bromelia", "blanket flower", "trumpet creeper",
+            "blackberry lily"
+        ]
+
+        class_dict = {}
+        for i, class_name in enumerate(class_names):
+            class_dict[class_name] = i
+
+        return class_dict
+
+
 class TextFileDataset(SourceDataset):
     """
     A source dataset that reads and parses datasets stored on disk in text format.
@@ -5679,3 +5930,384 @@ class PaddedDataset(GeneratorDataset):
         super().__init__(dataset, column_names=dataset.column_names, num_shards=None, shard_id=None, shuffle=False)
         self._dataset_size = len(dataset.padded_samples)
         self.padded_samples = padded_samples
+
+
+class FlickrDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing Flickr8k and Flickr30k dataset.
+
+    The generated dataset has two columns :py:obj:`[image, annotation]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`annotation` is a tensor which contains 5 annotations string,
+    such as ["a", "b", "c", "d", "e"].
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        annotation_file (str): Path to the root directory that contains the annotation.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir is not valid or does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If annotation_file is not exist.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> flickr_dataset_dir = "/path/to/flickr_dataset_directory"
+        >>> annotation_file = "/path/to/flickr_annotation_file"
+        >>>
+        >>> # 1) Get all samples from FLICKR dataset in sequence
+        >>> dataset = ds.FlickrDataset(dataset_dir=flickr_dataset_dir,
+        ...                            annotation_file=annotation_file,
+        ...                            shuffle=False)
+        >>>
+        >>> # 2) Randomly select 350 samples from FLICKR dataset
+        >>> dataset = ds.FlickrDataset(dataset_dir=flickr_dataset_dir,
+        ...                            annotation_file=annotation_file,
+        ...                            num_samples=350,
+        ...                            shuffle=True)
+        >>>
+        >>> # 3) Get samples from FLICKR dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.FlickrDataset(dataset_dir=flickr_dataset_dir,
+        ...                            annotation_file=annotation_file,
+        ...                            num_shards=2,
+        ...                            shard_id=0)
+        >>>
+        >>> # In FLICKR dataset, each dictionary has keys "image" and "annotation"
+
+    About Flickr8k dataset:
+
+    The Flickr8k dataset consists of 8092 colour images. There are 40460 annotations in the Flickr8k.token.txt,
+    each image has 5 annotations.
+
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── Flickr8k
+             ├── Flickr8k_Dataset
+             │    ├── 1000268201_693b08cb0e.jpg
+             │    ├── 1001773457_577c3a7d70.jpg
+             │    ├── ...
+             └── Flickr8k.token.txt
+
+    Citation:
+
+    .. code-block::
+
+        @article{DBLP:journals/jair/HodoshYH13,
+        author    = {Micah Hodosh and Peter Young and Julia Hockenmaier},
+        title     = {Framing Image Description as a Ranking Task: Data, Models and Evaluation Metrics},
+        journal   = {J. Artif. Intell. Res.},
+        volume    = {47},
+        pages     = {853--899},
+        year      = {2013},
+        url       = {https://doi.org/10.1613/jair.3994},
+        doi       = {10.1613/jair.3994},
+        timestamp = {Mon, 21 Jan 2019 15:01:17 +0100},
+        biburl    = {https://dblp.org/rec/journals/jair/HodoshYH13.bib},
+        bibsource = {dblp computer science bibliography, https://dblp.org}
+        }
+
+    About Flickr30k dataset:
+
+    The Flickr30k dataset consists of 31783 colour images. There are 158915 annotations in
+    the results_20130124.token, each image has 5 annotations.
+
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+
+    Citation:
+
+    .. code-block::
+
+        .
+        └── Flickr30k
+             ├── flickr30k-images
+             │    ├── 1000092795.jpg
+             │    ├── 10002456.jpg
+             │    ├── ...
+             └── results_20130124.token
+
+    .. code-block::
+
+        @article{DBLP:journals/tacl/YoungLHH14,
+        author    = {Peter Young and Alice Lai and Micah Hodosh and Julia Hockenmaier},
+        title     = {From image descriptions to visual denotations: New similarity metrics
+                     for semantic inference over event descriptions},
+        journal   = {Trans. Assoc. Comput. Linguistics},
+        volume    = {2},
+        pages     = {67--78},
+        year      = {2014},
+        url       = {https://tacl2013.cs.columbia.edu/ojs/index.php/tacl/article/view/229},
+        timestamp = {Wed, 17 Feb 2021 21:55:25 +0100},
+        biburl    = {https://dblp.org/rec/journals/tacl/YoungLHH14.bib},
+        bibsource = {dblp computer science bibliography, https://dblp.org}
+        }
+    """
+
+    @check_flickr_dataset
+    def __init__(self, dataset_dir, annotation_file, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 decode=None, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.annotation_file = annotation_file
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.FlickrNode(self.dataset_dir, self.annotation_file, self.decode, self.sampler)
+
+
+class SBDataset(GeneratorDataset):
+    """
+    A source dataset for reading and parsing Semantic Boundaries Dataset.
+
+    The generated dataset has two columns: :py:obj:`[image, task]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`task` contains 20 images of the uint8 type if `task` is `Boundaries` otherwise
+    contains 1 image of the uint8 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        task (str, optional): Acceptable tasks include `Boundaries` or `Segmentation` (default=`Boundaries`).
+        usage (str, optional): Acceptable usages include `train`, `val`, `train_noval` and `all` (default=`all`).
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+
+    Raises:
+        RuntimeError: If dataset_dir is not valid or does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If task is not in [`Boundaries`, `Segmentation`].
+        ValueError: If usage is not in [`train`, `val`, `train_noval`, `all`].
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> sb_dataset_dir = "/path/to/sb_dataset_directory"
+        >>>
+        >>> # 1) Get all samples from Semantic Boundaries Dataset in sequence
+        >>> dataset = ds.SBDataset(dataset_dir=sb_dataset_dir, shuffle=False)
+        >>>
+        >>> # 2) Randomly select 350 samples from Semantic Boundaries Dataset
+        >>> dataset = ds.SBDataset(dataset_dir=sb_dataset_dir, num_samples=350, shuffle=True)
+        >>>
+        >>> # 3) Get samples from Semantic Boundaries Dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.SBDataset(dataset_dir=sb_dataset_dir, num_shards=2, shard_id=0)
+        >>>
+        >>> # In Semantic Boundaries Dataset, each dictionary has keys "image" and "task"
+
+    About Semantic Boundaries Dataset:
+
+    The Semantic Boundaries Dataset consists of 11355 colour images. There are 8498 images' name in the train.txt,
+    2857 images' name in the val.txt and 5623 images' name in the train_noval.txt. The category cls/
+    contains the Segmentation and Boundaries results of category-level, the category inst/ catains the
+    Segmentation and Boundaries results of instance-level.
+
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
+
+    .. code-block::
+
+         .
+         └── benchmark_RELEASE
+              ├── dataset
+              ├── img
+              │    ├── 2008_000002.jpg
+              │    ├── 2008_000003.jpg
+              │    ├── ...
+              ├── cls
+              │    ├── 2008_000002.mat
+              │    ├── 2008_000003.mat
+              │    ├── ...
+              ├── inst
+              │    ├── 2008_000002.mat
+              │    ├── 2008_000003.mat
+              │    ├── ...
+              ├── train.txt
+              └── val.txt
+
+    .. code-block::
+
+        @InProceedings{BharathICCV2011,
+            author       = "Bharath Hariharan and Pablo Arbelaez and Lubomir Bourdev and
+                            Subhransu Maji and Jitendra Malik",
+            title        = "Semantic Contours from Inverse Detectors",
+            booktitle    = "International Conference on Computer Vision (ICCV)",
+            year         = "2011",
+    """
+
+    @check_sb_dataset
+    def __init__(self, dataset_dir, task='Boundaries', usage='all', num_samples=None, num_parallel_workers=1,
+                 shuffle=None, decode=None, sampler=None, num_shards=None, shard_id=None):
+        dataset = _SBDataset(dataset_dir, task, usage, decode)
+        super().__init__(dataset, column_names=dataset.column_list, num_samples=num_samples,
+                         num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
+                         num_shards=num_shards, shard_id=shard_id)
+
+
+class _SBDataset:
+    """
+    Dealing with the data file with .mat extension, and return one row in tuple (image, task) each time.
+    """
+
+    def __init__(self, dataset_dir, task, usage, decode):
+        self.column_list = ['image', 'task']
+        self.task = task
+        self.images_path = os.path.join(dataset_dir, 'img')
+        self.cls_path = os.path.join(dataset_dir, 'cls')
+        self._loadmat = loadmat
+        self.categories = 20
+        self.decode = replace_none(decode, False)
+
+        if usage == "all":
+            image_names = []
+            for item in ["train", "val"]:
+                usage_path = os.path.join(dataset_dir, item + '.txt')
+                if not os.path.exists(usage_path):
+                    raise FileNotFoundError("SBDataset: {0} not found".format(usage_path))
+                with open(usage_path, 'r') as f:
+                    image_names += [x.strip() for x in f.readlines()]
+        else:
+            usage_path = os.path.join(dataset_dir, usage + '.txt')
+            if not os.path.exists(usage_path):
+                raise FileNotFoundError("SBDataset: {0} not found".format(usage_path))
+            with open(usage_path, 'r') as f:
+                image_names = [x.strip() for x in f.readlines()]
+
+        self.images = [os.path.join(self.images_path, i + ".jpg") for i in image_names]
+        self.clss = [os.path.join(self.cls_path, i + ".mat") for i in image_names]
+
+        if len(self.images) != len(self.clss):
+            raise ValueError("SBDataset: images count not equal to cls count")
+
+        self._get_data = self._get_boundaries_data if self.task == "Boundaries" else self._get_segmentation_data
+        self._get_item = self._get_decode_item if self.decode else self._get_undecode_item
+
+    def _get_boundaries_data(self, mat_path):
+        mat_data = self._loadmat(mat_path)
+        return np.concatenate([np.expand_dims(mat_data['GTcls'][0][self.task][0][i][0].toarray(), axis=0)
+                               for i in range(self.categories)], axis=0)
+
+    def _get_segmentation_data(self, mat_path):
+        mat_data = self._loadmat(mat_path)
+        return Image.fromarray(mat_data['GTcls'][0][self.task][0])
+
+    def _get_decode_item(self, idx):
+        return Image.open(self.images[idx]).convert('RGB'), self._get_data(self.clss[idx])
+
+    def _get_undecode_item(self, idx):
+        return np.fromfile(self.images[idx], dtype=np.uint8), self._get_data(self.clss[idx])
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        return self._get_item(idx)
+
+
+class DeserializedDataset(Dataset):
+    def __init__(self, input_obj):
+        super().__init__()
+        self.input_obj = input_obj
+
+    def parse(self, children=None):
+        if isinstance(self.input_obj, dict):
+            json_str = json.dumps(self.input_obj)
+            return cde.Dataset.from_json_string(json_str)
+        return cde.Dataset.from_json_file(self.input_obj)

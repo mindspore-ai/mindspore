@@ -28,6 +28,6 @@ python ${CUR_DIR}/run_ernie_classifier.py  \
     --train_data_shuffle="true" \
     --eval_data_shuffle="false" \
     --eval_batch_size=32 \
-    --load_finetune_checkpoint_path="${SAVE_PATH}/classifier-3_302.ckpt" \
+    --load_finetune_checkpoint_path="${SAVE_PATH}/classifier-3_301.ckpt" \
     --eval_data_file_path="${DATA_PATH}/test.mindrecord" \
     --schema_file_path="" > ${GLOG_log_dir}/eval_classifier_log.txt 2>&1 &

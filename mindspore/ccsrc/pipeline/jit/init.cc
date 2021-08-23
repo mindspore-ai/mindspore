@@ -96,7 +96,9 @@ PYBIND11_MODULE(_c_expression, m) {
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
     .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
     .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.")
-    .def("set_py_exe_path", &ExecutorPy::PyExePath, py::arg("phase") = py::str(""), "set python executable path.");
+    .def("set_py_exe_path", &ExecutorPy::PyExePath, py::arg("py_exe_path") = py::str(""), "set python executable path.")
+    .def("set_kernel_build_server_dir", &ExecutorPy::KernelBuildServerDir,
+         py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.");
 
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 
@@ -105,6 +107,8 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
   (void)m.def("init_hccl", &mindspore::pipeline::InitHccl, "Init Hccl");
   (void)m.def("finalize_hccl", &mindspore::pipeline::FinalizeHccl, "Finalize Hccl");
+  (void)m.def("get_hccl_rank_id", &mindspore::pipeline::GetHcclRankId, "Get Hccl Rank Id");
+  (void)m.def("get_hccl_rank_size", &mindspore::pipeline::GetHcclRankSize, "Get Hccl Rank Size");
   (void)m.def("verify_inputs_signature", &mindspore::pipeline::VerifyInputSignature, "Verify input signature.");
   (void)m.def("init_exec_dataset", &mindspore::pipeline::InitExecDataset, py::arg("queue_name"), py::arg("size"),
               py::arg("batch_size"), py::arg("types"), py::arg("shapes"), py::arg("input_indexs"),

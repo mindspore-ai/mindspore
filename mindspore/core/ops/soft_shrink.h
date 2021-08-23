@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftShrink = "SoftShrink";
-class SoftShrink : public PrimitiveC {
+class MS_CORE_API SoftShrink : public PrimitiveC {
  public:
   SoftShrink() : PrimitiveC(kNameSoftShrink) { InitIOName({"input_x"}, {"output"}); }
   ~SoftShrink() = default;

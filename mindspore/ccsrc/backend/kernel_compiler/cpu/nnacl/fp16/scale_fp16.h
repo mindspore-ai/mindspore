@@ -24,12 +24,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoScaleFp16(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int task_id,
-                 ScaleParameter *scale_param);
-void Fp16DoScaleRelu(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int task_id,
-                     ScaleParameter *scale_param);
-void DoScaleRelu6Fp16(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int task_id,
-                      ScaleParameter *scale_param);
+void DoScaleFp16(const float16_t *in_data, float16_t *out_data, const float16_t *scale, const float16_t *offset,
+                 int task_id, const ScaleParameter *scale_param);
+void Fp16DoScaleRelu(const float16_t *in_data, float16_t *out_data, const float16_t *scale, const float16_t *offset,
+                     int task_id, const ScaleParameter *scale_param);
+void DoScaleRelu6Fp16(const float16_t *in_data, float16_t *out_data, const float16_t *scale, const float16_t *offset,
+                      int task_id, const ScaleParameter *scale_param);
 #ifdef __cplusplus
 }
 #endif

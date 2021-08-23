@@ -90,6 +90,7 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 }  // namespace mindspore

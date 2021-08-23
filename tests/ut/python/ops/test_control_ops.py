@@ -1015,3 +1015,23 @@ def test_recursive_call():
         net(input_data)
     os.environ['ENV_RECURSIVE_EVAL'] = '0'
     context.set_context(max_call_depth=old_max_call_depth)
+
+
+# grad for Tensor(Bool) input and eliminate AddN(MakeTuple(Xs, zeros_like(Bool)))
+def test_grad_tensor_bool():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self, x, y, z):
+            out = z
+            while x:
+                out = out + z
+                x = y
+            return out
+
+    x = Tensor(np.array(False).astype(np.bool))
+    y = Tensor(np.array(False).astype(np.bool))
+    z = Tensor(np.ones([2, 3], dtype=np.float32))
+    net = grad_all(Net())
+    net(x, y, z)

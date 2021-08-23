@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "debug/anf_ir_utils.h"
-#include "debug/common.h"
 #include "proto/anf_ir.pb.h"
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
@@ -544,7 +543,7 @@ void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix) {
     MS_LOG(ERROR) << "Func graph is nullptr";
     return;
   }
-  std::string file_path = pipeline::GetSaveGraphsPathName("ms_output_" + suffix + ".pb");
+  std::string file_path = GetSaveGraphsPathName("ms_output_" + suffix + ".pb");
   auto realpath = Common::GetRealPath(file_path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file_path;

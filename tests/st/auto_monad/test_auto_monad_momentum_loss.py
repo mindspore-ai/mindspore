@@ -61,7 +61,7 @@ class MSELoss(Cell):
         return self.reduce_mean(self.square(diff), get_axis(diff))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHashtableLookup = "HashtableLookup";
-class HashtableLookup : public PrimitiveC {
+class MS_CORE_API HashtableLookup : public PrimitiveC {
  public:
   HashtableLookup() : PrimitiveC(kNameHashtableLookup) {}
   ~HashtableLookup() = default;

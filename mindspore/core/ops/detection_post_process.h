@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDetectionPostProcess = "DetectionPostProcess";
-class DetectionPostProcess : public PrimitiveC {
+class MS_CORE_API DetectionPostProcess : public PrimitiveC {
  public:
   DetectionPostProcess() : PrimitiveC(kNameDetectionPostProcess) {}
   ~DetectionPostProcess() = default;

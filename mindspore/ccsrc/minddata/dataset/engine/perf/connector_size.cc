@@ -53,8 +53,8 @@ json ConnectorSize::ParseOpInfo(const DatasetOp &node, const std::vector<int32_t
 
   auto children = node.Children();
   std::vector<int32_t> children_id;
-  std::transform(children.begin(), children.end(), std::back_inserter(children_id),
-                 [](std::shared_ptr<DatasetOp> op) -> int32_t { return op->id(); });
+  (void)std::transform(children.begin(), children.end(), std::back_inserter(children_id),
+                       [](const std::shared_ptr<DatasetOp> &op) -> int32_t { return op->id(); });
   if (!children_id.empty()) {
     json_node["children"] = children_id;
   }

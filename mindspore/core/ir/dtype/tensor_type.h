@@ -34,7 +34,7 @@
 #include "ir/dtype/type.h"
 
 namespace mindspore {
-class UndeterminedType : public Object {
+class MS_CORE_API UndeterminedType : public Object {
  public:
   UndeterminedType() : Object(kObjectTypeUndeterminedType) {}
   explicit UndeterminedType(const TypePtr &ele)
@@ -57,7 +57,7 @@ class UndeterminedType : public Object {
 };
 using MetaTensorTypePtr = std::shared_ptr<UndeterminedType>;
 
-class TensorType : public Object {
+class MS_CORE_API TensorType : public Object {
  public:
   TensorType() : Object(kObjectTypeTensorType, kObjectTypeUndeterminedType) {}
   explicit TensorType(const TypePtr &ele)
@@ -80,7 +80,7 @@ class TensorType : public Object {
 };
 using TensorTypePtr = std::shared_ptr<TensorType>;
 
-class RowTensorType : public Object {
+class MS_CORE_API RowTensorType : public Object {
  public:
   RowTensorType() : Object(kObjectTypeRowTensorType, kObjectTypeUndeterminedType) {}
   explicit RowTensorType(const TypePtr &ele)
@@ -103,7 +103,7 @@ class RowTensorType : public Object {
 };
 using RowTensorTypePtr = std::shared_ptr<RowTensorType>;
 
-class SparseTensorType : public Object {
+class MS_CORE_API SparseTensorType : public Object {
  public:
   SparseTensorType() : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType) {}
   explicit SparseTensorType(const TypePtr &ele)

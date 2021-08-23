@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 
+#include "utils/visible.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
 #include "ir/anf.h"
@@ -32,13 +33,13 @@ using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 class FuncGraphManager;
 using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 
-struct AnfNodeIndexPairHasher {
+struct MS_CORE_API AnfNodeIndexPairHasher {
   std::size_t operator()(const std::pair<AnfNodePtr, int> &p1) const {
     return std::hash<const AnfNode *>{}(p1.first.get());
   }
 };
 
-struct AnfNodeIndexPairEqual {
+struct MS_CORE_API AnfNodeIndexPairEqual {
   bool operator()(const std::pair<AnfNodePtr, int> &lhs, const std::pair<AnfNodePtr, int> &rhs) const {
     return lhs == rhs;
   }
@@ -47,7 +48,7 @@ struct AnfNodeIndexPairEqual {
 using AnfNodeIndexSet = OrderedSet<std::pair<AnfNodePtr, int>, AnfNodeIndexPairHasher, AnfNodeIndexPairEqual>;
 using NodeUsersMap = OrderedMap<AnfNodePtr, AnfNodeIndexSet>;
 
-class FuncGraphManager {
+class MS_CORE_API FuncGraphManager {
  public:
   FuncGraphManager() = default;
   virtual ~FuncGraphManager() = default;

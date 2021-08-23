@@ -14,6 +14,7 @@
 # ============================================================================
 """Context of auto parallel"""
 import threading
+
 import mindspore.context as context
 import mindspore.log as logger
 from mindspore.parallel._dp_allreduce_fusion import _set_fusion_strategy_by_idx, _set_fusion_strategy_by_size
@@ -39,6 +40,7 @@ class _AutoParallelContext:
 
     def __init__(self):
         self._context_handle = AutoParallelContext.get_instance()
+        self._dataset_strategy_using_str = True
 
     def __new__(cls):
         if cls._instance is None:
@@ -261,24 +263,34 @@ class _AutoParallelContext:
         Set dataset sharding strategy.
 
         Args:
-            dataset_strategy (tuple(tuple)): The dataset sharding strategy.
+            dataset_strategy (str or tuple(tuple)): The dataset sharding strategy.
         """
         self.check_context_handle()
+        if isinstance(dataset_strategy, str):
+            if dataset_strategy not in ("full_batch", "data_parallel"):
+                raise ValueError("The dataset_strategy string should be 'full_batch' or 'data_parallel', "
+                                 "otherwise, incoming tuple(tuple) type strategy")
+            self._context_handle.set_full_batch(dataset_strategy == "full_batch")
+            self._dataset_strategy_using_str = True
+            return
         if not isinstance(dataset_strategy, tuple):
-            raise TypeError(f'strategy must be tuple type, but got:{type(dataset_strategy)}')
+            raise TypeError(f'strategy must be str or tuple type, but got:{type(dataset_strategy)}')
         for ele in dataset_strategy:
             if not isinstance(ele, tuple):
                 raise TypeError(f'The element of strategy must be tuple type, but got:{type(ele)}')
             for dim in ele:
                 if not isinstance(dim, int):
                     raise TypeError(f'The dim of each strategy value must be int type, but got:{type(dim)}')
+        self._dataset_strategy_using_str = False
         self._context_handle.set_dataset_strategy(dataset_strategy)
 
     def get_dataset_strategy(self):
         """Get dataset sharding strategy."""
         self.check_context_handle()
-        if _is_role_pserver():
-            return False
+        if self._dataset_strategy_using_str:
+            if self._context_handle.get_full_batch():
+                return "full_batch"
+            return "data_parallel"
         return self._context_handle.get_dataset_strategy()
 
     def set_grad_accumulation_step(self, grad_accumulation_step):
@@ -659,7 +671,7 @@ _get_auto_parallel_context_func_map = {
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
                  loss_repeated_mean=bool, parallel_mode=str, auto_parallel_search_mode=str,
                  parameter_broadcast=bool, strategy_ckpt_load_file=str,
-                 strategy_ckpt_save_file=str, full_batch=bool, dataset_strategy=tuple, enable_parallel_optimizer=bool,
+                 strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
                  communi_parallel_mode=str, optimizer_weight_shard_size=int,
                  optimizer_weight_shard_aggregated_save=bool,
@@ -706,7 +718,7 @@ def _set_auto_parallel_context(**kwargs):
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         group_ckpt_save_file (str): The path to save parallel group checkpoint. Default: ''
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
-        dataset_strategy (tuplr): Dataset sharding strategy. Default: ().
+        dataset_strategy Union[str, tuple]: Dataset sharding strategy. Default: "data_parallel".
         enable_parallel_optimizer (bool): Enable using optimizer segmentation or not. Default: False.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how

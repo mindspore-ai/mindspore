@@ -199,12 +199,6 @@ if(NOT ENABLE_GE)
 
         if(ENABLE_D)
             install(
-                TARGETS ms_profile
-                DESTINATION ${INSTALL_LIB_DIR}
-                COMPONENT mindspore
-            )
-
-            install(
               TARGETS hccl_plugin
               DESTINATION ${INSTALL_LIB_DIR}
               COMPONENT mindspore

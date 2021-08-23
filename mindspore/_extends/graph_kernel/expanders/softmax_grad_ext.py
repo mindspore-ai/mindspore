@@ -15,7 +15,8 @@
 """generate json desc for SoftmaxGradExt"""
 from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from ._utils import Expander, ExpanderInfoValidator as VLD
-from ._utils import infer_shape_from_fractalNz, get_reduced_ori_shape, to_frac_z_axis
+from ._utils import infer_shape_from_fractalnz, get_reduced_ori_shape, to_frac_z_axis
+
 
 @VLD.add_format(DF.FRAC_NZ, DF.FRAC_NZ, DF.DEFAULT)
 @VLD.add_format(DF.DEFAULT, DF.DEFAULT, DF.DEFAULT)
@@ -29,7 +30,7 @@ class SoftmaxGradExt(Expander):
 
         ori_shape = x.shape
         if x.data_format == DF.FRAC_NZ:
-            ori_shape = infer_shape_from_fractalNz(ori_shape)
+            ori_shape = infer_shape_from_fractalnz(ori_shape)
         if not axis:
             axis = []
             for i, _ in enumerate(ori_shape):

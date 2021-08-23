@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class DiagPart : public PrimitiveC {
+class MS_CORE_API DiagPart : public PrimitiveC {
  public:
   DiagPart() : PrimitiveC(prim::kPrimDiagPart->name()) { InitIOName({"input_x"}, {"output"}); }
   ~DiagPart() = default;

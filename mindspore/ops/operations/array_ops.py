@@ -1264,7 +1264,7 @@ class Fill(PrimitiveWithInfer):
         return out
 
 
-class Ones(PrimitiveWithInfer):
+class Ones(Primitive):
     r"""
     Creates a tensor filled with value ones.
 
@@ -1301,27 +1301,6 @@ class Ones(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Ones"""
-
-    def __infer__(self, dims, dtype):
-        if isinstance(dims['value'], int):
-            shape = (dims['value'],)
-        else:
-            shape = dims['value']
-        validator.check_value_type("shape", shape, [tuple], self.name)
-        for i, item in enumerate(shape):
-            validator.check_non_negative_int(item, shape[i], self.name)
-        valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                       mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
-                       mstype.float16, mstype.float32, mstype.float64]
-        validator.check_types_same_and_valid({"value": dtype['value']}, valid_types, self.name)
-        x_nptype = mstype.dtype_to_nptype(dtype['value'])
-        ret = np.ones(shape, x_nptype)
-        out = {
-            'value': Tensor(ret),
-            'shape': shape,
-            'dtype': x_nptype,
-        }
-        return out
 
 
 class Zeros(Primitive):
@@ -2308,7 +2287,7 @@ class Concat(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-          The data type is the same with `input_x`.
+        The data type is the same with `input_x`.
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -5725,6 +5704,9 @@ class EmbeddingLookup(PrimitiveWithCheck):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
         validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
         validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
+        indices_shp = indices['shape']
+        if not indices_shp:
+            raise ValueError("'indices' should NOT be a scalar.")
         params_shp = params['shape']
         if len(params_shp) > 2:
             raise ValueError("The dimension of 'params' in EmbeddingLookup must <= 2, but got %d." % len(params_shp))
@@ -5980,8 +5962,15 @@ class SearchSorted(PrimitiveWithInfer):
 
 class TensorScatterMax(PrimitiveWithInfer):
     """
-    This operator is equivalent to TensorScatterAdd, except we take the maximum instead
-    of adding values together.
+    By comparing the value at the position indicated by the index in input_x with the value in the update,
+    the value at the index will eventually be equal to the largest one to create a new tensor.
+
+    The last axis of the index is the depth of each index vector. For each index vector,
+    there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
+
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `update` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -6031,8 +6020,15 @@ class TensorScatterMax(PrimitiveWithInfer):
 
 class TensorScatterMin(PrimitiveWithInfer):
     """
-    This operator is equivalent to TensorScatterAdd, except we take the minimum instead
-    of adding values together.
+    By comparing the value at the position indicated by the index in input_x with the value in the update,
+    the value at the index will eventually be equal to the smallest one to create a new tensor.
+
+    The last axis of the index is the depth of each index vector. For each index vector,
+    there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
+
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `update` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -6083,8 +6079,18 @@ class TensorScatterMin(PrimitiveWithInfer):
 
 class TensorScatterSub(PrimitiveWithInfer):
     """
-    This operator is equivalent to TensorScatterAdd, except we subtract, instead of
-    adding values together.
+    Creates a new tensor by subtracting the values from the positions in `input_x` indicicated by
+    `indices`, with values from `update`. When multiple values are provided for the same
+    index, the result of the update will be to subtract these values respectively. This operation is almost
+    equivalent to using ScatterNdSub, except that the updates are applied on `Tensor` instead of `Parameter`.
+
+    The last axis of `indices` is the depth of each index vectors. For each index vector,
+    there must be a corresponding value in `update`. The shape of `update` should be
+    equal to the shape of `input_x[indices]`.
+
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `update` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -6110,8 +6116,8 @@ class TensorScatterSub(PrimitiveWithInfer):
         >>> op = ops.TensorScatterSub()
         >>> output = op(input_x, indices, update)
         >>> print(output)
-        [[ -3.3  0.3  3.6]
-         [ 0.4  0.5 -3.2]]
+        [[-3.3000002  0.3        3.6      ]
+         [ 0.4        0.5       -3.2      ]]
     """
 
     @prim_attr_register

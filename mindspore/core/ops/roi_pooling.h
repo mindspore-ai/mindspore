@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameROIPooling = "ROIPooling";
-class ROIPooling : public PrimitiveC {
+class MS_CORE_API ROIPooling : public PrimitiveC {
  public:
   ROIPooling() : PrimitiveC(kNameROIPooling) {}
   ~ROIPooling() = default;

@@ -36,6 +36,17 @@ int ConvolutionSWCPUKernel::Init() {
     in_tile_ = C8NUM;
     ic_res_ = conv_param_->input_channel_ % in_tile_;
   }
+  if (op_parameter_->is_train_session_) {
+    auto filter_tensor = in_tensors_.at(kWeightIndex);
+    auto input_channel = filter_tensor->Channel();
+    auto output_channel = filter_tensor->Batch();
+    int kernel_h = filter_tensor->Height();
+    int kernel_w = filter_tensor->Width();
+    int kernel_plane = kernel_h * kernel_w;
+    int oc_block_num = UP_DIV(output_channel, oc_tile_);
+    int pack_weight_size = oc_block_num * oc_tile_ * input_channel * kernel_plane;
+    set_workspace_size(pack_weight_size * sizeof(float));
+  }
   auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
@@ -64,7 +75,6 @@ int ConvolutionSWCPUKernel::ReSize() {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
   }
-
   // init sliding window param
   slidingWindow_param_ = new (std::nothrow) SlidingWindowParam;
   if (slidingWindow_param_ == nullptr) {
@@ -175,7 +185,7 @@ void ConvolutionSWCPUKernel::PackWeight() {
   int kernel_h = filter_tensor->Height();
   int kernel_w = filter_tensor->Width();
   int oc_block_num = UP_DIV(output_channel, oc_tile_);
-  void *origin_weight = IsTrainable() ? filter_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data_c() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackNHWCToNXHWCXFp32(kernel_h, kernel_w, output_channel, oc_block_num, input_channel,
                        reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(origin_weight));
@@ -192,12 +202,14 @@ int ConvolutionSWCPUKernel::MallocWeightBiasData() {
   int kernel_plane = kernel_h * kernel_w;
   int oc_block_num = UP_DIV(output_channel, oc_tile_);
   int pack_weight_size = oc_block_num * oc_tile_ * input_channel * kernel_plane;
-  packed_weight_ = malloc(pack_weight_size * sizeof(float));
-  if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "malloc packed weight failed.";
-    return RET_NULL_PTR;
+  if (!op_parameter_->is_train_session_) {
+    packed_weight_ = malloc(pack_weight_size * sizeof(float));
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "malloc packed weight failed.";
+      return RET_NULL_PTR;
+    }
+    memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   }
-  memset(packed_weight_, 0, pack_weight_size * sizeof(float));
 
   if (in_tensors_.size() == kInputSize2) {
     bias_data_ = malloc(oc_block_num * oc_tile_ * sizeof(float));

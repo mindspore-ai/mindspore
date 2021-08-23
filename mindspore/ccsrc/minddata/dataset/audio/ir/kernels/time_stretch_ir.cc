@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
-#include "minddata/dataset/audio/kernels/time_stretch_op.h"
 
 #include "minddata/dataset/audio/ir/validators.h"
+#include "minddata/dataset/audio/kernels/time_stretch_op.h"
+
 namespace mindspore {
 namespace dataset {
 namespace audio {
 
-// TimeStretch
+// TimeStretchOperation
 TimeStretchOperation::TimeStretchOperation(float hop_length, int n_freq, float fixed_rate)
     : hop_length_(hop_length), n_freq_(n_freq), fixed_rate_(fixed_rate) {}
 
@@ -31,10 +32,10 @@ std::string TimeStretchOperation::Name() const { return kTimeStretchOperation; }
 
 Status TimeStretchOperation::ValidateParams() {
   //  param check
-  RETURN_IF_NOT_OK(CheckFloatScalarPositive("TimeStretch", "hop_length", hop_length_));
-  RETURN_IF_NOT_OK(CheckIntScalarPositive("TimeStretch", "n_freq", n_freq_));
-  RETURN_IF_NOT_OK(CheckFloatScalarNotNan("TimeStretch", "fixed_rate", fixed_rate_));
-  RETURN_IF_NOT_OK(CheckFloatScalarPositive("TimeStretch", "fixed_rate", fixed_rate_));
+  RETURN_IF_NOT_OK(ValidateFloatScalarPositive("TimeStretch", "hop_length", hop_length_));
+  RETURN_IF_NOT_OK(ValidateIntScalarPositive("TimeStretch", "n_freq", n_freq_));
+  RETURN_IF_NOT_OK(ValidateFloatScalarNotNan("TimeStretch", "fixed_rate", fixed_rate_));
+  RETURN_IF_NOT_OK(ValidateFloatScalarPositive("TimeStretch", "fixed_rate", fixed_rate_));
   return Status::OK();
 }
 

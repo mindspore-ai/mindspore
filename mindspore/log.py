@@ -422,7 +422,6 @@ def _get_stack_info(frame):
     Returns:
         str, the string of the stack information.
     """
-    sinfo = None
     stack_prefix = 'Stack (most recent call last):\n'
     sinfo = stack_prefix + "".join(traceback.format_stack(frame))
     return sinfo

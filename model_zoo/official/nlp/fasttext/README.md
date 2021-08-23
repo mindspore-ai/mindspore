@@ -68,10 +68,10 @@ After dataset preparation, you can start training and evaluation as follows:
     ```bash
     # run training example
     cd ./scripts
-    bash run_standalone_train.sh [TRAIN_DATASET] [DEVICEID]
+    bash run_standalone_train.sh [TRAIN_DATASET] [DEVICEID] [DATANAME]
 
     # run distributed training example
-    bash run_distribute_train.sh [TRAIN_DATASET] [RANK_TABLE_PATH]
+    bash run_distribute_train.sh [TRAIN_DATASET] [RANK_TABLE_PATH] [DATANAME]
 
     # run evaluation example
     bash run_eval.sh [EVAL_DATASET_PATH] [DATASET_NAME] [MODEL_CKPT] [DEVICEID]
@@ -219,14 +219,14 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
         ```bash
         cd ./scripts
-        bash run_standalone_train.sh [DATASET_PATH]
+        bash run_standalone_train.sh [DATASET_PATH] [DEVICE_ID] [DATANAME]
         ```
 
     - Running scripts for distributed training of FastText. Task training on multiple device and run the following command in bash to be executed in `scripts/`:
 
         ```bash
         cd ./scripts
-        bash run_distributed_train.sh [DATASET_PATH] [RANK_TABLE_PATH]
+        bash run_distributed_train.sh [DATASET_PATH] [RANK_TABLE_PATH] [DATANAME]
         ```
 
 - Running on GPU

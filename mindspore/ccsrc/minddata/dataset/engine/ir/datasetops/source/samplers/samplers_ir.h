@@ -67,6 +67,14 @@ class SamplerObj {
 
   virtual Status to_json(nlohmann::json *const out_json);
 
+#ifndef ENABLE_ANDROID
+  /// \brief Function to construct children samplers
+  /// \param[in] json_obj The JSON object to be deserialized
+  /// \param[out] parent_sampler given parent sampler, output constructed parent sampler with children samplers added
+  /// \return Status The status code returned
+  static Status from_json(nlohmann::json json_obj, std::shared_ptr<SamplerObj> *parent_sampler);
+#endif
+
   std::vector<std::shared_ptr<SamplerObj>> GetChild() { return children_; }
 
 #ifndef ENABLE_ANDROID

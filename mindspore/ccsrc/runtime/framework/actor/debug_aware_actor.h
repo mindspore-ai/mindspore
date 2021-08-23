@@ -25,10 +25,17 @@ namespace runtime {
 // The actor represents a set of common debug related operations of actor.
 class DebugAwareActor : public MemoryAwareActor {
  public:
-  explicit DebugAwareActor(const std::string &name) : MemoryAwareActor(name) {}
+  explicit DebugAwareActor(const std::string &name, KernelTransformType type, const AID *recorder_aid,
+                           const AID &memory_manager_aid, const AID *debug_aid)
+      : MemoryAwareActor(name, type, recorder_aid, memory_manager_aid), debug_aid_(debug_aid) {}
   virtual ~DebugAwareActor() = default;
+
   virtual void SendDebugReq(OpContext<DeviceTensor> *const context) {}
   virtual void OnDebugFinish(OpContext<DeviceTensor> *const context) {}
+
+ protected:
+  // The id of debug actor. Send message to it for debug.
+  const AID *debug_aid_;
 };
 }  // namespace runtime
 }  // namespace mindspore

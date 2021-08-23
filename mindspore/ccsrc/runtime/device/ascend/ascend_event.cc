@@ -29,6 +29,14 @@ AscendEvent::AscendEvent() {
   }
 }
 
+AscendTimeEvent::AscendTimeEvent() {
+  auto ret = rtEventCreateWithFlag(&event_, RT_EVENT_TIME_LINE);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "rtEventCreate failed, ret:" << ret;
+    event_ = nullptr;
+  }
+}
+
 AscendEvent::~AscendEvent() {
   auto ret = rtEventDestroy(event_);
   if (ret != RT_ERROR_NONE) {
@@ -58,6 +66,25 @@ void AscendEvent::WaitEvent() {
     MS_LOG(EXCEPTION) << "rtEventReset failed, ret:" << ret;
   }
   need_wait_ = false;
+}
+
+void AscendEvent::SyncEvent() {
+  MS_EXCEPTION_IF_NULL(event_);
+  auto ret = rtEventSynchronize(event_);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "rtEventSynchronize failed, ret:" << ret;
+  }
+}
+
+void AscendEvent::ElapsedTime(float *cost_time, DeviceEvent *other) {
+  MS_EXCEPTION_IF_NULL(event_);
+  auto ascend_other = static_cast<AscendEvent *>(other);
+  MS_EXCEPTION_IF_NULL(ascend_other);
+  MS_EXCEPTION_IF_NULL(ascend_other->event_);
+  auto ret = rtEventElapsedTime(cost_time, event_, ascend_other->event_);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "rtEventElapsedTime failed, ret:" << ret;
+  }
 }
 
 bool AscendEvent::NeedWait() { return need_wait_; }

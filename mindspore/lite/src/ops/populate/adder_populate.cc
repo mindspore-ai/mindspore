@@ -42,7 +42,13 @@ OpParameter *PopulateAdderParameter(const void *prim) {
   auto pad_list = value->pad_list();
   auto dilation = value->dilation();
   if (kernel_size == nullptr || stride == nullptr || pad_list == nullptr || dilation == nullptr) {
-    MS_LOG(ERROR) << "nullptr";
+    MS_LOG(ERROR) << "exist attr is nullptr";
+    free(param);
+    return nullptr;
+  }
+  if (kernel_size->size() < kMinShapeSizeTwo || stride->size() < kMinShapeSizeTwo ||
+      pad_list->size() < kMinShapeSizeFour || dilation->size() < kMinShapeSizeTwo) {
+    MS_LOG(ERROR) << "exist attr size is invalid.";
     free(param);
     return nullptr;
   }

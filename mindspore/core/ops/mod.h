@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMod = "Mod";
-class Mod : public PrimitiveC {
+class MS_CORE_API Mod : public PrimitiveC {
  public:
   Mod() : PrimitiveC(kNameMod) { InitIOName({"x", "y"}, {"output"}); }
   ~Mod() = default;

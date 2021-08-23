@@ -103,7 +103,7 @@ void SearchSortedCPUKernel<S, T>::CheckParam(const std::vector<AddressPtr> &inpu
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, list_count);
+  CPUKernelUtils::ParallelFor(task, IntToSize(list_count));
 }
 }  // namespace kernel
 }  // namespace mindspore

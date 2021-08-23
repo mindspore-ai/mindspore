@@ -21,6 +21,7 @@ from mindspore.common.initializer import initializer
 
 import mindspore.ops as P
 from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 
 from mindspore import Parameter, ParameterTuple
 from mindspore import Tensor
@@ -350,8 +351,7 @@ class TrainStepWrap(nn.Cell):
         grads = self.grad(self.network, weights)(cats_vals, num_vals, label, sens)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))
 
 
 class ModelBuilder:

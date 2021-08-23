@@ -17,6 +17,7 @@
 #include "backend/kernel_compiler/gpu/data/dataset_init_kernel.h"
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/data/dataset_utils.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "runtime/device/gpu/gpu_memory_allocator.h"
 #include "utils/convert_utils.h"

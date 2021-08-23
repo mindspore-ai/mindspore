@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020-21 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,15 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -gt 8 ]
+if [ $# -gt 6 ]
 then
-    echo "Usage: sh test_and_eval.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT] [GROUND_TRUTH_PATH]"
-    echo "   or: sh test_and_eval.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]"
-    echo "   or: sh test_and_eval.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID]"
-    echo "   or: sh test_and_eval.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH]"
-    echo "   or: sh test_and_eval.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT]"
-    echo "   or: sh test_and_eval.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET]"
-    echo "   or: sh test_and_eval.sh [DEVICE_TARGET] [MODEL_PATH]"
-    echo "   or: sh test_and_eval.sh [DEVICE_TARGET]"
+    echo "Usage: sh test_and_eval.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT] [GROUND_TRUTH_PATH]"
+    echo "   or: sh test_and_eval.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]"
+    echo "   or: sh test_and_eval.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID]"
+    echo "   or: sh test_and_eval.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH]"
+    echo "   or: sh test_and_eval.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT]"
+    echo "   or: sh test_and_eval.sh [MODEL_PATH] [DATASET]"
+    echo "   or: sh test_and_eval.sh [MODEL_PATH]"
     echo "   or: sh test_and_eval.sh "
 exit 1
 fi
@@ -52,24 +51,14 @@ dataset_root=$root/dataset
 dataset_path=$dataset_root/centerface/images/val/images/
 ground_truth_mat=$dataset_root/centerface/ground_truth/val.mat
 save_path=$root/output/centerface/999
-device_target="Ascend"
 device_id=0
-ckpt="0-140_221620.ckpt" # the model saved for epoch=125
+ckpt="0-125_24750.ckpt" # the model saved for epoch=125
 ground_truth_path=$root/dataset/centerface/ground_truth
 
 if [ $# -ge 1 ]
 then
-    device_target="$1"
-    if [ "$device_target" != "Ascend" ] && [ "$device_target" != "GPU" ]
-    then
-        echo "error: device_target=$device_target is not a valid option (Ascend or GPU)"
-    exit 1
-    fi
-fi
-
-if [ $# -ge 2 ]
-then
-    model_path=$(get_real_path $2)
+    model_path=$(get_real_path $1)
+#    if [ ! -f $model_path ]
     if [ ! -d $model_path ]
     then
         echo "error: model_path=$model_path is not a dir"
@@ -77,9 +66,9 @@ then
     fi
 fi
 
-if [ $# -ge 3 ]
+if [ $# -ge 2 ]
 then
-    dataset_path=$(get_real_path $3)
+    dataset_path=$(get_real_path $2)
     if [ ! -d $dataset_path ]
     then
         echo "error: dataset_path=$dataset_path is not a dir"
@@ -87,9 +76,9 @@ then
     fi
 fi
 
-if [ $# -ge 4 ]
+if [ $# -ge 3 ]
 then
-    ground_truth_mat=$(get_real_path $4)
+    ground_truth_mat=$(get_real_path $3)
     if [ ! -f $ground_truth_mat ]
     then
         echo "error: ground_truth_mat=$ground_truth_mat is not a file"
@@ -97,9 +86,9 @@ then
     fi
 fi
 
-if [ $# -ge 5 ]
+if [ $# -ge 4 ]
 then
-    save_path=$(get_real_path $5)
+    save_path=$(get_real_path $4)
     if [ ! -d $save_path ]
     then
         echo "error: save_path=$save_path is not a dir"
@@ -107,19 +96,19 @@ then
     fi
 fi
 
+if [ $# -ge 5 ]
+then
+    device_id=$5
+fi
+
 if [ $# -ge 6 ]
 then
-    device_id=$6
+    ckpt=$6
 fi
 
 if [ $# -ge 7 ]
 then
-    ckpt=$7
-fi
-
-if [ $# == 8 ]
-then
-    ground_truth_path=$(get_real_path $8)
+    ground_truth_path=$(get_real_path $7)
     if [ ! -f $ground_truth_path ]
     then
         echo "error: ground_truth_path=$ground_truth_path is not a file"
@@ -153,7 +142,6 @@ python ${dirname_path}/${SCRIPT_NAME} \
     --rank=$device_id \
     --ckpt_name=$ckpt \
     --eval=1 \
-    --device_target=$device_target \
     --ground_truth_path=$ground_truth_path > test.log  2>&1 &
 
 echo 'running'

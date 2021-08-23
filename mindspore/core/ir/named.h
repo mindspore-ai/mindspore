@@ -24,7 +24,7 @@
 #include "ir/anf.h"
 
 namespace mindspore {
-class Named : public Value {
+class MS_CORE_API Named : public Value {
  public:
   explicit Named(const std::string &name) : name_(name) { hash_id_ = std::hash<std::string>{}(name); }
   Named(const Named &other) : Value(other) {
@@ -62,14 +62,14 @@ class Named : public Value {
 };
 using NamedPtr = std::shared_ptr<Named>;
 
-struct NamedHasher {
+struct MS_CORE_API NamedHasher {
   std::size_t operator()(NamedPtr const &name) const {
     std::size_t hash = name->Hash();
     return hash;
   }
 };
 
-struct NamedEqual {
+struct MS_CORE_API NamedEqual {
   bool operator()(NamedPtr const &t1, NamedPtr const &t2) const {
     MS_EXCEPTION_IF_NULL(t1);
     MS_EXCEPTION_IF_NULL(t2);
@@ -77,31 +77,31 @@ struct NamedEqual {
   }
 };
 
-class None : public Named {
+class MS_CORE_API None : public Named {
  public:
   None() : Named("None") {}
   ~None() override = default;
   MS_DECLARE_PARENT(None, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-extern const NamedPtr kNone;
+MS_CORE_API extern const NamedPtr kNone;
 
-class Null : public Named {
+class MS_CORE_API Null : public Named {
  public:
   Null() : Named("Null") {}
   ~Null() override = default;
   MS_DECLARE_PARENT(Null, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-extern const NamedPtr kNull;
+MS_CORE_API extern const NamedPtr kNull;
 
-class Ellipsis : public Named {
+class MS_CORE_API Ellipsis : public Named {
  public:
   Ellipsis() : Named("Ellipsis") {}
   ~Ellipsis() override = default;
   MS_DECLARE_PARENT(Ellipsis, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-extern const NamedPtr kEllipsis;
+MS_CORE_API extern const NamedPtr kEllipsis;
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_NAMED_H_

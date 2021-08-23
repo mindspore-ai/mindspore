@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchNorm = "BatchNorm";
-class BatchNorm : public PrimitiveC {
+class MS_CORE_API BatchNorm : public PrimitiveC {
  public:
   BatchNorm() : PrimitiveC(kNameBatchNorm) {
     InitIOName({"x", "scale", "offset", "mean", "variance"},

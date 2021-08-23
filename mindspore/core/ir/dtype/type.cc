@@ -87,6 +87,7 @@ enum class BitsNum : int {
   eBits16 = 16,
   eBits32 = 32,
   eBits64 = 64,
+  eBits128 = 128,
 };
 TypeId IntBitsToTypeId(const int nbits) {
   switch (nbits) {
@@ -126,6 +127,17 @@ TypeId FloatBitsToTypeId(const int nbits) {
       return kNumberTypeFloat32;
     case static_cast<int>(BitsNum::eBits64):
       return kNumberTypeFloat64;
+    default:
+      MS_LOG(EXCEPTION) << "Wrong number of bits:" << nbits;
+  }
+}
+
+TypeId ComplexBitsToTypeId(const int nbits) {
+  switch (nbits) {
+    case static_cast<int>(BitsNum::eBits64):
+      return kNumberTypeComplex64;
+    case static_cast<int>(BitsNum::eBits128):
+      return kNumberTypeComplex128;
     default:
       MS_LOG(EXCEPTION) << "Wrong number of bits:" << nbits;
   }

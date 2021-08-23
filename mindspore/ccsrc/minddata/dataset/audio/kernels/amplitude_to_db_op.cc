@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <limits>
-
 #include "minddata/dataset/audio/kernels/amplitude_to_db_op.h"
+
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/util/status.h"
@@ -26,7 +25,7 @@ namespace dataset {
 Status AmplitudeToDBOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   if (input->shape().Rank() < 2) {
-    std::string err_msg = "AmplitudeToDB: input tensor shape should be <..., freq, time>";
+    std::string err_msg = "AmplitudeToDB: input tensor is not in shape of <..., freq, time>.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -40,12 +39,12 @@ Status AmplitudeToDBOp::Compute(const std::shared_ptr<Tensor> &input, std::share
 
   // typecast
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
-                               "AmplitudeToDB: input type should be float, but got string.");
+                               "AmplitudeToDB: input tensor type should be float, but got: string.");
   if (input->type() != DataType::DE_FLOAT64) {
-    CHECK_FAIL_RETURN_UNEXPECTED(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)),
-                                 "AmplitudeToDB: input type should be float, but got " + input->type().ToString());
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)),
+      "AmplitudeToDB: input tensor type should be float, but got: " + input->type().ToString());
     return AmplitudeToDB<float>(input_tensor, output, multiplier, amin, db_multiplier, top_db);
-
   } else {
     input_tensor = input;
     return AmplitudeToDB<double>(input_tensor, output, multiplier, amin, db_multiplier, top_db);

@@ -183,7 +183,6 @@ function Run_x86_java() {
 
 basepath=$(pwd)
 echo ${basepath}
-#set -e
 
 # Example:sh run_benchmark_x86.sh -r /home/temp_test -m /home/temp_test/models -e arm_cpu
 while getopts "r:m:e:" opt; do
@@ -205,8 +204,6 @@ while getopts "r:m:e:" opt; do
         exit 1;;
     esac
 done
-
-# mkdir train
 
 x86_path=${release_path}/ubuntu_x86
 file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)

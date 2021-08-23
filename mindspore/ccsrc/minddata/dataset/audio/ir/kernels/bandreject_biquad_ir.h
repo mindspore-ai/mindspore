@@ -16,10 +16,12 @@
 
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_BANDREJECT_BIQUAD_IR_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_BANDREJECT_BIQUAD_IR_H_
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "include/api/status.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/include/dataset/transforms.h"
@@ -27,10 +29,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
 
-// Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kBandrejectBiquadOperation[] = "BandrejectBiquad";
 
 class BandrejectBiquadOperation : public TensorOperation {

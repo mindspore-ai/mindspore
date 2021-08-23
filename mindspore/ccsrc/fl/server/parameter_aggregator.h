@@ -68,6 +68,9 @@ class ParameterAggregator {
   // Reinitialize the parameter aggregator after scaling operations are done.
   bool ReInitForScaling();
 
+  // After hyper-parameters are updated, some parameter aggregators should be reinitialized.
+  bool ReInitForUpdatingHyperParams(size_t aggr_threshold);
+
   // Update old data stored in ParameterAggregator with new data.
   // The data could have many meanings: weights, gradients, learning_rate, momentum, etc.
   bool UpdateData(const std::map<std::string, Address> &new_data);

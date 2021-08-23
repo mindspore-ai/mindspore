@@ -35,7 +35,7 @@ class MindDataTestExecute : public UT::DatasetOpTesting {
 };
 
 TEST_F(MindDataTestExecute, TestAllpassBiquadWithEager) {
-  MS_LOG(INFO) << "Basic Function Test With Eager.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAllpassBiquadWithEager.";
   // Original waveform
   std::vector<float> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
@@ -54,7 +54,7 @@ TEST_F(MindDataTestExecute, TestAllpassBiquadWithEager) {
 }
 
 TEST_F(MindDataTestExecute, TestAllpassBiquadWithWrongArg) {
-  MS_LOG(INFO) << "Wrong Arg.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAllpassBiquadWithWrongArg.";
   std::vector<double> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
     1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
@@ -72,9 +72,8 @@ TEST_F(MindDataTestExecute, TestAllpassBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
-TEST_F(MindDataTestExecute, TestAdjustGammaEager1) {
-  // 3-channel eager
-  MS_LOG(INFO) << "3-channel image test";
+TEST_F(MindDataTestExecute, TestAdjustGammaEager3Channel) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustGammaEager3Channel.";
   // Read images
   auto image = ReadFileToTensor("data/dataset/apple.jpg");
 
@@ -87,9 +86,8 @@ TEST_F(MindDataTestExecute, TestAdjustGammaEager1) {
   EXPECT_EQ(rc, Status::OK());
 }
 
-TEST_F(MindDataTestExecute, TestAdjustGammaEager2) {
-  // 1-channel eager
-  MS_LOG(INFO) << "1-channel image test";
+TEST_F(MindDataTestExecute, TestAdjustGammaEager1Channel) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustGammaEager1Channel.";
   auto m1 = ReadFileToTensor("data/dataset/apple.jpg");
   // Transform params
   auto decode = vision::Decode();
@@ -102,7 +100,7 @@ TEST_F(MindDataTestExecute, TestAdjustGammaEager2) {
 }
 
 TEST_F(MindDataTestExecute, TestAmplitudeToDB) {
-  MS_LOG(INFO) << "Basic Function Test With Eager.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDB.";
   // Original waveform
   std::vector<float> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
@@ -122,7 +120,7 @@ TEST_F(MindDataTestExecute, TestAmplitudeToDB) {
 }
 
 TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongArgs) {
-  MS_LOG(INFO) << "Wrong Arg.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDBWrongArgs.";
   // Original waveform
   std::vector<float> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
@@ -142,7 +140,7 @@ TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongArgs) {
 }
 
 TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongInput) {
-  MS_LOG(INFO) << "Wrong Input.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDBWrongInput.";
   // Original waveform
   std::vector<float> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
@@ -161,7 +159,7 @@ TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongInput) {
 }
 
 TEST_F(MindDataTestExecute, TestComposeTransforms) {
-  MS_LOG(INFO) << "Doing TestComposeTransforms.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComposeTransforms.";
 
   // Read images
   auto image = ReadFileToTensor("data/dataset/apple.jpg");
@@ -197,8 +195,34 @@ TEST_F(MindDataTestExecute, TestCrop) {
   EXPECT_EQ(image.Shape()[1], 15);
 }
 
+TEST_F(MindDataTestExecute, TestFrequencyMasking) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestFrequencyMasking.";
+  std::shared_ptr<Tensor> input_tensor_;
+  TensorShape s = TensorShape({6, 2});
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input_tensor_));
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> frequency_masking_op = std::make_shared<audio::FrequencyMasking>(true, 2);
+  mindspore::dataset::Execute transform({frequency_masking_op});
+  Status status = transform(input_tensor, &input_tensor);
+  EXPECT_TRUE(status.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestTimeMasking) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTimeMasking.";
+  std::shared_ptr<Tensor> input_tensor_;
+  TensorShape s = TensorShape({2, 6});
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input_tensor_));
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> time_masking_op = std::make_shared<audio::TimeMasking>(true, 2);
+  mindspore::dataset::Execute transform({time_masking_op});
+  Status status = transform(input_tensor, &input_tensor);
+  EXPECT_TRUE(status.IsOk());
+}
+
 TEST_F(MindDataTestExecute, TestTimeStretchEager) {
-  MS_LOG(INFO) << "Doing test TimeStretchOp with custom param value. Eager.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTimeStretchEager.";
   std::shared_ptr<Tensor> input_tensor_;
   // op param
   int freq = 4;
@@ -222,8 +246,8 @@ TEST_F(MindDataTestExecute, TestTimeStretchEager) {
   EXPECT_TRUE(status.IsOk());
 }
 
-TEST_F(MindDataTestExecute, TestTimeStretchParamCheck1) {
-  MS_LOG(INFO) << "Doing MindDataTestTimeStretch-TestTimeStretchParamCheck with invalid parameters.";
+TEST_F(MindDataTestExecute, TestTimeStretchParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestTimeStretch-TestTimeStretchParamCheck.";
   // Create an input
   std::shared_ptr<Tensor> input_tensor_;
   std::shared_ptr<Tensor> output_tensor;
@@ -233,26 +257,15 @@ TEST_F(MindDataTestExecute, TestTimeStretchParamCheck1) {
                         1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}),
     s, &input_tensor_));
   auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
-  std::shared_ptr<TensorTransform> timestretch = std::make_shared<audio::TimeStretch>(4, 512, -2);
-  mindspore::dataset::Execute Transform({timestretch});
-  Status status = Transform(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
-}
 
-TEST_F(MindDataTestExecute, TestTimeStretchParamCheck2) {
-  MS_LOG(INFO) << "Doing MindDataTestTimeStretch-TestTimeStretchParamCheck with invalid parameters.";
-  // Create an input
-  std::shared_ptr<Tensor> input_tensor_;
-  std::shared_ptr<Tensor> output_tensor;
-  TensorShape s = TensorShape({1, 4, 3, 2});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f,
-                        1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}),
-    s, &input_tensor_));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
-  std::shared_ptr<TensorTransform> timestretch = std::make_shared<audio::TimeStretch>(4, -512, 2);
-  mindspore::dataset::Execute Transform({timestretch});
-  Status status = Transform(input_ms, &input_ms);
+  std::shared_ptr<TensorTransform> time_stretch1 = std::make_shared<audio::TimeStretch>(4, 512, -2);
+  mindspore::dataset::Execute Transform1({time_stretch1});
+  Status status = Transform1(input_ms, &input_ms);
+  EXPECT_FALSE(status.IsOk());
+
+  std::shared_ptr<TensorTransform> time_stretch2 = std::make_shared<audio::TimeStretch>(4, -512, 2);
+  mindspore::dataset::Execute Transform2({time_stretch2});
+  status = Transform2(input_ms, &input_ms);
   EXPECT_FALSE(status.IsOk());
 }
 
@@ -485,7 +498,7 @@ TEST_F(MindDataTestExecute, TestResizeWithBBox) {
 }
 
 TEST_F(MindDataTestExecute, TestBandBiquadWithEager) {
-  MS_LOG(INFO) << "Basic Function Test With Eager.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandBiquadWithEager.";
   // Original waveform
   std::vector<float> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
@@ -504,7 +517,7 @@ TEST_F(MindDataTestExecute, TestBandBiquadWithEager) {
 }
 
 TEST_F(MindDataTestExecute, TestBandBiquadWithWrongArg) {
-  MS_LOG(INFO) << "Wrong Arg.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandBiquadWithWrongArg.";
   std::vector<double> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
     1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
@@ -523,7 +536,7 @@ TEST_F(MindDataTestExecute, TestBandBiquadWithWrongArg) {
 }
 
 TEST_F(MindDataTestExecute, TestBandpassBiquadWithEager) {
-  MS_LOG(INFO) << "Basic Function Test With Eager.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandpassBiquadWithEager.";
   // Original waveform
   std::vector<float> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
@@ -542,7 +555,7 @@ TEST_F(MindDataTestExecute, TestBandpassBiquadWithEager) {
 }
 
 TEST_F(MindDataTestExecute, TestBandpassBiquadWithWrongArg) {
-  MS_LOG(INFO) << "Wrong Arg.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandpassBiquadWithWrongArg.";
   std::vector<double> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
     1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
@@ -561,7 +574,7 @@ TEST_F(MindDataTestExecute, TestBandpassBiquadWithWrongArg) {
 }
 
 TEST_F(MindDataTestExecute, TestBandrejectBiquadWithEager) {
-  MS_LOG(INFO) << "Basic Function Test With Eager.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandrejectBiquadWithEager.";
   // Original waveform
   std::vector<float> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
@@ -580,7 +593,7 @@ TEST_F(MindDataTestExecute, TestBandrejectBiquadWithEager) {
 }
 
 TEST_F(MindDataTestExecute, TestBandrejectBiquadWithWrongArg) {
-  MS_LOG(INFO) << "Wrong Arg.";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandrejectBiquadWithWrongArg.";
   std::vector<double> labels = {
     2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
     1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
@@ -599,7 +612,7 @@ TEST_F(MindDataTestExecute, TestBandrejectBiquadWithWrongArg) {
 }
 
 TEST_F(MindDataTestExecute, TestAngleEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAngleEager";
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAngleEager.";
   std::vector<double> origin = {1.143, 1.3123, 2.632, 2.554, -1.213, 1.3, 0.456, 3.563};
   TensorShape input_shape({4, 2});
   std::shared_ptr<Tensor> de_tensor;
@@ -611,4 +624,35 @@ TEST_F(MindDataTestExecute, TestAngleEager) {
   Status s = Transform(input, &input);
 
   ASSERT_TRUE(s.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestRGB2BGREager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRGB2BGREager.";
+
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto rgb2bgr_op = vision::RGB2BGR();
+
+  auto transform = Execute({decode, rgb2bgr_op});
+  Status rc = transform(image, &image);
+
+  EXPECT_EQ(rc, Status::OK());
+}
+
+TEST_F(MindDataTestExecute, TestComplexNormEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComplexNormEager.";
+  // testing
+  std::shared_ptr<Tensor> input_tensor_;
+  Tensor::CreateFromVector(std::vector<float>({1.0, 1.0, 2.0, 3.0, 4.0, 4.0}), TensorShape({3, 2}), &input_tensor_);
+
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> complex_norm_01 = std::make_shared<audio::ComplexNorm>(4.0);
+
+  // Filtered waveform by complexnorm
+  mindspore::dataset::Execute Transform01({complex_norm_01});
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_TRUE(s01.IsOk());
 }

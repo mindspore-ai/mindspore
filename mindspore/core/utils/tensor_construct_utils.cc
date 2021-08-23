@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 #include "utils/tensor_construct_utils.h"
-#include <vector>
 #include <memory>
+#include <vector>
+#include <map>
+#include <functional>
 namespace mindspore {
 tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr &type_ptr, const std::vector<int64_t> &shape) {
   MS_EXCEPTION_IF_NULL(type_ptr);
@@ -34,13 +36,41 @@ tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type_ptr
   MS_EXCEPTION_IF_NULL(type_ptr);
   auto type_id = ExtractTypeId(type_ptr);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-  size_t mem_size = IntToSize(tensor->ElementsNum());
-  if (tensor->data_type() == kNumberTypeFloat32) {
-    SetTensorData<float>(tensor->data_c(), 1.0, mem_size);
-  } else if (tensor->data_type() == kNumberTypeInt) {
-    SetTensorData<int>(tensor->data_c(), 1, mem_size);
+  const size_t &mem_size = IntToSize(tensor->ElementsNum());
+  auto tensor_data = tensor->data_c();
+  std::map<TypeId, std::function<void()>> type_dict{
+    {kNumberTypeBool, [&tensor_data, mem_size]() { SetTensorData<bool>(tensor_data, true, mem_size); }},
+    {kNumberTypeInt8,
+     [&tensor_data, mem_size]() { SetTensorData<int8_t>(tensor_data, static_cast<int8_t>(1), mem_size); }},
+    {kNumberTypeInt16,
+     [&tensor_data, mem_size]() { SetTensorData<int16_t>(tensor_data, static_cast<int16_t>(1), mem_size); }},
+    {kNumberTypeInt32,
+     [&tensor_data, mem_size]() { SetTensorData<int32_t>(tensor_data, static_cast<int32_t>(1), mem_size); }},
+    {kNumberTypeInt64,
+     [&tensor_data, mem_size]() { SetTensorData<int64_t>(tensor_data, static_cast<int64_t>(1), mem_size); }},
+    {kNumberTypeUInt8,
+     [&tensor_data, mem_size]() { SetTensorData<uint8_t>(tensor_data, static_cast<uint8_t>(1), mem_size); }},
+    {kNumberTypeUInt16,
+     [&tensor_data, mem_size]() { SetTensorData<uint16_t>(tensor_data, static_cast<uint16_t>(1), mem_size); }},
+    {kNumberTypeUInt32,
+     [&tensor_data, mem_size]() { SetTensorData<uint32_t>(tensor_data, static_cast<uint32_t>(1), mem_size); }},
+    {kNumberTypeUInt64,
+     [&tensor_data, mem_size]() { SetTensorData<uint64_t>(tensor_data, static_cast<uint64_t>(1), mem_size); }},
+    {kNumberTypeFloat16,
+     [&tensor_data, mem_size]() { SetTensorData<float16>(tensor_data, static_cast<float16>(1.0), mem_size); }},
+    {kNumberTypeFloat32,
+     [&tensor_data, mem_size]() { SetTensorData<float>(tensor_data, static_cast<float>(1.0), mem_size); }},
+    {kNumberTypeFloat64,
+     [&tensor_data, mem_size]() { SetTensorData<double>(tensor_data, static_cast<double>(1.0), mem_size); }},
+  };
+
+  const auto &tensor_type = tensor->data_type();
+  if (type_dict.count(tensor_type)) {
+    type_dict[tensor_type]();
+    return tensor;
+  } else {
+    MS_LOG(EXCEPTION) << "unsupported data type: " << tensor_type;
   }
-  return tensor;
 }
 
 tensor::TensorPtr TensorConstructUtils::CreateTensor(const TypePtr &type_ptr, const std::vector<int64_t> &shape,

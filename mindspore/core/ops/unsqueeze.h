@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnsqueeze = "Unsqueeze";
-class Unsqueeze : public PrimitiveC {
+class MS_CORE_API Unsqueeze : public PrimitiveC {
  public:
   Unsqueeze() : PrimitiveC(kNameUnsqueeze) {}
   ~Unsqueeze() = default;

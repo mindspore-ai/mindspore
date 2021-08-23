@@ -8,7 +8,6 @@ file(GLOB_RECURSE _PIPELINE_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "pipeline_split.cc"
     "parse/*.cc"
     "static_analysis/*.cc"
-    "prim_bprop_optimizer.cc"
 )
 
 

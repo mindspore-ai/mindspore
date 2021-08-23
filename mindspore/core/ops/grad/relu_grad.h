@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReLUGrad = prim::kReLUGrad;
-class ReLUGrad : public PrimitiveC {
+class MS_CORE_API ReLUGrad : public PrimitiveC {
  public:
   ReLUGrad() : PrimitiveC(prim::kPrimReluGrad->name()) { InitIOName({"x"}, {"output"}); }
   ~ReLUGrad() = default;

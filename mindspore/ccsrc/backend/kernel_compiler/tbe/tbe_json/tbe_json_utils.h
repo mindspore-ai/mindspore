@@ -108,6 +108,11 @@ class TbeJsonUtils {
   static bool GetOutputsRealNum(const AnfNodePtr &anf_node, const std::vector<OpIOInfoPtr> &outputs_ptr,
                                 std::vector<size_t> *outputs_num);
   static bool IsNeedChangeDefaultFormat(const AnfNodePtr &anf_node);
+  // just for generate json for ascend op build, it will be deleted after unify size_t and int64_t.
+  static std::vector<int64_t> GetInputOriShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx);
+  static std::vector<int64_t> GetInputDeviceShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx);
+  static std::vector<int64_t> GetOutputOriShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx);
+  static std::vector<int64_t> GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx);
 };
 
 }  // namespace mindspore::kernel

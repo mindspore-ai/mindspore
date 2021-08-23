@@ -18,51 +18,41 @@
 #include <string>
 #include <vector>
 #include "backend/optimizer/common/pass.h"
-#include "tools/converter/registry/pass_content.h"
 
 namespace mindspore {
-namespace opt {
-bool RunOptimizerPass(const FuncGraphPtr &func_graph, std::vector<std::string> pass_names) {
+namespace lite {
+bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::string> &pass_names) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is nullptr.";
     return false;
   }
-  auto &passes_info = PassStoreRoomInfo();
-  for (auto &name : pass_names) {
-    if (passes_info.find(name) == passes_info.end()) {
-      MS_LOG(ERROR) << "cannot find required pass.";
+  auto schedule_passes = registry::PassRegistry::GetPassFromStoreRoom(pass_names);
+  if (schedule_passes.size() != pass_names.size()) {
+    MS_LOG(ERROR) << "exited pass cannot be obtained.";
+    return false;
+  }
+  int index = 0;
+  for (auto &pass : schedule_passes) {
+    if (!pass->Run(func_graph)) {
+      MS_LOG(ERROR) << "run pass failed, pass name is " << pass_names[index];
       return false;
     }
-    if (!passes_info[name]->Run(func_graph)) {
-      MS_LOG(ERROR) << "run pass failed, pass name is " << name;
-      return false;
-    }
+    ++index;
   }
   return true;
 }
 
-bool RunExternalPass(const FuncGraphPtr &func_graph, PassPosition position) {
+bool RunExternalPass(const FuncGraphPtr &func_graph, registry::PassPosition position) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is nullptr.";
     return false;
   }
-  auto &external_assigned = ExternalAssignedPassesInfo();
-  if (external_assigned.find(position) == external_assigned.end()) {
-    MS_LOG(DEBUG) << "there is no external pass in current position, position is " << position;
-    return true;
-  }
-  auto &passes_info = PassStoreRoomInfo();
-  for (auto &name : external_assigned[position]) {
-    if (passes_info.find(name) == passes_info.end()) {
-      MS_LOG(ERROR) << "cannot find required pass.";
-      return false;
-    }
-    if (!passes_info[name]->Run(func_graph)) {
-      MS_LOG(ERROR) << "run pass failed, pass name is " << name;
-      return false;
-    }
+  auto schedule_task = registry::PassRegistry::GetOuterScheduleTask(position);
+  if (!RunOptimizerPass(func_graph, schedule_task)) {
+    MS_LOG(ERROR) << "run external scheduled task failed.";
+    return false;
   }
   return true;
 }
-}  // namespace opt
+}  // namespace lite
 }  // namespace mindspore

@@ -39,6 +39,8 @@ class AscendKernelRuntime : public KernelRuntime {
   AscendKernelRuntime() = default;
   ~AscendKernelRuntime() override;
   bool Init() override;
+  uint32_t GetRankId() override;
+  uint32_t GetRankSize() override;
   bool LoadData(session::KernelGraph *graph) override;
   bool GenTask(const session::KernelGraph *graph);
   bool GenDynamicKernel(const session::KernelGraph *graph) override;
@@ -47,9 +49,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool RunTask(const session::KernelGraph *graph);
   bool Load(session::KernelGraph *graph, bool is_task_sink) override;
   bool Run(session::KernelGraph *graph, bool is_task_sink) override;
-  void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
-                                 const std::unordered_set<ValueNodePtr> &value_nodes,
-                                 const std::vector<CNodePtr> &execution_order) override;
+  void ClearGraphRuntimeResource(uint32_t graph_id) override;
   void ClearGlobalIdleMem() override;
   bool SyncStream() override;
   bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override;
@@ -60,6 +60,7 @@ class AscendKernelRuntime : public KernelRuntime {
   uint64_t GetAvailableMemMaxSize() const override;
   DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kAscend; };
   std::shared_ptr<DeviceEvent> CreateDeviceEvent() override;
+  std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() override;
   void *compute_stream() const override { return stream_; }
   void *communication_stream() const override { return communication_stream_; }
 

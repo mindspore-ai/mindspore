@@ -25,7 +25,7 @@ namespace mindspore::lite::micro {
 
 class OpCoderBuilder {
  public:
-  std::unique_ptr<OperatorCoder> build();
+  std::unique_ptr<OperatorCoder> build(int schema_version);
 
   OpCoderBuilder &inputs(const std::vector<Tensor *> &inputs);
 

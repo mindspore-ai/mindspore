@@ -41,6 +41,7 @@ namespace mindspore {
 TypeId IntBitsToTypeId(const int nbits);
 TypeId UIntBitsToTypeId(const int nbits);
 TypeId FloatBitsToTypeId(const int nbits);
+TypeId ComplexBitsToTypeId(const int nbits);
 const std::string &TypeIdLabel(const TypeId &v);
 TypeId NormalizeTypeId(const TypeId type_id);
 bool IsSameObjectType(const Type &lhs, const Type &rhs);
@@ -49,7 +50,7 @@ size_t GetTypeByte(const TypePtr &type_ptr);
 // Base class for all types
 // forward declaration.
 
-class Type : public Value {
+class MS_CORE_API Type : public Value {
  public:
   Type() : meta_type_(kMetaTypeType), is_generic_(true) {}
   explicit Type(TypeId t, bool is_generic = true) : meta_type_(t), is_generic_(is_generic) {}
@@ -94,7 +95,7 @@ using TypePtrList = std::vector<TypePtr>;
 //
 // Base class for normal objects
 //
-class Object : public Type {
+class MS_CORE_API Object : public Type {
  public:
   Object() : Type(kMetaTypeObject), object_type_(kMetaTypeObject), parent_type_(kMetaTypeObject) {}
   explicit Object(const TypeId object_type, bool is_generic = true)
@@ -132,7 +133,7 @@ const std::unordered_map<TypeId, int> type_priority_map = {
   {kNumberTypeInt16, 3},   {kNumberTypeInt32, 4},   {kNumberTypeInt64, 5},
   {kNumberTypeFloat16, 6}, {kNumberTypeFloat32, 7}, {kNumberTypeFloat64, 8}};
 
-std::ostream &operator<<(std::ostream &os, const TypePtrList &types);
+MS_CORE_API std::ostream &operator<<(std::ostream &os, const TypePtrList &types);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_TYPE_H_

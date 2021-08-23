@@ -22,7 +22,7 @@ from mindspore._c_dataengine import TensorOp, TensorOperation
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER, \
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
     parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, \
-    check_value_cutoff, check_value_ratio, check_odd
+    check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32
 from .utils import Inter, Border, ImageBatchFormat, SliceMode
 
 
@@ -143,7 +143,7 @@ def check_degrees(degrees):
     """Check if the degrees is legal."""
     type_check(degrees, (int, float, list, tuple), "degrees")
     if isinstance(degrees, (int, float)):
-        check_pos_float32(degrees, "degrees")
+        check_non_negative_float32(degrees, "degrees")
     elif isinstance(degrees, (list, tuple)):
         if len(degrees) == 2:
             type_check_list(degrees, (int, float), "degrees")

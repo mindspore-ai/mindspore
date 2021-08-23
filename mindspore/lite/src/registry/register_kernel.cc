@@ -16,18 +16,39 @@
 
 #include "include/registry/register_kernel.h"
 #include <set>
+#include "include/errorcode.h"
+#include "src/common/log_adapter.h"
 #include "src/registry/register_kernel_impl.h"
 
 namespace mindspore {
-namespace kernel {
-int RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
-                                    const std::string &type, CreateKernel creator) {
-  return lite::RegistryKernelImpl::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
+namespace registry {
+Status RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
+                                       const std::string &type, CreateKernel creator) {
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+  return RegistryKernelImpl::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
+#else
+  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
+  return lite::RET_NOT_SUPPORT;
+#endif
 }
 
-int RegisterKernel::RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int op_type,
-                              CreateKernel creator) {
-  return lite::RegistryKernelImpl::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
+Status RegisterKernel::RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int op_type,
+                                 CreateKernel creator) {
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+  return RegistryKernelImpl::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
+#else
+  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
+  return lite::RET_NOT_SUPPORT;
+#endif
 }
-}  // namespace kernel
+
+CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, KernelDesc *desc) {
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+  return RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, desc);
+#else
+  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
+  return nullptr;
+#endif
+}
+}  // namespace registry
 }  // namespace mindspore

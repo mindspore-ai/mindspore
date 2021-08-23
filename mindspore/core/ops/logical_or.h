@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalOr = "LogicalOr";
-class LogicalOr : public PrimitiveC {
+class MS_CORE_API LogicalOr : public PrimitiveC {
  public:
   LogicalOr() : PrimitiveC(kNameLogicalOr) { InitIOName({"x", "y"}, {"output"}); }
   ~LogicalOr() = default;

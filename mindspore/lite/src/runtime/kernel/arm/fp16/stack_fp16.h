@@ -40,7 +40,7 @@ class StackFp16CPUKernel : public StackBaseCPUKernel {
   std::vector<bool> malloc_buffers_;
   std::vector<void *> buffers_;
   float16_t *out_buffer_ = nullptr;
-  bool malloc_out_;
+  bool malloc_out_ = false;
 };
 }  // namespace mindspore::kernel
 

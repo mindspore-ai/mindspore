@@ -32,7 +32,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::lite::converter::FmkType_TFLITE;
+using mindspore::converter::kFmkTypeTflite;
 namespace mindspore::lite {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
@@ -53,8 +53,8 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::st
 }
 
 FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag) {
-  auto model_file = flag.model_file_;
-  quant_type_ = flag.quant_type_;
+  auto model_file = flag.model_file;
+  quant_type_ = flag.quant_type;
   // load graph
   tflite_model_ = ReadTfliteModel(model_file);
   if (tflite_model_ == nullptr) {
@@ -69,7 +69,7 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
     return nullptr;
   }
   res_graph_ = std::make_shared<FuncGraph>();
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TFLITE)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTflite)));
 
   auto status = ConvertGraphInputs();
   if (status != RET_OK) {
@@ -105,7 +105,7 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_TFLITE, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeTflite, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -134,8 +134,8 @@ STATUS TfliteModelParser::ConvertOps() {
   int op_idx = 0;
   for (auto &op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model_->operator_codes[op->opcode_index])->builtin_code;
-    auto op_type = GetMSOpType(tflite_op_type);
-    auto op_name = op_type + "-" + std::to_string(op_idx);
+    std::string op_type = tflite::EnumNameBuiltinOperator(tflite_op_type);
+    std::string op_name = op_type + "-" + std::to_string(op_idx);
     op_idx++;
     // parse primitive
     MS_LOG(INFO) << "parse node :" << op_name;
@@ -336,7 +336,8 @@ STATUS TfliteModelParser::ConvertGraphInputs() {
       return RET_ERROR;
     }
     parameter->set_abstract(abstract_tensor);
-    parameter->set_name("graph_input-" + std::to_string(tflite_graph_input));
+    parameter->set_name(tensor->name);
+    ConverterContext::GetInstance()->AddGraphInputTensorNames(tensor->name);
     nodes_.insert(std::pair(tflite_graph_input, parameter));
   }
   return RET_OK;
@@ -398,6 +399,12 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     returnCnode->set_fullname_with_scope("Return");
     res_graph_->set_return(returnCnode);
   }
+  // save original output tensor names.
+  std::vector<std::string> output_names;
+  auto output_idx = tflite_subgraph->outputs;
+  std::transform(output_idx.begin(), output_idx.end(), std::back_inserter(output_names),
+                 [&](auto out_idx) { return tflite_subgraph->tensors.at(out_idx)->name; });
+  ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_names);
   return RET_OK;
 }
 
@@ -540,5 +547,5 @@ int TfliteModelParser::Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_g
   return RET_OK;
 }
 
-REG_MODEL_PARSER(FmkType_TFLITE, LiteModelParserCreator<TfliteModelParser>)
+REG_MODEL_PARSER(kFmkTypeTflite, converter::LiteModelParserCreator<TfliteModelParser>)
 }  // namespace mindspore::lite

@@ -22,9 +22,11 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/primitive_adjust.h"
 #include "tools/converter/import/mindir_adjust.h"
+#include "tools/converter/import/mindir_control_flow_adjust.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/unify_format.h"
+#include "tools/converter/parser/lstm_adjust_pass.h"
 
 namespace mindspore::lite {
 namespace {
@@ -43,7 +45,14 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const
   mindir_adjust_pass->SetQuantType(flag.quantType);
   mindir_adjust_pass->SetTrainFlag(flag.trainModel);
   if (!mindir_adjust_pass->Run(func_graph)) {
-    MS_LOG(ERROR) << "mindir adjust failed.";
+    MS_LOG(ERROR) << "MindIr adjust failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
+  auto mindir_control_flow_adjust = std::make_shared<MindIRControlFlowAdjust>();
+  mindir_control_flow_adjust->SetFmkType(flag.fmk);
+  if (!mindir_control_flow_adjust->Run(func_graph)) {
+    MS_LOG(ERROR) << "MindIR control flow adjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return RET_ERROR;
   }
@@ -112,16 +121,22 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     return nullptr;
   }
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
-  func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
+  func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeMs)));
   STATUS status;
   if ((status = Mindir2AnfAdjust(func_graph, flag)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_MS, flag.trainModel, flag.quantType);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, flag.trainModel, flag.quantType);
   if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
+    return nullptr;
+  }
+
+  auto lstm_adjust_pass = std::make_shared<opt::LstmAdjustPass>();
+  if (!lstm_adjust_pass->Run(func_graph)) {
+    MS_LOG(ERROR) << "Run mindir lstm adjust failed.";
     return nullptr;
   }
   return func_graph;

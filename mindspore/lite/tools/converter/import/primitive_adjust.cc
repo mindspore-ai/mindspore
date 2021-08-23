@@ -39,6 +39,8 @@
 #include "ops/fusion/max_pool_fusion.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/pad_fusion.h"
+#include "ops/partial.h"
+#include "ops/fusion/partial_fusion.h"
 #include "ops/fusion/pow_fusion.h"
 #include "ops/fusion/prelu_fusion.h"
 #include "ops/fusion/reduce_fusion.h"
@@ -95,6 +97,8 @@ using mindspore::ops::kNameMaxPool;
 using mindspore::ops::kNameMaxPoolGrad;
 using mindspore::ops::kNameMul;
 using mindspore::ops::kNamePad;
+using mindspore::ops::kNamePartial;
+using mindspore::ops::kNamePartialFusion;
 using mindspore::ops::kNamePow;
 using mindspore::ops::kNamePReLU;
 using mindspore::ops::kNameReduceAll;
@@ -519,14 +523,24 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
 }  // namespace
 
 bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
-  if (this->fmk_type_ != lite::converter::FmkType_MS) {
+  if (this->fmk_type_ != converter::kFmkTypeMs) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return lite::RET_OK;
   }
   MS_ASSERT(graph != nullptr);
+  static auto root_func_manager = Manage(func_graphs);
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graphs, &all_func_graphs);
+  int i = 0;
   for (auto func_graph : all_func_graphs) {
+    func_graph->set_manager(root_func_manager);
+    func_graph->set_attr("fmk", MakeValue(static_cast<int>(FmkType::kFmkTypeMs)));
+    if (i == 0) {
+      func_graph->set_attr("graph_name", MakeValue("main_graph"));
+    } else {
+      func_graph->set_attr("graph_name", MakeValue("subgraph" + std::to_string(i)));
+    }
+    i++;
     auto node_list = TopoSort(func_graph->get_return());
     int status = lite::RET_OK;
     for (auto &node : node_list) {
@@ -537,11 +551,16 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
       MS_ASSERT(cnode->size() > 0);
       auto value_node = cnode->input(0)->cast<ValueNodePtr>();
       if (value_node == nullptr) {
+        if (cnode->input(0)->cast<CNodePtr>() != nullptr) {
+          continue;
+        }
         MS_LOG(ERROR) << "cnode first input is invalid.";
         return false;
       }
       auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-      MS_ASSERT(prim != nullptr);
+      if (prim == nullptr) {
+        continue;
+      }
       auto name = prim->name();
       auto adjust_func = PrimitiveAdjustRegistry::GetInstance()->GetPrimitiveCreator(name);
       if (adjust_func == nullptr) {
@@ -594,6 +613,7 @@ REGIST_PRIMITIVE_ADJUST(kNameMaxPool, MoveAttrPool)
 REGIST_PRIMITIVE_ADJUST(kNameMaxPoolGrad, MoveAttrPoolGrad)
 REGIST_PRIMITIVE_ADJUST(kNameMul, MoveAttrMapCommon<ops::MulFusion>)
 REGIST_PRIMITIVE_ADJUST(kNamePad, MoveAttrMapCommon<ops::PadFusion>)
+REGIST_PRIMITIVE_ADJUST(kNamePartial, MoveAttrMapCommon<ops::PartialFusion>)
 REGIST_PRIMITIVE_ADJUST(kNamePow, MoveAttrMapCommon<ops::PowFusion>)
 REGIST_PRIMITIVE_ADJUST(kNamePReLU, MoveAttrMapCommon<ops::PReLUFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameReduceAll, MoveAttrMapReduce)

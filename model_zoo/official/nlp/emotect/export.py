@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 from mindspore import Tensor, context, load_checkpoint, export
 
 from src.finetune_eval_config import ernie_net_cfg
-from src.finetune_eval_model import ErnieCLSModel
+from src.ernie_for_finetune import ErnieCLS
 parser = argparse.ArgumentParser(description="Emotect export")
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--batch_size", type=int, default=32, help="batch size")
@@ -38,7 +38,7 @@ if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
 
 if __name__ == "__main__":
-    net = ErnieCLSModel(ernie_net_cfg, False, num_labels=args.number_labels)
+    net = ErnieCLS(ernie_net_cfg, False, num_labels=args.number_labels)
 
     load_checkpoint(args.ckpt_file, net=net)
     net.set_train(False)
@@ -49,4 +49,4 @@ if __name__ == "__main__":
     label_ids = Tensor(np.zeros([args.batch_size, ernie_net_cfg.seq_length]), mstype.int32)
 
     input_data = [input_ids, input_mask, token_type_id]
-    export(net, *input_data, file_name=args.file_name, file_format=args.file_format)
+    export(net.ernie, *input_data, file_name=args.file_name, file_format=args.file_format)

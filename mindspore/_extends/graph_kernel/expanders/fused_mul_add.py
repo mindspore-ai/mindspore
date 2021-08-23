@@ -15,6 +15,7 @@
 """generate json desc for FusedMulAdd"""
 from ._utils import Expander
 
+
 class FusedMulAdd(Expander):
     """FusedMulAdd expander"""
 

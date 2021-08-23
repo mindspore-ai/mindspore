@@ -36,7 +36,7 @@
 
 namespace mindspore {
 namespace lite {
-class OnnxModelParser : public ModelParser {
+class OnnxModelParser : public converter::ModelParser {
  public:
   OnnxModelParser() = default;
 
@@ -99,7 +99,7 @@ class OnnxModelParser : public ModelParser {
   std::unordered_map<std::string, AnfNodePtr> anf_nodes_map_;
   std::unordered_map<std::string, std::unordered_map<std::string, AnfNodePtr> *> control_nodes_map_;
   std::unordered_map<std::string, std::string> child_root_map_;  // for nest control flow node
-  QuantType quant_type_ = schema::QuantType_QUANT_NONE;
+  schema::QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 };
 }  // namespace lite
 }  // namespace mindspore

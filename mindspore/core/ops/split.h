@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSplit = "Split";
-class Split : public PrimitiveC {
+class MS_CORE_API Split : public PrimitiveC {
  public:
   Split() : PrimitiveC(kNameSplit) {}
   ~Split() = default;

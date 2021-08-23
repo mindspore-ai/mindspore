@@ -26,7 +26,7 @@
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "nnacl/op_base.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 namespace mindspore {
 namespace opt {
 std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t input_h,
@@ -172,8 +172,8 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
   }
   auto splited_axis = split_info->axis;
   // need to check
-  if (split_info->fmk_type == FmkType::FmkType_CAFFE ||
-      split_info->fmk_type == FmkType::FmkType_ONNX) {  // NHWC -> NCHW
+  if (split_info->fmk_type == FmkType::kFmkTypeCaffe ||
+      split_info->fmk_type == FmkType::kFmkTypeOnnx) {  // NHWC -> NCHW
     splited_axis += 1;
   }
 

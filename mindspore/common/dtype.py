@@ -38,7 +38,8 @@ __dtype__ = [
     "number", "tensor",
     "string", "type_none",
     "tensor_type",
-    "Type", "Int"
+    "Type", "Int",
+    "complex64", "complex128"
 ]
 
 __method__ = [
@@ -77,6 +78,8 @@ float32 = typing.Float(32)
 single = float32
 float64 = typing.Float(64)
 double = float64
+complex64 = typing.Complex(64)
+complex128 = typing.Complex(128)
 
 number = typing.Number()
 int_ = typing.Int()
@@ -124,14 +127,16 @@ number_type = (int8,
                uint64,
                float16,
                float32,
-               float64,)
+               float64,
+               complex64,
+               complex128,)
 
 int_type = (int8, int16, int32, int64,)
 uint_type = (uint8, uint16, uint32, uint64,)
 float_type = (float16, float32, float64,)
 
 implicit_conversion_seq = {t: idx for idx, t in enumerate((
-    bool_, int8, uint8, int16, int32, int64, float16, float32, float64))}
+    bool_, int8, uint8, int16, int32, int64, float16, float32, float64, complex64, complex128))}
 
 _simple_types = {
     list: list_,
@@ -140,6 +145,7 @@ _simple_types = {
     bool: bool_,
     int: int64,
     float: float64,
+    complex: complex128,
     str: string,
     np.bool_: bool_,
     np.str: string,
@@ -180,10 +186,10 @@ def pytype_to_dtype(obj):
 
 def get_py_obj_dtype(obj):
     """
-    Get the MindSpore data type which corresponds to python type or variable.
+    Get the MindSpore data type, which corresponds to python type or variable.
 
     Args:
-        obj (type): An object of python type, or a variable in python type.
+        obj (type): An object of python type, or a variable of python type.
 
     Returns:
         Type of MindSpore type.
@@ -228,6 +234,8 @@ def dtype_to_nptype(type_):
         float16: np.float16,
         float32: np.float32,
         float64: np.float64,
+        complex64: np.complex64,
+        complex128: np.complex128,
     }[type_]
 
 
@@ -260,6 +268,8 @@ def dtype_to_pytype(type_):
         list_: list,
         tuple_: tuple,
         string: str,
+        complex64: complex,
+        complex128: complex,
         type_none: type(None)
     }[type_]
 

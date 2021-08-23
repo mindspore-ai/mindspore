@@ -134,12 +134,12 @@ set(LITE_SRC
         ${LITE_DIR}/src/common/graph_util.cc
         ${LITE_DIR}/src/common/prim_util.cc
         ${LITE_DIR}/src/common/string_util.cc
+        ${LITE_DIR}/src/common/lite_utils.cc
         ${LITE_DIR}/src/common/tensor_util.cc
         ${LITE_DIR}/src/runtime/infer_manager.cc
-        ${LITE_DIR}/src/registry/kernel_interface.cc
+        ${LITE_DIR}/src/registry/register_kernel_interface.cc
         ${LITE_DIR}/src/registry/kernel_interface_registry.cc
         ${LITE_DIR}/src/registry/register_kernel.cc
-        ${LITE_DIR}/src/registry/register_utils.cc
         ${LITE_DIR}/src/registry/register_kernel_impl.cc
         ${LITE_DIR}/src/lite_model.cc
         ${LITE_DIR}/src/ms_tensor.cc

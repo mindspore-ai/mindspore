@@ -226,6 +226,15 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     MS_LOG(EXCEPTION) << "No ResourceBase exists.";
   }
 
+  // Only for the case that manager->replace() has to be called in substitution. This interface can only be used in
+  // substitution. Note that it is not recommended to replace nodes other than the input node in substitution.
+  void SubstitutionReplace(const FuncGraphManagerPtr &manager, const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
+    manager->Replace(old_node, new_node);
+    substitution_replaced_nodes_.emplace_back(new_node);
+  }
+  std::vector<AnfNodePtr> substitution_replaced_nodes() const { return substitution_replaced_nodes_; }
+  void clear_substitution_replaced_nodes() { substitution_replaced_nodes_.clear(); }
+
   const std::string name() const { return name_; }
 
   void set_is_untyped_generated() { is_untyped_generated_ = true; }
@@ -250,6 +259,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   pipeline::ResourceBasePtr resource_;
   std::vector<OptPass> passes_;
   std::vector<std::string> pass_names_;
+  std::vector<AnfNodePtr> substitution_replaced_nodes_;
   bool run_only_once_;
   bool is_watch_renormalize_;
   bool is_enable_;

@@ -36,6 +36,7 @@ BatchOp::Builder::Builder(int32_t batch_size) : builder_drop_(false), builder_pa
 }
 
 Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
+  RETURN_UNEXPECTED_IF_NULL(ptr);
 #ifdef ENABLE_PYTHON
   *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
                                    builder_num_workers_, builder_in_names_, builder_out_names_,
@@ -106,7 +107,7 @@ Status BatchOp::operator()() {
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
   int32_t cur_batch_size = 0;
   RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, 0, 0)));
-  while (child_iterator_->eof_handled() == false) {
+  while (child_iterator_->EofHandled() == false) {
     while (new_row.empty() == false) {
       table->emplace_back(new_row);
       // if # of rows is enough to make 1 batch, send it to worker_queue
@@ -142,7 +143,7 @@ Status BatchOp::operator()() {
                       << "reduce memory usage.";
     }
 #endif
-  }  // end of eof_handled() == false
+  }  // end of EofHandled() == false
   RETURN_IF_NOT_OK(
     worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOF))));
   // EOF received, send quit signal to all workers
@@ -168,6 +169,8 @@ void BatchOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size) {
+  RETURN_UNEXPECTED_IF_NULL(src);
+  RETURN_UNEXPECTED_IF_NULL(dest);
   if ((*src)->size() != batch_size) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] Source table size does not match the batch_size.");
   }
@@ -274,6 +277,8 @@ Status BatchOp::EoeReceived(int32_t) {
 
 #ifdef ENABLE_PYTHON
 Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair) {
+  RETURN_UNEXPECTED_IF_NULL(table_pair);
+  RETURN_UNEXPECTED_IF_NULL(table_pair->first);
   std::unique_ptr<TensorQTable> in_q_table = std::move(table_pair->first);
   size_t num_rows = in_q_table->size();
   auto out_q_table = std::make_unique<TensorQTable>(num_rows, TensorRow(column_name_id_map_.size(), nullptr));
@@ -316,6 +321,7 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
 #endif
 
 Status BatchOp::GetBatchSize(int32_t *batch_size, CBatchInfo info) {
+  RETURN_UNEXPECTED_IF_NULL(batch_size);
 #ifdef ENABLE_PYTHON
   if (batch_size_func_) {
     RETURN_IF_NOT_OK(InvokeBatchSizeFunc(batch_size, info));
@@ -330,6 +336,7 @@ Status BatchOp::GetBatchSize(int32_t *batch_size, CBatchInfo info) {
 
 #ifdef ENABLE_PYTHON
 Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
+  RETURN_UNEXPECTED_IF_NULL(batch_size);
   {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
@@ -355,6 +362,8 @@ Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
 }
 
 Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info) {
+  RETURN_UNEXPECTED_IF_NULL(input);
+  RETURN_UNEXPECTED_IF_NULL(output);
   {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
@@ -471,6 +480,9 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
                               const std::unordered_map<std::string, int32_t> &column_name_id_map,
                               std::set<int32_t> *pad_cols, std::vector<std::shared_ptr<Tensor>> *pad_vals,
                               std::vector<std::vector<dsize_t>> *pad_shapes) {
+  RETURN_UNEXPECTED_IF_NULL(pad_cols);
+  RETURN_UNEXPECTED_IF_NULL(pad_vals);
+  RETURN_UNEXPECTED_IF_NULL(pad_shapes);
   if (pad_info.empty()) {  // if pad_info empty, pad every columns automatically
     for (size_t col_id = 0; col_id < column_name_id_map.size(); col_id++) {
       pad_cols->insert(col_id);
@@ -561,6 +573,7 @@ int64_t BatchOp::GetTreeBatchSize() {
 }
 
 Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   int32_t cur_batch_size = 0;

@@ -151,8 +151,6 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
     return false;
   }
 
-  std::mt19937 gen(seedc);
-  std::uniform_int_distribution<> dis(0, non_zero_num - 1);
   int *mask_dim = new (std::nothrow) int[output_length];
   if (mask_dim == nullptr) {
     MS_LOG(EXCEPTION) << "Malloc memory failed!";
@@ -163,8 +161,12 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
   (void)memset_s(mask_dim, output_length, 0X00, output_length);
   (void)memset_s(tmp_output, output_length, 0X00, output_length);
 
+  std::vector<int32_t> all_nums(non_zero_num);
+  std::iota(begin(all_nums), end(all_nums), 0);
+  shuffle(all_nums.begin(), all_nums.end(), std::default_random_engine(seedc));
+
   for (int32_t i = 0; i < output_non_zero_length; i++) {
-    int32_t mean = dis(gen);
+    int32_t mean = all_nums[i];
     tmp_output[i] = input_dim[mean];
     mask_dim[i] = 1;
   }

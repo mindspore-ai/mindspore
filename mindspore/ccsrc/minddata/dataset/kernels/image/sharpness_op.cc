@@ -42,9 +42,10 @@ Status SharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
     ///                              1, 5, 1,
     ///                              1, 1, 1
 
-    float filterSum = 13.0;
+    const float filterMid = 5.0;
+    const float filterSum = 13.0;
     cv::Mat filter = cv::Mat(3, 3, CV_32F, cv::Scalar::all(1.0 / filterSum));
-    filter.at<float>(1, 1) = 5.0 / filterSum;
+    filter.at<float>(1, 1) = filterMid / filterSum;
 
     /// applying filter on channels
     cv::Mat result = cv::Mat();

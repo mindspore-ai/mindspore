@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCumSum = "CumSum";
-class CumSum : public PrimitiveC {
+class MS_CORE_API CumSum : public PrimitiveC {
  public:
   CumSum() : PrimitiveC(kNameCumSum) {}
   ~CumSum() = default;

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceMax = "ReduceMax";
-class ReduceMax : public Reduce {
+class MS_CORE_API ReduceMax : public Reduce {
  public:
   ReduceMax() : Reduce(kNameReduceMax) { InitIOName({"input_x", "axis"}, {"y"}); }
   ~ReduceMax() = default;

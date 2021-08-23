@@ -36,26 +36,6 @@ class TensorOperation;
 
 // Transform operations for performing computer vision.
 namespace vision {
-/// \brief Apply automatic contrast on the input image.
-class AutoContrast final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] cutoff Percent of pixels to cut off from the histogram, the valid range of cutoff value is 0 to 50.
-  /// \param[in] ignore Pixel values to ignore.
-  explicit AutoContrast(float cutoff = 0.0, std::vector<uint32_t> ignore = {});
-
-  /// \brief Destructor.
-  ~AutoContrast() = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
 
 /// \brief AdjustGamma TensorTransform.
 /// \notes Apply gamma correction on input image.
@@ -72,6 +52,27 @@ class AdjustGamma final : public TensorTransform {
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Apply automatic contrast on the input image.
+class AutoContrast final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] cutoff Percent of pixels to cut off from the histogram, the valid range of cutoff value is 0 to 50.
+  /// \param[in] ignore Pixel values to ignore.
+  explicit AutoContrast(float cutoff = 0.0, std::vector<uint32_t> ignore = {});
+
+  /// \brief Destructor.
+  ~AutoContrast() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 

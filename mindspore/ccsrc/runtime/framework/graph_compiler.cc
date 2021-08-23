@@ -527,5 +527,10 @@ void GraphCompiler::Summary(const std::vector<KernelGraphPtr> &graphs) const {
     session_->Summary(graph.get());
   }
 }
+
+void GraphCompiler::EraseSingleOpCache(const GraphInfo &graph_info, const GraphId &graph_id) {
+  run_op_graphs_.erase(graph_info);
+  run_op_graph_output_nodes_.erase(graph_id);
+}
 }  // namespace runtime
 }  // namespace mindspore

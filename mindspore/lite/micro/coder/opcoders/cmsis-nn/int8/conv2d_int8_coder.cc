@@ -174,14 +174,9 @@ int Conv2DInt8Coder::InitTmpBuffer() {
 
 std::unique_ptr<OperatorCoder> CmsisConv2DInt8OpCoderCreator(const std::vector<Tensor *> &in_tensors,
                                                              const std::vector<Tensor *> &out_tensors,
-                                                             const Model::Node *node, size_t node_index,
-                                                             Target target) {
+                                                             const Model::Node *node, size_t node_index, Target target,
+                                                             int schema_version) {
   MS_CHECK_PTR_RET_NULL(node);
-  int pt = GetPrimitiveType(node->primitive_);
-  if (pt != schema::PrimitiveType::PrimitiveType_Conv2DFusion) {
-    MS_LOG(ERROR) << "unmatched primitive type " << PrimitiveTypeName(pt);
-    return nullptr;
-  }
   std::unique_ptr<Conv2DInt8Coder> coder =
     std::make_unique<Conv2DInt8Coder>(in_tensors, out_tensors, node, node_index, target);
   return coder;

@@ -95,7 +95,7 @@ auto NotTransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_sh
 };
 
 bool IsAkgMatMul(size_t K, size_t M, size_t N) {
-  if (K > 4096 || M * N * K >= 3 * pow(10, 10)) {
+  if (K > 4096 || M * N * K >= 3e10) {
     return false;
   }
   return true;
@@ -148,13 +148,13 @@ std::tuple<bool, bool, bool> NeedPad(const CNodePtr &matmul, vec *pad_shape_a, v
 // Insert pad for A if left is true, insert pad for B if left is false
 void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng, bool left,
                const vec &pad_shape, const vec &tail_shape) {
-  int input_index = left ? 1 : 2;
+  size_t input_index = left ? 1 : 2;
   AnfNodePtrList pad_inp = {NewValueNode(opt::kPrimPadAkg), matmul->input(input_index)};
   auto pad_cnode = func_graph->NewCNode(pad_inp);
   func_graph->AddNode(pad_cnode);
 
   ShapeVector tail;
-  tail.insert(tail.begin(), tail_shape.begin(), tail_shape.end());
+  (void)tail.insert(tail.begin(), tail_shape.begin(), tail_shape.end());
   ShapeVector head(tail_shape.size(), 0);
 
   SetNodeAttrSafely("head", MakeValue(head), pad_cnode);
@@ -163,7 +163,7 @@ void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const Fun
   std::vector<TypeId> pad_type = {AnfAlgo::GetPrevNodeOutputInferDataType(matmul, 0)};
 
   ShapeVector abs_shape;
-  abs_shape.insert(abs_shape.begin(), pad_shape.begin(), pad_shape.end());
+  (void)abs_shape.insert(abs_shape.begin(), pad_shape.begin(), pad_shape.end());
   auto abs_shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(abs_shape));
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(pad_type[0]), abs_shape_ptr);
   pad_cnode->set_abstract(abstract);
@@ -188,12 +188,12 @@ void InsertUnpad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const F
   auto unpad_cnode = func_graph->NewCNode(unpad_inp);
   func_graph->AddNode(unpad_cnode);
   ShapeVector tail;
-  tail.insert(tail.begin(), tail_shape.begin(), tail_shape.end());
+  (void)tail.insert(tail.begin(), tail_shape.begin(), tail_shape.end());
   SetNodeAttrSafely("tail", MakeValue(tail), unpad_cnode);
   std::vector<TypeId> unpad_type = {AnfAlgo::GetOutputInferDataType(matmul, 0)};
 
   ShapeVector abs_shape;
-  abs_shape.insert(abs_shape.begin(), unpad_shape.begin(), unpad_shape.end());
+  (void)abs_shape.insert(abs_shape.begin(), unpad_shape.begin(), unpad_shape.end());
   auto abs_shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(abs_shape));
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(unpad_type[0]), abs_shape_ptr);
   unpad_cnode->set_abstract(abstract);
@@ -207,7 +207,7 @@ void InsertUnpad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const F
     BuildSelectKernelBuildInfo(unpad_input_format, unpad_input_type, unpad_output_format, unpad_output_type);
   AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, unpad_cnode.get());
 
-  mng->Replace(matmul, unpad_cnode);
+  (void)mng->Replace(matmul, unpad_cnode);
 }
 
 // Update matmul's Abatract and BuildInfo as M or N is changed
@@ -239,13 +239,7 @@ bool InsertPadUnpad(const FuncGraphPtr &func_graph) {
     if (!AnfAlgo::CheckPrimitiveType(n, prim::kPrimMatMul)) continue;
     auto mm_cnode = n->cast<CNodePtr>();
     vec pad_shape_a, pad_shape_b, tail_shape_a, tail_shape_b, tail_shape_unpad, unpad_shape;
-    bool pad_K, pad_M, pad_N;
-    pad_shape_a.clear();
-    pad_shape_b.clear();
-    tail_shape_a.clear();
-    tail_shape_b.clear();
-    tail_shape_unpad.clear();
-    unpad_shape.clear();
+    bool pad_K{false}, pad_M{false}, pad_N{false};
     std::tie(pad_K, pad_M, pad_N) =
       NeedPad(mm_cnode, &pad_shape_a, &pad_shape_b, &unpad_shape, &tail_shape_a, &tail_shape_b, &tail_shape_unpad);
     if (!pad_K && !pad_M && !pad_N) continue;

@@ -15,13 +15,15 @@
 """generate json desc for LayerNorm"""
 from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from ._utils import Expander, ExpanderInfoValidator as VLD
-from ._utils import infer_shape_from_fractalNz, get_reduced_ori_shape, to_frac_z_axis
+from ._utils import infer_shape_from_fractalnz, get_reduced_ori_shape, to_frac_z_axis
+
 
 @VLD.add_format(DF.FRAC_NZ, DF.DEFAULT, DF.DEFAULT)
 @VLD.add_format(DF.DEFAULT, DF.DEFAULT, DF.DEFAULT)
 @VLD.check_attrs('begin_norm_axis', 'begin_params_axis', 'epsilon')
 class LayerNorm(Expander):
     """LayerNorm expander"""
+
     def _expand(self, graph_builder):
         input_x, input_gamma, input_beta = self.inputs
         processor = self.processor
@@ -36,7 +38,7 @@ class LayerNorm(Expander):
 
         ori_shape_x = input_x.shape
         if input_x.data_format == DF.FRAC_NZ:
-            ori_shape_x = infer_shape_from_fractalNz(ori_shape_x)
+            ori_shape_x = infer_shape_from_fractalnz(ori_shape_x)
 
         # Calculate the scaling ratio of the average
         if begin_norm_axis < 0:

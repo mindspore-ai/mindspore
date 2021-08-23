@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_
 
+#ifndef RUNTIME_PASS_CLIP
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/sub_graph_kernel.h"
@@ -26,16 +27,15 @@
 namespace mindspore::lite {
 
 /* Nc4hw4 PASS
- * before  :  CONV --(nhwc)-- TRANSPOSE --(nhwc)-- OP
- * after   :  CONV --(nc4hw4)-- OP
+ * before  : --(nhwc)-- CONV --(nhwc)-- TRANSPOSE --(nchw)-- IN --(nchw)-- TRANSPOSE --(nhwc)--
+ * after   : --(nhwc)-- CONV --(nc4hw4)-- IN --(nhwc)--
  * */
 static const schema::PrimitiveType Nc4hw4FormatTransposeOp = schema::PrimitiveType_Transpose;
 static const std::vector<schema::PrimitiveType> Nc4hw4FormatOutOpList = {schema::PrimitiveType_Conv2DFusion};
-static const std::vector<schema::PrimitiveType> Nc4hw4FormatInOpList = {schema::PrimitiveType_InstanceNorm,
-                                                                        schema::PrimitiveType_PadFusion};
-bool Nc4hw4PassValid(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels);
-void Nc4hw4Pass(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors);
+static const std::vector<schema::PrimitiveType> Nc4hw4FormatInOpList = {schema::PrimitiveType_InstanceNorm};
+void Nc4hw4Pass(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels,
+                std::vector<Tensor *> *tensors);
 
 }  // namespace mindspore::lite
-
+#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_

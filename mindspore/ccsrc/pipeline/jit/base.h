@@ -24,7 +24,6 @@
 
 #include "ir/anf.h"
 #include "pipeline/jit/resource.h"
-#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -44,20 +43,6 @@ inline std::string GetPhasePrefix(const std::string &phase) {
     MS_LOG(EXCEPTION) << "Phase has no . for prefix" << phase;
   }
   return phase.substr(0, pos);
-}
-
-inline std::string GetSaveGraphsPathName(const std::string &file_name) {
-  std::ostringstream oss;
-  auto ms_context = MsContext::GetInstance();
-  if (ms_context == nullptr) {
-    MS_LOG(EXCEPTION) << "ms_context is nullptr";
-  }
-  auto save_graphs_path = ms_context->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
-  oss << save_graphs_path << "/" << file_name;
-  return oss.str();
 }
 }  // namespace pipeline
 }  // namespace mindspore

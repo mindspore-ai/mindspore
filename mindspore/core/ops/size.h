@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSize = "Size";
-class Size : public PrimitiveC {
+class MS_CORE_API Size : public PrimitiveC {
  public:
   Size() : PrimitiveC(kNameSize) {}
   ~Size() = default;

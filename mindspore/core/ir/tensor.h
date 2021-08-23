@@ -42,7 +42,7 @@ enum TensorSyncStatus { kNoNeedSync, kNeedSyncHostToDevice, kNeedSyncDeviceToHos
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
 // Tensor data interface.
-class TensorData {
+class MS_CORE_API TensorData {
  public:
   /// virtual destructor is required for base classes.
   virtual ~TensorData() = default;
@@ -111,7 +111,7 @@ class WaitEvent : public ExceptionListener {
 };
 
 // Tensor entity class
-class Tensor : public MetaTensor {
+class MS_CORE_API Tensor : public MetaTensor {
  public:
   abstract::AbstractBasePtr ToAbstract() override;
 
@@ -286,10 +286,13 @@ class Tensor : public MetaTensor {
   void set_init_flag(bool flag) { init_flag_ = flag; }
 
   DeviceSyncPtr device_address() const { return device_sync_; }
-  void set_device_address(const DeviceSyncPtr &device_sync) {
+  // If need_update_ref_count is true, the device address cannot be released and reused,
+  // so the feature map should set false when set device address of tensor.
+  void set_device_address(const DeviceSyncPtr &device_sync, bool need_update_ref_count = true) {
     device_sync_ = device_sync;
-    // To support the old and new runtime coexistence.
-    if (device_sync_ != nullptr) {
+    // To support the old and new runtime coexistence, the output of old runtime may be the input of new runtime, so the
+    // device address cannot be released through ref count and set max ref count in this scenario.
+    if (need_update_ref_count && (device_sync_ != nullptr)) {
       device_sync_->set_original_ref_count(SIZE_MAX);
       device_sync_->ResetRefCount();
     }

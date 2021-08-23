@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore import Tensor
-
+from mindspore import context
 
 class Proposal(nn.Cell):
     """
@@ -104,6 +104,8 @@ class Proposal(nn.Cell):
 
         self.multi_10 = Tensor(10.0, mstype.float16)
 
+        self.platform = context.get_context("device_target")
+
     def set_train_local(self, config, training=True):
         """Set training flag."""
         self.training_local = training
@@ -174,6 +176,10 @@ class Proposal(nn.Cell):
             proposals_decode = self.decode(anchors_sorted, bboxes_sorted)
 
             proposals_decode = self.concat_axis1((proposals_decode, self.reshape(scores_sorted, self.topK_shape[idx])))
+
+            if self.platform == "CPU":
+                proposals_decode = self.cast(proposals_decode, mstype.float32)
+
             proposals, _, mask_valid = self.nms(proposals_decode)
 
             mlvl_proposals = mlvl_proposals + (proposals,)
@@ -184,7 +190,10 @@ class Proposal(nn.Cell):
 
         _, _, _, _, scores = self.split(proposals)
         scores = self.squeeze(scores)
-        topk_mask = self.cast(self.topK_mask, mstype.float16)
+        if self.platform == "CPU":
+            topk_mask = self.cast(self.topK_mask, mstype.float32)
+        else:
+            topk_mask = self.cast(self.topK_mask, mstype.float16)
         scores_using = self.select(masks, scores, topk_mask)
 
         _, topk_inds = self.topKv2(scores_using, self.max_num)

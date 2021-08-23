@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameStack = "Stack";
-class Stack : public PrimitiveC {
+class MS_CORE_API Stack : public PrimitiveC {
  public:
   Stack() : PrimitiveC(kNameStack) {}
   ~Stack() = default;

@@ -93,6 +93,8 @@ int ScaleOpenCLKernel::InitWeights() {
   ImageSize img_size;
   GetImageSize(0, &img_size);
   img_size.dtype = scale_dtype == kNumberTypeFloat16 ? CL_HALF_FLOAT : CL_FLOAT;
+  MS_ASSERT(scale_tensor->data_c());
+  MS_ASSERT(offset_tensor->data_c());
 
   if (broadcast_flag_) {
     img_size.height = 1;

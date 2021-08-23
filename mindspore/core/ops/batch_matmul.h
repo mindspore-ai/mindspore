@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class BatchMatmul : public PrimitiveC {
+class MS_CORE_API BatchMatmul : public PrimitiveC {
  public:
   BatchMatmul() : PrimitiveC(prim::kPrimBatchMatMul->name()) { InitIOName({"x1", "x2"}, {"output"}); }
   ~BatchMatmul() = default;

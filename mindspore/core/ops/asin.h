@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAsin = "Asin";
-class Asin : public PrimitiveC {
+class MS_CORE_API Asin : public PrimitiveC {
  public:
   Asin() : PrimitiveC(kNameAsin) {}
   ~Asin() = default;

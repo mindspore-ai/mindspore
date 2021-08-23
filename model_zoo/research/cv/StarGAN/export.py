@@ -38,4 +38,4 @@ if __name__ == '__main__':
     input_array = Tensor(np.random.uniform(-1.0, 1.0, size=(1, 3, 128, 128)).astype(np.float32))
     input_label = Tensor(np.random.uniform(-1.0, 1.0, size=(1, 5)).astype(np.float32))
     G_file = f"StarGAN_Generator"
-    export(G, input_array, file_name=G_file, file_format=config.file_format)
+    export(G, input_array, input_label, file_name=G_file, file_format=config.file_format)

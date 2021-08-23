@@ -66,6 +66,20 @@ void DistributedCountService::RegisterCounter(const std::string &name, size_t gl
   return;
 }
 
+bool DistributedCountService::ReInitCounter(const std::string &name, size_t global_threshold_count) {
+  MS_LOG(INFO) << "Rank " << local_rank_ << " reinitialize counter for " << name << " count:" << global_threshold_count;
+  if (local_rank_ == counting_server_rank_) {
+    std::unique_lock<std::mutex> lock(mutex_[name]);
+    if (global_threshold_count_.count(name) == 0) {
+      MS_LOG(INFO) << "Counter for " << name << " is not set.";
+      return false;
+    }
+    global_current_count_[name] = {};
+    global_threshold_count_[name] = global_threshold_count;
+  }
+  return true;
+}
+
 bool DistributedCountService::Count(const std::string &name, const std::string &id, std::string *reason) {
   MS_LOG(INFO) << "Rank " << local_rank_ << " reports count for " << name << " of " << id;
   if (local_rank_ == counting_server_rank_) {

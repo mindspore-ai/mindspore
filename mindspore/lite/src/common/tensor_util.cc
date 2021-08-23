@@ -22,32 +22,6 @@
 
 namespace mindspore {
 namespace lite {
-int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out) {
-  MS_ASSERT(tensors_out != nullptr);
-  for (size_t i = 0; i < tensors_in.size(); ++i) {
-    size_t shape_size = tensors_in[i]->shape().size();
-    if (shape_size >= MAX_SHAPE_SIZE) {
-      MS_LOG(ERROR) << "shape size " << shape_size << " unsupported!";
-      return RET_ERROR;
-    }
-    auto *tensor_c = static_cast<TensorC *>(malloc(sizeof(TensorC)));
-    if (tensor_c == nullptr) {
-      MS_LOG(ERROR) << "malloc tensor fail!";
-      return RET_ERROR;
-    }
-    memset(tensor_c, 0, sizeof(TensorC));
-    tensor_c->format_ = tensors_in[i]->format();
-    tensor_c->data_type_ = tensors_in[i]->data_type();
-    tensor_c->shape_size_ = shape_size;
-    tensor_c->data_ = tensors_in[i]->data_c();
-    for (size_t j = 0; j < shape_size; ++j) {
-      tensor_c->shape_[j] = tensors_in[i]->shape()[j];
-    }
-    tensors_out->push_back(tensor_c);
-  }
-  return RET_OK;
-}
-
 int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector<TensorC *> *tensors_c) {
   MS_ASSERT(tensors_c != nullptr);
   for (size_t i = 0; i < tensors.size(); ++i) {
@@ -70,7 +44,7 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
     if (i == nullptr) {
       continue;
     }
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     if (i->data_type_ == kObjectTypeTensorType) {
       TensorListC *tensorListC = reinterpret_cast<TensorListC *>(i);
       FreeTensorListC(tensorListC);
@@ -79,7 +53,7 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
 #endif
       free(i);
       i = nullptr;
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
 #endif
   }
@@ -110,7 +84,7 @@ void TensorC2Tensor(const TensorC *src, Tensor *dst) {
   dst->set_shape(std::vector<int>(src->shape_, src->shape_ + src->shape_size_));
 }
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 void FreeTensorListC(TensorListC *tensorlist_c) {
   MS_ASSERT(tensorlist_c != nullptr);
   if (tensorlist_c->tensors_ != nullptr) {
@@ -192,11 +166,10 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
                        const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *out_tensor_c) {
   MS_ASSERT(out_tensor_c != nullptr);
   MS_ASSERT(parameter != nullptr);
-  int ret = RET_OK;
-#ifdef ENABLE_CONTROL_TENSORLIST
   if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListSetItem) {
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     // TensorListC ->TensorC
     auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
     if (tensor_list_c == nullptr) {
@@ -204,25 +177,14 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
     }
     memset(tensor_list_c, 0, sizeof(TensorListC));
     out_tensor_c->push_back(reinterpret_cast<TensorC *const>(tensor_list_c));
-  } else if (parameter->type_ == mindspore::schema::PrimitiveType_Merge ||
-             parameter->type_ == mindspore::schema::PrimitiveType_Switch) {
-    ret = GenerateMergeSwitchOutTensorC(inputs, static_cast<int>(outputs.size()), out_tensor_c);
-  } else {
-    ret = OutputTensor2TensorC(outputs, out_tensor_c);
-  }
+    return RET_OK;
 #else
-  if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
-      parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
-      parameter->type_ == mindspore::schema::PrimitiveType_TensorListSetItem ||
-      parameter->type_ == mindspore::schema::PrimitiveType_Merge ||
-      parameter->type_ == mindspore::schema::PrimitiveType_Switch) {
-    MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
     return RET_ERROR;
-  } else {
-    ret = OutputTensor2TensorC(outputs, out_tensor_c);
-  }
 #endif
-  return ret;
+  } else {
+    return OutputTensor2TensorC(outputs, out_tensor_c);
+  }
 }
 
 int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
@@ -231,7 +193,7 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
   int ret = RET_OK;
   for (auto input : inputs) {
     if (input->data_type() == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
       // Tensor ->TensorList -> TensorListC -> TensorC
       auto *tensor_list = reinterpret_cast<TensorList *>(input);
       auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
@@ -248,7 +210,7 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
       }
       in_tensor_c->push_back(reinterpret_cast<TensorC *>(tensor_list_c));
 #else
-      MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+      MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
       return RET_NOT_SUPPORT;
 #endif
     } else {
@@ -286,8 +248,8 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
                     << "check the model and assign the input shape with method Resize().";
       return RET_ERROR;
     }
-    if (tensor->format() != mindspore::NHWC) {
-      MS_LOG(ERROR) << "model input's format may be changed, which should keep default value NHWC";
+    if (tensor->format() != mindspore::NHWC && tensor->format() != mindspore::NCHW) {
+      MS_LOG(ERROR) << "model input's format may be changed, which should be NHWC or NCHW";
       return RET_FORMAT_ERR;
     }
     if (tensor->data_c() == nullptr) {

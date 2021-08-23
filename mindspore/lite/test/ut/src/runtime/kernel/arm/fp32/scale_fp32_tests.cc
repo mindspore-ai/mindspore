@@ -54,6 +54,7 @@ class TestScaleFp32 : public mindspore::CommonTest {
 };
 
 void TestScaleFp32::TearDown() {
+  delete kernel_;
   in_tensor_.set_data(nullptr);
   scale_tensor_.set_data(nullptr);
   offset_tensor_.set_data(nullptr);

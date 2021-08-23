@@ -85,15 +85,21 @@ int InstanceNormFp16CPUKernel::Init() {
 }
 
 int InstanceNormFp16CPUKernel::ReSize() {
-  auto shape = in_tensors_.front()->shape();
-  param_->batch_ = shape[0];
-  param_->inner_size_ = shape[2] * shape[3];
-  param_->channel_ = shape[1];
+  param_->op_parameter_.thread_num_ = op_parameter_->thread_num_;
+  auto in_tensor = in_tensors_.front();
+  param_->batch_ = in_tensor->Batch();
+  param_->inner_size_ = in_tensor->Height() * in_tensor->Width();
+  param_->channel_ = in_tensor->Channel();
   return RET_OK;
 }
 
 int InstanceNormFp16CPUKernel::DoInstanceNorm(int task_id) {
-  int ret = InstanceNormFp16(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+  int ret = RET_OK;
+  if (in_tensors_[0]->format() == NC4HW4) {
+    ret = InstanceNormNC8HW8Fp16(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+  } else {
+    ret = InstanceNormFp16(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoInstanceNorm error error_code[" << ret << "]";
     return ret;

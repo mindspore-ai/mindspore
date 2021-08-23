@@ -284,5 +284,12 @@ TEST_F(CropTestFp32, CropTest11) {
   std::cout << "\n";
   ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
   delete ctx;
+  for (unsigned int i = 0; i < inputs.size(); i++) {
+    delete inputs[i];
+  }
+  for (unsigned int i = 0; i < outputs.size(); i++) {
+    delete outputs[i];
+  }
+  delete kernel;
 }
 }  // namespace mindspore

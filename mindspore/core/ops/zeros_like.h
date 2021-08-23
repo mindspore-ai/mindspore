@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-class ZerosLike : public PrimitiveC {
+class MS_CORE_API ZerosLike : public PrimitiveC {
  public:
   ZerosLike() : PrimitiveC(prim::kPrimZerosLike->name()) { InitIOName({"x"}, {"y"}); }
   ~ZerosLike() = default;

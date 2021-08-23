@@ -37,8 +37,8 @@ The overall network architecture of ResNeXt is show below:
 Dataset used: [imagenet](http://www.image-net.org/)
 
 - Dataset size: ~125G, 1.2W colorful images in 1000 classes
-- Train: 120G, 1.2W images
-- Test: 5G, 50000 images
+    - Train: 120G, 1.2W images
+    - Test: 5G, 50000 images
 - Data format: RGB images
 - Note: Data will be processed in src/dataset.py
 
@@ -46,19 +46,19 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 ## [Mixed Precision](#contents)
 
-The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
+The [mixed precision](https://www.mindspore.cn/docs/programming_guide/en/master/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-- Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend  processor.
 - Framework
-- [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-- [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-- [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 
 # [Script description](#contents)
 
@@ -145,18 +145,18 @@ or shell script:
 ```script
 Ascend:
     # distribute training example(8p)
-    sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+    bash run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
     # standalone training
-    sh run_standalone_train.sh DEVICE_ID DATA_PATH
+    bash run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 
 #### Launch
 
 ```bash
 # distributed training example(8p) for Ascend
-sh scripts/run_distribute_train.sh RANK_TABLE_FILE /dataset/train
+bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 # standalone training example for Ascend
-sh scripts/run_standalone_train.sh 0 /dataset/train
+bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 
 You can find checkpoint file together with result in log.
@@ -175,7 +175,7 @@ or shell script:
 
 ```script
 # Evaluation
-sh run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH PLATFORM
+bash run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH PLATFORM
 ```
 
 PLATFORM is Ascend, default is Ascend.
@@ -184,10 +184,10 @@ PLATFORM is Ascend, default is Ascend.
 
 ```bash
 # Evaluation with checkpoint
-sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext152_100.ckpt Ascend
+bash scripts/run_eval.sh DEVICE_ID PRETRAINED_CKPT_PATH PLATFORM
 
-#Directly use the script to run
-python eval.py --data_dir /opt/npu/pvc/dataset/storage/imagenet/val/ --platform Ascend --pretrained /root/test/resnext152_64x4d/outputs_demo/best_acc_4.ckpt
+# Directly use the script to run
+python eval.py --data_dir ~/imagenet/val/ --platform Ascend --pretrained ~/best_acc_4.ckpt
 ```
 
 #### Result
@@ -213,31 +213,31 @@ python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_forma
 
 ### Training Performance
 
-| Parameters                 | ResNeXt152                                    |      |
-| -------------------------- | --------------------------------------------- | ---- |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G |      |
-| uploaded Date              | 06/30/2021                                    |      |
-| MindSpore Version          | 1.2                                           |      |
-| Dataset                    | ImageNet                                      |      |
-| Training Parameters        | src/config.py                                 |      |
-| Optimizer                  | Momentum                                      |      |
-| Loss Function              | SoftmaxCrossEntropy                           |      |
-| Loss                       | 1.28923                                       |      |
-| Accuracy                   | 80.08%(TOP1)                                  |      |
-| Total time                 | 7.8 h 8ps                                     |      |
-| Checkpoint for Fine tuning | 192 M(.ckpt file)                             |      |
+| Parameters                 | ResNeXt152                                    |
+| -------------------------- | --------------------------------------------- |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G |
+| uploaded Date              | 06/30/2021                                    |
+| MindSpore Version          | 1.2                                           |
+| Dataset                    | ImageNet                                      |
+| Training Parameters        | src/config.py                                 |
+| Optimizer                  | Momentum                                      |
+| Loss Function              | SoftmaxCrossEntropy                           |
+| Loss                       | 1.28923                                       |
+| Accuracy                   | 80.08%(TOP1)                                  |
+| Total time                 | 7.8 h 8ps                                     |
+| Checkpoint for Fine tuning | 192 M(.ckpt file)                             |
 
 #### Inference Performance
 
-| Parameters        |      |      |                  |
-| ----------------- | ---- | ---- | ---------------- |
-| Resource          |      |      | Ascend 910       |
-| uploaded Date     |      |      | 06/20/2021       |
-| MindSpore Version |      |      | 1.2              |
-| Dataset           |      |      | ImageNet, 1.2W   |
-| batch_size        |      |      | 1                |
-| outputs           |      |      | probability      |
-| Accuracy          |      |      | acc=80.08%(TOP1) |
+| Parameters        |                  |
+| ----------------- | ---------------- |
+| Resource          | Ascend 910       |
+| uploaded Date     | 06/20/2021       |
+| MindSpore Version | 1.2              |
+| Dataset           | ImageNet, 1.2W   |
+| batch_size        | 1                |
+| outputs           | probability      |
+| Accuracy          | acc=80.08%(TOP1) |
 
 # [Description of Random Situation](#contents)
 

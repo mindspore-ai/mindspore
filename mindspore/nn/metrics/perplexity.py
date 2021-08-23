@@ -77,17 +77,17 @@ class Perplexity(Metric):
 
         Raises:
             ValueError: If the number of the inputs is not 2.
-            RuntimeError: If preds and labels should have different length.
-            RuntimeError: If label shape should not be equal to pred shape.
+            RuntimeError: If preds and labels have different lengths.
+            RuntimeError: If label shape is not equal to pred shape.
         """
         if len(inputs) != 2:
-            raise ValueError('Perplexity needs 2 inputs (preds, labels), but got {}.'.format(len(inputs)))
+            raise ValueError('The perplexity needs 2 inputs (preds, labels), but got {}.'.format(len(inputs)))
 
         preds = [self._convert_data(inputs[0])]
         labels = [self._convert_data(inputs[1])]
 
         if len(preds) != len(labels):
-            raise RuntimeError('preds and labels should have the same length, but the length of preds is{}, '
+            raise RuntimeError('The preds and labels should have the same length, but the length of preds is{}, '
                                'the length of labels is {}.'.format(len(preds), len(labels)))
 
         loss = 0.
@@ -121,6 +121,6 @@ class Perplexity(Metric):
             RuntimeError: If the sample size is 0.
         """
         if self._num_inst == 0:
-            raise RuntimeError('Perplexity can not be calculated, because the number of samples is 0.')
+            raise RuntimeError('The perplexity can not be calculated, because the number of samples is 0.')
 
         return math.exp(self._sum_metric / self._num_inst)

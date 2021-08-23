@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ class TFConvBaseParser : public TFNodeParser {
                                std::vector<int64_t> *dilations);
   static STATUS ParseKernels(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
                              std::vector<int64_t> *kernel);
+  static STATUS ParseExplicitPaddings(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
+                                      std::vector<int64_t> *explicit_paddings);
   static mindspore::PadMode ParsePadMode(const tensorflow::NodeDef &node_def);
 };
 }  // namespace lite

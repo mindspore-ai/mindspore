@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolFusion = "MaxPoolFusion";
-class MaxPoolFusion : public MaxPool {
+class MS_CORE_API MaxPoolFusion : public MaxPool {
  public:
   MaxPoolFusion() : MaxPool(kNameMaxPoolFusion) { InitIOName({"x"}, {"output"}); }
   ~MaxPoolFusion() = default;

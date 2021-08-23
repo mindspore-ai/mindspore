@@ -24,6 +24,7 @@
 #include "src/runtime/kernel/arm/fp16/convolution_depthwise_slidewindow_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_depthwise_3x3_fp16.h"
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
+#include "nnacl/base/conv_common_base.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -48,7 +49,7 @@ void ConvolutionDelegateFP16CPUKernel::FreeCopiedData() {
   }
 }
 
-void *ConvolutionDelegateFP16CPUKernel::CopyData(lite::Tensor *tensor) {
+void *ConvolutionDelegateFP16CPUKernel::CopyData(const lite::Tensor *tensor) {
   auto data_type = tensor->data_type();
   if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16) {
     MS_LOG(ERROR) << "Not supported data type: " << data_type;
@@ -85,7 +86,7 @@ int ConvolutionDelegateFP16CPUKernel::Init() {
   return ReSize();
 }
 
-static void SetInputOutputShapeInfo(ConvParameter *conv_param, lite::Tensor *input, lite::Tensor *output,
+static void SetInputOutputShapeInfo(ConvParameter *conv_param, const lite::Tensor *input, const lite::Tensor *output,
                                     const InnerContext *ctx) {
   conv_param->input_batch_ = input->Batch();
   conv_param->input_h_ = input->Height();
@@ -113,7 +114,9 @@ int ConvolutionDelegateFP16CPUKernel::ReSize() {
   }
   // copied weight and bias are not be used anymore,free them.
   FreeCopiedData();
-  return fp16_conv_kernel_->ReSize();
+  auto ret = fp16_conv_kernel_->ReSize();
+  set_workspace_size(fp16_conv_kernel_->workspace_size());
+  return ret;
 }
 
 kernel::InnerKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -165,6 +168,11 @@ kernel::InnerKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &
     kernel = new (std::nothrow)
       kernel::ConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, origin_weight, origin_bias);
   }
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr";
+    free(op_parameter);
+    return nullptr;
+  }
   // Once kernel is selected, init func will invoke InitWeightAndBias
   auto ret = kernel->Init();
   if (ret != RET_OK) {
@@ -178,9 +186,20 @@ kernel::InnerKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &
 kernel::InnerKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs,
                                                    OpParameter *op_parameter, const InnerContext *ctx) {
-  auto *group_conv_creator = new GroupConvCreator(inputs, outputs, op_parameter, ctx, false, kNumberTypeFloat16);
-  return new (std::nothrow) GroupConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, group_conv_creator,
-                                                          reinterpret_cast<ConvParameter *>(op_parameter)->group_);
+  auto *group_conv_creator =
+    new (std::nothrow) GroupConvCreator(inputs, outputs, op_parameter, ctx, false, kNumberTypeFloat16);
+  if (group_conv_creator == nullptr) {
+    MS_LOG(ERROR) << "new GroupConvCreator fail";
+    free(op_parameter);
+    return nullptr;
+  }
+  auto kernel = new (std::nothrow) GroupConvolutionFP16CPUKernel(
+    op_parameter, inputs, outputs, ctx, group_conv_creator, reinterpret_cast<ConvParameter *>(op_parameter)->group_);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new GroupConvolutionFP16CPUKernel fail";
+    free(op_parameter);
+  }
+  return kernel;
 }
 
 /* creator func */
@@ -200,7 +219,7 @@ kernel::InnerKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> 
     kernel = CpuGroupConvFp16KernelCreator(inputs, outputs, opParameter, static_cast<const lite::InnerContext *>(ctx));
   }
 
-  if (kernel == nullptr) {
+  if (conv_param->group_ == 1 && kernel == nullptr) {
     MS_LOG(DEBUG) << "Create conv fp16 kernel failed.";
     free(opParameter);
     return nullptr;

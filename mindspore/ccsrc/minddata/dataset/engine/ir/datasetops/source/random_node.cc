@@ -131,7 +131,7 @@ Status RandomNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t num_rows = total_rows_ != 0 ? total_rows_ : data_schema_->num_rows();
+  int64_t num_rows = total_rows_ != 0 ? total_rows_ : data_schema_->NumRows();
   *dataset_size = num_rows;
   dataset_size_ = *dataset_size;
   return Status::OK();

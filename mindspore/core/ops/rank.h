@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRank = "Rank";
-class Rank : public PrimitiveC {
+class MS_CORE_API Rank : public PrimitiveC {
  public:
   Rank() : PrimitiveC(kNameRank) { auto prim_name = name(); }
   ~Rank() = default;

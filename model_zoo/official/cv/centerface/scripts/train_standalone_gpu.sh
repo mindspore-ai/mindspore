@@ -14,15 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 0 ] && [ $# != 1 ] && [ $# != 2 ] && [ $# != 3 ] && [ $# != 4 ] && [ $# != 5 ]
+if [ $# != 1 ]
 then
-    echo "Usage: sh train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]"
-    echo "   or: sh train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS]"
-    echo "   or: sh train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET]"
-    echo "   or: sh train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE]"
-    echo "   or: sh train_standalone_gpu.sh [USE_DEVICE_ID]"
-    echo "   or: sh train_standalone_gpu.sh "
-exit 1
+    echo "Usage: bash train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [ANNOTATIONS] [DATASET]"
+    exit 1
 fi
 
 get_real_path(){
@@ -43,89 +38,48 @@ SCRIPT_NAME='train.py'
 
 ulimit -c unlimited
 
-root=${current_exec_path} # your script path
-pretrained_backbone=${dirname_path}/mobilenet_v2.ckpt # or mobilenet_v2-b0353104.ckpt
-dataset_path=$root/dataset/centerface
-annot_path=$dataset_path/annotations/train.json
-img_dir=$dataset_path/images/train/images
-use_device_id=0
-
-if [ $# == 1 ]
+if [ $1 -lt 0 ] && [ $1 -gt 7 ]
 then
-    use_device_id=$1
+    echo "error: DEVICE_ID=$1 is not in (0-7)"
+    exit 1
 fi
 
-if [ $# == 2 ]
-then
-    use_device_id=$1
-    pretrained_backbone=$(get_real_path $2)
-fi
+export CUDA_VISIBLE_DEVICES="$1"
 
-if [ $# == 3 ]
-then
-    use_device_id=$1
-    pretrained_backbone=$(get_real_path $2)
-    dataset_path=$(get_real_path $3)
-fi
-
-if [ $# == 4 ]
-then
-    use_device_id=$1
-    pretrained_backbone=$(get_real_path $2)
-    dataset_path=$(get_real_path $3)
-    annot_path=$(get_real_path $4)
-fi
-
-if [ $# == 5 ]
-then
-    use_device_id=$1
-    pretrained_backbone=$(get_real_path $2)
-    dataset_path=$(get_real_path $3)
-    annot_path=$(get_real_path $4)
-    img_dir=$(get_real_path $5)
-fi
-
-echo "use_device_id: "   $use_device_id
-echo "pretrained_backbone: "   $pretrained_backbone
-echo "dataset_path: "   $dataset_path
-echo "annot_path: "   $annot_path
-echo "img_dir: "   $img_dir
-
+pretrained_backbone=$(get_real_path $2)
 if [ ! -f $pretrained_backbone ]
 then
     echo "error: pretrained_backbone=$pretrained_backbone is not a file"
-exit 1
+    exit 1
 fi
 
-if [ ! -d $dataset_path ]
-then
-    echo "error: dataset_path=$dataset_path is not a directory"
-exit 1
-fi
-
+annot_path=$(get_real_path $3)
 if [ ! -f $annot_path ]
 then
     echo "error: annot_path=$annot_path is not a file"
-exit 1
+    exit 1
 fi
 
-if [ ! -d $img_dir ]
+dataset_path=$(get_real_path $4)
+if [ ! -d $dataset_path ]
 then
-    echo "error: img_dir=$img_dir is not a directory"
-exit 1
+    echo "error: dataset_path=$dataset_path is not a dir"
+    exit 1
 fi
+
+echo $pretrained_backbone
+echo $annot_path
+echo $dataset_path
 
 export PYTHONPATH=${dirname_path}:$PYTHONPATH
 export RANK_SIZE=1
 
 echo 'start training'
-echo 'start rank '$use_device_id
 rm -rf ${current_exec_path}/train_standalone_gpu
 mkdir ${current_exec_path}/train_standalone_gpu
 cd ${current_exec_path}/train_standalone_gpu || exit
 export RANK_ID=0
-dev=`expr $use_device_id + 0`
-export DEVICE_ID=$dev
+
 python ${dirname_path}/${SCRIPT_NAME} \
     --lr=5e-4 \
     --per_batch_size=8 \
@@ -138,9 +92,8 @@ python ${dirname_path}/${SCRIPT_NAME} \
     --weight_decay=0.0000 \
     --loss_scale=1024 \
     --pretrained_backbone=$pretrained_backbone \
-    --data_dir=$dataset_path \
     --annot_path=$annot_path \
-    --img_dir=$img_dir \
+    --img_dir=$dataset_path \
     --device_target="GPU" > train.log  2>&1 &
 
 echo 'running'

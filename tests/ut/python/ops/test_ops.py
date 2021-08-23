@@ -2189,6 +2189,10 @@ test_case_nn_ops = [
                         Tensor(np.zeros((1, 1, 2, 2)), mstype.uint16)],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('Roll', {
+        'block': nn.Roll(shift=[1, -2], axis=[0, 1]),
+        'desc_inputs': [Tensor([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]], mstype.float32)],
+        'desc_bprop': [Tensor([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]], mstype.float32)]}),
     ('SoftShrink', {
         'block': P.SoftShrink(),
         'desc_inputs': [Tensor(np.array([[0.5297, 0.7871, 1.1754], [0.7836, 0.6218, -1.1542]]), mstype.float32)],

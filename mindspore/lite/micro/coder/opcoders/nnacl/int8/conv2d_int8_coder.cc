@@ -247,14 +247,14 @@ int Conv2DINT8Coder::DoCode(CoderContext *const context) {
 
 std::unique_ptr<OperatorCoder> CPUConv2DINT8CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                          const std::vector<Tensor *> &out_tensors,
-                                                         const Model::Node *node, size_t node_index, Target target) {
+                                                         const Model::Node *node, size_t node_index, Target target,
+                                                         int schema_version) {
   const void *primitive = node->primitive_;
   if (primitive == nullptr) {
     return nullptr;
   }
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  ParameterGen paramGen =
-    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
+  ParameterGen paramGen = PopulateRegistry::GetInstance()->GetParameterCreator(
+    GetPrimitiveType(node->primitive_, schema_version), schema_version);
   if (paramGen == nullptr) {
     MS_LOG(ERROR) << "parameter generator is null";
     return nullptr;
@@ -269,11 +269,11 @@ std::unique_ptr<OperatorCoder> CPUConv2DINT8CoderCreator(const std::vector<Tenso
   free(conv_param);
   std::unique_ptr<OperatorCoder> coder;
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    coder = CPUOpCoderCreator<Conv2D3x3Int8Coder>(in_tensors, out_tensors, node, node_index, target);
+    coder = CPUOpCoderCreator<Conv2D3x3Int8Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
   } else if (kernel_h == 1 && kernel_w == 1) {
-    coder = CPUOpCoderCreator<Conv2D1x1Int8Coder>(in_tensors, out_tensors, node, node_index, target);
+    coder = CPUOpCoderCreator<Conv2D1x1Int8Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
   } else {
-    coder = CPUOpCoderCreator<Conv2DINT8Coder>(in_tensors, out_tensors, node, node_index, target);
+    coder = CPUOpCoderCreator<Conv2DINT8Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
   }
   if (coder == nullptr) {
     MS_LOG(ERROR) << "create conv2d int8 coder failed";
@@ -285,14 +285,13 @@ std::unique_ptr<OperatorCoder> CPUConv2DINT8CoderCreator(const std::vector<Tenso
 std::unique_ptr<OperatorCoder> CPUConv2DFusionINT8CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                                const std::vector<Tensor *> &out_tensors,
                                                                const Model::Node *node, size_t node_index,
-                                                               Target target) {
+                                                               Target target, int schema_version) {
   const void *primitive = node->primitive_;
   if (primitive == nullptr) {
     return nullptr;
   }
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  ParameterGen paramGen =
-    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
+  ParameterGen paramGen = PopulateRegistry::GetInstance()->GetParameterCreator(
+    GetPrimitiveType(node->primitive_, schema_version), schema_version);
   if (paramGen == nullptr) {
     MS_LOG(ERROR) << "parameter generator is null";
     return nullptr;
@@ -300,9 +299,10 @@ std::unique_ptr<OperatorCoder> CPUConv2DFusionINT8CoderCreator(const std::vector
   auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
   std::unique_ptr<OperatorCoder> coder;
   if (conv_param->group_ == 1) {
-    coder = CPUConv2DINT8CoderCreator(in_tensors, out_tensors, node, node_index, target);
+    coder = CPUConv2DINT8CoderCreator(in_tensors, out_tensors, node, node_index, target, schema_version);
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    coder = CPUOpCoderCreator<ConvolutionDepthwiseINT8Coder>(in_tensors, out_tensors, node, node_index, target);
+    coder = CPUOpCoderCreator<ConvolutionDepthwiseINT8Coder>(in_tensors, out_tensors, node, node_index, target,
+                                                             schema_version);
   } else {
     // group conv
   }
@@ -311,6 +311,7 @@ std::unique_ptr<OperatorCoder> CPUConv2DFusionINT8CoderCreator(const std::vector
     MS_LOG(ERROR) << "create conv2d int8 coder failed";
     return nullptr;
   }
+  coder->SetSchemaVersion(schema_version);
   return coder;
 }
 

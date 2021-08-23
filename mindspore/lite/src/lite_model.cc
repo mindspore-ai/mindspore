@@ -37,7 +37,10 @@ int LiteModel::ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *ds
     return RET_ERROR;
   }
   auto primitive = node->primitive_;
-  MS_ASSERT(primitive != nullptr);
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr.";
+    return RET_ERROR;
+  }
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(primitive);
   int primitive_type = prim->value_type();
   auto creator = CompatRegistry::GetInstance()->GetTransferAttrFunc(SCHEMA_VERSION::SCHEMA_V0, primitive_type);
@@ -54,8 +57,7 @@ int LiteModel::ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *ds
 }
 
 int LiteModel::ConvertAttrToTensors() {
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  if (schema_version != SCHEMA_VERSION::SCHEMA_V0) {
+  if (schema_version_ != SCHEMA_VERSION::SCHEMA_V0) {
     MS_LOG(DEBUG) << "no need to convert attr to tensor.";
     return RET_OK;
   }
@@ -143,7 +145,7 @@ void LiteModel::Destroy() {
 
 int LiteModel::ConvertSubGraph(const schema::SubGraph &sub_graph) {
   if (sub_graph.name() == nullptr || sub_graph.inputIndices() == nullptr || sub_graph.outputIndices() == nullptr ||
-      sub_graph.nodeIndices() == nullptr || sub_graph.tensorIndices() == nullptr) {
+      sub_graph.tensorIndices() == nullptr) {
     MS_LOG(ERROR) << "sub_graph is invalid";
     return RET_ERROR;
   }
@@ -163,9 +165,11 @@ int LiteModel::ConvertSubGraph(const schema::SubGraph &sub_graph) {
   for (uint32_t i = 0; i < out_count; ++i) {
     subgraph->output_indices_.push_back(sub_graph.outputIndices()->Get(i));
   }
-  auto node_count = sub_graph.nodeIndices()->size();
-  for (uint32_t i = 0; i < node_count; ++i) {
-    subgraph->node_indices_.push_back(sub_graph.nodeIndices()->Get(i));
+  if (sub_graph.nodeIndices() != nullptr) {
+    auto node_count = sub_graph.nodeIndices()->size();
+    for (uint32_t i = 0; i < node_count; ++i) {
+      subgraph->node_indices_.push_back(sub_graph.nodeIndices()->Get(i));
+    }
   }
   auto tensor_count = sub_graph.tensorIndices()->size();
   for (uint32_t i = 0; i < tensor_count; ++i) {
@@ -211,8 +215,8 @@ int LiteModel::NodeVerify() const {
       return RET_ERROR;
     }
 
-    if (IsPartialNode(node->primitive_)) {
-      auto subgraph_index = GetPartialGraphIndex(node->primitive_);
+    if (IsPartialNode(node->primitive_, schema_version_)) {
+      auto subgraph_index = GetPartialGraphIndex(node->primitive_, schema_version_);
       if (static_cast<uint32_t>(subgraph_index) >= subgraph_size) {
         MS_LOG(ERROR) << "subgraph index：" << subgraph_index << " is beyond subgraph_size: " << subgraph_size;
         return RET_ERROR;
@@ -226,8 +230,7 @@ int LiteModel::SubGraphVerify() const {
   auto tensor_size = this->all_tensors_.size();
   auto node_size = this->all_nodes_.size();
 
-  if (sub_graphs_[0]->input_indices_.size() == 0 || GetGraphInputNodes(this).size() == 0 ||
-      sub_graphs_[0]->output_indices_.size() == 0 || GetGraphOutputNodes(this).size() == 0) {
+  if (sub_graphs_[0]->input_indices_.size() == 0 || sub_graphs_[0]->output_indices_.size() == 0) {
     MS_LOG(ERROR) << "The model has invalid input and output, please check";
     return RET_ERROR;
   }
@@ -290,12 +293,11 @@ bool LiteModel::ModelVerify() const {
 
 const void *LiteModel::GetMetaGraphByVerison() {
   MS_ASSERT(this->buf != nullptr);
-  auto schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  if (schema_version == SCHEMA_VERSION::SCHEMA_CUR) {
+  if (schema_version_ == SCHEMA_VERSION::SCHEMA_CUR) {
     return reinterpret_cast<const void *>(schema::GetMetaGraph(this->buf));
   }
 #ifdef ENABLE_V0
-  if (schema_version == SCHEMA_VERSION::SCHEMA_V0) {
+  if (schema_version_ == SCHEMA_VERSION::SCHEMA_V0) {
     return reinterpret_cast<const void *>(schema::v0::GetMetaGraph(buf));
   }
 #endif
@@ -304,12 +306,11 @@ const void *LiteModel::GetMetaGraphByVerison() {
 
 int LiteModel::GenerateModelByVersion(const void *meta_graph) {
   MS_ASSERT(meta_graph != nullptr);
-  auto schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   int status = RET_ERROR;
 #ifdef ENABLE_MODEL_OBF
   DeObfuscator *model_deobf = nullptr;
 #endif
-  if (schema_version == SCHEMA_VERSION::SCHEMA_CUR) {
+  if (schema_version_ == SCHEMA_VERSION::SCHEMA_CUR) {
 #ifdef ENABLE_MODEL_OBF
     if (IsMetaGraphObfuscated<schema::MetaGraph>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph))) {
       model_deobf =
@@ -323,7 +324,7 @@ int LiteModel::GenerateModelByVersion(const void *meta_graph) {
     status = GenerateModel<schema::MetaGraph, schema::CNode>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph));
   }
 #ifdef ENABLE_V0
-  if (schema_version == SCHEMA_VERSION::SCHEMA_V0) {
+  if (schema_version_ == SCHEMA_VERSION::SCHEMA_V0) {
     status = GenerateModel<schema::v0::MetaGraph, schema::v0::CNode>(
       *reinterpret_cast<const schema::v0::MetaGraph *>(meta_graph));
   }
@@ -348,12 +349,11 @@ int LiteModel::ConstructModel() {
     return RET_NULL_PTR;
   }
   flatbuffers::Verifier verify((const uint8_t *)this->buf, this->buf_size_);
-  int schema_version = VersionVerify(&verify);
-  if (schema_version == SCHEMA_INVALID) {
+  schema_version_ = VersionVerify(&verify);
+  if (schema_version_ == SCHEMA_INVALID) {
     MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";
     return RET_ERROR;
   }
-  VersionManager::GetInstance()->SetSchemaVersion(schema_version);
   const void *meta_graph = GetMetaGraphByVerison();
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "meta_graph is nullptr!";

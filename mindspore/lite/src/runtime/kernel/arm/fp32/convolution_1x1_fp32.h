@@ -40,7 +40,6 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   int Init() override;
   int Run() override;
   int ReSize() override;
-  int Eval() override;
 
  public:
   int DoConv1x1(int task_id);

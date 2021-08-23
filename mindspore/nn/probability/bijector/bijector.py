@@ -147,6 +147,7 @@ class Bijector(Cell):
         return (shape_tensor + dist_shape_tensor).shape
 
     def shape_mapping(self, shape):
+        """Map shape."""
         return self._shape_mapping(shape)
 
     def _add_parameter(self, value, name):
@@ -161,7 +162,7 @@ class Bijector(Cell):
             self.common_dtype = None
         # cast value to a tensor if it is not None
         if isinstance(value, bool) or value is None:
-            raise TypeError(f"{name} cannot be type {type(value)}")
+            raise TypeError("{} cannot be type {}".format(name, type(value)))
         value_t = Tensor(value)
         # if the bijector's dtype is not specified
         if self.dtype is None:

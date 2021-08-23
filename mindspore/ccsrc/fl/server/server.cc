@@ -32,6 +32,22 @@
 namespace mindspore {
 namespace fl {
 namespace server {
+// The handler to capture the signal of SIGTERM. Normally this signal is triggered by cloud cluster managers like K8S.
+std::shared_ptr<ps::core::CommunicatorBase> g_communicator_with_server = nullptr;
+std::vector<std::shared_ptr<ps::core::CommunicatorBase>> g_communicators_with_worker = {};
+void SignalHandler(int signal) {
+  MS_LOG(WARNING) << "SIGTERM captured: " << signal;
+  (void)std::for_each(g_communicators_with_worker.begin(), g_communicators_with_worker.end(),
+                      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                        MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
+                        (void)communicator->Stop();
+                      });
+
+  MS_ERROR_IF_NULL_WO_RET_VAL(g_communicator_with_server);
+  (void)g_communicator_with_server->Stop();
+  return;
+}
+
 void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const std::vector<RoundConfig> &rounds_config,
                         const CipherConfig &cipher_config, const FuncGraphPtr &func_graph, size_t executor_threshold) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -48,6 +64,7 @@ void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const s
   use_http_ = use_http;
   http_port_ = http_port;
   executor_threshold_ = executor_threshold;
+  signal(SIGTERM, SignalHandler);
   return;
 }
 
@@ -80,6 +97,7 @@ void Server::Run() {
     MS_LOG(INFO) << "Parameters for secure aggregation have been initiated.";
   }
   RegisterRoundKernel();
+  InitMetrics();
   MS_LOG(INFO) << "Server started successfully.";
   safemode_ = false;
   lock.unlock();
@@ -107,6 +125,12 @@ void Server::CancelSafeMode() {
 }
 
 bool Server::IsSafeMode() const { return safemode_.load(); }
+
+void Server::WaitExitSafeMode() const {
+  while (safemode_.load()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(kThreadSleepTime));
+  }
+}
 
 void Server::InitServerContext() {
   ps::PSContext::instance()->GenerateResetterRound();
@@ -144,6 +168,7 @@ bool Server::InitCommunicatorWithServer() {
   communicator_with_server_ =
     server_node_->GetOrCreateTcpComm(scheduler_ip_, scheduler_port_, worker_num_, server_num_, task_executor_);
   MS_EXCEPTION_IF_NULL(communicator_with_server_);
+  g_communicator_with_server = communicator_with_server_;
   return true;
 }
 
@@ -165,6 +190,7 @@ bool Server::InitCommunicatorWithWorker() {
     MS_EXCEPTION_IF_NULL(http_comm);
     communicators_with_worker_.push_back(http_comm);
   }
+  g_communicators_with_worker = communicators_with_worker_;
   return true;
 }
 
@@ -238,10 +264,9 @@ void Server::InitIteration() {
 #endif
 
   // 2.Initialize all the rounds.
-  TimeOutCb time_out_cb =
-    std::bind(&Iteration::MoveToNextIteration, iteration_, std::placeholders::_1, std::placeholders::_2);
+  TimeOutCb time_out_cb = std::bind(&Iteration::NotifyNext, iteration_, std::placeholders::_1, std::placeholders::_2);
   FinishIterCb finish_iter_cb =
-    std::bind(&Iteration::MoveToNextIteration, iteration_, std::placeholders::_1, std::placeholders::_2);
+    std::bind(&Iteration::NotifyNext, iteration_, std::placeholders::_1, std::placeholders::_2);
   iteration_->InitRounds(communicators_with_worker_, time_out_cb, finish_iter_cb);
   return;
 }
@@ -306,6 +331,8 @@ void Server::RegisterCommCallbacks() {
 
   // Set exception event callbacks for server.
   RegisterExceptionEventCallback(tcp_comm);
+  // Set message callbacks for server.
+  RegisterMessageCallback(tcp_comm);
 
   if (!server_node_->InitFollowerScaler()) {
     MS_LOG(EXCEPTION) << "Initializing follower elastic scaler failed.";
@@ -354,6 +381,19 @@ void Server::RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpC
   });
 }
 
+void Server::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator) {
+  MS_EXCEPTION_IF_NULL(communicator);
+  // Register handler for restful requests receviced by scheduler.
+  communicator->RegisterMsgCallBack("enableFLS",
+                                    std::bind(&Server::HandleEnableServerRequest, this, std::placeholders::_1));
+  communicator->RegisterMsgCallBack("disableFLS",
+                                    std::bind(&Server::HandleDisableServerRequest, this, std::placeholders::_1));
+  communicator->RegisterMsgCallBack("newInstance",
+                                    std::bind(&Server::HandleNewInstanceRequest, this, std::placeholders::_1));
+  communicator->RegisterMsgCallBack("queryInstance",
+                                    std::bind(&Server::HandleQueryInstanceRequest, this, std::placeholders::_1));
+}
+
 void Server::InitExecutor() {
   MS_EXCEPTION_IF_NULL(func_graph_);
   if (executor_threshold_ == 0) {
@@ -390,6 +430,19 @@ void Server::RegisterRoundKernel() {
     round->BindRoundKernel(round_kernel);
   }
   return;
+}
+
+void Server::InitMetrics() {
+  if (server_node_->rank_id() == kLeaderServerRank) {
+    MS_EXCEPTION_IF_NULL(iteration_);
+    std::shared_ptr<IterationMetrics> iteration_metrics =
+      std::make_shared<IterationMetrics>(ps::PSContext::instance()->config_file_path());
+    if (!iteration_metrics->Initialize()) {
+      MS_LOG(WARNING) << "Initializing metrics failed.";
+      return;
+    }
+    iteration_->set_metrics(iteration_metrics);
+  }
 }
 
 void Server::StartCommunicator() {
@@ -458,15 +511,7 @@ void Server::ProcessAfterScalingIn() {
   std::unique_lock<std::mutex> lock(scaling_mtx_);
   MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == UINT32_MAX) {
-    MS_LOG(WARNING) << "This server the one to be scaled in. Server exiting.";
-    (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                        [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
-                          MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
-                          (void)communicator->Stop();
-                        });
-
-    MS_ERROR_IF_NULL_WO_RET_VAL(communicator_with_server_);
-    (void)communicator_with_server_->Stop();
+    MS_LOG(WARNING) << "This server the one to be scaled in. Server need to wait SIGTERM to exit.";
     return;
   }
 
@@ -488,6 +533,92 @@ void Server::ProcessAfterScalingIn() {
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(kServerSleepTimeForNetworking));
   safemode_ = false;
+}
+
+void Server::HandleEnableServerRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(iteration_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_with_server_);
+  auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
+
+  std::string result_message = "";
+  bool result = iteration_->EnableServerInstance(&result_message);
+  nlohmann::json response;
+  response["result"] = result;
+  response["message"] = result_message;
+  if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
+}
+
+void Server::HandleDisableServerRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(iteration_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_with_server_);
+  auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
+
+  std::string result_message = "";
+  bool result = iteration_->DisableServerInstance(&result_message);
+  nlohmann::json response;
+  response["result"] = result;
+  response["message"] = result_message;
+  if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
+}
+
+void Server::HandleNewInstanceRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(iteration_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_with_server_);
+  auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
+
+  std::string hyper_params_str(static_cast<const char *>(message->data()), message->len());
+  nlohmann::json new_instance_json;
+  nlohmann::json response;
+  try {
+    new_instance_json = nlohmann::json::parse(hyper_params_str);
+  } catch (const std::exception &e) {
+    response["result"] = false;
+    response["message"] = "The hyper-parameter data is not in json format.";
+    if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {
+      MS_LOG(ERROR) << "Sending response failed.";
+      return;
+    }
+  }
+
+  std::string result_message = "";
+  bool result = iteration_->NewInstance(new_instance_json, &result_message);
+  response["result"] = result;
+  response["message"] = result_message;
+  if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
+}
+
+void Server::HandleQueryInstanceRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, float> response;
+  response["start_fl_job_threshold"] = ps::PSContext::instance()->start_fl_job_threshold();
+  response["start_fl_job_time_window"] = ps::PSContext::instance()->start_fl_job_time_window();
+  response["update_model_ratio"] = ps::PSContext::instance()->update_model_ratio();
+  response["update_model_time_window"] = ps::PSContext::instance()->update_model_time_window();
+  response["fl_iteration_num"] = ps::PSContext::instance()->fl_iteration_num();
+  response["client_epoch_num"] = ps::PSContext::instance()->client_epoch_num();
+  response["client_batch_size"] = ps::PSContext::instance()->client_batch_size();
+  response["client_learning_rate"] = ps::PSContext::instance()->client_learning_rate();
+  auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
+  if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
 }
 }  // namespace server
 }  // namespace fl

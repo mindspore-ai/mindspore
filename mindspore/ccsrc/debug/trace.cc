@@ -36,7 +36,9 @@
 #include "debug/common.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
+#include "pipeline/jit/base.h"
 #include "utils/log_adapter.h"
+#include "utils/comm_manager.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
@@ -133,9 +135,11 @@ class AnalyzeFailExporter : public AnfExporter {
 
   bool ExportFuncGraph(const std::string &filename, const TraceCNodeEvalStack &node_config_stack);
 
- private:
+ protected:
   void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                    std::map<AnfNodePtr, int> *const apply_map) override;
+
+ private:
   std::string GetNodeType(const AnfNodePtr &nd) override;
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
   AnfNodeConfigPtr GetForwardConfig(const AnfNodeConfigPtr &cfg);
@@ -400,6 +404,22 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
   return true;
 }
 
+std::string GetEvalFailDatPath() {
+  std::string path;
+  auto ms_om_path = common::GetEnv("MS_OM_PATH");
+  if (!ms_om_path.empty()) {
+    path = ms_om_path;
+  } else {
+    path = ".";
+  }
+  path += "/rank_" + std::to_string(GetRank()) + "/om/analyze_fail.dat";
+  auto realpath = Common::GetRealPath(path);
+  if (!realpath.has_value()) {
+    MS_EXCEPTION(ValueError) << "Get real path failed. path=" << path;
+  }
+  return realpath.value();
+}
+
 void GetEvalStackInfo(std::ostringstream &oss) {
   MS_LOG(INFO) << "Get graph analysis information begin";
   auto stack = GetCNodeDebugStack();
@@ -407,17 +427,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     MS_LOG(INFO) << "Length of analysis information stack is empty.";
     return;
   }
-  string file_name = "analyze_fail.dat";
-  auto ms_om_path = common::GetEnv("MS_OM_PATH");
-  if (!ms_om_path.empty()) {
-    auto path = ms_om_path + "/" + file_name;
-    auto realpath = Common::GetRealPath(path);
-    if (!realpath.has_value()) {
-      MS_EXCEPTION(ValueError) << "Get real path failed. path=" << path;
-    }
-    file_name = realpath.value();
-  }
-
+  std::string file_name = GetEvalFailDatPath();
   auto ret = OutputAnalyzedGraphWithType(file_name);
   oss << "\nThe function call stack";
   if (ret) {

@@ -62,9 +62,11 @@ class MSTensor::Impl {
                                                        const std::vector<int64_t> &shape, const void *data,
                                                        size_t data_len);
 
+#ifndef STRING_KERNEL_CLIP
   static std::shared_ptr<Impl> MS_API StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str);
 
   static std::vector<std::string> MS_API TensorImplToStrings(const std::shared_ptr<Impl> &impl);
+#endif
 
   virtual const std::string &Name() const {
     static std::string empty = "";

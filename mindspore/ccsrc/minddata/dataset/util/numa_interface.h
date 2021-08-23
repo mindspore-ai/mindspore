@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_NUMA_INTERFACE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_NUMA_INTERFACE_H_
 
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {

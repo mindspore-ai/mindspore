@@ -68,6 +68,7 @@ TEST_F(TestTileFp32, Tile) {
 
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestTileFp32, SimpleTile1) {
@@ -115,6 +116,7 @@ TEST_F(TestTileFp32, SimpleTile1) {
 
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestTileFp32, SimpleTile2) {
@@ -162,5 +164,6 @@ TEST_F(TestTileFp32, SimpleTile2) {
 
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 }  // namespace mindspore

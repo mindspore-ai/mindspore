@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "common/common.h"
 #include "include/api/types.h"
 #include "utils/log_adapter.h"
 
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 
 using namespace mindspore::dataset;
 using mindspore::LogStream;
@@ -31,7 +33,7 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 TEST_F(MindDataTestPipeline, TestAmplitudeToDBPipeline) {
-  MS_LOG(INFO) << "Basic Function Test";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmplitudeToDBPipeline.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -69,7 +71,7 @@ TEST_F(MindDataTestPipeline, TestAmplitudeToDBPipeline) {
 }
 
 TEST_F(MindDataTestPipeline, TestAmplitudeToDBWrongArgs) {
-  MS_LOG(INFO) << "Basic Function Test";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmplitudeToDBWrongArgs.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -89,8 +91,8 @@ TEST_F(MindDataTestPipeline, TestAmplitudeToDBWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestBandBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -128,8 +130,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestBandBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -157,8 +159,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandBiquad002) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestAllpassBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestAllpassBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAllpassBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -196,8 +198,8 @@ TEST_F(MindDataTestPipeline, Level0_TestAllpassBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestAllpassBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestAllpassBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAllpassBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -225,8 +227,8 @@ TEST_F(MindDataTestPipeline, Level0_TestAllpassBiquad002) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandpassBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestBandpassBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandpassBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -264,8 +266,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandpassBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandpassBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestBandpassBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandpassBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -293,8 +295,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandpassBiquad002) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestBandrejectBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandrejectBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -332,8 +334,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestBandrejectBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandrejectBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -361,8 +363,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad002) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBassBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestBassBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBassBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -400,8 +402,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBassBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBassBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestBassBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBassBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -430,7 +432,7 @@ TEST_F(MindDataTestPipeline, Level0_TestBassBiquad002) {
 }
 
 TEST_F(MindDataTestPipeline, TestAnglePipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipeline";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipeline.";
 
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("complex", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -468,7 +470,7 @@ TEST_F(MindDataTestPipeline, TestAnglePipeline) {
 }
 
 TEST_F(MindDataTestPipeline, TestAnglePipelineError) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipelineError";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipelineError.";
 
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("complex", mindspore::DataType::kNumberTypeFloat32, {3, 2, 1}));
@@ -486,4 +488,122 @@ TEST_F(MindDataTestPipeline, TestAnglePipelineError) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   std::unordered_map<std::string, mindspore::MSTensor> row;
   EXPECT_ERROR(iter->GetNextRow(&row));
+}
+
+TEST_F(MindDataTestPipeline, TestFrequencyMaskingPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFrequencyMaskingPipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {200, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto frequencymasking = audio::FrequencyMasking(true, 6);
+
+  ds = ds->Map({frequencymasking});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {200, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFrequencyMaskingWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFrequencyMaskingWrongArgs.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {20, 20}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto frequencymasking = audio::FrequencyMasking(true, -100);
+
+  ds = ds->Map({frequencymasking});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by bandbiquad
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestComplexNormBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComplexNormBasic.";
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt64, {3, 2, 4, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto ComplexNormOp = audio::ComplexNorm(3.0);
+
+  ds = ds->Map({ComplexNormOp});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by ComplexNorm
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {3, 2, 2};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestComplexNormWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComplexNormWrongArgs.";
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt64, {3, 2, 4, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto ComplexNormOp = audio::ComplexNorm(-10);
+
+  ds = ds->Map({ComplexNormOp});
+  std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
+  EXPECT_EQ(iter1, nullptr);
 }

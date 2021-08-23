@@ -16,9 +16,8 @@
 
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 
-#include "minddata/dataset/audio/kernels/bass_biquad_op.h"
-
 #include "minddata/dataset/audio/ir/validators.h"
+#include "minddata/dataset/audio/kernels/bass_biquad_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -30,7 +29,7 @@ BassBiquadOperation::BassBiquadOperation(int32_t sample_rate, float gain, float 
 
 Status BassBiquadOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("BassBiquad", "Q", Q_, {0, 1.0}, true, false));
-  RETURN_IF_NOT_OK(CheckScalarNotZero("BassBiquad", "sample_rate", sample_rate_));
+  RETURN_IF_NOT_OK(ValidateScalarNotZero("BassBiquad", "sample_rate", sample_rate_));
   return Status::OK();
 }
 
@@ -38,6 +37,7 @@ std::shared_ptr<TensorOp> BassBiquadOperation::Build() {
   std::shared_ptr<BassBiquadOp> tensor_op = std::make_shared<BassBiquadOp>(sample_rate_, gain_, central_freq_, Q_);
   return tensor_op;
 }
+
 Status BassBiquadOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["sample_rate"] = sample_rate_;

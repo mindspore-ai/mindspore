@@ -138,7 +138,7 @@ typedef struct vvector {
   size_t size_;      // number of shapes
 } vvector;
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 typedef struct TensorListC {
   bool is_ready_;
   int data_type_;
@@ -160,7 +160,7 @@ typedef struct VectorC {
   size_t per_malloc_size_;
 } VectorC;
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape);
 int TensorListMergeShape(int *element_shape, size_t *element_shape_size, const int *tmp, size_t tmp_size);
 bool TensorListIsFullyDefined(const int *shape, size_t shape_size);

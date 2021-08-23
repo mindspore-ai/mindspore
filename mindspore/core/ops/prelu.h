@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePReLU = "PReLU";
-class PReLU : public PrimitiveC {
+class MS_CORE_API PReLU : public PrimitiveC {
  public:
   PReLU() : PrimitiveC(kNamePReLU) { InitIOName({"x"}, {"y"}); }
   explicit PReLU(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"y"}); }

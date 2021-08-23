@@ -69,7 +69,7 @@ class DistributedSampler:
 def resume_model(config, G, D):
     """Restore the trained generator and discriminator."""
     print('Loading the trained models from step {}...'.format(config.resume_iters))
-    G_path = os.path.join(config.model_save_dir, f"Generator_2-0_%d.ckpt" % config.resume_iters)
+    G_path = os.path.join(config.model_save_dir, f"Generator-0_%d.ckpt" % config.resume_iters)
     # D_path = os.path.join(config.model_save_dir, f"Net_D_%d.ckpt" % config.resume_iters)
     param_G = load_checkpoint(G_path, G)
     # param_D = load_checkpoint(D_path, D)

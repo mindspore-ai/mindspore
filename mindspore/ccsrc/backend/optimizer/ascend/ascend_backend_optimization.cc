@@ -38,6 +38,7 @@
 #include "backend/optimizer/ascend/ir_fusion/square_sum_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/lamb_update_with_lr_rule_fusion.h"
+#include "backend/optimizer/ascend/ir_fusion/prelu_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/clip_by_value_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/confusion_softmax_grad_rule.h"
 #include "backend/optimizer/ascend/ir_fusion/lamb_next_mv_rule.h"
@@ -128,6 +129,7 @@
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "backend/optimizer/ascend/enhancer/add_attr_for_3d_graph.h"
 #include "backend/optimizer/ascend/enhancer/split_n_optimizer.h"
+#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
 #include "utils/ms_context.h"
 #include "utils/config_manager.h"
 #include "utils/context/graph_kernel_flags.h"
@@ -164,6 +166,7 @@ void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<PReluFusion>());
 }
 
 void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
@@ -322,8 +325,13 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
@@ -338,10 +346,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
-  ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
-  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
 
@@ -382,6 +386,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   // other optimization
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto other_pm = std::make_shared<PassManager>("other_pm");
+  other_pm->AddPass(std::make_shared<SendFusion>());
+  other_pm->AddPass(std::make_shared<RecvFusion>());
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
   other_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());

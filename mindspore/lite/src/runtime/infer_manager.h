@@ -30,8 +30,10 @@
 namespace mindspore::lite {
 int KernelInferShape(const std::vector<lite::Tensor *> &tensors_in, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter);
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                     const void *primitive, std::set<std::string> &&providers);
+                     const void *primitive, std::set<std::string> &&providers, int schema_version);
+#endif
 class InferManager {
  public:
   static InferManager *GetInstance() {

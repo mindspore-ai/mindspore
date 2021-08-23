@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCTCLossV2Grad = "CTCLossV2Grad";
-class CTCLossV2Grad : public PrimitiveC {
+class MS_CORE_API CTCLossV2Grad : public PrimitiveC {
  public:
   CTCLossV2Grad() : PrimitiveC(kNameCTCLossV2Grad) {
     InitIOName(

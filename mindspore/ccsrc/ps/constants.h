@@ -133,6 +133,59 @@ constexpr char kClientCertPath[] = "client_cert_path";
 constexpr char kClientPassword[] = "client_password";
 constexpr char kCaCertPath[] = "ca_cert_path";
 
+constexpr char kCipherList[] = "cipher_list";
+constexpr char kCertCheckInterval[] = "cert_check_interval_in_hour";
+// 7 * 24
+constexpr int64_t kCertCheckIntervalInHour = 168;
+constexpr char kCertExpireWarningTime[] = "cert_expire_warning_time_in_day";
+// 90
+constexpr int64_t kCertExpireWarningTimeInDay = 90;
+constexpr char kConnectionNum[] = "connection_num";
+constexpr int64_t kConnectionNumDefault = 10000;
+constexpr char kLocalIp[] = "127.0.0.1";
+
+constexpr int64_t kJanuary = 1;
+constexpr int64_t kSeventyYear = 70;
+constexpr int64_t kHundredYear = 100;
+constexpr int64_t kThousandYear = 1000;
+constexpr int64_t kBaseYear = 1900;
+constexpr int64_t kMinWarningTime = 7;
+constexpr int64_t kMaxWarningTime = 180;
+
+constexpr char kServerCert[] = "server.p12";
+constexpr char kClientCert[] = "client.p12";
+constexpr char kCaCert[] = "ca.crt";
+constexpr char kColon = ':';
+const std::map<std::string, size_t> kCiphers = {{"ECDHE-RSA-AES128-GCM-SHA256", 0},
+                                                {"ECDHE-ECDSA-AES128-GCM-SHA256", 1},
+                                                {"ECDHE-RSA-AES256-GCM-SHA384", 2},
+                                                {"ECDHE-ECDSA-AES256-GCM-SHA384", 3},
+                                                {"DHE-RSA-AES128-GCM-SHA256", 4},
+                                                {"DHE-DSS-AES128-GCM-SHA256", 5},
+                                                {"ECDHE-RSA-AES128-SHA256", 6},
+                                                {"ECDHE-ECDSA-AES128-SHA256", 7},
+                                                {"ECDHE-RSA-AES128-SHA", 8},
+                                                {"ECDHE-ECDSA-AES128-SHA", 9},
+                                                {"ECDHE-RSA-AES256-SHA384", 10},
+                                                {"ECDHE-ECDSA-AES256-SHA384", 11},
+                                                {"ECDHE-RSA-AES256-SHA", 12},
+                                                {"ECDHE-ECDSA-AES256-SHA", 13},
+                                                {"DHE-RSA-AES128-SHA256", 14},
+                                                {"DHE-RSA-AES128-SHA", 15},
+                                                {"DHE-DSS-AES128-SHA256", 16},
+                                                {"DHE-RSA-AES256-SHA256", 17},
+                                                {"DHE-DSS-AES256-SHA", 18},
+                                                {"DHE-RSA-AES256-SHA", 19},
+                                                {"!aNULL", 20},
+                                                {"!eNULL", 21},
+                                                {"!EXPORT", 22},
+                                                {"!DES", 23},
+                                                {"!RC4", 24},
+                                                {"!3DES", 25},
+                                                {"!MD5", 26},
+                                                {"!PSK", 27},
+                                                {"kEDH+AESGCM", 28}};
+
 using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 using Key = uint64_t;
@@ -197,6 +250,7 @@ using HandlerAfterScaleOut = std::function<void(void)>;
 using HandlerAfterScaleIn = std::function<void(void)>;
 
 constexpr char kClusterSafeMode[] = "The cluster is in safemode.";
+constexpr char kJobNotAvailable[] = "The server's training job is disabled or finished.";
 
 enum class CustomEvent { kIterationRunning = 0, kIterationCompleted };
 

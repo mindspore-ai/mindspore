@@ -61,6 +61,18 @@ Status SequentialSamplerObj::to_json(nlohmann::json *const out_json) {
   return Status::OK();
 }
 
+#ifndef ENABLE_ANDROID
+Status SequentialSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples,
+                                       std::shared_ptr<SamplerObj> *sampler) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("start_index") != json_obj.end(), "Failed to find start_index");
+  int64_t start_index = json_obj["start_index"];
+  *sampler = std::make_shared<SequentialSamplerObj>(start_index, num_samples);
+  // Run common code in super class to add children samplers
+  RETURN_IF_NOT_OK(SamplerObj::from_json(json_obj, sampler));
+  return Status::OK();
+}
+#endif
+
 Status SequentialSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
   *sampler = std::make_shared<dataset::SequentialSamplerRT>(start_index_, num_samples_);

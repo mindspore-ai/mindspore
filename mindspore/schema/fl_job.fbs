@@ -160,3 +160,12 @@ table ResponsePullWeight{
 table FeatureMapList {
   feature_map:[FeatureMap];
 }
+
+table RequestPushMetrics{
+  loss:float;
+  accuracy:float;
+}
+
+table ResponsePushMetrics{
+  retcode:int;
+}

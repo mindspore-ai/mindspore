@@ -28,10 +28,12 @@
 #include "src/inner_context.h"
 #include "include/model.h"
 #include "src/scheduler_cb.h"
-
+#ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
+#endif
 
 namespace mindspore::lite {
+constexpr int kDefaultDeviceType = -1;
 const constexpr int kSwitchTrueBranch = 1;
 const constexpr int kSwitchFalseBranch = 2;
 class Scheduler {
@@ -53,11 +55,14 @@ class Scheduler {
   void SetupSchedulerCb(std::unique_ptr<SchedulerCb> cb) { sched_cb_ = std::move(cb); }
 
  private:
+  int SchedulePreProcess();
+  int CheckInputParam(std::vector<kernel::LiteKernel *> *dst_kernels);
   void FindNodeInoutTensors(const Model::Node &node, std::vector<Tensor *> *inputs, std::vector<Tensor *> *outputs);
   Model::Node *NodeInputIsPartial(const Model::Node *node);
   int InferPartialShape(const Model::Node *node);
   int InferCallShape(const Model::Node *node);
   int InferNodeShape(const Model::Node *node);
+  void FreeOpParameters();
   int InferSubGraphShape(size_t subgraph_index);
   // schedule a node to kernel according to context and kernels registered
   kernel::LiteKernel *FindBackendKernel(const std::vector<Tensor *> &in_tensors,
@@ -66,8 +71,10 @@ class Scheduler {
   int FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                     OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
                     kernel::LiteKernel **kernel);
+#ifdef GPU_OPENCL
   int FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                     OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel);
+#endif
   int FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                          const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel);
 
@@ -102,7 +109,7 @@ class Scheduler {
 
   bool IsControlFlowPattern(const lite::Model::Node &partial_node);
   int SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type);
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
   int InferSwitchShape(const Model::Node *node);
   Model::Node *NodeInputIsSwitch(const Model::Node *node);
   bool SubGraphHasScheduled(const int &index);
@@ -129,11 +136,12 @@ class Scheduler {
   std::shared_ptr<Delegate> delegate_ = nullptr;
   std::deque<int> subgraphs_to_schedule_{};
   std::unordered_map<size_t, kernel::LiteKernel *> subgraph_index_subgraph_kernel_map_{};
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
   std::set<int> scheduled_subgraph_index_{};
   std::unordered_map<kernel::LiteKernel *, size_t> partial_kernel_subgraph_index_map_{};
   std::set<lite::Model::Node *> partial_cnode_inferred_{};
 #endif
+  int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
 };
 }  // namespace mindspore::lite
 

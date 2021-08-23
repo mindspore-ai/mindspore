@@ -31,6 +31,7 @@
     - [推理过程](#推理过程)
         - [用法](#用法-2)
         - [结果](#结果-2)
+    - [训练后量化推理](#训练后量化推理)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
@@ -62,13 +63,7 @@ Pascal VOC数据集和语义边界数据集（Semantic Boundaries Dataset，SBD�
 
 - 准备Backbone模型
 
-准备resnet101模型，点此下载(https://download.pytorch.org/models/resnet101-5d3b4d8f.pth).
-
-使用convert_resnet101.py脚本转换Backbone模型.
-
-```shell
-python convert_resnet101.py
-```
+准备resnet101模型，点此下载(https://download.mindspore.cn/model_zoo/r1.2/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt).
 
 - 下载分段数据集。
 
@@ -809,6 +804,40 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DATA_ROOT] [DATA_LIST] [DEVICE_
 | **Network**    | OS=16 | OS=8 | MS   | Flip  | mIOU  | mIOU in paper |
 | :----------: | :-----: | :----: | :----: | :-----: | :-----: | :-------------: |
 | deeplab_v3 |       | √    |      |       | 78.84 | 78.51    |
+
+## [训练后量化推理](#contents)
+
+训练后量化推理的相关执行脚本文件在"ascend310_quant_infer"目录下，依次执行以下步骤实现训练后量化推理。
+本训练后量化工程的模型类型是deeplab_v3_s8。
+
+1、生成Ascend310平台AIR模型推理需要的.bin格式数据。
+
+```shell
+python export_bin.py --model [MODEL] --data_root [DATA ROOT] --data_lst [DATA LST]
+```
+
+2、导出训练后量化的AIR格式模型。
+
+导出训练后量化模型需要配套的量化工具包，参考[官方地址](https://www.hiascend.com/software/cann/community)
+
+```shell
+python post_quant.py --model [MODEL] --data_root [DATA ROOT] --data_lst [DATA LST] --ckpt_file [CKPT_PATH]
+```
+
+导出的模型会存储在./result/deeplabv3_quant.air。
+
+3、在Ascend310执行推理量化模型。
+
+```shell
+# Ascend310 inference
+bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH] [SHAPE_PATH]
+```
+
+推理结果保存在脚本执行的当前路径，可以在acc.log中看到精度计算结果。
+
+```bash
+mean Iou 0.7854572371350974
+```
 
 # 模型描述
 

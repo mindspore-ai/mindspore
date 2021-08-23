@@ -24,11 +24,11 @@ class BleuScore(Metric):
     Calculates BLEU score of machine translated text with one or more references.
 
     Args:
-        n_gram (int): The n_gram value ranged from 1 to 4. Default: 4.
+        n_gram (int): The n_gram value ranges from 1 to 4. Default: 4.
         smooth (bool): Whether or not to apply smoothing. Default: False.
 
     Raises:
-        ValueError: If the value range of n_gram is not 1 to 4.
+        ValueError: If the value range of n_gram is not from 1 to 4.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -48,7 +48,7 @@ class BleuScore(Metric):
         super().__init__()
         self.n_gram = validator.check_value_type("n_gram", n_gram, [int])
         if self.n_gram > 4 or self.n_gram < 1:
-            raise ValueError('The n_gram value ranged from 1 to 4, but got {}'.format(n_gram))
+            raise ValueError('The n_gram value ranges from 1 to 4, but got {}'.format(n_gram))
 
         self.smooth = validator.check_value_type("smooth", smooth, [bool])
         self.clear()
@@ -70,7 +70,7 @@ class BleuScore(Metric):
 
         Args:
             ngram_input_list (list): A list of translated text or reference texts.
-            n_gram (int): gram value ranged 1 to 4.
+            n_gram (int): gram value ranges from 1 to 4.
 
         Return:
             ngram_counter: a collections.Counter object of ngram.
@@ -99,12 +99,12 @@ class BleuScore(Metric):
             ValueError: If the number of input is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The bleu_score need 2 inputs (candidate_corpus, reference_corpus), '
+            raise ValueError('The bleu_score needs 2 inputs (candidate_corpus, reference_corpus), '
                              'but got {}'.format(len(inputs)))
         candidate_corpus = inputs[0]
         reference_corpus = inputs[1]
         if len(candidate_corpus) != len(reference_corpus):
-            raise ValueError('translate_corpus and reference_corpus should be equal in length, '
+            raise ValueError('The translate_corpus and reference_corpus should be equal in length, '
                              'but got {} {}'.format(len(candidate_corpus), len(reference_corpus)))
 
         for (candidate, references) in zip(candidate_corpus, reference_corpus):

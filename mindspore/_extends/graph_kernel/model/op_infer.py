@@ -16,7 +16,7 @@
 
 import copy
 import sys
-from functools import reduce
+from functools import reduce as prod_reduce
 from .model import GraphKernelUnsupportedException as GKException
 from .model import PrimLib, DataFormat as DF
 
@@ -101,22 +101,24 @@ class OpInfer:
 
 class _Elemwise(OpInfer):
     """Common infer for elementwise operators"""
-
-    def _broadcast_shape(self, shapes):
+    @staticmethod
+    def broadcast_shape(shapes):
         """deduce broadcast shape using same rules as numpy"""
         dim_size = max([len(shape) for shape in shapes])
         align_shapes = [[1] * (dim_size - len(shape)) + shape for shape in shapes]
         out_shape = [1] * dim_size
         for i in range(dim_size):
             for align_shape in align_shapes:
-                if align_shape[i] > 1:
-                    if out_shape[i] == 1:
-                        out_shape[i] = align_shape[i]
-                    if out_shape[i] != align_shape[i]:
-                        raise GKException("shape broadcast failed!")
+                if align_shape[i] == 1:
+                    continue
+                if out_shape[i] == 1:
+                    out_shape[i] = align_shape[i]
+                elif out_shape[i] != align_shape[i]:
+                    raise GKException("shape broadcast failed!")
         return out_shape
 
-    def _to_nz(self, default_shape):
+    @staticmethod
+    def defaultformat_to_nz(default_shape):
         """default format shape to fractal_Nz format shape"""
         if len(default_shape) not in (1, 2):
             raise GKException("shape is too long!")
@@ -142,17 +144,17 @@ class _Elemwise(OpInfer):
         """returns the output shape with broadcast"""
 
         # in case all inputs are default format/NHWC/NCHW
-        is_default = [input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW) for input in self.inputs]
+        is_default = [op_input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW) for op_input in self.inputs]
         if all(is_default):
-            return self._broadcast_shape([input.shape for input in self.inputs])
+            return self.broadcast_shape([op_input.shape for op_input in self.inputs])
 
         # in case formats are fractal_nz, default_fromat/NHWC/HCHW(optional)
-        is_default_frac_nz = [input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW, DF.FRAC_NZ)
-                              for input in self.inputs]
+        is_default_frac_nz = [op_input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW, DF.FRAC_NZ)
+                              for op_input in self.inputs]
         if all(is_default_frac_nz):
-            nz_shapes = [self._to_nz(input.shape) if input.data_format != DF.FRAC_NZ else input.shape
-                         for input in self.inputs]
-            return self._broadcast_shape(nz_shapes)
+            nz_shapes = [self.defaultformat_to_nz(op_input.shape) if op_input.data_format != DF.FRAC_NZ
+                         else op_input.shape for op_input in self.inputs]
+            return self.broadcast_shape(nz_shapes)
 
         raise GKException("Only support default and fractal_nz")
 
@@ -214,9 +216,11 @@ class _Reshape(OpInfer):
 
 
 class Reshape(_Reshape):
+    """Reshape op infer"""
+
     def _check_shape(self):
-        size_before_reshape = reduce(lambda x, y: x * y, self.inputs[0].shape)
-        size_after_reshape = reduce(lambda x, y: x * y, self.attrs["shape"])
+        size_before_reshape = prod_reduce(lambda x, y: x * y, self.inputs[0].shape)
+        size_after_reshape = prod_reduce(lambda x, y: x * y, self.attrs["shape"])
         if size_before_reshape != size_after_reshape:
             raise GKException("The shape product before and after reshaping should be equal")
 
@@ -225,11 +229,15 @@ class Reshape(_Reshape):
 
 
 class Cast(_Elemwise):
+    """Cast op infer"""
+
     def _infer_type(self):
         return self.attrs["dst_type"]
 
 
 class InplaceAssign(_Elemwise):
+    """InplaceAssign op infer"""
+
     def _infer_shape(self):
         return self.inputs[2].shape
 
@@ -241,6 +249,8 @@ class InplaceAssign(_Elemwise):
 
 
 class BroadcastTo(OpInfer):
+    """BroadcastTo op infer"""
+
     def _infer_shape(self):
         return self.attrs["shape"]
 
@@ -256,6 +266,8 @@ class _CompareOp(_Elemwise):
 
 
 class CImag(OpInfer):
+    """CImag op infer"""
+
     def _check_type(self):
         if self.inputs[0].dtype != "complex64":
             raise GKException(
@@ -266,6 +278,8 @@ class CImag(OpInfer):
 
 
 class CReal(OpInfer):
+    """CReal op infer"""
+
     def _check_type(self):
         if self.inputs[0].dtype != "complex64":
             raise GKException(
@@ -276,6 +290,8 @@ class CReal(OpInfer):
 
 
 class Complex(OpInfer):
+    """Complex op infer"""
+
     def _check_type(self):
         if self.inputs[0].dtype != "float32":
             raise GKException(
@@ -288,26 +304,28 @@ class Complex(OpInfer):
 
 
 class Less(_CompareOp):
-    pass
+    """Less op infer"""
 
 
 class LessEqual(_CompareOp):
-    pass
+    """LessEqual op infer"""
 
 
 class Equal(_CompareOp):
-    pass
+    """Equal op infer"""
 
 
 class Greater(_CompareOp):
-    pass
+    """Greater op infer"""
 
 
 class GreaterEqual(_CompareOp):
-    pass
+    """GreaterEqual op infer"""
 
 
 class Select(_Elemwise):
+    """Select op infer"""
+
     def _check_type(self):
         if self.inputs[0].dtype != "bool":
             raise GKException("Select's input[0] should be a bool condition but got {}".format(self.inputs[0].dtype))
@@ -319,6 +337,7 @@ class Select(_Elemwise):
 
 
 def check_format_any(formats, checked_format):
+    """Check whether input format in formats list"""
     if not isinstance(formats, (list, tuple)):
         raise GKException("formats {} should be list or tuple, but got {}.".format(formats, type(formats)))
     if checked_format not in formats:
@@ -326,11 +345,13 @@ def check_format_any(formats, checked_format):
 
 
 def check_nd(data, nd):
+    """Check whether data are nd format"""
     if not isinstance(data, (list, tuple)) or len(data) != nd:
         raise GKException("input should be {}D list or tuple, but got {}.".format(nd, data))
 
 
 def conv_had_pad(pad_list, pad_mode):
+    """Check whether conv need to add pad"""
     if not isinstance(pad_list, (list, tuple)) or len(pad_list) != 4:
         raise GKException("pad_list should be 4D list or tuple, but got {}".format(pad_list))
     if pad_list[0] != pad_list[1] or pad_list[2] != pad_list[3]:

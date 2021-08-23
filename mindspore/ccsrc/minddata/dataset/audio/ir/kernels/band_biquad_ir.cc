@@ -16,9 +16,8 @@
 
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
 
-#include "minddata/dataset/audio/kernels/band_biquad_op.h"
-
 #include "minddata/dataset/audio/ir/validators.h"
+#include "minddata/dataset/audio/kernels/band_biquad_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -30,7 +29,7 @@ BandBiquadOperation::BandBiquadOperation(int32_t sample_rate, float central_freq
 
 Status BandBiquadOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("BandBiquad", "Q", Q_, {0, 1.0}, true, false));
-  RETURN_IF_NOT_OK(CheckScalarNotZero("BandBIquad", "sample_rate", sample_rate_));
+  RETURN_IF_NOT_OK(ValidateScalarNotZero("BandBIquad", "sample_rate", sample_rate_));
   return Status::OK();
 }
 

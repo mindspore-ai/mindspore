@@ -32,6 +32,7 @@ namespace mindspore::kernel {
 int SplitOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto src_data = in_tensors_[0]->data_c();
+  MS_ASSERT(src_data);
   cl::Image2D *in_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
   if (in_image == nullptr) {
     MS_LOG(ERROR) << "RunAxis0 in_image can not be nullptr";
@@ -40,6 +41,7 @@ int SplitOpenCLKernel::RunAxis0() {
   auto src_area = cl::array<cl::size_type, 3U>{0, 0, 0};
   for (int i = 0; i < out_tensors_.size(); i++) {
     auto dst_data = out_tensors_[i]->data_c();
+    MS_ASSERT(dst_data);
     ImageSize img_size;
     if (allocator_->GetImageSize(dst_data, &img_size) != RET_OK) {
       MS_LOG(ERROR) << "GetImageSize failed.";
@@ -52,7 +54,10 @@ int SplitOpenCLKernel::RunAxis0() {
       MS_LOG(ERROR) << "RunAxis0 out_image can not be nullptr";
       return RET_ERROR;
     }
-    ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*in_image, *out_image, src_area, dst_area, region);
+    if (ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*in_image, *out_image, src_area, dst_area, region) !=
+        CL_SUCCESS) {
+      MS_LOG(WARNING) << "enqueueCopyImage failed.";
+    }
     src_area[1] += region[1];
   }
   return RET_OK;
@@ -229,7 +234,11 @@ void SplitOpenCLKernel::SetGlobalLocal() {
 
 int SplitOpenCLKernel::Run() {
   if (split_dim_ == 0) {
-    RunAxis0();
+    int ret = RunAxis0();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "RunAxis0 failed.";
+      return ret;
+    }
     return RET_OK;
   }
   int arg_cn = 0;

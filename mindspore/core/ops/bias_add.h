@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBiasAdd = prim::kBiasAdd;
-class BiasAdd : public PrimitiveC {
+class MS_CORE_API BiasAdd : public PrimitiveC {
  public:
   BiasAdd() : PrimitiveC(prim::kPrimBiasAdd->name()) { InitIOName({"x", "b"}, {"output"}); }
   ~BiasAdd() = default;

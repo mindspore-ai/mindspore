@@ -17,9 +17,11 @@
 #include "nnacl/infer/matmul_infer.h"
 #include "nnacl/infer/infer_register.h"
 
+#define MIN_SHAPE_SIZE 2
+
 int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_t b_shape_size,
                           const MatMulParameter *param) {
-  if (a_shape_size < 2 || b_shape_size < 2) {
+  if (a_shape_size < MIN_SHAPE_SIZE || b_shape_size < MIN_SHAPE_SIZE) {
     return NNACL_PARAM_INVALID;
   }
   for (size_t i = 0; i < (a_shape_size - 2) && i < (b_shape_size - 2); ++i) {

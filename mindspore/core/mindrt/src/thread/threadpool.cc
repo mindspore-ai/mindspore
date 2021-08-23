@@ -175,11 +175,11 @@ int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) 
   return THREAD_OK;
 }
 
-void ThreadPool::SyncRunTask(Task *task, int task_num) const {
+void ThreadPool::SyncRunTask(Task *task, int start_num, int task_num) const {
   // run task sequentially
   // if the current thread is not the actor thread
-  float per_scale = kMaxScale / task_num;
-  for (int i = 0; i < task_num; ++i) {
+  float per_scale = kMaxScale / (task_num - start_num);
+  for (int i = start_num; i < task_num; ++i) {
     float lhs_scale = i * per_scale;
     float rhs_scale = (i + 1) * per_scale;
     rhs_scale = i == task_num - 1 ? kMaxScale : rhs_scale;
@@ -197,7 +197,11 @@ void ThreadPool::DistributeTask(Task *task, int task_num) const {
   int sum_frequency = 0;
   std::vector<Worker *> assigned;
   int num = static_cast<int>(workers_.size()) - 1;
-  for (int i = num; i >= 0 && count < num_assigned; --i) {
+  int offset = 0;
+  if (!occupied_actor_thread_) {
+    offset = static_cast<int>(actor_thread_num_);
+  }
+  for (int i = num; i >= offset && count < num_assigned; --i) {
     if (workers_[i]->available()) {
       assigned.push_back(workers_[i]);
       sum_frequency += workers_[i]->frequency();
@@ -212,7 +216,9 @@ void ThreadPool::DistributeTask(Task *task, int task_num) const {
       sum_frequency += curr->frequency();
     }
   } else if (assigned.size() != static_cast<size_t>(task_num)) {
-    SyncRunTask(task, task_num);
+    CalculateScales(assigned, sum_frequency);
+    ActiveWorkers(assigned, task, assigned.size(), curr);
+    SyncRunTask(task, assigned.size(), task_num);
     return;
   }
   CalculateScales(assigned, sum_frequency);

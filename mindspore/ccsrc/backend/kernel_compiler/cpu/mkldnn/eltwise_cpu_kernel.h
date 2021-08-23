@@ -52,8 +52,6 @@ MS_REG_CPU_KERNEL(Sigmoid, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutp
                   EltWiseCPUKernel);
 MS_REG_CPU_KERNEL(Sqrt, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   EltWiseCPUKernel);
-MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
 MS_REG_CPU_KERNEL(Tanh, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   EltWiseCPUKernel);
 MS_REG_CPU_KERNEL(Softplus, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

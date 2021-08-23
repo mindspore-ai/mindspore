@@ -9,5 +9,8 @@ add_library(audio-ir-kernels OBJECT
         bandpass_biquad_ir.cc
         bandreject_biquad_ir.cc
         bass_biquad_ir.cc
+        complex_norm_ir.cc
+        frequency_masking_ir.cc
+        time_masking_ir.cc
         time_stretch_ir.cc
         )

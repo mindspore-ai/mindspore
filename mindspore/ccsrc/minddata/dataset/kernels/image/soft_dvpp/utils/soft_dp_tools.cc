@@ -48,9 +48,5 @@ bool IsDirectory(const std::string &path) {
     return false;
   }
 
-  if (S_ISDIR(buf.st_mode)) {
-    return true;
-  } else {
-    return false;
-  }
+  return S_ISDIR(buf.st_mode);
 }

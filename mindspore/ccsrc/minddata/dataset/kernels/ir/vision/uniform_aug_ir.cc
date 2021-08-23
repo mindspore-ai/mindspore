@@ -18,6 +18,7 @@
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
 #endif
 
@@ -72,6 +73,16 @@ Status UniformAugOperation::to_json(nlohmann::json *out_json) {
   args["transforms"] = transforms;
   args["num_ops"] = num_ops_;
   *out_json = args;
+  return Status::OK();
+}
+
+Status UniformAugOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("transforms") != op_params.end(), "Failed to find transforms");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_ops") != op_params.end(), "Failed to find num_ops");
+  std::vector<std::shared_ptr<TensorOperation>> transforms = {};
+  RETURN_IF_NOT_OK(Serdes::ConstructTensorOps(op_params["transforms"], &transforms));
+  int32_t num_ops = op_params["num_ops"];
+  *operation = std::make_shared<vision::UniformAugOperation>(transforms, num_ops);
   return Status::OK();
 }
 #endif

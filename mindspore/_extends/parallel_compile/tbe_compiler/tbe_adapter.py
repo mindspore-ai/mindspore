@@ -32,7 +32,7 @@ from te_fusion.parallel_compilation import init_multi_process_env, start_ga_mult
     get_finished_compilation_task
 
 from .tbe_helper import get_soc_info, assemble_op_args, get_compute_op_list, get_options_info, get_fuzz_build_info, \
-    BuildType, adjust_custom_op_info, pack_op_args
+    BuildType, adjust_custom_op_info, pack_op_args, get_module_name
 from .tbe_job import TbeJob, JobStatus
 
 PLATFORM_FLAG = ["Ascend310", "Ascend910", "Hi3796CV300ES", "Ascend710", "Ascend610", "Hi3796CV300CS", "SD3403"]
@@ -242,7 +242,7 @@ def check_support(job: TbeJob):
     op_func_name = compute_op_info["func_name"]
     if op_func_name in ("resize_nearest_neighbor_v2_grad_d", "resize_bilinear_v2_grad"):
         attrs.pop(-2)
-    op_module_name = compute_op_info["module_name"]
+    op_module_name = get_module_name(compute_op_info)
     py_module_path = compute_op_info["py_module_path"]
     _normalize_module_name(op_module_name, py_module_path)
     func_name = "check_supported"
@@ -281,7 +281,7 @@ def select_op_format(job: TbeJob):
     compute_op_info = compute_op_info_list[0]
     adjust_custom_op_info(compute_op_info)
     inputs, outputs, attrs = assemble_op_args(compute_op_info)
-    op_module_name = compute_op_info["module_name"]
+    op_module_name = get_module_name(compute_op_info)
     py_module_path = compute_op_info["py_module_path"]
     _normalize_module_name(op_module_name, py_module_path)
     op_func_name = "op_select_format"
@@ -317,7 +317,7 @@ def _pre_build_compute_op_info(compute_op, job):
     if l1_size != -1:
         set_L1_info("op_L1_space", -1)
     inputs, outputs, attrs = assemble_op_args(compute_op)
-    op_module_name = compute_op["module_name"]
+    op_module_name = get_module_name(compute_op)
     py_module_path = compute_op["py_module_path"]
     op_func_name = compute_op["func_name"]
     op_type = compute_op["type"]
@@ -340,8 +340,8 @@ def _pre_build_compute_op_info(compute_op, job):
         job.info("OpType {} support op_impl_mode, current op_impl_mode:{}".format(op_type, op_impl_mode))
     options = get_options_info(job.content)
     dispatch_prebuild_task(job.source_id, job.id, l1_size, op_module_name, op_type, op_func_name, unknown_shape,
-                           (inputs, outputs, attrs, options), int64_mode, dynamic_compile_static, job.rl_tune_switch,
-                           job.rl_tune_list, job.pass_list, job.op_tune_switch, job.op_tune_list)
+                           (inputs, outputs, attrs, options), int64_mode, dynamic_compile_static, unknown_shape,
+                           job.rl_tune_switch, job.rl_tune_list, job.pass_list, job.op_tune_switch, job.op_tune_list)
 
 
 def get_prebuild_output(op_name):
@@ -391,7 +391,7 @@ def build_single_pre_op(job: TbeJob):
     inputs, outputs, attrs = assemble_op_args(compute_op_info)
     op_type = compute_op_info["type"]
     l1_size = job.content["l1_size"]
-    op_module_name = compute_op_info["module_name"]
+    op_module_name = get_module_name(compute_op_info)
     op_kernel_name = compute_op_info["op_name"]
     py_module_path = compute_op_info["py_module_path"]
     op_func_name = compute_op_info["func_name"]
@@ -404,9 +404,9 @@ def build_single_pre_op(job: TbeJob):
     fuzz_build_info = get_fuzz_build_info(job.content)
     dispatch_single_op_compile_task(job.source_id, job.id, l1_size, op_module_name, op_type, op_func_name,
                                     op_kernel_name, unknown_shape, (inputs, outputs, attrs, options), int64_mode,
-                                    None, None, dynamic_compile_static, op_pattern, json.dumps(fuzz_build_info),
-                                    job.rl_tune_switch, job.rl_tune_list, job.pass_list, job.op_tune_switch,
-                                    job.op_tune_list)
+                                    None, None, dynamic_compile_static, unknown_shape, op_pattern,
+                                    json.dumps(fuzz_build_info), job.rl_tune_switch, job.rl_tune_list, job.pass_list,
+                                    job.op_tune_switch, job.op_tune_list)
     return True
 
 
@@ -487,7 +487,7 @@ def rl_tune_single_op(job: TbeJob):
     inputs, outputs, attrs = assemble_op_args(compute_op_info)
     op_type = compute_op_info["type"]
     l1_size = job.content["l1_size"]
-    op_module_name = compute_op_info["module_name"]
+    op_module_name = get_module_name(compute_op_info)
     op_kernel_name = compute_op_info["op_name"]
     full_name = compute_op_info["name"]
     py_module_path = compute_op_info["py_module_path"]
@@ -503,7 +503,7 @@ def rl_tune_single_op(job: TbeJob):
     device_id = job.content["SocInfo"]["deviceId"]
     try:
         build_single_op_from_c(op_module_name, op_func_name, op_type, "build", unknown_shape,
-                               (inputs, outputs, attrs), int64_mode, dynamic_compile_static, op_pattern,
+                               (inputs, outputs, attrs), int64_mode, dynamic_compile_static, unknown_shape, op_pattern,
                                auto_tiling_mode, device_id, json.dumps(fuzz_build_info))
     # pylint: disable=broad-except
     except Exception:
@@ -547,7 +547,7 @@ def rl_tune_fusion_op(job: TbeJob):
     compute_op_list = get_compute_op_list(job.content)
     op_module_names_str = ""
     for op in compute_op_list:
-        op_module_names_str = op_module_names_str + "," + op["module_name"]
+        op_module_names_str = op_module_names_str + "," + get_module_name(op)
     op_module_names_str = op_module_names_str[1:]
     from schedule_search.rl_online_tune import dispatch_fusion_tune_task
     res = dispatch_fusion_tune_task(job.source_id, job.id, l1_size, base_kernel, op_kernel_name, op_module_names_str,

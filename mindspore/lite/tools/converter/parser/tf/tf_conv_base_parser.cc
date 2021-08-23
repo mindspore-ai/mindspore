@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,14 @@
 #include "schema/inner/model_generated.h"
 namespace mindspore {
 namespace lite {
+
+namespace {
+constexpr size_t kPadDims = 4;
+constexpr size_t kExplicitPaddingsDims = 8;
+constexpr size_t NHWCTopPadPos = 2;
+constexpr size_t NCHWTopPadPos = 4;
+}  // namespace
+
 STATUS TFConvBaseParser::ParseKernels(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
                                       std::vector<int64_t> *kernel) {
   tensorflow::AttrValue attr_value;
@@ -60,6 +68,33 @@ STATUS TFConvBaseParser::ParseStrides(const tensorflow::NodeDef &node_def, const
   return RET_OK;
 }
 
+STATUS TFConvBaseParser::ParseExplicitPaddings(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
+                                               std::vector<int64_t> *explicit_paddings) {
+  MS_ASSERT(explicit_paddings != nullptr);
+  tensorflow::AttrValue attr_value;
+  if (!TensorFlowUtils::FindAttrValue(node_def, "explicit_paddings", &attr_value)) {
+    MS_LOG(ERROR) << "The explicit paddings value should be specified";
+    return RET_ERROR;
+  } else {
+    auto explicit_paddings_list = attr_value.list();
+    if (explicit_paddings_list.i_size() != kExplicitPaddingsDims) {
+      MS_LOG(ERROR) << "The explicit paddings attr should contain only 8 elements";
+      return RET_ERROR;
+    }
+    explicit_paddings->clear();
+    if (format == mindspore::NHWC) {
+      for (size_t i = 0; i < kPadDims; ++i) {
+        explicit_paddings->push_back(explicit_paddings_list.i(i + NHWCTopPadPos));
+      }
+    } else {
+      for (size_t i = 0; i < kPadDims; ++i) {
+        explicit_paddings->push_back(explicit_paddings_list.i(i + NCHWTopPadPos));
+      }
+    }
+  }
+  return RET_OK;
+}
+
 STATUS TFConvBaseParser::ParseDilations(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
                                         std::vector<int64_t> *dilations) {
   tensorflow::AttrValue attr_value;
@@ -87,6 +122,8 @@ mindspore::PadMode TFConvBaseParser::ParsePadMode(const tensorflow::NodeDef &nod
   }
   if (attr_value.s() == "SAME") {
     return mindspore::PadMode::SAME;
+  } else if (attr_value.s() == "EXPLICIT") {
+    return mindspore::PadMode::PAD;
   }
   return mindspore::PadMode::VALID;
 }

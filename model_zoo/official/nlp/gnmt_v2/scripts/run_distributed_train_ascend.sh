@@ -47,12 +47,12 @@ do
     cp -r ../../src .
     cp -r ../../model_utils .
     export RANK_ID=$i
-    export DEVICE_ID=$i
     config_path="${current_exec_path}/device${i}/default_config.yaml"
     echo "config path is : ${config_path}"
-  python ../../train.py \
-    --config_path=$config_path \
-    --pre_train_dataset=$PRE_TRAIN_DATASET > log_gnmt_network${i}.log 2>&1 &
-    cd ${current_exec_path} || exit
+    python ../../train.py \
+      --config_path=$config_path \
+      --pre_train_dataset=$PRE_TRAIN_DATASET \
+      --device_id=$i > log_gnmt_network${i}.log 2>&1 &
+      cd ${current_exec_path} || exit
 done
 cd ${current_exec_path} || exit

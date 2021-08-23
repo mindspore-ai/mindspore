@@ -138,6 +138,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestActivationFp32, HardTanh1) {
@@ -184,6 +185,7 @@ TEST_F(TestActivationFp32, HardTanh1) {
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestActivationFp32, HardTanh2) {
@@ -230,6 +232,7 @@ TEST_F(TestActivationFp32, HardTanh2) {
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestActivationFp32, Softplus) {
@@ -275,6 +278,7 @@ TEST_F(TestActivationFp32, Softplus) {
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 }  // namespace mindspore

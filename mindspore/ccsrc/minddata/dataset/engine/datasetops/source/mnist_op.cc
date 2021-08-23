@@ -180,7 +180,7 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
       pixels[m] = (pixels[m] == 0) ? 0 : 255;
     }
     std::shared_ptr<Tensor> image;
-    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(img_tensor_shape, data_schema_->column(0).type(),
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(img_tensor_shape, data_schema_->Column(0).Type(),
                                               reinterpret_cast<unsigned char *>(pixels), &image));
     image_label_pairs_.emplace_back(std::make_pair(image, labels_buf[j]));
     image_path_.push_back(image_names_[index]);
@@ -225,8 +225,8 @@ Status MnistOp::WalkAllFiles() {
   std::string prefix;  // empty string, used to match usage = "" (default) or usage == "all"
   if (usage_ == "train" || usage_ == "test") prefix = (usage_ == "test" ? test_prefix : train_prefix);
   if (dir_it != nullptr) {
-    while (dir_it->hasNext()) {
-      Path file = dir_it->next();
+    while (dir_it->HasNext()) {
+      Path file = dir_it->Next();
       std::string fname = file.Basename();  // name of the mnist file
       if ((fname.find(prefix + "-images") != std::string::npos) && (fname.find(img_ext) != std::string::npos)) {
         image_names_.push_back(file.toString());
@@ -307,7 +307,7 @@ Status MnistOp::ComputeColMap() {
   // set the column name map (base class field)
   if (column_name_id_map_.empty()) {
     for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->column(i).name()] = i;
+      column_name_id_map_[data_schema_->Column(i).Name()] = i;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

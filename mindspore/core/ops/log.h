@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLog = prim::kLog;
-class Log : public PrimitiveC {
+class MS_CORE_API Log : public PrimitiveC {
  public:
   Log() : PrimitiveC(prim::kPrimLog->name()) { InitIOName({"x"}, {"y"}); }
   ~Log() = default;

@@ -35,7 +35,7 @@
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::lite::converter::FmkType_TF;
+using mindspore::converter::kFmkTypeTf;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -414,7 +414,7 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::NodeDef &node_def, co
 }
 
 STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
-                                       std::unordered_map<std::string, AnfNodePtr> *anf_node_map) {
+                                       std::unordered_map<std::string, AnfNodePtr> *anf_node_map, bool root_graph) {
   MS_ASSERT(node != nullptr);
   MS_ASSERT(parameter != nullptr);
 
@@ -446,7 +446,10 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
       return status;
     }
   } else {
-    graph_input_names_.emplace_back(node.name());  // only root graph need set graph input names
+    if (root_graph) {
+      graph_input_names_.emplace_back(node.name());  // only root graph need set graph input names
+      ConverterContext::GetInstance()->AddGraphInputTensorNames(node.name());
+    }
   }
 
   type = (type == kNumberTypeInt64) ? kNumberTypeInt32 : type;
@@ -463,13 +466,14 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
   return RET_OK;
 }
 
-STATUS TFModelParser::ConvertGraphInputsAndConsts(
-  const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes, const FuncGraphPtr &anf_graph,
-  std::unordered_map<std::string, AnfNodePtr> *anf_node_map) {
-  for (auto &pair : tf_graph_nodes) {
+STATUS TFModelParser::ConvertGraphInputsAndConsts(const std::vector<const tensorflow::NodeDef *> &tf_graph_nodes,
+                                                  const FuncGraphPtr &anf_graph,
+                                                  std::unordered_map<std::string, AnfNodePtr> *anf_node_map,
+                                                  bool root_graph) {
+  for (auto &node : tf_graph_nodes) {
     bool have_data_depend = false;
-    for (int i = 0; i < pair.second->input_size(); ++i) {
-      auto name = pair.second->input(i);
+    for (int i = 0; i < node->input_size(); ++i) {
+      auto name = node->input(i);
       if (!name.empty() && name[0] != '^') {  // control_depend input start with "^"
         have_data_depend = true;
         break;
@@ -477,7 +481,7 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(
     }
     if (!have_data_depend) {
       auto parameter = anf_graph->add_parameter();
-      if (ConvertParameter(*pair.second, parameter, anf_node_map) != RET_OK) {
+      if (ConvertParameter(*node, parameter, anf_node_map, root_graph) != RET_OK) {
         MS_LOG(ERROR) << "convert Parameter Node failed";
         return RET_ERROR;
       }
@@ -487,8 +491,8 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(
 }
 
 FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
-  auto modelFile = flag.model_file_;
-  quant_type_ = flag.quant_type_;
+  auto modelFile = flag.model_file;
+  quant_type_ = flag.quant_type;
   NotSupportOp::GetInstance()->set_fmk_type("TF");
   auto status = ValidateFileStr(modelFile, ".pb");
   if (status != RET_OK) {
@@ -515,14 +519,15 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
     return nullptr;
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTf)));
 
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
     tf_root_graph_nodes_[node_def.name()] = &node_def;
+    tf_root_graph_nodes_vec_.emplace_back(&node_def);
   }
 
-  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_, res_graph_, &anf_root_node_map_);
+  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_vec_, res_graph_, &anf_root_node_map_, true);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
@@ -576,7 +581,7 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_TF, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeTf, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -607,11 +612,13 @@ STATUS TFModelParser::ConvertSubgraphInputs(std::map<std::string, const tensorfl
     }
     sub_graph_inputs.emplace_back(parameter);
   }
+  std::vector<const tensorflow::NodeDef *> subgraph_tf_node_vec;
   for (int j = 0; j < tf_sub_fuction.node_def_size(); j++) {
     auto &node_def = tf_sub_fuction.node_def(j);
     (*tf_sub_node_map)[node_def.name()] = &node_def;
+    subgraph_tf_node_vec.emplace_back(&node_def);
   }
-  if (ConvertGraphInputsAndConsts(*tf_sub_node_map, sub_func_graph, anf_sub_node_map) != RET_OK) {
+  if (ConvertGraphInputsAndConsts(subgraph_tf_node_vec, sub_func_graph, anf_sub_node_map, false) != RET_OK) {
     MS_LOG(ERROR) << "Convert subgraph consts failed";
     return RET_ERROR;
   }
@@ -727,7 +734,7 @@ STATUS TFModelParser::ConvertSubgraph() {
 
     FuncGraphPtr sub_func_graph = std::make_shared<FuncGraph>();
     sub_func_graph->set_attr("graph_name", MakeValue(sub_graph_name));
-    sub_func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
+    sub_func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTf)));
     std::unordered_map<std::string, AnfNodePtr> anf_sub_node_map;
     std::map<std::string, const tensorflow::NodeDef *> tf_sub_node_map;
 
@@ -921,7 +928,6 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   if (op_type == "Placeholder" || op_type == "Const" || op_type == "Identity" || op_type == "StopGradient") {
     return RET_OK;
   }
-
   MS_LOG(INFO) << "parse op : " << op_type;
   auto node_parser = TFNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
   if (node_parser == nullptr) {
@@ -1030,23 +1036,24 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
   // tf_root_graph_nodes_ but not anf_root_node_map_
   std::set<std::string> all_node_inputs;
   std::vector<AnfNodePtr> output_nodes;
-  for (auto &pair : tf_root_graph_nodes_) {
-    for (int i = 0; i < pair.second->input_size(); ++i) {
-      all_node_inputs.insert(TensorFlowUtils::GetNodeName(pair.second->input(i)));
-      auto input_name = pair.second->input(i);
+  for (auto &node : tf_root_graph_nodes_vec_) {
+    for (int i = 0; i < node->input_size(); ++i) {
+      all_node_inputs.insert(TensorFlowUtils::GetNodeName(node->input(i)));
+      auto input_name = node->input(i);
       if (input_name[0] == '^') {
         input_name.erase(0, 1);
       }
       all_node_inputs.insert(input_name);
     }
   }
-  for (auto &pair : tf_root_graph_nodes_) {
-    if (pair.second->op() == "Assert") {
+  for (auto &node : tf_root_graph_nodes_vec_) {
+    if (node->op() == "Assert") {
       continue;
     }
-    auto it = all_node_inputs.find(pair.first);
-    if (it == all_node_inputs.end() && pair.second->input_size() > 0) {  // output node not constraint to Identity
-      auto origin_name = GetOriginInputName(*(pair.second), tf_root_graph_nodes_);
+    auto it = all_node_inputs.find(node->name());
+    if (it == all_node_inputs.end() && node->input_size() > 0) {  // output node not constraint to Identity
+      auto origin_name = GetOriginInputName(*(node), tf_root_graph_nodes_);
+      // node with multiple outputs has been changed to tupleGetItem, and the original name changes to be name:idx.
       for (int i = 0; i < node_output_num_[origin_name]; i++) {
         auto anf_node = GetAnfNode(origin_name, anf_root_node_map_, i);
         if (anf_node == nullptr) {
@@ -1054,7 +1061,22 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
           return RET_ERROR;
         }
         output_nodes.push_back(anf_node);
-        graph_output_names_.push_back(anf_node->fullname_with_scope());
+        // Get the name of node 'Identity' and 'StopGradient'.
+        if (node->op() == "Identity" || node->op() == "StopGradient") {
+          auto tmp_node = node;
+          bool found_input = true;
+          while (tmp_node->name().empty() && (tmp_node->op() == "Identity" || tmp_node->op() == "StopGradient")) {
+            auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(tmp_node->input(0));
+            if (tf_root_graph_nodes_.find(flatten_input_name) != tf_root_graph_nodes_.end()) {
+              tmp_node = tf_root_graph_nodes_.at(flatten_input_name);
+            } else {
+              found_input = false;
+              break;
+            }
+          }
+          origin_name = found_input ? tmp_node->name() : origin_name;
+        }
+        graph_output_names_.push_back(origin_name);
       }
     }
   }
@@ -1063,6 +1085,8 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
     MS_LOG(ERROR) << "make anf graph outputs node error";
     return status;
   }
+  // save original output tensor names.
+  ConverterContext::GetInstance()->SetGraphOutputTensorNames(graph_output_names_);
   return RET_OK;
 }
 STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph) {
@@ -1119,6 +1143,6 @@ int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   return RET_OK;
 }
 
-REG_MODEL_PARSER(FmkType_TF, LiteModelParserCreator<TFModelParser>)
+REG_MODEL_PARSER(kFmkTypeTf, converter::LiteModelParserCreator<TFModelParser>)
 }  // namespace lite
 }  // namespace mindspore

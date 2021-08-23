@@ -37,7 +37,7 @@
 #include "ops/transpose.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::lite::converter::FmkType_ONNX;
+using mindspore::converter::kFmkTypeOnnx;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -59,8 +59,8 @@ std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
   {onnx::TensorProto_DataType_BOOL, mindspore::kNumberTypeBool}};
 
 FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) {
-  string model_file = flag.model_file_;
-  quant_type_ = flag.quant_type_;
+  string model_file = flag.model_file;
+  quant_type_ = flag.quant_type;
   NotSupportOp::GetInstance()->set_fmk_type("ONNX");
   res_graph_ = std::make_shared<FuncGraph>();
   auto status = InitOriginModel(model_file);
@@ -79,10 +79,10 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
   static auto root_func_manager = Manage(res_graph_);
   for (auto &subgraph : all_subgraphs_) {
     subgraph->set_manager(root_func_manager);
-    subgraph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
+    subgraph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
   if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
@@ -95,7 +95,7 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_ONNX, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeOnnx, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -118,7 +118,7 @@ STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
   }
   OnnxNodeParser::set_opset_version(onnx_model_.opset_import().Get(0).version());
   onnx_root_graph_ = onnx_model_.graph();
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
   return RET_OK;
 }
 STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,
@@ -156,6 +156,13 @@ STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, con
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     MS_LOG(ERROR) << "convert graph outputs failed.";
     return RET_ERROR;
+  }
+  // save original output tensor names.
+  if (root_node_name == "root_node") {
+    std::vector<std::string> output_names;
+    std::transform(onnx_graph.output().begin(), onnx_graph.output().end(), std::back_inserter(output_names),
+                   [](auto &graph_output) { return graph_output.name(); });
+    ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_names);
   }
   return status;
 }
@@ -214,6 +221,7 @@ STATUS OnnxModelParser::ConvertGraphInputs(const onnx::GraphProto &onnx_graph, c
     }
     parameter->set_abstract(abstract_tensor);
     parameter->set_name(input_value.name());
+    ConverterContext::GetInstance()->AddGraphInputTensorNames(input_value.name());
     anf_nodes_map->emplace(input_value.name(), parameter);
   }
   return RET_OK;
@@ -246,7 +254,7 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
       continue;
     }
     if (primitive_c->GetAttr(ops::kFormat) == nullptr) {
-      primitive_c->AddAttr(mindspore::ops::kFormat, MakeValue<int64_t>(Format_NCHW));
+      primitive_c->AddAttr(mindspore::ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
     }
     status = ConvertOpQuantParams(onnx_node, primitive_c);
     if (status != RET_OK) {
@@ -1246,6 +1254,6 @@ int OnnxModelParser::Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graph
   return RET_OK;
 }
 
-REG_MODEL_PARSER(FmkType_ONNX, LiteModelParserCreator<OnnxModelParser>)
+REG_MODEL_PARSER(kFmkTypeOnnx, converter::LiteModelParserCreator<OnnxModelParser>)
 }  // namespace lite
 }  // namespace mindspore

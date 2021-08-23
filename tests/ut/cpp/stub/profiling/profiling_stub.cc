@@ -15,6 +15,7 @@
  */
 #include <string>
 #include "prof_mgr_core.h"
+#include "prof_callback.h"
 
 namespace Msprof {
 namespace Engine {
@@ -54,3 +55,21 @@ int ProfMgrStop(void* handle) { return 0; }
 namespace Analysis::Dvvp::ProfilerSpecial {
 uint32_t MsprofilerInit() { return 0; }
 }
+
+/*
+ * @name  MsprofInit
+ * @brief Profiling module init
+ * @param [in] dataType: profiling type: ACL Env/ACL Json/GE Option
+ * @param [in] data: profiling switch data
+ * @param [in] dataLen: Length of data
+ * @return 0:SUCCESS, >0:FAILED
+ */
+int32_t MsprofInit(uint32_t dataType, void *data, uint32_t dataLen) { return 0; }
+
+/*
+ * @name AscendCL
+ * @brief Finishing Profiling
+ * @param NULL
+ * @return 0:SUCCESS, >0:FAILED
+ */
+int32_t MsprofFinalize() { return 0; }

@@ -61,7 +61,7 @@ usage()
   echo "    -l Compile with python dependency, default on"
   echo "    -S Enable enable download cmake compile dependency from gitee , default off"
   echo "    -k Enable make clean, clean up compilation generated cache "
-  echo "    -W Enable x86_64 SSE or AVX instruction set, use [sse|neon|avx|avx512|off], default off for lite and avx for CPU"
+  echo "    -W Enable SIMD instruction set, use [sse|neon|avx|avx512|off], default avx for cloud CPU backend"
   echo "    -H Enable hidden"
   echo "    -L Link and specify Tensor-RT library path, default disable Tensor-RT lib linking"
   echo "    -y Compile the symbol table switch and save the symbol table to the directory output"

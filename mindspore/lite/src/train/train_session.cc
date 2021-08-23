@@ -52,17 +52,9 @@ const char *kOptimizerName = "optimizer";
 TrainSession::TrainSession() {
   is_train_session_ = true;
   InitCallBack();
-#ifdef ENABLE_V0
-  if (VersionManager::GetInstance()->CheckV0Schema()) {
-    kernel::PopulateTrainV0Parameters();
-  }
-#endif
-  if (!VersionManager::GetInstance()->CheckV0Schema()) {
-    kernel::PopulateTrainParameters();
-  }
 }
 
-int TrainSession::Init(const Context *context, const TrainCfg *train_cfg) {
+int TrainSession::Init(InnerContext *context, const TrainCfg *train_cfg) {
   if (train_cfg != nullptr) {
     if (train_cfg->mix_precision_cfg_.loss_scale_ <= 0) {
       MS_LOG(ERROR) << "illegal loss scale configuration";
@@ -114,7 +106,10 @@ int TrainSession::AllocWorkSpace() {
 }
 
 void TrainSession::FreeWorkSpace() {
-  free(workspace_);
+  if (workspace_ != nullptr) {
+    free(workspace_);
+    workspace_ = nullptr;
+  }
   for (auto kernel : this->train_kernels_) {
     static_cast<kernel::InnerKernel *>(kernel->kernel())->FreeWorkspace();
   }
@@ -125,7 +120,7 @@ int TrainSession::InitCallBack() {
     if (!context_->IsCpuFloat16Enabled()) {
       return false;
     }
-    auto node_type = GetPrimitiveType(node->primitive_);
+    auto node_type = GetPrimitiveType(node->primitive_, SCHEMA_VERSION::SCHEMA_CUR);
     if (node_type == schema::PrimitiveType_Cast) {
       return false;
     }
@@ -216,6 +211,15 @@ int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
   if (sched_cb_ == nullptr) {
     MS_LOG(ERROR) << "Failed to create SchedulerCb node";
     return RET_ERROR;
+  }
+
+#ifdef ENABLE_V0
+  if (reinterpret_cast<LiteModel *>(model_.get())->GetSchemaVersion() == SCHEMA_VERSION::SCHEMA_V0) {
+    kernel::PopulateTrainV0Parameters();
+  }
+#endif
+  if (reinterpret_cast<LiteModel *>(model_.get())->GetSchemaVersion() == SCHEMA_VERSION::SCHEMA_CUR) {
+    kernel::PopulateTrainParameters();
   }
 
   auto ret = lite::LiteSession::CompileGraph(model_.get());
@@ -765,6 +769,30 @@ bool TrainSession::IsBN(kernel::LiteKernel *kernel) const {
           (kernel->type() == schema::PrimitiveType_FusedBatchNorm));
 }
 
+int TrainSession::Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) {
+  FreeWorkSpace();
+  if (tensors_data_ != nullptr) {
+    free(tensors_data_);
+    tensors_data_ = nullptr;
+  }
+  auto ret = lite::LiteSession::Resize(inputs, dims);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "train resize input failed.";
+    return RET_ERROR;
+  }
+  ret = AllocWorkSpace();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "failed to allocate space";
+    return RET_ERROR;
+  }
+  ret = AllocTensors(train_kernels_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "train alloc failed after resize.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantizationType quant_type,
                          FormatType format) {
   if (file_name.empty()) {
@@ -857,7 +885,9 @@ session::LiteSession *session::TrainSession::CreateTrainSession(const std::strin
       MS_LOG(ERROR) << " cannot convert to static allocation";
     }
   }
-  auto ret = session->Init(context, cfg);
+
+  mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
+  auto ret = session->Init(inner_context, cfg);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
     return nullptr;

@@ -18,7 +18,7 @@
 #include "nnacl/common_func.h"
 
 void PadFp16(const float16_t *input_data, float16_t *output_data, const int *input_shape, const int *output_shape,
-             const int *paddings, const int tid, const int thread_num) {
+             const int *paddings, int tid, int thread_num) {
   int in[DEFAULT_PAD_NDIMS], out[DEFAULT_PAD_NDIMS];
   for (in[0] = 0; in[0] < input_shape[0]; in[0]++) {
     out[0] = in[0] + paddings[0];

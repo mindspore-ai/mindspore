@@ -102,8 +102,9 @@ class TbeJobManager:
             source_id = job_json["source_id"]
             job_type = job_json["job_type"]
             sys_info = self._get_job_sys_info()
-            job = TbeJob(source_id, job_id, job_type, job_json["job_content"], job_str, sys_info)
-            job.debug("Req job string: {}".format(job_str))
+            fusion_op_name = "NA" if "fusion_op_name" not in job_json["job_content"] else job_json["job_content"][
+                "fusion_op_name"]
+            job = TbeJob(source_id, job_id, job_type, job_json["job_content"], fusion_op_name, job_str, sys_info)
             post_job(self._all_jobs, job)
             if not self.tbe_initialize and job.type != JobType.INITIALIZE_JOB:
                 job.error(
@@ -115,6 +116,7 @@ class TbeJobManager:
             return res
         # pylint: disable=broad-except
         except Exception:
+            # pylint: disable=no-value-for-parameter
             sys_info = self._get_job_sys_info()
             job = TbeJob(-1, -1, "", None, job_str, sys_info) if job is None else job
             job.status = JobStatus.JOB_FAILED
@@ -261,9 +263,6 @@ class TbeJobManager:
             return self.add_to_finished_jobs(query_job, JobStatus.JOB_SUCCESS)
         target_job = get_job(self._running_jobs, target_source_id, target_job_id)
         if target_job:
-            query_job.debug("Found job in Running jobs, source_id:{}, job_id:{}".format(target_source_id,
-                                                                                        target_job_id))
-            target_job.debug("Be Queried")
             query_job.result = target_job.get_result()
             return self.add_to_finished_jobs(query_job, JobStatus.JOB_SUCCESS)
         target_job = get_job(self._all_jobs, target_source_id, target_job_id)

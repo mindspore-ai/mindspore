@@ -48,6 +48,7 @@ TreeAdapter::TreeAdapter(UsageFlag usage) : usage_(usage), launched_(false), tre
 }
 
 Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
+  RETURN_UNEXPECTED_IF_NULL(ir);
   // Vector of actions in pre-pass phase
   std::vector<std::unique_ptr<IRPass>> actions;
 
@@ -73,6 +74,7 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
 }
 
 Status TreeAdapter::Optimize(std::shared_ptr<DatasetNode> ir) {
+  RETURN_UNEXPECTED_IF_NULL(ir);
   // Vector of optimizations
   std::vector<std::unique_ptr<IRNodePass>> optimizations;
   MS_LOG(INFO) << "Running optimization pass loops";
@@ -89,6 +91,7 @@ Status TreeAdapter::Optimize(std::shared_ptr<DatasetNode> ir) {
 }
 
 Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
+  RETURN_UNEXPECTED_IF_NULL(ir);
   // Vector of actions in post-pass phase
   std::vector<std::unique_ptr<IRPass>> actions;
   MS_LOG(INFO) << "Running post pass loops.";
@@ -118,6 +121,9 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
 }
 
 Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *const op) {
+  RETURN_UNEXPECTED_IF_NULL(ir);
+  RETURN_UNEXPECTED_IF_NULL(op);
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   // Build the DatasetOp ExecutionTree from the optimized IR tree
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(ir->Build(&ops));
@@ -133,7 +139,7 @@ Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std
   }
 
   // Build the children of IR, once they return, add the return value to *op
-  for (std::shared_ptr<DatasetNode> child_ir : ir->Children()) {
+  for (const std::shared_ptr<DatasetNode> &child_ir : ir->Children()) {
     std::shared_ptr<DatasetOp> child_op;
     RETURN_IF_NOT_OK(BuildExecutionTreeRecur(child_ir, &child_op));
     RETURN_IF_NOT_OK(ops.back()->AddChild(child_op));  // append children to the last of ops
@@ -143,6 +149,7 @@ Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std
 }
 
 Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
+  RETURN_UNEXPECTED_IF_NULL(root_ir);
   // This will evolve in the long run
   tree_ = std::make_unique<ExecutionTree>();
   // disable profiling if this is only a getter pass

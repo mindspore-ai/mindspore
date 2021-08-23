@@ -137,10 +137,11 @@ class IrExportBuilder {
   mind_ir::ModelProto model_;
   mind_ir::NodeProto *last_node_{nullptr};
   std::list<FuncGraphPtr> todo_;
-  std::map<AnfNodePtr, size_t> node_index_map_;
+  std::map<AnfNodePtr, std::string> node_index_map_;
   std::set<std::string> nodeName_;
   size_t node_index_{0};
   size_t shape_index_{0};
+  bool top_graph{true};
 };
 
 using IrExporterPtr = std::shared_ptr<IrExporter>;
@@ -177,6 +178,7 @@ void IrExportBuilder::BuildModelInfo() {
 }
 
 void IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tensor_data) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   mind_ir::GraphProto *graph_proto = model_.mutable_graph();
   graph_proto->set_name(func_graph->ToString());
   graph_proto->set_bprop_hash(func_graph->bprop_hash());
@@ -185,9 +187,11 @@ void IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
   nodeName_.clear();
   // Build the main funcGraph
   nodeName_.insert(func_graph->ToString());
+  top_graph = true;
   BuildFuncGraph(func_graph, graph_proto, save_tensor_data);
   std::set<FuncGraphPtr> graphVisited;
   graphVisited.insert(func_graph);
+  top_graph = false;
   while (!todo_.empty()) {
     FuncGraphPtr fg = todo_.back();
     todo_.pop_back();
@@ -204,6 +208,7 @@ void IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
   }
   // Release resource
   nodeName_.clear();
+  node_index_map_.clear();
 }
 
 void IrExportBuilder::BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto,
@@ -221,14 +226,17 @@ void IrExportBuilder::BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::Gr
 
 void IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto,
                                       bool save_tensor_data) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(graph_proto);
   for (auto &item : func_graph->parameters()) {
+    MS_EXCEPTION_IF_NULL(item);
     auto param = item->cast<ParameterPtr>();
     if (param == nullptr) {
       MS_LOG(EXCEPTION) << "Parameter: '" << item->ToString() << "' could not cast to parameter.";
     }
     std::string param_name = GetUniqueNodeName(param);
-    if (param->has_default()) {
-      MS_LOG(DEBUG) << "Parameter: '" << item->ToString() << "' has default.";
+    if (top_graph && param->has_default()) {
+      MS_LOG(DEBUG) << "Parameter: '" << item->DebugString() << "' has default. address: " << (size_t)param.get();
       mind_ir::TensorProto *parameter_proto = graph_proto->add_parameter();
       parameter_proto->set_name(param_name);
       SetParamToTensorProto(param, parameter_proto);
@@ -292,6 +300,7 @@ void IrExportBuilder::SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueIn
   }
   if (type->isa<TensorType>() && shape->isa<abstract::Shape>()) {
     auto tensor = type->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
     auto elem_type = tensor->element();
     const auto &dims = shape->cast<abstract::ShapePtr>()->shape();
     mind_ir::TensorProto *tensor_proto = value_proto->add_tensor();
@@ -308,11 +317,10 @@ void IrExportBuilder::SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueIn
   } else if (type->isa<Tuple>()) {
     auto tup_shape = shape->cast<abstract::TupleShapePtr>();
     value_proto->set_denotation(type->type_name() + ":" + std::to_string(tup_shape->shape().size()));
-  } else if (type->isa<Number>() || type->isa<String>()) {
-    value_proto->set_denotation(type->type_name());
   } else {
-    MS_LOG(EXCEPTION) << "Value type: " << type->type_name() << " is not supported!";
+    value_proto->set_denotation(type->type_name());
   }
+  MS_LOG(DEBUG) << "Value type: " << type->type_name();
 }
 
 void IrExportBuilder::SetTensorToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
@@ -324,6 +332,7 @@ void IrExportBuilder::SetTensorToAttributeProto(const ValuePtr &value, mind_ir::
   mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
   tensor_proto->set_name("value0");
   auto data = value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(data);
   tensor_proto->set_raw_data(data->data_c(), static_cast<size_t>(data->data().nbytes()));
   auto dtype = data->data_type();
   auto shape = data->shape_c();
@@ -356,34 +365,31 @@ void IrExportBuilder::SetParamToTensorProto(const ParameterPtr &param, mind_ir::
 
 void IrExportBuilder::BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
-  bool is_only_return = true;
   for (const AnfNodePtr &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       MS_LOG(DEBUG) << "Node: '" << node->ToString() << "' is not cnode";
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     if (cnode == func_graph->get_return()) {
-      if (is_only_return) {
-        MS_LOG(EXCEPTION) << "Only has return node, can't convert to binary model!";
-      }
       BuildOutput(cnode, graph_proto);
     } else {
       BuildCNode(cnode, graph_proto);
-      is_only_return = false;
     }
   }
 }
 
 void IrExportBuilder::BuildOutput(const CNodePtr &node, mind_ir::GraphProto *const graph_proto) {
-  if (node->size() != 2) {
+  MS_EXCEPTION_IF_NULL(node);
+  const int OutputSize = 2;
+  if (node->size() != OutputSize) {
     MS_LOG(EXCEPTION) << "Number of inputs of return node is not equal to 2.";
   }
   AnfNodePtr arg = node->input(1);
+  std::string node_name = BuildInputNode(arg, graph_proto);
   mind_ir::ValueInfoProto *output_proto = graph_proto->add_output();
-  std::string output_name = GetUniqueNodeName(node);
-  output_proto->set_name(output_name);
-  last_node_->set_output(0, output_name);
+  output_proto->set_name(node_name);
   SetValueInfoProto(arg, output_proto);
 }
 
@@ -392,9 +398,11 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
   std::string type_name = "";
   if (IsValueNode<Primitive>(node)) {
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
+    MS_EXCEPTION_IF_NULL(prim);
     type_name = prim->ToString();
   } else if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
+    MS_EXCEPTION_IF_NULL(fg);
     todo_.push_back(fg);
     type_name = "REF::" + fg->ToString();
   } else if (node->isa<CNode>() || node->isa<Parameter>()) {
@@ -412,10 +420,9 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
 
 void IrExportBuilder::SetShapeToNodeProto(const TypePtr &type, const BaseShapePtr &shape,
                                           mind_ir::AttributeProto *const attr_proto, std::string *const seq_string) {
-  if (seq_string == nullptr) {
-    MS_LOG(EXCEPTION) << "seq_string is nullptr.";
-  }
-
+  MS_EXCEPTION_IF_NULL(type);
+  MS_EXCEPTION_IF_NULL(shape);
+  MS_EXCEPTION_IF_NULL(seq_string);
   if (type->isa<Tuple>()) {
     *seq_string += "Tuple[";
     auto elements = type->cast<TuplePtr>()->elements();
@@ -541,32 +548,24 @@ std::string IrExportBuilder::GetUniqueNodeName(const AnfNodePtr &node) {
   // Naming anfnode
   // 1. parameter is unique in one func_graph
   // 2. cnode and valuenode may be reduplicative, so add index to identify.
-  std::string node_name = "";
-  if (node->isa<Parameter>()) {
-    node_name = GetNodeName(node);
-  } else if (node->isa<CNode>()) {
-    auto iter = node_index_map_.find(node);
-    if (iter != node_index_map_.end()) {
-      node_name = GetNodeName(node) + ":" + std::to_string(iter->second);
-    } else {
-      auto node_idx = GetNodeIndex();
-      node_index_map_[node] = node_idx;
-      node_name = GetNodeName(node) + ":" + std::to_string(node_idx);
-    }
-  } else if (node->isa<ValueNode>()) {
-    auto node_idx = GetNodeIndex();
-    node_index_map_[node] = node_idx;
-    node_name = GetNodeName(node) + ":" + std::to_string(node_idx);
+  auto iter = node_index_map_.find(node);
+  if (iter != node_index_map_.end()) {
+    return iter->second;
   } else {
-    MS_LOG(EXCEPTION) << "Can not support type of node:" << node->ToString();
+    std::string node_name = GetNodeName(node);
+    while (nodeName_.count(node_name) > 0) {
+      auto node_idx = GetNodeIndex();
+      node_name = node_name + ":" + std::to_string(node_idx);
+    }
+    node_index_map_[node] = node_name;
+    return node_name;
   }
-  MS_LOG(DEBUG) << "Node name: " << node_name;
-  return node_name;
 }
 
 std::string IrExportBuilder::GetNodeName(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   std::string node_name = "";
-  if ((node != nullptr) && (node->func_graph() != nullptr)) {
+  if (node->func_graph() != nullptr) {
     node_name = node->func_graph()->ToString() + ":";
   }
   if (node->isa<ValueNode>()) {
@@ -583,7 +582,9 @@ void IrExportBuilder::SetAttributeProto(const AnfNodePtr &node, mind_ir::NodePro
   if (node == nullptr || node_proto == nullptr) {
     MS_LOG(EXCEPTION) << "AnfNode or NodeProto is null!";
   }
-  auto value = node->cast<ValueNodePtr>()->value();
+  auto value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
   node_proto->set_op_type("Constant");
   mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
   attr_proto->set_name("value");
@@ -668,6 +669,9 @@ void IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
 }
 
 void IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
+  if (value == nullptr || attr_proto == nullptr) {
+    MS_LOG(EXCEPTION) << "ValuePtr or AttributeProto is null!";
+  }
   attr_proto->set_ref_attr_name("scalar:value0");
   if (value->isa<StringImm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_STRING);
@@ -714,6 +718,9 @@ void IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_i
 }
 
 void IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
+  if (value == nullptr || attr_proto == nullptr) {
+    MS_LOG(EXCEPTION) << "ValuePtr or AttributeProto is null!";
+  }
   if (value->isa<Int>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
     mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
@@ -808,6 +815,7 @@ void IrExportBuilder::SetSequenceToAttributeProto(const ValueSequeuePtr &value,
       return;
     }
     for (const auto &item : list_value->value()) {
+      MS_EXCEPTION_IF_NULL(item);
       if (item->isa<ValueList>()) {
         SetSequenceToAttributeProto(item->cast<ValueListPtr>(), attr_proto, seq_string);
       } else {

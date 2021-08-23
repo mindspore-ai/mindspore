@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSub = prim::kSub;
-class Sub : public PrimitiveC {
+class MS_CORE_API Sub : public PrimitiveC {
  public:
   Sub() : PrimitiveC(kNameSub) { InitIOName({"x", "y"}, {"output"}); }
   explicit Sub(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }

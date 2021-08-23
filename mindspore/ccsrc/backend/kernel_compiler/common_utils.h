@@ -143,6 +143,7 @@ size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &
 std::vector<int64_t> CalDimOffset(const std::vector<int64_t> &input_shape);
 size_t GetCopySize(const std::vector<int64_t> &dim_offset, const std::vector<int64_t> &start,
                    const std::vector<int64_t> &stop);
+size_t UnitSizeInBytes(const mindspore::TypeId &t);
 }  // namespace kernel
 }  // namespace mindspore
 

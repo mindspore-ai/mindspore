@@ -27,7 +27,7 @@ class Bernoulli(Distribution):
     Bernoulli Distribution.
 
     Args:
-        probs (float, list, numpy.ndarray, Tensor): The probability of that the outcome is 1.
+        probs (float, list, numpy.ndarray, Tensor): The probability of that the outcome is 1. Default: None.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
         name (str): The name of the distribution. Default: 'Bernoulli'.
@@ -153,10 +153,11 @@ class Bernoulli(Distribution):
         self.uniform = C.uniform
 
     def extend_repr(self):
+        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = f'probs = {self.probs}'
+            s = 'probs = {}'.format(self.probs)
         else:
-            s = f'batch_shape = {self._broadcast_shape}'
+            s = 'batch_shape = {}'.format(self._broadcast_shape)
         return s
 
     @property

@@ -203,6 +203,9 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, siz
     auto input0 = cnode->input(0);
     MS_EXCEPTION_IF_NULL(input0);
     if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
+      if (AnfAlgo::GetInputTensorNum(cnode) == 0) {
+        return std::make_pair(nullptr, 0);
+      }
       auto node = cnode->input(index + IntToSize(1));
       MS_EXCEPTION_IF_NULL(node);
       return VisitKernel(node, 0);
@@ -1723,7 +1726,7 @@ void AnfRuntimeAlgorithm::ReorderOptimizerExecList(NotNull<std::vector<CNodePtr>
 
     auto trans_data_func = [&](const CNodePtr &node) -> bool {
       MS_EXCEPTION_IF_NULL(node);
-      if (AnfAlgo::GetCNodeName(node) == prim::KPrimTransData->name()) {
+      if (AnfAlgo::GetCNodeName(node) == prim::kPrimTransData->name()) {
         auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, 0), 0);
         MS_EXCEPTION_IF_NULL(kernel_index.first);
         if (kernel_index.first->isa<CNode>() && kOptOperatorSet.find(AnfAlgo::GetCNodeName(
@@ -2236,6 +2239,138 @@ bool AnfRuntimeAlgorithm::IsNodeInputContainMonad(const AnfNodePtr &node) {
     }
   }
   return false;
+}
+
+void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto nodes = kernel_graph->execution_order();
+  for (auto &kernel : nodes) {
+    // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
+    // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
+    // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
+    if (HasNodeAttr("nop_op", kernel)) {
+      for (size_t idx = 0; idx < GetOutputTensorNum(kernel); idx += 1) {
+        auto real_input = GetRealInputIndex(kernel, idx);
+        auto device_address = GetPrevNodeMutableOutputAddr(kernel, real_input);
+        SetOutputAddr(device_address, idx, kernel.get());
+      }
+      continue;
+    }
+    auto kernel_mod = GetKernelMod(kernel);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    if (GetCNodeName(kernel) == kAtomicAddrCleanOpName) {
+      CacheAddrForAtomicClean(kernel, kernel_mod);
+      continue;
+    }
+    CacheAddrForKernel(kernel, kernel_mod);
+  }
+}
+
+void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::KernelMod *kernel_mod) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  std::vector<AddressPtr> kernel_inputs;
+  std::vector<AddressPtr> kernel_workspaces;
+  std::vector<AddressPtr> kernel_outputs;
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto visit_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
+  size_t input_num = GetInputTensorNum(node);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto op_name = GetCNodeName(cnode);
+    constexpr auto none_placeholder_index = 3;
+    if (op_name == kDynamicRNNOpName && i == none_placeholder_index) {
+      continue;
+    }
+    if (op_name == kDynamicGRUV2OpName) {
+      auto none_index = GetNodeAttr<std::vector<int64_t>>(cnode, "placeholder_index");
+      auto item = std::find(none_index.begin(), none_index.end(), i);
+      if (item != none_index.end()) {
+        continue;
+      }
+    }
+    auto real_input = GetRealInputIndex(node, i);
+    auto device_address = GetPrevNodeOutputAddr(node, real_input, visit_nop_node);
+    MS_EXCEPTION_IF_NULL(device_address);
+    kernel::AddressPtr input = std::make_shared<kernel::Address>();
+    MS_EXCEPTION_IF_NULL(input);
+    input->addr = const_cast<void *>(device_address->GetPtr());
+    MS_EXCEPTION_IF_NULL(input->addr);
+    input->size = device_address->GetSize();
+    kernel_inputs.emplace_back(input);
+  }
+  for (size_t i = 0; i < kernel_mod->GetOutputSizeList().size(); ++i) {
+    auto device_address = GetOutputAddr(node, i, visit_nop_node);
+    kernel::AddressPtr output = std::make_shared<kernel::Address>();
+    MS_EXCEPTION_IF_NULL(output);
+    output->addr = const_cast<void *>(device_address->GetPtr());
+    MS_EXCEPTION_IF_NULL(output->addr);
+    output->size = device_address->GetSize();
+    kernel_outputs.emplace_back(output);
+  }
+  for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
+    auto device_address = GetWorkspaceAddr(node, i);
+    kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
+    MS_EXCEPTION_IF_NULL(workspace);
+    workspace->addr = const_cast<void *>(device_address->GetPtr());
+    MS_EXCEPTION_IF_NULL(workspace->addr);
+    workspace->size = device_address->GetSize();
+    kernel_workspaces.emplace_back(workspace);
+  }
+  kernel_mod->set_inputs_addr(kernel_inputs);
+  kernel_mod->set_workspaces_addr(kernel_workspaces);
+  kernel_mod->set_outputs_addr(kernel_outputs);
+}
+
+void AnfRuntimeAlgorithm::CacheAddrForAtomicClean(const AnfNodePtr &node, kernel::KernelMod *kernel_mod) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  std::vector<AddressPtr> kernel_inputs;
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->inputs().size() != 2) {
+    MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
+  }
+  MS_EXCEPTION_IF_NULL(cnode->inputs()[1]);
+  auto pre_node = (cnode->inputs()[1])->cast<CNodePtr>();
+  // set clean output address
+  if (HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
+#if defined(__APPLE__)
+    auto clean_output_indexes = GetNodeAttr<std::vector<int>>(pre_node, kAttrAtomicOutputIndexs);
+#else
+    auto clean_output_indexes = GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
+#endif
+    for (auto index : clean_output_indexes) {
+      auto device_address = GetOutputAddr(pre_node, index);
+      kernel::AddressPtr input = std::make_shared<kernel::Address>();
+      MS_EXCEPTION_IF_NULL(input);
+      input->addr = const_cast<void *>(device_address->GetPtr());
+      MS_EXCEPTION_IF_NULL(input->addr);
+      input->size = device_address->GetSize();
+      kernel_inputs.emplace_back(input);
+    }
+    MS_LOG(DEBUG) << "AtomicAddClean clean output size:" << clean_output_indexes.size();
+  }
+  // set clean workspace address
+  if (HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
+#if defined(__APPLE__)
+    auto clean_workspaces_indexes = GetNodeAttr<std::vector<int>>(pre_node, kAttrAtomicWorkspaceIndexs);
+#else
+    auto clean_workspaces_indexes = GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
+#endif
+    for (const auto &index : clean_workspaces_indexes) {
+      auto device_address = GetWorkspaceAddr(pre_node, index);
+      kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
+      MS_EXCEPTION_IF_NULL(workspace);
+      workspace->addr = const_cast<void *>(device_address->GetPtr());
+      MS_EXCEPTION_IF_NULL(workspace->addr);
+      workspace->size = device_address->GetSize();
+      kernel_inputs.emplace_back(workspace);
+    }
+  }
+  kernel_mod->set_inputs_addr(kernel_inputs);
 }
 }  // namespace session
 }  // namespace mindspore

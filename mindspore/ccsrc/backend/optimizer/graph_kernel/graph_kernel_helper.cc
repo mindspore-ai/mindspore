@@ -207,7 +207,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
         v_replace.begin(), v_replace.end(),
         [&tensor](const std::pair<tensor::TensorPtr, AnfNodePtrList> &vl) { return vl.first->ValueEqual(*tensor); });
       if (tensor_iter == v_replace.end()) {
-        v_replace.emplace_back(tensor, AnfNodePtrList{tnode});
+        (void)v_replace.emplace_back(tensor, AnfNodePtrList{tnode});
       } else {
         tensor_iter->second.push_back(tnode);
       }
@@ -801,16 +801,16 @@ void OpListFilter(std::vector<PrimitivePtr> *ops, const std::vector<std::string>
   auto new_prim = [](const std::string &name) { return std::make_shared<Primitive>(name); };
   if (!enable_ops_only.empty()) {
     ops->clear();
-    std::transform(enable_ops_only.begin(), enable_ops_only.end(), std::back_inserter(*ops), new_prim);
+    (void)std::transform(enable_ops_only.begin(), enable_ops_only.end(), std::back_inserter(*ops), new_prim);
   } else {
     if (!enable_ops.empty()) {
-      std::transform(enable_ops.begin(), enable_ops.end(), std::back_inserter(*ops), new_prim);
+      (void)std::transform(enable_ops.begin(), enable_ops.end(), std::back_inserter(*ops), new_prim);
     }
     if (!disable_ops.empty()) {
       auto iter = std::remove_if(ops->begin(), ops->end(), [&disable_ops](const PrimitivePtr &p) {
         return std::find(disable_ops.begin(), disable_ops.end(), p->name()) != disable_ops.end();
       });
-      ops->erase(iter, ops->end());
+      (void)ops->erase(iter, ops->end());
     }
   }
 }

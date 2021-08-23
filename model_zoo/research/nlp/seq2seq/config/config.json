@@ -22,9 +22,9 @@
     "max_decode_length": 50
   },
   "loss_scale_config": {
-    "init_loss_scale": 65536,
+    "init_loss_scale": 64,
     "loss_scale_factor": 2,
-    "scale_window": 1000
+    "scale_window": 5000
   },
   "learn_rate_config": {
     "optimizer": "adam",

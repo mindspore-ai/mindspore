@@ -500,10 +500,10 @@ class NeighborExchange(Primitive):
     as while receive data from recv_rank_ids.
 
     Args:
-        send_rank_ids (list): Ranks which the data is sent to.
-        recv_rank_ids (list): Ranks which the data is received from.
-        recv_shapes (list): Data shape which received from recv_rank_ids.
-        send_shapes (list): Data shape which send to the send_rank_ids.
+        send_rank_ids (list(int)): Ranks which the data is sent to.
+        recv_rank_ids (list(int)): Ranks which the data is received from.
+        recv_shapes (tuple(list(int))): Data shape which received from recv_rank_ids.
+        send_shapes (tuple(list(int))): Data shape which send to the send_rank_ids.
         recv_type (type): Data type which received from recv_rank_ids
         group (str):
     """
@@ -517,6 +517,9 @@ class NeighborExchange(Primitive):
         self.recv_shapes = recv_shapes
         self.send_shapes = send_shapes
         self.recv_type = recv_type
+
+    def __call__(self, tensor):
+        raise NotImplementedError
 
 
 class MatrixSetDiag(PrimitiveWithInfer):
@@ -954,6 +957,7 @@ class StackInit(PrimitiveWithInfer):
         [[1 3]
          [2 0]]
     """
+
     @prim_attr_register
     def __init__(self, index=1):
         """StackInit"""
@@ -979,6 +983,7 @@ class StackPush(PrimitiveWithInfer):
     Examples:
         Please refer to the usage of `StackInit`.
     """
+
     @prim_attr_register
     def __init__(self, index=1):
         """StackPush"""
@@ -1007,6 +1012,7 @@ class StackPop(PrimitiveWithInfer):
     Examples:
         Please refer to the usage of `StackInit`.
     """
+
     @prim_attr_register
     def __init__(self, index=1, shape=(1,), dtype=mstype.float32):
         """StackPop"""
@@ -1046,6 +1052,7 @@ class StackDestroy(PrimitiveWithInfer):
     Examples:
         Please refer to the usage of `StackInit`.
     """
+
     @prim_attr_register
     def __init__(self, index=1):
         """StackDestroy"""
@@ -1220,3 +1227,69 @@ class TensorCopySlices(Primitive):
     def __init__(self):
         """Initialize TensorScatterUpdate"""
         self.init_prim_io_names(inputs=['x', 'value', 'begin', 'end', 'strides'], outputs=['y'])
+
+
+class Roll(Primitive):
+    """
+    Rolls the elements of a tensor along an axis.
+
+    The elements are shifted positively (towards larger indices) by the offset of `shift` along the dimension of `axis`.
+    Negative `shift` values will shift elements in the opposite direction. Elements that roll passed the last position
+    will wrap around to the first and vice versa. Multiple shifts along multiple axes may be specified.
+
+    Note:
+        This inner operation is valid only if the axis is equal to 0. If the shift and the axis are tuples or lists,
+        this inner operation is valid only for the first pair of elements.
+
+    Args:
+        shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
+            positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
+            in the opposite direction.
+        axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled. The value is
+            forced to be zero in this operation.
+
+    Inputs:
+        - **input_x** (Tensor) - Input tensor.
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `shift` is not an int, a tuple or a list.
+        TypeError: If `axis` is not an int, a tuple or a list.
+        TypeError: If element of `shift` is not an int.
+        TypeError: If element of `axis` is not an int.
+        ValueError: If axis is not equal to 0.
+        ValueError: If shape of `shift` is not equal to 1.
+        ValueError: If shape of `axis` is not equal to 1.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore.ops.operations import _inner_ops as inner
+        >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
+        >>> op = inner.Roll(shift=2, axis=0)
+        >>> output = op(input_x)
+        >>> print(output)
+        [3. 4. 0. 1. 2.]
+        >>> input_x = Tensor(np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]).astype(np.float32))
+        >>> op = inner.Roll(shift=-1, axis=0)
+        >>> output = op(input_x)
+        >>> print(output)
+        [[5. 6. 7. 8. 9.]
+         [0. 1. 2. 3. 4.]]
+    """
+
+    @prim_attr_register
+    def __init__(self, shift, axis):
+        """Initialize Roll"""
+        validator.check_value_type("shift", shift, [int, tuple, list], self.name)
+        validator.check_value_type("axis", axis, [int, tuple, list], self.name)
+        if isinstance(shift, (tuple, list)) and isinstance(axis, (tuple, list)):
+            validator.check_equal_int(len(shift), 1, "shift size", self.name)
+            validator.check_equal_int(len(axis), 1, "shift size", self.name)
+            validator.check_equal_int(axis[0], 0, "axis", self.name)
+        elif isinstance(shift, int) and isinstance(axis, int):
+            validator.check_equal_int(axis, 0, "axis", self.name)
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])

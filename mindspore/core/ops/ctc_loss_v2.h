@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCTCLossV2 = "CTCLossV2";
-class CTCLossV2 : public PrimitiveC {
+class MS_CORE_API CTCLossV2 : public PrimitiveC {
  public:
   CTCLossV2() : PrimitiveC(kNameCTCLossV2) {
     InitIOName({"log_probs", "targets", "input_lengths", "target_lengths"}, {"neg_log_likelihood", "log_alpha"});

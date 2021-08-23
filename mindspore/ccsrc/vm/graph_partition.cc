@@ -452,6 +452,31 @@ void AddSegmentDependency(const FuncGraphPtr &graph, const std::map<AnfNodePtr, 
   }
 }
 
+void RemoveUselessDependency(std::vector<GraphSegmentPtr> *segments) {
+  MS_EXCEPTION_IF_NULL(segments);
+  for (auto &segment : *segments) {
+    MS_EXCEPTION_IF_NULL(segment);
+    if (segment->is_cut_) {
+      continue;
+    }
+    bool total_virtual_node = true;
+    for (auto &node : segment->nodes_) {
+      if (IsPrimitiveCNode(node, prim::kPrimImageSummary) || IsPrimitiveCNode(node, prim::kPrimScalarSummary) ||
+          IsPrimitiveCNode(node, prim::kPrimTensorSummary) || IsPrimitiveCNode(node, prim::kPrimHistogramSummary) ||
+          IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
+          IsPrimitiveCNode(node, prim::kPrimUpdateState) || IsPrimitiveCNode(node, prim::kPrimMakeTuple) ||
+          IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+        continue;
+      }
+      total_virtual_node = false;
+      break;
+    }
+    if (total_virtual_node) {
+      segment->pre_segments_.clear();
+    }
+  }
+}
+
 bool IsSubGraph(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<CNode>()) {
@@ -691,6 +716,7 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
   MS_LOG(DEBUG) << "Segment size:" << segments.size();
   if (contain_multi_target) {
     AddSegmentDependency(graph, node_to_segment);
+    RemoveUselessDependency(&segments);
   }
   return segments;
 }

@@ -13,8 +13,15 @@
 # limitations under the License.
 # ============================================================================
 import mindspore as ms
+from mindspore import context
 from mindspore.ops.operations._inner_ops import NeighborExchange
 from mindspore.ops.operations.comm_ops import _AlltoAll
+from mindspore.communication.management import GlobalComm, init
+
+context.set_context(device_target="Ascend")
+GlobalComm.CHECK_ENVS = False
+init("hccl")
+GlobalComm.CHECK_ENVS = True
 
 class FnDict:
     def __init__(self):
@@ -28,7 +35,7 @@ class FnDict:
 
 def test_neighbor_exchange(tag):
     fns = FnDict()
-    neighbor = NeighborExchange(send_rank_ids=[0], recv_rank_ids=[1], recv_shapes=([2, 3],), send_shapes=([2, 2],),
+    neighbor = NeighborExchange(send_rank_ids=[0], recv_rank_ids=[1], recv_shapes=([2, 2],), send_shapes=([2, 2],),
                                 recv_type=ms.float32)
     @fns
     def before(x):
@@ -37,6 +44,7 @@ def test_neighbor_exchange(tag):
     return fns[tag]
 
 def test_all_to_all(tag):
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
     fns = FnDict()
     altoall = _AlltoAll(split_count=8, split_dim=2, concat_dim=3)
     @fns

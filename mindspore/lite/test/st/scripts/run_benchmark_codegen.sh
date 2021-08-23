@@ -23,6 +23,7 @@ function Run_Converter() {
 # Run on x86 codegen benchmark
 function Run_x86_codegen() {
     # $1:buildPath $2:modelPath $3:cfgFile $4:logFile $5:resultFile
+    local support_parallel bind_mode thread_num suffix run_result
     local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/codegen
     rm -rf $1
     mkdir -p $1
@@ -64,6 +65,7 @@ function Run_x86_codegen() {
 
 function Run_arm_codegen() {
     # $1:buildPath $2:modelPath $3:cfgFile $4:logFile $5:resultFile $6:deviceID $7:processor
+    local package_path package_suffix target platform android_abi toolchain_name package_path run_result
     echo "ANDROID_NDK: ${ANDROID_NDK}" >> $4
     package_path=${arm64_path}
     package_suffix="aarch64"
@@ -205,14 +207,16 @@ version=${file_name_array[2]}
 models_codegen_config=${basepath}/../config/models_codegen.cfg
 models_codegen_parallel_config=${basepath}/../config/models_codegen_parallel.cfg
 
+# Set models and build path
 ms_models_path=${basepath}/ms_models
-build_path=${basepath}/codegen_build
-build_parallal_path=${basepath}/codegen_parallel_build
+build_path_x86=${basepath}/codegen_build_x86
+build_path_parallel=${basepath}/codegen_build_parallel
+build_path_arm64=${basepath}/codegen_build_arm64
+build_path_arm32=${basepath}/codegen_build_arm32
 
 # Write converter result to temp file
 run_converter_log_file=${basepath}/run_converter_log.txt
 echo ' ' > ${run_converter_log_file}
-
 run_converter_result_file=${basepath}/run_converter_result.txt
 echo ' ' > ${run_converter_result_file}
 
@@ -255,38 +259,38 @@ echo "input backend is ${backend}"
 backend=${backend:-"all"}
 isFailed=0
 echo "current backend is ${backend}"
-if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "codegen&train" ]]; then
+if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "codegen_and_train" ]]; then
     # Run on x86-codegen
     echo "start Run x86 codegen ..."
-    Run_x86_codegen ${build_path} ${ms_models_path} ${models_codegen_config} ${run_x86_codegen_log_file} ${run_benchmark_result_file} &
+    Run_x86_codegen ${build_path_x86} ${ms_models_path} ${models_codegen_config} ${run_x86_codegen_log_file} ${run_benchmark_result_file} &
     Run_x86_codegen_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" || $backend == "codegen&train" ]]; then
+if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" || $backend == "codegen_and_train" ]]; then
     # Run on x86-codegen-parallel
     echo "start Run x86 codegen parallel ..."
-    Run_x86_codegen ${build_parallal_path} ${ms_models_path} ${models_codegen_parallel_config} ${run_x86_codegen_parallel_log_file} ${run_benchmark_result_file} &
+    Run_x86_codegen ${build_path_parallel} ${ms_models_path} ${models_codegen_parallel_config} ${run_x86_codegen_parallel_log_file} ${run_benchmark_result_file} &
     Run_x86_codegen_parallel_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" || $backend == "codegen&train" ]]; then
+if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" || $backend == "codegen_and_train" ]]; then
     # Run on codegen
     echo "start Run arm64 codegen ..."
-    Run_arm_codegen ${build_path} ${ms_models_path} ${models_codegen_config} ${run_arm64_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm64"
+    Run_arm_codegen ${build_path_arm64} ${ms_models_path} ${models_codegen_config} ${run_arm64_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm64"
     Run_arm64_codegen_status=$?
 #    Run_arm64_codegen_PID=$!
 #    sleep 1
 fi
-if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" || $backend == "codegen&train" ]]; then
+if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" || $backend == "codegen_and_train" ]]; then
     # Run on arm32 codegen
     echo "start Run arm32 codegen ..."
-    Run_arm_codegen ${build_path} ${ms_models_path} ${models_codegen_config} ${run_arm32_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm32"
+    Run_arm_codegen ${build_path_arm32} ${ms_models_path} ${models_codegen_config} ${run_arm32_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm32"
     Run_arm32_codegen_status=$?
 #    Run_arm32_codegen_PID=$!
 #    sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "codegen&train" ]]; then
+if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "codegen_and_train" ]]; then
     wait ${Run_x86_codegen_PID}
     Run_x86_codegen_status=$?
     if [[ ${Run_x86_codegen_status} != 0 ]];then
@@ -295,7 +299,7 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" ||
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" || $backend == "codegen&train" ]]; then
+if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" || $backend == "codegen_and_train" ]]; then
     wait ${Run_x86_codegen_parallel_PID}
     Run_x86_codegen_parallel_status=$?
     if [[ ${Run_x86_codegen_parallel_status} != 0 ]];then
@@ -304,7 +308,7 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" ||
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" || $backend == "codegen&train" ]]; then
+if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" || $backend == "codegen_and_train" ]]; then
 #    wait ${Run_arm64_codegen_PID}
 #    Run_arm64_codegen_status=$?
     if [[ ${Run_arm64_codegen_status} != 0 ]];then
@@ -313,7 +317,7 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" 
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" || $backend == "codegen&train" ]]; then
+if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" || $backend == "codegen_and_train" ]]; then
 #    wait ${Run_arm32_codegen_PID}
 #    Run_arm32_codegen_status=$?
     if [[ ${Run_arm32_codegen_status} != 0 ]];then

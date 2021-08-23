@@ -867,9 +867,9 @@ void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, in
 }
 
 // int8 convolution 3x3
-void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bias_data, int8_t *output_data,
-                 int16_t *tile_buffer, int16_t *block_unit_buffer, int32_t *tmp_dst_buffer, int8_t *tmp_out,
-                 int task_id, const ConvParameter *conv_param) {
+void Conv3x3Int8(const int16_t *input_data, const int16_t *transed_weight, const int32_t *bias_data,
+                 int8_t *output_data, int16_t *tile_buffer, int16_t *block_unit_buffer, int32_t *tmp_dst_buffer,
+                 int8_t *tmp_out, int task_id, const ConvParameter *conv_param) {
   int ic8 = UP_DIV(conv_param->input_channel_, C8NUM);
   int out_w_block = UP_DIV(conv_param->output_w_, OUPUT_UNIT);
   int out_h_block = UP_DIV(conv_param->output_h_, OUPUT_UNIT);

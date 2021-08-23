@@ -99,7 +99,7 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
   const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
   size_t latest_iter_num = iter_to_model.rbegin()->first;
   // If this iteration is not finished yet, return ResponseCode_SucNotReady so that clients could get model later.
-  if ((current_iter == get_model_iter && latest_iter_num != current_iter) || current_iter == get_model_iter - 1) {
+  if ((current_iter == get_model_iter && latest_iter_num != current_iter)) {
     std::string reason = "The model is not ready yet for iteration " + std::to_string(get_model_iter) +
                          ". Maybe this is because\n" + "1.Client doesn't send enough update model requests.\n" +
                          "2. Worker has not push all the weights to servers.";

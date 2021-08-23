@@ -139,6 +139,9 @@ void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
       const std::string file_path = realpath.value();
       ChangeFileMode(file_path, S_IWUSR);
       std::ofstream json_copy(file_path);
+      if (!json_copy.is_open()) {
+        MS_LOG(EXCEPTION) << "Json file " << file_path << "open failed!";
+      }
       json_copy << json_file.rdbuf();
       json_copy.close();
       ChangeFileMode(file_path, S_IRUSR);
@@ -166,6 +169,9 @@ void DumpJsonParser::CopyHcclJsonToDir(uint32_t rank_id) {
     const std::string file_path = realpath.value();
     ChangeFileMode(file_path, S_IWUSR);
     std::ofstream json_copy(file_path);
+    if (!json_copy.is_open()) {
+      MS_LOG(EXCEPTION) << "Json file " << file_path << "open failed!";
+    }
     json_copy << json_file.rdbuf();
     json_copy.close();
     ChangeFileMode(file_path, S_IRUSR);
@@ -188,6 +194,9 @@ void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t rank_id) {
     const std::string file_path = realpath.value();
     ChangeFileMode(file_path, S_IWUSR);
     std::ofstream json_create(file_path);
+    if (!json_create.is_open()) {
+      MS_LOG(EXCEPTION) << "Json file " << file_path << "open failed!";
+    }
     json_create << ms_info;
     json_create.close();
     ChangeFileMode(file_path, S_IRUSR);
@@ -212,14 +221,17 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   ChangeFileMode(file_path, S_IWUSR);
   std::ofstream fd(file_path, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!fd.is_open()) {
-    MS_LOG(ERROR) << "Open file " << file_path << " failed."
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
-    return false;
+    MS_LOG(EXCEPTION) << "Open file " << file_path << " failed."
+                      << " Errno:" << errno << " ErrInfo:" << strerror(errno);
   }
   std::string npy_header = GenerateNpyHeader(shape, type);
   if (!npy_header.empty()) {
     fd << npy_header;
     (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
+    if (fd.bad()) {
+      fd.close();
+      MS_LOG(EXCEPTION) << "Write mem to file " << file_path << " failed.";
+    }
     fd.close();
     ChangeFileMode(file_path, S_IRUSR);
   }
@@ -358,7 +370,7 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
       MS_LOG(EXCEPTION) << "iteration only supports digits, {'-', '|'}, or just \"all\" but got: " << iteration_;
     }
   } else if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
-    MS_LOG(WARNING) << "Dump not enabled. ";
+    MS_LOG(WARNING) << "Dump is not enabled. ";
   } else {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. Async or E2E should be enabled. ";
   }
@@ -372,11 +384,11 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   int start = 0;
   int end = iteration_.find("|");
   while (end != -1) {
-    std::string temp = iteration_.substr(start, end - start);
+    std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
     int range_idx = temp.find("-");
     if (range_idx != -1) {
-      uint32_t low_range = std::stoul(temp.substr(0, range_idx));
-      uint32_t high_range = std::stoul(temp.substr((range_idx + 1), -1));
+      uint32_t low_range = std::stoul(temp.substr(0, IntToSize(range_idx)));
+      uint32_t high_range = std::stoul(temp.substr(IntToSize(range_idx + 1), -1));
       if ((low_range <= iteration) && (iteration <= high_range)) {
         return true;
       }
@@ -386,10 +398,10 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
     start = end + 1;
     end = iteration_.find("|", start);
   }
-  std::string temp = iteration_.substr(start, end - start);
+  std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
   int range_idx = temp.find("-");
   if (range_idx != -1) {
-    uint32_t low_range = std::stoul(temp.substr(0, range_idx));
+    uint32_t low_range = std::stoul(temp.substr(0, IntToSize(range_idx)));
     uint32_t high_range = std::stoul(temp.substr((range_idx + 1), -1));
     if ((low_range <= iteration) && (iteration <= high_range)) {
       return true;
@@ -472,9 +484,9 @@ void DumpJsonParser::JsonConfigToString() {
   cur_config.append(" input_output:");
   cur_config.append(std::to_string(input_output_));
   cur_config.append("e2e_enable:");
-  cur_config.append(std::to_string(e2e_dump_enabled_));
+  cur_config.append(std::to_string(static_cast<int>(e2e_dump_enabled_)));
   cur_config.append(" async_dump_enable:");
-  cur_config.append(std::to_string(async_dump_enabled_));
+  cur_config.append(std::to_string(static_cast<int>(async_dump_enabled_)));
   MS_LOG(INFO) << cur_config;
 }
 
@@ -493,14 +505,14 @@ void DumpJsonParser::JudgeDumpEnabled() {
   }
 
   if (!async_dump_enabled_ && !e2e_dump_enabled_) {
-    MS_LOG(WARNING) << "Dump json parse failed. Dump not enabled";
+    MS_LOG(WARNING) << "Dump json parse failed. Dump is not enabled";
   }
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kCPUDevice) {
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     if (support_devices_.find(device_id) == support_devices_.end()) {
       async_dump_enabled_ = false;
       e2e_dump_enabled_ = false;
-      MS_LOG(WARNING) << "Dump not enabled. device_id:" << device_id << " not support";
+      MS_LOG(WARNING) << "Dump is not enabled. device_id:" << device_id << " not support";
     }
   }
   JsonConfigToString();
@@ -541,9 +553,10 @@ std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id) const {
   bin_path.append("rank_");
 
   uint32_t rank_id = 0;
-  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   auto env_rank_id = common::GetEnv("RANK_ID");
-  if (!(env_table_file.empty() || env_rank_id.empty())) {
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
     // get actual rank id if it's distribution training case.
     if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
       MS_LOG(INFO) << "Failed to get rank id.";

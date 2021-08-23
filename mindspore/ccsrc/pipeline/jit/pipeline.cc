@@ -45,13 +45,14 @@
 #include "backend/session/executor_manager.h"
 #include "debug/trace.h"
 #include "debug/draw.h"
+#include "debug/common.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/py_pass_manager.h"
 #include "pybind_api/pybind_patch.h"
 #include "utils/shape_utils.h"
 #include "utils/info.h"
 #include "load_mindir/load_model.h"
-#include "pipeline/jit/prim_bprop_optimizer.h"
+#include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "utils/crypto.h"
 
@@ -142,20 +143,21 @@ std::string GetCompileExceptionInfo() {
   return oss.str();
 }
 
-void SetGpuLoopSink(const ResourcePtr &resource) {
+void SetLoopCount(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto func_graph = resource->func_graph();
   if (func_graph != nullptr && func_graph->manager() != nullptr) {
     auto manager = func_graph->manager();
     size_t graph_nums = manager->func_graphs().size();
-    int64_t sinksize = ConfigManager::GetInstance().iter_num();
-    if (graph_nums == 1 || MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-      resource->set_gpu_loopsink(true, sinksize);
-    } else {
-      resource->set_gpu_loopsink(false, sinksize);
+    int64_t loop_size = ConfigManager::GetInstance().iter_num();
+    const auto context_ptr = MsContext::GetInstance();
+    if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+      resource->set_vm_loop(!context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK), loop_size);
+    } else if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
+      bool run_with_mind_rt = graph_nums == 1 || context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT);
+      resource->set_vm_loop(!run_with_mind_rt, loop_size);
     }
-    MS_LOG(INFO) << "Change gpu_loopsink_flag_ to " << resource->gpu_loopsink_flag() << ", set loopsink size to "
-                 << sinksize;
+    MS_LOG(INFO) << "Change vm_loop_flag to " << resource->vm_loop_flag() << ", set loop_size to " << loop_size;
   }
 }
 
@@ -610,6 +612,11 @@ bool IsPhaseTrain(const std::string &phase_s) {
   return phase_s.rfind(phase_to_train) != std::string::npos;
 }
 
+bool IsPhaseLoadFromMindIR(const std::string &phase_s) {
+  const std::string mindir_graph = "graph_load_from_mindir";
+  return phase_s.rfind(mindir_graph) != std::string::npos;
+}
+
 std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
   MS_EXCEPTION_IF_NULL(resource);
   bool is_air = IsPhaseExportAir(phase_s);
@@ -643,6 +650,9 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     if (IsPhaseTrain(phase_s) && MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE) &&
         resource->func_graph() != nullptr) {
       return BackendPipeline();
+    }
+    if (IsPhaseLoadFromMindIR(phase_s)) {
+      return MindIRPipeline();
     }
     return VmPipeline();
   }
@@ -827,7 +837,7 @@ void Pipeline::Run(const std::string &phase_s) {
         MS_LOG(DEBUG) << "Action " << action.first << " end.";
       };
       if (action.first == "task_emit") {
-        SetGpuLoopSink(resource_);
+        SetLoopCount(resource_);
       } else if (action.first == "validate") {
         CacheValidateFuncGraph(phase_s, resource_);
       }
@@ -1003,13 +1013,17 @@ py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
     MS_LOG(EXCEPTION) << "Can't find run graph func for " << phase_s;
   }
   // Set loopsink size for each phase.
-  bool is_loopsink = info_[phase_s]->resource->gpu_loopsink_flag();
-  int64_t sinksize = info_[phase_s]->resource->gpu_loopsink_size();
-  ConfigManager::GetInstance().set_gpu_loopsink_size(is_loopsink ? sinksize : 1);
-  // If target is not gpu or is loopsink, keep vmloop 1.
-  bool g = (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
-  int64_t vm_loop = (!g || is_loopsink) ? 1 : sinksize;
-  MS_LOG(INFO) << "VM loop size " << vm_loop << ", loopsink size " << (is_loopsink ? sinksize : 1);
+  bool vm_loop_flag = info_[phase_s]->resource->vm_loop_flag();
+  int64_t loop_size = info_[phase_s]->resource->loop_size();
+  int64_t vm_loop = 1;
+  if (vm_loop_flag) {
+    vm_loop = loop_size;
+  } else {
+    // Set the loop size in config if graphs nums is 1(is_loop_sin=True), then there will be a loop embrace
+    // 'Execute(graph)' in GPUSession.
+    ConfigManager::GetInstance().set_gpu_loopsink_size(loop_size);
+  }
+  MS_LOG(INFO) << "VM loop size " << vm_loop << ", loopsink size " << vm_loop;
   py::object ret;
   MS_LOG(DEBUG) << "Eval run" << backend;
   for (int64_t i = 0; i < vm_loop; i++) {
@@ -1055,11 +1069,20 @@ void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &ph
 
 void ExecutorPy::PyExePath(const py::object &py_exe_path) {
   if (!py::isinstance<py::str>(py_exe_path)) {
-    MS_LOG(EXCEPTION) << "Failed, phase input is not a str";
+    MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
   }
   auto py_exe_path_s = py::cast<std::string>(py_exe_path);
   auto ms_context = MsContext::GetInstance();
   ms_context->set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, py_exe_path_s);
+}
+
+void ExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server_dir) {
+  if (!py::isinstance<py::str>(kernel_build_server_dir)) {
+    MS_LOG(EXCEPTION) << "Failed, kernel_build_server_dir input is not a str";
+  }
+  auto kernel_build_server_dir_s = py::cast<std::string>(kernel_build_server_dir);
+  auto ms_context = MsContext::GetInstance();
+  ms_context->set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, kernel_build_server_dir_s);
 }
 
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
@@ -1159,9 +1182,6 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   // Convert CNodeList to LinConvertResult.
   auto segment = std::make_shared<GraphSegment>(std::vector<AnfNodePtr>{app_init}, false);
   auto runner = convert_fn(segment, "");
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    backend->Link(runner.graph_id);
-  }
   ConfigManager::GetInstance().set_iter_num(size);
   // PS cache does not support loop sink.
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
@@ -1225,6 +1245,32 @@ void FinalizeHccl() {
   session::ExecutorManager::Instance().Clear();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 #endif
+}
+
+auto GetAscendRuntimeInstance() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  auto backend = ms_context->backend_policy();
+  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend == "ms" && device_target == kAscendDevice) {
+    return runtime_instance;
+  } else {
+    MS_LOG(EXCEPTION) << "Get MindSpore ascend runtime instance failed";
+  }
+}
+
+uint32_t GetHcclRankId() {
+  auto runtime_instance = GetAscendRuntimeInstance();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  return runtime_instance->GetRankId();
+}
+
+uint32_t GetHcclRankSize() {
+  auto runtime_instance = GetAscendRuntimeInstance();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  return runtime_instance->GetRankSize();
 }
 
 void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase) {
@@ -1320,7 +1366,7 @@ void ClearResAtexit() {
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   ad::g_k_prims.clear();
   ad::ClearKPynativeCellStaticRes();
-  PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
+  ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
 
   abstract::ClearPrimEvaluatorMap();
   pipeline::GetMethodMap().clear();

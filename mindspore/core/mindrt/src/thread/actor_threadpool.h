@@ -23,6 +23,7 @@
 #include <atomic>
 #include <condition_variable>
 #include "thread/threadpool.h"
+#include "thread/core_affinity.h"
 #include "actor/actor.h"
 #include "thread/hqueue.h"
 #define USE_HQUEUE

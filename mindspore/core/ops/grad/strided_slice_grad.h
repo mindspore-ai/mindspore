@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameStridedSliceGrad = "StridedSliceGrad";
-class StridedSliceGrad : public PrimitiveC {
+class MS_CORE_API StridedSliceGrad : public PrimitiveC {
  public:
   StridedSliceGrad() : PrimitiveC(kNameStridedSliceGrad) {}
   ~StridedSliceGrad() = default;

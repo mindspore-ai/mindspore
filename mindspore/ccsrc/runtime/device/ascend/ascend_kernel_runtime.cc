@@ -78,7 +78,7 @@ constexpr size_t kPathMax = 4096;
 namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
 namespace {
-std::string GetRankId() {
+std::string GetRankIdStr() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
@@ -155,9 +155,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
   }
 }
 
-void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &,
-                                                    const std::unordered_set<ValueNodePtr> &,
-                                                    const std::vector<CNodePtr> &) {
+void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   SetCurrentContext();
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " data dumper";
   if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
@@ -252,6 +250,8 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
+  // DestroyHccl must be called before FreeDeviceMemory
+  (void)DestroyHccl();
   if (mem_manager_ != nullptr) {
     mem_manager_->FreeDeviceMemory();
   }
@@ -261,7 +261,6 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
   }
 
-  (void)DestroyHccl();
   (void)ResetDevice(device_id);
   (void)ProfilingManager::GetInstance().StopProfiling();
   current_graph_ = nullptr;
@@ -283,7 +282,32 @@ void AscendKernelRuntime::PreInit() {
   }
 }
 
+uint32_t AscendKernelRuntime::GetRankId() {
+  uint32_t rank_id;
+  auto ret = hccl::HcclAdapter::GetInstance().HcclGetRankId(&rank_id);
+  if (ret != HCCL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "HcclGetRankId failed, ret:" << ret;
+  }
+  return rank_id;
+}
+
+uint32_t AscendKernelRuntime::GetRankSize() {
+  uint32_t rank_size;
+  auto ret = hccl::HcclAdapter::GetInstance().HcclGetRankSize(&rank_size);
+  if (ret != HCCL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "HcclGetRankSize failed, ret:" << ret;
+  }
+  return rank_size;
+}
+
 bool AscendKernelRuntime::Init() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  auto profiling_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PROFILING);
+  if (execution_mode == kPynativeMode && profiling_flag) {
+    pynative_mode_profiling_flag_ = true;
+  }
   if (initialized_) {
     SetCurrentContext();
     return true;
@@ -868,7 +892,7 @@ bool AscendKernelRuntime::HcclInit() {
     MS_LOG(ERROR) << "File path oversize";
     return false;
   }
-  std::string rank_id_str = GetRankId();
+  std::string rank_id_str = GetRankIdStr();
   auto full_path = realpath(config_path_str, nullptr);
   if (full_path == nullptr) {
     MS_LOG(ERROR) << "File path " << config_path_str << " does not exist";
@@ -876,7 +900,7 @@ bool AscendKernelRuntime::HcclInit() {
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
   bool ret = hccl::HcclAdapter::GetInstance().InitHccl(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id_str,
-                                                       full_path);
+                                                       full_path, mode == kGraphMode);
   free(full_path);
   if (!ret) {
     MS_LOG(ERROR) << "Hcom init failed.";
@@ -946,6 +970,12 @@ std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceEvent() {
   auto ascend_event = std::make_shared<AscendEvent>();
   MS_EXCEPTION_IF_NULL(ascend_event);
   return ascend_event;
+}
+
+std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceTimeEvent() {
+  auto ascend_time_event = std::make_shared<AscendTimeEvent>();
+  MS_EXCEPTION_IF_NULL(ascend_time_event);
+  return ascend_time_event;
 }
 
 uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {

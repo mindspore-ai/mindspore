@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class GatherD : public PrimitiveC {
+class MS_CORE_API GatherD : public PrimitiveC {
  public:
   GatherD() : PrimitiveC(prim::kPrimGatherD->name()) { InitIOName({"x", "dim", "index"}, {"output"}); }
   ~GatherD() = default;

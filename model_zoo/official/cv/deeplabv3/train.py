@@ -161,8 +161,15 @@ def train():
                         continue
                     print('filter {}'.format(key))
                     del param_dict[key]
-        load_param_into_net(train_net, param_dict)
-        print('load_model {} success'.format(args.ckpt_pre_trained))
+            load_param_into_net(train_net, param_dict)
+            print('load_model {} success'.format(args.ckpt_pre_trained))
+        else:
+            trans_param_dict = {}
+            for key, val in param_dict.items():
+                key = key.replace("down_sample_layer", "downsample")
+                trans_param_dict[f"network.resnet.{key}"] = val
+            load_param_into_net(train_net, trans_param_dict)
+            print('load_model {} success'.format(args.ckpt_pre_trained))
 
     # optimizer
     iters_per_epoch = dataset.get_dataset_size()

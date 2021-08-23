@@ -18,6 +18,7 @@
 #include "minddata/dataset/kernels/ir/vision/random_select_subpolicy_ir.h"
 
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/kernels/image/random_select_subpolicy_op.h"
 #endif
 
@@ -98,6 +99,33 @@ Status RandomSelectSubpolicyOperation::to_json(nlohmann::json *out_json) {
     policy_tensor_ops.push_back(sub_policy_tensor_ops);
   }
   (*out_json)["policy"] = policy_tensor_ops;
+  return Status::OK();
+}
+
+Status RandomSelectSubpolicyOperation::from_json(nlohmann::json op_params,
+                                                 std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("policy") != op_params.end(), "Failed to find policy");
+  nlohmann::json policy_json = op_params["policy"];
+  std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy;
+  std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> policy_items;
+  for (nlohmann::json item : policy_json) {
+    for (nlohmann::json item_pair : item) {
+      CHECK_FAIL_RETURN_UNEXPECTED(item_pair.find("prob") != item_pair.end(), "Failed to find prob");
+      CHECK_FAIL_RETURN_UNEXPECTED(item_pair.find("tensor_op") != item_pair.end(), "Failed to find tensor_op");
+      std::vector<std::shared_ptr<TensorOperation>> operations;
+      std::pair<std::shared_ptr<TensorOperation>, double> policy_pair;
+      std::shared_ptr<TensorOperation> operation;
+      nlohmann::json tensor_op_json;
+      double prob = item_pair["prob"];
+      tensor_op_json.push_back(item_pair["tensor_op"]);
+      RETURN_IF_NOT_OK(Serdes::ConstructTensorOps(tensor_op_json, &operations));
+      CHECK_FAIL_RETURN_UNEXPECTED(operations.size() == 1, "There should be only 1 tensor operation");
+      policy_pair = std::make_pair(operations[0], prob);
+      policy_items.push_back(policy_pair);
+    }
+    policy.push_back(policy_items);
+  }
+  *operation = std::make_shared<vision::RandomSelectSubpolicyOperation>(policy);
   return Status::OK();
 }
 #endif

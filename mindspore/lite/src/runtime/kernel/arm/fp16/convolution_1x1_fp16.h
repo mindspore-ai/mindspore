@@ -37,7 +37,6 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int Eval() override;
 
  public:
   int RunOc(int task_id);

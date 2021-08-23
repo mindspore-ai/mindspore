@@ -143,13 +143,85 @@ Status Conv2DInfo::CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) {
   return SUCCESS;
 }
 
+Status Conv2DInfo::CheckHWStrategySameMode(int64_t h_strategy, int64_t w_strategy) {
+  int64_t h_slice_shape = inputs_shape_[0][2] / h_strategy;
+  int64_t w_slice_shape = inputs_shape_[0][3] / w_strategy;
+
+  // H dimension
+  if (kernel_size_[0] > stride_[2] && h_strategy > 1) {
+    MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split H when kernel_size > stride";
+    return FAILED;
+  }
+
+  if (h_strategy > 1 && (kernel_size_[0] <= stride_[2] && h_slice_shape % stride_[2] != 0)) {
+    MS_LOG(ERROR) << name_
+                  << ": The 'same' mode do not support to split H when kernel_size <= stride but slice shape "
+                     "is not divisible by stride ";
+    return FAILED;
+  }
+
+  // W dimension
+  if (w_strategy > 1 && (kernel_size_[1] <= stride_[3] && w_slice_shape % stride_[3] != 0)) {
+    MS_LOG(ERROR) << name_
+                  << ": The 'same' mode do not support to split W when kernel_size <= stride but slice shape "
+                     "is not divisible by stride ";
+    return FAILED;
+  }
+
+  if (w_strategy > 1 && (kernel_size_[1] > stride_[3])) {
+    if (inputs_shape_[0][3] % stride_[3] != 0) {
+      MS_LOG(ERROR) << name_
+                    << ": The 'same' mode do not support to split W when kernel_size > stride but w shape is not "
+                       "divisible by stride";
+      return FAILED;
+    }
+
+    if (w_slice_shape < ((kernel_size_[1] - stride_[3] + 1) / 2)) {
+      MS_LOG(ERROR) << name_
+                    << ": The 'same' mode do not support to split W when kernel_size > stride but w slice shape is "
+                       "smaller than (k - s + 1) / 2";
+      return FAILED;
+    }
+
+    if (kernel_size_[1] - stride_[3] == 1) {
+      MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split W when kernel_size > stride but k - s == 1";
+      return FAILED;
+    }
+  }
+
+  return SUCCESS;
+}
+
+Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy) {
+  int64_t h_slice_shape = inputs_shape_[0][2] / h_strategy;
+  int64_t w_slice_shape = inputs_shape_[0][3] / w_strategy;
+
+  if ((kernel_size_[0] > stride_[2] && h_strategy > 1) || (kernel_size_[1] > stride_[3] && w_strategy > 1)) {
+    MS_LOG(ERROR) << name_ << ": The 'valid' mode do not support to split H or W when kernel_size > stride";
+    return FAILED;
+  }
+
+  if (kernel_size_[0] <= stride_[2] && h_slice_shape % stride_[2] != 0) {
+    MS_LOG(ERROR) << name_
+                  << ": The 'valid' mode do not support to split H when kernel_size <= stride but slice shape is "
+                     "not divisible by stride ";
+    return FAILED;
+  }
+
+  if (kernel_size_[1] <= stride_[3] && w_slice_shape % stride_[3] != 0) {
+    MS_LOG(ERROR) << name_
+                  << ": The 'valid' mode do not support to split W when kernel_size <= stride but slice shape is "
+                     "not divisible by stride ";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
 Status Conv2DInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
   if (CheckHWStrategyBase(h_strategy, w_strategy) != SUCCESS) {
     return FAILED;
   }
-
-  int64_t h_slice_shape = inputs_shape_[0][2] / h_strategy;
-  int64_t w_slice_shape = inputs_shape_[0][3] / w_strategy;
 
   if (pad_mode_ == 0) {  // 'pad' mode
     MS_LOG(ERROR) << name_ << ": The 'pad' mode do not support to split H or W";
@@ -157,40 +229,11 @@ Status Conv2DInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
   }
 
   if (pad_mode_ == 1) {  // 'same' mode
-    if ((kernel_size_[0] > stride_[2] || kernel_size_[1] > stride_[3]) && h_strategy > 1) {
-      MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split H when kernel_size > stride";
-      return FAILED;
-    }
-
-    if (kernel_size_[0] <= stride_[2] || kernel_size_[1] <= stride_[3]) {
-      if (h_slice_shape % stride_[2] != 0 || w_slice_shape % stride_[3] != 0) {
-        MS_LOG(ERROR) << name_
-                      << ": The 'same' mode do not support to split H or W when kernel_size <= stride but slice shape "
-                         "is not divisible by stride ";
-        return FAILED;
-      }
-    }
+    return CheckHWStrategySameMode(h_strategy, w_strategy);
   }
 
   if (pad_mode_ == 2) {  // 'valid' mode
-    if ((kernel_size_[0] > stride_[2] && h_strategy > 1) || (kernel_size_[1] > stride_[3] && w_strategy > 1)) {
-      MS_LOG(ERROR) << name_ << ": The 'valid' mode do not support to split H or W when kernel_size > stride";
-      return FAILED;
-    }
-
-    if (kernel_size_[0] <= stride_[2] && h_slice_shape % stride_[2] != 0) {
-      MS_LOG(ERROR) << name_
-                    << ": The 'valid' mode do not support to split H when kernel_size <= stride but slice shape is "
-                       "not divisible by stride ";
-      return FAILED;
-    }
-
-    if (kernel_size_[1] <= stride_[3] && w_slice_shape % stride_[3] != 0) {
-      MS_LOG(ERROR) << name_
-                    << ": The 'valid' mode do not support to split W when kernel_size <= stride but slice shape is "
-                       "not divisible by stride ";
-      return FAILED;
-    }
+    return CheckHWStrategyValidMode(h_strategy, w_strategy);
   }
 
   return SUCCESS;
@@ -493,10 +536,18 @@ void Conv2DInfo::InferSendRecvFlag() {
                << right_need_recv_;
 
   if (left_need_send_) {
+    if (left_rank_overlap_right_size_ > input_slice_shape_[3]) {
+      MS_LOG(EXCEPTION) << name_ << ": Do not support left overlap size(" << left_rank_overlap_right_size_
+                        << ") larger than slice shape in w dimension(" << input_slice_shape_[3] << ")";
+    }
     send_rank_ids_.push_back(left_rank_id_);
   }
 
   if (right_need_send_) {
+    if (right_rank_overlap_left_size_ > input_slice_shape_[3]) {
+      MS_LOG(EXCEPTION) << name_ << ": Do not support left overlap size(" << right_rank_overlap_left_size_
+                        << ") larger than slice shape in w dimension(" << input_slice_shape_[3] << ")";
+    }
     send_rank_ids_.push_back(right_rank_id_);
   }
 
@@ -869,15 +920,8 @@ Status Conv2DBackpropInputInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_st
   }
 
   if (h_strategy > 1) {
-    if (inputs_shape_[0][2] * stride_[2] != outputs_shape_[0][2]) {
-      MS_LOG(ERROR) << name_ << ": Do not support to split h dimension when in_shape * stride != out_shape";
-      return FAILED;
-    }
-
-    if (kernel_size_[0] > stride_[2]) {
-      MS_LOG(ERROR) << name_ << ": Do not support to split h dimension when kernel size larger than stride";
-      return FAILED;
-    }
+    MS_LOG(ERROR) << name_ << ": Do not support to split h dimension";
+    return FAILED;
   }
 
   if (w_strategy > 1 && inputs_shape_[0][3] * stride_[3] != outputs_shape_[0][3]) {

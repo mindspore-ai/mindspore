@@ -632,7 +632,7 @@ std::list<CNodePtr> FuncGraph::GetOrderedCnodes() {
   auto SuccDepends = std::bind(SuccIncludeFV, this_ptr, std::placeholders::_1);
 
   std::list<CNodePtr> cnodes;
-  auto nodes = TopoSort(get_return(), SuccDepends, BelongSameGraph);
+  auto nodes = mindspore::TopoSort(get_return(), SuccDepends, BelongSameGraph);
   for (const auto &node : nodes) {
     auto cnode = dyn_cast<CNode>(node);
     if (cnode) {
@@ -727,7 +727,7 @@ bool FuncGraph::ContainMultiTarget() const {
   MS_EXCEPTION_IF_NULL(graph_manager);
   FuncGraphSet graphs = graph_manager->func_graphs();
   for (auto &g : graphs) {
-    auto nodes = TopoSort(g->get_return());
+    auto nodes = mindspore::TopoSort(g->get_return());
     if (mindspore::ContainMultiTarget(nodes)) {
       return true;
     }
@@ -739,6 +739,9 @@ size_t NewFgSeenGeneration() {
   static size_t fg_seen_generation = 0;
   return ++fg_seen_generation;
 }
+
+// Implement TopoSort api.
+std::vector<AnfNodePtr> api::FuncGraph::TopoSort(const AnfNodePtr &node) { return mindspore::TopoSort(node); }
 
 const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");
 }  // namespace mindspore

@@ -31,10 +31,10 @@
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/cmu_arctic_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 
@@ -123,6 +123,17 @@ PYBIND_REGISTER(CSVNode, 2, ([](const py::module *m) {
                     }));
                 }));
 
+PYBIND_REGISTER(
+  FlickrNode, 2, ([](const py::module *m) {
+    (void)py::class_<FlickrNode, DatasetNode, std::shared_ptr<FlickrNode>>(*m, "FlickrNode", "to create a FlickrNode")
+      .def(py::init([](std::string dataset_dir, std::string annotation_file, bool decode, py::handle sampler) {
+        auto flickr =
+          std::make_shared<FlickrNode>(dataset_dir, annotation_file, decode, toSamplerObj(sampler), nullptr);
+        THROW_IF_ERROR(flickr->ValidateParams());
+        return flickr;
+      }));
+  }));
+
 PYBIND_REGISTER(GeneratorNode, 2, ([](const py::module *m) {
                   (void)py::class_<GeneratorNode, DatasetNode, std::shared_ptr<GeneratorNode>>(
                     *m, "GeneratorNode", "to create a GeneratorNode")
@@ -209,19 +220,6 @@ PYBIND_REGISTER(MnistNode, 2, ([](const py::module *m) {
                     }));
                 }));
 
-
-
-PYBIND_REGISTER(CmuArcticNode, 2, ([](const py::module *m) {
-                  (void)py::class_<CmuArcticNode, DatasetNode, std::shared_ptr<CmuArcticNode>>(*m, "CmuArcticNode",
-                                                                                       "to create an CmuArcticNode")
-                    .def(py::init([](std::string dataset_dir, std::string usage, py::handle sampler) {
-                      auto cmuarctic = std::make_shared<CmuArcticNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
-                      THROW_IF_ERROR(cmuarctic->ValidateParams());
-                      return cmuarctic;
-                    }));
-                }));
-
-
 PYBIND_REGISTER(RandomNode, 2, ([](const py::module *m) {
                   (void)py::class_<RandomNode, DatasetNode, std::shared_ptr<RandomNode>>(*m, "RandomNode",
                                                                                          "to create a RandomNode")
@@ -264,7 +262,7 @@ PYBIND_REGISTER(TFRecordNode, 2, ([](const py::module *m) {
                       THROW_IF_ERROR(tfrecord->ValidateParams());
                       return tfrecord;
                     }))
-                    .def(py::init([](const py::list dataset_files, std::string schema, py::list columns_list,
+                    .def(py::init([](const py::list dataset_files, std::string schema, const py::list columns_list,
                                      int64_t num_samples, int32_t shuffle, int32_t num_shards, int32_t shard_id,
                                      bool shard_equal_rows) {
                       std::shared_ptr<TFRecordNode> tfrecord = std::make_shared<TFRecordNode>(

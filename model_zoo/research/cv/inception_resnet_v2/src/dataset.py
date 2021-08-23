@@ -20,8 +20,9 @@ import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 from src.config import config_ascend as config
 
-DEVICE_ID = 1
-DEVICE_NUM = 1
+
+device_id = int(os.getenv('DEVICE_ID'))
+device_num = int(os.getenv('RANK_SIZE'))
 
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
@@ -39,8 +40,6 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
     """
 
     do_shuffle = bool(do_train)
-    device_id = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else DEVICE_ID
-    device_num = int(os.getenv('RANK_SIZE')) if os.getenv('RANK_SIZE') else DEVICE_NUM
 
     if device_num == 1 or not do_train:
         ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums, shuffle=do_shuffle)
@@ -72,7 +71,9 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
     ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=config.work_nums)
     ds = ds.map(input_columns="image", operations=trans, num_parallel_workers=config.work_nums)
 
+    # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
 
+    # apply dataset repeat operation
     ds = ds.repeat(repeat_num)
     return ds

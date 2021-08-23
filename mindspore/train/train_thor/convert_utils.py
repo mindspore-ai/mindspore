@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 from mindspore import context
 
 
-class ConvertNetUtils():
+class ConvertNetUtils:
     """
     Convert net to thor layer net
     """
@@ -28,7 +28,6 @@ class ConvertNetUtils():
         self._convert_method_map = {nn.Dense: ConvertNetUtils._convert_dense,
                                     nn.Embedding: ConvertNetUtils._convert_embedding,
                                     nn.Conv2d: ConvertNetUtils._convert_conv2d}
-
 
     @staticmethod
     def _convert_dense(subcell):
@@ -64,7 +63,6 @@ class ConvertNetUtils():
             new_subcell.bias = subcell.bias
         return new_subcell
 
-
     @staticmethod
     def _convert_embedding(subcell):
         """
@@ -75,7 +73,6 @@ class ConvertNetUtils():
                                        use_one_hot=False)
         new_subcell.embedding_table = subcell.embedding_table
         return new_subcell
-
 
     @staticmethod
     def _convert_conv2d(subcell):
@@ -95,7 +92,6 @@ class ConvertNetUtils():
                                     has_bias=has_bias, weight_init=weight)
         return new_subcell
 
-
     def _convert_to_thor_net(self, net):
         """
         Convert net to thor net
@@ -114,9 +110,6 @@ class ConvertNetUtils():
             elif isinstance(subcell, (nn.Embedding, nn.Dense, nn.Conv2d)):
                 prefix = subcell.param_prefix
                 new_subcell = self._convert_method_map[type(subcell)](subcell)
-                print("subcell name: ", name, "prefix is", prefix, flush=True)
-                if isinstance(new_subcell, (nn.DenseThor, nn.EmbeddingThor, nn.Conv2dThor)):
-                    print("convert to thor layer success.", flush=True)
                 new_subcell.update_parameters_name(prefix + '.')
                 net.insert_child_to_cell(name, new_subcell)
                 change = True
@@ -124,9 +117,7 @@ class ConvertNetUtils():
                 self._convert_to_thor_net(subcell)
 
         if isinstance(net, nn.SequentialCell) and change:
-            print("is nn.SequentialCell and change")
             net.cell_list = list(net.cells())
-
 
     def convert_to_thor_net(self, net):
         """
@@ -152,7 +143,7 @@ class ConvertNetUtils():
         net.update_cell_type("second-order")
 
 
-class ConvertModelUtils():
+class ConvertModelUtils:
     """
     Convert model to thor model.
     """
@@ -203,7 +194,7 @@ class ConvertModelUtils():
             ...            frequency=100)
             >>> model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_manager, metrics={"acc"},
             ...               amp_level="O2", keep_batchnorm_fp32=False)
-            >>> model = ConvertModelUtils().convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
+            >>> model = ConvertModelUtils.convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
             ...                                                   metrics={'acc'}, amp_level="O2",
             ...                                                   loss_scale_manager=loss_manager,
             ...                                                   keep_batchnorm_fp32=False)

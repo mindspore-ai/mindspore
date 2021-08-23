@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAbsGrad = "AbsGrad";
-class AbsGrad : public PrimitiveC {
+class MS_CORE_API AbsGrad : public PrimitiveC {
  public:
   AbsGrad() : PrimitiveC(kNameAbsGrad) {}
   ~AbsGrad() = default;

@@ -45,7 +45,7 @@ void FreeTensors(std::vector<lite::Tensor *> *tensors) {
 
 void RectifyFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inputs, FmkType fmk_type) {
   MS_ASSERT(cnode != nullptr);
-  if (fmk_type != lite::converter::FmkType_ONNX) {
+  if (fmk_type != converter::kFmkTypeOnnx) {
     return;
   }
   for (auto &input : inputs) {
@@ -122,7 +122,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     fbb.Clear();
     return lite::RET_ERROR;
   }
-  auto ret = KernelInferShape(inputs, outputs, prim, {});
+  auto ret = KernelInferShape(inputs, outputs, prim, {}, lite::SCHEMA_CUR);
   if (ret == lite::RET_NOT_SUPPORT) {
     auto parameter_gen =
       lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);

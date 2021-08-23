@@ -33,6 +33,8 @@ RepeatPass::RepeatPass()
 
 // Identifies the subtree below this node as being in a repeated path of the tree.
 Status RepeatPass::Visit(std::shared_ptr<RepeatNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // If this is an infinite repeat under infinite repeat/epoch, adjust current num_repeats_.
   // Otherwise, after multiplication it would become positive and this repeat wouldn't run infinitely.
   if (node->Count() == DatasetOp::kInfiniteRepeat && num_repeats_ < 0) {
@@ -56,6 +58,8 @@ Status RepeatPass::Visit(std::shared_ptr<RepeatNode> node, bool *const modified)
 
 // Identifies the subtree below this node as being in a repeated path of the tree.
 Status RepeatPass::Visit(std::shared_ptr<EpochCtrlNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Get the total number of epochs from the EpochCtrlOp parameter
   num_epochs_ = node->Count();
   // Every node below this EpochCtrlOp should be repeated for num_epochs_ times.
@@ -69,6 +73,8 @@ Status RepeatPass::Visit(std::shared_ptr<EpochCtrlNode> node, bool *const modifi
 #ifndef ENABLE_ANDROID
 // Identifies the subtree below this node as being in a cache merge path
 Status RepeatPass::Visit(std::shared_ptr<CacheMergeNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Turn on the flag that we're under a merge op
   is_merge_ = true;
   return Status::OK();
@@ -76,6 +82,8 @@ Status RepeatPass::Visit(std::shared_ptr<CacheMergeNode> node, bool *const modif
 
 // Identifies the subtree below this node as being cached
 Status RepeatPass::Visit(std::shared_ptr<CacheNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Turn on the flag that we're under a merge op
   is_cached_ = true;
   return Status::OK();
@@ -84,6 +92,8 @@ Status RepeatPass::Visit(std::shared_ptr<CacheNode> node, bool *const modified) 
 
 // Hooks up any identified eoe nodes under this repeat.
 Status RepeatPass::VisitAfter(std::shared_ptr<RepeatNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // We are a repeat op in the descendant tree of a merge op, then we take the saved lookup up
   // and set its total repeats. It is important that the op is removed from the save area,
   // because the merge op above us may also take action on it later for a different case when
@@ -103,12 +113,16 @@ Status RepeatPass::VisitAfter(std::shared_ptr<RepeatNode> node, bool *const modi
   // The total repeats of nodes above this Repeat(n) have nothing to do with this RepeatOp's parameter n.
   // But num_repeats_ has been multiplied by n during this Repeat(n)'s PreRunOnNode,
   // so we divide num_repeats_ by n to be able to correctly set total repeats for nodes above this RepeatOp.
+  CHECK_FAIL_RETURN_UNEXPECTED(node->Count() != 0, "Invalid data, the number of node can't be 0.");
   num_repeats_ /= node->Count();
   return Status::OK();
 }
 
 // Hooks up any identified eoe nodes under this repeat.
 Status RepeatPass::VisitAfter(std::shared_ptr<EpochCtrlNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
+  CHECK_FAIL_RETURN_UNEXPECTED(node->Count() != 0, "Invalid data, the number of node can't be 0.");
   node->SetTotalRepeats(num_repeats_);
   node->SetNumEpochs(num_epochs_);
   // We finish the walk of this EpochCtrl's descendent nodes.
@@ -119,6 +133,8 @@ Status RepeatPass::VisitAfter(std::shared_ptr<EpochCtrlNode> node, bool *const m
 // All operators have a flag that might be set related to the repeat and any leaf nodes need to be set up
 // for use with a controlling repeat above it.
 Status RepeatPass::VisitAfter(std::shared_ptr<DatasetNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // If we are under a cache op, then save ourselves to the cached op stack.
   if (is_cached_) {
     AddToCachedNodeStack(node);
@@ -132,6 +148,8 @@ Status RepeatPass::VisitAfter(std::shared_ptr<DatasetNode> node, bool *const mod
 #ifndef ENABLE_ANDROID
 // CacheOp removes previous leaf ops and replaces them with itself
 Status RepeatPass::VisitAfter(std::shared_ptr<CacheNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   is_cached_ = false;
 
   // if we are a cache within a repeat path of the tree, then adjust the total repeats and total epochs for cached ops.
@@ -153,6 +171,8 @@ Status RepeatPass::VisitAfter(std::shared_ptr<CacheNode> node, bool *const modif
 
 // Turns off the tracking for operations under merge op
 Status RepeatPass::VisitAfter(std::shared_ptr<CacheMergeNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // If there was not any repeat in the merge cache miss leg, then the cache_lookup
   // would not have been consumed yet.  In that case, we need to set its total repeats for it.
   if (cache_lookup_) {
@@ -168,6 +188,8 @@ Status RepeatPass::VisitAfter(std::shared_ptr<CacheMergeNode> node, bool *const 
 
 // Saves the lookup up in case it needs to be referenced by a repeat
 Status RepeatPass::VisitAfter(std::shared_ptr<CacheLookupNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   if (!node->IsLeaf()) {
     // By definition, the CacheLookup must be a leaf op.  Make that clear here.
     RETURN_STATUS_UNEXPECTED("CacheLookupOp must be a leaf node!");
@@ -185,6 +207,8 @@ Status RepeatPass::VisitAfter(std::shared_ptr<CacheLookupNode> node, bool *const
 #endif
 
 Status RepeatPass::VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Set total repeats and total epochs for the TransferNode
   node->SetTotalRepeats(num_epochs_);
   node->SetNumEpochs(num_epochs_);
@@ -192,7 +216,12 @@ Status RepeatPass::VisitAfter(std::shared_ptr<TransferNode> node, bool *const mo
 }
 
 // Adds an operator to the cached operator stack save area
-void RepeatPass::AddToCachedNodeStack(const std::shared_ptr<DatasetNode> &node) { cached_node_stacks_.push(node); }
+void RepeatPass::AddToCachedNodeStack(const std::shared_ptr<DatasetNode> &node) {
+  if (node == nullptr) {
+    return;
+  }
+  cached_node_stacks_.push(node);
+}
 
 // Pops an operator from the cached operator stack save area
 std::shared_ptr<DatasetNode> RepeatPass::PopFromCachedNodeStack() {

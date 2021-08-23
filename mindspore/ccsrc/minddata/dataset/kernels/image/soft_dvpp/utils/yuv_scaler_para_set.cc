@@ -75,7 +75,7 @@ void GetParaSet(std::string str_line, int32_t *flag_ctl, int32_t *flag_tap, YuvW
 
   // taps_4, the second character in the square brackets is the start address of the array block.
   if ((*flag_ctl - initBracketNum) % arrTypeNum == 2) {
-    while (1) {
+    while (true) {
       ss >> yuv_scaler_paraset->scale[cnt].taps_4[index->first_index++];
       if (ss.fail()) {  // rerad failed.
         index->first_index = index->first_index - 1;
@@ -94,7 +94,7 @@ void GetParaSet(std::string str_line, int32_t *flag_ctl, int32_t *flag_tap, YuvW
 
   // taps_6
   if ((*flag_ctl - initBracketNum) % arrTypeNum == 0) {
-    while (1) {
+    while (true) {
       ss >> yuv_scaler_paraset->scale[cnt].taps_6[index->second_index++];
       if (ss.fail()) {  // read failed.
         index->second_index = index->second_index - 1;
@@ -115,7 +115,6 @@ void GetParaSet(std::string str_line, int32_t *flag_ctl, int32_t *flag_tap, YuvW
 }
 
 int32_t CheckParamater(std::pair<bool, std::string> rlt, uint32_t i) {
-  int32_t ret = dpSucc;
   if (rlt.first == false) {
     API_LOGE("Get real path failed. index = %u", i);
     return dpFail;
@@ -126,7 +125,7 @@ int32_t CheckParamater(std::pair<bool, std::string> rlt, uint32_t i) {
     return dpFail;
   }
 
-  return ret;
+  return dpSucc;
 }
 
 // Read the parameter set file and skip the comments in the file.
@@ -177,7 +176,7 @@ int32_t ParseFileToVar(const std::string *para_set_name, uint32_t yuv_scaler_par
       }
 
       // cale the number of "{",check the location of the data.
-      if (str_line.find("{") != std::string::npos) {
+      if (str_line.find('{') != std::string::npos) {
         flag_ctl++;
         flag_tap = 1;
       }

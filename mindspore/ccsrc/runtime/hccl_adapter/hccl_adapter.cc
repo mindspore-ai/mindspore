@@ -84,6 +84,8 @@ void HcclAdapter::InitPlugin() {
   get_all_kernel_builder_ = DlsymFuncObj(GetAllKernelBuilder, plugin_handle_);
   init_hccl_comm_ = DlsymFuncObj(HcclCommInitClusterInfo, plugin_handle_);
   finalize_hccl_comm_ = DlsymFuncObj(HcclCommDestroy, plugin_handle_);
+  single_op_hccl_get_rank_id_ = DlsymFuncObj(HcclGetRankId, plugin_handle_);
+  single_op_hccl_get_rank_size_ = DlsymFuncObj(HcclGetRankSize, plugin_handle_);
   launch_hccl_broadcast_ = DlsymFuncObj(HcclBroadcast, plugin_handle_);
   launch_hccl_all_reduce_ = DlsymFuncObj(HcclAllReduce, plugin_handle_);
   hccl_create_group_ = DlsymFuncObj(HcomCreateGroup, plugin_handle_);
@@ -137,43 +139,53 @@ bool HcclAdapter::InitHccl() {
   return true;
 }
 
-bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file) {
-  MS_LOG(INFO) << "Start init hccl adapter.";
+bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file,
+                           bool is_graph_mode) {
+  MS_LOG(INFO) << "Start init hccl adapter for " << (is_graph_mode ? "graph mode." : "pynative mode.");
   std::lock_guard<std::mutex> lock(init_mutex_);
   if (init_flag_) {
     MS_LOG(INFO) << "Hccl has been inited, skip.";
     return true;
   }
-
+  is_graph_mode_ = is_graph_mode;
   InitPlugin();
-  bool ret = InitKernelInfoStore(device_id, rank_id, rank_file);
-  if (!ret) {
-    return false;
+  if (is_graph_mode_) {
+    bool ret = InitKernelInfoStore(device_id, rank_id, rank_file);
+    if (!ret) {
+      return false;
+    }
+
+    ret = InitHcclExec();
+    if (!ret) {
+      return false;
+    }
+  } else {
+    bool ret = InitHcclComm(rank_id, rank_file);
+    if (!ret) {
+      return false;
+    }
   }
-  ret = InitHcclComm(rank_id, rank_file);
-  if (!ret) {
-    return false;
-  }
-  ret = InitHcclExec();
-  if (!ret) {
-    return false;
-  }
+
   init_flag_ = true;
   MS_LOG(INFO) << "Init hccl adapter success.";
   return true;
 }
 
 bool HcclAdapter::FinalizeHccl() {
-  MS_LOG(INFO) << "Start destroy hccl adapter.";
   std::lock_guard<std::mutex> lock(init_mutex_);
+  MS_LOG(INFO) << "Start destroy hccl adapter for " << (is_graph_mode_ ? "graph mode." : "pynative mode.");
   if (!init_flag_) {
     MS_LOG(INFO) << "Hccl has never been inited, skip.";
     return true;
   }
 
-  (void)FinalizeHcclExec();
-  (void)FinalizeHcclComm();
-  (void)FinalizeKernelInfoStore();
+  if (is_graph_mode_) {
+    (void)FinalizeHcclExec();
+    (void)FinalizeKernelInfoStore();
+  } else {
+    (void)FinalizeHcclComm();
+  }
+
   FinalizePlugin();
   init_flag_ = false;
   MS_LOG(INFO) << "Destroy hccl adapter success.";
@@ -442,6 +454,16 @@ HcclResult HcclAdapter::HcclCreateGroup(const std::string &group, uint32_t rank_
 HcclResult HcclAdapter::HcclDestroyGroup(const std::string &group) const {
   MS_EXCEPTION_IF_NULL(hccl_destroy_group_);
   return hccl_destroy_group_(group.c_str());
+}
+
+HcclResult HcclAdapter::HcclGetRankId(uint32_t *rank_id) const {
+  MS_EXCEPTION_IF_NULL(single_op_hccl_get_rank_id_);
+  return single_op_hccl_get_rank_id_(hccl_comm_, rank_id);
+}
+
+HcclResult HcclAdapter::HcclGetRankSize(uint32_t *rank_size) const {
+  MS_EXCEPTION_IF_NULL(single_op_hccl_get_rank_size_);
+  return single_op_hccl_get_rank_size_(hccl_comm_, rank_size);
 }
 
 HcclResult HcclAdapter::HcclGetRankId(const std::string &group, uint32_t *rank_id) const {

@@ -50,10 +50,10 @@ STATUS DecideTFConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType quan
   }
   bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
   switch (quant_type) {
-    case QuantType_AwareTraining:
-    case QuantType_PostTraining:
-    case QuantType_WeightQuant:
-    case QuantType_QUANT_NONE: {
+    case schema::QuantType_AwareTraining:
+    case schema::QuantType_PostTraining:
+    case schema::QuantType_WeightQuant:
+    case schema::QuantType_QUANT_NONE: {
       if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
         if (!is_depth_wise) {
           *src_format = schema::Format_HWCK;
@@ -85,10 +85,10 @@ STATUS DecideTFLITEConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType 
   }
   bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
   switch (quant_type) {
-    case QuantType_AwareTraining:
-    case QuantType_PostTraining:
-    case QuantType_WeightQuant:
-    case QuantType_QUANT_NONE: {
+    case schema::QuantType_AwareTraining:
+    case schema::QuantType_PostTraining:
+    case schema::QuantType_WeightQuant:
+    case schema::QuantType_QUANT_NONE: {
       if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
         if (!is_depth_wise) {
           *src_format = schema::Format_KHWC;
@@ -127,7 +127,7 @@ STATUS DecideONNXConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType qu
   bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
   int64_t format = prim->GetAttr(ops::kFormat) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kFormat)) : 0;
   switch (quant_type) {
-    case QuantType_AwareTraining: {
+    case schema::QuantType_AwareTraining: {
       if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
         if (!is_depth_wise) {
           *src_format = schema::Format_KHWC;
@@ -141,9 +141,9 @@ STATUS DecideONNXConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType qu
         return lite::RET_ERROR;
       }
     } break;
-    case QuantType_PostTraining:
-    case QuantType_WeightQuant:
-    case QuantType_QUANT_NONE: {
+    case schema::QuantType_PostTraining:
+    case schema::QuantType_WeightQuant:
+    case schema::QuantType_QUANT_NONE: {
       if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
           opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
         if (format == schema::Format_NHWC) {
@@ -173,16 +173,18 @@ STATUS UnifyFormatToNHWC::GetTransNodeFormatType(const CNodePtr &cnode, opt::Tra
   MS_ASSERT(cnode != nullptr && trans_info != nullptr);
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_ASSERT(prim != nullptr);
+  if (prim == nullptr) {
+    return RET_OK;
+  }
   auto &specify_nhwc_op_map = opt::GetNHWCOpMap();
   auto &specify_nchw_op_map = opt::GetNCHWOpMap();
-  if (fmk_type_ == lite::converter::FmkType_TFLITE) {
+  if (fmk_type_ == converter::kFmkTypeTflite) {
     if (specify_nchw_op_map.find(prim->name()) == specify_nchw_op_map.end()) {
       return lite::RET_OK;
     }
     trans_info->pre_ = opt::kNHWC2NCHW;
     trans_info->post_ = opt::kNCHW2NHWC;
-  } else if (fmk_type_ == lite::converter::FmkType_TF) {
+  } else if (fmk_type_ == converter::kFmkTypeTf) {
     if (specify_nhwc_op_map.find(prim->name()) != specify_nhwc_op_map.end() && opt::GetFormat(cnode) == NCHW) {
       trans_info->pre_ = opt::kNCHW2NHWC;
       trans_info->post_ = opt::kNHWC2NCHW;
@@ -193,7 +195,7 @@ STATUS UnifyFormatToNHWC::GetTransNodeFormatType(const CNodePtr &cnode, opt::Tra
     }
   } else {
     if (specify_nhwc_op_map.find(prim->name()) != specify_nhwc_op_map.end()) {
-      if (fmk_type_ == lite::converter::FmkType_ONNX && prim->GetAttr(ops::kFormat) != nullptr &&
+      if (fmk_type_ == converter::kFmkTypeOnnx && prim->GetAttr(ops::kFormat) != nullptr &&
           GetValue<int64_t>(prim->GetAttr(ops::kFormat)) == NHWC) {
         return lite::RET_OK;
       }
@@ -213,10 +215,10 @@ void UnifyFormatToNHWC::SetSensitiveOps() {
 
 bool UnifyFormatToNHWC::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ShapeVector &shape) {
   MS_ASSERT(func_graph != nullptr);
-  if (fmk_type_ == converter::FmkType_TF || fmk_type_ == converter::FmkType_TFLITE) {
+  if (fmk_type_ == converter::kFmkTypeTf || fmk_type_ == converter::kFmkTypeTflite) {
     return false;
   }
-  if (func_graph->get_inputs().size() == 1 && fmk_type_ == lite::converter::FmkType_ONNX &&
+  if (func_graph->get_inputs().size() == 1 && fmk_type_ == converter::kFmkTypeOnnx &&
       shape[opt::kInputIndexThree] == kInputChannal && shape[1] == -1) {
     return false;
   }
@@ -230,11 +232,11 @@ STATUS UnifyFormatToNHWC::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode,
   MS_ASSERT(cnode != nullptr && src_format != nullptr && dst_format != nullptr);
   *dst_format = schema::Format_KHWC;
   std::map<converter::FmkType, std::function<int(const CNodePtr &, schema::QuantType, schema::Format *)>>
-    decide_functions = {{converter::FmkType_MS, DecideMINDIRConvWeightSrcFormat},
-                        {converter::FmkType_TF, DecideTFConvWeightSrcFormat},
-                        {converter::FmkType_TFLITE, DecideTFLITEConvWeightSrcFormat},
-                        {converter::FmkType_CAFFE, DecideCAFFEConvWeightSrcFormat},
-                        {converter::FmkType_ONNX, DecideONNXConvWeightSrcFormat}};
+    decide_functions = {{converter::kFmkTypeMs, DecideMINDIRConvWeightSrcFormat},
+                        {converter::kFmkTypeTf, DecideTFConvWeightSrcFormat},
+                        {converter::kFmkTypeTflite, DecideTFLITEConvWeightSrcFormat},
+                        {converter::kFmkTypeCaffe, DecideCAFFEConvWeightSrcFormat},
+                        {converter::kFmkTypeOnnx, DecideONNXConvWeightSrcFormat}};
   auto iter = decide_functions.find(fmk_type_);
   if (iter == decide_functions.end()) {
     MS_LOG(ERROR) << "current fmk don't support, please check.";

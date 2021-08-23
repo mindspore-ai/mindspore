@@ -25,7 +25,7 @@ namespace mindspore {
 namespace fl {
 namespace worker {
 void FLWorker::Run() {
-  if (running_) {
+  if (running_.load()) {
     return;
   }
   running_ = true;
@@ -48,6 +48,7 @@ void FLWorker::Run() {
 
   worker_node_->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
     Finalize();
+    running_ = false;
     try {
       MS_LOG(EXCEPTION)
         << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
@@ -57,6 +58,7 @@ void FLWorker::Run() {
   });
   worker_node_->RegisterEventCallback(ps::core::ClusterEvent::NODE_TIMEOUT, [this]() {
     Finalize();
+    running_ = false;
     try {
       MS_LOG(EXCEPTION)
         << "Event NODE_TIMEOUT is captured. This is because some server nodes are finalized or crashed after the "
@@ -123,8 +125,9 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
         return false;
       }
 
-      if (std::string(reinterpret_cast<char *>((*output)->data()), (*output)->size()) == ps::kClusterSafeMode) {
-        MS_LOG(INFO) << "The server " << server_rank << " is in safemode.";
+      std::string response_str = std::string(reinterpret_cast<char *>((*output)->data()), (*output)->size());
+      if (response_str == ps::kClusterSafeMode || response_str == ps::kJobNotAvailable) {
+        MS_LOG(INFO) << "The server " << server_rank << " is in safemode or finished.";
         std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerRetryDurationForSafeMode));
       } else {
         break;
@@ -146,6 +149,8 @@ uint32_t FLWorker::worker_num() const { return worker_num_; }
 uint32_t FLWorker::rank_id() const { return rank_id_; }
 
 uint64_t FLWorker::worker_step_num_per_iteration() const { return worker_step_num_per_iteration_; }
+
+bool FLWorker::running() const { return running_.load(); }
 
 void FLWorker::SetIterationRunning() {
   MS_LOG(INFO) << "Worker iteration starts.";

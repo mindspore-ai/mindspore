@@ -85,7 +85,6 @@
 // IR leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/cmu_arctic_node.h"
 
 // IR leaf nodes disabled for android
 #ifndef ENABLE_ANDROID
@@ -594,14 +593,16 @@ SchemaObj::SchemaObj(const std::vector<char> &schema_file) : data_(std::make_sha
 
 // SchemaObj Init function
 Status SchemaObj::Init() {
-  if (!data_->schema_file_.empty()) {
-    Path schema_file(data_->schema_file_);
+  if (data_ != nullptr && !data_->schema_file_.empty()) {
+    std::string real_path;
+    RETURN_IF_NOT_OK(Path::RealPath(data_->schema_file_, real_path));
+    Path schema_file(real_path);
     CHECK_FAIL_RETURN_UNEXPECTED(schema_file.Exists(),
                                  "The file " + data_->schema_file_ + " does not exist or permission denied!");
 
     nlohmann::json js;
     try {
-      std::ifstream in(data_->schema_file_);
+      std::ifstream in(real_path);
       in >> js;
       CHECK_FAIL_RETURN_UNEXPECTED(js.find("columns") != js.end(),
                                    "\"columns\" node is required in the schema json file.");
@@ -1134,27 +1135,6 @@ MnistDataset::MnistDataset(const std::vector<char> &dataset_dir, const std::vect
                            const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<MnistNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
-}
-
-CmuArcticDataset::CmuArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                           const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
-  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
-  auto ds = std::make_shared<CmuArcticNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
-}
-
-CmuArcticDataset::CmuArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
-                           const std::shared_ptr<DatasetCache> &cache) {
-  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
-  auto ds = std::make_shared<CmuArcticNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
-}
-
-CmuArcticDataset::CmuArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                           const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache) {
-  auto sampler_obj = sampler.get().Parse();
-  auto ds = std::make_shared<CmuArcticNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

@@ -178,6 +178,15 @@ class FedAvgKernel : public AggregationKernel {
     return true;
   }
 
+  bool ReInitForUpdatingHyperParams(size_t aggr_threshold) override {
+    done_count_ = aggr_threshold;
+    if (!DistributedCountService::GetInstance().ReInitCounter(name_, done_count_)) {
+      MS_LOG(ERROR) << "Reinitializing counter for " << name_ << " failed.";
+      return false;
+    }
+    return true;
+  }
+
  private:
   void GenerateReuseKernelNodeInfo() override {
     MS_LOG(INFO) << "FedAvg reuse 'weight' of the kernel node.";

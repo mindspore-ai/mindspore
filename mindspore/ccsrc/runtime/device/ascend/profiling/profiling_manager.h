@@ -25,6 +25,8 @@
 #include "utils/ms_context.h"
 #include "toolchain/prof_callback.h"
 #include "toolchain/prof_acl_api.h"
+#include "toolchain/slog.h"
+#include "runtime/base.h"
 #include "runtime/device/ascend/profiling/profiling_callback_register.h"
 
 using std::map;
@@ -43,6 +45,7 @@ class ProfilingManager {
   static ProfilingManager &GetInstance();
   uint64_t GetJobId() const;
   bool ReportProfilingData(const map<uint32_t, string> &op_taskId_map) const;
+  bool ProfRegisterCtrlCallback() const;
   bool StartupProfiling(uint32_t device_id);
   bool StopProfiling();
 
@@ -75,7 +78,9 @@ class ProfilingManager {
 Status RegProfCtrlCallback(MsprofCtrlCallback func);
 Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func);
 Status RegProfReporterCallback(MsprofReporterCallback func);
-Status ProfCommandHandle(ProfCommandHandleType type, void *data, uint32_t len);
+Status ProfCommandHandle(ProfCommandHandleType type);
+rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t len);
+Status ProfCtrlSwitchHandle(void *data);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

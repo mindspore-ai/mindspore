@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNonMaxSuppression = "NonMaxSuppression";
-class NonMaxSuppression : public PrimitiveC {
+class MS_CORE_API NonMaxSuppression : public PrimitiveC {
  public:
   NonMaxSuppression() : PrimitiveC(kNameNonMaxSuppression) {}
   ~NonMaxSuppression() = default;

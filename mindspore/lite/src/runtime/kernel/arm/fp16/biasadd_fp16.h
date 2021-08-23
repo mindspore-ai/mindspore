@@ -42,7 +42,7 @@ class BiasAddCPUFp16Kernel : public InnerKernel {
   ArithmeticParameter *bias_param_ = nullptr;
   float16_t *bias_data_ = nullptr;
   lite::Tensor *bias_tensor_ = nullptr;
-  TypeId bias_data_type_;
+  TypeId bias_data_type_ = kNumberTypeFloat16;
   bool is_repack_ = false;
 };
 }  // namespace mindspore::kernel

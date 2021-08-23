@@ -23,33 +23,33 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ElementAbsFp16(float16_t *input, float16_t *output, int element_size);
+int ElementAbsFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementCosFp16(float16_t *input, float16_t *output, int element_size);
+int ElementCosFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementLogFp16(float16_t *input, float16_t *output, int element_size);
+int ElementLogFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementSquareFp16(float16_t *input, float16_t *output, int element_size);
+int ElementSquareFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementSqrtFp16(float16_t *input, float16_t *output, int element_size);
+int ElementSqrtFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementRsqrtFp16(float16_t *input, float16_t *output, int element_size);
+int ElementRsqrtFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementSinFp16(float16_t *input, float16_t *output, int element_size);
+int ElementSinFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementLogicalNotFp16(float16_t *input, float16_t *output, int element_size);
+int ElementLogicalNotFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementRoundFp16(float16_t *input, float16_t *output, int element_size);
+int ElementRoundFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementFloorFp16(float16_t *input, float16_t *output, int element_size);
+int ElementFloorFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementCeilFp16(float16_t *input, float16_t *output, int number);
+int ElementCeilFp16(const float16_t *input, float16_t *output, int number);
 
-int ElementNegativeFp16(float16_t *input, float16_t *output, int element_size);
+int ElementNegativeFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementReciprocalFp16(float16_t *input, float16_t *output, int element_size);
+int ElementReciprocalFp16(const float16_t *input, float16_t *output, int element_size);
 
-int ElementErfFp16(float16_t *input, float16_t *output, int element_size);
+int ElementErfFp16(const float16_t *input, float16_t *output, int element_size);
 #ifdef __cplusplus
 }
 #endif

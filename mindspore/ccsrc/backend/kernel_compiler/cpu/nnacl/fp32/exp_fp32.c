@@ -27,6 +27,12 @@ void ExpFp32(const float *src, float *dst, int num) {
     simd_exp(vld1q_f32(src + i), dst + i);
   }
 #endif
+#ifdef ENABLE_AVX
+  int count = (num / C8NUM) * C8NUM;
+  for (; i < count; i += C8NUM) {
+    simd_exp_avx(_mm256_loadu_ps(src + i), dst + i);
+  }
+#endif
   for (; i < num; ++i) {
     single_exp(src[i], dst + i);
   }

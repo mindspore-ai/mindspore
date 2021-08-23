@@ -76,6 +76,7 @@ TEST_F(TestRaggedRangeFp32, 001) {
   in_tensor2.set_data(nullptr);
   out_tensor0.set_data(nullptr);
   out_tensor1.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestRaggedRangeFp32, 002) {
@@ -128,5 +129,6 @@ TEST_F(TestRaggedRangeFp32, 002) {
   in_tensor2.set_data(nullptr);
   out_tensor0.set_data(nullptr);
   out_tensor1.set_data(nullptr);
+  delete kernel;
 }
 }  // namespace mindspore

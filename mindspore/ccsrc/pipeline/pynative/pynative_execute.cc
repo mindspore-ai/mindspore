@@ -32,6 +32,7 @@
 #include "ir/tensor.h"
 #include "utils/any.h"
 #include "utils/utils.h"
+#include "utils/profile.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
 #include "utils/context/context_extends.h"
@@ -59,7 +60,7 @@
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/pass.h"
 #include "frontend/parallel/context.h"
-#include "pipeline/jit/prim_bprop_optimizer.h"
+#include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 
 #ifdef ENABLE_GE
 #include "pipeline/pynative/pynative_execute_ge.h"
@@ -67,6 +68,7 @@
 
 #include "debug/anf_ir_dump.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "runtime/device/pynative_profiling.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -79,6 +81,7 @@ std::mutex PynativeExecutor::instance_lock_;
 namespace {
 const size_t PTR_LEN = 15;
 const size_t ARG_SIZE = 2;
+const size_t MAX_TOP_CELL_COUNTS = 20;
 
 // primitive unable to infer value for constant input in PyNative mode
 const std::set<std::string> kVmOperators = {"make_ref", "HookBackward", "InsertGradientOf", "stop_gradient",
@@ -345,7 +348,7 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::v
   return graph_info;
 }
 
-py::args FilterTensorArgs(const py::args &args, bool has_sens = false) {
+py::list FilterTensorArgs(const py::args &args, bool has_sens = false) {
   size_t size = args.size();
   if (size == 0 && has_sens) {
     MS_LOG(EXCEPTION) << "The size of args is 0, when the flag of sens is set to True";
@@ -702,6 +705,9 @@ py::object GetDstType(const TypeId &type_id) {
 }  // namespace
 
 py::object RealRunOp(const py::args &args) {
+  auto real_run_op_start = GetTime();
+  auto &profiler_inst = device::PynativeProfiler::GetInstance();
+  profiler_inst.AddRealRunOpIndex();
   CheckPyNativeContext();
   auto executor = PynativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
@@ -709,6 +715,10 @@ py::object RealRunOp(const py::args &args) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   py::object ret = py::none();
   PynativeExecutorTry(executor->forward_executor()->RunOpS, &ret, op_exec_info);
+  auto real_run_op_end = GetTime();
+  profiler_inst.SetRealRunOpName(op_exec_info->op_name);
+  profiler_inst.SetRealRunOpTime(std::make_pair(real_run_op_start, real_run_op_end));
+  profiler_inst.SingleOpProfilingData();
   return ret;
 }
 
@@ -975,6 +985,8 @@ void ForwardExecutor::GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info,
 
   if (shape->IsDynamic()) {
     op_exec_info->is_dynamic_shape = true;
+    // Dynamic shape operator in the current top cell, disable backend cache
+    grad()->EnableOpGraphCache(false);
   }
 }
 
@@ -998,7 +1010,7 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
   }
 
   // Add output abstract info into cache, the const value needs to infer evert step
-  if (!prim_cache_hit && !op_exec_info->is_dynamic_shape) {
+  if (grad()->enable_op_cache() && !prim_cache_hit && !op_exec_info->is_dynamic_shape) {
     AbsCacheKey key{prim->name(), prim->Hash(), prim->attrs()};
     auto &out = prim_abs_list_[key];
     out[args_spec_list].abs = op_exec_info->abstract;
@@ -1320,6 +1332,13 @@ TopCellInfoPtr GradExecutor::GetTopCell(const std::string &cell_id) const {
   return nullptr;
 }
 
+void GradExecutor::EnableOpGraphCache(bool is_enable) {
+  enable_op_cache_ = is_enable;
+  const auto inst = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(inst);
+  inst->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, is_enable);
+}
+
 void GradExecutor::RecordGradOpInfo(const OpExecInfoPtr &op_exec_info, const py::object &ret) {
   if (!grad_flag_) {
     MS_LOG(DEBUG) << "Grad flag is set to false, no need to record op info";
@@ -1497,7 +1516,7 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
   }
 
   // First run top cell
-  if (already_run_top_cell_.find(top_cell_->cell_id()) == already_run_top_cell_.end()) {
+  if (already_run_top_cell_.find(top_cell_->already_run_cell_id()) == already_run_top_cell_.end()) {
     MS_LOG(DEBUG) << "Top cell " << top_cell_->cell_id() << " run firstly";
     if (!need_construct_graph()) {
       MS_LOG(EXCEPTION) << "The cell stack is empty when running a new top cell " << top_cell_->cell_id();
@@ -1505,7 +1524,7 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
     return;
   }
   // Non-first run
-  const auto &pre_top_cell = already_run_top_cell_.at(top_cell_->cell_id());
+  const auto &pre_top_cell = already_run_top_cell_.at(top_cell_->already_run_cell_id());
   MS_EXCEPTION_IF_NULL(pre_top_cell);
   if (pre_top_cell->op_info_with_tensor_id().find(op_info) == pre_top_cell->op_info_with_tensor_id().end()) {
     MS_LOG(DEBUG) << "Can not find op info " << op_info << " in op info with tensor id map. Top cell "
@@ -1582,7 +1601,7 @@ py::tuple ForwardExecutor::RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_ex
 }
 
 MsBackendPolicy ForwardExecutor::InitEnv(const OpExecInfoPtr &op_exec_info) {
-  MS_LOG(INFO) << "RunOp start, op name is: " << op_exec_info->op_name;
+  MS_LOG(DEBUG) << "RunOp start, op name is: " << op_exec_info->op_name;
   parse::python_adapter::set_python_env_flag(true);
   MsBackendPolicy backend_policy;
 #if (!defined ENABLE_GE)
@@ -1877,13 +1896,12 @@ void GradExecutor::ClearCellRes(const std::string &cell_id) {
   }
   // clear when cell destruction
   for (auto it = top_cell_list_.begin(); it != top_cell_list_.end();) {
-    auto top_cell_id = (*it)->cell_id();
+    const auto &top_cell_id = (*it)->cell_id();
+    const auto &alreay_top_cell_id = (*it)->already_run_cell_id();
     if (IsCellObjIdEq(cell_id, top_cell_id)) {
       (*it)->Clear();
       it = top_cell_list_.erase(it);
-      if (already_run_top_cell_.find(top_cell_id) != already_run_top_cell_.end()) {
-        (void)already_run_top_cell_.erase(top_cell_id);
-      }
+      (void)already_run_top_cell_.erase(alreay_top_cell_id);
       MS_LOG(DEBUG) << "Clear top cell resource. Top cell id " << top_cell_id;
       continue;
     }
@@ -1934,7 +1952,7 @@ void GradExecutor::HandleInputArgsForTopCell(const py::args &args, bool is_bprop
   }
   // Convert input args to parameters for top cell graph in construct.
   std::vector<ValuePtr> input_param_values;
-  py::args only_tensors = FilterTensorArgs(args);
+  const auto &only_tensors = FilterTensorArgs(args);
   auto df_builder = GetDfbuilder(top_cell_->cell_id());
   MS_EXCEPTION_IF_NULL(df_builder);
   for (size_t i = 0; i < only_tensors.size(); ++i) {
@@ -1999,11 +2017,18 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
 
 void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const py::args &args) {
   MS_EXCEPTION_IF_NULL(ret);
-  auto cell_id = GetCellId(cell, args);
+  const auto &cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << " " << cell_id;
   if (top_cell_ != nullptr && cell_stack_.empty()) {
+    // Already run top cell need distinguish high order; high order add "0" otherwise "1"
+    std::string already_run_cell_id;
+    if (IsNestedGrad()) {
+      already_run_cell_id = cell_id + "0";
+    } else {
+      already_run_cell_id = cell_id + "1";
+    }
     // Whether it is top and has been run
-    auto top_it = already_run_top_cell_.find(cell_id);
+    auto top_it = already_run_top_cell_.find(already_run_cell_id);
     if (top_it != already_run_top_cell_.end()) {
       // Top cell forward run.
       const auto &pre_top_cell = top_it->second;
@@ -2014,8 +2039,8 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
         set_top_cell(pre_top_cell);
         return;
       }
-    } else if ((top_cell()->IsSubCell(cell_id) && !IsCellObjIdEq(cell_id, check_graph_cell_id_)) ||
-               GetHighOrderStackSize() >= 1) {
+    } else if ((top_cell()->IsSubCell(cell_id) || GetHighOrderStackSize() >= 1) &&
+               !IsCellObjIdEq(cell_id, check_graph_cell_id_)) {
       // Sub cell ( or may be a temporary cell, but must be non top) forward run in cache process.
       MS_LOG(DEBUG) << "Sub cell no need to run NewGraphInner again";
       return;
@@ -2047,6 +2072,15 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::args &args, 
   // Run forward first need plus 1
   if (grad_order_ == 0) {
     ++grad_order_;
+  }
+  // The number of top cell exceeds MAX_TOP_CELL_COUNTS, delete the last one to keep the maximum length of the list,
+  // disable backend cache
+  if (top_cell_list_.size() >= MAX_TOP_CELL_COUNTS) {
+    EnableOpGraphCache(false);
+    const auto last_top_cell = top_cell_list_.back();
+    top_cell_list_.pop_back();
+    last_top_cell->Clear();
+    (void)already_run_top_cell_.erase(last_top_cell->already_run_cell_id());
   }
   // Create top cell
   curr_g_ = std::make_shared<FuncGraph>();
@@ -2360,7 +2394,7 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
   return w_args;
 }
 
-abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::args &args, const FuncGraphPtr &bprop_graph) {
+abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::list &args, const FuncGraphPtr &bprop_graph) {
   MS_EXCEPTION_IF_NULL(bprop_graph);
   std::size_t size = args.size();
   abstract::AbstractBasePtrList args_spec;
@@ -2447,7 +2481,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_graph);
-  auto optimized_bg = pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().BpropGraphFinalOpt(resource);
+  auto optimized_bg = ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().BpropGraphFinalOpt(resource);
 
   if (cell_stack_.empty()) {
     need_renormalize_ = false;
@@ -2506,25 +2540,32 @@ py::object PynativeExecutor::CheckAlreadyRun(const py::object &cell, const py::a
 
 void GradExecutor::CheckNeedCompileGraph() {
   auto new_top_cell = top_cell();
-  std::string top_cell_id = new_top_cell->cell_id();
-  // update top cell by current cell op info
-  if (already_run_top_cell_.find(top_cell_id) == already_run_top_cell_.end()) {
-    MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has never been ran, need compile graph";
-    already_run_top_cell_[top_cell_id] = new_top_cell;
+  const auto &already_top_cell_id = new_top_cell->already_run_cell_id();
+  // Update top cell by current cell op info
+  if (already_run_top_cell_.find(already_top_cell_id) == already_run_top_cell_.end()) {
+    MS_LOG(DEBUG) << "Top cell " << new_top_cell->cell_id() << " has never been ran, need compile graph";
+    already_run_top_cell_[already_top_cell_id] = new_top_cell;
     return;
   }
 
-  MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has been ran";
-  auto pre_top_cell = already_run_top_cell_.at(top_cell_id);
+  MS_LOG(DEBUG) << "Top cell " << new_top_cell->cell_id() << " has been ran";
+  auto pre_top_cell = already_run_top_cell_.at(already_top_cell_id);
   auto pre_all_op_info = pre_top_cell->all_op_info();
   auto new_all_op_info = new_top_cell->all_op_info();
   MS_LOG(DEBUG) << "Pre all op info : " << pre_all_op_info;
   MS_LOG(DEBUG) << "New all op info : " << new_all_op_info;
   if (pre_all_op_info != new_all_op_info) {
     MS_LOG(DEBUG) << "The op info has been changed, need to compile graph again";
+    // The top cell switches exceeds MAX_TOP_CELL_COUNTS under the control flow, disable backend cache
+    if (top_cell_switch_counts_ >= MAX_TOP_CELL_COUNTS) {
+      EnableOpGraphCache(false);
+    } else {
+      // Increase top cell switches counts
+      ++top_cell_switch_counts_;
+    }
     EraseTopCellFromTopCellList(pre_top_cell);
     pre_top_cell->Clear();
-    already_run_top_cell_[top_cell_id] = new_top_cell;
+    already_run_top_cell_[already_top_cell_id] = new_top_cell;
   } else {
     MS_LOG(DEBUG) << "The op info has not been changed, no need to compile graph again";
     pre_top_cell->set_input_args_id(new_top_cell->input_args_id());
@@ -2773,9 +2814,11 @@ void GradExecutor::ClearGrad(const py::object &cell, const py::args &args) {
 void GradExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear grad res";
   grad_order_ = 0;
+  top_cell_switch_counts_ = 0;
   grad_flag_ = false;
   need_renormalize_ = false;
   grad_is_running_ = false;
+  enable_op_cache_ = true;
   top_cell_ = nullptr;
   curr_g_ = nullptr;
   bprop_cell_list_.clear();
@@ -2798,6 +2841,24 @@ void PynativeExecutor::set_grad_flag(bool flag) { grad_executor()->set_grad_flag
 
 void PynativeExecutor::set_graph_phase(const std::string &graph_phase) {
   grad_executor()->set_graph_phase(graph_phase);
+}
+
+void PynativeExecutor::set_py_exe_path(const py::object &py_exe_path) {
+  if (!py::isinstance<py::str>(py_exe_path)) {
+    MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
+  }
+  auto py_exe_path_s = py::cast<std::string>(py_exe_path);
+  auto ms_context = MsContext::GetInstance();
+  ms_context->set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, py_exe_path_s);
+}
+
+void PynativeExecutor::set_kernel_build_server_dir(const py::object &kernel_build_server_dir) {
+  if (!py::isinstance<py::str>(kernel_build_server_dir)) {
+    MS_LOG(EXCEPTION) << "Failed, kernel_build_server_dir input is not a str";
+  }
+  auto kernel_build_server_dir_s = py::cast<std::string>(kernel_build_server_dir);
+  auto ms_context = MsContext::GetInstance();
+  ms_context->set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, kernel_build_server_dir_s);
 }
 
 py::object PynativeExecutor::CheckGraph(const py::object &cell, const py::args &args) {
@@ -2904,6 +2965,11 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
                            .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
-                                "Executor set grad flag.");
+                                "Executor set grad flag.")
+                           .def("set_py_exe_path", &PynativeExecutor::set_py_exe_path,
+                                py::arg("py_exe_path") = py::str(""), "set python executable path.")
+                           .def("set_kernel_build_server_dir", &PynativeExecutor::set_kernel_build_server_dir,
+                                py::arg("kernel_build_server_dir") = py::str(""),
+                                "set kernel build server directory path.");
                        }));
 }  // namespace mindspore::pynative

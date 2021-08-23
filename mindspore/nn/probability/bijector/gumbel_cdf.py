@@ -28,7 +28,7 @@ class GumbelCDF(Bijector):
         Y = \exp(-\exp(\frac{-(X - loc)}{scale}))
 
     Args:
-        loc (float, list, numpy.ndarray, Tensor): The location. Default: 0..
+        loc (float, list, numpy.ndarray, Tensor): The location. Default: 0.0.
         scale (float, list, numpy.ndarray, Tensor): The scale. Default: 1.0.
         name (str): The name of the Bijector. Default: 'GumbelCDF'.
 
@@ -101,10 +101,11 @@ class GumbelCDF(Bijector):
         return self._scale
 
     def extend_repr(self):
+        """Display instance object as string."""
         if self.is_scalar_batch:
-            str_info = f'loc = {self.loc}, scale = {self.scale}'
+            str_info = 'loc = {}, scale = {}'.format(self.loc, self.scale)
         else:
-            str_info = f'batch_shape = {self.batch_shape}'
+            str_info = 'batch_shape = {}'.format(self.batch_shape)
         return str_info
 
     def _forward(self, x):
@@ -112,9 +113,12 @@ class GumbelCDF(Bijector):
         loc_local = self.cast_param_by_value(x, self.loc)
         scale_local = self.cast_param_by_value(x, self.scale)
         z = (x - loc_local) / scale_local
+        # pylint: disable=E1130
         return self.exp(-self.exp(-z))
 
     def _inverse(self, y):
+        # pylint false positive
+        # pylint: disable=E1130
         y = self._check_value_dtype(y)
         loc_local = self.cast_param_by_value(y, self.loc)
         scale_local = self.cast_param_by_value(y, self.scale)
