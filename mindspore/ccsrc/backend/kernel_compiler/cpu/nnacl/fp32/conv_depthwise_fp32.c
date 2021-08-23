@@ -56,7 +56,7 @@ int ConvDw(float *output_data, const float *input_data, const float *weight_data
                conv_param->output_channel_ * (int)(sizeof(float)));
       }
       for (int kh = start_kh; kh < end_kh; kh++) {
-        int ih = ih_origin + conv_param->dilation_w_ * kh;
+        int ih = ih_origin + conv_param->dilation_h_ * kh;
 
         const float *src_kh = src + ih * conv_param->input_w_ * conv_param->input_channel_;
         const float *weight_kh = weight_data + kh * conv_param->kernel_w_ * conv_param->output_channel_;

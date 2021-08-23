@@ -74,6 +74,10 @@ void pad_input_shape(int *input_shape, int input_shape_len, int output_shape_len
                                                                                                        \
     int dim_index = dim_max - 1;                                                                       \
     while (dim_index >= 0) {                                                                           \
+      if (input_shape[dim_index] == 0) {                                                               \
+        free(data_temp);                                                                               \
+        return NNACL_ERR;                                                                              \
+      }                                                                                                \
       dim_broadcast_rate = (size_t)(output_shape[dim_index] / input_shape[dim_index]);                 \
       if (dim_broadcast_rate > 1) {                                                                    \
         before_dim_elements_num = accumulate(input_shape, 0, dim_index - 1);                           \

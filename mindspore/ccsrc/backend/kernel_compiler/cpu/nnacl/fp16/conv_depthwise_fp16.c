@@ -416,7 +416,7 @@ void ConvDwFp16(float16_t *output_data, const float16_t *input_data, const float
         memcpy(dst_data + ow * conv_param->output_channel_, bias_data, conv_param->output_channel_ * sizeof(float16_t));
       }
       for (int kh = start_kh; kh < end_kh; kh++) {
-        int ih = ih_origin + conv_param->dilation_w_ * kh;
+        int ih = ih_origin + conv_param->dilation_h_ * kh;
 
         const float16_t *src_kh = src + ih * conv_param->input_w_ * conv_param->input_channel_;
         const float16_t *weight_kh = weight_data + kh * conv_param->kernel_w_ * conv_param->output_channel_;
