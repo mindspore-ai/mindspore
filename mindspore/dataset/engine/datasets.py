@@ -3829,6 +3829,8 @@ class _GeneratorWorkerMp(multiprocessing.Process):
             self.res_queue = _SharedQueue(queue_size, max_rowsize=max_rowsize)
         else:
             self.res_queue = multiprocessing.Queue(queue_size)
+        self.idx_queue._joincancelled = True  # pylint: disable=W0212
+        self.res_queue._joincancelled = True  # pylint: disable=W0212
         super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, True))
 
     def put(self, item):
