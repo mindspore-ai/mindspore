@@ -420,7 +420,7 @@ void LiteSession::IsolateOutputTensor() {
         }
       }
 #ifndef DELEGATE_CLIP
-      if (subgraph->desc().delegate != nullptr) {
+      if (subgraph->desc().arch == kernel::kDelegate) {
         continue;
       }
 #endif
@@ -581,7 +581,7 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
   for (auto kernel : this->kernels_) {
     kernel->FindInoutKernels(this->kernels_);
 #ifndef DELEGATE_CLIP
-    if (kernel->desc().delegate != nullptr) {
+    if (kernel->desc().arch == kernel::kDelegate) {
       all_kernels.push_back(kernel);
     } else {
 #endif
@@ -604,7 +604,7 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
   // init init_ref_count for subgraphs and kernels
   for (auto *kernel : this->kernels_) {
 #ifndef DELEGATE_CLIP
-    if (kernel->desc().delegate != nullptr) {
+    if (kernel->desc().arch == kernel::kDelegate) {
       continue;
     }
 #endif
@@ -699,11 +699,13 @@ int LiteSession::Init(InnerContext *context) {
 #ifndef DELEGATE_CLIP
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
-    if (delegate_ret == RET_NOT_SUPPORT) {
+    if (delegate_ret == mindspore::kLiteNotSupport) {
       MS_LOG(DEBUG) << "Delegate is unsupported";
+      delegate_.reset();
       delegate_ = nullptr;
-    }
-    if (delegate_ret == RET_ERROR) {
+    } else if (delegate_ret == mindspore::kSuccess) {
+      MS_LOG(INFO) << "Delegate init successfully";
+    } else {
       MS_LOG(ERROR) << "Delegate init failed";
       return RET_ERROR;
     }
@@ -855,7 +857,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
     }
     auto ret = RET_OK;
 #ifndef DELEGATE_CLIP
-    if (kernel->desc().delegate != nullptr) {
+    if (kernel->desc().arch == kernel::kDelegate) {
       ret = kernel->ReSize();
     } else {
 #endif

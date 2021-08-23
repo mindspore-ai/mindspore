@@ -512,11 +512,11 @@ int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
     if (before_outputs.empty()) {
       MS_LOG(INFO) << "The num of beforeOutputs is empty";
     }
-    if (op_times_by_type_.find(call_param.node_type_) == op_times_by_type_.end()) {
-      op_times_by_type_.insert(std::make_pair(call_param.node_type_, std::make_pair(0, 0.0f)));
+    if (op_times_by_type_.find(call_param.node_type) == op_times_by_type_.end()) {
+      op_times_by_type_.insert(std::make_pair(call_param.node_type, std::make_pair(0, 0.0f)));
     }
-    if (op_times_by_name_.find(call_param.node_name_) == op_times_by_name_.end()) {
-      op_times_by_name_.insert(std::make_pair(call_param.node_name_, std::make_pair(0, 0.0f)));
+    if (op_times_by_name_.find(call_param.node_name) == op_times_by_name_.end()) {
+      op_times_by_name_.insert(std::make_pair(call_param.node_name, std::make_pair(0, 0.0f)));
     }
 
     op_call_times_total_++;
@@ -542,10 +542,10 @@ int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
       cost = static_cast<float>(gpu_param.execute_time);
     }
     op_cost_total_ += cost;
-    op_times_by_type_[call_param.node_type_].first++;
-    op_times_by_type_[call_param.node_type_].second += cost;
-    op_times_by_name_[call_param.node_name_].first++;
-    op_times_by_name_[call_param.node_name_].second += cost;
+    op_times_by_type_[call_param.node_type].first++;
+    op_times_by_type_[call_param.node_type].second += cost;
+    op_times_by_name_[call_param.node_name].first++;
+    op_times_by_name_[call_param.node_name].second += cost;
     return true;
   };
   return RET_OK;
@@ -604,11 +604,11 @@ int BenchmarkUnifiedApi::InitPerfProfilingCallbackParameter() {
     if (before_outputs.empty()) {
       MS_LOG(INFO) << "The num of beforeOutputs is empty";
     }
-    if (op_perf_by_type_.find(call_param.node_type_) == op_perf_by_type_.end()) {
-      op_perf_by_type_.insert(std::make_pair(call_param.node_type_, std::make_pair(0, zero)));
+    if (op_perf_by_type_.find(call_param.node_type) == op_perf_by_type_.end()) {
+      op_perf_by_type_.insert(std::make_pair(call_param.node_type, std::make_pair(0, zero)));
     }
-    if (op_perf_by_name_.find(call_param.node_name_) == op_perf_by_name_.end()) {
-      op_perf_by_name_.insert(std::make_pair(call_param.node_name_, std::make_pair(0, zero)));
+    if (op_perf_by_name_.find(call_param.node_name) == op_perf_by_name_.end()) {
+      op_perf_by_name_.insert(std::make_pair(call_param.node_name, std::make_pair(0, zero)));
     }
 
     op_call_times_total_++;
@@ -637,12 +637,12 @@ int BenchmarkUnifiedApi::InitPerfProfilingCallbackParameter() {
     float cost2 = static_cast<float>(res.values[1].value);
     op_cost_total_ += cost1;
     op_cost2_total_ += cost2;
-    op_perf_by_type_[call_param.node_type_].first++;
-    op_perf_by_type_[call_param.node_type_].second.value[0] += cost1;
-    op_perf_by_type_[call_param.node_type_].second.value[1] += cost2;
-    op_perf_by_name_[call_param.node_name_].first++;
-    op_perf_by_name_[call_param.node_name_].second.value[0] += cost1;
-    op_perf_by_name_[call_param.node_name_].second.value[1] += cost2;
+    op_perf_by_type_[call_param.node_type].first++;
+    op_perf_by_type_[call_param.node_type].second.value[0] += cost1;
+    op_perf_by_type_[call_param.node_type].second.value[1] += cost2;
+    op_perf_by_name_[call_param.node_name].first++;
+    op_perf_by_name_[call_param.node_name].second.value[0] += cost1;
+    op_perf_by_name_[call_param.node_name].second.value[1] += cost2;
     return true;
   };
 #endif
@@ -728,12 +728,12 @@ int BenchmarkUnifiedApi::InitPrintTensorDataCallbackParameter() {
   ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
                             const std::vector<mindspore::MSTensor> &after_outputs, const MSCallBackParam &call_param) {
     std::cout << "================================================================" << std::endl;
-    std::cout << call_param.node_name_ << " inputs : " << std::endl;
+    std::cout << call_param.node_name << " inputs : " << std::endl;
     for (auto ms_tensor : after_inputs) {
       std::cout << DumpMSTensor(&ms_tensor) << std::endl;
     }
     std::cout << "----------------------------------------------------------------" << std::endl;
-    std::cout << call_param.node_name_ << " outputs : " << std::endl;
+    std::cout << call_param.node_name << " outputs : " << std::endl;
     for (auto ms_tensor : after_outputs) {
       std::cout << DumpMSTensor(&ms_tensor) << std::endl;
     }
@@ -750,11 +750,11 @@ int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
-    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name_) != kernels.end()) {
+    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
       if (input_output_mode == 0 || input_output_mode == 1) {
         for (size_t i = 0; i < before_inputs.size(); i++) {
           auto ms_tensor = before_inputs.at(i);
-          auto file_name = GenerateOutputFileName(&ms_tensor, call_param.node_name_, "input", i);
+          auto file_name = GenerateOutputFileName(&ms_tensor, call_param.node_name, "input", i);
           auto abs_file_path = dump_file_output_dir_ + "/" + file_name;
           if (WriteToBin(abs_file_path, ms_tensor.MutableData(), ms_tensor.DataSize()) != RET_OK) {  // save to file
             MS_LOG(ERROR) << "write tensor data to file failed.";
@@ -773,11 +773,11 @@ int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
     if (dump_mode == kDumpInputsAndOutputs ||
-        std::find(kernels.begin(), kernels.end(), call_param.node_name_) != kernels.end()) {
+        std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
       if (input_output_mode == kDumpInputsAndOutputs || input_output_mode == kDumpOutputs) {
         for (size_t i = 0; i < after_outputs.size(); i++) {
           auto ms_tensor = after_outputs.at(i);
-          auto file_name = GenerateOutputFileName(&ms_tensor, call_param.node_name_, "output", i);
+          auto file_name = GenerateOutputFileName(&ms_tensor, call_param.node_name, "output", i);
           auto abs_file_path = dump_file_output_dir_ + "/" + file_name;
           if (WriteToBin(abs_file_path, ms_tensor.MutableData(), ms_tensor.DataSize()) != RET_OK) {  // save to file
             MS_LOG(ERROR) << "write tensor data to file failed.";

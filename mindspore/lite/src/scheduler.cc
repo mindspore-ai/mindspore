@@ -81,7 +81,7 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
   for (auto kernel : dst_kernels) {
 #ifndef DELEGATE_CLIP
     // delegate graph kernel
-    if (kernel->desc().delegate != nullptr) {
+    if (kernel->desc().arch == kernel::kDelegate) {
       continue;
     }
 #endif
@@ -245,10 +245,10 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
     return RET_NULL_PTR;
   }
   auto ret = delegate_->Build(model);
-  if (ret != RET_OK) {
+  if (ret != mindspore::kSuccess) {
     delete model;
     MS_LOG(ERROR) << "Delegate prepare kernels failed.";
-    return ret;
+    return RET_ERROR;
   }
 
   auto src_kernels = *dst_kernels;
@@ -283,7 +283,7 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
           break;
         }
       }
-      kernel::KernelKey delegate_desc{kernel::kDelegate, delegate_type, schema::PrimitiveType_NONE, "", "", delegate_};
+      kernel::KernelKey delegate_desc{kernel::kDelegate, delegate_type, schema::PrimitiveType_NONE, "", ""};
       lite_kernel->set_desc(delegate_desc);
       dst_kernels->push_back(lite_kernel);
     }
@@ -1338,7 +1338,7 @@ kernel::LiteKernel *FindAllSubGraphKernels(const std::vector<kernel::LiteKernel 
     MS_ASSERT(GetKernelSubGraphType(cur_kernel, context) != kernel::kApuSubGraph);
     // already a subgraph or a delegate
 #ifndef DELEGATE_CLIP
-    if (cur_kernel->desc().delegate != nullptr) {
+    if (cur_kernel->desc().arch == kernel::kDelegate) {
       --(*cur_index);
       break;
     }
@@ -1368,7 +1368,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     // Not support APU now
     MS_ASSERT(GetKernelSubGraphType(cur_kernel, *context_) != kernel::kApuSubGraph);
 #ifndef DELEGATE_CLIP
-    if (cur_kernel->desc().delegate != nullptr) {
+    if (cur_kernel->desc().arch == kernel::kDelegate) {
       dst_kernel->emplace_back(cur_kernel);
       continue;
     }
@@ -1387,8 +1387,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
   }
   for (auto *subgraph : *dst_kernel) {
 #ifndef DELEGATE_CLIP
-    auto subgraph_delegate = subgraph->desc().delegate;
-    if (subgraph_delegate == nullptr) {
+    if (subgraph->desc().arch != kernel::kDelegate) {
 #endif
       auto ret = subgraph->Init();
       if (ret != RET_OK) {

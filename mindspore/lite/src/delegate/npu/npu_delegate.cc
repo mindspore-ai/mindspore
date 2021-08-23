@@ -72,24 +72,24 @@ NPUDelegate::~NPUDelegate() {
   }
 }
 
-int NPUDelegate::Init() {
+Status NPUDelegate::Init() {
   npu_manager_ = new (std::nothrow) NPUManager(frequency_);
   if (npu_manager_ == nullptr) {
     MS_LOG(ERROR) << "New npu manager failed.";
-    return RET_ERROR;
+    return mindspore::kLiteNullptr;
   }
   if (!npu_manager_->IsSupportNPU()) {
     MS_LOG(DEBUG) << "Checking that npu is unsupported.";
     free(npu_manager_);
     npu_manager_ = nullptr;
-    return RET_NOT_SUPPORT;
+    return mindspore::kLiteNotSupport;
   }
   pass_manager_ = new (std::nothrow) NPUPassManager();
   if (pass_manager_ == nullptr) {
     free(npu_manager_);
     npu_manager_ = nullptr;
     MS_LOG(ERROR) << "New npu pass manager failed.";
-    return RET_ERROR;
+    return mindspore::kLiteNullptr;
   }
   auto transform_pass = new (std::nothrow) NPUTransformPass();
   pass_manager_->AddPass(transform_pass);
@@ -157,10 +157,10 @@ int NPUDelegate::Init() {
     {schema::PrimitiveType_Transpose, GetNPUOp<TransposeNPUOp>},
     {schema::PrimitiveType_Unsqueeze, GetNPUOp<UnsqueezeNPUOp>},
   };
-  return RET_OK;
+  return mindspore::kSuccess;
 }
 
-int NPUDelegate::Build(DelegateModel *model) {
+Status NPUDelegate::Build(DelegateModel *model) {
   KernelIter from, end;
   std::vector<NPUOp *> npu_ops;
   int graph_index = 0;
@@ -179,7 +179,7 @@ int NPUDelegate::Build(DelegateModel *model) {
         auto npu_graph_kernel = CreateNPUGraph(npu_ops, model, from, end);
         if (npu_graph_kernel == nullptr) {
           MS_LOG(ERROR) << "Create NPU Graph failed.";
-          return RET_ERROR;
+          return mindspore::kLiteNullptr;
         }
         npu_graph_kernel->set_name("NpuGraph" + std::to_string(graph_index++));
         iter = model->Replace(from, end + 1, npu_graph_kernel);
@@ -191,7 +191,7 @@ int NPUDelegate::Build(DelegateModel *model) {
     auto npu_graph_kernel = CreateNPUGraph(npu_ops, model, from, end);
     if (npu_graph_kernel == nullptr) {
       MS_LOG(ERROR) << "Create NPU Graph failed.";
-      return RET_ERROR;
+      return mindspore::kLiteNullptr;
     }
     npu_graph_kernel->set_name("NpuGraph" + std::to_string(graph_index++));
     model->Replace(from, end + 1, npu_graph_kernel);
@@ -200,9 +200,9 @@ int NPUDelegate::Build(DelegateModel *model) {
   auto ret = npu_manager_->LoadOMModel();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NPU client load model failed.";
-    return RET_ERROR;
+    return mindspore::kLiteError;
   }
-  return RET_OK;
+  return mindspore::kSuccess;
 }
 
 NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primitive) {

@@ -49,9 +49,7 @@ struct KernelKey {
   int type = 0;
   std::string kernel_arch;
   std::string provider{kBuiltin};
-#ifndef DELEGATE_CLIP
-  std::shared_ptr<Delegate> delegate = nullptr;
-#endif
+
   bool operator<(const KernelKey &dst) const {
     if (provider != dst.provider) {
       return provider < dst.provider;

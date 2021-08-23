@@ -44,6 +44,7 @@ class MS_API Model {
   ~Model();
   Model(const Model &) = delete;
   void operator=(const Model &) = delete;
+
   /// \brief Builds a model so that it can run on a device.
   ///
   /// \param[in] graph GraphCell is a derivative of Cell. Cell is not available currently. GraphCell can be constructed
@@ -78,6 +79,7 @@ class MS_API Model {
   ///
   /// \return The vector that includes all input tensors.
   std::vector<MSTensor> GetInputs();
+
   /// \brief Obtains the input tensor of the model by name.
   ///
   /// \return The input tensor with the given name, if the name is not found, an invalid tensor is returned.
@@ -90,15 +92,25 @@ class MS_API Model {
   ///
   /// \return The vector that includes all output tensors.
   std::vector<MSTensor> GetOutputs();
+
   /// \brief Obtains names of all output tensors of the model.
   ///
   /// \return A vector that includes names of all output tensors.
   inline std::vector<std::string> GetOutputTensorNames();
+
   /// \brief Obtains the output tensor of the model by name.
   ///
   /// \return The output tensor with the given name, if the name is not found, an invalid tensor is returned.
   inline MSTensor GetOutputByTensorName(const std::string &tensor_name);
-  inline std::vector<MSTensor> GetOutputsByNodeName(const std::string &tensor_name);
+
+  /// \brief Get output MSTensors of model by node name.
+  ///
+  /// \param[in] node_name Define node name.
+  ///
+  /// \note Deprecated, replace with GetOutputByTensorName
+  ///
+  /// \return The vector of output MSTensor.
+  inline std::vector<MSTensor> GetOutputsByNodeName(const std::string &node_name);
 
   /// \brief Inference model.
   ///
@@ -112,9 +124,32 @@ class MS_API Model {
   bool GetTrainMode() const;
   Status Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs);
   Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs);
+
+  /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
+  ///
+  /// \param[in] model_data Define the buffer read from a model file.
+  /// \param[in] size Define bytes number of model buffer.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
+  /// ModelType::kMindIR is valid for Lite.
+  /// \param[in] model_context Define the context used to store options during execution.
+  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16, 24, or 32.
+  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM, AES-CBC.
+  ///
+  /// \return Status.
   Status Build(const void *model_data, size_t data_size, ModelType model_type,
                const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
                const std::string &dec_mode = kDecModeAesGcm);
+
+  /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
+  ///
+  /// \param[in] model_path Define the model path.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
+  /// ModelType::kMindIR is valid for Lite.
+  /// \param[in] model_context Define the context used to store options during execution.
+  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16, 24, or 32.
+  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM, AES-CBC.
+  ///
+  /// \return Status.
   Status Build(const std::string &model_path, ModelType model_type,
                const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
                const std::string &dec_mode = kDecModeAesGcm);
@@ -140,8 +175,8 @@ MSTensor Model::GetOutputByTensorName(const std::string &tensor_name) {
   return GetOutputByTensorName(StringToChar(tensor_name));
 }
 
-std::vector<MSTensor> Model::GetOutputsByNodeName(const std::string &tensor_name) {
-  return GetOutputsByNodeName(StringToChar(tensor_name));
+std::vector<MSTensor> Model::GetOutputsByNodeName(const std::string &node_name) {
+  return GetOutputsByNodeName(StringToChar(node_name));
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

@@ -78,7 +78,7 @@ void LiteOpActor::ReplaceNodeInTensor(kernel::LiteKernel *kernel, Tensor *old_te
   int ref_count = 0;
 #ifndef DELEGATE_CLIP
   /* set op input for calculate */
-  if (kernel->desc().delegate != nullptr) {
+  if (kernel->desc().arch == kernel::kDelegate) {
     ref_count++;
   } else {
 #endif
@@ -202,7 +202,7 @@ int LiteOpActor::CompileArrowThroughOutputKernels() {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 int LiteOpActor::CompileArrowThroughPartialCall() {
 #ifndef DELEGATE_CLIP
-  if (kernel_->desc().delegate != nullptr) {
+  if (kernel_->desc().arch == kernel::kDelegate) {
     MS_LOG(INFO) << "kernel is delegate subgraph kernel.";
     return RET_OK;
   }
