@@ -3750,7 +3750,7 @@ class TensorScatterAdd(PrimitiveWithInfer):
         >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
-        >>> # 4, Satisfy the above formula: input_x[indices].shape=(1, 2) == update.shape=(1, 2)
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == update.shape=(2)
         >>> op = ops.TensorScatterAdd()
         >>> # 5, Perform the addition operation for the first time:
         >>> #      first_input_x = input_x[0][0] + update[0] = [[0.9, 0.3, 3.6], [0.4, 0.5, -3.2]]
@@ -6007,7 +6007,7 @@ class TensorScatterMax(PrimitiveWithInfer):
         >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
-        >>> # 4, Satisfy the above formula: input_x[indices].shape=(1, 2) == update.shape=(1, 2)
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == update.shape=(2)
         >>> op = ops.TensorScatterMax()
         >>> # 5, Perform the max operation for the first time:
         >>> #      first_input_x = Max(input_x[0][0], update[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
@@ -6075,7 +6075,7 @@ class TensorScatterMin(PrimitiveWithInfer):
         >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
-        >>> # 4, Satisfy the above formula: input_x[indices].shape=(1, 2) == update.shape=(1, 2)
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == update.shape=(2)
         >>> op = ops.TensorScatterMin()
         >>> # 5, Perform the min operation for the first time:
         >>> #      first_input_x = Min(input_x[0][0], update[0]) = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
@@ -6146,7 +6146,7 @@ class TensorScatterSub(PrimitiveWithInfer):
         >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
-        >>> # 4, Satisfy the above formula: input_x[indices].shape=(1, 2) == update.shape=(1, 2)
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == update.shape=(2)
         >>> op = ops.TensorScatterSub()
         >>> # 5, Perform the subtract operation for the first time:
         >>> #      first_input_x = input_x[0][0] - update[0] = [[-1.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
