@@ -33,7 +33,7 @@ using PassPtr = std::shared_ptr<Pass>;
 }  // namespace opt
 
 namespace registry {
-/// \brief PassPosition defined where to plae user's pass.
+/// \brief PassPosition defined where to place user's pass.
 enum MS_API PassPosition { POSITION_BEGIN = 0, POSITION_END = 1 };
 
 /// \brief PassRegistry defined registration of Pass.

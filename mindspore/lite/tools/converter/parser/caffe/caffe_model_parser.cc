@@ -19,6 +19,7 @@
 #include <set>
 #include <memory>
 #include <algorithm>
+#include "include/registry/node_parser_registry.h"
 #include "tools/converter/parser/caffe/caffe_node_parser_registry.h"
 #include "tools/converter/parser/caffe/caffe_inspector.h"
 #include "tools/common/graph_util.h"
@@ -145,18 +146,22 @@ STATUS CaffeModelParser::ConvertLayers() {
 
     // parse primitive
     MS_LOG(INFO) << "parse op : " << layer.type();
-    auto node_parser = CaffeNodeParserRegistry::GetInstance()->GetNodeParser(layer.type());
-    if (node_parser == nullptr) {
-      NotSupportOp::GetInstance()->InsertOp(layer.type());
-      status = (status == RET_OK ? RET_NOT_FIND_OP : status);
-      continue;
+    ops::PrimitiveC *primitive_c;
+    auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeCaffe, layer.type());
+    if (node_parser != nullptr) {
+      primitive_c = node_parser->Parse(layer, weight);
+    } else {
+      auto node_parser_builtin = CaffeNodeParserRegistry::GetInstance()->GetNodeParser(layer.type());
+      if (node_parser_builtin == nullptr) {
+        NotSupportOp::GetInstance()->InsertOp(layer.type());
+        status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+        continue;
+      }
+      if (status != RET_OK) {
+        continue;
+      }
+      primitive_c = node_parser_builtin->Parse(layer, weight);
     }
-
-    if (status != RET_OK) {
-      continue;
-    }
-
-    auto primitive_c = node_parser->Parse(layer, weight);
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "parse node " << layer.name() << " failed.";
       status = RET_ERROR;

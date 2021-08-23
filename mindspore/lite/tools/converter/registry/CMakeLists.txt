@@ -1,8 +1,5 @@
 set(KERNEL_REG_DIR ${TOP_DIR}/mindspore/lite/src/registry)
-file(GLOB CONVERT_REG_SRC
-        pass_registry.cc
-        model_parser_registry.cc
-        )
+file(GLOB CONVERT_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
 file(GLOB KERNEL_REG_SRC ${KERNEL_REG_DIR}/*.cc)
 set(REG_SRC ${CONVERT_REG_SRC}
         ${KERNEL_REG_SRC}
