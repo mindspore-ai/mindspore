@@ -29,7 +29,7 @@
 
 #include "utils/log_adapter.h"
 #include "ps/core/communicator/http_message_handler.h"
-#include "ps/core/communicator/ssl_wrapper.h"
+#include "ps/core/communicator/ssl_http.h"
 #include "ps/constants.h"
 #include "ps/ps_context.h"
 
@@ -44,7 +44,7 @@ using OnRequestReceive = std::function<void(std::shared_ptr<HttpMessageHandler>)
 class HttpRequestHandler {
  public:
   HttpRequestHandler() : evbase_(nullptr) {}
-  virtual ~HttpRequestHandler() = default;
+  virtual ~HttpRequestHandler();
 
   bool Initialize(int fd, const std::unordered_map<std::string, OnRequestReceive *> &handlers);
   void Run();

@@ -83,6 +83,11 @@ class PSContext {
   bool enable_ssl() const;
   void set_enable_ssl(bool enabled);
 
+  std::string client_password() const;
+  void set_client_password(const std::string &password);
+  std::string server_password() const;
+  void set_server_password(const std::string &password);
+
   // In new server framework, process role, worker number, server number, scheduler ip and scheduler port should be set
   // by ps_context.
   void set_server_mode(const std::string &server_mode);
@@ -218,7 +223,9 @@ class PSContext {
         dp_delta_(0.01),
         dp_norm_clip_(1.0),
         encrypt_type_(kNotEncryptType),
-        node_id_("") {}
+        node_id_(""),
+        client_password_(""),
+        server_password_("") {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -310,6 +317,11 @@ class PSContext {
 
   // Unique id of the node
   std::string node_id_;
+
+  // Password used to decode p12 file.
+  std::string client_password_;
+  // Password used to decode p12 file.
+  std::string server_password_;
 };
 }  // namespace ps
 }  // namespace mindspore

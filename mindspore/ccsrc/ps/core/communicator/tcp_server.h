@@ -57,11 +57,11 @@ class TcpConnection {
 
   using Callback = std::function<void(const std::shared_ptr<CommMessage>)>;
 
-  virtual void InitConnection(const messageReceive &callback);
-  virtual void SendMessage(const void *buffer, size_t num) const;
+  void InitConnection(const messageReceive &callback);
+  void SendMessage(const void *buffer, size_t num) const;
   bool SendMessage(const std::shared_ptr<CommMessage> &message) const;
   bool SendMessage(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) const;
-  virtual void OnReadHandler(const void *buffer, size_t numBytes);
+  void OnReadHandler(const void *buffer, size_t numBytes);
   const TcpServer *GetServer() const;
   const evutil_socket_t &GetFd() const;
   void set_callback(const Callback &callback);
@@ -97,8 +97,6 @@ class TcpServer {
   void Init();
   void Start();
   void StartWithNoBlock();
-  void StartTimerOnlyOnce(const uint32_t &time);
-  void StartTimer(const uint32_t &time);
   void Stop();
   void SendToAllClients(const char *data, size_t len);
   void AddConnection(const evutil_socket_t &fd, std::shared_ptr<TcpConnection> connection);
@@ -142,7 +140,8 @@ class TcpServer {
   OnTimerOnce on_timer_once_callback_;
   OnTimer on_timer_callback_;
   // The Configuration file
-  Configuration *const config_;
+  Configuration *config_;
+  int64_t max_connection_;
 };
 }  // namespace core
 }  // namespace ps

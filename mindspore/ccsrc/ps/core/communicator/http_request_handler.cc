@@ -19,6 +19,13 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+HttpRequestHandler::~HttpRequestHandler() {
+  if (evbase_) {
+    event_base_free(evbase_);
+    evbase_ = nullptr;
+  }
+}
+
 bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string, OnRequestReceive *> &handlers) {
   evbase_ = event_base_new();
   MS_EXCEPTION_IF_NULL(evbase_);
@@ -27,33 +34,18 @@ bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string
 
   if (PSContext::instance()->enable_ssl()) {
     MS_LOG(INFO) << "Enable ssl support.";
-    SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(),
-                        SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_SSLv2);
-    EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-    MS_EXCEPTION_IF_NULL(ecdh);
-
-    X509 *cert = SSLWrapper::GetInstance().ReadCertFromFile(kCertificateChain);
-    if (!SSLWrapper::GetInstance().VerifyCertTime(cert)) {
-      MS_LOG(INFO) << "Verify cert time failed.";
-      return false;
+    if (!SSL_CTX_set_options(SSLHTTP::GetInstance().GetSSLCtx(), SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE |
+                                                                   SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 |
+                                                                   SSL_OP_NO_TLSv1_1)) {
+      if (evbase_) {
+        event_base_free(evbase_);
+        evbase_ = nullptr;
+      }
+      evhttp_free(http);
+      http = nullptr;
+      MS_LOG(EXCEPTION) << "SSL_CTX_set_options failed.";
     }
-
-    if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(), kCertificateChain)) {
-      MS_LOG(ERROR) << "SSL use certificate chain file failed!";
-      return false;
-    }
-
-    if (!SSL_CTX_use_PrivateKey_file(SSLWrapper::GetInstance().GetSSLCtx(), kPrivateKey, SSL_FILETYPE_PEM)) {
-      MS_LOG(ERROR) << "SSL use private key file failed!";
-      return false;
-    }
-
-    if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx())) {
-      MS_LOG(ERROR) << "SSL check private key file failed!";
-      return false;
-    }
-
-    evhttp_set_bevcb(http, BuffereventCallback, SSLWrapper::GetInstance().GetSSLCtx());
+    evhttp_set_bevcb(http, BuffereventCallback, SSLHTTP::GetInstance().GetSSLCtx());
   }
 
   int result = evhttp_accept_socket(http, fd);
@@ -67,6 +59,7 @@ bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string
       MS_EXCEPTION_IF_NULL(req);
       MS_EXCEPTION_IF_NULL(arg);
       auto httpReq = std::make_shared<HttpMessageHandler>();
+      MS_EXCEPTION_IF_NULL(httpReq);
       httpReq->set_request(req);
       httpReq->InitHttpMessage();
       OnRequestReceive *func = reinterpret_cast<OnRequestReceive *>(arg);
@@ -74,6 +67,7 @@ bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string
     };
 
     // O SUCCESS,-1 ALREADY_EXIST,-2 FAILURE
+    MS_EXCEPTION_IF_NULL(handler.second);
     int ret = evhttp_set_cb(http, handler.first.c_str(), TransFunc, reinterpret_cast<void *>(handler.second));
     std::string log_prefix = "Ev http register handle of:";
     if (ret == 0) {
@@ -101,16 +95,12 @@ void HttpRequestHandler::Run() {
   } else {
     MS_LOG(ERROR) << "Event base dispatch with unexpected error code!";
   }
-
-  if (evbase_) {
-    event_base_free(evbase_);
-    evbase_ = nullptr;
-  }
 }
 
 bool HttpRequestHandler::Stop() {
   MS_LOG(INFO) << "Stop http server!";
 
+  MS_EXCEPTION_IF_NULL(evbase_);
   int ret = event_base_loopbreak(evbase_);
   if (ret != 0) {
     MS_LOG(ERROR) << "event base loop break failed!";
@@ -120,9 +110,13 @@ bool HttpRequestHandler::Stop() {
 }
 
 bufferevent *HttpRequestHandler::BuffereventCallback(event_base *base, void *arg) {
+  MS_EXCEPTION_IF_NULL(base);
+  MS_EXCEPTION_IF_NULL(arg);
   SSL_CTX *ctx = reinterpret_cast<SSL_CTX *>(arg);
   SSL *ssl = SSL_new(ctx);
+  MS_EXCEPTION_IF_NULL(ssl);
   bufferevent *bev = bufferevent_openssl_socket_new(base, -1, ssl, BUFFEREVENT_SSL_ACCEPTING, BEV_OPT_CLOSE_ON_FREE);
+  MS_EXCEPTION_IF_NULL(bev);
   return bev;
 }
 }  // namespace core

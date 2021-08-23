@@ -62,7 +62,7 @@ void SSLHTTP::InitSSL() {
   server_cert = path;
 
   // 2. Parse the server password.
-  std::string server_password = CommUtil::ParseConfig(*(config_), kServerPassword);
+  std::string server_password = PSContext::instance()->server_password();
   if (server_password.empty()) {
     MS_LOG(EXCEPTION) << "The client password's value is empty.";
   }
@@ -92,6 +92,11 @@ void SSLHTTP::InitSSL() {
   }
   if (!SSL_CTX_check_private_key(ssl_ctx_)) {
     MS_LOG(EXCEPTION) << "SSL check private key file failed!";
+  }
+
+  if (!SSL_CTX_set_options(ssl_ctx_, SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
+                                       SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1)) {
+    MS_LOG(EXCEPTION) << "SSL_CTX_set_options failed.";
   }
 }
 

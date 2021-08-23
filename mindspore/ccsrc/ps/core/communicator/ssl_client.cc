@@ -58,7 +58,7 @@ void SSLClient::InitSSL() {
   client_cert = path;
 
   // 2. Parse the client password.
-  std::string client_password = CommUtil::ParseConfig(*config_, kClientPassword);
+  std::string client_password = PSContext::instance()->client_password();
   if (client_password.empty()) {
     MS_LOG(EXCEPTION) << "The client password's value is empty.";
   }
