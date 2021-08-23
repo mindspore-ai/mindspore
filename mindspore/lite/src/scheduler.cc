@@ -343,6 +343,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   }
   ret = KernelInferShape(inputs, outputs, parameter);
 
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
   bool not_able_to_infer = false;
   for (auto &input : inputs) {
     if (input->data_type() == kObjectTypeTensorType) {
@@ -357,6 +358,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
     }
     return RET_INFER_INVALID;
   }
+#endif
 
   if (ret == RET_OK) {
     for (auto &output : outputs) {
@@ -805,6 +807,15 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << GetPrimitiveTypeName(node->primitive_, schema_version_);
     return nullptr;
   }
+
+#ifdef WEIGHT_DECODE_CLIP
+  if ((op_parameter->quant_type_ == schema::QuantType_QUANT_WEIGHT) ||
+      (node->quant_type_ == schema::QuantType_QUANT_WEIGHT)) {
+    MS_LOG(ERROR) << unsupport_weight_decode_log;
+    return nullptr;
+  }
+#endif
+
   int kernel_thread_count = op_parameter->thread_num_;
   op_parameter->is_train_session_ = is_train_session_;
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
@@ -1026,12 +1037,12 @@ int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_
     std::vector<Tensor *> inputs;
     std::vector<Tensor *> outputs;
     FindNodeInoutTensors(*node, &inputs, &outputs);
-
+#ifndef WEIGHT_DECODE_CLIP
     if (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) {
       *prefer_data_type = kNumberTypeFloat32;
       return RET_OK;
     }
-
+#endif
     TypeId data_type = GetFirstFp32Fp16OrInt8Type(inputs);
     if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16) {
       *prefer_data_type = kNumberTypeFloat32;

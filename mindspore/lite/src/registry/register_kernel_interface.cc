@@ -27,7 +27,7 @@ Status RegisterKernelInterface::Reg(const std::string &provider, int op_type, Ke
   return KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
-  return lite::RET_NOT_SUPPORT;
+  return kLiteNotSupport;
 #endif
 }
 
@@ -37,7 +37,7 @@ Status RegisterKernelInterface::CustomReg(const std::string &provider, const std
   return KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
-  return lite::RET_NOT_SUPPORT;
+  return kLiteNotSupport;
 #endif
 }
 

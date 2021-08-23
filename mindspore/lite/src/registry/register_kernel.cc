@@ -28,7 +28,7 @@ Status RegisterKernel::RegCustomKernel(const std::string &arch, const std::strin
   return RegistryKernelImpl::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
-  return lite::RET_NOT_SUPPORT;
+  return kLiteNotSupport;
 #endif
 }
 
@@ -38,7 +38,7 @@ Status RegisterKernel::RegKernel(const std::string &arch, const std::string &pro
   return RegistryKernelImpl::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
-  return lite::RET_NOT_SUPPORT;
+  return kLiteNotSupport;
 #endif
 }
 
