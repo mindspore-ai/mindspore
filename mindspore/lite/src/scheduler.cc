@@ -892,7 +892,9 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   }
 #endif
 
+#if (defined GPU_OPENCL) || (defined ENABLE_FP16)
   int kernel_thread_count = op_parameter->thread_num_;
+#endif
   op_parameter->is_train_session_ = is_train_session_;
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
 
@@ -920,6 +922,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     }
   }
 #endif
+#ifdef ENABLE_FP16
   if ((prefer_data_type == kNumberTypeFloat16 || prefer_data_type == kTypeUnknown) &&
       ((is_train_session_ == false) || (sched_cb_ && sched_cb_->SchedFp16Kernel(node)))) {
     status = FindCpuKernel(in_tensors, out_tensors, op_parameter, desc, kNumberTypeFloat16, &kernel);
@@ -941,6 +944,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       }
     }
   }
+#endif
   if (data_type == kNumberTypeFloat16) {
     MS_LOG(DEBUG) << "Get fp16 op failed, back to fp32 op.";
     desc.data_type = kNumberTypeFloat32;
@@ -1090,6 +1094,7 @@ kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *
   return subgraph_kernel;
 }
 
+#ifdef ENABLE_FP16
 int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type) {
   if (!context_->IsCpuFloat16Enabled()) {
     *prefer_data_type = kNumberTypeFloat32;
@@ -1131,6 +1136,7 @@ int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_
   *prefer_data_type = kNumberTypeFloat16;
   return RET_OK;
 }
+#endif
 
 std::vector<kernel::LiteKernel *> Scheduler::ScheduleMainSubGraphToKernels() {
   std::vector<kernel::LiteKernel *> kernels;
@@ -1146,10 +1152,12 @@ std::vector<kernel::LiteKernel *> Scheduler::ScheduleMainSubGraphToKernels() {
 
 kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgraph_index) {
   TypeId prefer_data_type = kTypeUnknown;
+#ifdef ENABLE_FP16
   if (SubGraphPreferDataType(subgraph_index, &prefer_data_type) != RET_OK) {
     MS_LOG(ERROR) << "SubGraphPreferDataType failed, subgraph index: " << subgraph_index;
     return nullptr;
   }
+#endif
   std::vector<kernel::LiteKernel *> kernels;
   std::vector<lite::Tensor *> in_tensors;
   std::vector<lite::Tensor *> out_tensors;

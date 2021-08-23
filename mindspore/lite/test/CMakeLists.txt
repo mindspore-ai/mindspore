@@ -50,7 +50,7 @@ if(SUPPORT_TRAIN)
     list(APPEND KERNEL_OP_SRC ${KERNEL_OP_TRAIN_SRC})
 endif()
 
-if(ENABLE_FP16)
+if(MSLITE_ENABLE_FP16)
     list(APPEND KERNEL_OP_SRC ${FP16_KERNEL_OP_SRC})
 endif()
 
@@ -378,7 +378,7 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
             )
 endif()
 
-if(ENABLE_FP16)
+if(MSLITE_ENABLE_FP16)
     file(GLOB_RECURSE TEST_CASE_KERNEL_FP16_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16/*.cc
             )
@@ -393,7 +393,7 @@ if(ENABLE_FP16)
             )
 endif()
 
-if(ENABLE_FP16 AND SUPPORT_TRAIN)
+if(MSLITE_ENABLE_FP16 AND SUPPORT_TRAIN)
     file(GLOB_RECURSE TEST_CASE_KERNEL_FP16_SRC_GRAD
             ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16_grad/*.cc)
     list(APPEND TEST_SRC ${TEST_CASE_KERNEL_FP16_SRC_GRAD})
@@ -415,7 +415,7 @@ target_link_libraries(lite-test
         mindspore::gtest
         )
 
-if(PLATFORM_ARM AND ENABLE_FP16)
+if(PLATFORM_ARM AND MSLITE_ENABLE_FP16)
     target_link_libraries(lite-test nnacl_fp16_mid)
     if(PLATFORM_ARM64)
         target_link_libraries(lite-test nnacl_optimize_mid)

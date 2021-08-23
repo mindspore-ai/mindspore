@@ -108,7 +108,9 @@ class Scheduler {
   int RestoreSubGraphInput(const lite::Model::Node *partial_node);
 
   bool IsControlFlowPattern(const lite::Model::Node &partial_node);
+#ifdef ENABLE_FP16
   int SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type);
+#endif
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   int InferSwitchShape(const Model::Node *node);
   Model::Node *NodeInputIsSwitch(const Model::Node *node);

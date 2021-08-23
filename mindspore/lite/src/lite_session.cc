@@ -508,6 +508,11 @@ int LiteSession::CompileGraph(Model *model) {
   }
   InitGraphInputTensors(model);
   InitGraphOutputTensors(model);
+#ifndef ENABLE_FP16
+  if (context_->GetCpuInfo().enable_float16_) {
+    MS_LOG(WARNING) << unsupport_fp16_log;
+  }
+#endif
   // scheduler kernels
   Scheduler scheduler(context_, ms_context_, model, &tensors_, inputs_, outputs_, is_train_session_, delegate_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
