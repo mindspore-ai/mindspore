@@ -25,14 +25,11 @@ int BnGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
 
   const TensorC *in = inputs[1];
-  if (inputs[0]->format_ != Format_NHWC || in->format_ != Format_NHWC) {
+  if ((inputs[0]->shape_size_ == 4 && inputs[0]->format_ != Format_NHWC) ||
+      (in->shape_size_ == 4 && in->format_ != Format_NHWC)) {
     return NNACL_FORMAT_ERROR;
   }
   const TensorC *scale = inputs[2];
-  if (in->shape_size_ != 4) {
-    return NNACL_INPUT_TENSOR_ERROR;
-  }
-
   SetShapeTensor(outputs[0], in);
   SetDataTypeFormat(outputs[0], in);
   SetShapeTensor(outputs[1], scale);

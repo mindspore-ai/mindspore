@@ -347,7 +347,7 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
     if (CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
       status = ReplaceTupleGetItem(node, manager);
     }
-    if (CheckPrimitiveType(node, prim::kPrimDropout)) {
+    if (!is_train_model_ && CheckPrimitiveType(node, prim::kPrimDropout)) {
       status = RemoveDropoutOp(node, manager);
     }
     if (CheckPrimitiveType(node, prim::kPrimPadFusion)) {
