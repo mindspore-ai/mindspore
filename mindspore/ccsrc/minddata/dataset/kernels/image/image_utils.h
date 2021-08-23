@@ -133,6 +133,12 @@ Status Rescale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
 /// \param output: Cropped image Tensor of shape <h,w,C> or <h,w> and same input type.
 Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int x, int y, int w, int h);
 
+/// \brief Change the color space of the image.
+/// \param input: The input image.
+/// \param output: The output image.
+/// \param convert_mode: The mode of image channel conversion.
+Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, ConvertMode convert_mode);
+
 /// \brief Swaps the channels in the image, i.e. converts HWC to CHW
 /// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
 /// \param output: Tensor of shape <C,H,W> or <H,W> and same input type.

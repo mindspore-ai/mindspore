@@ -22,6 +22,7 @@
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/center_crop_ir.h"
+#include "minddata/dataset/kernels/ir/vision/convert_color_ir.h"
 #include "minddata/dataset/kernels/ir/vision/crop_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutmix_batch_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
@@ -110,6 +111,17 @@ PYBIND_REGISTER(
         auto center_crop = std::make_shared<vision::CenterCropOperation>(size);
         THROW_IF_ERROR(center_crop->ValidateParams());
         return center_crop;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  ConvertColorOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::ConvertColorOperation, TensorOperation, std::shared_ptr<vision::ConvertColorOperation>>(
+      *m, "ConvertColorOperation", "Tensor operation to change the color space of the image.")
+      .def(py::init([](ConvertMode convert_mode) {
+        auto convert = std::make_shared<vision::ConvertColorOperation>(convert_mode);
+        THROW_IF_ERROR(convert->ValidateParams());
+        return convert;
       }));
   }));
 

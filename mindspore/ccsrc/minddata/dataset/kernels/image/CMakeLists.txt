@@ -11,6 +11,7 @@ add_library(kernels-image OBJECT
     auto_contrast_op.cc
     bounding_box.cc
     center_crop_op.cc
+    convert_color_op.cc
     crop_op.cc
     cut_out_op.cc
     cutmix_batch_op.cc

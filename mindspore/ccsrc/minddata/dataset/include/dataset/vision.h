@@ -113,6 +113,26 @@ class BoundingBoxAugment final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Change the color space of the image.
+class ConvertColor final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] convert_mode The mode of image channel conversion.
+  explicit ConvertColor(ConvertMode convert_mode);
+
+  /// \brief Destructor.
+  ~ConvertColor() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Mask a random section of each image with the corresponding part of another randomly
 ///     selected image in that batch.
 class CutMixBatch final : public TensorTransform {

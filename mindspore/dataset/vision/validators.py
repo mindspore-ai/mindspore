@@ -23,7 +23,7 @@ from mindspore.dataset.core.validator_helpers import check_value, check_uint8, F
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
     parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, \
     check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32
-from .utils import Inter, Border, ImageBatchFormat, SliceMode
+from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode
 
 
 def check_crop_size(size):
@@ -961,6 +961,18 @@ def check_gaussian_blur(method):
             else:
                 raise TypeError("Sigma should be a single number or a list/tuple of length 2 for width and height.")
 
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+def check_convert_color(method):
+    """Wrapper method to check the parameters of convertcolor."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [convert_mode], _ = parse_user_args(method, *args, **kwargs)
+        if convert_mode is not None:
+            type_check(convert_mode, (ConvertMode,), "convert_mode")
         return method(self, *args, **kwargs)
 
     return new_method

@@ -7,6 +7,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         auto_contrast_ir.cc
         bounding_box_augment_ir.cc
         center_crop_ir.cc
+        convert_color_ir.cc
         crop_ir.cc
         cutmix_batch_ir.cc
         cutout_ir.cc

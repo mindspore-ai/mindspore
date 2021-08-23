@@ -138,5 +138,30 @@ PYBIND_REGISTER(SliceMode, 0, ([](const py::module *m) {
                     .export_values();
                 }));
 
+PYBIND_REGISTER(ConvertMode, 0, ([](const py::module *m) {
+                  (void)py::enum_<ConvertMode>(*m, "ConvertMode", py::arithmetic())
+                    .value("DE_COLOR_BGR2BGRA", ConvertMode::COLOR_BGR2BGRA)
+                    .value("DE_COLOR_RGB2RGBA", ConvertMode::COLOR_RGB2RGBA)
+                    .value("DE_COLOR_BGRA2BGR", ConvertMode::COLOR_BGRA2BGR)
+                    .value("DE_COLOR_RGBA2RGB", ConvertMode::COLOR_RGBA2RGB)
+                    .value("DE_COLOR_BGR2RGBA", ConvertMode::COLOR_BGR2RGBA)
+                    .value("DE_COLOR_RGB2BGRA", ConvertMode::COLOR_RGB2BGRA)
+                    .value("DE_COLOR_RGBA2BGR", ConvertMode::COLOR_RGBA2BGR)
+                    .value("DE_COLOR_BGRA2RGB", ConvertMode::COLOR_BGRA2RGB)
+                    .value("DE_COLOR_BGR2RGB", ConvertMode::COLOR_BGR2RGB)
+                    .value("DE_COLOR_RGB2BGR", ConvertMode::COLOR_RGB2BGR)
+                    .value("DE_COLOR_BGRA2RGBA", ConvertMode::COLOR_BGRA2RGBA)
+                    .value("DE_COLOR_RGBA2BGRA", ConvertMode::COLOR_RGBA2BGRA)
+                    .value("DE_COLOR_BGR2GRAY", ConvertMode::COLOR_BGR2GRAY)
+                    .value("DE_COLOR_RGB2GRAY", ConvertMode::COLOR_RGB2GRAY)
+                    .value("DE_COLOR_GRAY2BGR", ConvertMode::COLOR_GRAY2BGR)
+                    .value("DE_COLOR_GRAY2RGB", ConvertMode::COLOR_GRAY2RGB)
+                    .value("DE_COLOR_GRAY2BGRA", ConvertMode::COLOR_GRAY2BGRA)
+                    .value("DE_COLOR_GRAY2RGBA", ConvertMode::COLOR_GRAY2RGBA)
+                    .value("DE_COLOR_BGRA2GRAY", ConvertMode::COLOR_BGRA2GRAY)
+                    .value("DE_COLOR_RGBA2GRAY", ConvertMode::COLOR_RGBA2GRAY)
+                    .export_values();
+                }));
+
 }  // namespace dataset
 }  // namespace mindspore

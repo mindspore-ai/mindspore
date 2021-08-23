@@ -47,11 +47,11 @@ import numpy as np
 from PIL import Image
 import mindspore._c_dataengine as cde
 
-from .utils import Inter, Border, ImageBatchFormat, SliceMode
+from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode
 from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, check_random_resize_crop, \
     check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
     check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, \
-    check_uniform_augment_cpp, \
+    check_uniform_augment_cpp, check_convert_color, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
     check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
@@ -91,6 +91,28 @@ DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBO
 
 DE_C_SLICE_MODE = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
                    SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
+
+DE_C_CONVERTCOLOR_MODE = {ConvertMode.COLOR_BGR2BGRA: cde.ConvertMode.DE_COLOR_BGR2BGRA,
+                          ConvertMode.COLOR_RGB2RGBA: cde.ConvertMode.DE_COLOR_RGB2RGBA,
+                          ConvertMode.COLOR_BGRA2BGR: cde.ConvertMode.DE_COLOR_BGRA2BGR,
+                          ConvertMode.COLOR_RGBA2RGB: cde.ConvertMode.DE_COLOR_RGBA2RGB,
+                          ConvertMode.COLOR_BGR2RGBA: cde.ConvertMode.DE_COLOR_BGR2RGBA,
+                          ConvertMode.COLOR_RGB2BGRA: cde.ConvertMode.DE_COLOR_RGB2BGRA,
+                          ConvertMode.COLOR_RGBA2BGR: cde.ConvertMode.DE_COLOR_RGBA2BGR,
+                          ConvertMode.COLOR_BGRA2RGB: cde.ConvertMode.DE_COLOR_BGRA2RGB,
+                          ConvertMode.COLOR_BGR2RGB: cde.ConvertMode.DE_COLOR_BGR2RGB,
+                          ConvertMode.COLOR_RGB2BGR: cde.ConvertMode.DE_COLOR_RGB2BGR,
+                          ConvertMode.COLOR_BGRA2RGBA: cde.ConvertMode.DE_COLOR_BGRA2RGBA,
+                          ConvertMode.COLOR_RGBA2BGRA: cde.ConvertMode.DE_COLOR_RGBA2BGRA,
+                          ConvertMode.COLOR_BGR2GRAY: cde.ConvertMode.DE_COLOR_BGR2GRAY,
+                          ConvertMode.COLOR_RGB2GRAY: cde.ConvertMode.DE_COLOR_RGB2GRAY,
+                          ConvertMode.COLOR_GRAY2BGR: cde.ConvertMode.DE_COLOR_GRAY2BGR,
+                          ConvertMode.COLOR_GRAY2RGB: cde.ConvertMode.DE_COLOR_GRAY2RGB,
+                          ConvertMode.COLOR_GRAY2BGRA: cde.ConvertMode.DE_COLOR_GRAY2BGRA,
+                          ConvertMode.COLOR_GRAY2RGBA: cde.ConvertMode.DE_COLOR_GRAY2RGBA,
+                          ConvertMode.COLOR_BGRA2GRAY: cde.ConvertMode.DE_COLOR_BGRA2GRAY,
+                          ConvertMode.COLOR_RGBA2GRAY: cde.ConvertMode.DE_COLOR_RGBA2GRAY,
+                          }
 
 
 def parse_padding(padding):
@@ -229,6 +251,31 @@ class CenterCrop(ImageTensorOperation):
 
     def parse(self):
         return cde.CenterCropOperation(self.size)
+
+
+class ConvertColor(ImageTensorOperation):
+    """
+    Change the color space of the image.
+
+    Args:
+        convert_mode (ConvertMode): The mode of image channel conversion.
+
+    Examples:
+        >>> # Convert RGB images to GRAY images
+        >>> convert_op = c_vision.ConvertColor(ConvertMode.COLOR_RGB2GRAY)
+        >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
+        ...                                                 input_columns=["image"])
+        >>> # Convert RGB images to BGR images
+        >>> convert_op = c_vision.ConvertColor(ConvertMode.COLOR_RGB2BGR)
+        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=convert_op,
+        ...                                                     input_columns=["image"])
+    """
+    @check_convert_color
+    def __init__(self, convert_mode):
+        self.convert_mode = convert_mode
+
+    def parse(self):
+        return cde.ConvertColorOperation(DE_C_CONVERTCOLOR_MODE[self.convert_mode])
 
 
 class Crop(ImageTensorOperation):
