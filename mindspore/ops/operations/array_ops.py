@@ -3719,7 +3719,7 @@ class TensorScatterAdd(PrimitiveWithInfer):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `update`. The shape of `update` should be
-    equal to the shape of `input_x[indices]`.
+    equal to the shape of `input_x[indices]`. For more details, see use cases.
 
     Note:
         If some values of the `indices` are out of bound, instead of raising an index error,
@@ -3746,7 +3746,16 @@ class TensorScatterAdd(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> # Next, demonstrate the approximate operation process of this operator:
+        >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
+        >>> # 2, And input_x[0, 0] = -0.1
+        >>> # 3, So input_x[indices] = [-0.1, -0.1]
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(1, 2) == update.shape=(1, 2)
         >>> op = ops.TensorScatterAdd()
+        >>> # 5, Perform the addition operation for the first time:
+        >>> #      first_input_x = input_x[0][0] + update[0] = [[0.9, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> # 6, Perform the addition operation for the second time:
+        >>> #      second_input_x = input_x[0][0] + update[1] = [[3.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> output = op(input_x, indices, update)
         >>> print(output)
         [[ 3.1  0.3  3.6]
@@ -5967,6 +5976,7 @@ class TensorScatterMax(PrimitiveWithInfer):
 
     The last axis of the index is the depth of each index vector. For each index vector,
     there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
+    For more details, see use cases.
 
     Note:
         If some values of the `indices` are out of bound, instead of raising an index error,
@@ -5993,7 +6003,16 @@ class TensorScatterMax(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> # Next, demonstrate the approximate operation process of this operator:
+        >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
+        >>> # 2, And input_x[0, 0] = -0.1
+        >>> # 3, So input_x[indices] = [-0.1, -0.1]
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(1, 2) == update.shape=(1, 2)
         >>> op = ops.TensorScatterMax()
+        >>> # 5, Perform the max operation for the first time:
+        >>> #      first_input_x = Max(input_x[0][0], update[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> # 6, Perform the max operation for the second time:
+        >>> #      second_input_x = Max(input_x[0][0], update[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> output = op(input_x, indices, update)
         >>> print(output)
         [[ 2.2  0.3  3.6]
@@ -6025,6 +6044,7 @@ class TensorScatterMin(PrimitiveWithInfer):
 
     The last axis of the index is the depth of each index vector. For each index vector,
     there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
+    For more details, see use cases.
 
     Note:
         If some values of the `indices` are out of bound, instead of raising an index error,
@@ -6051,7 +6071,16 @@ class TensorScatterMin(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> # Next, demonstrate the approximate operation process of this operator:
+        >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
+        >>> # 2, And input_x[0, 0] = -0.1
+        >>> # 3, So input_x[indices] = [-0.1, -0.1]
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(1, 2) == update.shape=(1, 2)
         >>> op = ops.TensorScatterMin()
+        >>> # 5, Perform the min operation for the first time:
+        >>> #      first_input_x = Min(input_x[0][0], update[0]) = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> # 6, Perform the min operation for the second time:
+        >>> #      second_input_x = Min(input_x[0][0], update[1]) = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> output = op(input_x, indices, update)
         >>> print(output)
         [[ -0.1  0.3  3.6]
@@ -6086,7 +6115,7 @@ class TensorScatterSub(PrimitiveWithInfer):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `update`. The shape of `update` should be
-    equal to the shape of `input_x[indices]`.
+    equal to the shape of `input_x[indices]`. For more details, see use cases.
 
     Note:
         If some values of the `indices` are out of bound, instead of raising an index error,
@@ -6113,7 +6142,16 @@ class TensorScatterSub(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> # Next, demonstrate the approximate operation process of this operator:
+        >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
+        >>> # 2, And input_x[0, 0] = -0.1
+        >>> # 3, So input_x[indices] = [-0.1, -0.1]
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(1, 2) == update.shape=(1, 2)
         >>> op = ops.TensorScatterSub()
+        >>> # 5, Perform the subtract operation for the first time:
+        >>> #      first_input_x = input_x[0][0] - update[0] = [[-1.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> # 6, Perform the subtract operation for the second time:
+        >>> #      second_input_x = input_x[0][0] - update[1] = [[-3.3, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> output = op(input_x, indices, update)
         >>> print(output)
         [[-3.3000002  0.3        3.6      ]
