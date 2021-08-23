@@ -39,7 +39,9 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
     MS_LOG(ERROR) << "kernel pack should not be nullptr.";
     return false;
   }
-
+  if (stream_ == nullptr) {
+    stream_ = stream_ptr;
+  }
   uint32_t blockdim = 1;  // default blockdim equal to 1.
   auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &blockdim);
   if (func_stub == 0) {
@@ -60,7 +62,8 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
   rtL2Ctrl_t *l2ctrl = nullptr;
   const void *stubFunc = reinterpret_cast<void *>(func_stub);
   auto argsSize = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtimeargs.size());
-  if (RT_ERROR_NONE != rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream_ptr)) {
+  auto ret = rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream_);
+  if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call runtime rtKernelLaunch error.";
     return false;
   }

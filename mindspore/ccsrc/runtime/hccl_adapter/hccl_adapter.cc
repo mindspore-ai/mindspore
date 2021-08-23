@@ -28,8 +28,6 @@
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
 #include "runtime/hccl_adapter/converter.h"
-#include "runtime/device/ascend/distribute/ascend_collective.h"
-using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 
 static constexpr const char *kHcclPluginFileName = "libhccl_plugin.so";
 static constexpr const char *kHcclDeployModeEnv = "DEPLOY_MODE";
@@ -88,6 +86,10 @@ void HcclAdapter::InitPlugin() {
   single_op_hccl_get_rank_size_ = DlsymFuncObj(HcclGetRankSize, plugin_handle_);
   launch_hccl_broadcast_ = DlsymFuncObj(HcclBroadcast, plugin_handle_);
   launch_hccl_all_reduce_ = DlsymFuncObj(HcclAllReduce, plugin_handle_);
+  launch_hccl_reduce_scatter_ = DlsymFuncObj(HcclReduceScatter, plugin_handle_);
+  launch_hccl_all_gather_ = DlsymFuncObj(HcclAllGather, plugin_handle_);
+  launch_hccl_send_ = DlsymFuncObj(HcclSend, plugin_handle_);
+  launch_hccl_recv_ = DlsymFuncObj(HcclRecv, plugin_handle_);
   hccl_create_group_ = DlsymFuncObj(HcomCreateGroup, plugin_handle_);
   hccl_destroy_group_ = DlsymFuncObj(HcomDestroyGroup, plugin_handle_);
   hccl_get_rank_id_ = DlsymFuncObj(HcomGetRankId, plugin_handle_);
@@ -269,65 +271,40 @@ HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType da
 HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                       HcclReduceOp op, aclrtStream stream, const std::string &group) const {
   MS_EXCEPTION_IF_NULL(launch_hccl_all_reduce_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
+  auto hccl_comm = GetHcomm(group);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_reduce_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                           HcclReduceOp op, aclrtStream stream, const std::string &group) const {
   MS_EXCEPTION_IF_NULL(launch_hccl_reduce_scatter_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
+  auto hccl_comm = GetHcomm(group);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_reduce_scatter_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                       aclrtStream stream, const std::string &group) const {
   MS_EXCEPTION_IF_NULL(launch_hccl_all_gather_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
+  auto hccl_comm = GetHcomm(group);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_gather_(send_buf, recv_buf, count, dataType, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
                                  aclrtStream stream, const std::string &group) const {
   MS_EXCEPTION_IF_NULL(launch_hccl_send_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
+  auto hccl_comm = GetHcomm(group);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_send_(send_buf, count, dataType, destRank, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank,
                                  aclrtStream stream, const std::string &group) const {
   MS_EXCEPTION_IF_NULL(launch_hccl_recv_);
-  HcclComm hccl_comm;
-  if (hccl_comm_ != nullptr) {
-    hccl_comm = hccl_comm_;
-  } else {
-    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
-    MS_EXCEPTION_IF_NULL(hccl_comm);
-  }
+  auto hccl_comm = GetHcomm(group);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_recv_(recv_buf, count, dataType, srcRank, hccl_comm, stream);
 }
 

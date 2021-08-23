@@ -64,7 +64,8 @@ class KernelRuntime {
   virtual bool Run(session::KernelGraph *graph, bool is_task_sink) = 0;
   virtual bool GenDynamicKernel(const session::KernelGraph *graph) = 0;
   virtual bool RunDynamicKernelAsync(const session::KernelGraph *graph) = 0;
-  bool LaunchKernel(const session::KernelGraph *graph);
+  bool LaunchKernels(const session::KernelGraph *graph);
+  virtual bool LaunchKernel(const AnfNodePtr &kernel);
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
   virtual void ClearGraphRuntimeResource(uint32_t graph_id);
@@ -98,7 +99,7 @@ class KernelRuntime {
 
   virtual void PreInit() {}
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
-  void GenKernelEvents(const session::KernelGraph *graph);
+  virtual void GenKernelEvents(const session::KernelGraph *graph);
   virtual std::shared_ptr<DeviceEvent> CreateDeviceEvent() { return nullptr; }
   virtual std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() { return nullptr; }
   virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
@@ -123,6 +124,10 @@ class KernelRuntime {
   void AssignCommunicationNodeOutputMem(MemType type, const AnfNodePtr &node);
   void AssignCommunicationNodeInputMem(MemType type, const AnfNodePtr &node);
   void AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node);
+  bool LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_mod, const std::string &op_name,
+                                         const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs, void *stream);
 
   virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
 
@@ -138,10 +143,6 @@ class KernelRuntime {
   void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, session::KernelGraph *graph);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);
   DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index);
-  bool LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_mod, const std::string &op_name,
-                                         const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream);
 #if (ENABLE_CPU && !_WIN32)
   void GetFirstPSEmbeddingCache(const session::KernelGraph *graph, AnfNodePtr *const first_cache_input_index,
                                 size_t *const first_cache_size);
@@ -156,6 +157,7 @@ class KernelRuntime {
   std::shared_ptr<Debugger> debugger_;
 #endif
   void *stream_{nullptr};
+  void *independent_stream_{nullptr};
   void *communication_stream_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
   std::map<uint32_t, std::vector<DynamicKernelPtr>> graph_dynamic_kernel_map_;

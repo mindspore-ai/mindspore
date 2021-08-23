@@ -139,7 +139,9 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
-
+  if (stream_ == nullptr) {
+    stream_ = stream_ptr;
+  }
   CreateCpuKernelInfo(inputs, outputs);
   if (node_name_ == kTopK) {
     node_name_ = kTopKV2;
@@ -152,7 +154,7 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   if (rtCpuKernelLaunch(reinterpret_cast<const void *>(node_so_.c_str()),
                         reinterpret_cast<const void *>(node_name_.c_str()), 1,
                         reinterpret_cast<const void *>(args_.data()), static_cast<uint32_t>(args_.length()), nullptr,
-                        stream_ptr) != RT_ERROR_NONE) {
+                        stream_) != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Aicpu op launch failed!";
 
     return false;

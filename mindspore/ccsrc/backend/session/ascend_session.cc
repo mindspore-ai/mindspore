@@ -1136,11 +1136,11 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
   }
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  if (is_task) {
+  if (is_task && is_task_sink) {
     DumpSetup(kernel_graph);
   }
   bool ret_ok = runtime_instance->Run(kernel_graph.get(), is_task_sink);
-  if (is_task) {
+  if (is_task && is_task_sink) {
     Dump(kernel_graph);
   }
   if (!ret_ok) {

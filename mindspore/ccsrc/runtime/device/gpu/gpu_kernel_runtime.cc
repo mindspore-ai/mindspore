@@ -472,7 +472,7 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
       // run dynamic shape graph in pynative
       ret = RunOpLaunchKernelDynamic(graph);
     } else {
-      ret = LaunchKernel(graph);
+      ret = LaunchKernels(graph);
     }
   }
   (void)gettimeofday(&end_time, nullptr);

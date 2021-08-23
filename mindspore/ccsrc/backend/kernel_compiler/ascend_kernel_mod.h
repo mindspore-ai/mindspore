@@ -37,8 +37,11 @@ class AscendKernelMod : public KernelMod {
     return dump_json.NeedDump(fullname_) && dump_json.async_dump_enabled() && dump_json.op_debug_mode() == 0 &&
            !is_monad_;
   }
+  void SetStream(void *stream) { stream_ = stream; }
+  void *GetStream() { return stream_; }
 
  protected:
+  void *stream_{nullptr};
   uint32_t block_dim_{1};
   uint32_t stream_id_{0};
 };
