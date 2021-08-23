@@ -36,7 +36,7 @@ class LogLevel(Enum):
     INFO = 1
     WARNING = 2
     ERROR = 3
-    EXCEPTION = 4
+    ERROR_MANAGER = 4
 
 
 class JobStatus(Enum):
@@ -141,7 +141,7 @@ class TbeJob:
         self.process_info.append(message)
         self._sys_logger.error(msg, *args, **kwargs)
 
-    def exception(self, msg, *args, **kwargs):
+    def error_manager(self, msg, *args, **kwargs):
         """
         log exception level info
         :param msg:
@@ -149,18 +149,18 @@ class TbeJob:
         :return:
         """
         if not msg:
-            self.warning("Get empty exception message")
+            self.warning("Get empty error manager message, op_name: {}".format(self.fusion_op_name))
             return
         exception_info = msg[0]
         if not isinstance(exception_info, dict):
-            self.warning("Get illegal exception message")
+            self.warning("Get illegal error manager message, op_name: {}".format(self.fusion_op_name))
             return
         op_name = self.fusion_op_name
         if len(msg) >= 2:
             op_name = msg[1]
         exception_info["op_name"] = op_name
         processed_msg = json.dumps(exception_info)
-        message = LogMessage(len(self.process_info), LogLevel.EXCEPTION, processed_msg)
+        message = LogMessage(len(self.process_info), LogLevel.ERROR_MANAGER, processed_msg)
         self.process_info.append(message)
         self._sys_logger.exception(msg, *args, **kwargs)
 
