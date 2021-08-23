@@ -48,6 +48,10 @@ int GatherFp16CPUKernel::Init() {
     const_input_ = true;
     input_data_ =
       reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
+    if (input_data_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed";
+      return RET_ERROR;
+    }
     Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
   }
   MS_ASSERT(in_tensors_.at(kSecondInput)->data_c() != nullptr);
