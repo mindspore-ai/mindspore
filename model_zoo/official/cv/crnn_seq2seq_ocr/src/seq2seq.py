@@ -21,7 +21,6 @@ import mindspore.ops.operations as P
 import mindspore.common.dtype as mstype
 
 from src.cnn import CNN
-from src.gru import GRU
 from src.lstm import LSTM
 from src.weight_init import lstm_default_state
 
@@ -74,7 +73,10 @@ class AttnDecoderRNN(nn.Cell):
         self.attn_combine = nn.Dense(in_channels=self.hidden_size * 2,
                                      out_channels=self.hidden_size).to_float(mstype.float16)
         self.dropout = nn.Dropout(keep_prob=1.0 - self.dropout_p)
-        self.gru = GRU(hidden_size, hidden_size).to_float(mstype.float16)
+        self.gru = nn.GRU(input_size=hidden_size, hidden_size=hidden_size,
+                          num_layers=1, has_bias=True,
+                          batch_first=False, dropout=0,
+                          bidirectional=False).to_float(mstype.float16)
         self.out = nn.Dense(in_channels=self.hidden_size, out_channels=self.output_size).to_float(mstype.float16)
         self.transpose = P.Transpose()
         self.concat = P.Concat(axis=2)
@@ -108,8 +110,7 @@ class AttnDecoderRNN(nn.Cell):
         output = self.unsqueeze(output, 0)
         output = self.relu(output)
 
-        gru_hidden = self.squeeze1(hidden)
-        output, hidden, _, _, _, _ = self.gru(output, gru_hidden)
+        output, hidden, _, _, _, _ = self.gru(output, hidden)
         output = self.squeeze1(output)
         output = self.log_softmax(self.out(output))
 
