@@ -72,7 +72,8 @@ class HcclParser:
         self._dev_id = device_id
         self._source_dir = source_dir
         self._save_path = self._get_save_path(output_path)
-        self._step_timestamps_info = self._get_step_timestamps_info(output_path)
+        self._step_trace_info = self._get_step_trace_info(output_path)
+        self._communication_operator_name_mapping_info = self._get_communication_operator_name_mapping_info()
 
     def parse(self):
         """Parse communication info."""
@@ -138,8 +139,8 @@ class HcclParser:
             output_path, self._parsed_hccl_file_name.format(self._dev_id)
         )
 
-    def _get_step_timestamps_info(self, source_dir):
-        """Get the start and end timestamps in a step."""
+    def _get_step_trace_info(self, source_dir):
+        """Get the start and end timestamps in a step and communication operators names."""
         file_path = os.path.join(
             source_dir,
             f'step_trace_raw_{self._dev_id}_detail_time.csv'
@@ -155,23 +156,61 @@ class HcclParser:
 
         with open(file_path, 'r') as src_file:
             csv_reader = csv.reader(src_file)
+            # The first row of step trace file is like: step_num, start_point,...,communication_operator_name.
+            # The position number of the first communication operator name is 9.
+            communication_operators_names = next(csv_reader)[9:]
+
             # index_0:step_num, index_1:start_point, index_2:end_point
             # The unit of time stamp is 10ns. To convert it to μs, you need to divide it by 100.
             step_timestamps_info = [[info[0], float(info[1])/100, float(info[2])/100]
                                     for info in csv_reader if info[0].isdigit()]
 
-        return step_timestamps_info
+        return [communication_operators_names, step_timestamps_info]
+
+    def _get_communication_operator_name_mapping_info(self):
+        """Get the name of communication operators mapping between hccl and step trace."""
+        dir_path = self._validate_dir_path(self._source_dir)
+        # The name of the operator in hccl is like：operatorName_{Ordered_number}_xx_xx.
+        operators_names_in_hccl = [entry.name for entry in os.scandir(dir_path) if entry.is_dir()]
+        operators_names_in_hccl_set = set({i.split('_')[0] for i in operators_names_in_hccl})
+        op_names_in_hccl_dic = dict()
+        for item in operators_names_in_hccl_set:
+            op_names_in_hccl_dic[item] = sorted([i for i in operators_names_in_hccl if i.split('_')[0] == item],
+                                                key=lambda x: int(x.split('_')[1]))
+
+        # The op_info in step trace is like:[op_name,op_name_start_point,op_name_end_point]
+        # The name of the operator in step trace can be obtained every three.
+        # The name of the operator in step trace  is like: stream_xx_xx_operatorName-opxx.
+        operators_names_in_step_trace = [self._step_trace_info[0][i]
+                                         for i in range(0, len(self._step_trace_info[0]), 3)]
+        op_names_in_step_trace_set = set({i.split('_')[3].split('-')[0] for i in operators_names_in_step_trace})
+        op_names_in_step_trace_dic = dict()
+        for item in op_names_in_step_trace_set:
+            op_names_in_step_trace_dic[item] = [i for i in operators_names_in_step_trace
+                                                if i.split('_')[3].split('-')[0] == item]
+
+        communication_operator_mapping_info = dict()
+        for hccl_key, hccl_value in op_names_in_hccl_dic.items():
+            for step_trace_key, step_trace_value in op_names_in_step_trace_dic.items():
+                if hccl_key.lower() == step_trace_key.lower():
+                    communication_operator_mapping_info[hccl_key] = list(zip(hccl_value, step_trace_value))
+
+        logger.info("Communication operator name mapping info is %s", communication_operator_mapping_info)
+
+        return communication_operator_mapping_info
 
     def _calculate_the_step_by_timestamp(self, timestamp):
         """Calculate the step according to the timestamp."""
-        step_timestamps_len = len(self._step_timestamps_info)
+        # index0:communication_operator_name, index1:step_timestamps_info
+        step_timestamps_info = self._step_trace_info[1]
+        step_timestamps_len = len(step_timestamps_info)
         # index_0:step_num, index_1:start_point, index_2:end_point
-        if timestamp < self._step_timestamps_info[0][1]:
-            step_num = 1
-        elif self._step_timestamps_info[step_timestamps_len - 1][2] < timestamp:
-            step_num = self._step_timestamps_info[step_timestamps_len - 1][0]
+        if timestamp < step_timestamps_info[0][1]:
+            step_num = "1"
+        elif step_timestamps_info[step_timestamps_len - 1][2] < timestamp:
+            step_num = step_timestamps_info[step_timestamps_len - 1][0]
         else:
-            for item in self._step_timestamps_info:
+            for item in step_timestamps_info:
                 if item[1] <= timestamp < item[2]:
                     step_num = item[0]
         return step_num
@@ -185,6 +224,14 @@ class HcclParser:
         for operator_dir in operator_dir_path:
             operator_cost = self._calculate_communication_operator_cost(operator_dir)
             operator_name = os.path.basename(operator_dir)
+            op_mapping_info = self._communication_operator_name_mapping_info.get(operator_name.split('_')[0], [])
+            # index1: operator name in step trace.
+            op_mapping_name = [item[1] for item in op_mapping_info if item[0] == operator_name]
+            if not op_mapping_name:
+                logger.warning("The mapping relationship between op name in hccl and op name in step trace "
+                               "cannot be found. Use op name in hccl to show the name of the communication operator.")
+            else:
+                operator_name = op_mapping_name[0]
             operators_cost_info[operator_name] = operator_cost
         return operators_cost_info
 
