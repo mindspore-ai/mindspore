@@ -194,7 +194,7 @@ class ResNet(nn.Cell):
                                        stride=strides[3])
 
         self.num_classes = num_classes
-        if num_classes:
+        if not self.feature_only:
             self.reduce_mean = P.ReduceMean(keep_dims=True)
             self.end_point = nn.Dense(out_channels[3], num_classes, has_bias=True,
                                       weight_init=weight_variable(),
@@ -244,7 +244,7 @@ class ResNet(nn.Cell):
         c5 = self.layer4(c4)
 
         out = c5
-        if self.feature_only:
+        if not self.feature_only:
             out = self.reduce_mean(c5, (2, 3))
             out = self.squeeze(out)
             out = self.end_point(out)
