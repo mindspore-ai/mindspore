@@ -64,7 +64,7 @@ uint64_t Node::SendMessageAsync(const std::shared_ptr<TcpClient> &client, const 
   return request_id;
 }
 
-bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta> meta,
+bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                            const Protos &protos, const void *data, size_t size, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(client);
   MS_EXCEPTION_IF_NULL(meta);

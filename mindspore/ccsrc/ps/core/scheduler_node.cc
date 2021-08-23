@@ -416,7 +416,7 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
     std::string ip = node_info.ip_;
     uint16_t port = node_info.port_;
     auto client = std::make_shared<TcpClient>(ip, port);
-    client->SetMessageCallback([&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
+    client->SetMessageCallback([&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                                    size_t size) { NotifyMessageArrival(meta); });
     client->Init();
     if (is_client_started_ == false) {
@@ -468,7 +468,7 @@ bool SchedulerNode::Finish(const uint32_t &) {
   return true;
 }
 
-void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
+void SchedulerNode::ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &resp) {
   RequestProcessResult status(RequestProcessResultCode::kSuccess);
   status = resp->ParsePostMessageToJson();
   if (status != RequestProcessResultCode::kSuccess) {
@@ -530,7 +530,7 @@ void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
  *    "node_ids": ["node_id1", "node_id2"]
  * }
  */
-void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
+void SchedulerNode::ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &resp) {
   RequestProcessResult status(RequestProcessResultCode::kSuccess);
   status = resp->ParsePostMessageToJson();
   if (status != RequestProcessResultCode::kSuccess) {
@@ -621,7 +621,7 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
  *    ]
  * }
  */
-void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp) {
+void SchedulerNode::ProcessGetNodesInfo(const std::shared_ptr<HttpMessageHandler> &resp) {
   nlohmann::json js;
   js["message"] = "Get nodes info successful.";
   auto node_infos = node_manager_.nodes_info();
@@ -647,7 +647,7 @@ void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp
  *    "cluster_state": "CLUSTER_READY"
  * }
  */
-void SchedulerNode::ProcessGetClusterState(std::shared_ptr<HttpMessageHandler> resp) {
+void SchedulerNode::ProcessGetClusterState(const std::shared_ptr<HttpMessageHandler> &resp) {
   nlohmann::json js;
   js["message"] = "Get cluster state successful.";
   auto cluster_state = node_manager_.GetClusterState();

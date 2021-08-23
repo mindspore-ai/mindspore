@@ -95,7 +95,7 @@ class HttpMessageHandler {
   void SendResponse();
   void QuickResponse(int code, const unsigned char *body, size_t len);
   void SimpleResponse(int code, const HttpHeaders &headers, const std::string &body);
-  void ErrorResponse(int code, RequestProcessResult status);
+  void ErrorResponse(int code, const RequestProcessResult &status);
 
   // If message is empty, libevent will use default error code message instead
   void RespError(int nCode, const std::string &message);

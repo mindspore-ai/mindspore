@@ -631,7 +631,7 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
 }
 
 void Worker::PushData(const std::vector<Key> &keys, const std::vector<float> &vals, const std::vector<int> &lens,
-                      int cmd, int64_t) {
+                      int64_t cmd, int64_t) {
   KVMessage kvs;
   *kvs.mutable_keys() = {keys.begin(), keys.end()};
   *kvs.mutable_values() = {vals.begin(), vals.end()};
@@ -670,7 +670,7 @@ void Worker::PushSparseData(const std::vector<Key> &keys, const std::vector<floa
   }
 }
 
-void Worker::PullData(const std::vector<Key> &keys, std::vector<float> *const vals, std::vector<int> *lens, int cmd,
+void Worker::PullData(const std::vector<Key> &keys, std::vector<float> *const vals, std::vector<int> *lens, int64_t cmd,
                       int64_t priority) {
   MS_EXCEPTION_IF_NULL(vals);
   KVMessage kvs;
@@ -865,7 +865,7 @@ void Worker::RoundRobinPartitioner(const KVMessage &send, PartitionKVMessages *p
 }
 
 void Worker::WorkerInitEmbeddingPartitioner(const KVMessage &send, std::vector<std::pair<bool, KVMessage>> *partition,
-                                            const std::map<int64_t, int64_t> &attrs) {
+                                            const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
   partition->resize(LongToSize(server_num_));
   auto keys = send.keys();
@@ -936,7 +936,7 @@ void Worker::BroadcastPartitioner(const KVMessage &send, PartitionKVMessages *pa
   }
 }
 
-void Worker::SendForPush(int cmd, const KVMessage &send, const KVPartitioner &partitioner,
+void Worker::SendForPush(int64_t cmd, const KVMessage &send, const KVPartitioner &partitioner,
                          const std::map<int64_t, int64_t> &attrs) {
   PartitionKVMessages messages;
   partitioner(send, &messages, attrs);
@@ -962,7 +962,7 @@ void Worker::SendForPush(int cmd, const KVMessage &send, const KVPartitioner &pa
   worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, cmd);
 }
 
-void Worker::SendForPull(int cmd, const KVMessage &send, const KVPartitioner &partitioner,
+void Worker::SendForPull(int64_t cmd, const KVMessage &send, const KVPartitioner &partitioner,
                          const std::map<int64_t, int64_t> &, std::vector<float> *vals, std::vector<int> *lens) {
   MS_EXCEPTION_IF_NULL(vals);
   PartitionKVMessages messages;

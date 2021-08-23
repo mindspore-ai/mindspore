@@ -96,8 +96,6 @@ class TcpServer {
   void Init();
   void Start();
   void StartWithNoBlock();
-  void StartTimerOnlyOnce(const uint32_t &time);
-  void StartTimer(const uint32_t &time);
   void Stop();
   void SendToAllClients(const char *data, size_t len);
   void AddConnection(const evutil_socket_t &fd, std::shared_ptr<TcpConnection> connection);

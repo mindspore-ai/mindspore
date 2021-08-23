@@ -108,7 +108,7 @@ void ServerNode::Initialize() {
 }
 
 void ServerNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
-                                 const Protos &protos, const void *data, size_t size) {
+                                 const Protos &, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);

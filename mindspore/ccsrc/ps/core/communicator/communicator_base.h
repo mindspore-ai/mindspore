@@ -54,7 +54,7 @@ class CommunicatorBase {
 
   virtual void RegisterMsgCallBack(const std::string &msg_type, const MessageCallback &cb) = 0;
 
-  bool SendResponse(const void *rsp_data, size_t rsp_len, std::shared_ptr<MessageHandler> msg_handler);
+  bool SendResponse(const void *rsp_data, size_t rsp_len, const std::shared_ptr<MessageHandler> &msg_handler);
 
   bool running() const;
 
