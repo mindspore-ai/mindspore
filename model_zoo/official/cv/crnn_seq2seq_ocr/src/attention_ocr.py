@@ -184,5 +184,5 @@ class TrainingWrapper(nn.Cell):
         grads = self.grad(self.network, weights)(*args, sens)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        self.optimizer(grads)
-        return loss
+        succ = self.optimizer(grads)
+        return F.depend(loss, succ)
