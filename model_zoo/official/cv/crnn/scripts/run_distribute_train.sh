@@ -49,7 +49,6 @@ if [ "GPU" == $PLATFORM ]; then
   mkdir $WORKDIR
   cp ./*.py $WORKDIR
   cp -r ./src $WORKDIR
-  cp -r ./scripts $WORKDIR
   cp ./*yaml $WORKDIR
   cd $WORKDIR || exit
   echo "start distributed training with $DEVICE_NUM GPUs."
@@ -72,7 +71,6 @@ elif [ "Ascend" == $PLATFORM ]; then
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp ./*.py ./train_parallel$i
-    cp -r scripts/ ./train_parallel$i
     cp -r ./src ./train_parallel$i
     cp ./*yaml ./train_parallel$i
     cd ./train_parallel$i || exit

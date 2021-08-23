@@ -60,7 +60,6 @@ run_ascend() {
   mkdir ./eval
   cp ./*.py ./eval
   cp -r ./src ./eval
-  cp -r ./scripts ./eval
   cp ./*yaml ./eval
   cd ./eval || exit
   env >env.log
@@ -76,7 +75,6 @@ run_gpu() {
   mkdir ./eval
   cp ./*.py ./eval
   cp -r ./src ./eval
-  cp -r ./scripts ./eval
   cp ./*yaml ./eval
   cd ./eval || exit
   env >env.log
