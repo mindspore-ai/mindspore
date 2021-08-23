@@ -147,11 +147,11 @@ int CreateOutputDir(std::string *file_path) {
     }
   }
 
-  int count = 1;
+  int count = 0;
   while (AccessFile((*file_path + "/" + std::to_string(count)), F_OK) == 0) {
-    MS_LOG(DEBUG) << "current file_path has existed, file_path cnt plus 1.";  // such as: /xxx/1 ==> /xxx/2
+    MS_LOG(INFO) << "current file_path has existed, file_path cnt plus 1.";  // such as: /xxx/0 ==> /xxx/1
     count++;
-    if (count > MAXIMUM_NUMBERS_OF_FOLDER) {
+    if (count >= MAXIMUM_NUMBERS_OF_FOLDER) {
       MS_LOG(ERROR) << "the number of file folders exceeds the upper limit.";
       return RET_ERROR;
     }

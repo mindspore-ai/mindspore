@@ -11,6 +11,10 @@ include(${TOP_DIR}/cmake/external_libs/opencv.cmake)
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 
+if(NOT WIN32)
+    set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
+endif()
+
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../flag/flag_parser.cc
