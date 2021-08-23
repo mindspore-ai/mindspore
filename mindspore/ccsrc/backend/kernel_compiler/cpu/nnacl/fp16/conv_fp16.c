@@ -93,13 +93,13 @@ void ConvOutNc8hw8Fp16(const float16_t *input_data, float16_t *packed_input, con
 #else
       RowMajor2Col12MajorFp16Opt(packed_input, col_major_input, tile_n, deep);
 #endif
-      for (int j = 0; j < weight_block; j++) {
+      const float16_t *cur_weight = packed_weight;
+      const float16_t *cur_bias = bias_data;
+      for (int j = 0; j < weight_block; j++, cur_weight += C8NUM * deep, cur_bias += C8NUM) {
         int real_weight_row = (j != weight_block - 1) ? C8NUM : conv_param->output_channel_ - j * C8NUM;
-        int weight_offset = j * C8NUM * deep;
-        int bias_offset = j * real_weight_row;
         int out_offset = j * output_hw * C8NUM + i * tile_n * real_weight_row;
-        MatMulFp16(col_major_input, packed_weight + weight_offset, output_data + out_offset, bias_data + bias_offset,
-                   conv_param->act_type_, deep, real_in_row, real_weight_row, real_weight_row, OutType_Nhwc);
+        MatMulFp16(col_major_input, cur_weight, output_data + out_offset, cur_bias, conv_param->act_type_, deep,
+                   real_in_row, real_weight_row, real_weight_row, OutType_Nhwc);
       }
     }
   }

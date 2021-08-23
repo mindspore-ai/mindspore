@@ -141,6 +141,11 @@ bool Nc4hw4PassValid(const InnerContext *context, std::vector<kernel::LiteKernel
       }
     }
   }
+
+  if (context->IsCpuFloat16Enabled()) {
+    return true;
+  }
+
   return false;
 }
 
