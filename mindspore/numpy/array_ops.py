@@ -200,7 +200,7 @@ def rollaxis(x, axis, start=0):
 
     axis = _check_axes_range(axis, ndim)
     start = _check_start_normalize(start, ndim)
-    if 0 <= start - axis <= 1:
+    if start - axis >= 0 and start - axis <= 1:
         return x
     perm = F.make_range(0, ndim)
     new_perm = None
