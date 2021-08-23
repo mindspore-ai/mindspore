@@ -60,7 +60,7 @@ test_ignore_threshold: 0.001
 # Export options
 device_id: 0
 batch_size: 1
-testing_shape: 608
+testing_shape: 416
 ckpt_file: ""
 file_name: "yolov4_tiny"
 file_format: "AIR"
@@ -114,7 +114,7 @@ anchor_scales: [[10, 14],
 
 num_classes: 80
 out_channel: 255 # 3 * (num_classes + 5)
-test_img_shape: [608, 608]
+test_img_shape: [416, 416]
 checkpoint_filter_list: ['feature_map.yolo_tiny_head1.conv2.weight', 'feature_map.yolo_tiny_head1.conv2.bias',
                          'feature_map.yolo_tiny_head2.conv2.weight', 'feature_map.yolo_tiny_head2.conv2.bias',
                          'feature_map.backblock2.conv6.weight', 'feature_map.backblock2.conv6.bias',

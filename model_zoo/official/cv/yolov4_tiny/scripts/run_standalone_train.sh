@@ -66,10 +66,10 @@ env > env.log
 python train.py \
     --data_dir=$DATASET_PATH \
     --is_distributed=0 \
-    --lr=0.012 \
-    --t_max=320 \
-    --max_epoch=320 \
-    --warmup_epochs=4 \
+    --lr=0.01 \
+    --t_max=500 \
+    --max_epoch=500 \
+    --warmup_epochs=20 \
     --training_shape=416 \
     --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 cd ..
