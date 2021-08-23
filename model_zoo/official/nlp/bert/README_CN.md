@@ -95,17 +95,17 @@ bash scripts/run_distributed_pretrain_ascend.sh /path/cn-wiki-128 /path/hccl.jso
 - 在`finetune_eval_config.py`中设置BERT网络配置和优化器超参。
 
 - 分类任务：在scripts/run_classifier.sh中设置任务相关的超参。
-- 运行`bash scripts/run_classifier.py`，对BERT-base和BERT-NEZHA模型进行微调。
+- 运行`bash scripts/run_classifier.sh`，对BERT-base和BERT-NEZHA模型进行微调。
 
   bash scripts/run_classifier.sh
 
 - NER任务：在scripts/run_ner.sh中设置任务相关的超参。
-- 运行`bash scripts/run_ner.py`，对BERT-base和BERT-NEZHA模型进行微调。
+- 运行`bash scripts/run_ner.sh`，对BERT-base和BERT-NEZHA模型进行微调。
 
   bash scripts/run_ner.sh
 
 - SQUAD任务：在scripts/run_squad.sh中设置任务相关的超参。
--运行`bash scripts/run_squad.py`，对BERT-base和BERT-NEZHA模型进行微调。
+-运行`bash scripts/run_squad.sh`，对BERT-base和BERT-NEZHA模型进行微调。
 
   bash scripts/run_squad.sh
 ```
@@ -124,19 +124,19 @@ bash scripts/run_distributed_pretrain_for_gpu.sh 8 40 /path/cn-wiki-128
 - 在`finetune_eval_config.py`中设置BERT网络配置和优化器超参。
 
 - 分类任务：在scripts/run_classifier.sh中设置任务相关的超参。
-- 运行`bash scripts/run_classifier.py`，对BERT-base和BERT-NEZHA模型进行微调。
+- 运行`bash scripts/run_classifier.sh`，对BERT-base和BERT-NEZHA模型进行微调。
 
   bash scripts/run_classifier.sh
 
 - NER任务：在scripts/run_ner.sh中设置任务相关的超参。
-- 运行`bash scripts/run_ner.py`，对BERT-base和BERT-NEZHA模型进行微调。
+- 运行`bash scripts/run_ner.sh`，对BERT-base和BERT-NEZHA模型进行微调。
 
   bash scripts/run_ner.sh
 
-- SQUAD任务：在scripts/run_squad.sh中设置任务相关的超参。
--运行`bash scripts/run_squad.py`，对BERT-base和BERT-NEZHA模型进行微调。
+- SQUAD任务：在scripts/run_squad_gpu.sh中设置任务相关的超参。
+-运行`bash scripts/run_squad_gpu.sh`，对BERT-base和BERT-NEZHA模型进行微调。
 
-  bash scripts/run_squad.sh
+  bash scripts/run_squad_gpu.sh
 ```
 
 - 在ModelArts上运行(如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
@@ -266,7 +266,8 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
         --README.md
     ├─run_classifier.sh                       # Ascend或GPU设备上单机分类器任务shell脚本
     ├─run_ner.sh                              # Ascend或GPU设备上单机NER任务shell脚本
-    ├─run_squad.sh                            # Ascend或GPU设备上单机SQUAD任务shell脚本
+    ├─run_squad.sh                            # Ascend设备上单机SQUAD任务shell脚本
+    ├─run_squad_gpu.sh                        # GPU设备上单机SQUAD任务shell脚本
     ├─run_standalone_pretrain_ascend.sh       # Ascend设备上单机预训练shell脚本
     ├─run_distributed_pretrain_ascend.sh      # Ascend设备上分布式预训练shell脚本
     ├─run_distributed_pretrain_gpu.sh         # GPU设备上分布式预训练shell脚本

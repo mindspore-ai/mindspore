@@ -36,7 +36,7 @@ export_file_name: 'bert_squad'
 file_format: 'AIR'
 
 optimizer_cfg:
-    optimizer: 'Lamb'
+    optimizer: 'Momentum'
     AdamWeightDecay:
         learning_rate: 0.0001  # 1e-4
         end_learning_rate: 0.00000000001  # 1e-11

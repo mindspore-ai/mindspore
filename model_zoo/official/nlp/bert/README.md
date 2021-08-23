@@ -92,17 +92,17 @@ bash scripts/run_distributed_pretrain_ascend.sh /path/cn-wiki-128 /path/hccl.jso
 - Set bert network config and optimizer hyperparameters in `finetune_eval_config.py`.
 
 - Classification task: Set task related hyperparameters in scripts/run_classifier.sh.
-- Run `bash scripts/run_classifier.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+- Run `bash scripts/run_classifier.sh` for fine-tuning of BERT-base and BERT-NEZHA model.
 
   bash scripts/run_classifier.sh
 
 - NER task: Set task related hyperparameters in scripts/run_ner.sh.
-- Run `bash scripts/run_ner.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+- Run `bash scripts/run_ner.sh` for fine-tuning of BERT-base and BERT-NEZHA model.
 
   bash scripts/run_ner.sh
 
 - SQuAD task: Set task related hyperparameters in scripts/run_squad.sh.
-- Run `bash scripts/run_squad.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+- Run `bash scripts/run_squad.sh` for fine-tuning of BERT-base and BERT-NEZHA model.
 
   bash scripts/run_squad.sh
 ```
@@ -121,19 +121,19 @@ bash scripts/run_distributed_pretrain_for_gpu.sh 8 40 /path/cn-wiki-128
 - Set bert network config and optimizer hyperparameters in `finetune_eval_config.py`.
 
 - Classification task: Set task related hyperparameters in scripts/run_classifier.sh.
-- Run `bash scripts/run_classifier.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+- Run `bash scripts/run_classifier.sh` for fine-tuning of BERT-base and BERT-NEZHA model.
 
   bash scripts/run_classifier.sh
 
 - NER task: Set task related hyperparameters in scripts/run_ner.sh.
-- Run `bash scripts/run_ner.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+- Run `bash scripts/run_ner.sh` for fine-tuning of BERT-base and BERT-NEZHA model.
 
   bash scripts/run_ner.sh
 
-- SQuAD task: Set task related hyperparameters in scripts/run_squad.sh.
-- Run `bash scripts/run_squad.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+- SQuAD task: Set task related hyperparameters in scripts/run_squad_gpu.sh.
+- Run `bash scripts/run_squad_gpu.py` for fine-tuning of BERT-base and BERT-NEZHA model.
 
-  bash scripts/run_squad.sh
+  bash scripts/run_squad_gpu.sh
 ```
 
 - running on ModelArts
@@ -268,7 +268,8 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
         ├─README.md
     ├─run_classifier.sh                       # shell script for standalone classifier task on ascend or gpu
     ├─run_ner.sh                              # shell script for standalone NER task on ascend or gpu
-    ├─run_squad.sh                            # shell script for standalone SQUAD task on ascend or gpu
+    ├─run_squad.sh                            # shell script for standalone SQUAD task on ascend
+    ├─run_squad_gpu.sh                        # shell script for standalone SQUAD task on gpu
     ├─run_standalone_pretrain_ascend.sh       # shell script for standalone pretrain on ascend
     ├─run_distributed_pretrain_ascend.sh      # shell script for distributed pretrain on ascend
     ├─run_distributed_pretrain_gpu.sh         # shell script for distributed pretrain on gpu

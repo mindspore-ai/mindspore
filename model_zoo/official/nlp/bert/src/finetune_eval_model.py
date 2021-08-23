@@ -20,7 +20,10 @@ Bert finetune and evaluation model script.
 import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.ops import operations as P
+from mindspore import context
 from .bert_model import BertModel
+
+
 
 class BertCLSModel(nn.Cell):
     """
@@ -28,6 +31,7 @@ class BertCLSModel(nn.Cell):
     LCQMC(num_labels=2), Chnsenti(num_labels=2). The returned output represents the final
     logits as the results of log_softmax is proportional to that of softmax.
     """
+
     def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False,
                  assessment_method=""):
         super(BertCLSModel, self).__init__()
@@ -46,8 +50,7 @@ class BertCLSModel(nn.Cell):
         self.assessment_method = assessment_method
 
     def construct(self, input_ids, input_mask, token_type_id):
-        _, pooled_output, _ = \
-            self.bert(input_ids, token_type_id, input_mask)
+        _, pooled_output, _ = self.bert(input_ids, token_type_id, input_mask)
         cls = self.cast(pooled_output, self.dtype)
         cls = self.dropout(cls)
         logits = self.dense_1(cls)
@@ -56,10 +59,12 @@ class BertCLSModel(nn.Cell):
             logits = self.log_softmax(logits)
         return logits
 
+
 class BertSquadModel(nn.Cell):
     '''
     This class is responsible for SQuAD
     '''
+
     def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False):
         super(BertSquadModel, self).__init__()
         if not is_training:
@@ -73,22 +78,36 @@ class BertSquadModel(nn.Cell):
         self.dtype = config.dtype
         self.log_softmax = P.LogSoftmax(axis=1)
         self.is_training = is_training
+        self.gpu_target = context.get_context("device_target") == "GPU"
+        self.cast = P.Cast()
+        self.reshape = P.Reshape()
+        self.transpose = P.Transpose()
+        self.shape = (-1, config.hidden_size)
+        self.origin_shape = (-1, config.seq_length, self.num_labels)
+        self.transpose_shape = (-1, self.num_labels, config.seq_length)
 
     def construct(self, input_ids, input_mask, token_type_id):
+        """Return the final logits as the results of log_softmax."""
         sequence_output, _, _ = self.bert(input_ids, token_type_id, input_mask)
-        batch_size, seq_length, hidden_size = P.Shape()(sequence_output)
-        sequence = P.Reshape()(sequence_output, (-1, hidden_size))
+        sequence = self.reshape(sequence_output, self.shape)
         logits = self.dense1(sequence)
-        logits = P.Cast()(logits, self.dtype)
-        logits = P.Reshape()(logits, (batch_size, seq_length, self.num_labels))
-        logits = self.log_softmax(logits)
+        logits = self.cast(logits, self.dtype)
+        logits = self.reshape(logits, self.origin_shape)
+        if self.gpu_target:
+            logits = self.transpose(logits, (0, 2, 1))
+            logits = self.log_softmax(self.reshape(logits, (-1, self.transpose_shape[-1])))
+            logits = self.transpose(self.reshape(logits, self.transpose_shape), (0, 2, 1))
+        else:
+            logits = self.log_softmax(logits)
         return logits
+
 
 class BertNERModel(nn.Cell):
     """
     This class is responsible for sequence labeling task evaluation, i.e. NER(num_labels=11).
     The returned output represents the final logits as the results of log_softmax is proportional to that of softmax.
     """
+
     def __init__(self, config, is_training, num_labels=11, use_crf=False, dropout_prob=0.0,
                  use_one_hot_embeddings=False):
         super(BertNERModel, self).__init__()
@@ -111,8 +130,7 @@ class BertNERModel(nn.Cell):
 
     def construct(self, input_ids, input_mask, token_type_id):
         """Return the final logits as the results of log_softmax."""
-        sequence_output, _, _ = \
-            self.bert(input_ids, token_type_id, input_mask)
+        sequence_output, _, _ = self.bert(input_ids, token_type_id, input_mask)
         seq = self.dropout(sequence_output)
         seq = self.reshape(seq, self.shape)
         logits = self.dense_1(seq)
