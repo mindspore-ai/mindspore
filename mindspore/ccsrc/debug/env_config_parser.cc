@@ -19,6 +19,7 @@
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
 #include "debug/common.h"
+#include "debug/dump_utils.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 
@@ -102,17 +103,19 @@ void EnvConfigParser::ParseFromEnv() {
     has_rdr_setting_ = true;
     rdr_enabled_ = rdr_enable_env.value();
   }
+  std::string path = "";
   auto path_env = GetRdrPathFromEnv();
   if (path_env.has_value()) {
     has_rdr_setting_ = true;
-    std::string path = path_env.value();
+    path = path_env.value();
     if (!path.empty()) {
       if (path.back() != '/') {
         path += '/';
       }
-      rdr_path_ = path;
     }
   }
+  uint32_t rank_id = DumpUtils::GetRankId();
+  rdr_path_ = path + "rank_" + std::to_string(rank_id) + "/rdr/";
 #endif
 }
 

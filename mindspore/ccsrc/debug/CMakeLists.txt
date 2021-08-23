@@ -6,6 +6,7 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/anf_ir_utils.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/draw.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/dump_proto.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/dump_utils.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/env_config_parser.cc"
@@ -52,6 +53,7 @@ if(NOT ENABLE_SECURITY)
     if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         list(APPEND _DEBUG_SRC_LIST
             "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/dump_utils.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/e2e_dump.cc"
             )
     endif()
