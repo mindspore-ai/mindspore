@@ -84,6 +84,7 @@ set(LITE_SRC
         ${API_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/context_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/config_file.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc

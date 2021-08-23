@@ -20,9 +20,10 @@
 #include "src/lite_session.h"
 #include "src/lite_kernel.h"
 
-namespace mindspore::lite::opencl::test {
-
-class TestOpenCL_MindrtParallel : public CommonTest {};
+class MindrtRuntimeTest : public mindspore::CommonTest {
+ public:
+  MindrtRuntimeTest() = default;
+};
 
 int CheckRuntime(mindspore::session::LiteSession *session) {
   mindspore::lite::LiteSession *lite_session = reinterpret_cast<mindspore::lite::LiteSession *>(session);
@@ -52,27 +53,27 @@ int CheckRuntime(mindspore::session::LiteSession *session) {
   return 0;
 }
 
-TEST_F(TestOpenCL_MindrtParallel, Runtime) {
+TEST_F(MindrtRuntimeTest, Runtime) {
   size_t size = 0;
-  char *graph_buf = lite::ReadFile("./test_data/mindrt_parallel/mindrt_parallel_model.ms", &size);
+  char *graph_buf = mindspore::lite::ReadFile("./test_data/mindrt_parallel/mindrt_parallel_model.ms", &size);
   ASSERT_NE(graph_buf, nullptr);
 
-  auto model = std::shared_ptr<lite::Model>(mindspore::lite::Model::Import(graph_buf, size));
+  auto model = std::shared_ptr<mindspore::lite::Model>(mindspore::lite::Model::Import(graph_buf, size));
   delete[](graph_buf);
   ASSERT_NE(model, nullptr);
 
-  auto context = std::make_shared<lite::Context>();
+  auto context = std::make_shared<mindspore::lite::Context>();
   ASSERT_NE(context, nullptr);
   context->enable_parallel_ = true;
-  DeviceContext gpu_device_ctx{DT_GPU, {false}};
+  mindspore::lite::DeviceContext gpu_device_ctx{mindspore::lite::DT_GPU, {false}};
   gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = false;
   context->device_list_.push_back(gpu_device_ctx);
 
-  session::LiteSession *session = session::LiteSession::CreateSession(context.get());
+  mindspore::session::LiteSession *session = mindspore::session::LiteSession::CreateSession(context.get());
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());
-  ASSERT_EQ(benchmark_ret, lite::RET_OK);
+  ASSERT_EQ(benchmark_ret, mindspore::lite::RET_OK);
 
   ASSERT_EQ(CheckRuntime(session), 0);
 
@@ -81,7 +82,7 @@ TEST_F(TestOpenCL_MindrtParallel, Runtime) {
     in->MutableData();
   }
   benchmark_ret = session->RunGraph(nullptr, nullptr);
-  ASSERT_EQ(benchmark_ret, lite::RET_OK);
+  ASSERT_EQ(benchmark_ret, mindspore::lite::RET_OK);
 
   delete session;
 }
@@ -103,26 +104,26 @@ int CheckRuntime2(mindspore::session::LiteSession *session) {
   return 0;
 }
 
-TEST_F(TestOpenCL_MindrtParallel, RuntimeFp16) {
+TEST_F(MindrtRuntimeTest, RuntimeFp16) {
   size_t size = 0;
-  char *graph_buf = lite::ReadFile("./test_data/mindrt_parallel/mindrt_parallel_model.ms", &size);
+  char *graph_buf = mindspore::lite::ReadFile("./test_data/mindrt_parallel/mindrt_parallel_model.ms", &size);
   ASSERT_NE(graph_buf, nullptr);
 
-  auto model = std::shared_ptr<lite::Model>(mindspore::lite::Model::Import(graph_buf, size));
+  auto model = std::shared_ptr<mindspore::lite::Model>(mindspore::lite::Model::Import(graph_buf, size));
   delete[](graph_buf);
   ASSERT_NE(model, nullptr);
 
-  auto context = std::make_shared<lite::Context>();
+  auto context = std::make_shared<mindspore::lite::Context>();
   ASSERT_NE(context, nullptr);
   context->enable_parallel_ = true;
   auto &cpu_device_ctx = context->device_list_[0];
   cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = true;
 
-  session::LiteSession *session = session::LiteSession::CreateSession(context.get());
+  mindspore::session::LiteSession *session = mindspore::session::LiteSession::CreateSession(context.get());
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());
-  ASSERT_EQ(benchmark_ret, lite::RET_OK);
+  ASSERT_EQ(benchmark_ret, mindspore::lite::RET_OK);
 
   ASSERT_EQ(CheckRuntime2(session), 0);
 
@@ -131,8 +132,7 @@ TEST_F(TestOpenCL_MindrtParallel, RuntimeFp16) {
     in->MutableData();
   }
   benchmark_ret = session->RunGraph(nullptr, nullptr);
-  ASSERT_EQ(benchmark_ret, lite::RET_OK);
+  ASSERT_EQ(benchmark_ret, mindspore::lite::RET_OK);
 
   delete session;
 }
-}  // namespace mindspore::lite::opencl::test
