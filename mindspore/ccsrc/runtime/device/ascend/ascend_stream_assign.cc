@@ -1159,63 +1159,6 @@ bool AscendStreamAssign::CheckStreamSwitch(const CNodePtr &switch_ptr) {
   return true;
 }
 
-void AscendStreamAssign::UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &switch_ptr,
-                                            vector<CNodePtr> *orders) {
-  if (!CheckStreamSwitch(switch_ptr)) {
-    orders->emplace_back(switch_ptr);
-    return;
-  }
-
-  auto kind = AnfAlgo::GetNodeAttr<uint32_t>(switch_ptr, kAttrStreamSwitchKind);
-  if (kind == kIndependentStreamSwitch) {
-    bool independent_empty = independent_stream_map_.empty();
-    // if independent empty: delete independent streamswitch
-    if (!independent_empty) {
-      for (const auto &item : independent_stream_map_) {
-        // first independent stream id is minimum and order by std map;
-        auto first_independent_stream = item.first;
-        AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(first_independent_stream), switch_ptr);
-        orders->emplace_back(switch_ptr);
-        break;
-      }
-    } else {
-      MS_LOG(ERROR) << "Independent stream switch exit, but independent stream is empty";
-    }
-
-    // update processed stream
-    independent_stream_activated_ = true;
-    for (const auto &item : independent_stream_map_) {
-      processed_streams_.emplace(item.first);
-    }
-  } else if (kind == kFpBpStreamSwitch) {
-    if (hcom_stream_map_.empty()) {
-      orders->emplace_back(switch_ptr);
-      return;
-    }
-    if (!AnfAlgo::HasNodeAttr(kAttrTrueBranchStream, switch_ptr)) {
-      // FpBp StreamSwitch has no true branch attr
-      orders->emplace_back(switch_ptr);
-      return;
-    }
-    auto true_stream_id = AnfAlgo::GetNodeAttr<uint32_t>(switch_ptr, kAttrTrueBranchStream);
-    MS_LOG(INFO) << "Switch stream id:" << AnfAlgo::GetStreamId(switch_ptr) << "; active stream id:" << true_stream_id;
-    CNodePtr active_ptr = KernelAdjust::GetInstance().CreateStreamActiveOp(graph_ptr);
-    AnfAlgo::SetStreamId(true_stream_id, active_ptr.get());
-    vector<uint32_t> active_ids;
-    // active hcom stream
-    for (const auto &item : hcom_stream_map_) {
-      active_ids.emplace_back(item.first);
-    }
-    AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(active_ids), active_ptr);
-    hcom_stream_activated_ = true;
-    for (const auto &item : hcom_stream_map_) {
-      processed_streams_.emplace(item.first);
-    }
-    orders->emplace_back(switch_ptr);
-    orders->emplace_back(active_ptr);
-  }
-}
-
 bool AscendStreamAssign::IsProcessedStream(uint32_t stream_id) {
   auto it = std::find(processed_streams_.begin(), processed_streams_.end(), stream_id);
   if (it != processed_streams_.end()) {
@@ -1936,16 +1879,18 @@ void AscendStreamAssign::CheckEventAssign(const NotNull<KernelGraphPtr> &graph_p
     }
     uint32_t assigned_event_num = resource_manager.get_cur_event_num();
     if ((max_event_id != assigned_event_num - 1) || (event_map.size() != assigned_event_num)) {
-      MS_LOG(EXCEPTION) << "Event should be consecutive";
+      MS_LOG(EXCEPTION) << "Event should be consecutive, however, assigned event num is: " << assigned_event_num
+                        << ", max event id:" << max_event_id << ", event map is:" << event_map;
     }
     for (const auto &item : event_map) {
       if (item.second.size() != 2) {
-        MS_LOG(EXCEPTION) << "Send/recv should be in pair and share one event id";
+        MS_LOG(EXCEPTION) << "Send/recv should be in pair and share one event id, invalid event id is:" << item.first
+                          << ", event size is:" << item.second.size();
       }
       auto first_name = AnfAlgo::GetCNodeName(item.second[0]);
       auto second_name = AnfAlgo::GetCNodeName(item.second[1]);
       if (!(first_name == kSendOpName && second_name == kRecvOpName)) {
-        MS_LOG(EXCEPTION) << "Send should be before recv";
+        MS_LOG(EXCEPTION) << "Send should be before recv, invalid event id is:" << item.first;
       }
     }
   }
@@ -2220,20 +2165,20 @@ void AscendStreamAssign::GetStreamActiveStreamRelation(const NotNull<KernelGraph
   auto cur_stream_id = AnfAlgo::GetStreamId(cur_cnode);
   auto active_list = AnfAlgo::GetNodeAttr<vector<uint32_t>>(cur_cnode, kAttrActiveStreamList);
   if (kind == kHead) {
-    uint32_t active_current_node = GetStreamByActivedStream(cur_stream_id);
-    if (active_current_node == kInvalidStreamId) {
-      MS_LOG(EXCEPTION) << "No stream to active streamactive stream";
+    uint32_t active_current_stream_id = GetStreamByActivedStream(cur_stream_id);
+    if (active_current_stream_id == kInvalidStreamId) {
+      MS_LOG(EXCEPTION) << "No stream to active streamactive stream: " << cur_stream_id;
     }
 
     for (const auto &item : active_list) {
-      if (item <= active_current_node) {
+      if (item <= active_current_stream_id) {
         MS_LOG(WARNING) << "Activated stream is less than activing stream";
         continue;
       }
-      auto it =
-        std::find(stream_relations_[active_current_node].begin(), stream_relations_[active_current_node].end(), item);
-      if (it == stream_relations_[active_current_node].end()) {
-        stream_relations_[active_current_node].emplace_back(item);
+      auto it = std::find(stream_relations_[active_current_stream_id].begin(),
+                          stream_relations_[active_current_stream_id].end(), item);
+      if (it == stream_relations_[active_current_stream_id].end()) {
+        stream_relations_[active_current_stream_id].emplace_back(item);
       }
     }
   }
@@ -2277,7 +2222,7 @@ StreamActiveKind AscendStreamAssign::GetStreamActiveKind(const NotNull<KernelGra
   auto cur_cnode = exe_orders[index];
   auto cur_stream_id = AnfAlgo::GetStreamId(cur_cnode);
   if (AnfAlgo::GetCNodeName(cur_cnode) != kStreamActiveOpName) {
-    MS_LOG(EXCEPTION) << "Current node name is not StreamActive";
+    MS_LOG(EXCEPTION) << "Current node name [" << AnfAlgo::GetCNodeName(cur_cnode) << "] is not StreamActive.";
   }
 
   if (index == 0) {

@@ -52,7 +52,8 @@ kernel::KernelMod *LaunchMul::ObtainLaunchMulKernelMod() {
   }
   // obtain kernel_mod
   if (mul_graph_->execution_order().size() != 1) {
-    MS_LOG(ERROR) << "the execution order of the mul graph should have only one node";
+    MS_LOG(ERROR) << "the execution order of the mul graph should have only one node, however, it has "
+                  << mul_graph_->execution_order().size() << " nodes.";
   }
   return AnfAlgo::GetKernelMod(mul_graph_->execution_order()[0]);
 }

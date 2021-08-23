@@ -582,7 +582,7 @@ DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node,
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();
   if (output_sizes.size() <= index) {
-    MS_LOG(EXCEPTION) << "Previous node output size < node index";
+    MS_LOG(EXCEPTION) << "Previous node output size " << output_sizes.size() << " <= node index " << index;
   }
   std::string output_format = AnfAlgo::GetOutputFormat(anf_node, index);
   auto output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, index);
