@@ -16,6 +16,10 @@
 
 #include "backend/kernel_compiler/gpu/cuda_impl/rl/rl_buffer_impl.cuh"
 
+#include <thrust/device_ptr.h>
+#include <thrust/sort.h>
+#include <thrust/execution_policy.h>
+
 __global__ void BufferAppendKernel(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
                                    unsigned char *buffer, const unsigned char *exp) {
   size_t index_ = index[0];
@@ -84,19 +88,24 @@ __global__ void CheckBatchSizeKernel(const int *count, const int *head, const si
   }
 }
 
-__global__ void BufferSampleKernel(const size_t size, const size_t one_element, const int *index,
+__global__ void BufferSampleKernel(const size_t size, const size_t one_element, const unsigned int *index,
                                    const unsigned char *buffer, unsigned char *out) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     out[i] = buffer[index[i / one_element] * one_element + i % one_element];
   }
 }
 
-__global__ void SrandUniformFloat(const int size, curandState *globalState, const int seedc, float *out) {
+__global__ void SetupKernel(const int seed, curandState *state, const int size) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    curand_init(seedc, threadIdx.x, 0, &globalState[i]);
-    out[i] = curand_uniform(&globalState[i]);
+    curand_init(seed, i, 0, &state[i]);
   }
-  __syncthreads();
+}
+
+__global__ void SrandUInt(const int size, curandState *globalState, unsigned int *value, unsigned int *out) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    out[i] = curand(&globalState[i]);
+    value[i] = i;
+  }
 }
 
 void BufferAppend(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
@@ -123,11 +132,21 @@ void CheckBatchSize(const int *count, const int *head, const size_t batch_size, 
   CheckBatchSizeKernel<<<1, 1, 0, cuda_stream>>>(count, head, batch_size, capacity);
 }
 
-void BufferSample(const size_t size, const size_t one_element, const int *index, const unsigned char *buffer,
+void BufferSample(const size_t size, const size_t one_element, const unsigned int *index, const unsigned char *buffer,
                   unsigned char *out, cudaStream_t cuda_stream) {
   BufferSampleKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, one_element, index, buffer, out);
 }
 
-void RandomGen(const int size, curandState *globalState, const int &seedc, float *out, cudaStream_t stream) {
-  SrandUniformFloat<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(size, globalState, seedc, out);
+void RandInit(const int size, const int seed, curandState *state, cudaStream_t stream) {
+  SetupKernel<<<(size + 255) / 256, 256, 0, stream>>>(seed, state, size);
+}
+
+void RandomGen(const int size, curandState *globalState, unsigned int *value, unsigned int *key, cudaStream_t stream) {
+  // 1 Generate two list, value for random int num, key for sequence form [0, size).
+  SrandUInt<<<(size + 255) / 256, 256, 0, stream>>>(size, globalState, value, key);
+  auto policy = thrust::cuda::par.on(stream);
+  thrust::device_ptr<unsigned int> dev_data_ptr(value);
+  thrust::device_ptr<unsigned int> dev_key_ptr(key);
+  // 2 Sort the key and get the sorted indexes.
+  thrust::sort_by_key(policy, dev_key_ptr, dev_key_ptr + size, dev_data_ptr);
 }
