@@ -51,7 +51,6 @@ class GradientWithInput(nn.Cell):
         self.reduce_sum = ops.ReduceSum()
         self.discriminator = discriminator
         self.discriminator.set_train(mode=True)
-        self.discriminator.set_grad(True)
 
     def construct(self, interpolates):
         decision_interpolate, _ = self.discriminator(interpolates)
@@ -72,7 +71,6 @@ class WGANGPGradientPenalty(nn.Cell):
         self.sqrt = ops.Sqrt()
         self.discriminator = discriminator
         self.GradientWithInput = GradientWithInput(discriminator)
-        self.GradientWithInput.set_grad(True)
 
     def construct(self, x_real, x_fake):
         """get gradient penalty"""
