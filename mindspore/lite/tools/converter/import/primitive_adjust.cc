@@ -549,16 +549,12 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
       }
       auto cnode = node->cast<CNodePtr>();
       MS_ASSERT(cnode->size() > 0);
-      auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-      if (value_node == nullptr) {
-        if (cnode->input(0)->cast<CNodePtr>() != nullptr) {
-          continue;
-        }
-        MS_LOG(ERROR) << "cnode first input is invalid.";
-        return false;
+      if (cnode->input(0)->cast<CNodePtr>() != nullptr) {
+        continue;
       }
       auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
       if (prim == nullptr) {
+        MS_LOG(DEBUG) << "this is a call cnode, which input[0] is fg.";
         continue;
       }
       auto name = prim->name();
