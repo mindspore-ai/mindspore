@@ -24,9 +24,6 @@ from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.deeplab_v3plus import DeepLabV3Plus
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False,
-                    device_id=int(os.getenv('DEVICE_ID')))
-
 
 def parse_args():
     """parse_args"""
@@ -43,6 +40,11 @@ def parse_args():
     parser.add_argument('--flip', action='store_true', help='perform left-right flip')
     parser.add_argument('--ignore_label', type=int, default=255, help='ignore label')
     parser.add_argument('--num_classes', type=int, default=21, help='number of classes')
+
+    # device info
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU', 'CPU'],
+                        help='device where the code will be implemented. (Default: Ascend)')
+    parser.add_argument('--device_id', type=int, default=0, help='device id')
 
     # model
     parser.add_argument('--model', type=str, default='', help='select model')
@@ -154,7 +156,8 @@ def eval_batch_scales(args, eval_net, img_lst, scales,
 def net_eval():
     """net_eval"""
     args = parse_args()
-
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, save_graphs=False,
+                        device_id=args.device_id)
     # data list
     with open(args.data_lst) as f:
         img_lst = f.readlines()

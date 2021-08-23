@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-export DEVICE_ID=5
+DEVICE_ID=5
 export SLOG_PRINT_TO_STDOUT=0
 train_path=/PATH/TO/EXPERIMENTS_DIR
 train_code_path=/PATH/TO/MODEL_ZOO_CODE
@@ -41,4 +41,5 @@ python ${train_code_path}/train.py --data_file=/PATH/TO/MINDRECORD_NAME  \
                     --model=DeepLabV3plus_s16  \
                     --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
                     --save_steps=1500  \
-                    --keep_checkpoint_max=200 >log 2>&1 &
+                    --keep_checkpoint_max=200 \
+                    --device_id=$DEVICE_ID >log 2>&1 &
