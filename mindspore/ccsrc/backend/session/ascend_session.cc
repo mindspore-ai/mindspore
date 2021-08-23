@@ -1547,10 +1547,7 @@ void AscendSession::ReportWarningMessage() {
 
 void AscendSession::ReportErrorMessage() {
   const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-  if (error_message.find(kUnknowErrorString) != string::npos) {
-    return;
-  }
-  if (!error_message.empty()) {
+  if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
     MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
   }
 }
