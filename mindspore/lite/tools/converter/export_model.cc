@@ -191,7 +191,8 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     return RET_ERROR;
   }
   (void)Manage(mirror_graph, true);
-  if (!RunOptimizerPass(mirror_graph, {"InferShapePass", "DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
+  if (!RunOptimizerPass(mirror_graph,
+                        {"ToNHWCFormat", "InferShapePass", "DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "Run transpose opt pass failed.";
     return RET_ERROR;
   }

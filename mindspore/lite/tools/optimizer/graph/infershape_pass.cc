@@ -136,7 +136,7 @@ bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
       } else {
         all_op_can_infer = all_op_can_infer && JudgeAllOpsCanInfer(sub_func_graph);
       }
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         all_op_can_infer = false;

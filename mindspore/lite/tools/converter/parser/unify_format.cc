@@ -213,7 +213,8 @@ void UnifyFormatToNHWC::SetSensitiveOps() {
   sensitive_ops_.insert(sensitive_nchw_ops.begin(), sensitive_nchw_ops.end());
 }
 
-bool UnifyFormatToNHWC::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ShapeVector &shape) {
+bool UnifyFormatToNHWC::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ParameterPtr &input,
+                                                      const ShapeVector &shape) {
   MS_ASSERT(func_graph != nullptr);
   if (fmk_type_ == converter::kFmkTypeTf || fmk_type_ == converter::kFmkTypeTflite) {
     return false;
