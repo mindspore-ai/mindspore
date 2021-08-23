@@ -79,11 +79,11 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
     auto x_type = input_args[i]->BuildType();
     MS_EXCEPTION_IF_NULL(x_type);
     std::set<TypePtr> valid_x_type = {kTensorType};
-    CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_type, valid_x_type, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_type, valid_x_type, prim_name);
   }
   std::map<std::string, TypePtr> types;
-  types.emplace("input_x", input_args[0]->BuildType());
-  types.emplace("bias", input_args[1]->BuildType());
+  (void)types.emplace("input_x", input_args[0]->BuildType());
+  (void)types.emplace("bias", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim_name);
 }
 }  // namespace

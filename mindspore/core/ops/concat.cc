@@ -52,7 +52,7 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto axis = axis_temp < 0 ? LongToSize(axis_temp) + element0_rank : LongToSize(axis_temp);
 
   std::map<std::string, TypePtr> types;
-  types.emplace("element0", element0->BuildType());
+  (void)types.emplace("element0", element0->BuildType());
   int64_t all_shp = element0_shape[axis];
   for (size_t i = 1; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
@@ -65,7 +65,7 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
       }
     }
     all_shp = all_shp == -1 || elementi_shape[axis] == -1 ? -1 : all_shp + elementi_shape[axis];
-    types.emplace(elementi, elements[i]->BuildType());
+    (void)types.emplace(elementi, elements[i]->BuildType());
   }
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, all_types, prim_name);
   auto ret_shape = element0_shape;

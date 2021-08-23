@@ -45,7 +45,8 @@ AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto dim_rank = dims.size();
   std::vector<int64_t> out_shape;
   if (dim_rank == 0) {
-    std::copy_if(input_shape.begin(), input_shape.end(), out_shape.begin(), [](const auto item) { return item == 1; });
+    (void)std::copy_if(input_shape.begin(), input_shape.end(), out_shape.begin(),
+                       [](const auto item) { return item == 1; });
   } else {
     auto sz = input_rank + dim_rank;
     size_t in_itr = 0;

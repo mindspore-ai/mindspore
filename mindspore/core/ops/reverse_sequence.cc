@@ -57,7 +57,7 @@ AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const 
                                            input_shape[LongToSize(batch_dim)], prim_name);
   // infer type
   std::set<TypePtr> valid_x_types(common_valid_types);
-  valid_x_types.emplace(kBool);
+  (void)valid_x_types.emplace(kBool);
   const std::set<TypePtr> valid_seq_types = {kInt32, kInt64};
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   auto seq_type = input_args[1]->BuildType()->cast<TensorTypePtr>()->element();

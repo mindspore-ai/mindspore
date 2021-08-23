@@ -32,7 +32,7 @@ std::vector<int64_t> GetInferShape(const std::vector<int64_t> &input_shape, cons
   }
   if (len_sub > 0) {
     for (int64_t i = 0; i < len_sub; i++) {
-      infer_shape.insert(infer_shape.begin(), 1);
+      (void)infer_shape.insert(infer_shape.begin(), 1);
     }
     multiples_w = multiples_v;
   }

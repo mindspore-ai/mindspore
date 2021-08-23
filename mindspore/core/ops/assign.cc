@@ -33,7 +33,7 @@ AbstractBasePtr InferImplAssign(const abstract::AnalysisEnginePtr &, const Primi
   (void)CheckAndConvertUtils::CheckInteger(
     "Assign infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(args_spec_list)), kEqual, 2, prim_name);
   auto check_types = common_valid_types;
-  check_types.emplace(kBool);
+  (void)check_types.emplace(kBool);
   auto variable_type = args_spec_list[0]->BuildType();
   auto value_type = args_spec_list[1]->BuildType();
   CheckAndConvertUtils::CheckScalarOrTensorTypesSame(std::map<std::string, TypePtr>{{"value", value_type}}, check_types,
@@ -41,7 +41,7 @@ AbstractBasePtr InferImplAssign(const abstract::AnalysisEnginePtr &, const Primi
   if (variable_type->isa<RefKeyType>()) {
     return args_spec_list[1]->Broaden();
   }
-  CheckAndConvertUtils::CheckTensorTypeValid("variable", variable_type, check_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("variable", variable_type, check_types, prim_name);
   return args_spec_list[0];
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Assign, prim::kPrimAssign, InferImplAssign, nullptr, true);

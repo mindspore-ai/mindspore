@@ -39,15 +39,15 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   (void)CheckAndConvertUtils::CheckInteger("depth value", depth_val, kGreaterEqual, 0, op_name);
   if (min_shape.size() == 0 || max_shape.size() == 0) {
     if (axis >= 0) {
-      in_shape.insert(in_shape.begin() + axis, depth_val);
+      (void)in_shape.insert(in_shape.begin() + axis, depth_val);
     } else {
       in_shape.push_back(depth_val);
     }
   } else {
     if (axis >= 0) {
-      in_shape.insert(in_shape.begin() + axis, depth_val);
-      min_shape.insert(min_shape.begin() + axis, depth_val);
-      max_shape.insert(max_shape.begin() + axis, depth_val);
+      (void)in_shape.insert(in_shape.begin() + axis, depth_val);
+      (void)min_shape.insert(min_shape.begin() + axis, depth_val);
+      (void)max_shape.insert(max_shape.begin() + axis, depth_val);
     } else {
       in_shape.push_back(depth_val);
       min_shape.push_back(depth_val);
@@ -59,8 +59,9 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
 
 TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
-  CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), {kInt32, kInt64}, op_name);
-  CheckAndConvertUtils::CheckTypeValid("depth", input_args[1]->BuildType(), {kInt8, kInt16, kInt32, kInt64}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), {kInt32, kInt64}, op_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("depth", input_args[1]->BuildType(), {kInt8, kInt16, kInt32, kInt64},
+                                             op_name);
   std::map<std::string, TypePtr> args = {{"on_value", input_args[2]->BuildType()},
                                          {"off_dtype", input_args[3]->BuildType()}};
   return CheckAndConvertUtils::CheckTensorTypeSame(args, {kFloat16, kFloat32}, op_name);

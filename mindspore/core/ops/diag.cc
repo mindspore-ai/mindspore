@@ -29,7 +29,7 @@ abstract::ShapePtr DiagInferShape(const PrimitivePtr &primitive, const std::vect
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("input rank", input_shape.size(), kGreaterEqual, 1, primitive->name());
   std::vector<int64_t> out_shape(input_shape);
-  out_shape.insert(out_shape.end(), input_shape.begin(), input_shape.end());
+  (void)out_shape.insert(out_shape.end(), input_shape.begin(), input_shape.end());
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

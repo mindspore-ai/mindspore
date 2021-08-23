@@ -45,9 +45,9 @@ std::vector<int64_t> GetOutputMaskShape(const std::vector<int64_t> &input_shape,
     }
   }
   if (x_dtype == kUInt8 || x_dtype == kInt8) {
-    mask_shape.insert(mask_shape.end(), 4);
+    (void)mask_shape.insert(mask_shape.end(), 4);
   } else {
-    mask_shape.insert(mask_shape.end(), 2);
+    (void)mask_shape.insert(mask_shape.end(), 2);
   }
   return mask_shape;
 }

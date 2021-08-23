@@ -32,8 +32,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   auto len = SizeToLong(in_shape.size());
   if (axis.empty()) {
-    std::copy_if(in_shape.begin(), in_shape.end(), std::back_inserter(infer_shape),
-                 [](int64_t value) { return value != 1; });
+    (void)std::copy_if(in_shape.begin(), in_shape.end(), std::back_inserter(infer_shape),
+                       [](int64_t value) { return value != 1; });
   } else {
     for (auto &item : axis) {
       CheckAndConvertUtils::CheckInRange<int64_t>("axis_or_elememt", item, kIncludeBoth, {-len, len + 1}, op_name);

@@ -42,9 +42,9 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   auto input_x_type = input_args[0]->BuildType();
   auto indices_type = input_args[1]->BuildType();
   auto update_type = input_args[2]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type, input_x_valid_types, prim->name());
-  CheckAndConvertUtils::CheckTypeValid("update type", update_type, update_valid_types, prim->name());
-  CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_type, indices_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type, input_x_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTypeValid("update type", update_type, update_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_type, indices_valid_types, prim->name());
   return input_args[0]->BuildType();
 }
 }  // namespace

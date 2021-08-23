@@ -45,8 +45,8 @@ TypePtr LayerNormBetaGammaBackpropInferType(const PrimitivePtr &prim, const std:
   std::map<std::string, TypePtr> types;
   const int64_t beta_index = 1;
   const int64_t gamma_index = 2;
-  types.emplace("beta", input_args[beta_index]->BuildType());
-  types.emplace("gamma", input_args[gamma_index]->BuildType());
+  (void)types.emplace("beta", input_args[beta_index]->BuildType());
+  (void)types.emplace("gamma", input_args[gamma_index]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
 }
 }  // namespace

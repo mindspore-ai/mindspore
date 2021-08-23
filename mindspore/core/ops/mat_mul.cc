@@ -98,8 +98,8 @@ TypePtr MatMulInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   MS_EXCEPTION_IF_NULL(prim);
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[0]->BuildType());
-  types.emplace("w", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->BuildType());
+  (void)types.emplace("w", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
