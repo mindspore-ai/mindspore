@@ -179,7 +179,7 @@ std::unordered_map<size_t, size_t> TransferSession::ConnectionMap() {
 }
 
 int TransferSession::Export(const std::string &filename, ModelType model_type, QuantizationType quant_type,
-                            FormatType format) {
+                            FormatType format, std::vector<std::string> out_put_tensor_name) {
   if (format != FT_FLATBUFFERS) {
     MS_LOG(ERROR) << "Currently only flatbuffer format is supported";
     return RET_ERROR;
@@ -206,7 +206,17 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
       return status;
     }
   }
-  status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_.get(), quant_type);
+  if (!out_put_tensor_name.empty() && model_type == MT_INFERENCE) {
+    std::vector<kernel::LiteKernel *> export_kernels = {};
+    status = FindExportKernels(&export_kernels, out_put_tensor_name, inference_kernels_);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "FindExportKernels failed.";
+      return RET_ERROR;
+    }
+    status = texport.ExportNet(export_kernels, tensors_, out_put_tensor_name, model_.get(), quant_type);
+  } else {
+    status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_.get(), quant_type);
+  }
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot serialize head";
     return status;

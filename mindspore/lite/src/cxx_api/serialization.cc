@@ -123,7 +123,8 @@ Status Serialization::ExportModel(const Model &model, ModelType model_type, Buff
 }
 
 Status Serialization::ExportModel(const Model &model, ModelType model_type, const std::string &model_file,
-                                  QuantizationType quantization_type, bool export_inference_only) {
+                                  QuantizationType quantization_type, bool export_inference_only,
+                                  std::vector<std::string> output_tensor_name) {
   if (model.impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteUninitializedObj;
@@ -137,7 +138,7 @@ Status Serialization::ExportModel(const Model &model, ModelType model_type, cons
     return kLiteParamInvalid;
   }
   auto ret = model.impl_->session_->Export(model_file, export_inference_only ? lite::MT_INFERENCE : lite::MT_TRAIN,
-                                           A2L_ConvertQT(quantization_type), lite::FT_FLATBUFFERS);
+                                           A2L_ConvertQT(quantization_type), lite::FT_FLATBUFFERS, output_tensor_name);
 
   return (ret == mindspore::lite::RET_OK) ? kSuccess : kLiteError;
 }

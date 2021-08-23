@@ -18,6 +18,8 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <utility>
+#include <queue>
+#include <algorithm>
 #include <functional>
 #include <map>
 #include <set>
@@ -28,8 +30,42 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
 constexpr static int kFmkVal = 3;
 constexpr static int kTransformTensorDim = 4;
+std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx) {
+  std::vector<size_t> postNodeIdx;
+  for (size_t i = 0; i < graphT.nodes.size(); i++) {
+    auto &oldNode = graphT.nodes.at(i);
+    if (oldNode == nullptr) {
+      continue;
+    }
+    auto inputIndexes = oldNode->inputIndex;
+    if (IsContain<uint32_t>(inputIndexes, tensorIdx)) {
+      postNodeIdx.emplace_back(i);
+    }
+  }
+  return postNodeIdx;
+}
+
+std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const schema::CNodeT &node,
+                                     const int outputIndexIdx = -1) {
+  std::vector<uint32_t> outputIndexes;
+  if (outputIndexIdx == -1) {
+    outputIndexes = node.outputIndex;
+  } else {
+    outputIndexes.emplace_back(node.outputIndex.at(outputIndexIdx));
+  }
+  std::set<size_t> outputNodeIdx;
+  for (uint32_t outputIdx : outputIndexes) {
+    auto linkedPostIdx = GetLinkedPostIdx(graphT, outputIdx);
+    outputNodeIdx.insert(linkedPostIdx.begin(), linkedPostIdx.end());
+  }
+  std::vector<size_t> ret;
+  ret.insert(ret.end(), outputNodeIdx.begin(), outputNodeIdx.end());
+  return ret;
+}
+}  // namespace
 
 std::vector<uint8_t> TrainExport::CreateData(const lite::Tensor *tensor) {
   uint8_t *tensor_data = reinterpret_cast<uint8_t *>(tensor->data_c());
@@ -397,8 +433,75 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
     }
   }
   TagQuantizedNodes();  // do another loop to mark QUANT_WEIGHT_NODES
+  auto status = TopologicalSort();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "TopologicalSort failed.";
+    return RET_ERROR;
+  }
 
   return RET_OK;
+}
+
+int TrainExport::TopologicalSort() {
+  MS_ASSERT(meta_graph_ != nullptr);
+  std::vector<std::unique_ptr<schema::CNodeT>> new_nodes;
+  std::vector<size_t> sinked_tensor_idxes;
+  for (auto &subgraph : meta_graph_->subGraph) {
+    std::copy(subgraph->inputIndices.begin(), subgraph->inputIndices.end(), std::back_inserter(sinked_tensor_idxes));
+  }
+  // put all const tensor index into sinked_tensor_idxes
+  for (size_t i = 0; i < meta_graph_->allTensors.size(); i++) {
+    if (meta_graph_->allTensors.at(i)->nodeType == NodeType_ValueNode) {
+      sinked_tensor_idxes.push_back(i);
+    }
+  }
+  auto &old_nodes = meta_graph_->nodes;
+  std::queue<std::unique_ptr<schema::CNodeT>> op_queue;
+  // put all none depend node into queue
+  for (size_t i = 0; i < meta_graph_->subGraph.size(); i++) {
+    std::vector<unsigned int> new_subgraph_node_indices = {};
+    auto subgraph_node_indices = meta_graph_->subGraph[i]->nodeIndices;
+
+    for (size_t j = 0; j < subgraph_node_indices.size(); j++) {
+      auto &node = old_nodes[subgraph_node_indices[j]];
+      if (IsNodeNonDepend(node, sinked_tensor_idxes)) {
+        sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), node->outputIndex.begin(), node->outputIndex.end());
+        op_queue.push(std::move(node));
+      }
+    }
+    while (!op_queue.empty()) {
+      auto &node = op_queue.front();
+      auto post_node_idxes = GetOutputNodeIdx(*meta_graph_, *(node.get()));
+      sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), node->outputIndex.begin(), node->outputIndex.end());
+      for (auto post_node_idx : post_node_idxes) {
+        if (IsContain(subgraph_node_indices, (unsigned int)(post_node_idx))) {
+          auto &post_node = old_nodes.at(post_node_idx);
+          // check if post_node is non-depended
+          if (IsNodeNonDepend(post_node, sinked_tensor_idxes)) {
+            op_queue.push(std::move(post_node));
+          }
+        }
+      }
+      new_nodes.emplace_back(std::move(node));
+      new_subgraph_node_indices.push_back(new_nodes.size() - 1);
+      op_queue.pop();
+    }
+    meta_graph_->subGraph[i]->nodeIndices.swap(new_subgraph_node_indices);
+  }
+  if (new_nodes.size() != old_nodes.size()) {
+    MS_LOG(ERROR) << "Unknown error in TopologicalSort, old_nodes size: " << old_nodes.size()
+                  << ", new_nodes size: " << new_nodes.size();
+    return RET_ERROR;
+  }
+  meta_graph_->nodes.swap(new_nodes);
+  return RET_OK;
+}
+
+bool TrainExport::IsNodeNonDepend(const std::unique_ptr<schema::CNodeT> &node,
+                                  const std::vector<size_t> &sinked_tensor_idxes) {
+  MS_ASSERT(node != nullptr);
+  return std::all_of(node->inputIndex.begin(), node->inputIndex.end(),
+                     [&](size_t input_idx) { return IsContain(sinked_tensor_idxes, size_t(input_idx)); });
 }
 
 int TrainExport::ExportInit(const std::string model_name, std::string version) {
@@ -407,6 +510,13 @@ int TrainExport::ExportInit(const std::string model_name, std::string version) {
     MS_LOG(ERROR) << "cannot allocate meta_graph";
     return RET_ERROR;
   }
+  auto sub_graph = std::make_unique<schema::SubGraphT>();
+  if (sub_graph == nullptr) {
+    MS_LOG(ERROR) << "cannot allocate SubGraphT";
+    return RET_ERROR;
+  }
+  sub_graph->name = model_name + "_subgraph";
+  meta_graph_->subGraph.emplace_back(std::move(sub_graph));
   meta_graph_->fmkType = kFmkVal;
   meta_graph_->name = model_name;
   meta_graph_->version = version;

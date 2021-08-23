@@ -182,9 +182,11 @@ class MS_API LiteSession {
   /// \param[in] model_type indication whether to save full model or only the inference part
   /// \param[in] quant_type indication whether to quantize exported model
   /// \param[in] format of exported file (currently only FT_FLATBUFFERS is supported)
+  /// \param[in] out_put_tensor_name of exported tensorname
   /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
   virtual int Export(const std::string &file_name, lite::ModelType model_type = lite::MT_TRAIN,
-                     lite::QuantizationType quant_type = lite::QT_DEFAULT, lite::FormatType = lite::FT_FLATBUFFERS) {
+                     lite::QuantizationType quant_type = lite::QT_DEFAULT, lite::FormatType = lite::FT_FLATBUFFERS,
+                     std::vector<std::string> out_put_tensor_name = {}) {
     return mindspore::lite::RET_ERROR;
   }
 

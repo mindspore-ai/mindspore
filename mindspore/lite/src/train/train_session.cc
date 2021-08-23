@@ -22,6 +22,7 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <queue>
 #include <map>
 #include "include/errorcode.h"
 #include "src/executor.h"
@@ -793,8 +794,63 @@ int TrainSession::Resize(const std::vector<tensor::MSTensor *> &inputs, const st
   return RET_OK;
 }
 
+int TrainSession::FindUseInTensorKernel(std::vector<kernel::LiteKernel *> *use_in_tensor_kernels,
+                                        const std::vector<lite::Tensor *> &kernel_in_tensors,
+                                        const std::vector<kernel::LiteKernel *> &inference_kernels) {
+  for (size_t i = 0; i < inference_kernels.size(); i++) {
+    for (size_t j = 0; j < kernel_in_tensors.size(); j++) {
+      if (IsContain(inference_kernels[i]->out_tensors(), kernel_in_tensors[j])) {
+        use_in_tensor_kernels->push_back(inference_kernels[i]);
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int TrainSession::FindExportKernels(std::vector<kernel::LiteKernel *> *export_kernels,
+                                    const std::vector<std::string> &export_output_tensor_names,
+                                    const std::vector<kernel::LiteKernel *> &inference_kernels) {
+  std::vector<std::string> all_kernel_name = {};
+  std::transform(inference_kernels.begin(), inference_kernels.end(), std::back_inserter(all_kernel_name),
+                 [](kernel::LiteKernel *kernel) { return kernel->name(); });
+  std::queue<std::string> need_kernel_names;
+  // Find the kernel name according to the tensor name
+  for (auto &kernel : inference_kernels) {
+    if (std::any_of(kernel->out_tensors().begin(), kernel->out_tensors().end(), [&](lite::Tensor *out_tensor) {
+          return IsContain(export_output_tensor_names, out_tensor->tensor_name());
+        })) {
+      need_kernel_names.push(kernel->name());
+    }
+  }
+  // find all kernel
+  while (!need_kernel_names.empty()) {
+    auto kernel_name = need_kernel_names.front();
+    need_kernel_names.pop();
+    auto it = find(all_kernel_name.begin(), all_kernel_name.end(), kernel_name);
+    if (it == all_kernel_name.end()) {
+      MS_LOG(ERROR) << "not find kernel name in export trained model.";
+      return RET_ERROR;
+    }
+    auto kernel = inference_kernels[it - all_kernel_name.begin()];
+    if (!IsContain(*export_kernels, kernel)) {
+      export_kernels->push_back(kernel);
+    }
+    auto kernel_in_tensors = kernel->in_tensors();
+    std::vector<kernel::LiteKernel *> use_in_tensor_kernels;
+    auto status = FindUseInTensorKernel(&use_in_tensor_kernels, kernel_in_tensors, inference_kernels);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "FindUseInTensorKernel failed.";
+      return RET_ERROR;
+    }
+    for (size_t i = 0; i < use_in_tensor_kernels.size(); i++) {
+      need_kernel_names.push(use_in_tensor_kernels[i]->name());
+    }
+  }
+  return RET_OK;
+}
+
 int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantizationType quant_type,
-                         FormatType format) {
+                         FormatType format, std::vector<std::string> out_put_tensor_name) {
   if (file_name.empty()) {
     MS_LOG(ERROR) << "File name cannot be empty";
     return RET_ERROR;
@@ -820,9 +876,21 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
     MS_LOG(ERROR) << "cannot init export";
     return status;
   }
-  status = texport.ExportNet((model_type == MT_TRAIN) ? train_kernels_ : inference_kernels_, tensors_,
-                             (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_,
-                             model_.get(), quant_type);
+
+  if (!out_put_tensor_name.empty() && model_type == MT_INFERENCE) {
+    std::vector<kernel::LiteKernel *> export_kernels = {};
+    status = FindExportKernels(&export_kernels, out_put_tensor_name, inference_kernels_);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "FindExportKernels failed.";
+      return RET_ERROR;
+    }
+    status = texport.ExportNet(export_kernels, tensors_, out_put_tensor_name, model_.get(), quant_type);
+  } else {
+    status = texport.ExportNet((model_type == MT_TRAIN) ? train_kernels_ : inference_kernels_, tensors_,
+                               (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_,
+                               model_.get(), quant_type);
+  }
+
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot export Network";
     return status;
