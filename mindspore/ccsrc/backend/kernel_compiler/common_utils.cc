@@ -916,7 +916,7 @@ std::vector<int64_t> CalDimOffset(const std::vector<int64_t> &input_shape) {
   return dim_offset;
 }
 
-size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &stop, const std::vector<int64_t> &step,
+size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
                  const std::vector<int64_t> &dim_offset) {
   size_t size = start.size();
   size_t offset = 0;

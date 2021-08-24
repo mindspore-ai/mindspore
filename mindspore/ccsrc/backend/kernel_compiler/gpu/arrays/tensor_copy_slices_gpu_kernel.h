@@ -90,7 +90,7 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
 
     CheckSliceValid(begin, end, strides, input_shapes_);
     auto dim_offset = CalDimOffset(input_shapes_);
-    offset_ = CalOffset(begin, end, strides, dim_offset);
+    offset_ = CalOffset(begin, end, dim_offset);
     copy_size_ = GetCopySize(dim_offset, begin, end) * sizeof(T);
     return true;
   }

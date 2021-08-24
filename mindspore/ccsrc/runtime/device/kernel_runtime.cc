@@ -523,7 +523,7 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
       return;
     }
     if (context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
-      mem_size = mem_manager_->GetCommonAlignSize(mem_size);
+      mem_size = MemoryManager::GetCommonAlignSize(mem_size);
     }
     total_size += mem_size;
     align_size_list.emplace_back(mem_size);
@@ -610,7 +610,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
       MS_LOG(EXCEPTION) << "Communication node inputs only support CNode";
     }
     MS_EXCEPTION_IF_NULL(address);
-    auto mem_size = mem_manager_->GetCommonAlignSize(address->size());
+    auto mem_size = MemoryManager::GetCommonAlignSize(address->size());
     total_size += mem_size;
     addr_size.emplace_back(address, mem_size);
   }
@@ -955,7 +955,7 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
 }
 
 void KernelRuntime::LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &kernel_events,
-                                      size_t index) {
+                                      size_t index) const {
   if (index >= kernel_events.size()) {
     return;
   }
