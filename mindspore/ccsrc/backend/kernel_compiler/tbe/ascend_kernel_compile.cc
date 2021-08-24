@@ -369,6 +369,8 @@ void AscendKernelCompileManager::ParseTargetJobStatus(const std::string &type, c
         success_job->emplace_back(task_info.target_job_id);
         MS_LOG(WARNING) << "Single op pre build failed ,res: " << query_obj;
       } else {
+        ResetOldTask();
+        single_processed_kernels_.clear();
         MS_LOG(EXCEPTION) << "Single op compile failed ,res: " << query_obj;
       }
     }
@@ -573,7 +575,6 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
   MS_EXCEPTION_IF_NULL(build_manager_);
   auto json_creator = std::make_shared<BuildTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
-  static std::set<std::string> processed_kernel;
   std::string job_type;
   for (const auto &node : anf_nodes) {
     MS_EXCEPTION_IF_NULL(node);
@@ -592,11 +593,11 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
     if (!is_tune_flag_ && build_manager_->SearchInCache(json_name, in_size_list, out_size_list, node.get())) {
       continue;
     }
-    if (processed_kernel.find(json_name) != processed_kernel.end()) {
+    if (single_processed_kernels_.find(json_name) != single_processed_kernels_.end()) {
       build_manager_->SaveSameOpInfo(node, json_name, in_size_list, out_size_list);
       continue;
     }
-    (void)processed_kernel.insert(json_name);
+    (void)single_processed_kernels_.insert(json_name);
 
     nlohmann::json build_json;
     job_type = is_tune_flag_ ? kTune : kCompile;
@@ -619,6 +620,8 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
       std::string build_res = GetJsonValue<std::string>(json_obj, kResult);
       build_manager_->TaskFinishProcess(task_id, build_res);
     } else {
+      ResetOldTask();
+      single_processed_kernels_.clear();
       MS_LOG(EXCEPTION) << "Kernel compile failed, op [" << op_name << "], build result: " << build_result;
     }
   }
@@ -629,7 +632,6 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
 KernelModMap AscendKernelCompileManager::AscendFusionOpCompile(const std::vector<FusionScopeInfo> &fusion_scopes) {
   MS_LOG(INFO) << "fusion op build start";
   KernelModMap kernel_mode_ret;
-  static std::set<std::string> processed_kernel;
   MS_EXCEPTION_IF_NULL(build_manager_);
   auto json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
@@ -659,12 +661,12 @@ KernelModMap AscendKernelCompileManager::AscendFusionOpCompile(const std::vector
     }
 
     // same op no need build, but need wait build finish to set kernel mode
-    if (processed_kernel.find(json_name) != processed_kernel.end()) {
+    if (fusion_processed_kernels_.find(json_name) != fusion_processed_kernels_.end()) {
       build_manager_->SaveSameFusionOpInfo(fusion_scope_iter.scope_id, json_name, tbe::kProcessorAiCore,
                                            input_size_list, output_size_list);
       continue;
     }
-    (void)processed_kernel.insert(json_name);
+    (void)fusion_processed_kernels_.insert(json_name);
 
     nlohmann::json build_json;
     const std::string job_type = is_tune_flag_ ? kTune : kCompile;
@@ -780,6 +782,8 @@ void AscendKernelCompileManager::TbeFinalize() {
   tbe_init_flag_ = false;
   is_tune_flag_ = false;
   job_list_.clear();
+  single_processed_kernels_.clear();
+  fusion_processed_kernels_.clear();
   MS_LOG(INFO) << "TbeFinalize end";
 }
 

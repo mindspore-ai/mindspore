@@ -30,6 +30,7 @@
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "backend/kernel_compiler/tbe/tbe_json/tbe_json_utils.h"
 #include "utils/json_operation_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -328,6 +329,11 @@ std::string TbeAdapter::GetNodeFusionType(const mindspore::CNodePtr &cnode) {
 
 std::string TbeAdapter::FormatPass(const std::string &format, const size_t &origin_shape_size) {
   if (format == kOpFormat_DEFAULT) {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+      return kOpFormat_NCHW;
+    }
     return origin_shape_size == kNCHWShapeSize ? kOpFormat_NCHW : kOpFormat_ND;
   } else if (format == kOpFormat_FRAC_Z) {
     return kOpFormat_FRACTAL_Z;

@@ -271,9 +271,8 @@ bool TbeKernelSelect::TbeCheckSupported(const KernelBuildInfoIter &kernel_build_
     }
     ret = AscendKernelBuildClient::Instance().CheckSupported(kernel_json.dump());
   } else {
-    auto build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    MS_EXCEPTION_IF_NULL(build_manager);
-    if (!build_manager->AscendOpCheckSupported(cnode_ptr_)) {
+    auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
+    if (!build_manager.AscendOpCheckSupported(cnode_ptr_)) {
       MS_LOG(WARNING) << "Tbe check supported failed";
       ret = false;
     }
@@ -448,9 +447,8 @@ std::string TbeKernelSelect::OpSelectFormat() {
   } else {
     MS_LOG(INFO) << "Format select for node:[" << AnfAlgo::GetCNodeName(cnode_ptr_) << ", "
                  << cnode_ptr_->fullname_with_scope() << "].";
-    auto build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    MS_EXCEPTION_IF_NULL(build_manager);
-    res_json_str = build_manager->AscendOpSelectFormat(cnode_ptr_);
+    auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
+    res_json_str = build_manager.AscendOpSelectFormat(cnode_ptr_);
   }
   return res_json_str;
 }

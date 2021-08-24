@@ -40,12 +40,10 @@ struct TargetJobStatus {
 
 class AscendKernelCompileManager {
  public:
-  AscendKernelCompileManager() = default;
-  ~AscendKernelCompileManager();
-  static std::shared_ptr<AscendKernelCompileManager> GetInstance() {
-    static auto instance = std::make_shared<AscendKernelCompileManager>();
-    if (!instance->tbe_init_flag_) {
-      instance->TbeInitialize();
+  static AscendKernelCompileManager &GetInstance() {
+    static AscendKernelCompileManager instance;
+    if (!instance.tbe_init_flag_) {
+      instance.TbeInitialize();
     }
     return instance;
   }
@@ -64,6 +62,8 @@ class AscendKernelCompileManager {
   void ResetOldTask();
 
  private:
+  AscendKernelCompileManager() = default;
+  ~AscendKernelCompileManager();
   void GetAllAscendNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph, std::vector<AnfNodePtr> *tbe_nodes);
   void QueryFinishJob(const std::string &type);
   void ParseTargetJobStatus(const std::string &type, const std::string &build_res, std::vector<int> *success_job);
@@ -80,6 +80,8 @@ class AscendKernelCompileManager {
 
   static bool tbe_init_flag_;
   static bool is_tune_flag_;
+  std::set<std::string> single_processed_kernels_;
+  std::set<std::string> fusion_processed_kernels_;
   std::shared_ptr<ParallelBuildManager> build_manager_ = nullptr;
   std::map<int, nlohmann::json> job_list_;
   std::map<int, std::string> fusion_op_names_;

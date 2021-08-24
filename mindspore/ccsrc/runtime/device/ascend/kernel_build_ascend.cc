@@ -105,10 +105,9 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
     if (!old_build.empty()) {
       tbe_ret = kernel::TbeOpParallelBuild(tbe_nodes);
     } else {
-      auto build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-      MS_EXCEPTION_IF_NULL(build_manager);
-      build_manager->ResetOldTask();
-      tbe_ret = build_manager->AscendSingleOpCompile(tbe_nodes);
+      auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
+      tbe_ret = build_manager.AscendSingleOpCompile(tbe_nodes);
+      build_manager.ResetOldTask();
     }
     auto config_path = TbeUtils::GetOpDebugPath();
     std::string dir = config_path + "kernel_meta/";
