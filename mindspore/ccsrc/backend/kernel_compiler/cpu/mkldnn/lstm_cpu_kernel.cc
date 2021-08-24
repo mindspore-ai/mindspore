@@ -23,6 +23,7 @@ namespace mindspore {
 namespace kernel {
 const int kMaxLSTMLayer = 100;
 const int kOutputWorkSpaceIndex = 3;
+const size_t kGateNum = 4;
 void LstmCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   output_size_list_[kOutputWorkSpaceIndex] = reserve_size_;
@@ -31,10 +32,10 @@ void LstmCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   auto output_types = std::vector<TypeId>(output_num, output_type);
   std::vector<std::vector<size_t>> output_shapes;
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
+    auto shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
     output_shapes.emplace_back(shape);
   }
-  size_t len = reserve_size_ / 4;
+  size_t len = reserve_size_ / kGateNum;
   output_shapes[kOutputWorkSpaceIndex] = {len, 1};
   AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node.get());
 }
@@ -56,9 +57,9 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dim src_dims = {seq_len_, batch_size_, input_size_};
   dim src_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dim src_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
-  weights_dims_ = {num_layers_, num_directions_, input_size_, 4, hidden_size_};
-  weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, 4, hidden_size_};
-  bias_dims_ = {num_layers_, num_directions_, 4, hidden_size_};
+  weights_dims_ = {num_layers_, num_directions_, input_size_, kGateNum, hidden_size_};
+  weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, kGateNum, hidden_size_};
+  bias_dims_ = {num_layers_, num_directions_, kGateNum, hidden_size_};
   dim dst_dims = {seq_len_, batch_size_, static_cast<int64_t>(hidden_size_) * num_directions_};
   dim dst_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dim dst_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
@@ -115,7 +116,7 @@ void LstmCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   if (bidirectional_) {
     num_directions_ = 2;
   }
-  const int gate_size = 4 * hidden_size_;
+  const int gate_size = kGateNum * hidden_size_;
   if (num_layers_ <= 0) {
     MS_LOG(EXCEPTION) << "Layers must be greater than zero!";
   }

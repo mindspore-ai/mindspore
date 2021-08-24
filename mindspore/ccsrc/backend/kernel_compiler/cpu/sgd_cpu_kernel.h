@@ -39,6 +39,7 @@ class SGDCPUKernel : public CPUKernel {
   float dampening_{0.0};
   float weight_decay_{0.0};
   bool nesterov_{true};
+  enum input_list_ { PARAM, GRAD, LR, ACCUM, MOMENTUM, STAT };
 };
 
 MS_REG_CPU_KERNEL_T(SGD,

@@ -117,6 +117,5 @@ bool RMSPropCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   }
   return true;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

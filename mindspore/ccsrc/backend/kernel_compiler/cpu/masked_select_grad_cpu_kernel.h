@@ -24,6 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputNum = 3;
+constexpr size_t kOutputNum = 1;
 template <typename T>
 class MaskedSelectGradCPUKernel : public CPUKernel {
  public:
@@ -41,6 +43,7 @@ class MaskedSelectGradCPUKernel : public CPUKernel {
   std::vector<size_t> grad_shape_;
   std::vector<size_t> output_shape_;
   uint64_t tensor_size_ = 1;
+  enum input_list_ { INPUT, MASK, GRAD };
 };
 
 MS_REG_CPU_KERNEL_T(MaskedSelectGrad,

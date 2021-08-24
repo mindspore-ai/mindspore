@@ -370,6 +370,5 @@ std::vector<size_t> CPUKernelUtils::GetBroadcastShape(const std::vector<size_t> 
   }
   return broadcast_shape;
 }
-
 }  // namespace kernel
 }  // namespace mindspore
