@@ -19,16 +19,6 @@
 #include <vector>
 
 namespace mindspore::lite {
-static std::mutex g_mtx;
-TensorRTRuntime *TensorRTRuntime::cuda_runtime_instance_ = nullptr;
-TensorRTRuntime *TensorRTRuntime::GetInstance() {
-  std::unique_lock<std::mutex> lck(g_mtx);
-  static TensorRTRuntime cuda_runtime;
-  if (cuda_runtime_instance_ == nullptr) {
-    cuda_runtime_instance_ = &cuda_runtime;
-  }
-  return cuda_runtime_instance_;
-}
 int TensorRTRuntime::Init() {
   if (is_init_) {
     return RET_OK;
@@ -39,7 +29,6 @@ int TensorRTRuntime::Init() {
     return RET_ERROR;
   }
   builder_->setMaxBatchSize(MAX_BATCH_SIZE);
-
   allocator_ = new (std::nothrow) TensorRTAllocator();
   if (allocator_ == nullptr) {
     MS_LOG(ERROR) << "Create allocator failed.";

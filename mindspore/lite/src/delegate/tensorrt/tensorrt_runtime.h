@@ -45,8 +45,6 @@ class TensorRTRuntime {
 
   ~TensorRTRuntime();
 
-  static TensorRTRuntime *GetInstance();
-
   int Init();
 
   nvinfer1::IBuilder *GetBuilder() { return this->builder_; }
@@ -58,7 +56,6 @@ class TensorRTRuntime {
   TensorRTAllocator *GetAllocator() { return this->allocator_; }
 
  private:
-  static TensorRTRuntime *cuda_runtime_instance_;
   bool is_init_ = false;
   nvinfer1::IBuilder *builder_{nullptr};
   TensorRTLogger logger_;
