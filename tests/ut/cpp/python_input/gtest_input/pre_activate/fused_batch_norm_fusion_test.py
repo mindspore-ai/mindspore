@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import mindspore.common.dtype as mstype
-from mindspore.common import monad
+import mindspore.common._monad as monad
 from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
