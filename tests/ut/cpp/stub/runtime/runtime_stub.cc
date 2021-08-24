@@ -181,6 +181,8 @@ RTS_API rtError_t rtLabelListCpy(rtLabel_t *label, uint32_t labelNumber, void *d
 
 RTS_API rtError_t rtModelGetTaskId(rtModel_t model, uint32_t *taskid, uint32_t *streamid) { return RT_ERROR_NONE; }
 
+RTS_API rtError_t rtModelGetId(rtModel_t model, uint32_t *modelId) { return RT_ERROR_NONE; }
+
 RTS_API rtError_t rtLabelCreateEx(rtLabel_t *label, rtStream_t stream) { return RT_ERROR_NONE; }
 
 RTS_API rtError_t rtCpuKernelLaunchWithFlag(const void *soName, const void *kernelName, uint32_t blockDim,
@@ -194,6 +196,8 @@ RTS_API rtError_t rtLabelSwitchByIndex(void *ptr, uint32_t max, void *labelInfoP
 }
 
 RTS_API rtError_t rtProfilerTrace(uint64_t id, bool notify, uint32_t flags, rtStream_t stream) { return RT_ERROR_NONE; }
+
+RTS_API rtError_t rtProfilerTraceEx(uint64_t id, uint64_t modelId, uint16_t tagId, rtStream_t stream) { return RT_ERROR_NONE; }
 
 RTS_API rtError_t rtKernelLaunchWithFlag(const void *stubFunc, uint32_t blockDim, void *args, uint32_t argsSize,
                                          rtSmDesc_t *smDesc, rtStream_t stream, uint32_t flags) {

@@ -23,14 +23,18 @@ from decimal import Decimal
 from abc import abstractmethod
 
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException, \
-    JobIdMismatchException, ProfilerIOException, ProfilerRawFileException
+    ProfilerIOException, ProfilerRawFileException
 from mindspore import log
 from mindspore.profiler.common.util import get_summary_for_step_trace
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
 
+ProfilingHeadStruct = namedtuple(
+    'ProfilingHeadStruct', ['mode', 'rptType', 'bufSize']
+)
+
 StepTraceStruct = namedtuple(
-    'TrainingTraceStruct', ['tag_id', 'task_id', 'stream_id', 'sys_count']
+    'StepTraceStruct', ['timeStamp', 'index_id', 'model_id', 'stream_id', 'task_id', 'tag_id']
 )
 
 
@@ -58,8 +62,17 @@ class BaseStepTraceParser:
         self._step_num = 0
         self._tag_map = {}
         self._is_training_mode = is_training_mode
-        self._step_end_tag_id = 255
+        self._step_end_tag_id = 4
         self._is_gpu_kernel_async_launch = is_gpu_kernel_async_launch
+        self._model_start_tag_id = 0
+        self._model_end_tag_id = 1
+        self._fp_tag_id = 2
+        self._bp_tag_id = 3
+        self._reduce_min_tag_id = 10000
+        self._reduce_max_tag_id = 20000
+        self._profiling_head_len = 4
+        self._profiling_head_pad_len = 4
+        self._st_data_len = 8 + 8 + 8 + 2 + 2 + 2
 
     @property
     def output_file(self):
@@ -113,7 +126,6 @@ class BaseStepTraceParser:
             point_info (dict): The point info about tag id and relative op name.
         """
         self._get_step_trace_files()
-        self._get_step_end_tag_id()
         tag_map = {}
         for tag, op_name in point_info.items():
             op_type = self._get_op_type(tag, op_name)
@@ -138,7 +150,7 @@ class BaseStepTraceParser:
         if op_type:
             return op_type
         # check if the tag is step tag.
-        if tag > self._step_end_tag_id or tag == 0:
+        if tag == 0:
             return 'start'
         # analyze the reduce tag
         op_name = name.rsplit('/', 1)[-1]
@@ -163,7 +175,7 @@ class BaseStepTraceParser:
         files = os.listdir(input_dir)
         step_trace_files = list(
             filter(
-                lambda file: file.startswith('training_trace') and not file.endswith('.done'),
+                lambda file: file.startswith('ts_track.data') and not file.endswith('.done'),
                 files
             )
         )
@@ -201,62 +213,51 @@ class BaseStepTraceParser:
         event_info['start'] = start_time
         event_info['reduce'] = {}
 
-        for pos in range(0, len(content), 20):
-            next_event = self._get_trace_struct(content[pos:pos + self._event_size])
-            self._construct_event_info(next_event, event_info)
-            if event_info.get('end'):
-                yield event_info
-                start_time = event_info.get('end', '-')
-                event_info.clear()
-                event_info['start'] = start_time
-                event_info['reduce'] = {}
+        i = 0
+        while i < len(content):
+            profiling_head_data = content[i:i + self._profiling_head_len]
+            parsed_head = struct.unpack('BBH', profiling_head_data)
+            profiling_head = ProfilingHeadStruct(*parsed_head)
+            if profiling_head.rptType == 10:
+                st_data = content[i + self._profiling_head_len + self._profiling_head_pad_len:
+                                  i + self._profiling_head_len + self._profiling_head_pad_len + self._st_data_len]
+                parsed_data = struct.unpack('QQQHHH', st_data)
+                next_event = StepTraceStruct(*parsed_data)
+                self._construct_event_info(next_event, event_info)
 
-    def _get_trace_struct(self, bin_info):
-        """Translate event info to StepTraceStruct."""
-        if len(bin_info) == self._event_size:
-            parsed_info = struct.unpack('=QHHQ', bin_info)
-            return StepTraceStruct(*parsed_info)
-        return None
+                if event_info.get('end'):
+                    yield event_info
+                    start_time = event_info.get('end', '-')
+                    event_info.clear()
+                    event_info['start'] = start_time
+                    event_info['reduce'] = {}
+            i = i + profiling_head.bufSize
 
     def _construct_event_info(self, next_event, event_info):
         """Construct event info according to next_event."""
-        min_job_id = self._step_end_tag_id
-        step_flag: bool = lambda tag: tag > min_job_id or tag == 0
-        end_flag: bool = lambda tag: tag == min_job_id
-        fp_flag: bool = lambda tag: tag == self._fp_tag
-        bp_flag: bool = lambda tag: tag == self._bp_tag
-
-        def _on_step_event():
-            """Handle step event."""
-            self._validate_tag_id(tag_id)
+        end_flag: bool = lambda tag: tag == self._step_end_tag_id
+        fp_flag: bool = lambda tag: tag == self._fp_tag_id
+        bp_flag: bool = lambda tag: tag == self._bp_tag_id
+        reduce_flag: bool = lambda tag: self._reduce_min_tag_id <= tag < self._reduce_max_tag_id
 
         def _on_reduce_event(reduce_tag_id):
             """Handle reduce event."""
             stream_id = next_event.stream_id
             if event_info['reduce'].get(stream_id):
-                event_info['reduce'][stream_id].append((reduce_tag_id, sys_count))
+                event_info['reduce'][stream_id].append((reduce_tag_id, time_stamp))
             else:
-                event_info['reduce'][stream_id] = [(reduce_tag_id, sys_count)]
+                event_info['reduce'][stream_id] = [(reduce_tag_id, time_stamp)]
 
         tag_id = next_event.tag_id
-        sys_count = next_event.sys_count
+        time_stamp = next_event.timeStamp
         if end_flag(tag_id):
-            event_info['end'] = sys_count
-        elif step_flag(tag_id):
-            _on_step_event()
+            event_info['end'] = time_stamp
         elif fp_flag(tag_id):
-            event_info['fp'] = sys_count
+            event_info['fp'] = time_stamp
         elif bp_flag(tag_id):
-            event_info['bp'] = sys_count
-        else:
+            event_info['bp'] = time_stamp
+        elif reduce_flag(tag_id):
             _on_reduce_event(tag_id)
-
-    def _validate_tag_id(self, job_id):
-        """Check the job id in source step trace file is same as user set."""
-        if not self._job_id:
-            self._job_id = job_id
-        elif self._job_id != job_id:
-            raise JobIdMismatchException()
 
     def _record_trace_event(self, step_trace):
         """Record trace event."""
@@ -449,7 +450,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
                             f"Failed to parse {source_file} file. Due to the profiled "
                             f"step_num of FP/BP/ITER_END Point are not equal")
                 iter_start_info = [step_trace_info_all[fp_start][0]] + \
-                    step_trace_info_all[iter_end][:num_of_step]
+                                  step_trace_info_all[iter_end][:num_of_step]
                 step_trace_info_all.insert(iter_start, iter_start_info)
         except (IOError, OSError) as err:
             log.warning(f'Failed to read {source_file}', err)
@@ -540,8 +541,8 @@ class GpuStepTraceParser(BaseStepTraceParser):
 class AscendStepTraceParser(BaseStepTraceParser):
     """The parser for ascend step trace data."""
     _event_size = 20
-    _fp_tag = 1
-    _bp_tag = 2
+    _fp_tag = 2
+    _bp_tag = 3
     _step_trace_files = []
 
     def record_point_info(self, point_info, output_path):
@@ -593,35 +594,6 @@ class AscendStepTraceParser(BaseStepTraceParser):
 
         return step_trace_files
 
-    def _get_step_end_tag_id(self):
-        """
-        Get step end tag id.This id is 255 before 2020.12.16,and 65535 now.
-        File is an old version if there is no 65535 tag id, or it is a new version.
-        """
-
-        if not self._step_trace_files:
-            return
-
-        step_num = 0
-        source_file = validate_and_normalize_path(self._step_trace_files[0])
-        try:
-            with open(source_file, 'rb') as handler:
-                content = handler.read()
-                for pos in range(0, len(content), 20):
-                    next_event = self._get_trace_struct(content[pos:pos + self._event_size])
-                    # 1 means bp_start.
-                    if next_event.tag_id == 1:
-                        step_num += 1
-                    # Step end tag id is 65535 in the new version.
-                    if next_event.tag_id == 65535:
-                        self._step_end_tag_id = next_event.tag_id
-                    # We only search the first step to find if there is 65535 tag id.
-                    if step_num == 2:
-                        break
-        except (IOError, OSError) as err:
-            log.warning(f'Failed to read {source_file} while get end tag id', err)
-            raise ProfilerIOException
-
     def _parse(self, source_files):
         """Parse source step trace files."""
         log.info("Start to parse step trace file.")
@@ -657,7 +629,7 @@ class AscendStepTraceParser(BaseStepTraceParser):
             dict, reduce info.
         """
         reduce_info = {}
-        if end_point[0] - start_point[0] != 1 or end_point[0] % 2:
+        if end_point[0] - start_point[0] != 1 or start_point[0] % 2:
             log.warning("Unmatched reduce event <%s, %s>.", start_point, end_point)
             return reduce_info
         op_type = self._tag_map.get(start_point[0])

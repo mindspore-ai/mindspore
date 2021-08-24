@@ -37,9 +37,9 @@ constexpr char kFpStartNode[] = "fp_point";
 constexpr char kBpEndNode[] = "bp_point";
 constexpr char kIterEndNode[] = "PROFILING_ITER_END";
 // PROFILING_CUSTOM_LOGID_START 3
-constexpr uint64_t kProfilingFpStartLogId = 1;
-constexpr uint64_t kProfilingBpEndLogId = 2;
-constexpr uint64_t kProfilingIterEndLogId = 65535;
+constexpr uint64_t kProfilingFpStartLogId = 2;
+constexpr uint64_t kProfilingBpEndLogId = 3;
+constexpr uint64_t kProfilingIterEndLogId = 4;
 constexpr auto kDouble = 2;
 
 nlohmann::json GetContextProfilingOption() {
@@ -57,7 +57,7 @@ nlohmann::json GetContextProfilingOption() {
 
 ProfilingTraceInfo ProfilingUtils::GenerateProfilingTrace(const session::KernelGraph &kernel_graph) {
   MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id() << " Start to get trace";
-  custom_node_index_ = 1;
+  custom_node_index_ = 5000;
   auto &cnode_exec_order = kernel_graph.execution_order();
   auto profiling_option = GetContextProfilingOption();
 
@@ -334,8 +334,8 @@ void ProfilingUtils::InsertProfilingCustomOp(const AnfNodePtr &anf_node, const P
     return;
   }
   MS_LOG(INFO) << "Profiling graph:" << graph_ptr->graph_id() << " Match CustomOp:" << anf_node->fullname_with_scope();
-  // custom op profiling job start from 3.
-  auto custom_point_id = kDouble * custom_node_index_ + 1;
+  // custom op profiling job start from 10000.
+  auto custom_point_id = kDouble * custom_node_index_;
   ProfilingContent front_profiling_content = {false, custom_point_id, 0};
   CNodePtr front_node = CreateProfilingCNodeWithStream(anf_node, front_profiling_content, graph_ptr);
   kernel_list->insert(kernel_list->end() - 1, front_node);
