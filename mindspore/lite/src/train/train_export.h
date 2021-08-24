@@ -57,6 +57,8 @@ class TrainExport {
   std::vector<size_t> out_idx_;
   std::map<size_t, size_t> remap_;
   std::unordered_map<size_t, size_t> connect_;  // connection map (backbone tenor id-> head tensor id)
+  bool IsNodeNonDepend(const std::unique_ptr<schema::CNodeT> &node, const std::vector<size_t> &sinked_tensor_idxes);
+  int TopologicalSort();
   void PrepareRemap(int offset);
   Model::Node *FindNode(const mindspore::kernel::LiteKernel *kernel, const Model *model);
   std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor);

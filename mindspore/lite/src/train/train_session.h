@@ -89,11 +89,18 @@ class TrainSession : virtual public lite::LiteSession {
     }
     return outputs;
   }
-  int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType) override;
+  int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType,
+             std::vector<std::string> out_put_tensor_name = {}) override;
 
   std::vector<tensor::MSTensor *> GetFeatureMaps() const override;
 
   int UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features_map) override;
+  int FindUseInTensorKernel(std::vector<kernel::LiteKernel *> *use_in_tensor_kernels,
+                            const std::vector<lite::Tensor *> &kernel_in_tensors,
+                            const std::vector<kernel::LiteKernel *> &inference_kernels);
+  int FindExportKernels(std::vector<kernel::LiteKernel *> *export_kernels,
+                        const std::vector<std::string> &export_output_tensor_names,
+                        const std::vector<kernel::LiteKernel *> &inference_kernels);
 
  protected:
   int AllocWorkSpace();
