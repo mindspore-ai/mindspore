@@ -95,8 +95,11 @@ The entire code structure is as following:
 ├─ data
   └─download_Pix2Pix_dataset.sh        # download dataset
 ├── scripts
+  └─run_infer_310.sh                   # launch ascend 310 inference
   └─run_train_ascend.sh                # launch ascend training(1 pcs)
   └─run_eval_ascend.sh                 # launch ascend eval
+  └─run_train_gpu.sh                   # launch gpu training(1 pcs)
+  └─run_eval_gpu.sh                    # launch gpu eval
 ├─ imgs
   └─Pix2Pix-examples.jpg               # Pix2Pix Imgs
 ├─ src
@@ -161,10 +164,31 @@ Major parameters in train.py and config.py as follows:
 python train.py --device_target [Ascend] --device_id [0] --train_data_dir [./data/facades/train]
 ```
 
-## [Evaluation](#contents)
+- running on GPU with fixed parameters
 
 ```python
-python eval.py --device_target [Ascend] --device_id [0] --val_data_dir [./data/facades/test] --ckpt [./results/ckpt/Generator_200.ckpt]
+python train.py --device_target [GPU] --device_id [0] --train_data_dir [./data/facades/train] --pad_mode REFLECT
+OR
+bash scripts/run_train_gpu.sh [DATASET_PATH] [DATASET_NAME]
+```
+
+## [Evaluation](#contents)
+
+- running on Ascend
+
+```python
+python eval.py --device_target [Ascend] --device_id [0] --val_data_dir [./data/facades/test] --ckpt [./results/ckpt/Generator_200.ckpt] --pad_mode REFLECT
+OR
+bash scripts/run_eval.sh
+```
+
+- running on GPU
+
+```python
+python eval.py --device_target [GPU] --device_id [0] --val_data_dir [./data/facades/test] --ckpt [./train/results/ckpt/Generator_200.ckpt] --predict_dir [./train/results/predict/] \
+--dataset_size 1096 --pad_mode REFLECT
+OR
+bash scripts/run_eval_gpu.sh [DATASET_PATH] [DATASET_NAME]
 ```
 
 **Note:**: Before training and evaluating, create folders like "./results/...". Then you will get the results as following in "./results/predict".
@@ -183,44 +207,44 @@ bash run_infer_310.sh [The path of the MINDIR for 310 infer] [The path of the da
 
 ### Training Performance
 
-| Parameters                 | single Ascend                                            |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | Pix2Pix                                                    |
-| Resource                   | Ascend 910                                               |
-| MindSpore Version          | 1.2                                                         |
-| Dataset                    | facades                                                  |
-| Training Parameters        | epoch=200, steps=400, batch_size=1, lr=0.0002               |
-| Optimizer                  | Adam                                                        |
-| Loss Function              | SigmoidCrossEntropyWithLogits Loss & L1 Loss                                   |
-| outputs                    | probability                                                 |
-| Speed                      | 1pc(Ascend): 10 ms/step                                  |
-| Total time                 | 1pc(Ascend): 0.3h                                        |
-| Checkpoint for Fine tuning | 207M (.ckpt file)                                            |
+| Parameters                 | single Ascend                                            | single GPU                                                         |
+| -------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------- |
+| Model Version              | Pix2Pix                                                    | Pix2Pix                                                          |
+| Resource                   | Ascend 910                                               | PCIE V100-32G                                                      |
+| MindSpore Version          | 1.2                                                         | 1.3.0                                                           |
+| Dataset                    | facades                                                  | facades                                                |
+| Training Parameters        | epoch=200, steps=400, batch_size=1, lr=0.0002               | epoch=250, steps=400, batch_size=1, lr=0.0002, init_gain=0.0195 |
+| Optimizer                  | Adam                                                        | Adam                                                            |
+| Loss Function              | SigmoidCrossEntropyWithLogits Loss & L1 Loss                                   | SigmoidCrossEntropyWithLogits Loss & L1 Loss |
+| outputs                    | probability                                                 | probability                                                     |
+| Speed                      | 1pc(Ascend): 10 ms/step                                  | 1pc(GPU): 50 ms/step                                     |
+| Total time                 | 1pc(Ascend): 0.3h                                        | 1pc(GPU): 0.9 h                                     |
+| Checkpoint for Fine tuning | 207M (.ckpt file)                                            | 207M (.ckpt file)                                              |
 
-| Parameters                 | single Ascend                                            |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | Pix2Pix                                                    |
+| Parameters                 | single Ascend                                            | single GPU                                                         |
+| -------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------- |
+| Model Version              | Pix2Pix                                                    | Pix2Pix                                                          |
 | Resource                   | Ascend 910                                               |
-| MindSpore Version          | 1.2                                                         |
-| Dataset                    | maps                                                     |
-| Training Parameters        | epoch=200, steps=1096, batch_size=1, lr=0.0002              |
-| Optimizer                  | Adam                                                        |
-| Loss Function              | SigmoidCrossEntropyWithLogits Loss & L1 Loss                                   |
-| outputs                    | probability                                                 |
-| Speed                      | 1pc(Ascend): 20 ms/step                                  |
-| Total time                 | 1pc(Ascend): 1.58h                                       |
-| Checkpoint for Fine tuning | 207M (.ckpt file)                                            |
+| MindSpore Version          | 1.2                                                         | 1.3.0                                                           |
+| Dataset                    | maps                                                     | maps                                                               |
+| Training Parameters        | epoch=200, steps=1096, batch_size=1, lr=0.0002              | epoch=250, steps=400, batch_size=1, lr=0.0002, init_gain=0.0195 |
+| Optimizer                  | Adam                                                        | Adam                                                            |
+| Loss Function              | SigmoidCrossEntropyWithLogits Loss & L1 Loss                                   | SigmoidCrossEntropyWithLogits Loss & L1 Loss |
+| outputs                    | probability                                                 | probability                                                     |
+| Speed                      | 1pc(Ascend): 20 ms/step                                  | 1pc(GPU): 60 ms/step                                     |
+| Total time                 | 1pc(Ascend): 1.58h                                       | 1pc(GPU): 2.2h                                     |
+| Checkpoint for Fine tuning | 207M (.ckpt file)                                            | 207M (.ckpt file)                                              |
 
 ### Evaluation Performance
 
-| Parameters          | single Ascend               |
-| ------------------- | --------------------------- |
-| Model Version       | Pix2Pix                     |
-| Resource            | Ascend 910                  |
-| MindSpore Version   | 1.2                         |
-| Dataset             | facades / maps              |
-| batch_size          | 1                           |
-| outputs             | probability                 |
+| Parameters          | single Ascend               | single GPU                  |
+| ------------------- | --------------------------- | --------------------------- |
+| Model Version       | Pix2Pix                     | Pix2Pix                     |
+| Resource            | Ascend 910                  | PCIE V100-32G               |
+| MindSpore Version   | 1.2                         | 1.3.0                       |
+| Dataset             | facades / maps              | facades / maps              |
+| batch_size          | 1                           | 1                           |
+| outputs             | probability                 | probability                 |
 
 # [ModelZoo Homepage](#contents)
 

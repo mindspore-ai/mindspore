@@ -38,6 +38,8 @@ def get_args():
     parser.add_argument('--init_type', type=str, default='normal', help='network initialization, default is normal.')
     parser.add_argument('--init_gain', type=float, default=0.02,
                         help='scaling factor for normal, xavier and orthogonal, default is 0.02.')
+    parser.add_argument('--pad_mode', type=str, default='CONSTANT', choices=('CONSTANT', 'REFLECT', 'SYMMETRIC'),
+                        help='scale images to this size, default is CONSTANT.')
     parser.add_argument('--load_size', type=int, default=286, help='scale images to this size, default is 286.')
     parser.add_argument('--batch_size', type=int, default=1, help='batch_size, default is 1.')
     parser.add_argument('--LAMBDA_Dis', type=float, default=0.5, help='weight for Discriminator Loss, default is 0.5.')
