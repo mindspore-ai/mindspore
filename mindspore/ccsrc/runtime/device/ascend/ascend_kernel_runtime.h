@@ -92,6 +92,7 @@ class AscendKernelRuntime : public KernelRuntime {
                            const NotNull<std::function<void *()>> &model_handle);
   void LaunchDataDump(GraphId graph_id);
   static CNodePtr GetErrorNodeName(uint32_t streamid, uint32_t taskid);
+  static std::string GetDumpPath();
   static void DumpTaskExceptionInfo(const session::KernelGraph *graph);
   static void TaskFailCallback(rtExceptionInfo *task_fail_info);
   void ReportProfilingData();

@@ -43,6 +43,9 @@
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
 #include "common/util/error_manager/error_manager.h"
 #include "debug/anf_ir_dump.h"
+#include "frontend/parallel/context.h"
+#include "utils/comm_manager.h"
+#include "utils/runtime_error_codes.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include "debug/env_config_parser.h"
@@ -576,6 +579,7 @@ void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
                         << "Task overflow infos task_id: " << task_fail_info->taskid
                         << ", stream_id: " << task_fail_info->streamid << ", tid: " << task_fail_info->tid
                         << ", device_id: " << task_fail_info->deviceid << ", retcode: " << task_fail_info->retcode
+                        << " (" << GetErrorMsg(task_fail_info->retcode) << ")"
                         << ", trace: " << trace::DumpSourceLines(node);
         overflow_tasks_[key] = 1;
       } else {
@@ -607,28 +611,49 @@ CNodePtr AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taski
   return nullptr;
 }
 
+std::string AscendKernelRuntime::GetDumpPath() {
+  uint32_t rank_id = 0;
+  auto inst = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(inst);
+  if (inst->parallel_mode() != parallel::STAND_ALONE) {
+    if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
+      MS_LOG(WARNING) << "Get rank id failed.";
+    }
+  }
+
+  auto ms_om_path = common::GetEnv("MS_OM_PATH");
+  std::string path;
+  if (ms_om_path.empty()) {
+    MS_LOG(WARNING) << "MS_OM_PATH is null, so dump to process local path, as ./rank_id/...";
+    path = "./" + std::to_string(rank_id);
+  } else {
+    path = ms_om_path + "/" + std::to_string(rank_id);
+  }
+  return path;
+}
+
 void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  const std::string local_path = std::string("./task_error_dump/") + std::to_string(task_fail_infoes_.at(0).deviceid);
-  if (access(local_path.c_str(), F_OK) == 0) {
-    if (!DeleteDumpDir(local_path)) {
-      MS_LOG(ERROR) << "Delete dump directory " << local_path << " failed";
+  const std::string path = GetDumpPath();
+  if (access(path.c_str(), F_OK) == 0) {
+    if (!DeleteDumpDir(path)) {
+      MS_LOG(ERROR) << "Delete dump directory " << path << " failed";
     }
   }
   for (const auto &task_fail_info : task_fail_infoes_) {
     MS_LOG(ERROR) << "Task fail infos task_id: " << task_fail_info.taskid << ", stream_id: " << task_fail_info.streamid
                   << ", tid: " << task_fail_info.tid << ", device_id: " << task_fail_info.deviceid
-                  << ", retcode: " << task_fail_info.retcode;
+                  << ", retcode: " << task_fail_info.retcode << " (" << GetErrorMsg(task_fail_info.retcode) << ")";
     auto node = AscendKernelRuntime::GetErrorNodeName(task_fail_info.streamid, task_fail_info.taskid);
     // Dump error data in local path
     if (node == nullptr) {
       continue;
     }
     auto full_scope_name = node->fullname_with_scope();
-    MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/output data to: " << local_path
+    MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/output data to: " << path
                   << " trace: " << trace::DumpSourceLines(node);
-    E2eDump::DumpInputImpl(node, false, local_path, &full_scope_name, nullptr);
-    E2eDump::DumpOutputImpl(node, false, local_path, &full_scope_name, nullptr);
+    E2eDump::DumpInputImpl(node, false, path, &full_scope_name, nullptr);
+    E2eDump::DumpOutputImpl(node, false, path, &full_scope_name, nullptr);
   }
 }
 
