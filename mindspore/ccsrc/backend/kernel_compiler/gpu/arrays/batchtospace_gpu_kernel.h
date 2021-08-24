@@ -112,7 +112,7 @@ class BatchToSpaceGpuKernel : public GpuKernel {
     // check input_shape
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     if(input_shape.size() != 4) {
-      MS_LOG(ERROR) << "Input is " << shape_size << "-D, but BatchToSpace supports 4-D tensor.";
+      MS_LOG(ERROR) << "Input is " << input_shape.size() << "-D, but BatchToSpace supports 4-D tensor.";
       return false;
     }
     if((input_shape[0] % (block_size_ * block_size_)) != 0) {
