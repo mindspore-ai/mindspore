@@ -100,7 +100,66 @@ int InstanceNormNC8HW8Fp16(const float16_t *src_data, float16_t *dst_data, const
     const float16_t *src_b = src_data + b * channel * hw_plane;
     float16_t *dst_b = dst_data + b * channel * hw_plane;
     int c = channel_begin;
-    for (; c < c8_down; c += C8NUM) {
+    for (; c <= channel_end - C16NUM; c += C16NUM) {
+      const float16_t *src = src_b + c * hw_plane;
+      const float16_t *src1 = src_b + (c + C8NUM) * hw_plane;
+      float16_t *dst = dst_b + c;
+      float32x4_t mean1 = vdupq_n_f32(0.0f);
+      float32x4_t mean2 = vdupq_n_f32(0.0f);
+      float32x4_t mean3 = vdupq_n_f32(0.0f);
+      float32x4_t mean4 = vdupq_n_f32(0.0f);
+      float32x4_t square_mean1 = vdupq_n_f32(0.0f);
+      float32x4_t square_mean2 = vdupq_n_f32(0.0f);
+      float32x4_t square_mean3 = vdupq_n_f32(0.0f);
+      float32x4_t square_mean4 = vdupq_n_f32(0.0f);
+      for (int index = 0; index < hw_plane; ++index) {
+        float16x8_t srcv = vld1q_f16(src + index * C8NUM);
+        float16x8_t srcv1 = vld1q_f16(src1 + index * C8NUM);
+
+        float32x4_t srcv01 = vcvt_f32_f16(vget_low_f16(srcv));
+        float32x4_t srcv02 = vcvt_f32_f16(vget_high_f16(srcv1));
+        float32x4_t srcv11 = vcvt_f32_f16(vget_low_f16(srcv));
+        float32x4_t srcv12 = vcvt_f32_f16(vget_high_f16(srcv1));
+        mean1 = vaddq_f32(mean1, srcv01);
+        mean2 = vaddq_f32(mean2, srcv02);
+        mean3 = vaddq_f32(mean3, srcv11);
+        mean4 = vaddq_f32(mean4, srcv12);
+        square_mean1 = vaddq_f32(square_mean1, vmulq_f32(srcv01, srcv01));
+        square_mean2 = vaddq_f32(square_mean2, vmulq_f32(srcv02, srcv02));
+        square_mean3 = vaddq_f32(square_mean3, vmulq_f32(srcv11, srcv11));
+        square_mean4 = vaddq_f32(square_mean4, vmulq_f32(srcv12, srcv12));
+      }
+      float16x8_t mean =
+        vcombine_f16(vcvt_f16_f32(MS_DIVQ_F32(mean1, hw_plane_4)), vcvt_f16_f32(MS_DIVQ_F32(mean2, hw_plane_4)));
+      float16x8_t mean_1 =
+        vcombine_f16(vcvt_f16_f32(MS_DIVQ_F32(mean3, hw_plane_4)), vcvt_f16_f32(MS_DIVQ_F32(mean4, hw_plane_4)));
+      float16x8_t square_mean = vcombine_f16(vcvt_f16_f32(MS_DIVQ_F32(square_mean1, hw_plane_4)),
+                                             vcvt_f16_f32(MS_DIVQ_F32(square_mean2, hw_plane_4)));
+      float16x8_t square_mean_1 = vcombine_f16(vcvt_f16_f32(MS_DIVQ_F32(square_mean3, hw_plane_4)),
+                                               vcvt_f16_f32(MS_DIVQ_F32(square_mean4, hw_plane_4)));
+      float16x8_t deno = vaddq_f16(vsubq_f16(square_mean, vmulq_f16(mean, mean)), vdupq_n_f16(param->epsilon_));
+      float16x8_t deno1 = vaddq_f16(vsubq_f16(square_mean_1, vmulq_f16(mean_1, mean_1)), vdupq_n_f16(param->epsilon_));
+      deno = 1 / MS_SQRTFX8_F16(deno);
+      deno1 = 1 / MS_SQRTFX8_F16(deno1);
+
+      float16x8_t gammav = vmulq_f16(vld1q_f16(gamma_data + c), deno);            // deno * gamma_data[c]
+      float16x8_t gammav1 = vmulq_f16(vld1q_f16(gamma_data + c + C8NUM), deno1);  // deno * gamma_data[c]
+      float16x8_t betav = vld1q_f16(beta_data + c);
+      float16x8_t betav1 = vld1q_f16(beta_data + c + C8NUM);
+      for (int index = 0; index < hw_plane; ++index) {
+        float16x8_t srcv = vld1q_f16(src + index * C8NUM);
+        float16x8_t srcv1 = vld1q_f16(src1 + index * C8NUM);
+        float16x8_t outv = vsubq_f16(srcv, mean);
+        float16x8_t outv1 = vsubq_f16(srcv1, mean1);
+        outv = vmulq_f16(outv, gammav);
+        outv1 = vmulq_f16(outv1, gammav1);
+        outv = vaddq_f16(outv, betav);
+        outv1 = vaddq_f16(outv1, betav1);
+        vst1q_f16(dst + index * channel, outv);
+        vst1q_f16(dst + index * channel + C8NUM, outv1);
+      }
+    }
+    for (; c <= channel_end - C8NUM; c += C8NUM) {
       const float16_t *src = src_b + c * hw_plane;
       float16_t *dst = dst_b + c;
       float32x4_t mean1 = vdupq_n_f32(0.0f);
