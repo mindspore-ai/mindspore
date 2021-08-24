@@ -16,6 +16,10 @@
 
 #include "src/common/config_file.h"
 
+#ifdef _MSC_VER
+#define PATH_MAX 1024
+#endif
+
 namespace mindspore {
 namespace lite {
 int GetSectionInfoFromConfigFile(const std::string &file, const std::string &section_name,

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INFER_SPLICE_INFER_H_
-#define MINDSPORE_NNACL_INFER_SPLICE_INFER_H_
+#ifndef MINDSPORE_NNACL_INFER_AFFINE_INFER_H_
+#define MINDSPORE_NNACL_INFER_AFFINE_INFER_H_
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/affine_parameter.h"
 
@@ -23,10 +23,10 @@
 extern "C" {
 #endif
 
-int SpliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int AffineInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_INFER_SPLICE_INFER_H_
+#endif  // MINDSPORE_NNACL_INFER_AFFINE_INFER_H_

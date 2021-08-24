@@ -190,7 +190,8 @@ int Benchmark::CompareOutput() {
     }
     int ret;
     if (tensor->data_type() == kObjectTypeString) {
-      ret = CompareStringData(tensor_name, tensor);
+      std::vector<std::string> output_strings = MSTensorToStrings(tensor);
+      ret = CompareStringData(tensor_name, calib_tensor.second->strings_data, output_strings);
     } else {
       ret = CompareDataGetTotalBiasAndSize(tensor_name, tensor, &total_bias, &total_size);
     }
