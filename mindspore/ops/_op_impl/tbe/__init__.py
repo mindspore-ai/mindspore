@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -400,3 +400,4 @@ from .hsigmoid_grad import _hsigmoid_grad_tbe
 from .hsigmoid import _hsigmoid_tbe
 from .hshrink import _hshrink_tbe
 from .hshrink_grad import _hshrink_grad_tbe
+from .new_im2col import _new_im2col_tbe
