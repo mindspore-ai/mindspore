@@ -31,7 +31,7 @@ mkdir ${train_path}/ckpt
 for((i=0;i<=$RANK_SIZE-1;i++));
 do
     export RANK_ID=${i}
-    export DEVICE_ID=$((i + RANK_START_ID))
+    DEVICE_ID=$((i + RANK_START_ID))
     echo 'start rank='${i}', device id='${DEVICE_ID}'...'
     mkdir ${train_path}/device${DEVICE_ID}
     cd ${train_path}/device${DEVICE_ID} || exit
@@ -51,5 +51,6 @@ do
                                                --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
                                                --is_distributed  \
                                                --save_steps=110  \
-                                               --keep_checkpoint_max=200 >log 2>&1 &
+                                               --keep_checkpoint_max=200 \
+                                               --device_id=$DEVICE_ID >log 2>&1 &
 done

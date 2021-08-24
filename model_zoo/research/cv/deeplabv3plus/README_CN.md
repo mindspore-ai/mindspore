@@ -17,10 +17,12 @@
     - [训练过程](#训练过程)
         - [用法](#用法)
             - [Ascend处理器环境运行](#ascend处理器环境运行)
+            - [GPU处理器环境运行](#gpu处理器环境运行)
         - [结果](#结果)
     - [评估过程](#评估过程)
         - [用法](#用法-1)
             - [Ascend处理器环境运行](#ascend处理器环境运行-1)
+            - [GPU处理器环境运行](#gpu处理器环境运行-1)
         - [结果](#结果-1)
             - [训练准确率](#训练准确率)
 - [模型描述](#模型描述)
@@ -173,6 +175,66 @@ run_eval_s8_multiscale.sh
 run_eval_s8_multiscale_flip.sh
 ```
 
+- GPU处理器环境运行
+
+按照以下训练步骤进行8卡训练：
+
+1.使用VOCaug数据集训练s16，微调ResNet-101预训练模型。脚本如下：
+
+```bash
+bash run_distribute_train_s16_r1_gpu.sh /PATH/TO/MINDRECORD_NAME /PATH/TO/PRETRAIN_MODEL
+```
+
+2.使用VOCaug数据集训练s8，微调上一步的模型。脚本如下：
+
+```bash
+bash run_distribute_train_s8_r1_gpu.sh /PATH/TO/MINDRECORD_NAME /PATH/TO/PRETRAIN_MODEL
+```
+
+3.使用VOCtrain数据集训练s8，微调上一步的模型。脚本如下：
+
+```bash
+bash run_distribute_train_s8_r2_gpu.sh /PATH/TO/MINDRECORD_NAME /PATH/TO/PRETRAIN_MODEL
+```
+
+评估步骤如下：
+
+1.使用voc val数据集评估s16。评估脚本如下：
+
+```bash
+bash run_eval_s16_gpu.sh /PATH/TO/DATA /PATH/TO/DATA_lst.txt /PATH/TO/PRETRAIN_MODEL DEVICE_ID
+```
+
+2.使用voc val数据集评估多尺度s16。评估脚本如下：
+
+```bash
+bash run_eval_s16_multiscale_gpu.sh /PATH/TO/DATA /PATH/TO/DATA_lst.txt /PATH/TO/PRETRAIN_MODEL DEVICE_ID
+```
+
+3.使用voc val数据集评估多尺度和翻转s16。评估脚本如下：
+
+```bash
+bash run_eval_s16_multiscale_flip_gpu.sh /PATH/TO/DATA /PATH/TO/DATA_lst.txt /PATH/TO/PRETRAIN_MODEL DEVICE_ID
+```
+
+4.使用voc val数据集评估s8。评估脚本如下：
+
+```bash
+bash run_eval_s8_gpu.sh /PATH/TO/DATA /PATH/TO/DATA_lst.txt /PATH/TO/PRETRAIN_MODEL DEVICE_ID
+```
+
+5.使用voc val数据集评估多尺度s8。评估脚本如下：
+
+```bash
+bash run_eval_s8_multiscale_gpu.sh /PATH/TO/DATA /PATH/TO/DATA_lst.txt /PATH/TO/PRETRAIN_MODEL DEVICE_ID
+```
+
+6.使用voc val数据集评估多尺度和翻转s8。评估脚本如下：
+
+```bash
+bash run_eval_s8_multiscale_flip_gpu.sh /PATH/TO/DATA /PATH/TO/DATA_lst.txt /PATH/TO/PRETRAIN_MODEL DEVICE_ID
+```
+
 # 脚本说明
 
 ## 脚本及样例代码
@@ -192,6 +254,15 @@ run_eval_s8_multiscale_flip.sh
     ├── run_eval_s8.sh                            # 使用s8结构启动Ascend评估
     ├── run_eval_s8_multiscale.sh                 # 使用多尺度s8结构启动Ascend评估
     ├── run_eval_s8_multiscale_filp.sh            # 使用多尺度和翻转s8结构启动Ascend评估
+    ├── run_distribute_train_s16_r1_gpu.sh            # 使用s16结构的VOCaug数据集启动GPU分布式训练（8卡）
+    ├── run_distribute_train_s8_r1_gpu.sh             # 使用s8结构的VOCaug数据集启动GPU分布式训练（8卡）
+    ├── run_distribute_train_s8_r2_gpu.sh             # 使用s8结构的VOCtrain数据集启动GPU分布式训练（8卡）
+    ├── run_eval_s16_gpu.sh                           # 使用s16结构启动GPU评估
+    ├── run_eval_s16_multiscale_gpu.sh                # 使用多尺度s16结构启动GPU评估
+    ├── run_eval_s16_multiscale_filp_gpu.sh           # 使用多尺度和翻转s16结构启动GPU评估
+    ├── run_eval_s8_gpu.sh                            # 使用s8结构启动GPU评估
+    ├── run_eval_s8_multiscale_gpu.sh                 # 使用多尺度s8结构启动GPU评估
+    ├── run_eval_s8_multiscale_filp_gpu.sh            # 使用多尺度和翻转s8结构启动GPU评估
   ├── src
     ├── tools
         ├── get_dataset_list.py               # 获取数据清单文件
@@ -274,7 +345,7 @@ do
     echo 'start rank='$i', device id='$DEVICE_ID'...'
     mkdir ${train_path}/device$DEVICE_ID
     cd ${train_path}/device$DEVICE_ID
-    ython ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
+    python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
                                                --data_file=/PATH/TO/MINDRECORD_NAME  \
                                                --train_epochs=300  \
                                                --batch_size=32  \
@@ -373,6 +444,10 @@ python  train.py    --train_url=/PATH/TO/OUTPUT_DIR \
                     --lr_type=cos  \
                     --save_steps=410  \
 ```
+
+#### GPU处理器环境运行
+
+具体参数配置可参照[快速入门](#快速入门)中8卡训练脚本。
 
 ### 结果
 
@@ -483,6 +558,10 @@ python ${train_code_path}/eval.py --data_root=/PATH/TO/DATA  \
                     --ckpt_path=/PATH/TO/PRETRAIN_MODEL >${eval_path}/eval_log 2>&1 &
 ```
 
+#### GPU处理器环境运行
+
+具体参数配置可参照[快速入门](#快速入门)中评估测试脚本。
+
 ### 结果
 
 运行适用的训练脚本获取结果。要获得相同的结果，请按照快速入门中的步骤操作。
@@ -506,21 +585,21 @@ python ${train_code_path}/eval.py --data_root=/PATH/TO/DATA  \
 
 ### 评估性能
 
-| 参数 | Ascend 910|
-| -------------------------- | -------------------------------------- |
-| 模型版本 | DeepLabV3+ |
-| 资源 | Ascend 910 |
-| 上传日期 | 2021-03-16 |
-| MindSpore版本 | 1.1.1 |
-| 数据集 | PASCAL VOC2012 + SBD |
-| 训练参数 | epoch = 300, batch_size = 32 (s16_r1)  epoch = 800, batch_size = 16 (s8_r1)  epoch = 300, batch_size = 16 (s8_r2) |
-| 优化器 | Momentum |
-| 损失函数 | Softmax交叉熵 |
-| 输出 | 概率 |
-| 损失 | 0.0041095633 |
-| 性能 | 187736.386 ms（单卡，s16）<br>  44474.187 ms（八卡，s16） |  
-| 微调检查点 | 453M （.ckpt文件） |
-| 脚本 | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/deeplabv3plus) |
+| 参数 | Ascend 910| GPU |
+| -------------------------- | -------------------------------------- | -------------------------------------- |
+| 模型版本 | DeepLabV3+ | DeepLabV3+ |
+| 资源 | Ascend 910 |NV SMX2 V100-32G|
+| 上传日期 | 2021-03-16 |2021-08-23|
+| MindSpore版本 | 1.1.1 |1.4.0|
+| 数据集 | PASCAL VOC2012 + SBD | PASCAL VOC2012 + SBD |
+| 训练参数 | epoch = 300, batch_size = 32 (s16_r1)  epoch = 800, batch_size = 16 (s8_r1)  epoch = 300, batch_size = 16 (s8_r2) |epoch = 300, batch_size = 16 (s16_r1)  epoch = 800, batch_size = 8 (s8_r1)  epoch = 300, batch_size = 8 (s8_r2) |
+| 优化器 | Momentum | Momentum |
+| 损失函数 | Softmax交叉熵 |Softmax交叉熵 |
+| 输出 | 概率 |概率 |
+| 损失 | 0.0041095633 |0.003395824|
+| 性能 | 187736.386 ms（单卡，s16）<br>  44474.187 ms（八卡，s16） |  1080 ms/step（单卡，s16）|  
+| 微调检查点 | 453M （.ckpt文件） | 454M （.ckpt文件）|
+| 脚本 | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/deeplabv3plus) |[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/deeplabv3plus) |
 
 # 随机情况说明
 

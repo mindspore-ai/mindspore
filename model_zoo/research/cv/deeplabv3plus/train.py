@@ -76,8 +76,9 @@ def parse_args():
     parser.add_argument('--ckpt_pre_trained', type=str, default='', help='PreTrained model')
 
     # train
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'CPU'],
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU', 'CPU'],
                         help='device where the code will be implemented. (Default: Ascend)')
+    parser.add_argument('--device_id', type=int, default=0, help='device id')
     parser.add_argument('--is_distributed', action='store_true', help='distributed training')
     parser.add_argument('--rank', type=int, default=0, help='local rank of distributed')
     parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
@@ -99,17 +100,16 @@ def parse_args():
 def train():
     """train"""
     args = parse_args()
-    if args.device_target == "CPU":
-        context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="CPU")
-    else:
-        context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True, save_graphs=False,
-                            device_target="Ascend", device_id=int(os.getenv('DEVICE_ID')))
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target=args.device_target)
+    if args.device_target != "CPU":
+        context.set_context(enable_auto_mixed_precision=True, device_id=args.device_id)
+
     # init multicards training
     if args.modelArts_mode:
         import moxing as mox
         local_data_url = '/cache/data'
         local_train_url = '/cache/ckpt'
-        device_id = int(os.getenv('DEVICE_ID'))
+        device_id = args.device_id
         device_num = int(os.getenv('RANK_SIZE'))
         if device_num > 1:
             init()
@@ -169,7 +169,15 @@ def train():
     # load pretrained model
     if args.ckpt_pre_trained or args.pretrainedmodel_filename:
         param_dict = load_checkpoint(ckpt_file)
-        load_param_into_net(train_net, param_dict)
+        if args.model == 'DeepLabV3plus_s16':
+            trans_param_dict = {}
+            for key, val in param_dict.items():
+                key = key.replace("down_sample_layer", "downsample")
+                trans_param_dict[f"network.resnet.{key}"] = val
+            load_param_into_net(train_net, trans_param_dict)
+        else:
+            load_param_into_net(train_net, param_dict)
+        print('load_model {} success'.format(args.ckpt_pre_trained))
 
     # optimizer
     iters_per_epoch = dataset.get_dataset_size()
@@ -188,7 +196,7 @@ def train():
 
     # loss scale
     manager_loss_scale = FixedLossScaleManager(args.loss_scale, drop_overflow_update=False)
-    amp_level = "O0" if args.device_target == "CPU" else "O3"
+    amp_level = "O0" if args.device_target != "Ascend" else "O3"
     model = Model(train_net, optimizer=opt, amp_level=amp_level, loss_scale_manager=manager_loss_scale)
 
     # callback for saving ckpts
