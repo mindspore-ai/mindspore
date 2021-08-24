@@ -23,12 +23,14 @@ namespace kernel {
 template <typename T>
 void MaskedSelectCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MaskedSelectCPUKernel needs 2 input.";
+  if (input_num != kInputNum) {
+    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MaskedSelectCPUKernel needs " << kInputNum
+                      << " input.";
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MaskedSelectCPUKernel needs 1 output.";
+  if (output_num != kOutputNum) {
+    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MaskedSelectCPUKernel needs " << kOutputNum
+                      << " output.";
   }
   input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
@@ -69,7 +71,7 @@ bool MaskedSelectCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
       MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
     }
     std::vector<size_t> out_shape;
-    out_shape.emplace_back(j);
+    (void)out_shape.emplace_back(j);
     std::vector<TypeId> dtypes;
     size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
     for (size_t i = 0; i < output_num; i++) {

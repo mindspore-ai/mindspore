@@ -33,7 +33,7 @@ void SplitCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 void SplitCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  workspace_size_list_.emplace_back((sizeof(T *) * output_num_));
+  (void)workspace_size_list_.emplace_back((sizeof(T *) * output_num_));
 }
 
 template <typename T>
@@ -45,12 +45,12 @@ bool SplitCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t size) {
+void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t /* size */) {
   SplitParameter param;
   param.num_split_ = output_num_;
   param.split_dim_ = axis_;
   param.strides_[input_shape_.size() - 1] = 1;
-  for (int i = input_shape_.size() - 2; i >= 0; i--) {
+  for (int i = input_shape_.size() - 2; i >= 0; i--) {  // from -2 to 0 dim
     param.strides_[i] = param.strides_[i + 1] * input_shape_[i + 1];
   }
   auto split_sizes = std::make_unique<int[]>(param.num_split_);
@@ -103,7 +103,7 @@ void SplitCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
   if (axis_ < 0) {
     axis_ += SizeToInt(input_shape_.size());
   }
-  if (output_num_ > SizeToInt(input_shape_[axis_])) {
+  if (output_num_ > IntToLong(input_shape_[axis_])) {
     MS_LOG(EXCEPTION) << "Attr output_num " << output_num_ << " must less than " << input_shape_[axis_];
   }
   if (output_num_ != output_num) {

@@ -28,16 +28,16 @@ void DepthToSpaceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  block_size_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "block_size");
+  block_size_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "block_size"));
 }
 
 template <typename T>
 bool DepthToSpaceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                      const std::vector<kernel::AddressPtr> & /* workspace */,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t size = IntToSize(inputs[0]->size / sizeof(T));
+  size_t size = inputs[0]->size / sizeof(T);
   std::vector<size_t> input_shape = input_shape_;
   std::vector<size_t> output_shape = output_shape_;
   size_t block_size = block_size_;

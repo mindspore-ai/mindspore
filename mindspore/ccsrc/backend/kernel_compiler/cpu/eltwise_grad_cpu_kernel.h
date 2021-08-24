@@ -24,6 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputMinNum = 2;
+constexpr size_t kOutputNum = 1;
 template <typename T>
 class EltWiseGradCPUKernel : public CPUKernel {
  public:

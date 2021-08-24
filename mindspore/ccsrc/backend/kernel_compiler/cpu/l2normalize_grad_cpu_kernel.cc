@@ -31,7 +31,7 @@ void L2NormalizeGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
   int output_dim_length = output_shape.size();
   dim_elem_num_list_.resize(output_dim_length, 1);
-  for (int i = output_dim_length - 2; i >= 0; i--) {
+  for (int i = output_dim_length - 2; i >= 0; i--) {  // from -2 to 0 dim
     dim_elem_num_list_[i] = output_shape[i + 1] * dim_elem_num_list_[i + 1];
   }
 
@@ -133,14 +133,15 @@ void L2NormalizeGradCPUKernel<T>::GetSumOfProduct(const std::vector<T> &x_vector
   for (size_t i = 0; i < len; i++) {
     tmp_vector[i] = x_vector[i] * y_vector[i];
   }
-  if (len % 2 == 1) {
+  const size_t half = 2;
+  if (len % half == 1) {
     tmp_vector[0] += tmp_vector[len - 1];
   }
-  for (size_t stride = len / 2; stride > 0; stride >>= 1) {
+  for (size_t stride = len / half; stride > 0; stride >>= 1) {
     for (size_t i = 0; i < stride; i++) {
       tmp_vector[i] += tmp_vector[i + stride];
     }
-    if (stride > 2 && stride % 2 == 1) {
+    if (stride > half && stride % half == 1) {
       tmp_vector[0] += tmp_vector[stride - 1];
     }
   }
