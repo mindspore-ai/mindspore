@@ -33,6 +33,7 @@ def modelarts_process():
 
 @moxing_wrapper(pre_process=modelarts_process)
 def export_lenet():
+    print('export with config: ', config)
     # define fusion network
     network = LeNet5(config.num_classes)
     # load network checkpoint
