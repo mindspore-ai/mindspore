@@ -32,7 +32,7 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
   }
   std::vector<int> weight_height;
   for (size_t i = 2; i < dim; ++i) {
-    weight_height.emplace_back(src_shape[i]);
+    (void)weight_height.emplace_back(src_shape[i]);
   }
 
   MS_LOG(INFO) << "pad mode: " << pad_mode;

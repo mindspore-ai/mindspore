@@ -22,9 +22,13 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kPoolingMinDim = 4;
+constexpr size_t kPoolingMaxDim = 5;
+constexpr size_t kPoolingOffsetDim = 2;
+
 void PoolingCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  workspace_size_list_.emplace_back(workspace_size_);
+  (void)workspace_size_list_.emplace_back(workspace_size_);
 }
 
 void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -42,7 +46,7 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
                        [](const int64_t &value) { return static_cast<int>(value); });
   auto dim = origin_kernel_sizes.size();
-  if (dim < 4 || dim > 5 || dim != strides.size()) {
+  if (dim < kPoolingMinDim || dim > kPoolingMaxDim || dim != strides.size()) {
     MS_LOG(EXCEPTION) << "Invalid kernel size " << origin_kernel_sizes.size() << " or stride size " << strides.size();
   }
   std::vector<int> stride;
@@ -51,25 +55,25 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> kernel_size;
   std::vector<int> dummy_dilation;
   for (size_t i = 2; i < dim; ++i) {
-    stride.emplace_back(strides[i]);
-    kernels_dims.emplace_back(origin_kernel_sizes[i]);
-    strides_dims.emplace_back(strides[i]);
-    kernel_size.emplace_back(IntToSize(origin_kernel_sizes[i]));
-    dummy_dilation.emplace_back(1);
+    (void)stride.emplace_back(strides[i]);
+    (void)kernels_dims.emplace_back(origin_kernel_sizes[i]);
+    (void)strides_dims.emplace_back(strides[i]);
+    (void)kernel_size.emplace_back(IntToSize(origin_kernel_sizes[i]));
+    (void)dummy_dilation.emplace_back(1);
   }
 
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dummy_dilation);
-  if (int_padding_l.size() != dim - 2 || int_padding_r.size() != dim - 2) {
+  if (int_padding_l.size() != dim - kPoolingOffsetDim || int_padding_r.size() != dim - kPoolingOffsetDim) {
     MS_LOG(EXCEPTION) << "Pooling get padding failed!";
   }
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
-  for (size_t i = 0; i < dim - 2; ++i) {
-    padding_l.emplace_back(int_padding_l[i]);
-    padding_r.emplace_back(int_padding_r[i]);
+  for (size_t i = 0; i < dim - kPoolingOffsetDim; ++i) {
+    (void)padding_l.emplace_back(int_padding_l[i]);
+    (void)padding_r.emplace_back(int_padding_r[i]);
   }
   dnnl::pooling_forward::desc desc =
     dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_max, src_desc, dst_desc,
