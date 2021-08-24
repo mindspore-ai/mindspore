@@ -60,6 +60,8 @@ int NPUInsertTransformPass::GetInsertState(NPUOp *op) {
     inputs.size() + std::max(std::max(op->out_ops().size(), static_cast<size_t>(1)), op->outputs().size());
   size_t transpose_input_num = 0;
   size_t transpose_output_num = 0;
+  size_t graph_input_num = 0;
+  size_t graph_output_num = 0;
   bool need_pre_insert = false;
   bool need_post_insert = false;
   // count number of input tensor from nc2nh and output tensor to nh2nc
@@ -70,9 +72,15 @@ int NPUInsertTransformPass::GetInsertState(NPUOp *op) {
     } else {
       need_pre_insert = true;
     }
+    if (in_op == nullptr) {
+      graph_input_num++;
+    }
   }
   if (op->out_ops().empty()) {
     need_post_insert = true;
+  }
+  if (op->outputs().size() > op->out_ops().size()) {
+    graph_output_num = op->outputs().size() - op->out_ops().size();
   }
   for (const auto out_op : op->out_ops()) {
     if (NPUPassUtils::IsNhwc2Nchw(out_op)) {
@@ -82,10 +90,12 @@ int NPUInsertTransformPass::GetInsertState(NPUOp *op) {
     }
   }
 
-  // won't insert any thing if num of transpose tensor is smaller than half of total input output.
+  // won't insert any thing if num of transpose tensor is smaller than half of total op inputs and op outputs, unless
+  // current op is the graph input or output op, since we should avoid to build a single op subgraph in this case.
   // won't insert if total input output are all transpose tensor, the fusion pass will handle this.
   size_t transpose_tensor_num = transpose_input_num + transpose_output_num;
-  if (transpose_tensor_num == 0 || transpose_tensor_num * 2 < in_out_tensor_num ||
+  size_t connected_in_out_tensor_num = in_out_tensor_num - graph_output_num - graph_input_num;
+  if (transpose_tensor_num == 0 || transpose_tensor_num * 2 < connected_in_out_tensor_num ||
       transpose_tensor_num == in_out_tensor_num) {
     return InsertNone;
   }
