@@ -26,7 +26,6 @@ void BroadcastToCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   size_t input_shape_size = input_shape_.size();
   size_t output_shape_size = output_shape_.size();
-
   if (output_shape_size < input_shape_size) {
     MS_LOG(EXCEPTION) << "Cannot broadcast input tensor with shape " << input_shape_
                       << " to  a smaller dimension shape " << output_shape_ << ".";
@@ -68,7 +67,7 @@ bool BroadcastToCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, cons
 
   const auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  int ret = NNACL_ERR;
+  int ret = static_cast<int>(NNACL_ERR);
   if constexpr (std::is_same_v<T, bool>) {
     ret = BroadcastTo(bool, input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, int>) {
@@ -86,6 +85,5 @@ bool BroadcastToCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, cons
                 << " execute failed.";
   return false;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

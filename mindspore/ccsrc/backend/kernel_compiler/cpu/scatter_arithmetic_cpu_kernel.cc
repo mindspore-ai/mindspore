@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
@@ -43,11 +42,11 @@ template <typename T>
 void ScatterArithmeticCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) const {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 3) {
+  if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but ScatterAdd needs 3 inputs.";
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
+  if (output_num != kOutputNum) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ScatterAdd has 1 output.";
   }
 }
@@ -65,9 +64,9 @@ bool ScatterArithmeticCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
                                    {"ScatterMin", &ScatterArithmeticCPUKernel<T>::ScatterMin},
                                    {"ScatterUpdate", &ScatterArithmeticCPUKernel<T>::ScatterUpdate}};
   if (kScatterArithmeticBinOpFuncMap.find(kernel_name_) != kScatterArithmeticBinOpFuncMap.end()) {
-    T *input = reinterpret_cast<T *>(inputs[0]->addr);
-    int *indices = reinterpret_cast<int *>(inputs[1]->addr);
-    T *updates = reinterpret_cast<T *>(inputs[2]->addr);
+    T *input = reinterpret_cast<T *>(inputs[INPUT]->addr);
+    int *indices = reinterpret_cast<int *>(inputs[INDICES]->addr);
+    T *updates = reinterpret_cast<T *>(inputs[UPDATES]->addr);
     T *output = reinterpret_cast<T *>(outputs[0]->addr);
     kScatterArithmeticBinOpFuncMap.at(kernel_name_)(this, input, indices, updates);
     auto bufferSize = outputs[0]->size;

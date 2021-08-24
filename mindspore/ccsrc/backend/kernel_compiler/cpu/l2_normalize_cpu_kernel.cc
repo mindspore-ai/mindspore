@@ -39,18 +39,19 @@ void L2NormalizeCPUKernel<T>::CalcDenominator(const T *input_addr, const size_t 
   size_t stride = 1;
   std::vector<size_t> axes(input_shape_.size());
   int k = 0;
-  for (int i = 0; i < dims; ++i) {
-    if (i != axis_) {
+  size_t axis_size = IntToSize(axis_);
+  for (size_t i = 0; i < IntToSize(dims); ++i) {
+    if (i != axis_size) {
       axes[k] = i;
       ++k;
     } else {
       stride *= input_shape_[i];
     }
   }
-  axes[k] = axis_;
+  axes[k] = axis_size;
 
   std::vector<size_t> transpose_shape(input_shape_.size());
-  for (int i = 0; i < dims; ++i) {
+  for (size_t i = 0; i < IntToSize(dims); ++i) {
     transpose_shape[i] = input_shape_[axes[i]];
   }
 
@@ -109,7 +110,7 @@ void L2NormalizeCPUKernel<T>::CalcOutput(const T *input_addr, const std::vector<
 
 template <typename T>
 bool L2NormalizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                     const std::vector<kernel::AddressPtr> & /* workspace */,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);

@@ -51,12 +51,12 @@ bool SGDCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::v
                              const std::vector<AddressPtr> &outputs) {
   CheckParam(inputs, outputs);
 
-  auto param = reinterpret_cast<T *>(inputs[0]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[1]->addr);
-  auto lr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto accum = reinterpret_cast<T *>(inputs[3]->addr);
-  auto momentum = reinterpret_cast<T *>(inputs[4]->addr);
-  auto stat = reinterpret_cast<T *>(inputs[5]->addr);
+  auto param = reinterpret_cast<T *>(inputs[PARAM]->addr);
+  auto grad = reinterpret_cast<T *>(inputs[GRAD]->addr);
+  auto lr = reinterpret_cast<T *>(inputs[LR]->addr);
+  auto accum = reinterpret_cast<T *>(inputs[ACCUM]->addr);
+  auto momentum = reinterpret_cast<T *>(inputs[MOMENTUM]->addr);
+  auto stat = reinterpret_cast<T *>(inputs[STAT]->addr);
   auto output_param = reinterpret_cast<T *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(T);
 

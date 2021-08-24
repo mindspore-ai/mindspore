@@ -24,6 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputNum = 2;
+constexpr size_t kOutputNum = 1;
 template <typename T>
 class MaskedSelectCPUKernel : public CPUKernel {
  public:

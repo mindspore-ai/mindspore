@@ -43,7 +43,7 @@ class StridedSliceGradCPUKernel : public CPUKernel {
   std::vector<int> input_shape_;
   std::vector<size_t> output_shape_;
   TypeId dtype_{kTypeUnknown};
-  StridedSliceParameter *param_;
+  StridedSliceParameter *param_{nullptr};
 };
 
 MS_REG_CPU_KERNEL(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

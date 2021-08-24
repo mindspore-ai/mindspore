@@ -111,7 +111,9 @@ void TileCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
   tile_parameter_.data_size_ = sizeof(T);
 
   if (one_dim_tile_) {
-    auto task = [&](size_t start, size_t end) { TileSimple(x_addr, y_addr, start, end, &tile_parameter_); };
+    auto task = [&x_addr, &y_addr, this](size_t start, size_t end) {
+      TileSimple(x_addr, y_addr, start, end, &tile_parameter_);
+    };
     CPUKernelUtils::ParallelFor(task, tile_parameter_.fast_outer_size_);
   }
 

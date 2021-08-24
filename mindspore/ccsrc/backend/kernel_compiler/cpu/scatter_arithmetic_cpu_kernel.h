@@ -22,6 +22,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputNum = 3;
+constexpr size_t kOutputNum = 1;
 template <typename T>
 class ScatterArithmeticCPUKernel : public CPUKernel {
  public:
@@ -55,6 +57,7 @@ class ScatterArithmeticCPUKernel : public CPUKernel {
   size_t inner_size_{0};
   size_t indices_size_{0};
   std::string kernel_name_;
+  enum input_list_ { INPUT, INDICES, UPDATES };
 };
 
 MS_REG_CPU_KERNEL_T(ScatterAdd,

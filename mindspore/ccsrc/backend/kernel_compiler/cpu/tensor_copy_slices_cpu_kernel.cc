@@ -46,7 +46,7 @@ void TensorCopySlicesCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool TensorCopySlicesCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                       const std::vector<kernel::AddressPtr> & /* workspace */,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 2 || outputs.size() != 1) {
     MS_LOG(ERROR) << "TensorCopySlices requires 1 input and 1 output, but got " << inputs.size() << " input and "

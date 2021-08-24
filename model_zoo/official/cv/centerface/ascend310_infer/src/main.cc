@@ -67,7 +67,7 @@ DEFINE_int32(image_width, 832, "image width");
 
 int Resize_Affine(const MSTensor &input, MSTensor *output) {
   int new_height, new_width;
-  float scale = 0.999;
+  const float scale = 0.999;
   auto imgResize = MSTensor();
   std::vector<int64_t> shape = input.Shape();
   new_height = static_cast<int>(shape[0] * scale);

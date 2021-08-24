@@ -23,8 +23,10 @@
 namespace mindspore {
 namespace kernel {
 void StridedSliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  //  CheckParam(kernel_node);
   param_ = (struct StridedSliceParameter *)malloc(sizeof(struct StridedSliceParameter));
+  if (param_ == nullptr) {
+    MS_LOG(ERROR) << "malloc StridedSliceGradParameter failed.";
+  }
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   switch (dtype_) {
@@ -91,7 +93,7 @@ void StridedSliceGradCPUKernel::ExpandAllMemberDims() {
 }
 
 bool StridedSliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                       const std::vector<kernel::AddressPtr> & /* workspace */,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   bool ret{true};
   if (dtype_ == kNumberTypeFloat32) {

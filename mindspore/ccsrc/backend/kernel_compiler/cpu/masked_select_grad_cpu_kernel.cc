@@ -23,16 +23,18 @@ namespace kernel {
 template <typename T>
 void MaskedSelectGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 3) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MaskedSelectGradCPUKernel needs 3 input.";
+  if (input_num != kInputNum) {
+    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MaskedSelectGradCPUKernel needs " << kInputNum
+                      << " input.";
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MaskedSelectGradCPUKernel needs 1 output.";
+  if (output_num != kOutputNum) {
+    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MaskedSelectGradCPUKernel needs " << kOutputNum
+                      << " output.";
   }
-  input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+  input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, INPUT);
+  input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, MASK);
+  grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, GRAD);
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
   for (const uint64_t &d : output_shape_) {
     tensor_size_ *= d;
@@ -43,9 +45,9 @@ template <typename T>
 bool MaskedSelectGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto mask = reinterpret_cast<bool *>(inputs[1]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[2]->addr);
-  auto dx = reinterpret_cast<T *>(outputs[0]->addr);
+  auto mask = reinterpret_cast<bool *>(inputs[MASK]->addr);
+  auto grad = reinterpret_cast<T *>(inputs[GRAD]->addr);
+  auto dx = reinterpret_cast<T *>(outputs[INPUT]->addr);
 
   auto ret = memset_s(dx, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {

@@ -37,7 +37,7 @@ class DepthToSpaceCPUKernel : public CPUKernel {
   void CheckParam(const CNodePtr &kernel_node);
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
-  size_t block_size_;
+  size_t block_size_{0};
 };
 
 MS_REG_CPU_KERNEL_T(

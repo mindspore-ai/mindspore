@@ -31,7 +31,8 @@ void GatherV2CPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   if (axis_ < 0) {
     axis_ = axis_ + SizeToLong(input_shape_.size());
   }
-  axis_ += 4 - input_shape_.size();
+  const size_t expand_dim = 4;
+  axis_ += expand_dim - input_shape_.size();
   CPUKernelUtils::ExpandDimsTo4(&input_shape_);
   CPUKernelUtils::ExpandDimsTo4(&output_shape_);
 }
@@ -39,7 +40,7 @@ void GatherV2CPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 void GatherV2CPUKernel<T>::ParallelRun(int8_t *input_addr, int8_t *output_addr, int thread_num) {
   int outer_size = 1, inner_size = 1;
-  for (int64_t i = 0; i < axis_; ++i) {
+  for (size_t i = 0; i < LongToSize(axis_); ++i) {
     outer_size *= input_shape_.at(i);
   }
   for (size_t i = axis_ + 1; i < input_shape_.size(); ++i) {
