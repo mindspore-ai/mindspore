@@ -22,10 +22,20 @@
 #include <string>
 #include "utils/profile.h"
 #include "utils/utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
+PynativeProfiler::PynativeProfiler() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  enable_profiler_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PROFILING);
+}
+
 void PynativeProfiler::SingleOpProfilingData() {
+  if (!enable_profiler_flag) {
+    return;
+  }
   static std::ofstream of("pynative_forward_profiling_data.csv");
   of.setf(std::ios::fixed, std::ios::floatfield);
   if (real_run_op_index_ == 1) {

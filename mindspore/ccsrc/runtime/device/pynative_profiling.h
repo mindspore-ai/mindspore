@@ -41,10 +41,11 @@ class PynativeProfiler {
   void SingleOpProfilingData();
 
  private:
-  PynativeProfiler() = default;
+  PynativeProfiler();
   ~PynativeProfiler() = default;
   PynativeProfiler(const PynativeProfiler &) = delete;
   PynativeProfiler &operator=(const PynativeProfiler &) = delete;
+  bool enable_profiler_flag = false;
   int real_run_op_index_ = 0;
   std::string real_run_op_name_;
   std::pair<double, double> real_run_op_start_time_end_time_;
