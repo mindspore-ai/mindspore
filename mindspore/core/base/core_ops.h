@@ -84,6 +84,7 @@ constexpr auto kDiag = "Diag";
 constexpr auto kDiagPart = "DiagPart";
 constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
 constexpr auto kTranspose = "Transpose";
+constexpr auto kSplitV = "SplitV";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -221,6 +222,7 @@ inline const PrimitivePtr kPrimScatterUpdate = std::make_shared<Primitive>("Scat
 inline const PrimitivePtr kPrimTensorCopySlices = std::make_shared<Primitive>("TensorCopySlices");
 inline const PrimitivePtr kPrimMapUniform = std::make_shared<Primitive>("MapUniform");
 inline const PrimitivePtr kPrimSplit = std::make_shared<Primitive>("Split");
+inline const PrimitivePtr kPrimSplitV = std::make_shared<Primitive>(kSplitV);
 inline const PrimitivePtr kPrimSequenceMask = std::make_shared<Primitive>("SequenceMask");
 inline const PrimitivePtr kPrimRange = std::make_shared<Primitive>("Range");
 inline const PrimitivePtr kPrimSpaceToBatchND = std::make_shared<Primitive>("SpaceToBatchND");
@@ -489,7 +491,6 @@ inline const PrimitivePtr kPrimExpm1 = std::make_shared<Primitive>("Expm1");
 inline const PrimitivePtr kPrimLog = std::make_shared<Primitive>(kLog);
 inline const PrimitivePtr kPrimRsqrt = std::make_shared<Primitive>("Rsqrt");
 inline const PrimitivePtr kPrimRsqrtGrad = std::make_shared<Primitive>("RsqrtGrad");
-inline const PrimitivePtr kPrimSplitV = std::make_shared<Primitive>("SplitV");
 inline const PrimitivePtr kPrimLinSpace = std::make_shared<Primitive>("LinSpace");
 inline const PrimitivePtr kPrimNonMaxSuppression = std::make_shared<Primitive>("NonMaxSuppression");
 inline const PrimitivePtr kPrimSign = std::make_shared<Primitive>("Sign");

@@ -2519,6 +2519,12 @@ test_case_array_ops = [
                         Tensor([[5, 6]], mstype.float32)],
         'skip': ['backward'],
     }),
+    ('SplitV', {
+        'block': P.SplitV(size_splits=[1, 2], split_dim=1, num_split=2),
+        'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])],
+        'desc_bprop': [(Tensor([[1], [4], [7]]),
+                        Tensor([[2, 3], [5, 6], [8, 9]]))],
+    }),
 ]
 
 test_case_other_ops = [
