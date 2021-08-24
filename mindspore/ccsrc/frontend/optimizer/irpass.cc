@@ -146,7 +146,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                                              {prim::kPrimGetRefKey, prim::kPrimGetRefValue});
 
   replace_refkey_by_param_ = MakeSubstitution(std::make_shared<ReplaceRefkeyByParam>(), "replace_refkey_by_param",
-                                              IsValueNode<RefKey>, false, opt::FORCE_RENORM);
+                                              IsValueNode<RefKey>, opt::FORCE_RENORM);
   replace_old_param_ = MakeSubstitution(std::make_shared<ReplaceOldParam>(), "replace_old_param", IsParam);
   minmaximum_grad_ = MakeSubstitution(std::make_shared<MinMaximumGrad>(), "minmaximum_grad", prim::kPrimTupleGetItem);
 
@@ -186,20 +186,11 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<SpecializeOnGraphArguments>(), "specialize_transform", IsCNodeGraph);
 
   // UpdateState eliminate
-  updatestate_only_used_node_eliminater_ =
-    MakeSubstitution(std::make_shared<UpdatestateOnlyUsedNodeEliminater>(), "updatestate_only_used_node_eliminater",
+  updatestate_useless_node_eliminater_ =
+    MakeSubstitution(std::make_shared<UpdatestateUselessNodeEliminater>(), "updatestate_useless_node_eliminater",
                      prim::kPrimUpdateState);
   updatestate_pure_node_eliminater_ = MakeSubstitution(std::make_shared<UpdatestatePureNodeEliminater>(),
                                                        "updatestate_pure_node_eliminater", prim::kPrimUpdateState);
-  updatestate_depend_eliminater_ = MakeSubstitution(std::make_shared<UpdatestateDependEliminater>(),
-                                                    "updatestate_depend_eliminater", prim::kPrimUpdateState, true);
-  updatestate_assign_eliminater_ = MakeSubstitution(std::make_shared<UpdatestateAssignEliminater>(),
-                                                    "updatestate_assign_eliminater", prim::kPrimUpdateState, true);
-  updatestate_maketuple_eliminater_ =
-    MakeSubstitution(std::make_shared<UpdatestateMakeTupleEliminater>(), "updatestate_maketuple_eliminater",
-                     prim::kPrimUpdateState, true);
-  updatestate_loads_eliminater_ = MakeSubstitution(std::make_shared<UpdatestateLoadsEliminater>(),
-                                                   "updatestate_loads_eliminater", prim::kPrimUpdateState, true);
   switch_call_monad_eliminater_ = MakeSubstitution(std::make_shared<SwitchCallMonadParameterEliminater>(),
                                                    "switch_call_monad_eliminater", IsCNodeDup);
 
@@ -274,9 +265,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
 ResolveIRPassLib::ResolveIRPassLib() {
   // In resolver_getattr_resolve_, some patterns have priority over others.
-  resolver_getattr_resolve_ =
-    MakeSubstitution(std::make_shared<ResolverGetAttrResolve>(), "getattr_resolve",
-                     {prim::kPrimGetAttr, prim::kPrimResolve}, false, opt::CHECK_RENORM, true);
+  resolver_getattr_resolve_ = MakeSubstitution(std::make_shared<ResolverGetAttrResolve>(), "getattr_resolve",
+                                               {prim::kPrimGetAttr, prim::kPrimResolve}, opt::CHECK_RENORM, true);
 }
 
 InferenceOptPrepareLib::InferenceOptPrepareLib() {
