@@ -24,14 +24,14 @@ template <typename I, typename T>
 void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
   adj_st_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
   adj_dt_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (indices_shape.size() != 2 && indices_shape[1] != 2) {
+  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
+  if (indices_shape.size() != kIndicesSizeNum && indices_shape[1] != kIndices2rdDimNum) {
     MS_LOG(EXCEPTION)
       << "SparseTensorDenseMatmul requires 'indices' should be a 2-D Tensor and the second dimension length "
          "should be 2, but got 'indices' shape: "
       << indices_shape;
   }
-  auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION)
       << "SparseTensorDenseMatmul requires 'value's should be a 1-D Tensor and the first dimension length should be "
@@ -40,14 +40,14 @@ void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_n
   }
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   values_size_ = values_shape[0];
-  b_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+  b_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE);
 }
 
 template <typename I, typename T>
 bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                                    const std::vector<kernel::AddressPtr> & /* workspace */,
                                                     const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 4 || outputs.size() != 1) {
+  if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << "SparseTensorDenseMatmul requires 4 inputs and 1 output, but got " << inputs.size()
                   << " inputs and " << outputs.size() << " output.";
     return false;
@@ -74,7 +74,7 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
   const size_t same_dim = adj_dt_ ? b_dim_1 : b_dim_0;
 
   for (size_t i = 0; i < values_size_; ++i) {
-    if (i * 2 + 1 >= indices_length) {
+    if (i * 2 + 1 >= indices_length) {  // the interval is 2
       MS_LOG(EXCEPTION) << "The index of a_indices out of bounds.";
     }
     if (i >= values_length) {

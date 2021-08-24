@@ -264,7 +264,7 @@ void Atanh(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Identity(const T *in, T *out, size_t size) {
-  std::copy(in, in + size, out);
+  (void)std::copy(in, in + size, out);
 }
 }  // namespace
 

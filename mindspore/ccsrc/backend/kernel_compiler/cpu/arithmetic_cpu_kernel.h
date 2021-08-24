@@ -58,7 +58,7 @@ class ArithmeticCPUKernel : public CPUKernel {
   std::vector<size_t> input_element_num2_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> output_element_num_;
-  size_t output_size_;
+  size_t output_size_{1};
   ArithmeticParameter op_para;
   OperateType operate_type_{ADD};
   TypeId dtype_{kTypeUnknown};

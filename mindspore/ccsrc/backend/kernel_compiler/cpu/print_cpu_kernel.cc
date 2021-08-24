@@ -38,8 +38,8 @@ void PrintCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 bool PrintCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> & /*workspace*/,
-                               const std::vector<kernel::AddressPtr> & /*outputs*/) {
+                               const std::vector<kernel::AddressPtr> & /* workspace */,
+                               const std::vector<kernel::AddressPtr> & /* outputs */) {
   auto data_type = CheckType();
   if (data_type == kTypeUnknown) {
     MS_LOG(EXCEPTION) << "CPU print does not support the input type.";

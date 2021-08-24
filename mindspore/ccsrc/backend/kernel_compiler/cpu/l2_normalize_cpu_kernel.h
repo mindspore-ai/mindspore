@@ -46,7 +46,7 @@ class L2NormalizeCPUKernel : public CPUKernel {
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   T epsilon_;
-  int axis_;
+  int axis_{0};
   void CheckParam(const CNodePtr &kernel_node);
 };
 

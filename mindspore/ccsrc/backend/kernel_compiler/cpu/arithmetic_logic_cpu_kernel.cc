@@ -177,7 +177,7 @@ void ArithmeticLogicCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   input_shape2_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (output_shape_.size() == 0) {
-    output_shape_.insert(output_shape_.begin(), 1);
+    (void)output_shape_.insert(output_shape_.begin(), 1);
   }
 
   output_size_ = 1;
@@ -187,11 +187,11 @@ void ArithmeticLogicCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
   size_t l = input_shape1_.size();
   for (size_t i = 0; i < output_shape_.size() - l; ++i) {
-    input_shape1_.insert(input_shape1_.begin(), 1);
+    (void)input_shape1_.insert(input_shape1_.begin(), 1);
   }
   l = input_shape2_.size();
   for (size_t i = 0; i < output_shape_.size() - l; ++i) {
-    input_shape2_.insert(input_shape2_.begin(), 1);
+    (void)input_shape2_.insert(input_shape2_.begin(), 1);
   }
   CPUKernelUtils::GetElementNumEveryDim(input_shape1_, &input_element_num1_);
   CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);
@@ -205,7 +205,7 @@ void ArithmeticLogicCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 bool ArithmeticLogicCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> & /* workspace */,
                                          const std::vector<AddressPtr> &outputs) {
   T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
   T *input2 = reinterpret_cast<T *>(inputs[1]->addr);

@@ -246,7 +246,7 @@ bool EltWiseGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
             {prim::kPrimAsinhGrad->name(), &EltWiseGradCPUKernel<T>::AsinhGrad},
             {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad},
             {prim::kPrimSoftplusGrad->name(), &EltWiseGradCPUKernel<T>::SoftplusGrad}};
-  if (inputs.size() < 2 || outputs.size() != 1) {
+  if (inputs.size() < kInputMinNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << " requires at least 2 inputs and 1 output, but got " << inputs.size()
                   << " inputs and " << outputs.size() << " output.";
     return false;
