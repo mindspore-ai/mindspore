@@ -92,8 +92,9 @@ template <typename T, typename C = std::allocator<T>, typename... Args>
 Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, C alloc, size_t n, Args &&... args) {
   RETURN_UNEXPECTED_IF_NULL(out);
   CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "size must be positive");
+  T *data = nullptr;
   try {
-    T *data = alloc.allocate(n);
+    data = alloc.allocate(n);
     // Some of our implementation of allocator (e.g. NumaAllocator) don't throw std::bad_alloc.
     // So we have to catch for null ptr
     if (data == nullptr) {
@@ -114,8 +115,14 @@ Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, C alloc, 
     };
     *out = std::unique_ptr<T[], std::function<void(T *)>>(data, std::bind(deleter, std::placeholders::_1, alloc, n));
   } catch (const std::bad_alloc &e) {
+    if (data != nullptr) {
+      alloc.deallocate(data, n);
+    }
     return Status(StatusCode::kMDOutOfMemory);
   } catch (const std::exception &e) {
+    if (data != nullptr) {
+      alloc.deallocate(data, n);
+    }
     RETURN_STATUS_UNEXPECTED(e.what());
   }
   return Status::OK();

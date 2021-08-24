@@ -21,9 +21,9 @@
 #include <random>
 #include <string>
 
-#include "./utils/external_soft_dp.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
+#include "minddata/dataset/kernels/image/soft_dvpp/utils/external_soft_dp.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {

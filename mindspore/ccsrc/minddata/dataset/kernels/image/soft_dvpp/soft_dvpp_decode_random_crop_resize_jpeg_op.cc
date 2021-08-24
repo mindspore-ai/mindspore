@@ -57,7 +57,7 @@ Status SoftDvppDecodeRandomCropResizeJpegOp::Compute(const std::shared_ptr<Tenso
   SoftDpCropInfo crop_info;
   RETURN_IF_NOT_OK(GetCropInfo(input, &crop_info));
   try {
-    unsigned char *buffer = const_cast<unsigned char *>(input->GetBuffer());
+    auto buffer = const_cast<unsigned char *>(input->GetBuffer());
     CHECK_FAIL_RETURN_UNEXPECTED(buffer != nullptr,
                                  "SoftDvppDecodeRandomCropResizeJpeg: the input image buffer is empty.");
     SoftDpProcsessInfo info;

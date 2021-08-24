@@ -372,9 +372,10 @@ std::vector<std::string> ShardHeader::SerializeHeader() {
 std::string ShardHeader::SerializeIndexFields() {
   json j;
   auto fields = index_->GetFields();
-  for (const auto &field : fields) {
-    j.push_back({{"schema_id", field.first}, {"index_field", field.second}});
-  }
+  (void)std::transform(fields.begin(), fields.end(), std::back_inserter(j),
+                       [](const std::pair<uint64_t, std::string> &field) -> json {
+                         return {{"schema_id", field.first}, {"index_field", field.second}};
+                       });
   return j.dump();
 }
 
@@ -382,9 +383,8 @@ std::vector<std::string> ShardHeader::SerializePage() {
   std::vector<string> pages;
   for (auto &shard_pages : pages_) {
     json j;
-    for (const auto &p : shard_pages) {
-      j.emplace_back(p->GetPage());
-    }
+    (void)std::transform(shard_pages.begin(), shard_pages.end(), std::back_inserter(j),
+                         [](const std::shared_ptr<Page> &p) { return p->GetPage(); });
     pages.emplace_back(j.dump());
   }
   return pages;
@@ -392,25 +392,22 @@ std::vector<std::string> ShardHeader::SerializePage() {
 
 std::string ShardHeader::SerializeStatistics() {
   json j;
-  for (const auto &stats : statistics_) {
-    j.emplace_back(stats->GetStatistics());
-  }
+  (void)std::transform(statistics_.begin(), statistics_.end(), std::back_inserter(j),
+                       [](const std::shared_ptr<Statistics> &stats) { return stats->GetStatistics(); });
   return j.dump();
 }
 
 std::string ShardHeader::SerializeSchema() {
   json j;
-  for (const auto &schema : schema_) {
-    j.emplace_back(schema->GetSchema());
-  }
+  (void)std::transform(schema_.begin(), schema_.end(), std::back_inserter(j),
+                       [](const std::shared_ptr<Schema> &schema) { return schema->GetSchema(); });
   return j.dump();
 }
 
 std::string ShardHeader::SerializeShardAddress() {
   json j;
-  for (const auto &addr : shard_addresses_) {
-    j.emplace_back(GetFileName(addr).second);
-  }
+  (void)std::transform(shard_addresses_.begin(), shard_addresses_.end(), std::back_inserter(j),
+                       [](const std::string &addr) { return GetFileName(addr).second; });
   return j.dump();
 }
 
@@ -759,7 +756,7 @@ MSRStatus ShardHeader::FileToPages(const std::string dump_file_name) {
   return SUCCESS;
 }
 
-MSRStatus ShardHeader::initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
+MSRStatus ShardHeader::Initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
                                   const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
                                   uint64_t &schema_id) {
   if (header_ptr == nullptr) {
@@ -775,9 +772,8 @@ MSRStatus ShardHeader::initialize(const std::shared_ptr<ShardHeader> *header_ptr
   // create index
   std::vector<std::pair<uint64_t, std::string>> id_index_fields;
   if (!index_fields.empty()) {
-    for (auto &el : index_fields) {
-      id_index_fields.emplace_back(schema_id, el);
-    }
+    (void)std::transform(index_fields.begin(), index_fields.end(), std::back_inserter(id_index_fields),
+                         [schema_id](const std::string &el) { return std::make_pair(schema_id, el); });
     if (SUCCESS != (*header_ptr)->AddIndexFields(id_index_fields)) {
       MS_LOG(ERROR) << "Got unexpected error when adding mindrecord index.";
       return FAILED;

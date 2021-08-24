@@ -159,7 +159,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   }
 
   std::string kImageFile = image_folder_path_ + std::string("/") + image_id;
-  RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
+  RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->Column(0), &image));
 
   auto bboxRow = itr->second;
   std::vector<float> bbox_row;
@@ -590,7 +590,7 @@ Status CocoOp::ComputeColMap() {
   // Set the column name map (base class field)
   if (column_name_id_map_.empty()) {
     for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->column(i).name()] = i;
+      column_name_id_map_[data_schema_->Column(i).Name()] = i;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

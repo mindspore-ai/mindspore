@@ -70,7 +70,7 @@ Status ComposeOperation::ValidateParams() {
 std::shared_ptr<TensorOp> ComposeOperation::Build() {
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
   (void)std::transform(transforms_.begin(), transforms_.end(), std::back_inserter(tensor_ops),
-                       [](std::shared_ptr<TensorOperation> op) -> std::shared_ptr<TensorOp> { return op->Build(); });
+                       [](const auto &op) -> std::shared_ptr<TensorOp> { return op->Build(); });
   return std::make_shared<ComposeOp>(tensor_ops);
 }
 
@@ -184,7 +184,7 @@ std::shared_ptr<TensorOp> PadEndOperation::Build() { return std::make_shared<Pad
 #endif
 
 // PreBuiltOperation
-PreBuiltOperation::PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op) : op_(tensor_op) {
+PreBuiltOperation::PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op) : op_(std::move(tensor_op)) {
 #ifdef ENABLE_PYTHON
   auto pyfunc_tensor_op = std::dynamic_pointer_cast<PyFuncOp>(tensor_op);
   if (pyfunc_tensor_op && pyfunc_tensor_op->IsRandom()) random_op_ = true;
@@ -231,7 +231,7 @@ Status RandomChoiceOperation::ValidateParams() {
 std::shared_ptr<TensorOp> RandomChoiceOperation::Build() {
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
   (void)std::transform(transforms_.begin(), transforms_.end(), std::back_inserter(tensor_ops),
-                       [](std::shared_ptr<TensorOperation> op) -> std::shared_ptr<TensorOp> { return op->Build(); });
+                       [](const auto &op) -> std::shared_ptr<TensorOp> { return op->Build(); });
   return std::make_shared<RandomChoiceOp>(tensor_ops);
 }
 

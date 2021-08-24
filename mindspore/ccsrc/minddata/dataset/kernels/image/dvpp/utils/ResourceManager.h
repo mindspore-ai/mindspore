@@ -16,17 +16,18 @@
 #ifndef RESOURCEMANAGER_H
 #define RESOURCEMANAGER_H
 
-#include <vector>
-#include <set>
+#include <climits>
 #include <cstring>
 #include <climits>
-#include <unordered_map>
 #include <mutex>
-#include "CommonDataType.h"
-#include "ErrorCode.h"
+#include <set>
 #include <sys/stat.h>
+#include <unordered_map>
+#include <vector>
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
 
 enum ModelLoadMethod {
   LOAD_FROM_FILE = 0,       // Loading from file, memory of model and weights are managed by ACL

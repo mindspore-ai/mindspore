@@ -593,7 +593,7 @@ Status DeviceQueueOp::SendDataToCPU() {
   MS_LOG(INFO) << "Device queue, sending data to CPU.";
   int64_t total_batch = 0;
 
-  while (!(child_iterator_->eof_handled())) {
+  while (!(child_iterator_->EofHandled())) {
     TensorRow curr_row;
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
 

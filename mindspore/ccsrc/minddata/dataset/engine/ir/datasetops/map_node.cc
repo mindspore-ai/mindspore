@@ -56,6 +56,7 @@ void MapNode::Print(std::ostream &out) const {
 }
 
 Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
+  RETURN_UNEXPECTED_IF_NULL(node_ops);
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
 
   // Build tensorOp from tensorOperation vector
@@ -128,12 +129,16 @@ Status MapNode::ValidateParams() {
 
 // Visitor accepting method for IRNodePass
 Status MapNode::Accept(IRNodePass *const p, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(p);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<MapNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
 Status MapNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(p);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<MapNode>(), modified);
 }
@@ -144,6 +149,7 @@ void MapNode::setOperations(const std::vector<std::shared_ptr<TensorOperation>> 
 std::vector<std::shared_ptr<TensorOperation>> MapNode::operations() { return operations_; }
 
 Status MapNode::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
   args["input_columns"] = input_columns_;
@@ -158,6 +164,7 @@ Status MapNode::to_json(nlohmann::json *out_json) {
   std::vector<nlohmann::json> ops;
   std::vector<int32_t> cbs;
   for (auto op : operations_) {
+    RETURN_UNEXPECTED_IF_NULL(op);
     nlohmann::json op_args;
     RETURN_IF_NOT_OK(op->to_json(&op_args));
     if (op->Name() == "PyFuncOp") {
@@ -170,8 +177,8 @@ Status MapNode::to_json(nlohmann::json *out_json) {
     }
   }
   args["operations"] = ops;
-  std::transform(callbacks_.begin(), callbacks_.end(), std::back_inserter(cbs),
-                 [](std::shared_ptr<DSCallback> cb) -> int32_t { return cb->step_size(); });
+  (void)std::transform(callbacks_.begin(), callbacks_.end(), std::back_inserter(cbs),
+                       [](std::shared_ptr<DSCallback> cb) -> int32_t { return cb != nullptr ? cb->step_size() : 0; });
   args["callback"] = cbs;
   *out_json = args;
   return Status::OK();

@@ -107,6 +107,7 @@ Status ConfigManager::LoadFile(const std::string &settingsFile) {
     nlohmann::json js;
     in >> js;
     rc = FromJson(js);
+    in.close();
   } catch (const nlohmann::json::type_error &e) {
     std::ostringstream ss;
     ss << "Client file failed to load:\n" << e.what();

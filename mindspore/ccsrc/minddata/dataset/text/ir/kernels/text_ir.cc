@@ -15,7 +15,6 @@
  */
 
 #include <unistd.h>
-
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
 
 #ifndef _WIN32
@@ -316,7 +315,9 @@ Status SentencePieceTokenizerOperation::ValidateParams() {
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   } else {
-    Path vocab_file(vocab_path_);
+    std::string real_vocab_path;
+    RETURN_IF_NOT_OK(Path::RealPath(vocab_path_, real_vocab_path));
+    Path vocab_file(real_vocab_path);
     if (!vocab_file.Exists() || vocab_file.IsDirectory()) {
       std::string err_msg = "SentencePieceTokenizer : vocab file: [" + vocab_path_ + "] is invalid or does not exist.";
       MS_LOG(ERROR) << err_msg;

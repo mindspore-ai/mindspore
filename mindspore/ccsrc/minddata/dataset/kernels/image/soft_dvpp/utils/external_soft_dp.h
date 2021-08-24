@@ -17,7 +17,7 @@
 #ifndef EXTERNAL_SOFTDP_H
 #define EXTERNAL_SOFTDP_H
 
-#include <stdint.h>
+#include <cstdint>
 
 struct SoftDpProcsessInfo {
   uint8_t *input_buffer;       // input buffer
