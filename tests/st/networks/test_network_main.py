@@ -56,9 +56,9 @@ def test_resnet50():
 
 
 def test_lenet():
-    data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
-    label = Tensor(np.ones([32]).astype(np.int32))
     net = LeNet()
+    data = Tensor(np.ones([net.batch_size, 3, 32, 32]).astype(np.float32) * 0.01)
+    label = Tensor(np.ones([net.batch_size]).astype(np.int32))
     train(net, data, label)
 
 
