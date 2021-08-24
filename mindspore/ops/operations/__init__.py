@@ -421,6 +421,7 @@ __all__ = [
     "ApplyGradientDescent",
     "ApplyProximalGradientDescent",
     "BatchToSpace",
+    "SpaceToBatch",
     "Atan2",
     "ApplyRMSProp",
     "ApplyCenteredRMSProp",

@@ -66,7 +66,7 @@ void CalSpaceToBatch(const size_t size, const T *input, const size_t in,
                      const size_t oc, const size_t pad_up, const size_t pad_dn,
                      const size_t pad_lft, const size_t pad_rht, const size_t block_num,
                      T *output, cudaStream_t cuda_stream) {
-  //cudaMemset(output, 0, on * oc * oh * ow * size(T));
+  cudaMemset(output, 0, on * oc * oh * ow * size(T));
   SpaceToBatch<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, input, in, ih, iw, ic, on, oh, ow, oc, pad_up, pad_dn, pad_lft, pad_rht, block_num, output);
   return;
