@@ -70,15 +70,16 @@ enum StatusCode : uint32_t {
   kMCInvalidArgs = kMC | 0x4,
 
   // Lite  // Common error code, range: [-1, -100）
-  kLiteError = kLite | (0x0FFFFFFF & -1),           /**< Common error code. */
-  kLiteNullptr = kLite | (0x0FFFFFFF & -2),         /**< NULL pointer returned.*/
-  kLiteParamInvalid = kLite | (0x0FFFFFFF & -3),    /**< Invalid parameter.*/
-  kLiteNoChange = kLite | (0x0FFFFFFF & -4),        /**< No change. */
-  kLiteSuccessExit = kLite | (0x0FFFFFFF & -5),     /**< No error but exit. */
-  kLiteMemoryFailed = kLite | (0x0FFFFFFF & -6),    /**< Fail to create memory. */
-  kLiteNotSupport = kLite | (0x0FFFFFFF & -7),      /**< Fail to support. */
-  kLiteThreadPoolError = kLite | (0x0FFFFFFF & -8), /**< Error occur in thread pool. */
+  kLiteError = kLite | (0x0FFFFFFF & -1),            /**< Common error code. */
+  kLiteNullptr = kLite | (0x0FFFFFFF & -2),          /**< NULL pointer returned.*/
+  kLiteParamInvalid = kLite | (0x0FFFFFFF & -3),     /**< Invalid parameter.*/
+  kLiteNoChange = kLite | (0x0FFFFFFF & -4),         /**< No change. */
+  kLiteSuccessExit = kLite | (0x0FFFFFFF & -5),      /**< No error but exit. */
+  kLiteMemoryFailed = kLite | (0x0FFFFFFF & -6),     /**< Fail to create memory. */
+  kLiteNotSupport = kLite | (0x0FFFFFFF & -7),       /**< Fail to support. */
+  kLiteThreadPoolError = kLite | (0x0FFFFFFF & -8),  /**< Error occur in thread pool. */
   kLiteUninitializedObj = kLite | (0x0FFFFFFF & -9), /**< Object is not initialized. */
+  kLiteFileError = kLite | (0x0FFFFFFF & -10),       /**< Invalid file. */
 
   // Executor error code, range: [-100,-200)
   kLiteOutOfTensorRange = kLite | (0x0FFFFFFF & -100), /**< Failed to check range. */
