@@ -31,9 +31,9 @@ __global__ void SpaceToBatch(const size_t size, const T *input, const size_t in,
   size_t idx_ih = 0;
   size_t idx_iw = 0;
   size_t idx_on = 0;
-  size_t input_pos = 0;
+  size_t output_pos = 0;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size;
-  pos += blockDim.x * gridDim.x) {
+    pos += blockDim.x * gridDim.x) {
     temp_stride = ic * ih * iw;
     idx_in = pos / temp_stride;
     temp_pos = pos % temp_stride;
@@ -50,11 +50,11 @@ __global__ void SpaceToBatch(const size_t size, const T *input, const size_t in,
     idx_iw = temp_pos / temp_stride;
 
     idx_on = (((idx_ih + pad_up) % block_num) * block_num + ((idx_iw + pad_lft) % block_num)) * in + idx_in;
-    input_pos = idx_on * oc;
-    input_pos = (input_pos + idx_ic) * oh;
-    input_pos = (input_pos + ((idx_ih + pad_up) - (idx_on / (in * block_num))) / block_num) * ow;
-    input_pos = (input_pos + ((idx_iw + pad_lft) - ((idx_on / in) % block_num)) / block_num);
-    output[input_pos] = input[pos];
+    output_pos = idx_on * oc;
+    output_pos = (output_pos + idx_ic) * oh;
+    output_pos = (output_pos + ((idx_ih + pad_up) - (idx_on / (in * block_num))) / block_num) * ow;
+    output_pos = (output_pos + ((idx_iw + pad_lft) - ((idx_on / in) % block_num)) / block_num);
+    output[output_pos] = input[pos];
   }
   return;
 }
@@ -66,7 +66,7 @@ void CalSpaceToBatch(const size_t size, const T *input, const size_t in,
                      const size_t oc, const size_t pad_up, const size_t pad_dn,
                      const size_t pad_lft, const size_t pad_rht, const size_t block_num,
                      T *output, cudaStream_t cuda_stream) {
-  //cudaMemset(output, 0, on * oc * oh * ow * sizeof(T));
+  cudaMemset(output, 0, on * oc * oh * ow * sizeof(T));
   SpaceToBatch<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, input, in, ih, iw, ic, on, oh, ow, oc, pad_up, pad_dn, pad_lft, pad_rht, block_num, output);
   return;
