@@ -142,6 +142,7 @@ from .one_hot import _one_hot_tbe
 from .one_hot_ds import _one_hot_ds_tbe
 from .equal import _equal_tbe
 from .equal_ds import _equal_ds_tbe
+from .lerp import _lerp_tbe
 from .less import _less_tbe
 from .less_equal import _less_equal_tbe
 from .logical_and import _logical_and_tbe

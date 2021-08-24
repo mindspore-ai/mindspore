@@ -26,7 +26,8 @@
 namespace mindspore {
 namespace ops {
 std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,
-                                       const std::string &op_name) {
+                                       const std::string &op_name, const std::string &op_x_name,
+                                       const std::string &op_y_name) {
   if (x_shape == y_shape) {
     return x_shape;
   }
@@ -47,7 +48,8 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
     } else if (x_shape[x_length + i] == y_shape[y_length + i]) {
       broadcast_shape.push_back(x_shape[x_length + i]);
     } else {
-      MS_EXCEPTION(ValueError) << "For op " << op_name << ", the two input can not broadcast";
+      MS_EXCEPTION(ValueError) << "For op " << op_name << ", the two input '" << op_x_name << "' and '" << op_y_name
+                               << "' can not broadcast";
     }
   }
   return broadcast_shape;
