@@ -251,18 +251,18 @@ struct MS_CORE_API TypeListEqual {
   bool operator()(TypePtrList const &lhs, TypePtrList const &rhs) const;
 };
 
-MS_CORE_API extern const TypePtr kTypeExternal;
-MS_CORE_API extern const TypePtr kTypeEnv;
-MS_CORE_API extern const TypePtr kTypeType;
-MS_CORE_API extern const TypePtr kString;
-MS_CORE_API extern const TypePtr kList;
-MS_CORE_API extern const TypePtr kTuple;
-MS_CORE_API extern const TypePtr kDict;
-MS_CORE_API extern const TypePtr kSlice;
-MS_CORE_API extern const TypePtr kKeyword;
-MS_CORE_API extern const TypePtr kTensorType;
-MS_CORE_API extern const TypePtr kTensorTypeFP16;
-MS_CORE_API extern const TypePtr kTensorTypeFP32;
+inline const TypePtr kTypeExternal = std::make_shared<External>();
+inline const TypePtr kTypeEnv = std::make_shared<EnvType>();
+inline const TypePtr kTypeType = std::make_shared<TypeType>();
+inline const TypePtr kString = std::make_shared<String>();
+inline const TypePtr kList = std::make_shared<List>();
+inline const TypePtr kTuple = std::make_shared<Tuple>();
+inline const TypePtr kDict = std::make_shared<Dictionary>();
+inline const TypePtr kSlice = std::make_shared<Slice>();
+inline const TypePtr kKeyword = std::make_shared<Keyword>();
+inline const TypePtr kTensorType = std::make_shared<TensorType>();
+inline const TypePtr kTensorTypeFP16 = std::make_shared<TensorType>(std::make_shared<Float>(16));
+inline const TypePtr kTensorTypeFP32 = std::make_shared<TensorType>(std::make_shared<Float>(32));
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_H_

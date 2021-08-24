@@ -43,7 +43,4 @@ std::string RefType::DumpText() const {
   }
   return buffer.str();
 }
-
-const TypePtr kRefKeyType = std::make_shared<RefKeyType>();
-const TypePtr kRefType = std::make_shared<RefType>();
 }  // namespace mindspore
