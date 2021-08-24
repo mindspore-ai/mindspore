@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BATCHOSPACE_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BATCHOSPACE_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPACETOBATCH_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPACETOBATCH_KERNEL_H_
 
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/batchtospace_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/spacetobatch_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class BatchToSpaceGpuKernel : public GpuKernel {
+class SpaceToBatchGpuKernel : public GpuKernel {
  public:
-  BatchToSpaceGpuKernel() { ResetResource(); }
-  ~BatchToSpaceGpuKernel() = default;
+  SpaceToBatchGpuKernel() { ResetResource(); }
+  ~SpaceToBatchGpuKernel() {}
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
@@ -39,10 +39,10 @@ class BatchToSpaceGpuKernel : public GpuKernel {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
 
-    size_t size = output_size_ / sizeof(T);
+    size_t size = input_size_ / sizeof(T);
 
-    CalBatchToSpace<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_,
-                       crops_[0][0], crops_[0][1], crops_[1][0], crops_[1][1],
+    CalSpaceToBatch<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_,
+                       paddings_[0][0], paddings_[0][1], paddings_[1][0], paddings_[1][1],
                        block_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -55,16 +55,15 @@ class BatchToSpaceGpuKernel : public GpuKernel {
     for(size_t idx = 0; idx < input_shape_.size(); ++idx){
       input_size_ *= input_shape_[idx];
     }
-
     in_ = input_shape_[0];
     ic_ = input_shape_[1];
     ih_ = input_shape_[2];
     iw_ = input_shape_[3];
 
-    on_ = in_ / (block_size_ * block_size_);
+    on_ = in_ * block_size_ * block_size_;
     oc_ = ic_;
-    oh_ = ih_ * block_size_ - crops_[0][0] - crops_[0][1];
-    ow_ = iw_ * block_size_ - crops_[1][0] - crops_[1][1];
+    oh_ = (ih_ + paddings_[0][0] + paddings_[0][1]) / block_size_;
+    ow_ = (iw_ + paddings_[1][0] + paddings_[1][1]) / block_size_;
     output_size_ = on_ * oc_ * oh_ * ow_ * sizeof(T);
     InitSizeLists();
     return true;
@@ -81,7 +80,7 @@ class BatchToSpaceGpuKernel : public GpuKernel {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
-    crops_.clear();
+    paddings_.clear();
     input_shape_.clear();
   }
 
@@ -91,6 +90,7 @@ class BatchToSpaceGpuKernel : public GpuKernel {
     output_size_list_.push_back(output_size_);
   }
 
+ private:
   bool CheckParam(const CNodePtr &kernel_node) {
     block_size_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "block_size"));
     if(block_size_ < 2) {
@@ -114,47 +114,41 @@ class BatchToSpaceGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "Input is " << input_shape.size() << "-D, but BatchToSpace supports 4-D tensor.";
       return false;
     }
-    if((input_shape[0] % (block_size_ * block_size_)) != 0) {
-      MS_LOG(ERROR) << "input_shape[0] must be divisible by product of block_shape";
-      return false;
-    }
     input_shape_.assign(input_shape.begin(),input_shape.end());
-
-    // check crops
-    crops_ =
-      static_cast<std::vector<std::vector<int64_t>>>(GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "crops"));
-
-    if(crops_.size() != 2) {
-      MS_LOG(ERROR) << "crops.size() in BatchToSpace needs 2.";
+    // check paddings_
+    paddings_ =
+      static_cast<std::vector<std::vector<int64_t>>>(GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings"));
+    if(paddings_.size() != 2) {
+      MS_LOG(ERROR) << "paddings.size() in BatchToSpace needs 2.";
       return false;
     }
-    if(crops_[0].size() != 2 || crops_[1].size() != 2) {
-      MS_LOG(ERROR) << "crops[i].size() in BatchToSpace needs 2.";
+    if(paddings_[0].size() != 2 || paddings_[1].size() != 2) {
+      MS_LOG(ERROR) << "paddings[i].size() in BatchToSpace needs 2.";
       return false;
     }else {
       for(size_t idx_i = 0; idx_i < 2; ++idx_i) {
         for(size_t idx_j = 0; idx_j < 2; ++idx_j) {
-          if(crops_[idx_i][idx_j] < 0) {
-            MS_LOG(ERROR) << "the number in crops can not be less than 0.";
+          if(paddings_[idx_i][idx_j] < 0) {
+            MS_LOG(ERROR) << "the number in paddings can not be less than 0.";
             return false;
           }
         }
-        auto tmp_shape = input_shape[idx_i + 2] * block_size_ - crops_[idx_i][0] - crops_[idx_i][1];
-        if(tmp_shape < 0) {
-          MS_LOG(ERROR) << "out_shape can not be less 0.";
+        auto tmp_shape = input_shape[idx_i + 2] + paddings_[idx_i][0] + paddings_[idx_i][1];
+        if((tmp_shape % block_size_) != 0) {
+          MS_LOG(ERROR) << "padded shape must be divisible by block_size";
         }
       }
     }
     return true;
   }
 
- private:
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
-  std::vector<std::vector<int64_t>> crops_;
+  std::vector<std::vector<int64_t>> paddings_;
   std::vector<size_t> input_shape_;
+  size_t shape_size_;
   size_t block_size_;
   size_t input_size_;
   size_t output_size_;
@@ -169,4 +163,4 @@ class BatchToSpaceGpuKernel : public GpuKernel {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BATCHOSPACE_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPACETOBATCH_KERNEL_H_
