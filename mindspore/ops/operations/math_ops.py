@@ -2144,6 +2144,10 @@ class Log(PrimitiveWithInfer):
     .. math::
         y_i = log_e(x_i)
 
+    .. warning::
+        If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy
+        is subject to change.
+
     Inputs:
         - **x** (Tensor) - The input tensor. The value must be greater than 0.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
@@ -2700,6 +2704,9 @@ class TruncateDiv(_MathBinaryOp):
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
+    Note:
+        Broadcasting is supported.
+
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
           or a tensor whose data type is number or bool.
@@ -2736,6 +2743,13 @@ class TruncateMod(_MathBinaryOp):
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
+
+    .. warning::
+        - The input data does not support 0.
+        - When NUM exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
+          double thousandths in the mini form.
+        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
+        - If shape is expressed as (D1,D2... ,Dn), then D1*D2... *DN<=1000000,n<=8.
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
@@ -2775,6 +2789,13 @@ class Mod(_MathBinaryOp):
     .. math::
 
         out_{i} = x_{i} // y_{i}
+
+    .. warning::
+        - The input data does not support 0.
+        - When NUM exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
+          double thousandths in the mini form.
+        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
+        - If shape is expressed as (D1,D2... ,Dn), then D1*D2... *DN<=1000000,n<=8.
 
     Inputs:
         - **x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
@@ -2868,6 +2889,13 @@ class FloorMod(_MathBinaryOp):
         out_{i} =\text{floor}(x_{i} // y_{i})
 
     where the :math:`floor` indicates the Floor operator, for more details, please refer to the Floor operator.
+
+    .. warning::
+        - The input data does not support 0.
+        - When NUM exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
+          double thousandths in the mini form.
+        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
+        - If shape is expressed as (D1,D2... ,Dn), then D1*D2... *DN<=1000000,n<=8.
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -3030,6 +3058,10 @@ class Acosh(PrimitiveWithInfer):
     .. math::
 
         out_i = \cosh^{-1}(input_i)
+
+    .. warning::
+        Given an input tensor x, the function computes inverse hyperbolic cosine of every element.
+        Input range is [1, inf].
 
     Inputs:
         - **x** (Tensor) - The data type should be one of the following types: float16, float32.
@@ -3445,6 +3477,9 @@ class Greater(_LogicBinaryOp):
             & \text{False,   if } x_{i}<=y_{i}
             \end{cases}
 
+    Note:
+        Broadcasting is supported.
+
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number or
           a bool or a tensor whose data type is number or bool.
@@ -3639,6 +3674,9 @@ class LogicalNot(PrimitiveWithInfer):
 
         out_{i} = \\neg x_{i}
 
+    .. warning::
+        The input and output values are "1" or "0", corresponding to bool values "true" and "false".
+
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is bool.
           :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
@@ -3694,6 +3732,9 @@ class LogicalAnd(_LogicBinaryOp):
 
         out_{i} = x_{i} \wedge y_{i}
 
+    Note:
+        LogicalAnd supports broadcasting.
+
     Inputs:
         - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
         - **y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
@@ -3743,6 +3784,9 @@ class LogicalOr(_LogicBinaryOp):
     .. math::
 
         out_{i} = x_{i} \\vee y_{i}
+
+    Note:
+        LogicalOr supports broadcasting.
 
     Inputs:
         - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
@@ -4255,6 +4299,9 @@ class NMSWithMask(PrimitiveWithInfer):
 
     .. math::
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
+
+    .. warning::
+        Only supports 2864 input boxes at one time.
 
     Args:
         iou_threshold (float): Specifies the threshold of overlap boxes with respect to

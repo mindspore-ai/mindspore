@@ -1065,6 +1065,9 @@ class BNTrainingUpdate(PrimitiveWithInfer):
     BNTrainingReduce. Where the moving averages is a method of analyzing data points by creating a series of averages
     of different subsets of the entire data set.
 
+    .. warning::
+        For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
+
     Args:
         isRef (bool): If a ref. Default: True. Ref indicates whether to enable the output multiplexing input address.
         epsilon (float): A small value added to variance avoid dividing by zero. Default: 1e-5.
@@ -1178,6 +1181,11 @@ class BatchNorm(PrimitiveWithInfer):
 
     where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon, :math:`mean` is the mean of x,
     :math:`variance` is the variance of x.
+
+    .. warning::
+        - If the operation is used for inference, and outputs "reserve_space_1" and "reserve_space_2" are available,
+          then "reserve_space_1" has the same value as "mean" and "reserve_space_2" has the same value as "variance".
+        - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
 
     Args:
         is_training (bool): If `is_training` is True, `mean` and `variance` are computed during training.
@@ -1928,6 +1936,14 @@ class AvgPool(_Pool):
         \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
+    .. warning::
+        - Only single input and single output are supported.
+        - Global pooling is supported.
+        - The height of "kernel_size" and the weight of "kernel_size" are positive integers within the range [1, 255].
+          ksize_H * ksize_W < 256.
+        - Due to instruction restrictions, the values of "strides_h" and "strides_w" are
+          positive integers within the range [1, 63].
+
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
             is an int number that represents height and width of the kernel, or a tuple
@@ -2611,6 +2627,10 @@ class SmoothL1Loss(PrimitiveWithInfer):
     Its default value is 1.0. :math:`N` is the batch size. This function returns an
     unreduced loss Tensor.
 
+    .. warning::
+        This operator does not perform the "reduce" operation on the loss value.
+        Call other reduce operators to perform "reduce" operation on the loss if required.
+
     Args:
         beta (float): A parameter used to control the point where the function will change from
             quadratic to linear. Default: 1.0.
@@ -2969,6 +2989,11 @@ class ApplyRMSProp(PrimitiveWithInfer):
     :math:`\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
     :math:`\eta` represents `learning_rate`. :math:`\nabla Q_{i}(w)` represents `grad`.
 
+    .. warning::
+        Note that in dense implementation of this algorithm, "mean_square" and "moment" will update even if "grad" is 0,
+        but in this sparse implementation, "mean_square" and "moment" will not update
+        in iterations during which "grad" is 0.
+
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
                             from being updated. Default: False.
@@ -3079,6 +3104,11 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         uses the centered RMSProp algorithm, and the centered RRMSProp algorithm uses an estimate of the centered second
         moment(i.e., the variance) for normalization, as opposed to regular RMSProp, which uses the (uncentered)
         second moment. This often helps with training, but is slightly more exapnsive interms of computation and memory.
+
+    .. warning::
+        In dense implementation of this algorithm, mean_gradient, mean_square, and moment will update
+        even if the grad is zero. But in this sparse implementation, mean_gradient, mean_square, and moment
+        will not update in iterations during which the grad is zero.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
@@ -5192,6 +5222,10 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
         \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
+
+    .. warning::
+        - The value of "x" must range from 0 to 1.
+        - The value of "y" must be "0" or "1".
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
@@ -7827,6 +7861,9 @@ class AvgPool3D(Primitive):
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, AvgPool3D outputs
     regional average in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
     :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
+
+    .. warning::
+        "kernel_size" is in the range [1, 255]. "strides" is in the range [1, 63].
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
