@@ -77,13 +77,25 @@ bool CommManager::CreateGroupSync(const string &group, const vector<unsigned int
 
 bool CommManager::GetRankID(const string &group, unsigned int *rank_id) const {
   HCCL_GROUP_CHECK_EMPTY(group);
-  HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(group, rank_id));
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(group, rank_id));
+  } else {
+    HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(rank_id));
+  }
   return true;
 }
 
 bool CommManager::GetRankSize(const string &group, unsigned int *rank_size) const {
   HCCL_GROUP_CHECK_EMPTY(group);
-  HCCL_RUN_CHECK(string("get rank size"), group, hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, rank_size));
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    HCCL_RUN_CHECK(string("get rank size"), group, hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, rank_size));
+  } else {
+    HCCL_RUN_CHECK(string("get rank size"), group, hccl::HcclAdapter::GetInstance().HcclGetRankSize(rank_size));
+  }
   return true;
 }
 
