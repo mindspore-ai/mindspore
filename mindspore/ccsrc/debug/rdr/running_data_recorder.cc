@@ -89,19 +89,19 @@ bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, co
   return ans;
 }
 
-bool RecordMemAddressInfo(const SubModuleId module, const std::string &name, size_t nsize) {
+bool RecordMemAddressInfo(const SubModuleId module, const std::string &name) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
   MemAddressRecorderPtr mem_info_recorder = std::make_shared<MemAddressRecorder>(submodule_name, name);
-  mem_info_recorder->Reset(nsize);
+  mem_info_recorder->Reset();
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(mem_info_recorder));
   return ans;
 }
 
 bool UpdateMemAddress(const SubModuleId module, const std::string &name, const std::string &op_name,
-                      const MemInfo &mem_info, size_t id) {
+                      const kernel::KernelLaunchInfo &mem_info) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
@@ -110,7 +110,7 @@ bool UpdateMemAddress(const SubModuleId module, const std::string &name, const s
   bool ans = false;
   if (recorder != nullptr) {
     auto mem_recorder = std::dynamic_pointer_cast<MemAddressRecorder>(recorder);
-    mem_recorder->SaveMemInfo(op_name, mem_info, id);
+    mem_recorder->SaveMemInfo(op_name, mem_info);
     ans = true;
   }
   return ans;

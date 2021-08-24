@@ -731,8 +731,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   int exec_order = 1;
 #ifdef ENABLE_DUMP_IR
   std::string name = "mem_address_list";
-  (void)mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, name, kernels.size());
-  size_t id = 0;
+  (void)mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, name);
 #endif
   CNodePtr last_kernel = GetLastKernel(graph);
   for (const auto &kernel : kernels) {
@@ -769,9 +768,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       return false;
     }
 #ifdef ENABLE_DUMP_IR
-    MemInfo mem_info = {&kernel_inputs, &kernel_workspaces, &kernel_outputs};
+    kernel::KernelLaunchInfo mem_info = {kernel_inputs, kernel_workspaces, kernel_outputs};
     std::string op_name = kernel->fullname_with_scope();
-    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info, id++);
+    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info);
 #endif
     if (!mock) {
       LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);

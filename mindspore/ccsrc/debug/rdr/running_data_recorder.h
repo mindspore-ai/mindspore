@@ -30,6 +30,7 @@ using CNodePtr = std::shared_ptr<CNode>;
 
 namespace kernel {
 class Address;
+struct KernelLaunchInfo;
 using AddressPtr = std::shared_ptr<Address>;
 }  // namespace kernel
 using AddressPtrList = std::vector<kernel::AddressPtr>;
@@ -52,9 +53,9 @@ bool RecordGraphExecOrder(const SubModuleId module, const std::string &name,
                           const std::vector<CNodePtr> &final_exec_order);
 bool RecordString(SubModuleId module, const std::string &name, const std::string &data);
 bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, const std::vector<CNodePtr> &exec_order);
-bool RecordMemAddressInfo(const SubModuleId module, const std::string &name, size_t nsize);
+bool RecordMemAddressInfo(const SubModuleId module, const std::string &name);
 bool UpdateMemAddress(const SubModuleId module, const std::string &name, const std::string &op_name,
-                      const MemInfo &mem_info, size_t id);
+                      const kernel::KernelLaunchInfo &mem_info);
 #ifdef ENABLE_D
 bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
                          const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
