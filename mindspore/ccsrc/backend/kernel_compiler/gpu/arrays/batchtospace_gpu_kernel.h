@@ -41,9 +41,8 @@ class BatchToSpaceGpuKernel : public GpuKernel {
 
     size_t size = output_size_ / sizeof(T);
 
-    CalBatchToSpace<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_,
-                       crops_[0][0], crops_[0][1], crops_[1][0], crops_[1][1],
-                       block_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalBatchToSpace<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_,crops_[0][0], crops_[0][1], crops_[1][0],
+                       crops_[1][1],block_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
