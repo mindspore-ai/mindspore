@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 6 ]
 then
     echo "Usage: sh run_distribute_train.sh [DATASET_PATH] [TRAIN_IMG_DIR] [TRAIN_JSON_FILE] [VAL_IMG_DIR] [VAL_JSON_FILE] [RANK_TABLE_FILE]"
 exit 1
