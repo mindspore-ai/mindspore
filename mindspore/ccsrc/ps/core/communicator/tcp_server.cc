@@ -208,34 +208,6 @@ void TcpServer::StartWithNoBlock() {
   MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpected error code!";
 }
 
-void TcpServer::StartTimerOnlyOnce(const uint32_t &time) {
-  MS_EXCEPTION_IF_NULL(base_);
-  if (time == 0) {
-    MS_LOG(EXCEPTION) << "The time should not be 0!";
-  }
-  struct event *ev = nullptr;
-  struct timeval timeout {};
-  timeout.tv_sec = time;
-  timeout.tv_usec = 0;
-  ev = evtimer_new(base_, TimerOnceCallback, this);
-  MS_EXCEPTION_IF_NULL(ev);
-  evtimer_add(ev, &timeout);
-}
-
-void TcpServer::StartTimer(const uint32_t &time) {
-  MS_EXCEPTION_IF_NULL(base_);
-  struct event *ev = nullptr;
-  if (time == 0) {
-    MS_LOG(EXCEPTION) << "The time should not be 0!";
-  }
-  struct timeval timeout {};
-  timeout.tv_sec = time;
-  timeout.tv_usec = 0;
-  ev = event_new(base_, -1, EV_PERSIST, TimerCallback, this);
-  MS_EXCEPTION_IF_NULL(ev);
-  evtimer_add(ev, &timeout);
-}
-
 void TcpServer::Stop() {
   std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Stop tcp server!";

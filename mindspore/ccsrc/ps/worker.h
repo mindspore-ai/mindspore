@@ -102,11 +102,11 @@ class Worker {
                         const float *original_data, const float *grads, int *indices, std::vector<float> *reduced_data);
 
   void PushData(const std::vector<Key> &keys, const std::vector<float> &vals, const std::vector<int> &lens = {},
-                int command = 0, int64_t priority = 0);
+                int64_t command = 0, int64_t priority = 0);
   void PushSparseData(const std::vector<Key> &keys, const std::vector<float> &vals, const std::vector<int> &lens,
                       size_t grad_index, size_t indice_index, size_t first_dim_size, size_t outer_dim_size);
   void PullData(const std::vector<Key> &keys, std::vector<float> *const vals, std::vector<int> *lens = nullptr,
-                int cmd = 0, int64_t priority = 0);
+                int64_t cmd = 0, int64_t priority = 0);
 
   void LookupIdPartitioner(const EmbeddingTableLookup &send, PartitionEmbeddingMessages *partition,
                            const std::map<int64_t, int64_t> &attrs);
@@ -121,9 +121,9 @@ class Worker {
                                   const std::map<int64_t, int64_t> &attrs);
   void BroadcastPartitioner(const KVMessage &send, PartitionKVMessages *partition,
                             const std::map<int64_t, int64_t> &attrs);
-  void SendForPush(int cmd, const KVMessage &send, const KVPartitioner &partitioner,
+  void SendForPush(int64_t cmd, const KVMessage &send, const KVPartitioner &partitioner,
                    const std::map<int64_t, int64_t> &attrs);
-  void SendForPull(int cmd, const KVMessage &send, const KVPartitioner &partitioner,
+  void SendForPull(int64_t cmd, const KVMessage &send, const KVPartitioner &partitioner,
                    const std::map<int64_t, int64_t> &attrs, std::vector<float> *vals, std::vector<int> *lens);
 
   int64_t server_num_;

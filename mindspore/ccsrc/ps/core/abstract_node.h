@@ -84,14 +84,14 @@ class AbstractNode : public Node {
   // Set the callback corresponding to the custom event.
   void RegisterCustomEventCallback(const uint32_t &event, const EventCallback &event_cb);
 
-  bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
+  bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int64_t command,
             const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
-            const std::vector<size_t> &lens, int command, const uint32_t &timeout = kCommTimeoutInSeconds);
-  bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len, int command,
+            const std::vector<size_t> &lens, int64_t command, const uint32_t &timeout = kCommTimeoutInSeconds);
+  bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len, int64_t command,
             VectorPtr *output, const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
-            const std::vector<size_t> &data_lens, int command, std::vector<VectorPtr> *output,
+            const std::vector<size_t> &data_lens, int64_t command, std::vector<VectorPtr> *output,
             const uint32_t &timeout = kCommTimeoutInSeconds);
 
   uint64_t CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);

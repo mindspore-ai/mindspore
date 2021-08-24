@@ -263,7 +263,7 @@ void HttpMessageHandler::SimpleResponse(int code, const HttpHeaders &headers, co
   evhttp_send_reply(event_request_, code, nullptr, resp_buf_);
 }
 
-void HttpMessageHandler::ErrorResponse(int code, RequestProcessResult result) {
+void HttpMessageHandler::ErrorResponse(int code, const RequestProcessResult &result) {
   nlohmann::json error_json = {{"error_message", result.StatusMessage()}};
   std::string out_error = error_json.dump();
   AddRespString(out_error);

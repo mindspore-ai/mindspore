@@ -168,7 +168,7 @@ void AbstractNode::RegisterCustomEventCallback(const uint32_t &event, const Even
 }
 
 bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
-                        int command, const uint32_t &timeout) {
+                        int64_t command, const uint32_t &timeout) {
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     MS_LOG(DEBUG) << "The node is timeout, can not send message.";
     return false;
@@ -190,7 +190,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
 }
 
 bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
-                        const std::vector<DataPtr> &data, const std::vector<size_t> &lens, int command,
+                        const std::vector<DataPtr> &data, const std::vector<size_t> &lens, int64_t command,
                         const uint32_t &timeout) {
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     MS_LOG(DEBUG) << "The node is timeout, can not send message.";
@@ -228,7 +228,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
 }
 
 bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len,
-                        int command, VectorPtr *output, const uint32_t &timeout) {
+                        int64_t command, VectorPtr *output, const uint32_t &timeout) {
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     MS_LOG(DEBUG) << "The node is timeout, can not send message.";
     return false;
@@ -266,7 +266,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
 }
 
 bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
-                        const std::vector<DataPtr> &data, const std::vector<size_t> &data_lens, int command,
+                        const std::vector<DataPtr> &data, const std::vector<size_t> &data_lens, int64_t command,
                         std::vector<VectorPtr> *output, const uint32_t &timeout) {
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     MS_LOG(DEBUG) << "The node is timeout, can not send message.";
@@ -551,7 +551,7 @@ void AbstractNode::ProcessFetchServersResp(const std::shared_ptr<MessageMeta> &m
 }
 
 void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &conn,
-                                       const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                                       const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data,
                                        size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -601,7 +601,7 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
 }
 
 void AbstractNode::ProcessFinish(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
-                                 const Protos &protos, const void *data, size_t size) {
+                                 const Protos &, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -613,7 +613,7 @@ void AbstractNode::ProcessFinish(const std::shared_ptr<TcpConnection> &conn, con
 }
 
 void AbstractNode::ProcessScaleOutDone(const std::shared_ptr<TcpConnection> &conn,
-                                       const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                                       const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data,
                                        size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);

@@ -110,16 +110,16 @@ class SchedulerNode : public Node {
   void SendEvent(const std::shared_ptr<TcpClient> &client, const uint32_t &event);
 
   // Handle the scale out http request, then delegate to the leader scaler to process scale out asynchronously.
-  void ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp);
+  void ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &resp);
 
   // Handle the scale in http request, then delegate to the leader scaler to process scale in asynchronously.
-  void ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp);
+  void ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &resp);
 
   // Handle the get nodes info http request Synchronously.
-  void ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp);
+  void ProcessGetNodesInfo(const std::shared_ptr<HttpMessageHandler> &resp);
 
   // Handle the get cluster state http request Synchronously.
-  void ProcessGetClusterState(std::shared_ptr<HttpMessageHandler> resp);
+  void ProcessGetClusterState(const std::shared_ptr<HttpMessageHandler> &resp);
 
   // check whether the cluster is in the ready state.
   RequestProcessResult CheckIfClusterReady();

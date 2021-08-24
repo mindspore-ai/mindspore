@@ -25,7 +25,8 @@ CommunicatorBase::~CommunicatorBase() {
   Join();
 }
 
-bool CommunicatorBase::SendResponse(const void *rsp_data, size_t rsp_len, std::shared_ptr<MessageHandler> msg_handler) {
+bool CommunicatorBase::SendResponse(const void *rsp_data, size_t rsp_len,
+                                    const std::shared_ptr<MessageHandler> &msg_handler) {
   // The rsp_len could be 0 because of ProtoBuffer's feature.
   if (rsp_data == nullptr || msg_handler == nullptr) {
     MS_LOG(ERROR) << "SendResponse inputs are invalid.";
