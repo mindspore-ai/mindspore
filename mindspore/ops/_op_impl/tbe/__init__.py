@@ -396,6 +396,7 @@ from .ctc_loss_v2 import _ctc_loss_v2_tbe
 from .ctc_loss_v2_grad import _ctc_loss_v2_grad_tbe
 from .roll import _roll_tbe
 from .soft_shrink import _soft_shrink_tbe
+from .erfinv import _erfinv_tbe
 from .soft_shrink_grad import _soft_shrink_grad_tbe
 from .hsigmoid_grad import _hsigmoid_grad_tbe
 from .hsigmoid import _hsigmoid_tbe
