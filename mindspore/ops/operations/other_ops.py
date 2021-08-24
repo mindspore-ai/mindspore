@@ -15,8 +15,8 @@
 
 """Other operators."""
 import functools
+import mindspore.common._monad as monad
 from mindspore import log as logger
-from mindspore.common import monad
 from mindspore.common._decorator import deprecated
 from .. import signature as sig
 from ..._checkparam import Validator as validator, Rel
