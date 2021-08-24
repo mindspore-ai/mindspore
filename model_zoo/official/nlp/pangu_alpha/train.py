@@ -205,9 +205,8 @@ def add_checkpoint_callback_policy(args_param, callback, rank_id):
     """
     if args_param.save_checkpoint:
         # checkpoint store epoch_num and step_num info
-        ckpt_append_info = ["epoch_num", "step_num", {"epoch_num": args_param.has_trained_epoches,
-                                                      "step_num": args_param.has_trained_steps}]
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args_param.keep_checkpoint_max,
+        ckpt_append_info = [{"epoch_num": args_param.has_trained_epoches, "step_num": args_param.has_trained_steps}]
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=args_param.save_checkpoint_steps,
                                        keep_checkpoint_max=args_param.keep_checkpoint_max,
                                        integrated_save=False,
                                        append_info=ckpt_append_info
