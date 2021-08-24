@@ -108,3 +108,12 @@ if [[ $backend == "all" || $backend == "arm32_3516D" ]]; then
       exit 1
     fi
 fi
+
+if [[ $backend == "all" || $backend == "arm64_cpu_cropping" ]]; then
+    sh $cur_path/scripts/run_benchmark_cropping_size.sh -r $release_path -m $models_path -d $device_id -e $backend
+    hi3516_status=$?
+    if [[ $hi3516_status -ne 0 ]]; then
+      echo "Run arm64_cpu_cropping failed"
+      exit 1
+    fi
+fi
