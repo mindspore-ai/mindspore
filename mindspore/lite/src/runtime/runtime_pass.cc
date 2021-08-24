@@ -145,9 +145,9 @@ bool Nc4hw4PassValid(const InnerContext *context, std::vector<kernel::LiteKernel
     }
   }
 
-  if (context->IsCpuFloat16Enabled()) {
-    return true;
-  }
+#ifdef ENABLE_ARM64
+  return true;
+#endif
 
   return false;
 }
