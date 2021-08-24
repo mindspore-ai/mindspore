@@ -41,12 +41,12 @@ Dataset used [ICDAR 2015](https://rrc.cvc.uab.es/?ch=4&com=downloads)
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 
 # [Script description](#contents)
 
@@ -88,7 +88,7 @@ sh run_eval_ascend.sh [DATASET_PATH] [CKPT_PATH] [DEVICE_ID]
 ```
 
 > Notes:
-> RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html) , and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools). For large models like InceptionV4, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
+> RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/docs/programming_guide/en/master/distributed_training_ascend.html) , and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools). For large models like InceptionV4, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
 >
 > This is processor cores binding operation regarding the `device_num` and total processor numbers. If you are not expect to do it, remove the operations `taskset` in `scripts/run_distribute_train.sh`
 >
