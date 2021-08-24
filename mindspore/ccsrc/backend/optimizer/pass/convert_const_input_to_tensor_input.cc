@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-AnfNodePtr CreateTensorInput(const AnfNodePtr &node, const KernelGraphPtr &kernel_graph, const AnfNodePtr &input_node) {
+AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePtr &input_node) {
   MS_EXCEPTION_IF_NULL(input_node);
   auto value_node = input_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
@@ -76,7 +76,7 @@ AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePt
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
     if (IsValueNode<Scalar>(input_node) || IsValueNode<ValueTuple>(input_node)) {
-      auto tensor_input = CreateTensorInput(cnode, kernel_graph, input_node);
+      auto tensor_input = CreateTensorInput(kernel_graph, input_node);
       if (tensor_input == nullptr) {
         new_inputs.push_back(input_node);
         continue;

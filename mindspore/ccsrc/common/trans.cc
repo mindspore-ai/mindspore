@@ -389,6 +389,9 @@ std::vector<size_t> FracZDeviceShapeWithGroups(const std::vector<size_t> &shape,
   if (!CheckDims(shape)) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
   }
+  if (groups <= 0) {
+    MS_LOG(EXCEPTION) << "The value of groups should be greater than 0, but got " << groups;
+  }
   size_t group_size = LongToSize(groups);
   size_t cin_ori = shape[kC];
   size_t cout_ori = shape[kN] / group_size;
@@ -1606,6 +1609,9 @@ bool NchwFracZTransWithGroups(const FormatArgs &args, void *result, bool to_devi
   if (size < 1) {
     MS_LOG(ERROR) << "Illegal dtype";
     return false;
+  }
+  if (groups <= 0) {
+    MS_LOG(EXCEPTION) << "The value of groups should be greater than 0, but got " << groups;
   }
   auto n_dim = args.host_shape[kN];
   auto c_dim = args.host_shape[kC];
