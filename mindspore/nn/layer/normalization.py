@@ -108,9 +108,13 @@ class _BatchNorm(Cell):
                 self.is_global = True
                 self.group_device_num = self.rank_size
                 self.device_list = [i for i in range(0, self.rank_size)]
-                if SYNC_BN_GROUP_NAME == "":
-                    SYNC_BN_GROUP_NAME = "sync_bn_group0"
-                    management.create_group(SYNC_BN_GROUP_NAME, self.device_list)
+                if context.get_context("device_target") == "Ascend":
+                    if SYNC_BN_GROUP_NAME == "":
+                        SYNC_BN_GROUP_NAME = "sync_bn_group0"
+                        management.create_group(SYNC_BN_GROUP_NAME, self.device_list)
+                elif context.get_context("device_target") == "GPU":
+                    if SYNC_BN_GROUP_NAME == "":
+                        SYNC_BN_GROUP_NAME = "nccl_world_group"
 
         self.shape = P.Shape()
         self.reduce_mean = P.ReduceMean(keep_dims=True)
