@@ -52,7 +52,7 @@ class BatchToSpaceGpuKernel : public GpuKernel {
       return false;
     }
     input_size_ = sizeof(T);
-    for(size_t idx = 0; idx < shape_size_; ++idx){
+    for(size_t idx = 0; idx < input_shape_.size(); ++idx){
       printf("idx:%zd,input_size:%zd,input_shape:%zd\n",idx,input_size_,input_shape_[idx]);
       input_size_ *= input_shape_[idx];
     }
@@ -112,14 +112,14 @@ class BatchToSpaceGpuKernel : public GpuKernel {
     // check input_shape
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     if(input_shape.size() != 4) {
-      MS_LOG(ERROR) << "Input is " << shape_size_ << "-D, but BatchToSpace supports 4-D tensor.";
+      MS_LOG(ERROR) << "Input is " << shape_size << "-D, but BatchToSpace supports 4-D tensor.";
       return false;
     }
     if((input_shape[0] % (block_size_ * block_size_)) != 0) {
       MS_LOG(ERROR) << "input_shape[0] must be divisible by product of block_shape";
       return false;
     }
-    input_shape_ = input_shape;
+    input_shape_.assign(input_shape.begin(),input_shape.end());
 
     // check crops
     crops_ =
@@ -156,7 +156,6 @@ class BatchToSpaceGpuKernel : public GpuKernel {
 
   std::vector<std::vector<int64_t>> crops_;
   std::vector<size_t> input_shape_;
-  size_t shape_size_;
   size_t block_size_;
   size_t input_size_;
   size_t output_size_;
