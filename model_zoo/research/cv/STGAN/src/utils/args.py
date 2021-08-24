@@ -273,7 +273,7 @@ def get_args(phase):
                             device_id=int(os.environ["DEVICE_ID"]))
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(
-            parallel_mode=ParallelMode.AUTO_PARALLEL,
+            parallel_mode=ParallelMode.DATA_PARALLEL,
             gradients_mean=True,
             device_num=args.device_num)
         init()
