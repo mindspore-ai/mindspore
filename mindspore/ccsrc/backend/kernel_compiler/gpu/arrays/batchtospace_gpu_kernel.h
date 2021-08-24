@@ -29,7 +29,7 @@ template <typename T>
 class BatchToSpaceGpuKernel : public GpuKernel {
  public:
   BatchToSpaceGpuKernel() { ResetResource(); }
-  ~BatchToSpaceGpuKernel() {}
+  ~BatchToSpaceGpuKernel() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
@@ -53,6 +53,7 @@ class BatchToSpaceGpuKernel : public GpuKernel {
     }
     input_size_ = sizeof(T);
     for(size_t idx = 0; idx < shape_size_; ++idx){
+      printf("idx:%zd,input_size:%zd,input_shape:%zd\n",idx,input_size_,input_shape_[idx]);
       input_size_ *= input_shape_[idx];
     }
 
