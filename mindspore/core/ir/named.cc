@@ -28,11 +28,8 @@ bool Named::operator==(const Value &other) const {
 }
 
 abstract::AbstractBasePtr None::ToAbstract() { return std::make_shared<abstract::AbstractNone>(); }
-const NamedPtr kNone = std::make_shared<None>();
 
 abstract::AbstractBasePtr Null::ToAbstract() { return std::make_shared<abstract::AbstractNull>(); }
-const NamedPtr kNull = std::make_shared<Null>();
 
 abstract::AbstractBasePtr Ellipsis::ToAbstract() { return std::make_shared<abstract::AbstractEllipsis>(); }
-const NamedPtr kEllipsis = std::make_shared<Ellipsis>();
 }  // namespace mindspore

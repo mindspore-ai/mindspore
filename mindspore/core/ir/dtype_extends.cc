@@ -402,18 +402,4 @@ bool IsSubType(TypePtr const &t1, TypePtr const &t2) {
     return true;
   }
 }
-
-const TypePtr kTypeExternal = std::make_shared<External>();
-const TypePtr kTypeEnv = std::make_shared<EnvType>();
-const TypePtr kTypeType = std::make_shared<TypeType>();
-const TypePtr kTensorType = std::make_shared<TensorType>();
-const TypePtr kRowTensorType = std::make_shared<RowTensorType>();
-const TypePtr kSparseTensorType = std::make_shared<SparseTensorType>();
-const TypePtr kUndeterminedType = std::make_shared<UndeterminedType>();
-const TypePtr kString = std::make_shared<String>();
-const TypePtr kList = std::make_shared<List>();
-const TypePtr kTuple = std::make_shared<Tuple>();
-const TypePtr kDict = std::make_shared<Dictionary>();
-const TypePtr kSlice = std::make_shared<Slice>();
-const TypePtr kKeyword = std::make_shared<Keyword>();
 }  // namespace mindspore

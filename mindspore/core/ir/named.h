@@ -84,7 +84,7 @@ class MS_CORE_API None : public Named {
   MS_DECLARE_PARENT(None, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-MS_CORE_API extern const NamedPtr kNone;
+inline const NamedPtr kNone = std::make_shared<None>();
 
 class MS_CORE_API Null : public Named {
  public:
@@ -93,7 +93,7 @@ class MS_CORE_API Null : public Named {
   MS_DECLARE_PARENT(Null, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-MS_CORE_API extern const NamedPtr kNull;
+inline const NamedPtr kNull = std::make_shared<Null>();
 
 class MS_CORE_API Ellipsis : public Named {
  public:
@@ -102,6 +102,6 @@ class MS_CORE_API Ellipsis : public Named {
   MS_DECLARE_PARENT(Ellipsis, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-MS_CORE_API extern const NamedPtr kEllipsis;
+inline const NamedPtr kEllipsis = std::make_shared<Ellipsis>();
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_NAMED_H_
