@@ -70,6 +70,8 @@ void MatVecMulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, c
 
 void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type, int depth,
                    int col);
+void VecMatmulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
+                         int depth, int col);
 #elif ENABLE_ARM82_A32
 void MatMul12x8A32Fp16(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,
                        int deep, int row, int col, int stride, int write_mode);
