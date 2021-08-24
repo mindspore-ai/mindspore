@@ -35,7 +35,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, "kernel_size");
   auto data_format = AnfAlgo::GetNodeAttr<std::string>(cnode, "format");
   if (data_format != kOpFormat_NCDHW) {
-    MS_LOG(ERROR) << "MaxPool3DGradGrad only support NCDHW.";
+    MS_LOG(ERROR) << "MaxPool3DGradGrad only support NCDHW format, but got " << data_format;
   }
   if (ksize.size() != kKernelSizeNum) {
     MS_LOG(EXCEPTION) << "kernel_size of MaxPool3DGradGrad must be five, but got :" << ksize;

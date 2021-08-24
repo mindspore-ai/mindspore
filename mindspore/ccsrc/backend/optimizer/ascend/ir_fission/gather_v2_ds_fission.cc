@@ -40,15 +40,16 @@ CNodePtr CreatePad(const FuncGraphPtr &graph, const CNodePtr &origin_node, const
   auto param_abstract_shape = origin_node->input(1)->Shape();
   MS_EXCEPTION_IF_NULL(param_abstract_shape);
   if (!param_abstract_shape->isa<abstract::Shape>()) {
-    MS_LOG(EXCEPTION) << "Gatherv2 's first input has wrong shape type";
+    MS_LOG(EXCEPTION) << "The node [" << origin_node->DebugString() << "]'s first input has wrong shape type.";
   }
   auto param_dyn_shape = param_abstract_shape->cast<abstract::ShapePtr>();
   ShapeVector shape(param_dyn_shape->shape());
   if (shape.empty()) {
-    MS_LOG(EXCEPTION) << "Gatherv2 's shape is empty";
+    MS_LOG(EXCEPTION) << "The shape of node [" << origin_node->DebugString() << "]'s first input is empty.";
   }
   if (shape[shape.size() - 1] == -1) {
-    MS_LOG(EXCEPTION) << "Dim needs pad should not be dynamic";
+    MS_LOG(EXCEPTION) << "The node [" << origin_node->DebugString()
+                      << "]'s first input should not be dynamic, shape:" << shape;
   }
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
   auto type_id = AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
