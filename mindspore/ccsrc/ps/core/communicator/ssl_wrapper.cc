@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -33,11 +32,11 @@ namespace ps {
 namespace core {
 SSLWrapper::SSLWrapper()
     : ssl_ctx_(nullptr),
-      client_ssl_ctx_(nullptr),
       rootFirstCA_(nullptr),
       rootSecondCA_(nullptr),
-      rootFirstCrl_(nullptr),
-      rootSecondCrl_(nullptr) {
+      check_time_thread_(nullptr),
+      running_(false),
+      is_ready_(false) {
   InitSSL();
 }
 
@@ -45,22 +44,103 @@ SSLWrapper::~SSLWrapper() { CleanSSL(); }
 
 void SSLWrapper::InitSSL() {
   CommUtil::InitOpenSSLEnv();
-  int rand = RAND_poll();
-  if (rand == 0) {
-    MS_LOG(ERROR) << "RAND_poll failed";
-  }
   ssl_ctx_ = SSL_CTX_new(SSLv23_server_method());
   if (!ssl_ctx_) {
-    MS_LOG(ERROR) << "SSL_CTX_new failed";
+    MS_LOG(EXCEPTION) << "SSL_CTX_new failed";
   }
   X509_STORE *store = SSL_CTX_get_cert_store(ssl_ctx_);
+  MS_EXCEPTION_IF_NULL(store);
   if (X509_STORE_set_default_paths(store) != 1) {
-    MS_LOG(ERROR) << "X509_STORE_set_default_paths failed";
+    MS_LOG(EXCEPTION) << "X509_STORE_set_default_paths failed";
   }
-  client_ssl_ctx_ = SSL_CTX_new(SSLv23_client_method());
-  if (!ssl_ctx_) {
-    MS_LOG(ERROR) << "SSL_CTX_new failed";
+  std::unique_ptr<Configuration> config_ =
+    std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
+  MS_EXCEPTION_IF_NULL(config_);
+  if (!config_->Initialize()) {
+    MS_LOG(EXCEPTION) << "The config file is empty.";
   }
+
+  // 1.Parse the server's certificate and the ciphertext of key.
+  std::string server_cert = kCertificateChain;
+  std::string path = CommUtil::ParseConfig(*(config_), kServerCertPath);
+  if (!CommUtil::IsFileExists(path)) {
+    MS_LOG(EXCEPTION) << "The key:" << kServerCertPath << "'s value is not exist.";
+  }
+  server_cert = path;
+
+  MS_LOG(INFO) << "The server cert path:" << server_cert;
+
+  // 2. Parse the server password.
+  std::string server_password = PSContext::instance()->server_password();
+  if (server_password.empty()) {
+    MS_LOG(EXCEPTION) << "The client password's value is empty.";
+  }
+
+  EVP_PKEY *pkey = nullptr;
+  X509 *cert = nullptr;
+  STACK_OF(X509) *ca_stack = nullptr;
+  BIO *bio = BIO_new_file(server_cert.c_str(), "rb");
+  MS_EXCEPTION_IF_NULL(bio);
+  PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
+  MS_EXCEPTION_IF_NULL(p12);
+  BIO_free_all(bio);
+  if (!PKCS12_parse(p12, server_password.c_str(), &pkey, &cert, &ca_stack)) {
+    MS_LOG(EXCEPTION) << "PKCS12_parse failed.";
+  }
+  PKCS12_free(p12);
+  std::string default_cipher_list = CommUtil::ParseConfig(*config_, kCipherList);
+  std::vector<std::string> ciphers = CommUtil::Split(default_cipher_list, kColon);
+  if (!CommUtil::VerifyCipherList(ciphers)) {
+    MS_LOG(EXCEPTION) << "The cipher is wrong.";
+  }
+  if (!SSL_CTX_set_cipher_list(ssl_ctx_, default_cipher_list.c_str())) {
+    MS_LOG(EXCEPTION) << "SSL use set cipher list failed!";
+  }
+
+  std::string crl_path = CommUtil::ParseConfig(*(config_), kCrlPath);
+  if (crl_path.empty()) {
+    MS_LOG(INFO) << "The crl path is empty.";
+  } else if (!CommUtil::VerifyCRL(cert, crl_path)) {
+    MS_LOG(EXCEPTION) << "Verify crl failed.";
+  }
+
+  std::string client_ca = kCAcrt;
+  std::string ca_path = CommUtil::ParseConfig(*config_, kCaCertPath);
+  if (!CommUtil::IsFileExists(ca_path)) {
+    MS_LOG(WARNING) << "The key:" << kCaCertPath << "'s value is not exist.";
+  }
+  client_ca = ca_path;
+
+  if (!CommUtil::VerifyCommonName(cert, client_ca)) {
+    MS_LOG(EXCEPTION) << "Verify common name failed.";
+  }
+
+  SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER, 0);
+  if (!SSL_CTX_load_verify_locations(ssl_ctx_, client_ca.c_str(), nullptr)) {
+    MS_LOG(EXCEPTION) << "SSL load ca location failed!";
+  }
+
+  if (!SSL_CTX_use_certificate(ssl_ctx_, cert)) {
+    MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
+  }
+
+  if (!SSL_CTX_use_PrivateKey(ssl_ctx_, pkey)) {
+    MS_LOG(EXCEPTION) << "SSL use private key file failed!";
+  }
+
+  if (!SSL_CTX_check_private_key(ssl_ctx_)) {
+    MS_LOG(EXCEPTION) << "SSL check private key file failed!";
+  }
+  if (!SSL_CTX_set_options(ssl_ctx_, SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
+                                       SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1)) {
+    MS_LOG(EXCEPTION) << "SSL_CTX_set_options failed.";
+  }
+
+  if (!SSL_CTX_set_mode(ssl_ctx_, SSL_MODE_AUTO_RETRY)) {
+    MS_LOG(EXCEPTION) << "SSL set mode auto retry failed!";
+  }
+
+  StartCheckCertTime(*config_, cert, client_ca);
 }
 
 void SSLWrapper::CleanSSL() {
@@ -71,152 +151,99 @@ void SSLWrapper::CleanSSL() {
   EVP_cleanup();
   ERR_remove_thread_state(nullptr);
   CRYPTO_cleanup_all_ex_data();
+  StopCheckCertTime();
 }
 
-SSL_CTX *SSLWrapper::GetSSLCtx(bool is_server) {
-  if (is_server) {
-    return ssl_ctx_;
-  } else {
-    return client_ssl_ctx_;
+time_t SSLWrapper::ConvertAsn1Time(const ASN1_TIME *const time) const {
+  MS_EXCEPTION_IF_NULL(time);
+  struct tm t;
+  const char *str = (const char *)time->data;
+  MS_EXCEPTION_IF_NULL(str);
+  size_t i = 0;
+
+  if (memset_s(&t, sizeof(t), 0, sizeof(t)) != EOK) {
+    MS_LOG(EXCEPTION) << "Memset Failed!";
+  }
+
+  if (time->type == V_ASN1_UTCTIME) {
+    t.tm_year = (str[i++] - '0') * kBase;
+    t.tm_year += (str[i++] - '0');
+    if (t.tm_year < kSeventyYear) {
+      t.tm_year += kHundredYear;
+    }
+  } else if (time->type == V_ASN1_GENERALIZEDTIME) {
+    t.tm_year = (str[i++] - '0') * kThousandYear;
+    t.tm_year += (str[i++] - '0') * kHundredYear;
+    t.tm_year += (str[i++] - '0') * kBase;
+    t.tm_year += (str[i++] - '0');
+    t.tm_year -= kBaseYear;
+  }
+  t.tm_mon = (str[i++] - '0') * kBase;
+  // -1 since January is 0 not 1.
+  t.tm_mon += (str[i++] - '0') - kJanuary;
+  t.tm_mday = (str[i++] - '0') * kBase;
+  t.tm_mday += (str[i++] - '0');
+  t.tm_hour = (str[i++] - '0') * kBase;
+  t.tm_hour += (str[i++] - '0');
+  t.tm_min = (str[i++] - '0') * kBase;
+  t.tm_min += (str[i++] - '0');
+  t.tm_sec = (str[i++] - '0') * kBase;
+  t.tm_sec += (str[i++] - '0');
+
+  return mktime(&t);
+}
+
+void SSLWrapper::StartCheckCertTime(const Configuration &config, const X509 *cert, const std::string &ca_path) {
+  MS_EXCEPTION_IF_NULL(cert);
+  MS_LOG(INFO) << "The server start check cert.";
+  int64_t interval = kCertCheckIntervalInHour;
+
+  int64_t warning_time = kCertExpireWarningTimeInDay;
+  if (config.Exists(kCertExpireWarningTime)) {
+    int64_t res_time = config.GetInt(kCertExpireWarningTime, 0);
+    if (res_time < kMinWarningTime || res_time > kMaxWarningTime) {
+      MS_LOG(EXCEPTION) << "The Certificate expiration warning time should be [7, 180]";
+    }
+    warning_time = res_time;
+  }
+  MS_LOG(INFO) << "The interval time is:" << interval << ", the warning time is:" << warning_time;
+  BIO *ca_bio = BIO_new_file(ca_path.c_str(), "r");
+  MS_EXCEPTION_IF_NULL(ca_bio);
+  X509 *ca_cert = PEM_read_bio_X509(ca_bio, nullptr, nullptr, nullptr);
+  BIO_free_all(ca_bio);
+  MS_EXCEPTION_IF_NULL(ca_cert);
+
+  running_ = true;
+  check_time_thread_ = std::make_unique<std::thread>([&, cert, ca_cert, interval, warning_time]() {
+    while (running_) {
+      if (!CommUtil::VerifyCertTime(cert, warning_time)) {
+        MS_LOG(WARNING) << "Verify server cert time failed.";
+      }
+
+      if (!CommUtil::VerifyCertTime(ca_cert, warning_time)) {
+        MS_LOG(WARNING) << "Verify ca cert time failed.";
+      }
+      std::unique_lock<std::mutex> lock(mutex_);
+      bool res = cond_.wait_for(lock, std::chrono::hours(interval), [&] {
+        bool result = is_ready_.load();
+        return result;
+      });
+      MS_LOG(INFO) << "Wait for res:" << res;
+    }
+  });
+  MS_EXCEPTION_IF_NULL(check_time_thread_);
+}
+
+void SSLWrapper::StopCheckCertTime() {
+  running_ = false;
+  is_ready_ = true;
+  cond_.notify_all();
+  if (check_time_thread_ != nullptr) {
+    check_time_thread_->join();
   }
 }
 
-X509 *SSLWrapper::ReadCertFromFile(const std::string &certPath) const {
-  BIO *bio = BIO_new_file(certPath.c_str(), "r");
-  return PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
-}
-
-X509 *SSLWrapper::ReadCertFromPerm(std::string cert) {
-  BIO *bio = BIO_new_mem_buf(reinterpret_cast<void *>(cert.data()), -1);
-  return PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
-}
-
-X509_CRL *SSLWrapper::ReadCrlFromFile(const std::string &crlPath) const {
-  BIO *bio = BIO_new_file(crlPath.c_str(), "r");
-  return PEM_read_bio_X509_CRL(bio, nullptr, nullptr, nullptr);
-}
-
-bool SSLWrapper::VerifyCertTime(const X509 *cert) const {
-  ASN1_TIME *start = X509_getm_notBefore(cert);
-  ASN1_TIME *end = X509_getm_notAfter(cert);
-
-  int day = 0;
-  int sec = 0;
-  ASN1_TIME_diff(&day, &sec, start, NULL);
-
-  if (day < 0 || sec < 0) {
-    MS_LOG(INFO) << "Cert start time is later than now time.";
-    return false;
-  }
-  day = 0;
-  sec = 0;
-  ASN1_TIME_diff(&day, &sec, NULL, end);
-  if (day < 0 || sec < 0) {
-    MS_LOG(INFO) << "Cert end time is sooner than now time.";
-    return false;
-  }
-
-  return true;
-}
-
-bool SSLWrapper::VerifyCAChain(const std::string &keyAttestation, const std::string &equipCert,
-                               const std::string &equipCACert, std::string) {
-  X509 *keyAttestationCertObj = ReadCertFromPerm(keyAttestation);
-  X509 *equipCertObj = ReadCertFromPerm(equipCert);
-  X509 *equipCACertObj = ReadCertFromPerm(equipCACert);
-
-  if (!VerifyCertTime(keyAttestationCertObj) || !VerifyCertTime(equipCertObj) || !VerifyCertTime(equipCACertObj)) {
-    return false;
-  }
-
-  EVP_PKEY *equipPubKey = X509_get_pubkey(equipCertObj);
-  EVP_PKEY *equipCAPubKey = X509_get_pubkey(equipCACertObj);
-
-  EVP_PKEY *rootFirstPubKey = X509_get_pubkey(rootFirstCA_);
-  EVP_PKEY *rootSecondPubKey = X509_get_pubkey(rootSecondCA_);
-
-  int ret = 0;
-  ret = X509_verify(keyAttestationCertObj, equipPubKey);
-  if (ret != 1) {
-    MS_LOG(INFO) << "keyAttestationCert verify is failed";
-    return false;
-  }
-  ret = X509_verify(equipCertObj, equipCAPubKey);
-  if (ret != 1) {
-    MS_LOG(INFO) << "Equip cert verify is failed";
-    return false;
-  }
-  int ret_first = X509_verify(equipCACertObj, rootFirstPubKey);
-  int ret_second = X509_verify(equipCACertObj, rootSecondPubKey);
-  if (ret_first != 1 && ret_second != 1) {
-    MS_LOG(INFO) << "Equip ca cert verify is failed";
-    return false;
-  }
-  MS_LOG(INFO) << "VerifyCAChain success.";
-
-  EVP_PKEY_free(equipPubKey);
-  EVP_PKEY_free(equipCAPubKey);
-  EVP_PKEY_free(rootFirstPubKey);
-  EVP_PKEY_free(rootSecondPubKey);
-  return true;
-}
-
-bool SSLWrapper::VerifyCRL(const std::string &equipCert) {
-  X509 *equipCertObj = ReadCertFromPerm(equipCert);
-  if (rootFirstCrl_ == nullptr && rootSecondCrl_ == nullptr) {
-    MS_LOG(INFO) << "RootFirstCrl && rootSecondCrl is nullptr.";
-    return false;
-  }
-
-  EVP_PKEY *evp_pkey = X509_get_pubkey(equipCertObj);
-  int ret = X509_CRL_verify(rootFirstCrl_, evp_pkey);
-  if (ret == 1) {
-    MS_LOG(INFO) << "Equip cert in root first crl, verify failed";
-    return false;
-  }
-  ret = X509_CRL_verify(rootSecondCrl_, evp_pkey);
-  if (ret == 1) {
-    MS_LOG(INFO) << "Equip cert in root second crl, verify failed";
-    return false;
-  }
-  MS_LOG(INFO) << "VerifyCRL success.";
-  return true;
-}
-
-bool SSLWrapper::VerifyRSAKey(const std::string &keyAttestation, const unsigned char *srcData,
-                              const unsigned char *signData, int srcDataLen) {
-  if (keyAttestation.empty() || srcData == nullptr || signData == nullptr) {
-    MS_LOG(INFO) << "KeyAttestation or srcData or signData is empty.";
-    return false;
-  }
-
-  X509 *keyAttestationCertObj = ReadCertFromPerm(keyAttestation);
-
-  EVP_PKEY *pubKey = X509_get_pubkey(keyAttestationCertObj);
-  RSA *pRSAPublicKey = EVP_PKEY_get0_RSA(pubKey);
-  if (pRSAPublicKey == nullptr) {
-    MS_LOG(INFO) << "Get rsa public key failed.";
-    return false;
-  }
-
-  int pubKeyLen = RSA_size(pRSAPublicKey);
-  int ret = RSA_verify(NID_sha256, srcData, srcDataLen, signData, pubKeyLen, pRSAPublicKey);
-  if (ret != 1) {
-    MS_LOG(WARNING) << "Verify error.";
-    int64_t ulErr = ERR_get_error();
-    char szErrMsg[1024] = {0};
-    MS_LOG(WARNING) << "Error number: " << ulErr;
-    ERR_error_string(ulErr, szErrMsg);
-    MS_LOG(INFO) << "Error message:" << szErrMsg;
-    return false;
-  }
-  RSA_free(pRSAPublicKey);
-  X509_free(keyAttestationCertObj);
-  CRYPTO_cleanup_all_ex_data();
-
-  MS_LOG(INFO) << "VerifyRSAKey success.";
-  return true;
-}
+SSL_CTX *SSLWrapper::GetSSLCtx(bool) { return ssl_ctx_; }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

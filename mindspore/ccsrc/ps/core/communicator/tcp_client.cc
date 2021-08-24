@@ -37,7 +37,7 @@ event_base *TcpClient::event_base_ = nullptr;
 std::mutex TcpClient::event_base_mutex_;
 bool TcpClient::is_started_ = false;
 
-TcpClient::TcpClient(const std::string &address, std::uint16_t port, Configuration *config)
+TcpClient::TcpClient(const std::string &address, std::uint16_t port, Configuration *const config)
     : event_timeout_(nullptr),
       buffer_event_(nullptr),
       server_address_(std::move(address)),
@@ -87,8 +87,6 @@ void TcpClient::Init() {
     MS_LOG(EXCEPTION) << "The tcp client ip:" << server_address_ << " is illegal!";
   }
 
-  event_enable_debug_logging(EVENT_DBG_ALL);
-  event_set_log_callback(CommUtil::LogCallback);
   int result = evthread_use_pthreads();
   if (result != 0) {
     MS_LOG(EXCEPTION) << "Use event pthread failed!";
@@ -108,10 +106,12 @@ void TcpClient::Init() {
   sin.sin_port = htons(server_port_);
 
   if (!PSContext::instance()->enable_ssl()) {
+    MS_LOG(INFO) << "SSL is disable.";
     buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   } else {
     if (!EstablishSSL()) {
-      MS_LOG(EXCEPTION) << "Establish SSL failed.";
+      MS_LOG(WARNING) << "Establish SSL failed.";
+      return;
     }
   }
 
@@ -135,18 +135,21 @@ void TcpClient::StartWithDelay(int seconds) {
   }
 
   event_base_ = event_base_new();
+  MS_EXCEPTION_IF_NULL(event_base_);
 
   timeval timeout_value{};
   timeout_value.tv_sec = seconds;
   timeout_value.tv_usec = 0;
 
   event_timeout_ = evtimer_new(event_base_, TimeoutCallback, this);
+  MS_EXCEPTION_IF_NULL(event_timeout_);
   if (evtimer_add(event_timeout_, &timeout_value) == -1) {
     MS_LOG(EXCEPTION) << "Event timeout failed!";
   }
 }
 
 void TcpClient::Stop() {
+  MS_EXCEPTION_IF_NULL(event_base_);
   std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Stop tcp client!";
   int ret = event_base_loopbreak(event_base_);
@@ -177,8 +180,8 @@ void TcpClient::ReadCallback(struct bufferevent *bev, void *ctx) {
   char read_buffer[kMessageChunkLength];
   int read = 0;
 
-  while ((read = bufferevent_read(bev, &read_buffer, sizeof(read_buffer))) > 0) {
-    tcp_client->OnReadHandler(read_buffer, read);
+  while ((read = bufferevent_read(bev, &read_buffer, SizeToInt(sizeof(read_buffer)))) > 0) {
+    tcp_client->OnReadHandler(read_buffer, IntToSize(read));
   }
 }
 
@@ -207,70 +210,9 @@ void TcpClient::NotifyConnected() {
 bool TcpClient::EstablishSSL() {
   MS_LOG(INFO) << "Enable ssl support.";
 
-  if (config_ == nullptr) {
-    MS_LOG(EXCEPTION) << "The config is empty.";
-  }
-
-  SSL *ssl = SSL_new(SSLWrapper::GetInstance().GetSSLCtx(false));
-
-  // 1.Parse the client's certificate and the ciphertext of key.
-  std::string client_cert = kCertificateChain;
-  std::string path = CommUtil::ParseConfig(*config_, kClientCertPath);
-  if (!CommUtil::IsFileExists(path)) {
-    MS_LOG(WARNING) << "The key:" << kClientCertPath << "'s value is not exist.";
-    return false;
-  }
-  client_cert = path;
-
-  MS_LOG(INFO) << "The client cert path:" << client_cert;
-
-  // 2. Parse the client password.
-  std::string client_password = CommUtil::ParseConfig(*config_, kClientPassword);
-  if (client_password.empty()) {
-    MS_LOG(WARNING) << "The key:" << kClientPassword << "'s value is empty.";
-    return false;
-  }
-
-  MS_LOG(INFO) << "The client password:" << client_password;
-
-  EVP_PKEY *pkey = nullptr;
-  X509 *cert = nullptr;
-  STACK_OF(X509) *ca_stack = nullptr;
-  BIO *bio = BIO_new_file(client_cert.c_str(), "rb");
-  PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
-  BIO_free_all(bio);
-  PKCS12_parse(p12, client_password.c_str(), &pkey, &cert, &ca_stack);
-  PKCS12_free(p12);
-
-  if (!SSLWrapper::GetInstance().VerifyCertTime(cert)) {
-    MS_LOG(EXCEPTION) << "Verify cert time failed.";
-  }
-
-  if (!SSL_CTX_use_certificate(SSLWrapper::GetInstance().GetSSLCtx(false), cert)) {
-    MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
-  }
-
-  if (!SSL_CTX_use_PrivateKey(SSLWrapper::GetInstance().GetSSLCtx(false), pkey)) {
-    MS_LOG(EXCEPTION) << "SSL use private key file failed!";
-  }
-
-  std::string client_ca = kCAcrt;
-  std::string ca_path = CommUtil::ParseConfig(*config_, kCaCertPath);
-  if (!CommUtil::IsFileExists(ca_path)) {
-    MS_LOG(WARNING) << "The key:" << kCaCertPath << "'s value is not exist.";
-  }
-  client_ca = ca_path;
-  MS_LOG(INFO) << "The ca cert path:" << client_ca;
-
-  if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx(false))) {
-    MS_LOG(EXCEPTION) << "SSL check private key file failed!";
-  }
-
-  if (!SSL_CTX_load_verify_locations(SSLWrapper::GetInstance().GetSSLCtx(false), client_ca.c_str(), nullptr)) {
-    MS_LOG(EXCEPTION) << "SSL load ca location failed!";
-  }
-
-  SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(false), SSL_OP_NO_SSLv2);
+  SSL *ssl = SSL_new(SSLClient::GetInstance().GetSSLCtx());
+  MS_ERROR_IF_NULL_W_RET_VAL(ssl, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(event_base_, false);
 
   buffer_event_ = bufferevent_openssl_socket_new(event_base_, -1, ssl, BUFFEREVENT_SSL_CONNECTING,
                                                  BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
@@ -334,7 +276,7 @@ bool TcpClient::SendMessage(const CommMessage &message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
   bufferevent_lock(buffer_event_);
   bool res = true;
-  size_t buf_size = IntToUint(message.ByteSizeLong());
+  size_t buf_size = message.ByteSizeLong();
   uint32_t meta_size = SizeToUint(message.pb_meta().ByteSizeLong());
   MessageHeader header;
   header.message_proto_ = Protos::PROTOBUF;
@@ -388,20 +330,6 @@ bool TcpClient::SendMessage(const std::shared_ptr<MessageMeta> &meta, const Prot
   }
   bufferevent_unlock(buffer_event_);
   return res;
-}
-
-void TcpClient::StartTimer(const uint32_t &time) {
-  MS_EXCEPTION_IF_NULL(event_base_);
-  struct event *ev = nullptr;
-  if (time == 0) {
-    MS_LOG(EXCEPTION) << "The time should not be 0!";
-  }
-  struct timeval timeout {};
-  timeout.tv_sec = time;
-  timeout.tv_usec = 0;
-  ev = event_new(event_base_, -1, EV_PERSIST, TimerCallback, this);
-  MS_EXCEPTION_IF_NULL(ev);
-  evtimer_add(ev, &timeout);
 }
 
 void TcpClient::set_timer_callback(const OnTimer &timer) { on_timer_callback_ = timer; }

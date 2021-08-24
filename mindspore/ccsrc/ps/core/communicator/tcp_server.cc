@@ -35,12 +35,19 @@ namespace core {
 TcpConnection::~TcpConnection() { bufferevent_free(buffer_event_); }
 void TcpConnection::InitConnection(const messageReceive &callback) { tcp_message_handler_.SetCallback(callback); }
 
-void TcpConnection::OnReadHandler(const void *buffer, size_t num) { tcp_message_handler_.ReceiveMessage(buffer, num); }
+void TcpConnection::OnReadHandler(const void *buffer, size_t num) {
+  MS_EXCEPTION_IF_NULL(buffer);
+  tcp_message_handler_.ReceiveMessage(buffer, num);
+}
 
 void TcpConnection::SendMessage(const void *buffer, size_t num) const {
+  MS_EXCEPTION_IF_NULL(buffer);
+  MS_EXCEPTION_IF_NULL(buffer_event_);
+  bufferevent_lock(buffer_event_);
   if (bufferevent_write(buffer_event_, buffer, num) == -1) {
     MS_LOG(ERROR) << "Write message to buffer event failed!";
   }
+  bufferevent_unlock(buffer_event_);
 }
 
 const TcpServer *TcpConnection::GetServer() const { return server_; }
@@ -93,24 +100,22 @@ bool TcpConnection::SendMessage(const std::shared_ptr<MessageMeta> &meta, const 
   }
   int result = bufferevent_flush(buffer_event_, EV_READ | EV_WRITE, BEV_FLUSH);
   if (result < 0) {
+    bufferevent_unlock(buffer_event_);
     MS_LOG(EXCEPTION) << "Bufferevent flush failed!";
   }
   bufferevent_unlock(buffer_event_);
-  MS_LOG(DEBUG) << "SendMessage the request id is:" << meta->request_id() << " the current time is:"
-                << std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now())
-                     .time_since_epoch()
-                     .count();
   return res;
 }
 
-TcpServer::TcpServer(const std::string &address, std::uint16_t port, Configuration *config)
+TcpServer::TcpServer(const std::string &address, std::uint16_t port, Configuration *const config)
     : base_(nullptr),
       signal_event_(nullptr),
       listener_(nullptr),
       server_address_(std::move(address)),
       server_port_(port),
       is_stop_(true),
-      config_(config) {}
+      config_(config),
+      max_connection_(0) {}
 
 TcpServer::~TcpServer() {
   if (signal_event_ != nullptr) {
@@ -146,14 +151,18 @@ void TcpServer::Init() {
     MS_LOG(EXCEPTION) << "Use event pthread failed!";
   }
 
-  event_enable_debug_logging(EVENT_DBG_ALL);
-  event_set_log_callback(CommUtil::LogCallback);
   is_stop_ = false;
   base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(base_);
   if (!CommUtil::CheckIp(server_address_)) {
     MS_LOG(EXCEPTION) << "The tcp server ip:" << server_address_ << " is illegal!";
   }
+  MS_EXCEPTION_IF_NULL(config_);
+  max_connection_ = kConnectionNumDefault;
+  if (config_->Exists(kConnectionNum)) {
+    max_connection_ = config_->GetInt(kConnectionNum, 0);
+  }
+  MS_LOG(INFO) << "The max connection is:" << max_connection_;
 
   struct sockaddr_in sin {};
   if (memset_s(&sin, sizeof(sin), 0, sizeof(sin)) != EOK) {
@@ -210,35 +219,8 @@ void TcpServer::StartWithNoBlock() {
   MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpected error code!";
 }
 
-void TcpServer::StartTimerOnlyOnce(const uint32_t &time) {
-  MS_EXCEPTION_IF_NULL(base_);
-  if (time == 0) {
-    MS_LOG(EXCEPTION) << "The time should not be 0!";
-  }
-  struct event *ev = nullptr;
-  struct timeval timeout {};
-  timeout.tv_sec = time;
-  timeout.tv_usec = 0;
-  ev = evtimer_new(base_, TimerOnceCallback, this);
-  MS_EXCEPTION_IF_NULL(ev);
-  evtimer_add(ev, &timeout);
-}
-
-void TcpServer::StartTimer(const uint32_t &time) {
-  MS_EXCEPTION_IF_NULL(base_);
-  struct event *ev = nullptr;
-  if (time == 0) {
-    MS_LOG(EXCEPTION) << "The time should not be 0!";
-  }
-  struct timeval timeout {};
-  timeout.tv_sec = time;
-  timeout.tv_usec = 0;
-  ev = event_new(base_, -1, EV_PERSIST, TimerCallback, this);
-  MS_EXCEPTION_IF_NULL(ev);
-  evtimer_add(ev, &timeout);
-}
-
 void TcpServer::Stop() {
+  MS_EXCEPTION_IF_NULL(base_);
   std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Stop tcp server!";
   if (event_base_got_break(base_)) {
@@ -279,71 +261,29 @@ std::shared_ptr<TcpConnection> TcpServer::GetConnectionByFd(const evutil_socket_
 void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, struct sockaddr *sockaddr, int,
                                  void *data) {
   auto server = reinterpret_cast<class TcpServer *>(data);
-  auto base = reinterpret_cast<struct event_base *>(server->base_);
   MS_EXCEPTION_IF_NULL(server);
+  auto base = reinterpret_cast<struct event_base *>(server->base_);
   MS_EXCEPTION_IF_NULL(base);
   MS_EXCEPTION_IF_NULL(sockaddr);
+
+  if (server->ConnectionNum() >= server->max_connection_) {
+    MS_LOG(WARNING) << "The current connection num:" << server->ConnectionNum() << " is greater or equal to "
+                    << server->max_connection_;
+    return;
+  }
 
   struct bufferevent *bev = nullptr;
 
   if (!PSContext::instance()->enable_ssl()) {
+    MS_LOG(INFO) << "SSL is disable.";
     bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   } else {
     MS_LOG(INFO) << "Enable ssl support.";
-    if (server->config_ == nullptr) {
-      MS_LOG(EXCEPTION) << "The config is empty.";
-    }
-
     SSL *ssl = SSL_new(SSLWrapper::GetInstance().GetSSLCtx());
-
-    // 1.Parse the server's certificate and the ciphertext of key.
-    std::string server_cert = kCertificateChain;
-    std::string path = CommUtil::ParseConfig(*(server->config_), kServerCertPath);
-    if (!CommUtil::IsFileExists(path)) {
-      MS_LOG(EXCEPTION) << "The key:" << kServerCertPath << "'s value is not exist.";
-    }
-    server_cert = path;
-
-    MS_LOG(INFO) << "The server cert path:" << server_cert;
-
-    // 2. Parse the server password.
-    std::string server_password = CommUtil::ParseConfig(*(server->config_), kServerPassword);
-    if (server_password.empty()) {
-      MS_LOG(EXCEPTION) << "The key:" << kServerPassword << "'s value is empty.";
-    }
-
-    MS_LOG(INFO) << "The server password:" << server_password;
-
-    EVP_PKEY *pkey = nullptr;
-    X509 *cert = nullptr;
-    STACK_OF(X509) *ca_stack = nullptr;
-    BIO *bio = BIO_new_file(server_cert.c_str(), "rb");
-    PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
-    BIO_free_all(bio);
-    PKCS12_parse(p12, server_password.c_str(), &pkey, &cert, &ca_stack);
-    PKCS12_free(p12);
-
-    if (!SSLWrapper::GetInstance().VerifyCertTime(cert)) {
-      MS_LOG(EXCEPTION) << "Verify cert time failed.";
-    }
-
-    if (!SSL_CTX_use_certificate(SSLWrapper::GetInstance().GetSSLCtx(), cert)) {
-      MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
-    }
-
-    if (!SSL_CTX_use_PrivateKey(SSLWrapper::GetInstance().GetSSLCtx(), pkey)) {
-      MS_LOG(EXCEPTION) << "SSL use private key file failed!";
-    }
-
-    if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx())) {
-      MS_LOG(EXCEPTION) << "SSL check private key file failed!";
-    }
-    SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(), SSL_OP_NO_SSLv2);
-
+    MS_EXCEPTION_IF_NULL(ssl);
     bev = bufferevent_openssl_socket_new(base, fd, ssl, BUFFEREVENT_SSL_ACCEPTING,
                                          BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   }
-
   if (bev == nullptr) {
     MS_LOG(ERROR) << "Error constructing buffer event!";
     int ret = event_base_loopbreak(base);
@@ -386,9 +326,10 @@ std::shared_ptr<TcpConnection> TcpServer::onCreateConnection(struct bufferevent 
 OnServerReceiveMessage TcpServer::GetServerReceive() const { return message_callback_; }
 
 void TcpServer::SignalCallback(evutil_socket_t, std::int16_t, void *data) {
+  MS_EXCEPTION_IF_NULL(data);
   auto server = reinterpret_cast<class TcpServer *>(data);
-  MS_EXCEPTION_IF_NULL(server);
   struct event_base *base = server->base_;
+  MS_EXCEPTION_IF_NULL(base);
   struct timeval delay = {0, 0};
   MS_LOG(ERROR) << "Caught an interrupt signal; exiting cleanly in 0 seconds.";
   if (event_base_loopexit(base, &delay) == -1) {
@@ -402,6 +343,7 @@ void TcpServer::ReadCallback(struct bufferevent *bev, void *connection) {
 
   auto conn = static_cast<class TcpConnection *>(connection);
   struct evbuffer *buf = bufferevent_get_input(bev);
+  MS_EXCEPTION_IF_NULL(buf);
   char read_buffer[kMessageChunkLength];
   while (EVBUFFER_LENGTH(buf) > 0) {
     int read = evbuffer_remove(buf, &read_buffer, sizeof(read_buffer));
@@ -409,11 +351,6 @@ void TcpServer::ReadCallback(struct bufferevent *bev, void *connection) {
       MS_LOG(EXCEPTION) << "Can not drain data from the event buffer!";
     }
     conn->OnReadHandler(read_buffer, IntToSize(read));
-    MS_LOG(DEBUG) << "the current time is:"
-                  << std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now())
-                       .time_since_epoch()
-                       .count()
-                  << " the read size is:" << read;
   }
 }
 
@@ -421,9 +358,10 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
   MS_EXCEPTION_IF_NULL(bev);
   MS_EXCEPTION_IF_NULL(data);
   struct evbuffer *output = bufferevent_get_output(bev);
-  size_t remain = evbuffer_get_length(output);
+  MS_EXCEPTION_IF_NULL(output);
   auto conn = static_cast<class TcpConnection *>(data);
   auto srv = const_cast<TcpServer *>(conn->GetServer());
+  MS_EXCEPTION_IF_NULL(srv);
 
   if (events & BEV_EVENT_EOF) {
     MS_LOG(INFO) << "Event buffer end of file, a client is disconnected from this server!";
@@ -434,7 +372,15 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
     // Free connection structures
     srv->RemoveConnection(conn->GetFd());
   } else if (events & BEV_EVENT_ERROR) {
-    MS_LOG(WARNING) << "Event buffer remain data: " << remain;
+    MS_LOG(WARNING) << "Connect to server error.";
+    if (PSContext::instance()->enable_ssl()) {
+      uint64_t err = bufferevent_get_openssl_error(bev);
+      MS_LOG(WARNING) << "The error number is:" << err;
+
+      MS_LOG(WARNING) << "Error message:" << ERR_reason_error_string(err)
+                      << ", the error lib:" << ERR_lib_error_string(err)
+                      << ", the error func:" << ERR_func_error_string(err);
+    }
     // Free connection structures
     srv->RemoveConnection(conn->GetFd());
 
@@ -443,7 +389,7 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
       srv->client_disconnection_(*srv, *conn);
     }
   } else {
-    MS_LOG(WARNING) << "Unhandled event!";
+    MS_LOG(WARNING) << "Unhandled event:" << events;
   }
 }
 

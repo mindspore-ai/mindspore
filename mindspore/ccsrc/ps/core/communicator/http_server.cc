@@ -41,11 +41,15 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-HttpServer::~HttpServer() { Stop(); }
+HttpServer::~HttpServer() {
+  if (!Stop()) {
+    MS_LOG(WARNING) << "Stop http server failed.";
+  }
+}
 
 bool HttpServer::InitServer() {
   if (server_address_ == "") {
-    MS_LOG(INFO) << "The server ip is empty.";
+    MS_LOG(WARNING) << "The server address is empty.";
     std::string interface;
     std::string server_ip;
     CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
@@ -91,22 +95,24 @@ bool HttpServer::InitServer() {
 
   result = ::bind(fd_, (struct sockaddr *)&addr, sizeof(addr));
   if (result < 0) {
-    MS_LOG(ERROR) << "Bind ip:" << server_address_ << " port:" << server_port_ << " failed!";
+    MS_LOG(ERROR) << "Bind ip:" << server_address_ << " port:" << server_port_ << "failed!";
     close(fd_);
     fd_ = -1;
     return false;
   }
 
+  MS_LOG(INFO) << "Bind ip:" << server_address_ << " port:" << server_port_ << " successful!";
+
   result = ::listen(fd_, backlog_);
   if (result < 0) {
-    MS_LOG(ERROR) << "Listen ip:" << server_address_ << " port:" << server_port_ << " failed!";
+    MS_LOG(ERROR) << "Listen ip:" << server_address_ << " port:" << server_port_ << "failed!";
     close(fd_);
     fd_ = -1;
     return false;
   }
 
   int flags = 0;
-  if ((flags = fcntl(fd_, F_GETFL, 0)) < 0 || fcntl(fd_, F_SETFL, flags | O_NONBLOCK) < 0) {
+  if ((flags = fcntl(fd_, F_GETFL, 0)) < 0 || fcntl(fd_, F_SETFL, (unsigned int)flags | O_NONBLOCK) < 0) {
     MS_LOG(ERROR) << "Set fcntl O_NONBLOCK failed!";
     close(fd_);
     fd_ = -1;
@@ -135,12 +141,14 @@ bool HttpServer::Start(bool is_detach) {
   MS_LOG(INFO) << "Start http server!";
   for (size_t i = 0; i < thread_num_; i++) {
     auto http_request_handler = std::make_shared<HttpRequestHandler>();
+    MS_EXCEPTION_IF_NULL(http_request_handler);
     if (!http_request_handler->Initialize(fd_, request_handlers_)) {
       MS_LOG(ERROR) << "Http initialize failed.";
       return false;
     }
     http_request_handlers.push_back(http_request_handler);
     auto thread = std::make_shared<std::thread>(&HttpRequestHandler::Run, http_request_handler);
+    MS_EXCEPTION_IF_NULL(thread);
     if (is_detach) {
       thread->detach();
     }
@@ -167,6 +175,10 @@ bool HttpServer::Stop() {
       if (res == false) {
         result = false;
       }
+    }
+    if (fd_ != -1) {
+      close(fd_);
+      fd_ = -1;
     }
     is_stop_ = true;
   }

@@ -413,5 +413,11 @@ std::string PSContext::config_file_path() const { return config_file_path_; }
 void PSContext::set_node_id(const std::string &node_id) { node_id_ = node_id; }
 
 const std::string &PSContext::node_id() const { return node_id_; }
+
+std::string PSContext::client_password() const { return client_password_; }
+void PSContext::set_client_password(const std::string &password) { client_password_ = password; }
+
+std::string PSContext::server_password() const { return server_password_; }
+void PSContext::set_server_password(const std::string &password) { server_password_ = password; }
 }  // namespace ps
 }  // namespace mindspore

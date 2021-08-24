@@ -34,6 +34,7 @@
 #include "ps/core/cluster_config.h"
 #include "utils/convert_utils_base.h"
 #include "ps/core/comm_util.h"
+#include "ps/core/communicator/ssl_client.h"
 #include "ps/core/communicator/ssl_wrapper.h"
 #include "ps/constants.h"
 #include "ps/ps_context.h"
@@ -69,7 +70,6 @@ class TcpClient {
   void SetMessageCallback(const OnMessage &cb);
   bool SendMessage(const CommMessage &message) const;
   bool SendMessage(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size);
-  void StartTimer(const uint32_t &time);
   void set_timer_callback(const OnTimer &timer);
   const event_base &eventbase() const;
 
@@ -107,7 +107,7 @@ class TcpClient {
   std::atomic<bool> is_stop_;
   std::atomic<bool> is_connected_;
   // The Configuration file
-  Configuration *const config_;
+  Configuration *config_;
 };
 }  // namespace core
 }  // namespace ps

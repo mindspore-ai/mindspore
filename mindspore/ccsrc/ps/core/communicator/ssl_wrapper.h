@@ -27,9 +27,16 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <atomic>
 
 #include "utils/log_adapter.h"
 #include "ps/core/comm_util.h"
+#include "ps/core/file_configuration.h"
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {
@@ -42,29 +49,6 @@ class SSLWrapper {
   }
   SSL_CTX *GetSSLCtx(bool is_server = true);
 
-  // read certificate from file path
-  X509 *ReadCertFromFile(const std::string &certPath) const;
-
-  // read Certificate Revocation List from file absolute path
-  X509_CRL *ReadCrlFromFile(const std::string &crlPath) const;
-
-  // read certificate from pem string
-  X509 *ReadCertFromPerm(std::string cert);
-
-  // verify valid of certificate time
-  bool VerifyCertTime(const X509 *cert) const;
-
-  // verify valid of certificate chain
-  bool VerifyCAChain(const std::string &keyAttestation, const std::string &equipCert, const std::string &equipCACert,
-                     std::string rootCert);
-
-  // verify valid of sign data
-  bool VerifyRSAKey(const std::string &keyAttestation, const unsigned char *srcData, const unsigned char *signData,
-                    int srcDataLen);
-
-  // verify valid of equip certificate with CRL
-  bool VerifyCRL(const std::string &equipCert);
-
  private:
   SSLWrapper();
   virtual ~SSLWrapper();
@@ -73,18 +57,22 @@ class SSLWrapper {
 
   void InitSSL();
   void CleanSSL();
+  time_t ConvertAsn1Time(const ASN1_TIME *const time) const;
+  void StartCheckCertTime(const Configuration &config, const X509 *cert, const std::string &ca_path);
+  void StopCheckCertTime();
 
   SSL_CTX *ssl_ctx_;
-  SSL_CTX *client_ssl_ctx_;
 
   // The firset root ca certificate.
   X509 *rootFirstCA_;
   // The second root ca certificate.
   X509 *rootSecondCA_;
-  // The firset root revocation list
-  X509_CRL *rootFirstCrl_;
-  // The second root revocation list
-  X509_CRL *rootSecondCrl_;
+  std::unique_ptr<std::thread> check_time_thread_;
+  std::atomic<bool> running_;
+  std::atomic<bool> is_ready_;
+  std::mutex mutex_;
+  std::condition_variable cond_;
+  std::mutex verify_mutex_;
 };
 }  // namespace core
 }  // namespace ps
