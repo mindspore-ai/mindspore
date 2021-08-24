@@ -362,7 +362,8 @@ class GraphMemoryParser:
                 tensor_dict = self._get_tensor_dict(node, tensor, t_id)
                 self.breakdowns[index].append(tensor_dict)
 
-    def _get_tensor_dict(self, node, tensor, t_id):
+    @staticmethod
+    def _get_tensor_dict(node, tensor, t_id):
         """Update node outputs to assemble memory breakdowns."""
         for i, output_id in enumerate(node.output_ids):
             if t_id == output_id:

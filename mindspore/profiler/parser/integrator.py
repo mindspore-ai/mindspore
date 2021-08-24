@@ -61,6 +61,8 @@ class Integrator:
         self._device_id = device_id
         self._op_time_cache = {}
         self._total_time = Decimal('0.0')
+        self._column = ""
+        self._result = []
 
     def integrate(self):
         """Integrate the parsed profiling files."""
@@ -263,7 +265,7 @@ class Integrator:
         file_path = validate_and_normalize_path(file_path)
         with open(file_path, 'r') as handle:
             csv_reader = csv.reader(handle)
-            self.__column__ = next(csv_reader)
+            self._column = next(csv_reader)
             self._aicore_trace_data = list(csv_reader)
         self._size = len(self._aicore_trace_data) - 1
         self._load_point_info()
@@ -312,7 +314,7 @@ class Integrator:
             dict, step trace information. The key is in `__column__`.
         """
         row_info_dict = {}
-        for key, value in zip(self.__column__, row_info):
+        for key, value in zip(self._column, row_info):
             if key == 'step_num':
                 continue
             value = to_int(value, key)
@@ -337,7 +339,7 @@ class Integrator:
         factor = 1e5  # convert time unit from 10ns to 1ms
         reduce_pid = 10000
         reduce_info = []
-        reduce_fields = [field_name for field_name in self.__column__
+        reduce_fields = [field_name for field_name in self._column
                          if field_name.startswith('stream_') and not field_name.endswith('point')]
         for reduce_field in reduce_fields:
             reduce_start = row_info_dict.get(reduce_field + '_start_point')
@@ -449,7 +451,8 @@ class Integrator:
                         return False
         return True
 
-    def _is_match_condition(self, exp_key, exp_value, actual_value):
+    @staticmethod
+    def _is_match_condition(exp_key, exp_value, actual_value):
         """
         Check whether the actual value meets the expect condition.
 
@@ -518,15 +521,6 @@ class BaseTimelineGenerator:
     }
     _op_name_idx, _tid_idx, _start_time_idx, _duration_idx = 0, 1, 2, 3
     _max_scope_name_num = 0
-
-    def _load_timeline_data(self):
-        """Load timeline data from file."""
-
-    def _parse_timeline_data(self):
-        """Parse timeline data."""
-
-    def init_timeline(self):
-        """Init timeline metadata, adding all collected info."""
 
     def write_timeline(self, size_limit=SIZE_LIMIT_DEFAULT):
         """Load data according to the parsed profiling files."""

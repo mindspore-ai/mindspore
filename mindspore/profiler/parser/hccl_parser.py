@@ -221,7 +221,7 @@ class HcclParser:
         """Calculate the time-consuming of communication operator in one execution round."""
 
         def _inner_calculate_communication_operator_iter_cost(events):
-            total_notify_wait = self._calculate_notify_wait_time(events)
+            total_notify_wait = HcclParser._calculate_notify_wait_time(events)
             # Divide information by src dst rank_id.
             src_dst_dict = self._divide_communication_info_by_src_dst_rank(events)
             src_dst_link_info = self._calculate_src_dst_link_info(src_dst_dict)
@@ -254,7 +254,8 @@ class HcclParser:
                 mainstream_communication_operator_iter_cost[1],
                 total_communication_operator_iter_cost[2]]
 
-    def _divide_communication_info_by_thread(self, trace_events: list):
+    @staticmethod
+    def _divide_communication_info_by_thread(trace_events: list):
         """Divide information by thread."""
         threads_dict = dict()
         for item in trace_events:
@@ -352,7 +353,8 @@ class HcclParser:
                     result_dict[key][link_type_key] = sdma_total_cost
         return result_dict
 
-    def _calculate_adma_link_info(self, trace_event: list):
+    @staticmethod
+    def _calculate_adma_link_info(trace_event: list):
         """
         Calculate RDMA link info.
 
@@ -420,7 +422,8 @@ class HcclParser:
             if sdma_communication_size else 0
         return [sdma_communication_time, sdma_communication_size, sdma_bandwidth]
 
-    def _calculate_notify_wait_time(self, trace_event: list):
+    @staticmethod
+    def _calculate_notify_wait_time(trace_event: list):
         """Calculate notify wait time."""
         total_notify_wait_time = 0
         for item in trace_event:
@@ -441,10 +444,11 @@ class HcclParser:
         wait_cost_average = sum([i[2] for i in communication_info]) / communication_info_size
         link_info = [i[3] for i in communication_info]
         calculate_type = 'average'
-        link_average_info = self._calculate_link_value(link_info, calculate_type)
+        link_average_info = HcclParser._calculate_link_value(link_info, calculate_type)
         return [communication_cost_average, wait_cost_average, link_average_info]
 
-    def _calculate_link_value(self, link_info: list, calculate_type):
+    @staticmethod
+    def _calculate_link_value(link_info: list, calculate_type):
         """Calculate link average or total value."""
         result_dict = dict()
         for item in link_info:

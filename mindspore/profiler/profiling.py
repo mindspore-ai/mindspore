@@ -131,8 +131,8 @@ class Profiler:
         os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
 
         if self._device_target:
-            CPUProfiler = c_expression.CPUProfiler
-            self._cpu_profiler = CPUProfiler.get_instance()
+            cpu_profiler = c_expression.CPUProfiler
+            self._cpu_profiler = cpu_profiler.get_instance()
             self._cpu_profiler.init(self._output_path)
             self._cpu_profiler.step_profiling_enable(True)
         if self._device_target and self._device_target == "GPU":
@@ -536,7 +536,8 @@ class Profiler:
 
         return job_id
 
-    def _parse_host_start_log(self, input_file):
+    @staticmethod
+    def _parse_host_start_log(input_file):
         """
         Parse host start log file, get the start time of the job.
 

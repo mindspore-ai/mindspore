@@ -51,9 +51,9 @@ class HWTSLogParser:
                 file_name = get_file_join_name(data_path, self._source_file_target)
                 if not file_name:
                     file_name = get_file_join_name(data_path, self._source_file_target_old)
-                    if not file_name:
-                        msg = "Fail to find hwts log file, under profiling directory"
-                        raise RuntimeError(msg)
+        if not file_name:
+            msg = "Fail to find hwts log file, under profiling directory"
+            raise RuntimeError(msg)
 
         return file_name
 
