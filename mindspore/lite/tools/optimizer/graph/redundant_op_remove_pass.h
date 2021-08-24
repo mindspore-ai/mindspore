@@ -26,7 +26,8 @@ using mindspore::converter::FmkType;
 namespace mindspore::opt {
 class RemoveRedundantOpPass : public Pass {
  public:
-  RemoveRedundantOpPass() : Pass("remove_redundant_op_pass") {}
+  explicit RemoveRedundantOpPass(bool is_train_model)
+      : Pass("remove_redundant_op_pass"), is_train_model_(is_train_model) {}
   ~RemoveRedundantOpPass() override = default;
   int ReplaceOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   int ReplaceUpdateStateOp(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node);
@@ -37,6 +38,7 @@ class RemoveRedundantOpPass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
+  bool is_train_model_ = false;
   std::set<AnfNodePtr> remove_cnode_;
 };
 }  // namespace mindspore::opt

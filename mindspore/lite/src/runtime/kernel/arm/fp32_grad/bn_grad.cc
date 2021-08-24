@@ -41,8 +41,15 @@ constexpr int kMaxTaskNum = 4;
 
 int BNGradCPUKernel::ReSize() {
   auto *input_x = in_tensors_.at(1);
-  int channels = input_x->shape().at(kNHWC_C);
-  ws_size_ = kWsMultiplier * channels;
+  if (input_x->shape().size() == 4) {
+    int channels = input_x->shape().at(kNHWC_C);
+    ws_size_ = kWsMultiplier * channels;
+  } else if (input_x->shape().size() == 2) {
+    int channels = input_x->shape().at(1);
+    ws_size_ = kWsMultiplier * channels;
+  } else {
+    MS_LOG(ERROR) << "not support input dims: " << input_x->shape().size();
+  }
   set_workspace_size(ws_size_ * sizeof(float));
   return RET_OK;
 }

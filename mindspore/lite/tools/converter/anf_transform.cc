@@ -231,7 +231,7 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
 int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
-  const_fold_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
+  const_fold_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel));
   if (!config->trainModel) {
     const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
   }
