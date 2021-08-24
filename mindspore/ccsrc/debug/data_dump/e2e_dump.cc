@@ -425,9 +425,11 @@ bool E2eDump::isDatasetGraph(const session::KernelGraph *graph) {
 }
 bool E2eDump::DumpDirExists(const std::string &dump_path) {
   DIR *dir = opendir(dump_path.c_str());
-  if (dir) {
+  if (dir != nullptr) {
     MS_LOG(INFO) << "Dump dir " << dump_path << " exists";
-    closedir(dir);
+    if (closedir(dir) == -1) {
+      MS_LOG(WARNING) << "Dump dir " << dump_path << " close failed.";
+    }
     return true;
   }
   return false;
@@ -446,12 +448,16 @@ bool E2eDump::MoveDumpFiles(const std::string &first_dir, const std::string &sec
     std::string old_file_path = first_dir + "/" + file_name;
     std::string new_file_path = second_dir + "/" + file_name;
     if (rename(old_file_path.c_str(), new_file_path.c_str()) != 0) {
-      closedir(d_handle);
+      if (closedir(d_handle) == -1) {
+        MS_LOG(WARNING) << "Dump dir " << first_dir << " close failed.";
+      }
       return false;
     }
   }
 
-  closedir(d_handle);
+  if (closedir(d_handle) == -1) {
+    MS_LOG(WARNING) << "Dump dir " << first_dir << " close failed.";
+  }
   return true;
 }
 
@@ -469,11 +475,15 @@ bool E2eDump::DeleteDirContents(const std::string &dir_path) {
     int res = remove(file_path.c_str());
     if (res != 0) {
       // Could not remove the file
-      closedir(d_handle);
+      if (closedir(d_handle) == -1) {
+        MS_LOG(WARNING) << "Dump dir " << dir_path << " close failed.";
+      }
       return false;
     }
   }
-  closedir(d_handle);
+  if (closedir(d_handle) == -1) {
+    MS_LOG(WARNING) << "Dump dir " << dir_path << " close failed.";
+  }
   return true;
 }
 }  // namespace mindspore

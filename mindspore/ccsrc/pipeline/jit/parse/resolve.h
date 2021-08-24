@@ -126,7 +126,7 @@ class SymbolResolver {
 
   SymbolPtr symbol() { return symbol_; }
 
-  py::object &result() { return result_; }
+  const py::object &result() { return result_; }
 
   AnfNodePtr resolved_node() { return resolved_node_; }
 

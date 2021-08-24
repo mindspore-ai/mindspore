@@ -25,7 +25,7 @@
 #include "pybind_api/ir/base_ref_py.h"
 
 namespace mindspore {
-py::function GetBpropFunctionByObj(py::object obj) {
+py::function GetBpropFunctionByObj(const py::object &obj) {
   static const std::string get_bprop_fn = "get_bprop_fn";
   static const std::string ad_module = "mindspore.ops._grad";
   static const std::string ad_experimental_module = "mindspore.ops._grad_experimental";
@@ -36,12 +36,12 @@ py::function GetBpropFunctionByObj(py::object obj) {
   return fn;
 }
 
-py::function GetBpropFunction(std::string name) {
+py::function GetBpropFunction(const std::string &name) {
   auto fn = GetBpropFunctionByObj(py::str(name));
   return fn;
 }
 
-py::function GetComputeFunction(std::string name) {
+py::function GetComputeFunction(const std::string &name) {
   static const std::string module = "mindspore._extends.builtin_operations";
   py::module mod = py::module::import(common::SafeCStr(module));
   if (!py::hasattr(mod, common::SafeCStr(name))) {
