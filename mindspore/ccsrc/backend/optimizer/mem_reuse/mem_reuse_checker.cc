@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace memreuse {
 MemReuseChecker &MemReuseChecker::GetInstance() {
-  static MemReuseChecker instance;
+  static MemReuseChecker instance{};
   return instance;
 }
 
@@ -94,8 +94,7 @@ int64_t MemReuseChecker::CalculOriValue(const KernelGraph *graph) const {
     if (tensor == nullptr) {
       continue;
     }
-    size_t tensor_size = tensor->data().nbytes();
-    auto checker_size = SizeToLong(tensor_size);
+    int64_t checker_size = tensor->data().nbytes();
     static_value_size += checker_size;
   }
   return static_value_size;

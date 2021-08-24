@@ -17,6 +17,7 @@
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
 #include <algorithm>
 #include <memory>
+#include <utility>
 #include "utils/context/graph_kernel_flags.h"
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include "backend/optimizer/common/helper.h"
@@ -246,7 +247,7 @@ void MemReuseUtil::SetWkMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr) {
   }
 }
 
-KernelRefCountPtr MemReuseUtil::GetRef(const AnfNodePtr &node, int output_idx) {
+KernelRefCountPtr MemReuseUtil::GetRef(const AnfNodePtr &node, size_t output_idx) {
   if (node == nullptr) {
     MS_LOG(EXCEPTION) << "The node pointer is a nullptr.";
   }
@@ -254,8 +255,8 @@ KernelRefCountPtr MemReuseUtil::GetRef(const AnfNodePtr &node, int output_idx) {
   if (node->isa<CNode>() && !HasAbstractMonad(node)) {
     auto ak_node = node->cast<CNodePtr>();
     auto key = ak_node.get();
-    MemReuseChecker::GetInstance().CheckOutRef(kernel_output_refs_, ak_node, IntToSize(output_idx));
-    return kernel_output_refs_[key][IntToSize(output_idx)];
+    MemReuseChecker::GetInstance().CheckOutRef(kernel_output_refs_, ak_node, output_idx);
+    return kernel_output_refs_[key][output_idx];
   }
   return nullptr;
 }
@@ -278,7 +279,7 @@ KernelRefCountPtr MemReuseUtil::GetKernelInputRef(const CNodePtr &kernel, size_t
   if (IsPrimitive(kernel_input.first, prim::kPrimMakeTuple)) {
     MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << input_idx << " is MakeTuple";
   }
-  auto result = GetRef(kernel_input.first, SizeToInt(kernel_input.second));
+  auto result = GetRef(kernel_input.first, kernel_input.second);
   return result;
 }
 
@@ -506,7 +507,9 @@ session::KernelWithIndex MemReuseUtil::VisitKernelWithReturnType(const AnfNodePt
     visit_nop_node ? visit_kernel_with_return_type_in0pos_cache_ : visit_kernel_with_return_type_in0pos_skip_nop_cache_;
   std::unordered_map<AnfNodePtr, session::KernelWithIndex>::iterator tag_iter;
   if (auto iter = cache.find(node); iter == cache.end()) {
-    tag_iter = cache.insert({node, AnfAlgo::VisitKernelWithReturnType(node, i, visit_nop_node)}).first;
+    auto tmp_item = std::pair<AnfNodePtr, session::KernelWithIndex>{
+      node, AnfAlgo::VisitKernelWithReturnType(node, i, visit_nop_node)};
+    tag_iter = cache.emplace(tmp_item).first;
   } else {
     tag_iter = iter;
   }

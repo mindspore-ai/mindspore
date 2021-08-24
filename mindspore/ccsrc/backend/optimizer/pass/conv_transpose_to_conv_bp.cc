@@ -39,7 +39,7 @@ const AnfNodePtr ConvTransposeToConvBackpropInputPass::Process(const FuncGraphPt
   auto conv_transpose = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv_transpose);
 
-  if (conv_transpose->size() <= kCNodePrimitiveIdx) {
+  if (conv_transpose->size() == kCNodePrimitiveIdx) {
     MS_LOG(EXCEPTION) << "Invalid cnode " << node->DebugString() << " input size " << conv_transpose->size();
   }
 

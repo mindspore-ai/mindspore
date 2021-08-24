@@ -231,7 +231,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, siz
   }
 }
 
-KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr &anf_node, int index,
+KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr &anf_node, size_t index,
                                                                bool visit_nop_node,
                                                                const std::vector<PrimitivePtr> &return_types) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -347,7 +347,7 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
   }
   // The output may be the tuple of node, so need visit all the outputs of node.
   for (size_t i = 0; i < outputs_num; ++i) {
-    auto output_with_index = AnfAlgo::VisitKernelWithReturnType(node, SizeToInt(i), false, return_types);
+    auto output_with_index = AnfAlgo::VisitKernelWithReturnType(node, i, false, return_types);
     MS_EXCEPTION_IF_NULL(output_with_index.first);
 
     // The depend and makeTuple node need recurse.

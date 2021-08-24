@@ -77,7 +77,7 @@ AnfNodePtr EliminateIsolatedVirtualNodeInput(const FuncGraphPtr &func_graph, con
   std::vector<AnfNodePtr> new_depend_inputs = cnode->inputs();
   new_depend_inputs[kIsolatedDependRealInputIndex + 1] = replace_node;
   auto new_depend = CreateNewDependNode(func_graph, cnode, new_depend_inputs);
-  func_graph->manager()->Replace(cnode, new_depend);
+  (void)func_graph->manager()->Replace(cnode, new_depend);
   return new_depend;
 }
 
@@ -168,7 +168,7 @@ std::vector<size_t> SearchTransDataAndCast(const CNodePtr &cnode) {
     if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimCast) ||
         AnfAlgo::CheckPrimitiveType(input, prim::kPrimTransData) ||
         AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
-      result.emplace_back(i);
+      (void)result.emplace_back(i);
     }
   }
   return result;
@@ -205,7 +205,7 @@ const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, con
   }
   // Create a new Depend node to replace the old one if inputs changed.
   auto new_depend = CreateNewDependNode(func_graph, cnode, new_inputs);
-  func_graph->manager()->Replace(cnode, new_depend);
+  (void)func_graph->manager()->Replace(cnode, new_depend);
   return nullptr;
 }
 
