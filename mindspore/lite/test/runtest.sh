@@ -13,9 +13,6 @@ mkdir -pv ${CUR_DIR}/do_test
 cd ${CUR_DIR}/do_test
 cp ${BUILD_DIR}/test/lite-test ./
 cp ${BUILD_DIR}/googletest/googlemock/gtest/libgtest.so ./
-tar -xzf ../../../../output/mindspore-lite-*.tar.gz --strip-components=3 --wildcards *runtime/lib/*.so* || true
-tar -xzf ../../../../output/mindspore-lite-*.tar.gz --strip-components=4 --wildcards *converter/lib/*.so* || true
-tar -xzf ../../../../output/mindspore-lite-*.tar.gz --strip-components=5 --wildcards *libjpeg-turbo/lib/*.so* || true
 ls -l *.so*
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./
 

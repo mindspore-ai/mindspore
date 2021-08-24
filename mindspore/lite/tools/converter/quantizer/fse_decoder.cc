@@ -52,8 +52,18 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint16_t *symbol_frequency, int
     uint16_t sym = symbol_table[i];
     uint16_t x = frequency[sym];
     frequency[sym] += 1;
-
+#ifdef _MSC_VER
+    int num = 0;
+    uint32_t tmp = x;
+    tmp |= 1;
+    while (!(tmp & 0x80000000)) {
+      num += 1;
+      tmp <<= 1;
+    }
+    bit_count[i] = table_log - (num ^ 31);
+#else
     bit_count[i] = table_log - (__builtin_clz(x) ^ 31);
+#endif
     new_state[i] = (x << bit_count[i]) - table_size;
   }
   return RET_OK;
