@@ -49,11 +49,11 @@ __global__ void SpaceToBatch(const size_t size, const T *input, const size_t in,
     temp_stride /= iw;
     idx_iw = temp_pos / temp_stride;
 
-    idx_on = (((idx_ih + pad_dn) % block_num) * block_num + ((idx_iw + pad_rht) % block_num)) * in + idx_in;
+    idx_on = (((idx_ih + pad_up) % block_num) * block_num + ((idx_iw + pad_lft) % block_num)) * in + idx_in;
     output_pos = idx_on * oc;
     output_pos = (output_pos + idx_ic) * oh;
-    output_pos = (output_pos + ((idx_ih + pad_dn) - (idx_on / (in * block_num))) / block_num) * ow;
-    output_pos = (output_pos + ((idx_iw + pad_rht) - ((idx_on / in) % block_num)) / block_num);
+    output_pos = (output_pos + ((idx_ih + pad_up) - (idx_on / (in * block_num))) / block_num) * ow;
+    output_pos = (output_pos + ((idx_iw + pad_lft) - ((idx_on / in) % block_num)) / block_num);
     output[output_pos] = input[pos];
   }
   return;
