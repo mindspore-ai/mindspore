@@ -24,6 +24,7 @@ sparse_gather_v2_ds_op_info = TBERegOp("SparseGatherV2") \
     .kernel_name("gather_v2") \
     .partial_flag(True) \
     .dynamic_shape(True) \
+    .attr("batch_dims", "required", "int", "all", "0") \
     .input(0, "x", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
     .input(2, "axis", False, "required", "all") \
