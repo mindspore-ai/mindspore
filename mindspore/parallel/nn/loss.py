@@ -31,19 +31,25 @@ __all__ = ["CrossEntropyLoss"]
 class CrossEntropyLoss(Cell):
     """
     Calculate the cross entropy loss.
+
     Args:
-        parallel_config(OpParallelConfig): the configure of the parallel. Default:'default_dpmp_config'
+        parallel_config (OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
+                                           a instance of `OpParallelConfig` with default args.
+
     Inputs:
         - **logits** (Tensor) - Tensor of shape (N, C). Data type must be float16 or float32. the output logits of
-                                the backbone.
+          the backbone.
+
         - **labels** (Tensor) - Tensor of shape (N, ). The ground truth label of the sample.
-        - **input_mask** (Tensor): Tensor of shape (N, ). input_mask indicates whether there is padded inputs and for
-                                    padded inputs it will not be counted into loss.
-    Returns:
-        loss: Tensor, the corresponding cross entropy loss
+
+        - **input_mask** (Tensor) - Tensor of shape (N, ). input_mask indicates whether there is padded inputs and for
+          padded inputs it will not be counted into loss.
+
+    Outputs:
+        Tensor. the corresponding cross entropy loss
 
     Exapmes:
-        >>> loss = nn.parallel.CrossEntropyLoss()
+        >>> loss = mindspore.parallel.nn.CrossEntropyLoss()
         >>> logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), mindspore.float32)
         >>> labels_np = np.array([1]).astype(np.int32)
         >>> input_mask = Tensor(np.ones(1).astype(np.float32))

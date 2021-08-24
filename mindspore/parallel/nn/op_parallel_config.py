@@ -49,7 +49,7 @@ class OpParallelConfig(_Config):
             ``Ascend`` ``GPU``
 
         Examples:
-            >>> from mindspore.nn.parallel import OpParallelConfig
+            >>> from mindspore.parallel.nn import OpParallelConfig
             >>> config=OpParallelConfig(data_parallel=1, model_parallel=1)
     """
 

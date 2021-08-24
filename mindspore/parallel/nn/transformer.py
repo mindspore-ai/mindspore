@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Transformer Networks. This is an experimental interface that is subject to change and/or deletion."""
+"""
+NOTE:
+    Transformer Networks. This is an experimental interface that is subject to change and/or deletion.
+"""
 import math
 import numpy as np
 from mindspore.common.tensor import Tensor
@@ -158,16 +161,15 @@ class TransformerOpParallelConfig(_Config):
             \*pipeline_stage must be equal to the device. When setting the pipeline stage and
             optimizer_shard, the config will overwrite the auto_parallel_context.
 
-
         Args:
-            data_parallel (int): The data parallel way. Default: 1
-            model_parallel (int): The model parallel way. Default: 1
+            data_parallel (int): The data parallel way. Default: 1.
+            model_parallel (int): The model parallel way. Default: 1.
             pipeline_stage (int): The number of the pipeline stage. Should be a positive value. Default: 1.
             micro_batch_num (int): The micore size of the batches for the pipeline training. Default: 1.
             optimizer_shard (bool): Whether to enable optimizer shard. Default False.
             gradient_aggregation_group (int): The fusion group size of the optimizer state sharding. Default: 4.
             recompute (bool): Enable recomputation of the transformer block or not. Default: False.
-            vocab_emb_dp (bool): Shard embedding in model parallel or data parallel. Default: True
+            vocab_emb_dp (bool): Shard embedding in model parallel or data parallel. Default: True.
 
         Supported Platforms:
             ``Ascend`` ``GPU``
@@ -307,11 +309,15 @@ class FeedForward(Cell):
                          'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                          'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         param_init_type (dtype.Number): The parameter initialization type. Can be dtype.float32 or dtype.float16.
-        parallel_config(OpParallelConfig): the config of parallel setting, see `OpParallelConfig`
+        parallel_config(OpParallelConfig): The config of parallel setting, see `OpParallelConfig`.
+                                           Default `default_dpmp_config`, a instance of `OpParallelConfig` with default
+                                           args.
+
     Inputs:
-        x: should be `[batch, seq_length, hidden_size]`. Float tensor.
-    Returns:
-        output: Float16 Tensor, the output of this layer after mapping. The shape is `[batch, seq_length, hidden_size]`.
+        - **x** (Tensor) - should be `[batch, seq_length, hidden_size]`. Float tensor.
+
+    Outputs:
+        Tensor, the output of this layer after mapping. The shape is `[batch, seq_length, hidden_size]`.
 
     Raises:
         ValueError: `hidden_act` is not a string.
@@ -319,6 +325,7 @@ class FeedForward(Cell):
 
     Supported Platforms:
         ``Ascend`` ``GPU``
+
     Examples:
         >>> model = FeedForward(hidden_size=15, ffn_hidden_size=30, dropout_rate=0.1)
         >>> tensor = Tensor(np.ones((2, 20, 15)), dtype.float32)
@@ -381,25 +388,29 @@ class AttentionMask(Cell):
     r"""
     Get the Lower triangular matrix from the input mask. The input mask is a 2D tensor (batch_size, seq_length)
     with 1 and 0. 1 indicates the current position is a valid token, otherwise not.
+
     Args:
         seq_length(int): the sequence length of the input tensor.
-        parallel_config(OpParallelConfig): the parallel configure
+        parallel_config(OpParallelConfig): the parallel configure. Default `default_dpmp_config`,
+                                           a instance of `OpParallelConfig` with default args.
+
     Inputs:
-        input_mask: the mask indicating whether each position is a valid input with (batch_size, seq_length)
+        - **input_mask** (Tensor) - the mask indicating whether each position is a valid input with
+          (batch_size, seq_length).
+
     Outputs:
-        attention_mask: the attention mask matrix with shape (batch_size, seq_length, seq_length)
+        Tensor. the attention mask matrix with shape (batch_size, seq_length, seq_length).
 
     Raises:
-        TypeError: `seq_length` is not a int
+        TypeError: `seq_length` is not a int.
         ValueError: `seq_length` is not a positive value.
         ValueError: `parallel_config` is not a subclass of OpParallelConfig.
-
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> mask = nn.parallel.AttentionMask(seq_length=4)
+        >>> mask = mindspore.parallel.nn.AttentionMask(seq_length=4)
         >>> mask_array = np.array([[1, 1, 1, 0]], np.int32)
         >>> inputs = Tensor(mask_array)
         >>> res = mask(inputs)
@@ -428,9 +439,6 @@ class AttentionMask(Cell):
         self.multiply = P.Mul().shard(((parallel_config.data_parallel, 1, 1), (1, 1, 1)))
 
     def construct(self, input_mask):
-        r"""
-        Generate the attention mask matrix.
-        """
         _check_input_shape(F.shape(input_mask), "input_mask", self.cls_name, 2)
         _check_input_dtype(F.dtype(input_mask), "input_mask", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_shape_value(F.shape(input_mask), 1, "input_mask", self.cls_name, self.seq_length)
@@ -462,14 +470,18 @@ class VocabEmbedding(Cell):
         param_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
             Refer to class `initializer` for the values of string when a string
             is specified. Default: 'normal'.
-        parallel_config(EmbeddingOpParallelConfig): the parallel config of network.
+        parallel_config(EmbeddingOpParallelConfig): the parallel config of network. Default
+            `default_embedding_parallel_config`, a instance of `EmbeddingOpParallelConfig` with default args.
 
     Inputs:
-        input_ids: the tokenized inputs with datatype int32 with shape (batch_size, seq_length)
+        **input_ids** (Tensor) - the tokenized inputs with datatype int32 with shape (batch_size, seq_length)
+
     Outputs:
-        output: Tensor, the embedding vector for the input with shape (batch_size,
-        seq_length, embedding_size)
-        self.weight: Parameter with shape (vocab_size, embedding_size), the embedding table.
+        Tuple, a tuple contains (`output`, `embedding_table`)
+
+        - **output** (Tensor) - The embedding vector for the input with shape (batch_size,
+          seq_length, embedding_size).
+        - **weight** (Tensor) - The embedding table with shape (vocab_size, embedding_size).
 
     Raises:
         ValueError: If the parallel_config.vocab_emb_dp is True, the vocab size is not a multiple of
@@ -523,7 +535,7 @@ class VocabEmbedding(Cell):
 class MultiHeadAttention(Cell):
     """
     This is an implementation of multihead attention in the paper `Attention is all you need
-    <https://arxiv.org/pdf/1706.03762v5.pdf>`.
+    <https://arxiv.org/pdf/1706.03762v5.pdf>`_.
 
     Args:
         batch_size(int): The batch size of the input tensor.
@@ -538,30 +550,37 @@ class MultiHeadAttention(Cell):
         param_init_type(dtype.Number). The parameter initialization type of the module. Default dtype.float32.
             Can be dtype.float32 or dtype.float16.
         use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
-        parallel_config(OpParallelConfig): The parallel configure.
+        parallel_config(OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
+                                           a instance of `OpParallelConfig` with default args.
+
     Inputs:
-        query_tensor: the query vector with shape (batch_size, src_seq_length, hidden_size).
-        key_tensor: the key vector with shape (batch_size, tgt_seq_length, hidden_size).
-        value_tensor: the value vector with shape (batch_size, tgt_seq_length, hidden_size).
-        attention_mask: the attention mask matrix with shape (batch_size, src_seq_length, tgt_seq_length).
-        key_past: Float16 tensor with shape (batch_size, num_heads, size_per_head, tgt_seq_length).
-                  The past calculated key vector. Used for incremental prediction when the use_past is True.
-                  Default None.
-        value_past: Float16 tensor with shape (batch_size, num_heads, tgt_seq_length, size_per_head).
-                    The past calculated value vector. Used for incremental prediction when the use_past is True.
-                    Default None.
-        batch_valid_length: Int32 tensor with shape (batch_size,) the past calculated the index. Used for incremental
-                            prediction when the use_past is True. Default None.
+        - **query_tensor** (Tensor) - the query vector with shape (batch_size, src_seq_length, hidden_size).
+        - **key_tensor** (Tensor) - the key vector with shape (batch_size, tgt_seq_length, hidden_size).
+        - **value_tensor** (Tensor) - the value vector with shape (batch_size, tgt_seq_length, hidden_size).
+        - **attention_mask** (Tensor) - the attention mask matrix with shape (batch_size, src_seq_length,
+          tgt_seq_length).
+        - **key_past** (Tensor) - Float16 tensor with shape (batch_size, num_heads, size_per_head, tgt_seq_length).
+          The past calculated key vector. Used for incremental prediction when the use_past is True.
+          Default None.
+        - **value_past** (Tensor) - Float16 tensor with shape (batch_size, num_heads, tgt_seq_length, size_per_head).
+          The past calculated value vector. Used for incremental prediction when the use_past is True.
+          Default None.
+        - **batch_valid_length** (Tensor) - Int32 tensor with shape (batch_size,) the past calculated the index.
+          Used for incremental prediction when the use_past is True. Default None.
 
     Outputs:
-        output: Tensor, the float tensor of the output of the layer with
-                shape (batch_size, src_seq_length, hidden_size)
-        layer_present: A tuple of the Tensor the projected key and value vector with
-                       ((batch_size, num_heads, size_per_head, tgt_seq_length),
-                       (batch_size, num_heads, tgt_seq_length, size_per_head)).
+        Tuple, a tuple contains(`output`, `layer_present`)
+
+        - **output** (Tensor) - Tensor, the float tensor of the output of the layer with
+          shape (batch_size, src_seq_length, hidden_size)
+
+        - **layer_present** (Tuple) - A tuple of the Tensor the projected key and value vector with
+          ((batch_size, num_heads, size_per_head, tgt_seq_length),
+          (batch_size, num_heads, tgt_seq_length, size_per_head)).
 
     Supported Platforms:
         ``Ascend`` ``GPU``
+
     Examples:
         >>> model = MultiHeadAttention(batch_size=2, hidden_size=15, src_seq_length=20, tgt_seq_length=20,
         ...                            num_heads=3)
@@ -895,6 +914,7 @@ class TransformerEncoderLayer(Cell):
     r"""
     Transformer Encoder Layer. This is an implementation of the single layer of the transformer
     encoder layer including multihead attention and feedward layer.
+
     Args:
         batch_size(int): The batch size of the input tensor.
         hidden_size(int): The hidden size of the input.
@@ -911,26 +931,33 @@ class TransformerEncoderLayer(Cell):
             Can be dtype.float32 or dtype.float16. Default dtype.float16.
         softmax_comptue_type(dtype.Number): The computation type of the softmax in the attention.
             Can be dtype.float32 or dtype.float16. Default mstype.float16.
-        param_init_type: The parameter initialization type of the module. Can be dtype.float32 or dtype.float16.
-            Default dtype.float32.
+        param_init_type(dtype.Number): The parameter initialization type of the module.
+            Can be dtype.float32 or dtype.float16. Default dtype.float32.
         use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
-        parallel_config(OpParallelConfig): The parallel configure.
+        parallel_config(OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
+                                           a instance of `OpParallelConfig` with default args.
+
     Inputs:
-        x: Float Tensor, shape should be [batch_size, seq_length, hidden_size]
-        input_mask: Float Tensor, attention mask with shape [batch_size, seq_length, seq_length]
-        init_reset: A bool tensor with shape [batch_size,], used to clear the past key parameter and past value
-                    parameter used in the incremental prediction. Only valid when use_past is True. Default True
-        batch_valid_length: Int32 tensor with shape (batch_size,) the past calculated the index. Used for incremental
-                            prediction when the use_past is True. Default None.
+        - **x** (Tensor) - Float Tensor, shape should be [batch_size, seq_length, hidden_size].
+        - **input_mask** (Tensor) - Float Tensor, attention mask with shape [batch_size, seq_length, seq_length].
+        - **init_reset** (Tensor) - A bool tensor with shape [batch_size,], used to clear the past key parameter and
+          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
+        - **batch_valid_length** (Tensor) - Int32 tensor with shape (batch_size,) the past calculated the index. Used
+          for incremental prediction when the use_past is True. Default None.
+
     Outputs:
-        output: Tensor, the float tensor of the output of the layer with
-                shape (batch_size, seq_length, hidden_size)
-        layer_present: A tuple of the Tensor the projected key and value vector with
-                       ((batch_size, num_heads, size_per_head, seq_length),
-                       (batch_size, num_heads, seq_length, size_per_head)).
+        Tuple, a tuple contains(`output`, `layer_present`).
+
+        - **output** (Tensor) - The float tensor of the output of the layer with
+          shape (batch_size, seq_length, hidden_size).
+
+        - **layer_present** (Tuple) - A tuple of the Tensor the projected key and value vector with
+          ((batch_size, num_heads, size_per_head, seq_length),
+          (batch_size, num_heads, seq_length, size_per_head)).
 
     Supported Platforms:
         ``Ascend`` ``GPU``
+
     Examples:
         >>> model = TransformerEncoderLayer(batch_size=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
         ...                                 num_heads=2)
@@ -1016,10 +1043,6 @@ class TransformerEncoderLayer(Cell):
             self.assign = P.Assign().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
 
     def construct(self, x, input_mask, init_reset=True, batch_valid_length=None):
-        r"""
-        The forward process of the block.
-        """
-        # [bs, seq_length, embedding_size]
         self._check_input(x, input_mask, init_reset, batch_valid_length)
         input_x = self.layernorm1(x)
         input_x = F.cast(input_x, self.dtype)
@@ -1112,26 +1135,34 @@ class TransformerDecoderLayer(Cell):
         param_init_type: The parameter initialization type of the module. Can be dtype.float32 or dtype.float16.
             Default dtype.float32.
         use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
-        parallel_config(OpParallelConfig): The parallel configure.
+        parallel_config(OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
+                                           a instance of `OpParallelConfig` with default args.
+
     Inputs:
-        hidden_stats: the input tensor with shape [batch_size, tgt_seq_length, hidden_size].
-        decoder_mask: the attention mask for decoder with shape [batch_size, src_seq_length, seq_length].
-        encoder_output: the output of the encoder with shape [batch_size, seq_length, hidden_size].
-        memory_mask: the memory mask of the cross attention with shape [batch, tgt_seq_length, src_seq_length].
-         where tgt_seq_length is the length of the decoder.
-        init_reset: A bool tensor with shape [batch_size,], used to clear the past key parameter and past value
-                    parameter used in the incremental prediction. Only valid when use_past is True. Default True
-        batch_valid_length: Int32 tensor with shape (batch_size,) the past calculated the index. Used for incremental
-                            prediction when the use_past is True. Default None.
+        - **hidden_stats** (Tensor) - the input tensor with shape [batch_size, tgt_seq_length, hidden_size].
+        - **decoder_mask** (Tensor) - the attention mask for decoder with shape [batch_size, src_seq_length,
+          seq_length].
+        - **encoder_output** (Tensor) - the output of the encoder with shape [batch_size, seq_length, hidden_size].
+        - **memory_mask** (Tensor) - the memory mask of the cross attention with shape [batch, tgt_seq_length,
+          src_seq_length], where tgt_seq_length is the length of the decoder.
+        - **init_reset** (Tensor) - A bool tensor with shape [batch_size,], used to clear the past key parameter and
+          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
+        - **batch_valid_length** (Tensor) - Int32 tensor with shape (batch_size,) the past calculated the index. Used
+          for incremental prediction when the use_past is True. Default None.
+
     Outputs:
-        output: Tensor, the output logit of this layer. The shape is [batch, seq_length, hidden_size]
-        layer_present: A tuple, where each tuple is the tensor the projected key and value vector in self attention
-                       with shape ((batch_size, num_heads, size_per_head, tgt_seq_length),
-                       (batch_size, num_heads, tgt_seq_length, size_per_head), and the projected key and value vector
-                       in cross attention with shape  (batch_size, num_heads, size_per_head, src_seq_length),
-                       (batch_size, num_heads, src_seq_length, size_per_head)).
+        Tuple, a tuple contains(`output`, `layer_present`)
+
+        - **output** (Tensor) - the output logit of this layer. The shape is [batch, seq_length, hidden_size]
+        - **layer_present** (Tensor) - A tuple, where each tuple is the tensor the projected key and value
+          vector in self attention with shape ((batch_size, num_heads, size_per_head, tgt_seq_length),
+          (batch_size, num_heads, tgt_seq_length, size_per_head), and the projected key and value vector
+          in cross attention with shape  (batch_size, num_heads, size_per_head, src_seq_length),
+          (batch_size, num_heads, src_seq_length, size_per_head)).
+
     Supported Platforms:
         ``Ascend`` ``GPU``
+
     Examples:
         >>> model = TransformerDecoderLayer(batch_size=2, hidden_size=64, ffn_hidden_size=64, num_heads=2,
         ...                                 src_seq_length=20, tgt_seq_length=10)
@@ -1246,10 +1277,6 @@ class TransformerDecoderLayer(Cell):
                   encoder_output=None,
                   memory_mask=None,
                   init_reset=True, batch_valid_length=None):
-        r"""
-        The forward process of the block.
-        """
-
         self._check_input(hidden_stats, decoder_mask, encoder_output, memory_mask, init_reset, batch_valid_length)
         # [bs, seq_length, embedding_size]
         input_x = self.layernorm1(hidden_stats)
@@ -1351,10 +1378,10 @@ def _get_lambda_func(total_layer=None):
             Default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
 
             Args:
-                network(Cell): Represents the transformer block
-                layer_id(int): Means the layer index for the current module, counts from zero.
-                offset(int): Means the layer_index needs a offset, if there are other modules in the net.
-                layers(int): The total layers used for the model.
+                network(Cell) - Represents the transformer block
+                layer_id(int) - Means the layer index for the current module, counts from zero.
+                offset(int) - Means the layer_index needs a offset, if there are other modules in the net.
+                layers(int) - The total layers used for the model.
         """
         # override the layers
         if total_layer:
@@ -1411,21 +1438,25 @@ class TransformerEncoder(Cell):
             default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
         offset(int): The initial layer index for the `decoder`. Used for setting the fusion id and stage id, to not
             overlap with the encoder layer.
-        parallel_config(TransformerOpParallelConfig): The parallel configure.
+        parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,
+                                           a instance of `TransformerOpParallelConfig` with default args.
+
     Inputs:
-        hidden_states: Tensor, shape should be [batch_size, seq_length, hidden_size]
-        attention_mask: Tensor, attention mask with shape [batch_size, seq_length, seq_length]
-        init_reset: A bool tensor with shape [batch_size,], used to clear the past key parameter and past value
-                    parameter used in the incremental prediction. Only valid when use_past is True. Default True
-        batch_valid_length: Int32 tensor with shape (batch_size,) the past calculated the index. Used for incremental
-                            prediction when the use_past is True. Default None.
+        - **hidden_states** (Tensor) - Tensor, shape should be [batch_size, seq_length, hidden_size]
+        - **attention_mask** (Tensor) - Tensor, attention mask with shape [batch_size, seq_length, seq_length]
+        - **init_reset** (Tensor) - A bool tensor with shape [batch_size,], used to clear the past key parameter and
+          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True
+        - **batch_valid_length** (Tensor) - Int32 tensor with shape (batch_size,) the past calculated the index. Used
+          for incremental prediction when the use_past is True. Default None.
 
     Outputs:
-        output: Tensor, the float tensor of the output of the layer with
-                shape (batch_size, seq_length, hidden_size)
-        layer_present: a tuple with size of num_layers, where each tuple contains the Tensor the projected key and
-                       value vector with shape ((batch_size, num_heads, size_per_head, seq_length),
-                       and (batch_size, num_heads, seq_length, size_per_head)).
+        Tuple, a tuple contains(`output`, `layer_present`)
+
+        - **output** (Tensor) - The float tensor of the output of the layer with
+          shape (batch_size, seq_length, hidden_size)
+        - **layer_present** (Tuple) - A tuple with size of num_layers, where each tuple contains the Tensor the
+          projected key and value vector with shape ((batch_size, num_heads, size_per_head, seq_length),
+          and (batch_size, num_heads, seq_length, size_per_head)).
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -1502,9 +1533,6 @@ class TransformerEncoder(Cell):
             self.blocks.append(block)
 
     def construct(self, hidden_states, attention_mask, init_reset=True, batch_valid_length=None):
-        r"""
-        The forward process of the block.
-        """
         present_layer = ()
         for i in range(self.num_layers):
             hidden_states, present = self.blocks[i](hidden_states,
@@ -1549,28 +1577,33 @@ class TransformerDecoder(Cell):
             zero, `offset(int)` means the layer_index needs a offset, if there are other modules in the net. The
             default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
             Default: None
-        parallel_config(TransformerOpParallelConfig): The parallel configure for the transformer.
+        parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,
+                                           a instance of `TransformerOpParallelConfig` with default args.
 
     Inputs:
-        hidden_stats: the input tensor with shape [batch_size, seq_length, hidden_size]
-        attention_mask: the attention mask for decoder with shape [batch_size, seq_length, seq_length]
-        encoder_output: the output of the encoder with shape [batch_size, seq_length, hidden_size]
-        memory_mask: the memory mask of the cross attention with shape [batch, tgt_seq_length, src_seq_length]
-         where tgt_seq_length is the length of the decoder. the output of the encoder with shape
-         [batch_size, seq_length, hidden_size],
-        init_reset: A bool tensor with shape [batch_size,], used to clear the past key parameter and past value
-                    parameter used in the incremental prediction. Only valid when use_past is True. Default True
-        batch_valid_length: Int32 tensor with shape (batch_size,) the past calculated the index. Used for incremental
-                            prediction when the use_past is True. Default None.
+        - **hidden_stats** (Tensor) - the input tensor with shape [batch_size, seq_length, hidden_size]
+        - **attention_mask** (Tensor) - the attention mask for decoder with shape [batch_size, seq_length, seq_length]
+        - **encoder_output** (Tensor) - the output of the encoder with shape [batch_size, seq_length, hidden_size]
+        - **memory_mask** (Tensor) - the memory mask of the cross attention with shape [batch, tgt_seq_length,
+          src_seq_length] where tgt_seq_length is the length of the decoder. the output of the encoder with shape
+          [batch_size, seq_length, hidden_size],
+        - **init_reset** (Tensor) - A bool tensor with shape [batch_size,], used to clear the past key parameter and
+          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True
+        - **batch_valid_length** (Tensor) - Int32 tensor with shape (batch_size,) the past calculated the index.
+          Used for incremental prediction when the use_past is True. Default None.
     Outputs:
-        output: Tensor, the output logit of this layer. The shape is [batch, tgt_seq_length, hidden_size]
-        layer_present: A tuple with size of num_layers, where each tuple is the tensor the projected key and value
-                       vector in self attention with shape ((batch_size, num_heads, size_per_head, tgt_seq_length),
-                       (batch_size, num_heads, tgt_seq_length, size_per_head), and the projected key and value vector
-                       in cross attention with shape  (batch_size, num_heads, size_per_head, src_seq_length),
-                       (batch_size, num_heads, src_seq_length, size_per_head)).
+        Tuple, a tuple contains(`output`, `layer_present`)
+
+        - **output** (Tensor) - The output logit of this layer. The shape is [batch, tgt_seq_length, hidden_size]
+        - **layer_present** (Tuple) - A tuple with size of num_layers, where each tuple is the tensor the projected
+          key and value vector in self attention with shape ((batch_size, num_heads, size_per_head, tgt_seq_length),
+          (batch_size, num_heads, tgt_seq_length, size_per_head), and the projected key and value vector
+          in cross attention with shape  (batch_size, num_heads, size_per_head, src_seq_length),
+          (batch_size, num_heads, src_seq_length, size_per_head)).
+
     Supported Platforms:
         ``Ascend`` ``GPU``
+
     Examples:
         >>> model = TransformerDecoder(batch_size=2, num_layers=1, hidden_size=64, ffn_hidden_size=64,
         ...                            num_heads=2, src_seq_length=20, tgt_seq_length=10)
@@ -1654,9 +1687,6 @@ class TransformerDecoder(Cell):
 
     def construct(self, hidden_states, attention_mask, encoder_output=None, memory_mask=None,
                   init_reset=True, batch_valid_length=None):
-        r"""
-        The forward process of the block.
-        """
         present_layer = ()
         # Loop through each self-attention layer
         for i in range(self.num_layers):
@@ -1675,11 +1705,9 @@ class Transformer(Cell):
     r"""
     Transformer module including encoder and decoder. The difference with the original implements is the module use
     the residual addition before the layernormalization. And the default hidden act is `gelu`.
-     The detials can be found in `Attention is all you need
-    <https://arxiv.org/pdf/1706.03762v5.pdf>`.
+     The detials can be found in `Attention is all you need<https://arxiv.org/pdf/1706.03762v5.pdf>`_.
 
-
-    .. warning::
+    NOTE:
         This is an experimental interface that is subject to change and/or deletion.
 
     Args:
@@ -1704,38 +1732,45 @@ class Transformer(Cell):
             zero, `offset(int)` means the layer_index needs a offset, if there are other modules in the net. The
             default setting for the pipeline is: `(layer_id + offset) // ((encoder_layers + decoder_length)
             / pipeline_stage)`.
-        parallel_config(TransformerOpParallelConfig): The parallel configure. Default 'default_transformer_config'
-    Inputs:
-        encoder_inputs: the input tensor with shape [batch_size, seq_length, hidden_size].
-        encoder_masks: the attention mask for decoder with shape [batch_size, seq_length, seq_length].
-        decoder_inputs: the output of the encoder with shape [batch_size, seq_length, hidden_size], this can be none if
-            the decoder layer is 0.
-        decoder_masks: the attention mask for decoder with shape [batch_size, 1, seq_length, seq_length]
-        memory_mask: the memory mask of the cross attention with shape [batch, tgt_seq_length, src_seq_length]
-         where tgt_seq_length is the length of the decoder. the output of the encoder with shape [batch_size,
-         seq_length, hidden_size], this can be none if the decoder layer is 0.
-        init_reset: A bool tensor with shape [batch_size,], used to clear the past key parameter and past value
-                    parameter used in the incremental prediction. Only valid when use_past is True. Default True
-        batch_valid_length: Int32 tensor with shape (batch_size,) the past calculated the index. Used for incremental
-                            prediction when the use_past is True. Default None.
-    Outputs:
+        parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,
+                                           a instance of `TransformerOpParallelConfig` with default args.
 
-        output: Float Tensor, if there is only encoder, the output logit of the encoder layer. The shape is
-                [batch, src_seq_length, hidden_size], if there are encoder and decoders, the output is from the
-                decoder layer. The shape is [batch, tgt_seq_length, hidden_size].
-        encoder_layer_present: A tuple with size of num_layers, where each tuple is the tensor the projected key and
-                               value vector in self attention with shape ((batch_size, num_heads, size_per_head,
-                               src_seq_length), (batch_size, num_heads, src_seq_length, size_per_head).
-        decoder_layer_present: A tuple with size of num_layers, where each tuple is the tensor the projected key and
-                               value vector in self attention with shape ((batch_size, num_heads, size_per_head,
-                               tgt_seq_length), (batch_size, num_heads, tgt_seq_length, size_per_head), and the
-                               projected key and value vector in cross attention with shape
-                               (batch_size, num_heads, size_per_head, src_seq_length),
-                               (batch_size, num_heads, src_seq_length, size_per_head)). If the decoder is not set, the
-                               returned value will be None.
+    Inputs:
+        - **encoder_inputs** (Tensor) - the input tensor with shape [batch_size, seq_length, hidden_size].
+        - **encoder_masks** (Tensor) - the attention mask for decoder with shape [batch_size, seq_length, seq_length].
+        - **decoder_inputs** (Tensor) - the output of the encoder with shape [batch_size, seq_length, hidden_size],
+          this can be none if the decoder layer is 0.
+        - **decoder_masks** (Tensor) - the attention mask for decoder with shape [batch_size, 1,
+          seq_length, seq_length]
+        - **memory_mask** (Tensor) - the memory mask of the cross attention with shape [batch, tgt_seq_length,
+          src_seq_length]
+          where tgt_seq_length is the length of the decoder. the output of the encoder with shape [batch_size,
+          seq_length, hidden_size], this can be none if the decoder layer is 0.
+        - **init_reset** (Tensor) - A bool tensor with shape [batch_size,], used to clear the past key parameter and
+          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True
+        - **batch_valid_length** (Tensor) - Int32 tensor with shape (batch_size,) the past calculated the index. Used
+          for incremental prediction when the use_past is True. Default None.
+
+    Outputs:
+        Tuple, a tuple contains(`output`, `encoder_layer_present`, `encoder_layer_present`)
+
+        - **output** (Tensor) - If there is only encoder, the output logit of the encoder layer. The shape is
+          [batch, src_seq_length, hidden_size], if there are encoder and decoders, the output is from the
+          decoder layer. The shape is [batch, tgt_seq_length, hidden_size].
+        - **encoder_layer_present** (Tuple) - A tuple with size of num_layers, where each tuple is the tensor the
+          projected key and value vector in self attention with shape ((batch_size, num_heads, size_per_head,
+          src_seq_length), (batch_size, num_heads, src_seq_length, size_per_head).
+        - **decoder_layer_present** (Tuple) - A tuple with size of num_layers, where each tuple is the tensor
+          the projected key and value vector in self attention with shape ((batch_size, num_heads, size_per_head,
+          tgt_seq_length), (batch_size, num_heads, tgt_seq_length, size_per_head), and the
+          projected key and value vector in cross attention with shape
+          (batch_size, num_heads, size_per_head, src_seq_length),
+          (batch_size, num_heads, src_seq_length, size_per_head)). If the decoder is not set, the
+          returned value will be None.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
+
     Examples:
         >>> model = Transformer(encoder_layers=1, decoder_layers=2, hidden_size=64, ffn_hidden_size=64,
         ...      src_seq_length=20, tgt_seq_length=10)
