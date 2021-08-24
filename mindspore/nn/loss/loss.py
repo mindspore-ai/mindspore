@@ -65,6 +65,12 @@ class LossBase(Cell):
         self.cast = P.Cast()
 
     def get_axis(self, x):
+        """
+        Get a range of axis for input.
+
+        Args:
+            x (Tensor): Tensor of any shape.
+        """
         shape = F.shape(x)
         length = F.tuple_len(shape)
         perm = F.make_range(0, length)
@@ -75,6 +81,8 @@ class LossBase(Cell):
         Computes the weighted loss.
 
         Args:
+            x (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
+                additional dimensions.
             weights (Union[float, Tensor]): Optional `Tensor` whose rank is either 0, or the same rank as inputs,
                 and must be broadcastable to inputs (i.e., all dimensions must be either `1`,
                 or the same as the corresponding inputs dimension).
