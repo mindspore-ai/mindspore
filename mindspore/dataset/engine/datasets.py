@@ -3582,6 +3582,7 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
             if shm_estimate_usage >= threshold_ratio * shm_available:
                 raise RuntimeError(
                     "Insufficient shared memory available. Required: {}, Available: {}. "
+                    "The required memory can't exceed 80% of the available shared memory. "
                     "Recommend to set_enable_shared_mem to False, reduce max_rowsize or reduce num_parallel_workers."
                     .format(shm_estimate_usage, shm_available))
         except FileNotFoundError:
