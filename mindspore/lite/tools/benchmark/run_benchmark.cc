@@ -35,7 +35,11 @@ int RunBenchmark(int argc, const char **argv) {
   BenchmarkBase *benchmark = nullptr;
   // get dump data output path
   auto new_api = std::getenv("ENABLE_NEW_API");
-  if (new_api == nullptr || std::string(new_api) != "true") {
+  bool run_old_api = (new_api == nullptr || std::string(new_api) != "true");
+  if (flags.config_file_ != "") {
+    run_old_api = false;
+  }
+  if (run_old_api) {
     benchmark = new Benchmark(&flags);
   } else {
     benchmark = new BenchmarkUnifiedApi(&flags);
