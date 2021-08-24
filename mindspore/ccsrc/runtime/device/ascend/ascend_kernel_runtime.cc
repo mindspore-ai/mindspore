@@ -80,6 +80,7 @@ constexpr size_t kPathMax = 4096;
 
 namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
+constexpr auto kUnknowErrorString = "Unknown error occurred";
 namespace {
 std::string GetRankIdStr() {
   auto context_ptr = MsContext::GetInstance();
@@ -278,7 +279,7 @@ void AscendKernelRuntime::PreInit() {
   auto ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
   if (!ret) {
     const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-    if (!error_message.empty()) {
+    if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
       MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
     }
     MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
@@ -338,7 +339,7 @@ bool AscendKernelRuntime::Init() {
     }
   } catch (const std::exception &e) {
     const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-    if (!error_message.empty()) {
+    if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
       MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
     }
     throw;

@@ -39,6 +39,8 @@ namespace context {
 using mindspore::transform::DfGraphManager;
 #endif
 
+constexpr auto kUnknowErrorString = "Unknown error occurred";
+
 #ifndef NO_DLIB
 // Open tdt dataset
 bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
@@ -85,7 +87,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   auto ret = rtSetDevice(static_cast<int32_t>(device_id));
   if (ret != RT_ERROR_NONE) {
     const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-    if (!error_message.empty()) {
+    if (!error_message.empty() && error_message.find(kUnknowErrorString) == std::string::npos) {
       MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
     }
     MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
@@ -119,7 +121,7 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     auto ret = rtDeviceReset(static_cast<int32_t>(device_id));
     if (ret != RT_ERROR_NONE) {
       const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-      if (!error_message.empty()) {
+      if (!error_message.empty() && error_message.find(kUnknowErrorString) == std::string::npos) {
         MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
       }
       MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
