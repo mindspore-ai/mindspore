@@ -71,7 +71,7 @@ class TFRecordToMR:
         source (str): the TFRecord file to be transformed.
         destination (str): the MindRecord file path to transform into.
         feature_dict (dict): a dictionary that states the feature type, and
-        `VarLenFeature` is not supported.
+            `VarLenFeature` is not supported.
         bytes_fields (list, optional): the bytes fields which are in `feature_dict` and can be images bytes.
 
     Raises:

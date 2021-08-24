@@ -1591,9 +1591,9 @@ class SlicePatches(ImageTensorOperation):
         num_height (int, optional): The number of patches in vertical direction (default=1).
         num_width (int, optional): The number of patches in horizontal direction (default=1).
         slice_mode (Inter mode, optional): An mode represents pad or drop (default=SliceMode.PAD).
-        It can be any of [SliceMode.PAD, SliceMode.DROP].
+            It can be any of [SliceMode.PAD, SliceMode.DROP].
         fill_value (int, optional): The border width in number of pixels in
-        right and bottom direction if slice_mode is set to be SliceMode.PAD (default=0).
+            right and bottom direction if slice_mode is set to be SliceMode.PAD (default=0).
 
     Examples:
         >>> # default padding mode
