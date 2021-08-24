@@ -148,7 +148,6 @@ class SpaceToBatchGpuKernel : public GpuKernel {
 
   std::vector<std::vector<int64_t>> paddings_;
   std::vector<size_t> input_shape_;
-  size_t shape_size_;
   size_t block_size_;
   size_t input_size_;
   size_t output_size_;
