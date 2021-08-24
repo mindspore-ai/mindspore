@@ -116,9 +116,8 @@ class SpaceToBatchGpuKernel : public GpuKernel {
     }
     input_shape_.assign(input_shape.begin(), input_shape.end());
     // check paddings_
-    paddings_ =
-      static_cast<std::vector<std::vector<int64_t>>>
-      (GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings"));
+    paddings_ = static_cast<std::vector<std::vector<int64_t>>>(
+      GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings"));
     if (paddings_.size() != 2) {
       MS_LOG(ERROR) << "paddings.size() in BatchToSpace needs 2.";
       return false;
