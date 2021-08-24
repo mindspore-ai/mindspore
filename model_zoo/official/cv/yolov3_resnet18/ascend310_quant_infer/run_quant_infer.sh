@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -lt 3 ]; then
-    echo "Usage: bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH]"
-    echo "Example: bash run_quant_infer.sh ./crnn_quant.air ./00_data ./label.npy"
+if [ $# -lt 4 ]; then
+    echo "Usage: bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [SHAPE_PATH] [ANNOTATION_PATH]"
+    echo "Example: bash run_quant_infer.sh ./yolov3_resnet_quant.air ./00_image ./01_image_shape ./annotation_list.npy"
 exit 1
 fi
 
@@ -29,11 +29,13 @@ get_real_path(){
 }
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
-label_path=$(get_real_path $3)
+shape_path=$(get_real_path $3)
+annotation_path=$(get_real_path $4)
 
 echo "air name: "$model
 echo "dataset path: "$data_path
-echo "label path: "$label_path
+echo "shape path: "$shape_path
+echo "annotation path: "$annotation_path
 
 export ASCEND_HOME=/usr/local/Ascend/
 if [ -d ${ASCEND_HOME}/ascend-toolkit ]; then
@@ -52,7 +54,7 @@ fi
 
 function air_to_om()
 {
-    atc --input_format=NCHW --framework=1 --model=$model --output=crnn_quant --soc_version=Ascend310 &> atc.log
+    atc --input_format=NCHW --framework=1 --model=$model --output=yolov3_resnet_quant --soc_version=Ascend310 &> atc.log
 }
 
 function compile_app()
@@ -66,12 +68,12 @@ function infer()
         rm -rf ./result
     fi
     mkdir result
-    ./out/main ./crnn_quant.om $data_path &> infer.log
+    ./out/main ./yolov3_resnet_quant.om $data_path $shape_path &> infer.log
 }
 
 function cal_acc()
 {
-    python3.7 ./acc.py --result_path=./result --label_path=$label_path  &> acc.log
+    python3.7 ./acc.py --result_path=./result --anno_path=$annotation_path &> acc.log
 }
 
 echo "start atc================================================"

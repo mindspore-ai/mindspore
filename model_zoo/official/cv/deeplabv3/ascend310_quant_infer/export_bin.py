@@ -102,7 +102,9 @@ def generate_data():
     batch_msk_lst = []
     shape_lst = []
     for i, line in enumerate(img_lst):
-        img_path, msk_path = line.strip().split(" ")
+        ori_img_path, ori_msk_path = line.strip().split(" ")
+        img_path = "VOCdevkit" + ori_img_path.split("VOCdevkit")[1]
+        msk_path = "VOCdevkit" + ori_msk_path.split("VOCdevkit")[1]
         img_path = os.path.join(args.data_root, img_path)
         msk_path = os.path.join(args.data_root, msk_path)
         org_width, org_height = get_img_size(img_path)
