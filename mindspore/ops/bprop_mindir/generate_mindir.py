@@ -16,67 +16,22 @@
 import os
 import shutil
 import argparse
-import numpy as np
 
-import mindspore.context as context
-import mindspore.nn as nn
-from mindspore import Tensor
 from mindspore.ops import operations as P
-import mindspore.ops as ops
 import mindspore.ops._grad as g
+from mindspore.ops.operations import _inner_ops as inner
+from mindspore._c_expression import _export_bprop_mindir
 
-context.set_context(mode=context.GRAPH_MODE)
-os.environ['GENERATE_MINDIR'] = '1'
-
-
-class NetRelu(nn.Cell):
-    def __init__(self):
-        super(NetRelu, self).__init__()
-        self.relu = P.ReLU()
-
-    def construct(self, x):
-        return self.relu(x)
-
-
-class NetIdentity(nn.Cell):
-    def __init__(self):
-        super(NetIdentity, self).__init__()
-        self.identity = P.Identity()
-
-    def construct(self, x):
-        return self.identity(x)
-
-
-class GradNet(nn.Cell):
-    def __init__(self, network):
-        super(GradNet, self).__init__()
-        self.grad = ops.GradOperation()
-        self.network = network
-
-    def construct(self, x):
-        gout = self.grad(self.network)(x)
-        return gout
-
-
-def test_relu():
-    x = Tensor(np.array([[[[-1, 1, 10],
-                           [1, -1, 1],
-                           [10, 1, -1]]]]).astype(np.float32))
-    relu = NetRelu()
-    grad = GradNet(relu)
-    grad(x)
-
-
-def test_identity():
-    x = Tensor(np.array([1, 2, 3, 4]).astype(np.int64))
-    identity = NetIdentity()
-    grad = GradNet(identity)
-    grad(x)
+serializable_bprop_ops = [P.ReLU(), P.Identity(), inner.Range(1.0), P.OnesLike(), P.ZerosLike(), P.Argmax(), P.Argmin(),
+                          P.Broadcast(1), P.AssignAdd(), P.AssignSub(), P.IsFinite(), P.ApproximateEqual(), P.Sign(),
+                          P.LogicalNot(), P.Round(), P.LinSpace(), P.DropoutGenMask(), P.OneHot(), P.Assign(), P.IOU(),
+                          P.BNTrainingReduce(), P.Equal(), P.NotEqual(), P.Greater(), P.GreaterEqual(), P.Less(),
+                          P.LessEqual(), P.LogicalAnd(), P.LogicalOr(), P.ReduceAll(), P.ReduceAny(), P.DropoutDoMask()]
 
 
 def run_generate():
-    test_relu()
-    test_identity()
+    for op in serializable_bprop_ops:
+        _export_bprop_mindir(op)
 
 
 if __name__ == "__main__":
@@ -133,4 +88,4 @@ if __name__ == "__main__":
               "\".")
     else:
         print("The new bprop mindir files has been generated in the path \"" + bprop_mindir_export_dir +
-              "\", copy the *.mindir to your PYTHONPATH if necessary.")
+              "\", copy the *.mindir to your mindspore path or PYTHONPATH if necessary.")

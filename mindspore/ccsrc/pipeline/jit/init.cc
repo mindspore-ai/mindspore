@@ -28,6 +28,7 @@
 #include "utils/ms_utils.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/costmodel_context.h"
+#include "frontend/optimizer/ad/dfunctor.h"
 #ifdef ENABLE_GPU_COLLECTIVE
 #include "runtime/device/gpu/distribution/collective_init.h"
 #else
@@ -420,4 +421,9 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");
   (void)m.def("_is_cipher_file", &mindspore::pipeline::PyIsCipherFile, "Determine whether the file is encrypted");
+
+#ifndef _WIN32
+  (void)m.def("_export_bprop_mindir", &mindspore::ad::KPrim::ExportBpropMindir,
+              "Export the backpropagation function to mindir file.");
+#endif
 }

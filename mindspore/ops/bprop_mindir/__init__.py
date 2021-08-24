@@ -14,3 +14,6 @@
 # ============================================================================
 
 """bprop mindir."""
+from .generate_mindir import serializable_bprop_ops
+
+__all__ = ['serializable_bprop_ops']
