@@ -78,9 +78,8 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # enter script dir, train CNNDirectionModel
-bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
-# enter script dir, evaluate CNNDirectionModel
-bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]
+bash scripts/run_standalone_train.sh [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+# example: bash run_standalone_train_ascend.sh 0 /home/DataSet/FSNS/train/
 ```
 
 # [Script Description](#contents)
@@ -96,8 +95,11 @@ bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]
         ├── scripts
         │   ├──run_distribute_train_ascend.sh          // distributed training in ascend
         │   ├──run_standalone_eval_ascend.sh             //  evaluate in ascend
+        │   ├──run_distribute_train_gpu.sh             // distributed training in gpu
+        │   ├──run_standalone_eval_gpush                 //  evaluate in gpu
         │   ├──run_eval.sh                               // shell script for evaluation on Ascend
         │   ├──run_standalone_train_ascend.sh          //  train standalone in ascend
+        │   ├──run_standalone_train_gpu.sh          //  train standalone in gpu
         ├── src
         │   ├──dataset.py                               // creating dataset
         │   ├──cnn_direction_model.py              // cnn_direction_model architecture
@@ -138,6 +140,7 @@ Major parameters in default_config.yaml as follows:
 
   ```python
   bash scripts/run_standalone_train_ascend.sh device_id path-to-train-mindrecords pre-trained-chkpt(optional)
+  # example: bash run_standalone_train_ascend.sh 0 /home/DataSet/FSNS/train/
   ```
 
   The model checkpoint will be saved script/train.
@@ -152,6 +155,7 @@ Before running the command below, please check the checkpoint path used for eval
 
   ```python
   bash scripts/run_standalone_eval_ascend.sh device_id path-to-test-mindrecords trained-chkpt-path
+  # example: bash  run_standalone_eval_ascend.sh /home/DataSet/FSNS/test/ /home/model/cnn_direction_model/ckpt/cnn_direction_model-10_32644.ckpt
   ```
 
 Results of evaluation will be printed after evaluation process is completed.
@@ -175,7 +179,7 @@ bash scripts/run_distribute_train_ascend.sh [rank_table] [train_dataset_path] [P
 For example, you can run the shell command below to launch the training procedure.
 
 ```shell
-bash scripts/run_distribute_train_ascend.sh /home/rank_table.json /home/fsns/train/
+bash run_distribute_train_ascend.sh /home/hccl_8p_01234567_10.155.170.71.json /home/DataSet/FSNS/train/
 ```
 
 - running on ModelArts

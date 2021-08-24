@@ -124,22 +124,34 @@ pip install tqdm
 pip install six
 ```
 
+```default_config.yaml
+
+TRAIN_DATASET_PATH: /home/DataSet/MJ-ST-IIIT/ST-MJ/
+TRAIN_DATASET_INDEX_PATH: /home/DataSet/MJ-ST-IIIT/st_mj_fixed_length_index_list.pkl
+TEST_DATASET_PATH: /home/DataSet/MJ-ST-IIIT/IIIT5K_3000
+
+根据实际路径修改参数
+```
+
 - 单机训练：
 
 ```shell
 bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [PRETRAINED_CKPT(options)]
+# example: bash scripts/run_standalone_train_ascend.sh 0
 ```
 
 - 分布式训练：
 
 ```shell
 bash scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT(options)]
+# example: bash scripts/run_distribute_train_ascend.sh /home/hccl_8p_01234567_10.155.170.71.json
 ```
 
 - 评估：
 
 ```shell
 bash scripts/run_eval_ascend.sh DEVICE_ID TRAINED_CKPT
+# example: scripts/run_eval_ascend.sh 0 /home/model/cnnctc/ckpt/CNNCTC-1_8000.ckpt
 ```
 
 # 脚本说明
@@ -216,6 +228,7 @@ bash scripts/run_eval_ascend.sh DEVICE_ID TRAINED_CKPT
 
 ```shell
 bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [PRETRAINED_CKPT(options)]
+# example: bash scripts/run_standalone_train_ascend.sh 0
 ```
 
 结果和检查点被写入`./train`文件夹。日志可以在`./train/log`中找到，损失值记录在`./train/loss.log`中。
@@ -226,6 +239,7 @@ bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [PRETRAINED_CKPT(options
 
 ```shell
 bash scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT(options)]
+# example: bash scripts/run_distribute_train_ascend.sh /home/hccl_8p_01234567_10.155.170.71.json
 ```
 
 结果和检查点分别写入设备`i`的`./train_parallel_{i}`文件夹。  
@@ -271,6 +285,7 @@ epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.3184
 
 ```shell
 bash scripts/run_eval_ascend.sh [DEVICE_ID] [TRAINED_CKPT]
+# example: scripts/run_eval_ascend.sh 0 /home/model/cnnctc/ckpt/CNNCTC-1_8000.ckpt
 ```
 
 在IIIT数据集上评估模型，并打印样本结果和总准确率。

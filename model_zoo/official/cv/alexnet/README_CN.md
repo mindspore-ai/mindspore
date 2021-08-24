@@ -71,8 +71,13 @@ AlexNet由5个卷积层和3个全连接层组成。多个卷积核用于提取�
 ```python
 # 进入脚本目录，训练AlexNet
 bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
+# example: bash run_standalone_train_ascend.sh /home/DataSet/Cifar10/cifar-10-batches-bin/ /home/model/alexnet/ckpt/
+
+# 分布式训练AlexNet
+
 # 进入脚本目录，评估AlexNet
 bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
+# example: bash run_standalone_eval_ascend.sh /home/DataSet/cifar10/cifar-10-verify-bin /home/model/cv/alxnet/ckpt/checkpoint_alexnet-1_1562.ckpt
 ```
 
 - 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
@@ -216,7 +221,7 @@ train.py和config.py中主要参数如下：
   ```bash
   python train.py --config_path default_config.yaml --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
   # 或进入脚本目录，执行脚本
-  bash run_standalone_train_ascend.sh cifar-10-batches-bin ckpt
+  bash run_standalone_train_ascend.sh /home/DataSet/Cifar10/cifar-10-batches-bin/ /home/model/alexnet/ckpt/
   ```
 
   经过训练后，损失值如下：
@@ -263,7 +268,7 @@ train.py和config.py中主要参数如下：
   ```bash
   python eval.py --config_path default_config.yaml --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-1_1562.ckpt > eval_log.txt 2>&1 &
   #或进入脚本目录，执行脚本
-  bash run_standalone_eval_ascend.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-1_1562.ckpt
+  bash run_standalone_eval_ascend.sh /home/DataSet/cifar10/cifar-10-verify-bin /home/model/cv/alxnet/ckpt/checkpoint_alexnet-1_1562.ckpt
   ```
 
   可通过"eval_log”文件查看结果。测试数据集的准确率如下：

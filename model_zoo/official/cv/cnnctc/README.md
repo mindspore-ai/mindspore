@@ -121,34 +121,46 @@ pip install tqdm
 pip install six
 ```
 
+```default_config.yaml
+
+TRAIN_DATASET_PATH: /home/DataSet/MJ-ST-IIIT/ST-MJ/
+TRAIN_DATASET_INDEX_PATH: /home/DataSet/MJ-ST-IIIT/st_mj_fixed_length_index_list.pkl
+TEST_DATASET_PATH: /home/DataSet/MJ-ST-IIIT/IIIT5K_3000
+
+Modify the parameters according to the actual path
+```
+
 - Standalone Ascend Training:
 
 ```bash
-bash scripts/run_standalone_train_ascend.sh $PRETRAINED_CKPT
+bash scripts/run_standalone_train_ascend.sh $DEVICE_ID $PRETRAINED_CKPT(options)
+# example: bash scripts/run_standalone_train_ascend.sh 0
 ```
 
 - Standalone GPU Training:
 
 ```bash
-bash scripts/run_standalone_train_gpu.sh $PRETRAINED_CKPT
+bash scripts/run_standalone_train_gpu.sh $PRETRAINED_CKPT(options)
 ```
 
 - Distributed Ascend Training:
 
 ```bash
-bash scripts/run_distribute_train_ascend.sh $RANK_TABLE_FILE $PRETRAINED_CKPT
+bash scripts/run_distribute_train_ascend.sh $RANK_TABLE_FILE $PRETRAINED_CKPT(options)
+# example: bash scripts/run_distribute_train_ascend.sh /home/hccl_8p_01234567_10.155.170.71.json
 ```
 
 - Distributed GPU Training:
 
 ```bash
-bash scripts/run_distribute_train_gpu.sh $PRETRAINED_CKPT
+bash scripts/run_distribute_train_gpu.sh $PRETRAINED_CKPT(options)
 ```
 
 - Ascend Evaluation:
 
 ```bash
-bash scripts/run_eval_ascend.sh $TRAINED_CKPT
+bash scripts/run_eval_ascend.sh $DEVICE_ID $TRAINED_CKPT
+# example: scripts/run_eval_ascend.sh 0 /home/model/cnnctc/ckpt/CNNCTC-1_8000.ckpt
 ```
 
 - GPU Evaluation:
@@ -231,6 +243,7 @@ Arguments:
 
 ```bash
 bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [PRETRAINED_CKPT(options)]
+# example: bash scripts/run_standalone_train_ascend.sh 0
 ```
 
 Results and checkpoints are written to `./train` folder. Log can be found in `./train/log` and loss values are recorded in `./train/loss.log`.
@@ -241,6 +254,7 @@ Results and checkpoints are written to `./train` folder. Log can be found in `./
 
 ```bash
 bash scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT(options)]
+# example: bash scripts/run_distribute_train_ascend.sh /home/hccl_8p_01234567_10.155.170.71.json
 ```
 
   For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -361,6 +375,7 @@ Log can be found in `./train_parallel/log` and loss values are recorded in `./tr
 
 ```bash
 bash scripts/run_eval_ascend.sh [DEVICE_ID] [TRAINED_CKPT]
+# example: scripts/run_eval_ascend.sh 0 /home/model/cnnctc/ckpt/CNNCTC-1_8000.ckpt
 ```
 
 The model will be evaluated on the IIIT dataset, sample results and overall accuracy will be printed.
