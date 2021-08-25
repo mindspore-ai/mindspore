@@ -23,6 +23,7 @@
 
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -77,6 +78,8 @@ Status ValidateDatasetDirParam(const std::string &dataset_name, std::string data
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
+  std::string real_path;
+  RETURN_IF_NOT_OK(Path::RealPath(dataset_dir, real_path));
   Path dir(dataset_dir);
   if (!dir.IsDirectory()) {
     std::string err_msg = dataset_name + ": dataset_dir: [" + dataset_dir + "] is an invalid directory path.";

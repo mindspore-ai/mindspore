@@ -325,6 +325,9 @@ class DataHelper {
         return Status(kMDUnexpectedError, "Error opening Bin file to write");
       }
       size_t length = data.size();
+      if (length == 0) {
+        return Status(kMDUnexpectedError, "size of data is 0 when written into file.");
+      }
       o.write(reinterpret_cast<const char *>(&data[0]), std::streamsize(length * sizeof(T)));
       o.close();
     }

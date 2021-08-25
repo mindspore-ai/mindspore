@@ -141,7 +141,7 @@ class MS_API Status {
 
  private:
   // api without std::string
-  explicit Status(enum StatusCode status_code, const std::vector<char> &status_msg);
+  Status(enum StatusCode status_code, const std::vector<char> &status_msg);
   Status(const enum StatusCode code, int line_of_code, const char *file_name, const std::vector<char> &extra);
   std::vector<char> ToCString() const;
   std::vector<char> GetErrDescriptionChar() const;
