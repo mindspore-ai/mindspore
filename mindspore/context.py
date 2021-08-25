@@ -516,7 +516,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
                  enable_sparse=bool, max_call_depth=int, env_config_path=str, graph_kernel_flags=str,
-                 save_compile_cache=bool, load_compile_cache=bool, grad_for_scalar=bool)
+                 save_compile_cache=bool, load_compile_cache=bool, grad_for_scalar=bool, pynative_synchronize=bool)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -544,14 +544,14 @@ def set_context(**kwargs):
     check_bprop                  print_file_path              max_device_memory
     device_id                    enable_dump                  enable_graph_kernel
     device_target                save_dump_path               graph_kernel_flags
-    enable_sparse                enable_graph_kernel
+    enable_sparse                enable_graph_kernel          pynative_synchronize
     max_call_depth               enable_reduce_precision
     mode                         enable_profiling
     reserve_class_name_in_scope  profiling_options
     save_graphs                  variable_memory_max_size
     save_graphs_path             auto_tune_mode
     env_config_path              graph_kernel_flags
-    grad_for_scalar
+    grad_for_scalar              pynative_synchronize
     save_compile_cache
     load_compile_cache
     ===========================  ===========================  =================
@@ -663,6 +663,8 @@ def set_context(**kwargs):
             you should make sure the network has not been changed since the last execution. By now, we have
             not support automatically checking the changes yet. Default: False.
             This is an experimental prototype that is subject to change and/or deletion.
+        pynative_synchronize (bool): Whether to enable asynchronous execution of the device in Pynative mode.
+            Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.
