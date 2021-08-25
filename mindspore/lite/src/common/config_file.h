@@ -30,13 +30,19 @@
 #include <utility>
 #include "src/common/utils.h"
 #include "src/common/log_adapter.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {
 constexpr int MAX_CONFIG_FILE_LENGTH = 1024;
+#define CONFIG_FILE_EXECUTION_PLAN "execution_plan"
 
-std::map<std::string, std::string> GetSectionInfoFromConfigFile(const std::string &file,
-                                                                const std::string &section_name);
+int GetSectionInfoFromConfigFile(const std::string &file, const std::string &section_name,
+                                 std::map<std::string, std::string> *section_info);
+
+void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
+                         std::map<std::string, TypeId> *data_type_plan);
+
 }  // namespace lite
 }  // namespace mindspore
 

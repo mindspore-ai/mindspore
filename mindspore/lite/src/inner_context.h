@@ -28,7 +28,7 @@
 namespace mindspore::lite {
 struct InnerContext : public Context {
  public:
-  InnerContext() = default;
+  InnerContext() { InitDeviceFp16(); }
 
   explicit InnerContext(const Context *context);
 
@@ -76,6 +76,8 @@ struct InnerContext : public Context {
   bool IsUserSetNpu() const;
 
   void SetContextDevice(const Context *context);
+
+  void InitDeviceFp16();
 
   bool device_and_pkg_support_fp16_ = false;
 

@@ -24,6 +24,7 @@
 #include <deque>
 #include <unordered_map>
 #include <set>
+#include <string>
 #include "src/sub_graph_kernel.h"
 #include "src/inner_context.h"
 #include "include/model.h"
@@ -41,7 +42,7 @@ class Scheduler {
   Scheduler(const InnerContext *ctx, const mindspore::Context *ms_ctx, Model *src_model,
             std::vector<Tensor *> *src_tensors, const std::vector<Tensor *> &input_tensors,
             const std::vector<Tensor *> &output_tensors, bool is_train_session,
-            std::shared_ptr<Delegate> delegate = nullptr)
+            std::map<std::string, TypeId> *executions, std::shared_ptr<Delegate> delegate = nullptr)
       : context_(ctx),
         ms_context_(ms_ctx),
         src_model_(src_model),
@@ -49,7 +50,8 @@ class Scheduler {
         inputs_(input_tensors),
         outputs_(output_tensors),
         is_train_session_(is_train_session),
-        delegate_(delegate) {}
+        delegate_(delegate),
+        execution_plan_(executions) {}
   ~Scheduler() = default;
   int Schedule(std::vector<kernel::LiteKernel *> *dst_kernels);
   void SetupSchedulerCb(std::unique_ptr<SchedulerCb> cb) { sched_cb_ = std::move(cb); }
@@ -72,6 +74,8 @@ class Scheduler {
                     OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
                     kernel::LiteKernel **kernel);
   int CheckCpuValid(std::vector<kernel::LiteKernel *> *dst_kernels);
+  void ResetByExecutionPlan(std::string node_name, TypeId *data_type);
+
 #ifdef GPU_OPENCL
   int FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                     OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel);
@@ -148,6 +152,7 @@ class Scheduler {
   std::set<lite::Model::Node *> partial_cnode_inferred_{};
 #endif
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
+  std::map<std::string, TypeId> *execution_plan_ = nullptr;
 };
 }  // namespace mindspore::lite
 

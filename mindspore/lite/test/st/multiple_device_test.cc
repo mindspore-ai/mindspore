@@ -428,7 +428,7 @@ TEST_F(MultipleDeviceTest, NewApi5) {
   model_impl->Predict(inputs, &outputs, nullptr, nullptr);
 
   /* checkout output */
-  auto out = outputs[0]; /* output data control by users */
+  auto out = outputs[0];
   void *out_data = out.MutableData();
   float *fp32_data = reinterpret_cast<float *>(out_data);
 
@@ -452,8 +452,8 @@ TEST_F(MultipleDeviceTest, NewApi6) {
 
   auto context = std::make_shared<mindspore::Context>();
   context->MutableDeviceInfo().push_back(std::make_shared<mindspore::CPUDeviceInfo>());
-  //  context->MutableDeviceInfo().push_back(std::make_shared<mindspore::KirinNPUDeviceInfo>());
-  //  context->MutableDeviceInfo().push_back(std::make_shared<mindspore::GPUDeviceInfo>());
+  context->MutableDeviceInfo().push_back(std::make_shared<mindspore::KirinNPUDeviceInfo>());
+  context->MutableDeviceInfo().push_back(std::make_shared<mindspore::GPUDeviceInfo>());
 
   auto model_impl = std::make_shared<mindspore::ModelImpl>();
   auto ret = model_impl->Build(content, size, mindspore::kFlatBuffer, context);
@@ -473,7 +473,7 @@ TEST_F(MultipleDeviceTest, NewApi6) {
   model_impl->Predict(inputs, &outputs, nullptr, nullptr);
 
   /* checkout output */
-  auto out = outputs[0]; /* output data control by users */
+  auto out = outputs[0];
   void *out_data = out.MutableData();
   float *fp32_data = reinterpret_cast<float *>(out_data);
 

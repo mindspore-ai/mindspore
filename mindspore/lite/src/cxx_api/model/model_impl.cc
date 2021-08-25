@@ -29,6 +29,7 @@
 #include "src/common/log_adapter.h"
 #include "src/lite_session.h"
 #include "src/common/file_utils.h"
+#include "src/common/config_file.h"
 
 namespace mindspore {
 using mindspore::lite::RET_ERROR;
@@ -182,6 +183,23 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
 }
 
 bool ModelImpl::IsTrainModel() { return (graph_ && graph_->graph_data_ && graph_->graph_data_->IsTrainModel()); }
+
+Status ModelImpl::LoadConfig(const std::string &config_path) {
+  std::map<std::string, std::string> config_info;
+  int ret = lite::GetSectionInfoFromConfigFile(config_path, CONFIG_FILE_EXECUTION_PLAN, &config_info);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "GetSectionInfoFromConfigFile failed.";
+    return kLiteFileError;
+  }
+
+  if (config_info.empty()) {
+    MS_LOG(WARNING) << "No valid info in config file.";
+    return kSuccess;
+  }
+
+  lite::ParserExecutionPlan(&config_info, &execution_plan_);
+  return kSuccess;
+}
 
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
@@ -461,6 +479,8 @@ session::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) 
     MS_LOG(ERROR) << "create session failed";
     return nullptr;
   }
+
+  session->InitExecutionConfig(&execution_plan_);
 
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {

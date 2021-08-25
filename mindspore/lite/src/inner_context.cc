@@ -32,18 +32,22 @@ const constexpr int kMaxLiteContextDeviceNums = 2;
 const constexpr int kMaxInnerContextDeviceNums = 3;
 }  // namespace
 
-InnerContext::InnerContext(const Context *context) {
-  this->allocator = context->allocator;
-  this->thread_num_ = context->thread_num_;
-  this->enable_parallel_ = context->enable_parallel_;
-  this->affinity_core_list_ = context->affinity_core_list_;
-  SetContextDevice(context);
+void InnerContext::InitDeviceFp16() {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   CpuInfo cpu_info;
   device_and_pkg_support_fp16_ = cpu_info.ArmIsSupportFp16();
 #else
   device_and_pkg_support_fp16_ = false;
 #endif
+}
+
+InnerContext::InnerContext(const Context *context) {
+  this->allocator = context->allocator;
+  this->thread_num_ = context->thread_num_;
+  this->enable_parallel_ = context->enable_parallel_;
+  this->affinity_core_list_ = context->affinity_core_list_;
+  SetContextDevice(context);
+  InitDeviceFp16();
 }
 
 void InnerContext::SetContextDevice(const Context *context) {
