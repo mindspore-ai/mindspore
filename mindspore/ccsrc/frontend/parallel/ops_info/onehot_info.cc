@@ -84,7 +84,11 @@ Status OneHotInfo::InferDevMatrixShape() {
     }
   }
   old_dev_matrix_back_ = dev_matrix_shape_.back();
-  repeated_num_in_dev_matrix_right_ = false;
+  if (old_dev_matrix_back_ == 1) {
+    repeated_num_in_dev_matrix_right_ = true;
+  } else {
+    repeated_num_in_dev_matrix_right_ = false;
+  }
   return SUCCESS;
 }
 
