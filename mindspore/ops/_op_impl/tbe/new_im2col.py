@@ -25,10 +25,10 @@ new_im2col_op_info = TBERegOp("NewIm2Col") \
     .attr("ksizes", "required", "listInt", "all") \
     .attr("strides", "optional", "listInt", "all", "1") \
     .attr("dilations", "optional", "listInt", "all", "1") \
-    .attr("padding_mode", "optional", "listInt", "all", "SAME") \
+    .attr("padding_mode", "optional", "str", "all", "SAME") \
     .attr("pad_list", "optional", "listInt", "all", "0") \
     .input(0, "x", False, "required", "all") \
-    .output(0, "output", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.F16_Default) \
     .dtype_format(DataType.I8_5HD, DataType.I8_Default) \
     .get_op_info()

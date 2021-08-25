@@ -577,11 +577,11 @@ class NewIm2Col(PrimitiveWithInfer):
         stride_w = self.strides
         dilation_h = self.dilations
         dilation_w = self.dilations
-        if self.pad_mode == "VALID":
+        if self.padding_mode == "VALID":
             h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
             w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
             pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
-        elif self.pad_mode == "SAME":
+        elif self.padding_mode == "SAME":
             h_out = math.ceil(x_shape[2] / stride_h)
             w_out = math.ceil(x_shape[3] / stride_w)
             pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
@@ -601,7 +601,7 @@ class NewIm2Col(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         "infer dtype"
-        valid_dtypes = [mstype.float16, mstype.float32]
+        valid_dtypes = [mstype.float16, mstype.int8]
         validator.check_tensor_dtype_valid('x', x_dtype, valid_dtypes, self.name)
         return x_dtype
 

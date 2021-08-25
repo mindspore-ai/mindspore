@@ -20,15 +20,17 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
+import mindspore.log as logger
 from mindspore._checkparam import Validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.parallel._utils import _get_device_num, _get_gradients_mean
 from mindspore import context
 from mindspore.context import ParallelMode
-from mindspore.nn.layer import DenseThor, Conv2dThor, EmbeddingThor
+from mindspore.nn.layer import DenseThor, Conv2dThor, EmbeddingThor, EmbeddingLookupThor
 from mindspore.nn.wrap import DistributedGradReducer
 from mindspore.train.train_thor.convert_utils import ConvertNetUtils
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
+
 
 # Enumerates types of Layer
 Other = -1
@@ -120,6 +122,34 @@ def caculate_device_shape(matrix_dim, channel, is_a):
     return ll
 
 
+def is_conv_matmul_support_shape(matrix_a_shape, matrix_g_shape):
+    """is conv layer matmul support shape"""
+    temp = (matrix_g_shape, matrix_a_shape)
+    support_shape = [((4, 4, 16, 16), (49, 49, 16, 16)),
+                     ((4, 4, 16, 16), (4, 4, 16, 16)),
+                     ((4, 4, 16, 16), (36, 36, 16, 16)),
+                     ((16, 16, 16, 16), (4, 4, 16, 16)),
+                     ((4, 4, 16, 16), (16, 16, 16, 16)),
+                     ((8, 8, 16, 16), (16, 16, 16, 16)),
+                     ((8, 8, 16, 16), (72, 72, 16, 16)),
+                     ((32, 32, 16, 16), (8, 8, 16, 16)),
+                     ((32, 32, 16, 16), (16, 16, 16, 16)),
+                     ((8, 8, 16, 16), (32, 32, 16, 16)),
+                     ((16, 16, 16, 16), (32, 32, 16, 16)),
+                     ((16, 16, 16, 16), (144, 144, 16, 16)),
+                     ((64, 64, 16, 16), (16, 16, 16, 16)),
+                     ((64, 64, 16, 16), (32, 32, 16, 16)),
+                     ((16, 16, 16, 16), (64, 64, 16, 16)),
+                     ((32, 32, 16, 16), (64, 64, 16, 16)),
+                     ((32, 32, 16, 16), (288, 288, 16, 16)),
+                     ((128, 128, 16, 16), (32, 32, 16, 16)),
+                     ((128, 128, 16, 16), (64, 64, 16, 16)),
+                     ((32, 32, 16, 16), (128, 128, 16, 16))]
+    if temp in support_shape:
+        return True
+    return False
+
+
 def caculate_matmul_shape(matrix_a_dim, matrix_g_dim, split_dim):
     """get matmul shape"""
     split_dima = split_dim
@@ -151,21 +181,29 @@ def find_net_layertype_recur(net, layertype_map):
     cells = net.name_cells()
     for name in cells:
         subcell = cells[name]
+        prefix = subcell.param_prefix
         if subcell == net:
             continue
         elif isinstance(subcell, Conv2dThor):
             layertype_map.append(Conv)
         elif isinstance(subcell, DenseThor):
             layertype_map.append(FC)
-        elif isinstance(subcell, EmbeddingThor):
+        elif isinstance(subcell, (EmbeddingThor, EmbeddingLookupThor)):
             layertype_map.append(Embedding)
         elif isinstance(subcell, nn.LayerNorm):
             layertype_map.append(LayerNorm)
         elif isinstance(subcell, nn.BatchNorm2d):
-            layertype_map.append(BatchNorm)
+            if subcell.gamma.requires_grad:
+                layertype_map.append(BatchNorm)
         elif isinstance(subcell, (nn.Conv2d, nn.Dense, nn.Embedding, nn.Conv2dTranspose, nn.Conv1d, nn.Conv1dTranspose,
                                   nn.BatchNorm1d, nn.GroupNorm, nn.GlobalBatchNorm)):
-            layertype_map.append(Other)
+            if isinstance(subcell, (nn.Dense, nn.Conv2d)):
+                if "rpn_with_loss.rpn_convs_list." in prefix.lower():
+                    continue
+                elif subcell.weight.requires_grad:
+                    layertype_map.append(Other)
+            else:
+                layertype_map.append(Other)
         else:
             find_net_layertype_recur(subcell, layertype_map)
 
@@ -188,7 +226,14 @@ def get_layer_counter(layer_type, layer_counter, params, idx):
         if "beta" in params[idx].name.lower():
             layer_counter = layer_counter + 1
     else:
-        layer_counter = layer_counter + 1
+        if "bias" in params[idx].name.lower():
+            layer_counter = layer_counter + 1
+        elif "weight" in params[idx].name.lower():
+            if idx < len(params) - 1 and "bias" not in params[idx + 1].name.lower():
+                layer_counter = layer_counter + 1
+        else:
+            # for example : embedding layer
+            layer_counter = layer_counter + 1
     return layer_counter
 
 
@@ -315,6 +360,7 @@ class ThorGpu(Optimizer):
         self.params = self.parameters
         self.use_nesterov = Validator.check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
+        self.hyper_map = C.HyperMap()
         self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)
         self.net = net
         self.matrix_a_cov = ParameterTuple(filter(lambda x: 'matrix_a' in x.name, net.get_parameters()))
@@ -326,7 +372,7 @@ class ThorGpu(Optimizer):
         self.batch_size_scale = Tensor(batch_size * batch_size, mstype.float32)
         self.damping = damping
         self._define_gpu_operator()
-        print("matrix_a_cov len is {}".format(len(self.matrix_a_cov)), flush=True)
+        logger.info("matrix_a_cov len is {}".format(len(self.matrix_a_cov)))
         self.thor = True
         self.matrix_a = ()
         self.matrix_g = ()
@@ -374,6 +420,7 @@ class ThorGpu(Optimizer):
         self.inv = P.Reciprocal()
         self.square = P.Square()
         self.expand = P.ExpandDims()
+
 
     def _define_gpu_reducer(self, split_indices):
         """define gpu reducer"""
@@ -602,17 +649,16 @@ class ThorAscend(Optimizer):
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self.parameters
         self.moments = self.params.clone(prefix="moments", init='zeros')
+        self.hyper_map = C.HyperMap()
         self.opt = P.ApplyMomentum()
         self.net = net
         self.matrix_a_cov = ParameterTuple(filter(lambda x: 'matrix_a' in x.name, net.get_parameters()))
         self.matrix_g_cov = ParameterTuple(filter(lambda x: 'matrix_g' in x.name, net.get_parameters()))
         self.a_normalizer = ParameterTuple(filter(lambda x: 'a_normalizer' in x.name, net.get_parameters()))
         self.g_normalizer = ParameterTuple(filter(lambda x: 'g_normalizer' in x.name, net.get_parameters()))
-        print("matrix_a_cov len is {}".format(len(self.matrix_a_cov)), flush=True)
+        logger.info("matrix_a_cov len is {}".format(len(self.matrix_a_cov)))
         self._define_ascend_operator()
         self.C0 = 16
-        self.matrix_a_dim = ()
-        self.pad_a_flag = ()
         self.device_shape_pad_flag = ()
         self.diag_block_dim = 128
         self.matrix_a = ()
@@ -622,6 +668,11 @@ class ThorAscend(Optimizer):
         self.weight_conv_idx_map = ()
         self.weight_fim_idx_map = ()
         self.weight_layertype_idx_map = ()
+        self.a_split_pad_dim_map = ()
+        self.g_split_pad_dim_map = ()
+        self.conv_matmul_support_map = ()
+        self.batch_matmul_support_list = [1, 2, 4, 5, 6, 8, 9, 16, 18, 24, 32, 36]
+        self.abs_max_support_list = [1, 2, 4, 8, 16, 5, 9, 18, 36, 32]
         self._process_matrix_init_and_weight_idx_map(self.net)
         self.matrix_a = ParameterTuple(self.matrix_a)
         self.matrix_g = ParameterTuple(self.matrix_g)
@@ -646,6 +697,16 @@ class ThorAscend(Optimizer):
         """get thor frequency"""
         return self.frequency
 
+    def _get_pad_dim(self, matrix_dim):
+        """get diag split pad dim """
+        split_pad_dim = 0
+        if matrix_dim == 64:
+            return split_pad_dim
+        res = matrix_dim % self.diag_block_dim
+        if res != 0:
+            split_pad_dim = self.diag_block_dim - res
+        return split_pad_dim
+
     def _define_ascend_operator(self):
         """define ascend operator"""
         self.cube_matmul_left = P.CusMatMulCubeFraczLeftCast()
@@ -663,8 +724,10 @@ class ThorAscend(Optimizer):
         self.assign = P.Assign()
         self.cast = P.Cast()
         self.eye = P.Eye()
+        self.concat = P.Concat(0)
         self.cholesky = P.CusCholeskyTrsm()
         self.vector_matmul = P.CusBatchMatMul()
+        self.tbe_batch_matmul = P.BatchMatMul(transpose_a=True)
         self.fused_abs_max2 = P.CusFusedAbsMax1()
         self.matrix_combine = P.CusMatrixCombine()
         self.slice = P.Slice()
@@ -676,6 +739,7 @@ class ThorAscend(Optimizer):
         self.axis = 0
         self.one = Tensor(1, mstype.int32)
         self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
+
 
     def _define_ascend_reducer(self, split_indices):
         """define ascend reducer"""
@@ -691,13 +755,13 @@ class ThorAscend(Optimizer):
             if self.conv_layer_count > 0:
                 auto_parallel_context().set_all_reduce_fusion_split_indices(self.split_indices, "hccl_world_groupsum2")
                 auto_parallel_context().set_all_reduce_fusion_split_indices(self.split_indices, "hccl_world_groupsum4")
-                self.grad_reducer_amax = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=2)
-                self.grad_reducer_gmax = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=4)
+                self.grad_reducer_amax = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=3)
+                self.grad_reducer_gmax = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=5)
 
             auto_parallel_context().set_all_reduce_fusion_split_indices(self.split_indices, "hccl_world_groupsum6")
             auto_parallel_context().set_all_reduce_fusion_split_indices(self.split_indices, "hccl_world_groupsum8")
-            self.grad_reducer_a = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=6)
-            self.grad_reducer_g = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=8)
+            self.grad_reducer_a = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=9)
+            self.grad_reducer_g = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=17)
 
     def _process_matrix_init_and_weight_idx_map(self, net):
         """for Ascend, process matrix init shape, and get weight idx map"""
@@ -714,39 +778,66 @@ class ThorAscend(Optimizer):
                 matrix_g_dim = out_channels
                 matrix_a_device_shape, matrix_a_device_dim = caculate_device_shape(matrix_a_dim, in_channels, True)
                 matrix_g_device_shape, matrix_g_device_dim = caculate_device_shape(matrix_g_dim, in_channels, False)
-                matrix_a_inv = Parameter(
-                    Tensor(np.reshape(np.identity(matrix_a_device_dim).astype(np.float16), matrix_a_device_shape)),
-                    name='matrix_a_inv_' + str(self.thor_layer_count), requires_grad=False)
-                matrix_g_inv = Parameter(
-                    Tensor(np.reshape(np.identity(matrix_g_device_dim).astype(np.float16), matrix_g_device_shape)),
-                    name="matrix_g_inv_" + str(self.thor_layer_count), requires_grad=False)
+                ret = is_conv_matmul_support_shape(matrix_a_device_shape, matrix_g_device_shape)
+                if ret:
+                    matrix_a_inv = Parameter(
+                        Tensor(np.reshape(np.identity(matrix_a_device_dim).astype(np.float16), matrix_a_device_shape)),
+                        name='matrix_a_inv_' + str(self.thor_layer_count), requires_grad=False)
+                    matrix_g_inv = Parameter(
+                        Tensor(np.reshape(np.identity(matrix_g_device_dim).astype(np.float16), matrix_g_device_shape)),
+                        name="matrix_g_inv_" + str(self.thor_layer_count), requires_grad=False)
+                    self.conv_matmul_support_map = self.conv_matmul_support_map + (1,)
+                else:
+                    matrix_a_inv = Parameter(Tensor(np.eye(matrix_a_dim).astype(np.float16)),
+                                             name='matrix_a_inv_' + str(self.thor_layer_count), requires_grad=False)
+                    matrix_g_inv = Parameter(Tensor(np.eye(matrix_g_dim).astype(np.float16)),
+                                             name="matrix_g_inv_" + str(self.thor_layer_count), requires_grad=False)
+                    self.conv_matmul_support_map = self.conv_matmul_support_map + (0,)
                 self.matrix_a = self.matrix_a + (matrix_a_inv,)
                 self.matrix_g = self.matrix_g + (matrix_g_inv,)
-                self.matrix_a_dim = self.matrix_a_dim + (matrix_a_dim,)
-                pad_a_flag = False
-                if (matrix_a_dim // self.diag_block_dim) * self.diag_block_dim != matrix_a_dim \
-                        and matrix_a_dim > self.diag_block_dim:
-                    pad_a_flag = True
-                self.pad_a_flag = self.pad_a_flag + (pad_a_flag,)
                 device_shape_pad_flag = False
                 if matrix_a_dim != matrix_a_device_dim:
                     device_shape_pad_flag = True
                 self.device_shape_pad_flag = self.device_shape_pad_flag + (device_shape_pad_flag,)
             elif layer_type == FC and "bias" not in self.params[idx].name.lower():
                 out_channels = weight_shape[0]
-                if out_channels == 1001:
-                    fc_matrix_a = Parameter(Tensor(np.zeros([128, 128, 16, 16]).astype(np.float16)),
-                                            name='matrix_a_inv_' + str(self.thor_layer_count),
-                                            requires_grad=False)
-                    fc_matrix_g = Parameter(Tensor(np.zeros([63, 63, 16, 16]).astype(np.float16)),
-                                            name="matrix_g_inv_" + str(self.thor_layer_count),
-                                            requires_grad=False)
+                in_channels = weight_shape[1]
+                if self.conv_layer_count > 0:
+                    if out_channels == 1001:
+                        fc_matrix_a = Parameter(Tensor(np.zeros([128, 128, 16, 16]).astype(np.float16)),
+                                                name='matrix_a_inv_' + str(self.thor_layer_count),
+                                                requires_grad=False)
+                        fc_matrix_g = Parameter(Tensor(np.zeros([63, 63, 16, 16]).astype(np.float16)),
+                                                name="matrix_g_inv_" + str(self.thor_layer_count),
+                                                requires_grad=False)
+                    else:
+                        fc_matrix_a = Parameter(Tensor(np.eye(in_channels).astype(np.float16)),
+                                                name='matrix_a_inv_' + str(self.thor_layer_count),
+                                                requires_grad=False)
+                        fc_matrix_g = Parameter(Tensor(np.eye(out_channels).astype(np.float16)),
+                                                name="matrix_g_inv_" + str(self.thor_layer_count),
+                                                requires_grad=False)
                     self.matrix_a = self.matrix_a + (fc_matrix_a,)
                     self.matrix_g = self.matrix_g + (fc_matrix_g,)
 
             if layer_type in [Conv, FC, Embedding] and "bias" not in self.params[idx].name.lower():
                 self.weight_fim_idx_map = self.weight_fim_idx_map + (self.thor_layer_count,)
                 self.weight_layertype_idx_map = self.weight_layertype_idx_map + (layer_type,)
+                if layer_type == Embedding:
+                    a_pad_dim = 0
+                    g_pad_dim = 0
+                    self.a_split_pad_dim_map = self.a_split_pad_dim_map + (a_pad_dim,)
+                    self.g_split_pad_dim_map = self.g_split_pad_dim_map + (g_pad_dim,)
+                else:
+                    out_channels = weight_shape[0]
+                    g_pad_dim = self._get_pad_dim(out_channels)
+                    self.g_split_pad_dim_map = self.g_split_pad_dim_map + (g_pad_dim,)
+                    matrix_a_dim = weight_shape[1]
+                    if layer_type == Conv:
+                        matrix_a_dim = weight_shape[1] * weight_shape[2] * weight_shape[3]
+                    a_pad_dim = self._get_pad_dim(matrix_a_dim)
+                    self.a_split_pad_dim_map = self.a_split_pad_dim_map + (a_pad_dim,)
+
                 self.thor_layer_count = self.thor_layer_count + 1
                 if layer_type == Conv:
                     self.weight_conv_idx_map = self.weight_conv_idx_map + (self.conv_layer_count,)
@@ -765,6 +856,39 @@ class ThorAscend(Optimizer):
             if "output_bias" not in self.params[idx].name.lower():
                 layer_counter = get_layer_counter(layer_type, layer_counter, self.params, idx)
 
+    def _process_batch_matmul(self, input_matrix):
+        """process batch matmul"""
+        input_matrix_shape = self.shape(input_matrix)
+        if input_matrix_shape[0] in self.batch_matmul_support_list:
+            input_matrix = self.vector_matmul(input_matrix, input_matrix)
+        else:
+            input_matrix = self.tbe_batch_matmul(input_matrix, input_matrix)
+        return input_matrix
+
+    def _process_cholesky_pad(self, pad_dim, input_matrix, matrix_shape0):
+        """process cholesky pad"""
+        if pad_dim > 0:
+            matrix_sup = self.eye(pad_dim, pad_dim, mstype.float32)
+            matrix_sup = P.Pad(((0, 0), (matrix_shape0, 0)))(matrix_sup)
+            input_matrix = P.Pad(((0, 0), (0, pad_dim)))(input_matrix)
+            input_matrix = self.concat((input_matrix, matrix_sup))
+        return input_matrix
+
+
+    def _get_abs_max(self, matrix_inv, origin_dim):
+        """get matrix abs max"""
+        cholesky_shape = self.shape(matrix_inv)
+        if cholesky_shape[0] in self.abs_max_support_list:
+            matrix_inv_max = P.CusFusedAbsMax1([origin_dim, origin_dim])(matrix_inv)
+            matrix_max = self.fused_abs_max2(matrix_inv_max)
+            matrix_inv = self.matrix_combine(matrix_inv)
+        else:
+            matrix_inv = self.matrix_combine(matrix_inv)
+            matrix_abs = P.Abs()(matrix_inv)
+            matrix_max = P.ReduceMax(keep_dims=False)(matrix_abs)
+        return matrix_max, matrix_inv
+
+
     def _get_fc_ainv_ginv(self, index, damping_step, gradients, matrix_a_allreduce, matrix_g_allreduce,
                           matrix_a_max_allreduce, matrix_g_max_allreduce):
         """get fc layer ainv and ginv"""
@@ -780,10 +904,14 @@ class ThorAscend(Optimizer):
         g_eye = self.eye(g_shape[0], g_shape[0], mstype.float32)
         damping = self.sqrt(damping_step)
         matrix_a = matrix_a + damping * a_eye
+        a_pad_dim = self.a_split_pad_dim_map[thor_layer_count]
+        matrix_a = self._process_cholesky_pad(a_pad_dim, matrix_a, a_shape[0])
         matrix_a_inv = self.cholesky(matrix_a)
-        matrix_a_inv = self.vector_matmul(matrix_a_inv, matrix_a_inv)
+        matrix_a_inv = self._process_batch_matmul(matrix_a_inv)
+
         weight_shape = self.shape(self.params[index])
         out_channels = weight_shape[0]
+        in_channels = weight_shape[1]
         if out_channels == 2:
             matrix_a_inv = self.matrix_combine(matrix_a_inv)
             matrix_g_inv = g_eye
@@ -791,27 +919,13 @@ class ThorAscend(Optimizer):
             matrix_g = self.mul(matrix_g, self.loss_scale)
             matrix_g = self.mul(matrix_g, self.batch_size_scale)
             matrix_g = matrix_g + damping * g_eye
+            g_pad_dim = self.g_split_pad_dim_map[thor_layer_count]
+            matrix_g = self._process_cholesky_pad(g_pad_dim, matrix_g, g_shape[0])
             matrix_g_inv = self.cholesky(matrix_g)
-            matrix_g_inv = self.vector_matmul(matrix_g_inv, matrix_g_inv)
-            if out_channels == 1001:
-                matrix_a_inv_max = self.fused_abs_max2(matrix_a_inv)
-                a_max = self.fused_abs_max2(matrix_a_inv_max)
-                matrix_a_inv = self.matrix_combine(matrix_a_inv)
-                matrix_a_inv_shape = self.shape(matrix_a_inv)
-                matrix_a_inv = self.reshape(matrix_a_inv,
-                                            (matrix_a_inv_shape[0] / 16, 16,
-                                             matrix_a_inv_shape[0] / 16, 16))
-                matrix_a_inv = self.transpose(matrix_a_inv, (2, 0, 1, 3))
-                matrix_g_inv_max = P.CusFusedAbsMax1([1001, 1001])(matrix_g_inv)
-                g_max = self.fused_abs_max2(matrix_g_inv_max)
-                matrix_g_inv = self.matrix_combine(matrix_g_inv)
-                matrix_g_inv = self.slice(matrix_g_inv, (0, 0), (1001, 1001))
-                matrix_g_inv = P.Pad(((0, 7), (0, 7)))(matrix_g_inv)
-                matrix_g_inv_shape = self.shape(matrix_g_inv)
-                matrix_g_inv = self.reshape(matrix_g_inv,
-                                            (matrix_g_inv_shape[0] / 16, 16,
-                                             matrix_g_inv_shape[0] / 16, 16))
-                matrix_g_inv = self.transpose(matrix_g_inv, (2, 0, 1, 3))
+            matrix_g_inv = self._process_batch_matmul(matrix_g_inv)
+            if self.conv_layer_count > 0:
+                a_max, matrix_a_inv = self._get_abs_max(matrix_a_inv, in_channels)
+                g_max, matrix_g_inv = self._get_abs_max(matrix_g_inv, out_channels)
                 a_max = F.depend(a_max, g)
                 g_max = F.depend(g_max, g)
                 matrix_a_max_allreduce = matrix_a_max_allreduce + (a_max,)
@@ -819,6 +933,26 @@ class ThorAscend(Optimizer):
             else:
                 matrix_a_inv = self.matrix_combine(matrix_a_inv)
                 matrix_g_inv = self.matrix_combine(matrix_g_inv)
+
+            if a_pad_dim > 0:
+                matrix_a_inv = self.slice(matrix_a_inv, (0, 0), (in_channels, in_channels))
+            if g_pad_dim > 0:
+                matrix_g_inv = self.slice(matrix_g_inv, (0, 0), (out_channels, out_channels))
+            matrix_a_inv_shape = self.shape(matrix_a_inv)
+            matrix_g_combine_shape = self.shape(matrix_g_inv)
+            if matrix_a_inv_shape[0] == 2048 and matrix_g_combine_shape[0] == 1001:
+                matrix_a_inv = self.reshape(matrix_a_inv,
+                                            (matrix_a_inv_shape[0] / 16, 16,
+                                             matrix_a_inv_shape[0] / 16, 16))
+                matrix_a_inv = self.transpose(matrix_a_inv, (2, 0, 1, 3))
+                matrix_g_inv = P.Pad(((0, 7), (0, 7)))(matrix_g_inv)
+
+                matrix_g_inv_shape = self.shape(matrix_g_inv)
+                matrix_g_inv = self.reshape(matrix_g_inv,
+                                            (matrix_g_inv_shape[0] / 16, 16,
+                                             matrix_g_inv_shape[0] / 16, 16))
+                matrix_g_inv = self.transpose(matrix_g_inv, (2, 0, 1, 3))
+
         matrix_a_allreduce = matrix_a_allreduce + (matrix_a_inv,)
         matrix_g_allreduce = matrix_g_allreduce + (matrix_g_inv,)
         return matrix_a_allreduce, matrix_g_allreduce, matrix_a_max_allreduce, matrix_g_max_allreduce
@@ -830,8 +964,12 @@ class ThorAscend(Optimizer):
             thor_layer_count = self.weight_fim_idx_map[i]
             conv_layer_count = self.weight_conv_idx_map[i]
             layer_type = self.weight_layertype_idx_map[i]
+            weight_shape = self.shape(self.params[i])
+            out_channels = weight_shape[0]
             if layer_type == Conv:
                 g = gradients[i]
+                matrix_a_dim = weight_shape[1] * weight_shape[2] * weight_shape[3]
+                matmul_support_flag = self.conv_matmul_support_map[conv_layer_count]
                 matrix_a = self.matrix_a_cov[thor_layer_count]
                 matrix_g = self.matrix_g_cov[thor_layer_count]
                 matrix_a = F.depend(matrix_a, g)
@@ -848,43 +986,44 @@ class ThorAscend(Optimizer):
                 damping_g = self.mul(damping_step, self.batch_size / g_normalizer)
                 damping_a = self.sqrt(damping_a)
                 matrix_a = matrix_a + damping_a * a_eye
+                a_pad_dim = self.a_split_pad_dim_map[thor_layer_count]
+                matrix_a = self._process_cholesky_pad(a_pad_dim, matrix_a, a_shape[0])
                 matrix_a_inv = self.cholesky(matrix_a)
-                matrix_a_inv = self.vector_matmul(matrix_a_inv, matrix_a_inv)
-                a_max = P.CusFusedAbsMax1([self.matrix_a_dim[conv_layer_count],
-                                           self.matrix_a_dim[conv_layer_count]])(matrix_a_inv)
-                a_max = self.fused_abs_max2(a_max)
-                matrix_a_inv = self.matrix_combine(matrix_a_inv)
-                if self.pad_a_flag[conv_layer_count]:
-                    matrix_a_inv = self.slice(matrix_a_inv, (0, 0), (self.matrix_a_dim[conv_layer_count],
-                                                                     self.matrix_a_dim[conv_layer_count]))
-                if self.device_shape_pad_flag[conv_layer_count]:
-                    weight = self.params[i]
-                    weight_shape = self.shape(weight)
-                    kernel_hw = weight_shape[2] * weight_shape[3]
-                    in_channels = weight_shape[1]
-                    matrix_a_inv = self.reshape(matrix_a_inv, (kernel_hw, in_channels, kernel_hw, in_channels))
-                    matrix_a_inv = P.Pad(((0, 0), (0, self.C0 - in_channels), (0, 0),
-                                          (0, self.C0 - in_channels)))(matrix_a_inv)
-                matrix_a_inv_shape = self.shape(self.matrix_a[thor_layer_count])
-                matrix_a_device_temp_shape = (matrix_a_inv_shape[0], matrix_a_inv_shape[2],
-                                              matrix_a_inv_shape[1], matrix_a_inv_shape[3])
-                matrix_a_inv = self.reshape(matrix_a_inv, matrix_a_device_temp_shape)
-                matrix_a_inv = self.transpose(matrix_a_inv, (2, 0, 1, 3))
+                matrix_a_inv = self._process_batch_matmul(matrix_a_inv)
+                a_max, matrix_a_inv = self._get_abs_max(matrix_a_inv, matrix_a_dim)
 
                 damping_g = self.sqrt(damping_g)
                 matrix_g = self.mul(matrix_g, self.loss_scale)
                 matrix_g = self.mul(matrix_g, self.batch_size_scale)
                 matrix_g = matrix_g + damping_g * g_eye
+                g_pad_dim = self.g_split_pad_dim_map[thor_layer_count]
+                matrix_g = self._process_cholesky_pad(g_pad_dim, matrix_g, g_shape[0])
                 matrix_g_inv = self.cholesky(matrix_g)
-                matrix_g_inv = self.vector_matmul(matrix_g_inv, matrix_g_inv)
-                g_max = self.fused_abs_max2(matrix_g_inv)
-                g_max = self.fused_abs_max2(g_max)
-                matrix_g_inv = self.matrix_combine(matrix_g_inv)
-                matrix_g_inv_shape = self.shape(self.matrix_g[thor_layer_count])
-                matrix_g_device_temp_shape = (matrix_g_inv_shape[0], matrix_g_inv_shape[2],
-                                              matrix_g_inv_shape[1], matrix_g_inv_shape[3])
-                matrix_g_inv = self.reshape(matrix_g_inv, matrix_g_device_temp_shape)
-                matrix_g_inv = self.transpose(matrix_g_inv, (2, 0, 1, 3))
+                matrix_g_inv = self._process_batch_matmul(matrix_g_inv)
+                g_max, matrix_g_inv = self._get_abs_max(matrix_g_inv, out_channels)
+
+                if a_pad_dim > 0:
+                    matrix_a_inv = self.slice(matrix_a_inv, (0, 0), (matrix_a_dim, matrix_a_dim))
+                if g_pad_dim > 0:
+                    matrix_g_inv = self.slice(matrix_g_inv, (0, 0), (out_channels, out_channels))
+
+                if matmul_support_flag == 1:
+                    if self.device_shape_pad_flag[conv_layer_count]:
+                        kernel_hw = weight_shape[2] * weight_shape[3]
+                        in_channels = weight_shape[1]
+                        matrix_a_inv = self.reshape(matrix_a_inv, (kernel_hw, in_channels, kernel_hw, in_channels))
+                        matrix_a_inv = P.Pad(((0, 0), (0, self.C0 - in_channels), (0, 0),
+                                              (0, self.C0 - in_channels)))(matrix_a_inv)
+                    matrix_a_inv_shape = self.shape(self.matrix_a[thor_layer_count])
+                    matrix_a_device_temp_shape = (matrix_a_inv_shape[0], matrix_a_inv_shape[2],
+                                                  matrix_a_inv_shape[1], matrix_a_inv_shape[3])
+                    matrix_a_inv = self.reshape(matrix_a_inv, matrix_a_device_temp_shape)
+                    matrix_a_inv = self.transpose(matrix_a_inv, (2, 0, 1, 3))
+                    matrix_g_inv_shape = self.shape(self.matrix_g[thor_layer_count])
+                    matrix_g_device_temp_shape = (matrix_g_inv_shape[0], matrix_g_inv_shape[2],
+                                                  matrix_g_inv_shape[1], matrix_g_inv_shape[3])
+                    matrix_g_inv = self.reshape(matrix_g_inv, matrix_g_device_temp_shape)
+                    matrix_g_inv = self.transpose(matrix_g_inv, (2, 0, 1, 3))
 
                 a_max = F.depend(a_max, g)
                 g_max = F.depend(g_max, g)
@@ -913,7 +1052,7 @@ class ThorAscend(Optimizer):
                 matrix_g = self.mul(matrix_g, self.batch_size_scale)
                 matrix_g = matrix_g + damping * g_eye
                 matrix_g_inv = self.cholesky(matrix_g)
-                matrix_g_inv = self.vector_matmul(matrix_g_inv, matrix_g_inv)
+                matrix_g_inv = self._process_batch_matmul(matrix_g_inv)
                 matrix_g_inv = self.matrix_combine(matrix_g_inv)
                 matrix_a_allreduce = matrix_a_allreduce + (matrix_a_inv,)
                 matrix_g_allreduce = matrix_g_allreduce + (matrix_g_inv,)
@@ -951,16 +1090,39 @@ class ThorAscend(Optimizer):
             for i in range(params_len):
                 g = gradients[i]
                 thor_layer_count = self.weight_fim_idx_map[i]
+                conv_layer_count = self.weight_conv_idx_map[i]
                 layer_type = self.weight_layertype_idx_map[i]
                 matrix_a = self.matrix_a[thor_layer_count]
                 matrix_g = self.matrix_g[thor_layer_count]
                 matrix_max = self.matrix_max_inv[thor_layer_count]
+                grad_shape = self.shape(g)
                 if layer_type == FC:
-                    g = self.cube_matmul_left_fc(matrix_g, g)
-                    g = self.cube_matmul_right_fc(g, matrix_a, matrix_max)
+                    if grad_shape[0] == 1001:
+                        g = self.cube_matmul_left_fc(matrix_g, g)
+                        g = self.cube_matmul_right_fc(g, matrix_a, matrix_max)
+                    else:
+                        temp_a = self.cast(matrix_a, mstype.float16)
+                        temp_g = self.cast(matrix_g, mstype.float16)
+                        g = self.cast(g, mstype.float16)
+                        g = self.matmul(temp_g, g)
+                        g = self.matmul(g, temp_a)
+                        g = self.cast(g, mstype.float32)
+                        g = self.mul(g, matrix_max)
                 elif layer_type == Conv:
-                    g = self.cube_matmul_left(matrix_g, g)
-                    g = self.cube_matmul_right_mul(g, matrix_a, matrix_max)
+                    matmul_support_flag = self.conv_matmul_support_map[conv_layer_count]
+                    if matmul_support_flag == 1:
+                        g = self.cube_matmul_left(matrix_g, g)
+                        g = self.cube_matmul_right_mul(g, matrix_a, matrix_max)
+                    else:
+                        g = self.reshape(g, (grad_shape[0], grad_shape[1] * grad_shape[2] * grad_shape[3]))
+                        temp_a = self.cast(matrix_a, mstype.float16)
+                        temp_g = self.cast(matrix_g, mstype.float16)
+                        g = self.cast(g, mstype.float16)
+                        g = self.matmul(temp_g, g)
+                        g = self.matmul(g, temp_a)
+                        g = self.cast(g, mstype.float32)
+                        g = self.mul(g, matrix_max)
+                        g = self.reshape(g, grad_shape)
                 new_grads = new_grads + (g,)
         else:
             for i in range(params_len):
@@ -994,15 +1156,37 @@ class ThorAscend(Optimizer):
         """get second gradient by matmul"""
         conv_layer_count = self.weight_conv_idx_map[index]
         layer_type = self.weight_layertype_idx_map[index]
+        grad_shape = self.shape(g)
         if layer_type == FC:
-            g = self.cube_matmul_left_fc(temp_g, g)
-            g = self.cube_matmul_right_fc(g, temp_a, temp_max)
+            if grad_shape[0] == 1001:
+                g = self.cube_matmul_left_fc(temp_g, g)
+                g = self.cube_matmul_right_fc(g, temp_a, temp_max)
+            else:
+                temp_a = self.cast(temp_a, mstype.float16)
+                temp_g = self.cast(temp_g, mstype.float16)
+                g = self.cast(g, mstype.float16)
+                g = self.matmul(temp_g, g)
+                g = self.matmul(g, temp_a)
+                g = self.cast(g, mstype.float32)
+                g = self.mul(g, temp_max)
         elif layer_type == Conv:
             a_normalizer = self.a_normalizer[conv_layer_count]
             a_normalizer = F.depend(a_normalizer, g)
             temp_max = self.mul(temp_max, self.batch_size / a_normalizer)
-            g = self.cube_matmul_left(temp_g, g)
-            g = self.cube_matmul_right_mul(g, temp_a, temp_max)
+            matmul_support_flag = self.conv_matmul_support_map[conv_layer_count]
+            if matmul_support_flag == 1:
+                g = self.cube_matmul_left(temp_g, g)
+                g = self.cube_matmul_right_mul(g, temp_a, temp_max)
+            else:
+                g = self.reshape(g, (grad_shape[0], grad_shape[1] * grad_shape[2] * grad_shape[3]))
+                temp_a = self.cast(temp_a, mstype.float16)
+                temp_g = self.cast(temp_g, mstype.float16)
+                g = self.cast(g, mstype.float16)
+                g = self.matmul(temp_g, g)
+                g = self.matmul(g, temp_a)
+                g = self.cast(g, mstype.float32)
+                g = self.mul(g, temp_max)
+                g = self.reshape(g, grad_shape)
         return g, temp_max
 
     def _get_second_grad_by_layertype(self, index, matrix_a_allreduce, matrix_g_allreduce, g, damping_step):
