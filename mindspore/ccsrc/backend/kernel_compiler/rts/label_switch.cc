@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 #include "runtime/stream.h"
-#include "framework/ge_runtime/task_info.h"
+#include "runtime/device/ascend/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
 using mindspore::ge::model_runner::LabelSwitchTaskInfo;
@@ -72,8 +72,8 @@ std::vector<TaskInfoPtr> LabelSwitchKernel::GenTask(const std::vector<AddressPtr
 
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> LabelSwitchDesc::GetKernelInfo() {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> label_switch_build_info{};
-  vector<string> input_format{kOpFormat_DEFAULT};
-  vector<TypeId> input_type{kNumberTypeInt32};
+  std::vector<string> input_format{kOpFormat_DEFAULT};
+  std::vector<TypeId> input_type{kNumberTypeInt32};
   if (input_format.size() != input_type.size()) {
     MS_LOG(EXCEPTION) << "Invalid param num, input_format size " << input_format.size() << " input_type size "
                       << input_type.size();

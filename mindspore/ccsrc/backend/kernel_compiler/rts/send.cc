@@ -17,7 +17,7 @@
 #include "backend/kernel_compiler/rts/send.h"
 #include <memory>
 #include "runtime/event.h"
-#include "framework/ge_runtime/task_info.h"
+#include "runtime/device/ascend/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
 using mindspore::ge::model_runner::EventRecordTaskInfo;
