@@ -19,4 +19,4 @@ provide more kinds of image augmentations which is developed with Python PIL.
 """
 from . import c_transforms
 from . import py_transforms
-from .utils import Inter, Border, ImageBatchFormat
+from .utils import Inter, Border, ImageBatchFormat, SliceMode

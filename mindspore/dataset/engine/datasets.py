@@ -4139,7 +4139,7 @@ class TFRecordDataset(SourceDataset):
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
-        >>> import mindspore.common.dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>>
         >>> tfrecord_dataset_dir = ["/path/to/tfrecord_dataset_file"] # contains 1 or multiple TFRecord files
         >>> tfrecord_schema_file = "/path/to/tfrecord_schema_file"
@@ -4601,7 +4601,7 @@ class Schema:
         RuntimeError: If schema file failed to load.
 
     Example:
-        >>> import mindspore.common.dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>>
         >>> # Create schema; specify column name, mindspore.dtype and shape of the column
         >>> schema = ds.Schema()
