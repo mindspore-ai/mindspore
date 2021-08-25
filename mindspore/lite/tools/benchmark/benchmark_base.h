@@ -104,6 +104,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     // common
     AddFlag(&BenchmarkFlags::model_file_, "modelFile", "Input model file", "");
     AddFlag(&BenchmarkFlags::in_data_file_, "inDataFile", "Input data file, if not set, use random input", "");
+    AddFlag(&BenchmarkFlags::config_file_, "configFile", "Config file", "");
     AddFlag(&BenchmarkFlags::device_, "device", "CPU | GPU | NPU", "CPU");
     AddFlag(&BenchmarkFlags::cpu_bind_mode_, "cpuBindMode",
             "Input 0 for NO_BIND, 1 for HIGHER_CPU, 2 for MID_CPU, default value: 1", 1);
@@ -136,6 +137,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   // common
   std::string model_file_;
   std::string in_data_file_;
+  std::string config_file_;
   std::vector<std::string> input_data_list_;
   InDataType in_data_type_ = kBinary;
   std::string in_data_type_in_ = "bin";

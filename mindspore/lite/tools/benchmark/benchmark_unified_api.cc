@@ -447,6 +447,13 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   }
 
   (void)InitMSContext(context);
+
+  auto config_ret = ms_model_.LoadConfig(flags_->config_file_);
+  if (config_ret != kSuccess) {
+    MS_LOG(ERROR) << "ms_model_.LoadConfig failed while running ", model_name.c_str();
+    std::cout << "ms_model_.LoadConfig failed while running ", model_name.c_str();
+  }
+
   auto ret = ms_model_.Build(graph_buf, size, kMindIR, context);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ms_model_.Build failed while running ", model_name.c_str();
