@@ -16,12 +16,12 @@
 
 #include "tools/converter/parser/onnx/onnx_scatter_nd_parser.h"
 #include <memory>
-#include "ops/scatter_nd.h"
+#include "ops/scatter_nd_update.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxScatterNdParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::ScatterNd>();
+  auto prim = std::make_unique<ops::ScatterNdUpdate>();
   return prim.release();
 }
 

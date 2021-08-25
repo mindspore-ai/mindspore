@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/scatter_nd_fp32.h"
+#include "src/runtime/kernel/arm/fp32/scatter_nd_update_fp32.h"
 #include <cstring>
-#include <vector>
+#include "src/runtime/kernel/arm/fp32/scatter_nd_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -25,15 +25,16 @@ using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_ScatterNd;
+using mindspore::schema::PrimitiveType_ScatterNdUpdate;
 
 namespace mindspore::kernel {
 namespace {
-constexpr int kScatterShapeIndex = 0;
+constexpr int kScatterUpdateInputIndex = 0;
 constexpr int kScatterIndicesIndex = 1;
 constexpr int kScatterUpdateIndex = 2;
+constexpr size_t kScatterIndicesDims = 2;
 }  // namespace
-int ScatterNDCPUKernel::Init() {
+int ScatterNdUpdateCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D)
   CHECK_LESS_RETURN(out_tensors_.size(), 1)
   if (!InferShapeDone()) {
@@ -42,55 +43,34 @@ int ScatterNDCPUKernel::Init() {
   return ReSize();
 }
 
-int ScatterNDCPUKernel::ReSize() {
-  auto shape = in_tensors_.at(kScatterShapeIndex);
+int ScatterNdUpdateCPUKernel::ReSize() {
+  auto input = in_tensors_.at(kScatterUpdateInputIndex);
   auto indices = in_tensors_.at(kScatterIndicesIndex);
   auto update = in_tensors_.at(kScatterUpdateIndex);
+  auto output = out_tensors_.front();
 
   update_ptr_ = reinterpret_cast<float *>(update->MutableData());
   MS_ASSERT(update_ptr_ != nullptr);
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  output_ptr_ = reinterpret_cast<float *>(output->MutableData());
   MS_ASSERT(output_ptr_ != nullptr);
 
   // check indices shape
-  auto shape_rank = shape->ElementsNum();
-  auto shape_data = reinterpret_cast<int *>(shape->MutableData());
-  MS_ASSERT(shape_data != nullptr);
-  auto indice_unit_rank = indices->shape().back();
-  if (indice_unit_rank > shape_rank) {
-    MS_LOG(ERROR) << "Value of last dimension of indices is greater than shape rank.";
+  int input_rank = static_cast<int>(input->shape().size());
+  int indice_unit_rank = indices->shape().back();
+  if (indice_unit_rank > input_rank) {
+    MS_LOG(ERROR) << "Value of last dimension of indices is greater than input rank.";
     return RET_ERROR;
   }
 
-  if (indices->shape().size() < 2) {
+  if (indices->shape().size() < kScatterIndicesDims) {
     MS_LOG(ERROR) << "Indices dimension smaller than 2.";
     return RET_ERROR;
   }
 
   // check consistency of the shape indices and shape
-  auto update_rank = static_cast<int>(update->shape().size());
+  int update_rank = static_cast<int>(update->shape().size());
   auto indices_shape = indices->shape();
-  if (update_rank != static_cast<int>(indices->shape().size() - 1 + shape_rank - indice_unit_rank)) {
-    MS_LOG(ERROR) << "Update, shape rank and indices rank inconsistent.";
-    return RET_ERROR;
-  }
-  // check update shape
   auto update_shape = update->shape();
-  for (size_t i = 0; i < indices_shape.size() - 1; i++) {
-    if (update_shape.at(i) != indices_shape.at(i)) {
-      MS_LOG(ERROR) << "Value of " << i << " th dimension of indices is not equal to that of update.";
-      return RET_ERROR;
-    }
-  }
-  for (size_t i = 0; i < shape->ElementsNum() - (indices_shape.size() - 1); i++) {
-    if (update_shape.at(i + indices_shape.size() - 1) != shape_data[i + indices_shape.size() - 1]) {
-      MS_LOG(ERROR) << "Value of " << i + indices_shape.size() - 1
-                    << " th dimension of indices is not equal to the corresbonding dimension of shape.";
-      return RET_ERROR;
-    }
-  }
-
-  // calculate unit_size_
   unit_size_ = 1;
   for (int i = indices_shape.size() - 1; i < update_rank; i++) {
     unit_size_ *= update_shape.at(i);
@@ -100,9 +80,10 @@ int ScatterNDCPUKernel::ReSize() {
   int out_stride = 1;
   out_strides_.push_back(1);
   for (int i = indice_unit_rank - 2; i >= 0; i--) {
-    out_stride *= shape_data[i + 1];
+    out_stride *= input->shape()[i + 1];
     out_strides_.push_back(out_stride);
   }
+  std::reverse(out_strides_.begin(), out_strides_.end());
 
   num_unit_ = 1;
   num_unit_ *= update_shape.at(indices_shape.size() - 2);
@@ -129,42 +110,56 @@ int ScatterNDCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ScatterNDCPUKernel::ScatterND(int task_id) {
+int ScatterNdUpdateCPUKernel::ScatterNdUpdate(int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
   }
   int offset = task_id * thread_n_stride_;
-  MS_LOG(ERROR) << "offset " << offset << std::endl;
   auto ret = DoScatterND(output_ptr_, update_ptr_ + offset * unit_size_, output_unit_offsets_.data() + offset,
                          unit_size_, num_unit_thread);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ScatterND error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "ScatterNdUpdate error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
+  in_tensors_.at(kScatterUpdateInputIndex)->IncRefCount();
   return RET_OK;
 }
 
-int ScatterNDRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto g_kernel = reinterpret_cast<ScatterNDCPUKernel *>(cdata);
+int ScatterNdUpdateRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  auto g_kernel = reinterpret_cast<ScatterNdUpdateCPUKernel *>(cdata);
   MS_ASSERT(g_kernel != nullptr);
-  auto ret = g_kernel->ScatterND(task_id);
+  auto ret = g_kernel->ScatterNdUpdate(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ScatterNDRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "ScatterNdUpdateRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int ScatterNDCPUKernel::Run() {
-  auto ret = ParallelLaunch(this->ms_context_, ScatterNDRun, this, thread_n_num_);
+int ScatterNdUpdateCPUKernel::Run() {
+  auto in_tensor = in_tensors().front();
+  auto out_tensor = out_tensors().front();
+  if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
+      op_parameter_->is_train_session_) {
+    memcpy(out_tensor->data(), in_tensor->data(), in_tensor->Size());
+  } else {
+    out_tensor->FreeData();
+    out_tensor->ResetRefCount();
+    in_tensor->allocator()->IncRefCount(in_tensor->data(), out_tensor->ref_count());
+    out_tensor->set_data(in_tensor->data());
+    out_tensor->set_own_data(in_tensor->own_data());
+    output_ptr_ = reinterpret_cast<float *>(out_tensor->data());
+  }
+
+  auto ret = ParallelLaunch(this->ms_context_, ScatterNdUpdateRun, this, thread_n_num_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ScatterND error error_code[" << ret << "]";
+    MS_LOG(ERROR) << "ScatterNdUpdate error error_code[" << ret << "]";
     return RET_ERROR;
   }
 
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ScatterNd, LiteKernelCreator<ScatterNDCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ScatterNdUpdate, LiteKernelCreator<ScatterNdUpdateCPUKernel>)
 }  // namespace mindspore::kernel

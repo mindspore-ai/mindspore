@@ -142,7 +142,7 @@ int WhereCPUKernel::RunWithTripleInputs() {
     MS_LOG(ERROR) << "Error, inputs' length are zero !!!";
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->ms_context_, WhereRun, this, where_param_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, WhereRun, this, where_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "WhereDwRun error: error_code[" << ret << "]";
     return RET_ERROR;

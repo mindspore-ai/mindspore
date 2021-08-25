@@ -69,7 +69,7 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
       MS_LOG(ERROR) << "fetch transpose perm failed.";
       return lite::RET_ERROR;
     }
-    if (!shape.empty() && shape.size() != perm.size()) {
+    if (!shape.empty() && shape.size() != perm.size() && !(shape.size() == 1 && shape[0] == -1)) {
       MS_LOG(DEBUG) << "transpose node need to be deleted.";
       if (UpdateNodeFormat(func_graph, cnode) != lite::RET_OK) {
         MS_LOG(ERROR) << "update cnode format failed.";
