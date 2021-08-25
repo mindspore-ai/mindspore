@@ -141,6 +141,7 @@ class BatchToSpaceGpuKernel : public GpuKernel {
         auto tmp_shape = input_shape[idx_i + 2] * block_size_ - crops_[idx_i][0] - crops_[idx_i][1];
         if (tmp_shape < 0) {
           MS_LOG(ERROR) << "out_shape can not be less 0.";
+          return false;
         }
       }
     }

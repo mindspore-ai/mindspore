@@ -136,6 +136,7 @@ class SpaceToBatchGpuKernel : public GpuKernel {
         auto tmp_shape = input_shape[idx_i + 2] + paddings_[idx_i][0] + paddings_[idx_i][1];
         if ((tmp_shape % block_size_) != 0) {
           MS_LOG(ERROR) << "padded shape must be divisible by block_size";
+          return false;
         }
       }
     }
