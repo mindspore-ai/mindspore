@@ -14,10 +14,10 @@ modelarts_dataset_unzip_name: "coco"
 
 # ==============================================================================
 # Train options
-train_img_dir: ""
-train_json_file: ""
-val_img_dir: ""
-val_json_file: ""
+train_img_dir: "train2017"
+train_json_file: "annotations/instances_train2017.json"
+val_img_dir: "val2017"
+val_json_file: "annotations/instances_val2017.json"
 data_dir: ""
 per_batch_size: 8
 pretrained_backbone: ""
