@@ -29,8 +29,10 @@
 #include "ps/core/follower_scaler.h"
 #include "utils/ms_exception.h"
 #include "ps/constants.h"
-#include "ps/core/recovery_base.h"
 #include "ps/core/node_info.h"
+#include "ps/core/recovery_base.h"
+#include "ps/core/communicator/task_executor.h"
+#include "ps/core/communicator/communicator_base.h"
 
 namespace mindspore {
 namespace ps {
@@ -51,7 +53,7 @@ class AbstractNode : public Node {
         node_recovery_(nullptr),
         scheduler_ip_(""),
         scheduler_port_(0) {}
-  ~AbstractNode() override { is_finish_ = true; }
+  ~AbstractNode() override = default;
 
   typedef void (AbstractNode::*ResponseHandler)(const std::shared_ptr<MessageMeta> &meta, const void *data,
                                                 size_t size);
@@ -61,6 +63,9 @@ class AbstractNode : public Node {
 
   using DataPtr = std::shared_ptr<unsigned char[]>;
   using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
+  using RequestHandler =
+    std::function<void(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                       const DataPtr &data, size_t size)>;
 
   bool Broadcast(const NodeRole &node_role, const DataPtr &message, size_t size, int command,
                  const uint32_t &timeout = kCommTimeoutInSeconds);
@@ -124,6 +129,16 @@ class AbstractNode : public Node {
 
   ClusterState cluster_state() const;
 
+  void set_handler(const RequestHandler &handler);
+  void Response(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta, const void *data,
+                size_t size);
+
+  std::shared_ptr<CommunicatorBase> GetOrCreateHttpComm(const std::string &ip, uint16_t port,
+                                                        const std::shared_ptr<TaskExecutor> &task_executor);
+  std::shared_ptr<CommunicatorBase> GetOrCreateTcpComm(const std::string &scheduler_ip, std::int16_t scheduler_port,
+                                                       uint32_t worker_num, uint32_t server_num,
+                                                       const std::shared_ptr<TaskExecutor> &task_executor);
+
  protected:
   void Register(const std::shared_ptr<TcpClient> &client);
   bool Heartbeat(const std::shared_ptr<TcpClient> &client);
@@ -162,11 +177,17 @@ class AbstractNode : public Node {
   bool WaitForDisconnect(const uint32_t &timeout);
   bool InitClientToScheduler();
   const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const uint32_t &rank_id);
-
-  void ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
-                           size_t size);
-  void RunMessageCallback(const uint64_t &request_id);
-  void set_message_callback(const uint64_t &request_id, const MessageCallback &callback);
+  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
+                       const uint32_t &timeout = kCommTimeoutInSeconds);
+  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
+                       const Protos &, const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
+  uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
+                            const Protos &protos, const void *data, size_t size);
+  void ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                                 const void *data, size_t size);
+  void ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                       const Protos &protos, const void *data, size_t size);
+  void NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta);
   void RunReceiveCallback(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                           size_t size);
   uint64_t NextExpectedRankRequestId(const uint32_t &rank_id);
@@ -186,6 +207,10 @@ class AbstractNode : public Node {
   // Trigger the callback corresponding to the custom event.
   void OnCustomEventCallback(const uint32_t &event);
 
+  bool IsWorkerOrServer0(const std::unordered_map<std::string, NodeInfo> &info);
+
+  void CreateTcpServer();
+
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;
   std::shared_ptr<TcpClient> client_to_scheduler_;
@@ -194,14 +219,6 @@ class AbstractNode : public Node {
   std::map<std::pair<NodeRole, uint32_t>, std::pair<std::string, uint16_t>> nodes_address_;
   // the map's key is: rank_id
   std::unordered_map<uint32_t, std::shared_ptr<TcpClient>> connected_nodes_;
-
-  // the key is: request_id, the value is: <rank_id, RecvMessage>
-  std::unordered_map<uint64_t, std::unordered_map<uint32_t, VectorPtr>> receive_messages_;
-  std::map<std::pair<uint32_t, uint64_t>, bool> receive_messages_done_;
-  std::mutex receive_messages_mutex_;
-  // the key is: request_id
-  std::unordered_map<uint64_t, MessageCallback> message_callbacks_;
-  std::mutex message_callbacks_mutex_;
 
   // the key is <rank_id, rank_request_id>
   std::map<std::pair<uint32_t, uint64_t>, std::shared_ptr<std::vector<unsigned char>>> received_data_;
@@ -252,6 +269,10 @@ class AbstractNode : public Node {
 
   // Synchronize all node metadata from the scheduler.
   std::unordered_map<std::string, NodeInfo> all_nodes_info_;
+  RequestHandler request_handler_;
+
+  std::unordered_map<std::string, std::shared_ptr<CommunicatorBase>> communicators_;
+  std::mutex communicator_mutex_;
 };
 }  // namespace core
 }  // namespace ps

@@ -27,11 +27,11 @@ SchedulerNode::~SchedulerNode() {
 }
 
 bool SchedulerNode::Start(const uint32_t &timeout) {
-  MS_LOG(INFO) << "[Scheudler start]: 1. Begin to start scheduler node!";
+  MS_LOG(INFO) << "[Scheduler start]: 1. Begin to start scheduler node!";
   if (PSContext::instance()->scheduler_manage_port() != 0) {
     MS_LOG(WARNING) << "Start the scheduler http service, the ip:" << PSContext::instance()->scheduler_ip()
                     << ", the port:" << PSContext::instance()->scheduler_manage_port();
-    StartRestfulServer(PSContext::instance()->scheduler_ip(), PSContext::instance()->scheduler_manage_port(), 1);
+    StartRestfulServer(kLocalIp, PSContext::instance()->scheduler_manage_port(), 1);
   }
   Initialize();
   StartUpdateClusterStateTimer();
@@ -77,6 +77,7 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
 
 void SchedulerNode::Initialize() {
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
+  MS_EXCEPTION_IF_NULL(config_);
   if (!config_->Initialize()) {
     MS_LOG(INFO) << "The config file is empty.";
   }
@@ -94,6 +95,8 @@ void SchedulerNode::Initialize() {
   }
   node_info_.node_role_ = NodeRole::SCHEDULER;
   leader_scaler_ = std::make_unique<LeaderScaler>(this);
+  MS_EXCEPTION_IF_NULL(leader_scaler_);
+  instance_manager_ = std::make_unique<InstanceManager>(this);
   MS_LOG(INFO) << "[Scheduler start]: 2. The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << ", the node id is:" << node_info_.node_id_ << " create a tcp server.";
 }
@@ -114,6 +117,7 @@ void SchedulerNode::CreateTcpServer() {
   std::string scheduler_host = PSContext::instance()->cluster_config().scheduler_host;
   uint32_t scheduler_port = PSContext::instance()->cluster_config().scheduler_port;
   server_ = std::make_shared<TcpServer>(scheduler_host, scheduler_port, config_.get());
+  MS_EXCEPTION_IF_NULL(server_);
   server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &, const void *data, size_t size) {
     if (handlers_.count(meta->cmd()) == 0) {
@@ -129,6 +133,7 @@ void SchedulerNode::CreateTcpServer() {
     MS_LOG(INFO) << "The scheduler node start a tcp server!";
     this->server_->Start();
   });
+  MS_EXCEPTION_IF_NULL(scheduler_thread_);
 }
 
 void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
@@ -138,29 +143,35 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  MS_LOG(INFO) << "The scheduler process a register message!";
   RegisterMessage register_message;
   CHECK_RETURN_TYPE(register_message.ParseFromArray(data, SizeToInt(size)));
+
+  const std::string &node_id = register_message.node_id();
+  node_manager_.UpdateHeartbeat(node_id);
+
+  MS_LOG(INFO) << "The node id:" << node_id << " is registering to scheduler.";
+  client_mutex_.lock();
+  if (node_manager_.IsNodeRegistered(node_id)) {
+    MS_LOG(INFO) << "The node id is registered.";
+    if (connected_nodes_.count(node_id)) {
+      (void)connected_nodes_.erase(node_id);
+    }
+  }
+  client_mutex_.unlock();
 
   // assign worker node and server node rank id
   uint32_t rank_id = node_manager_.NextRankId(register_message, meta);
   if (rank_id == UINT32_MAX) {
     MS_LOG(WARNING) << "The rank id is wrong!";
   }
-  const std::string &node_id = register_message.node_id();
-  node_manager_.UpdateHeartbeat(node_id);
-
-  client_mutex_.lock();
-  if (connected_nodes_.count(node_id)) {
-    connected_nodes_.erase(node_id);
-  }
-  client_mutex_.unlock();
 
   RegisterRespMessage register_resp_message;
   register_resp_message.set_node_id(node_id);
 
-  server->SendMessage(conn, meta, Protos::PROTOBUF, register_resp_message.SerializeAsString().data(),
-                      register_resp_message.ByteSizeLong());
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, register_resp_message.SerializeAsString().data(),
+                           register_resp_message.ByteSizeLong())) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
 
   if (node_manager_.IsAllNodesRegistered()) {
     is_ready_ = true;
@@ -170,15 +181,18 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
       auto nodes = node_manager_.nodes_info();
       for (const auto &id : scale_in_node_ids_) {
         MS_LOG(INFO) << "The scheduler send metadata to scale in node:" << id;
-        auto scale_in_client = GetOrCreateClient(nodes[id]);
-        SendMetadata(scale_in_client, nodes[id].rank_id_);
-        node_manager_.UpdateHeartbeat(id);
+        if (nodes.count(id)) {
+          auto scale_in_client = GetOrCreateClient(nodes[id]);
+          SendMetadata(scale_in_client, nodes[id].rank_id_);
+          node_manager_.UpdateHeartbeat(id);
+        }
       }
     }
     node_manager_.UpdateNodesInfo();
     auto node_infos = node_manager_.nodes_info();
     for (const auto &kvs : node_infos) {
       auto client = GetOrCreateClient(kvs.second);
+      MS_EXCEPTION_IF_NULL(client);
       SendMetadata(client, kvs.second.rank_id_);
       node_manager_.UpdateHeartbeat(kvs.first);
     }
@@ -194,9 +208,12 @@ void SchedulerNode::ProcessFinish(const std::shared_ptr<TcpServer> &server, cons
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   auto finish_message = std::make_unique<std::string>(reinterpret_cast<const char *>(data), size);
+  MS_EXCEPTION_IF_NULL(finish_message);
   std::string node_id = *finish_message;
   MS_LOG(INFO) << "Process finish message from node id:" << node_id;
-  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
 
   auto iter = std::find_if(scale_in_node_ids_.begin(), scale_in_node_ids_.end(), [node_id](auto item) {
     if (node_id == item) {
@@ -224,7 +241,7 @@ void SchedulerNode::ProcessFinish(const std::shared_ptr<TcpServer> &server, cons
 
 void SchedulerNode::ProcessFetchMetadata(const std::shared_ptr<TcpServer> &server,
                                          const std::shared_ptr<TcpConnection> &conn,
-                                         const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+                                         const std::shared_ptr<MessageMeta> &meta, const void *data, size_t) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -234,8 +251,10 @@ void SchedulerNode::ProcessFetchMetadata(const std::shared_ptr<TcpServer> &serve
 
   *fetch_servers_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 
-  server->SendMessage(conn, meta, Protos::PROTOBUF, fetch_servers_message.SerializeAsString().data(),
-                      fetch_servers_message.ByteSizeLong());
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, fetch_servers_message.SerializeAsString().data(),
+                           fetch_servers_message.ByteSizeLong())) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
 }
 
 void SchedulerNode::ProcessScaleOutDone(const std::shared_ptr<TcpServer> &server,
@@ -246,12 +265,14 @@ void SchedulerNode::ProcessScaleOutDone(const std::shared_ptr<TcpServer> &server
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   ScaleOutDoneMessage scale_out_done_message;
-  scale_out_done_message.ParseFromArray(data, size);
+  scale_out_done_message.ParseFromArray(data, SizeToInt(size));
   std::string node_id = scale_out_done_message.node_id();
   MS_LOG(INFO) << "The scheduler process a scale_out_done message from node id:" << node_id;
   node_manager_.AddScaleOutDoneNode(node_id);
 
-  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
 
   if (node_manager_.IsAllNodesScaleOutDone()) {
     auto node_infos = node_manager_.nodes_info();
@@ -272,12 +293,14 @@ void SchedulerNode::ProcessScaleInDone(const std::shared_ptr<TcpServer> &server,
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   ScaleInDoneMessage scale_in_done_message;
-  scale_in_done_message.ParseFromArray(data, size);
+  scale_in_done_message.ParseFromArray(data, SizeToInt(size));
   std::string node_id = scale_in_done_message.node_id();
   MS_LOG(INFO) << "The scheduler process a scale_in_done message from node id:" << node_id;
   node_manager_.AddScaleInDoneNode(node_id);
 
-  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
 
   if (node_manager_.IsAllNodesScaleInDone()) {
     auto node_infos = node_manager_.nodes_info();
@@ -298,12 +321,14 @@ void SchedulerNode::ProcessSendEvent(const std::shared_ptr<TcpServer> &server,
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   EventMessage event_message;
-  event_message.ParseFromArray(data, size);
+  event_message.ParseFromArray(data, SizeToInt(size));
   std::string node_id = event_message.node_id();
   uint32_t event = event_message.event();
   MS_LOG(DEBUG) << "The scheduler process a event message from node id:" << node_id;
 
-  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
 
   auto node_infos = node_manager_.nodes_info();
   for (const auto &kvs : node_infos) {
@@ -315,6 +340,7 @@ void SchedulerNode::ProcessSendEvent(const std::shared_ptr<TcpServer> &server,
 void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint32_t rank_id) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
   message_meta->set_cmd(NodeCommand::SEND_METADATA);
 
   SendMetadataMessage send_metadata_message;
@@ -332,13 +358,14 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint3
                       << " the node id:" << node_info_.node_id_ << " send metadata timeout!";
   }
 
-  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << " the node id:" << node_info_.node_id_ << "is sending metadata to workers and servers!";
+  MS_LOG(DEBUG) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << " the node id:" << node_info_.node_id_ << "is sending metadata to workers and servers!";
 }
 
 void SchedulerNode::SendFinish(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
   message_meta->set_cmd(NodeCommand::FINISH);
 
   // The scheduler does not need to bring any data when sending the finish command
@@ -356,6 +383,7 @@ void SchedulerNode::SendFinish(const std::shared_ptr<TcpClient> &client) {
 void SchedulerNode::SendScaleOutDone(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
   message_meta->set_cmd(NodeCommand::SCALE_OUT_DONE);
 
   // The scheduler does not need to bring any data when sending the scale_out_done command
@@ -373,6 +401,7 @@ void SchedulerNode::SendScaleOutDone(const std::shared_ptr<TcpClient> &client) {
 void SchedulerNode::SendScaleInDone(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
   message_meta->set_cmd(NodeCommand::SCALE_IN_DONE);
 
   // The scheduler does not need to bring any data when sending the scale_in_done command
@@ -390,6 +419,7 @@ void SchedulerNode::SendScaleInDone(const std::shared_ptr<TcpClient> &client) {
 void SchedulerNode::SendEvent(const std::shared_ptr<TcpClient> &client, const uint32_t &event) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
   message_meta->set_cmd(NodeCommand::SEND_EVENT);
 
   EventRespMessage event_resp_message;
@@ -427,6 +457,7 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
       }
     }
   });
+  MS_EXCEPTION_IF_NULL(update_state_thread_);
 }
 
 const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInfo &node_info) {
@@ -440,9 +471,19 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
     std::string ip = node_info.ip_;
     uint16_t port = node_info.port_;
     auto client = std::make_shared<TcpClient>(ip, port, config_.get());
-    client->SetMessageCallback([&](const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *, size_t) {
-      NotifyMessageArrival(meta);
-    });
+    MS_EXCEPTION_IF_NULL(client);
+    client->SetMessageCallback(
+      [&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
+        switch (meta->cmd()) {
+          case NodeCommand::SEND_DATA:
+            ProcessSendDataResp(meta, protos, data, size);
+            RunMessageCallback(meta->request_id());
+            break;
+          default:
+            MS_LOG(DEBUG) << "The cmd:" << meta->cmd();
+        }
+        NotifyMessageArrival(meta);
+      });
     client->Init();
     if (is_client_started_ == false) {
       is_client_started_ = true;
@@ -450,7 +491,9 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
         MS_LOG(INFO) << "The node start a tcp client!";
         client->Start();
       });
+      MS_EXCEPTION_IF_NULL(client_thread_);
     }
+
     connected_nodes_[node_info.node_id_] = client;
     return connected_nodes_[node_info.node_id_];
   }
@@ -459,13 +502,18 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
 bool SchedulerNode::Stop() {
   MS_LOG(INFO) << "Stop scheduler node!";
   if (!is_already_stopped_) {
+    MS_ERROR_IF_NULL_W_RET_VAL(update_state_thread_, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(server_, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(scheduler_thread_, false);
     is_already_stopped_ = true;
     update_state_thread_->join();
     server_->Stop();
     scheduler_thread_->join();
     if (!connected_nodes_.empty()) {
       for (auto &connected_node : connected_nodes_) {
-        connected_node.second->Stop();
+        auto client = connected_node.second;
+        MS_ERROR_IF_NULL_W_RET_VAL(client, false);
+        client->Stop();
       }
     }
     if (client_thread_ != nullptr && client_thread_->joinable()) {
@@ -493,7 +541,8 @@ bool SchedulerNode::Finish(const uint32_t &) {
   return true;
 }
 
-void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
+void SchedulerNode::ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &resp) {
+  MS_EXCEPTION_IF_NULL(resp);
   RequestProcessResult status(RequestProcessResultCode::kSuccess);
   status = resp->ParsePostMessageToJson();
   if (status != RequestProcessResultCode::kSuccess) {
@@ -536,6 +585,8 @@ void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
   node_manager_.ResetMetadata();
   for (const auto &kvs : node_infos) {
     auto client = GetOrCreateClient(kvs.second);
+    MS_EXCEPTION_IF_NULL(client);
+    MS_EXCEPTION_IF_NULL(leader_scaler_);
     leader_scaler_->ScaleOutAsync(client, node_manager_);
   }
   MS_LOG(INFO) << "Scheduler send scale out successful.";
@@ -555,7 +606,8 @@ void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
  *    "node_ids": ["node_id1", "node_id2"]
  * }
  */
-void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
+void SchedulerNode::ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &resp) {
+  MS_EXCEPTION_IF_NULL(resp);
   RequestProcessResult status(RequestProcessResultCode::kSuccess);
   status = resp->ParsePostMessageToJson();
   if (status != RequestProcessResultCode::kSuccess) {
@@ -616,6 +668,7 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
     if (scale_in_nodes.count(kvs.first)) {
       is_node_scale_in = true;
     }
+    MS_EXCEPTION_IF_NULL(leader_scaler_);
     leader_scaler_->ScaleInAsync(client, node_manager_, is_node_scale_in);
   }
 
@@ -646,7 +699,8 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
  *    ]
  * }
  */
-void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp) {
+void SchedulerNode::ProcessGetNodesInfo(const std::shared_ptr<HttpMessageHandler> &resp) {
+  MS_EXCEPTION_IF_NULL(resp);
   nlohmann::json js;
   js["message"] = "Get nodes info successful.";
   auto node_infos = node_manager_.nodes_info();
@@ -672,11 +726,240 @@ void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp
  *    "cluster_state": "CLUSTER_READY"
  * }
  */
-void SchedulerNode::ProcessGetClusterState(std::shared_ptr<HttpMessageHandler> resp) {
+void SchedulerNode::ProcessGetClusterState(const std::shared_ptr<HttpMessageHandler> &resp) {
+  MS_EXCEPTION_IF_NULL(resp);
   nlohmann::json js;
   js["message"] = "Get cluster state successful.";
   auto cluster_state = node_manager_.GetClusterState();
   js["cluster_state"] = CommUtil::ClusterStateToString(cluster_state);
+
+  resp->AddRespString(js.dump());
+  resp->AddRespHeadParam("Content-Type", "application/json");
+
+  resp->SetRespCode(HTTP_OK);
+  resp->SendResponse();
+}
+
+void SchedulerNode::ProcessNewInstance(const std::shared_ptr<HttpMessageHandler> &resp) {
+  MS_EXCEPTION_IF_NULL(resp);
+
+  RequestProcessResult status(RequestProcessResultCode::kSuccess);
+
+  status = CheckIfClusterReady();
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  status = resp->ParsePostMessageToJson();
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_NEW_INSTANCE);
+
+  std::string body = resp->request_message().dump();
+
+  uint64_t request_id = AddMessageTrack(node_manager_.server_num());
+
+  std::unordered_map<uint32_t, VectorPtr> outputs;
+
+  set_message_callback(request_id, [&]() {
+    receive_messages_mutex_.lock();
+    outputs = receive_messages_[request_id];
+    receive_messages_.erase(request_id);
+    receive_messages_mutex_.unlock();
+  });
+
+  auto node_infos = node_manager_.nodes_info();
+  for (const auto &kvs : node_infos) {
+    if (kvs.second.node_role_ == NodeRole::SERVER) {
+      auto client = GetOrCreateClient(kvs.second);
+      MS_EXCEPTION_IF_NULL(client);
+      MS_EXCEPTION_IF_NULL(instance_manager_);
+      instance_manager_->NewInstanceAsync(client, node_manager_, body, request_id, node_info_);
+    }
+  }
+  bool res = Wait(request_id);
+  if (!res) {
+    ERROR_STATUS(status, RequestProcessResultCode::kInvalidInputs, "The new instance is timeout.");
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+    return;
+  }
+
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+  nlohmann::json js;
+  js["message"] = "Start update flPlan successful.";
+  for (const auto &output : outputs) {
+    std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
+    js["result"][output.first] = data;
+  }
+
+  resp->AddRespString(js.dump());
+  resp->AddRespHeadParam("Content-Type", "application/json");
+
+  resp->SetRespCode(HTTP_OK);
+  resp->SendResponse();
+}
+
+void SchedulerNode::ProcessQueryInstance(const std::shared_ptr<HttpMessageHandler> &resp) {
+  MS_EXCEPTION_IF_NULL(resp);
+
+  RequestProcessResult status(RequestProcessResultCode::kSuccess);
+
+  status = CheckIfClusterReady();
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  uint64_t request_id = AddMessageTrack(node_manager_.server_num());
+
+  std::unordered_map<uint32_t, VectorPtr> outputs;
+
+  set_message_callback(request_id, [&]() {
+    receive_messages_mutex_.lock();
+    outputs = receive_messages_[request_id];
+    receive_messages_.erase(request_id);
+    receive_messages_mutex_.unlock();
+  });
+
+  auto node_infos = node_manager_.nodes_info();
+  for (const auto &kvs : node_infos) {
+    if (kvs.second.node_role_ == NodeRole::SERVER) {
+      auto client = GetOrCreateClient(kvs.second);
+      MS_EXCEPTION_IF_NULL(client);
+      MS_EXCEPTION_IF_NULL(instance_manager_);
+      instance_manager_->QueryInstanceAsync(client, node_manager_, request_id, node_info_);
+    }
+  }
+  bool res = Wait(request_id);
+  if (!res) {
+    ERROR_STATUS(status, RequestProcessResultCode::kInvalidInputs, "The query instance is timeout.");
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  nlohmann::json js;
+  js["message"] = "Start update flPlan successful.";
+  for (const auto &output : outputs) {
+    std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
+    js["result"][output.first] = data;
+  }
+
+  resp->AddRespString(js.dump());
+  resp->AddRespHeadParam("Content-Type", "application/json");
+
+  resp->SetRespCode(HTTP_OK);
+  resp->SendResponse();
+}
+
+void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &resp) {
+  MS_EXCEPTION_IF_NULL(resp);
+
+  RequestProcessResult status(RequestProcessResultCode::kSuccess);
+
+  status = CheckIfClusterReady();
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_ENABLE_FLS);
+
+  uint64_t request_id = AddMessageTrack(node_manager_.server_num());
+
+  std::unordered_map<uint32_t, VectorPtr> outputs;
+
+  set_message_callback(request_id, [&]() {
+    receive_messages_mutex_.lock();
+    outputs = receive_messages_[request_id];
+    receive_messages_.erase(request_id);
+    receive_messages_mutex_.unlock();
+  });
+
+  auto node_infos = node_manager_.nodes_info();
+  for (const auto &kvs : node_infos) {
+    if (kvs.second.node_role_ == NodeRole::SERVER) {
+      auto client = GetOrCreateClient(kvs.second);
+      MS_EXCEPTION_IF_NULL(client);
+      MS_EXCEPTION_IF_NULL(instance_manager_);
+      instance_manager_->EnableFLSAsync(client, node_manager_, request_id, node_info_);
+    }
+  }
+  bool res = Wait(request_id);
+  if (!res) {
+    ERROR_STATUS(status, RequestProcessResultCode::kInvalidInputs, "The enable FLS is timeout.");
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+    return;
+  }
+
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+  nlohmann::json js;
+  js["message"] = "start enabling FL-Server successful.";
+  for (const auto &output : outputs) {
+    std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
+    js["result"][output.first] = data;
+  }
+
+  resp->AddRespString(js.dump());
+  resp->AddRespHeadParam("Content-Type", "application/json");
+
+  resp->SetRespCode(HTTP_OK);
+  resp->SendResponse();
+}
+
+void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> &resp) {
+  MS_EXCEPTION_IF_NULL(resp);
+
+  RequestProcessResult status(RequestProcessResultCode::kSuccess);
+
+  status = CheckIfClusterReady();
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_DISABLE_FLS);
+
+  uint64_t request_id = AddMessageTrack(node_manager_.server_num());
+
+  std::unordered_map<uint32_t, VectorPtr> outputs;
+
+  set_message_callback(request_id, [&]() {
+    receive_messages_mutex_.lock();
+    outputs = receive_messages_[request_id];
+    receive_messages_.erase(request_id);
+    receive_messages_mutex_.unlock();
+  });
+
+  auto node_infos = node_manager_.nodes_info();
+  for (const auto &kvs : node_infos) {
+    if (kvs.second.node_role_ == NodeRole::SERVER) {
+      auto client = GetOrCreateClient(kvs.second);
+      MS_EXCEPTION_IF_NULL(client);
+      MS_EXCEPTION_IF_NULL(instance_manager_);
+      instance_manager_->DisableFLSAsync(client, node_manager_, request_id, node_info_);
+    }
+  }
+  bool res = Wait(request_id);
+  if (!res) {
+    ERROR_STATUS(status, RequestProcessResultCode::kInvalidInputs, "The disable FLS is timeout.");
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+    return;
+  }
+
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+  nlohmann::json js;
+  js["message"] = "start disabling FL-Server successful.";
+  for (const auto &output : outputs) {
+    std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
+    js["result"][output.first] = data;
+  }
 
   resp->AddRespString(js.dump());
   resp->AddRespHeadParam("Content-Type", "application/json");
@@ -734,6 +1017,7 @@ RequestProcessResult SchedulerNode::CheckIfNodeIdLegal(const std::vector<std::st
 void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t port, size_t thread_num) {
   MS_LOG(INFO) << "Scheduler start https server.";
   http_server_ = std::make_shared<HttpServer>(address, port, thread_num);
+  MS_EXCEPTION_IF_NULL(http_server_);
 
   OnRequestReceive scale_out = std::bind(&SchedulerNode::ProcessScaleOut, this, std::placeholders::_1);
   callbacks_["/scaleout"] = scale_out;
@@ -751,18 +1035,39 @@ void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t
   callbacks_["/state"] = cluster_state;
   http_server_->RegisterRoute("/state", &callbacks_["/state"]);
 
+  OnRequestReceive new_instance = std::bind(&SchedulerNode::ProcessNewInstance, this, std::placeholders::_1);
+  callbacks_["/newInstance"] = new_instance;
+  http_server_->RegisterRoute("/newInstance", &callbacks_["/newInstance"]);
+
+  OnRequestReceive query_instance = std::bind(&SchedulerNode::ProcessQueryInstance, this, std::placeholders::_1);
+  callbacks_["/queryInstance"] = query_instance;
+  http_server_->RegisterRoute("/queryInstance", &callbacks_["/queryInstance"]);
+
+  OnRequestReceive enable_fls = std::bind(&SchedulerNode::ProcessEnableFLS, this, std::placeholders::_1);
+  callbacks_["/enableFLS"] = enable_fls;
+  http_server_->RegisterRoute("/enableFLS", &callbacks_["/enableFLS"]);
+
+  OnRequestReceive disable_fls = std::bind(&SchedulerNode::ProcessDisableFLS, this, std::placeholders::_1);
+  callbacks_["/disableFLS"] = disable_fls;
+  http_server_->RegisterRoute("/disableFLS", &callbacks_["/disableFLS"]);
+
   if (!http_server_->InitServer()) {
     MS_LOG(EXCEPTION) << "The scheduler init http server failed.";
   }
 
-  http_server_->Start(false);
+  if (!http_server_->Start(false)) {
+    MS_LOG(EXCEPTION) << "The scheduler start http server failed.";
+  }
   restful_thread_ = std::make_unique<std::thread>([&]() { http_server_->Wait(); });
+  MS_EXCEPTION_IF_NULL(restful_thread_);
 }
 
 void SchedulerNode::StopRestfulServer() {
   MS_LOG(INFO) << "Scheduler stop https server.";
+  MS_ERROR_IF_NULL_WO_RET_VAL(http_server_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(restful_thread_);
   if (!http_server_->Stop()) {
-    MS_LOG(WARNING) << "Stop http server failed.";
+    MS_LOG(WARNING) << "Scheduler stop https server failed.";
   }
   if (restful_thread_ != nullptr && restful_thread_->joinable()) {
     restful_thread_->join();

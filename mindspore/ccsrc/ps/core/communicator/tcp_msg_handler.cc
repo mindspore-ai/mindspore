@@ -20,9 +20,9 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-TcpMsgHandler::TcpMsgHandler(ServerNode *server_node, std::shared_ptr<core::TcpConnection> conn,
-                             std::shared_ptr<MessageMeta> meta, DataPtr data, size_t size)
-    : server_node_(server_node), tcp_conn_(conn), meta_(meta), data_ptr_(data), data_(nullptr), len_(size) {
+TcpMsgHandler::TcpMsgHandler(AbstractNode *abstract_node, const std::shared_ptr<core::TcpConnection> &conn,
+                             const std::shared_ptr<MessageMeta> &meta, DataPtr data, size_t size)
+    : abstract_node_(abstract_node), tcp_conn_(conn), meta_(meta), data_ptr_(data), data_(nullptr), len_(size) {
   if (data_ptr_ != nullptr) {
     data_ = data_ptr_.get();
   }
@@ -39,7 +39,8 @@ bool TcpMsgHandler::SendResponse(const void *data, const size_t &len) {
   MS_ERROR_IF_NULL_W_RET_VAL(tcp_conn_, false);
   MS_ERROR_IF_NULL_W_RET_VAL(meta_, false);
   MS_ERROR_IF_NULL_W_RET_VAL(data, false);
-  server_node_->Response(tcp_conn_, meta_, const_cast<void *>(data), len);
+  MS_ERROR_IF_NULL_W_RET_VAL(abstract_node_, false);
+  abstract_node_->Response(tcp_conn_, meta_, const_cast<void *>(data), len);
   return true;
 }
 }  // namespace core

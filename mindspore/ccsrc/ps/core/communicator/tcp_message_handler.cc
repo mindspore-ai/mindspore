@@ -52,6 +52,7 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
           }
           remaining_length_ = message_header_.message_length_;
           message_buffer_ = std::make_unique<unsigned char[]>(remaining_length_);
+          MS_EXCEPTION_IF_NULL(message_buffer_);
           buffer_data += (i + 1);
           break;
         }
@@ -75,6 +76,7 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
       if (remaining_length_ == 0) {
         if (message_callback_) {
           std::shared_ptr<MessageMeta> pb_message = std::make_shared<MessageMeta>();
+          MS_EXCEPTION_IF_NULL(pb_message);
           CHECK_RETURN_TYPE(
             pb_message->ParseFromArray(message_buffer_.get(), UintToInt(message_header_.message_meta_length_)));
           message_callback_(pb_message, message_header_.message_proto_,

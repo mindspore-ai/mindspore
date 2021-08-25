@@ -29,6 +29,7 @@
 #include <condition_variable>
 #include <utility>
 #include <tuple>
+#include <map>
 
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
@@ -69,7 +70,7 @@ class Node {
 
   bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
-  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta>, const Protos &,
+  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &, const Protos &,
                        const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
 
  protected:
@@ -85,6 +86,10 @@ class Node {
   uint64_t AddMessageTrack(const uint32_t &expected_response);
   bool CheckMessageTrack(const uint64_t &request_id);
   void NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta);
+  void set_message_callback(const uint64_t &request_id, const MessageCallback &callback);
+  void ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                           size_t size);
+  void RunMessageCallback(const uint64_t &request_id);
 
   NodeInfo node_info_;
   std::atomic<bool> is_ready_;
@@ -119,6 +124,17 @@ class Node {
   std::unique_ptr<Configuration> config_;
   // Used to synchronize the connected nodes
   std::mutex client_mutex_;
+
+  // the key is: request_id
+  std::unordered_map<uint64_t, MessageCallback> message_callbacks_;
+  std::mutex message_callbacks_mutex_;
+
+  // the key is: request_id, the value is: <rank_id, RecvMessage>
+  std::unordered_map<uint64_t, std::unordered_map<uint32_t, VectorPtr>> receive_messages_;
+  // the key is: request_id, the value is: <rank_id, RecvMessage>
+  std::unordered_map<uint64_t, std::unordered_map<uint32_t, VectorPtr>> workder_receive_messages_;
+  std::map<std::pair<uint32_t, uint64_t>, bool> receive_messages_done_;
+  std::mutex receive_messages_mutex_;
 };
 }  // namespace core
 }  // namespace ps

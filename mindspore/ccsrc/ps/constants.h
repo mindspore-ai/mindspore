@@ -152,6 +152,12 @@ constexpr int64_t kBaseYear = 1900;
 constexpr int64_t kMinWarningTime = 7;
 constexpr int64_t kMaxWarningTime = 180;
 
+constexpr int64_t kLength = 100;
+constexpr int64_t kMaxPort = 65535;
+
+constexpr char kTcpCommunicator[] = "TCP";
+constexpr char kHttpCommunicator[] = "HTTP";
+
 constexpr char kServerCert[] = "server.p12";
 constexpr char kClientCert[] = "client.p12";
 constexpr char kCaCert[] = "ca.crt";

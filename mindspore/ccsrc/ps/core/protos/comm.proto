@@ -64,7 +64,7 @@ message RegisterMessage {
   // ip
   string ip = 1;
   // the port of this node
-  int32 port = 2;
+  uint32 port = 2;
   // the current Node unique id:0,1,2...
   string node_id = 3;
   // the role of the node: worker,server,scheduler
@@ -93,6 +93,9 @@ enum ClusterState {
   NODE_TIMEOUT = 3;
   CLUSTER_SCALE_OUT = 4;
   CLUSTER_SCALE_IN = 5;
+  CLUSTER_NEW_INSTANCE = 6;
+  CLUSTER_ENABLE_FLS = 7;
+  CLUSTER_DISABLE_FLS = 8;
 }
 
 message HeartbeatRespMessage {
@@ -177,4 +180,8 @@ message EventMessage {
 // scheduler broadcasts the event to all other nodes through this message
 message EventRespMessage {
   uint32 event = 1;
+}
+
+message ScaleInFinishMessage {
+  bool is_all_nodes_registered = 1;
 }

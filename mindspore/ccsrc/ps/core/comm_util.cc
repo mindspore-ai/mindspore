@@ -56,6 +56,14 @@ bool CommUtil::CheckIp(const std::string &ip) {
   return true;
 }
 
+bool CommUtil::CheckPort(const uint16_t &port) {
+  if (port > 65535) {
+    MS_LOG(ERROR) << "The range of port should be 1 to 65535.";
+    return false;
+  }
+  return true;
+}
+
 void CommUtil::GetAvailableInterfaceAndIP(std::string *interface, std::string *ip) {
   MS_EXCEPTION_IF_NULL(interface);
   MS_EXCEPTION_IF_NULL(ip);

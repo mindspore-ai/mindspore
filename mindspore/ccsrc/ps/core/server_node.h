@@ -38,9 +38,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-constexpr char kTcpCommunicator[] = "TCP";
-constexpr char kHttpCommunicator[] = "HTTP";
-
 class ServerNode : public AbstractNode {
  public:
   ServerNode() = default;
@@ -51,31 +48,8 @@ class ServerNode : public AbstractNode {
   bool Stop() override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 
-  using RequestHandler =
-    std::function<void(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
-                       const DataPtr &data, size_t size)>;
-
-  void set_handler(const RequestHandler &handler);
-  void Response(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta, const void *data,
-                size_t size);
-
-  std::shared_ptr<CommunicatorBase> GetOrCreateHttpComm(const std::string &ip, uint16_t port,
-                                                        const std::shared_ptr<TaskExecutor> &task_executor);
-  std::shared_ptr<CommunicatorBase> GetOrCreateTcpComm(const std::string &scheduler_ip, uint16_t scheduler_port,
-                                                       uint32_t worker_num, uint32_t server_num,
-                                                       const std::shared_ptr<TaskExecutor> &task_executor);
-
  private:
-  void CreateTcpServer();
   void Initialize();
-  void ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
-                       const Protos &protos, const void *data, size_t size);
-  void ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
-                                 const void *data, size_t size);
-
-  RequestHandler request_handler_;
-  std::unordered_map<std::string, std::shared_ptr<CommunicatorBase>> communicators_;
-  std::mutex communicator_mutex_;
 };
 }  // namespace core
 }  // namespace ps

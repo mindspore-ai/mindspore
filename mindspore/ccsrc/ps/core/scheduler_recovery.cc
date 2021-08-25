@@ -20,10 +20,14 @@ namespace mindspore {
 namespace ps {
 namespace core {
 void SchedulerRecovery::Persist(const std::string &key, const std::string &value) {
+  MS_EXCEPTION_IF_NULL(recovery_storage_);
   recovery_storage_->Put(key, value);
 }
 
-std::string SchedulerRecovery::GetMetadata(const std::string &key) { return recovery_storage_->Get(key, ""); }
+std::string SchedulerRecovery::GetMetadata(const std::string &key) {
+  MS_EXCEPTION_IF_NULL(recovery_storage_);
+  return recovery_storage_->Get(key, "");
+}
 
 bool SchedulerRecovery::Recover() { return true; }
 }  // namespace core

@@ -43,9 +43,12 @@ bool Node::WaitForStart(const uint32_t &timeout) {
 
 bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
                            const uint32_t &timeout) {
+  MS_EXCEPTION_IF_NULL(client);
   uint64_t request_id = AddMessageTrack(1);
   const_cast<CommMessage &>(message).mutable_pb_meta()->set_request_id(request_id);
-  client->SendMessage(message);
+  if (!client->SendMessage(message)) {
+    MS_LOG(WARNING) << "Client send message failed.";
+  }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
   return Wait(request_id, timeout);
@@ -58,20 +61,24 @@ uint64_t Node::SendMessageAsync(const std::shared_ptr<TcpClient> &client, const 
   MS_EXCEPTION_IF_NULL(data);
   uint64_t request_id = AddMessageTrack(1);
   meta->set_request_id(request_id);
-  client->SendMessage(meta, protos, data, size);
+  if (!client->SendMessage(meta, protos, data, size)) {
+    MS_LOG(WARNING) << "Client send message failed.";
+  }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
   return request_id;
 }
 
-bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta> meta,
+bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                            const Protos &protos, const void *data, size_t size, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(client);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   uint64_t request_id = AddMessageTrack(1);
   meta->set_request_id(request_id);
-  client->SendMessage(meta, protos, data, size);
+  if (!client->SendMessage(meta, protos, data, size)) {
+    MS_LOG(WARNING) << "Client send message failed.";
+  }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
   return Wait(request_id, timeout);
@@ -80,10 +87,13 @@ bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared
 bool Node::Wait(uint64_t request_id, const uint32_t &timeout) {
   std::unique_lock<std::mutex> lock(message_tracker_mutex_);
   bool res = message_tracker_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] {
-    bool ret = message_tracker_[request_id].first == message_tracker_[request_id].second;
-    return ret;
+    if (message_tracker_.count(request_id)) {
+      bool ret = message_tracker_[request_id].first == message_tracker_[request_id].second;
+      return ret;
+    }
+    return false;
   });
-  message_tracker_.erase(request_id);
+  (void)message_tracker_.erase(request_id);
   return res;
 }
 
@@ -96,20 +106,96 @@ uint64_t Node::AddMessageTrack(const uint32_t &expected_response) {
 
 bool Node::CheckMessageTrack(const uint64_t &request_id) {
   std::lock_guard<std::mutex> lock(message_tracker_mutex_);
-  return message_tracker_[request_id].first == message_tracker_[request_id].second + 1;
+  if (message_tracker_.count(request_id)) {
+    return message_tracker_[request_id].first == message_tracker_[request_id].second + 1;
+  }
+  MS_LOG(INFO) << "The message tracker is not contain the id:" << request_id;
+  return false;
 }
 
 void Node::NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta) {
   std::lock_guard<std::mutex> lock(message_tracker_mutex_);
   uint64_t request_id = meta->request_id();
-
   if (message_tracker_.count(request_id)) {
     message_tracker_[request_id].second++;
-  } else {
-    MS_LOG(WARNING) << "The request id:" << request_id << " is removed.";
+    message_tracker_cond_.notify_all();
   }
+}
 
-  message_tracker_cond_.notify_all();
+void Node::set_message_callback(const uint64_t &request_id, const MessageCallback &callback) {
+  if (!callback) {
+    return;
+  }
+  std::lock_guard<std::mutex> lock(message_callbacks_mutex_);
+  message_callbacks_[request_id] = callback;
+}
+
+void Node::ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data,
+                               size_t size) {
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  std::lock_guard<std::mutex> lock(receive_messages_mutex_);
+  const uint32_t &rank_id = meta->rank_id();
+  const uint64_t request_id = meta->request_id();
+  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
+  if (meta->role() == NodeRole::SERVER) {
+    auto it = receive_messages_.find(request_id);
+    VectorPtr received_data = std::make_shared<std::vector<unsigned char>>(size, 0);
+    if (size > 0) {
+      size_t dest_size = size;
+      size_t src_size = size;
+      auto ret = memcpy_s(received_data.get()->data(), dest_size, data, src_size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+      }
+    }
+    if (it != receive_messages_.end()) {
+      it->second[rank_id] = received_data;
+    } else {
+      std::unordered_map<uint32_t, VectorPtr> res;
+      (void)res.insert(std::make_pair(rank_id, received_data));
+      receive_messages_[request_id] = res;
+    }
+  } else {
+    auto it = workder_receive_messages_.find(request_id);
+    VectorPtr received_data = std::make_shared<std::vector<unsigned char>>(size, 0);
+    if (size > 0) {
+      size_t dest_size = size;
+      size_t src_size = size;
+      auto ret = memcpy_s(received_data.get()->data(), dest_size, data, src_size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+      }
+    }
+    if (it != workder_receive_messages_.end()) {
+      it->second[rank_id] = received_data;
+    } else {
+      std::unordered_map<uint32_t, VectorPtr> res;
+      (void)res.insert(std::make_pair(rank_id, received_data));
+      workder_receive_messages_[request_id] = res;
+    }
+  }
+}
+
+void Node::RunMessageCallback(const uint64_t &request_id) {
+  message_callbacks_mutex_.lock();
+  // When receiving a message's response, Then compare with the desired number of responses,
+  // If they are equal, then call the callback function
+  if (CheckMessageTrack(request_id)) {
+    auto it = message_callbacks_.find(request_id);
+    if (it != message_callbacks_.end()) {
+      message_callbacks_mutex_.unlock();
+
+      if (it->second) {
+        it->second();
+      }
+
+      message_callbacks_mutex_.lock();
+      message_callbacks_.erase(it);
+    }
+  }
+  message_callbacks_mutex_.unlock();
 }
 }  // namespace core
 }  // namespace ps

@@ -59,7 +59,6 @@ class NodeManager {
   uint32_t NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta);
 
   void UpdateHeartbeat(const std::string &node_id);
-
   std::vector<ServersMeta> FetchServersMeta();
   // Fetch metadata information of all nodes.
   std::vector<ServersMeta> FetchAllNodesMeta();
@@ -87,13 +86,13 @@ class NodeManager {
   // nodes and Determine whether the nodes are equal to total_node_num_.
   bool IsAllNodesScaleInDone() const;
 
-  std::unordered_map<std::string, NodeInfo> &nodes_info();
-  std::unordered_map<std::string, NodeInfo> &registered_nodes_info();
+  const std::unordered_map<std::string, NodeInfo> &nodes_info() const;
+  const std::unordered_map<std::string, NodeInfo> &registered_nodes_info() const;
   // After all the nodes are registered successfully, the nodes info can be updated.
   void UpdateNodesInfo();
 
   void set_total_node_num(const int32_t &node_num);
-  const int32_t &total_node_num();
+  const int32_t &total_node_num() const;
   void set_worker_num(const int32_t &worker_num);
   void set_server_num(const int32_t &server_num);
   int32_t worker_num() const;
@@ -108,8 +107,10 @@ class NodeManager {
   // will re-register.
   void ResetMetadata(const std::vector<std::string> &scale_in_nodes = {});
 
-  // Recovery currently does not support worker or server0 node downtime.
   bool IsWorkerOrServer0();
+
+  // Determine whether the node id has been registered.
+  bool IsNodeRegistered(const std::string &node_id);
 
  private:
   std::mutex node_mutex_;

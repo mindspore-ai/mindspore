@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_CLIENT_NODE_H_
-#define MINDSPORE_CCSRC_PS_CORE_CLIENT_NODE_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_WORKER_NODE_H_
+#define MINDSPORE_CCSRC_PS_CORE_WORKER_NODE_H_
 
 #include <cstdlib>
 #include <iostream>
@@ -43,10 +43,9 @@ class WorkerNode : public AbstractNode {
 
  private:
   void Initialize();
-  void CreateTcpServer();
 };
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PS_CORE_CLIENT_NODE_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_WORKER_NODE_H_

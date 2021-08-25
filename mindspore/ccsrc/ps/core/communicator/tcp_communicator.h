@@ -55,17 +55,21 @@ const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kStartFLJob, "startFLJob"},
   {TcpUserCommand::kUpdateModel, "updateModel"},
   {TcpUserCommand::kGetModel, "getModel"},
-  {TcpUserCommand::kPushMetrics, "pushMetrics"}};
+  {TcpUserCommand::kPushMetrics, "pushMetrics"},
+  {TcpUserCommand::kNewInstance, "newInstance"},
+  {TcpUserCommand::kQueryInstance, "queryInstance"},
+  {TcpUserCommand::kEnableFLS, "enableFLS"},
+  {TcpUserCommand::kDisableFLS, "disableFLS"}};
 
 class TcpCommunicator : public CommunicatorBase {
  public:
-  explicit TcpCommunicator(const std::shared_ptr<TaskExecutor> &task_executor, ServerNode *node)
+  explicit TcpCommunicator(const std::shared_ptr<TaskExecutor> &task_executor, AbstractNode *node)
       : task_executor_(task_executor),
         server_num_(0),
         worker_num_(0),
         scheduler_ip_(""),
         scheduler_port_(0),
-        server_node_(node) {}
+        abstrace_node_(node) {}
   ~TcpCommunicator() = default;
 
   bool Start() override;
@@ -73,8 +77,6 @@ class TcpCommunicator : public CommunicatorBase {
 
   void RegisterMsgCallBack(const std::string &msg_type, const MessageCallback &cb) override;
   void RegisterEventCallback(const core::ClusterEvent &event, const EventCallback &event_cb);
-
-  ServerNode *server_node();
 
   template <class T>
   bool SendPbRequest(const T &pb_msg, const uint32_t &rank_id, TcpUserCommand command,
@@ -90,12 +92,12 @@ class TcpCommunicator : public CommunicatorBase {
     }
 
     if (output != nullptr) {
-      if (!server_node_->Send(NodeRole::SERVER, rank_id, msg, msg_str.size(), static_cast<int>(command), output)) {
+      if (!abstrace_node_->Send(NodeRole::SERVER, rank_id, msg, msg_str.size(), static_cast<int>(command), output)) {
         MS_LOG(ERROR) << "Sending protobuffer message to server " << rank_id << " failed.";
         return false;
       }
     } else {
-      if (!server_node_->Send(NodeRole::SERVER, rank_id, msg, msg_str.size(), static_cast<int>(command))) {
+      if (!abstrace_node_->Send(NodeRole::SERVER, rank_id, msg, msg_str.size(), static_cast<int>(command))) {
         MS_LOG(ERROR) << "Sending protobuffer message to server " << rank_id << " failed.";
         return false;
       }
@@ -115,7 +117,7 @@ class TcpCommunicator : public CommunicatorBase {
   std::string scheduler_ip_;
   uint16_t scheduler_port_;
 
-  ServerNode *server_node_;
+  AbstractNode *abstrace_node_;
 };
 }  // namespace core
 }  // namespace ps

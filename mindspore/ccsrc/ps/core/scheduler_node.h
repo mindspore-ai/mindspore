@@ -40,6 +40,7 @@
 #include "ps/core/communicator/http_server.h"
 #include "ps/core/leader_scaler.h"
 #include "ps/core/recovery_base.h"
+#include "ps/core/instance_manager.h"
 
 namespace mindspore {
 namespace ps {
@@ -90,6 +91,7 @@ class SchedulerNode : public Node {
   // Process scale_in_done messages from workers/servers
   void ProcessScaleInDone(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
   // Process scale_in_done messages from workers/servers
   void ProcessSendEvent(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
                         const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
@@ -110,16 +112,28 @@ class SchedulerNode : public Node {
   void SendEvent(const std::shared_ptr<TcpClient> &client, const uint32_t &event);
 
   // Handle the scale out http request, then delegate to the leader scaler to process scale out asynchronously.
-  void ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp);
+  void ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &resp);
 
   // Handle the scale in http request, then delegate to the leader scaler to process scale in asynchronously.
-  void ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp);
+  void ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &resp);
 
   // Handle the get nodes info http request Synchronously.
-  void ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp);
+  void ProcessGetNodesInfo(const std::shared_ptr<HttpMessageHandler> &resp);
 
   // Handle the get cluster state http request Synchronously.
-  void ProcessGetClusterState(std::shared_ptr<HttpMessageHandler> resp);
+  void ProcessGetClusterState(const std::shared_ptr<HttpMessageHandler> &resp);
+
+  // Handle the new instance http request Synchronously.
+  void ProcessNewInstance(const std::shared_ptr<HttpMessageHandler> &resp);
+
+  // Handle the query instance http request Synchronously.
+  void ProcessQueryInstance(const std::shared_ptr<HttpMessageHandler> &resp);
+
+  // Handle the enable FLS http request Synchronously.
+  void ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &resp);
+
+  // Handle the disable FLS http request Synchronously.
+  void ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> &resp);
 
   // check whether the cluster is in the ready state.
   RequestProcessResult CheckIfClusterReady();
@@ -155,6 +169,8 @@ class SchedulerNode : public Node {
 
   // The node id of scale in nodes.
   std::vector<std::string> scale_in_node_ids_;
+
+  std::unique_ptr<InstanceManager> instance_manager_;
 };
 }  // namespace core
 }  // namespace ps

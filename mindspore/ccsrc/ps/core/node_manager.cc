@@ -24,10 +24,13 @@ void NodeManager::InitNode() {
                             PSContext::instance()->cluster_config().initial_worker_num;
   meta_data_ = std::make_unique<ClusterMetadata>(PSContext::instance()->cluster_config().initial_worker_num,
                                                  PSContext::instance()->cluster_config().initial_server_num);
+  MS_EXCEPTION_IF_NULL(meta_data_);
   total_node_num_ = initial_total_node_num_;
 }
 
 uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta) {
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(meta_data_);
   std::lock_guard<std::mutex> lock(assign_rank_id_mutex_);
   uint32_t rank_id = UINT_MAX;
 
@@ -38,7 +41,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     rank_id = registered_nodes_info_[node_id].rank_id_;
     registered_nodes_info_[node_id].is_alive = true;
     registered_nodes_info_[node_id].ip_ = new_ip;
-    registered_nodes_info_[node_id].port_ = new_port;
+    registered_nodes_info_[node_id].port_ = static_cast<uint16_t>(new_port);
     MS_LOG(INFO) << "The node id: " << node_id << " is already assigned!";
     return rank_id;
   }
@@ -177,7 +180,7 @@ void NodeManager::UpdateCluster() {
   if (!timeout_nodes_info_.empty()) {
     UpdateClusterState(ClusterState::NODE_TIMEOUT);
     for (auto iter = timeout_nodes_info_.begin(); iter != timeout_nodes_info_.end(); ++iter) {
-      heartbeats_.erase(iter->first);
+      (void)heartbeats_.erase(iter->first);
       finish_nodes_id_.insert(iter->first);
     }
   }
@@ -195,7 +198,7 @@ void NodeManager::CheckClusterTimeout() {
                     << PSContext::instance()->cluster_config().cluster_available_timeout
                     << " seconds,so finish the cluster, and change total node number from " << total_node_num_ << " to "
                     << registered_nodes_info_.size();
-    current_node_num_ = registered_nodes_info_.size();
+    current_node_num_ = SizeToInt(registered_nodes_info_.size());
     UpdateClusterState(ClusterState::NODE_TIMEOUT);
   }
 }
@@ -220,9 +223,11 @@ bool NodeManager::IsAllNodesScaleOutDone() const {
 
 bool NodeManager::IsAllNodesScaleInDone() const { return SizeToInt(scale_in_done_nodes_id_.size()) == total_node_num_; }
 
-std::unordered_map<std::string, NodeInfo> &NodeManager::nodes_info() { return nodes_info_; }
+const std::unordered_map<std::string, NodeInfo> &NodeManager::nodes_info() const { return nodes_info_; }
 
-std::unordered_map<std::string, NodeInfo> &NodeManager::registered_nodes_info() { return registered_nodes_info_; }
+const std::unordered_map<std::string, NodeInfo> &NodeManager::registered_nodes_info() const {
+  return registered_nodes_info_;
+}
 
 void NodeManager::UpdateNodesInfo() {
   MS_LOG(INFO) << "Update nodes info.";
@@ -285,13 +290,20 @@ bool NodeManager::IsWorkerOrServer0() {
   return res;
 }
 
+bool NodeManager::IsNodeRegistered(const std::string &node_id) {
+  if (registered_nodes_info_.find(node_id) != registered_nodes_info_.end()) {
+    return true;
+  }
+  return false;
+}
+
 void NodeManager::set_total_node_num(const int32_t &node_num) { total_node_num_ = node_num; }
 
-const int32_t &NodeManager::total_node_num() { return total_node_num_; }
+const int32_t &NodeManager::total_node_num() const { return total_node_num_; }
 
-void NodeManager::set_worker_num(const int32_t &worker_num) { meta_data_->worker_num = worker_num; }
+void NodeManager::set_worker_num(const int32_t &worker_num) { meta_data_->worker_num = IntToUint(worker_num); }
 
-void NodeManager::set_server_num(const int32_t &server_num) { meta_data_->server_num = server_num; }
+void NodeManager::set_server_num(const int32_t &server_num) { meta_data_->server_num = IntToUint(server_num); }
 
 int32_t NodeManager::worker_num() const { return UintToInt(meta_data_->worker_num); }
 

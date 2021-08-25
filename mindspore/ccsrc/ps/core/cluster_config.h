@@ -58,7 +58,7 @@ struct ClusterConfig {
   // The timeout period for the client to connect to the server is 3000ms.
   uint32_t connect_interval;
   // When the scheduler exits, the worker and server can continue to work for 5 hours
-  uint32_t scheduler_timeout;
+  int64_t scheduler_timeout;
 };
 }  // namespace core
 }  // namespace ps
