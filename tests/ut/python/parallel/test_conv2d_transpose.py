@@ -112,6 +112,26 @@ def test_conv2d_transpose_all_rank_no_need_overlap():
     compile_net(net)
 
 
+def test_conv2d_transpose_split_h_or_w_in_pad_mode():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    strategy1 = ((2, 2, 1, 4), (2, 1, 1, 1))
+    strategy2 = ((2, 2, 1, 4),)
+    net = Net2(_w1, out_channel=8, kernel_size=(2, 2), pad_mode="pad", stride=2,
+               strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
+def test_conv2d_transpose_split_h_in_same_mode():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    strategy1 = ((2, 2, 4, 1), (2, 1, 1, 1))
+    strategy2 = ((2, 2, 1, 4),)
+    net = Net2(_w1, out_channel=8, kernel_size=(2, 2), pad_mode="same", stride=2,
+               strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
 def test_conv2d_transpose_overlap_size_too_large():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
