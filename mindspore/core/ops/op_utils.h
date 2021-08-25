@@ -76,6 +76,7 @@ constexpr auto kFftLength = "fft_length";
 constexpr auto kFilterBankChannelNum = "filter_bank_channel_num";
 constexpr auto kFlip = "flip";
 constexpr auto kFormat = "format";
+constexpr auto kOriginalFormat = "OriginalFormat";
 constexpr auto kFreqLowerLimit = "freq_lower_limit";
 constexpr auto kFreqUpperLimit = "freq_upper_limit";
 constexpr auto kFreezeBn = "freeze_bn";

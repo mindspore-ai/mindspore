@@ -33,7 +33,7 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
   prim->set_group(1);
 
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim->set_format(format);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
 
   std::vector<int64_t> dilations(2);
   if (ParseDilations(tf_op, format, &dilations) != RET_OK) {

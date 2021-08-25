@@ -20,13 +20,13 @@
 #include <map>
 #include <memory>
 #include "ops/resize.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Resize>();
-
-  prim->set_format(mindspore::Format::NCHW);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_nearest_mode(mindspore::NearestMode::ROUND_HALF_DOWN);
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {

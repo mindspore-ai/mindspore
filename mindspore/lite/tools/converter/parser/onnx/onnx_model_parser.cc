@@ -253,8 +253,8 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
       status = RET_ERROR;
       continue;
     }
-    if (primitive_c->GetAttr(ops::kFormat) == nullptr) {
-      primitive_c->AddAttr(mindspore::ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
+    if (primitive_c->GetAttr(ops::kOriginalFormat) == nullptr) {
+      primitive_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCHW));
     }
     status = ConvertOpQuantParams(onnx_node, primitive_c);
     if (status != RET_OK) {

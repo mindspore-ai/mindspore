@@ -23,6 +23,7 @@
 #include "base/float16.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/transpose.h"
+#include "ops/gather.h"
 #include "tools/converter/ops/ops_def.h"
 #include "src/common/common.h"
 #include "tools/common/tensor_util.h"
@@ -1506,6 +1507,37 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSizeTwo, 1);
   auto trans_insert_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   trans_insert_prim->AddAttr("quant_params", quant_params_holder);
+  return cnode;
+}
+
+CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &indices,
+                       const std::string &cnode_name) {
+  MS_ASSERT(func_graph != nullptr && input_node != nullptr);
+  auto indices_node = BuildIntVecParameterNode(func_graph, indices, cnode_name + "_indices");
+  if (indices_node == nullptr) {
+    MS_LOG(ERROR) << "make indices node failed.";
+    return nullptr;
+  }
+  auto axis_node = BuildIntVecParameterNode(func_graph, {0}, cnode_name + "_indices");
+  if (axis_node == nullptr) {
+    MS_LOG(ERROR) << "make indices node failed.";
+    return nullptr;
+  }
+  auto gather_prim = std::make_shared<ops::Gather>();
+  MS_ASSERT(gather_prim != nullptr);
+  auto cnode = func_graph->NewCNode(gather_prim, {input_node, indices_node, axis_node});
+  MS_ASSERT(cnode != nullptr);
+  auto manager = Manage(func_graph);
+  MS_ASSERT(manager != nullptr);
+  auto tr = manager->Transact();
+  tr.SetEdge(cnode, 1, input_node);
+  tr.SetEdge(cnode, kInputIndexTwo, indices_node);
+  tr.SetEdge(cnode, kInputIndexThree, axis_node);
+  tr.Commit();
+  cnode->set_fullname_with_scope(cnode_name);
+  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSizeThree, 1);
+  auto gather_insert_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  gather_insert_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;
 }
 

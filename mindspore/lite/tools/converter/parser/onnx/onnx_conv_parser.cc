@@ -184,7 +184,7 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
       }
     }
   }
-  prim->set_format(format);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
   prim->set_pad_mode(pad_mode);
   prim->set_group(group);
 
@@ -193,7 +193,7 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
     return nullptr;
   }
   if (conv1d) {
-    prim->set_format(mindspore::Format::NCW);
+    prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCW));
   }
   prim->set_dilation({1, 1});
   if (!dilation.empty()) {

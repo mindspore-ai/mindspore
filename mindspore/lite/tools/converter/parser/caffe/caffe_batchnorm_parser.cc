@@ -27,7 +27,7 @@ ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
   auto prim = std::make_unique<ops::BatchNorm>();
 
   prim->set_is_training(false);
-  prim->set_format(mindspore::NCHW);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
 
   const caffe::BatchNormParameter &batchNormParam = proto.batch_norm_param();
   if (proto.bottom_size() != 1) {

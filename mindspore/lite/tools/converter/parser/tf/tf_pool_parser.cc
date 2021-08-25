@@ -40,7 +40,7 @@ ops::PrimitiveC *TFMaxPoolParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim->set_format(format);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "strides", &attr_value)) {
     const auto &stride_list = attr_value.list();
@@ -83,7 +83,7 @@ ops::PrimitiveC *TFAvgPoolParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim->set_format(format);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "strides", &attr_value)) {
     const auto &stride_list = attr_value.list();

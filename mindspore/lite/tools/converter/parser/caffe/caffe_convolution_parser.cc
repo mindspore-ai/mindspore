@@ -26,7 +26,7 @@ ops::PrimitiveC *CaffeConvolutionParser::Parse(const caffe::LayerParameter &prot
 
   prim->set_pad({0, 0, 0, 0});
   prim->set_pad_mode(mindspore::PadMode::PAD);
-  prim->set_format(mindspore::Format::NCHW);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_activation_type(mindspore::NO_ACTIVATION);
 
   const caffe::ConvolutionParameter &convParam = proto.convolution_param();

@@ -177,10 +177,10 @@ STATUS TfliteModelParser::ConvertOps() {
       }
       const auto &input_tensor = tflite_subgraph->tensors[input_idx];
       auto type_id = GetTfliteDataType(input_tensor.get()->type);
-      if (i == 0 && type_id != kNumberTypeUInt8) {
-        is_uint8_weight_quant = true;
-      }
       if (nodes_.find(input_idx) != nodes_.end()) {
+        if (utils::isa<CNodePtr>(nodes_[input_idx]) && type_id != kNumberTypeUInt8) {
+          is_uint8_weight_quant = true;
+        }
         op_inputs.emplace_back(nodes_.at(input_idx));
         continue;
       }
