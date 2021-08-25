@@ -57,4 +57,5 @@ REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Shape, LiteKernelCreator<ShapeC
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Shape, LiteKernelCreator<ShapeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Shape, LiteKernelCreator<ShapeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Shape, LiteKernelCreator<ShapeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_Shape, LiteKernelCreator<ShapeCPUKernel>)
 }  // namespace mindspore::kernel

@@ -108,6 +108,16 @@ STATUS OnnxInputAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph
   return lite::RET_OK;
 }
 
+bool ValidParameterNode(const ParameterPtr &param_node) {
+  MS_ASSERT(param_node != nullptr);
+  if (!param_node->has_default()) {
+    return true;
+  }
+  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
+  MS_ASSERT(tensor_info != nullptr);
+  return tensor_info->Size() != 0;
+}
+
 STATUS OnnxInputAdjust::AdjustResize(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto node = cnode->input(0);
@@ -120,17 +130,49 @@ STATUS OnnxInputAdjust::AdjustResize(const CNodePtr &cnode) {
   if (resize_prim->GetAttr(ops::kCoordinateTransformMode) == nullptr) {
     return lite::RET_OK;
   }
-  if (cnode->inputs().size() > opt::kInputSizeFour &&
-      resize_prim->get_coordinate_transform_mode() == mindspore::HALF_PIXEL) {
-    std::vector<AnfNodePtr> new_resize_inputs;
-    new_resize_inputs.push_back(cnode->inputs()[0]);
-    new_resize_inputs.push_back(cnode->inputs()[1]);
-    new_resize_inputs.push_back(cnode->inputs()[opt::kInputIndexFour]);
-    cnode->set_inputs(new_resize_inputs);
-  } else if (cnode->inputs().size() == opt::kInputSizeFour) {
+  if (cnode->inputs().size() == opt::kInputSizeFour) {
     auto new_input = cnode->inputs();
     new_input.erase(new_input.begin() + opt::kInputIndexTwo);
     cnode->set_inputs(new_input);
+  } else if (cnode->inputs().size() > opt::kInputSizeFour) {
+    std::vector<AnfNodePtr> new_resize_inputs;
+    new_resize_inputs.push_back(cnode->inputs()[0]);
+    new_resize_inputs.push_back(cnode->inputs()[1]);
+
+    // remove roi and checkout the scale or size as the third input.
+    int shape_index = opt::kInputIndexFour;
+    auto scale_node = cnode->inputs()[opt::kInputIndexThree];
+    auto size_node = cnode->inputs()[opt::kInputIndexFour];
+    MS_ASSERT(scale_node != nullptr);
+    MS_ASSERT(size_node != nullptr);
+    if (scale_node->isa<CNode>() && size_node->isa<CNode>()) {
+      MS_LOG(ERROR) << "One of scale and size should be specified.";
+      return lite::RET_ERROR;
+    } else if ((scale_node->isa<CNode>() && size_node->isa<Parameter>()) ||
+               (scale_node->isa<Parameter>() && size_node->isa<CNode>())) {
+      auto param_node =
+        scale_node->isa<Parameter>() ? scale_node->cast<ParameterPtr>() : size_node->cast<ParameterPtr>();
+      MS_ASSERT(param_node != nullptr);
+      if (ValidParameterNode(param_node)) {
+        MS_LOG(ERROR) << "One of scale and size should be specified.";
+        return lite::RET_ERROR;
+      }
+      shape_index = scale_node->isa<CNode>() ? opt::kInputIndexThree : opt::kInputIndexFour;
+    } else if (scale_node->isa<Parameter>() && size_node->isa<Parameter>()) {
+      auto scale_param = scale_node->cast<ParameterPtr>();
+      auto size_param = size_node->cast<ParameterPtr>();
+      MS_ASSERT(scale_param != nullptr);
+      MS_ASSERT(size_param != nullptr);
+      bool is_scale_valid = ValidParameterNode(scale_param);
+      bool is_size_valid = ValidParameterNode(size_param);
+      if (!(is_scale_valid ^ is_size_valid)) {
+        MS_LOG(ERROR) << "One of scale and size should be specified.";
+        return lite::RET_ERROR;
+      }
+      shape_index = is_scale_valid ? opt::kInputIndexThree : opt::kInputIndexFour;
+    }
+    new_resize_inputs.push_back(cnode->inputs()[shape_index]);
+    cnode->set_inputs(new_resize_inputs);
   }
   return lite::RET_OK;
 }
