@@ -13,12 +13,24 @@
 # limitations under the License.
 # ============================================================================
 
-"""grad experimental impl."""
-from .._grad.grad_base import get_bprop_fn
-from . import grad_array_ops
-from . import grad_inner_ops
-from . import grad_nn_ops
-from . import grad_comm_ops
-from . import grad_math_ops
+"""Erfinv op"""
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-__all__ = ['get_bprop_fn']
+erfinv_op_info = TBERegOp("Erfinv") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("erfinv.so") \
+    .compute_cost(10) \
+    .kernel_name("erfinv") \
+    .partial_flag(True) \
+    .input(0, "input_x", False, "required", "all") \
+    .output(0, "output", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
+
+
+@op_info_register(erfinv_op_info)
+def _erfinv_tbe():
+    """Erfinv TBE register"""
+    return

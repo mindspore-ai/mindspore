@@ -16,6 +16,7 @@
 """Define the grad rules of math related operations."""
 
 from mindspore.common import dtype as mstype
+import numpy as np
 from .. import functional as F
 from .. import operations as P
 from .._grad.grad_base import bprop_getters
@@ -43,5 +44,23 @@ def get_bprop_index_lerp(self):
         dstart = F.cast(dstart, F.dtype(start))
         dend = F.cast(dend, F.dtype(end))
         return dstart, dend, dweight
+
+    return bprop
+
+
+@bprop_getters.register(P.Erfinv)
+def get_bprop_erfinv(self):
+    """Grad definition for `Erfinv` operation."""
+    exp = P.Exp()
+    square = P.Square()
+    sqrt = P.Sqrt()
+    cast = P.Cast()
+    dtype = P.DType()
+
+    def bprop(input_x, out, dout):
+        root_pi_over_two = cast(sqrt(F.scalar_to_tensor(np.pi)) / 2, dtype(dout))
+        dout_square = square(dout)
+        dx = dout * root_pi_over_two * exp(dout_square)
+        return (dx,)
 
     return bprop

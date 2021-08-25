@@ -5262,3 +5262,36 @@ class IndexAdd(PrimitiveWithInfer):
             if dim != axis:
                 validator.check('x dim %d' % dim, x_shape[dim], "y dim %d" % dim, y_shape[dim], Rel.EQ, self.name)
         return x_shape
+
+
+class Erfinv(Primitive):
+    r"""
+    Computes the inverse error function of input. The inverse error function is defined in the range (-1, 1) as:
+
+    .. math::
+                                erfinv(erf(x)) = x
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor to compute to, with data type float32, float16.
+
+    Outputs:
+        Tensor, has the same shape and dtype as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is not one of: float32, float16.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
+        >>> erfinv = P.Erfinv()
+        >>> output = erfinv(x)
+        >>> print(output)
+        [ 0.          0.47695306 -1.1630805 ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Erfinv"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])

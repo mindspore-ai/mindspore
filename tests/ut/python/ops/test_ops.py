@@ -1667,6 +1667,10 @@ test_case_math_ops = [
                         Tensor(np.random.rand(4).astype(np.int32))],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('Erfinv', {
+        'block': P.Erfinv(),
+        'desc_inputs': [Tensor(np.array([0.1, 0.1, 0.1]).astype(np.float16))],
+        'desc_bprop': [Tensor(np.array([1, 1, 1]).astype(np.float16))]}),
 ]
 
 test_case_nn_ops = [
