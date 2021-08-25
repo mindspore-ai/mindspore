@@ -203,6 +203,20 @@ def test_multihead_attention():
     _executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
 
 
+def test_multihead_attention_wrong_batch():
+    model = MultiHeadAttention(hidden_size=15,
+                               src_seq_length=20,
+                               tgt_seq_length=20,
+                               batch_size=2,
+                               num_heads=3)
+    from_tensor = Tensor(np.ones((3, 20, 15)), dtype.float32)
+    to_tensor = Tensor(np.ones((3, 20, 15)), dtype.float16)
+    attention_mask = Tensor(np.ones((3, 20, 20)), dtype.float16)
+
+    with pytest.raises(ValueError):
+        _executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
+
+
 def test_feedforward_layer():
     model = FeedForward(hidden_size=15,
                         ffn_hidden_size=30,

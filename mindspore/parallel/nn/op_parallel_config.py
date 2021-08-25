@@ -21,6 +21,7 @@ from mindspore import context
 import mindspore.communication.management as D
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_parallel_mode
+from mindspore import log as logger
 
 __all__ = [
     "OpParallelConfig"
@@ -56,8 +57,8 @@ class OpParallelConfig(_Config):
     def __init__(self, data_parallel=1, model_parallel=1):
         Validator.check_positive_int(data_parallel, "data_parallel")
         Validator.check_positive_int(model_parallel, "model_parallel")
-        self._data_parallel = data_parallel
-        self._model_parallel = model_parallel
+        self.data_parallel = data_parallel
+        self.model_parallel = model_parallel
 
     @property
     def data_parallel(self):
@@ -95,8 +96,8 @@ class _PipeLineConfig(_Config):
     def __init__(self, pipeline_stage=1, micro_batch_num=1):
         Validator.check_positive_int(pipeline_stage, "pipeline_stage")
         Validator.check_positive_int(micro_batch_num, "micro_batch_num")
-        self._pipeline_stage = pipeline_stage
-        self._micro_batch_num = micro_batch_num
+        self.pipeline_stage = pipeline_stage
+        self.micro_batch_num = micro_batch_num
 
     @property
     def pipeline_stage(self):
@@ -150,9 +151,10 @@ def _check_config(config):
                          "should be less than device_num {device_num}")
 
     # the config optimizer_shard is same with context.optimizer_shard
-    if hasattr(config, "optimizer_shard") and optimizer_shard != config.optimizer_shard:
-        raise ValueError(f"The optimizer shard {optimizer_shard} in auto_parallel_context is not equal to the"
-                         f"optimizer_shard {config.optimizer_shard} in the config")
+    if hasattr(config, "optimizer_shard") and optimizer_shard and optimizer_shard != config.optimizer_shard:
+        logger.warning(f"The optimizer shard {optimizer_shard} in auto_parallel_context is not equal to the"
+                       f" optimizer_shard {config.optimizer_shard} in the OpParallelConfig. Please check the "
+                       f"optimizer_shard to make them consistent.")
 
     # pipeline_stage <= micro_batch_num
     if hasattr(config, 'pipeline_stage') and hasattr(config, 'micro_batch_num')\
