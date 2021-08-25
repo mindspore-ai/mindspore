@@ -77,7 +77,7 @@ void Cloner::CloneParameter(const AnfNodePtr &node, const FuncGraphPtr &target, 
     // Default parameter can be shared since it is readonly.
     new_param->set_default_param(old_param->default_param());
   }
-  ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
+  ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_param->set_scope(scope);
   repl_node_[node] = new_param;
 }
@@ -89,11 +89,8 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   CNodePtr new_node = std::make_shared<CNode>(AnfNodePtrList{}, target);
   auto old_node = node->cast<CNodePtr>();
   new_node->CloneCNodeInfo(old_node);
-  ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
+  ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_node->set_scope(scope);
-  if (IsParallelConsiderCNode(old_node) && new_node->scope() == kDefaultScope) {
-    new_node->set_fullname_with_scope(old_node->fullname_with_scope());
-  }
   repl_node_[old_node] = new_node;
   nodes_.emplace_back(old_node, new_node);
 }
@@ -102,7 +99,7 @@ void Cloner::CloneValueNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   TraceGuard trace_guard(node->debug_info(), relation_);
   ValueNodePtr new_const = NewValueNode(GetValueNode(node));
-  ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
+  ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
   new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
@@ -114,7 +111,7 @@ void Cloner::CloneValueNode(const AnfNodePtr &node, const FuncGraphPtr &target) 
   MS_EXCEPTION_IF_NULL(target);
   TraceGuard trace_guard(node->debug_info(), relation_);
   ValueNodePtr new_const = NewValueNode(target);
-  ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
+  ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
   new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
