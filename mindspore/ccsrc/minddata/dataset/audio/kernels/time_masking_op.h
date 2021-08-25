@@ -30,8 +30,8 @@ namespace dataset {
 
 class TimeMaskingOp : public TensorOp {
  public:
-  explicit TimeMaskingOp(bool iid_masks = false, int64_t time_mask_param = 0, int64_t mask_start = 0,
-                         double mask_value_ = 0.0);
+  explicit TimeMaskingOp(bool iid_masks = false, int32_t time_mask_param = 0, int32_t mask_start = 0,
+                         float mask_value_ = 0.0);
 
   ~TimeMaskingOp() override = default;
 
@@ -41,9 +41,9 @@ class TimeMaskingOp : public TensorOp {
 
  private:
   bool iid_masks_;
-  int64_t time_mask_param_;
-  int64_t mask_start_;
-  double mask_value_;
+  int32_t time_mask_param_;
+  int32_t mask_start_;
+  float mask_value_;
   std::mt19937 rnd_;
 };
 }  // namespace dataset

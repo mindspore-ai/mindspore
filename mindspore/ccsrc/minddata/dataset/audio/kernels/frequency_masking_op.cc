@@ -25,7 +25,7 @@ namespace dataset {
 
 // constructor
 FrequencyMaskingOp::FrequencyMaskingOp(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start,
-                                       double mask_value)
+                                       float mask_value)
     : frequency_mask_param_(frequency_mask_param),
       mask_start_(mask_start),
       iid_masks_(iid_masks),
@@ -42,7 +42,7 @@ Status FrequencyMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::sh
   TensorShape input_shape = input->shape();
   CHECK_FAIL_RETURN_UNEXPECTED(
     input_shape[-2] >= frequency_mask_param_,
-    "FrequencyMasking: frequency_mask_param should be less than the length of frequency dimension.");
+    "FrequencyMasking: frequency_mask_param should be less than or equal to the length of frequency dimension.");
 
   std::shared_ptr<Tensor> input_tensor;
   // typecast
@@ -53,13 +53,11 @@ Status FrequencyMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::sh
   } else {
     input_tensor = input;
   }
-  auto mask_val =
-    input->type() != DataType::DE_FLOAT64 ? static_cast<float>(mask_value_) : static_cast<double>(mask_value_);
   // iid_masks - whether to apply different masks to each example/channel.
   if (iid_masks_ == false) {
-    return MaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_start_, mask_val, 1);
+    return MaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_start_, mask_value_, 1);
   } else {
-    return RandomMaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_val, 1, rnd_);
+    return RandomMaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_value_, 1, rnd_);
   }
 }
 }  // namespace dataset

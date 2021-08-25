@@ -215,13 +215,13 @@ class FrequencyMasking final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] iid_masks Whether to apply different masks to each example.
-  /// \param[in] frequency_mask_param Maximum possible length of the mask.
+  /// \param[in] frequency_mask_param Maximum possible length of the mask, range: [0, freq_length] (Default: 0).
   ///     Indices uniformly sampled from [0, frequency_mask_param].
   ///     Mask width when iid_masks=true.
-  /// \param[in] mask_start Mask start when iid_masks=true.
+  /// \param[in] mask_start Mask start when iid_masks=true, range: [0, freq_length-frequency_mask_param] (Default: 0).
   /// \param[in] mask_value Mask value.
   explicit FrequencyMasking(bool iid_masks = false, int32_t frequency_mask_param = 0, int32_t mask_start = 0,
-                            double mask_value = 0.0);
+                            float mask_value = 0.0);
 
   /// \brief Destructor.
   ~FrequencyMasking() = default;
@@ -242,13 +242,13 @@ class TimeMasking final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] iid_masks Whether to apply different masks to each example.
-  /// \param[in] time_mask_param Maximum possible length of the mask.
+  /// \param[in] time_mask_param Maximum possible length of the mask, range: [0, time_length] (Default: 0).
   ///     Indices uniformly sampled from [0, time_mask_param].
   ///     Mask width when iid_masks=true.
-  /// \param[in] mask_start Mask start when iid_masks=true.
+  /// \param[in] mask_start Mask start when iid_masks=true, range: [0, time_length-time_mask_param] (Default: 0).
   /// \param[in] mask_value Mask value.
-  explicit TimeMasking(bool iid_masks = false, int64_t time_mask_param = 0, int64_t mask_start = 0,
-                       double mask_value = 0.0);
+  explicit TimeMasking(bool iid_masks = false, int32_t time_mask_param = 0, int32_t mask_start = 0,
+                       float mask_value = 0.0);
 
   /// \brief Destructor.
   ~TimeMasking() = default;

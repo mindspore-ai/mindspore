@@ -24,7 +24,7 @@ namespace dataset {
 namespace audio {
 
 FrequencyMaskingOperation::FrequencyMaskingOperation(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start,
-                                                     double mask_value)
+                                                     float mask_value)
     : iid_masks_(iid_masks),
       frequency_mask_param_(frequency_mask_param),
       mask_start_(mask_start),

@@ -24,7 +24,7 @@ namespace mindspore {
 namespace dataset {
 
 // constructor
-TimeMaskingOp::TimeMaskingOp(bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value)
+TimeMaskingOp::TimeMaskingOp(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value)
     : time_mask_param_(time_mask_param), mask_start_(mask_start), iid_masks_(iid_masks), mask_value_(mask_value) {
   rnd_.seed(GetSeed());
 }
@@ -35,8 +35,9 @@ Status TimeMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   // input <..., freq, time>
   CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() >= 2, "TimeMasking: input tensor is not in shape of <..., freq, time>.");
   TensorShape input_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape[-1] >= time_mask_param_,
-                               "TimeMasking: time_mask_param should be less than the length of time dimension.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input_shape[-1] >= time_mask_param_,
+    "TimeMasking: time_mask_param should be less than or equal to the length of time dimension.");
 
   std::shared_ptr<Tensor> input_tensor;
   // typecast

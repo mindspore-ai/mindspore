@@ -134,7 +134,7 @@ PYBIND_REGISTER(
     (void)
       py::class_<audio::FrequencyMaskingOperation, TensorOperation, std::shared_ptr<audio::FrequencyMaskingOperation>>(
         *m, "FrequencyMaskingOperation")
-        .def(py::init([](bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value) {
+        .def(py::init([](bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, float mask_value) {
           auto frequency_masking =
             std::make_shared<audio::FrequencyMaskingOperation>(iid_masks, frequency_mask_param, mask_start, mask_value);
           THROW_IF_ERROR(frequency_masking->ValidateParams());
@@ -146,7 +146,7 @@ PYBIND_REGISTER(
   TimeMaskingOperation, 1, ([](const py::module *m) {
     (void)py::class_<audio::TimeMaskingOperation, TensorOperation, std::shared_ptr<audio::TimeMaskingOperation>>(
       *m, "TimeMaskingOperation")
-      .def(py::init([](bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value) {
+      .def(py::init([](bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value) {
         auto time_masking =
           std::make_shared<audio::TimeMaskingOperation>(iid_masks, time_mask_param, mask_start, mask_value);
         THROW_IF_ERROR(time_masking->ValidateParams());

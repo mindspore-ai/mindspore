@@ -273,9 +273,10 @@ class FrequencyMasking(AudioTensorOperation):
 
     Args:
         iid_masks (bool, optional): Whether to apply different masks to each example (default=false).
-        frequency_mask_param (int): Maximum possible length of the mask (default=0).
+        frequency_mask_param (int): Maximum possible length of the mask, range: [0, freq_length] (default=0).
             Indices uniformly sampled from [0, frequency_mask_param].
-        mask_start (int): Mask start when iid_masks=true (default=0).
+        mask_start (int): Mask start takes effect when iid_masks=true,
+            range: [0, freq_length-frequency_mask_param] (default=0).
         mask_value (double): Mask value (default=0.0).
 
     Examples:
@@ -304,9 +305,10 @@ class TimeMasking(AudioTensorOperation):
 
     Args:
         iid_masks (bool, optional): Whether to apply different masks to each example (default=false).
-        time_mask_param (int): Maximum possible length of the mask (default=0).
+        time_mask_param (int): Maximum possible length of the mask, range: [0, time_length] (default=0).
             Indices uniformly sampled from [0, time_mask_param].
-        mask_start (int): Mask start takes effect when iid_masks=true (default=0).
+        mask_start (int): Mask start takes effect when iid_masks=true,
+            range: [0, time_length-time_mask_param] (default=0).
         mask_value (double): Mask value (default=0.0).
 
     Examples:
