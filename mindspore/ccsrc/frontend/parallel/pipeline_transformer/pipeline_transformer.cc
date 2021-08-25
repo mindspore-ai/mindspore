@@ -574,10 +574,10 @@ SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNod
     send->AddPrimalAttr(PIPELINE_END, value);
   } else {
     send->AddPrimalAttr(PIPELINE_PARAM, value);
-    send->AddPrimalAttr(MICRO, value);
     send->set_user_data<OperatorInfo>(op_info);
     send->AddPrimalAttr(PARAM_INDEX, MakeValue(index));
   }
+  send->AddPrimalAttr(MICRO, value);
   OperatorAttrs depend_attrs;
   auto depend_op = CreatOpInstance(depend_attrs, DEPEND, DEPEND);
   std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), parameter, send};
