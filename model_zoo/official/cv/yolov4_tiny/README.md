@@ -243,7 +243,7 @@ sh run_standalone_train.sh dataset/coco2017 train2017 annotations/instances_trai
 ```text
 python train.py \
     --data_dir=/dataset/xxx \
-	--train_img_dir=train2017 \
+    --train_img_dir=train2017 \
     --train_json_file=annotations/instances_train2017.json \
     --val_img_dir=val2017 \
     --val_json_file=annotations/instances_val2017.json \
@@ -287,7 +287,7 @@ You can train your own model based on either pretrained classification model or 
 ```bash
 python eval.py \
     --data_dir=./dataset/coco2017 \
-	--val_img_dir=val2017 \
+    --val_img_dir=val2017 \
     --val_json_file=annotations/instances_val2017.json \
     --pretrained=yolov4.ckpt \
     --testing_shape=608 > log.txt 2>&1 &
