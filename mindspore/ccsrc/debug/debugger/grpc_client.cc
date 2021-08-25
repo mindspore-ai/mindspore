@@ -26,7 +26,9 @@ using debugger::EventReply_Status_FAILED;
 using debugger::GraphProto;
 using debugger::Heartbeat;
 using debugger::Metadata;
+using debugger::TensorBase;
 using debugger::TensorProto;
+using debugger::TensorSummary;
 using debugger::WatchpointHit;
 
 namespace mindspore {
@@ -195,6 +197,34 @@ EventReply GrpcClient::SendHeartbeat(const Heartbeat &heartbeat) {
 
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendHeartbeat";
+    MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
+    reply.set_status(EventReply_Status_FAILED);
+  }
+  return reply;
+}
+
+EventReply GrpcClient::SendTensorBase(const TensorBase &tensor_base) {
+  EventReply reply;
+  grpc::ClientContext context;
+
+  grpc::Status status = stub_->SendTensorBase(&context, tensor_base, &reply);
+
+  if (!status.ok()) {
+    MS_LOG(ERROR) << "RPC failed: SendTensorBase";
+    MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
+    reply.set_status(EventReply_Status_FAILED);
+  }
+  return reply;
+}
+
+EventReply GrpcClient::SendTensorStats(const TensorSummary &tensor_summary) {
+  EventReply reply;
+  grpc::ClientContext context;
+
+  grpc::Status status = stub_->SendTensorStats(&context, tensor_summary, &reply);
+
+  if (!status.ok()) {
+    MS_LOG(ERROR) << "RPC failed: SendTensorStats";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
     reply.set_status(EventReply_Status_FAILED);
   }

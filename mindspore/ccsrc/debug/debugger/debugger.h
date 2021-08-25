@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ using debugger::DataType;
 using debugger::EventReply;
 using debugger::GraphProto;
 using debugger::ModelProto;
+using debugger::Statistics;
 using debugger::TensorProto;
 using debugger::WatchCondition;
 using debugger::WatchCondition_Parameter;
@@ -216,6 +217,12 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void ProcessKSetCMD(const EventReply &reply);
   // Process the KViewCMD
   void ProcessKViewCMD(const EventReply &reply);
+  // ViewCMD base level
+  void ViewBaseLevel(const EventReply &reply);
+  // ViewCMD statistics level
+  void ViewStatLevel(const EventReply &reply);
+  // ViewCMD value level
+  void ViewValueLevel(const EventReply &reply);
   // set what nodes and conditions to watch
   void SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id,
                      const ProtoVector<WatchCondition_Parameter> &parameters);
@@ -225,6 +232,12 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // load tensor for view command
   std::list<TensorProto> LoadTensors(const ProtoVector<TensorProto> &tensors) const;
+
+  // load tensor base for view command
+  std::list<TensorBase> LoadTensorsBase(const ProtoVector<TensorProto> &tensors) const;
+
+  // load tensor statistics for view command
+  std::list<TensorSummary> LoadTensorsStat(const ProtoVector<TensorProto> &tensors) const;
 
   // terminate training process
   void Exit();

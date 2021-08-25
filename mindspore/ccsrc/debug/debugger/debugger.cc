@@ -48,6 +48,7 @@ using debugger::Chunk;
 using debugger::EventReply;
 using debugger::GraphProto;
 using debugger::ModelProto;
+using debugger::Statistics;
 using debugger::TensorProto;
 using debugger::WatchCondition;
 using debugger::WatchCondition_Condition_inf;
@@ -839,6 +840,29 @@ void Debugger::ProcessKViewCMD(const EventReply &reply) {
     MS_LOG(INFO) << "tensor iter: " << received_tensor.iter();
     MS_LOG(INFO) << "tensor truncate: " << std::boolalpha << received_tensor.truncate() << std::noboolalpha;
   }
+
+  switch (reply.view_cmd().level()) {
+    case debugger::ViewCMD_Level::ViewCMD_Level_base:
+      MS_LOG(INFO) << "Tensor base request.";
+      ViewBaseLevel(reply);
+      break;
+
+    case debugger::ViewCMD_Level::ViewCMD_Level_statistics:
+      MS_LOG(INFO) << "Tensor statistics request.";
+      ViewStatLevel(reply);
+      break;
+
+    case debugger::ViewCMD_Level::ViewCMD_Level_value:
+      MS_LOG(INFO) << "Tensor value request.";
+      ViewValueLevel(reply);
+      break;
+    default:
+      MS_LOG(DEBUG) << "Debug: Unknown tensor info level";
+      break;
+  }
+}
+
+void Debugger::ViewValueLevel(const EventReply &reply) {
   MS_LOG(INFO) << "Sending tensors";
   std::list<TensorProto> tensors = LoadTensors(GetTensors(reply));
   // print view cmd reply
@@ -860,6 +884,30 @@ void Debugger::ProcessKViewCMD(const EventReply &reply) {
   }
 }
 
+void Debugger::ViewStatLevel(const EventReply &reply) {
+  std::list<TensorSummary> tensor_stat_list = LoadTensorsStat(GetTensors(reply));
+  int index = 0;
+  for (auto tensor_stat : tensor_stat_list) {
+    EventReply send_tensors_stat_reply = grpc_client_->SendTensorStats(tensor_stat);
+    if (send_tensors_stat_reply.status() != debugger::EventReply::OK) {
+      MS_LOG(ERROR) << "Error: SendTensorsStats failed for tensor index " << index << ".";
+    }
+    index++;
+  }
+}
+
+void Debugger::ViewBaseLevel(const EventReply &reply) {
+  std::list<TensorBase> tensors_base_list = LoadTensorsBase(GetTensors(reply));
+  int index = 0;
+  for (auto tensor_base : tensors_base_list) {
+    EventReply send_tensors_base_reply = grpc_client_->SendTensorBase(tensor_base);
+    if (send_tensors_base_reply.status() != debugger::EventReply::OK) {
+      MS_LOG(ERROR) << "Error: SendTensorsBase failed for tensor index " << index << ".";
+    }
+    index++;
+  }
+}
+
 void AddTensorProtoInfo(TensorProto *tensor_item, const TensorProto &tensor) {
   tensor_item->set_node_name(tensor.node_name());
   tensor_item->set_slot(tensor.slot());
@@ -868,6 +916,35 @@ void AddTensorProtoInfo(TensorProto *tensor_item, const TensorProto &tensor) {
   tensor_item->clear_tensor_content();
   tensor_item->clear_data_type();
   tensor_item->clear_dims();
+}
+
+void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat, std::list<TensorSummary> *tensor_summary_list) {
+  if (!tensor_summary_list) {
+    MS_LOG(DEBUG) << "tensor_summary_list is nullptr.";
+    return;
+  }
+  TensorSummary tensor_summary_item;
+  TensorBase *tensor_base = tensor_summary_item.mutable_tensor_base();
+  tensor_base->set_data_type(tensor_stat.dtype);
+  tensor_base->set_data_size(tensor_stat.data_size);
+  for (auto elem : tensor_stat.shape) {
+    tensor_base->add_shape(elem);
+  }
+
+  Statistics *tensor_statistics = tensor_summary_item.mutable_statistics();
+  tensor_statistics->set_is_bool(tensor_stat.is_bool);
+  tensor_statistics->set_max_value(tensor_stat.max_value);
+  tensor_statistics->set_min_value(tensor_stat.min_value);
+  tensor_statistics->set_avg_value(tensor_stat.avg_value);
+  tensor_statistics->set_count(tensor_stat.count);
+  tensor_statistics->set_neg_zero_count(tensor_stat.neg_zero_count);
+  tensor_statistics->set_pos_zero_count(tensor_stat.pos_zero_count);
+  tensor_statistics->set_nan_count(tensor_stat.nan_count);
+  tensor_statistics->set_neg_inf_count(tensor_stat.neg_inf_count);
+  tensor_statistics->set_pos_inf_count(tensor_stat.pos_inf_count);
+  tensor_statistics->set_zero_count(tensor_stat.zero_count);
+
+  tensor_summary_list->push_back(tensor_summary_item);
 }
 
 void Debugger::SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id,
@@ -943,6 +1020,56 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
     result_index++;
   }
   return tensor_list;
+}
+
+std::list<TensorBase> Debugger::LoadTensorsBase(const ProtoVector<TensorProto> &tensors) const {
+  std::list<TensorBase> tensor_base_list;
+  std::vector<std::string> name;
+  std::transform(tensors.begin(), tensors.end(), std::back_inserter(name), GetTensorFullName);
+  std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> result_list;
+  debug_services_->SearchNodesTensors(name, &result_list);
+  for (auto result : result_list) {
+    auto tensor = std::get<1>(result);
+    if (!tensor) {
+      // tensor was not found, creating empty tensor base.
+      TensorBase tensor_base_item;
+      tensor_base_item.set_data_size(0);
+      tensor_base_item.set_data_type(0);
+      tensor_base_item.add_shape(0);
+      tensor_base_list.push_back(tensor_base_item);
+      continue;
+    }
+    // tensor was found creating tensor base object.
+    TensorBase tensor_base_item;
+    tensor_base_item.set_data_size(tensor->GetByteSize());
+    tensor_base_item.set_data_type(tensor->GetType());
+    for (auto elem : tensor->GetShape()) {
+      tensor_base_item.add_shape(elem);
+    }
+    tensor_base_list.push_back(tensor_base_item);
+  }
+  return tensor_base_list;
+}
+
+std::list<TensorSummary> Debugger::LoadTensorsStat(const ProtoVector<TensorProto> &tensors) const {
+  std::list<TensorSummary> tensor_summary_list;
+  std::vector<std::string> name;
+  std::transform(tensors.begin(), tensors.end(), std::back_inserter(name), GetTensorFullName);
+  std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> result_list;
+  debug_services_->SearchNodesTensors(name, &result_list);
+  for (auto result : result_list) {
+    auto tensor = std::get<1>(result);
+    if (!tensor) {
+      // tensor was not found, creating empty tensor summary.
+      DebugServices::TensorStat tensor_stat;
+      AddTensorStatInfo(tensor_stat, &tensor_summary_list);
+      continue;
+    }
+    // tensor was found creating tensor summary object.
+    DebugServices::TensorStat tensor_stat = debug_services_->GetTensorStatistics(tensor);
+    AddTensorStatInfo(tensor_stat, &tensor_summary_list);
+  }
+  return tensor_summary_list;
 }
 
 void Debugger::Exit() {

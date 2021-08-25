@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ service EventListener {
   rpc SendMetadata (Metadata) returns (EventReply) {};
   rpc SendGraph (stream Chunk) returns (EventReply) {};
   rpc SendTensors (stream TensorProto) returns (EventReply) {};
+  rpc SendTensorBase (TensorBase) returns (EventReply) {};
+  rpc SendTensorStats (TensorSummary) returns (EventReply) {};
   rpc SendWatchpointHits (stream WatchpointHit) returns (EventReply) {};
   rpc SendMultiGraphs (stream Chunk) returns (EventReply) {};
   rpc SendHeartbeat (Heartbeat) returns (EventReply) {};
@@ -87,6 +89,12 @@ message SetCMD {
 
 message ViewCMD {
   repeated TensorProto tensors = 1;
+  enum Level {
+    value = 0;
+    statistics = 1;
+    base = 2;
+  }
+  Level level = 2;
 }
 
 message WatchCondition {
@@ -141,4 +149,29 @@ message WatchpointHit {
 message Heartbeat {
   string message = 1;
   int32 period = 2;
+}
+
+message TensorSummary{
+ TensorBase tensor_base = 1;
+ Statistics statistics = 2;
+}
+
+message Statistics {
+ bool is_bool = 1;
+ float max_value = 2;
+ float min_value = 3;
+ float avg_value = 4;
+ int32 count = 5;
+ int32 neg_zero_count = 6;
+ int32 pos_zero_count = 7;
+ int32 nan_count = 8;
+ int32 neg_inf_count = 9;
+ int32 pos_inf_count = 10;
+ int32 zero_count = 11;
+}
+
+message TensorBase{
+ int32 data_type = 1;
+ repeated int64 shape = 2;
+ int64 data_size = 3;
 }
