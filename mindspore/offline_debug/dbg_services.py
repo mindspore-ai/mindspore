@@ -1063,7 +1063,7 @@ class WatchpointHit():
             >>> name = watchpoint_hit.name
         """
 
-        return self.instance.name()
+        return self.instance.get_name()
 
     @property
     def slot(self):
@@ -1086,7 +1086,7 @@ class WatchpointHit():
             >>> slot = watchpoint_hit.slot
         """
 
-        return self.instance.slot()
+        return self.instance.get_slot()
 
     @property
     def condition(self):
@@ -1109,7 +1109,7 @@ class WatchpointHit():
             >>> condition = watchpoint_hit.condition
         """
 
-        return self.instance.condition()
+        return self.instance.get_condition()
 
     @property
     def watchpoint_id(self):
@@ -1132,7 +1132,7 @@ class WatchpointHit():
             >>> watchpoint_id = watchpoint_hit.watchpoint_id
         """
 
-        return self.instance.watchpoint_id()
+        return self.instance.get_watchpoint_id()
 
     @property
     def parameters(self):
@@ -1155,7 +1155,7 @@ class WatchpointHit():
             >>> parameters = watchpoint_hit.parameters
         """
 
-        params = self.instance.parameters()
+        params = self.instance.get_parameters()
         param_list = []
         for elem in params:
             tmp = Parameter(elem.get_name(),
