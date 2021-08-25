@@ -54,9 +54,9 @@ class Angle final : public TensorTransform {
 class BandBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
   /// \param[in] noise Choose alternate mode for un-pitched audio or mode oriented to pitched audio(Default: False).
   explicit BandBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool noise = false);
 
@@ -76,9 +76,9 @@ class BandBiquad final : public TensorTransform {
 /// \brief Design two-pole allpass filter. Similar to SoX implementation.
 class AllpassBiquad final : public TensorTransform {
  public:
-  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q https://en.wikipedia.org/wiki/Q_factor (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
   explicit AllpassBiquad(int32_t sample_rate, float central_freq, float Q = 0.707);
 
   /// \brief Destructor.
@@ -124,10 +124,10 @@ class AmplitudeToDB final : public TensorTransform {
 class BandpassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor (Default: 0.707).
-  /// \param[in] const_skirt_gain, If ``True``, uses a constant skirt gain (peak gain = Q). If ``False``, uses a
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  /// \param[in] const_skirt_gain, If True, uses a constant skirt gain (peak gain = Q). If False, uses a
   ///     constant 0dB peak gain (Default: False).
   explicit BandpassBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool const_skirt_gain = false);
 
@@ -148,9 +148,9 @@ class BandpassBiquad final : public TensorTransform {
 class BandrejectBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
   explicit BandrejectBiquad(int32_t sample_rate, float central_freq, float Q = 0.707);
 
   /// \brief Destructor.
@@ -170,10 +170,10 @@ class BandrejectBiquad final : public TensorTransform {
 class BassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] gain Desired gain at the boost (or attenuation) in dB.
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q https://en.wikipedia.org/wiki/Q_factor (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
   explicit BassBiquad(int32_t sample_rate, float gain, float central_freq = 100, float Q = 0.707);
 
   /// \brief Destructor.
