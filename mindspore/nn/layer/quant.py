@@ -538,6 +538,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
             self._quant_max = (1 << self.num_bits) - 1
 
     def extend_repr(self):
+        """Display instance object as string."""
         s = 'quant_dtype={}, symmetric={}, narrow_range={}, ema={}({}), per_channel={}({}, {}), ' \
             'quant_delay={}, min_init={}, max_init={}'.format(self.quant_dtype, self.symmetric, self.narrow_range,
                                                               self.ema, self.ema_decay, self.per_channel,
@@ -763,6 +764,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.reshape = P.Reshape()
 
     def extend_repr(self):
+        """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
             'fake={}, momentum={}, quant_delay={}'.format(self.in_channels, self.out_channels,
@@ -994,6 +996,7 @@ class Conv2dBnFoldQuant(Cell):
         self.assignadd = P.AssignAdd()
 
     def extend_repr(self):
+        """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
             'fake={}, freeze_bn={}, momentum={}, quant_delay={}'.format(self.in_channels, self.out_channels,
@@ -1184,6 +1187,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
         return out
 
     def extend_repr(self):
+        """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
             'has_bias={}, quant_delay={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride,
@@ -1326,6 +1330,7 @@ class Conv2dQuant(Cell):
         return out
 
     def extend_repr(self):
+        """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
             'has_bias={}, quant_delay={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride,
