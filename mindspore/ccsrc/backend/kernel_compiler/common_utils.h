@@ -137,7 +137,7 @@ inline T ComputeLerp(T top_left, T top_right, T bottom_left, T bottom_right, T x
 void CastShapeSizeToLong(const std::vector<size_t> &shape, std::vector<int64_t> *long_shape);
 void CheckSliceValid(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
                      const std::vector<int64_t> &step, const std::vector<int64_t> &input_shape);
-size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &stop, const std::vector<int64_t> &step,
+size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
                  const std::vector<int64_t> &dim_offset);
 std::vector<int64_t> CalDimOffset(const std::vector<int64_t> &input_shape);
 size_t GetCopySize(const std::vector<int64_t> &dim_offset, const std::vector<int64_t> &start,

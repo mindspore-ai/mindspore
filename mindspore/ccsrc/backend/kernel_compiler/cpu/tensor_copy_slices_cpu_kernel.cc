@@ -41,7 +41,7 @@ void TensorCopySlicesCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto dim_offset = CalDimOffset(input_shape_);
   auto type_size = abstract::TypeIdSize(data_type_);
-  offset_ = CalOffset(begin, end, stride, dim_offset) * type_size;
+  offset_ = CalOffset(begin, end, dim_offset) * type_size;
   copy_size_ = GetCopySize(dim_offset, begin, end) * type_size;
 }
 
