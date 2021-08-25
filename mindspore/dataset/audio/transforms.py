@@ -83,7 +83,7 @@ class AmplitudeToDB(AudioTensorOperation):
         stype (ScaleType, optional): Scale of the input tensor (default=ScaleType.POWER).
             It can be one of ScaleType.MAGNITUDE or ScaleType.POWER.
         ref_value (float, optional): Param for generate db_multiplier.
-        amin (float, optional): Lower bound to clamp the input waveform.
+        amin (float, optional): Lower bound to clamp the input waveform. It must be greater than zero.
         top_db (float, optional): Minimum cut-off decibels. The range of values is non-negative.
             Commonly set at 80 (default=80.0).
     Examples:
