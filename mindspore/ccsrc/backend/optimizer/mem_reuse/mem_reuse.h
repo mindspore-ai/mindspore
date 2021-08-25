@@ -70,7 +70,7 @@ class MemReuseUtil {
   // Reset the dynamic used reference count by ref_count_.
   void ResetDynamicUsedRefCount();
 
-  KernelRefCountPtr GetRef(const AnfNodePtr &node, int output_idx);
+  KernelRefCountPtr GetRef(const AnfNodePtr &node, size_t output_idx);
   KernelRefCountPtr GetKernelInputRef(const CNodePtr &kernel, size_t input_idx);
   KernelRefCountPtrList total_refs_list() const { return total_refs_list_; }
   KernelRefCountPtrList total_wk_ref_list() const { return total_wk_ref_list_; }

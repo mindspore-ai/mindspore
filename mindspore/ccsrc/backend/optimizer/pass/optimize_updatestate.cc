@@ -46,9 +46,9 @@ const AnfNodePtr OptimizeUpdateState::Process(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(manager);
   auto &node_users = manager->node_users();
   std::vector<AnfNodePtr> new_inputs;
-  new_inputs.emplace_back(update_state->input(0));
-  new_inputs.emplace_back(update_state->input(kInputIndex));
-  new_inputs.emplace_back(update_state->input(kAttachIndex));
+  (void)new_inputs.emplace_back(update_state->input(0));
+  (void)new_inputs.emplace_back(update_state->input(kInputIndex));
+  (void)new_inputs.emplace_back(update_state->input(kAttachIndex));
   for (size_t i = kAdditionalAttachIndex; i < update_state->size(); ++i) {
     auto &attach = update_state->input(i);
     auto &users = node_users[attach];
@@ -57,7 +57,7 @@ const AnfNodePtr OptimizeUpdateState::Process(const FuncGraphPtr &func_graph, co
       // If the only user of attach is the UpdateState node, drop the attach node.
       continue;
     }
-    new_inputs.emplace_back(attach);
+    (void)new_inputs.emplace_back(attach);
   }
   if (new_inputs.size() == update_state->size()) {
     // Attaches not changed.
