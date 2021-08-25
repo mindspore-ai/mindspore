@@ -184,8 +184,8 @@ class ConvertModelUtils:
             ``Ascend`` ``GPU``
 
         Examples:
-            >>> from mindspore.nn.optim import thor
-            >>> from mindspore.train.model import Model
+            >>> from mindspore.nn import thor
+            >>> from mindspore import Model
             >>> from mindspore import FixedLossScaleManager
             >>>
             >>> net = Net()
