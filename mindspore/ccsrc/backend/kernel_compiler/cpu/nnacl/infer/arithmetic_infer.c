@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/arithmetic_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/infer/broadcast_to_infer.h"
 
 void SetOutputDtypeFormat(const TensorC *input0, const TensorC *input1, TensorC *output) {
   output->format_ = input0->format_;
@@ -34,38 +35,18 @@ void SetOutputDtypeFormat(const TensorC *input0, const TensorC *input1, TensorC 
   }
 }
 
-void UpdateInputShape(const int input_shape0_size, const int input_shape1_size, int *ndim, const int *input_shape0,
-                      const int *input_shape1, int *in_shape0, int *in_shape1) {
-  if (input_shape0_size < input_shape1_size) {
-    *ndim = input_shape1_size;
-    int fill_dim_num = input_shape1_size - input_shape0_size;
-    int j = 0;
-    for (size_t i = 0; i < input_shape1_size; i++) {
-      if (i < fill_dim_num) {
-        in_shape0[i] = 1;
-      } else {
-        in_shape0[i] = input_shape0[j++];
-      }
-      in_shape1[i] = input_shape1[i];
-    }
-  } else if (input_shape0_size > input_shape1_size) {
-    *ndim = input_shape0_size;
-    int fill_dim_num = input_shape0_size - input_shape1_size;
-    int j = 0;
-    for (size_t i = 0; i < input_shape0_size; i++) {
-      if (i < fill_dim_num) {
-        in_shape1[i] = 1;
-      } else {
-        in_shape1[i] = input_shape1[j++];
-      }
-      in_shape0[i] = input_shape0[i];
-    }
-  } else {
-    for (size_t i = 0; i < input_shape0_size; i++) {
-      in_shape1[i] = input_shape1[i];
-      in_shape0[i] = input_shape0[i];
-    }
+int BroadCastInferShape(const int input_shape0_size, const int input_shape1_size, const int *input_shape0,
+                        const int *input_shape1, int *ndim, int *in_shape0, int *in_shape1, int *out_shape,
+                        bool *has_broad_cast) {
+  if (input_shape0_size > MAX_SHAPE_SIZE || input_shape1_size > MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
   }
+  MakeUpInputShapes(input_shape0_size, input_shape1_size, input_shape0, input_shape1, ndim, in_shape0, in_shape1);
+  if (*ndim >= MAX_SHAPE_SIZE) {
+    return NNACL_INFER_INVALID;
+  }
+
+  return BroadCastOutputShape(in_shape0, in_shape1, *ndim, out_shape, has_broad_cast);
 }
 
 int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
@@ -93,43 +74,24 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  if (input_shape0_size > MAX_SHAPE_SIZE || input_shape1_size > MAX_SHAPE_SIZE) {
-    return NNACL_ERR;
-  }
+
   int in_shape0[MAX_SHAPE_SIZE] = {0};
   int in_shape1[MAX_SHAPE_SIZE] = {0};
-  int out_shape[MAX_SHAPE_SIZE] = {0};
-  int ndim = input_shape0_size;
-  UpdateInputShape(input_shape0_size, input_shape1_size, &ndim, input_shape0, input_shape1, in_shape0, in_shape1);
-
   int output_shape[MAX_SHAPE_SIZE] = {0};
-  size_t output_shape_size = 0;
-  if (ndim >= MAX_SHAPE_SIZE) {
-    return NNACL_INFER_INVALID;
-  }
-  for (int i = 0; i < ndim; i++) {
-    if (in_shape0[i] != in_shape1[i]) {
-      if (in_shape0[i] == 1) {
-        out_shape[i] = in_shape1[i];
-      } else if (in_shape1[i] == 1) {
-        out_shape[i] = in_shape0[i];
-      } else {
-        return NNACL_ERR;
-      }
-      param->broadcasting_ = true;
-    } else {
-      out_shape[i] = in_shape0[i];
-    }
-    output_shape[output_shape_size] = out_shape[i];
-    output_shape_size++;
+  int ndim = input_shape0_size;
+  bool has_broad_cast = false;
+  if (BroadCastInferShape(input_shape0_size, input_shape1_size, input_shape0, input_shape1, &ndim, in_shape0, in_shape1,
+                          output_shape, &has_broad_cast) != NNACL_OK) {
+    return NNACL_ERR;
   }
 
-  SetShapeArray(output, output_shape, output_shape_size);
+  SetShapeArray(output, output_shape, ndim);
 
+  param->broadcasting_ = has_broad_cast;
   param->ndim_ = ndim;
   memcpy(param->in_shape0_, in_shape0, ndim * sizeof(int));
   memcpy(param->in_shape1_, in_shape1, ndim * sizeof(int));
-  memcpy(param->out_shape_, out_shape, ndim * sizeof(int));
+  memcpy(param->out_shape_, output_shape, ndim * sizeof(int));
 
   param->in_elements_num0_ = 1;
   param->in_elements_num1_ = 1;

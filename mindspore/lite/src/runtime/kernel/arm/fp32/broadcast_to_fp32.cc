@@ -25,8 +25,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BroadcastTo;
 
 namespace mindspore::kernel {
-constexpr int kBroadCastToInputNum = 2;
-
 BroadcastToCPUKernel::~BroadcastToCPUKernel() {
   if (shape_info_ != nullptr) {
     free(shape_info_);
@@ -67,18 +65,6 @@ int BroadcastToCPUKernel::Init() {
 }
 
 int BroadcastToCPUKernel::Run() {
-  if (in_tensors_.size() == kBroadCastToInputNum) {
-    auto shape_tensor = in_tensors_.at(1);
-    MS_ASSERT(shape_tensor->data_type() == kNumberTypeInt32);
-    if (shape_tensor->ElementsNum() > MAX_SHAPE_SIZE) {
-      MS_LOG(ERROR) << "Size of broadcast_to shape exceed MAX_SHAPE_SIZE";
-      return RET_ERROR;
-    }
-    auto shape_data = reinterpret_cast<int *>(shape_tensor->data());
-    for (int i = 0; i < shape_tensor->ElementsNum(); i++) {
-      shape_info_->output_shape_[i] = (shape_data[i] == -1) ? (shape_info_->input_shape_[i]) : shape_data[i];
-    }
-  }
   switch (data_type_) {
     case kNumberTypeFloat32: {
       const auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
