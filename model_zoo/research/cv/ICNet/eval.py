@@ -83,8 +83,8 @@ class Evaluator:
             end_time = time.time()
             step_time = end_time - start_time
 
-            output = np.array(output)
-            mask = np.expand_dims(mask, axis=0)
+            output = output.asnumpy()
+            mask = np.expand_dims(mask.asnumpy(), axis=0)
             self.metric.update(output, mask)
             list_time.append(step_time)
 
