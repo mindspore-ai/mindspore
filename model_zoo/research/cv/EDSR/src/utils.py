@@ -12,76 +12,179 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""edsr train wrapper"""
+"""
+#################utils for train.py and eval.py########################
+"""
 import os
 import time
-import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.common import dtype as mstype
-from mindspore.train.serialization import save_checkpoint
-class Trainer():
-    """Trainer"""
-    def __init__(self, args, loader, my_model):
-        self.args = args
-        self.scale = args.scale
-        self.trainloader = loader
-        self.model = my_model
-        self.model.set_train()
-        self.criterion = nn.L1Loss()
-        self.loss_history = []
-        self.begin_time = time.time()
-        self.optimizer = nn.Adam(self.model.trainable_params(), learning_rate=args.lr, loss_scale=1024.0)
-        self.loss_net = nn.WithLossCell(self.model, self.criterion)
-        self.net = nn.TrainOneStepCell(self.loss_net, self.optimizer)
-    def train(self, epoch):
-        """Trainer"""
-        losses = 0
-        batch_idx = 0
-        for batch_idx, imgs in enumerate(self.trainloader):
-            lr = imgs["LR"]
-            hr = imgs["HR"]
-            lr = Tensor(lr, mstype.float32)
-            hr = Tensor(hr, mstype.float32)
-            t1 = time.time()
-            loss = self.net(lr, hr)
-            t2 = time.time()
-            losses += loss.asnumpy()
-            print('Epoch: %g, Step: %g , loss: %f, time: %f s ' % \
-                (epoch, batch_idx, loss.asnumpy(), t2 - t1), end='\n', flush=True)
-        print("the epoch loss is", losses / (batch_idx + 1), flush=True)
-        self.loss_history.append(losses / (batch_idx + 1))
-        print(self.loss_history)
-        t = time.time() - self.begin_time
-        t = int(t)
-        print(", running time: %gh%g'%g''"%(t//3600, (t-t//3600*3600)//60, t%60), flush=True)
-        os.makedirs(self.args.save, exist_ok=True)
-        if self.args.rank == 0 and (epoch+1)%10 == 0:
-            save_checkpoint(self.net, self.args.save + "model_" + str(self.epoch) + '.ckpt')
-    def update_learning_rate(self, epoch):
-        """Update learning rates for all the networks; called at the end of every epoch.
-        :param epoch: current epoch
-        :type epoch: int
-        :param lr: learning rate of cyclegan
-        :type lr: float
-        :param niter: number of epochs with the initial learning rate
-        :type niter: int
-        :param niter_decay: number of epochs to linearly decay learning rate to zero
-        :type niter_decay: int
-        """
-        self.epoch = epoch
-        print("*********** epoch: {} **********".format(epoch))
-        lr = self.args.lr / (2 ** ((epoch+1)//200))
-        self.adjust_lr('model', self.optimizer, lr)
-        print("*********************************")
-    def adjust_lr(self, name, optimizer, lr):
-        """Adjust learning rate for the corresponding model.
-        :param name: name of model
-        :type name: str
-        :param optimizer: the optimizer of the corresponding model
-        :type optimizer: torch.optim
-        :param lr: learning rate to be adjusted
-        :type lr: float
-        """
-        lr_param = optimizer.get_lr()
-        lr_param.assign_value(Tensor(lr, mstype.float32))
-        print('==> ' + name + ' learning rate: ', lr_param.asnumpy())
+
+from mindspore import context
+from mindspore.communication.management import init
+from mindspore.context import ParallelMode
+from mindspore.train.serialization import load_checkpoint
+
+from model_utils.config import config
+from model_utils.device_adapter import get_device_id, get_rank_id, get_device_num
+from .dataset import create_dataset_DIV2K
+from .edsr import EDSR
+
+
+def init_env(cfg):
+    """
+    init env for mindspore
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
+    device_num = get_device_num()
+    if cfg.device_target == "Ascend":
+        context.set_context(device_id=get_device_id())
+        if device_num > 1:
+            init()
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
+    elif cfg.device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
+        if device_num > 1:
+            init()
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
+    elif cfg.device_target == "CPU":
+        pass
+    else:
+        raise ValueError("Unsupported platform.")
+
+
+def init_dataset(cfg, dataset_type="train"):
+    """
+    init DIV2K dataset
+    """
+    ds_cfg = {
+        "dataset_path": cfg.data_path,
+        "scale": cfg.scale,
+        "lr_type": cfg.lr_type,
+        "batch_size": cfg.batch_size,
+        "patch_size": cfg.patch_size,
+    }
+    if cfg.dataset_name == "DIV2K":
+        dataset = create_dataset_DIV2K(config=ds_cfg,
+                                       dataset_type=dataset_type,
+                                       num_parallel_workers=10,
+                                       shuffle=dataset_type == "Train")
+    else:
+        raise ValueError("Unsupported dataset.")
+    return dataset
+
+
+def init_net(cfg):
+    """
+    init edsr network
+    """
+    net = EDSR(scale=cfg.scale,
+               n_feats=cfg.n_feats,
+               kernel_size=cfg.kernel_size,
+               n_resblocks=cfg.n_resblocks,
+               n_colors=cfg.n_colors,
+               res_scale=cfg.res_scale,
+               rgb_range=cfg.rgb_range,
+               rgb_mean=cfg.rgb_mean,
+               rgb_std=cfg.rgb_std,)
+    if cfg.pre_trained:
+        pre_trained_path = os.path.join(cfg.output_path, cfg.pre_trained)
+        if len(cfg.pre_trained) >= 5 and cfg.pre_trained[:5] == "s3://":
+            pre_trained_path = cfg.pre_trained
+            import moxing as mox
+            mox.file.shift("os", "mox") # then system can read file from s3://
+        elif os.path.isfile(cfg.pre_trained):
+            pre_trained_path = cfg.pre_trained
+        elif os.path.isfile(pre_trained_path):
+            pass
+        else:
+            raise ValueError(f"pre_trained error: {cfg.pre_trained}")
+        print(f"loading pre_trained = {pre_trained_path}", flush=True)
+        param_dict = load_checkpoint(pre_trained_path)
+        net.load_pre_trained_param_dict(param_dict, strict=False)
+    return net
+
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        zip_isexist = zipfile.is_zipfile(zip_file)
+        zip_name = os.path.basename(zip_file)
+        if zip_isexist:
+            fz = zipfile.ZipFile(zip_file, 'r')
+            data_num = len(fz.namelist())
+            data_print = int(data_num / 4) if data_num > 4 else 1
+            len_data_num = len(str(data_num))
+            for i, _file in enumerate(fz.namelist()):
+                if i % data_print == 0:
+                    print("[{1:>{0}}/{2:>{0}}] {3:>2}%  const time: {4:0>2}:{5:0>2}  unzipping {6}".format(
+                        len_data_num,
+                        i,
+                        data_num,
+                        int(i / data_num * 100),
+                        int((time.time() - s_time) / 60),
+                        int(int(time.time() - s_time) % 60),
+                        zip_name,
+                        flush=True))
+                fz.extract(_file, save_dir)
+            print("       finish  const time: {:0>2}:{:0>2}  unzipping {}".format(
+                int((time.time() - s_time) / 60),
+                int(int(time.time() - s_time) % 60),
+                zip_name,
+                flush=True))
+        else:
+            print("{} is not zip.".format(zip_name), flush=True)
+
+    if config.enable_modelarts and config.need_unzip_in_modelarts:
+        sync_lock = "/tmp/unzip_sync.lock"
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            for ufile in config.need_unzip_files:
+                zip_file = os.path.join(config.data_path, ufile)
+                save_dir = os.path.dirname(zip_file)
+                unzip(zip_file, save_dir)
+            print("===Finish extract data synchronization===", flush=True)
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data.".format(get_device_id()), flush=True)
+
+    config.ckpt_save_dir = os.path.join(config.output_path, config.ckpt_save_dir)
+
+
+def do_eval(eval_network, ds_val, metrics, cur_epoch=None):
+    """
+    do eval for psnr and save hr, sr
+    """
+    eval_network.set_train(False)
+    total_step = ds_val.get_dataset_size()
+    setw = len(str(total_step))
+    begin = time.time()
+    step_begin = time.time()
+    rank_id = get_rank_id()
+    for i, (lr, hr) in enumerate(ds_val):
+        sr = eval_network(lr)
+        _ = [m.update(sr, hr) for m in metrics.values()]
+        result = {k: m.eval(sync=False) for k, m in metrics.items()}
+        result["time"] = time.time() - step_begin
+        step_begin = time.time()
+        print(f"[{i+1:>{setw}}/{total_step:>{setw}}] rank = {rank_id} result = {result}", flush=True)
+    result = {k: m.eval(sync=True) for k, m in metrics.items()}
+    result["time"] = time.time() - begin
+    if cur_epoch is not None:
+        result["epoch"] = cur_epoch
+    if rank_id == 0:
+        print(f"evaluation result = {result}", flush=True)
+    eval_network.set_train(True)
+    return result
