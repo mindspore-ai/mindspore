@@ -26,6 +26,9 @@
 
 namespace mindspore::lite {
 
+void RuntimePass(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels,
+                 std::vector<Tensor *> *tensors);
+
 /* Nc4hw4 PASS
  * before  : --(nhwc)-- CONV --(nhwc)-- TRANSPOSE --(nchw)-- IN --(nchw)-- TRANSPOSE --(nhwc)--
  * after   : --(nhwc)-- CONV --(nc4hw4)-- IN --(nhwc)--
@@ -33,8 +36,18 @@ namespace mindspore::lite {
 static const schema::PrimitiveType Nc4hw4FormatTransposeOp = schema::PrimitiveType_Transpose;
 static const std::vector<schema::PrimitiveType> Nc4hw4FormatOutOpList = {schema::PrimitiveType_Conv2DFusion};
 static const std::vector<schema::PrimitiveType> Nc4hw4FormatInOpList = {schema::PrimitiveType_InstanceNorm};
-void Nc4hw4Pass(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels,
-                std::vector<Tensor *> *tensors);
+
+/*
+ * ConvNormC4 PASS
+ * before  : --(nhwc)-- CONV --(nhwc)-- INSTANCENORM --(nhwc)--
+ * after   : --(nhwc)-- CONV --(nc4hw4)-- INSTANCENORM --(nhwc)--
+ *
+ * before  : --(nhwc)-- CONV --(nhwc)-- ACT --(nhwc)-- INSTANCENORM --(nhwc)--
+ * after   : --(nhwc)-- CONV --(nc4hw4)-- ACT --(nc4hw4)-- INSTANCENORM --(nhwc)--
+ * */
+static const schema::PrimitiveType ConvNormC4OpConv2DFusion = schema::PrimitiveType_Conv2DFusion;
+static const schema::PrimitiveType ConvNormC4OpActivation = schema::PrimitiveType_Activation;
+static const schema::PrimitiveType ConvNormC4OpInstanceNorm = schema::PrimitiveType_InstanceNorm;
 
 }  // namespace mindspore::lite
 #endif
