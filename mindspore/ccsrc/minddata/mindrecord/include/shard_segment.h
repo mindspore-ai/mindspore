@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SEGMENT_H_
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SEGMENT_H_
 
+#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -25,6 +26,10 @@
 
 namespace mindspore {
 namespace mindrecord {
+using CATEGORY_INFO = std::vector<std::tuple<int, std::string, int>>;
+using PAGES = std::vector<std::tuple<std::vector<uint8_t>, json>>;
+using PAGES_LOAD = std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>;
+
 class __attribute__((visibility("default"))) ShardSegment : public ShardReader {
  public:
   ShardSegment();
@@ -33,12 +38,12 @@ class __attribute__((visibility("default"))) ShardSegment : public ShardReader {
 
   /// \brief Get candidate category fields
   /// \return a list of fields names which are the candidates of category
-  std::pair<MSRStatus, vector<std::string>> GetCategoryFields();
+  Status GetCategoryFields(std::shared_ptr<vector<std::string>> *fields_ptr);
 
   /// \brief Set category field
   /// \param[in] category_field category name
   /// \return true if category name is existed
-  MSRStatus SetCategoryField(std::string category_field);
+  Status SetCategoryField(std::string category_field);
 
   /// \brief Thread-safe implementation of ReadCategoryInfo
   /// \return statistics data in json format with 2 field: "key" and "categories".
@@ -50,47 +55,41 @@ class __attribute__((visibility("default"))) ShardSegment : public ShardReader {
   /// { "key": "label",
   ///    "categories": [ { "count": 3, "id": 0, "name": "sport", },
   ///                    { "count": 3, "id": 1, "name": "finance", } ] }
-  std::pair<MSRStatus, std::string> ReadCategoryInfo();
+  Status ReadCategoryInfo(std::shared_ptr<std::string> *category_ptr);
 
   /// \brief Thread-safe implementation of ReadAtPageById
   /// \param[in] category_id category ID
   /// \param[in] page_no page number
   /// \param[in] n_rows_of_page rows number in one page
   /// \return images array, image is a vector of uint8_t
-  std::pair<MSRStatus, std::vector<std::vector<uint8_t>>> ReadAtPageById(int64_t category_id, int64_t page_no,
-                                                                         int64_t n_rows_of_page);
+  Status ReadAtPageById(int64_t category_id, int64_t page_no, int64_t n_rows_of_page,
+                        std::shared_ptr<std::vector<std::vector<uint8_t>>> *page_ptr);
 
   /// \brief Thread-safe implementation of ReadAtPageByName
   /// \param[in] category_name category Name
   /// \param[in] page_no page number
   /// \param[in] n_rows_of_page rows number in one page
   /// \return images array, image is a vector of uint8_t
-  std::pair<MSRStatus, std::vector<std::vector<uint8_t>>> ReadAtPageByName(std::string category_name, int64_t page_no,
-                                                                           int64_t n_rows_of_page);
+  Status ReadAtPageByName(std::string category_name, int64_t page_no, int64_t n_rows_of_page,
+                          std::shared_ptr<std::vector<std::vector<uint8_t>>> *pages_ptr);
 
-  std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, json>>> ReadAllAtPageById(int64_t category_id,
-                                                                                              int64_t page_no,
-                                                                                              int64_t n_rows_of_page);
+  Status ReadAllAtPageById(int64_t category_id, int64_t page_no, int64_t n_rows_of_page,
+                           std::shared_ptr<PAGES> *pages_ptr);
 
-  std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, json>>> ReadAllAtPageByName(
-    std::string category_name, int64_t page_no, int64_t n_rows_of_page);
-
-  std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>> ReadAtPageByIdPy(
-    int64_t category_id, int64_t page_no, int64_t n_rows_of_page);
-
-  std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>> ReadAtPageByNamePy(
-    std::string category_name, int64_t page_no, int64_t n_rows_of_page);
+  Status ReadAllAtPageByName(std::string category_name, int64_t page_no, int64_t n_rows_of_page,
+                             std::shared_ptr<PAGES> *pages_ptr);
 
   std::pair<ShardType, std::vector<std::string>> GetBlobFields();
 
  private:
-  std::pair<MSRStatus, std::vector<std::tuple<int, std::string, int>>> WrapCategoryInfo();
+  Status WrapCategoryInfo(std::shared_ptr<CATEGORY_INFO> *category_info_ptr);
 
   std::string ToJsonForCategory(const std::vector<std::tuple<int, std::string, int>> &tri_vec);
 
   std::string CleanUp(std::string fieldName);
 
-  std::pair<MSRStatus, std::vector<uint8_t>> PackImages(int group_id, int shard_id, std::vector<uint64_t> offset);
+  Status PackImages(int group_id, int shard_id, std::vector<uint64_t> offset,
+                    std::shared_ptr<std::vector<uint8_t>> *images_ptr);
 
   std::vector<std::string> candidate_category_fields_;
   std::string current_category_field_;

@@ -40,11 +40,11 @@ class __attribute__((visibility("default"))) ShardSample : public ShardOperator 
 
   ~ShardSample() override{};
 
-  MSRStatus Execute(ShardTaskList &tasks) override;
+  Status Execute(ShardTaskList &tasks) override;
 
-  MSRStatus UpdateTasks(ShardTaskList &tasks, int taking);
+  Status UpdateTasks(ShardTaskList &tasks, int taking);
 
-  MSRStatus SufExecute(ShardTaskList &tasks) override;
+  Status SufExecute(ShardTaskList &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 

@@ -39,11 +39,6 @@ class __attribute__((visibility("default"))) Schema {
   /// \param[in] schema the schema's json
   static std::shared_ptr<Schema> Build(std::string desc, const json &schema);
 
-  /// \brief obtain the json schema and its description for python
-  /// \param[in] desc the description of the schema
-  /// \param[in] schema the schema's json
-  static std::shared_ptr<Schema> Build(std::string desc, pybind11::handle schema);
-
   /// \brief compare two schema to judge if they are equal
   /// \param b another schema to be judged
   /// \return true if they are equal,false if not
@@ -56,10 +51,6 @@ class __attribute__((visibility("default"))) Schema {
   /// \brief get the schema and its description
   /// \return the json format of the schema and its description
   json GetSchema() const;
-
-  /// \brief get the schema and its description for python method
-  /// \return the python object of the schema and its description
-  pybind11::object GetSchemaForPython() const;
 
   /// set the schema id
   /// \param[in] id the id need to be set

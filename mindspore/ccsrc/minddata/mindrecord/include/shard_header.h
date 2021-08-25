@@ -37,9 +37,9 @@ class __attribute__((visibility("default"))) ShardHeader {
 
   ~ShardHeader() = default;
 
-  MSRStatus BuildDataset(const std::vector<std::string> &file_paths, bool load_dataset = true);
+  Status BuildDataset(const std::vector<std::string> &file_paths, bool load_dataset = true);
 
-  static std::pair<MSRStatus, json> BuildSingleHeader(const std::string &file_path);
+  static Status BuildSingleHeader(const std::string &file_path, std::shared_ptr<json> *header_ptr);
   /// \brief add the schema and save it
   /// \param[in] schema the schema needs to be added
   /// \return the last schema's id
@@ -53,9 +53,9 @@ class __attribute__((visibility("default"))) ShardHeader {
   /// \brief create index and add fields which from schema for each schema
   /// \param[in] fields the index fields needs to be added
   /// \return SUCCESS if add successfully, FAILED if not
-  MSRStatus AddIndexFields(std::vector<std::pair<uint64_t, std::string>> fields);
+  Status AddIndexFields(std::vector<std::pair<uint64_t, std::string>> fields);
 
-  MSRStatus AddIndexFields(const std::vector<std::string> &fields);
+  Status AddIndexFields(const std::vector<std::string> &fields);
 
   /// \brief get the schema
   /// \return the schema
@@ -79,9 +79,10 @@ class __attribute__((visibility("default"))) ShardHeader {
   std::shared_ptr<Index> GetIndex();
 
   /// \brief get the schema by schemaid
-  /// \param[in] schemaId the id of schema needs to be got
-  /// \return the schema obtained by schemaId
-  std::pair<std::shared_ptr<Schema>, MSRStatus> GetSchemaByID(int64_t schema_id);
+  /// \param[in] schema_id the id of schema needs to be got
+  /// \param[in] schema_ptr the schema obtained by schemaId
+  /// \return Status
+  Status GetSchemaByID(int64_t schema_id, std::shared_ptr<Schema> *schema_ptr);
 
   /// \brief get the filepath to shard by shardID
   /// \param[in] shardID the id of shard which filepath needs to be obtained
@@ -89,25 +90,26 @@ class __attribute__((visibility("default"))) ShardHeader {
   std::string GetShardAddressByID(int64_t shard_id);
 
   /// \brief get the statistic by statistic id
-  /// \param[in] statisticId the id of statistic needs to be get
-  /// \return the statistics obtained by statistic id
-  std::pair<std::shared_ptr<Statistics>, MSRStatus> GetStatisticByID(int64_t statistic_id);
+  /// \param[in] statistic_id the id of statistic needs to be get
+  /// \param[in] statistics_ptr the statistics obtained by statistic id
+  /// \return Status
+  Status GetStatisticByID(int64_t statistic_id, std::shared_ptr<Statistics> *statistics_ptr);
 
-  MSRStatus InitByFiles(const std::vector<std::string> &file_paths);
+  Status InitByFiles(const std::vector<std::string> &file_paths);
 
   void SetIndex(Index index) { index_ = std::make_shared<Index>(index); }
 
-  std::pair<std::shared_ptr<Page>, MSRStatus> GetPage(const int &shard_id, const int &page_id);
+  Status GetPage(const int &shard_id, const int &page_id, std::shared_ptr<Page> *page_ptr);
 
-  MSRStatus SetPage(const std::shared_ptr<Page> &new_page);
+  Status SetPage(const std::shared_ptr<Page> &new_page);
 
-  MSRStatus AddPage(const std::shared_ptr<Page> &new_page);
+  Status AddPage(const std::shared_ptr<Page> &new_page);
 
   int64_t GetLastPageId(const int &shard_id);
 
   int GetLastPageIdByType(const int &shard_id, const std::string &page_type);
 
-  const std::pair<MSRStatus, std::shared_ptr<Page>> GetPageByGroupId(const int &group_id, const int &shard_id);
+  Status GetPageByGroupId(const int &group_id, const int &shard_id, std::shared_ptr<Page> *page_ptr);
 
   std::vector<std::string> GetShardAddresses() const { return shard_addresses_; }
 
@@ -129,43 +131,41 @@ class __attribute__((visibility("default"))) ShardHeader {
 
   std::vector<std::string> SerializeHeader();
 
-  MSRStatus PagesToFile(const std::string dump_file_name);
+  Status PagesToFile(const std::string dump_file_name);
 
-  MSRStatus FileToPages(const std::string dump_file_name);
+  Status FileToPages(const std::string dump_file_name);
 
-  static MSRStatus Initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
-                              const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
-                              uint64_t &schema_id);
+  static Status Initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
+                           const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
+                           uint64_t &schema_id);
 
  private:
-  MSRStatus InitializeHeader(const std::vector<json> &headers, bool load_dataset);
+  Status InitializeHeader(const std::vector<json> &headers, bool load_dataset);
 
   /// \brief get the headers from all the shard data
   /// \param[in] the shard data real path
   /// \param[in] the headers which read from the shard data
   /// \return SUCCESS/FAILED
-  MSRStatus GetHeaders(const vector<string> &real_addresses, std::vector<json> &headers);
+  Status GetHeaders(const vector<string> &real_addresses, std::vector<json> &headers);
 
-  MSRStatus ValidateField(const std::vector<std::string> &field_name, json schema, const uint64_t &schema_id);
+  Status ValidateField(const std::vector<std::string> &field_name, json schema, const uint64_t &schema_id);
 
   /// \brief check the binary file status
-  static MSRStatus CheckFileStatus(const std::string &path);
+  static Status CheckFileStatus(const std::string &path);
 
-  static std::pair<MSRStatus, json> ValidateHeader(const std::string &path);
-
-  void ParseHeader(const json &header);
+  static Status ValidateHeader(const std::string &path, std::shared_ptr<json> *header_ptr);
 
   void GetHeadersOneTask(int start, int end, std::vector<json> &headers, const vector<string> &realAddresses);
 
-  MSRStatus ParseIndexFields(const json &index_fields);
+  Status ParseIndexFields(const json &index_fields);
 
-  MSRStatus CheckIndexField(const std::string &field, const json &schema);
+  Status CheckIndexField(const std::string &field, const json &schema);
 
-  MSRStatus ParsePage(const json &page, int shard_index, bool load_dataset);
+  Status ParsePage(const json &page, int shard_index, bool load_dataset);
 
-  MSRStatus ParseStatistics(const json &statistics);
+  Status ParseStatistics(const json &statistics);
 
-  MSRStatus ParseSchema(const json &schema);
+  Status ParseSchema(const json &schema);
 
   void ParseShardAddress(const json &address);
 
@@ -181,7 +181,7 @@ class __attribute__((visibility("default"))) ShardHeader {
 
   std::shared_ptr<Index> InitIndexPtr();
 
-  MSRStatus GetAllSchemaID(std::set<uint64_t> &bucket_count);
+  Status GetAllSchemaID(std::set<uint64_t> &bucket_count);
 
   uint32_t shard_count_;
   uint64_t header_size_;

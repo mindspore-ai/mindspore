@@ -36,20 +36,42 @@ using mindspore::MsLogLevel::ERROR;
 
 namespace mindspore {
 namespace mindrecord {
+#define THROW_IF_ERROR(s)                                      \
+  do {                                                         \
+    Status rc = std::move(s);                                  \
+    if (rc.IsError()) throw std::runtime_error(rc.ToString()); \
+  } while (false)
+
 void BindSchema(py::module *m) {
   (void)py::class_<Schema, std::shared_ptr<Schema>>(*m, "Schema", py::module_local())
-    .def_static("build", (std::shared_ptr<Schema>(*)(std::string, py::handle)) & Schema::Build)
+    .def_static("build",
+                [](const std::string &desc, const pybind11::handle &schema) {
+                  json schema_json = nlohmann::detail::ToJsonImpl(schema);
+                  return Schema::Build(std::move(desc), schema_json);
+                })
     .def("get_desc", &Schema::GetDesc)
-    .def("get_schema_content", (py::object(Schema::*)()) & Schema::GetSchemaForPython)
+    .def("get_schema_content",
+         [](Schema &s) {
+           json schema_json = s.GetSchema();
+           return nlohmann::detail::FromJsonImpl(schema_json);
+         })
     .def("get_blob_fields", &Schema::GetBlobFields)
     .def("get_schema_id", &Schema::GetSchemaID);
 }
 
 void BindStatistics(const py::module *m) {
   (void)py::class_<Statistics, std::shared_ptr<Statistics>>(*m, "Statistics", py::module_local())
-    .def_static("build", (std::shared_ptr<Statistics>(*)(std::string, py::handle)) & Statistics::Build)
+    .def_static("build",
+                [](const std::string desc, const pybind11::handle &statistics) {
+                  json statistics_json = nlohmann::detail::ToJsonImpl(statistics);
+                  return Statistics::Build(std::move(desc), statistics_json);
+                })
     .def("get_desc", &Statistics::GetDesc)
-    .def("get_statistics", (py::object(Statistics::*)()) & Statistics::GetStatisticsForPython)
+    .def("get_statistics",
+         [](Statistics &s) {
+           json statistics_json = s.GetStatistics();
+           return nlohmann::detail::FromJsonImpl(statistics_json);
+         })
     .def("get_statistics_id", &Statistics::GetStatisticsID);
 }
 
@@ -59,70 +81,179 @@ void BindShardHeader(const py::module *m) {
     .def("add_schema", &ShardHeader::AddSchema)
     .def("add_statistics", &ShardHeader::AddStatistic)
     .def("add_index_fields",
-         (MSRStatus(ShardHeader::*)(const std::vector<std::string> &)) & ShardHeader::AddIndexFields)
+         [](ShardHeader &s, const std::vector<std::string> &fields) {
+           THROW_IF_ERROR(s.AddIndexFields(fields));
+           return SUCCESS;
+         })
     .def("get_meta", &ShardHeader::GetSchemas)
     .def("get_statistics", &ShardHeader::GetStatistics)
     .def("get_fields", &ShardHeader::GetFields)
-    .def("get_schema_by_id", &ShardHeader::GetSchemaByID)
-    .def("get_statistic_by_id", &ShardHeader::GetStatisticByID);
+    .def("get_schema_by_id",
+         [](ShardHeader &s, int64_t schema_id) {
+           std::shared_ptr<Schema> schema_ptr;
+           THROW_IF_ERROR(s.GetSchemaByID(schema_id, &schema_ptr));
+           return schema_ptr;
+         })
+    .def("get_statistic_by_id", [](ShardHeader &s, int64_t statistic_id) {
+      std::shared_ptr<Statistics> statistics_ptr;
+      THROW_IF_ERROR(s.GetStatisticByID(statistic_id, &statistics_ptr));
+      return statistics_ptr;
+    });
 }
 
 void BindShardWriter(py::module *m) {
   (void)py::class_<ShardWriter>(*m, "ShardWriter", py::module_local())
     .def(py::init<>())
-    .def("open", &ShardWriter::Open)
-    .def("open_for_append", &ShardWriter::OpenForAppend)
-    .def("set_header_size", &ShardWriter::SetHeaderSize)
-    .def("set_page_size", &ShardWriter::SetPageSize)
-    .def("set_shard_header", &ShardWriter::SetShardHeader)
-    .def("write_raw_data", (MSRStatus(ShardWriter::*)(std::map<uint64_t, std::vector<py::handle>> &,
-                                                      vector<vector<uint8_t>> &, bool, bool)) &
-                             ShardWriter::WriteRawData)
-    .def("commit", &ShardWriter::Commit);
+    .def("open",
+         [](ShardWriter &s, const std::vector<std::string> &paths, bool append) {
+           THROW_IF_ERROR(s.Open(paths, append));
+           return SUCCESS;
+         })
+    .def("open_for_append",
+         [](ShardWriter &s, const std::string &path) {
+           THROW_IF_ERROR(s.OpenForAppend(path));
+           return SUCCESS;
+         })
+    .def("set_header_size",
+         [](ShardWriter &s, const uint64_t &header_size) {
+           THROW_IF_ERROR(s.SetHeaderSize(header_size));
+           return SUCCESS;
+         })
+    .def("set_page_size",
+         [](ShardWriter &s, const uint64_t &page_size) {
+           THROW_IF_ERROR(s.SetPageSize(page_size));
+           return SUCCESS;
+         })
+    .def("set_shard_header",
+         [](ShardWriter &s, std::shared_ptr<ShardHeader> header_data) {
+           THROW_IF_ERROR(s.SetShardHeader(header_data));
+           return SUCCESS;
+         })
+    .def("write_raw_data",
+         [](ShardWriter &s, std::map<uint64_t, std::vector<py::handle>> &raw_data, vector<vector<uint8_t>> &blob_data,
+            bool sign, bool parallel_writer) {
+           std::map<uint64_t, std::vector<json>> raw_data_json;
+           (void)std::transform(raw_data.begin(), raw_data.end(), std::inserter(raw_data_json, raw_data_json.end()),
+                                [](const std::pair<uint64_t, std::vector<py::handle>> &p) {
+                                  auto &py_raw_data = p.second;
+                                  std::vector<json> json_raw_data;
+                                  (void)std::transform(
+                                    py_raw_data.begin(), py_raw_data.end(), std::back_inserter(json_raw_data),
+                                    [](const py::handle &obj) { return nlohmann::detail::ToJsonImpl(obj); });
+                                  return std::make_pair(p.first, std::move(json_raw_data));
+                                });
+           THROW_IF_ERROR(s.WriteRawData(raw_data_json, blob_data, sign, parallel_writer));
+           return SUCCESS;
+         })
+    .def("commit", [](ShardWriter &s) {
+      THROW_IF_ERROR(s.Commit());
+      return SUCCESS;
+    });
 }
 
 void BindShardReader(const py::module *m) {
   (void)py::class_<ShardReader, std::shared_ptr<ShardReader>>(*m, "ShardReader", py::module_local())
     .def(py::init<>())
-    .def("open", (MSRStatus(ShardReader::*)(const std::vector<std::string> &, bool, const int &,
-                                            const std::vector<std::string> &,
-                                            const std::vector<std::shared_ptr<ShardOperator>> &)) &
-                   ShardReader::OpenPy)
-    .def("launch", &ShardReader::Launch)
+    .def("open",
+         [](ShardReader &s, const std::vector<std::string> &file_paths, bool load_dataset, const int &n_consumer,
+            const std::vector<std::string> &selected_columns,
+            const std::vector<std::shared_ptr<ShardOperator>> &operators) {
+           THROW_IF_ERROR(s.Open(file_paths, load_dataset, n_consumer, selected_columns, operators));
+           return SUCCESS;
+         })
+    .def("launch",
+         [](ShardReader &s) {
+           THROW_IF_ERROR(s.Launch(false));
+           return SUCCESS;
+         })
     .def("get_header", &ShardReader::GetShardHeader)
     .def("get_blob_fields", &ShardReader::GetBlobFields)
-    .def("get_next", (std::vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>>(ShardReader::*)()) &
-                       ShardReader::GetNextPy)
+    .def("get_next",
+         [](ShardReader &s) {
+           auto data = s.GetNext();
+           vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> res;
+           std::transform(data.begin(), data.end(), std::back_inserter(res),
+                          [&s](const std::tuple<std::vector<uint8_t>, json> &item) {
+                            auto &j = std::get<1>(item);
+                            pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
+                            auto blob_data_ptr = std::make_shared<std::vector<std::vector<uint8_t>>>();
+                            (void)s.UnCompressBlob(std::get<0>(item), &blob_data_ptr);
+                            return std::make_tuple(*blob_data_ptr, std::move(obj));
+                          });
+           return res;
+         })
     .def("close", &ShardReader::Close);
 }
 
 void BindShardIndexGenerator(const py::module *m) {
   (void)py::class_<ShardIndexGenerator>(*m, "ShardIndexGenerator", py::module_local())
     .def(py::init<const std::string &, bool>())
-    .def("build", &ShardIndexGenerator::Build)
-    .def("write_to_db", &ShardIndexGenerator::WriteToDatabase);
+    .def("build",
+         [](ShardIndexGenerator &s) {
+           THROW_IF_ERROR(s.Build());
+           return SUCCESS;
+         })
+    .def("write_to_db", [](ShardIndexGenerator &s) {
+      THROW_IF_ERROR(s.WriteToDatabase());
+      return SUCCESS;
+    });
 }
 
 void BindShardSegment(py::module *m) {
   (void)py::class_<ShardSegment>(*m, "ShardSegment", py::module_local())
     .def(py::init<>())
-    .def("open", (MSRStatus(ShardSegment::*)(const std::vector<std::string> &, bool, const int &,
-                                             const std::vector<std::string> &,
-                                             const std::vector<std::shared_ptr<ShardOperator>> &)) &
-                   ShardSegment::OpenPy)
+    .def("open",
+         [](ShardSegment &s, const std::vector<std::string> &file_paths, bool load_dataset, const int &n_consumer,
+            const std::vector<std::string> &selected_columns,
+            const std::vector<std::shared_ptr<ShardOperator>> &operators) {
+           THROW_IF_ERROR(s.Open(file_paths, load_dataset, n_consumer, selected_columns, operators));
+           return SUCCESS;
+         })
     .def("get_category_fields",
-         (std::pair<MSRStatus, vector<std::string>>(ShardSegment::*)()) & ShardSegment::GetCategoryFields)
-    .def("set_category_field", (MSRStatus(ShardSegment::*)(std::string)) & ShardSegment::SetCategoryField)
-    .def("read_category_info", (std::pair<MSRStatus, std::string>(ShardSegment::*)()) & ShardSegment::ReadCategoryInfo)
-    .def("read_at_page_by_id", (std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>>(
-                                 ShardSegment::*)(int64_t, int64_t, int64_t)) &
-                                 ShardSegment::ReadAtPageByIdPy)
-    .def("read_at_page_by_name", (std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>>(
-                                   ShardSegment::*)(std::string, int64_t, int64_t)) &
-                                   ShardSegment::ReadAtPageByNamePy)
+         [](ShardSegment &s) {
+           auto fields_ptr = std::make_shared<vector<std::string>>();
+           THROW_IF_ERROR(s.GetCategoryFields(&fields_ptr));
+           return *fields_ptr;
+         })
+    .def("set_category_field",
+         [](ShardSegment &s, const std::string &category_field) {
+           THROW_IF_ERROR(s.SetCategoryField(category_field));
+           return SUCCESS;
+         })
+    .def("read_category_info",
+         [](ShardSegment &s) {
+           std::shared_ptr<std::string> category_ptr;
+           THROW_IF_ERROR(s.ReadCategoryInfo(&category_ptr));
+           return *category_ptr;
+         })
+    .def("read_at_page_by_id",
+         [](ShardSegment &s, int64_t category_id, int64_t page_no, int64_t n_rows_of_page) {
+           auto pages_load_ptr = std::make_shared<PAGES_LOAD>();
+           auto pages_ptr = std::make_shared<PAGES>();
+           THROW_IF_ERROR(s.ReadAllAtPageById(category_id, page_no, n_rows_of_page, &pages_ptr));
+           (void)std::transform(pages_ptr->begin(), pages_ptr->end(), std::back_inserter(*pages_load_ptr),
+                                [](const std::tuple<std::vector<uint8_t>, json> &item) {
+                                  auto &j = std::get<1>(item);
+                                  pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
+                                  return std::make_tuple(std::get<0>(item), std::move(obj));
+                                });
+           return *pages_load_ptr;
+         })
+    .def("read_at_page_by_name",
+         [](ShardSegment &s, std::string category_name, int64_t page_no, int64_t n_rows_of_page) {
+           auto pages_load_ptr = std::make_shared<PAGES_LOAD>();
+           auto pages_ptr = std::make_shared<PAGES>();
+           THROW_IF_ERROR(s.ReadAllAtPageByName(category_name, page_no, n_rows_of_page, &pages_ptr));
+           (void)std::transform(pages_ptr->begin(), pages_ptr->end(), std::back_inserter(*pages_load_ptr),
+                                [](const std::tuple<std::vector<uint8_t>, json> &item) {
+                                  auto &j = std::get<1>(item);
+                                  pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
+                                  return std::make_tuple(std::get<0>(item), std::move(obj));
+                                });
+           return *pages_load_ptr;
+         })
     .def("get_header", &ShardSegment::GetShardHeader)
-    .def("get_blob_fields",
-         (std::pair<ShardType, std::vector<std::string>>(ShardSegment::*)()) & ShardSegment::GetBlobFields);
+    .def("get_blob_fields", [](ShardSegment &s) { return s.GetBlobFields(); });
 }
 
 void BindGlobalParams(py::module *m) {

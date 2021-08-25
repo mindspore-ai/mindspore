@@ -94,10 +94,9 @@ Status GraphLoader::InitAndLoad() {
   TaskGroup vg;
 
   shard_reader_ = std::make_unique<ShardReader>();
-  CHECK_FAIL_RETURN_UNEXPECTED(shard_reader_->Open({mr_path_}, true, num_workers_) == MSRStatus::SUCCESS,
-                               "Fail to open" + mr_path_);
+  RETURN_IF_NOT_OK(shard_reader_->Open({mr_path_}, true, num_workers_));
   CHECK_FAIL_RETURN_UNEXPECTED(shard_reader_->GetShardHeader()->GetSchemaCount() > 0, "No schema found!");
-  CHECK_FAIL_RETURN_UNEXPECTED(shard_reader_->Launch(true) == MSRStatus::SUCCESS, "fail to launch mr");
+  RETURN_IF_NOT_OK(shard_reader_->Launch(true));
 
   graph_impl_->data_schema_ = (shard_reader_->GetShardHeader()->GetSchemas()[0]->GetSchema());
   mindrecord::json schema = graph_impl_->data_schema_["schema"];
@@ -116,8 +115,7 @@ Status GraphLoader::InitAndLoad() {
   if (graph_impl_->server_mode_) {
 #if !defined(_WIN32) && !defined(_WIN64)
     int64_t total_blob_size = 0;
-    CHECK_FAIL_RETURN_UNEXPECTED(shard_reader_->GetTotalBlobSize(&total_blob_size) == MSRStatus::SUCCESS,
-                                 "failed to get total blob size");
+    RETURN_IF_NOT_OK(shard_reader_->GetTotalBlobSize(&total_blob_size));
     graph_impl_->graph_shared_memory_ = std::make_unique<GraphSharedMemory>(total_blob_size, mr_path_);
     RETURN_IF_NOT_OK(graph_impl_->graph_shared_memory_->CreateSharedMemory());
 #endif

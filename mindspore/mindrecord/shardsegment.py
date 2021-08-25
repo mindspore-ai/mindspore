@@ -19,7 +19,6 @@ import mindspore._c_mindrecord as ms
 from mindspore import log as logger
 from .shardutils import populate_data, SUCCESS
 from .shardheader import ShardHeader
-from .common.exceptions import MRMOpenError, MRMFetchCandidateFieldsError, MRMReadCategoryInfoError, MRMFetchDataError
 
 __all__ = ['ShardSegment']
 
@@ -73,15 +72,8 @@ class ShardSegment:
         Returns:
             list[str], by which data could be grouped.
 
-        Raises:
-            MRMFetchCandidateFieldsError: If failed to get candidate category fields.
         """
-        ret, fields = self._segment.get_category_fields()
-        if ret != SUCCESS:
-            logger.error("Failed to get candidate category fields.")
-            raise MRMFetchCandidateFieldsError
-        return fields
-
+        return self._segment.get_category_fields()
 
     def set_category_field(self, category_field):
         """Select one category field to use."""
@@ -94,14 +86,8 @@ class ShardSegment:
         Returns:
             str, description fo group information.
 
-        Raises:
-            MRMReadCategoryInfoError: If failed to read category information.
         """
-        ret, category_info = self._segment.read_category_info()
-        if ret != SUCCESS:
-            logger.error("Failed to read category information.")
-            raise MRMReadCategoryInfoError
-        return category_info
+        return self._segment.read_category_info()
 
     def read_at_page_by_id(self, category_id, page, num_row):
         """
@@ -116,13 +102,9 @@ class ShardSegment:
             list[dict]
 
         Raises:
-            MRMFetchDataError: If failed to read by category id.
             MRMUnsupportedSchemaError: If schema is invalid.
         """
-        ret, data = self._segment.read_at_page_by_id(category_id, page, num_row)
-        if ret != SUCCESS:
-            logger.error("Failed to read by category id.")
-            raise MRMFetchDataError
+        data = self._segment.read_at_page_by_id(category_id, page, num_row)
         return [populate_data(raw, blob, self._columns, self._header.blob_fields,
                               self._header.schema) for blob, raw in data]
 
@@ -139,12 +121,8 @@ class ShardSegment:
             list[dict]
 
         Raises:
-            MRMFetchDataError: If failed to read by category name.
             MRMUnsupportedSchemaError: If schema is invalid.
         """
-        ret, data = self._segment.read_at_page_by_name(category_name, page, num_row)
-        if ret != SUCCESS:
-            logger.error("Failed to read by category name.")
-            raise MRMFetchDataError
+        data = self._segment.read_at_page_by_name(category_name, page, num_row)
         return [populate_data(raw, blob, self._columns, self._header.blob_fields,
                               self._header.schema) for blob, raw in data]

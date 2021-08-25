@@ -121,14 +121,19 @@ TEST_F(TestShard, TestShardHeaderPart) {
     re_statistics.push_back(*statistic);
   }
   ASSERT_EQ(re_statistics, validate_statistics);
-  ASSERT_EQ(header_data.GetStatisticByID(-1).second, FAILED);
-  ASSERT_EQ(header_data.GetStatisticByID(10).second, FAILED);
+  std::shared_ptr<Statistics> statistics_ptr;
+
+  auto status = header_data.GetStatisticByID(-1, &statistics_ptr);
+  EXPECT_FALSE(status.IsOk());
+  status = header_data.GetStatisticByID(10, &statistics_ptr);
+  EXPECT_FALSE(status.IsOk());
 
   // test add index fields
   std::vector<std::pair<uint64_t, std::string>> fields;
   std::pair<uint64_t, std::string> pair1(0, "name");
   fields.push_back(pair1);
-  ASSERT_TRUE(header_data.AddIndexFields(fields) == SUCCESS);
+  status = header_data.AddIndexFields(fields);
+  EXPECT_TRUE(status.IsOk());
   std::vector<std::pair<uint64_t, std::string>> resFields = header_data.GetFields();
   ASSERT_EQ(resFields, fields);
 }

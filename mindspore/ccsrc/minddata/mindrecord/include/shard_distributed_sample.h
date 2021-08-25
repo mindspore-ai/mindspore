@@ -39,7 +39,7 @@ class __attribute__((visibility("default"))) ShardDistributedSample : public Sha
 
   ~ShardDistributedSample() override{};
 
-  MSRStatus PreExecute(ShardTaskList &tasks) override;
+  Status PreExecute(ShardTaskList &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 

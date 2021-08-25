@@ -37,13 +37,11 @@ ShardPkSample::ShardPkSample(const std::string &category_field, int64_t num_elem
   shuffle_op_ = std::make_shared<ShardShuffle>(seed, kShuffleSample);  // do shuffle and replacement
 }
 
-MSRStatus ShardPkSample::SufExecute(ShardTaskList &tasks) {
+Status ShardPkSample::SufExecute(ShardTaskList &tasks) {
   if (shuffle_ == true) {
-    if (SUCCESS != (*shuffle_op_)(tasks)) {
-      return FAILED;
-    }
+    RETURN_IF_NOT_OK((*shuffle_op_)(tasks));
   }
-  return SUCCESS;
+  return Status::OK();
 }
 }  // namespace mindrecord
 }  // namespace mindspore

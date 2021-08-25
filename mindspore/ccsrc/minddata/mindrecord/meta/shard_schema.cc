@@ -38,12 +38,6 @@ std::shared_ptr<Schema> Schema::Build(std::string desc, const json &schema) {
   return std::make_shared<Schema>(object_schema);
 }
 
-std::shared_ptr<Schema> Schema::Build(std::string desc, pybind11::handle schema) {
-  // validate check
-  json schema_json = nlohmann::detail::ToJsonImpl(schema);
-  return Build(std::move(desc), schema_json);
-}
-
 std::string Schema::GetDesc() const { return desc_; }
 
 json Schema::GetSchema() const {
@@ -52,12 +46,6 @@ json Schema::GetSchema() const {
   str_schema["schema"] = schema_;
   str_schema["blob_fields"] = blob_fields_;
   return str_schema;
-}
-
-pybind11::object Schema::GetSchemaForPython() const {
-  json schema_json = GetSchema();
-  pybind11::object schema_py = nlohmann::detail::FromJsonImpl(schema_json);
-  return schema_py;
 }
 
 void Schema::SetSchemaID(int64_t id) { schema_id_ = id; }

@@ -35,19 +35,6 @@ std::shared_ptr<Statistics> Statistics::Build(std::string desc, const json &stat
   return std::make_shared<Statistics>(object_statistics);
 }
 
-std::shared_ptr<Statistics> Statistics::Build(std::string desc, pybind11::handle statistics) {
-  // validate check
-  json statistics_json = nlohmann::detail::ToJsonImpl(statistics);
-  if (!Validate(statistics_json)) {
-    return nullptr;
-  }
-  Statistics object_statistics;
-  object_statistics.desc_ = std::move(desc);
-  object_statistics.statistics_ = statistics_json;
-  object_statistics.statistics_id_ = -1;
-  return std::make_shared<Statistics>(object_statistics);
-}
-
 std::string Statistics::GetDesc() const { return desc_; }
 
 json Statistics::GetStatistics() const {
@@ -55,11 +42,6 @@ json Statistics::GetStatistics() const {
   str_statistics["desc"] = desc_;
   str_statistics["statistics"] = statistics_;
   return str_statistics;
-}
-
-pybind11::object Statistics::GetStatisticsForPython() const {
-  json str_statistics = Statistics::GetStatistics();
-  return nlohmann::detail::FromJsonImpl(str_statistics);
 }
 
 void Statistics::SetStatisticsID(int64_t id) { statistics_id_ = id; }

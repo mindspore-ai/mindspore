@@ -61,35 +61,44 @@ TEST_F(TestShardSegment, TestShardSegment) {
   ShardSegment dataset;
   dataset.Open({file_name}, true, 4);
 
-  auto x = dataset.GetCategoryFields();
-  for (const auto &fields : x.second) {
+  auto fields_ptr = std::make_shared<vector<std::string>>();
+  auto status = dataset.GetCategoryFields(&fields_ptr);
+  for (const auto &fields : *fields_ptr) {
     MS_LOG(INFO) << "Get category field: " << fields;
   }
 
-  ASSERT_TRUE(dataset.SetCategoryField("label") == SUCCESS);
-  ASSERT_TRUE(dataset.SetCategoryField("laabel_0") == FAILED);
+  status = dataset.SetCategoryField("label");
+  EXPECT_TRUE(status.IsOk());
+  status = dataset.SetCategoryField("laabel_0");
+  EXPECT_FALSE(status.IsOk());
 
-  MS_LOG(INFO) << "Read category info: " << dataset.ReadCategoryInfo().second;
 
-  auto ret = dataset.ReadAtPageByName("822", 0, 10);
-  auto images = ret.second;
-  MS_LOG(INFO) << "category field: 822, images count: " << images.size() << ", image[0] size: " << images[0].size();
+  std::shared_ptr<std::string> category_ptr;
+  status = dataset.ReadCategoryInfo(&category_ptr);
+  EXPECT_TRUE(status.IsOk());
+  MS_LOG(INFO) << "Read category info: " << *category_ptr;
 
-  auto ret1 = dataset.ReadAtPageByName("823", 0, 10);
-  auto images2 = ret1.second;
-  MS_LOG(INFO) << "category field: 823, images count: " << images2.size();
+  auto pages_ptr = std::make_shared<std::vector<std::vector<uint8_t>>>();
+  status = dataset.ReadAtPageByName("822", 0, 10, &pages_ptr);
+  EXPECT_TRUE(status.IsOk());
+  MS_LOG(INFO) << "category field: 822, images count: " << pages_ptr->size() << ", image[0] size: " << ((*pages_ptr)[0]).size();
 
-  auto ret2 = dataset.ReadAtPageById(1, 0, 10);
-  auto images3 = ret2.second;
-  MS_LOG(INFO) << "category id: 1, images count: " << images3.size() << ", image[0] size: " << images3[0].size();
+  auto pages_ptr_1 = std::make_shared<std::vector<std::vector<uint8_t>>>();
+  status = dataset.ReadAtPageByName("823", 0, 10, &pages_ptr_1);
+  MS_LOG(INFO) << "category field: 823, images count: " << pages_ptr_1->size();
 
-  auto ret3 = dataset.ReadAllAtPageByName("822", 0, 10);
-  auto images4 = ret3.second;
-  MS_LOG(INFO) << "category field: 822, images count: " << images4.size();
+  auto pages_ptr_2 = std::make_shared<std::vector<std::vector<uint8_t>>>();
+  status = dataset.ReadAtPageById(1, 0, 10, &pages_ptr_2);
+  EXPECT_TRUE(status.IsOk());
+  MS_LOG(INFO) << "category id: 1, images count: " << pages_ptr_2->size() << ", image[0] size: " << ((*pages_ptr_2)[0]).size();
 
-  auto ret4 = dataset.ReadAllAtPageById(1, 0, 10);
-  auto images5 = ret4.second;
-  MS_LOG(INFO) << "category id: 1, images count: " << images5.size();
+  auto pages_ptr_3 = std::make_shared<PAGES>();
+  status = dataset.ReadAllAtPageByName("822", 0, 10, &pages_ptr_3);
+  MS_LOG(INFO) << "category field: 822, images count: " << pages_ptr_3->size();
+
+  auto pages_ptr_4 = std::make_shared<PAGES>();
+  status = dataset.ReadAllAtPageById(1, 0, 10, &pages_ptr_4);
+  MS_LOG(INFO) << "category id: 1, images count: " << pages_ptr_4->size();
 }
 
 TEST_F(TestShardSegment, TestReadAtPageByNameOfCategoryName) {
@@ -99,21 +108,28 @@ TEST_F(TestShardSegment, TestReadAtPageByNameOfCategoryName) {
   ShardSegment dataset;
   dataset.Open({file_name}, true, 4);
 
-  auto x = dataset.GetCategoryFields();
-  for (const auto &fields : x.second) {
+  auto fields_ptr = std::make_shared<vector<std::string>>();
+  auto status = dataset.GetCategoryFields(&fields_ptr);
+  for (const auto &fields : *fields_ptr) {
     MS_LOG(INFO) << "Get category field: " << fields;
   }
 
   string category_name = "82Cus";
   string category_field = "laabel_0";
 
-  ASSERT_TRUE(dataset.SetCategoryField("label") == SUCCESS);
-  ASSERT_TRUE(dataset.SetCategoryField(category_field) == FAILED);
+  status = dataset.SetCategoryField("label");
+  EXPECT_TRUE(status.IsOk());
+  status = dataset.SetCategoryField(category_field);
+  EXPECT_FALSE(status.IsOk());
 
-  MS_LOG(INFO) << "Read category info: " << dataset.ReadCategoryInfo().second;
+  std::shared_ptr<std::string> category_ptr;
+  status = dataset.ReadCategoryInfo(&category_ptr);
+  EXPECT_TRUE(status.IsOk());
+  MS_LOG(INFO) << "Read category info: " << *category_ptr;
 
-  auto ret = dataset.ReadAtPageByName(category_name, 0, 10);
-  EXPECT_TRUE(ret.first == FAILED);
+  auto pages_ptr = std::make_shared<std::vector<std::vector<uint8_t>>>();
+  status = dataset.ReadAtPageByName(category_name, 0, 10, &pages_ptr);
+  EXPECT_FALSE(status.IsOk());
 }
 
 TEST_F(TestShardSegment, TestReadAtPageByIdOfCategoryId) {
@@ -123,19 +139,25 @@ TEST_F(TestShardSegment, TestReadAtPageByIdOfCategoryId) {
   ShardSegment dataset;
   dataset.Open({file_name}, true,  4);
 
-  auto x = dataset.GetCategoryFields();
-  for (const auto &fields : x.second) {
+  auto fields_ptr = std::make_shared<vector<std::string>>();
+  auto status = dataset.GetCategoryFields(&fields_ptr);
+  for (const auto &fields : *fields_ptr) {
     MS_LOG(INFO) << "Get category field: " << fields;
   }
 
   int64_t categoryId = 2251799813685247;
   MS_LOG(INFO) << "Input category id: " << categoryId;
 
-  ASSERT_TRUE(dataset.SetCategoryField("label") == SUCCESS);
-  MS_LOG(INFO) << "Read category info: " << dataset.ReadCategoryInfo().second;
+  status = dataset.SetCategoryField("label");
+  EXPECT_TRUE(status.IsOk());
+  std::shared_ptr<std::string> category_ptr;
+  status = dataset.ReadCategoryInfo(&category_ptr);
+  EXPECT_TRUE(status.IsOk());
+  MS_LOG(INFO) << "Read category info: " << *category_ptr;
 
-  auto ret2 = dataset.ReadAtPageById(categoryId, 0, 10);
-  EXPECT_TRUE(ret2.first == FAILED);
+  auto pages_ptr = std::make_shared<std::vector<std::vector<uint8_t>>>();
+  status = dataset.ReadAtPageById(categoryId, 0, 10, &pages_ptr);
+  EXPECT_FALSE(status.IsOk());
 }
 
 TEST_F(TestShardSegment, TestReadAtPageByIdOfPageNo) {
@@ -145,19 +167,27 @@ TEST_F(TestShardSegment, TestReadAtPageByIdOfPageNo) {
   ShardSegment dataset;
   dataset.Open({file_name}, true, 4);
 
-  auto x = dataset.GetCategoryFields();
-  for (const auto &fields : x.second) {
+  auto fields_ptr = std::make_shared<vector<std::string>>();
+  auto status = dataset.GetCategoryFields(&fields_ptr);
+  for (const auto &fields : *fields_ptr) {
     MS_LOG(INFO) << "Get category field: " << fields;
   }
 
   int64_t page_no = 2251799813685247;
   MS_LOG(INFO) << "Input page no: " << page_no;
 
-  ASSERT_TRUE(dataset.SetCategoryField("label") == SUCCESS);
-  MS_LOG(INFO) << "Read category info: " << dataset.ReadCategoryInfo().second;
+  status = dataset.SetCategoryField("label");
+  EXPECT_TRUE(status.IsOk());
 
-  auto ret2 = dataset.ReadAtPageById(1, page_no, 10);
-  EXPECT_TRUE(ret2.first == FAILED);
+
+  std::shared_ptr<std::string> category_ptr;
+  status = dataset.ReadCategoryInfo(&category_ptr);
+  EXPECT_TRUE(status.IsOk());
+  MS_LOG(INFO) << "Read category info: " << *category_ptr;
+
+  auto pages_ptr = std::make_shared<std::vector<std::vector<uint8_t>>>();
+  status = dataset.ReadAtPageById(1, page_no, 10, &pages_ptr);
+  EXPECT_FALSE(status.IsOk());
 }
 
 TEST_F(TestShardSegment, TestReadAtPageByIdOfPageRows) {
@@ -167,19 +197,26 @@ TEST_F(TestShardSegment, TestReadAtPageByIdOfPageRows) {
   ShardSegment dataset;
   dataset.Open({file_name}, true, 4);
 
-  auto x = dataset.GetCategoryFields();
-  for (const auto &fields : x.second) {
+  auto fields_ptr = std::make_shared<vector<std::string>>();
+  auto status = dataset.GetCategoryFields(&fields_ptr);
+  for (const auto &fields : *fields_ptr) {
     MS_LOG(INFO) << "Get category field: " << fields;
   }
 
   int64_t pageRows = 0;
   MS_LOG(INFO) << "Input page rows: " << pageRows;
 
-  ASSERT_TRUE(dataset.SetCategoryField("label") == SUCCESS);
-  MS_LOG(INFO) << "Read category info: " << dataset.ReadCategoryInfo().second;
+  status = dataset.SetCategoryField("label");
+  EXPECT_TRUE(status.IsOk());
 
-  auto ret2 = dataset.ReadAtPageById(1, 0, pageRows);
-  EXPECT_TRUE(ret2.first == FAILED);
+  std::shared_ptr<std::string> category_ptr;
+  status = dataset.ReadCategoryInfo(&category_ptr);
+  EXPECT_TRUE(status.IsOk());
+  MS_LOG(INFO) << "Read category info: " << *category_ptr;
+
+  auto pages_ptr = std::make_shared<std::vector<std::vector<uint8_t>>>();
+  status = dataset.ReadAtPageById(1, 0, pageRows, &pages_ptr);
+  EXPECT_FALSE(status.IsOk());
 }
 
 }  // namespace mindrecord

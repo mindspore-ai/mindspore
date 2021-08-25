@@ -384,8 +384,8 @@ void ShardWriterImageNetOpenForAppend(string filename) {
   {
     MS_LOG(INFO) << "=============== images " << bin_data.size() << " ============================";
     mindrecord::ShardWriter fw;
-    auto ret = fw.OpenForAppend(filename);
-    if (ret == FAILED) {
+    auto status = fw.OpenForAppend(filename);
+    if (status.IsError()) {
       return;
     }
 

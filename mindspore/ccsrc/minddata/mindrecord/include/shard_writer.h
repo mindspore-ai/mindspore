@@ -55,69 +55,60 @@ class __attribute__((visibility("default"))) ShardWriter {
   /// \brief Open file at the beginning
   /// \param[in] paths the file names list
   /// \param[in] append new data at the end of file if true, otherwise overwrite file
-  /// \return MSRStatus the status of MSRStatus
-  MSRStatus Open(const std::vector<std::string> &paths, bool append = false);
+  /// \return Status
+  Status Open(const std::vector<std::string> &paths, bool append = false);
 
   /// \brief Open file at the ending
   /// \param[in] paths the file names list
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus OpenForAppend(const std::string &path);
+  Status OpenForAppend(const std::string &path);
 
   /// \brief Write header to disk
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus Commit();
+  Status Commit();
 
   /// \brief Set file size
   /// \param[in] header_size the size of header, only (1<<N) is accepted
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus SetHeaderSize(const uint64_t &header_size);
+  Status SetHeaderSize(const uint64_t &header_size);
 
   /// \brief Set page size
   /// \param[in] page_size the size of page, only (1<<N) is accepted
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus SetPageSize(const uint64_t &page_size);
+  Status SetPageSize(const uint64_t &page_size);
 
   /// \brief Set shard header
   /// \param[in] header_data the info of header
   ///        WARNING, only called when file is empty
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus SetShardHeader(std::shared_ptr<ShardHeader> header_data);
+  Status SetShardHeader(std::shared_ptr<ShardHeader> header_data);
 
   /// \brief write raw data by group size
   /// \param[in] raw_data the vector of raw json data, vector format
   /// \param[in] blob_data the vector of image data
   /// \param[in] sign validate data or not
   /// \return MSRStatus the status of MSRStatus to judge if write successfully
-  MSRStatus WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data, vector<vector<uint8_t>> &blob_data,
-                         bool sign = true, bool parallel_writer = false);
-
-  /// \brief write raw data by group size for call from python
-  /// \param[in] raw_data the vector of raw json data, python-handle format
-  /// \param[in] blob_data the vector of image data
-  /// \param[in] sign validate data or not
-  /// \return MSRStatus the status of MSRStatus to judge if write successfully
-  MSRStatus WriteRawData(std::map<uint64_t, std::vector<py::handle>> &raw_data, vector<vector<uint8_t>> &blob_data,
-                         bool sign = true, bool parallel_writer = false);
+  Status WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data, vector<vector<uint8_t>> &blob_data,
+                      bool sign = true, bool parallel_writer = false);
 
   /// \brief write raw data by group size for call from python
   /// \param[in] raw_data the vector of raw json data, python-handle format
   /// \param[in] blob_data the vector of blob json data, python-handle format
   /// \param[in] sign validate data or not
   /// \return MSRStatus the status of MSRStatus to judge if write successfully
-  MSRStatus WriteRawData(std::map<uint64_t, std::vector<py::handle>> &raw_data,
-                         std::map<uint64_t, std::vector<py::handle>> &blob_data, bool sign = true,
-                         bool parallel_writer = false);
+  Status WriteRawData(std::map<uint64_t, std::vector<py::handle>> &raw_data,
+                      std::map<uint64_t, std::vector<py::handle>> &blob_data, bool sign = true,
+                      bool parallel_writer = false);
 
-  MSRStatus MergeBlobData(const std::vector<string> &blob_fields,
-                          const std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> &row_bin_data,
-                          std::shared_ptr<std::vector<uint8_t>> *output);
+  Status MergeBlobData(const std::vector<string> &blob_fields,
+                       const std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> &row_bin_data,
+                       std::shared_ptr<std::vector<uint8_t>> *output);
 
-  static MSRStatus Initialize(const std::unique_ptr<ShardWriter> *writer_ptr,
-                              const std::vector<std::string> &file_names);
+  static Status Initialize(const std::unique_ptr<ShardWriter> *writer_ptr, const std::vector<std::string> &file_names);
 
  private:
   /// \brief write shard header data to disk
-  MSRStatus WriteShardHeader();
+  Status WriteShardHeader();
 
   /// \brief erase error data
   void DeleteErrorData(std::map<uint64_t, std::vector<json>> &raw_data, std::vector<std::vector<uint8_t>> &blob_data);
@@ -130,108 +121,107 @@ class __attribute__((visibility("default"))) ShardWriter {
                       std::map<int, std::string> &err_raw_data);
 
   /// \brief write shard header data to disk
-  std::tuple<MSRStatus, int, int> ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_data,
-                                                  std::vector<std::vector<uint8_t>> &blob_data, bool sign);
+  Status ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_data, std::vector<std::vector<uint8_t>> &blob_data,
+                         bool sign, std::shared_ptr<std::pair<int, int>> *count_ptr);
 
   /// \brief fill data array in multiple thread run
   void FillArray(int start, int end, std::map<uint64_t, vector<json>> &raw_data,
                  std::vector<std::vector<uint8_t>> &bin_data);
 
   /// \brief serialized raw data
-  MSRStatus SerializeRawData(std::map<uint64_t, std::vector<json>> &raw_data,
-                             std::vector<std::vector<uint8_t>> &bin_data, uint32_t row_count);
+  Status SerializeRawData(std::map<uint64_t, std::vector<json>> &raw_data, std::vector<std::vector<uint8_t>> &bin_data,
+                          uint32_t row_count);
 
   /// \brief write all data parallel
-  MSRStatus ParallelWriteData(const std::vector<std::vector<uint8_t>> &blob_data,
-                              const std::vector<std::vector<uint8_t>> &bin_raw_data);
+  Status ParallelWriteData(const std::vector<std::vector<uint8_t>> &blob_data,
+                           const std::vector<std::vector<uint8_t>> &bin_raw_data);
 
   /// \brief write data shard by shard
-  MSRStatus WriteByShard(int shard_id, int start_row, int end_row, const std::vector<std::vector<uint8_t>> &blob_data,
-                         const std::vector<std::vector<uint8_t>> &bin_raw_data);
+  Status WriteByShard(int shard_id, int start_row, int end_row, const std::vector<std::vector<uint8_t>> &blob_data,
+                      const std::vector<std::vector<uint8_t>> &bin_raw_data);
 
   /// \brief break image data up into multiple row groups
-  MSRStatus CutRowGroup(int start_row, int end_row, const std::vector<std::vector<uint8_t>> &blob_data,
-                        std::vector<std::pair<int, int>> &rows_in_group, const std::shared_ptr<Page> &last_raw_page,
-                        const std::shared_ptr<Page> &last_blob_page);
+  Status CutRowGroup(int start_row, int end_row, const std::vector<std::vector<uint8_t>> &blob_data,
+                     std::vector<std::pair<int, int>> &rows_in_group, const std::shared_ptr<Page> &last_raw_page,
+                     const std::shared_ptr<Page> &last_blob_page);
 
   /// \brief append partial blob data to previous page
-  MSRStatus AppendBlobPage(const int &shard_id, const std::vector<std::vector<uint8_t>> &blob_data,
-                           const std::vector<std::pair<int, int>> &rows_in_group,
-                           const std::shared_ptr<Page> &last_blob_page);
-
-  /// \brief write new blob data page to disk
-  MSRStatus NewBlobPage(const int &shard_id, const std::vector<std::vector<uint8_t>> &blob_data,
+  Status AppendBlobPage(const int &shard_id, const std::vector<std::vector<uint8_t>> &blob_data,
                         const std::vector<std::pair<int, int>> &rows_in_group,
                         const std::shared_ptr<Page> &last_blob_page);
 
+  /// \brief write new blob data page to disk
+  Status NewBlobPage(const int &shard_id, const std::vector<std::vector<uint8_t>> &blob_data,
+                     const std::vector<std::pair<int, int>> &rows_in_group,
+                     const std::shared_ptr<Page> &last_blob_page);
+
   /// \brief shift last row group to next raw page for new appending
-  MSRStatus ShiftRawPage(const int &shard_id, const std::vector<std::pair<int, int>> &rows_in_group,
-                         std::shared_ptr<Page> &last_raw_page);
+  Status ShiftRawPage(const int &shard_id, const std::vector<std::pair<int, int>> &rows_in_group,
+                      std::shared_ptr<Page> &last_raw_page);
 
   /// \brief write raw data page to disk
-  MSRStatus WriteRawPage(const int &shard_id, const std::vector<std::pair<int, int>> &rows_in_group,
-                         std::shared_ptr<Page> &last_raw_page, const std::vector<std::vector<uint8_t>> &bin_raw_data);
+  Status WriteRawPage(const int &shard_id, const std::vector<std::pair<int, int>> &rows_in_group,
+                      std::shared_ptr<Page> &last_raw_page, const std::vector<std::vector<uint8_t>> &bin_raw_data);
 
   /// \brief generate empty raw data page
-  void EmptyRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page);
+  Status EmptyRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page);
 
   /// \brief append a row group at the end of raw page
-  MSRStatus AppendRawPage(const int &shard_id, const std::vector<std::pair<int, int>> &rows_in_group,
-                          const int &chunk_id, int &last_row_groupId, std::shared_ptr<Page> last_raw_page,
-                          const std::vector<std::vector<uint8_t>> &bin_raw_data);
+  Status AppendRawPage(const int &shard_id, const std::vector<std::pair<int, int>> &rows_in_group, const int &chunk_id,
+                       int &last_row_groupId, std::shared_ptr<Page> last_raw_page,
+                       const std::vector<std::vector<uint8_t>> &bin_raw_data);
 
   /// \brief write blob chunk to disk
-  MSRStatus FlushBlobChunk(const std::shared_ptr<std::fstream> &out, const std::vector<std::vector<uint8_t>> &blob_data,
-                           const std::pair<int, int> &blob_row);
+  Status FlushBlobChunk(const std::shared_ptr<std::fstream> &out, const std::vector<std::vector<uint8_t>> &blob_data,
+                        const std::pair<int, int> &blob_row);
 
   /// \brief write raw chunk to disk
-  MSRStatus FlushRawChunk(const std::shared_ptr<std::fstream> &out,
-                          const std::vector<std::pair<int, int>> &rows_in_group, const int &chunk_id,
-                          const std::vector<std::vector<uint8_t>> &bin_raw_data);
+  Status FlushRawChunk(const std::shared_ptr<std::fstream> &out, const std::vector<std::pair<int, int>> &rows_in_group,
+                       const int &chunk_id, const std::vector<std::vector<uint8_t>> &bin_raw_data);
 
   /// \brief break up into tasks by shard
   std::vector<std::pair<int, int>> BreakIntoShards();
 
   /// \brief calculate raw data size row by row
-  MSRStatus SetRawDataSize(const std::vector<std::vector<uint8_t>> &bin_raw_data);
+  Status SetRawDataSize(const std::vector<std::vector<uint8_t>> &bin_raw_data);
 
   /// \brief calculate blob data size row by row
-  MSRStatus SetBlobDataSize(const std::vector<std::vector<uint8_t>> &blob_data);
+  Status SetBlobDataSize(const std::vector<std::vector<uint8_t>> &blob_data);
 
   /// \brief populate last raw page pointer
-  void SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page);
+  Status SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page);
 
   /// \brief populate last blob page pointer
-  void SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &last_blob_page);
+  Status SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &last_blob_page);
 
   /// \brief check the data by schema
-  MSRStatus CheckData(const std::map<uint64_t, std::vector<json>> &raw_data);
+  Status CheckData(const std::map<uint64_t, std::vector<json>> &raw_data);
 
   /// \brief check the data and type
-  MSRStatus CheckDataTypeAndValue(const std::string &key, const json &value, const json &data, const int &i,
-                                  std::map<int, std::string> &err_raw_data);
+  Status CheckDataTypeAndValue(const std::string &key, const json &value, const json &data, const int &i,
+                               std::map<int, std::string> &err_raw_data);
 
   /// \brief Lock writer and save pages info
-  int LockWriter(bool parallel_writer = false);
+  Status LockWriter(bool parallel_writer, std::unique_ptr<int> *fd_ptr);
 
   /// \brief Unlock writer and save pages info
-  MSRStatus UnlockWriter(int fd, bool parallel_writer = false);
+  Status UnlockWriter(int fd, bool parallel_writer = false);
 
   /// \brief Check raw data before writing
-  MSRStatus WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>> &raw_data, vector<vector<uint8_t>> &blob_data,
-                                 bool sign, int *schema_count, int *row_count);
+  Status WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>> &raw_data, vector<vector<uint8_t>> &blob_data,
+                              bool sign, int *schema_count, int *row_count);
 
   /// \brief Get full path from file name
-  MSRStatus GetFullPathFromFileName(const std::vector<std::string> &paths);
+  Status GetFullPathFromFileName(const std::vector<std::string> &paths);
 
   /// \brief Open files
-  MSRStatus OpenDataFiles(bool append);
+  Status OpenDataFiles(bool append);
 
   /// \brief Remove lock file
-  MSRStatus RemoveLockFile();
+  Status RemoveLockFile();
 
   /// \brief Remove lock file
-  MSRStatus InitLockFile();
+  Status InitLockFile();
 
  private:
   const std::string kLockFileSuffix = "_Locker";

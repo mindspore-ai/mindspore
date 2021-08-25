@@ -38,7 +38,7 @@ class __attribute__((visibility("default"))) ShardPkSample : public ShardCategor
 
   ~ShardPkSample() override{};
 
-  MSRStatus SufExecute(ShardTaskList &tasks) override;
+  Status SufExecute(ShardTaskList &tasks) override;
 
   int64_t GetNumSamples() const { return num_samples_; }
 

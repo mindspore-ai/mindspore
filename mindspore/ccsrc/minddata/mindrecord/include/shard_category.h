@@ -46,7 +46,7 @@ class __attribute__((visibility("default"))) ShardCategory : public ShardOperato
 
   bool GetReplacement() const { return replacement_; }
 
-  MSRStatus Execute(ShardTaskList &tasks) override;
+  Status Execute(ShardTaskList &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 

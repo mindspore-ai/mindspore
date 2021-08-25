@@ -33,6 +33,7 @@
 #include <future>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <random>
 #include <set>
 #include <sstream>
@@ -159,13 +160,15 @@ bool ValidateFieldName(const std::string &str);
 
 /// \brief get the filename by the path
 /// \param s file path
-/// \return
-std::pair<MSRStatus, std::string> GetFileName(const std::string &s);
+/// \param fn_ptr shared ptr of file name
+/// \return Status
+Status GetFileName(const std::string &path, std::shared_ptr<std::string> *fn_ptr);
 
 /// \brief get parent dir
 /// \param path file path
-/// \return parent path
-std::pair<MSRStatus, std::string> GetParentDir(const std::string &path);
+/// \param pd_ptr shared ptr of parent path
+/// \return Status
+Status GetParentDir(const std::string &path, std::shared_ptr<std::string> *pd_ptr);
 
 bool CheckIsValidUtf8(const std::string &str);
 
@@ -179,8 +182,9 @@ enum DiskSizeType { kTotalSize = 0, kFreeSize };
 /// \brief get the free space about the disk
 /// \param str_dir file path
 /// \param disk_type: kTotalSize / kFreeSize
-/// \return size in Megabytes
-std::pair<MSRStatus, uint64_t> GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type);
+/// \param size: shared ptr of size in Megabytes
+/// \return Status
+Status GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type, std::shared_ptr<uint64_t> *size);
 
 /// \brief get the max hardware concurrency
 /// \return max concurrency
@@ -189,8 +193,9 @@ uint32_t GetMaxThreadNum();
 /// \brief get absolute path of all mindrecord files
 /// \param path path to one fo mindrecord files
 /// \param addresses relative path of all mindrecord files
-/// \return vector of absolute path
-std::pair<MSRStatus, std::vector<std::string>> GetDatasetFiles(const std::string &path, const json &addresses);
+/// \param ds shared ptr of vector of absolute path
+/// \return Status
+Status GetDatasetFiles(const std::string &path, const json &addresses, std::shared_ptr<std::vector<std::string>> *ds);
 }  // namespace mindrecord
 }  // namespace mindspore
 

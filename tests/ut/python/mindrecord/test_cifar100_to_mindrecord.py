@@ -19,7 +19,6 @@ import pytest
 from mindspore import log as logger
 from mindspore.mindrecord import Cifar100ToMR
 from mindspore.mindrecord import FileReader
-from mindspore.mindrecord import MRMOpenError
 from mindspore.mindrecord import SUCCESS
 
 CIFAR100_DIR = "../data/mindrecord/testCifar100Data"
@@ -119,8 +118,8 @@ def test_cifar100_to_mindrecord_directory(fixture_file):
     test transform cifar10 dataset to mindrecord
     when destination path is directory.
     """
-    with pytest.raises(MRMOpenError,
-                       match="MindRecord File could not open successfully"):
+    with pytest.raises(RuntimeError,
+                       match="MindRecord file already existed, please delete file:"):
         cifar100_transformer = Cifar100ToMR(CIFAR100_DIR,
                                             CIFAR100_DIR)
         cifar100_transformer.transform()
@@ -130,8 +129,8 @@ def test_cifar100_to_mindrecord_filename_equals_cifar100(fixture_file):
     test transform cifar10 dataset to mindrecord
     when destination path equals source path.
     """
-    with pytest.raises(MRMOpenError,
-                       match="MindRecord File could not open successfully"):
+    with pytest.raises(RuntimeError,
+                       match="indRecord file already existed, please delete file:"):
         cifar100_transformer = Cifar100ToMR(CIFAR100_DIR,
                                             CIFAR100_DIR + "/train")
         cifar100_transformer.transform()

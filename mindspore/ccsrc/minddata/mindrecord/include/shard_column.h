@@ -65,11 +65,11 @@ class __attribute__((visibility("default"))) ShardColumn {
   ~ShardColumn() = default;
 
   /// \brief get column value by column name
-  MSRStatus GetColumnValueByName(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
-                                 const json &columns_json, const unsigned char **data,
-                                 std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *const n_bytes,
-                                 ColumnDataType *column_data_type, uint64_t *column_data_type_size,
-                                 std::vector<int64_t> *column_shape);
+  Status GetColumnValueByName(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
+                              const json &columns_json, const unsigned char **data,
+                              std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *const n_bytes,
+                              ColumnDataType *column_data_type, uint64_t *column_data_type_size,
+                              std::vector<int64_t> *column_shape);
 
   /// \brief compress blob
   std::vector<uint8_t> CompressBlob(const std::vector<uint8_t> &blob, int64_t *compression_size);
@@ -90,19 +90,18 @@ class __attribute__((visibility("default"))) ShardColumn {
   std::vector<std::vector<int64_t>> GetColumnShape() { return column_shape_; }
 
   /// \brief get column value from blob
-  MSRStatus GetColumnFromBlob(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
-                              const unsigned char **data, std::unique_ptr<unsigned char[]> *data_ptr,
-                              uint64_t *const n_bytes);
+  Status GetColumnFromBlob(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
+                           const unsigned char **data, std::unique_ptr<unsigned char[]> *data_ptr,
+                           uint64_t *const n_bytes);
 
   /// \brief get column type
-  std::pair<MSRStatus, ColumnCategory> GetColumnTypeByName(const std::string &column_name,
-                                                           ColumnDataType *column_data_type,
-                                                           uint64_t *column_data_type_size,
-                                                           std::vector<int64_t> *column_shape);
+  Status GetColumnTypeByName(const std::string &column_name, ColumnDataType *column_data_type,
+                             uint64_t *column_data_type_size, std::vector<int64_t> *column_shape,
+                             ColumnCategory *column_category);
 
   /// \brief get column value from json
-  MSRStatus GetColumnFromJson(const std::string &column_name, const json &columns_json,
-                              std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes);
+  Status GetColumnFromJson(const std::string &column_name, const json &columns_json,
+                           std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes);
 
  private:
   /// \brief initialization
@@ -110,15 +109,15 @@ class __attribute__((visibility("default"))) ShardColumn {
 
   /// \brief get float value from json
   template <typename T>
-  MSRStatus GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value, bool use_double);
+  Status GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value, bool use_double);
 
   /// \brief get integer value from json
   template <typename T>
-  MSRStatus GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value);
+  Status GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value);
 
   /// \brief get column offset address and size from blob
-  MSRStatus GetColumnAddressInBlock(const uint64_t &column_id, const std::vector<uint8_t> &columns_blob,
-                                    uint64_t *num_bytes, uint64_t *shift_idx);
+  Status GetColumnAddressInBlock(const uint64_t &column_id, const std::vector<uint8_t> &columns_blob,
+                                 uint64_t *num_bytes, uint64_t *shift_idx);
 
   /// \brief check if column name is available
   ColumnCategory CheckColumnName(const std::string &column_name);
@@ -128,8 +127,8 @@ class __attribute__((visibility("default"))) ShardColumn {
 
   /// \brief uncompress integer array column
   template <typename T>
-  static MSRStatus UncompressInt(const uint64_t &column_id, std::unique_ptr<unsigned char[]> *const data_ptr,
-                                 const std::vector<uint8_t> &columns_blob, uint64_t *num_bytes, uint64_t shift_idx);
+  static Status UncompressInt(const uint64_t &column_id, std::unique_ptr<unsigned char[]> *const data_ptr,
+                              const std::vector<uint8_t> &columns_blob, uint64_t *num_bytes, uint64_t shift_idx);
 
   /// \brief convert big-endian bytes to unsigned int
   /// \param bytes_array bytes array

@@ -70,7 +70,7 @@ class ShardReader:
         Raises:
             MRMLaunchError: If failed to launch worker threads.
         """
-        ret = self._reader.launch(False)
+        ret = self._reader.launch()
         if ret != ms.MSRStatus.SUCCESS:
             logger.error("Failed to launch worker threads.")
             raise MRMLaunchError
