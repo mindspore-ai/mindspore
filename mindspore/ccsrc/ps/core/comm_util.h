@@ -97,6 +97,7 @@ class CommUtil {
  public:
   static bool CheckIpWithRegex(const std::string &ip);
   static bool CheckIp(const std::string &ip);
+  static bool CheckPort(const uint16_t &port);
   static void GetAvailableInterfaceAndIP(std::string *interface, std::string *ip);
   static std::string GenerateUUID();
   static std::string NodeRoleToString(const NodeRole &role);

@@ -41,7 +41,7 @@ class RecoveryBase {
   virtual ~RecoveryBase() = default;
 
   // Initialize the recovery configuration item and get the storage type of recovery.
-  void Initialize(const std::string &json_config);
+  virtual void Initialize(const std::string &json_config);
 
   // The node needs to recover metadata information when it starts.
   virtual bool Recover() = 0;

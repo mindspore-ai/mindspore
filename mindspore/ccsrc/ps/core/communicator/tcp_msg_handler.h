@@ -19,7 +19,7 @@
 
 #include <memory>
 #include "proto/ps.pb.h"
-#include "ps/core/server_node.h"
+#include "ps/core/abstract_node.h"
 #include "ps/core/communicator/message_handler.h"
 #include "ps/constants.h"
 
@@ -28,8 +28,8 @@ namespace ps {
 namespace core {
 class TcpMsgHandler : public MessageHandler {
  public:
-  TcpMsgHandler(ServerNode *server_node, std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
-                DataPtr data, size_t size);
+  TcpMsgHandler(AbstractNode *abstract_node, const std::shared_ptr<core::TcpConnection> &conn,
+                const std::shared_ptr<MessageMeta> &meta, DataPtr data, size_t size);
   ~TcpMsgHandler() override = default;
 
   void *data() const override;
@@ -37,7 +37,7 @@ class TcpMsgHandler : public MessageHandler {
   bool SendResponse(const void *data, const size_t &len) override;
 
  private:
-  ServerNode *server_node_;
+  AbstractNode *abstract_node_;
   std::shared_ptr<TcpConnection> tcp_conn_;
   // core::MessageMeta is used for server to get the user command and to find communication peer when responding.
   std::shared_ptr<MessageMeta> meta_;

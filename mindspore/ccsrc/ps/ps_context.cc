@@ -51,10 +51,23 @@ void PSContext::SetPSEnable(bool enabled) {
     worker_num_ = std::strtol(common::GetEnv(kEnvWorkerNum).c_str(), nullptr, kBase);
     server_num_ = std::strtol(common::GetEnv(kEnvPServerNum).c_str(), nullptr, kBase);
     scheduler_host_ = common::GetEnv(kEnvSchedulerHost);
+    if (scheduler_host_.length() > kLength) {
+      MS_LOG(EXCEPTION) << "The scheduler host's length can not exceed " << kLength;
+    }
     scheduler_port_ = std::strtol(common::GetEnv(kEnvSchedulerPort).c_str(), nullptr, kBase);
-    scheduler_manage_port_ = std::strtol(common::GetEnv(kEnvSchedulerManagePort).c_str(), nullptr, kBase);
+    if (scheduler_port_ > kMaxPort) {
+      MS_LOG(EXCEPTION) << "The port: " << scheduler_port_ << " is illegal.";
+    }
+    scheduler_manage_port_ =
+      static_cast<uint16_t>((std::strtol(common::GetEnv(kEnvSchedulerManagePort).c_str(), nullptr, kBase)));
+    if (scheduler_manage_port_ > kMaxPort) {
+      MS_LOG(EXCEPTION) << "The port << " << scheduler_manage_port_ << " is illegal.";
+    }
     cluster_config_ = std::make_unique<core::ClusterConfig>(worker_num_, server_num_, scheduler_host_, scheduler_port_);
     node_id_ = common::GetEnv(kEnvNodeId);
+    if (node_id_.length() > kLength) {
+      MS_LOG(EXCEPTION) << "The node id length can not exceed " << kLength;
+    }
   } else {
     MS_LOG(INFO) << "PS mode is disabled.";
     is_worker_ = false;

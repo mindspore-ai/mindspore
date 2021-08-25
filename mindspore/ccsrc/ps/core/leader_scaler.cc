@@ -21,7 +21,9 @@ namespace ps {
 namespace core {
 void LeaderScaler::ScaleOutAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager) {
   MS_EXCEPTION_IF_NULL(client);
+  MS_EXCEPTION_IF_NULL(node_);
   auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
   message_meta->set_cmd(NodeCommand::SCALE_OUT);
 
   ScaleOutMessage scale_out_message;
@@ -39,7 +41,9 @@ void LeaderScaler::ScaleOutAsync(const std::shared_ptr<TcpClient> &client, const
 void LeaderScaler::ScaleInAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager,
                                 bool is_node_scale_in) {
   MS_EXCEPTION_IF_NULL(client);
+  MS_EXCEPTION_IF_NULL(node_);
   auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
   message_meta->set_cmd(NodeCommand::SCALE_IN);
 
   ScaleInMessage scale_in_message;

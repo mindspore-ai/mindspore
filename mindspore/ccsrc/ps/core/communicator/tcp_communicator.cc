@@ -25,7 +25,7 @@ bool TcpCommunicator::Start() {
     MS_LOG(INFO) << "The TCP communicator has already started.";
     return true;
   }
-  MS_EXCEPTION_IF_NULL(server_node_);
+  MS_EXCEPTION_IF_NULL(abstrace_node_);
 
   // Set message callback. For example, message of push/pull, etc.
   tcp_msg_callback_ = std::bind(
@@ -43,11 +43,15 @@ bool TcpCommunicator::Start() {
 
       MS_LOG(DEBUG) << "TcpCommunicator receives message for " << msg_type;
       std::shared_ptr<MessageHandler> tcp_msg_handler =
-        std::make_shared<TcpMsgHandler>(server_node_, conn, meta, data, size);
+        std::make_shared<TcpMsgHandler>(abstrace_node_, conn, meta, data, size);
       MS_ERROR_IF_NULL_WO_RET_VAL(tcp_msg_handler);
       // The Submit function timed out for 30s, if it returns false, it will retry 60 times.
-      bool res = CommUtil::Retry([&] { return task_executor_->Submit(msg_callbacks_[msg_type], tcp_msg_handler); },
-                                 kRetryCount, kRetryIntervalInMs);
+      bool res = CommUtil::Retry(
+        [&] {
+          MS_EXCEPTION_IF_NULL(task_executor_);
+          return task_executor_->Submit(msg_callbacks_[msg_type], tcp_msg_handler);
+        },
+        kRetryCount, kRetryIntervalInMs);
       if (res == false) {
         MS_LOG(EXCEPTION) << "Submit tcp msg handler failed.";
       }
@@ -55,9 +59,9 @@ bool TcpCommunicator::Start() {
       return;
     },
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-  server_node_->set_handler(tcp_msg_callback_);
+  abstrace_node_->set_handler(tcp_msg_callback_);
 
-  if (!server_node_->Start()) {
+  if (!abstrace_node_->Start()) {
     MS_LOG(EXCEPTION) << "Starting server node failed.";
     return false;
   }
@@ -71,12 +75,12 @@ bool TcpCommunicator::Start() {
 }
 
 bool TcpCommunicator::Stop() {
-  MS_EXCEPTION_IF_NULL(server_node_);
-  if (!server_node_->Finish()) {
+  MS_EXCEPTION_IF_NULL(abstrace_node_);
+  if (!abstrace_node_->Finish()) {
     MS_LOG(ERROR) << "Finishing server node failed.";
     return false;
   }
-  if (!server_node_->Stop()) {
+  if (!abstrace_node_->Stop()) {
     MS_LOG(ERROR) << "Stopping server node failed.";
     return false;
   }
@@ -90,11 +94,9 @@ void TcpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const Mes
 }
 
 void TcpCommunicator::RegisterEventCallback(const core::ClusterEvent &event, const EventCallback &event_cb) {
-  MS_EXCEPTION_IF_NULL(server_node_);
-  server_node_->RegisterEventCallback(event, event_cb);
+  MS_EXCEPTION_IF_NULL(abstrace_node_);
+  abstrace_node_->RegisterEventCallback(event, event_cb);
 }
-
-ServerNode *TcpCommunicator::server_node() { return server_node_; }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

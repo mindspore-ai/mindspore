@@ -28,11 +28,19 @@ void RecoveryBase::Initialize(const std::string &config_json) {
   }
 
   MS_LOG(INFO) << "The node is support recovery.";
+  if (!recovery_config.contains(kStoreType)) {
+    MS_LOG(WARNING) << "The " << kStoreType << " is not existed.";
+    return;
+  }
   std::string storage_file_path = "";
   std::string type = recovery_config.at(kStoreType).dump();
   if (type == kFileStorage) {
     storage_type_ = StorageType::kFileStorage;
 
+    if (!recovery_config.contains(kStoreFilePath)) {
+      MS_LOG(WARNING) << "The " << kStoreFilePath << " is not existed.";
+      return;
+    }
     storage_file_path = recovery_config.at(kStoreFilePath);
     if (storage_file_path == "") {
       MS_LOG(EXCEPTION) << "If the scheduler support recovery, and if the persistent storage is a file, the path of "
@@ -40,6 +48,7 @@ void RecoveryBase::Initialize(const std::string &config_json) {
     }
 
     recovery_storage_ = std::make_unique<FileConfiguration>(storage_file_path);
+    MS_EXCEPTION_IF_NULL(recovery_storage_);
 
     if (!recovery_storage_->Initialize()) {
       MS_LOG(INFO) << "The storage file path " << storage_file_path << " is empty.";
