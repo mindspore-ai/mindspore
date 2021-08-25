@@ -90,8 +90,8 @@ int CalculateNewHeightAndWidth(const TensorC *const *inputs, size_t inputs_size,
     if (GetElementNum(inputs[3]) < 2) {
       return NNACL_ERR;
     }
-    param->new_height_ = ((int *)(inputs[3]->data_))[0];
-    param->new_width_ = ((int *)(inputs[3]->data_))[1];
+    const TensorC *inputs_tmp[2] = {inputs[0], inputs[3]};
+    return HandleTwoInputs(inputs_tmp, param);
   } else {
     return NNACL_ERR;
   }

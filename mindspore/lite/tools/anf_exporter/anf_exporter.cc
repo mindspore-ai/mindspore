@@ -690,7 +690,7 @@ int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, cons
   schema_tensor->dims = data_info.shape_;
   schema_tensor->dataType = data_info.data_type_;
   schema_tensor->data = data_info.data_;
-  if (!schema_tensor->data.empty()) {
+  if (param_node->has_default()) {
     schema_tensor->nodeType = NodeType_ValueNode;
   } else {
     schema_tensor->nodeType = NodeType_CNode;
