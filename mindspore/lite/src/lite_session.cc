@@ -676,7 +676,13 @@ int LiteSession::Init(InnerContext *context) {
     return ret;
   }
   if (context->delegate != nullptr) {
+#ifndef DELEGATE_CLIP
     delegate_ = context->delegate;
+#else
+    MS_LOG(ERROR) << unsupport_delegate_log;
+    is_running_.store(false);
+    return RET_NOT_SUPPORT;
+#endif
   }
   ms_context_ = MSContextFromContext(context);
   if (ms_context_ == nullptr) {
@@ -684,6 +690,7 @@ int LiteSession::Init(InnerContext *context) {
     is_running_.store(false);
     return RET_NULL_PTR;
   }
+#ifndef DELEGATE_CLIP
 #if SUPPORT_NPU
   if (delegate_ == nullptr && context_->IsNpuEnabled()) {
     delegate_ = std::make_shared<NPUDelegate>(context_->GetNpuInfo());
@@ -702,7 +709,7 @@ int LiteSession::Init(InnerContext *context) {
     }
   }
 #endif
-#ifndef DELEGATE_CLIP
+
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
     if (delegate_ret == mindspore::kLiteNotSupport) {

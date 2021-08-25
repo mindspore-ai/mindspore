@@ -351,7 +351,11 @@ int LiteModel::ConstructModel() {
   flatbuffers::Verifier verify((const uint8_t *)this->buf, this->buf_size_);
   schema_version_ = VersionVerify(&verify);
   if (schema_version_ == SCHEMA_INVALID) {
-    MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";
+    MS_LOG(ERROR) << "The model buffer is invalid and fail to create graph.";
+#ifndef ENABLE_V0
+    MS_LOG(ERROR) << "Maybe this is a model transferred out using the conversion tool before 1.1.0";
+    MS_LOG(ERROR) << unsupport_v0_log;
+#endif
     return RET_ERROR;
   }
   const void *meta_graph = GetMetaGraphByVerison();

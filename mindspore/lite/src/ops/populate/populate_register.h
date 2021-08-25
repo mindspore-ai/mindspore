@@ -18,12 +18,14 @@
 #define MINDSPORE_LITE_SRC_OPS_POPULATE_POPULATE_REGISTER_H_
 
 #include <map>
+#include <vector>
 #include "schema/model_generated.h"
 #include "nnacl/op_base.h"
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "src/common/prim_util.h"
 #include "src/common/version_manager.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -32,6 +34,11 @@ constexpr int kOffsetThree = 3;
 constexpr size_t kMinShapeSizeTwo = 2;
 constexpr size_t kMinShapeSizeFour = 4;
 typedef OpParameter *(*ParameterGen)(const void *prim);
+
+static const std::vector<schema::PrimitiveType> string_op = {
+  schema::PrimitiveType_CustomExtractFeatures, schema::PrimitiveType_CustomNormalize,
+  schema::PrimitiveType_CustomPredict,         schema::PrimitiveType_HashtableLookup,
+  schema::PrimitiveType_LshProjection,         schema::PrimitiveType_SkipGram};
 
 class PopulateRegistry {
  public:
@@ -45,8 +52,16 @@ class PopulateRegistry {
     ParameterGen param_creator = nullptr;
     auto iter = parameters_.find(GenPrimVersionKey(type, version));
     if (iter == parameters_.end()) {
-      MS_LOG(ERROR) << "Unsupported parameter type in Create : "
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type));
+#ifdef STRING_KERNEL_CLIP
+      if (lite::IsContain(string_op, static_cast<schema::PrimitiveType>(type))) {
+        MS_LOG(ERROR) << unsupport_string_tensor_log;
+      } else {
+#endif
+        MS_LOG(ERROR) << "Unsupported parameter type in Create : "
+                      << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type));
+#ifdef STRING_KERNEL_CLIP
+      }
+#endif
       return nullptr;
     }
     param_creator = iter->second;
