@@ -237,12 +237,16 @@ Resnet50 is easy to get in mindspore model zoo.
 For Ascend device, standalone training example(1p) by shell script
 
 ```bash
-sh run_standalone_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt
+sh run_standalone_train.sh dataset/coco2017 train2017 annotations/instances_train2017.json val2017 annotations/instances_val2017.json
 ```
 
 ```text
 python train.py \
     --data_dir=/dataset/xxx \
+	--train_img_dir=train2017 \
+    --train_json_file=annotations/instances_train2017.json \
+    --val_img_dir=val2017 \
+    --val_json_file=annotations/instances_val2017.json \
     --pretrained_backbone=cspdarknet53_backbone.ckpt \
     --is_distributed=0 \
     --lr=0.1 \
@@ -262,7 +266,7 @@ After training, you'll get some checkpoint files under the outputs folder by def
 For Ascend device, distributed training example(8p) by shell script
 
 ```bash
-sh run_distribute_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt rank_table_8p.json
+sh run_distribute_train.sh dataset/coco2017 train2017 annotations/instances_train2017.json val2017 annotations/instances_val2017.json rank_table_8p.json
 ```
 
 The above shell script will run distribute training in the background.
@@ -283,10 +287,12 @@ You can train your own model based on either pretrained classification model or 
 ```bash
 python eval.py \
     --data_dir=./dataset/coco2017 \
+	--val_img_dir=val2017 \
+    --val_json_file=annotations/instances_val2017.json \
     --pretrained=yolov4.ckpt \
     --testing_shape=608 > log.txt 2>&1 &
 OR
-sh run_eval.sh dataset/coco2017 checkpoint/yolov4.ckpt
+sh run_eval.sh dataset/coco2017 val2017 annotations/instances_val2017.json checkpoint/yolov4.ckpt
 ```
 
 The above python command will run in the background. You can view the results through the file "log.txt".
