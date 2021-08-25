@@ -21,6 +21,7 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore.context import ParallelMode
 import mindspore.dataset as ds
+from mindspore.common import set_seed
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.model import Model
 from mindspore.train.callback import LossMonitor, TimeMonitor, ModelCheckpoint, CheckpointConfig
@@ -29,6 +30,8 @@ from src.midas_net import MidasNet, Loss, NetwithCell
 from src.utils import loadImgDepth
 from src.config import config
 
+set_seed(1)
+ds.config.set_seed(1)
 
 def dynamic_lr(num_epoch_per_decay, total_epochs, steps_per_epoch, lr, end_lr):
     """dynamic learning rate generator"""
@@ -78,8 +81,7 @@ def train(mixdata_path):
                             max_call_depth=10000)
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True,
-                                          device_num=device_num,
-                                          parameter_broadcast=True
+                                          device_num=device_num
                                           )
         init()
         local_data_path = config.train_data_dir + '/data'
