@@ -104,7 +104,12 @@ bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBu
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
-
+  auto func_call = kernel_node->input(0);
+  if (auto pre = GetCNodePrimitive(kernel_node)) {
+    if (pre->GetAttr("akg")) {
+      return true;
+    }
+  }
   if (AnfAlgo::IsNodeInGraphKernel(kernel_node)) {
     // The op_info in OpLib is only used for basic ops,
     // we don't care it in GraphKernel.
