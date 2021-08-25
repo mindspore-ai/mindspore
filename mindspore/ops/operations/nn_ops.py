@@ -8683,6 +8683,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
 class SoftShrink(Primitive):
     r"""
     Applies the soft shrinkage function elementwise.
+
     .. math::
         \text{SoftShrink}(x) =
         \begin{cases}
@@ -8690,6 +8691,7 @@ class SoftShrink(Primitive):
         x + \lambda, & \text{ if } x < -\lambda \\
         0, & \text{ otherwise }
         \end{cases}
+
     Args:
         lambd: the :math:`\lambda` must be no less than zero value for the Softshrink formulation. Default: 0.5.
 
