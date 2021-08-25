@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.mindspore.lite.config;
 
+/**
+ * define device type
+ *
+ * @since v1.0
+ */
 public class DeviceType {
     public static final int DT_CPU = 0;
     public static final int DT_GPU = 1;
