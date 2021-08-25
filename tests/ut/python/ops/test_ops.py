@@ -81,6 +81,18 @@ def test_recursive_grad():
     f2(x, y)
 
 
+class IndexAdd(nn.Cell):
+    """IndexAdd net definition"""
+
+    def __init__(self, axis):
+        super(IndexAdd, self).__init__()
+        self.index_add = P.IndexAdd(axis)
+        self.input_x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)))
+
+    def construct(self, indices, updates):
+        return self.index_add(self.input_x, indices, updates)
+
+
 class InputBackward(nn.Cell):
     def __init__(self, network):
         super(InputBackward, self).__init__()
@@ -1671,6 +1683,11 @@ test_case_math_ops = [
         'block': P.Erfinv(),
         'desc_inputs': [Tensor(np.array([0.1, 0.1, 0.1]).astype(np.float16))],
         'desc_bprop': [Tensor(np.array([1, 1, 1]).astype(np.float16))]}),
+    ('IndexAdd', {
+        'block': IndexAdd(1),
+        'desc_inputs': (Tensor(np.array([0, 1, 2]).astype(np.int32)),
+                        Tensor(np.array([[0.5, 1.0, 1.5], [1.0, 1.5, 2.0], [2.0, 2.5, 3.0]]).astype(np.float32))),
+        'desc_bprop': [Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]).astype(np.float32))]}),
 ]
 
 test_case_nn_ops = [

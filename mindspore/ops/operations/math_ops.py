@@ -5177,7 +5177,7 @@ class MatrixInverse(PrimitiveWithInfer):
         return x_shape
 
 
-class IndexAdd(PrimitiveWithInfer):
+class IndexAdd(Primitive):
     """
     Adds tensor y to specified axis and indices of tensor x. The axis should be in the range from 0 to len(x.dim) - 1,
     and indices should be in the range from 0 to the size of x at the axis dimension.
@@ -5186,8 +5186,7 @@ class IndexAdd(PrimitiveWithInfer):
         axis (int): The dimension along which to index.
 
     Inputs:
-        - **x** (Parameter) - The input tensor to add to, with data type float64, float32, float16, int32, int16,
-          int8, uint8.
+        - **x** (Parameter) - The input tensor to add to.
         - **indices** (Tensor) - The index of `x` on the `axis` th dimension to add to, with data type int32.
           The `indices` must be 1D with the same size as the size of the `axis` th dimension of `y`. The values
           of `indices` should be in the range of 0 to the size of the `axis` th dimension of `x`.
@@ -5198,16 +5197,15 @@ class IndexAdd(PrimitiveWithInfer):
         Tensor, has the same shape and dtype as x.
 
     Raises:
-        TypeError: If dtype of `x` is not one of: float64, float32, float16, int32, int16, int8, uint8.
+        TypeError: If `x` is not a Tensor.
         TypeError: If neither `indices` nor `y` is a Tensor.
-        TypeError: If shape of `y` is not same as the `x`.
         ValueError: If axis is out of `x` rank's range.
         ValueError: If `x` rank is not the same as `y` rank.
         ValueError: If size of `indices` is not equal to dimension of y[axis].
         ValueError: If `y`'s shape is not the same as `x` except the `axis` th dimension.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -5240,28 +5238,6 @@ class IndexAdd(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'input_y'], outputs=['output'])
         self.axis = axis
         validator.check_value_type('axis', axis, [int], self.name)
-
-    def infer_dtype(self, x_dtype, idx_type, y_dtype):
-        args = {'input_x': x_dtype, 'input_y': y_dtype}
-        valid_type = [mstype.float64, mstype.float32, mstype.float16, mstype.int32, mstype.int16, mstype.int8,
-                      mstype.uint8]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_type, self.name)
-        valid_idx_type = [mstype.int32]
-        validator.check_tensor_dtype_valid('indices', idx_type, valid_idx_type, self.name)
-        return x_dtype
-
-    def infer_shape(self, x_shape, idx_shape, y_shape):
-        validator.check("x rank", len(x_shape), "y rank", len(y_shape), Rel.EQ, self.name)
-        x_rank = len(x_shape)
-        validator.check_int_range(self.axis, -x_rank - 1, x_rank, Rel.INC_NEITHER, 'axis', self.name)
-        validator.check_equal_int(len(idx_shape), 1, "rank of idx_shape", self.name)
-        validator.check("size of indices", idx_shape[0], "dimension of y[axis]", y_shape[self.axis],
-                        Rel.EQ, self.name)
-        axis = self.axis if self.axis >= 0 else x_rank + self.axis
-        for dim in range(x_rank):
-            if dim != axis:
-                validator.check('x dim %d' % dim, x_shape[dim], "y dim %d" % dim, y_shape[dim], Rel.EQ, self.name)
-        return x_shape
 
 
 class Erfinv(Primitive):

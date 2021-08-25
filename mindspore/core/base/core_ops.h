@@ -503,6 +503,7 @@ inline const PrimitivePtr kPrimAsinhGrad = std::make_shared<Primitive>("AsinhGra
 inline const PrimitivePtr kPrimAcoshGrad = std::make_shared<Primitive>("AcoshGrad");
 inline const PrimitivePtr kPrimFloorMod = std::make_shared<Primitive>("FloorMod");
 inline const PrimitivePtr kPrimWhere = std::make_shared<Primitive>("Where");
+inline const PrimitivePtr kPrimIndexAdd = std::make_shared<Primitive>("IndexAdd");
 inline const PrimitivePtr kPrimIdentityMath = std::make_shared<Primitive>("Identity", kSideEffectPropagate);
 inline const PrimitivePtr kPrimErfinv = std::make_shared<Primitive>("Erfinv");
 inline const PrimitivePtr kPrimIsNan = std::make_shared<Primitive>("IsNan");
