@@ -101,6 +101,8 @@ class FlopsParser:
             op_name_set.add(op_name)
             self._add_flops_to_each_scope(op_name, task_fops)
 
+        if not op_name_set:
+            raise ProfilerRawFileException("No aicore operator found.")
         self._flops_summary['FLOPS'] /= len(op_name_set)
         self._flops_summary['FLOPS_Utilization'] /= len(op_name_set)
         self._format_scope_flops()
