@@ -21,6 +21,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.tensor import Tensor
+from src.model_utils.config import config
 
 
 def conv_variance_scaling_initializer(in_channel, out_channel, kernel_size):
@@ -208,6 +209,8 @@ class ResidualBlock(nn.Cell):
 
         self.conv3 = _conv1x1(channel, out_channel, stride=1, use_se=self.use_se)
         self.bn3 = _bn(out_channel)
+        if config.optimizer == "Thor":
+            self.bn3 = _bn_last(out_channel)
         if self.se_block:
             self.se_global_pool = P.ReduceMean(keep_dims=False)
             self.se_dense_0 = _fc(out_channel, int(out_channel / 4), use_se=self.use_se)

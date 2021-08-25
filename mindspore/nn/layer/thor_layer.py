@@ -16,6 +16,7 @@
 """layers for second order optimization"""
 import numpy as np
 import mindspore.common.dtype as mstype
+import mindspore.log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.ops import operations as P
@@ -24,9 +25,14 @@ from mindspore._checkparam import Validator, Rel, twice
 from mindspore import context
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
+from mindspore.parallel._ps_context import _is_role_worker, _get_ps_context
+from mindspore.parallel._utils import _get_parallel_mode, _get_full_batch
+from mindspore.context import ParallelMode
+from mindspore.ops.primitive import constexpr
+from mindspore.ops import functional as F
+from .basic import ClipByNorm
 
-
-__all__ = ['DenseThor', 'Conv2dThor', 'EmbeddingThor']
+__all__ = ['DenseThor', 'Conv2dThor', 'EmbeddingThor', 'EmbeddingLookupThor']
 
 
 class DenseThor(Cell):
@@ -75,6 +81,7 @@ class DenseThor(Cell):
         [[  6.  6.  6.  6.]
          [ 12. 12. 12. 12. ]]
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -93,7 +100,6 @@ class DenseThor(Cell):
                     weight_init.shape[1] != in_channels:
                 raise ValueError("Weight init shape error.")
         self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
-
         self.bias = None
         if self.has_bias:
             if isinstance(bias_init, Tensor):
@@ -106,38 +112,25 @@ class DenseThor(Cell):
         self.activation = get_activation(activation)
         self.activation_flag = self.activation is not None
 
-        self.matrix_a = Parameter(Tensor(np.zeros([in_channels, in_channels]).astype(np.float32)),
+        self.matrix_a = Parameter(Tensor(np.eye(in_channels).astype(np.float32)),
                                   name='matrix_a', requires_grad=False)
+        self.matrix_g = Parameter(Tensor(np.eye(out_channels).astype(np.float32)),
+                                  name="matrix_g", requires_grad=False)
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
         self.mul = P.Mul()
         self.is_Ascend = True
+        self.split_dim = 128
         if context.get_context("device_target") == "Ascend":
-            self._process_ascend_dense_thor(out_channels)
+            self._process_ascend_dense_thor(out_channels, in_channels)
         else:
             self.is_Ascend = False
-            self.matrix_g = Parameter(Tensor(np.eye(out_channels).astype(np.float32)),
-                                      name="matrix_g", requires_grad=False)
             self.cube_matmul = P.MatMul(transpose_a=True)
         self.getG = P.InsertGradientOf(self.save_gradient)
 
-    def _process_ascend_dense_thor(self, out_channels):
+    def _process_ascend_dense_thor(self, out_channels, in_channels):
         """process ascend dense thor"""
-        if out_channels == 1001:
-            self.matrix_g = Parameter(Tensor(np.zeros([1024, 1024]).astype(np.float32)),
-                                      name='matrix_g', requires_grad=False)
-            self.pad = P.Pad(((0, 23), (0, 23)))
-            self.pad1 = P.Pad(((0, 7), (0, 7)))
-            self.slice = P.Slice()
-            self.add = P.TensorAdd()
-        else:
-            self.matrix_g = Parameter(Tensor(np.eye(out_channels).astype(np.float32)),
-                                      name="matrix_g", requires_grad=False)
-            self.abs = P.Abs()
-            self.reduce_max = P.ReduceMax(keep_dims=False)
-            self.neg = P.Neg()
-            self.reduce_sum = P.ReduceSum()
         self.matmul = P.MatMul(transpose_b=True)
         self.cube_matmul = P.CusMatMulCube(transpose_a=True)
         self.cast = P.Cast()
@@ -155,8 +148,6 @@ class DenseThor(Cell):
                 normalizer = self.cast(shape[0], mstype.float32)
                 matrix_g = self.cube_matmul(dout, dout)
                 matrix_g = self.mul(matrix_g, 1.0 / normalizer)
-                if self.out_channels == 1001:
-                    matrix_g = P.Pad(((0, 23), (0, 23)))(matrix_g)
                 self.matrix_g = matrix_g
         else:
             dout_shape = self.shape(dout)
@@ -380,7 +371,6 @@ class Conv2dThor(_ConvThor):
                                stride=self.stride, dilation=self.dilation, group=self.group)
         self._init_depthwise_conv2d(weight_init)
         self.bias_add = P.BiasAdd()
-
         self.thor = True
         self.hw = kernel_size[0] * kernel_size[1]
         self.matrix_a_dim = self.in_channels * self.kernel_size[0] * self.kernel_size[1]
@@ -389,8 +379,8 @@ class Conv2dThor(_ConvThor):
         self.reshape = P.Reshape()
         self.mul = P.Mul()
         self.cast = P.Cast()
-        self.a_normalizer = Parameter(initializer(0, [1], mstype.float32), name="a_normalizer", requires_grad=False)
-        self.g_normalizer = Parameter(initializer(0, [1], mstype.float32), name="g_normalizer", requires_grad=False)
+        self.a_normalizer = Parameter(initializer(1, [1], mstype.float32), name="a_normalizer", requires_grad=False)
+        self.g_normalizer = Parameter(initializer(1, [1], mstype.float32), name="g_normalizer", requires_grad=False)
         self.is_Ascend = True
         if context.get_context("device_target") == "Ascend":
             self._process_ascend_conv2d_thor(kernel_size, stride)
@@ -409,32 +399,18 @@ class Conv2dThor(_ConvThor):
         """process ascend conv2d thor"""
         ksizes = (1, kernel_size[0], kernel_size[1], 1)
         strides = (1, stride[0], stride[1], 1)
+        ksizes_tbe = (kernel_size[0], kernel_size[1])
         self.img2col = P.CusImg2Col(ksizes=ksizes, strides=strides)
+        self.transpose = P.Transpose()
+        self.reshape = P.Reshape()
         self.cube_matmul = P.CusMatMulCube(transpose_a=True)
-        self.transpose02314 = P.CusTranspose02314()
-        dampinga_dim = self.matrix_a_dim
         self.diag_block_dim = 128
-        if (self.matrix_a_dim % self.diag_block_dim) != 0 and self.matrix_a_dim > self.diag_block_dim:
-            dampinga_dim = (self.matrix_a_dim // self.diag_block_dim + 1) * self.diag_block_dim
-        dampingg_dim = self.matrix_g_dim
-        if (self.matrix_g_dim % self.diag_block_dim) != 0 and self.matrix_g_dim > self.diag_block_dim:
-            dampingg_dim = (self.matrix_g_dim // self.diag_block_dim + 1) * self.diag_block_dim
-        self.matrix_a_cov = Parameter(Tensor(np.zeros([dampinga_dim, dampinga_dim]).astype(np.float32)),
+        self.matrix_a_cov = Parameter(Tensor(np.eye(self.matrix_a_dim).astype(np.float32)),
                                       name='matrix_a', requires_grad=False)
-        self.matrix_g_cov = Parameter(Tensor(np.zeros([dampingg_dim, dampingg_dim]).astype(np.float32)),
+        self.matrix_g_cov = Parameter(Tensor(np.eye(self.matrix_g_dim).astype(np.float32)),
                                       name='matrix_g', requires_grad=False)
-
-        self.channels_slice_flag = False
-        self.C0 = 16
-        if self.in_channels % self.C0 != 0:
-            self.channels_slice_flag = True
-        self.pada_flag = False
-        if (self.matrix_a_dim // self.diag_block_dim) * self.diag_block_dim != self.matrix_a_dim \
-                and self.matrix_a_dim > self.diag_block_dim:
-            self.pada_flag = True
-            pad_dim = self.diag_block_dim - self.matrix_a_dim % self.diag_block_dim
-            self.pada = P.Pad(((0, pad_dim), (0, pad_dim)))
         self.slice = P.Slice()
+        self.im2col = P.NewIm2Col(ksizes=ksizes_tbe, strides=stride[0], padding_mode="SAME")
 
     def _init_depthwise_conv2d(self, weight_init):
         """Initialize depthwise conv2d op"""
@@ -460,7 +436,9 @@ class Conv2dThor(_ConvThor):
         """save_gradient"""
         out = dout
         if self.is_Ascend:
-            dout = self.transpose02314(dout)
+            dout_shape = self.shape(dout)
+            dout = self.transpose(dout, (0, 2, 3, 1))
+            dout = self.reshape(dout, (-1, dout_shape[1]))
             dout_shape = self.shape(dout)
             normalizer = dout_shape[0]
             matrix_g = self.cube_matmul(dout, dout)
@@ -483,23 +461,24 @@ class Conv2dThor(_ConvThor):
 
     def construct(self, x):
         if self.thor:
-            matrix_a = self.img2col(x)
-            matrix_a_shape = self.shape(matrix_a)
             if self.is_Ascend:
+                matrix_a = self.im2col(x)
+                matrix_a_shape = self.shape(matrix_a)
+                y = matrix_a_shape[3]
+                matrix_a = self.reshape(matrix_a, (-1, y))
+                matrix_a_shape = self.shape(matrix_a)
                 normalizer = matrix_a_shape[0]
                 matrix_a = self.cube_matmul(matrix_a, matrix_a)
-                if self.channels_slice_flag:
-                    matrix_a = self.reshape(matrix_a, (self.hw, self.C0, self.hw, self.C0))
-                    matrix_a = self.slice(matrix_a, (0, 0, 0, 0),
-                                          (self.hw, self.in_channels, self.hw, self.in_channels))
-                    matrix_a = self.reshape(matrix_a, (self.matrix_a_dim, self.matrix_a_dim))
                 normalizer = self.cast(normalizer, mstype.float32)
                 matrix_a = self.mul(matrix_a, 1.0 / normalizer)
-                if self.pada_flag:
-                    matrix_a = self.pada(matrix_a)
                 self.a_normalizer = normalizer
                 self.matrix_a_cov = matrix_a
+                weight = self.cast(self.weight, mstype.float16)
+                output = self.conv2d(x, weight)
+                output = self.getG(output)
             else:
+                matrix_a = self.img2col(x)
+                matrix_a_shape = self.shape(matrix_a)
                 matrix_a = self.reshape(matrix_a, (matrix_a_shape[0] * matrix_a_shape[1] * matrix_a_shape[2],
                                                    matrix_a_shape[3], -1))
                 matrix_a = self.reduce_mean(matrix_a, 1)
@@ -510,11 +489,19 @@ class Conv2dThor(_ConvThor):
                 matrix_a = self.mul(matrix_a, 1.0 / normalizer)
                 self.a_normalizer = normalizer
                 self.matrix_a_cov = matrix_a
-            output = self.conv2d(x, self.weight)
-            output = self.getG(output)
+                output = self.conv2d(x, self.weight)
+                output = self.getG(output)
         else:
-            output = self.conv2d(x, self.weight)
-            if self.has_bias:
+            if self.is_Ascend:
+                weight = self.cast(self.weight, mstype.float16)
+                output = self.conv2d(x, weight)
+            else:
+                output = self.conv2d(x, self.weight)
+        if self.has_bias:
+            if self.is_Ascend:
+                bias = self.cast(self.bias, mstype.float16)
+                output = self.bias_add(output, bias)
+            else:
                 output = self.bias_add(output, self.bias)
         return output
 
@@ -650,3 +637,296 @@ class EmbeddingThor(Cell):
         s = 'vocab_size={}, embedding_size={}, use_one_hot={}, embedding_table={}, dtype={}, padding_idx={}'.format(
             self.vocab_size, self.embedding_size, self.use_one_hot, self.embedding_table, self.dtype, self.padding_idx)
         return s
+
+@constexpr
+def _make_axis_range(start, end):
+    axis = tuple(range(start, end))
+    return axis
+
+
+class EmbeddingLookupThor(Cell):
+    r"""
+    Returns a slice of the input tensor based on the specified indices
+    and saving the information needed for THOR.
+
+    This module has the same function as EmbeddingLookup, but additionally saves the information A and G in the
+    embeddinglookup layer needed for THOR,
+    the detail can be seen in paper: https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf
+
+
+    Args:
+        vocab_size (int): The size of the dictionary of embeddings.
+        embedding_size (int): The size of each embedding vector.
+        param_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
+            Refer to class `initializer` for the values of string when a string is specified.
+            Default: 'normal'.
+        target (str): Specifies the target where the op is executed. The value must in
+            ['DEVICE', 'CPU']. Default: 'CPU'.
+        slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
+            nn.EmbeddingLookup. Default: nn.EmbeddingLookup.BATCH_SLICE.
+        manual_shapes (tuple): The accompaniment array in field slice mode.
+        max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32 or None.
+                                       Default: None
+        sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true.
+                       Default: True.
+        vocab_cache_size (int): Cache size of the dictionary of embeddings. Default: 0. It is valid only in
+            'DEVICE' target. And the moment parameter of corresponding optimizer will also be set to the cache size.
+            In addition, it should be noted that it will cost the 'DEVICE' memory, so suggests setting a reasonable
+            value to avoid insufficient memory.
+
+    Inputs:
+        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Raises:
+        ValueError: If `target` is neither 'CPU' nor 'DEVICE'.
+        ValueError: If `slice_mode` is not one of 'batch_slice' or 'field_slice' or
+                    'table_row_slice' or 'table_column_slice'.
+        ValueError: If `sparse` is False and `target` is 'CPU'.
+        ValueError: If `slice_mode` is 'field_slice' and `manual_shapes` is None.
+        TypeError: If `vocab_size` or `embedding_size` or `vocab_cache_size` is not an int.
+        TypeError: If `sparse` is not a bool or `manual_shapes` is not a tuple.
+        ValueError: If `vocab_size` or `embedding_size` is less than 1.
+        ValueError: If `vocab_cache_size` is less than 0.
+
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
+        >>> result = nn.EmbeddingLookup(4,2)(input_indices)
+        >>> print(result.shape)
+        (2, 2, 2)
+    """
+    BATCH_SLICE = "batch_slice"
+    FIELD_SLICE = "field_slice"
+    TABLE_ROW_SLICE = "table_row_slice"
+    TABLE_COLUMN_SLICE = "table_column_slice"
+
+    def __init__(self, vocab_size, embedding_size, param_init='normal',
+                 target='CPU', slice_mode='batch_slice', manual_shapes=None,
+                 max_norm=None, sparse=True, vocab_cache_size=0):
+        super(EmbeddingLookupThor, self).__init__()
+        Validator.check_value_type('sparse', sparse, [bool], self.cls_name)
+        self.vocab_size = Validator.check_positive_int(vocab_size, 'vocab_size')
+        self.vocab_cache_size = Validator.check_non_negative_int(vocab_cache_size, 'vocab_cache_size')
+        self.target = target
+        self.sparse = sparse
+        self.cache_enable = self.vocab_cache_size > 0
+        self.forward_unique = False
+        self.dtype = mstype.float16
+        if target not in ('CPU', 'DEVICE'):
+            raise ValueError('Attr \'target\' of \'EmbeddingLookup\' Op passed '
+                             + str(target) + ', should be one of values in \'CPU\', \'DEVICE\'.')
+        if not sparse and target == 'CPU':
+            raise ValueError('When target is CPU, embedding_lookup must be sparse.')
+        if sparse:
+            self.gatherv2 = P.SparseGatherV2()
+        else:
+            self.gatherv2 = P.Gather()
+        self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
+        enable_ps = _get_ps_context("enable_ps")
+        if enable_ps:
+            self._process_vocab_cache(slice_mode)
+        self.embedding_size = Validator.check_positive_int(embedding_size, 'embedding_size')
+        self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size],
+                                                     mstype.float16), name='embedding_table')
+        parallel_mode = _get_parallel_mode()
+        is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
+        self.gather_revert = P.Gather()
+        self.reshape_first = P.Reshape()
+        self.reshape = P.Reshape()
+        self.unique = P.Unique()
+        self.shape = P.Shape()
+        if is_auto_parallel:
+            self.unique = P.Unique().shard(((1,),))
+        if self.cache_enable and enable_ps:
+            self._set_voacb_cache_enable_for_ps(vocab_cache_size, embedding_size, vocab_size)
+            if is_auto_parallel:
+                self.unique.add_prim_attr('cache_enable', True)
+        indices_shape_size = 2
+        if slice_mode == "field_slice" and is_auto_parallel:
+            if not manual_shapes:
+                raise ValueError("in slice field mode, the manual_shapes should not be none")
+            if not isinstance(manual_shapes, tuple):
+                raise TypeError("manual_shapes type must be tuple(int) cannot be {}!".format(type(manual_shapes)))
+            for dim in manual_shapes:
+                Validator.check_positive_int(dim, 'manual shape dim', self.cls_name)
+            self.gatherv2.add_prim_attr("manual_split", manual_shapes)
+            self.embeddinglookup.add_prim_attr("manual_split", manual_shapes)
+            self.gatherv2.shard(((get_group_size(), 1), (1, get_group_size())))
+            self.embeddinglookup.shard(((get_group_size(), 1), (1, get_group_size())))
+        elif slice_mode == "table_row_slice" and is_auto_parallel:
+            full_batch = _get_full_batch()
+            if (target == 'DEVICE' and not full_batch) or (self.cache_enable and enable_ps and sparse):
+                indices_shape_size = 1
+                self.gather_revert.shard(((1, 1), (get_group_size(),)))
+                self.forward_unique = True
+            indices_strategy = (1,) * indices_shape_size
+            self.gatherv2.shard(((get_group_size(), 1), indices_strategy))
+            self.embeddinglookup.shard(((get_group_size(), 1), indices_strategy))
+        elif slice_mode == "table_column_slice" and is_auto_parallel:
+            if target == 'DEVICE':
+                indices_shape_size = 1
+                self.gather_revert.shard(((1, get_group_size()), (1,)))
+                self.forward_unique = True
+            indices_strategy = (1,) * indices_shape_size
+            self.gatherv2.shard(((1, get_group_size()), indices_strategy))
+            self.embeddinglookup.shard(((1, get_group_size()), indices_strategy))
+        elif slice_mode == "batch_slice" and is_auto_parallel:
+            indices_strategy = [get_group_size()]
+            indices_strategy.extend([1] * (indices_shape_size - 1))
+            indices_strategy = tuple(indices_strategy)
+            self.gatherv2.shard(((1, 1), indices_strategy))
+            self.embeddinglookup.shard(((1, 1), indices_strategy))
+        else:
+            if is_auto_parallel:
+                raise ValueError("slice_mode should support mode in nn.EmbeddingLookup, but get "
+                                 + str(slice_mode))
+        if self.cache_enable and not enable_ps:
+            if parallel_mode != ParallelMode.STAND_ALONE:
+                raise ValueError("parallel mode haven't supported cache enable yet.")
+            self._set_cache_enable()
+        self.embedding_table.unique = self.forward_unique
+        self.max_norm = max_norm
+        if self.max_norm is not None:
+            self.max_norm = Validator.check_positive_float(self.max_norm, 'max_norm', self.cls_name)
+            self.max_norm = Tensor(self.max_norm, dtype=mstype.float16)
+
+        self.thor = True
+        self.matrix_a = Parameter(Tensor(np.zeros([vocab_size]).astype(np.float32)),
+                                  name='matrix_a', requires_grad=False)
+        self.matrix_g = Parameter(Tensor(np.zeros([embedding_size, embedding_size]).astype(np.float32)),
+                                  name="matrix_g", requires_grad=False)
+        self.reduce_sum = P.ReduceSum(keep_dims=False)
+        self.getG = P.InsertGradientOf(self.save_gradient)
+        self.cast = P.Cast()
+        if context.get_context("device_target") == "Ascend":
+            self.cube_matmul = P.MatMul(transpose_a=True)
+        else:
+            self.cube_matmul = P.MatMul(transpose_a=True)
+        self.mul = P.Mul()
+        self.on_value = Tensor(1.0, self.dtype)
+        self.off_value = Tensor(0.0, self.dtype)
+        self.one_hot = P.OneHot()
+
+
+    def save_gradient(self, dout):
+        """
+           this function only for thor optimizer
+           save_gradient
+        """
+        out = dout
+        shape = self.shape(dout)
+        normalizer = self.cast(shape[0], mstype.float16)
+        dout = self.reshape(dout, (-1, self.embedding_size))
+        matrix_g = self.cube_matmul(dout, dout)
+        matrix_g = self.mul(matrix_g, 1.0 / normalizer)
+        matrix_g = self.cast(matrix_g, mstype.float16)
+        self.matrix_g = matrix_g
+        return out
+
+    def _set_cache_enable(self):
+        """EmbeddingLookup cache check for not ps env, which is only support 'ascend'."""
+        if self.target != 'DEVICE':
+            raise ValueError("The configuration of 'vocab_cache_size' is valid only in 'DEVICE' target.")
+        if not self.sparse:
+            raise ValueError("The configuration of 'vocab_cache_size' is valid only 'sparse' is true.")
+        if context.get_context("device_target") != 'Ascend':
+            raise ValueError("The configuration of 'vocab_cache_size' is valid only in 'ascend'.")
+
+        logger.info("EmbeddingLookup cache enable takes effect.")
+        self.forward_unique = True
+        self.unique = P.Unique().add_prim_attr('primitive_target', 'CPU')
+        self.unique.add_prim_attr('cache_enable', True)
+        self.embedding_table.cache_enable = self.cache_enable
+        self.embedding_table.cache_shape = (self.vocab_cache_size, self.embedding_size)
+        self.reshape_first = P.Reshape().add_prim_attr('primitive_target', 'CPU')
+
+    def _process_vocab_cache(self, slice_mode):
+        """PS embeddingLookup cache check and process."""
+        self.cache_enable = False
+        if self.vocab_cache_size > 0:
+            if self.target == 'CPU':
+                logger.warning("The configuration of 'vocab_cache_size' is valid only in 'DEVICE' target, "
+                               "current target is CPU, so it will be ignored.")
+                return
+            enable_ps = _get_ps_context("enable_ps")
+            if not enable_ps:
+                logger.warning(
+                    "The configuration of 'vocab_cache_size' is valid only in parameter server trainning "
+                    "mode, current mode is not parameter server trainning mode, so it will be ignored.")
+                return
+            parallel_mode = _get_parallel_mode()
+            is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
+            if is_auto_parallel:
+                rank_size = get_group_size()
+                rank_id = get_rank()
+                full_batch = _get_full_batch()
+                if rank_size > 1 and not (full_batch and slice_mode == "table_row_slice"):
+                    raise ValueError("The embeddingLookup cache of parameter server parallel only be used "
+                                     "in 'full_batch' and 'table_row_slice' parallel strategy.")
+                self.vocab_cache_size = self.vocab_cache_size * rank_size
+                _set_rank_id(rank_id)
+            self.cache_enable = True
+            if _is_role_worker():
+                self.vocab_size = self.vocab_cache_size
+                if context.get_context("enable_sparse") != self.sparse:
+                    raise ValueError("The value of parameter 'sparse' must be same for all EmbeddingLookup "
+                                     "kernels and equal the value of 'enable_sparse' in context setting in "
+                                     "parameter server cache mode")
+
+    def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size):
+        """PS embeddingLookup cache enable set."""
+        self.embedding_table.cache_enable = True
+        self.embedding_table.is_param_ps = True
+        _set_cache_enable(True)
+        if self.sparse:
+            self.forward_unique = True
+        if _is_role_worker():
+            _insert_hash_table_size(self.embedding_table.name, vocab_cache_size, embedding_size, vocab_size)
+
+    def construct(self, indices):
+        if self.target == "CPU":
+            out = self.embeddinglookup(self.embedding_table, indices, 0)
+        else:
+            if self.thor:
+                if self.forward_unique:
+                    shp = self.shape(indices) + (self.embedding_size,)
+                    indices_flatten = self.reshape_first(indices, (-1,))
+                    unique_id, unique_idx = self.unique(indices_flatten)
+                    one_hot_ids = self.one_hot(indices_flatten, self.vocab_size, self.on_value, self.off_value)
+                    matrix_a = self.reduce_sum(one_hot_ids, 0)
+                    matrix_a = self.cast(matrix_a, mstype.float16)
+                    self.matrix_a = matrix_a
+                    weight_unique = self.gatherv2(self.embedding_table, unique_id, 0)
+                    out = self.getG(weight_unique)
+                    weight_flatten = self.gather_revert(weight_unique, unique_idx, 0)
+                    out = self.reshape(weight_flatten, shp)
+
+                else:
+                    indices_flatten = self.reshape_first(indices, (-1,))
+                    one_hot_ids = self.one_hot(indices_flatten, self.vocab_size, self.on_value, self.off_value)
+                    matrix_a = self.reduce_sum(one_hot_ids, 0)
+                    matrix_a = self.cast(matrix_a, mstype.float16)
+                    self.matrix_a = matrix_a
+                    out = self.gatherv2(self.embedding_table, indices, 0)
+                    out = self.getG(out)
+            else:
+                if self.forward_unique:
+                    shp = self.shape(indices) + (self.embedding_size,)
+                    indices_flatten = self.reshape_first(indices, (-1,))
+                    unique_id, unique_idx = self.unique(indices_flatten)
+                    weight_unique = self.gatherv2(self.embedding_table, unique_id, 0)
+                    weight_flatten = self.gather_revert(weight_unique, unique_idx, 0)
+                    out = self.reshape(weight_flatten, shp)
+                else:
+                    out = self.gatherv2(self.embedding_table, indices, 0)
+        if self.max_norm is not None:
+            axis = _make_axis_range(F.rank(indices), F.rank(out))
+            clip_by_norm = ClipByNorm(axis)
+            out = clip_by_norm(out, self.max_norm)
+        return out

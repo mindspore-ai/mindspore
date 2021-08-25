@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Model."""
-
+"""High-Level API for Second Order Training or Testing.
+Second-order optimizer THOR reduces the computation workload and improves the computation speed by reducing the
+frequency of updating the second-order matrix. In order to optimize the overall performance, the ModelThor class
+is redefined to inherit the Model class provided by MindSpore. The parameter of THOR for controlling the frequency
+of updating the second-order matrix can be obtained by the ModelThor class. """
 import math
 from mindspore.train.callback import RunContext
 from mindspore import context

@@ -27,7 +27,9 @@ class ConvertNetUtils:
     def __init__(self):
         self._convert_method_map = {nn.Dense: ConvertNetUtils._convert_dense,
                                     nn.Embedding: ConvertNetUtils._convert_embedding,
-                                    nn.Conv2d: ConvertNetUtils._convert_conv2d}
+                                    nn.Conv2d: ConvertNetUtils._convert_conv2d,
+                                    nn.EmbeddingLookup: ConvertNetUtils._convert_embeddinglookup}
+
 
     @staticmethod
     def _convert_dense(subcell):
@@ -63,6 +65,7 @@ class ConvertNetUtils:
             new_subcell.bias = subcell.bias
         return new_subcell
 
+
     @staticmethod
     def _convert_embedding(subcell):
         """
@@ -73,6 +76,20 @@ class ConvertNetUtils:
                                        use_one_hot=False)
         new_subcell.embedding_table = subcell.embedding_table
         return new_subcell
+
+
+    @staticmethod
+    def _convert_embeddinglookup(subcell):
+        """
+        convert embedding cell to second_order cell
+        """
+        new_subcell = nn.EmbeddingLookupThor(vocab_size=subcell.vocab_size,
+                                             embedding_size=subcell.embedding_size,
+                                             target=subcell.target, sparse=subcell.sparse,
+                                             vocab_cache_size=subcell.vocab_cache_size)
+        new_subcell.embedding_table = subcell.embedding_table
+        return new_subcell
+
 
     @staticmethod
     def _convert_conv2d(subcell):
@@ -87,10 +104,21 @@ class ConvertNetUtils:
         pad_mode = subcell.pad_mode
         has_bias = subcell.has_bias
         weight = subcell.weight
+
         new_subcell = nn.Conv2dThor(in_channel, out_channel,
                                     kernel_size=kernel_size, stride=stride, padding=padding, pad_mode=pad_mode,
                                     has_bias=has_bias, weight_init=weight)
         return new_subcell
+
+    def _need_change(self, subcell, prefix):
+        """for thor layers, need to change"""
+        if isinstance(subcell, (nn.Dense, nn.Conv2d)) and subcell.weight.requires_grad:
+            if "rpn_with_loss.rpn_convs_list." in prefix.lower() or "wide" in prefix.lower():
+                return False
+            return True
+        if isinstance(subcell, (nn.Embedding, nn.EmbeddingLookup)) and subcell.embedding_table.requires_grad:
+            return True
+        return False
 
     def _convert_to_thor_net(self, net):
         """
@@ -102,22 +130,24 @@ class ConvertNetUtils:
             subcell = cells[name]
             if subcell == net:
                 continue
-            elif isinstance(subcell, (nn.DenseThor, nn.Conv2dThor, nn.EmbeddingThor)):
+            elif isinstance(subcell, (nn.DenseThor, nn.Conv2dThor, nn.EmbeddingThor, nn.EmbeddingLookupThor)):
                 continue
             elif isinstance(subcell, (nn.Conv2dTranspose, nn.Conv1d, nn.Conv1dTranspose, nn.BatchNorm1d, nn.GroupNorm,
                                       nn.GlobalBatchNorm, nn.LayerNorm, nn.BatchNorm2d, nn.MaxPool2d)):
                 continue
-            elif isinstance(subcell, (nn.Embedding, nn.Dense, nn.Conv2d)):
+            elif isinstance(subcell, (nn.Embedding, nn.Dense, nn.Conv2d, nn.EmbeddingLookup)):
                 prefix = subcell.param_prefix
-                new_subcell = self._convert_method_map[type(subcell)](subcell)
-                new_subcell.update_parameters_name(prefix + '.')
-                net.insert_child_to_cell(name, new_subcell)
-                change = True
+                if self._need_change(subcell, prefix):
+                    new_subcell = self._convert_method_map[type(subcell)](subcell)
+                    new_subcell.update_parameters_name(prefix + '.')
+                    net.insert_child_to_cell(name, new_subcell)
+                    change = True
             else:
                 self._convert_to_thor_net(subcell)
 
         if isinstance(net, nn.SequentialCell) and change:
             net.cell_list = list(net.cells())
+
 
     def convert_to_thor_net(self, net):
         """
@@ -174,7 +204,7 @@ class ConvertModelUtils:
                 Otherwise, scale the loss by LossScaleManager and optimizer can not be None. It is a key argument.
                 e.g. Use `loss_scale_manager=None` to set the value.
             keep_batchnorm_fp32 (bool): Keep Batchnorm running in `float32`. If True, the level setting before
-                will be overwritten. Default: True.
+                will be overwritten. Default: False.
 
         Returns:
              model (Object): High-Level API for Training.
@@ -195,9 +225,9 @@ class ConvertModelUtils:
             >>> model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_manager, metrics={"acc"},
             ...               amp_level="O2", keep_batchnorm_fp32=False)
             >>> model = ConvertModelUtils.convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
-            ...                                                   metrics={'acc'}, amp_level="O2",
-            ...                                                   loss_scale_manager=loss_manager,
-            ...                                                   keep_batchnorm_fp32=False)
+            ...                                                 metrics={'acc'}, amp_level="O2",
+            ...                                                 loss_scale_manager=loss_manager,
+            ...                                                 keep_batchnorm_fp32=False)
         """
 
         optim_name = type(optimizer).__name__

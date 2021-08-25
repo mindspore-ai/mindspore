@@ -28,6 +28,7 @@ from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.nn.optim import thor
 import mindspore.nn as nn
 import mindspore.dataset as ds
 
@@ -41,7 +42,7 @@ from tests.st.networks.models.resnet50.src_thor.config import config as thor_con
 from tests.st.networks.models.resnet50.src_thor.dataset import create_dataset as create_dataset_thor
 from tests.st.networks.models.resnet50.src_thor.model_thor import Model as THOR_Model
 from tests.st.networks.models.resnet50.src_thor.resnet import resnet50 as resnet50_thor
-from tests.st.networks.models.resnet50.src_thor.thor import THOR
+
 
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_1.json"
 MINDSPORE_HCCL_CONFIG_PATH_2 = "/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_2.json"
@@ -268,8 +269,8 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     damping = get_thor_damping(0, 0.02714, 0.50036, 70, 5004)
     # optimizer
     split_indices = [26, 53]
-    opt = THOR(net, Tensor(lr), Tensor(damping), thor_config.momentum, thor_config.weight_decay, thor_config.loss_scale,
-               thor_config.batch_size, split_indices=split_indices)
+    opt = thor(net, Tensor(lr), Tensor(damping), thor_config.momentum, thor_config.weight_decay, thor_config.loss_scale,
+               thor_config.batch_size, split_indices=split_indices, frequency=thor_config.frequency)
 
     # evaluation network
     dist_eval_network = ClassifyCorrectCell(net)

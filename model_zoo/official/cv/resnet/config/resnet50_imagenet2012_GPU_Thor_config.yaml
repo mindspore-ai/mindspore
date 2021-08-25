@@ -33,8 +33,6 @@ label_smooth_factor: 0.1
 lr_init: 0.05672
 lr_decay: 4.9687
 lr_end_epoch: 50
-lars_epsilon: 0.0
-lars_coefficient: 0.001
 damping_init: 0.02345
 damping_decay: 0.5467
 frequency: 834
@@ -54,8 +52,8 @@ enable_cache: False
 cache_session_id: ""
 mode_name: "GRAPH"
 acc_mode: "O0"
-conv_init: "XavierUniform"
-dense_init: "TruncatedNormal"
+conv_init: "HeUniform"
+dense_init: "HeUniform"
 all_reduce_fusion_config:
     - 85
     - 160

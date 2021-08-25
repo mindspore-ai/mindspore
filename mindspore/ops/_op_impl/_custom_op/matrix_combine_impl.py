@@ -63,9 +63,19 @@ def cus_matrix_combine(input_x, output, kernel_name="cus_matrix_combine"):
             repeat_real = tiling_dim * matrix_dim // 64
             if repeat_real <= 255:
                 tik_instance.vector_dup(64, input_x_ub, zero, repeat_real, 1, 8)
-            else:
+            elif repeat_real <= 510:
                 tik_instance.vector_dup(64, input_x_ub, zero, 255, 1, 8)
                 tik_instance.vector_dup(64, input_x_ub[255 * 64], zero, repeat_real - 255, 1, 8)
+            elif repeat_real <= 765:
+                tik_instance.vector_dup(64, input_x_ub, zero, 255, 1, 8)
+                tik_instance.vector_dup(64, input_x_ub[255 * 64], zero, 255, 1, 8)
+                tik_instance.vector_dup(64, input_x_ub[510 * 64], zero, repeat_real - 510, 1, 8)
+            else:
+                tik_instance.vector_dup(64, input_x_ub, zero, 255, 1, 8)
+                tik_instance.vector_dup(64, input_x_ub[255 * 64], zero, 255, 1, 8)
+                tik_instance.vector_dup(64, input_x_ub[510 * 64], zero, 255, 1, 8)
+                tik_instance.vector_dup(64, input_x_ub[765 * 64], zero, repeat_real - 765, 1, 8)
+
             with tik_instance.for_range(0, tiling_dim) as j:
                 tik_instance.data_move(input_x_ub[j, 128 * i], input_x[i, block_index * tiling_dim + j, 0],
                                        0, 1, 16, 0, 0)
