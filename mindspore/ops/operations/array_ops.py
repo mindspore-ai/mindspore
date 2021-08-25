@@ -1760,7 +1760,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)`.
+          :math:`(x_1, x_2, ..., x_N)`. And the data type only support mindspore.float16 or float32.
 
     Outputs:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
@@ -2294,7 +2294,7 @@ class Concat(PrimitiveWithInfer):
           Suppose there are two tensors in this tuple or list, namely x1 and x2.
           To perform `Concat` in the axis 0 direction, except for the 0th axis, all other axes should be equal,
           that is, :math:`x1.shape[1] == x2.shape[1], x1.shape[2] == x2.shape[2], ..., x1.shape[R] == x2.shape[R]`,
-          where the :math:`R' indicates the last axis.
+          where the :math:`R` indicates the last axis.
 
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
