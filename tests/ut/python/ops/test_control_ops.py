@@ -750,6 +750,23 @@ def test_while_scalar():
     out = net(x, y)
 
 
+def test_while_with_weight_in_condition():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.loop = Parameter(Tensor(1, dtype=ms.float32), name="loop")
+
+        def construct(self, x):
+            while self.loop < 5:
+                self.loop += 1
+                x += 1
+            return x
+
+    net = Net()
+    x = Tensor(-1, dtype=ms.float32)
+    grad_all(net)(x)
+
+
 def test_mixed_precision_cast():
     x = Tensor(np.ones([2, 3], dtype=np.float32))
     z = F.mixed_precision_cast(mstype.float16, x)
