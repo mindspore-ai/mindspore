@@ -463,6 +463,7 @@ constexpr auto kAttrMultiCallEnd = "multicall_end";
 constexpr auto kAttrProfilingIterEnd = "PROFILING_ITER_END";
 constexpr auto kAttrHiddenSize = "hidden_size";
 constexpr auto kAttrInputSize = "input_size";
+constexpr auto kAttrGraphOpRun = "GRAPH_OP_RUN";
 
 // primal attr key name
 constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";

@@ -580,6 +580,11 @@ BackendPtr CreateBackend() {
       if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
         backend->set_is_multi_graph_sink(false);
         context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+      } else {
+        auto single_op = std::getenv(kAttrGraphOpRun);
+        if (single_op && std::string(single_op) == "1") {
+          context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
+        }
       }
     }
     return backend;

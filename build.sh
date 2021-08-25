@@ -391,6 +391,7 @@ checkopts()
       ENABLE_D="on"
       ENABLE_ACL="on"
       ENABLE_CPU="on"
+      ENABLE_MPI="on"
     else
       echo "Invalid value ${DEVICE_VERSION} for option -V"
       usage

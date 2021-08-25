@@ -16,6 +16,9 @@
 
 #include "runtime/device/ascend/distribute/mpi_pycc.h"
 #include <pybind11/operators.h>
+#include <pybind11/stl.h>
+#include <vector>
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -28,12 +31,16 @@ MpiPycc &MpiPycc::instance() {
 int MpiPycc::GetDeviceID() { return GetDeviceId(); }
 int MpiPycc::GetRankId(const std::string &group) { return GetRankIdByGroup(group); }
 int MpiPycc::GetRankSize(const std::string &group) { return GetGroupSize(group); }
+void MpiPycc::CreateGroup(const std::string &group, const std::vector<unsigned int> &ranks) {
+  CreateCommForGroup(group, ranks);
+}
 
 // cppcheck-suppress syntaxError
 PYBIND11_MODULE(_ascend_mpi, mpi_initializer) {
   mpi_initializer.def("get_device_id", &MpiPycc::GetDeviceID, "get device id");
   mpi_initializer.def("get_rank_id", &MpiPycc::GetRankId, "get rank id");
   mpi_initializer.def("get_rank_size", &MpiPycc::GetRankSize, "get rank size");
+  mpi_initializer.def("create_group", &MpiPycc::CreateGroup, "create group");
 }
 }  // namespace collective
 }  // namespace ascend

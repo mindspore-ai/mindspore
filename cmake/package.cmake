@@ -163,6 +163,13 @@ if(ENABLE_MPI)
             COMPONENT mindspore
         )
     endif()
+    if(ENABLE_D)
+        install(
+                TARGETS _ascend_mpi
+                DESTINATION ${INSTALL_BASE_DIR}
+                COMPONENT mindspore
+        )
+    endif()
 endif()
 
 if(ENABLE_GPU)
@@ -178,6 +185,16 @@ if(ENABLE_GPU)
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
+endif()
+
+if(ENABLE_D)
+    if(ENABLE_MPI)
+        install(
+                TARGETS ascend_collective
+                DESTINATION ${INSTALL_LIB_DIR}
+                COMPONENT mindspore
+        )
+    endif()
 endif()
 
 if(ENABLE_CPU AND NOT WIN32)

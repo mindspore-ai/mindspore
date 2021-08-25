@@ -22,6 +22,9 @@
 
 #ifndef NO_DLIB
 #include "runtime/hccl_adapter/hccl_adapter.h"
+#include "hccl/hcom.h"
+#include "runtime/device/ascend/distribute/ascend_collective.h"
+using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 #endif
 
 #if defined(ENABLE_GPU)
@@ -69,9 +72,17 @@ bool CommManager::CreateGroupSync(const string &group, const vector<unsigned int
   auto rank_size = rank_id_list.size();
   HCCL_GROUP_CHECK_EMPTY(group);
   HCCL_GROUP_CHECK_IS_WORLD(group);
-  HCCL_RUN_CHECK(string("create communicate group"), group,
-                 hccl::HcclAdapter::GetInstance().HcclCreateGroup(group, UlongToUint(rank_size),
-                                                                  vector<unsigned int>(rank_id_list).data()));
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (!is_task_sink && mode == kGraphMode) {
+    HcclCollectiveGroup::instance().CreateCommGroup(group, rank_id_list);
+  } else {
+    HCCL_RUN_CHECK(string("create communicate group"), group,
+                   hccl::HcclAdapter::GetInstance().HcclCreateGroup(group, UlongToUint(rank_size),
+                                                                    vector<unsigned int>(rank_id_list).data()));
+  }
   return true;
 }
 
@@ -80,7 +91,11 @@ bool CommManager::GetRankID(const string &group, unsigned int *rank_id) const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(group, rank_id));
+    if (!context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+      *rank_id = static_cast<unsigned int>(HcclCollectiveGroup::instance().GetRankId(group));
+    } else {
+      HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(group, rank_id));
+    }
   } else {
     HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(rank_id));
   }
@@ -92,7 +107,12 @@ bool CommManager::GetRankSize(const string &group, unsigned int *rank_size) cons
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    HCCL_RUN_CHECK(string("get rank size"), group, hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, rank_size));
+    if (!context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+      *rank_size = static_cast<unsigned int>(HcclCollectiveGroup::instance().GetRankSize(group));
+    } else {
+      HCCL_RUN_CHECK(string("get rank size"), group,
+                     hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, rank_size));
+    }
   } else {
     HCCL_RUN_CHECK(string("get rank size"), group, hccl::HcclAdapter::GetInstance().HcclGetRankSize(rank_size));
   }

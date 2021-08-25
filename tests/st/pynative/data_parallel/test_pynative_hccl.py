@@ -86,3 +86,33 @@ def test_pynative_hccl_8p():
         os.system("rm -rf " + str(i))
 
     print("End training...")
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_pynative_hccl_8pv2():
+    os.environ['GRAPH_OP_RUN'] = str(1)
+    device_num = 8
+    process = []
+    q = Queue()
+    for i in range(device_num):
+        device_id = i
+        process.append(Process(target=train_allreduce_8p, args=(q, device_id, device_num)))
+
+    for i in range(device_num):
+        process[i].start()
+
+    print("Waiting for all subprocesses done...")
+
+    for i in range(device_num):
+        process[i].join()
+
+    # check result
+    for i in range(device_num):
+        assert q.get()
+
+    for i in range(device_num):
+        os.system("rm -rf " + str(i))
+
+    print("End training...")

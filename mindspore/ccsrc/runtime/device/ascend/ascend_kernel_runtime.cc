@@ -268,6 +268,10 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   (void)ResetDevice(device_id);
   (void)ProfilingManager::GetInstance().StopProfiling();
   current_graph_ = nullptr;
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
+      !context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+    HcclCollectiveGroup::instance().FinalizeCollective();
+  }
   MS_LOG(INFO) << "Ascend finalize end";
 }
 
