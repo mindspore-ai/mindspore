@@ -48,6 +48,7 @@ int64_t GetMicroBatch(const AnfNodePtr &node);
 void InsertDepend(const AnfNodePtr &prior_node, const AnfNodePtr &post_node, const FuncGraphManagerPtr &manager,
                   const FuncGraphPtr &root);
 PipelinePair Deduplicate(const std::vector<AnfNodePtr> &node_vector, const FuncGraphPtr &root, int64_t micro_max);
+AnfNodePtr GetActualOp(const AnfNodePtr &node);
 void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePtr> *forward_end,
                    std::vector<AnfNodePtr> *backward_start, std::vector<AnfNodePtr> *backward_end,
                    std::vector<AnfNodePtr> *forward_params, std::vector<AnfNodePtr> *backward_params,

@@ -62,12 +62,18 @@ class PipelineTransformer {
 
  private:
   void CreateForwardGroup();
+  AnfNodePtr ActualOp(const AnfNodePtr &node);
+  bool IsParameterGraph(const AnfNodePtr &node);
+  AnfNodeIndexSet GetActualOpUsers(const AnfNodePtr &node, NodeUsersMap *node_users_map);
+  AnfNodePtr HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage, int64_t user_stage,
+                                  const ValuePtr &micro, size_t pos, const std::vector<AnfNodePtr> ops);
   ValuePtr SetMicroBatch(const AnfNodePtr &node, int64_t micro_size);
   std::vector<AnfNodePtr> HandleSharedParameter();
   SendAttr InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, int64_t user_node_stage,
                       int64_t node_stage, const ValuePtr &value);
   AnfNodePtr InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
-                           int64_t user_node_stage, int64_t node_stage, const ValuePtr &value);
+                           int64_t user_node_stage, int64_t node_stage, const ValuePtr &value,
+                           const AnfNodePtr &graph_param);
   std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> CutBorder(const FuncGraphPtr &graph);
   AnfNodePtr Reuse(const AnfNodePtr &node, int64_t stage, const std::vector<AnfNodePtr> &out_input,
                    const std::string &tag);

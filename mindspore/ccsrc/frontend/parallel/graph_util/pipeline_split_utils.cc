@@ -17,6 +17,7 @@
 #include <iterator>
 #include <memory>
 #include <list>
+#include <set>
 #include <algorithm>
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
@@ -502,6 +503,14 @@ void HandleMicroBatch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
   }
 }
 
+AnfNodePtr GetActualOp(const AnfNodePtr &node) {
+  if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    auto cnode = node->cast<CNodePtr>();
+    return cnode->input(1);
+  }
+  return node;
+}
+
 void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePtr> *forward_end,
                    std::vector<AnfNodePtr> *backward_start, std::vector<AnfNodePtr> *backward_end,
                    std::vector<AnfNodePtr> *forward_params, std::vector<AnfNodePtr> *backward_params,
@@ -611,11 +620,15 @@ void Reorder(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   if (!IsLastStage()) {
     for (auto &node : forward_end_pair.first) {
       auto cnode = node->cast<CNodePtr>();
-      forward_end_before_pair.first.push_back(cnode->input(1));
+      auto temp_node = GetActualOp(cnode->input(1));
+      MS_EXCEPTION_IF_NULL(temp_node);
+      forward_end_before_pair.first.push_back(temp_node);
     }
     for (auto &node : forward_end_pair.second) {
       auto cnode = node->cast<CNodePtr>();
-      forward_end_before_pair.second.push_back(cnode->input(1));
+      auto temp_node = GetActualOp(cnode->input(1));
+      MS_EXCEPTION_IF_NULL(temp_node);
+      forward_end_before_pair.second.push_back(temp_node);
     }
   } else {
     forward_end_before_pair = forward_end_pair;

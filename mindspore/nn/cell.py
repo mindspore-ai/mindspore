@@ -242,8 +242,12 @@ class Cell(Cell_):
 
     @pipeline_stage.setter
     def pipeline_stage(self, value):
+        if isinstance(value, bool):
+            raise TypeError("'pipeline_stage' must be int type, but got bool.")
         if not isinstance(value, int):
             raise TypeError("'pipeline_stage' must be int type.")
+        if value < 0:
+            raise TypeError("'pipeline_stage' can not less than 0.")
         self._pipeline_stage = value
         for item in self.trainable_params():
             item.add_pipeline_stage(value)
