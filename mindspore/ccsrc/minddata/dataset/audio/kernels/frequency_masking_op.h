@@ -31,7 +31,7 @@ namespace dataset {
 class FrequencyMaskingOp : public TensorOp {
  public:
   explicit FrequencyMaskingOp(bool iid_masks = false, int32_t frequency_mask_param = 0, int32_t mask_start = 0,
-                              double mask_value_ = 0.0);
+                              float mask_value_ = 0.0);
 
   ~FrequencyMaskingOp() override = default;
 
@@ -43,7 +43,7 @@ class FrequencyMaskingOp : public TensorOp {
   bool iid_masks_;
   int32_t frequency_mask_param_;
   int32_t mask_start_;
-  double mask_value_;
+  float mask_value_;
   std::mt19937 rnd_;
 };
 }  // namespace dataset

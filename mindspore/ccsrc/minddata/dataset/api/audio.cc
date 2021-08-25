@@ -149,7 +149,7 @@ std::shared_ptr<TensorOperation> ComplexNorm::Parse() { return std::make_shared<
 
 // FrequencyMasking Transform Operation.
 struct FrequencyMasking::Data {
-  Data(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value)
+  Data(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, float mask_value)
       : iid_masks_(iid_masks),
         frequency_mask_param_(frequency_mask_param),
         mask_start_(mask_start),
@@ -157,10 +157,10 @@ struct FrequencyMasking::Data {
   int32_t frequency_mask_param_;
   int32_t mask_start_;
   bool iid_masks_;
-  double mask_value_;
+  float mask_value_;
 };
 
-FrequencyMasking::FrequencyMasking(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value)
+FrequencyMasking::FrequencyMasking(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, float mask_value)
     : data_(std::make_shared<Data>(iid_masks, frequency_mask_param, mask_start, mask_value)) {}
 
 std::shared_ptr<TensorOperation> FrequencyMasking::Parse() {
@@ -170,15 +170,15 @@ std::shared_ptr<TensorOperation> FrequencyMasking::Parse() {
 
 // TimeMasking Transform Operation.
 struct TimeMasking::Data {
-  Data(bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value)
+  Data(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value)
       : iid_masks_(iid_masks), time_mask_param_(time_mask_param), mask_start_(mask_start), mask_value_(mask_value) {}
-  int64_t time_mask_param_;
-  int64_t mask_start_;
+  int32_t time_mask_param_;
+  int32_t mask_start_;
   bool iid_masks_;
-  double mask_value_;
+  float mask_value_;
 };
 
-TimeMasking::TimeMasking(bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value)
+TimeMasking::TimeMasking(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value)
     : data_(std::make_shared<Data>(iid_masks, time_mask_param, mask_start, mask_value)) {}
 
 std::shared_ptr<TensorOperation> TimeMasking::Parse() {

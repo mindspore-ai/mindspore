@@ -31,7 +31,7 @@ constexpr char kFrequencyMaskingOperation[] = "FrequencyMasking";
 
 class FrequencyMaskingOperation : public TensorOperation {
  public:
-  FrequencyMaskingOperation(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value);
+  FrequencyMaskingOperation(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, float mask_value);
 
   ~FrequencyMaskingOperation();
 
@@ -47,7 +47,7 @@ class FrequencyMaskingOperation : public TensorOperation {
   int32_t frequency_mask_param_;
   int32_t mask_start_;
   bool iid_masks_;
-  double mask_value_;
+  float mask_value_;
 };  // class FrequencyMaskingOperation
 
 }  // namespace audio

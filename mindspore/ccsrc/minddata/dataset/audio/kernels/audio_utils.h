@@ -231,8 +231,8 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
 /// \param axis: Axis to apply masking on (1 -> frequency, 2 -> time).
 /// \param rnd: Number generator.
 /// \return Status code.
-Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_param,
-                           double mask_value, int axis, std::mt19937 rnd);
+Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_param,
+                           float mask_value, int axis, std::mt19937 rnd);
 
 /// \brief Apply a mask along axis. All examples will have the same mask interval.
 /// \param input: Tensor of shape <..., freq, time>.
@@ -243,8 +243,8 @@ Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr
 /// \param mask_value: Value to assign to the masked columns.
 /// \param axis: Axis to apply masking on (1 -> frequency, 2 -> time).
 /// \return Status code.
-Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_width,
-                     int64_t mask_start, double mask_value, int axis);
+Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_width,
+                     int32_t mask_start, float mask_value, int32_t axis);
 
 /// \brief Compute the norm of complex tensor input.
 /// \param power Power of the norm description (optional).

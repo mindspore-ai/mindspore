@@ -31,7 +31,7 @@ constexpr char kTimeMaskingOperation[] = "TimeMasking";
 
 class TimeMaskingOperation : public TensorOperation {
  public:
-  TimeMaskingOperation(bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value);
+  TimeMaskingOperation(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value);
 
   ~TimeMaskingOperation();
 
@@ -44,10 +44,10 @@ class TimeMaskingOperation : public TensorOperation {
   Status to_json(nlohmann::json *out_json) override;
 
  private:
-  int64_t time_mask_param_;
-  int64_t mask_start_;
+  int32_t time_mask_param_;
+  int32_t mask_start_;
   bool iid_masks_;
-  double mask_value_;
+  float mask_value_;
 };  // class TimeMaskingOperation
 
 }  // namespace audio

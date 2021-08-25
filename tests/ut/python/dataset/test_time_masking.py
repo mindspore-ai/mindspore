@@ -119,7 +119,7 @@ def test_time_masking_invalid_input():
     test_invalid_input("invalid mask_start", False, 2, 100, RuntimeError,
                        "MaskAlongAxis: mask_start should be less than the length of chosen dimension.")
     test_invalid_input("invalid mask_width", False, 200, 2, RuntimeError,
-                       "TimeMasking: time_mask_param should be less than the length of time dimension.")
+                       "TimeMasking: time_mask_param should be less than or equal to the length of time dimension.")
 
 
 if __name__ == "__main__":

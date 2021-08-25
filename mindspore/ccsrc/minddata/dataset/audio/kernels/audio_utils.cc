@@ -346,20 +346,20 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
   return Status::OK();
 }
 
-Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_param,
-                           double mask_value, int axis, std::mt19937 rnd) {
-  std::uniform_int_distribution<int64_t> mask_width_value(0, mask_param);
+Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_param,
+                           float mask_value, int axis, std::mt19937 rnd) {
+  std::uniform_int_distribution<int32_t> mask_width_value(0, mask_param);
   TensorShape input_shape = input->shape();
-  int64_t mask_dim_size = axis == 1 ? input_shape[-2] : input_shape[-1];
-  int64_t mask_width = mask_width_value(rnd);
-  std::uniform_int_distribution<int64_t> min_freq_value(0, mask_dim_size - mask_width);
-  int64_t mask_start = min_freq_value(rnd);
+  int32_t mask_dim_size = axis == 1 ? input_shape[-2] : input_shape[-1];
+  int32_t mask_width = mask_width_value(rnd);
+  std::uniform_int_distribution<int32_t> min_freq_value(0, mask_dim_size - mask_width);
+  int32_t mask_start = min_freq_value(rnd);
 
   return MaskAlongAxis(input, output, mask_width, mask_start, mask_value, axis);
 }
 
-Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_width,
-                     int64_t mask_start, double mask_value, int axis) {
+Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_width,
+                     int32_t mask_start, float mask_value, int32_t axis) {
   if (axis != 2 && axis != 1) {
     RETURN_STATUS_UNEXPECTED("MaskAlongAxis: only support Time and Frequency masking, axis should be 1 or 2.");
   }
@@ -374,7 +374,7 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   CHECK_FAIL_RETURN_UNEXPECTED(mask_start + mask_width <= input_shape[check_dim_ind],
                                "MaskAlongAxis: the sum of mask_start and mask_width is out of bounds.");
 
-  int64_t cell_size = input->type().SizeInBytes();
+  int32_t cell_size = input->type().SizeInBytes();
 
   if (axis == 1) {
     // freq
