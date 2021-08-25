@@ -20,6 +20,7 @@
 #include <memory>
 #include <bitset>
 #include <tuple>
+#include <type_traits>
 #include "debug/debugger/tensor_summary.h"
 
 #ifdef OFFLINE_DBG_MODE
@@ -92,39 +93,45 @@ double VarianceAndMeanCalculator::GetStandardDeviation() { return sqrt(GetVarian
 
 template <typename T>
 TensorSummary<T>::TensorSummary(void *current_tensor_ptr, void *const previous_tensor_ptr, uint32_t num_elements)
-    : current_tensor_ptr(reinterpret_cast<T *>(current_tensor_ptr)),
-      prev_tensor_ptr(reinterpret_cast<T *>(previous_tensor_ptr)),
-      num_elements(num_elements),
-      min(std::numeric_limits<double>::max()),
-      max(std::numeric_limits<double>::lowest()),
-      inf_count(0),
-      nan_count(0),
-      zero_count(0),
-      epsilon(1.0e-9),
-      mean_sd_cal_enabled(false) {}
+    : current_tensor_ptr_(reinterpret_cast<T *>(current_tensor_ptr)),
+      prev_tensor_ptr_(reinterpret_cast<T *>(previous_tensor_ptr)),
+      num_elements_(num_elements),
+      min_(std::numeric_limits<double>::max()),
+      max_(std::numeric_limits<double>::lowest()),
+      avg_(0.0),
+      is_bool_(false),
+      neg_zero_count_(0),
+      pos_zero_count_(0),
+      pos_inf_count_(0),
+      neg_inf_count_(0),
+      inf_count_(0),
+      nan_count_(0),
+      zero_count_(0),
+      epsilon_(1.0e-9),
+      mean_sd_cal_enabled_(false) {}
 
 template <typename T>
 void TensorSummary<T>::SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &wps) {
   InitCalculators(wps);
-  for (size_t i = 0; i < num_elements; ++i) {
-    auto current_value = static_cast<double>(current_tensor_ptr[i]);
+  for (size_t i = 0; i < num_elements_; ++i) {
+    auto current_value = static_cast<double>(current_tensor_ptr_[i]);
     double previous_value =
-      prev_tensor_ptr ? static_cast<double>(prev_tensor_ptr[i]) : std::numeric_limits<double>::quiet_NaN();
-    inf_count += std::isinf(current_value);
-    nan_count += std::isnan(current_value);
-    zero_count += (current_value == 0);
-    max = std::max(max, current_value);
-    min = std::min(min, current_value);
-    if (mean_sd_cal_enabled) {
-      current_mean_variance.ProcessElement(current_value);
+      prev_tensor_ptr_ ? static_cast<double>(prev_tensor_ptr_[i]) : std::numeric_limits<double>::quiet_NaN();
+    inf_count_ += std::isinf(current_value);
+    nan_count_ += std::isnan(current_value);
+    zero_count_ += (current_value == 0);
+    max_ = std::max(max_, current_value);
+    min_ = std::min(min_, current_value);
+    if (mean_sd_cal_enabled_) {
+      current_mean_variance_.ProcessElement(current_value);
     }
-    for (auto &it : all_close) {
+    for (auto &it : all_close_) {
       it.second->ProcessElement(current_value, previous_value);
     }
-    for (auto &range_count : range_counts) {
+    for (auto &range_count : range_counts_) {
       range_count.second->ProcessElement(current_value);
     }
-    for (auto &mean : means) {
+    for (auto &mean : means_) {
       if (mean.first == "curr_prev_diff_mean") {
         mean.second->ProcessElement(std::abs(current_value - previous_value));
       } else if (mean.first == "abs_prev_mean") {
@@ -137,6 +144,39 @@ void TensorSummary<T>::SummarizeTensor(const std::vector<DebugServices::watchpoi
 }
 
 template <typename T>
+void TensorSummary<T>::TensorStatistics(DbgDataType dtype_value) {
+  if (dtype_value == DT_BOOL) {
+    is_bool_ = true;
+  }
+  double sum_elements = 0.0;
+  for (size_t i = 0; i < num_elements_; ++i) {
+    auto current_value = static_cast<double>(current_tensor_ptr_[i]);
+    if (std::isinf(current_value)) {
+      if (current_value > 0) {
+        pos_inf_count_ += 1;
+      } else {
+        neg_inf_count_ += 1;
+      }
+    }
+    zero_count_ += (current_value == 0);
+    nan_count_ += std::isnan(current_value);
+    if (!(std::isnan(current_value) || std::isinf(current_value))) {
+      // only considering tensor elements with value
+      if (std::signbit(current_value) && !(current_value == 0)) {
+        neg_zero_count_ += 1;
+      } else if (!(current_value == 0)) {
+        pos_zero_count_ += 1;
+      }
+      max_ = std::max(max_, current_value);
+      min_ = std::min(min_, current_value);
+      sum_elements += current_value;
+    }
+  }
+  int value_count = zero_count_ + neg_zero_count_ + pos_zero_count_;
+  avg_ = sum_elements / value_count;
+}
+
+template <typename T>
 std::tuple<bool, int, std::vector<DebugServices::parameter_t>> TensorSummary<T>::IsWatchpointHit(
   DebugServices::watchpoint_t wp) {
   auto parameter_list = wp.parameter_list;
@@ -145,24 +185,24 @@ std::tuple<bool, int, std::vector<DebugServices::parameter_t>> TensorSummary<T>:
   std::bitset<bit_size> error_code;
   CONDITION_TYPE type = wp.condition.type;
   // bit 0 denotes presence of nan
-  error_code.set(0, nan_count > 0);
+  error_code.set(0, nan_count_ > 0);
   // bit 1 denotes presence of inf
-  error_code.set(1, inf_count > 0);
+  error_code.set(1, inf_count_ > 0);
 
   if (type == CONDITION_TYPE::HAS_NAN) {
     error_code.reset();
-    hit = nan_count > 0;
+    hit = nan_count_ > 0;
   } else if (type == CONDITION_TYPE::HAS_INF) {
     error_code.reset();
-    hit = inf_count > 0;
+    hit = inf_count_ > 0;
   } else if (type == CONDITION_TYPE::GENERAL_OVERFLOW) {
     error_code.reset();
-    hit = (nan_count + inf_count) > 0;
-  } else if (type == CONDITION_TYPE::NOT_CHANGED && prev_tensor_ptr && error_code.none()) {
-    hit = all_close[wp.id]->IsAllClose();
+    hit = (nan_count_ + inf_count_) > 0;
+  } else if (type == CONDITION_TYPE::NOT_CHANGED && prev_tensor_ptr_ && error_code.none()) {
+    hit = all_close_[wp.id]->IsAllClose();
   } else if ((type == CONDITION_TYPE::NOT_CHANGED || type == CONDITION_TYPE::CHANGE_TOO_LARGE ||
               type == CONDITION_TYPE::CHANGE_TOO_SMALL) &&
-             !prev_tensor_ptr) {
+             !prev_tensor_ptr_) {
     // bit 2 denotes absence of previous tensor
     error_code.set(2, true);
   }
@@ -196,26 +236,26 @@ double_t TensorSummary<T>::StatLookup(const std::string &parameter_name, const D
   }
 
   if (param_type == "max") {
-    return max;
+    return max_;
   } else if (param_type == "min") {
-    return min;
+    return min_;
   } else if (param_type == "max_min") {
-    return max - min;
+    return max_ - min_;
   } else if (param_type == "mean") {
-    return current_mean_variance.GetMean();
+    return current_mean_variance_.GetMean();
   } else if (param_type == "sd") {
-    return current_mean_variance.GetStandardDeviation();
+    return current_mean_variance_.GetStandardDeviation();
   } else if (param_type == "abs_mean") {
-    if (means.find("abs_current_mean") != means.end()) {
-      return means["abs_current_mean"]->GetMean();
+    if (means_.find("abs_current_mean") != means_.end()) {
+      return means_["abs_current_mean"]->GetMean();
     }
-  } else if (param_type == "abs_mean_update_ratio" && prev_tensor_ptr) {
-    if (means.find("curr_prev_diff_mean") != means.end() && means.find("abs_prev_mean") != means.end()) {
-      return means["curr_prev_diff_mean"]->GetMean() / (means["abs_prev_mean"]->GetMean() + epsilon);
+  } else if (param_type == "abs_mean_update_ratio" && prev_tensor_ptr_) {
+    if (means_.find("curr_prev_diff_mean") != means_.end() && means_.find("abs_prev_mean") != means_.end()) {
+      return means_["curr_prev_diff_mean"]->GetMean() / (means_["abs_prev_mean"]->GetMean() + epsilon_);
     }
   } else if (param_type == "range_percentage") {
-    if (range_counts.find(wp.id) != range_counts.end()) {
-      return range_counts[wp.id]->GetPercentInRange();
+    if (range_counts_.find(wp.id) != range_counts_.end()) {
+      return range_counts_[wp.id]->GetPercentInRange();
     }
   } else if (param_type == "zero_percentage") {
     return GetZeroValPercent();
@@ -227,54 +267,54 @@ template <typename T>
 double_t TensorSummary<T>::StatLookup(const DebugServices::watchpoint_t &wp) {
   CONDITION_TYPE type = wp.condition.type;
   if (type == CONDITION_TYPE::MAX_LT || type == CONDITION_TYPE::MAX_GT) {
-    return max;
+    return max_;
   } else if (type == CONDITION_TYPE::MIN_LT || type == CONDITION_TYPE::MIN_GT) {
-    return min;
+    return min_;
   } else if (type == CONDITION_TYPE::MEAN_LT || type == CONDITION_TYPE::MEAN_GT) {
-    return current_mean_variance.GetMean();
+    return current_mean_variance_.GetMean();
   } else if (type == CONDITION_TYPE::SD_LT || type == CONDITION_TYPE::SD_GT) {
-    return current_mean_variance.GetStandardDeviation();
+    return current_mean_variance_.GetStandardDeviation();
   } else if (type == CONDITION_TYPE::MAX_MIN_GT || type == CONDITION_TYPE::MAX_MIN_LT) {
-    return max - min;
+    return max_ - min_;
   }
   return std::numeric_limits<double_t>::quiet_NaN();
 }
 
 template <typename T>
 double_t TensorSummary<T>::GetZeroValPercent() {
-  if (num_elements == 0) {
+  if (num_elements_ == 0) {
     return 0;
   }
 
-  return (zero_count * 100.0) / num_elements;
+  return (zero_count_ * 100.0) / num_elements_;
 }
 
 template <typename T>
 void TensorSummary<T>::InitCalculators(const std::vector<DebugServices::watchpoint_t> &wps) {
   for (auto &wp : wps) {
     auto wp_id = wp.id;
-    mean_sd_cal_enabled = mean_sd_cal_enabled || wp.mean_sd_enabled();
-    if (wp.allclose_enabled() && prev_tensor_ptr) {
-      all_close[wp_id] = std::make_unique<AllCloseCalculator>();
+    mean_sd_cal_enabled_ = mean_sd_cal_enabled_ || wp.mean_sd_enabled();
+    if (wp.allclose_enabled() && prev_tensor_ptr_) {
+      all_close_[wp_id] = std::make_unique<AllCloseCalculator>();
       if (!wp.parameter_list[0].disabled) {
-        all_close[wp_id]->set_atol(wp.parameter_list[0].value);
+        all_close_[wp_id]->set_atol(wp.parameter_list[0].value);
       }
       if (!wp.parameter_list[1].disabled) {
-        all_close[wp_id]->set_rtol(wp.parameter_list[1].value);
+        all_close_[wp_id]->set_rtol(wp.parameter_list[1].value);
       }
     } else if (wp.range_enabled()) {
-      range_counts[wp_id] = std::make_unique<RangeCountCalculator>();
+      range_counts_[wp_id] = std::make_unique<RangeCountCalculator>();
       if (!wp.parameter_list[0].disabled) {
-        range_counts[wp_id]->set_range_start_inclusive(wp.parameter_list[0].value);
+        range_counts_[wp_id]->set_range_start_inclusive(wp.parameter_list[0].value);
       }
       if (!wp.parameter_list[1].disabled) {
-        range_counts[wp_id]->set_range_end_inclusive(wp.parameter_list[1].value);
+        range_counts_[wp_id]->set_range_end_inclusive(wp.parameter_list[1].value);
       }
-    } else if (wp.tensor_update_ratio_mean_enabled() && prev_tensor_ptr) {
-      means.insert({"curr_prev_diff_mean", std::make_unique<MeanCalculator>()});
-      means.insert({"abs_prev_mean", std::make_unique<MeanCalculator>()});
+    } else if (wp.tensor_update_ratio_mean_enabled() && prev_tensor_ptr_) {
+      means_.insert({"curr_prev_diff_mean", std::make_unique<MeanCalculator>()});
+      means_.insert({"abs_prev_mean", std::make_unique<MeanCalculator>()});
     } else if (wp.abs_mean_enabled()) {
-      means.insert({"abs_current_mean", std::make_unique<MeanCalculator>()});
+      means_.insert({"abs_current_mean", std::make_unique<MeanCalculator>()});
     }
   }
 }

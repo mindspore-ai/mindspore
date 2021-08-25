@@ -121,7 +121,7 @@ def check_check_watchpoints(method):
     return new_method
 
 
-def check_read_tensors(method):
+def check_read_tensor_info(method):
     """Wrapper method to check the parameters of DbgServices ReadTensors."""
 
     @wraps(method)
@@ -189,6 +189,52 @@ def check_tensor_data_init(method):
 
     return new_method
 
+def check_tensor_base_data_init(method):
+    """Wrapper method to check the parameters of DbgServices TensorBaseData init."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [data_size, dtype, shape], _ = parse_user_args(method, *args, **kwargs)
+
+        check_uint64(data_size, "data_size")
+        type_check(dtype, (int,), "dtype")
+        shape_names = ["shape_{0}".format(i) for i in range(len(shape))]
+        type_check_list(shape, (int,), shape_names)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+def check_tensor_stat_data_init(method):
+    """Wrapper method to check the parameters of DbgServices TensorBaseData init."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [data_size, dtype, shape, is_bool, max_value, min_value,
+         avg_value, count, neg_zero_count, pos_zero_count,
+         nan_count, neg_inf_count, pos_inf_count,
+         zero_count], _ = parse_user_args(method, *args, **kwargs)
+
+        check_uint64(data_size, "data_size")
+        type_check(dtype, (int,), "dtype")
+        shape_names = ["shape_{0}".format(i) for i in range(len(shape))]
+        type_check_list(shape, (int,), shape_names)
+        type_check(is_bool, (bool,), "is_bool")
+        type_check(max_value, (float,), "max_value")
+        type_check(min_value, (float,), "min_value")
+        type_check(avg_value, (float,), "avg_value")
+        type_check(count, (int,), "count")
+        type_check(neg_zero_count, (int,), "neg_zero_count")
+        type_check(pos_zero_count, (int,), "pos_zero_count")
+        type_check(nan_count, (int,), "nan_count")
+        type_check(neg_inf_count, (int,), "neg_inf_count")
+        type_check(pos_inf_count, (int,), "pos_inf_count")
+        type_check(zero_count, (int,), "zero_count")
+
+
+        return method(self, *args, **kwargs)
+
+    return new_method
 
 def check_watchpoint_hit_init(method):
     """Wrapper method to check the parameters of DbgServices WatchpointHit init."""

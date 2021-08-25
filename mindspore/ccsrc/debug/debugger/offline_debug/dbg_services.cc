@@ -226,7 +226,7 @@ unsigned int GetTensorSlot(tensor_info_t info) { return info.slot; }
 
 bool GetTensorIsOutput(tensor_info_t info) { return info.is_output; }
 
-std::vector<tensor_data_t> DbgServices::ReadTensors(std::vector<tensor_info_t> info) {
+std::vector<std::shared_ptr<TensorData>> DbgServices::ReadTensorsUtil(std::vector<tensor_info_t> info) {
   for (auto i : info) {
     MS_LOG(INFO) << "cpp DbgServices ReadTensor info name " << i.node_name << ", slot " << i.slot << ", iteration "
                  << i.iteration << ", rank_id " << i.rank_id << ", root_graph_id " << i.root_graph_id << ", is_output "
@@ -238,7 +238,6 @@ std::vector<tensor_data_t> DbgServices::ReadTensors(std::vector<tensor_info_t> i
   std::vector<unsigned int> iteration;
   std::vector<size_t> slot;
   std::vector<std::shared_ptr<TensorData>> result_list;
-  std::vector<tensor_data_t> tensors_read;
   std::vector<bool> is_output;
 
   std::transform(info.begin(), info.end(), std::back_inserter(backend_name), GetTensorFullName);
@@ -264,10 +263,60 @@ std::vector<tensor_data_t> DbgServices::ReadTensors(std::vector<tensor_info_t> i
   MS_LOG(INFO) << "ReadTensors Took: " << ms_double.count() / 1000 << "s";
   MS_LOG(INFO) << "cpp after";
 
+  return result_list;
+}
+
+std::vector<tensor_data_t> DbgServices::ReadTensors(std::vector<tensor_info_t> info) {
+  std::vector<tensor_data_t> tensors_read;
+  std::vector<std::shared_ptr<TensorData>> result_list;
+  result_list = ReadTensorsUtil(info);
   for (auto result : result_list) {
     tensor_data_t tensor_data_item(result->GetDataPtr(), result->GetByteSize(), result->GetType(), result->GetShape());
     tensors_read.push_back(tensor_data_item);
   }
-  MS_LOG(INFO) << "cpp end";
   return tensors_read;
+}
+
+std::vector<TensorBaseData> DbgServices::ReadTensorsBase(std::vector<tensor_info_t> info) {
+  std::vector<TensorBaseData> tensors_read_base;
+  std::vector<std::shared_ptr<TensorData>> result_list;
+  result_list = ReadTensorsUtil(info);
+  for (auto result : result_list) {
+    if (!result->GetByteSize()) {
+      // tensor not found, adding empty tensor base.
+      TensorBaseData tensor_data_item(0, 0, {0});
+      tensors_read_base.push_back(tensor_data_item);
+      continue;
+    }
+    TensorBaseData tensor_data_item(result->GetByteSize(), result->GetType(), result->GetShape());
+    tensors_read_base.push_back(tensor_data_item);
+  }
+  return tensors_read_base;
+}
+
+std::vector<TensorStatData> DbgServices::ReadTensorsStat(std::vector<tensor_info_t> info) {
+  std::vector<TensorStatData> tensors_read_stat;
+  std::vector<std::shared_ptr<TensorData>> result_list;
+  result_list = ReadTensorsUtil(info);
+  for (auto result : result_list) {
+    if (!result->GetByteSize()) {
+      DebugServices::TensorStat tensor_statistics;
+      TensorStatData tensor_data_item(
+        tensor_statistics.data_size, tensor_statistics.dtype, tensor_statistics.shape, tensor_statistics.is_bool,
+        tensor_statistics.max_value, tensor_statistics.min_value, tensor_statistics.avg_value, tensor_statistics.count,
+        tensor_statistics.neg_zero_count, tensor_statistics.pos_zero_count, tensor_statistics.nan_count,
+        tensor_statistics.neg_inf_count, tensor_statistics.pos_inf_count, tensor_statistics.zero_count);
+      tensors_read_stat.push_back(tensor_data_item);
+      continue;
+    }
+    DebugServices::TensorStat tensor_statistics = debug_services_->GetTensorStatistics(result);
+    TensorStatData tensor_data_item(
+      tensor_statistics.data_size, tensor_statistics.dtype, tensor_statistics.shape, tensor_statistics.is_bool,
+      tensor_statistics.max_value, tensor_statistics.min_value, tensor_statistics.avg_value, tensor_statistics.count,
+      tensor_statistics.neg_zero_count, tensor_statistics.pos_zero_count, tensor_statistics.nan_count,
+      tensor_statistics.neg_inf_count, tensor_statistics.pos_inf_count, tensor_statistics.zero_count);
+    tensors_read_stat.push_back(tensor_data_item);
+  }
+
+  return tensors_read_stat;
 }

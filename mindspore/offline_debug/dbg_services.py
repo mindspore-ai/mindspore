@@ -17,7 +17,10 @@ The module DbgServices provides offline debugger APIs.
 """
 
 import mindspore._mindspore_offline_debug as cds
-from mindspore.offline_debug.mi_validators import check_init, check_initialize, check_add_watchpoint, check_remove_watchpoint, check_check_watchpoints, check_read_tensors, check_initialize_done, check_tensor_info_init, check_tensor_data_init, check_watchpoint_hit_init, check_parameter_init
+from mindspore.offline_debug.mi_validators import check_init, check_initialize, check_add_watchpoint,\
+     check_remove_watchpoint, check_check_watchpoints, check_read_tensor_info, check_initialize_done, \
+         check_tensor_info_init, check_tensor_data_init, check_tensor_base_data_init, check_tensor_stat_data_init,\
+              check_watchpoint_hit_init, check_parameter_init
 from mindspore.offline_debug.mi_validator_helpers import replace_minus_one
 
 
@@ -238,7 +241,7 @@ class DbgServices():
         return watchpoint_hit_list
 
     @check_initialize_done
-    @check_read_tensors
+    @check_read_tensor_info
     def read_tensors(self, info):
         """
         Returning tensor data object describing the tensor requested tensor.
@@ -276,6 +279,83 @@ class DbgServices():
                 tensor_data = TensorData(elem.get_data_ptr(), elem.get_data_size(), elem.get_dtype(), elem.get_shape())
             tensor_data_list_ret.append(tensor_data)
         return tensor_data_list_ret
+
+    @check_initialize_done
+    @check_read_tensor_info
+    def read_tensor_base(self, info):
+        """
+        Returning tensor base data object describing the requested tensor.
+
+        Args:
+            info (list): List of TensorInfo objects.
+
+        Returns:
+            list, TensorBaseData list.
+
+        Examples:
+        >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
+        >>>                              verbose=True)
+        >>> d_init = d.initialize(is_sync_mode=True)
+        >>> tensor_base_data_list = d_init.read_tensor_base([dbg_services.TensorInfo(node_name="conv2.bias",
+        >>>                                                                          slot=0,
+        >>>                                                                          iteration=8,
+        >>>                                                                          rank_id=5,
+        >>>                                                                          root_graph_id=0,
+        >>>                                                                          is_output=True)])
+        """
+        log("in Python ReadTensorsBase info ", info)
+        info_list_inst = []
+        for elem in info:
+            log("in Python ReadTensorsBase info ", info)
+            info_list_inst.append(elem.instance)
+        tensor_base_data_list = self.dbg_instance.ReadTensorsBase(info_list_inst)
+        tensor_base_data_list_ret = []
+        for elem in tensor_base_data_list:
+            tensor_base_data = TensorBaseData(elem.data_size(), elem.dtype(), elem.shape())
+            tensor_base_data_list_ret.append(tensor_base_data)
+        return tensor_base_data_list_ret
+
+    @check_initialize_done
+    @check_read_tensor_info
+    def read_tensor_stats(self, info):
+        """
+        Returning tensor statistics object describing the requested tensor.
+
+        Args:
+            info (list): List of TensorInfo objects.
+
+        Returns:
+            list, TensorStatData list.
+
+        Examples:
+        >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
+        >>>                              verbose=True)
+        >>> d_init = d.initialize(is_sync_mode=True)
+        >>> tensor_stat_data_list = d_init.read_tensor_stats([dbg_services.TensorInfo(node_name="conv2.bias",
+        >>>                                                                           slot=0,
+        >>>                                                                           iteration=8,
+        >>>                                                                           rank_id=5,
+        >>>                                                                           root_graph_id=0,
+        >>>                                                                           is_output=True)])
+        """
+        log("in Python ReadTensorsStat info ", info)
+        info_list_inst = []
+        for elem in info:
+            log("in Python ReadTensorsStat info ", info)
+            info_list_inst.append(elem.instance)
+        tensor_stat_data_list = self.dbg_instance.ReadTensorsStat(info_list_inst)
+        tensor_stat_data_list_ret = []
+        for elem in tensor_stat_data_list:
+            tensor_stat_data = TensorStatData(elem.data_size(), elem.dtype(),
+                                              elem.shape(), elem.is_bool(),
+                                              elem.max_value(), elem.min_value(),
+                                              elem.avg_value(), elem.count(), elem.neg_zero_count(),
+                                              elem.pos_zero_count(), elem.nan_count(), elem.neg_inf_count(),
+                                              elem.pos_inf_count(), elem.zero_count())
+            tensor_stat_data_list_ret.append(tensor_stat_data)
+        return tensor_stat_data_list_ret
 
 class TensorInfo():
     """
@@ -527,6 +607,406 @@ class TensorData():
 
         return self.instance.get_shape()
 
+class TensorBaseData():
+
+    """
+    TensorBaseData class.
+
+    Args:
+        data_size (int): Size of data in bytes.
+        dtype (int): An encoding representing the type of TensorData.
+        shape (list): Shape of tensor.
+
+    Examples:
+        >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+        >>> tensor_base_data = dbg_services.TensorBaseData(data_size=4,
+        >>>                                       dtype=0,
+        >>>                                       shape=[2, 2])
+    """
+    @check_tensor_base_data_init
+    def __init__(self, data_size, dtype, shape):
+        self.instance = cds.TensorBaseData(data_size, dtype, shape)
+
+    @property
+    def data_size(self):
+        """
+        Function to receive TensorBaseData data_size.
+
+        Returns:
+            int, data_size of TensorBaseData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_base_data = dbg_services.TensorBaseData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2])
+            >>> data_size = tensor_base_data.data_size
+        """
+
+        return self.instance.data_size()
+
+    @property
+    def dtype(self):
+        """
+        Function to receive TensorBaseData dtype.
+
+        Returns:
+            int, dtype of TensorBaseData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_base_data = dbg_services.TensorBaseData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2])
+            >>> dtype = tensor_base_data.dtype
+        """
+
+        return self.instance.dtype()
+
+    @property
+    def shape(self):
+        """
+        Function to receive TensorBaseData shape.
+
+        Returns:
+            list, shape of TensorBaseData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_base_data = dbg_services.TensorBaseData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2])
+            >>> shape = tensor_base_data.shape
+        """
+
+        return self.instance.shape()
+class TensorStatData():
+
+    """
+    TensorStatData class.
+
+    Args:
+        data_size (int): Size of data in bytes.
+        dtype (int): An encoding representing the type of TensorData.
+        shape (list): Shape of tensor.
+        is_bool (bool): Whether the data type is bool
+        max_value (float): Maximum value in tensor's elements
+        min_value (float): Minimum value in tensor's elements
+        avg_value (float): Average value of all tensor's elements
+        count (int): Number of elements in tensor
+        neg_zero_count (int): Number of negative elements in tensor
+        pos_zero_count (int): Number of positive elements in tensor
+        nan_cout (int): Number of nan elements in tensor
+        neg_inf_count (int): Number of negative infinity elements in tensor
+        pos_inf_count (int): Number of positive infinity elements in tensor
+        zero_count (int): Total number of zero elements in tensor
+
+
+
+
+    Examples:
+        >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+        >>> tensor_stat_data = dbg_services.TensorStatData
+        >>>                                       (data_size=4,
+        >>>                                       dtype=0,
+        >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+        >>>                                       min_value = 0.0, avg_value = 5.0,
+        >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+        >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+    """
+    @check_tensor_stat_data_init
+    def __init__(self, data_size, dtype, shape, is_bool, max_value, min_value, avg_value, count,
+                 neg_zero_count, pos_zero_count, nan_count, neg_inf_count, pos_inf_count, zero_count):
+        self.instance = cds.TensorStatData(data_size, dtype, shape, is_bool, max_value,
+                                           min_value, avg_value, count, neg_zero_count,
+                                           pos_zero_count, nan_count, neg_inf_count,
+                                           pos_inf_count, zero_count)
+
+
+    @property
+    def data_size(self):
+        """
+        Function to receive TensorStatData data_size.
+
+        Returns:
+            int, data_size of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData
+            >>>                                       (data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            >>                                        nan_count = 0, neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> data_size = tensor_stat_data.data_size
+        """
+
+        return self.instance.data_size()
+
+    @property
+    def dtype(self):
+        """
+        Function to receive TensorStatData dtype.
+
+        Returns:
+            int, dtype of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>                                        min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> dtype = tensor_stat_data.dtype
+        """
+
+        return self.instance.dtype()
+
+    @property
+    def shape(self):
+        """
+        Function to receive TensorStatData shape.
+
+        Returns:
+            list, shape of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> shape = tensor_stat_data.shape
+        """
+
+        return self.instance.shape()
+
+    @property
+    def is_bool(self):
+        """
+        Function to receive TensorStatData is_bool.
+
+        Returns:
+            bool, Whether the tensor elements are bool.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> is_bool = tensor_stat_data.is_bool
+        """
+        return self.instance.is_bool()
+
+    @property
+    def max_value(self):
+        """
+        Function to receive TensorStatData max_value.
+
+        Returns:
+            float, max_value of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> max_value = tensor_stat_data.max_value
+        """
+        return self.instance.max_value()
+
+    @property
+    def min_value(self):
+        """
+        Function to receive TensorStatData min_value.
+
+        Returns:
+            float, min_value of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> min_value = tensor_stat_data.min_value
+        """
+        return self.instance.min_value()
+
+    @property
+    def avg_value(self):
+        """
+        Function to receive TensorStatData avg_value.
+
+        Returns:
+            float, avg_value of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> avg_value = tensor_stat_data.avg_value
+        """
+        return self.instance.avg_value()
+
+    @property
+    def count(self):
+        """
+        Function to receive TensorStatData count.
+
+        Returns:
+            int, count of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> count = tensor_stat_data.count
+        """
+        return self.instance.count()
+
+    @property
+    def neg_zero_count(self):
+        """
+        Function to receive TensorStatData neg_zero_count.
+
+        Returns:
+            int, neg_zero_count of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> neg_zero_count = tensor_stat_data.neg_zero_count
+        """
+        return self.instance.neg_zero_count()
+
+    @property
+    def pos_zero_count(self):
+        """
+        Function to receive TensorStatData pos_zero_count.
+
+        Returns:
+            int, pos_zero_count of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> pos_zero_count = tensor_stat_data.pos_zero_count
+        """
+        return self.instance.pos_zero_count()
+
+    @property
+    def zero_count(self):
+        """
+        Function to receive TensorStatData zero_count.
+
+        Returns:
+            int, zero_count of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> zero_count = tensor_stat_data.zero_count
+        """
+        return self.instance.zero_count()
+
+    @property
+    def nan_count(self):
+        """
+        Function to receive TensorStatData nan_count.
+
+        Returns:
+            int, nan_count of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> nan_count = tensor_stat_data.nan_count
+        """
+        return self.instance.nan_count()
+
+    @property
+    def neg_inf_count(self):
+        """
+        Function to receive TensorStatData shape.
+
+        Returns:
+            int, neg_inf_count of TensorStatData instance.
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> neg_inf_count = tensor_stat_data.neg_inf_count
+        """
+        return self.instance.neg_inf_count()
+
+    @property
+    def pos_inf_count(self):
+        """
+        Function to receive TensorStatData pos_inf_count.
+
+        Returns:
+            pos_inf_count of TensorStatData instance (int).
+
+        Examples:
+            >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
+            >>>                                       dtype=0,
+            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
+            >>>                                       min_value = 0.0, avg_value = 5.0,
+            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 1, nan_count = 0,
+            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> pos_inf_count = tensor_stat_data.pos_inf_count
+        """
+        return self.instance.pos_inf_count()
+
 class WatchpointHit():
     """
     WatchpointHit class.
@@ -583,7 +1063,7 @@ class WatchpointHit():
             >>> name = watchpoint_hit.name
         """
 
-        return self.instance.get_name()
+        return self.instance.name()
 
     @property
     def slot(self):
@@ -606,7 +1086,7 @@ class WatchpointHit():
             >>> slot = watchpoint_hit.slot
         """
 
-        return self.instance.get_slot()
+        return self.instance.slot()
 
     @property
     def condition(self):
@@ -629,7 +1109,7 @@ class WatchpointHit():
             >>> condition = watchpoint_hit.condition
         """
 
-        return self.instance.get_condition()
+        return self.instance.condition()
 
     @property
     def watchpoint_id(self):
@@ -652,7 +1132,7 @@ class WatchpointHit():
             >>> watchpoint_id = watchpoint_hit.watchpoint_id
         """
 
-        return self.instance.get_watchpoint_id()
+        return self.instance.watchpoint_id()
 
     @property
     def parameters(self):
@@ -675,7 +1155,7 @@ class WatchpointHit():
             >>> parameters = watchpoint_hit.parameters
         """
 
-        params = self.instance.get_parameters()
+        params = self.instance.parameters()
         param_list = []
         for elem in params:
             tmp = Parameter(elem.get_name(),

@@ -117,6 +117,68 @@ struct tensor_data_t {
   std::vector<int64_t> shape;
 };
 
+struct TensorBaseData {
+  TensorBaseData(uint64_t data_size, int dtype, const std::vector<int64_t> &shape)
+      : data_size_(data_size), dtype_(dtype), shape_(shape) {}
+
+  const uint64_t data_size() const { return data_size_; }
+  const int dtype() const { return dtype_; }
+  const std::vector<int64_t> &shape() const { return shape_; }
+  uint64_t data_size_;
+  int dtype_;
+  std::vector<int64_t> shape_;
+};
+
+struct TensorStatData {
+  TensorStatData(uint64_t data_size, int dtype, const std::vector<int64_t> &shape, bool is_bool, double max_value,
+                 double min_value, double avg_value, int count, int neg_zero_count, int pos_zero_count, int nan_count,
+                 int neg_inf_count, int pos_inf_count, int zero_count)
+      : data_size_(data_size),
+        dtype_(dtype),
+        shape_(shape),
+        is_bool_(is_bool),
+        max_value_(max_value),
+        min_value_(min_value),
+        avg_value_(avg_value),
+        count_(count),
+        neg_zero_count_(neg_zero_count),
+        pos_zero_count_(pos_zero_count),
+        nan_count_(nan_count),
+        neg_inf_count_(neg_inf_count),
+        pos_inf_count_(pos_inf_count),
+        zero_count_(zero_count) {}
+
+  const uint64_t data_size() const { return data_size_; }
+  const int dtype() const { return dtype_; }
+  const std::vector<int64_t> &shape() const { return shape_; }
+  const bool is_bool() const { return is_bool_; }
+  const double max_value() const { return max_value_; }
+  const double min_value() const { return min_value_; }
+  const double avg_value() const { return avg_value_; }
+  const int count() const { return count_; }
+  const int neg_zero_count() const { return neg_zero_count_; }
+  const int pos_zero_count() const { return pos_zero_count_; }
+  const int nan_count() const { return nan_count_; }
+  const int neg_inf_count() const { return neg_inf_count_; }
+  const int pos_inf_count() const { return pos_inf_count_; }
+  const int zero_count() const { return zero_count_; }
+
+  uint64_t data_size_;
+  int dtype_;
+  std::vector<int64_t> shape_;
+  bool is_bool_;
+  double max_value_;
+  double min_value_;
+  double avg_value_;
+  int count_;
+  int neg_zero_count_;
+  int pos_zero_count_;
+  int nan_count_;
+  int neg_inf_count_;
+  int pos_inf_count_;
+  int zero_count_;
+};
+
 class DbgServices {
  private:
   DebugServices *debug_services_;
@@ -141,7 +203,13 @@ class DbgServices {
 
   std::vector<watchpoint_hit_t> CheckWatchpoints(unsigned int iteration);
 
+  std::vector<std::shared_ptr<TensorData>> ReadTensorsUtil(std::vector<tensor_info_t> info);
+
   std::vector<tensor_data_t> ReadTensors(std::vector<tensor_info_t> info);
+
+  std::vector<TensorBaseData> ReadTensorsBase(std::vector<tensor_info_t> info);
+
+  std::vector<TensorStatData> ReadTensorsStat(std::vector<tensor_info_t> info);
 
   std::string GetVersion();
 };
