@@ -59,6 +59,7 @@ class HcomUtil {
  public:
   static bool GetKernelInputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_shape_list);
   static bool GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_shape_list);
+  static ::HcclDataType ConvertHcclType(TypeId type_id);
   static bool GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list);
   static bool GetHcclOpSize(const HcclDataType &data_type, const vector<size_t> &shape, size_t *size);
   static bool GetHcomTypeSize(const HcclDataType &data_type, uint32_t *size);

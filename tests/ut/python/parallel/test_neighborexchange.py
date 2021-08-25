@@ -91,7 +91,51 @@ def test_NeighborExchange_single_input_success():
     compile_net(net)
 
 
-def test_NeighborExchage_empty_send_empty_recv_success():
+def test_NeighborExchange_empty_send_success():
+    """
+    Feature: NeighborExchange
+    Description: empty inputs, with valid arguments
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = NeighborExchange(send_rank_ids=[], recv_rank_ids=[1], recv_shapes=([1],),
+                                              send_shapes=(), recv_type=ms.float32)
+
+        def construct(self, x1):
+            self.alltoallv()
+            return x1
+
+    net = Net()
+    _executor.compile(net, _x1)
+
+
+def test_NeighborExchange_empty_recv_success():
+    """
+    Feature: NeighborExchange
+    Description: empty outputs, with valid arguments
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = NeighborExchange(send_rank_ids=[0], recv_rank_ids=[], recv_shapes=(),
+                                              send_shapes=([32, 16],), recv_type=ms.float32)
+
+        def construct(self, x1):
+            self.alltoallv((x1,))
+            return x1
+
+    net = Net()
+    _executor.compile(net, _x1)
+
+
+def test_NeighborExchange_empty_send_empty_recv_success():
     """
     Feature: NeighborExchange
     Description: empty inputs and empty outputs, with valid arguments
@@ -102,20 +146,18 @@ def test_NeighborExchage_empty_send_empty_recv_success():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = NeighborExchange(send_rank_ids=[], recv_rank_ids=[],
-                                              recv_shapes=(),
-                                              send_shapes=(), recv_type=ms.float32, group=("str",))
+            self.alltoallv = NeighborExchange(send_rank_ids=[], recv_rank_ids=[], recv_shapes=(),
+                                              send_shapes=(), recv_type=ms.float32)
 
         def construct(self, x1):
             self.alltoallv()
             return x1
 
     net = Net()
-    with pytest.raises(TypeError):
-        _executor.compile(net, _x1)
+    _executor.compile(net, _x1)
 
 
-def test_NeighborExchage_recv_shape_num_diff_with_recv_rank_size_failed():
+def test_NeighborExchange_recv_shape_num_diff_with_recv_rank_size_failed():
     """
     Feature: NeighborExchange
     Description: send_rank_ids and send_shapes are set as 1 input, but gives 2
@@ -143,7 +185,7 @@ def test_NeighborExchage_recv_shape_num_diff_with_recv_rank_size_failed():
         compile_net(net)
 
 
-def test_NeighborExchage_send_shape_num_diff_with_send_rank_size_failed():
+def test_NeighborExchange_send_shape_num_diff_with_send_rank_size_failed():
     """
     Feature: NeighborExchange
     Description: send_rank_ids is set as 2 inputs, but send_shapes are set as 1 input
@@ -172,7 +214,7 @@ def test_NeighborExchage_send_shape_num_diff_with_send_rank_size_failed():
         compile_net(net)
 
 
-def test_NeighborExchage_send_shape_num_diff_with_input_num_failed():
+def test_NeighborExchange_send_shape_num_diff_with_input_num_failed():
     """
     Feature: NeighborExchange
     Description: send_rank_ids and send_shapes are set as 2 inputs, but has only 1 input
@@ -201,7 +243,7 @@ def test_NeighborExchage_send_shape_num_diff_with_input_num_failed():
         compile_net(net)
 
 
-def test_NeighborExchage_send_shape_diff_with_input_shape_failed():
+def test_NeighborExchange_send_shape_diff_with_input_shape_failed():
     """
     Feature: NeighborExchange
     Description: send_shapes is set as [16, 16], but input is [32, 32]
@@ -229,7 +271,7 @@ def test_NeighborExchage_send_shape_diff_with_input_shape_failed():
         compile_net(net)
 
 
-def test_NeighborExchage_attr_check_send_rank_ids_is_tuple_failed():
+def test_NeighborExchange_attr_check_send_rank_ids_is_tuple_failed():
     """
     Feature: NeighborExchange
     Description: send_rank_ids should be list, but a tuple is given
@@ -252,7 +294,7 @@ def test_NeighborExchage_attr_check_send_rank_ids_is_tuple_failed():
         _executor.compile(net, _x1)
 
 
-def test_NeighborExchage_attr_check_send_rank_ids_is_float_failed():
+def test_NeighborExchange_attr_check_send_rank_ids_is_float_failed():
     """
     Feature: NeighborExchange
     Description: send_rank_ids should be int, but a float is given
@@ -276,7 +318,7 @@ def test_NeighborExchage_attr_check_send_rank_ids_is_float_failed():
         _executor.compile(net, _x1)
 
 
-def test_NeighborExchage_attr_check_recv_rank_ids_is_tuple_failed():
+def test_NeighborExchange_attr_check_recv_rank_ids_is_tuple_failed():
     """
     Feature: NeighborExchange
     Description: recv_rank_ids should be list, but a tuple is given
@@ -300,7 +342,7 @@ def test_NeighborExchage_attr_check_recv_rank_ids_is_tuple_failed():
         _executor.compile(net, _x1)
 
 
-def test_NeighborExchage_attr_check_recv_rank_ids_is_float_failed():
+def test_NeighborExchange_attr_check_recv_rank_ids_is_float_failed():
     """
     Feature: NeighborExchange
     Description: recv_rank_ids should be int, but a float is given
@@ -324,7 +366,7 @@ def test_NeighborExchage_attr_check_recv_rank_ids_is_float_failed():
         _executor.compile(net, _x1)
 
 
-def test_NeighborExchage_attr_check_send_shape_not_tuple_failed():
+def test_NeighborExchange_attr_check_send_shape_not_tuple_failed():
     """
     Feature: NeighborExchange
     Description: send_shapes should be tuple(list), but a list is given
@@ -348,7 +390,7 @@ def test_NeighborExchage_attr_check_send_shape_not_tuple_failed():
         _executor.compile(net, _x1)
 
 
-def test_NeighborExchage_attr_check_recv_type_numpy_failed():
+def test_NeighborExchange_attr_check_recv_type_numpy_failed():
     """
     Feature: NeighborExchange
     Description: recv_type should be mindspore type, but a numpy type is given
@@ -372,7 +414,7 @@ def test_NeighborExchage_attr_check_recv_type_numpy_failed():
         _executor.compile(net, _x1)
 
 
-def test_NeighborExchage_attr_invalid_grpup_failed():
+def test_NeighborExchange_attr_invalid_grpup_failed():
     """
     Feature: NeighborExchange
     Description: group should be str, but a tuple is given

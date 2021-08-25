@@ -131,7 +131,7 @@ void Check(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &in
   }
 }
 
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::BaseShapePtr InferShape(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto recv_shapes = primitive->GetAttr(kRecvShapes);
   MS_EXCEPTION_IF_NULL(recv_shapes);
@@ -147,15 +147,14 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION_IF_NULL(base_shape);
     base_shape_list.push_back(base_shape);
   }
+  if (base_shape_list.empty()) {
+    return std::make_shared<abstract::Shape>();
+  }
   return std::make_shared<abstract::TupleShape>(base_shape_list);
 }
 
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr InferType(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("NeighborExchange infer", SizeToLong(input_args.size()), kEqual, 1,
-                                           prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto recv_shapes = primitive->GetAttr(kRecvShapes);
   MS_EXCEPTION_IF_NULL(recv_shapes);
   auto shapes_seq = recv_shapes->cast<ValueSequeuePtr>();
@@ -165,14 +164,17 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
   auto recv_type = primitive->GetAttr(kRecvType)->cast<TypePtr>();
   MS_EXCEPTION_IF_NULL(recv_type);
   std::vector<TypePtr> type_vec(out_num, recv_type);
+  if (type_vec.empty()) {
+    return std::make_shared<TypeNone>();
+  }
   return std::make_shared<Tuple>(type_vec);
 }
 }  // namespace
 AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   Check(primitive, input_args);
-  auto type = InferType(primitive, input_args);
-  auto shape = InferShape(primitive, input_args);
+  auto type = InferType(primitive);
+  auto shape = InferShape(primitive);
   return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(NeighborExchange, prim::kPrimNeighborExchange, NeighborExchangeInfer, nullptr, true);
