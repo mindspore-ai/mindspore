@@ -721,6 +721,8 @@ class DataType:
         F16_NDC1HWC0 = ("float16", "NDC1HWC0")
         F16_FRACTAL_Z_3D = ("float16", "FRACTAL_Z_3D")
         F16_FracZNLSTM = ("float16", "FRACTAL_ZN_LSTM")
+        F16_FracZNRNN = ("float16", "FRACTAL_ZN_RNN")
+        F16_ND_RNNBIAS = ("float16", "ND_RNN_BIAS")
         F16_ChannelLast = ("float16", "ChannelLast")
 
         F32_None = ("float32", "")
@@ -738,6 +740,8 @@ class DataType:
         F32_NDC1HWC0 = ("float32", "NDC1HWC0")
         F32_FRACTAL_Z_3D = ("float32", "FRACTAL_Z_3D")
         F32_FracZNLSTM = ("float32", "FRACTAL_ZN_LSTM")
+        F32_FracZNRNN = ("float32", "FRACTAL_ZN_RNN")
+        F32_ND_RNNBIAS = ("float32", "ND_RNN_BIAS")
         F32_ChannelLast = ("float32", "ChannelLast")
 
         F64_None = ("float64", "")
@@ -878,6 +882,8 @@ class DataType:
     F16_NDC1HWC0 = ("float16", "NDC1HWC0")
     F16_FRACTAL_Z_3D = ("float16", "FRACTAL_Z_3D")
     F16_FracZNLSTM = ("float16", "FRACTAL_ZN_LSTM")
+    F16_FracZNRNN = ("float16", "FRACTAL_ZN_RNN")
+    F16_ND_RNNBIAS = ("float16", "ND_RNN_BIAS")
     F16_ChannelLast = ("float16", "ChannelLast")
 
     F32_None = ("float32", "")
@@ -895,6 +901,8 @@ class DataType:
     F32_NDC1HWC0 = ("float32", "NDC1HWC0")
     F32_FRACTAL_Z_3D = ("float32", "FRACTAL_Z_3D")
     F32_FracZNLSTM = ("float32", "FRACTAL_ZN_LSTM")
+    F32_FracZNRNN = ("float32", "FRACTAL_ZN_RNN")
+    F32_ND_RNNBIAS = ("float32", "ND_RNN_BIAS")
     F32_ChannelLast = ("float32", "ChannelLast")
 
     F64_None = ("float64", "")

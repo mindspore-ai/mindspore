@@ -857,8 +857,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &n
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx));
   }
-  auto input_node_index = GetPrevNodeOutput(node, input_idx);
-  return trans::TransShapeToDevice(infer_shape, format, input_node_index.first, input_node_index.second);
+  return trans::TransShapeToDevice(infer_shape, format, node, input_idx, false);
 }
 
 std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, size_t input_idx) {
@@ -2055,8 +2054,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const An
     auto max_shape = GetInputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetInputFormat(anf_node, index);
-    auto input_node_index = GetPrevNodeOutput(anf_node, index);
-    trans::TransShapeToDevice(device_shape, format, input_node_index.first, input_node_index.second);
+    trans::TransShapeToDevice(device_shape, format, anf_node, index, false);
   }
   return device_shape;
 }

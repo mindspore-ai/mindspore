@@ -7404,9 +7404,6 @@ class DynamicRNN(PrimitiveWithInfer):
     are learnable weights between the output and the input in the formula. For instance,
     :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
 
-    Note:
-        The `hidden_size` in shape of inputs must be multiple of 16.
-
     Args:
         cell_type (str): A string identifying the cell type in the op. Default: 'LSTM'.
             Only 'LSTM' is currently supported.
@@ -7534,6 +7531,8 @@ class DynamicRNN(PrimitiveWithInfer):
         validator.check("c_shape", c_shape, "h_shape", h_shape, Rel.EQ, self.name)
         self.placeholder_index = [3]
         self.add_prim_attr("placeholder_index", self.placeholder_index)
+        self.add_prim_attr("input_size", input_size)
+        self.add_prim_attr("hidden_size", hidden_size)
         y_shape = (num_step, batch_size, hidden_size)
         return y_shape, y_shape, y_shape, y_shape, y_shape, y_shape, y_shape, y_shape
 

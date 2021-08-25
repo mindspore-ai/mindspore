@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,22 +53,22 @@ dynamic_rnn_op_info = TBERegOp("DynamicRNN") \
     .output(5, "f", False, "required", "all") \
     .output(6, "o", False, "required", "all") \
     .output(7, "tanhc", False, "required", "all") \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZNLSTM, DataType.F32_Default, DataType.None_Default,
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZNRNN, DataType.F32_ND_RNNBIAS, DataType.None_Default,
                   DataType.F16_FracNZ, DataType.F32_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.U8_Default, DataType.F32_FracNZ, DataType.F16_FracNZ,
                   DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
                   DataType.F32_FracNZ, DataType.F32_FracNZ) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZNLSTM, DataType.F16_Default, DataType.None_Default,
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZNRNN, DataType.F16_ND_RNNBIAS, DataType.None_Default,
                   DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.U8_Default, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.F16_FracNZ) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZNLSTM, DataType.F32_Default, DataType.I32_Default,
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZNRNN, DataType.F32_ND_RNNBIAS, DataType.I32_Default,
                   DataType.F16_FracNZ, DataType.F32_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.U8_Default, DataType.F32_FracNZ, DataType.F16_FracNZ,
                   DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
                   DataType.F32_FracNZ, DataType.F32_FracNZ) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZNLSTM, DataType.F16_Default, DataType.I32_Default,
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZNRNN, DataType.F16_ND_RNNBIAS, DataType.I32_Default,
                   DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.U8_Default, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,

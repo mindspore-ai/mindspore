@@ -51,6 +51,7 @@ void SetAttrForInputNode(const AnfNodePtr &node, int64_t groups) {
 void SetAttrForConvInput(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto groups = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrGroups);
+  AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), cnode);
   if (groups > 1) {
     SetAttrForInputNode(cnode->input(kConvFilterInputIndex), groups);
   }
