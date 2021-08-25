@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ def mat_to_list(mat_file):
     for elem in testdata:
         img_name = elem[0]
         label = elem[1]
-        ann = img_name+',' +label
+        ann = img_name[0] + ',' + label[0]
         ann_output.append(ann)
     return ann_output
 

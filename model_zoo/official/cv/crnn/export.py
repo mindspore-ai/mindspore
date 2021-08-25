@@ -23,6 +23,7 @@ from src.model_utils.moxing_adapter import moxing_wrapper
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
 
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False)
 
 def modelarts_pre_process():
     config.file_name = os.path.join(config.output_path, config.file_name)
