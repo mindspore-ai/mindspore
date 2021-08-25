@@ -4174,7 +4174,7 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         return mstype.float32
 
 
-class Cos(PrimitiveWithInfer):
+class Cos(Primitive):
     r"""
     Computes cosine of input element-wise.
 
@@ -4205,13 +4205,6 @@ class Cos(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Cos"""
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type, self.name)
-        return x_dtype
 
 
 class ACos(PrimitiveWithInfer):

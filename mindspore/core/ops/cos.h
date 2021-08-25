@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,13 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameCos = "Cos";
 class MS_CORE_API Cos : public PrimitiveC {
  public:
-  Cos() : PrimitiveC(kNameCos) {}
+  Cos() : PrimitiveC(prim::kPrimCos->name()) {}
   ~Cos() = default;
   MS_DECLARE_PARENT(Cos, PrimitiveC);
   void Init(float alpha = 0.0);
 };
-AbstractBasePtr CosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
-using PrimCos = std::shared_ptr<Cos>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_COS_H_
