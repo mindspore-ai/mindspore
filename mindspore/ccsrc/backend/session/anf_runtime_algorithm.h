@@ -67,7 +67,7 @@ class AnfRuntimeAlgorithm {
   static size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
   // get input_anf_node's real kernel by recurse
   static KernelWithIndex VisitKernel(const AnfNodePtr &input_anf_node, size_t output_index);
-  static KernelWithIndex VisitKernelWithReturnType(const AnfNodePtr &input_anf_node, int output_index,
+  static KernelWithIndex VisitKernelWithReturnType(const AnfNodePtr &input_anf_node, size_t output_index,
                                                    bool visit_nop_node = false,
                                                    const std::vector<PrimitivePtr> &return_types = {
                                                      prim::kPrimMakeTuple});

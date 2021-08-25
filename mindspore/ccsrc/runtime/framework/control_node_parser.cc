@@ -555,7 +555,7 @@ bool IsSubCallNode(const AnfNodePtr &node) {
 
 std::vector<KernelWithIndex> FetchAllRealInputNodeByParameter(const KernelWithIndex &node) {
   std::vector<KernelWithIndex> parameters;
-  const auto &real_node_with_index = AnfAlgo::VisitKernelWithReturnType(node.first, SizeToInt(node.second));
+  const auto &real_node_with_index = AnfAlgo::VisitKernelWithReturnType(node.first, node.second);
   const auto &real_node = real_node_with_index.first;
   if (real_node->isa<Parameter>()) {
     if (!HasAbstractRef(real_node) && !HasAbstractMonad(real_node)) {
@@ -944,8 +944,8 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
       if (IsInternalParameter(parameter, graph)) {
         auto front_node_with_index = graph->GetFrontNodeByInternalParameter(parameter);
         MS_EXCEPTION_IF_NULL(front_node_with_index.first);
-        const auto &front_output_with_index = AnfAlgo::VisitKernelWithReturnType(
-          front_node_with_index.first, SizeToInt(front_node_with_index.second), false);
+        const auto &front_output_with_index =
+          AnfAlgo::VisitKernelWithReturnType(front_node_with_index.first, front_node_with_index.second, false);
         auto front_output_node = front_output_with_index.first;
         MS_EXCEPTION_IF_NULL(front_output_node);
         if (AnfAlgo::CheckPrimitiveType(front_output_node, prim::kPrimSwitch)) {

@@ -1378,7 +1378,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
   if (from_kernel->isa<Parameter>() && graph_compiler_info.control_node_parser_->IsCallInputKernelGraph(graph)) {
     const auto &kernel_with_index = GetFrontNodeByKernelGraph(from_kernel, graph);
     const auto &real_front_node_with_index =
-      AnfAlgo::VisitKernelWithReturnType(kernel_with_index.first, SizeToInt(kernel_with_index.second));
+      AnfAlgo::VisitKernelWithReturnType(kernel_with_index.first, kernel_with_index.second);
     if (HasAbstractRef(real_front_node_with_index.first)) {
       (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second,
                                                              real_front_node_with_index.first);
