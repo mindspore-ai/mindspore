@@ -49,6 +49,7 @@ std::shared_ptr<mindspore::GPUDeviceInfo> GPUDeviceInfoFromGPUDeviceContext(cons
   }
   auto gpu_info = std::make_shared<mindspore::GPUDeviceInfo>();
   gpu_info->SetEnableFP16(gpu_context.device_info_.gpu_device_info_.enable_float16_);
+  gpu_info->SetDeviceID(gpu_context.device_info_.gpu_device_info_.gpu_device_id_);
   PassBasicProperties(gpu_info, gpu_context);
   return gpu_info;
 }

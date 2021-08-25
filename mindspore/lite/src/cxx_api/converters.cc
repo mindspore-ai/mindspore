@@ -56,7 +56,7 @@ Status AddCpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInf
 Status AddGpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
   lite::DeviceInfo device_info = {0};
   auto gpu_context = device->Cast<GPUDeviceInfo>();
-  device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};
+  device_info.gpu_device_info_ = {gpu_context->GetEnableFP16(), gpu_context->GetDeviceID()};
   l_context->device_list_.push_back({lite::DT_GPU, device_info, gpu_context->GetProvider(),
                                      gpu_context->GetProviderDevice(), gpu_context->GetAllocator()});
   return kSuccess;

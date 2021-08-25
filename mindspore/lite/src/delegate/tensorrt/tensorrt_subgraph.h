@@ -67,8 +67,6 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   static nvinfer1::ITensor *FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
-  void SetCudaDevice();
-
   std::vector<TensorRTOp *> all_ops_{};
   // subgraph input nodes.
   std::vector<TensorRTOp *> in_ops_{};
