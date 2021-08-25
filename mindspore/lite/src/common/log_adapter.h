@@ -37,6 +37,10 @@ const char *const unsupport_delegate_log =
   "The mindspore-lite library does not support delegate. Set environment variable "
   "MSLITE_DELEGATE_USE to on to "
   "recompile it.";
+const char *const unsupport_fp16_log =
+  "The mindspore-lite library does not support fp16. Set environment variable "
+  "MSLITE_ENABLE_FP16 to on to "
+  "recompile it.";
 }  // namespace mindspore
 #ifdef USE_GLOG
 #include "utils/log_adapter.h"

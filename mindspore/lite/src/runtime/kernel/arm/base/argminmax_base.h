@@ -19,7 +19,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "nnacl/fp32/arg_min_max_fp32.h"
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_FP16
 #include "nnacl/fp16/arg_min_max_fp16.h"
 #endif
 #include "nnacl/common_func.h"

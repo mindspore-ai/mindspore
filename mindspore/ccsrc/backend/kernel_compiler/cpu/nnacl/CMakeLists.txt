@@ -116,6 +116,6 @@ if(ENABLE_CPU)
 endif()
 
 ########################### arm fp16 build optimize library ########################
-if(ENABLE_FP16)
+if(PLATFORM_ARM)
     add_subdirectory(${NNACL_DIR}/optimize)
 endif()
