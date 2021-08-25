@@ -527,14 +527,14 @@ class CallInfoFinder {
   // Search recursive call from a call-site.
   void SearchRecursiveCall(const KernelGraphPtr &start_caller, CallSite *start_site) {
     SearchRecursiveContext context{.start_caller = start_caller, .start_site = start_site};
-    DoSearchRecursiveCall(start_caller, start_site, &context);
+    DoSearchRecursiveCall(start_caller, *start_site, &context);
   }
 
-  void DoSearchRecursiveCall(const KernelGraphPtr &graph, CallSite *call_site, SearchRecursiveContext *ctx) {
+  void DoSearchRecursiveCall(const KernelGraphPtr &graph, const CallSite &call_site, SearchRecursiveContext *ctx) {
     // Record call path.
     ctx->call_path.push_back(graph);
     // Handle callee graphs.
-    for (auto &callee : call_site->callees) {
+    for (auto &callee : call_site.callees) {
       auto &sub_graph = callee.graph;
       if (sub_graph == ctx->start_caller) {
         // Find a recursive call path.
@@ -557,7 +557,7 @@ class CallInfoFinder {
       auto &sites = call_info.call_sites;
       for (auto &site : sites) {
         if (!site.callees.empty()) {
-          DoSearchRecursiveCall(sub_graph, &site, ctx);
+          DoSearchRecursiveCall(sub_graph, site, ctx);
         }
       }
     }

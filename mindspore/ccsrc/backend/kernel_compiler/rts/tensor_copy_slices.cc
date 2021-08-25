@@ -76,7 +76,7 @@ bool TensorCopySlices::Init(const mindspore::AnfNodePtr &anf_node) {
 
   CheckSliceValid(begin, end, strides, input_shape_);
   auto dim_offset = CalDimOffset(input_shape_);
-  offset_ = CalOffset(begin, end, strides, dim_offset) * abstract::TypeIdSize(input_type_id_);
+  offset_ = CalOffset(begin, end, dim_offset) * abstract::TypeIdSize(input_type_id_);
   copy_size_ = GetCopySize(dim_offset, begin, end) * abstract::TypeIdSize(input_type_id_);
   return true;
 }
