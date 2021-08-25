@@ -16,6 +16,10 @@
 The module transforms.py_transform is implemented based on Python. It provides common
 operations including OneHotOp.
 """
+import json
+import sys
+import numpy as np
+
 from .validators import check_one_hot_op, check_compose_list, check_random_apply, check_transforms_list, \
     check_compose_call
 from . import py_transforms_util as util
@@ -31,7 +35,58 @@ def not_random(function):
     return function
 
 
-class OneHotOp:
+class PyTensorOperation:
+    """
+    Base Python Tensor Operations class
+    """
+
+    def to_json(self):
+        """
+        Base to_json for Python tensor operations class
+        """
+        json_obj = {}
+        json_trans = {}
+        if "transforms" in self.__dict__.keys():
+            # operations which have transforms as input, need to call _to_json() for each transform to serialize
+            json_list = []
+            for transform in self.transforms:
+                json_list.append(json.loads(transform.to_json()))
+            json_trans["transforms"] = json_list
+            self.__dict__.pop("transforms")
+        if "output_type" in self.__dict__.keys():
+            json_trans["output_type"] = np.dtype(
+                self.__dict__["output_type"]).name
+            self.__dict__.pop("output_type")
+        json_obj["tensor_op_params"] = self.__dict__
+        # append transforms to the tensor_op_params of the operation
+        json_obj["tensor_op_params"].update(json_trans)
+        json_obj["tensor_op_name"] = self.__class__.__name__
+        json_obj["python_module"] = self.__class__.__module__
+        return json.dumps(json_obj)
+
+    @classmethod
+    def from_json(cls, json_string):
+        """
+        Base from_json for Python tensor operations class
+        """
+        json_obj = json.loads(json_string)
+        new_op = cls.__new__(cls)
+        new_op.__dict__ = json_obj
+        if "transforms" in json_obj.keys():
+            # operations which have transforms as input, need to call _from_json() for each transform to deseriallize
+            transforms = []
+            for json_op in json_obj["transforms"]:
+                transforms.append(getattr(
+                    sys.modules[json_op["python_module"]], json_op["tensor_op_name"]).from_json(
+                        json.dumps(json_op["tensor_op_params"])))
+            new_op.transforms = transforms
+        if "output_type" in json_obj.keys():
+            output_type = np.dtype(json_obj["output_type"])
+            new_op.output_type = output_type
+        return new_op
+
+
+class OneHotOp(PyTensorOperation):
     """
     Apply one hot encoding transformation to the input label, make label be more smoothing and continuous.
 
@@ -67,7 +122,7 @@ class OneHotOp:
         return util.one_hot_encoding(label, self.num_classes, self.smoothing_rate)
 
 
-class Compose:
+class Compose(PyTensorOperation):
     """
     Compose a list of transforms.
 
@@ -170,7 +225,7 @@ class Compose:
         return new_ops
 
 
-class RandomApply:
+class RandomApply(PyTensorOperation):
     """
     Randomly perform a series of transforms with a given probability.
 
@@ -207,7 +262,7 @@ class RandomApply:
         return util.random_apply(img, self.transforms, self.prob)
 
 
-class RandomChoice:
+class RandomChoice(PyTensorOperation):
     """
     Randomly select one transform from a series of transforms and applies that on the image.
 
@@ -242,7 +297,7 @@ class RandomChoice:
         return util.random_choice(img, self.transforms)
 
 
-class RandomOrder:
+class RandomOrder(PyTensorOperation):
     """
     Perform a series of transforms to the input PIL image in a random order.
 

@@ -222,18 +222,20 @@ Status Serdes::ConstructSampler(nlohmann::json json_obj, std::shared_ptr<Sampler
 Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shared_ptr<TensorOperation>> *result) {
   std::vector<std::shared_ptr<TensorOperation>> output;
   for (nlohmann::json item : json_obj) {
-    CHECK_FAIL_RETURN_UNEXPECTED(item.find("is_python_front_end_op") == item.end(),
-                                 "python operation is not yet supported");
-    CHECK_FAIL_RETURN_UNEXPECTED(item.find("tensor_op_name") != item.end(), "Failed to find tensor_op_name");
-    CHECK_FAIL_RETURN_UNEXPECTED(item.find("tensor_op_params") != item.end(), "Failed to find tensor_op_params");
-    std::string op_name = item["tensor_op_name"];
-    nlohmann::json op_params = item["tensor_op_params"];
-    std::shared_ptr<TensorOperation> operation = nullptr;
-    CHECK_FAIL_RETURN_UNEXPECTED(func_ptr_.find(op_name) != func_ptr_.end(), "Failed to find " + op_name);
-    RETURN_IF_NOT_OK(func_ptr_[op_name](op_params, &operation));
-    output.push_back(operation);
+    if (item.find("python_module") != item.end()) {
+      RETURN_IF_NOT_OK(PyFuncOp::from_json(item, result));
+    } else {
+      CHECK_FAIL_RETURN_UNEXPECTED(item.find("tensor_op_name") != item.end(), "Failed to find tensor_op_name");
+      CHECK_FAIL_RETURN_UNEXPECTED(item.find("tensor_op_params") != item.end(), "Failed to find tensor_op_params");
+      std::string op_name = item["tensor_op_name"];
+      nlohmann::json op_params = item["tensor_op_params"];
+      std::shared_ptr<TensorOperation> operation = nullptr;
+      CHECK_FAIL_RETURN_UNEXPECTED(func_ptr_.find(op_name) != func_ptr_.end(), "Failed to find " + op_name);
+      RETURN_IF_NOT_OK(func_ptr_[op_name](op_params, &operation));
+      output.push_back(operation);
+      *result = output;
+    }
   }
-  *result = output;
   return Status::OK();
 }
 

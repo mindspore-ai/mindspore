@@ -382,19 +382,20 @@ def test_serdes_pyvision(remove_json_files=True):
     data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
     schema_file = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
     data1 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
-    transforms = [
+    transforms1 = [
         py_vision.Decode(),
         py_vision.CenterCrop([32, 32]),
         py_vision.ToTensor()
     ]
-    data1 = data1.map(operations=py.Compose(transforms), input_columns=["image"])
-    # Current python function derialization will be failed for pickle, so we disable this testcase
-    # as an exception testcase.
-    try:
-        util_check_serialize_deserialize_file(data1, "pyvision_dataset_pipeline", remove_json_files)
-        assert False
-    except RuntimeError as e:
-        assert "python operation is not yet supported" in str(e)
+    transforms2 = [
+        py_vision.RandomColorAdjust(),
+        py_vision.FiveCrop(1),
+        py_vision.Grayscale(),
+        py.OneHotOp(1)
+    ]
+    data1 = data1.map(operations=py.Compose(transforms1), input_columns=["image"])
+    data1 = data1.map(operations=py.RandomApply(transforms2), input_columns=["image"])
+    util_check_serialize_deserialize_file(data1, "pyvision_dataset_pipeline", remove_json_files)
 
 
 def test_serdes_uniform_augment(remove_json_files=True):

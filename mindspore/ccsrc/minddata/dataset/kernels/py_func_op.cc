@@ -20,6 +20,7 @@
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -124,9 +125,26 @@ Status PyFuncOp::CastOutput(const py::object &ret_py_obj, TensorRow *output) {
 
 Status PyFuncOp::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
-  args["tensor_op_name"] = py_func_ptr_.attr("__class__").attr("__name__").cast<std::string>();
-  args["is_python_front_end_op"] = true;
+  if (py_func_ptr_.attr("to_json")) {
+    args = nlohmann::json::parse(py_func_ptr_.attr("to_json")().cast<std::string>());
+  }
   *out_json = args;
+  return Status::OK();
+}
+
+Status PyFuncOp::from_json(nlohmann::json json_obj, std::vector<std::shared_ptr<TensorOperation>> *result) {
+  std::vector<std::shared_ptr<TensorOperation>> output;
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("tensor_op_name") != json_obj.end(), "Failed to find tensor_op_name");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("tensor_op_params") != json_obj.end(), "Failed to find tensor_op_params");
+  std::string op_name = json_obj["tensor_op_name"];
+  nlohmann::json op_params = json_obj["tensor_op_params"];
+  std::string python_module = json_obj["python_module"];
+  std::shared_ptr<TensorOperation> operation = nullptr;
+  py::function py_func =
+    py::module::import(python_module.c_str()).attr(op_name.c_str()).attr("from_json")(op_params.dump());
+  operation = std::make_shared<transforms::PreBuiltOperation>(std::make_shared<PyFuncOp>(py_func));
+  output.push_back(operation);
+  *result = output;
   return Status::OK();
 }
 
