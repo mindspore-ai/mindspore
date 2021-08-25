@@ -531,6 +531,81 @@ class Im2Col(PrimitiveWithInfer):
         return x_dtype
 
 
+class NewIm2Col(PrimitiveWithInfer):
+    """
+    extracts image paths from image by using TBE.
+
+    The rank of input_x1 must be `4`, data_format is "NCHW".
+
+    Inputs:
+        - **input_x1** (Tensor) - The feature map.
+          The shape of the tensor is :math:`(N, C, H, W)`.
+    Outputs:
+        Tensor. The shape of the tensor is :math:`(N, H, W, C)`.
+
+    Examples:
+        >>> input_x = Tensor(np.random.rand(32, 3, 224, 224).astype(np.float16))
+        >>> im2col = ops.NewIm2Col(ksizes=(7,7), strides=2)
+        >>> output = im2col(input_x)
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 ksizes,
+                 padding_mode="SAME",
+                 strides=1,
+                 dilations=1,
+                 pads=0):
+        """Initialize NewIm2Col"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        self.ksizes = ksizes
+        self.strides = strides
+        self.add_prim_attr('ksizes', self.ksizes)
+        self.add_prim_attr('strides', self.strides)
+        self.dilations = dilations
+        self.add_prim_attr('dilations', self.dilations)
+        self.padding_mode = validator.check_string(padding_mode, ['VALID', 'SAME'], 'padding_mode', self.name)
+        self.add_prim_attr('data_format', "NCHW")
+        self.pads = pads
+
+    def infer_shape(self, x_shape):
+        "infer shape"
+        validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
+        kernel_size_h = self.ksizes[0]
+        kernel_size_w = self.ksizes[1]
+        stride_h = self.strides
+        stride_w = self.strides
+        dilation_h = self.dilations
+        dilation_w = self.dilations
+        if self.pad_mode == "VALID":
+            h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
+            w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
+            pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
+        elif self.pad_mode == "SAME":
+            h_out = math.ceil(x_shape[2] / stride_h)
+            w_out = math.ceil(x_shape[3] / stride_w)
+            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
+            pad_top = math.floor(pad_needed_h / 2)
+            pad_bottom = pad_needed_h - pad_top
+            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3])
+            pad_left = math.floor(pad_needed_w / 2)
+            pad_right = pad_needed_w - pad_left
+        self.pad_list = [pad_top, pad_bottom, pad_left, pad_right]
+        self.add_prim_attr('pad_list', (pad_top, pad_bottom, pad_left, pad_right))
+        batch_size = x_shape[0]
+        channel = x_shape[1]
+        k_h = kernel_size_h
+        k_w = kernel_size_w
+        out_shape = [batch_size, h_out, w_out, channel * k_h * k_w]
+        return out_shape
+
+    def infer_dtype(self, x_dtype):
+        "infer dtype"
+        valid_dtypes = [mstype.float16, mstype.float32]
+        validator.check_tensor_dtype_valid('x', x_dtype, valid_dtypes, self.name)
+        return x_dtype
+
+
 class LoadIm2Col(PrimitiveWithInfer):
     """
     extracts image patches from image.
