@@ -169,7 +169,7 @@ class _Reduce(OpInfer):
     """Common infer for reduction operators"""
 
     def _check(self):
-        super()._check()
+        super(_Reduce, self)._check()
         # check reduce axis in the range [-len, len)
         shape_len = len(self.inputs[0].shape)
         axis = self.attrs['reduce_axis']
@@ -451,3 +451,28 @@ class UnPadAkg(OpInfer):
             raise GKException("Input dimension and pad mismatch: {}d vs {}d".format(n, len(unpad_after)))
         out_shape = [shape[i] - unpad_after[i] for i in range(n)]
         return out_shape
+
+
+class Gather(OpInfer):
+    """Gather infer"""
+
+    def _infer_shape(self):
+        input_shape = self.inputs[0].shape
+        indices_shape = self.inputs[1].shape
+        axis = self.attrs['axis']
+        output_shape = input_shape
+        indices_shape_one_dim = 1
+        for dim in indices_shape:
+            indices_shape_one_dim *= dim
+        output_shape[axis] = indices_shape_one_dim
+        return output_shape
+
+    def _infer_type(self):
+        return self.inputs[0].dtype
+
+    def _infer_format(self):
+        return self.inputs[0].data_format
+
+    def _check_type(self):
+        if self.inputs[1].dtype != "int32":
+            raise GKException("Indices dtype must be int32!")

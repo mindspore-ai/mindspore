@@ -46,9 +46,8 @@ class AtomicAddChecker {
   virtual bool SuitableForAtomicAdd(const AnfNodePtr &node) { return false; }
   virtual bool FindCandidate(const AnfNodePtr &anf_node);
   virtual bool CanActivateAtomicAdd(const AnfNodePtr &anf_node);
-
- private:
   AtomicAddInfo atomic_add_info_;
+  PrimitivePtr target_type_{prim::kPrimReduceSum};
 };
 
 class AtomicAddCheckerGPU : public AtomicAddChecker {
@@ -78,29 +77,28 @@ class AtomicCleanInsertter : public Pass {
  protected:
   virtual void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input);
   virtual void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input);
+  virtual CNodePtr CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type);
   void AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node, const AnfNodePtr &composite_node,
                  const AnfNodePtr &user_node, int index) const;
   void InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node, const FuncGraphManagerPtr &mng);
   CNodePtr InsertUpdateState(const KernelGraphPtr &main_graph, const CNodePtr &composite_node) const;
-  CNodePtr atomic_add_node_{nullptr};
-
- private:
   void CorrectAbstract(const AnfNodePtr &composite_node) const;
-  CNodePtr CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type);
   void CreateInplaceAssignNodeAndCorrectReturn(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter);
   void ProcessOriginCNodeUser(const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
                               const AnfNodePtr &broadcast_to_node, const AnfNodePtr &update_state_node,
                               const FuncGraphManagerPtr &mng);
+
+  CNodePtr atomic_add_node_{nullptr};
+  size_t reduce_real_output_index_{0};
+  size_t real_output_num_{0};
+
+ private:
   std::vector<std::pair<AnfNodePtr, int>> FindOriginCNodeUsers(const KernelGraphPtr &main_graph,
                                                                const AnfNodePtr &composite_node,
                                                                const FuncGraphManagerPtr &mng,
                                                                bool correct_index) const;
   bool IsExistStructuralObstacle(const KernelGraphPtr &main_graph, const AnfNodePtr &node,
                                  const FuncGraphManagerPtr &mng);
-
-  size_t reduce_real_output_index_{0};
-  size_t real_output_num_{0};
-  std::vector<std::pair<AnfNodePtr, AnfNodePtr>> to_process_order_;
 };
 using AtomicCleanInsertterPtr = std::shared_ptr<AtomicCleanInsertter>;
 }  // namespace opt

@@ -114,21 +114,21 @@ bool AtomicAddChecker::FindCandidate(const AnfNodePtr &anf_node) {
   // Rule: Only one ReduceSum inside sub-graph.
   auto real_return_node = sub_graph->get_return()->input(kFirstDataInputIndex);
   if (IsPrimitiveCNode(real_return_node, prim::kPrimMakeTuple)) {
-    size_t reduce_cnt = 0;
+    size_t target_cnt = 0;
     const auto &inputs = real_return_node->cast<CNodePtr>()->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
-      if (IsPrimitiveCNode(inputs[i], prim::kPrimReduceSum)) {
+      if (IsPrimitiveCNode(inputs[i], target_type_)) {
         atomic_add_info_.atomic_add_node = inputs[i]->cast<CNodePtr>();
         atomic_add_info_.reduce_real_output_index = i - 1;
-        reduce_cnt++;
+        target_cnt++;
       }
     }
 
-    if (reduce_cnt != 1) {
+    if (target_cnt != 1) {
       return false;
     }
     atomic_add_info_.real_output_num = inputs.size() - 1;
-  } else if (IsPrimitiveCNode(real_return_node, prim::kPrimReduceSum)) {
+  } else if (IsPrimitiveCNode(real_return_node, target_type_)) {
     atomic_add_info_.atomic_add_node = real_return_node->cast<CNodePtr>();
     atomic_add_info_.real_output_num = 1;
   } else {
@@ -385,6 +385,7 @@ CNodePtr AtomicCleanInsertter::InsertUpdateState(const KernelGraphPtr &main_grap
   u->set_abstract(kUMonad->ToAbstract());
   AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, composite_node};
   auto update_state_cnode = main_graph->NewCNode(update_state_inputs);
+  update_state_cnode->set_abstract(kUMonad->ToAbstract());
   main_graph->AddNode(update_state_cnode);
   return update_state_cnode;
 }
@@ -509,11 +510,11 @@ void AtomicCleanInsertter::ProcessOriginCNodeUser(const KernelGraphPtr &main_gra
     // update_state_node, broadcat_node and load_node to keep order.
     AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), broadcast_to_node, update_state_node};
     auto load_node = main_graph->NewCNode(load_inputs);
+    load_node->set_abstract(broadcast_to_node->abstract());
     main_graph->AddNode(load_node);
     auto user_cnode = user_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(user_cnode);
     user_cnode->set_input(IntToSize(index), load_node);
-    (void)to_process_order_.emplace_back(composite_node, user_node);
   }
 }
 

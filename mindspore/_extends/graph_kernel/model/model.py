@@ -17,6 +17,7 @@
 
 class Utils:
     """Model utils"""
+
     def __init__(self):
         pass
 
@@ -229,6 +230,10 @@ class PrimLib:
         'Atan': Prim(ELEMWISE),
         'Atan2': Prim(ELEMWISE),
         'Expm1': Prim(ELEMWISE),
+        'TensorScatterAdd': Prim(OPAQUE),
+        'Gather': Prim(OPAQUE),
+        'GatherNd': Prim(OPAQUE),
+        'UnsortedSegmentSum': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)

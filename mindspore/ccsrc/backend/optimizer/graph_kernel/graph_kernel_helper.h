@@ -133,6 +133,8 @@ ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t d
   return new_value_node;
 }
 
+AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx);
+
 // functions to graphkernel model
 graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph);
 FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, AnfNodePtrList *outputs = nullptr);
