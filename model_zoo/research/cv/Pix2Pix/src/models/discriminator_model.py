@@ -19,6 +19,9 @@
 
 import mindspore.nn as nn
 from mindspore.ops import Concat
+from ..utils.config import get_args
+
+args = get_args()
 
 class ConvNormReLU(nn.Cell):
     """
@@ -57,6 +60,10 @@ class ConvNormReLU(nn.Cell):
         has_bias = (norm_mode == 'instance')
         if padding is None:
             padding = (kernel_size - 1) // 2
+        if args.pad_mode == 'REFLECT':
+            pad_mode = "REFLECT"
+        elif arg.pad_mode == "SYMMETRIC":
+            pad_mode = "SYMMETRIC"
         if pad_mode == 'CONSTANT':
             conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='pad',
                              has_bias=has_bias, padding=padding)

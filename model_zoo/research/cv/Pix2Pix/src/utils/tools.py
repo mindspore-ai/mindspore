@@ -23,6 +23,7 @@ from PIL import Image
 from mindspore import Tensor
 from src.utils.config import get_args
 
+plt.switch_backend('Agg')
 args = get_args()
 
 def save_losses(G_losses, D_losses, idx):
