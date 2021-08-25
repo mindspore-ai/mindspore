@@ -53,8 +53,8 @@ int BroadcastToCPUKernel::ReSize() {
 }
 
 int BroadcastToCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), 1)
+  CHECK_LESS_RETURN(out_tensors_.size(), 1)
   shape_info_ = reinterpret_cast<BroadcastShapeInfo *>(malloc(sizeof(BroadcastShapeInfo)));
   if (shape_info_ == nullptr) {
     MS_LOG(ERROR) << "Malloc BroadcastShapeInfo failed!";

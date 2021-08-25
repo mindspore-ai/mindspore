@@ -25,18 +25,11 @@ int ScatterNdUpdateInferShape(const TensorC *const *inputs, size_t inputs_size, 
   }
 
   const TensorC *input_x = inputs[0];
-  const TensorC *indices = inputs[1];
-  const TensorC *update = inputs[2];
   TensorC *output = outputs[0];
-
   SetDataTypeFormat(output, input_x);
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  if (indices->shape_size_ != update->shape_size_) {
-    return NNACL_ERR;
-  }
-
   SetShapeArray(output, input_x->shape_, input_x->shape_size_);
   return NNACL_OK;
 }
