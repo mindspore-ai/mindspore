@@ -5869,6 +5869,45 @@ class Range(PrimitiveWithCheck):
         return None
 
 
+class MaskedFill(Primitive):
+    """
+    Fills elements of self tensor with value where mask is True.
+
+    The shapes of `input` and `mask` need to be the same or broadcast.
+
+    Inputs:
+        - **input** (Tensor) - The source tensor whose data type is one of float16, float32, int8, int32.
+        - **mask** (Tensor[bool]) - The boolean mask.
+        - **value** (Union[float, Tensor]) – The value to fill in with, which only supports
+          a 0-dimensional tensor or a float number.
+
+    Outputs:
+        Tensor, has the same type and shape as `input`.
+
+    Raises:
+        TypeError: If `input` or `mask` is not a tensor.
+        TypeError: If `value` is neither float number nor tensor.
+        TypeError: If dtype of `input` or `value` is not one of float16, float32, int8, int32.
+        TypeError: If dtype of `value` is different from that of `input`.
+        TypeError: If dtype of `mask` is not bool.
+        ValueError: If the shapes of `input` and `mask` could not be broadcast.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+        >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
+        >>> output = ops.MaskedFill()(input, mask, 0.5)
+        >>> print(output)
+        [0.5 0.5 3.  0.5]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['input', 'mask', 'value'], outputs=['output'])
+
+
 class MaskedSelect(PrimitiveWithCheck):
     """
     Returns a new 1-D Tensor which indexes the input tensor according to the boolean mask.

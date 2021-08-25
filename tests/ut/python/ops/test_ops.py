@@ -2494,6 +2494,13 @@ test_case_array_ops = [
                         Tensor(10, mstype.float32)],
         'skip': ['backward'],
     }),
+    ('MaskedFill', {
+        'block': P.MaskedFill(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0]]), mstype.float32),
+                        Tensor(np.array([[True, True, False]]), mstype.bool_),
+                        Tensor(4.0, mstype.float32)],
+        'desc_bprop': [Tensor(np.array([[1.0, 2.0, 3.0]]), mstype.float32)],
+    }),
     ('MatrixDiag', {
         'block': inner.MatrixDiag(),
         'desc_inputs': [Tensor(np.array([1, -1]), mstype.float32),

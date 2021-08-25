@@ -15,9 +15,35 @@
 
 """array_ops"""
 
+from ...common import dtype as mstype
+from .._grad.grad_math_ops import binop_grad_common
 from .._grad.grad_base import bprop_getters
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from .. import functional as F
 from .. import operations as P
+
+@bprop_getters.register(P.MaskedFill)
+def get_bprop_masked_select(self):
+    """Generate bprop for MaskedFill"""
+    mul_op = P.Mul()
+    sum_op = P.ReduceSum()
+    is_instance_op = P.IsInstance()
+
+    def bprop(input_data, mask, value, out, dout):
+        mask = F.cast(mask, mstype.float32)
+        dinput = mul_op(dout, (1 - mask))
+        dvalue = mul_op(dout, mask)
+        dinput, dvalue = binop_grad_common(input_data, mask, dinput, dvalue)
+        dvalue = sum_op(dvalue)
+        dinput = F.cast(dinput, F.dtype(input_data))
+        if is_instance_op(value, mstype.number) is True:
+            dvalue = zeros_like(value)
+        else:
+            dvalue = F.cast(dvalue, F.dtype(value))
+        return dinput, zeros_like(mask), dvalue
+
+    return bprop
+
 
 @bprop_getters.register(P.TensorScatterSub)
 def get_bprop_tensor_scatter_sub(self):
