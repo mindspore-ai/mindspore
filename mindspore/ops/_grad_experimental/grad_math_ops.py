@@ -21,7 +21,6 @@ from .. import functional as F
 from .. import operations as P
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
 
 @bprop_getters.register(P.Lerp)
 def get_bprop_index_lerp(self):
@@ -37,7 +36,7 @@ def get_bprop_index_lerp(self):
         dweight = mul_op(dout, sub_op(end, start))
         dstart, dend = binop_grad_common(start, end, dstart, dend)
         if is_instance_op(weight, mstype.number) is True:
-            dweight = zeros_like(weight)
+            dweight = 0
         else:
             _, dweight = binop_grad_common(start, weight, dstart, dweight)
             dweight = F.cast(dweight, F.dtype(weight))

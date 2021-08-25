@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace ops {
+
 AbstractBasePtr InferImplAssign(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -42,6 +43,27 @@ AbstractBasePtr InferImplAssign(const abstract::AnalysisEnginePtr &, const Primi
     return args_spec_list[1]->Broaden();
   }
   (void)CheckAndConvertUtils::CheckTensorTypeValid("variable", variable_type, check_types, prim_name);
+
+  auto variable_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(args_spec_list[0]->BuildShape())[kShape];
+  auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(args_spec_list[1]->BuildShape())[kShape];
+  if (variable_shape.size() != value_shape.size()) {
+    if (variable_shape.size() == 1 && variable_shape[0] == 1 && value_shape.empty()) {
+      return args_spec_list[0];
+    } else if (value_shape.size() == 1 && value_shape[0] == 1 && variable_shape.empty()) {
+      return args_spec_list[0];
+    } else {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the rank of value is " << value_shape.size()
+                               << ". It should be same with variable's rank " << variable_shape.size() << ".";
+    }
+  }
+  for (uint64_t i = 0; i < variable_shape.size(); i++) {
+    if (variable_shape[i] != value_shape[i]) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the shape of value is "
+                               << args_spec_list[1]->BuildShape()->ToString()
+                               << ". It should be same with variable's shape "
+                               << args_spec_list[0]->BuildShape()->ToString() << ".";
+    }
+  }
   return args_spec_list[0];
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Assign, prim::kPrimAssign, InferImplAssign, nullptr, true);

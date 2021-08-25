@@ -37,7 +37,7 @@ def get_bprop_masked_select(self):
         dvalue = sum_op(dvalue)
         dinput = F.cast(dinput, F.dtype(input_data))
         if is_instance_op(value, mstype.number) is True:
-            dvalue = zeros_like(value)
+            dvalue = 0
         else:
             dvalue = F.cast(dvalue, F.dtype(value))
         return dinput, zeros_like(mask), dvalue
