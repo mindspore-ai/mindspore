@@ -101,7 +101,10 @@ std::string TbeUtils::GetTuneDumpPath() {
 
 std::string TbeUtils::GetOpDebugPath() {
   auto old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
-  auto config_path = Common::CommonFuncForConfigPath("./", common::GetEnv(kCOMPILER_CACHE_PATH));
+  std::string config_path;
+  if (!Common::CommonFuncForConfigPath("./", common::GetEnv(kCOMPILER_CACHE_PATH), &config_path)) {
+    MS_LOG(EXCEPTION) << "Invalid env " << kCOMPILER_CACHE_PATH << " : " << common::GetEnv(kCOMPILER_CACHE_PATH);
+  }
   if (!old_build.empty()) {
     if (config_path[config_path.length() - 1] == '/') {
       return config_path;
@@ -126,7 +129,7 @@ std::string GetOpDebugLevel() {
   auto env_level = common::GetEnv(kCOMPILER_OP_LEVEL);
   if (!env_level.empty()) {
     if (exp.find(env_level) == exp.end()) {
-      MS_LOG(WARNING) << "Invalid COMPILER_OP_LEVEL env:" << env_level
+      MS_LOG(WARNING) << "Invalid MS_COMPILER_OP_LEVEL env:" << env_level
                       << ", the value should be 0 or 1, now using the default value 0";
     } else {
       op_debug_level = env_level;
@@ -155,8 +158,15 @@ void TbeUtils::GenSocInfo(nlohmann::json *soc_info_json) {
   (*soc_info_json)["op_debug_level"] = GetOpDebugLevel();
   (*soc_info_json)["autoTilingMode"] = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
   (*soc_info_json)["deviceId"] = std::to_string(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
-  (*soc_info_json)["op_bank_path"] = Common::CommonFuncForConfigPath("", common::GetEnv("OP_BANK_PATH"));
-  (*soc_info_json)["mdl_bank_path"] = Common::CommonFuncForConfigPath("", common::GetEnv("MDL_BANK_PATH"));
+  std::string config_path;
+  if (!Common::CommonFuncForConfigPath("", common::GetEnv("OP_BANK_PATH"), &config_path)) {
+    MS_LOG(EXCEPTION) << "Invalid env OP_BANK_PATH : " << common::GetEnv("OP_BANK_PATH");
+  }
+  (*soc_info_json)["op_bank_path"] = config_path;
+  if (!Common::CommonFuncForConfigPath("", common::GetEnv("MDL_BANK_PATH"), &config_path)) {
+    MS_LOG(EXCEPTION) << "Invalid env MDL_BANK_PATH : " << common::GetEnv("MDL_BANK_PATH");
+  }
+  (*soc_info_json)["mdl_bank_path"] = config_path;
 }
 
 void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &info) {

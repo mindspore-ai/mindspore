@@ -82,6 +82,7 @@ class AscendKernelCompileManager {
   static bool is_tune_flag_;
   std::set<std::string> single_processed_kernels_;
   std::set<std::string> fusion_processed_kernels_;
+  std::string op_debug_level_;  // if op_debug_level is "1", skip tbe compile cache and rebuild again.
   std::shared_ptr<ParallelBuildManager> build_manager_ = nullptr;
   std::map<int, nlohmann::json> job_list_;
   std::map<int, std::string> fusion_op_names_;
