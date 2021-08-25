@@ -43,17 +43,18 @@ class FlopsParser:
     # else the task id represents one operator.
     _task_id_threshold = 25000
 
-    def __init__(self, input_dir, output_dir, op_task_dict, device_id):
+    def __init__(self, input_dir, output_dir, op_task_dict, device_id, rank_id):
         self._input_dir = input_dir
         self._output_dir = output_dir
         self._op_task_dict = op_task_dict
         self._device_id = device_id
-        self._flops_filename = f'flops_{self._device_id}.txt'
-        self._flops_summary_filename = f'flops_summary_{self._device_id}.json'
-        self._flops_scope_filename = f'flops_scope_{self._device_id}.json'
+        self._rank_id = rank_id
+        self._flops_filename = f'flops_{self._rank_id}.txt'
+        self._flops_summary_filename = f'flops_summary_{self._rank_id}.json'
+        self._flops_scope_filename = f'flops_scope_{self._rank_id}.json'
         self._aicore_filename = f'aicore.data.{self._device_id}.slice_0'
-        self._optime_filename = f'output_op_compute_time_{self._device_id}.txt'
-        self._info_json = f'info.json.{device_id}'
+        self._optime_filename = f'output_op_compute_time_{self._rank_id}.txt'
+        self._info_json = f'info.json.{self._device_id}'
         self._flops_summary = {
             'FLOPs': 0,
             'FLOPS': 0,

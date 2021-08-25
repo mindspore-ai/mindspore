@@ -135,8 +135,12 @@ void MemoryProfiling::SaveMemoryProfiling() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string dir_path = GetOutputPath();
-  auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  std::string file = dir_path + std::string("/memory_usage_") + std::to_string(device_id) + std::string(".pb");
+  auto device_id = common::GetEnv("RANK_ID");
+  // If RANK_ID is not set, default value is 0
+  if (device_id.empty()) {
+    device_id = "0";
+  }
+  std::string file = dir_path + std::string("/memory_usage_") + std::string(device_id) + std::string(".pb");
 
   MemoryToPB();
 

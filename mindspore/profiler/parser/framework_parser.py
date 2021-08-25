@@ -173,6 +173,7 @@ class FrameworkParser:
     Args:
         profiling_id (str): The profiling ID.
         device_id (str): The device ID.
+        rank_id (str): The rank ID.
         output_path (str): The directory of the parsed file. Default: `./`.
     """
     _regex_framework = r'Framework\.(?P<data_type>.+)\.(?P<device_id>\d).+'
@@ -192,14 +193,14 @@ class FrameworkParser:
     # one operator
     _task_id_threshold = 25000
 
-    def __init__(self, profiling_id, device_id, output_path='./'):
+    def __init__(self, profiling_id, device_id, rank_id, output_path='./'):
         self._raw_data_dir = output_path
         self._profiling_path = self._get_raw_profiling_path(profiling_id)
         self._backend_type = None
         self._framework_path = {'graph': [], 'task': [], 'point': []}
         self._search_file(profiling_id, device_id)
         self._device_id = device_id
-        self._save_path = self._get_save_path(device_id, output_path)
+        self._save_path = self._get_save_path(rank_id, output_path)
         self._task_id_full_op_name_dict = {}
         self._task_cache = {}
         self._point_info = {}
@@ -421,12 +422,12 @@ class FrameworkParser:
                     os.path.join(profiling_data_path, file)
                 )
 
-    def _get_save_path(self, device_id, output_path):
+    def _get_save_path(self, rank_id, output_path):
         """
         Get the save path.
 
         Args:
-            device_id (str): The device ID.
+            rank_id (str): The rank ID.
             output_path (str): The output dir.
 
         Returns:
@@ -443,7 +444,7 @@ class FrameworkParser:
         if not os.path.isdir(output_dir):
             raise ProfilerDirNotFoundException(output_dir)
         return os.path.join(
-            output_dir, '_'.join(['framework', 'raw', device_id]) + '.csv'
+            output_dir, '_'.join(['framework', 'raw', rank_id]) + '.csv'
         )
 
     def _parse_task_files(self):

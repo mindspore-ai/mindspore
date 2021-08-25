@@ -74,7 +74,7 @@ class TestMinddataProfilingAnalyzer():
         # Set the MindData Profiling environment variables
         os.environ['PROFILING_MODE'] = 'true'
         os.environ['MINDDATA_PROFILING_DIR'] = '.'
-        os.environ['DEVICE_ID'] = '7'
+        os.environ['RANK_ID'] = '7'
 
 
     def teardown_method(self):
@@ -93,7 +93,7 @@ class TestMinddataProfilingAnalyzer():
         # Disable MindData Profiling environment variables
         del os.environ['PROFILING_MODE']
         del os.environ['MINDDATA_PROFILING_DIR']
-        del os.environ['DEVICE_ID']
+        del os.environ['RANK_ID']
 
 
     def get_csv_result(self, file_pathname):
