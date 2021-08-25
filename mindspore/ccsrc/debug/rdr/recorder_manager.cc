@@ -76,7 +76,7 @@ bool RecorderManager::RdrEnable() const {
   return rdr_enable_;
 }
 
-bool RecorderManager::CheckRdrGPUMemIsRecord() const {
+bool RecorderManager::CheckRdrMemIsRecord() const {
   if (!rdr_enable_) {
     return false;
   }
@@ -84,7 +84,7 @@ bool RecorderManager::CheckRdrGPUMemIsRecord() const {
   return rdr_has_record_mem_;
 }
 
-void RecorderManager::SetRdrGPUMemIsRecord(bool is_enable) {
+void RecorderManager::SetRdrMemIsRecord(bool is_enable) {
   if (!rdr_enable_) {
     return;
   }

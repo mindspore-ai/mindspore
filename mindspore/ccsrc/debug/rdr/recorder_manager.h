@@ -62,8 +62,8 @@ class RecorderManager {
 
   void UpdateRdrEnable();
   bool RdrEnable() const;
-  bool CheckRdrGPUMemIsRecord() const;
-  void SetRdrGPUMemIsRecord(bool is_enable = true);
+  bool CheckRdrMemIsRecord() const;
+  void SetRdrMemIsRecord(bool is_enable = true);
 
   bool RecordObject(const BaseRecorderPtr &recorder);
   BaseRecorderPtr GetRecorder(std::string module, std::string name);

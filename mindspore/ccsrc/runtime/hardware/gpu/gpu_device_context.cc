@@ -462,7 +462,7 @@ bool GPUDeviceContext::SyncStream(size_t stream_id) const {
     mindspore::RDR::TriggerAll();
   }
   // clear RDR gpu memory info
-  mindspore::RDR::ClearGPUMemAddressInfo();
+  mindspore::RDR::ClearMemAddressInfo();
 #endif
   return result;
 }

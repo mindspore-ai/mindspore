@@ -41,6 +41,8 @@
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
+#include "debug/rdr/recorder_manager.h"
+#include "debug/rdr/mem_address_recorder.h"
 #endif
 
 namespace mindspore {
@@ -410,7 +412,11 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
   bool iter_dump_flag = dump_json_parser.GetIterDumpFlag();
   uint32_t graph_id = kernel_graph->graph_id();
 #endif
-
+#ifdef ENABLE_DUMP_IR
+  std::string name = "mem_address_list";
+  (void)mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, name, kernels.size());
+  size_t id = 0;
+#endif
   for (const auto &kernel : kernels) {
 #ifdef ENABLE_PROFILE
     double start_time = GetTime();
@@ -445,6 +451,11 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
       uint32_t pid = getpid();
       profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
     }
+#ifdef ENABLE_DUMP_IR
+    MemInfo mem_info = {&kernel_inputs, &kernel_workspaces, &kernel_outputs};
+    std::string op_name = kernel->fullname_with_scope();
+    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info, id++);
+#endif
     try {
       ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
     } catch (std::exception &e) {

@@ -23,6 +23,9 @@
 #include "mindrt/include/async/async.h"
 #include "common/trans.h"
 #include "utils/log_adapter.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
@@ -165,10 +168,16 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     auto ret = device_contexts_[0]->LaunchKernel(data_kernel_, launch_info_.inputs_, launch_info_.workspaces_,
                                                  launch_info_.outputs_);
     if (!ret) {
+#ifdef ENABLE_DUMP_IR
+      mindspore::RDR::TriggerAll();
+#endif
       std::string error_info = "Launch kernel failed: " + data_kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
   } catch (const std::exception &e) {
+#ifdef ENABLE_DUMP_IR
+    mindspore::RDR::TriggerAll();
+#endif
     MsException::Instance().SetException();
     std::string error_info = "Launch kernel exception: " + data_kernel_->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);

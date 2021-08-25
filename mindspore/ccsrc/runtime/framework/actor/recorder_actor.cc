@@ -41,23 +41,23 @@ void RecorderActor::RecordInfo(const std::string op_name, const KernelLaunchInfo
     return;
   }
   std::string name = "mem_address_list";
-  if (!RecorderManager::Instance().CheckRdrGPUMemIsRecord()) {
+  if (!RecorderManager::Instance().CheckRdrMemIsRecord()) {
     std::string submodule_name = "KERNEL";
-    auto mem_info_recorder = std::make_shared<GPUMemAddressRecorder>(submodule_name, name);
+    auto mem_info_recorder = std::make_shared<MemAddressRecorder>(submodule_name, name);
     if (mem_info_recorder == nullptr) {
-      MS_LOG(ERROR) << "Make GPUMemAddressRecorder shared pointer failed.";
+      MS_LOG(ERROR) << "Make MemAddressRecorder shared pointer failed.";
       return;
     }
     mem_info_recorder->SaveMemInfo(op_name, launch_info_);
     bool result = RecorderManager::Instance().RecordObject(std::move(mem_info_recorder));
     if (result) {
-      RecorderManager::Instance().SetRdrGPUMemIsRecord(true);
+      RecorderManager::Instance().SetRdrMemIsRecord(true);
     }
   } else {
     std::string submodule_name = "KERNEL";
     auto recorder = RecorderManager::Instance().GetRecorder(submodule_name, name);
     if (recorder != nullptr) {
-      auto mem_recorder = std::dynamic_pointer_cast<GPUMemAddressRecorder>(recorder);
+      auto mem_recorder = std::dynamic_pointer_cast<MemAddressRecorder>(recorder);
       mem_recorder->SaveMemInfo(op_name, launch_info_);
     }
   }

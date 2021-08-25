@@ -33,7 +33,7 @@ std::string MemInfo2String(const std::string &label, const AddressPtrList &info)
 }
 }  // namespace
 
-void GPUMemAddressRecorder::SaveMemInfo(const std::string &op_name, const GPUMemInfo &mem_info, size_t id) {
+void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const MemInfo &mem_info, size_t id) {
   if (op_names_.size() <= id) {
     return;
   }
@@ -44,10 +44,10 @@ void GPUMemAddressRecorder::SaveMemInfo(const std::string &op_name, const GPUMem
   mem_info_outputs_[id] = *(mem_info.outputs_);
 }
 
-void GPUMemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo *mem_info) {
+void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo *mem_info) {
   std::lock_guard<std::mutex> lock(mtx_);
   if (!printed) {
-    MS_LOG(INFO) << "RDR update gpu mem info.";
+    MS_LOG(INFO) << "RDR update mem info.";
     printed = true;
   }
   op_names_.emplace_back(op_name);
@@ -56,7 +56,7 @@ void GPUMemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel
   mem_info_outputs_.emplace_back(mem_info->outputs_);
 }
 
-void GPUMemAddressRecorder::Export() {
+void MemAddressRecorder::Export() {
   auto realpath = GetFileRealPath();
   if (!realpath.has_value()) {
     return;
@@ -66,10 +66,10 @@ void GPUMemAddressRecorder::Export() {
   ChangeFileMode(file_path, S_IRWXU);
   std::ofstream fout(file_path);
   if (!fout.is_open()) {
-    MS_LOG(WARNING) << "Open file for saving gpu memory information failed. File path: '" << file_path << "'.";
+    MS_LOG(WARNING) << "Open file for saving memory information failed. File path: '" << file_path << "'.";
     return;
   }
-  MS_LOG(INFO) << "RDR export gpu mem info.";
+  MS_LOG(INFO) << "RDR export mem info.";
   std::ostringstream mem_info_stream;
   for (size_t i = 0; i < op_names_.size(); i++) {
     mem_info_stream << op_names_[i] << std::endl;
@@ -86,9 +86,9 @@ void GPUMemAddressRecorder::Export() {
   ChangeFileMode(file_path, S_IRUSR);
 }
 
-void GPUMemAddressRecorder::CleanUp() {
+void MemAddressRecorder::CleanUp() {
   std::lock_guard<std::mutex> lock(mtx_);
-  MS_LOG(INFO) << "RDR clean up gpu mem info, kernel size equals " << op_names_.size();
+  MS_LOG(INFO) << "RDR clean up mem info, kernel size equals " << op_names_.size();
   op_names_.clear();
   mem_info_inputs_.clear();
   mem_info_workspaces_.clear();
