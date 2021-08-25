@@ -42,6 +42,7 @@
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "backend/optimizer/gpu/remove_redundant_format_transform.h"
 #include "backend/optimizer/gpu/reduce_precision_fusion.h"
+#include "backend/optimizer/gpu/insert_cast_gpu.h"
 #include "backend/optimizer/gpu/relu_v2_pass.h"
 #include "backend/optimizer/gpu/add_relu_v2_fusion.h"
 #include "backend/optimizer/gpu/add_relu_grad_v2_fusion.h"
@@ -169,6 +170,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
   pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
+  pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -207,6 +209,7 @@ void GPUSession::RunOpOptimize(const std::shared_ptr<KernelGraph> &kernel_graph)
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
+  pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
