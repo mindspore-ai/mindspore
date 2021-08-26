@@ -52,17 +52,18 @@ class Net2(Cell):
         return out
 
 
+_x0 = Tensor(np.ones([32, 16, 10, 10]), dtype=ms.float32)
 _x = Tensor(np.ones([32, 16, 8, 8]), dtype=ms.float32)
 _w1 = Tensor(np.ones([8, 16, 2, 2]), dtype=ms.float32)
 _b = Tensor(np.ones([32, 16, 8, 8]), dtype=ms.float32)
 
 
-def compile_net(net):
+def compile_net(net, inputs=_x):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
     train_net.set_train()
-    _executor.compile(train_net, _x, _b)
+    _executor.compile(train_net, inputs, _b)
     context.reset_auto_parallel_context()
 
 
@@ -99,7 +100,7 @@ def test_maxpool_auto_parallel():
     compile_net(net)
 
 
-def test_maxpool_output_can_not_divisible_by_strategy():
+def test_maxpool_output_is_not_divisible_by_strategy_w_dimension():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
@@ -107,6 +108,56 @@ def test_maxpool_output_can_not_divisible_by_strategy():
               strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net)
+
+
+def test_maxpool_output_is_not_divisible_by_strategy_h_dimension():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 8, 1),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, pool_kernel_size=2, pool_strides=2,
+              strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
+def test_maxpool_shard_h_and_kernel_size_larger_than_stride():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 2, 1),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, pool_kernel_size=3, pool_strides=2,
+              strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
+def test_maxpool_shard_w_and_kernel_size_larger_than_stride():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 2),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, pool_kernel_size=3, pool_strides=2,
+              strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
+def test_maxpool_shard_h_and_input_slice_is_not_divisible_by_stride():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 2, 1),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, pool_kernel_size=1, pool_strides=3,
+              strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, inputs=_x0)
+
+
+def test_maxpool_shard_w_and_input_slice_is_not_divisible_by_stride():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 2, 1),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, pool_kernel_size=1, pool_strides=3,
+              strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, inputs=_x0)
 
 
 def test_avgpool_data_parallel():
