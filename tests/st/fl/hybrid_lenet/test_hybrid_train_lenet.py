@@ -14,6 +14,7 @@
 # ============================================================================
 
 import argparse
+import ast
 import numpy as np
 
 import mindspore.context as context
@@ -54,6 +55,9 @@ parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
 parser.add_argument("--cipher_time_window", type=int, default=300000)
 parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
+parser.add_argument("--client_password", type=str, default="")
+parser.add_argument("--server_password", type=str, default="")
+parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -83,6 +87,9 @@ reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
 dp_eps = args.dp_eps
 dp_delta = args.dp_delta
 dp_norm_clip = args.dp_norm_clip
+client_password = args.client_password
+server_password = args.server_password
+enable_ssl = args.enable_ssl
 
 ctx = {
     "enable_fl": True,
@@ -111,7 +118,10 @@ ctx = {
     "dp_eps": dp_eps,
     "dp_delta": dp_delta,
     "dp_norm_clip": dp_norm_clip,
-    "encrypt_type": encrypt_type
+    "encrypt_type": encrypt_type,
+    "client_password": client_password,
+    "server_password": server_password,
+    "enable_ssl": enable_ssl
 }
 
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target, save_graphs=False)

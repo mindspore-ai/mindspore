@@ -16,6 +16,7 @@
 import argparse
 import subprocess
 import os
+import ast
 
 parser = argparse.ArgumentParser(description="Run test_mobile_lenet.py case")
 parser.add_argument("--device_target", type=str, default="CPU")
@@ -45,6 +46,9 @@ parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
 parser.add_argument("--cipher_time_window", type=int, default=300000)
 parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
+parser.add_argument("--client_password", type=str, default="")
+parser.add_argument("--server_password", type=str, default="")
+parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
 
 if __name__ == "__main__":
     args, _ = parser.parse_known_args()
@@ -73,6 +77,9 @@ if __name__ == "__main__":
     dp_delta = args.dp_delta
     dp_norm_clip = args.dp_norm_clip
     encrypt_type = args.encrypt_type
+    client_password = args.client_password
+    server_password = args.server_password
+    enable_ssl = args.enable_ssl
 
     if local_server_num == -1:
         local_server_num = server_num
@@ -110,6 +117,9 @@ if __name__ == "__main__":
         cmd_server += " --dp_eps=" + str(dp_eps)
         cmd_server += " --dp_delta=" + str(dp_delta)
         cmd_server += " --dp_norm_clip=" + str(dp_norm_clip)
+        cmd_server += " --client_password=" + str(client_password)
+        cmd_server += " --server_password=" + str(server_password)
+        cmd_server += " --enable_ssl=" + str(enable_ssl)
         cmd_server += " --encrypt_type=" + str(encrypt_type)
         cmd_server += " > server.log 2>&1 &"
 

@@ -16,6 +16,7 @@
 import argparse
 import subprocess
 import os
+import ast
 
 parser = argparse.ArgumentParser(description="Run train_cloud.py case")
 parser.add_argument("--device_target", type=str, default="CPU")
@@ -25,6 +26,9 @@ parser.add_argument("--server_num", type=int, default=2)
 parser.add_argument("--scheduler_ip", type=str, default="127.0.0.1")
 parser.add_argument("--scheduler_port", type=int, default=8113)
 parser.add_argument("--scheduler_manage_port", type=int, default=11202)
+parser.add_argument("--client_password", type=str, default="")
+parser.add_argument("--server_password", type=str, default="")
+parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -34,6 +38,9 @@ server_num = args.server_num
 scheduler_ip = args.scheduler_ip
 scheduler_port = args.scheduler_port
 scheduler_manage_port = args.scheduler_manage_port
+client_password = args.client_password
+server_password = args.server_password
+enable_ssl = args.enable_ssl
 
 os.environ['MS_NODE_ID'] = "20"
 cmd_sched = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && rm -rf ${execute_path}/scheduler/ &&"
@@ -47,6 +54,9 @@ cmd_sched += " --worker_num=" + str(worker_num)
 cmd_sched += " --server_num=" + str(server_num)
 cmd_sched += " --scheduler_ip=" + scheduler_ip
 cmd_sched += " --scheduler_port=" + str(scheduler_port)
+cmd_sched += " --client_password=" + str(client_password)
+cmd_sched += " --server_password=" + str(server_password)
+cmd_sched += " --enable_ssl=" + str(enable_ssl)
 cmd_sched += " --scheduler_manage_port=" + str(scheduler_manage_port)
 cmd_sched += " > scheduler.log 2>&1 &"
 
