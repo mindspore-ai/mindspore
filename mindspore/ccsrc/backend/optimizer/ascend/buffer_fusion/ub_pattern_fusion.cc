@@ -469,10 +469,9 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
   if (!old_build.empty()) {
     kernel_mods = mindspore::kernel::KernelFusion(fusion_scope_infos);
   } else if (!fusion_scope_infos.empty()) {
-    auto build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    MS_EXCEPTION_IF_NULL(build_manager);
-    build_manager->ResetOldTask();
-    kernel_mods = build_manager->AscendFusionOpCompile(fusion_scope_infos);
+    auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
+    kernel_mods = build_manager.AscendFusionOpCompile(fusion_scope_infos);
+    build_manager.ResetOldTask();
   }
   std::set<int64_t> fusion_ids;
   for (auto &buffer_fusion_info : buffer_fusion_infos) {
