@@ -27,7 +27,7 @@ int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  if (in_tensors.size() != 2 && in_tensors.size() != 3) {
+  if (in_tensors.size() != INPUT_SIZE2 && in_tensors.size() != INPUT_SIZE3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
@@ -71,6 +71,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   // trt 6 only support 2D padding
   const int *padding_data = reinterpret_cast<const int *>(in_tensors_[1].Data().get());
+  MS_ASSERT(padding_data);
   nvinfer1::IPaddingLayer *padding_layer = nullptr;
   if (element_cnt == index_NHWC_ * 2) {
     // NHWC only support pad at HW index

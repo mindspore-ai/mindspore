@@ -26,7 +26,7 @@ int MatMulTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  if (in_tensors.size() != 2 && in_tensors.size() != 3) {
+  if (in_tensors.size() != INPUT_SIZE2 && in_tensors.size() != INPUT_SIZE3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }

@@ -20,16 +20,22 @@
 namespace mindspore::lite {
 nvinfer1::Dims ConvertCudaDims(const std::vector<int64_t> &shape) {
   nvinfer1::Dims dims{};
-  if (!shape.empty()) {
+  if (!shape.empty() && shape.size() <= static_cast<size_t>(dims.MAX_DIMS)) {
     dims.nbDims = shape.size();
     for (int i = 0; i < dims.nbDims; i++) {
       dims.d[i] = shape[i];
     }
+  } else {
+    MS_LOG(ERROR) << "invalid shape.";
   }
   return dims;
 }
 nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
   nvinfer1::Dims dims{};
+  if (size > static_cast<size_t>(dims.MAX_DIMS)) {
+    MS_LOG(ERROR) << "invalid shape size: " << size;
+    return dims;
+  }
   dims.nbDims = size;
   for (size_t i = 0; i < size; i++) {
     dims.d[i] = data;
@@ -39,6 +45,10 @@ nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
 
 nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
   nvinfer1::Dims dims{};
+  if (size > static_cast<int64_t>(dims.MAX_DIMS)) {
+    MS_LOG(ERROR) << "invalid shape size: " << size;
+    return dims;
+  }
   dims.nbDims = size;
   const int *dims_data = reinterpret_cast<const int *>(data);
   for (int i = 0; i < size; i++) {
@@ -183,6 +193,7 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
   constant_tensor->setName(name.c_str());
   return constant_tensor->getOutput(0);
 }
+
 nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, float **pack_weight) {
   // usage notice: malloc addr saved to pack_weight, save pack_weight ptr and free it when deconstruct
   nvinfer1::Weights weights{};

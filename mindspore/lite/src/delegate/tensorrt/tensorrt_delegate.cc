@@ -45,8 +45,8 @@ TensorRTDelegate::~TensorRTDelegate() {
 }
 bool IsHardwareSupport() {
   int driver_version = 0;
-  cudaDriverGetVersion(&driver_version);
-  if (driver_version == 0) {
+  int ret = cudaDriverGetVersion(&driver_version);
+  if (ret != cudaSuccess || driver_version == 0) {
     MS_LOG(WARNING) << "No nvidia GPU driver.";
     return false;
   }

@@ -26,7 +26,7 @@ int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  if (in_tensors.size() != 3) {
+  if (in_tensors.size() != INPUT_SIZE3) {
     MS_LOG(ERROR) << "invalid input tensor size: " << in_tensors.size();
     return RET_ERROR;
   }
@@ -39,7 +39,8 @@ int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
     return RET_ERROR;
   }
   if (in_tensors[AXIS_INDEX].ElementNum() == 1) {
-    axis_ = static_cast<const int *>(in_tensors[2].Data().get())[0];
+    MS_ASSERT(in_tensors[AXIS_INDEX].Data().get());
+    axis_ = static_cast<const int *>(in_tensors[AXIS_INDEX].Data().get())[0];
   } else {
     MS_LOG(ERROR) << "TensorRT axis is attribute.";
     return RET_ERROR;
