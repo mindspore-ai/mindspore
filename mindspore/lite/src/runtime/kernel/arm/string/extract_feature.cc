@@ -24,6 +24,8 @@ using mindspore::schema::PrimitiveType_CustomExtractFeatures;
 
 namespace mindspore::kernel {
 int ExtractFeatureCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), C2NUM);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -49,7 +51,9 @@ int ExtractFeatureCPUKernel::Run() {
   const int kMaxDimension = 1000000;
   auto input_tensor = in_tensors_.at(0);
   auto label_data = reinterpret_cast<int32_t *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(label_data);
   auto weight_data = out_tensors_.at(1)->MutableData();
+  CHECK_NULL_RETURN(weight_data);
   int string_num = lite::GetStringCount(input_tensor);
   std::vector<lite::StringPack> all_string_pack = ParseTensorBuffer(input_tensor);
 

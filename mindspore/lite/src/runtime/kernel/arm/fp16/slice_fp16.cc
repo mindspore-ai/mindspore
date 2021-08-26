@@ -26,6 +26,7 @@ using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
 int SliceFp16Launch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
     return RET_ERROR;
@@ -42,10 +43,14 @@ SliceFp16CPUKernel::~SliceFp16CPUKernel() {
 }
 
 int SliceFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_, 1);
+  CHECK_LESS_RETURN(out_tensors_, 1);
   auto input_tensor = in_tensors_.at(0);
   if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data_c() != nullptr) {
     input_data_ =
       reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
+    CHECK_NULL_RETURN(input_data_);
+    CHECK_NULL_RETURN(input_tensor->data_c());
     Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
   }
   return SliceCPUKernel::Init();
@@ -53,12 +58,15 @@ int SliceFp16CPUKernel::Init() {
 
 int SliceFp16CPUKernel::SliceFp16ParallelRun(int thread_id) {
   void *input_data = input_data_ == nullptr ? in_tensors_.at(0)->data_c() : input_data_;
+  CHECK_NULL_RETURN(input_data);
   DoSlice(input_data, out_tensors_.at(0)->data_c(), param_, thread_id, lite::DataTypeSize(kNumberTypeFloat16));
   return RET_OK;
 }
 
 int SliceFp16CPUKernel::Run() {
   void *input_data = input_data_ == nullptr ? in_tensors_.at(0)->data_c() : input_data_;
+  CHECK_NULL_RETURN(input_data);
+  CHECK_NULL_RETURN(out_tensors_.at(0)->data_c());
   if (param_->size_[1] < op_parameter_->thread_num_) {
     DoSliceNoParallel(input_data, out_tensors_.at(0)->data_c(), param_, lite::DataTypeSize(kNumberTypeFloat16));
     return RET_OK;

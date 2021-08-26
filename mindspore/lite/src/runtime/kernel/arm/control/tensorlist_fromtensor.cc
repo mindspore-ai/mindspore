@@ -53,14 +53,21 @@ int TensorListFromTensorCPUKernel::IsCompatibleShape() {
   return RET_OK;
 }
 
-int TensorListFromTensorCPUKernel::Init() { return RET_OK; }
+int TensorListFromTensorCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int TensorListFromTensorCPUKernel::ReSize() { return RET_OK; }
 
 int TensorListFromTensorCPUKernel::Run() {
   input0_ = in_tensors_[0];  // row tensor
+  CHECK_NULL_RETURN(input0_);
   input1_ = in_tensors_[1];  // element_shape tensor
+  CHECK_NULL_RETURN(input1_);
   output0_ = out_tensors_[0];
+  CHECK_NULL_RETURN(output0_);
   if (IsCompatibleShape() != RET_OK) {
     MS_LOG(ERROR) << "IsNotCompatibleShape!";
     return RET_ERROR;
@@ -75,6 +82,7 @@ int TensorListFromTensorCPUKernel::Run() {
     return RET_ERROR;
   }
   auto output0 = reinterpret_cast<lite::TensorList *>(output0_);
+  CHECK_NULL_RETURN(output0);
   if (dim0 != output0->ElementsNum()) {
     MS_LOG(ERROR) << "output0_->ElementsNum():" << output0->ElementsNum() << " must be equal to dim0:" << dim0;
     return RET_ERROR;
@@ -84,6 +92,9 @@ int TensorListFromTensorCPUKernel::Run() {
     return RET_ERROR;
   }
   int devision_dim0 = input0_->ElementsNum() / dim0;
+  if (INT_MUL_OVERFLOW(devision_dim0, static_cast<int>(lite::DataTypeSize(dtype_)))) {
+    return RET_ERROR;
+  }
   auto data_offset = devision_dim0 * lite::DataTypeSize(dtype_);
   auto in_data = reinterpret_cast<char *>(input0_->data_c());
   MS_ASSERT(in_data != nullptr);

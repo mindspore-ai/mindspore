@@ -48,9 +48,13 @@ int LshProjectionCPUKernel::Run() {
   auto out_tensor = out_tensors_.at(0);
 
   hash_seed_ = reinterpret_cast<float *>(input0_tensor->MutableData());
+  CHECK_NULL_RETURN(hash_seed_);
   feature_ = reinterpret_cast<int32_t *>(input1_tensor->MutableData());
+  CHECK_NULL_RETURN(feature_);
   weight_ = in_tensors_.size() == 2 ? nullptr : reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+  CHECK_NULL_RETURN(weight_);
   output_ = reinterpret_cast<int32_t *>(out_tensor->MutableData());
+  CHECK_NULL_RETURN(output_);
 
   param_->hash_buff_size_ = sizeof(float) + sizeof(int32_t);
   param_->feature_num_ = input1_tensor->ElementsNum();
@@ -100,6 +104,9 @@ void LshProjectionCPUKernel::FreeKeys() {
 }
 
 int LshProjectionCPUKernel::DoExecute(int task_id) {
+  if (INT_MUL_OVERFLOW(task_id, static_cast<int>(param_->thread_stride_))) {
+    return RET_ERROR;
+  }
   int cur_group_num = MSMIN(param_->hash_shape_[0] - task_id * param_->thread_stride_, param_->thread_stride_);
   int start = task_id * param_->thread_stride_;
   int end = start + cur_group_num;
@@ -120,6 +127,10 @@ int LshProjectionCPUKernel::DoExecute(int task_id) {
 
 int LshProjectionCPUKernel::GetSignBit(int32_t *feature, float *weight, float seed, LshProjectionParameter *para,
                                        char *hash_buff) {
+  MS_ASSERT(feature != nullptr);
+  MS_ASSERT(weight != nullptr);
+  MS_ASSERT(para != nullptr);
+  MS_ASSERT(hash_buff != nullptr);
   double score = 0.0;
   for (int i = 0; i < para->feature_num_; i++) {
     memcpy(hash_buff, &seed, sizeof(float));
@@ -138,6 +149,12 @@ int LshProjectionCPUKernel::GetSignBit(int32_t *feature, float *weight, float se
 void LshProjectionCPUKernel::LshProjectionSparse(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
                                                  LshProjectionParameter *para, int32_t start, int32_t end,
                                                  char *hash_buff) {
+  MS_ASSERT(hashSeed != nullptr);
+  MS_ASSERT(feature != nullptr);
+  MS_ASSERT(weight != nullptr);
+  MS_ASSERT(output != nullptr);
+  MS_ASSERT(para != nullptr);
+  MS_ASSERT(hash_buff != nullptr);
   for (int i = start; i < end; i++) {
     int32_t hash_sign = 0;
     for (int j = 0; j < para->hash_shape_[1]; j++) {
@@ -151,6 +168,11 @@ void LshProjectionCPUKernel::LshProjectionSparse(float *hashSeed, int32_t *featu
 void LshProjectionCPUKernel::LshProjectionDense(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
                                                 LshProjectionParameter *para, int32_t start, int32_t end,
                                                 char *hash_buff) {
+  MS_ASSERT(feature != nullptr);
+  MS_ASSERT(weight != nullptr);
+  MS_ASSERT(output != nullptr);
+  MS_ASSERT(para != nullptr);
+  MS_ASSERT(hash_buff != nullptr);
   for (int i = start; i < end; i++) {
     for (int j = 0; j < para->hash_shape_[1]; j++) {
       output[i * para->hash_shape_[1] + j] =

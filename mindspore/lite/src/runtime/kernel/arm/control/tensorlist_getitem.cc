@@ -26,14 +26,18 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListGetItem;
 
 namespace mindspore::kernel {
-int TensorListGetItemCPUKernel::Init() { return RET_OK; }
+int TensorListGetItemCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int TensorListGetItemCPUKernel::Run() {
-  MS_ASSERT(in_tensors_.size() >= 2);
   MS_ASSERT(in_tensors_.at(0) != nullptr);
   MS_ASSERT(in_tensors_.at(1) != nullptr);
   MS_ASSERT(out_tensors_.at(0) != nullptr);
   auto input0 = reinterpret_cast<lite::TensorList *>(in_tensors_.at(0));
+  CHECK_NULL_RETURN(input0);
   dtype_ = input0->tensors_data_type();
   MS_ASSERT(in_tensors_.at(1)->data_c() != nullptr);
   index_ = reinterpret_cast<int *>(in_tensors_.at(1)->data_c())[0];

@@ -27,10 +27,12 @@ using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
 int SliceInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_, 1);
+  CHECK_LESS_RETURN(out_tensors_, 1);
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  MS_ASSERT(input);
-  MS_ASSERT(output);
+  MS_ASSERT(input != nullptr);
+  MS_ASSERT(output != nullptr);
 
   auto in_quant_args = input->quant_params();
   param_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
@@ -55,9 +57,9 @@ int SliceInt8CPUKernel::Init() {
 
 int SliceInt8CPUKernel::DoSlice(int task_id) {
   const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->data_c());
-  MS_ASSERT(input_data);
+  MS_ASSERT(input_data != nullptr);
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
-  MS_ASSERT(output_data);
+  MS_ASSERT(output_data != nullptr);
 
   auto ret = SliceInt8(input_data, output_data, param_, task_id);
   if (ret != RET_OK) {
@@ -67,6 +69,7 @@ int SliceInt8CPUKernel::DoSlice(int task_id) {
 }
 
 int SliceInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto slice_kernel = reinterpret_cast<SliceInt8CPUKernel *>(cdata);
   auto ret = slice_kernel->DoSlice(task_id);
   if (ret != RET_OK) {

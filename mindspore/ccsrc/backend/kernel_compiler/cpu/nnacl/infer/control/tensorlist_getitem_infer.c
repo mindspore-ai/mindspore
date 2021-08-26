@@ -25,6 +25,7 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   }
 
   TensorListC *input0 = (TensorListC *)(inputs[0]);
+  NNACL_CHECK_NULL_RETURN_ERR(input0);
   const TensorC *get_index = inputs[1];
   if (get_index->data_ == NULL) {
     return NNACL_INFER_INVALID;
@@ -33,6 +34,7 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     return NNACL_ERR;
   }
   TensorC *output = outputs[0];
+  NNACL_CHECK_NULL_RETURN_ERR(output);
   if (!InferFlag(inputs, inputs_size) || input0->element_num_ == 0) {
     return NNACL_INFER_INVALID;
   }
@@ -41,6 +43,7 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     return NNACL_ERR;
   }
   TensorC *tensor_index = &input0->tensors_[index];
+  NNACL_CHECK_NULL_RETURN_ERR(tensor_index);
 
   if (tensor_index->data_type_ != kTypeUnknown) {
     output->data_type_ = tensor_index->data_type_;
@@ -57,10 +60,11 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     ShapeSet(output->shape_, &(output->shape_size_), tensor_index->shape_, tensor_index->shape_size_);
   } else {
     const TensorC *input2 = inputs[2];
-    if (input2->data_ == NULL) {
+    if (input2 == NULL || input2->data_ == NULL) {
       return NNACL_NULL_PTR;
     }
     int *ele_shape_data = (int *)(input2->data_);
+    NNACL_CHECK_NULL_RETURN_ERR(ele_shape_data);
     int element_shape[MAX_SHAPE_SIZE] = {0};
     size_t element_shape_size = 0;
     for (int i = 0; i < GetElementNum(input2); ++i) {

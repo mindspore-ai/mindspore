@@ -59,6 +59,7 @@ int QuantDTypeCastCPUKernel::Init() {
 
 int QuantDTypeCastCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
+  MS_ASSERT(in_tensor != nullptr);
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
   thread_n_num_ = MSMIN(thread_num_, num_unit_);
   if (thread_n_num_ == 0) {
@@ -70,6 +71,9 @@ int QuantDTypeCastCPUKernel::ReSize() {
 }
 
 int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
+  if (INT_MUL_OVERFLOW(task_id, thread_n_stride_)) {
+    return RET_ERROR;
+  }
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
@@ -131,6 +135,7 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
 }
 
 int QuantDTypeCastRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<QuantDTypeCastCPUKernel *>(cdata);
   auto ret = g_kernel->QuantDTypeCast(task_id);
   if (ret != RET_OK) {
