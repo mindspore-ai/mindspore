@@ -18,6 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_DISTRIBUTE_MPI_PYCC_H
 
 #include <string>
+#include <vector>
 #include "runtime/device/ascend/distribute/collective_group_wrapper.h"
 
 namespace mindspore {
@@ -32,6 +33,7 @@ class MpiPycc {
   static int GetDeviceID();
   static int GetRankId(const std::string &group);
   static int GetRankSize(const std::string &group);
+  static void CreateGroup(const std::string &group, const std::vector<unsigned int> &ranks);
 
  private:
   MpiPycc() = default;

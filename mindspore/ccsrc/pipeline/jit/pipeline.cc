@@ -72,6 +72,7 @@
 #include "transform/graph_ir/df_graph_manager.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
+#include "runtime/device/ascend/distribute/ascend_collective.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
@@ -91,6 +92,7 @@ using mindspore::abstract::AbstractTuplePtr;
 
 #ifdef ENABLE_D
 using mindspore::device::ascend::ProfilingManager;
+using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 #endif
 
 const char IR_TYPE_ANF[] = "anf_ir";
@@ -1216,6 +1218,23 @@ void InitHccl() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+#if ENABLE_D
+  bool task_sink = true;
+  auto single_op = std::getenv(kAttrGraphOpRun);
+  if (single_op && std::string(single_op) == "1") {
+    task_sink = false;
+  }
+  auto mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (!task_sink && mode == kGraphMode) {
+    MS_LOG(INFO) << "mpi collective init.";
+    if (!HcclCollectiveGroup::instance().InitCollective()) {
+      MS_LOG(EXCEPTION) << "HcclCollectiveGroup init failed.";
+    }
+    device_id = IntToUint(HcclCollectiveGroup::instance().GetDeviceId());
+    ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+    ms_context->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
+  }
+#endif
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
   if (ms_context->backend_policy() == "ms" &&

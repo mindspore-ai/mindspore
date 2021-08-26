@@ -19,6 +19,7 @@ from ._hccl_management import load_lib as hccl_load_lib
 
 _HCCL_AVAILABLE = False
 _NCCL_AVAILABLE = False
+_MPI_AVAILABLE = False
 try:
     import mindspore._ms_mpi as mpi
     _NCCL_AVAILABLE = True
@@ -34,6 +35,11 @@ except RuntimeError:
 
 if _HCCL_AVAILABLE:
     from . import _hccl_management as hccl
+    try:
+        import mindspore._ascend_mpi as mpi
+        _MPI_AVAILABLE = True
+    except ImportError:
+        _MPI_AVAILABLE = False
 else:
     try:
         import hccl_test.manage.api as hccl
@@ -68,6 +74,7 @@ class Backend:
     UNDEFINED = "undefined"
     HCCL = "hccl"
     NCCL = "nccl"
+    HCCL_MPI = "hccl_mpi"
 
     def __new__(cls, name):
         """Create instance object of Backend."""
@@ -104,6 +111,15 @@ def is_hccl_available():
         Boolean. Return whether hccl is available or not.
     """
     return _HCCL_AVAILABLE
+
+def is_mpi_available():
+    """
+    Check hccl & mpi api is available.
+
+    Returns:
+        Boolean. Return whether hccl & mpi is available or not.
+    """
+    return _MPI_AVAILABLE
 
 
 def is_nccl_available():
@@ -145,11 +161,13 @@ def check_parameter_available(func):
             backend = kargs.get("backend")
             if backend is Backend.HCCL and not is_hccl_available():
                 raise RuntimeError("Distributed Communication doesn't have HCCL built in")
+            if backend is Backend.HCCL_MPI and not is_mpi_available():
+                raise RuntimeError("Distributed Communication doesn't have MPI built in")
             if backend is Backend.NCCL and not is_nccl_available():
                 raise RuntimeError("Distributed Communication doesn't have NCCL built in")
 
         if group is None:
-            if backend is Backend.HCCL:
+            if backend is Backend.HCCL or Backend.HCCL_MPI:
                 group = HCCL_WORLD_COMM_GROUP
             elif backend is Backend.NCCL:
                 group = NCCL_WORLD_COMM_GROUP
@@ -176,7 +194,9 @@ def _get_rank_helper(group, backend):
     if _is_role_pserver() or _is_role_sched():
         rank_id = 0
         return rank_id
-    if backend == Backend.HCCL:
+    if backend == Backend.HCCL_MPI:
+        rank_id = mpi.get_rank_id(group)
+    elif backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
             rank_id = hccl.get_rank_id()
         else:
@@ -204,7 +224,9 @@ def _get_local_rank_helper(group, backend):
         Integer. The local rank id of the calling process.
     """
     rank_id = None
-    if backend == Backend.HCCL:
+    if backend == Backend.HCCL_MPI:
+        rank_id = mpi.get_rank_id(group)
+    elif backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
             rank_id = hccl.get_local_rank_id()
         else:
@@ -235,7 +257,9 @@ def _get_size_helper(group, backend):
     if _is_role_pserver() or _is_role_sched():
         size = 1
         return size
-    if backend == Backend.HCCL:
+    if backend == Backend.HCCL_MPI:
+        size = mpi.get_rank_size(group)
+    elif backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
             size = hccl.get_rank_size()
         else:
@@ -360,6 +384,8 @@ def _create_group_helper(group, rank_ids, backend):
         if len(rank_ids) - len(list(set(rank_ids))) > 0:
             raise ValueError("List rank_ids in Group {} has duplicate data!".format(group))
         hccl.create_group(group, rank_size, rank_ids)
+    elif backend == Backend.HCCL_MPI:
+        mpi.create_group(group, rank_ids)
     elif backend == Backend.NCCL:
         raise RuntimeError("Nccl doesn't support create_group now.")
     else:

@@ -36,6 +36,22 @@ def _get_group(group):
         return GlobalComm.WORLD_COMM_GROUP
     return group
 
+def _check_task_sink_envs():
+    """
+    Check whether task_sink environment variables have been exported or not.
+
+    return True if task_sink environment variables have been exported, False otherwise.
+    """
+    import os
+    task_sink = os.getenv("GRAPH_OP_RUN")
+    if task_sink:
+        try:
+            if int(task_sink) == 1:
+                return False
+        except ValueError:
+            return True
+    return True
+
 
 def _check_parallel_envs():
     """
@@ -86,7 +102,13 @@ def init(backend_name=None):
     """
     if _is_role_pserver() or _is_role_sched():
         return
+    task_sink = _check_task_sink_envs()
     device_target = context.get_context("device_target")
+    mode = context.get_context("mode")
+    mpi_init = False
+    if not task_sink and mode == context.GRAPH_MODE:
+        mpi_init = True
+
     if backend_name is None:
         if device_target == "Ascend":
             backend_name = "hccl"
@@ -101,9 +123,12 @@ def init(backend_name=None):
     if backend_name == "hccl":
         if device_target != "Ascend":
             raise RuntimeError("Device target should be 'Ascend' to init hccl, but got {}".format(device_target))
-        _check_parallel_envs()
+        if not mpi_init:
+            _check_parallel_envs()
+            GlobalComm.BACKEND = Backend("hccl")
+        else:
+            GlobalComm.BACKEND = Backend("hccl_mpi")
         init_hccl()
-        GlobalComm.BACKEND = Backend("hccl")
         GlobalComm.WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
         GlobalComm.INITED = True
     elif backend_name == "nccl":

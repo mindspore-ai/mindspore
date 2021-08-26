@@ -28,6 +28,7 @@ int HcclCollectiveGroup::GetRankSize(const std::string &) const { return 0; }
 int HcclCollectiveGroup::GetRankId(const std::string &) const { return 0; }
 int HcclCollectiveGroup::GetDeviceId() const { return 0; }
 void HcclCollectiveGroup::CreateCommGroup(const std::string &, const std::vector<unsigned int> &) { return; }
+void HcclCollectiveGroup::FinalizeCollective() { return; }
 }  // namespace collective
 }  // namespace ascend
 }  // namespace device

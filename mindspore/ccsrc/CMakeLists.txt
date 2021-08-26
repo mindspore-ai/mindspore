@@ -420,4 +420,10 @@ if(MODE_ASCEND_ALL)
     target_link_libraries(_c_expression PRIVATE ${adump_server})
 endif()
 
+if(ENABLE_D)
+    if(ENABLE_MPI)
+        set_target_properties(_ascend_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+    endif()
+endif()
+
 add_subdirectory(cxx_api)
