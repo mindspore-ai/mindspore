@@ -38,6 +38,8 @@ nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size);
 
 nvinfer1::Dims ConvertCudaDims(int data, size_t size);
 
+std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims);
+
 nvinfer1::DataType ConvertDataType(DataType type_id);
 
 nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input);

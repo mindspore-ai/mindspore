@@ -177,15 +177,15 @@ int ShuffleTensorRT::AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     MS_LOG(WARNING) << "AddUnsqueezeOp size of in tensort needs check: " << in_tensors_.size();
   }
   // axis
-  auto unsqueeze_shape = in_tensors_[0].Shape();
-  auto begin = std::begin(unsqueeze_shape);
+  auto unsqueeze_shape = tensorrt_in_tensors_[0]->getDimensions();
+  std::vector<int64_t> new_shape(unsqueeze_shape.d, unsqueeze_shape.d + unsqueeze_shape.nbDims);
   auto axis = unsqueeze_op->axis();
 
   for (size_t i = 0; i < axis->size(); i++) {
-    unsqueeze_shape.insert(begin + axis->Get(i), 1);
+    new_shape.insert(new_shape.begin() + axis->Get(i), 1);
   }
 
-  nvinfer1::Dims unsqueeze_dims = lite::ConvertCudaDims(unsqueeze_shape);
+  nvinfer1::Dims unsqueeze_dims = lite::ConvertCudaDims(new_shape);
 
   shuffle_layer->setReshapeDimensions(unsqueeze_dims);
   return shuffle_layer->getOutput(0) == nullptr ? RET_ERROR : RET_OK;
@@ -223,11 +223,6 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   if (shape_tensor.Data() != nullptr) {
     // static shuffle layer
     nvinfer1::Dims reshape_dims = lite::ConvertCudaDims(shape_tensor.Data().get(), shape_tensor.ElementNum());
-    int ret = InferReshapeDims(tensorrt_in_tensors_[0]->getDimensions(), &reshape_dims);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "invalid dims for reshape " << op_name_;
-      return ret;
-    }
     shuffle_layer->setReshapeDimensions(reshape_dims);
   } else {
     if (tensorrt_in_tensors_.size() != 2) {
@@ -250,6 +245,7 @@ int ShuffleTensorRT::AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 }
 
 int ShuffleTensorRT::InferReshapeDims(nvinfer1::Dims input_dims, nvinfer1::Dims *reshape_dims) {
+  // tensorrt support infer shape of 0 and -1
   int infer_index = -1;
   int known_cnt = 1;
   for (int i = 0; i < reshape_dims->nbDims; i++) {

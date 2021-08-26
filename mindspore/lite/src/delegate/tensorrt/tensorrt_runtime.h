@@ -60,7 +60,7 @@ class TensorRTRuntime {
   nvinfer1::IBuilder *builder_{nullptr};
   TensorRTLogger logger_;
   TensorRTAllocator *allocator_{nullptr};
-  int batch_size_ = 1;
+  int batch_size_{0};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_BUILDER_

@@ -515,7 +515,7 @@ int LiteSession::CompileGraph(Model *model) {
 #endif
   // scheduler kernels
   Scheduler scheduler(context_, ms_context_, model, &tensors_, inputs_, outputs_, is_train_session_, execution_plan_,
-                      delegate_);
+                      delegate_, delegate_device_type_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
@@ -691,6 +691,7 @@ int LiteSession::Init(InnerContext *context) {
       MS_LOG(ERROR) << "New delegate_ failed";
       return RET_ERROR;
     }
+    delegate_device_type_ = DT_NPU;
   }
 #endif
 #if GPU_TENSORRT
@@ -700,6 +701,7 @@ int LiteSession::Init(InnerContext *context) {
       MS_LOG(ERROR) << "New tensorrt delegate_ failed";
       return RET_ERROR;
     }
+    delegate_device_type_ = DT_GPU;
   }
 #endif
 #ifndef DELEGATE_CLIP

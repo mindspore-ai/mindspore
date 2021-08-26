@@ -25,25 +25,43 @@ void *TensorRTAllocator::MallocDeviceMem(const mindspore::MSTensor &host_tensor,
   if (host_tensor == NULL) {
     return nullptr;
   }
-  if (cuda_tensor_map_.find(host_tensor.Name()) != cuda_tensor_map_.end()) {
-    MS_LOG(INFO) << "tensor :" << host_tensor.Name() << " has already in cuda Allocator pool.";
-    return cuda_tensor_map_[host_tensor.Name()].data;
+  return MallocDeviceMem(host_tensor.Name(), size, host_tensor.DataType());
+}
+
+void *TensorRTAllocator::MallocDeviceMem(const std::string &name, size_t size, DataType data_type) {
+  if (cuda_tensor_map_.find(name) != cuda_tensor_map_.end() && size <= cuda_tensor_map_[name].size) {
+    MS_LOG(INFO) << "tensor :" << name << " has already in cuda Allocator pool.";
+    return cuda_tensor_map_[name].data;
   }
 
-  auto cuda_type = ConvertDataType(host_tensor.DataType());
+  auto cuda_type = ConvertDataType(data_type);
   if (static_cast<int>(cuda_type) == -1) {
-    MS_LOG(ERROR) << "Unsupported Tensor Type:" << static_cast<int>(host_tensor.DataType());
+    MS_LOG(ERROR) << "Unsupported Tensor Type:" << static_cast<int>(data_type);
     return nullptr;
   }
-  void *device_ptr;
+  void *device_ptr = nullptr;
   auto cuda_ret = cudaMalloc(&device_ptr, size);
   if (cuda_ret != cudaSuccess) {
     MS_LOG(ERROR) << "Cuda Malloc failed for size:" << size;
     return nullptr;
   }
-  cuda_tensor_map_[host_tensor.Name()].data = device_ptr;
-  cuda_tensor_map_[host_tensor.Name()].isValidMem = false;
+  MS_LOG(INFO) << "cudaMalloc size: " << size << " for " << name;
+  if (cuda_tensor_map_[name].data != nullptr) {
+    cuda_ret = cudaFree(cuda_tensor_map_[name].data);
+    if (cuda_ret != cudaSuccess && cuda_ret != cudaErrorCudartUnloading) {
+      MS_LOG(ERROR) << "free cuda failed for " << cudaGetErrorName(cuda_ret);
+      return nullptr;
+    }
+  }
+  cuda_tensor_map_[name].data = device_ptr;
+  cuda_tensor_map_[name].isValidMem = false;
+  cuda_tensor_map_[name].size = size;
   return device_ptr;
+}
+
+void TensorRTAllocator::MarkMemValid(const std::string &name, bool isValid) {
+  cuda_tensor_map_[name].isValidMem = isValid;
+  return;
 }
 
 void *TensorRTAllocator::GetDevicePtr(const std::string &tensor_name) {
@@ -80,7 +98,6 @@ int TensorRTAllocator::SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, c
     MS_LOG(ERROR) << "copy mem failed.";
     return RET_ERROR;
   }
-  current_cuda_tensor.isValidMem = true;
   return RET_OK;
 }
 

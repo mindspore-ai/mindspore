@@ -24,8 +24,9 @@
 
 namespace mindspore::lite {
 struct CudaTensorParam {
-  void *data;
-  bool isValidMem;
+  void *data = nullptr;
+  bool isValidMem = false;
+  size_t size = 0;
 };
 class TensorRTAllocator {
  public:
@@ -35,12 +36,16 @@ class TensorRTAllocator {
 
   void *MallocDeviceMem(const mindspore::MSTensor &host_tensor, size_t size);
 
+  void *MallocDeviceMem(const std::string &name, size_t size, DataType data_type);
+
   void *GetDevicePtr(const std::string &tensor_name);
 
   int SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, const std::string &device_tensor_name,
                              bool is_host2device, bool sync = true);
 
   int ClearDeviceMem();
+
+  void MarkMemValid(const std::string &name, bool isValid);
 
  private:
   std::map<std::string, CudaTensorParam> cuda_tensor_map_;
