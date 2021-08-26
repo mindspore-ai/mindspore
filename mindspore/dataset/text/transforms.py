@@ -45,7 +45,7 @@ import platform
 import numpy as np
 
 import mindspore._c_dataengine as cde
-import mindspore.common.dtype as mstype
+from mindspore import dtype as mstype
 
 from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType
 from .validators import check_lookup, check_jieba_add_dict, \
@@ -405,7 +405,7 @@ class ToNumber(TextTensorOperation):
         RuntimeError: If strings are invalid to cast, or are out of range after being cast.
 
     Examples:
-        >>> import mindspore.common.dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> data = [["1", "2", "3"]]
         >>> dataset = ds.NumpySlicesDataset(data)
         >>> to_number_op = text.ToNumber(mstype.int8)

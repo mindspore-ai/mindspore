@@ -18,7 +18,7 @@ The module transforms.c_transforms provides common operations, including OneHotO
 from enum import IntEnum
 import numpy as np
 
-import mindspore.common.dtype as mstype
+from mindspore import dtype as mstype
 import mindspore._c_dataengine as cde
 
 from .validators import check_num_classes, check_ms_type, check_fill_value, check_slice_option, check_slice_op, \
@@ -118,7 +118,7 @@ class TypeCast(TensorOperation):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.common.dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>>
         >>> # Generate 1d int numpy array from 0 - 63
         >>> def generator_1d():
@@ -211,6 +211,19 @@ class Slice(TensorOperation):
 
 
 class Relational(IntEnum):
+    """"
+    Relationship operator.
+
+    Possible enumeration values are: Relational.EQ, Relational.NE, Relational.GT, Relational.GE, Relational.LT,
+    Relational.LE.
+
+    - Relational.EQ: refers to Equality.
+    - Relational.NE: refers not equal, or Inequality.
+    - Relational.GT: refers to Greater than.
+    - Relational.GE: refers to Greater than or equal to.
+    - Relational.LT: refers to Less than.
+    - Relational.LE: refers to Less than or equal to.
+    """
     EQ = 0
     NE = 1
     GT = 2

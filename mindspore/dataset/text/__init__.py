@@ -27,7 +27,7 @@ __all__ = [
     "Lookup", "JiebaTokenizer", "UnicodeCharTokenizer", "Ngram",
     "to_str", "to_bytes", "Vocab", "WordpieceTokenizer", "TruncateSequencePair", "ToNumber",
     "PythonTokenizer", "SlidingWindow", "SentencePieceVocab", "SentencePieceTokenizer", "SPieceTokenizerOutType",
-    "SentencePieceModel", "SPieceTokenizerLoadType"
+    "SentencePieceModel", "SPieceTokenizerLoadType", "JiebaMode", "NormalizeForm",
 ]
 
 if platform.system().lower() != 'windows':
