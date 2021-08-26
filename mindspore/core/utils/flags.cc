@@ -47,4 +47,5 @@ const char ATTR_MAX_SHAPE[] = "max_shape";
 const char ATTR_MIN_VALUE[] = "min_value";
 const char ATTR_MAX_VALUE[] = "max_value";
 const char ATTR_NO_BROADEN[] = "no_broaden";
+const char ATTR_NO_ELIMINATE[] = "no_eliminate";
 }  // namespace mindspore

@@ -56,10 +56,14 @@ static bool CanBeIsolatedNode(const std::string &var_name, const AnfNodePtr &nod
     // will be ignored even if func_call() has side effects.
     return !var_name.empty() && var_name != "_";
   }
-  // For primitive cnode, only those with side effects can be isolate nodes.
+  // Primitive cnode with side effects can be isolate nodes.
   auto effect_info = GetPrimEffectInfo(prim);
   bool has_effects = (effect_info.memory || effect_info.io);
-  return has_effects;
+  if (has_effects) {
+    return true;
+  }
+  // Primitive cnode with 'no_eliminate' flag can be isolate nodes.
+  return GetPrimitiveFlag(prim, ATTR_NO_ELIMINATE);
 }
 
 // Write variable records the variable name to corresponding node
