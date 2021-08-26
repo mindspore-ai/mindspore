@@ -240,6 +240,7 @@ inline const PrimitivePtr kPrimResizeBilinear = std::make_shared<Primitive>("Res
 inline const PrimitivePtr kPrimResizeGrad = std::make_shared<Primitive>("ResizeGrad");
 inline const PrimitivePtr kPrimResizeNearestNeighbor = std::make_shared<Primitive>("ResizeNearestNeighbor");
 inline const PrimitivePtr kPrimSort = std::make_shared<Primitive>("Sort");
+inline const PrimitivePtr kPrimMaskedFill = std::make_shared<Primitive>("MaskedFill");
 inline const PrimitivePtr kPrimMaskedSelect = std::make_shared<Primitive>("MaskedSelect");
 inline const PrimitivePtr kPrimDiag = std::make_shared<Primitive>(kDiag);
 inline const PrimitivePtr kPrimDiagPart = std::make_shared<Primitive>(kDiagPart);

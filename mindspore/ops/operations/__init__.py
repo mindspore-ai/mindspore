@@ -33,8 +33,8 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Stack, Unpack, Unsta
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin, UnsortedSegmentMax,
                         UnsortedSegmentProd, UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch,
                         BatchToSpace, SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence,
-                        EmbeddingLookup, Unique, GatherD, Identity, Range, MaskedSelect, SearchSorted, TensorScatterMax,
-                        TensorScatterMin, TensorScatterSub)
+                        EmbeddingLookup, Unique, GatherD, Identity, Range, MaskedFill, MaskedSelect, SearchSorted,
+                        TensorScatterMax, TensorScatterMin, TensorScatterSub)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, AllSwap, ReduceScatter, Broadcast,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
                        _VirtualOutput, _VirtualDiv, _GetTensorSlice, _VirtualAdd, _VirtualAssignAdd, _VirtualAccuGrad,
@@ -142,6 +142,7 @@ __all__ = [
     'MatMul',
     'BatchMatMul',
     'Mul',
+    'MaskedFill',
     'MaskedSelect',
     'Meshgrid',
     'Pow',
