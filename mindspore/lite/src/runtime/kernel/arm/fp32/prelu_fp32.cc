@@ -91,11 +91,12 @@ int PReluCPUKernel::Run() {
   auto input_tensor = in_tensors_[0];
   input_data_ = reinterpret_cast<float *>(input_tensor->data_c());
   output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
-  MS_ASSERT(input_data_);
-  MS_ASSERT(output_data_);
+  CHECK_NULL_RETURN(input_data_);
+  CHECK_NULL_RETURN(output_data_);
 
   // negative slope tensor
   auto negative_slope_tensor = in_tensors_.at(1);
+  CHECK_NULL_RETURN(negative_slope_tensor->data_c());
   prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->data_c());
 
   auto ret = ParallelLaunch(this->ms_context_, PReluRun, this, prelu_param_->op_parameter_.thread_num_);

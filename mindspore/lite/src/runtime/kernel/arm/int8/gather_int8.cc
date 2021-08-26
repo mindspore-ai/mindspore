@@ -30,6 +30,7 @@ using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
 int GatherInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
   auto in_quant_args = in_tensors_.at(0)->quant_params();
   auto out_quant_args = out_tensors_.at(0)->quant_params();
@@ -51,13 +52,16 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
   auto out_tensor = out_tensors_.at(0);
 
   auto input_ptr = reinterpret_cast<int8_t *>(input_tensor->MutableData());
+  CHECK_NULL_RETURN(input_ptr);
   auto output_ptr = reinterpret_cast<int8_t *>(out_tensor->MutableData());
+  CHECK_NULL_RETURN(output_ptr);
   auto indices_ptr = reinterpret_cast<int32_t *>(indices_tensor->MutableData());
+  CHECK_NULL_RETURN(indices_ptr);
 
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
   int indices_element_size = indices_tensor->ElementsNum();
-
+  MS_CHECK_LT(axis_, in_rank, RET_ERROR);
   const int limit = in_shape.at(axis_);
   for (int i = 0; i < indices_element_size; ++i) {
     if (indices_ptr[i] >= limit) {

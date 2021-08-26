@@ -32,12 +32,14 @@ int FullconnectionCPUKernel::Init() {
 
   if (params_->a_const_) {
     auto a_shape = in_tensors_.at(0)->shape();
+    CHECK_LESS_RETURN(a_shape.size(), C2NUM);
     params_->row_ = a_shape[0];
     params_->deep_ = a_shape[1];
   }
 
   if (params_->b_const_) {
     auto b_shape = in_tensors_.at(1)->shape();
+    CHECK_LESS_RETURN(b_shape.size(), C2NUM);
     params_->col_ = b_shape[0];
     params_->deep_ = b_shape[1];
   }
