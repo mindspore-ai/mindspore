@@ -276,6 +276,7 @@ void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
   pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
+  pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
@@ -297,6 +298,7 @@ void RunOpOptimize(const KernelGraphPtr &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
+  pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

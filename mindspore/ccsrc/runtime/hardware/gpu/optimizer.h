@@ -50,5 +50,6 @@
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/gpu/matmul_biasadd_fusion.h"
 #include "backend/optimizer/gpu/bce_with_logits_loss_fusion.h"
+#include "backend/optimizer/gpu/insert_cast_gpu.h"
 
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_OPTIMIZER_H_

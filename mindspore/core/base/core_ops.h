@@ -282,6 +282,7 @@ inline const PrimitivePtr kPrimAvgPoolGradVm = std::make_shared<Primitive>("AvgP
 inline const PrimitivePtr kPrimFusedSparseAdam = std::make_shared<Primitive>("FusedSparseAdam");
 inline const PrimitivePtr kPrimFusedBatchNorm = std::make_shared<Primitive>("FusedBatchNorm");
 inline const PrimitivePtr kPrimConv2D = std::make_shared<Primitive>("Conv2D");
+inline const PrimitivePtr kPrimConv3D = std::make_shared<Primitive>("Conv3D");
 inline const PrimitivePtr kPrimCTCLossV2 = std::make_shared<Primitive>("CTCLossV2");
 inline const PrimitivePtr kPrimCTCLossV2Grad = std::make_shared<Primitive>("CTCLossV2Grad");
 inline const PrimitivePtr kPrimCTCLoss = std::make_shared<Primitive>(kCTCLoss);
