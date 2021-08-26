@@ -21,6 +21,7 @@
 #include <vector>
 #include <unordered_map>
 #include <utility>
+#include "include/registry/node_parser_registry.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
@@ -235,18 +236,24 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
   }
   STATUS status = RET_OK;
   for (const auto &onnx_node : onnx_graph.node()) {
-    auto node_parser = OnnxNodeParserRegistry::GetInstance()->GetNodeParser(onnx_node.op_type());
-    if (node_parser == nullptr) {
-      NotSupportOp::GetInstance()->InsertOp(onnx_node.op_type());
-      status = status == RET_OK ? RET_NOT_FIND_OP : status;
-      MS_LOG(ERROR) << "not support onnx data type " << onnx_node.op_type();
-    }
-    if (status != RET_OK) {
-      continue;
+    ops::PrimitiveC *primitive_c;
+    auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeOnnx, onnx_node.op_type());
+    if (node_parser != nullptr) {
+      primitive_c = node_parser->Parse(onnx_graph, onnx_node);
+    } else {
+      auto node_parser_builtin = OnnxNodeParserRegistry::GetInstance()->GetNodeParser(onnx_node.op_type());
+      if (node_parser_builtin == nullptr) {
+        NotSupportOp::GetInstance()->InsertOp(onnx_node.op_type());
+        status = status == RET_OK ? RET_NOT_FIND_OP : status;
+        MS_LOG(ERROR) << "not support onnx data type " << onnx_node.op_type();
+      }
+      if (status != RET_OK) {
+        continue;
+      }
+      MS_LOG(INFO) << "parse op:" << onnx_node.op_type();
+      primitive_c = node_parser_builtin->Parse(onnx_graph, onnx_node);
     }
 
-    MS_LOG(INFO) << "parse op:" << onnx_node.op_type();
-    auto primitive_c = node_parser->Parse(onnx_graph, onnx_node);
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "parse node " << onnx_node.op_type() << " failed.";
       status = RET_ERROR;

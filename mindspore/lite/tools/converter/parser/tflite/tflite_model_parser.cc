@@ -20,6 +20,7 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+#include "include/registry/node_parser_registry.h"
 #include "ops/primitive_c.h"
 #include "ir/func_graph.h"
 #include "src/common/file_utils.h"
@@ -138,27 +139,33 @@ STATUS TfliteModelParser::ConvertOps() {
     op_idx++;
     // parse primitive
     MS_LOG(INFO) << "parse node :" << op_name;
-    auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(tflite_op_type);
-    if (node_parser == nullptr) {
-      NotSupportOp::GetInstance()->InsertOp(op_type);
-      status = (status == RET_OK ? RET_NOT_FIND_OP : status);
-      MS_LOG(ERROR) << "Can not find " << op_type << " op parser.";
-      continue;
-    }
-    if (status != RET_OK) {
-      continue;
+    ops::PrimitiveC *primitive_c;
+    auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeTflite, op_type);
+    if (node_parser != nullptr) {
+      primitive_c = node_parser->Parse(op, tflite_model_);
+    } else {
+      auto node_parser_builtin = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(tflite_op_type);
+      if (node_parser_builtin == nullptr) {
+        NotSupportOp::GetInstance()->InsertOp(op_type);
+        status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+        MS_LOG(ERROR) << "Can not find " << op_type << " op parser.";
+        continue;
+      }
+      if (status != RET_OK) {
+        continue;
+      }
+      primitive_c = node_parser_builtin->Parse(op, tflite_model_);
     }
 
     std::vector<AnfNodePtr> op_inputs;
-    auto primitiveC = node_parser->Parse(op, tflite_model_);
-    if (primitiveC != nullptr) {
-      op_inputs = {NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitiveC))};
+    if (primitive_c != nullptr) {
+      op_inputs = {NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c))};
     } else {
       MS_LOG(ERROR) << "parse failed for node: " << op_name;
       return RET_ERROR;
     }
 
-    status = ConvertOpQuantParams(op.get(), primitiveC);
+    status = ConvertOpQuantParams(op.get(), primitive_c);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "convert " << op_name << " quant param failed.";
       continue;

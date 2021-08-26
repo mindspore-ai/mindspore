@@ -18,6 +18,7 @@
 #include "tools/converter/parser/tf/tf_model_parser.h"
 #include <functional>
 #include <set>
+#include "include/registry/node_parser_registry.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
@@ -928,18 +929,23 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
     return RET_OK;
   }
   MS_LOG(INFO) << "parse op : " << op_type;
-  auto node_parser = TFNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
-  if (node_parser == nullptr) {
-    NotSupportOp::GetInstance()->InsertOp(op_type);
-    MS_LOG(ERROR) << "cannot find node parser: " << node_def.name() << " in "
-                  << func_graph_ptr->get_attr("graph_name")->ToString();
-    return RET_NOT_FIND_OP;
-  }
-
+  ops::PrimitiveC *primitive_c;
+  auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeTf, op_type);
   int output_size;
   std::vector<std::string> input_names;
-  auto primitiveC = node_parser->Parse(node_def, tf_node_map, &input_names, &output_size);
-  if (primitiveC == nullptr) {
+  if (node_parser != nullptr) {
+    primitive_c = node_parser->Parse(node_def, tf_node_map, &input_names, &output_size);
+  } else {
+    auto node_parser_builtin = TFNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
+    if (node_parser_builtin == nullptr) {
+      NotSupportOp::GetInstance()->InsertOp(op_type);
+      MS_LOG(ERROR) << "cannot find node parser: " << node_def.name() << " in "
+                    << func_graph_ptr->get_attr("graph_name")->ToString();
+      return RET_NOT_FIND_OP;
+    }
+    primitive_c = node_parser_builtin->Parse(node_def, tf_node_map, &input_names, &output_size);
+  }
+  if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "node " << op_type << " parser failed";
     return RET_ERROR;
   }
@@ -947,7 +953,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   for (int i = 0; i < output_size; i++) {
     node_output_num_[node_def.name() + ":" + to_string(i)] = 1;
   }
-  auto value_node = NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitiveC));
+  auto value_node = NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c));
   if (value_node == nullptr) {
     MS_LOG(ERROR) << "value_node is nullptr";
     return RET_ERROR;
@@ -977,7 +983,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
     return status;
   }
 
-  status = ConvertQuantParams(inputs.size() - 1, output_size, primitiveC);
+  status = ConvertQuantParams(inputs.size() - 1, output_size, primitive_c);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert quant params for " << anf_node->fullname_with_scope() << " failed.";
     return status;
