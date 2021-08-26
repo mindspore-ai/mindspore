@@ -186,6 +186,15 @@ class DebugServices {
     }
   };
 
+  struct TensorBase {
+    TensorBase(uint64_t data_size, int dtype, const std::vector<int64_t> &shape)
+        : data_size(data_size), dtype(dtype), shape(shape) {}
+    TensorBase() = default;
+    uint64_t data_size = 0;
+    int dtype = 0;
+    std::vector<int64_t> shape;
+  };
+
   struct TensorStat {
     TensorStat(uint64_t data_size, int dtype, const std::vector<int64_t> &shape, bool is_bool, double max_value,
                double min_value, double avg_value, int count, int neg_zero_count, int pos_zero_count, int nan_count,
@@ -313,6 +322,9 @@ class DebugServices {
   void ReadNodesTensors(const std::vector<std::string> &name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size,
                         std::vector<unsigned int> *dtype, std::vector<std::vector<int64_t>> *const shape);
+
+  void SearchNodesTensors(const std::vector<std::string> &name,
+                          std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> *result_list);
 #ifdef ONLINE_DBG_MODE
   bool IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
 

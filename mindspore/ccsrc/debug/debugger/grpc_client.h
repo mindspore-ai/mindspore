@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ using debugger::EventReply;
 using debugger::GraphProto;
 using debugger::Heartbeat;
 using debugger::Metadata;
+using debugger::TensorBase;
 using debugger::TensorProto;
+using debugger::TensorSummary;
 using debugger::WatchpointHit;
 
 namespace mindspore {
@@ -54,6 +56,10 @@ class GrpcClient {
   EventReply SendGraph(const GraphProto &graph);
 
   EventReply SendTensors(const std::list<TensorProto> &tensors);
+
+  EventReply SendTensorBase(const TensorBase &tensor_base);
+
+  EventReply SendTensorStats(const TensorSummary &tensor_summary);
 
   EventReply SendMultiGraphs(const std::list<Chunk> &chunks);
 

@@ -193,18 +193,26 @@ void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, 
     auto wp = std::get<1>(w_table_item);
     // check ONLY init conditions on initial suspended state.
     // skip other conditions on initial suspended state
-    if (init_dbg_suspend && (wp.condition.type != INIT)) continue;
+    if (init_dbg_suspend && (wp.condition.type != INIT)) {
+      continue;
+    }
     // skip init condition if not init suspend
-    if ((wp.condition.type == INIT) && !init_dbg_suspend) continue;
+    if ((wp.condition.type == INIT) && !init_dbg_suspend) {
+      continue;
+    }
     // check change conditions only on step end.
-    if (wp.change_condition() && !step_end) continue;
+    if (wp.change_condition() && !step_end) {
+      continue;
+    }
     // if recheck, ignore the cache results and reanalyze everything.
     // if not a recheck, check only unanalyzed tensors
     if (!recheck) {
       wp_lock_.lock();
       bool wp_cache_hit = wp_id_cache_[tensor_name].count(wp.id);
       wp_lock_.unlock();
-      if (wp_cache_hit) continue;
+      if (wp_cache_hit) {
+        continue;
+      }
     }
     std::string found = wp.FindQualifiedTensorName(tensor_name_no_slot);
     if (!found.empty()) {
@@ -258,7 +266,9 @@ void DebugServices::CheckWatchpointsForTensor(
     const auto tensor_name_no_slot = tensor_name.substr(0, tensor_name.find_first_of(':'));
     const auto tensor_slot = std::to_string(tensor->GetSlot());
     // no elements to analyze
-    if (tensor->GetByteSize() == 0) continue;
+    if (tensor->GetByteSize() == 0) {
+      continue;
+    }
     (*chunk_tensor_byte_size)[chunk_id] += tensor->GetByteSize();
     int tensor_dtype = tensor->GetType();
     std::vector<watchpoint_t> watchpoints_to_check;
@@ -269,7 +279,9 @@ void DebugServices::CheckWatchpointsForTensor(
     AddWatchPointsToCheck(init_dbg_suspend, step_end, recheck, tensor_name, tensor_name_no_slot,
                           &previous_iter_tensor_needed, &qualified_tensor_name, &watchpoints_to_check);
     // no wp set on current tensor
-    if (watchpoints_to_check.empty()) continue;
+    if (watchpoints_to_check.empty()) {
+      continue;
+    }
     uint32_t num_elements = tensor->GetNumElements();
 #ifdef OFFLINE_DBG_MODE
     void *previous_tensor_ptr = GetPrevTensor(tensor, previous_iter_tensor_needed);
@@ -1030,6 +1042,15 @@ void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::
     dtype->push_back(std::get<1>(result)->GetType());
     shape->push_back(std::get<1>(result)->GetShape());
   }
+}
+
+void DebugServices::SearchNodesTensors(const std::vector<std::string> &name,
+                                       std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> *result_list) {
+  if (!result_list) {
+    MS_LOG(DEBUG) << "result_list is nullptr.";
+    return;
+  }
+  tensor_loader_->SearchTensors(name, result_list);
 }
 
 #ifdef ONLINE_DBG_MODE
