@@ -72,14 +72,14 @@ def _set_fusion_strategy_by_idx(idx_list, group="hccl_world_group"):
         return
     finally:
         pass
-    if isinstance(group, (str)):
+    if isinstance(group, str):
         group_len = len(group)
         if (group_len > _MAX_GROUP_NAME_LEN or group_len == 0):
             raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
     else:
         raise TypeError('Group must be a python str')
 
-    if isinstance(idx_list, (list)):
+    if isinstance(idx_list, list):
         idx_len = len(idx_list)
         if idx_len == 0:
             raise ValueError('idx_list length is 0')
@@ -87,7 +87,7 @@ def _set_fusion_strategy_by_idx(idx_list, group="hccl_world_group"):
         raise TypeError('idx_list must be a python list')
 
     for idx in idx_list:
-        if isinstance(idx, (int)):
+        if isinstance(idx, int):
             if idx < 0:
                 raise ValueError('Idx < 0')
         else:
@@ -133,13 +133,13 @@ def _set_fusion_strategy_by_size(data_size_list, group="hccl_world_group"):
     finally:
         pass
 
-    if isinstance(group, (str)):
+    if isinstance(group, str):
         group_len = len(group)
         if group_len > _MAX_GROUP_NAME_LEN or group_len == 0:
             raise ValueError('Group name is out of range {_MAX_GROUP_NAME_LEN}')
     else:
         raise TypeError('Group must be a python str')
-    if isinstance(data_size_list, (list)):
+    if isinstance(data_size_list, list):
         len_data_size = len(data_size_list)
         if len_data_size == 0:
             raise ValueError('data_size_list length is 0')

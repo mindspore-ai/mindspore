@@ -194,7 +194,7 @@ class _CostModelContext:
         Set costmodel communication bias.
 
         Args:
-            bias (float): A parameter used in adjusting communication calculation for practice.
+            communi_bias (float): A parameter used in adjusting communication calculation for practice.
 
         Raises:
             ValueError: If context handle is none.
@@ -249,6 +249,8 @@ class _CostModelContext:
         Raises:
             ValueError: If context handle is none, or phase is not in {0, 1}.
         """
+        if not isinstance(phase, int) or isinstance(phase, bool):
+            raise TypeError(f"The type of communi_const must be int, but got {type(phase)}.")
         if self._context_handle is None:
             raise ValueError("Context handle is none in context!!!")
         if phase not in (0, 1):
@@ -276,6 +278,8 @@ class _CostModelContext:
         Raises:
             ValueError: If context handle is none.
         """
+        if not isinstance(single_loop, bool):
+            raise TypeError(f"The type of single_loop must be bool, but got {type(single_loop)}.")
         if self._context_handle is None:
             raise ValueError("Context handle is none in context!!!")
         self._context_handle.set_dp_algo_single_loop(single_loop)

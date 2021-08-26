@@ -535,7 +535,7 @@ class Parameter(Tensor_):
         Initialize the parameter's data.
 
         Args:
-            layout (Union[None, list(list(int))]): Parameter slice
+            layout (Union[None, tuple(list(int))]): Parameter slice
                 layout [dev_mat, tensor_map, slice_shape]. Default: None.
 
                 - dev_mat (list(int)): Device matrix.
