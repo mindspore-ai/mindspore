@@ -743,5 +743,8 @@ size_t NewFgSeenGeneration() {
 // Implement TopoSort api.
 std::vector<AnfNodePtr> api::FuncGraph::TopoSort(const AnfNodePtr &node) { return mindspore::TopoSort(node); }
 
+// Create an api::FuncGraph instance.
+api::FuncGraphPtr api::FuncGraph::Create() { return std::make_shared<mindspore::FuncGraph>(); }
+
 const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");
 }  // namespace mindspore
