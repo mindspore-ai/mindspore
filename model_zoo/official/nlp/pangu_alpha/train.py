@@ -242,7 +242,8 @@ def load_checkpoint(args_param, sink_size, dataset, model):
         else:
             ckpt_files.sort(key=os.path.getmtime, reverse=True)
             time_stamp = datetime.datetime.now()
-            print(f"time stamp {time_stamp.strftime('%Y.%m.%d-%H:%M:%S')} pre trained ckpt model {ckpt_files} loading", flush=True)
+            print(f"time stamp {time_stamp.strftime('%Y.%m.%d-%H:%M:%S')} pre trained ckpt model {ckpt_files} loading",
+                  flush=True)
             ckpt_file = os.path.basename(ckpt_files[0])
             ckpt_file_length = ckpt_file.split("_")
             if len(ckpt_file_length) == 3:
