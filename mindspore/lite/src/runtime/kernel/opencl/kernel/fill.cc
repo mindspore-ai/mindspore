@@ -63,8 +63,6 @@ int FillOpenCLKernel::RunShape() {
   for (int i = 0; i < tensor_shape.size(); ++i) {
     fill_value.s[i] = reinterpret_cast<int *>(tensor_shape_data)[i];
   }
-  auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
-  auto region = cl::array<cl::size_type, 3U>{1, 1, 1};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
 
   int arg_idx = 0;
@@ -81,11 +79,6 @@ int FillOpenCLKernel::RunShape() {
       return RET_ERROR;
   }
 
-  if (ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region) !=
-      CL_SUCCESS) {
-    MS_LOG(ERROR) << "enqueueFillImage failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
