@@ -40,7 +40,7 @@ void AscendLaunchKernel::KernelSelect(std::shared_ptr<session::KernelGraph> kern
   for (size_t i = 0; i < node_list.size(); ++i) {
     auto status = device::ascend::SelectKernelInfo(node_list[i]);
     if (status == ascend::kNoMatched) {
-      MS_LOG(ERROR) << "cnode name : " << node_list[i]->fullname_with_scope() << " kernel select failed";
+      MS_LOG(ERROR) << "Cnode name : " << node_list[i]->fullname_with_scope() << " kernel select failed";
     }
   }
 }

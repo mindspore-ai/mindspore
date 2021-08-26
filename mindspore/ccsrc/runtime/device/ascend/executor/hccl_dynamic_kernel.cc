@@ -38,9 +38,9 @@ void HcclDynamicKernel::UpdateArgs() {
     MS_LOG(INFO) << "Not Dynamic Shape";
     return;
   }
-  MS_LOG(INFO) << "Start to UpdateArgs";
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "Start to UpdateArgs. Node info: " << cnode->DebugString();
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   // Update input, output, count
@@ -49,7 +49,7 @@ void HcclDynamicKernel::UpdateArgs() {
   AddressPtrList kernel_outputs;
   KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
   if (kernel_inputs.empty() || kernel_outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Inputs or outputs is empty";
+    MS_LOG(EXCEPTION) << "Inputs or outputs is empty. Node info: " << cnode->DebugString();
   }
   auto input0 = kernel_inputs.at(0);
   auto output0 = kernel_outputs.at(0);
@@ -62,17 +62,17 @@ void HcclDynamicKernel::UpdateArgs() {
 
   std::vector<std::vector<size_t>> hccl_kernel_input_shape_list;
   if (!HcomUtil::GetKernelInputShape(cnode, &hccl_kernel_input_shape_list)) {
-    MS_LOG(EXCEPTION) << "GetKernelInputShape fail!";
+    MS_LOG(EXCEPTION) << "GetKernelInputShape fail! Node info: " << cnode->DebugString();
   }
 
   std::vector<HcclDataType> hccl_data_type_list;
   if (!HcomUtil::GetHcomDataType(cnode, &hccl_data_type_list)) {
-    MS_LOG(EXCEPTION) << "GetHcomDataType fail!";
+    MS_LOG(EXCEPTION) << "GetHcomDataType fail! Node info: " << cnode->DebugString();
   }
 
   // Update Hccl count
   if (!HcomUtil::GetHcomCount(cnode, hccl_data_type_list, hccl_kernel_input_shape_list, &count_)) {
-    MS_LOG(EXCEPTION) << "GetHcomCount fail!";
+    MS_LOG(EXCEPTION) << "GetHcomCount fail! Node info: " << cnode->DebugString();
   }
   MS_LOG(INFO) << "Update Hccl count:" << count_;
 }
@@ -90,7 +90,9 @@ void HcclDynamicKernel::StaticShapeExecute() {
 }
 
 void HcclDynamicKernel::Execute() {
-  MS_LOG(INFO) << "Start Execute";
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "Start Execute: " << cnode->DebugString();
   ::HcomOperation op_info;
   op_info.hcclType = hccl_type_;
   op_info.inputPtr = input_ptr_;
@@ -111,12 +113,12 @@ void HcclDynamicKernel::Execute() {
 
   auto hccl_ret = hccl::HcclAdapter::GetInstance().HcclExecEnqueueOp(op_info, callback);
   if (hccl_ret != HCCL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Call EnqueueHcomOperation failed";
+    MS_LOG(EXCEPTION) << "Call EnqueueHcomOperation failed, node info: " << cnode->DebugString();
   }
 
   std::unique_lock<std::mutex> ulock(hccl_mutex_);
   cond_.wait(ulock);
-  MS_LOG(INFO) << "Execute success";
+  MS_LOG(INFO) << "Execute " << cnode->DebugString() << " success";
 }
 
 void HcclDynamicKernel::PostExecute() {}

@@ -49,7 +49,7 @@ void AscendLaunchAtomicClean::LaunchOpKernel() {
   }
   // obtain kernel_mod
   if (atomic_clean_graph_->execution_order().size() != 1) {
-    MS_LOG(ERROR) << "the execution order of the atomic clean graph should have only one node";
+    MS_LOG(ERROR) << "The execution order of the atomic clean graph should have only one node";
   }
   kernel_mod_ = AnfAlgo::GetKernelMod(atomic_clean_graph_->execution_order()[0]);
   MS_EXCEPTION_IF_NULL(kernel_mod_);

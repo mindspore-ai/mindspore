@@ -42,7 +42,7 @@ class TaskStream {
   uint32_t GetGenStreamIndex(uint32_t stream_id) {
     auto iter = gen_stream_index_map_.find(stream_id);
     if (iter == gen_stream_index_map_.end()) {
-      MS_LOG(EXCEPTION) << "stream_id not in gen_stream_index_map_";
+      MS_LOG(EXCEPTION) << "Parameter stream_id not in gen_stream_index_map_, id: " << stream_id;
     }
     return iter->second;
   }

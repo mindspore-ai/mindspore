@@ -33,7 +33,7 @@ ge::proto::DataType GeTypesConvert::GetGeDataType(TypeId type_id) {
     {TypeId::kNumberTypeUInt64, ge::proto::DT_UINT64},   {TypeId::kNumberTypeBool, ge::proto::DT_BOOL},
     {TypeId::kNumberTypeFloat64, ge::proto::DT_DOUBLE},  {TypeId::kObjectTypeString, ge::proto::DT_STRING},
   };
-  MS_LOG(INFO) << "Vm origin type_id:" << type_id;
+  MS_LOG(INFO) << "Vm origin type_id:" << type_id << ": " << TypeIdLabel(type_id);
   auto iter = data_type_map.find(type_id);
   if (iter == data_type_map.end()) {
     MS_LOG(EXCEPTION) << "MindSpore data type:" << TypeIdLabel(type_id) << " can't been found in GE.";
@@ -53,7 +53,7 @@ ge::DataType GeTypesConvert::TransTypeIdToGeDataType(TypeId type_id) {
     {TypeId::kNumberTypeInt64, ge::DataType::DT_DOUBLE},    {TypeId::kTypeUnknown, ge::DataType::DT_UNDEFINED}};
   auto iter = data_type_map.find(type_id);
   if (iter == data_type_map.end()) {
-    MS_LOG(EXCEPTION) << "Invalid data type:" << type_id;
+    MS_LOG(EXCEPTION) << "Invalid data type:" << type_id << ": " << TypeIdLabel(type_id);
   }
   return iter->second;
 }

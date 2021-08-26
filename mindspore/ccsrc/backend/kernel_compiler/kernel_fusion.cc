@@ -67,7 +67,7 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
       offline_tune[j] = tolower(offline_tune[j]);
     }
     if (!(offline_tune == "true" || offline_tune == "false")) {
-      MS_LOG(EXCEPTION) << "The value of ENABLE_TUNE_DUMP must be 'true' or 'false'";
+      MS_LOG(EXCEPTION) << "The value of ENABLE_TUNE_DUMP must be 'true' or 'false', bug got:" << offline_tune;
     }
   }
 
@@ -120,7 +120,7 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     auto task_id = ParallelBuildManager::StartCompileOp(fusion_json);
     TbeUtils::SaveJsonInfo(json_name, fusion_json.dump());
     if (task_id < 0) {
-      MS_EXCEPTION(ArgumentError) << "start compile failed.";
+      MS_EXCEPTION(ArgumentError) << "Start compile failed, json_name: " << json_name;
     }
     build_manger->SaveTaskInfo(task_id, nullptr, json_name, input_size_list, output_size_list,
                                fusion_scope_iter.scope_id);
@@ -137,8 +137,7 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     }
 
     if (task_result != "Success") {
-      MS_LOG(INFO) << "Fusion warning: Fuison op build failed, err log: " << task_result
-                   << "  change to single op build.";
+      MS_LOG(INFO) << "Fusion op build failed, error log: " << task_result << ", change to single op build.";
       build_failed_num++;
     }
     auto kernel_mod_item = build_manger->TaskFinishProcess(task_id, build_result, false);
@@ -148,10 +147,10 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
   }
   bool ret = build_manger->GenSameFusionOpKernelMod(&kernel_mod_ret);
   if (!ret) {
-    MS_LOG(INFO) << "Fusion warning: Fuison op has cache failed.";
+    MS_LOG(INFO) << "Fusion warning: Fusion op has cache failed.";
   }
 
-  MS_LOG(INFO) << "Build Fusion Kernel Failed Num: " << build_failed_num;
+  MS_LOG(INFO) << "Build fusion_kernel failed num: " << build_failed_num;
   return kernel_mod_ret;
 }
 }  // namespace mindspore::kernel

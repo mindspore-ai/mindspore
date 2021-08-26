@@ -48,7 +48,7 @@ void AscendLaunchTransData::LaunchOpKernel() {
   }
   // obtain kernel_mod
   if (transdata_graph_->execution_order().size() != 1) {
-    MS_LOG(ERROR) << "the execution order of the transdata graph should have only one node";
+    MS_LOG(ERROR) << "The execution order of the transdata graph should have only one node";
     return;
   }
   kernel_mod_ = AnfAlgo::GetKernelMod(transdata_graph_->execution_order()[0]);

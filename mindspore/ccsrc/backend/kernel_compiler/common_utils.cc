@@ -180,7 +180,7 @@ bool CheckCache(const std::string &kernel_name) {
   // check cache.
   KernelMeta *bin_map = KernelMeta::GetInstance();
   if (bin_map == nullptr) {
-    MS_LOG(DEBUG) << "kernel cache is invalid.";
+    MS_LOG(DEBUG) << "Kernel cache is invalid, kernel_name: " << kernel_name;
     return false;
   }
   std::string kernel_json = bin_map->Search(kernel_name);
@@ -197,7 +197,7 @@ KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &pro
   // search cache.
   KernelMeta *bin_map = KernelMeta::GetInstance();
   if (bin_map == nullptr) {
-    MS_LOG(DEBUG) << "kernel cache is invalid.";
+    MS_LOG(DEBUG) << "kernel cache is invalid, kernel_name: " << kernel_name;
     return nullptr;
   }
 
@@ -212,13 +212,13 @@ KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &pro
       return kernel_pack;
     }
   } else {
-    MS_LOG(INFO) << "cache kernel not found[" << kernel_name << "].";
+    MS_LOG(INFO) << "The cache kernel not found[" << kernel_name << "].";
     return nullptr;
   }
 }
 
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor) {
-  MS_LOG(INFO) << "kernel name:" << kernel_name << ", processr:" << processor;
+  MS_LOG(INFO) << "Insert cache for kernel:" << kernel_name << ", processr:" << processor;
   KernelMeta *bin_map = KernelMeta::GetInstance();
   std::string kernel_json;
   if (processor == kProcessorAiCore || processor == kProcessorAiCpu) {
@@ -234,11 +234,11 @@ KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &pro
   }
 
   if (bin_map == nullptr) {
-    MS_LOG(DEBUG) << "kernel cache is invalid.";
+    MS_LOG(DEBUG) << "Kernel cache is invalid, kernel name :" << kernel_name;
     return nullptr;
   }
   if (bin_map->Insert(kernel_name, kernel_json)) {
-    MS_LOG(INFO) << "Insert to cache success[" << kernel_json << "], kernelname[" << kernel_name << "].";
+    MS_LOG(INFO) << "Kernel insert cache success[" << kernel_json << "], kernel name[" << kernel_name << "].";
   }
   return kernel_pack;
 }
@@ -258,26 +258,27 @@ std::string TypeId2String(TypeId type_id, bool unknown_as_default) {
     if (!unknown_as_default) {
       MS_EXCEPTION(ArgumentError) << "Illegal input dtype." << TypeIdLabel(type_id);
     }
+    MS_LOG(INFO) << "Using default dtype: float32";
     return "float32";
   }
   return iter->second;
 }
 
-std::string Dtype2ShortType(const std::string &dtypes) {
-  auto iter = dtype_shortdtype_map_.find(dtypes);
+std::string Dtype2ShortType(const std::string &dtype) {
+  auto iter = dtype_shortdtype_map_.find(dtype);
   if (iter != dtype_shortdtype_map_.end()) {
     return iter->second;
   } else {
-    MS_EXCEPTION(ArgumentError) << "Illegal input dtype:" << dtypes;
+    MS_EXCEPTION(ArgumentError) << "Illegal input dtype:" << dtype;
   }
 }
 
-size_t GetDtypeNbyte(const std::string &dtypes) {
-  auto iter = dtype_nbyte_map.find(dtypes);
+size_t GetDtypeNbyte(const std::string &dtype) {
+  auto iter = dtype_nbyte_map.find(dtype);
   if (iter != dtype_nbyte_map.end()) {
     return iter->second;
   } else {
-    MS_EXCEPTION(ArgumentError) << "Illegal input dtype:" << dtypes;
+    MS_EXCEPTION(ArgumentError) << "Illegal input dtype:" << dtype;
   }
 }
 
@@ -299,13 +300,14 @@ bool SetInputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &inp
     std::vector<std::string> dtypes = input->dtypes();
     std::vector<std::string> formats = input->formats();
     if (dtypes.size() != kernel_info_cnt || formats.size() != kernel_info_cnt) {
-      MS_LOG(DEBUG) << "Set input kernel builder info, dtyps size != formats size.";
+      MS_LOG(DEBUG) << "Set input kernel builder info failed, dtyps size != formats size. dtypes size: "
+                    << dtypes.size() << ", formats size : " << formats.size();
       return false;
     }
 
     if (param_type == "dynamic") {
       if (dyn_input_sizes.empty()) {
-        MS_LOG(DEBUG) << "Set input kernel builder info, dyn_input_sizes's size is 0 when param_type is dynamic";
+        MS_LOG(DEBUG) << "Set input kernel builder info failed, dyn_input_sizes's size is 0 when param_type is dynamic";
         return false;
       }
 
@@ -420,11 +422,14 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
   std::vector<int64_t> dyn_input_sizes;
   auto primitive = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = AnfAlgo::GetCNodeName(kernel_node);
   if (primitive->GetAttr("dyn_input_sizes") != nullptr) {
     dyn_input_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr("dyn_input_sizes"));
   }
   if (inputs.size() > 0) {
-    MS_EXCEPTION_IF_NULL(inputs[0]);
+    if (inputs[0] == nullptr) {
+      MS_LOG(EXCEPTION) << "Inputs[0] is nullptr. Op name: " << op_name;
+    }
     size_t kernel_info_cnt = inputs[0]->dtypes().size();
     for (size_t j = 0; j < kernel_info_cnt; j++) {
       auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
@@ -432,13 +437,13 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
       SetKernelBuildInfo(builder, processor, op_info_ptr);
 
       if (!SetInputKernelBuilderInfo(inputs, real_input_num, j, dyn_input_sizes, builder)) {
-        MS_LOG(DEBUG) << "Parse kernel metadata, set inputs kernel builder info failed.";
+        MS_LOG(DEBUG) << "Parse kernel metadata, set inputs kernel builder info failed. Op name: " << op_name;
         return false;
       }
 
       if (outputs.size() > 0) {
         if (!SetOutputKernelBuilderInfo(outputs, j, real_output_num, builder)) {
-          MS_LOG(DEBUG) << "Parse kernel metadata, set outputs kernel builder info failed.";
+          MS_LOG(DEBUG) << "Parse kernel metadata, set outputs kernel builder info failed. Op name: " << op_name;
           return false;
         }
       }
@@ -446,7 +451,9 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
       kernel_info_list->push_back(builder->Build());
     }
   } else if (outputs.size() > 0) {
-    MS_EXCEPTION_IF_NULL(outputs[0]);
+    if (outputs[0] == nullptr) {
+      MS_LOG(EXCEPTION) << "Outputs[0] is nullptr. Op name: " << op_name;
+    }
     size_t kernel_info_cnt = outputs[0]->dtypes().size();
     for (size_t j = 0; j < kernel_info_cnt; j++) {
       auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
@@ -454,7 +461,7 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
       SetKernelBuildInfo(builder, processor, op_info_ptr);
 
       if (!SetOutputKernelBuilderInfo(outputs, j, real_output_num, builder)) {
-        MS_LOG(DEBUG) << "Parse kernel metadata, set outputs kernel builder info failed.";
+        MS_LOG(DEBUG) << "Parse kernel metadata, set outputs kernel builder info failed. Op name: " << op_name;
         return false;
       }
 
@@ -546,7 +553,8 @@ std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t 
   MS_EXCEPTION_IF_NULL(anf_node);
 
   if (index >= AnfAlgo::GetInputTensorNum(anf_node)) {
-    MS_EXCEPTION(ArgumentError) << "Index is out of the size of anf_node inputs.";
+    MS_EXCEPTION(ArgumentError) << "Index is out of the size of anf_node inputs. Node info : ["
+                                << anf_node->DebugString() << "]";
   }
 
   auto cnode = anf_node->cast<CNodePtr>();
@@ -725,6 +733,7 @@ bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann:
 
   auto tensor = GetValueNode<tensor::TensorPtr>(input_node);
   if (tensor == nullptr) {
+    MS_LOG(DEBUG) << "Value of input node is nullptr, op: [" << input_node->DebugString() << "]";
     return false;
   }
 
@@ -781,8 +790,7 @@ bool IsWeightBoundary(const AnfNodePtr &node) {
 std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   if (AnfAlgo::GetInputTensorNum(cnode) != AnfAlgo::GetOutputTensorNum(cnode) &&
       AnfAlgo::GetInputTensorNum(cnode) != 1) {
-    MS_LOG(EXCEPTION) << "the kind of reduce node [" << cnode->DebugString()
-                      << "] is not single input or single output ";
+    MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString() << "] is not single input or single output ";
   }
   std::vector<int64_t> axis;
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
@@ -790,7 +798,7 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto axis_attr = primitive->GetAttr(kAxis);
   if (axis_attr == nullptr) {
-    MS_LOG(ERROR) << "This node doesn't have axie attr.";
+    MS_LOG(ERROR) << "This node doesn't have axis attr. Node info [" << cnode->DebugString() << "]";
     return std::vector<int64_t>();
   }
   std::vector<int64_t> axis_list;

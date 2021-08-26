@@ -114,24 +114,24 @@ void AscendBucket::CopyTensorToContiguousMemory() {
 
 void AscendBucket::LaunchAllReduce() {
   if (tensor_type_list_.empty()) {
-    MS_LOG(EXCEPTION) << "No tesnor type found";
+    MS_LOG(EXCEPTION) << "No tensor type found";
   }
 
   // AllReduce inputs data type should be same
   auto type = tensor_type_list_[0];
   if (std::any_of(tensor_type_list_.begin(), tensor_type_list_.end(),
                   [&type](TypeId tensor_type) { return type != tensor_type; })) {
-    MS_LOG(EXCEPTION) << "allreduce input have different dtype";
+    MS_LOG(EXCEPTION) << "AllReduce input have different dtype";
   }
 
   auto iter = kConstOpHcomDataTypeMap.find(type);
   if (iter == kConstOpHcomDataTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "unknown data type:" << type;
+    MS_LOG(EXCEPTION) << "Unknown data type:" << type;
   }
 
   uint32_t type_size;
   if (!HcomUtil::GetHcomTypeSize(iter->second, &type_size)) {
-    MS_LOG(EXCEPTION) << "get hcom type size fialed";
+    MS_LOG(EXCEPTION) << "Get hcom type size failed";
   }
 
   if (type_size == 0 || total_size_ % type_size != 0) {
@@ -143,7 +143,7 @@ void AscendBucket::LaunchAllReduce() {
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(ar_input_addr_, ar_output_addr_, hccl_count,
                                                                     iter->second, op_type, stream_);
   if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "HcclAllReduce faled, ret:" << hccl_result;
+    MS_LOG(EXCEPTION) << "HCCL AllReduce failed, ret:" << hccl_result;
   }
 }
 

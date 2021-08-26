@@ -113,7 +113,7 @@ bool KernelBuildInfo::IsSimilarityKernelBuildInfo(const KernelBuildInfo &other) 
     if (op_pattern_ != kFormatAgnosticPattern) {
       return false;
     } else {
-      MS_LOG(INFO) << "this kernel build info:" << this->ToString()
+      MS_LOG(INFO) << "This kernel build info:" << this->ToString()
                    << ", other kernel build info: " << other.ToString();
     }
   }
@@ -197,22 +197,29 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOpPattern(OpPattern pattern) {
 }
 void KernelBuildInfo::KernelBuildInfoBuilder::SetInputFormat(const std::string &format, size_t index) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
-  if (index >= kernel_build_info_->inputs_format_.size()) {
-    MS_LOG(EXCEPTION) << "index outof range!";
+  auto index_limit = kernel_build_info_->inputs_format_.size();
+  if (index >= index_limit) {
+    MS_LOG(EXCEPTION) << "Index of input format out of range! The value should be less than: " << index_limit
+                      << ", but got: " << index;
   }
   kernel_build_info_->inputs_format_[index] = format;
 }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputFormat(const std::string &format, size_t index) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
-  if (index >= kernel_build_info_->outputs_format_.size()) {
-    MS_LOG(EXCEPTION) << "index outof range!";
+  auto index_limit = kernel_build_info_->outputs_format_.size();
+  if (index >= index_limit) {
+    MS_LOG(EXCEPTION) << "Index of output format out of range! The value should be less than: " << index_limit
+                      << ", but got: " << index;
   }
   kernel_build_info_->outputs_format_[index] = format;
 }
 void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(const std::string &input_reshape_type, size_t index) {
-  if (index >= kernel_build_info_->input_reshape_type_.size()) {
-    MS_LOG(EXCEPTION) << "index outof range!";
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  auto index_limit = kernel_build_info_->input_reshape_type_.size();
+  if (index >= index_limit) {
+    MS_LOG(EXCEPTION) << "Index of input_reshape_type out of range! The value should be less than: " << index_limit
+                      << ", but got: " << index;
   }
   (void)std::copy(input_reshape_type.begin(), input_reshape_type.end(),
                   std::back_inserter(kernel_build_info_->input_reshape_type_[index]));
@@ -220,23 +227,32 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(const std::str
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(const std::string &output_reshape_type,
                                                                    size_t index) {
-  if (index >= kernel_build_info_->output_reshape_type_.size()) {
-    MS_LOG(EXCEPTION) << "index outof range!";
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  auto index_limit = kernel_build_info_->output_reshape_type_.size();
+  if (index >= index_limit) {
+    MS_LOG(EXCEPTION) << "Index of output_reshape_type out of range! The value should be less than: " << index_limit
+                      << ", but got: " << index;
   }
   (void)std::copy(output_reshape_type.begin(), output_reshape_type.end(),
                   std::back_inserter(kernel_build_info_->output_reshape_type_[index]));
 }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputDeviceType(const TypeId &output_device_type, size_t index) {
-  if (index >= kernel_build_info_->outputs_device_type_.size()) {
-    MS_LOG(EXCEPTION) << "index outof range!";
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  auto index_limit = kernel_build_info_->outputs_device_type_.size();
+  if (index >= index_limit) {
+    MS_LOG(EXCEPTION) << "Index of output_device_type out of range! The value should be less than: " << index_limit
+                      << ", but got: " << index;
   }
   kernel_build_info_->outputs_device_type_[index] = output_device_type;
 }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetInputDeviceType(const TypeId &input_device_type, size_t index) {
-  if (index >= kernel_build_info_->inputs_device_type_.size()) {
-    MS_LOG(EXCEPTION) << "index outof range!";
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  auto index_limit = kernel_build_info_->inputs_device_type_.size();
+  if (index >= index_limit) {
+    MS_LOG(EXCEPTION) << "Index of input_device_type out of range! The value should be less than: " << index_limit
+                      << ", but got: " << index;
   }
   kernel_build_info_->inputs_device_type_[index] = input_device_type;
 }
