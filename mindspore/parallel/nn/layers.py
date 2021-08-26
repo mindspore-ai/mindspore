@@ -28,9 +28,10 @@ from mindspore._extends import cell_attr_register
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer import Dense
 import mindspore.nn as nn
+from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import functional as F
 from mindspore._checkparam import Validator
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, Primitive
 from .op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = [
@@ -199,7 +200,7 @@ class _LayerNorm(Cell):
         return self
 
 
-class _Linear(Dense):
+class _Linear(Cell):
     r"""
     The dense connected layer. Once the parallel mode is enabled, the input shape should be
     3-D tensor.
@@ -224,6 +225,8 @@ class _Linear(Dense):
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (str): activate function applied to the output of the fully connected layer,
             eg. 'ReLU'.Default: None.
+        expert_num (int): The number of experts used in this Linear. Here, for the case expert_num > 1, BatchMatMul is
+            used and the first dimension in BatchMatMul indicate expert_num. Default: 1.
         compute_dtype (mstype): The computation type. Default: mstype.float16
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
@@ -254,14 +257,12 @@ class _Linear(Dense):
                  has_bias=True,
                  activation=None,
                  transpose_b=True,
+                 expert_num=1,
                  param_init_type=mstype.float32,
                  compute_dtype=mstype.float16):
-        super(_Linear, self).__init__(in_channels=in_channels,
-                                      out_channels=out_channels,
-                                      weight_init=weight_init,
-                                      bias_init=bias_init,
-                                      has_bias=has_bias,
-                                      activation=activation)
+        super(_Linear, self).__init__()
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         if param_init_type not in [mstype.float32, mstype.float16]:
             raise TypeError(f"param type should in [float32, float16], but found type {type(param_init_type)}")
         if activation and not isinstance(activation, str):
@@ -274,26 +275,40 @@ class _Linear(Dense):
             weight_shape = [out_channels, in_channels]
         else:
             weight_shape = [in_channels, out_channels]
-        self.weight = Parameter(initializer(weight_init, weight_shape, param_init_type), name="weight")
-        self.matmul = P.MatMul(transpose_b=transpose_b)
+        self.expert_num = expert_num
+        if self.expert_num > 1:
+            self.expert_flag = True
+            self.weight = Parameter(initializer(weight_init, [self.expert_num] + weight_shape), name="weight")
+            self.matmul = P.BatchMatMul(transpose_b=transpose_b)
+        else:
+            self.expert_flag = False
+            self.weight = Parameter(initializer(weight_init, weight_shape, param_init_type), name="weight")
+            self.matmul = P.MatMul(transpose_b=transpose_b)
         self.bias = None
+        self.has_bias = has_bias
         if self.has_bias:
             if isinstance(bias_init, Tensor):
                 if bias_init.ndim != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError("Bias init shape error.")
             self.bias = Parameter(initializer(bias_init, [out_channels], param_init_type), name="bias")
-            self.bias_add = P.BiasAdd()
+            self.bias_add = P.TensorAdd()
         self.act_name = activation
+        self.activation = get_activation(activation) if isinstance(activation, str) else activation
+        if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
+            raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
+        self.activation_flag = self.activation is not None
         self.dtype = compute_dtype
         self.cast = P.Cast()
-        self.has_bias = self.has_bias
 
     def construct(self, x):
         out_shape = P.Shape()(x)[:-1] + (self.out_channels,)
         x = P.Reshape()(x, (-1, self.in_channels))
+        if self.expert_flag is True:
+            x = P.Reshape()(x, (self.expert_num, -1, self.in_channels))
         weight = self.cast(self.weight, self.dtype)
         x = self.matmul(x, weight)
-        x = self.bias_add(x, self.cast(self.bias, self.dtype))
+        if self.has_bias:
+            x = self.bias_add(x, self.cast(self.bias, self.dtype))
         output = P.Reshape()(x, out_shape)
         if self.activation_flag:
             output = self.activation(output)
@@ -549,3 +564,251 @@ class FixedSparseAttention(nn.Cell):
             (-1, self.seq_length, self.size_per_head * self.num_heads))
 
         return attention_merge
+
+
+class _CumSum(Cell):
+    r"""
+        A layer used to calculate cumulative summation of a tensor along a dimension.
+
+        Inputs:
+            - **expert_mask** (Tensor) - Tensor of shape :math:`(expert\_parallel, tokens\_per\_device,
+            expert\_dim)`.
+
+        Outputs:
+            Tensor of shape :math:`(expert\_parallel, tokens\_per\_device, expert\_dim)`.
+    """
+    def __init__(self, config):
+        super(_CumSum, self).__init__()
+        dp = config.data_parallel
+        self.range = P.Range().shard(((1,),))
+        self.reshape = P.Reshape()
+        self.matmul = P.MatMul().shard(((dp, 1), (1, 1)))
+        self.shape = P.Shape()
+        self.cast = P.Cast()
+
+        self.transpose = P.Transpose().shard(((dp, 1, 1),))
+        self.transpose2 = P.Transpose().shard(((1, 1),))
+        self.transpose3 = P.Transpose().shard(((dp, 1, 1),))
+        self.expand = P.ExpandDims().shard(((1,),))
+        self.greater = P.Greater().shard(((1, 1), (1, 1)))
+
+        self.start = Tensor(0, mstype.int32)
+        self.limit = Tensor(0, mstype.int32)
+        self.delta = Tensor(1, mstype.int32)
+        self.add = P.TensorAdd().shard(((1,), ()))
+
+
+    def construct(self, expert_mask):
+        # origin_shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        origin_shape = self.shape(expert_mask)
+        tokens_per_device = origin_shape[1]
+        # expert_mask_trans's shape: (self.expert_parallel, self.expert_dim, tokens_per_device)
+        expert_mask_trans = self.transpose(expert_mask, (0, 2, 1))
+        # expert_mask_reshaped's shape: (self.expert_parallel*self.expert_dim, tokens_per_device)
+        expert_mask_reshaped = self.reshape(expert_mask_trans, (-1, tokens_per_device))
+
+        one_dim = self.expand(self.range(self.start, self.add(self.limit, tokens_per_device), self.delta), 0)
+        other_dim = self.transpose2(one_dim, (1, 0))
+        # up_tri_matrix's shape: (tokens_per_device, tokens_per_device)
+        up_tri_matrix = self.greater(one_dim, other_dim)
+        up_tri_matrix = self.cast(up_tri_matrix, mstype.float32)
+
+        # cum_sum's shape: (self.expert_parallel*self.expert_dim, tokens_per_device)
+        cum_sum = self.matmul(expert_mask_reshaped, up_tri_matrix)
+        # cum_sum's shape: (self.expert_parallel, self.expert_dim, tokens_per_device)
+        cum_sum = self.reshape(cum_sum, (origin_shape[0], origin_shape[2], tokens_per_device))
+        # cum_sum's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        cum_sum = self.transpose3(cum_sum, (0, 2, 1))
+        return cum_sum
+
+
+@constexpr
+def calculate_expert_capacity(k, tokens_per_device, capacity_factor, expert_dim):
+    return math.ceil(k * tokens_per_device * capacity_factor / expert_dim)
+
+
+class Router(Cell):
+    r"""
+        A router backbone used to calculate logits of each token, which should be cascaded by router implementations
+        mapping tokens to experts.
+
+        Args:
+            d_model (int): The hidden size of each token.
+            moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
+            routing_policy: The policy of mapping tokens to experts. Default: SwitchRouter
+            training (bool): The value indicating whether is in training phase.
+            parallel_config: The parallel-related configuration.
+        Inputs:
+            - **input_tensor** (Tensor) - Tensor of shape :math:`(expert\_parallel, tokens\_per\_device,
+            hidden\_size)`.
+
+        Outputs:
+            Tensor of shape :math:`(expert\_parallel, tokens\_per\_device, expert\_dim)`.
+    """
+    def __init__(self,
+                 d_model,
+                 moe_config,
+                 routing_policy=None,
+                 training=True,
+                 parallel_config=None):
+        super(Router, self).__init__()
+        dp = parallel_config.data_parallel
+        self.d_model = d_model
+        self.expert_dim = moe_config.expert_num
+        self.capacity_factor = moe_config.capacity_factor
+        self.training = training
+        self.routing_policy = routing_policy
+        self.noisy_policy = moe_config.noisy_policy  # candidate: ["jitter", "rsample", "None"]
+        self.noisy_epsilon = moe_config.noisy_epsilon
+        self.noise = Tensor(np.random.uniform(1 - self.noisy_epsilon, 1 + self.noisy_epsilon, (d_model,)))
+
+        self.dense = Dense(in_channels=self.d_model, out_channels=self.expert_dim, has_bias=False)
+        self.dense.matmul.shard(((dp, 1), (1, 1)))
+        self.mul = P.Mul().shard(((dp, 1, 1), (dp,)))
+        self.cast = P.Cast()
+
+        if self.routing_policy is None:
+            self.router = SwitchRouter(d_model=d_model, moe_config=moe_config, training=training,
+                                       parallel_config=parallel_config)
+        else:
+            self.router = routing_policy
+
+    def construct(self, input_tensor):
+        input_tensor = self.cast(input_tensor, mstype.float32)
+        if self.noisy_policy == "jitter" and self.training is True:
+            # Here, we temporarily implement the multiplicative jitter this way,
+            # for the lack of UniforReal parallel operator.
+            input_tensor = self.mul(input_tensor, self.noise)
+
+        router_logits = self.dense(input_tensor)
+        return self.router(router_logits)
+
+
+class SwitchRouter(Cell):
+    r"""
+        A router implementation which maps each tokens to the top1 expert.
+        Reference: https://github.com/tensorflow/mesh/blob/master/mesh_tensorflow/transformer/moe.py
+
+        Args:
+            d_model (int): The hidden size of each token.
+            moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
+            training (bool): The value indicating whether is in training phase.
+            config: The parallel-related configuration.
+        Inputs:
+            - **input_tensor** (Tensor) - Tensor of shape :math:`(expert\_parallel, tokens\_per\_device,
+            hidden\_size)`.
+
+        Outputs:
+            Tensor of shape :math:`(expert\_parallel, tokens\_per\_device, expert\_dim, expert\_capacity)`,
+            Tensor of shape :math:`(expert\_parallel, tokens\_per\_device, expert\_dim, expert\_capacity)`,
+            Tensor of shape :math:`(1)`.
+    """
+    def __init__(self,
+                 d_model,
+                 moe_config,
+                 training=True,
+                 parallel_config=None):
+        super(SwitchRouter, self).__init__()
+        dp = parallel_config.data_parallel
+        self.d_model = d_model
+        self.expert_dim = moe_config.expert_num
+        self.capacity_factor = moe_config.capacity_factor
+        self.training = training
+        self.expert_parallel = dp
+        self.noisy_policy = moe_config.noisy_policy
+        self.cast = P.Cast()
+        self.reshape = P.Reshape()
+        self.shape = P.Shape()
+        self.softmax = P.Softmax(axis=-1).shard(((dp, 1, 1,),))
+        self.argmax = P.ArgMaxWithValue(axis=-1, keep_dims=False).shard(((dp, 1, 1),))
+
+        self.onehot = P.OneHot().shard(((dp, 1, 1), (), ()))
+        self.onehot2 = P.OneHot().shard(((dp, 1, 1), (), ()))
+        self.onehot3 = P.OneHot().shard(((dp, 1, 1, 1), (), ()))
+        self.on_value = Tensor(1.0, mstype.float32)
+        self.off_value = Tensor(0.0, mstype.float32)
+
+        self.reduce_mean = P.ReduceMean(keep_dims=False).shard(((dp, 1, 1),))
+        self.reduce_mean2 = P.ReduceMean(keep_dims=False).shard(((dp, 1, 1),))
+        self.reduce_mean3 = P.ReduceMean(keep_dims=False).shard(((dp, 1),))
+        self.mul = P.Mul().shard(((dp, 1), (dp, 1)))
+        self.mul2 = P.Mul().shard(((1,), ()))
+        self.mul3 = P.Mul().shard(((1,), ()))
+        self.mul4 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
+        self.mul5 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
+        self.mul6 = P.Mul().shard(((dp, 1), (dp, 1)))
+        self.mul7 = P.Mul().shard(((dp, 1), (dp, 1)))
+        self.mul8 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
+        self.mul9 = P.Mul().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
+
+        self.cumsum = _CumSum(config=parallel_config)
+        self.less = P.Less().shard(((dp, 1, 1), ()))
+        self.reduce_sum = P.ReduceSum(keep_dims=False).shard(((dp, 1, 1),))
+        self.expand = P.ExpandDims().shard(((dp, 1),))
+        self.expand2 = P.ExpandDims().shard(((dp, 1, 1),))
+
+    def _auxiliary_loss(self, expert_mask, router_prob):
+        """
+        Computing the load balance loss.
+        """
+        # density_1's shape: (self.expert_parallel, self.expert_dim)
+        density_1 = self.reduce_mean(expert_mask, 1)
+        # density_1_proxy's shape: (self.expert_parallel, self.expert_dim)
+        density_1_proxy = self.reduce_mean2(router_prob, 1)
+        loss = self.mul(density_1, density_1_proxy)
+        loss = self.reduce_mean3(loss)
+        loss = self.mul3(self.mul2(loss, self.expert_dim), self.expert_dim)
+        return loss
+
+    def _maskout_overflowed_tokens(self, expert_mask, expert_capacity, expert_gate):
+        """
+        Keeping only the tokens that fit within expert_capacity.
+        """
+        cumsum = self.cumsum(expert_mask)
+        # position_in_expert's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        position_in_expert = self.mul4(cumsum, expert_mask)
+        less_result = self.less(position_in_expert, expert_capacity)
+        # expert_mask's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        expert_mask = self.mul5(less_result, expert_mask)
+        # expert_mask_flat's shape: (self.expert_parallel, tokens_per_device)
+        expert_mask_flat = self.reduce_sum(expert_mask, -1)
+
+        # Mask out the experts that have overflowed the expert_capacity.
+        # expert_gate's shape: (self.expert_parallel, tokens_per_device)
+        expert_gate = self.mul6(expert_gate, expert_mask_flat)
+        return expert_gate, expert_mask_flat, position_in_expert
+
+
+    def construct(self, router_logits):
+        router_logits_shape = self.shape(router_logits)
+        router_logits = self.reshape(router_logits, (-1, router_logits_shape[-1]))
+        logits_shape = self.shape(router_logits)
+        tokens_per_device = logits_shape[0] / self.expert_parallel
+        expert_capacity = calculate_expert_capacity(1, tokens_per_device, self.capacity_factor, self.expert_dim)
+        router_logits = self.reshape(router_logits, (self.expert_parallel, tokens_per_device, self.expert_dim))
+        # Currently, lack of gumbel sampler for router_logits.
+
+        # Probabilities for each token of what expert is should be sent to
+        router_prob = self.softmax(router_logits)
+        # shape: (self.expert_parallel, tokens_per_device)
+        expert_index, expert_gate = self.argmax(router_prob)
+        # expert_mask's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        expert_mask = self.onehot(expert_index, self.expert_dim, self.on_value, self.off_value)
+
+        # Computing the load balance loss:
+        loss = self._auxiliary_loss(expert_mask, router_prob)
+
+        expert_gate, expert_mask_flat, position_in_expert = \
+            self._maskout_overflowed_tokens(expert_mask, expert_capacity, expert_gate)
+
+        # combine_tensor's shape: (self.expert_parallel, tokens_per_device)
+        combine_tensor = self.mul7(expert_gate, expert_mask_flat)
+        # combine_tensor's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        combine_tensor = self.mul8(self.expand(combine_tensor, -1),
+                                   self.onehot2(expert_index, self.expert_dim, self.on_value, self.off_value))
+        # combine_tensor's shape: (self.expert_parallel, tokens_per_device, self.expert_dim, self.expert_capacity)
+        combine_tensor = self.mul9(self.expand2(combine_tensor, -1),
+                                   self.onehot3(self.cast(position_in_expert, mstype.int32), expert_capacity,
+                                                self.on_value, self.off_value))
+        dispatch_tensor = self.cast(combine_tensor, mstype.bool_)
+        return dispatch_tensor, combine_tensor, loss
