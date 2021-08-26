@@ -66,7 +66,8 @@ bool PosixFileSystem::DeleteFile(const string &file_name) {
   }
   auto result = unlink(file_name.c_str());
   if (result != 0) {
-    MS_LOG(ERROR) << "Delete the file(" << file_name << ") is failed, error(" << errno << ").";
+    MS_LOG(ERROR) << "Delete the file(" << file_name << ") failed, error(" << errno
+                  << "). ErrInfo: " << strerror(errno);
     return false;
   }
   return true;
@@ -81,7 +82,8 @@ bool PosixFileSystem::CreateDir(const string &dir_name) {
   auto result = mkdir(dir_name.c_str(), DEFAULT_MKDIR_MODE);
   if (result != 0) {
     if (errno != EEXIST) {
-      MS_LOG(ERROR) << "Create the dir(" << dir_name << ") is failed, error(" << errno << ").";
+      MS_LOG(ERROR) << "Create the dir(" << dir_name << ") failed, error(" << errno
+                    << "). ErrInfo: " << strerror(errno);
       return false;
     }
   }
@@ -95,7 +97,7 @@ bool PosixFileSystem::DeleteDir(const string &dir_name) {
   }
   auto result = rmdir(dir_name.c_str());
   if (result != 0) {
-    MS_LOG(ERROR) << "Delete the dir(" << dir_name << ") is falire, error(" << errno << ").";
+    MS_LOG(ERROR) << "Delete the dir(" << dir_name << ") failed, error(" << errno << "). ErrInfo: " << strerror(errno);
     return false;
   }
   return true;
@@ -168,7 +170,8 @@ bool WinFileSystem::DeleteFile(const string &file_name) {
   }
   auto result = unlink(file_name.c_str());
   if (result != 0) {
-    MS_LOG(ERROR) << "Delete the file(" << file_name << ") is failed, error(" << errno << ").";
+    MS_LOG(ERROR) << "Delete the file(" << file_name << ") is failed, error(" << errno
+                  << "). ErrInfo: " << strerror(errno);
     return false;
   }
   return true;
@@ -191,7 +194,7 @@ bool WinWriteFile::Open() {
   // open the file
   file_ = fopen(path, "w+");
   if (file_ == nullptr) {
-    MS_LOG(ERROR) << "File(" << path << ") IO ERROR: " << errno << ".";
+    MS_LOG(ERROR) << "File(" << path << ") IO ERROR: " << errno << ". ErrInfo: " << strerror(errno);
     return false;
   }
   return true;
@@ -201,7 +204,7 @@ bool WinWriteFile::Write(const std::string &data) {
   MS_LOG(DEBUG) << "Write data(" << data.size() << ") to file(" << this->file_name_ << ").";
   size_t r = fwrite(data.data(), 1, data.size(), file_);
   if (r != data.size()) {
-    MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ".";
+    MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ". ErrInfo: " << strerror(errno);
     return false;
   }
   return true;
@@ -214,7 +217,7 @@ bool WinWriteFile::Close() {
   }
   bool result = true;
   if (fclose(file_) != 0) {
-    MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ".";
+    MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ". ErrInfo: " << strerror(errno);
     result = false;
   }
   file_ = nullptr;

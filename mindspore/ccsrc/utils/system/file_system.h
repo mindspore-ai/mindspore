@@ -153,7 +153,7 @@ class PosixWriteFile : public WriteFile {
     // open the file
     file_ = fopen(path, "w+");
     if (file_ == nullptr) {
-      MS_LOG(ERROR) << "File(" << path << ") IO ERROR: " << errno << ".";
+      MS_LOG(ERROR) << "File(" << path << ") IO ERROR: " << errno << ". ErrInfo: " << strerror(errno);
       return false;
     }
     return true;
@@ -163,7 +163,7 @@ class PosixWriteFile : public WriteFile {
     MS_LOG(DEBUG) << "Write data(" << data.size() << ") to file(" << this->file_name_ << ").";
     size_t r = fwrite(data.data(), 1, data.size(), file_);
     if (r != data.size()) {
-      MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ".";
+      MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ". ErrInfo: " << strerror(errno);
       return false;
     }
     return true;
@@ -176,7 +176,7 @@ class PosixWriteFile : public WriteFile {
     }
     bool result = true;
     if (fclose(file_) != 0) {
-      MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ".";
+      MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ". ErrInfo: " << strerror(errno);
       result = false;
     }
     file_ = nullptr;
@@ -185,7 +185,7 @@ class PosixWriteFile : public WriteFile {
 
   bool Flush() override {
     if (fflush(file_) != 0) {
-      MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << EBADF << ".";
+      MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << EBADF << ". ErrInfo: " << strerror(EBADF);
       return false;
     }
     return true;
