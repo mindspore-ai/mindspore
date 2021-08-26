@@ -358,11 +358,11 @@ class GradOperation(GradOperation_):
         grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
         if context.get_context("mode") == context.GRAPH_MODE:
             if self.get_by_list:
-                @ms_function(obj=fn)
+                @ms_function
                 def after_grad(*args):
                     return grad_(fn, weights)(*args)
             else:
-                @ms_function(obj=fn)
+                @ms_function
                 def after_grad(*args):
                     return grad_(fn)(*args)
         else:

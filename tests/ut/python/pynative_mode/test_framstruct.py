@@ -19,11 +19,12 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.api import ms_function
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.utils.check_gradient import (
-    ms_function, check_jacobian, Tensor, NNGradChecker,
+    check_jacobian, Tensor, NNGradChecker,
     OperationGradChecker, check_gradient)
 
 context.set_context(mode=context.PYNATIVE_MODE)
