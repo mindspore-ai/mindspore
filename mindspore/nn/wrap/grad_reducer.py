@@ -299,15 +299,11 @@ class DistributedGradReducer(Cell):
         >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
         >>> import numpy as np
         >>> from mindspore.communication import init
-        >>> from mindspore.ops import composite as C
-        >>> from mindspore.ops import operations as P
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> from mindspore import context
         >>> from mindspore.context import ParallelMode
         >>> from mindspore import Parameter, Tensor
         >>> from mindspore import nn
-        >>> from mindspore.nn.wrap.cell_wrapper import WithLossCell
-        >>> from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean)
         >>>
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>> init()
@@ -321,7 +317,7 @@ class DistributedGradReducer(Cell):
         ...         self.network.add_flags(defer_inline=True)
         ...         self.weights = optimizer.parameters
         ...         self.optimizer = optimizer
-        ...         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
+        ...         self.grad = ops.GradOperation(get_by_list=True, sens_param=True)
         ...         self.sens = sens
         ...         self.reducer_flag = False
         ...         self.grad_reducer = None
@@ -329,26 +325,26 @@ class DistributedGradReducer(Cell):
         ...         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
         ...             self.reducer_flag = True
         ...         if self.reducer_flag:
-        ...             mean = _get_gradients_mean()
-        ...             degree = _get_device_num()
+        ...             mean = context.get_auto_parallel_context("gradients_mean")
+        ...             degree = context.get_auto_parallel_context("device_num")
         ...             self.grad_reducer = nn.DistributedGradReducer(optimizer.parameters, mean, degree)
         ...
         ...     def construct(self, *args):
         ...         weights = self.weights
         ...         loss = self.network(*args)
-        ...         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
+        ...         sens = ops.Fill()(ops.DType()(loss), ops.Shape()(loss), self.sens)
         ...         grads = self.grad(self.network, weights)(*args, sens)
         ...         if self.reducer_flag:
         ...             # apply grad reducer on grads
         ...             grads = self.grad_reducer(grads)
-        ...         return F.depend(loss, self.optimizer(grads))
+        ...         return ops.Depend(loss, self.optimizer(grads))
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, in_features, out_features):
         ...         super(Net, self).__init__()
         ...         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
         ...                                 name='weight')
-        ...         self.matmul = P.MatMul()
+        ...         self.matmul = ops.MatMul()
         ...
         ...     def construct(self, x):
         ...         output = self.matmul(x, self.weight)
@@ -357,7 +353,7 @@ class DistributedGradReducer(Cell):
         >>> size, in_features, out_features = 16, 16, 10
         >>> network = Net(in_features, out_features)
         >>> loss = nn.MSELoss()
-        >>> net_with_loss = WithLossCell(network, loss)
+        >>> net_with_loss = nn.WithLossCell(network, loss)
         >>> optimizer = nn.Momentum(net_with_loss.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> train_cell = TrainingWrapper(net_with_loss, optimizer)
         >>> inputs = Tensor(np.ones([size, in_features]).astype(np.float32))
