@@ -47,12 +47,10 @@ void RollingCpuKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "min_periods should not less than 0, but got " << min_periods_;
   }
   center_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, CENTER);
-  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  auto axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  axis_ = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   closed_ = AnfAlgo::GetNodeAttr<std::string>(kernel_node, CLOSED);
-  if (axis_ < 0) {
-    axis_ += input_shape.size();
-  }
-  if ((axis_ < 0) || (axis_ >= static_cast<int64_t>(input_shape.size()))) {
+  if (axis_ >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "axis should be smaller than the dimension of input tensor " << input_shape.size()
                       << "D, but got " << axis_;
   }
@@ -64,14 +62,14 @@ void RollingCpuKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
 template <typename T, typename S>
 void RollingCpuKernel<T, S>::AxisCalculate(const std::vector<size_t> &input_shape) {
   outer_size_ = 1;
-  for (int i = 0; i < axis_; i++) {
+  for (size_t i = 0; i < axis_; i++) {
     outer_size_ *= input_shape[i];
   }
 
   axis_size_ = input_shape[axis_];
 
   inner_size_ = 1;
-  for (int i = axis_ + 1; i < static_cast<int>(input_shape.size()); ++i) {
+  for (size_t i = axis_ + 1; i < input_shape.size(); ++i) {
     inner_size_ *= input_shape[i];
   }
 }
@@ -84,8 +82,8 @@ void RollingCpuKernel<T, S>::RollingBoundsCalculate() {
   }
   starts_.resize(axis_size_);
   ends_.resize(axis_size_);
-  int start_offset = 0;
-  int end_offset = 0;
+  int start_offset = 1;
+  int end_offset = 1;
   if (closed_ == "left") {
     start_offset -= 1;
     end_offset -= 1;
@@ -94,11 +92,12 @@ void RollingCpuKernel<T, S>::RollingBoundsCalculate() {
   } else if (closed_ == "neither") {
     end_offset -= 1;
   }
-  for (int i = 0; i < axis_size_; ++i) {
-    int end = offset + i + 1;
-    int start = end - window_;
-    ends_[i] = std::max(0, std::min(end + end_offset, axis_size_));
-    starts_[i] = std::max(0, std::min(start + start_offset, axis_size_));
+  int axis_size = axis_size_;
+  for (size_t i = 0; i < axis_size_; ++i) {
+    int end = offset + i + end_offset;
+    int start = offset + i - window_ + start_offset;
+    ends_[i] = std::max(0, std::min(end, axis_size));
+    starts_[i] = std::max(0, std::min(start, axis_size));
   }
 }
 
@@ -106,9 +105,9 @@ template <typename T, typename S>
 void RollingCpuKernel<T, S>::MethodSwitch() {
   switch (method_) {
     case Method::Max:
-      reduceMethod_ = [this](const T *input_addr, int outer_offset, int w, int col) {
+      reduceMethod_ = [this](const T *input_addr, int outer_offset, size_t start, size_t end, int col) {
         T max_value = std::numeric_limits<T>::min();
-        for (int x = starts_[w]; x < ends_[w]; ++x) {
+        for (size_t x = start; x < end; ++x) {
           int index = outer_offset + x * inner_size_ + col;
           if (max_value < input_addr[index]) {
             max_value = input_addr[index];
@@ -118,9 +117,9 @@ void RollingCpuKernel<T, S>::MethodSwitch() {
       };
       break;
     case Method::Min:
-      reduceMethod_ = [this](const T *input_addr, int outer_offset, int w, int col) {
+      reduceMethod_ = [this](const T *input_addr, int outer_offset, size_t start, size_t end, int col) {
         T min_value = std::numeric_limits<T>::max();
-        for (int x = starts_[w]; x < ends_[w]; ++x) {
+        for (size_t x = start; x < end; ++x) {
           int index = outer_offset + x * inner_size_ + col;
           if (min_value > input_addr[index]) {
             min_value = input_addr[index];
@@ -130,9 +129,9 @@ void RollingCpuKernel<T, S>::MethodSwitch() {
       };
       break;
     case Method::Sum:
-      reduceMethod_ = [this](const T *input_addr, int outer_offset, int w, int col) {
+      reduceMethod_ = [this](const T *input_addr, int outer_offset, size_t start, size_t end, int col) {
         T sum = 0;
-        for (int x = starts_[w]; x < ends_[w]; ++x) {
+        for (size_t x = start; x < end; ++x) {
           int index = outer_offset + x * inner_size_ + col;
           sum += input_addr[index];
         }
@@ -140,27 +139,27 @@ void RollingCpuKernel<T, S>::MethodSwitch() {
       };
       break;
     case Method::Mean:
-      reduceMethod_ = [this](const T *input_addr, int outer_offset, int w, int col) {
+      reduceMethod_ = [this](const T *input_addr, int outer_offset, size_t start, size_t end, int col) {
         T sum = 0;
-        for (int x = starts_[w]; x < ends_[w]; ++x) {
+        for (size_t x = start; x < end; ++x) {
           int index = outer_offset + x * inner_size_ + col;
           sum += input_addr[index];
         }
-        return sum * 1.0 / (ends_[w] - starts_[w]);
+        return sum * 1.0 / (end - start);
       };
       break;
     case Method::Var:
-      reduceMethod_ = [this](const T *input_addr, int outer_offset, int w, int col) {
+      reduceMethod_ = [this](const T *input_addr, int outer_offset, size_t start, size_t end, int col) {
         // float for division
-        float n = ends_[w] - starts_[w];
+        float n = end - start;
         T sum1 = 0;
-        for (int x = starts_[w]; x < ends_[w]; ++x) {
+        for (size_t x = start; x < end; ++x) {
           int index = outer_offset + x * inner_size_ + col;
           sum1 += input_addr[index];
         }
         double mean = sum1 / n;
         double sum2 = 0;
-        for (int x = starts_[w]; x < ends_[w]; ++x) {
+        for (size_t x = start; x < end; ++x) {
           int index = outer_offset + x * inner_size_ + col;
           sum2 += (input_addr[index] - mean) * (input_addr[index] - mean);
         }
@@ -169,17 +168,17 @@ void RollingCpuKernel<T, S>::MethodSwitch() {
       };
       break;
     case Method::Std:
-      reduceMethod_ = [this](const T *input_addr, int outer_offset, int w, int col) {
+      reduceMethod_ = [this](const T *input_addr, int outer_offset, size_t start, size_t end, int col) {
         // float for division
-        float n = ends_[w] - starts_[w];
+        float n = end - start;
         T sum1 = 0;
-        for (int x = starts_[w]; x < ends_[w]; ++x) {
+        for (size_t x = start; x < end; ++x) {
           int index = outer_offset + x * inner_size_ + col;
           sum1 += input_addr[index];
         }
         double mean = sum1 / n;
         double sum2 = 0;
-        for (int x = starts_[w]; x < ends_[w]; ++x) {
+        for (size_t x = start; x < end; ++x) {
           int index = outer_offset + x * inner_size_ + col;
           sum2 += (input_addr[index] - mean) * (input_addr[index] - mean);
         }
@@ -203,27 +202,32 @@ bool RollingCpuKernel<T, S>::Launch(const std::vector<AddressPtr> &inputs, const
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<S *>(outputs[0]->addr);
 
-  for (int i = 0; i < outer_size_; ++i) {
+  std::vector<common::Task> tasks;
+  tasks.reserve(outer_size_ * inner_size_);
+  for (size_t i = 0; i < outer_size_; ++i) {
     int outer_offset = i * axis_size_ * inner_size_;
-    for (int col = 0; col < inner_size_; ++col) {
-      for (int w = 0; w < axis_size_; ++w) {
-        int result_offset = outer_offset + w * inner_size_ + col;
-        if (ends_[w] - starts_[w] < min_periods_) {
-          if constexpr (std::is_same_v<T, float>) {
-            output_addr[result_offset] = std::nanf("");
-          } else if constexpr (std::is_same_v<T, double>) {
-            output_addr[result_offset] = std::nan("");
+    for (size_t col = 0; col < inner_size_; ++col) {
+      tasks.emplace_back([this, outer_offset, col, input_addr, output_addr] {
+        for (size_t w = 0; w < axis_size_; ++w) {
+          int result_offset = outer_offset + w * inner_size_ + col;
+          if (ends_[w] - starts_[w] < LongToSize(min_periods_)) {
+            if constexpr (std::is_same_v<T, float>) {
+              output_addr[result_offset] = std::nanf("");
+            } else if constexpr (std::is_same_v<T, double>) {
+              output_addr[result_offset] = std::nan("");
+            } else {
+              // integer values not support nan
+              output_addr[result_offset] = 0;
+            }
           } else {
-            // integer values not support nan
-            output_addr[result_offset] = 0;
+            output_addr[result_offset] = reduceMethod_(input_addr, outer_offset, starts_[w], ends_[w], col);
           }
-        } else {
-          output_addr[result_offset] = reduceMethod_(input_addr, outer_offset, w, col);
         }
-      }
+        return common::SUCCESS;
+      });
     }
   }
-
+  common::ThreadPool::GetInstance().SyncRun(tasks);
   return true;
 }
 
