@@ -1,0 +1,62 @@
+enable_modelarts: 0
+
+# Url for modelarts
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+output_path: "/cache/train"
+
+# train datasets
+dataset_path: '/opt/npu/datasets/imagenet/train'
+train_image_size: 224
+interpolation: 'BILINEAR'
+crop_min: 0.05
+batch_size: 256
+train_num_workers: 14
+
+# eval datasets
+eval_path: '/opt/npu/datasets/imagenet/val'
+eval_image_size: 224
+eval_batch_size: 256
+eval_interval: 1
+eval_offset: -1
+eval_num_workers: 12
+
+# network
+backbone: 'vit_base_patch32'
+class_num: 1001
+vit_config_path: 'src.vit.VitConfig'
+pretrained: ''
+
+# lr
+lr_decay_mode: 'cosine'
+lr_init: 0.0
+lr_max: 0.00355
+lr_min: 0.0
+max_epoch: 300
+warmup_epochs: 40
+
+# optimizer
+opt: 'adamw'
+beta1: 0.9
+beta2: 0.999
+weight_decay: 0.05
+no_weight_decay_filter: "beta,bias"
+gc_flag: 0
+
+# loss
+loss_scale: 1024
+use_label_smooth: 1
+label_smooth_factor: 0.1
+mixup: 0.2
+autoaugment: 1
+loss_name: "ce_smooth_mixup"
+
+# ckpt
+save_checkpoint: 1
+save_checkpoint_epochs: 8
+keep_checkpoint_max: 3
+save_checkpoint_path: './outputs'
+
+# profiler
+open_profiler: 0

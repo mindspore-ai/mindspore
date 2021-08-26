@@ -1,0 +1,22 @@
+enable_modelarts: 0
+
+device_target: 'Ascend'
+device_id: 0
+
+# Url for modelarts
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+output_path: "/cache/train"
+
+file_name: 'vit_base_patch32.mindir'
+file_format: 'MINDIR'
+
+backbone: 'vit_base_patch32'
+train_image_size: 224
+class_num: 1001
+batch_size: 1
+vit_config_path: 'src.vit.VitConfig'
+
+# load model
+pretrained: './vit_base_patch32.ckpt'
