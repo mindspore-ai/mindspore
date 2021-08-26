@@ -49,13 +49,11 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   std::string correctOutputPath = "./test_data/out_castfp16.bin";
 
   MS_LOG(INFO) << " initialize param ";
-  auto param = reinterpret_cast<CastParameter *>(malloc(sizeof(CastParameter)));
+  auto param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
-    MS_LOG(INFO) << " new CastParameter failed ";
+    MS_LOG(INFO) << " new OpParameter failed ";
     return;
   }
-  param->src_type_ = kNumberTypeFloat32;
-  param->dst_type_ = kNumberTypeFloat16;
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
   auto correctOutput =
     reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
@@ -72,8 +70,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   std::vector<lite::Tensor *> inputs{input_tensor};
   std::vector<lite::Tensor *> outputs{output_tensor};
 
-  auto inner_kernel =
-    std::make_shared<kernel::CastOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
+  auto inner_kernel = std::make_shared<kernel::CastOpenCLKernel>(param, inputs, outputs, nullptr);
   if (inner_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
@@ -162,13 +159,11 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   std::string correctOutputPath = "./test_data/out_castfp32.bin";
 
   MS_LOG(INFO) << " initialize param ";
-  auto param = reinterpret_cast<CastParameter *>(malloc(sizeof(CastParameter)));
+  auto param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
-    MS_LOG(INFO) << " new CastParameter failed ";
+    MS_LOG(INFO) << " new OpParameter failed ";
     return;
   }
-  param->src_type_ = kNumberTypeFloat16;
-  param->dst_type_ = kNumberTypeFloat32;
   auto input_data = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
   auto correctOutput = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
 
@@ -184,8 +179,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   std::vector<lite::Tensor *> inputs{input_tensor};
   std::vector<lite::Tensor *> outputs{output_tensor};
 
-  auto inner_kernel =
-    std::make_shared<kernel::CastOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
+  auto inner_kernel = std::make_shared<kernel::CastOpenCLKernel>(param, inputs, outputs, nullptr);
   if (inner_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {

@@ -19,8 +19,10 @@ using mindspore::schema::PrimitiveType_Cast;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateCastParameter(const void *prim) {
+  if (prim == nullptr) {
+    return nullptr;
+  }
   auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
 
   auto *cast_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (cast_param == nullptr) {
@@ -30,7 +32,7 @@ OpParameter *PopulateCastParameter(const void *prim) {
   memset(cast_param, 0, sizeof(OpParameter));
 
   cast_param->type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(cast_param);
+  return cast_param;
 }
 
 REG_POPULATE(PrimitiveType_Cast, PopulateCastParameter, SCHEMA_CUR)
