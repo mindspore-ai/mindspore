@@ -58,13 +58,13 @@ constexpr int16_t kInputDataInt8Max = 127;
 constexpr int16_t kInputDataUint8Min = 0;
 constexpr int16_t kInputDataUint8Max = 254;
 
-const std::unordered_map<int, std::string> TYPE_ID_MAP{
+const std::unordered_map<int, std::string> kTypeIdMap{
   {kNumberTypeFloat16, "Float16"}, {kNumberTypeFloat, "Float32"},    {kNumberTypeFloat32, "Float32"},
   {kNumberTypeInt8, "Int8"},       {kNumberTypeInt16, "Int16"},      {kNumberTypeInt, "Int32"},
   {kNumberTypeInt32, "Int32"},     {kNumberTypeUInt8, "UInt8"},      {kNumberTypeUInt16, "UInt16"},
   {kNumberTypeUInt, "UInt32"},     {kNumberTypeUInt32, "UInt32"},    {kObjectTypeString, "String"},
   {kNumberTypeBool, "Bool"},       {kObjectTypeTensorType, "Tensor"}};
-const std::unordered_map<schema::Format, std::string> TENSOR_FORMAT_MAP{
+const std::unordered_map<schema::Format, std::string> kTensorFormatMap{
   {schema::Format_NCHW, "NCHW"}, {schema::Format_NHWC, "NHWC"},     {schema::Format_NHWC4, "NHWC4"},
   {schema::Format_HWKC, "HWKC"}, {schema::Format_HWCK, "HWCK"},     {schema::Format_KCHW, "KCHW"},
   {schema::Format_CKHW, "CKHW"}, {schema::Format_KHWC, "KHWC"},     {schema::Format_CHWK, "CHWK"},
@@ -270,7 +270,7 @@ int BenchmarkBase::InitDumpConfigFromJson(char *path) {
     return RET_ERROR;
   }
   if (dump_cfg_json_[dump::kSettings][dump::kNetName] == nullptr) {
-    dump_cfg_json_[dump::kSettings][dump::kNetName] = "Default";
+    dump_cfg_json_[dump::kSettings][dump::kNetName] = "default";
   }
   if (dump_cfg_json_[dump::kSettings][dump::kInputOutput] == nullptr) {
     dump_cfg_json_[dump::kSettings][dump::kInputOutput] = 0;

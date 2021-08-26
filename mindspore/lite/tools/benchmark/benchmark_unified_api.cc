@@ -722,8 +722,8 @@ std::string GenerateOutputFileName(mindspore::MSTensor *tensor, const std::strin
   for (const auto &dim : tensor->Shape()) {
     file_name += std::to_string(dim) + "_";
   }
-  if (TYPE_ID_MAP.find(static_cast<int>(tensor->DataType())) != TYPE_ID_MAP.end()) {
-    file_name += TYPE_ID_MAP.at(static_cast<int>(tensor->DataType()));
+  if (kTypeIdMap.find(static_cast<int>(tensor->DataType())) != kTypeIdMap.end()) {
+    file_name += kTypeIdMap.at(static_cast<int>(tensor->DataType()));
   }
 
   file_name += +".bin";

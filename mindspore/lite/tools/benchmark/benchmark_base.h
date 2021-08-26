@@ -59,8 +59,8 @@ constexpr const char *DELIM_COLON = ":";
 constexpr const char *DELIM_COMMA = ",";
 constexpr const char *DELIM_SLASH = "/";
 
-extern const std::unordered_map<int, std::string> TYPE_ID_MAP;
-extern const std::unordered_map<schema::Format, std::string> TENSOR_FORMAT_MAP;
+extern const std::unordered_map<int, std::string> kTypeIdMap;
+extern const std::unordered_map<schema::Format, std::string> kTensorFormatMap;
 
 //
 namespace dump {
