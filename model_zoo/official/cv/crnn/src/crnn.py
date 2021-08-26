@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +14,17 @@
 # ============================================================================
 """Warpctc network definition."""
 
+import math
 import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import Parameter
 from mindspore.common.initializer import TruncatedNormal
+from mindspore.common.initializer import initializer
 
 def _bn(channel):
     return nn.BatchNorm2d(channel, eps=1e-4, momentum=0.9, gamma_init=1, beta_init=0, moving_mean_init=0,
@@ -41,6 +44,46 @@ class Conv(nn.Cell):
             out = self.bn(out)
         out = self.Relu(out)
         return out
+
+class LSTMCPU(nn.Cell):
+    """Stacked LSTM (Long Short-Term Memory) layers for CPU"""
+    def __init__(self,
+                 input_size,
+                 hidden_size,
+                 num_layers=1,
+                 has_bias=True,
+                 dropout=0,
+                 bidirectional=False):
+        super(LSTMCPU, self).__init__()
+        self.transpose = P.Transpose()
+        self.num_layers = num_layers
+        self.bidirectional = bidirectional
+        self.dropout = dropout
+        self.lstm = P.LSTM(input_size=input_size,
+                           hidden_size=hidden_size,
+                           num_layers=num_layers,
+                           has_bias=has_bias,
+                           bidirectional=bidirectional,
+                           dropout=float(dropout))
+        weight_size = 0
+        gate_size = 4 * hidden_size
+        stdv = 1 / math.sqrt(hidden_size)
+        num_directions = 2 if bidirectional else 1
+
+        for layer in range(num_layers):
+            input_layer_size = input_size if layer == 0 else hidden_size * num_directions
+            increment_size = gate_size * input_layer_size
+            increment_size += gate_size * hidden_size
+            if has_bias:
+                increment_size += gate_size
+            weight_size += increment_size * num_directions
+        w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
+        self.weight = Parameter(initializer(Tensor(w_np), [weight_size, 1, 1]), name='weight')
+
+    def construct(self, x, hx):
+        h, c = hx
+        x, h, c, _, _ = self.lstm(x, h, c, self.weight)
+        return x, (h, c)
 
 class VGG(nn.Cell):
     """VGG Network structure"""
@@ -76,8 +119,10 @@ class BidirectionalLSTM(nn.Cell):
 
     def __init__(self, nIn, nHidden, nOut, batch_size):
         super(BidirectionalLSTM, self).__init__()
-
-        self.rnn = nn.LSTM(nIn, nHidden, bidirectional=True)
+        if context.get_context("device_target") == "CPU":
+            self.rnn = LSTMCPU(nIn, nHidden, bidirectional=True)
+        else:
+            self.rnn = nn.LSTM(nIn, nHidden, bidirectional=True)
         self.embedding = nn.Dense(in_channels=nHidden * 2, out_channels=nOut)
         self.h0 = Tensor(np.zeros([1 * 2, batch_size, nHidden]).astype(np.float32))
         self.c0 = Tensor(np.zeros([1 * 2, batch_size, nHidden]).astype(np.float32))

@@ -64,7 +64,7 @@ We provide `convert_ic03.py`, `convert_iiit5k.py`, `convert_svt.py` as exmples f
 ## [Environment Requirements](#contents)
 
 - Hardware
-    - Prepare hardware environment with Ascend processor or GPU.
+    - Prepare hardware environment with Ascend, GPU or CPU processor.
 - Framework
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
@@ -105,6 +105,16 @@ We provide `convert_ic03.py`, `convert_iiit5k.py`, `convert_svt.py` as exmples f
     $ bash scripts/run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] GPU
     ```
 
+    - Running on CPU
+
+    ```shell
+    # standalone training example in CPU
+    $ bash scripts/run_standalone_train_cpu.sh [DATASET_NAME] [DATASET_PATH]
+
+    # evaluation example in CPU
+    $ bash scripts/run_eval_cpu.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
+    ```
+
     DATASET_NAME is one of `ic03`, `ic13`, `svt`, `iiit5k`, `synth`.
 
     For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -142,9 +152,11 @@ crnn
 ├── convert_svt.py                              # Convert the original SVT dataset
 ├── requirements.txt                            # Requirements for this dataset
 ├── scripts
-│   ├── run_distribute_train.sh                 # Launch distributed training in Ascend(8 pcs)
-│   ├── run_eval.sh                             # Launch evaluation
-│   └── run_standalone_train.sh                 # Launch standalone training(1 pcs)
+│   ├── run_standalone_train_cpu.sh             # Launch standalone training in CPU
+│   ├── run_eval_cpu.sh                         # Launch evaluation in CPU
+│   ├── run_distribute_train.sh                 # Launch distributed training in Ascend or GPU(8 pcs)
+│   ├── run_eval.sh                             # Launch evaluation in Ascend or GPU
+│   └── run_standalone_train.sh                 # Launch standalone training in Ascend or GPU(1 pcs)
 ├── src
 │   ├── model_utils
 │       ├── config.py                           # Parameter config
@@ -172,11 +184,14 @@ crnn
 #### Training Script Parameters
 
 ```shell
-# distributed training
+# distributed training in Ascend or GPU
 Usage: bash scripts/run_distribute_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM] [RANK_TABLE_FILE](if Ascend)
 
-# standalone training
+# standalone training in Ascend or GPU
 Usage: bash scripts/run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM]
+
+# standalone training in CPU
+Usage: bash scripts/run_standalone_train_cpu.sh [DATASET_NAME] [DATASET_PATH]
 ```
 
 #### Parameters Configuration
@@ -218,6 +233,12 @@ max_text_length": 23,                     # max number of digits in each
 
 ``` bash
 bash scripts/run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM](optional)
+```
+
+- Or run `run_standalone_train_cpu.sh` for non-distributed training of CRNN model in CPU.
+
+``` bash
+bash scripts/run_standalone_train_cpu.sh [DATASET_NAME] [DATASET_PATH]
 ```
 
 #### [Distributed Training](#contents)
@@ -296,6 +317,8 @@ Epoch time: 2743.688s, per step time: 0.097s
 
 ``` bash
 bash scripts/run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM](optional)
+
+bash scripts/run_eval_cpu.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 Check the `eval/log.txt` and you will get outputs as following:
@@ -313,7 +336,7 @@ You can add `run_eval` to start shell and set it True.You need also add `eval_da
 ### [Export MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --device_target [DEVICE_TARGET] --model_version [MODEL_VERSION](required for cpu)
 ```
 
 The ckpt_file parameter is required,
