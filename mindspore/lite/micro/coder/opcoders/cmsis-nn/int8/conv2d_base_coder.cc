@@ -37,6 +37,7 @@ int Conv2DBaseCoder::SetQuantArgs() {
       // quantization dimension (channels_out).
       MS_CHECK_TRUE(conv_quant_arg_->filter_arg_num_ == static_cast<size_t>(channel), "quant num not match");
       const auto filter_scale = static_cast<double>(filter_quant_args[i].scale_);
+      MS_CHECK_TRUE(output_scale > 0, "output_scale should larger than 0.");
       const double effective_output_scale = input_scale * filter_scale / output_scale;
       QuantizeMultiplier(effective_output_scale, &significand, &channel_shift);
       output_mult_[i] = significand;
@@ -45,6 +46,7 @@ int Conv2DBaseCoder::SetQuantArgs() {
   } else {
     // broadcast multiplier and shift to all array if per-tensor
     const auto filter_scale = static_cast<double>(filter_quant_args[0].scale_);
+    MS_CHECK_TRUE(output_scale > 0, "output_scale should larger than 0.");
     const double effective_output_scale = input_scale * filter_scale / output_scale;
     QuantizeMultiplier(effective_output_scale, &significand, &channel_shift);
     for (int i = 0; i < channel; ++i) {

@@ -15,6 +15,7 @@
  */
 
 #include "coder/opcoders/base/detection_post_process_base_coder.h"
+#include "mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/op_base.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
@@ -44,6 +45,7 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
   Tensor *anchor_tensor = input_tensors_.at(kIndexSecond);
   MS_CHECK_PTR(anchor_tensor);
   if (anchor_tensor->data_type() == kNumberTypeInt8) {
+    MS_CHECK_TRUE(!anchor_tensor->quant_params().empty(), "anchor_tensor quant params cannot be empty.");
     LiteQuantParam quant_param = anchor_tensor->quant_params().at(0);
     auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->data_c());
     MS_CHECK_PTR(anchor_int8);
@@ -54,6 +56,7 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
                            anchor_tensor->ElementsNum());
     params_->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeUInt8) {
+    MS_CHECK_TRUE(!anchor_tensor->quant_params().empty(), "anchor_tensor quant params cannot be empty.");
     LiteQuantParam quant_param = anchor_tensor->quant_params().front();
     auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->data_c());
     MS_CHECK_PTR(anchor_uint8);
@@ -128,6 +131,8 @@ int DetectionPostProcessBaseCoder::DoCode(CoderContext *const context) {
 
   Serializer code;
   MS_CHECK_RET_CODE(GetInputData(context, &code), "GetInputData failed");
+  MS_CHECK_TRUE(output_tensors_.size() > kIndexThird,
+                "detection post process outputs size should equal or larger than 4.");
   Tensor *output_boxes = output_tensors_.at(0);
   Tensor *output_classes = output_tensors_.at(1);
   Tensor *output_scores = output_tensors_.at(kIndexSecond);

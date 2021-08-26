@@ -33,7 +33,7 @@ class StridedSliceBaseCoder final : public OperatorCoder {
 
  private:
   int ReSize();
-  void InitFastRunParam();
+  int InitFastRunParam();
   bool MatchFastPattern();
   int DoNormalCode(CoderContext *ctx);
   int DoFastCode(CoderContext *ctx);

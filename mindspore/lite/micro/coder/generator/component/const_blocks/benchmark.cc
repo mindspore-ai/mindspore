@@ -173,6 +173,7 @@ int main(int argc, const char **argv) {
   }
   int ret = ReadInputsFile(const_cast<char *>(argv[1]), inputs_binbuf, inputs_size, inputs_num);
   if (ret != lite::RET_OK) {
+    delete session;
     return lite::RET_ERROR;
   }
   for (size_t i = 0; i < inputs_num; ++i) {
@@ -187,6 +188,7 @@ int main(int argc, const char **argv) {
     for (int i = 0; i < loop_count; ++i) {
       ret = session->RunGraph();
       if (ret != lite::RET_OK) {
+        delete session;
         return lite::RET_ERROR;
       }
     }
@@ -196,6 +198,7 @@ int main(int argc, const char **argv) {
   }
   ret = session->RunGraph();
   if (ret != lite::RET_OK) {
+    delete session;
     return lite::RET_ERROR;
   }
 
@@ -210,14 +213,19 @@ int main(int argc, const char **argv) {
   if (argc >= 5) {
     lite::Calibrator *calibrator = new (std::nothrow) lite::Calibrator();
     if (calibrator == nullptr) {
+      delete session;
       return lite::RET_NULL_PTR;
     }
     ret = calibrator->ReadCalibData(argv[4]);
     if (ret != lite::RET_OK) {
+      delete session;
+      delete calibrator;
       return lite::RET_ERROR;
     }
     ret = calibrator->CompareOutputs(outputs);
     if (ret != lite::RET_OK) {
+      delete session;
+      delete calibrator;
       return lite::RET_ERROR;
     }
     delete calibrator;
