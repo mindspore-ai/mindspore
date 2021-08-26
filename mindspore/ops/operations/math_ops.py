@@ -2734,7 +2734,7 @@ class TruncateDiv(_MathBinaryOp):
 
 
 class TruncateMod(_MathBinaryOp):
-    """
+    r"""
     Returns the remainder of division element-wise.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
@@ -2749,7 +2749,7 @@ class TruncateMod(_MathBinaryOp):
         - When NUM exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as (D1,D2... ,Dn), then D1*D2... *DN<=1000000,n<=8.
+        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
@@ -2778,7 +2778,7 @@ class TruncateMod(_MathBinaryOp):
 
 
 class Mod(_MathBinaryOp):
-    """
+    r"""
     Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
@@ -2795,7 +2795,7 @@ class Mod(_MathBinaryOp):
         - When NUM exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as (D1,D2... ,Dn), then D1*D2... *DN<=1000000,n<=8.
+        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
 
     Inputs:
         - **x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
@@ -2873,7 +2873,7 @@ class Floor(PrimitiveWithInfer):
 
 
 class FloorMod(_MathBinaryOp):
-    """
+    r"""
     Computes the remainder of division element-wise. It's a flooring divide.
     E.g. :math:`floor(x / y) * y + mod(x, y) = x`.
 
@@ -2895,7 +2895,7 @@ class FloorMod(_MathBinaryOp):
         - When NUM exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as (D1,D2... ,Dn), then D1*D2... *DN<=1000000,n<=8.
+        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number or
