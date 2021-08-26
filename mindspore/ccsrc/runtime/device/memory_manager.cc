@@ -177,7 +177,8 @@ bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList ad
     return false;
   }
   if (addr_list.size() != device_ptr_list.size()) {
-    MS_LOG(EXCEPTION) << "The size of device list is not equal to the size of address list.";
+    MS_LOG(EXCEPTION) << "The size of device list " << addr_list.size() << " is not equal to the size of address list "
+                      << device_ptr_list.size();
   }
   for (size_t i = 0; i < addr_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(device_ptr_list[i]);

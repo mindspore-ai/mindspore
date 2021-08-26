@@ -425,7 +425,7 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
 
   const std::vector<CNodePtr> &orders = kernel_graph_ptr->execution_order();
   if (orders.empty()) {
-    MS_LOG(EXCEPTION) << "graph execution order is empty";
+    MS_LOG(EXCEPTION) << "graph " << kernel_graph_ptr->graph_id() << " execution order is empty";
   }
 
   std::vector<CNodePtr> exec_order;
@@ -571,7 +571,7 @@ CNodePtr KernelAdjust::CreateStreamSwitchOp(const std::shared_ptr<session::Kerne
   } else if (kind == kGetNextStreamSwitch || kind == kIndependentStreamSwitch) {
     inputs.push_back(switch_loop_input.at(kNextLoopCountParamName));
   } else {
-    MS_LOG(ERROR) << "unknown stream switch kind";
+    MS_LOG(ERROR) << "unknown stream switch kind: " << kind;
   }
 
   inputs.push_back(switch_loop_input.at(kIterLoopParamName));
@@ -826,7 +826,7 @@ void KernelAdjust::InsertProfilingKernel(const ProfilingTraceInfo &profiling_tra
   std::vector<CNodePtr> new_cnode_list;
   std::vector<CNodePtr> cnode_ptr_list = kernel_graph_ptr->execution_order();
   if (cnode_ptr_list.empty()) {
-    MS_LOG(ERROR) << "No CNode in graph";
+    MS_LOG(ERROR) << "No CNode in graph " << kernel_graph_ptr->graph_id();
     return;
   }
   for (const auto &cnode_ptr : cnode_ptr_list) {

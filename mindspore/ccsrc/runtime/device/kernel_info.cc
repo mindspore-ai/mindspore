@@ -24,7 +24,7 @@ kernel::KernelBuildInfoPtr KernelInfo::GetMutableSelectKernelBuildInfo() const {
 
 const DeviceAddress *KernelInfo::GetOutputAddr(size_t index) const {
   if (index >= output_address_list_.size()) {
-    MS_LOG(ERROR) << "Index [" << index << "] out of range";
+    MS_LOG(ERROR) << "Index [" << index << "] out of range 0~" << output_address_list_.size() - 1;
     return nullptr;
   }
   return output_address_list_[index].get();
@@ -101,7 +101,7 @@ bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t
     }
   }
   if (index >= workspace_address_list_.size()) {
-    MS_LOG(ERROR) << "Index" << index << " out of range";
+    MS_LOG(ERROR) << "Index [" << index << "] out of range";
     return false;
   }
   workspace_address_list_[index] = output_address;

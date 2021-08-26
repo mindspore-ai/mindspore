@@ -141,8 +141,6 @@ class AscendStreamAssign {
                                   const std::set<uint32_t> &independent_streams);
   void ActiveOtherGraphParallel(const NotNull<KernelGraphPtr> &graph_ptr,
                                 std::map<uint32_t, std::set<uint32_t>> other_graph);
-  void UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &switch_ptr,
-                          vector<CNodePtr> *orders);
   bool CheckStreamSwitch(const CNodePtr &switch_ptr);
   void InsertEventForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertCtrlForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);

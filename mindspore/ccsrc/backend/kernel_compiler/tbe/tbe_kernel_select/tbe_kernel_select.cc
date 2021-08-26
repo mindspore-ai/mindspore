@@ -96,7 +96,7 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
   size_t real_output_tensor_num = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
   const auto outputs_info = op_info.outputs_ptr();
   if (inputs_info.empty() && outputs_info.empty()) {
-    MS_LOG(EXCEPTION) << "op info input & output is null, please check.";
+    MS_LOG(EXCEPTION) << AnfAlgo::GetCNodeName(cnode_ptr_) << "'s op info input & output is null, please check.";
   }
   // create kernel build info from opinfo
   size_t kernel_build_info_num =

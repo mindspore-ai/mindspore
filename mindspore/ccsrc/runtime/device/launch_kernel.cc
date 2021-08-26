@@ -44,7 +44,8 @@ std::vector<kernel::AddressPtr> LaunchKernel::ObtainKernelInputs(const std::vect
                                                                  const std::vector<uint8_t *> &inputs_addr) {
   std::vector<kernel::AddressPtr> kernel_inputs;
   if (inputs_list.size() != inputs_addr.size()) {
-    MS_LOG(ERROR) << "input_list size should equal to input_addr_ size";
+    MS_LOG(ERROR) << "input_list size should equal to input_addr_ size, input_list size: " << inputs_list.size()
+                  << ", input_addr_ size: " << inputs_addr.size();
   }
   for (size_t i = 0; i < inputs_list.size(); ++i) {
     auto input_size = AlignSizeForLaunchKernel(inputs_list[i]);
