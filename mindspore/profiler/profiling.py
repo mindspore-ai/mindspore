@@ -649,6 +649,10 @@ class Profiler:
 
     def _get_output_path(self, kwargs):
         """Get output path of profiling data."""
+        if os.getenv("MS_DIAGNOSTIC_DATA_PATH") and kwargs.get("output_path") is not None:
+            logger.warning("Both parameter output_path and environment variable MS_DIAGNOSTIC_DATA_PATH"
+                           " have values set, and the profiling data saving path is the value set "
+                           "in parameter output_path")
         if kwargs.get("output_path") is None:
             if "output_path" in kwargs:
                 kwargs.pop("output_path")
@@ -690,7 +694,7 @@ class Profiler:
             raise ImportError(err)
         logger.info("Parse hccl info successfully.")
         logger.info("Start analyse hccl info.")
-        hccl_parse = HcclParser(hccl_path, self._dev_id, self._output_path)
+        hccl_parse = HcclParser(hccl_path, self._dev_id, self._rank_id, self._output_path)
         hccl_parse.parse()
         logger.info("Analyse hccl info successfully.")
 

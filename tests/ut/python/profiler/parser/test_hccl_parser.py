@@ -49,7 +49,7 @@ class TestHcclParser:
         )
         shutil.copyfile(os.path.join(PROFILER_DIR, 'step_trace_raw_6_detail_time.csv'),
                         os.path.join(self._output_path, 'step_trace_raw_6_detail_time.csv'))
-        self._parser = HcclParser(os.path.join(PROFILER_DIR, 'hccl_info'), '6', self._output_path)
+        self._parser = HcclParser(os.path.join(PROFILER_DIR, 'hccl_info'), '6', '6', self._output_path)
 
     def teardown_method(self) -> None:
         """Clear up after test case execution."""
