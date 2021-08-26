@@ -31,6 +31,7 @@ void AvgPoolingFp16Grad(const float16_t *input_ptr, float16_t *output_ptr, int c
   int output_w = pooling_param->output_w_;
   int output_h = pooling_param->output_h_;
 
+  NNACL_CHECK_ZERO_RETURN(win_h * win_w);
   const float16_t kk = 1.0f / (float16_t)(win_h * win_w);
 #if ENABLE_NEON
   const float16x4_t factor = vdup_n_f16(kk);

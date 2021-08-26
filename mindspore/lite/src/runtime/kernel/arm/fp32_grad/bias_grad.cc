@@ -43,6 +43,11 @@ int BiasGradCPUKernel::ReSize() {
 }
 
 int BiasGradCPUKernel::Init() {
+  CHECK_NULL_RETURN(bias_param);
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -52,7 +57,8 @@ int BiasGradCPUKernel::Init() {
 int BiasGradCPUKernel::Execute(int task_id) {
   auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-
+  CHECK_NULL_RETURN(in);
+  CHECK_NULL_RETURN(out);
   size_t nhw_size = 1;
   size_t channels = bias_param->in_shape0_[bias_param->ndim_ - 1];  // C in NHWC
   for (unsigned int i = 0; i < bias_param->ndim_ - 1; i++) {
@@ -71,6 +77,7 @@ int BiasGradCPUKernel::Execute(int task_id) {
 }
 
 int BiasGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto bias_kernel = reinterpret_cast<BiasGradCPUKernel *>(cdata);
   auto error_code = bias_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -92,7 +99,6 @@ int BiasGradCPUKernel::Run() {
 kernel::InnerKernel *CpuBiasGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                   const lite::Context *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BiasAddGrad);
   auto *kernel =
     new (std::nothrow) BiasGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

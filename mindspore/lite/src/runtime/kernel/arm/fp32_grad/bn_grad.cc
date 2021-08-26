@@ -54,7 +54,21 @@ int BNGradCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int BNGradCPUKernel::Init() { return ReSize(); }
+int BNGradCPUKernel::Init() {
+  CHECK_NULL_RETURN(op_parameter_);
+  CHECK_LESS_RETURN(in_tensors_.size(), 6);
+  CHECK_LESS_RETURN(out_tensors_.size(), 3);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(in_tensors_[2]);
+  CHECK_NULL_RETURN(in_tensors_[3]);
+  CHECK_NULL_RETURN(in_tensors_[4]);
+  CHECK_NULL_RETURN(in_tensors_[5]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[2]);
+  return ReSize();
+}
 
 int BNGradCPUKernel::Execute(int task_id) {
   auto *input_yt = in_tensors_.at(0);
@@ -72,7 +86,9 @@ int BNGradCPUKernel::Execute(int task_id) {
   int stage = stage_;
   int thread_num = thread_num_;
   float *save_mean = reinterpret_cast<float *>(input_mean->MutableData());
+  CHECK_NULL_RETURN(save_mean);
   float *save_var = reinterpret_cast<float *>(input_var->MutableData());
+  CHECK_NULL_RETURN(save_var);
 
   auto *output_dx = out_tensors_.at(0);
   auto *output_scale = out_tensors_.at(1);
@@ -82,14 +98,21 @@ int BNGradCPUKernel::Execute(int task_id) {
   int32_t spatial = input_x->Height() * input_x->Width();
 
   float *workspace_temp = static_cast<float *>(workspace());
+  CHECK_NULL_RETURN(workspace_temp);
   float *dxhat_sum = workspace_temp;
   float *dxhathat_sum = dxhat_sum + channels;
   float *x = reinterpret_cast<float *>(input_x->MutableData());
+  CHECK_NULL_RETURN(x);
   float *yt = reinterpret_cast<float *>(input_yt->MutableData());
+  CHECK_NULL_RETURN(yt);
   float *scale = reinterpret_cast<float *>(input_scale->MutableData());
+  CHECK_NULL_RETURN(scale);
   float *dx = reinterpret_cast<float *>(output_dx->MutableData());
+  CHECK_NULL_RETURN(dx);
   float *dbias = reinterpret_cast<float *>(output_bias->MutableData());
+  CHECK_NULL_RETURN(dbias);
   float *dscale = reinterpret_cast<float *>(output_scale->MutableData());
+  CHECK_NULL_RETURN(dscale);
   int total = spatial * batch;
   int stride = UP_DIV(total, thread_num);
   int count = MSMIN(stride, total - stride * task_id);
@@ -132,7 +155,7 @@ int BNGradCPUKernel::Execute(int task_id) {
 }
 
 int BNGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto bn_kernel = reinterpret_cast<BNGradCPUKernel *>(cdata);
   auto error_code = bn_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -169,7 +192,6 @@ int BNGradCPUKernel::Run() {
 kernel::InnerKernel *CpuBNGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BatchNormGrad);
   auto *kernel =
     new (std::nothrow) BNGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

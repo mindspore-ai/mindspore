@@ -29,18 +29,25 @@ using mindspore::schema::PrimitiveType_NegGrad;
 namespace mindspore::kernel {
 namespace {
 int NegGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<NegGradCPUKernel *>(cdata);
-  MS_ASSERT(kernel != nullptr);
   return kernel->DoNegGrad(task_id);
 }
 }  // namespace
 
-int NegGradCPUKernel::Init() { return RET_OK; }
+int NegGradCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
+  return RET_OK;
+}
 
 int NegGradCPUKernel::DoNegGrad(int task_id) {
   auto dy = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto dx = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(dy);
+  CHECK_NULL_RETURN(dx);
   int length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);

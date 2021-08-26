@@ -33,7 +33,7 @@ void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr,
   for (int i = axis + 1; i < n_dim; i++) {
     inner_size *= input_shape[i];
   }
-
+  NNACL_CHECK_ZERO_RETURN(outter_size);
   for (int i = 0; i < inner_size * input_shape[axis]; i++) sum_mul[i] = 1.0;
   for (int i = 0; i < n_dim; i++) dim *= input_shape[i];
   dim /= outter_size;

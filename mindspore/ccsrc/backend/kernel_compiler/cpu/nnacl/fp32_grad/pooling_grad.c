@@ -30,7 +30,7 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, const 
   int in_h = pooling_param->input_h_;
   int output_w = pooling_param->output_w_;
   int output_h = pooling_param->output_h_;
-
+  NNACL_CHECK_ZERO_RETURN(win_h * win_w);
   const float kk = 1.0f / (float)(win_h * win_w);
 #if ENABLE_ARM
   const float32x4_t factor = vdupq_n_f32(kk);

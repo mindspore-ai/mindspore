@@ -59,17 +59,17 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(ins);
   auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(labels);
   float *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(out);
   float *grads = nullptr;
   if (IsTrain() && out_tensors_.size() > 1) {
     grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
   }
   size_t data_size = in_tensors_.at(0)->ElementsNum();
 
-  MS_ASSERT(out != nullptr);
-  MS_ASSERT(labels != nullptr);
-  MS_ASSERT(ins != nullptr);
   float *losses_ = static_cast<float *>(workspace());
   float *sum_data_ = losses_ + data_size;
   std::fill(losses_, losses_ + data_size, 0);
@@ -80,6 +80,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
 }
 
 int SoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto softmax_kernel = reinterpret_cast<SoftmaxCrossEntropyWithLogitsCPUKernel *>(cdata);
   auto error_code = softmax_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -99,6 +100,12 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
 }
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
+  CHECK_NULL_RETURN(param_);
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   auto dims = in_tensors_.at(0)->shape();
   param_->n_dim_ = 2;
   param_->number_of_classes_ = dims.at(1);

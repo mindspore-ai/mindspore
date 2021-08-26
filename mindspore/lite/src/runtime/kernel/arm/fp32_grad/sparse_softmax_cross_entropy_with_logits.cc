@@ -33,6 +33,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
                                                                      float *output) const {
   float total_loss = 0;
+  MS_CHECK_GT(param->batch_size_, 0, RET_ERROR);
   for (int i = 0; i < param->batch_size_; ++i) {
     if (labels[i] < 0) {
       MS_LOG(ERROR) << "label value must >= 0";
@@ -52,6 +53,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *labels, const float *losses,
                                                                   float *grads) const {
+  MS_CHECK_GT(param->batch_size_, 0, RET_ERROR);
   size_t row_start = 0;
   for (int i = 0; i < param->batch_size_; ++i) {
     if (labels[i] < 0) {
@@ -80,13 +82,14 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *lab
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   auto sce_param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(op_parameter_);
   auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(ins);
   auto labels = reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
+  CHECK_NULL_RETURN(labels);
   float *out = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(out);
   size_t data_size = in_tensors_.at(0)->ElementsNum();
-  MS_ASSERT(out != nullptr);
-  MS_ASSERT(labels != nullptr);
-  MS_ASSERT(ins != nullptr);
   float *losses = static_cast<float *>(workspace());
+  CHECK_NULL_RETURN(losses);
   float *sum_data = losses + data_size;
   int length = sm_params_.input_shape_[sm_params_.axis_];
   int stride = UP_DIV(outter_size_, threads_);
@@ -111,6 +114,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto sparse_kernel = reinterpret_cast<SparseSoftmaxCrossEntropyWithLogitsCPUKernel *>(cdata);
   auto error_code = sparse_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -127,8 +131,10 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   const int *input_shape = sm_params_.input_shape_;
   int inner_size = 1;
   int outter_size = 1;
+  CHECK_NULL_RETURN(in_tensors_.at(0));
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   float *losses = static_cast<float *>(workspace());
+  CHECK_NULL_RETURN(losses);
   float *sum_data = losses + data_size;
   std::fill(losses, losses + data_size, 0.f);
   std::fill(sum_data, sum_data + sm_params_.input_shape_[0], 0.f);
@@ -154,11 +160,18 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   auto dims = in_tensors_.at(0)->shape();
   param->n_dim_ = 2;
   param->number_of_classes_ = dims.at(1);
   param->batch_size_ = dims.at(0);
-  for (unsigned int i = 0; i < dims.size(); i++) param->input_shape_[i] = dims.at(i);
+  for (unsigned int i = 0; i < dims.size(); i++) {
+    param->input_shape_[i] = dims.at(i);
+  }
   if (this->in_tensors_.size() != 2) {
     MS_LOG(ERROR) << "sparse softmax entropy loss should have two inputs";
     return RET_ERROR;
@@ -173,8 +186,9 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
   sm_params_.n_dim_ = 2;
   sm_params_.element_size_ = static_cast<int>(data_size);
   sm_params_.axis_ = 1;
-  for (size_t i = 0; i < dims.size(); i++) sm_params_.input_shape_[i] = dims.at(i);
-
+  for (size_t i = 0; i < dims.size(); i++) {
+    sm_params_.input_shape_[i] = dims.at(i);
+  }
   return RET_OK;
 }
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseSoftmaxCrossEntropyWithLogits,

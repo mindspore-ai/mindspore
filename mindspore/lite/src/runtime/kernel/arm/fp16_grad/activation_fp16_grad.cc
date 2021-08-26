@@ -34,6 +34,12 @@ int ActivationGradCPUKernelFp16::Init() {
     MS_LOG(ERROR) << "ActivationGrad should have 2 input tensors";
     return RET_ERROR;
   }
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_NULL_RETURN(param_act_grad_);
   return RET_OK;
 }
 
@@ -41,8 +47,11 @@ int ActivationGradCPUKernelFp16::ReSize() { return RET_OK; }
 
 int ActivationGradCPUKernelFp16::DoActivation(int task_id) {
   auto yt_addr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(yt_addr);
   auto input_addr = reinterpret_cast<float16_t *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(input_addr);
   auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(output_addr);
   int length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);
@@ -83,7 +92,7 @@ int ActivationGradCPUKernelFp16::DoActivation(int task_id) {
 }
 
 int ActivationGradRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto activationGrad_kernel = reinterpret_cast<ActivationGradCPUKernelFp16 *>(cdata);
   auto error_code = activationGrad_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {

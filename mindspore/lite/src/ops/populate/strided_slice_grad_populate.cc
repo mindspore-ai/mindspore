@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   auto value = primitive->value_as_StridedSliceGrad();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";

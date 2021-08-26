@@ -18,6 +18,7 @@
 
 int UnsortedSegmentSumFp16(const float16_t *input, int unit_num, int input_dim1, const int *indices, float16_t *output,
                            int output_dim0, int output_dim1) {
+  NNACL_CHECK_ZERO_RETURN_ERR(input_dim1);
   for (int i = 0; i < unit_num; ++i) {
     int j = i / input_dim1;
     int k = i % input_dim1;

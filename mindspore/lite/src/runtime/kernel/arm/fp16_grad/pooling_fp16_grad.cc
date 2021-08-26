@@ -35,6 +35,14 @@ constexpr int kNumShapeDim_2 = 2;
 }  // namespace
 int PoolingGradCPUKernelFp16::ReSize() {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(pool_param);
+  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_2));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
+
   auto in_shape = in_tensors_.at(0)->shape();
   auto out_shape = in_tensors_.at(1)->shape();
   if (pool_param->pool_mode_ == PoolMode_AvgPool) {
@@ -62,7 +70,9 @@ int PoolingGradCPUKernelFp16::Init() { return ReSize(); }
 int PoolingGradCPUKernelFp16::Execute(int task_id) {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(input_ptr);
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(output_ptr);
   int stride = UP_DIV(pool_param->output_batch_, thread_num_);
   int count = MSMIN(stride, pool_param->output_batch_ - stride * task_id);
   if (count > 0) {
@@ -84,7 +94,7 @@ int PoolingGradCPUKernelFp16::Execute(int task_id) {
 }
 
 int PoolingFp16GradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto pooling = reinterpret_cast<PoolingGradCPUKernelFp16 *>(cdata);
   auto error_code = pooling->Execute(task_id);
   if (error_code != RET_OK) {

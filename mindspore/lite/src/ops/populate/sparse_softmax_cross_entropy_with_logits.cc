@@ -21,8 +21,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateSparseSoftmaxCrossEntropyWithLogitsParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-
+  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   auto *param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";

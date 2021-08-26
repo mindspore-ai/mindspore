@@ -30,6 +30,8 @@ namespace mindspore::kernel {
 constexpr static int kMaxDim = 4;
 
 int BiasGradCPUKernelFp16::ReSize() {
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   auto dims = in_tensors_[0]->shape();
   bias_param->ndim_ = dims.size();
   for (unsigned int i = 0; i < bias_param->ndim_; i++) {
@@ -45,6 +47,9 @@ int BiasGradCPUKernelFp16::ReSize() {
 }
 
 int BiasGradCPUKernelFp16::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(bias_param);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -54,7 +59,8 @@ int BiasGradCPUKernelFp16::Init() {
 int BiasGradCPUKernelFp16::Execute(int task_id) {
   auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
-
+  CHECK_NULL_RETURN(in);
+  CHECK_NULL_RETURN(out);
   size_t nhw_size = 1;
   size_t channels = bias_param->in_shape0_[bias_param->ndim_ - 1];  // C in NHWC
   for (unsigned int i = 0; i < bias_param->ndim_ - 1; i++) {
@@ -74,6 +80,7 @@ int BiasGradCPUKernelFp16::Execute(int task_id) {
 }
 
 int BiasGradFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto bias_kernel = reinterpret_cast<BiasGradCPUKernelFp16 *>(cdata);
   auto error_code = bias_kernel->Execute(task_id);
   if (error_code != RET_OK) {

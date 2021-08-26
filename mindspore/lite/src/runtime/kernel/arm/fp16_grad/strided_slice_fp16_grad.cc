@@ -34,9 +34,13 @@ int StridedSliceGradCPUKernelFp16::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   param_ = reinterpret_cast<StridedSliceParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param_);
   auto input = in_tensors_.at(0);
-  MS_ASSERT(input);
+  CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   switch (input->data_type()) {
     case kNumberTypeFloat16:
       param_->data_type = kDataTypeFloat16;
@@ -111,7 +115,7 @@ void StridedSliceGradCPUKernelFp16::FillOutputDim() {
 int StridedSliceGradCPUKernelFp16::ReSize() { return RET_OK; }
 
 int StridedSliceFp16GradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto slice = reinterpret_cast<StridedSliceGradCPUKernelFp16 *>(cdata);
   auto error_code = slice->Execute(task_id);
   if (error_code != RET_OK) {
@@ -133,11 +137,12 @@ int StridedSliceGradCPUKernelFp16::Run() {
 int StridedSliceGradCPUKernelFp16::Execute(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  MS_ASSERT(output);
-
   int *po = output_shape_.data();
   auto dx = reinterpret_cast<float16_t *>(output->data_c());
   auto dy = reinterpret_cast<float16_t *>(input->data_c());
+  CHECK_NULL_RETURN(po);
+  CHECK_NULL_RETURN(dx);
+  CHECK_NULL_RETURN(dy);
 
   std::fill(dx, dx + output->ElementsNum(), 0.f);
   auto ret = DoStridedSliceFp16Grad(dy, dx, po, param_);

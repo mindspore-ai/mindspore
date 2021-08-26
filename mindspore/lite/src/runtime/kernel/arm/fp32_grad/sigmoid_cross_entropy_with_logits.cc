@@ -25,12 +25,23 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SigmoidCrossEntropyWithLogits;
 
 namespace mindspore::kernel {
-int SigmoidCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
+int SigmoidCrossEntropyWithLogitsCPUKernel::ReSize() {
+  CHECK_NULL_RETURN(op_parameter_);
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
+  return RET_OK;
+}
 
 int SigmoidCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   auto logits = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(logits);
   auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(labels);
   auto *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(out);
   const size_t tensor_len = in_tensors_.at(0)->ElementsNum();
 
   const float zero = 0.0f;
@@ -49,6 +60,7 @@ int SigmoidCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
 }
 
 int SigmoidCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto sig_crs_ent_kernel = reinterpret_cast<SigmoidCrossEntropyWithLogitsCPUKernel *>(cdata);
   auto error_code = sig_crs_ent_kernel->Execute(task_id);
   if (error_code != RET_OK) {

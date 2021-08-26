@@ -27,6 +27,7 @@ void backwardAllFp16(const float16_t *restrict in, const float16_t *restrict yt,
                      const float16_t *restrict invar, const float16_t *restrict scale, int size, int ch,
                      float *restrict dxhat_sum, float *restrict dxhathat_sum, float16_t *restrict dbias,
                      float16_t *restrict dscale, float16_t *restrict dx) {
+  NNACL_CHECK_ZERO_RETURN(size);
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {
       int ix = i * ch + c;
@@ -73,6 +74,7 @@ void backwardP1Fp16(const float16_t *restrict in, const float16_t *restrict yt, 
 void backwardP2Fp16(const float16_t *restrict in, const float16_t *restrict yt, const float16_t *restrict mean,
                     const float16_t *restrict invar, const float16_t *restrict scale, int size, int total_size, int ch,
                     const float *dxhat_sum, const float *dxhathat_sum, float16_t *restrict dx) {
+  NNACL_CHECK_ZERO_RETURN(total_size);
   const float N = (float)total_size;
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {

@@ -24,15 +24,28 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SmoothL1LossGrad;
 
 namespace mindspore::kernel {
-int SmoothL1LossGradCPUKernel::ReSize() { return RET_OK; }
+int SmoothL1LossGradCPUKernel::ReSize() {
+  CHECK_NULL_RETURN(smooth_l1_param_);
+  CHECK_NULL_RETURN(op_parameter_);
+  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(in_tensors_.at(2));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
+  return RET_OK;
+}
 
 int SmoothL1LossGradCPUKernel::Execute(int task_id) {
   SmoothL1LossParameter *smooth_l1_loss_param = reinterpret_cast<SmoothL1LossParameter *>(op_parameter_);
-
   auto predict = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(predict);
   auto target = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(target);
   auto d_loss = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+  CHECK_NULL_RETURN(d_loss);
   auto *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(out);
 
   int length = in_tensors_.at(0)->ElementsNum();
 
@@ -59,6 +72,7 @@ int SmoothL1LossGradCPUKernel::Execute(int task_id) {
 
 int SmoothL1LossGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto smooth_l1_loss_kernel = reinterpret_cast<SmoothL1LossGradCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(smooth_l1_loss_kernel);
   auto error_code = smooth_l1_loss_kernel->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SmoothL1LossGrad error task_id[" << task_id << "] error_code[" << error_code << "]";
