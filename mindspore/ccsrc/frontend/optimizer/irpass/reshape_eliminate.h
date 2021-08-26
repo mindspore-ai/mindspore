@@ -98,7 +98,6 @@ class TwoReshapeEliminater : public AnfVisitor {
       if (node->scope() != kDefaultScope) {
         new_node->set_scope(node->scope());
       }
-      new_node->set_fullname_with_scope(node->fullname_with_scope());
       return new_node;
     }
     return nullptr;
