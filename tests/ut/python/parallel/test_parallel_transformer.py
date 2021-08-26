@@ -212,6 +212,35 @@ def test_pipeline_single_transformer():
     model.train(1, dataset, dataset_sink_mode=False)
 
 
+def test_transformer_wrong_head():
+    set_auto_parallel_context(device_num=32,
+                              full_batch=True,
+                              pipeline_stages=pipeline_config.pipeline_stage, global_rank=0,
+                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    error_test_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, vocab_emb_dp=False)
+    with pytest.raises(ValueError):
+        net = Transformer(batch_size=4,
+                          src_seq_length=20,
+                          tgt_seq_length=10,
+                          encoder_layers=2,
+                          decoder_layers=2,
+                          hidden_size=64,
+                          num_heads=7,
+                          ffn_hidden_size=64,
+                          parallel_config=error_test_config)
+
+    with pytest.raises(ValueError):
+        net = Transformer(batch_size=4,
+                          src_seq_length=20,
+                          tgt_seq_length=10,
+                          encoder_layers=2,
+                          decoder_layers=2,
+                          hidden_size=63,
+                          num_heads=7,
+                          ffn_hidden_size=64,
+                          parallel_config=error_test_config)
+        del net
+
 def test_encoder():
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
