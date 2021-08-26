@@ -21,8 +21,9 @@ using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateDeconvParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Conv2dTransposeFusion();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";

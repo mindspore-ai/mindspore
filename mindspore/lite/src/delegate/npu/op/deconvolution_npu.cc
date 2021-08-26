@@ -16,11 +16,14 @@
 
 #include "src/delegate/npu/op/deconvolution_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
+#include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 int DeconvolutionNPUOp::IsSupport(const schema::Primitive *primitive,
                                   const std::vector<mindspore::MSTensor> &in_tensors,
                                   const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_NULL_RETURN(primitive);
   auto deconv_prim = primitive->value_as_Conv2dTransposeFusion();
   if (deconv_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -34,6 +37,9 @@ int DeconvolutionNPUOp::IsSupport(const schema::Primitive *primitive,
 }
 
 int DeconvolutionNPUOp::SetDeconvParam(const schema::Conv2dTransposeFusion *conv_prim) {
+  CHECK_NULL_RETURN(conv_prim);
+  CHECK_NULL_RETURN(deconv_);
+
   auto group = static_cast<int>(conv_prim->group());
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
   auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
@@ -62,6 +68,8 @@ int DeconvolutionNPUOp::SetDeconvParam(const schema::Conv2dTransposeFusion *conv
 
 int DeconvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_NULL_RETURN(primitive);
+
   // set deconv attr param
   deconv_ = new (std::nothrow) hiai::op::ConvTranspose(name_ + "_deconv");
   if (deconv_ == nullptr) {
@@ -93,11 +101,14 @@ int DeconvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vect
 int DeconvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                      const std::vector<mindspore::MSTensor> &out_tensors,
                                      const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_NULL_RETURN(deconv_);
+
   auto ret = InitWeightConst(in_tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set weight and bias for deconvolution op " << name_ << " failed when running npu";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(weight_);
   deconv_->set_input_filter(*weight_);
   if (in_tensors.size() == CONV_INPUT_SIZE) {
     ret = InitBiasConst(in_tensors);
@@ -105,6 +116,7 @@ int DeconvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_
       MS_LOG(ERROR) << "Set bias for deconvolution op " << name_ << " failed when running npu";
       return RET_ERROR;
     }
+    CHECK_NULL_RETURN(bias_);
     deconv_->set_input_bias(*bias_);
   }
   deconv_->set_input_x(*npu_inputs[0]);

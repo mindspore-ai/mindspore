@@ -146,8 +146,6 @@ int ConvolutionFP16CPUKernel::RunImpl(int task_id) {
   MS_ASSERT(output_tensor != nullptr);
   auto input_ptr = reinterpret_cast<float16_t *>(input_tensor->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(output_tensor->data_c());
-  CHECK_NULL_RETURN(input_ptr);
-  CHECK_NULL_RETURN(output_ptr);
   if (output_tensor->format() == NC4HW4) {
     ConvOutNc8hw8Fp16(input_ptr, packed_input_, reinterpret_cast<float16_t *>(packed_weight_),
                       reinterpret_cast<float16_t *>(bias_data_), col_major_input_, output_ptr, task_id, conv_param_);

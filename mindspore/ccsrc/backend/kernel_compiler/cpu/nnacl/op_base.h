@@ -151,22 +151,6 @@
     }                                                                                \
   } while (0)
 
-#define CHECK_NULL_RETURN(ptr)                       \
-  do {                                               \
-    if ((ptr) == nullptr) {                          \
-      MS_LOG(ERROR) << #ptr << " must not be null!"; \
-      return lite::RET_NULL_PTR;                     \
-    }                                                \
-  } while (0);
-
-#define CHECK_LESS_RETURN(size1, size2)                            \
-  do {                                                             \
-    if ((size1) < (size2)) {                                       \
-      MS_LOG(ERROR) << #size1 << " must not less than " << #size2; \
-      return lite::RET_ERROR;                                      \
-    }                                                              \
-  } while (0);
-
 #define NNACL_CHECK_ZERO_RETURN_ERR(val) \
   do {                                   \
     if ((val) == 0) {                    \
@@ -199,8 +183,6 @@
 #define MS_CHECK_LE(value1, value2, errcode)
 #define MS_CHECK_GE(value1, value2, errcode)
 
-#define CHECK_NULL_RETURN(ptr)
-#define CHECK_LESS_RETURN(size1, size2)
 #define NNACL_CHECK_ZERO_RETURN_ERR(val)
 #define NNACL_CHECK_ZERO_RETURN(val)
 #define NNACL_CHECK_NULL_RETURN_ERR(ptr)

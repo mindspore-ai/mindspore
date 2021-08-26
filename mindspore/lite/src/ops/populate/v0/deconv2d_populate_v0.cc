@@ -22,8 +22,8 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateDeconvParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto deconv2d_prim = primitive->value_as_DeConv2D();
   if (deconv2d_prim == nullptr) {
     MS_LOG(ERROR) << "deconv2d_prim is nullptr";

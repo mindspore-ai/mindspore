@@ -36,4 +36,24 @@
     }                                         \
   } while (0);
 
+#ifndef ENABLE_HIGH_PERFORMANCE
+#define CHECK_NULL_RETURN(ptr)                       \
+  do {                                               \
+    if ((ptr) == nullptr) {                          \
+      MS_LOG(ERROR) << #ptr << " must not be null!"; \
+      return mindspore::lite::RET_NULL_PTR;          \
+    }                                                \
+  } while (0);
+
+#define CHECK_LESS_RETURN(size1, size2)                            \
+  do {                                                             \
+    if ((size1) < (size2)) {                                       \
+      MS_LOG(ERROR) << #size1 << " must not less than " << #size2; \
+      return mindspore::lite::RET_ERROR;                           \
+    }                                                              \
+  } while (0);
+#else
+#define CHECK_NULL_RETURN(ptr)
+#define CHECK_LESS_RETURN(size1, size2)
+#endif
 #endif  // MINDSPORE_LITE_SRC_COMMON_LOG_UTIL_H_

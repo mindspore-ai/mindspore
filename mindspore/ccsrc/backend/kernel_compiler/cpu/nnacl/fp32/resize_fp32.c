@@ -125,8 +125,7 @@ int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, con
   int new_width = output_shape[2];
   float actual_x;
   float actual_y;
-  NNACL_CHECK_ZERO_RETURN_ERR(new_height - 1);
-  NNACL_CHECK_ZERO_RETURN_ERR(new_width - 1);
+
   for (int b = 0; b < batch; b++) {
     const float *box = boxes + b * 4;
     float start_h = box[0];
@@ -405,8 +404,6 @@ int RewriteExtrapolationValue(const float *input_data, float *output_data, const
   int new_channel = output_shape[3];
   int input_h = input_shape[1];
   int input_w = input_shape[2];
-  NNACL_CHECK_ZERO_RETURN_ERR(new_height - 1);
-  NNACL_CHECK_ZERO_RETURN_ERR(new_width - 1);
 
   for (int b = 0; b < batch; b++) {
     float *output = output_data + b * new_height * new_width * new_channel;

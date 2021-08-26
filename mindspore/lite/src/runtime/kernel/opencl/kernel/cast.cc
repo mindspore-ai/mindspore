@@ -30,16 +30,15 @@ using mindspore::schema::PrimitiveType_Cast;
 
 namespace mindspore::kernel {
 int CastOpenCLKernel::CheckSpecs() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.front());
-  CHECK_NULL_RETURN(out_tensors_.front());
-
   // the 2nd tensor is DstType
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
+
+  CHECK_NULL_RETURN(in_tensors_.front());
+  CHECK_NULL_RETURN(out_tensors_.front());
+
   if (in_tensors_.front()->shape() != out_tensors_.front()->shape()) {
     MS_LOG(ERROR) << "input shape must be equal to output shape";
     return RET_ERROR;

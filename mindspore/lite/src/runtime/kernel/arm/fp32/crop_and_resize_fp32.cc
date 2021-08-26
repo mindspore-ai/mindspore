@@ -33,8 +33,6 @@ constexpr size_t kBoxIndex = 1;
 constexpr size_t kBoxIdIndex = 2;
 }  // namespace
 int CropAndResizeCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -160,6 +158,7 @@ int CropAndResizeCPUKernel::Run() {
   ret = PrepareCropAndResizeBilinear(input_shape.data(), boxes, box_idx, out_tensors_.at(0)->shape().data(), y_bottoms_,
                                      y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "PrepareCropAndResizeBilinear, error_code[" << ret << "]";
     FreeTmpBuffer();
     return ret;
   }
