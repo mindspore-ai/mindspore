@@ -574,6 +574,79 @@ template void Rint<half>(const half *input, half *output, const size_t count, cu
 template void Round<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Sign<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 
+// int8
+template void Exponential<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Expm1<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Logarithm<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Log1p<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Erf<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Erfc<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Negative<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Reciprocal<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Square<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Sqrt<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Sin<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Cos<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Asin<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void ACos<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Atan<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Asinh<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Acosh<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Rsqrt<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Abs<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Floor<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Rint<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Round<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template void Sign<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+
+// uint8
+template void Exponential<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                         cudaStream_t cuda_stream);
+template void Expm1<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                   cudaStream_t cuda_stream);
+template void Logarithm<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                       cudaStream_t cuda_stream);
+template void Log1p<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                   cudaStream_t cuda_stream);
+template void Erf<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                 cudaStream_t cuda_stream);
+template void Erfc<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
+template void Negative<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                      cudaStream_t cuda_stream);
+template void Reciprocal<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                        cudaStream_t cuda_stream);
+template void Square<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                    cudaStream_t cuda_stream);
+template void Sqrt<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
+template void Sin<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                 cudaStream_t cuda_stream);
+template void Cos<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                 cudaStream_t cuda_stream);
+template void Asin<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
+template void ACos<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
+template void Atan<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
+template void Asinh<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                   cudaStream_t cuda_stream);
+template void Acosh<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                   cudaStream_t cuda_stream);
+template void Rsqrt<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                   cudaStream_t cuda_stream);
+template void Abs<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                 cudaStream_t cuda_stream);
+template void Floor<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                   cudaStream_t cuda_stream);
+template void Rint<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
+template void Round<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                   cudaStream_t cuda_stream);
+template void Sign<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                  cudaStream_t cuda_stream);
+
 // int32
 template void Exponential<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template void Expm1<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);

@@ -73,6 +73,9 @@ template void GatherNd<unsigned int, int>(unsigned int *input, int *indices, uns
                                     const size_t &output_dim0, const size_t &output_dim1,
                                     const size_t &indices_dim1, int *batch_indices, int *batch_strides,
                                     cudaStream_t stream);
+template void GatherNd<char, int>(char *input, int *indices, char *output, const size_t &output_dim0,
+                                      const size_t &output_dim1, const size_t &indices_dim1, int *batch_indices,
+                                      int *batch_strides, cudaStream_t stream);
 template void GatherNd<unsigned char, int>(unsigned char *input, int *indices, unsigned char *output,
                                            const size_t &output_dim0, const size_t &output_dim1,
                                            const size_t &indices_dim1, int *batch_indices, int *batch_strides,
@@ -99,6 +102,9 @@ template void GatherNd<unsigned int, int64_t>(unsigned int *input, int64_t *indi
                                         const size_t &output_dim0, const size_t &output_dim1,
                                         const size_t &indices_dim1, int64_t *batch_indices,
                                         int64_t *batch_strides, cudaStream_t stream);
+template void GatherNd<char, int64_t>(char *input, int64_t *indices, char *output, const size_t &output_dim0,
+                                      const size_t &output_dim1, const size_t &indices_dim1, int64_t *batch_indices,
+                                      int64_t *batch_strides, cudaStream_t stream);
 template void GatherNd<unsigned char, int64_t>(unsigned char *input, int64_t *indices, unsigned char *output,
                                                const size_t &output_dim0, const size_t &output_dim1,
                                                const size_t &indices_dim1, int64_t *batch_indices,

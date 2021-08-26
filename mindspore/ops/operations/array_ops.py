@@ -3684,45 +3684,51 @@ class TensorScatterUpdate(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize TensorScatterUpdate"""
-        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
-    def infer_shape(self, x_shape, indices_shape, value_shape):
-        if indices_shape[-1] > len(x_shape):
-            raise ValueError("For 'TensorScatterUpdate', indies.shape[-1] is larger than the rank of x.")
-        if indices_shape[:-1] + x_shape[indices_shape[-1]:] != value_shape:
-            raise ValueError("For 'TensorScatterUpdate', input value are not match with input indices.")
-        return x_shape
+    def infer_shape(self, input_x_shape, indices_shape, updates_shape):
+        if len(indices_shape) < 2:
+            raise ValueError("For 'TensorScatterUpdate', rank of indices cannot be less than 2.")
 
-    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
+        if indices_shape[-1] > len(input_x_shape):
+            raise ValueError("For 'TensorScatterUpdate', indices.shape[-1] cannot be greater than rank of input_x.")
+
+        updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
+        if updates_shape_check != updates_shape:
+            raise ValueError("For 'TensorScatterUpdate', input_x.shape, "\
+                             "indices.shape and updates.shape are incompatible.")
+
+        return input_x_shape
+
+    def infer_dtype(self, input_x_dtype, indices_dtype, updates_dtype):
         validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
-        args = {"x": x_dtype, "value": value_dtype}
+        args = {"input_x": input_x_dtype, "updates": updates_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
-        return x_dtype
+        return input_x_dtype
 
 
 class TensorScatterAdd(PrimitiveWithInfer):
     """
     Creates a new tensor by adding the values from the positions in `input_x` indicicated by
-    `indices`, with values from `update`. When multiple values are given for the same
+    `indices`, with values from `updates`. When multiple values are given for the same
     index, the updated result will be the sum of all values. This operation is almost
     equivalent to using ScatterNdAdd, except that the updates are applied on `Tensor`
     instead of `Parameter`.
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
-    there must be a corresponding value in `update`. The shape of `update` should be
+    there must be a corresponding value in `updates`. The shape of `updates` should be
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
     Note:
         If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `update` will not be updated to `input_x`.
+        the corresponding `updates` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
-        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and update.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -3737,18 +3743,18 @@ class TensorScatterAdd(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
-        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> # Next, demonstrate the approximate operation process of this operator:
         >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
-        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == update.shape=(2)
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
         >>> op = ops.TensorScatterAdd()
         >>> # 5, Perform the addition operation for the first time:
-        >>> #      first_input_x = input_x[0][0] + update[0] = [[0.9, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> #      first_input_x = input_x[0][0] + updates[0] = [[0.9, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> # 6, Perform the addition operation for the second time:
-        >>> #      second_input_x = input_x[0][0] + update[1] = [[3.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
-        >>> output = op(input_x, indices, update)
+        >>> #      second_input_x = input_x[0][0] + updates[1] = [[3.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> output = op(input_x, indices, updates)
         >>> print(output)
         [[ 3.1  0.3  3.6]
          [ 0.4  0.5 -3.2]]
@@ -3756,24 +3762,26 @@ class TensorScatterAdd(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize TensorScatterAdd"""
-        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
-    def infer_shape(self, x_shape, indices_shape, value_shape):
-        if indices_shape[-1] > len(x_shape):
-            raise ValueError("For 'TensorScatterAdd', indies.shape[-1] is larger than the rank of input_x.")
+    def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterAdd', the rank of the indices must >= 2.")
-        update_shape = indices_shape[:-1] + x_shape[indices_shape[-1]:]
-        if update_shape != value_shape:
-            raise ValueError("For 'TensorScatterAdd', input update does not match with indices.")
-        return x_shape
+            raise ValueError("For 'TensorScatterAdd', rank of indices cannot be less than 2.")
 
-    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
+        if indices_shape[-1] > len(input_x_shape):
+            raise ValueError("For 'TensorScatterAdd', indices.shape[-1] cannot be greater than rank of input_x.")
+
+        updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
+        if updates_shape_check != updates_shape:
+            raise ValueError("For 'TensorScatterAdd', input_x.shape, indices.shape and updates.shape are incompatible.")
+
+        return input_x_shape
+
+    def infer_dtype(self, input_x_dtype, indices_dtype, updates_dtype):
         validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
-        args = {"input_x": x_dtype, "update": value_dtype}
+        args = {"input_x": input_x_dtype, "updates": updates_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
-        return x_dtype
+        return input_x_dtype
 
 
 class ScatterUpdate(_ScatterOpDynamic):
@@ -6006,19 +6014,20 @@ class TensorScatterMax(PrimitiveWithInfer):
     the value at the index will eventually be equal to the largest one to create a new tensor.
 
     The last axis of the index is the depth of each index vector. For each index vector,
-    there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
+    there must be a corresponding value in `updates`. The shape of `updates` should be
+    equal to the shape of input_x[indices].
     For more details, see use cases.
 
     Note:
         If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `update` will not be updated to `input_x`.
+        the corresponding `updates` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
-        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and update.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -6033,18 +6042,18 @@ class TensorScatterMax(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
-        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> # Next, demonstrate the approximate operation process of this operator:
         >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
-        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == update.shape=(2)
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
         >>> op = ops.TensorScatterMax()
         >>> # 5, Perform the max operation for the first time:
-        >>> #      first_input_x = Max(input_x[0][0], update[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> #      first_input_x = Max(input_x[0][0], updates[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> # 6, Perform the max operation for the second time:
-        >>> #      second_input_x = Max(input_x[0][0], update[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
-        >>> output = op(input_x, indices, update)
+        >>> #      second_input_x = Max(input_x[0][0], updates[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> output = op(input_x, indices, updates)
         >>> print(output)
         [[ 2.2  0.3  3.6]
          [ 0.4  0.5 -3.2]]
@@ -6052,41 +6061,49 @@ class TensorScatterMax(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
-    def infer_shape(self, x_shape, indices_shape, value_shape):
+    def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterMax', the rank of the indices must > 2.")
-        update_shape = indices_shape[:-1] + x_shape[indices_shape[-1]:]
-        if update_shape != value_shape:
-            raise ValueError("For 'TensorScatterMax', input value are not match with input indices.")
-        return x_shape
+            raise ValueError("For 'TensorScatterMax', rank of indices cannot be less than 2.")
 
-    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
+        if indices_shape[-1] > len(input_x_shape):
+            raise ValueError("For 'TensorScatterMax', indices.shape[-1] cannot be greater than rank of input_x.")
+
+        updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
+        if updates_shape_check != updates_shape:
+            raise ValueError("For 'TensorScatterMax', input_x.shape, indices.shape and updates.shape are incompatible.")
+
+        return input_x_shape
+
+    def infer_dtype(self, input_x_dtype, indices_dtype, updates_dtype):
         validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
-        args = {"x": x_dtype, "value": value_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
-        return x_dtype
+        args = {"input_x": input_x_dtype, "updates": updates_dtype}
+        valid_input_types = (mstype.float16, mstype.float32, mstype.int8, mstype.uint8, mstype.int32)
+        validator.check_tensors_dtypes_same_and_valid(args, valid_input_types, self.name)
+        return input_x_dtype
+
 
 class TensorScatterMin(PrimitiveWithInfer):
     """
-    By comparing the value at the position indicated by the index in input_x with the value in the update,
+    By comparing the value at the position indicated by the index in input_x with the value in the `updates`,
     the value at the index will eventually be equal to the smallest one to create a new tensor.
 
     The last axis of the index is the depth of each index vector. For each index vector,
-    there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
+    there must be a corresponding value in `updates`. The shape of `updates` should be
+    equal to the shape of input_x[indices].
     For more details, see use cases.
 
     Note:
         If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `update` will not be updated to `input_x`.
+        the corresponding `updates` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
-        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and update.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -6101,18 +6118,18 @@ class TensorScatterMin(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
-        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> # Next, demonstrate the approximate operation process of this operator:
         >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
-        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == update.shape=(2)
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
         >>> op = ops.TensorScatterMin()
         >>> # 5, Perform the min operation for the first time:
-        >>> #      first_input_x = Min(input_x[0][0], update[0]) = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> #      first_input_x = Min(input_x[0][0], updates[0]) = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> # 6, Perform the min operation for the second time:
-        >>> #      second_input_x = Min(input_x[0][0], update[1]) = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
-        >>> output = op(input_x, indices, update)
+        >>> #      second_input_x = Min(input_x[0][0], updates[1]) = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> output = op(input_x, indices, updates)
         >>> print(output)
         [[ -0.1  0.3  3.6]
          [ 0.4  0.5 -3.2]]
@@ -6120,44 +6137,50 @@ class TensorScatterMin(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
-    def infer_shape(self, x_shape, indices_shape, value_shape):
+    def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterMin', the rank of the indices must > 2.")
-        update_shape = indices_shape[:-1] + x_shape[indices_shape[-1]:]
-        if update_shape != value_shape:
-            raise ValueError("For 'TensorScatterMin', input value are not match with input indices.")
-        return x_shape
+            raise ValueError("For 'TensorScatterMin', rank of indices cannot be less than 2.")
 
-    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
+        if indices_shape[-1] > len(input_x_shape):
+            raise ValueError("For 'TensorScatterMin', indices.shape[-1] cannot be greater than rank of input_x.")
+
+        updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
+        if updates_shape_check != updates_shape:
+            raise ValueError("For 'TensorScatterMin', input_x.shape, indices.shape and updates.shape are incompatible.")
+
+        return input_x_shape
+
+    def infer_dtype(self, input_x_dtype, indices_dtype, updates_dtype):
         validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
-        args = {"x": x_dtype, "value": value_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
-        return x_dtype
+        args = {"input_x": input_x_dtype, "updates": updates_dtype}
+        valid_input_types = (mstype.float16, mstype.float32, mstype.int8, mstype.uint8, mstype.int32)
+        validator.check_tensors_dtypes_same_and_valid(args, valid_input_types, self.name)
+        return input_x_dtype
 
 
 class TensorScatterSub(PrimitiveWithInfer):
     """
     Creates a new tensor by subtracting the values from the positions in `input_x` indicicated by
-    `indices`, with values from `update`. When multiple values are provided for the same
+    `indices`, with values from `updates`. When multiple values are provided for the same
     index, the result of the update will be to subtract these values respectively. This operation is almost
     equivalent to using ScatterNdSub, except that the updates are applied on `Tensor` instead of `Parameter`.
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
-    there must be a corresponding value in `update`. The shape of `update` should be
+    there must be a corresponding value in `updates`. The shape of `updates` should be
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
     Note:
         If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `update` will not be updated to `input_x`.
+        the corresponding `updates` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
-        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and update.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -6172,18 +6195,18 @@ class TensorScatterSub(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
-        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> # Next, demonstrate the approximate operation process of this operator:
         >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
-        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == update.shape=(2)
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
         >>> op = ops.TensorScatterSub()
         >>> # 5, Perform the subtract operation for the first time:
-        >>> #      first_input_x = input_x[0][0] - update[0] = [[-1.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> #      first_input_x = input_x[0][0] - updates[0] = [[-1.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> # 6, Perform the subtract operation for the second time:
-        >>> #      second_input_x = input_x[0][0] - update[1] = [[-3.3, 0.3, 3.6], [0.4, 0.5, -3.2]]
-        >>> output = op(input_x, indices, update)
+        >>> #      second_input_x = input_x[0][0] - updates[1] = [[-3.3, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> output = op(input_x, indices, updates)
         >>> print(output)
         [[-3.3000002  0.3        3.6      ]
          [ 0.4        0.5       -3.2      ]]
@@ -6191,21 +6214,27 @@ class TensorScatterSub(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
-    def infer_shape(self, x_shape, indices_shape, value_shape):
+    def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterSub', the rank of the indices must > 2.")
-        update_shape = indices_shape[:-1] + x_shape[indices_shape[-1]:]
-        if update_shape != value_shape:
-            raise ValueError("For 'TensorScatterSub', input value are not match with input indices.")
-        return x_shape
+            raise ValueError("For 'TensorScatterSub', rank of indices cannot be less than 2.")
 
-    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
+        if indices_shape[-1] > len(input_x_shape):
+            raise ValueError("For 'TensorScatterSub', indices.shape[-1] cannot be greater than rank of input_x.")
+
+        updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
+        if updates_shape_check != updates_shape:
+            raise ValueError("For 'TensorScatterSub', input_x.shape, indices.shape and updates.shape are incompatible.")
+
+        return input_x_shape
+
+    def infer_dtype(self, input_x_dtype, indices_dtype, updates_dtype):
         validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
-        args = {"x": x_dtype, "value": value_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
-        return x_dtype
+        args = {"input_x": input_x_dtype, "updates": updates_dtype}
+        valid_input_types = (mstype.float16, mstype.float32, mstype.int8, mstype.uint8, mstype.int32)
+        validator.check_tensors_dtypes_same_and_valid(args, valid_input_types, self.name)
+        return input_x_dtype
 
 
 class SplitV(Primitive):
