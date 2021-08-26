@@ -166,7 +166,7 @@ def test_checkpoint_manager():
     """ test_checkpoint_manager """
     ckp_mgr = _CheckpointManager()
 
-    ckpt_file_name = os.path.join(_cur_dir, './test1.ckpt')
+    ckpt_file_name = os.path.join(_cur_dir, './test-1_1.ckpt')
     with open(ckpt_file_name, 'w'):
         os.chmod(ckpt_file_name, stat.S_IWUSR | stat.S_IRUSR)
 
@@ -178,7 +178,7 @@ def test_checkpoint_manager():
     assert ckp_mgr.ckpoint_num == 0
     assert not os.path.exists(ckpt_file_name)
 
-    another_file_name = os.path.join(_cur_dir, './test2.ckpt')
+    another_file_name = os.path.join(_cur_dir, './test-2_1.ckpt')
     another_file_name = os.path.realpath(another_file_name)
     with open(another_file_name, 'w'):
         os.chmod(another_file_name, stat.S_IWUSR | stat.S_IRUSR)
@@ -191,9 +191,9 @@ def test_checkpoint_manager():
     assert not os.path.exists(another_file_name)
 
     # test keep_one_ckpoint_per_minutes
-    file1 = os.path.realpath(os.path.join(_cur_dir, './time_file1.ckpt'))
-    file2 = os.path.realpath(os.path.join(_cur_dir, './time_file2.ckpt'))
-    file3 = os.path.realpath(os.path.join(_cur_dir, './time_file3.ckpt'))
+    file1 = os.path.realpath(os.path.join(_cur_dir, './time_file-1_1.ckpt'))
+    file2 = os.path.realpath(os.path.join(_cur_dir, './time_file-2_1.ckpt'))
+    file3 = os.path.realpath(os.path.join(_cur_dir, './time_file-3_1.ckpt'))
     with open(file1, 'w'):
         os.chmod(file1, stat.S_IWUSR | stat.S_IRUSR)
     with open(file2, 'w'):
@@ -206,9 +206,9 @@ def test_checkpoint_manager():
     ckp_mgr.keep_one_ckpoint_per_minutes(1, time1)
     ckp_mgr.update_ckpoint_filelist(_cur_dir, "time_file")
     assert ckp_mgr.ckpoint_num == 1
-    if os.path.exists(_cur_dir + '/time_file1.ckpt'):
-        os.chmod(_cur_dir + '/time_file1.ckpt', stat.S_IWRITE)
-        os.remove(_cur_dir + '/time_file1.ckpt')
+    if os.path.exists(_cur_dir + '/time_file-1_1.ckpt'):
+        os.chmod(_cur_dir + '/time_file-1_1.ckpt', stat.S_IWRITE)
+        os.remove(_cur_dir + '/time_file-1_1.ckpt')
 
 
 def test_load_param_into_net_error_net():

@@ -69,6 +69,11 @@ class CheckpointConfig:
         During the training process, if dataset is transmitted through the data channel,
         It is suggested to set 'save_checkpoint_steps' to an integer multiple of loop_size.
         Otherwise, the time to save the checkpoint may be biased.
+        It is recommended to set only one save strategy and one keep strategy at the same time.
+        If both `save_checkpoint_steps` and `save_checkpoint_seconds` are set,
+        `save_checkpoint_seconds` will be invalid.
+        If both `keep_checkpoint_max` and `keep_checkpoint_per_n_minutes` are set,
+        `keep_checkpoint_per_n_minutes` will be invalid.
 
     Args:
         save_checkpoint_steps (int): Steps to save checkpoint. Default: 1.
@@ -77,13 +82,13 @@ class CheckpointConfig:
         keep_checkpoint_max (int): Maximum number of checkpoint files can be saved. Default: 5.
         keep_checkpoint_per_n_minutes (int): Save the checkpoint file every `keep_checkpoint_per_n_minutes` minutes.
             Can't be used with keep_checkpoint_max at the same time. Default: 0.
-        integrated_save (bool): Whether to perform integrated save function in automatic model parallel scene.
+        integrated_save (bool): Whether to merge and save the split Tensor in the automatic parallel scenario.
             Integrated save function is only supported in automatic parallel scene, not supported
             in manual parallel. Default: True.
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False.
         saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
             with the network in training, the initial value of saved_network will be saved. Default: None.
-        append_info (list): The information save to checkpoint file. Support "epoch_num"、"step_num"、and dict.
+        append_info (list): The information save to checkpoint file. Support "epoch_num", "step_num" and dict.
             The key of dict must be str, the value of dict must be one of int float and bool. Default: None.
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: None.
@@ -98,25 +103,25 @@ class CheckpointConfig:
         >>> from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
         >>>
         >>> class LeNet5(nn.Cell):
-        >>>     def __init__(self, num_class=10, num_channel=1):
-        >>>         super(LeNet5, self).__init__()
-        >>>         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
-        >>>         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
-        >>>         self.fc1 = nn.Dense(16 * 5 * 5, 120, weight_init=Normal(0.02))
-        >>>         self.fc2 = nn.Dense(120, 84, weight_init=Normal(0.02))
-        >>>         self.fc3 = nn.Dense(84, num_class, weight_init=Normal(0.02))
-        >>>         self.relu = nn.ReLU()
-        >>>         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
-        >>>         self.flatten = nn.Flatten()
-        >>>
-        >>>     def construct(self, x):
-        >>>         x = self.max_pool2d(self.relu(self.conv1(x)))
-        >>>         x = self.max_pool2d(self.relu(self.conv2(x)))
-        >>>         x = self.flatten(x)
-        >>>         x = self.relu(self.fc1(x))
-        >>>         x = self.relu(self.fc2(x))
-        >>>         x = self.fc3(x)
-        >>>         return x
+        ...     def __init__(self, num_class=10, num_channel=1):
+        ...         super(LeNet5, self).__init__()
+        ...         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
+        ...         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
+        ...         self.fc1 = nn.Dense(16 * 5 * 5, 120, weight_init=Normal(0.02))
+        ...         self.fc2 = nn.Dense(120, 84, weight_init=Normal(0.02))
+        ...         self.fc3 = nn.Dense(84, num_class, weight_init=Normal(0.02))
+        ...         self.relu = nn.ReLU()
+        ...         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        ...         self.flatten = nn.Flatten()
+        ...
+        ...     def construct(self, x):
+        ...         x = self.max_pool2d(self.relu(self.conv1(x)))
+        ...         x = self.max_pool2d(self.relu(self.conv2(x)))
+        ...         x = self.flatten(x)
+        ...         x = self.relu(self.fc1(x))
+        ...         x = self.relu(self.fc2(x))
+        ...         x = self.fc3(x)
+        ...         return x
         >>>
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
@@ -465,7 +470,7 @@ class CheckpointManager:
         self._ckpoint_filelist = []
         files = os.listdir(directory)
         for filename in files:
-            if os.path.splitext(filename)[-1] == ".ckpt" and filename.startswith(prefix):
+            if os.path.splitext(filename)[-1] == ".ckpt" and filename.startswith(prefix + "-"):
                 mid_name = filename[len(prefix):-5]
                 flag = not (True in [char.isalpha() for char in mid_name])
                 if flag:
