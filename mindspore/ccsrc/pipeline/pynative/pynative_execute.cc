@@ -52,6 +52,7 @@
 #include "pipeline/jit/action.h"
 
 #include "pipeline/pynative/base.h"
+#include "pipeline/pynative/pynative_profiling.h"
 #include "pybind_api/api_register.h"
 #include "pybind_api/pybind_patch.h"
 #include "vm/transform.h"
@@ -68,7 +69,6 @@
 
 #include "debug/anf_ir_dump.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "runtime/device/pynative_profiling.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -271,12 +271,14 @@ bool GetSignatureType(const PrimitivePyPtr &prim, std::vector<SignatureEnumDType
 
 void PynativeInfer(const PrimitivePyPtr &prim, OpExecInfo *const op_exec_info,
                    const abstract::AbstractBasePtrList &args_spec_list) {
+  PynativeProfiler::SetForwardTimePoint("ForwardPynativeInfer", "Start");
   MS_LOG(DEBUG) << "Prim " << prim->name() << " input infer " << mindspore::ToString(args_spec_list);
   prim->BeginRecordAddAttr();
   AbstractBasePtr infer_res = EvalOnePrim(prim, args_spec_list)->abstract();
   prim->EndRecordAddAttr();
   op_exec_info->abstract = infer_res;
   MS_LOG(DEBUG) << "Prim " << prim->name() << " infer result " << op_exec_info->abstract->ToString();
+  PynativeProfiler::SetForwardTimePoint("ForwardPynativeInfer", "End");
 }
 
 std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<tensor::TensorPtr> &input_tensors,
@@ -705,9 +707,8 @@ py::object GetDstType(const TypeId &type_id) {
 }  // namespace
 
 py::object RealRunOp(const py::args &args) {
-  auto real_run_op_start = GetTime();
-  auto &profiler_inst = device::PynativeProfiler::GetInstance();
-  profiler_inst.AddRealRunOpIndex();
+  PynativeProfiler::SetEnableProfilingFlag();
+  PynativeProfiler::SetForwardTimePoint("RealRunOp", "Start");
   CheckPyNativeContext();
   auto executor = PynativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
@@ -715,10 +716,9 @@ py::object RealRunOp(const py::args &args) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   py::object ret = py::none();
   PynativeExecutorTry(executor->forward_executor()->RunOpS, &ret, op_exec_info);
-  auto real_run_op_end = GetTime();
-  profiler_inst.SetRealRunOpName(op_exec_info->op_name);
-  profiler_inst.SetRealRunOpTime(std::make_pair(real_run_op_start, real_run_op_end));
-  profiler_inst.SingleOpProfilingData();
+  PynativeProfiler::SetRealRunOpName(op_exec_info->op_name);
+  PynativeProfiler::SetForwardTimePoint("RealRunOp", "End");
+  PynativeProfiler::SingleOpForwardHostProfilingData();
   return ret;
 }
 
@@ -876,6 +876,7 @@ void ForwardExecutor::RunMixedPrecisionCastOp(const OpExecInfoPtr &op_exec_info,
 
 void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
                                         abstract::AbstractBasePtrList *args_spec_list) {
+  PynativeProfiler::SetForwardTimePoint("GetInputsAbstract", "Start");
   MS_EXCEPTION_IF_NULL(args_spec_list);
   auto prim = op_exec_info->py_primitive;
   for (size_t i = 0; i < op_exec_info->op_inputs.size(); i++) {
@@ -907,9 +908,11 @@ void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
     }
     args_spec_list->emplace_back(abs);
   }
+  PynativeProfiler::SetForwardTimePoint("GetInputsAbstract", "End");
 }
 
 AnfNodePtr ForwardExecutor::ConstructForwardGraph(const OpExecInfoPtr &op_exec_info) {
+  PynativeProfiler::SetForwardTimePoint("ConstructForwardGraph", "Start");
   auto prim = op_exec_info->py_primitive;
   std::vector<AnfNodePtr> inputs;
   std::vector<int64_t> op_masks;
@@ -948,6 +951,7 @@ AnfNodePtr ForwardExecutor::ConstructForwardGraph(const OpExecInfoPtr &op_exec_i
     cnode = grad()->curr_g()->NewCNodeInOrder(inputs);
     MS_LOG(DEBUG) << "Make CNode for " << op_exec_info->op_name << ", new cnode is " << cnode->DebugString();
   }
+  PynativeProfiler::SetForwardTimePoint("ConstructForwardGraph", "End");
   return cnode;
 }
 
@@ -2577,6 +2581,7 @@ void GradExecutor::CheckNeedCompileGraph() {
 }
 
 void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args) {
+  PynativeProfiler::SetBackwardTimePoint("BackwardRunGradGraph", "Start");
   MS_EXCEPTION_IF_NULL(ret);
   auto cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "Run start cell id " << cell_id;
@@ -2621,6 +2626,9 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   } else if (GetHighOrderStackSize() >= 2) {
     SwitchTopcell();
   }
+  PynativeProfiler::SetBackwardTimePoint("BackwardRunGradGraph", "End");
+  PynativeProfiler::SingleOpBackwardHostProfilingData();
+  PynativeProfiler::SingleOpDeviceProfilingData();
 }
 
 void GradExecutor::SwitchTopcell() {
