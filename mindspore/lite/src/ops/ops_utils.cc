@@ -169,10 +169,6 @@ std::unique_ptr<schema::PrimitiveT> ConstantOfShapePrimitiveCreator(const AnfNod
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ConstantOfShape>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
-std::unique_ptr<schema::PrimitiveT> ControlDependPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ControlDepend>>(node);
-  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
-}
 std::unique_ptr<schema::PrimitiveT> Conv2DBackpropFilterFusionPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Conv2DBackpropFilterFusion>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
@@ -853,7 +849,6 @@ RegistryMSOps g_castPrimitiveCreatorRegistry("Cast", CastPrimitiveCreator);
 RegistryMSOps g_ceilPrimitiveCreatorRegistry("Ceil", CeilPrimitiveCreator);
 RegistryMSOps g_clipPrimitiveCreatorRegistry("Clip", ClipPrimitiveCreator);
 RegistryMSOps g_concatPrimitiveCreatorRegistry("Concat", ConcatPrimitiveCreator);
-RegistryMSOps g_controlDependPrimitiveCreatorRegistry("ControlDepend", ControlDependPrimitiveCreator);
 RegistryMSOps g_conv2DBackpropFilterFusionPrimitiveCreatorRegistry("Conv2DBackpropFilterFusion",
                                                                    Conv2DBackpropFilterFusionPrimitiveCreator);
 RegistryMSOps g_conv2DBackpropInputFusionPrimitiveCreatorRegistry("Conv2DBackpropInputFusion",

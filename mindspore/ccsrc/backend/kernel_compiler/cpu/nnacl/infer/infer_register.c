@@ -130,7 +130,6 @@
 #include "nnacl/infer/unsqueeze_infer.h"
 #include "nnacl/infer/unstack_infer.h"
 #include "nnacl/infer/where_infer.h"
-#include "nnacl/infer/while_infer.h"
 #include "nnacl/infer/split_with_over_lap_infer.h"
 #include "nnacl/infer/ragged_range_infer.h"
 #include "nnacl/infer/glu_infer.h"
@@ -175,7 +174,6 @@ void RegAllInferFunc1() {
   g_infer_func[PrimType_Ceil] = CommonInferShape;
   g_infer_func[PrimType_Clip] = CommonInferShape;
   g_infer_func[PrimType_Concat] = ConcatInferShape;
-  g_infer_func[PrimType_ControlDepend] = CommonInferShape;
   g_infer_func[PrimType_Conv2DBackpropFilterFusion] = Conv2dGradFilterInferShape;
   g_infer_func[PrimType_Conv2DBackpropInputFusion] = Conv2dGradInputInferShape;
   g_infer_func[PrimType_Conv2DFusion] = Conv2dInferShape;
@@ -313,11 +311,9 @@ void RegAllInferFunc2() {
   g_infer_func[PrimType_UnsortedSegmentSum] = UnsortedSegmentSumInferShape;
   g_infer_func[PrimType_Unsqueeze] = UnsqueezeInferShape;
   g_infer_func[PrimType_Unstack] = UnstackInferShape;
-  g_infer_func[PrimType_While] = WhileInferShape;
   g_infer_func[PrimType_Where] = WhereInferShape;
   g_infer_func[PrimType_ZerosLike] = CommonInferShape;
   g_infer_func[PrimType_Select] = SelectInferShape;
-  g_infer_func[PrimType_If] = CommonInferShape;
   g_infer_func[PrimType_GRU] = GruInferShape;
   g_infer_func[PrimType_NonZero] = NULL;
   g_infer_func[PrimType_InvertPermutation] = InvertPermutationInferShape;

@@ -49,7 +49,7 @@ union PrimitiveType {
     Ceil,
     Clip,
     Concat,
-    ControlDepend,
+    Attention,
     Conv2DBackpropFilterFusion,
     Conv2DBackpropInputFusion,
     Conv2DFusion,
@@ -184,11 +184,11 @@ union PrimitiveType {
     UnsortedSegmentSum,
     Unsqueeze,
     Unstack,
-    While,
+    LSTMGrad,
     Where,
     ZerosLike,
     Select,
-    If,
+    ScatterNdUpdate,
     GRU,
     NonZero,
     InvertPermutation,
@@ -218,9 +218,6 @@ union PrimitiveType {
     TensorArrayRead,
     TensorArrayWrite,
     Affine,
-    Attention,
-    LSTMGrad,
-    ScatterNdUpdate,
 }
 
 table Abs {
@@ -379,8 +376,7 @@ table Concat {
     axis: long;
 }
 
-table ControlDepend {
-    depend_mode: long;
+table Attention {
 }
 
 table Conv2DBackpropFilterFusion {
@@ -1036,11 +1032,6 @@ table Unstack {
     axis: long = 0;
 }
 
-table While {
-    cond_subgraph_index: long;
-    body_subgraph_index: long;
-}
-
 table Where {
 }
 
@@ -1048,9 +1039,6 @@ table ZerosLike {
 }
 
 table Select {
-}
-
-table If {
 }
 
 table GRU {
@@ -1209,9 +1197,6 @@ table Affine {
     activation_type: ActivationType = 0;
     transpose_a: bool = false;
     transpose_b: bool = false;
-}
-
-table Attention {
 }
 
 table ScatterNdUpdate {
