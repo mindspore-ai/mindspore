@@ -25,17 +25,13 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameAbs = "Abs";
 class MS_CORE_API Abs : public PrimitiveC {
  public:
-  Abs() : PrimitiveC(kNameAbs) { InitIOName({"input_x"}, {"output"}); }
+  Abs() : PrimitiveC(prim::kPrimAbs->name()) { InitIOName({"input_x"}, {"output"}); }
   ~Abs() = default;
   MS_DECLARE_PARENT(Abs, PrimitiveC);
   void Init() {}
 };
-AbstractBasePtr AbsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
-using PrimAbsPtr = std::shared_ptr<Abs>;
 }  // namespace ops
 }  // namespace mindspore
 

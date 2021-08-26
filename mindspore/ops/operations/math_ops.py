@@ -4405,7 +4405,7 @@ class NMSWithMask(PrimitiveWithInfer):
         return bboxes_dtype, mstype.int32, mstype.bool_
 
 
-class Abs(PrimitiveWithInfer):
+class Abs(Primitive):
     r"""
     Returns absolute value of a tensor element-wise.
 
@@ -4438,20 +4438,6 @@ class Abs(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Abs"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_type):
-        validator.check_tensor_dtype_valid('x', x_type, mstype.number_type, self.name)
-        return x_type
-
-    def infer_value(self, x):
-        if x is not None:
-            x = x.asnumpy()
-            out = np.array(np.abs(x, dtype=x.dtype))
-            return Tensor(out)
-        return None
 
 
 class Sign(PrimitiveWithInfer):
