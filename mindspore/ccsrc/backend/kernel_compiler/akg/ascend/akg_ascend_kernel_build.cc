@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 KernelPackPtr AkgAscendKernelBuilder::AkgSearchCache(const std::string &kernel_name) {
-  return tbe::TbeUtils::SearchCache(kernel_name, kProcessorAiCore);
+  return tbe::TbeUtils::SearchCache(kernel_name);
 }
 
 KernelPackPtr AkgAscendKernelBuilder::AkgInsertCache(const std::string &kernel_name) {

@@ -56,7 +56,6 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     if (AnfAlgo::GetKernelMod(anf_node) != nullptr) {
       continue;
     }
-    const std::string &processor = tbe::GetProcessor(anf_node);
     nlohmann::json kernel_json;
     TbeKernelJsonCreator creator(SINGLE_BUILD);
     if (!creator.GenTbeSingleKernelJson(anf_node, &kernel_json)) {
@@ -70,7 +69,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     (void)TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list, anf_node);
     // search cache
     const std::string &json_name = creator.json_name();
-    if (build_manger->SearchInCache(json_name, processor, input_size_list, output_size_list, anf_node.get()) &&
+    if (build_manger->SearchInCache(json_name, input_size_list, output_size_list, anf_node.get()) &&
         ((!offline_tune.empty() && offline_tune != "true") || tune_mode == "NO_TUNE")) {
       continue;
     }
@@ -215,8 +214,8 @@ void ParallelBuildManager::SaveSameFusionOpInfo(const int64_t scope_id, const st
 
 bool ParallelBuildManager::GenSameOpKernelMod() const {
   for (const auto &task_info : same_op_list_) {
-    bool ret = SearchInCache(task_info.json_name, task_info.processor, task_info.input_size_list,
-                             task_info.output_size_list, task_info.node.get());
+    bool ret =
+      SearchInCache(task_info.json_name, task_info.input_size_list, task_info.output_size_list, task_info.node.get());
     if (!ret) {
       MS_LOG(INFO) << "can't find " << task_info.json_name << " in cache.";
       return false;
@@ -228,7 +227,7 @@ bool ParallelBuildManager::GenSameOpKernelMod() const {
 bool ParallelBuildManager::GenSameFusionOpKernelMod(std::map<int64_t, KernelModPtr> *kernel_mode_ret) const {
   bool ret = true;
   for (const auto &task_info : same_op_list_) {
-    auto kernel_pack = TbeUtils::SearchCache(task_info.json_name, tbe::kProcessorAiCore);
+    auto kernel_pack = TbeUtils::SearchCache(task_info.json_name);
     if (kernel_pack != nullptr) {
       auto kernel_mode = GenKernelMod(task_info.input_size_list, task_info.output_size_list, kernel_pack);
       if (kernel_mode != nullptr) {
@@ -242,10 +241,9 @@ bool ParallelBuildManager::GenSameFusionOpKernelMod(std::map<int64_t, KernelModP
   return ret;
 }
 
-bool ParallelBuildManager::SearchInCache(const std::string &json_name, const std::string &processor,
-                                         const std::vector<size_t> &input_size_list,
+bool ParallelBuildManager::SearchInCache(const std::string &json_name, const std::vector<size_t> &input_size_list,
                                          const std::vector<size_t> &output_size_list, mindspore::AnfNode *node) const {
-  auto cached_kernel_pack = TbeUtils::SearchCache(json_name, processor);
+  auto cached_kernel_pack = TbeUtils::SearchCache(json_name);
   if (cached_kernel_pack != nullptr) {
     auto kernel_mod_ptr = GenKernelMod(input_size_list, output_size_list, cached_kernel_pack);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);

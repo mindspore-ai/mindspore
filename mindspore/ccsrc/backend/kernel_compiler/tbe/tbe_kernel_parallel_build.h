@@ -52,9 +52,8 @@ class ParallelBuildManager {
                             const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list);
   bool GenSameOpKernelMod() const;
   bool GenSameFusionOpKernelMod(std::map<int64_t, KernelModPtr> *kernel_mode_ret) const;
-  bool SearchInCache(const std::string &json_name, const std::string &processor,
-                     const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
-                     AnfNode *node) const;
+  bool SearchInCache(const std::string &json_name, const std::vector<size_t> &input_size_list,
+                     const std::vector<size_t> &output_size_list, AnfNode *node) const;
   bool IsAllTaskFinish() const;
   void PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result);
   std::pair<int32_t, KernelModPtr> TaskFinishProcess(int32_t task_id, const std::string &build_ret,
