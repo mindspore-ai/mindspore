@@ -32,11 +32,11 @@ std::vector<std::string> GetTokens(const std::string &str, const std::string &de
   std::vector<std::string> tokens;
   std::vector<char> c_str(str.begin(), str.end());
   c_str.push_back('\0');
-  char *saveptr;
+  char *saveptr = nullptr;
   char *pch = strtok_r(&c_str[0], delim.c_str(), &saveptr);
-  while (pch != NULL) {
+  while (pch != nullptr) {
     tokens.emplace_back(pch);
-    pch = strtok_r(NULL, delim.c_str(), &saveptr);
+    pch = strtok_r(nullptr, delim.c_str(), &saveptr);
   }
   return tokens;
 }
@@ -44,19 +44,19 @@ std::vector<std::string> GetTokens(const std::string &str, const std::string &de
 // Parse flag string to key-value pair.
 // Flag format: "--key=value", bool flag's value can be implicit, the "--key" means "--key=true"
 std::pair<std::string, std::string> ParseFlag(const std::string &flag) {
-  auto i = flag.find("--");
   // check the string starts with "--".
-  constexpr size_t expected_size = 2;
-  if (i != 0 || flag.size() == expected_size) {
+  auto i = flag.find("--");
+  constexpr size_t leading_size = 2;
+  if (flag.size() <= leading_size || i != 0) {
     return std::pair<std::string, std::string>();
   }
-  i += expected_size;
+  i += leading_size;
 
   auto j = flag.find('=', i + 1);  // the key should not be empty, "--=" is invalid
-  if (j == std::string::npos) {
+  if (j >= flag.size()) {
     // no value, treated as bool flag.
     return std::make_pair(flag.substr(i), "");
-  } else if (j + 1 != flag.size() && flag.find('=', j + 1) == std::string::npos) {
+  } else if (j + 1 < flag.size() && flag.find('=', j + 1) == std::string::npos) {
     // normal "--key=value" format
     return std::make_pair(flag.substr(i, j - i), flag.substr(j + 1));
   }

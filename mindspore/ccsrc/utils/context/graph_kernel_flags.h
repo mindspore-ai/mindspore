@@ -65,19 +65,19 @@ class GraphKernelFlags {
    *
    * Experimental feature, enabled by default when opt_level=3
    */
-  bool enable_stitch_fusion;
+  bool enable_stitch_fusion{false};
 
   /**
    * Enable recompute fusion in graph kernel fusion strategy, enabled when op_level>=2.
    */
-  bool enable_recompute_fusion;
+  bool enable_recompute_fusion{true};
 
   /**
    * Enable parallel fusion in graph kernel fusion strategy.
    *
    * Experimental feature, enabled by default when opt_level=3
    */
-  bool enable_parallel_fusion;
+  bool enable_parallel_fusion{false};
 
   /**
    * Optimization level, value from 0 to 3.
@@ -88,7 +88,7 @@ class GraphKernelFlags {
    * The default value is OptLevel_2 when the context "enable_graph_kernel" is set,
    * but if it's also changed in "graph_kernel_flags", then the "graph_kernel_flags" will prevail.
    */
-  unsigned int opt_level;  // defaults 0 or 2
+  unsigned int opt_level{0};  // defaults 0 or 2
 
   /**
    * auto_tune, unsupported now.
