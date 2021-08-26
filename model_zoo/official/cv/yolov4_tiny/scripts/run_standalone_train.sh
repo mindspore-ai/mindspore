@@ -16,7 +16,7 @@
 
 #if [ $# != 2 ]
 #then
-#    echo "Usage: sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_BACKBONE]"
+#    echo "Usage: sh run_standalone_train.sh [DATASET_PATH] [TRAIN_IMG_DIR] [TRAIN_JSON_FILE] [VAL_IMG_DIR] [VAL_JSON_FILE]"
 #exit 1
 #fi
 
@@ -29,21 +29,18 @@ get_real_path(){
 }
 
 DATASET_PATH=$(get_real_path $1)
+TRAIN_IMG_DIR=$2
+TRAIN_JSON_FILE=$3
+VAL_IMG_DIR=$4
+VAL_JSON_FILE=$5
+
 echo $DATASET_PATH
-#PRETRAINED_BACKBONE=$(get_real_path $2)
-#echo $PRETRAINED_BACKBONE
 
 if [ ! -d $DATASET_PATH ]
 then
     echo "error: DATASET_PATH=$DATASET_PATH is not a directory"
 exit 1
 fi
-
-#if [ ! -f $PRETRAINED_BACKBONE ]
-#then
-#    echo "error: PRETRAINED_PATH=$PRETRAINED_BACKBONE is not a file"
-#exit 1
-#fi
 
 export DEVICE_NUM=1
 export DEVICE_ID=0
@@ -65,11 +62,15 @@ env > env.log
 
 python train.py \
     --data_dir=$DATASET_PATH \
+    --train_img_dir=$TRAIN_IMG_DIR \
+    --train_json_file=$TRAIN_JSON_FILE \
+    --val_img_dir=$VAL_IMG_DIR \
+    --val_json_file=$VAL_JSON_FILE \
     --is_distributed=0 \
-    --lr=0.012 \
-    --t_max=320 \
-    --max_epoch=320 \
-    --warmup_epochs=4 \
+    --lr=0.01 \
+    --t_max=500 \
+    --max_epoch=500 \
+    --warmup_epochs=20 \
     --training_shape=416 \
     --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 cd ..

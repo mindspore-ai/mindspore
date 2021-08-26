@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 4 ]
 then
-    echo "Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage: sh run_eval.sh [DATASET_PATH] [VAL_IMG_DIR] [VAL_JSON_FILE] [CHECKPOINT_PATH]"
 exit 1
 fi
 
@@ -28,7 +28,10 @@ get_real_path(){
   fi
 }
 DATASET_PATH=$(get_real_path $1)
-CHECKPOINT_PATH=$(get_real_path $2)
+VAL_IMG_DIR=$2
+VAL_JSON_FILE=$3
+CHECKPOINT_PATH=$(get_real_path $4)
+
 echo $DATASET_PATH
 echo $CHECKPOINT_PATH
 
@@ -63,6 +66,8 @@ env > env.log
 echo "start inferring for device $DEVICE_ID"
 python eval.py \
     --data_dir=$DATASET_PATH \
+    --val_img_dir=$VAL_IMG_DIR \
+    --val_json_file=$VAL_JSON_FILE \
     --is_distributed=0 \
     --per_batch_size=1 \
     --pretrained=$CHECKPOINT_PATH > log.txt 2>&1 &

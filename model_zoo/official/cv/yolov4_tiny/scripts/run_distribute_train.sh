@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 6 ]
 then
-    echo "Usage: sh run_distribute_train.sh [DATASET_PATH] [RANK_TABLE_FILE]"
+    echo "Usage: sh run_distribute_train.sh [DATASET_PATH] [TRAIN_IMG_DIR] [TRAIN_JSON_FILE] [VAL_IMG_DIR] [VAL_JSON_FILE] [RANK_TABLE_FILE]"
 exit 1
 fi
 
@@ -29,7 +29,11 @@ get_real_path(){
 }
 
 DATASET_PATH=$(get_real_path $1)
-RANK_TABLE_FILE=$(get_real_path $2)
+TRAIN_IMG_DIR=$2
+TRAIN_JSON_FILE=$3
+VAL_IMG_DIR=$4
+VAL_JSON_FILE=$5
+RANK_TABLE_FILE=$(get_real_path $6)
 echo $DATASET_PATH
 echo $RANK_TABLE_FILE
 
@@ -65,13 +69,17 @@ do
     env > env.log
     nohup python train.py \
         --data_dir=$DATASET_PATH \
+        --train_img_dir=$TRAIN_IMG_DIR \
+        --train_json_file=$TRAIN_JSON_FILE \
+        --val_img_dir=$VAL_IMG_DIR \
+        --val_json_file=$VAL_JSON_FILE \
         --is_distributed=1 \
         --lr=0.01 \
         --t_max=500 \
         --max_epoch=500 \
         --warmup_epochs=20 \
         --per_batch_size=16 \
-        --training_shape=608 \
+        --training_shape=416 \
         --lr_scheduler=cosine_annealing  > log.txt 2>&1 &
     cd ..
 done
