@@ -1767,6 +1767,14 @@ test_case_nn_ops = [
         'block': P.MaxPool3D(kernel_size=2, strides=2, pad_mode="VALID"),
         'desc_inputs': [[100, 3, 28, 28, 28]],
         'desc_bprop': [[100, 3, 14, 14, 14]]}),
+    ('MaxPool3D', {
+        'block': P.MaxPool3D(kernel_size=4, strides=2, pad_mode="PAD", pad_list=2, ceil_mode=False),
+        'desc_inputs': [[100, 3, 28, 28, 28]],
+        'desc_bprop': [[100, 3, 14, 14, 14]]}),
+    ('MaxPool3D', {
+        'block': P.MaxPool3D(kernel_size=4, strides=2, pad_mode="PAD", pad_list=2, ceil_mode=True),
+        'desc_inputs': [[100, 3, 28, 28, 28]],
+        'desc_bprop': [[100, 3, 14, 14, 14]]}),
     ('MaxPool3DGrad', {
         'block': G.MaxPool3DGrad(kernel_size=2, strides=2, pad_mode="VALID"),
         'desc_inputs': [[3, 4, 6, 6, 6], [3, 4, 3, 3, 3], [3, 4, 3, 3, 3]],
