@@ -16,6 +16,12 @@
 import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops import composite as C
+from mindspore.context import ParallelMode
+from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
+                                       _get_parallel_mode)
+from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 
 def weight_variable():
     """Weight variable."""
@@ -172,3 +178,80 @@ class PoseNet(nn.Cell):
         return cls1_fc_pose_xyz, cls1_fc_pose_wpqr, \
                cls2_fc_pose_xyz, cls2_fc_pose_wpqr, \
                cls3_fc_pose_xyz, cls3_fc_pose_wpqr
+
+
+GRADIENT_CLIP_TYPE = 1
+GRADIENT_CLIP_VALUE = 50.0
+
+clip_grad = C.MultitypeFuncGraph("clip_grad")
+
+@clip_grad.register("Number", "Number", "Tensor")
+def _clip_grad(clip_type, clip_value, grad):
+    """
+    Clip gradients
+    Inputs:
+        clip_type: The way to clip, 0 for 'value', 1 for 'norm'
+        clip_value: Specifies how much to clip
+        grad: Gradients
+    Outputs:
+        tuple[Tensor], clipped gradients
+    """
+    if clip_type not in (0, 1):
+        return grad
+    dt = F.dtype(grad)
+    if clip_type == 0:
+        new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
+                                   F.cast(F.tuple_to_array((clip_value,)), dt))
+    else:
+        new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
+    return new_grad
+
+class PoseTrainOneStepCell(nn.Cell):
+    r"""
+    Network training package class.
+
+    Wraps the network with an optimizer. The resulting Cell is trained with input '\*inputs'.
+    The backward graph will be created in the construct function to update the parameter. Different
+    parallel modes are available for training.
+
+    Args:
+        network (Cell): The training network. The network only supports single output.
+        optimizer (Union[Cell]): Optimizer for updating the weights.
+        sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
+
+    Inputs:
+        - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+
+    Outputs:
+        Tensor, a tensor means the loss value, the shape of which is usually :math:`()`.
+
+    Raises:
+        TypeError: If `sens` is not a number.
+    """
+
+    def __init__(self, network, optimizer, sens=1.0):
+        super(PoseTrainOneStepCell, self).__init__(auto_prefix=False)
+        self.network = network
+        self.network.set_grad()
+        self.optimizer = optimizer
+        self.weights = self.optimizer.parameters
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
+        self.sens = sens
+        self.reducer_flag = False
+        self.grad_reducer = F.identity
+        self.hyper_map = C.HyperMap()
+        self.parallel_mode = _get_parallel_mode()
+        self.reducer_flag = self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL)
+        if self.reducer_flag:
+            self.mean = _get_gradients_mean()
+            self.degree = _get_device_num()
+            self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree)
+
+    def construct(self, *inputs):
+        loss = self.network(*inputs)
+        sens = F.fill(loss.dtype, loss.shape, self.sens)
+        grads = self.grad(self.network, self.weights)(*inputs, sens)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        grads = self.grad_reducer(grads)
+        loss = F.depend(loss, self.optimizer(grads))
+        return loss

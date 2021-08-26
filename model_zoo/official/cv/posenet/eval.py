@@ -41,6 +41,9 @@ if __name__ == '__main__':
     parser.add_argument('--is_modelarts', type=ast.literal_eval, default=False, help='Train in Modelarts.')
     parser.add_argument('--data_url', default=None, help='Location of data.')
     parser.add_argument('--train_url', default=None, help='Location of training outputs.')
+    parser.add_argument('--device_target', type=str, default='Ascend',
+                        choices=['Ascend', 'GPU'],
+                        help='Name of device target.')
     args_opt = parser.parse_args()
 
     cfg = common_config
@@ -49,8 +52,8 @@ if __name__ == '__main__':
     elif args_opt.dataset == "StMarysChurch":
         dataset_cfg = StMarysChurch
 
-    device_target = cfg.device_target
-    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
+    device_target = args_opt.device_target
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
 
     if args_opt.device_id is not None:
         context.set_context(device_id=args_opt.device_id)
