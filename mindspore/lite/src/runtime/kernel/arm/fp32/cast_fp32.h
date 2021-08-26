@@ -38,9 +38,9 @@ class CastCPUKernel : public InnerKernel {
   int DoCast(int thread_id);
 
  private:
-  int CastToFp32(lite::Tensor *input, lite::Tensor *output, int offset, int data_num);
-  int CastToFp16(lite::Tensor *input, lite::Tensor *output, int offset, int data_num);
-  int CastToOthers(lite::Tensor *input, lite::Tensor *output, int offset, int data_num);
+  int CastToFp32(const lite::Tensor *input, lite::Tensor *output, int offset, int data_num);
+  int CastToFp16(const lite::Tensor *input, lite::Tensor *output, int offset, int data_num);
+  int CastToOthers(const lite::Tensor *input, lite::Tensor *output, int offset, int data_num);
   int stride_ = 0;
   int data_num_ = 0;
 };

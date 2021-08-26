@@ -15,7 +15,6 @@
  */
 #include "common/common_test.h"
 #include "nnacl/infer/cast_infer.h"
-#include "nnacl/cast_parameter.h"
 
 namespace mindspore {
 

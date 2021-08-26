@@ -23,7 +23,7 @@ int CastInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-  if (inputs_size < 2) {
+  if (inputs_size != 2) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
 

@@ -46,29 +46,36 @@ int CastFp16CPUKernel::Init() {
 }
 
 int CastFp16CPUKernel::ReSize() {
-  data_num_ = in_tensors_.at(0)->ElementsNum();
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  auto in_tensor = in_tensors_.at(0);
+  CHECK_NULL_RETURN(in_tensor);
+  data_num_ = in_tensor->ElementsNum();
   if (data_num_ == 0) {
     return RET_OK;
   }
-  op_parameter_->thread_num_ = MSMIN(op_parameter_->thread_num_, static_cast<int>(data_num_));
+  op_parameter_->thread_num_ = MSMIN(op_parameter_->thread_num_, data_num_);
   stride_ = UP_DIV(data_num_, op_parameter_->thread_num_);
   return RET_OK;
 }
 
 int CastFp16CPUKernel::DoCast(int thread_id) {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto input = in_tensors_.at(0);
-  MS_ASSERT(input != nullptr);
+  auto output = out_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(output);
   auto input_data = input->data_c();
-  MS_ASSERT(input_data != nullptr);
+  auto output_data = output->data_c();
+  CHECK_NULL_RETURN(input_data);
+  CHECK_NULL_RETURN(output_data);
+
   int data_num = MSMIN(stride_, data_num_ - thread_id * stride_);
   if (data_num <= 0) {
     return RET_OK;
   }
 
   auto offset = thread_id * stride_;
-  auto output = out_tensors_.at(0);
-  auto output_data = output->data_c();
-  MS_ASSERT(output_data != nullptr);
   auto input_data_type = input->data_type();
   auto output_data_type = output->data_type();
 

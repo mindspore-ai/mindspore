@@ -88,7 +88,7 @@
   do {                                               \
     if ((ptr) == nullptr) {                          \
       MS_LOG(ERROR) << #ptr << " must not be null!"; \
-      return RET_NULL_PTR;                           \
+      return lite::RET_NULL_PTR;                     \
     }                                                \
   } while (0);
 

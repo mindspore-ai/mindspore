@@ -20,7 +20,6 @@
 #include <vector>
 #include <string>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "nnacl/cast_parameter.h"
 
 namespace mindspore::kernel {
 class CastOpenCLKernel : public OpenCLKernel {

@@ -16,12 +16,17 @@
 
 #include "src/delegate/npu/op/cast_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 int CastNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                          const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (in_tensors.size() >= 2 && in_tensors[1].ElementNum() == 1) {
-    dst_type_ = reinterpret_cast<const int *>(in_tensors[1].Data().get())[0];
+  auto in_tensor = in_tensors[1];
+  CHECK_NULL_RETURN(in_tensor);
+  CHECK_NULL_RETURN(in_tensor.Data().get());
+
+  if (in_tensors.size() >= 2 && in_tensor.ElementNum() == 1) {
+    dst_type_ = reinterpret_cast<const int *>(in_tensor.Data().get())[0];
   } else {
     MS_LOG(WARNING) << "NPU dst dtype is attribute.";
     return RET_NOT_SUPPORT;
@@ -31,6 +36,9 @@ int CastNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<m
 
 int CastNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                     const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_NULL_RETURN(in_tensors[0]);
+  CHECK_NULL_RETURN(cast_);
+
   cast_ = new (std::nothrow) hiai::op::CastT(name_);
   if (cast_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -44,6 +52,7 @@ int CastNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindsp
 int CastNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors,
                             const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_NULL_RETURN(cast_);
   cast_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }

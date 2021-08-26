@@ -16,20 +16,22 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/cast_parameter.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateCastParameter(const void *prim) {
-  CastParameter *cast_param = reinterpret_cast<CastParameter *>(malloc(sizeof(CastParameter)));
+  if (prim == nullptr) {
+    return nullptr;
+  }
+  OpParameter *cast_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (cast_param == nullptr) {
     MS_LOG(ERROR) << "malloc CastParameter failed.";
     return nullptr;
   }
-  memset(cast_param, 0, sizeof(CastParameter));
-  cast_param->op_parameter_.type_ = schema::PrimitiveType_Cast;
-  return reinterpret_cast<OpParameter *>(cast_param);
+  memset(cast_param, 0, sizeof(OpParameter));
+  cast_param->type_ = schema::PrimitiveType_Cast;
+  return cast_param;
 }
 }  // namespace
 
