@@ -399,6 +399,7 @@ from .roll import _roll_tbe
 from .soft_shrink import _soft_shrink_tbe
 from .erfinv import _erfinv_tbe
 from .soft_shrink_grad import _soft_shrink_grad_tbe
+from .index_add import _index_add_tbe
 from .hsigmoid_grad import _hsigmoid_grad_tbe
 from .hsigmoid import _hsigmoid_tbe
 from .hshrink import _hshrink_tbe
