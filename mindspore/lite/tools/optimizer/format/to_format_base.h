@@ -52,7 +52,8 @@ class ToFormatBase : public Pass {
  protected:
   virtual STATUS GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) = 0;
   virtual void SetSensitiveOps() { sensitive_ops_ = opt::GetNHWCOpMap(); }
-  virtual bool DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ShapeVector &shape) { return true; }
+  virtual bool DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ParameterPtr &input,
+                                             const ShapeVector &shape);
   virtual bool DecideWhetherInferShapeForNewNode() { return true; }
   virtual STATUS DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
                                                  schema::Format *dst_format) = 0;

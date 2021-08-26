@@ -45,6 +45,20 @@ STATUS ToNCHWFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTyp
 STATUS ToNCHWFormat::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
                                                      schema::Format *dst_format) {
   MS_ASSERT(cnode != nullptr && src_format != nullptr && dst_format != nullptr);
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(prim != nullptr);
+  if (prim->GetAttr(ops::kFormat) != nullptr) {
+    auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+    if (node_format == mindspore::NCHW) {
+      MS_LOG(DEBUG) << "node's format has been nchw, no need to transfer, " << cnode->fullname_with_scope();
+      return lite::RET_OK;
+    }
+    if (node_format != mindspore::NHWC) {
+      MS_LOG(ERROR) << "node's format is invalid, which must be nhwc or nchw, now is " << node_format
+                    << ", node name is " << cnode->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+  }
   *src_format = schema::Format_KHWC;
   *dst_format = schema::Format_KCHW;
   return lite::RET_OK;

@@ -36,7 +36,8 @@ class UnifyFormatToNHWC : public opt::ToFormatBase {
   STATUS ConvertOnnxResizeForVariableShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) override;
   void SetSensitiveOps() override;
-  bool DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ShapeVector &shape) override;
+  bool DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ParameterPtr &input,
+                                     const ShapeVector &shape) override;
   bool DecideWhetherInferShapeForNewNode() override;
   STATUS DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
                                          schema::Format *dst_format) override;

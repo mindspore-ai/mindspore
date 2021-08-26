@@ -178,6 +178,31 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
   return lite::RET_OK;
 }
 
+bool ToFormatBase::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ParameterPtr &input,
+                                                 const ShapeVector &shape) {
+  MS_ASSERT(func_graph != nullptr && input != nullptr);
+  auto manager = func_graph->manager();
+  MS_ASSERT(anager != nullptr);
+  auto node_users = manager->node_users()[input];
+  for (auto &node_user : node_users) {
+    auto post_node = node_user.first;
+    if (!utils::isa<CNode>(post_node)) {
+      continue;
+    }
+    auto post_cnode = post_node->cast<CNodePtr>();
+    auto prim = GetValueNode<PrimitivePtr>(post_cnode->input(0));
+    MS_ASSERT(prim != nullptr);
+    if (prim->GetAttr(ops::kFormat) != nullptr) {
+      auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+      if (node_format == format_) {
+        MS_LOG(DEBUG) << "this graph input don't need to change.";
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto graph_input = func_graph->get_inputs();
@@ -191,7 +216,7 @@ STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "fetch shape failed." << input->fullname_with_scope();
       return lite::RET_ERROR;
     }
-    if (shape.size() != kDimNumber || !DecideWhetherHandleGraphInput(func_graph, shape)) {
+    if (shape.size() != kDimNumber || !DecideWhetherHandleGraphInput(func_graph, input_param, shape)) {
       continue;
     }
     ShapeVector transfer_shape;
@@ -298,8 +323,6 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
 STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<AnfNodePtr> *has_visited) {
   MS_ASSERT(graph != nullptr && has_visited != nullptr);
   auto node_list = TopoSort(graph->get_return());
-  schema::Format src_format = schema::Format_NUM_OF_FORMAT;
-  schema::Format dst_format = schema::Format_NUM_OF_FORMAT;
   for (auto &node : node_list) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
@@ -335,6 +358,8 @@ STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<A
       continue;
     }
     has_visited->insert(node);
+    schema::Format src_format = schema::Format_NUM_OF_FORMAT;
+    schema::Format dst_format = schema::Format_NUM_OF_FORMAT;
     if (DecideConvWeightSrcAndDstFormat(cnode, &src_format, &dst_format) != lite::RET_OK) {
       MS_LOG(ERROR) << "weight's src format and dst format get failed.";
       return lite::RET_ERROR;
