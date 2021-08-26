@@ -336,11 +336,24 @@ std::pair<OperatorInfoPtr, int> PipelineTransformer::GetOpInfo(const AnfNodePtr 
   return std::make_pair(op_info, tensor_info_index);
 }
 
-AnfNodeIndexSet PipelineTransformer::GetActualOpUsers(const AnfNodePtr &node, NodeUsersMap *node_users_map) {
-  auto temp_users = (*node_users_map)[node];
-  auto temp_node = temp_users.front().first;
-  if (IsPrimitiveCNode(temp_node, prim::kPrimLoad) || IsPrimitiveCNode(temp_node, prim::kPrimCast)) {
-    return GetActualOpUsers(temp_node, node_users_map);
+AnfNodeIndexSet PipelineTransformer::GetActualOpUsers(const std::pair<AnfNodePtr, int> &node_pair,
+                                                      NodeUsersMap *node_users_map) {
+  auto temp_node = node_pair.first;
+  auto temp_cnode = temp_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(temp_cnode);
+  if (IsValueNode<FuncGraph>(temp_cnode->input(0))) {
+    auto graph = GetValueNode<FuncGraphPtr>(temp_cnode->input(0));
+    auto temp_params = graph->parameters();
+    if (temp_params.size() < IntToSize(node_pair.second)) {
+      MS_LOG(EXCEPTION) << "parameter: " << temp_node->DebugString() << " out of graph:" << graph->ToString()
+                        << "'s range.";
+    }
+    temp_node = temp_params[node_pair.second - 1];
+  }
+  auto temp_users = (*node_users_map)[temp_node];
+  auto node = temp_users.front().first;
+  if (IsPrimitiveCNode(node, prim::kPrimLoad) || IsPrimitiveCNode(node, prim::kPrimCast)) {
+    return GetActualOpUsers(temp_users.front(), node_users_map);
   }
   return temp_users;
 }
@@ -350,7 +363,7 @@ std::pair<OperatorInfoPtr, int> PipelineTransformer::GetParameterPair(const AnfN
   auto node_users_map = manager_->node_users();
   auto node_users = node_users_map[node];
   for (auto &node_user : node_users) {
-    auto load_users = GetActualOpUsers(node_user.first, &node_users_map);
+    auto load_users = GetActualOpUsers(node_user, &node_users_map);
     for (auto &user_pair : load_users) {
       auto user_node = user_pair.first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(user_node);
@@ -359,38 +372,11 @@ std::pair<OperatorInfoPtr, int> PipelineTransformer::GetParameterPair(const AnfN
       if (user_node_graph->stage() == -1) {
         continue;
       }
-      auto care_node = user_node;
       auto index = user_pair.second;
-      if (IsValueNode<FuncGraph>(user_node->input(0))) {
-        auto graph = GetValueNode<FuncGraphPtr>(user_node->input(0));
-        auto temp_params = graph->parameters();
-        if (temp_params.size() < IntToSize(user_pair.second)) {
-          MS_LOG(EXCEPTION) << "parameter:" << node->DebugString() << " out of graph: " << graph->ToString()
-                            << "'s range.";
-        }
-        auto temp_param = temp_params[user_pair.second - 1];
-        auto temp_users = node_users_map[temp_param];
-        for (auto &temp_user : temp_users) {
-          auto load_temp = temp_user.first->cast<CNodePtr>();
-          if (IsPrimitiveCNode(load_temp, prim::kPrimLoad)) {
-            temp_users = node_users_map[load_temp];
-            break;
-          }
-        }
-        for (auto &temp_pair : temp_users) {
-          auto temp_cnode = temp_pair.first->cast<CNodePtr>();
-          if (!IsPipelineCareNode(temp_cnode)) {
-            continue;
-          }
-          care_node = temp_cnode;
-          index = temp_pair.second;
-          break;
-        }
-      }
-      if (!IsPipelineCareNode(care_node)) {
+      if (!IsPipelineCareNode(user_node)) {
         continue;
       }
-      auto op_info = CreateOpInfo(care_node);
+      auto op_info = CreateOpInfo(user_node);
       return std::make_pair(op_info, index - 1);
     }
   }
@@ -710,20 +696,9 @@ AnfNodePtr PipelineTransformer::ActualOp(const AnfNodePtr &node) {
 bool PipelineTransformer::IsParameterGraph(const AnfNodePtr &node) {
   // ParameterGraph: graph which return a parameter
   MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
+  auto temp_node = ActualOp(node);
+  auto cnode = temp_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  // parameter_graph->return->load->graph
-  if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
-    auto graph_cnode = cnode->input(1)->cast<CNodePtr>();
-    if (!graph_cnode) {
-      return false;
-    }
-    if (!IsValueNode<FuncGraph>(graph_cnode->input(0))) {
-      return false;
-    }
-    // Now load's input must be a parameter
-    return true;
-  }
 
   // parameter_graph->return->graph
   if (!IsValueNode<FuncGraph>(cnode->input(0))) {
@@ -755,20 +730,14 @@ bool PipelineTransformer::IsParameterGraph(const AnfNodePtr &node) {
 AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage,
                                                      int64_t user_stage, const ValuePtr &micro, size_t pos,
                                                      const std::vector<AnfNodePtr> ops) {
-  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(node);
+  auto actual_node = ActualOp(node);
+  auto cnode = actual_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+  MS_EXCEPTION_IF_NULL(graph);
   AnfNodePtr argument;
   AnfNodePtr parameter;
-  FuncGraphPtr graph;
-  // parameter_graph->load->graph
-  if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
-    auto graph_cnode = cnode->input(1)->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(graph_cnode);
-    graph = GetValueNode<FuncGraphPtr>(graph_cnode->input(0));
-  } else {
-    graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-  }
-  MS_EXCEPTION_IF_NULL(graph);
 
   auto graph_out = ActualOp(graph->output());
   MS_EXCEPTION_IF_NULL(graph_out);
