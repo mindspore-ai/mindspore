@@ -767,7 +767,7 @@ if platform.system().lower() != 'windows':
         """
         Replace a part of UTF-8 string tensor with given text according to regular expressions.
 
-        See http://userguide.icu-project.org/strings/regexp for supported regex pattern.
+        See https://unicode-org.github.io/icu/userguide/strings/regexp.html for supported regex pattern.
 
         Note:
             RegexReplace is not supported on Windows platform yet.
@@ -799,7 +799,7 @@ if platform.system().lower() != 'windows':
         """
         Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
 
-        See http://userguide.icu-project.org/strings/regexp for supported regex pattern.
+        See https://unicode-org.github.io/icu/userguide/strings/regexp.html for supported regex pattern.
 
         Note:
             RegexTokenizer is not supported on Windows platform yet.
