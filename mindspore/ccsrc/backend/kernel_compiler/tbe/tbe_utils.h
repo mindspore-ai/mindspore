@@ -48,7 +48,7 @@ class TbeUtils {
 
   static void GenSocInfo(nlohmann::json *soc_info_json);
 
-  static KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);
+  static KernelPackPtr SearchCache(const std::string &kernel_name);
 
   static KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor);
 };
@@ -79,7 +79,7 @@ class KernelMeta {
  public:
   static KernelMeta *GetInstance();
   bool ReadIndex(const std::string &bin_dir);
-  KernelPackPtr GetKernelPack(const std::string &kernel_name, const std::string &processor);
+  KernelPackPtr GetKernelPack(const std::string &kernel_name);
 
  private:
   KernelMeta() = default;

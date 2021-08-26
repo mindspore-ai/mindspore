@@ -79,7 +79,7 @@ RangePair PaddingRangeTo4D(const RangePair &ori_range) {
       dst_range[kW] = ori_range[kH];
       break;
     case kNchwDims:
-      std::copy(ori_range.begin(), ori_range.end(), dst_range.begin());
+      (void)std::copy(ori_range.begin(), ori_range.end(), dst_range.begin());
       break;
     default:
       MS_LOG(EXCEPTION) << "Unexpected range size: " << ori_range.size();
@@ -136,7 +136,7 @@ RangePair FracNZRange(const RangePair &range) {
   if (range.size() < kDims2) {
     MS_LOG(EXCEPTION) << "Format FracNZ can not support range size: " << range.size();
   } else {
-    std::copy(range.begin(), range.end() - kDims2, std::back_inserter(dst_range));
+    (void)std::copy(range.begin(), range.end() - kDims2, std::back_inserter(dst_range));
   }
   const std::pair<int64_t, int64_t> c0 = {k16, k16};
   const std::pair<int64_t, int64_t> w1 = {(range[range.size() - 1].first - 1) / k16 + 1,

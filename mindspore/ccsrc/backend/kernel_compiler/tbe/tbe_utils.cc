@@ -98,14 +98,14 @@ void TbeUtils::LoadCache() {
   }
 }
 
-KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name, const std::string &processor) {
+KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name) {
   // search cache.
   KernelMeta *bin_map = KernelMeta::GetInstance();
   if (bin_map == nullptr) {
     MS_LOG(INFO) << "kernel cache is invalid.";
     return nullptr;
   }
-  return bin_map->GetKernelPack(kernel_name, processor);
+  return bin_map->GetKernelPack(kernel_name);
 }
 
 KernelPackPtr TbeUtils::InsertCache(const std::string &kernel_name, const std::string &processor) {
@@ -113,7 +113,7 @@ KernelPackPtr TbeUtils::InsertCache(const std::string &kernel_name, const std::s
   if (processor != kProcessorAiCore) {
     MS_LOG(EXCEPTION) << "process type should be aicore, actually is: " << processor;
   }
-  return SearchCache(kernel_name, processor);
+  return SearchCache(kernel_name);
 }
 
 int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buffer, void **module, const string &magic,
@@ -245,7 +245,7 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
   return true;
 }
 
-KernelPackPtr KernelMeta::GetKernelPack(const std::string &kernel_name, const std::string &processor) {
+KernelPackPtr KernelMeta::GetKernelPack(const std::string &kernel_name) {
   KernelPackPtr ret = nullptr;
   // 1. pack has been created
   auto kernel_pack_iter = kernel_pack_map_.find(kernel_name);

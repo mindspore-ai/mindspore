@@ -396,7 +396,6 @@ kernel::KernelModPtr AscendDeviceAddress::CompileTransDataAndObtainKernelMod(con
   static std::set<std::string> constructed_kernel = {};
   auto build_manager = std::make_shared<kernel::ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manager);
-  std::string processor = process_aicore;
   // get size
   std::vector<size_t> input_size_list;
   std::vector<size_t> output_size_list;
@@ -422,7 +421,7 @@ kernel::KernelModPtr AscendDeviceAddress::CompileTransDataAndObtainKernelMod(con
   }
   (void)constructed_kernel.insert(json_name);
   // search cache
-  auto cached_kernel_pack = TbeUtils::SearchCache(json_name, processor);
+  auto cached_kernel_pack = TbeUtils::SearchCache(json_name);
   MS_EXCEPTION_IF_NULL(cached_kernel_pack);
   auto kernel_mod_ptr = build_manager->GenKernelMod(input_size_list, output_size_list, cached_kernel_pack);
   return kernel_mod_ptr;
@@ -471,8 +470,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
 
 std::vector<size_t> AscendDeviceAddress::GetWorkspaceSizeList(const nlohmann::json &kernel_json) const {
   std::string json_name = kernel_json[op_info_str][kernel_name_str];
-  std::string processor = process_aicore;
-  auto cached_kernel_pack = TbeUtils::SearchCache(json_name, processor);
+  auto cached_kernel_pack = TbeUtils::SearchCache(json_name);
   MS_EXCEPTION_IF_NULL(cached_kernel_pack);
   auto kernel_json_info = cached_kernel_pack->kernel_json_info();
   return kernel_json_info.workspaces;
