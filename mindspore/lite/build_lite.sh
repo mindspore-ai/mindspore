@@ -90,14 +90,10 @@ build_lite_x86_64_jni_and_jar() {
     # build java fl_client
     if [[ "X$is_train" = "Xon" ]]; then
         ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/fl_client
-        echo "--------------------building createFlatBuffers for fl_client------------------------"
         ${LITE_JAVA_PATH}/java/gradlew createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
-        echo "--------------------create FlatBuffers for fl_client success--------------------"
         ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/java/fl_client
         ${LITE_JAVA_PATH}/java/gradlew clearJar -p ${LITE_JAVA_PATH}/java/fl_client
-        echo "--------------------building flReleaseJar for fl_client------------------------"
         ${LITE_JAVA_PATH}/java/gradlew flReleaseJarX86 --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
-        echo "--------------------build jar for fl_client success ------------------------"
         cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     fi
 
@@ -222,7 +218,7 @@ build_lite() {
           mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
         fi
 
-        if [[ "${local_lite_platform}" == "x86_64" ]]; then
+        if [[ "${local_lite_platform}" == "x86_64" && "${MSLITE_ENABLE_TESTCASES}" == "on" ]]; then
           mkdir -pv ${BASEPATH}/mindspore/lite/test/do_test || true
           cp ${BASEPATH}/output/tmp/mindspore-lite*/tools/converter/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
           cp ${BASEPATH}/output/tmp/mindspore-lite*/runtime/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
@@ -366,14 +362,10 @@ build_aar() {
     fi
     if [[ "X$is_train" = "Xon" ]]; then
         ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/fl_client
-        echo "--------------------building createFlatBuffers for fl_client------------------------"
         ${LITE_JAVA_PATH}/java/gradlew createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
-        echo "--------------------create FlatBuffers for fl_client success--------------------"
         ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/java/fl_client
         ${LITE_JAVA_PATH}/java/gradlew clearJar -p ${LITE_JAVA_PATH}/java/fl_client
-        echo "--------------------building flReleaseJar for fl_client------------------------"
         ${LITE_JAVA_PATH}/java/gradlew flReleaseJarAAR --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
-        echo "--------------------build jar for fl_client success ------------------------"
         cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarAAR/mindspore-lite-java-flclient.jar ${LITE_JAVA_PATH}/java/app/libs
     fi
 

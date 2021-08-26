@@ -189,7 +189,8 @@ class MS_API BenchmarkBase {
 
   virtual int CompareOutput() = 0;
 
-  int CompareStringData(const std::string &name, tensor::MSTensor *tensor);
+  int CompareStringData(const std::string &name, const std::vector<std::string> &calib_strings,
+                        const std::vector<std::string> &output_strings);
 
   int InitDumpConfigFromJson(char *path);
 

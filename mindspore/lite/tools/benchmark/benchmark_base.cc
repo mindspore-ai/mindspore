@@ -173,23 +173,20 @@ int BenchmarkBase::ReadCalibData() {
   return RET_OK;
 }
 
-int BenchmarkBase::CompareStringData(const std::string &name, tensor::MSTensor *tensor) {
-  auto iter = this->benchmark_data_.find(name);
-  if (iter != this->benchmark_data_.end()) {
-    std::vector<std::string> calib_strings = iter->second->strings_data;
-    std::vector<std::string> output_strings = MSTensorToStrings(tensor);
-    size_t compare_num = std::min(calib_strings.size(), output_strings.size());
-    size_t print_num = std::min(compare_num, static_cast<size_t>(kNumPrintMin));
+int BenchmarkBase::CompareStringData(const std::string &name, const std::vector<std::string> &calib_strings,
+                                     const std::vector<std::string> &output_strings) {
+  size_t compare_num = std::min(calib_strings.size(), output_strings.size());
+  size_t print_num = std::min(compare_num, static_cast<size_t>(kNumPrintMin));
 
-    std::cout << "Data of node " << name << " : " << std::endl;
-    for (size_t i = 0; i < compare_num; i++) {
-      if (i < print_num) {
-        std::cout << "  " << output_strings[i] << std::endl;
-      }
-      if (calib_strings[i] != output_strings[i]) {
-        MS_LOG(ERROR) << "Compare failed, index: " << i;
-        return RET_ERROR;
-      }
+  std::cout << "Data of node " << name << " : " << std::endl;
+  for (size_t i = 0; i < compare_num; i++) {
+    if (i < print_num) {
+      std::cout << "  " << output_strings[i] << std::endl;
+    }
+    if (calib_strings[i] != output_strings[i]) {
+      MS_LOG(ERROR) << "Compare failed, index: " << i;
+      std::cerr << "Compare failed, index: " << i << std::endl;
+      return RET_ERROR;
     }
   }
   return RET_OK;
@@ -207,6 +204,9 @@ void BenchmarkFlags::InitInputDataList() {
 
 void BenchmarkFlags::InitResizeDimsList() {
   std::string content = this->resize_dims_in_;
+  if (content.empty()) {
+    return;
+  }
   std::vector<int> shape;
   auto shape_strs = StrSplit(content, std::string(DELIM_COLON));
   for (const auto &shape_str : shape_strs) {

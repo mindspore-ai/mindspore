@@ -44,25 +44,27 @@ constexpr int kDumpOutputs = 2;
 
 namespace lite {
 int BenchmarkUnifiedApi::GenerateInputData() {
-  for (auto tensor : ms_inputs_for_api_) {
-    MS_ASSERT(tensor != nullptr);
-    auto input_data = tensor.MutableData();
-    if (input_data == nullptr) {
-      MS_LOG(ERROR) << "MallocData for inTensor failed";
-      return RET_ERROR;
-    }
-    int status;
+  for (auto &tensor : ms_inputs_for_api_) {
     if (static_cast<int>(tensor.DataType()) == kObjectTypeString) {
-      std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
-      MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
-      return RET_ERROR;
+      MSTensor *input = MSTensor::StringsToTensor(tensor.Name(), {"you're the best."});
+      if (input == nullptr) {
+        std::cerr << "StringsToTensor failed" << std::endl;
+        MS_LOG(ERROR) << "StringsToTensor failed";
+        return RET_ERROR;
+      }
+      tensor = *input;
     } else {
-      status = GenerateRandomData(tensor.DataSize(), input_data, static_cast<int>(tensor.DataType()));
-    }
-    if (status != RET_OK) {
-      std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
-      MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
-      return status;
+      auto input_data = tensor.MutableData();
+      if (input_data == nullptr) {
+        MS_LOG(ERROR) << "MallocData for inTensor failed";
+        return RET_ERROR;
+      }
+      int status = GenerateRandomData(tensor.DataSize(), input_data, static_cast<int>(tensor.DataType()));
+      if (status != RET_OK) {
+        std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
+        MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
+        return status;
+      }
     }
   }
   return RET_OK;
@@ -78,7 +80,7 @@ int BenchmarkUnifiedApi::ReadInputFile() {
     return RET_ERROR;
   } else {
     for (size_t i = 0; i < flags_->input_data_list_.size(); i++) {
-      auto cur_tensor = ms_inputs_for_api_.at(i);
+      auto &cur_tensor = ms_inputs_for_api_.at(i);
       MS_ASSERT(cur_tensor != nullptr);
       size_t size;
       char *bin_buf = ReadFile(flags_->input_data_list_[i].c_str(), &size);
@@ -87,9 +89,15 @@ int BenchmarkUnifiedApi::ReadInputFile() {
         return RET_ERROR;
       }
       if (static_cast<int>(cur_tensor.DataType()) == kObjectTypeString) {
-        std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
-        MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
-        return RET_ERROR;
+        std::string str(bin_buf, size);
+        MSTensor *input = MSTensor::StringsToTensor(cur_tensor.Name(), {str});
+        if (input == nullptr) {
+          std::cerr << "StringsToTensor failed" << std::endl;
+          MS_LOG(ERROR) << "StringsToTensor failed";
+          delete[] bin_buf;
+          return RET_ERROR;
+        }
+        cur_tensor = *input;
       } else {
         auto tensor_data_size = cur_tensor.DataSize();
         if (size != tensor_data_size) {
@@ -192,9 +200,8 @@ int BenchmarkUnifiedApi::CompareOutput() {
     }
     int ret;
     if (static_cast<int>(tensor.DataType()) == kObjectTypeString) {
-      std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
-      MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
-      return RET_ERROR;
+      std::vector<std::string> output_strings = MSTensor::TensorToStrings(tensor);
+      ret = CompareStringData(tensor_name, calib_tensor.second->strings_data, output_strings);
     } else {
       ret = CompareDataGetTotalBiasAndSize(tensor_name, &tensor, &total_bias, &total_size);
     }
@@ -390,9 +397,12 @@ int BenchmarkUnifiedApi::PrintInputData() {
 
     std::cout << "InData" << i << ": ";
     if (tensor_data_type == TypeId::kObjectTypeString) {
-      std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
-      MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
-      return RET_ERROR;
+      std::vector<std::string> output_strings = MSTensor::TensorToStrings(input);
+      size_t print_num = std::min(output_strings.size(), static_cast<size_t>(20));
+      for (size_t j = 0; j < print_num; j++) {
+        std::cout << output_strings[j] << std::endl;
+      }
+      continue;
     }
     size_t print_num = std::min(static_cast<int>(input.ElementNum()), kPrintDataNum);
     const void *in_data = input.MutableData();
@@ -448,13 +458,16 @@ int BenchmarkUnifiedApi::RunBenchmark() {
 
   (void)InitMSContext(context);
 
-  auto config_ret = ms_model_.LoadConfig(flags_->config_file_);
-  if (config_ret != kSuccess) {
-    MS_LOG(ERROR) << "ms_model_.LoadConfig failed while running ", model_name.c_str();
-    std::cout << "ms_model_.LoadConfig failed while running ", model_name.c_str();
+  if (!flags_->config_file_.empty()) {
+    auto config_ret = ms_model_.LoadConfig(flags_->config_file_);
+    if (config_ret != kSuccess) {
+      MS_LOG(ERROR) << "ms_model_.LoadConfig failed while running ", model_name.c_str();
+      std::cout << "ms_model_.LoadConfig failed while running ", model_name.c_str();
+    }
   }
 
   auto ret = ms_model_.Build(graph_buf, size, kMindIR, context);
+  delete[] graph_buf;
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ms_model_.Build failed while running ", model_name.c_str();
     std::cout << "ms_model_.Build failed while running ", model_name.c_str();
