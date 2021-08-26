@@ -26,8 +26,15 @@ class HcomAllToAllKernel : public HcclKernel {
  public:
   HcomAllToAllKernel();
   ~HcomAllToAllKernel() override;
+  bool Init(const AnfNodePtr &anf_node) override;
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               void *) override;
+  const std::vector<size_t> &GetOutputSizeList() const override;
+  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+
+ private:
+  HcclDataType data_type_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCOM_ALL_TO_ALL_H_

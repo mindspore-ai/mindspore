@@ -39,7 +39,7 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   if (parallel_context_instance->enable_parallel_optimizer() && op_name == kBroadcast) {
     return kOpFormat_DEFAULT;
   }
-  if (op_name == kReceive || op_name == kHcomSend) {
+  if (op_name == kReceive || op_name == kHcomSend || op_name == kAllToAllv) {
     return kOpFormat_DEFAULT;
   }
   auto format = AnfAlgo::GetPrevNodeOutputFormat(kernel_node, index);

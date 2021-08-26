@@ -54,6 +54,14 @@ bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<si
   return true;
 }
 
+::HcclDataType HcomUtil::ConvertHcclType(TypeId type_id) {
+  auto iter = kConstOpHcomDataTypeMap.find(type_id);
+  if (iter == kConstOpHcomDataTypeMap.end()) {
+    MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << type_id;
+  }
+  return iter->second;
+}
+
 bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(data_type_list);
@@ -69,17 +77,14 @@ bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> 
     } else {
       type_ptr = AnfAlgo::GetInputDeviceDataType(anf_node, i);
     }
-    auto iter = kConstOpHcomDataTypeMap.find(type_ptr);
-    if (iter == kConstOpHcomDataTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << type_ptr;
-    }
-    data_type_list->emplace_back(iter->second);
+    data_type_list->emplace_back(ConvertHcclType(type_ptr));
   }
-  auto type_base = *(std::begin(*data_type_list));
-  if (std::any_of(data_type_list->begin(), data_type_list->end(),
-                  [&type_base](HcclDataType type) { return type != type_base; })) {
-    MS_LOG(ERROR) << "hccl have different data type";
-    return false;
+  if (!data_type_list->empty()) {
+    if (std::any_of(data_type_list->begin(), data_type_list->end(),
+                    [&data_type_list](HcclDataType type) { return type != *(data_type_list->begin()); })) {
+      MS_LOG(ERROR) << "hccl have different data type";
+      return false;
+    }
   }
   return true;
 }
