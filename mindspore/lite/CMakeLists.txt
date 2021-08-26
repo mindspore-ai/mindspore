@@ -194,6 +194,12 @@ if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
             "is configured as off, MSLITE_ENABLE_CONVERTER and MSLITE_ENABLE_TESTCASES must also be configured as off")
 endif()
 
+if(((MSLITE_GPU_BACKEND STREQUAL tensorrt) OR MSLITE_ENABLE_NPU) AND (
+        NOT MSLITE_DELEGATE_USE))
+    message(FATAL_ERROR "If MSLITE_DELEGATE_USE use is configured as off, MSLITE_ENABLE_NPU must also be configured
+    as off and MSLITE_GPU_BACKEND nor can it be configured as tensorrt.")
+endif()
+
 if(MSLITE_ENABLE_FP16 AND PLATFORM_ARM32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
         AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
     message(FATAL_ERROR "If you want to build fp16 in arm82_a32, \
