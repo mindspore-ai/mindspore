@@ -20,6 +20,8 @@
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _constants
 from .primitive import Primitive
+from ..common import Tensor
+from ..nn.grad import Jvp
 from . import operations as P
 from .operations import _grad_ops
 from .composite import GradOperation
@@ -153,6 +155,63 @@ identity = P.identity()
 
 grad_first_parameter = GradOperation(get_all=False, get_by_list=False, sens_param=False)
 grad_all_parameters = GradOperation(get_all=True, get_by_list=False, sens_param=False)
+
+def _to_tuple(inp, arg_name):
+    """
+    Check whether input to jvp is valid and convert the input to tuple.
+    """
+    if isinstance(inp, list):
+        inp = tuple(inp)
+    inp_is_tuple = True
+    if not isinstance(inp, tuple):
+        inp = (inp,)
+        inp_is_tuple = False
+    for index, value in enumerate(inp):
+        if not isinstance(value, Tensor):
+            if inp_is_tuple:
+                raise TypeError(
+                    "The value at the index {} of {} must be a Tensor. But it's type is {}".format(index, arg_name,
+                                                                                                   type(value)))
+            raise TypeError("The {} must be a Tensor. But it's type is {}".format(arg_name, type(value)))
+    return inp
+
+
+def jvp(fn, jvp_input, v=None):
+    """
+    Function to compute the jacobian-vector-product of the given network. jvp is equivalent to forward mode autodiff.
+
+    Inputs:
+        - **network** (Cell): The network that takes Tensor inputs and returns a tuple of Tensors or a Tensor.
+        - **inputs** (Tensor or tuple/list of Tensors) - The inputs to `net`.
+        - **v** (tuple/list of Tensors or Tensor) - The vector for which the Jacobian vector product is computed.
+          Must have the same size as the input of `network`.
+
+    Outputs:
+        A tuple with:
+            net_output (Tuple(Tensor...)) - The output of `network(inputs)`.
+            jvp (Tuple(Tensor...)) - The result of the jacobian vector product.
+    """
+    inputs_tuple = _to_tuple(jvp_input, "input")
+    if v is not None:
+        v_tuple = _to_tuple(v, "v")
+        if len(v_tuple) != len(inputs_tuple):
+            raise ValueError("v is not the same size as the function inputs. The length of v is {}, while the length"
+                             "of function inputs is {}".format(len(v_tuple), len(inputs_tuple)))
+        for index, (v_value, inputs_value) in enumerate(zip(v_tuple, inputs_tuple)):
+            if v_value.shape != inputs_value.shape:
+                raise ValueError("The tensor shape at the index {} of v is not the same as the function inputs, it"
+                                 "should be {}, but got {}".format(index, inputs_value.shape, v_value.shape))
+    else:
+        if len(inputs_tuple) != 1 or inputs_tuple[0].shape != (1,):
+            raise ValueError("The vector v can only be None if the input is a Tensor with single element")
+        v = Tensor([1], dtype=inputs_tuple[0].dtype)
+
+    if len(inputs_tuple) != 1:
+        total_input = (*inputs_tuple, v_tuple)
+    else:
+        total_input = (jvp_input, v)
+    return Jvp(fn)(*total_input)
+
 
 def grad(fn, grad_first_param=False):
     """

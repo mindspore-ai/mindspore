@@ -33,8 +33,7 @@ from ..common import dtype as mstype
 from ..common.api import _executor, _pynative_exec
 from ..common.parameter import Parameter, ParameterTuple
 from ..common.tensor import Tensor
-from ..ops.functional import cast
-from ..ops.operations import HookBackward
+from ..ops.operations import HookBackward, Cast
 from ..ops.primitive import Primitive
 from ..parallel._tensor import _load_tensor_by_layout
 
@@ -118,6 +117,7 @@ class Cell(Cell_):
         self._bprop_debug = False
         self.cell_type = None
         self._auto_parallel_compile_and_run = False
+        self.cast = Cast()
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -319,9 +319,9 @@ class Cell(Cell_):
             if isinstance(item, tuple):
                 res.append(self._cast_mixed_precision_inputs(item, dst_type))
             elif isinstance(item, float):
-                res.append(cast(item, dst_type))
+                res.append(self.cast(item, dst_type))
             elif hasattr(item, "dtype") and item.dtype in {mstype.float16, mstype.float32, mstype.float64}:
-                res.append(cast(item, dst_type))
+                res.append(self.cast(item, dst_type))
             else:
                 res.append(item)
         return tuple(res)
@@ -332,7 +332,7 @@ class Cell(Cell_):
             if isinstance(item, tuple):
                 res.append(self.cast_inputs(item, dst_type))
             else:
-                res.append(cast(item, dst_type))
+                res.append(self.cast(item, dst_type))
         return tuple(res)
 
     def do_parameter_broadcast(self):

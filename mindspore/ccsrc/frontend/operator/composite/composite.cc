@@ -438,6 +438,26 @@ REGISTER_PYBIND_DEFINE(HyperMap_, ([](const py::module *m) {
                            .def(py::init<bool>(), py::arg("reverse"));
                        }));
 
+bool CheckSequenceAllTensor(const abstract::AbstractTuplePtr &tuple) {
+  for (size_t i = 0; i < tuple->size(); ++i) {
+    if (!(*tuple)[i]->isa<abstract::AbstractUndetermined>() &&
+        !((*tuple)[i]->isa<abstract::AbstractTuple>() &&
+          CheckSequenceAllTensor((*tuple)[i]->cast<abstract::AbstractTuplePtr>()))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CheckTailGradFristSequence(const abstract::AbstractSequeuePtr &sequeue, bool enable_tuple_grad) {
+  return sequeue->size() > 1 && (*sequeue)[1] != nullptr &&
+         ((*sequeue)[1]->isa<abstract::AbstractUndetermined>() ||
+          (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && (*sequeue)[1]->BuildType() != nullptr &&
+           (*sequeue)[1]->BuildType()->isa<Number>()) ||
+          ((*sequeue)[1]->isa<abstract::AbstractTuple>() && enable_tuple_grad &&
+           CheckSequenceAllTensor((*sequeue)[1]->cast<abstract::AbstractTuplePtr>())));
+}
+
 FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue) const {
   MS_EXCEPTION_IF_NULL(sequeue);
 
@@ -457,10 +477,7 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
   }
 
   if (tail_type_ == kGradFirst) {
-    if (sequeue->size() > 1 && (*sequeue)[1] != nullptr &&
-        ((*sequeue)[1]->isa<abstract::AbstractUndetermined>() ||
-         (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && (*sequeue)[1]->BuildType() != nullptr &&
-          (*sequeue)[1]->BuildType()->isa<Number>()))) {
+    if (CheckTailGradFristSequence(sequeue, enable_tuple_grad_)) {
       ret->set_output(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(1))}));
     } else {
       ret->set_output(NewValueNode(std::make_shared<ValueTuple>(std::vector<ValuePtr>{})));
@@ -597,7 +614,7 @@ GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_
 }
 
 FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &k, const AnfNodePtr &weights,
-                                    const std::vector<AnfNodePtr> &forward_graph_params,
+                                    const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad,
                                     const std::vector<AnfNodePtr> &weight_args) {
   FuncGraphPtr k_child = std::make_shared<FuncGraph>();
   k_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
@@ -620,13 +637,13 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &k, const AnfNodePtr &weigh
   auto f_app = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(0))});
   auto bprop = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(1))});
 
-  GradByParameter(k_child, f_app, bprop, weights_node);
+  GradByParameter(k_child, f_app, bprop, weights_node, enable_tuple_grad);
   return k_child;
 }
 
 // Do grad by the parameter of GradOperation.
 void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                                    const AnfNodePtr &weights) {
+                                    const AnfNodePtr &weights, bool enable_tuple_grad) {
   MS_EXCEPTION_IF_NULL(k_child);
 
   AnfNodePtr bprop_arg = nullptr;
@@ -677,6 +694,7 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
   // b_app returns (EnvInstance(grads wrt params), grads wrt input0, grads wrt input1, ...),
   // so obtain first input grad by setting tail_type of Tail to kGradFirst.
   TailPtr tail_grad_first = std::make_shared<Tail>("tail_grad_first", kGradFirst);
+  tail_grad_first->set_enable_tuple_grad(enable_tuple_grad);
   k_child->set_output(k_child->NewCNodeInOrder({NewValueNode(tail_grad_first), b_app}));
 }
 
@@ -726,7 +744,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   FuncGraphPtr k_child = nullptr;
   {
     TraceGuard guard(std::make_shared<TraceGradOperation>(forward_graph->debug_info()));
-    k_child = GetGrad(j, weights, forward_graph->parameters());
+    k_child = GetGrad(j, weights, forward_graph->parameters(), forward_graph->has_flag("enable_tuple_grad"));
   }
   grad_fg->set_output(NewValueNode(k_child));
 
