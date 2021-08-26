@@ -1046,7 +1046,7 @@ void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::
 
 void DebugServices::SearchNodesTensors(const std::vector<std::string> &name,
                                        std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> *result_list) {
-  if (!result_list) {
+  if (result_list == nullptr) {
     MS_LOG(DEBUG) << "result_list is nullptr.";
     return;
   }

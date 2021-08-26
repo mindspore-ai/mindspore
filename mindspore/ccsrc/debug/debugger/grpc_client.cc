@@ -203,11 +203,20 @@ EventReply GrpcClient::SendHeartbeat(const Heartbeat &heartbeat) {
   return reply;
 }
 
-EventReply GrpcClient::SendTensorBase(const TensorBase &tensor_base) {
+EventReply GrpcClient::SendTensorBase(const std::list<TensorBase> &tensor_base_list) {
   EventReply reply;
   grpc::ClientContext context;
 
-  grpc::Status status = stub_->SendTensorBase(&context, tensor_base, &reply);
+  std::unique_ptr<grpc::ClientWriter<TensorBase> > writer(stub_->SendTensorBase(&context, &reply));
+
+  for (const auto &tensor_base : tensor_base_list) {
+    if (!writer->Write(tensor_base)) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  writer->WritesDone();
+  grpc::Status status = writer->Finish();
 
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendTensorBase";
@@ -217,11 +226,20 @@ EventReply GrpcClient::SendTensorBase(const TensorBase &tensor_base) {
   return reply;
 }
 
-EventReply GrpcClient::SendTensorStats(const TensorSummary &tensor_summary) {
+EventReply GrpcClient::SendTensorStats(const std::list<TensorSummary> &tensor_summary_list) {
   EventReply reply;
   grpc::ClientContext context;
 
-  grpc::Status status = stub_->SendTensorStats(&context, tensor_summary, &reply);
+  std::unique_ptr<grpc::ClientWriter<TensorSummary> > writer(stub_->SendTensorStats(&context, &reply));
+
+  for (const auto &tensor_summary : tensor_summary_list) {
+    if (!writer->Write(tensor_summary)) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  writer->WritesDone();
+  grpc::Status status = writer->Finish();
 
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendTensorStats";

@@ -1,87 +1,120 @@
 -----------------------------------------------------------
 tensor_info_1 attributes:
-node name =  Default/Add-op4
-slot =  0
-iteration =  0
-rank_id =  0
-root_graph_id =  0
-is_output =  True
+node name = Default/Add-op4
+slot = 0
+iteration = 0
+rank_id = 0
+root_graph_id = 0
+is_output = True
 
 tensor_base_info:
-size in bytes =  24
-debugger dtype =  11
-shape =  [2, 3]
+size in bytes = 24
+debugger dtype = 11
+shape = [2, 3]
 
 tensor_stat_info:
-size in bytes =  24
-debugger dtype =  11
-shape =  [2, 3]
-is_bool =  False
-max_value =  10.0
-min_value =  -11.0
-avg_value =  0.880000114440918
-count =  6
-neg_zero_count =  2
-pos_zero_count =  3
-nan_count =  0
-neg_inf_count =  0
-pos_inf_count =  0
-zero_count =  1
+size in bytes = 24
+debugger dtype = 11
+shape = [2, 3]
+is_bool = False
+max_value = 10.0
+min_value = -11.0
+avg_value = 0.880000114440918
+count = 6
+neg_zero_count = 2
+pos_zero_count = 3
+nan_count = 0
+neg_inf_count = 0
+pos_inf_count = 0
+zero_count = 1
+
 -----------------------------------------------------------
 tensor_info_2 attributes:
-node name =  Default/Reciprocal-op3
-slot =  0
-iteration =  0
-rank_id =  0
-root_graph_id =  0
-is_output =  True
+node name = Default/Reciprocal-op3
+slot = 0
+iteration = 0
+rank_id = 0
+root_graph_id = 0
+is_output = True
 
 tensor_base_info:
-size in bytes =  40
-debugger dtype =  11
-shape =  [2, 5]
+size in bytes = 40
+debugger dtype = 11
+shape = [2, 5]
 
 tensor_stat_info:
-size in bytes =  40
-debugger dtype =  11
-shape =  [2, 5]
-is_bool =  False
-max_value =  1.0
-min_value =  1.0
-avg_value =  1.0
-count =  10
-neg_zero_count =  0
-pos_zero_count =  2
-nan_count =  0
-neg_inf_count =  3
-pos_inf_count =  5
-zero_count =  0
+size in bytes = 40
+debugger dtype = 11
+shape = [2, 5]
+is_bool = False
+max_value = 1.0
+min_value = 1.0
+avg_value = 1.0
+count = 10
+neg_zero_count = 0
+pos_zero_count = 2
+nan_count = 0
+neg_inf_count = 3
+pos_inf_count = 5
+zero_count = 0
+
 -----------------------------------------------------------
 tensor_info_3 attributes:
-node name =  Default/network-WithLossCell/_backbone-MockModel/ReduceMean-op92
-slot =  0
-iteration =  0
-rank_id =  0
-root_graph_id =  0
-is_output =  True
+node name = Default/network-WithLossCell/_backbone-MockModel/ReduceMean-op92
+slot = 0
+iteration = 0
+rank_id = 0
+root_graph_id = 0
+is_output = True
 
 tensor_base_info:
-size in bytes =  20
-debugger dtype =  11
-shape =  [5]
+size in bytes = 20
+debugger dtype = 11
+shape = [5]
 
 tensor_stat_info:
-size in bytes =  20
-debugger dtype =  11
-shape =  [5]
-is_bool =  False
-max_value =  1.9901361465454102
-min_value =  -2.175431728363037
-avg_value =  -0.6648297309875488
-count =  5
-neg_zero_count =  2
-pos_zero_count =  1
-nan_count =  2
-neg_inf_count =  0
-pos_inf_count =  0
-zero_count =  0
+size in bytes = 20
+debugger dtype = 11
+shape = [5]
+is_bool = False
+max_value = 1.9901361465454102
+min_value = -2.175431728363037
+avg_value = -0.6648297309875488
+count = 5
+neg_zero_count = 2
+pos_zero_count = 1
+nan_count = 2
+neg_inf_count = 0
+pos_inf_count = 0
+zero_count = 0
+
+-----------------------------------------------------------
+tensor_info_4 attributes:
+node name = invalid_name_for_test
+slot = 0
+iteration = 0
+rank_id = 0
+root_graph_id = 0
+is_output = True
+
+tensor_base_info:
+size in bytes = 0
+debugger dtype = 0
+shape = []
+
+tensor_stat_info:
+size in bytes = 0
+debugger dtype = 0
+shape = []
+is_bool = False
+max_value = -1.7976931348623157e+308
+min_value = 1.7976931348623157e+308
+avg_value = 0.0
+count = 0
+neg_zero_count = 0
+pos_zero_count = 0
+nan_count = 0
+neg_inf_count = 0
+pos_inf_count = 0
+zero_count = 0
+

@@ -130,7 +130,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
   // check if we should read the kernel data
   bool read_data = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  std::string kernel_name = kernel->fullname_with_scope();
+  std::string kernel_name = GetKernelNodeName(kernel);
   debugger->SetCurNode(kernel_name);
   if (dump_enabled) {
     auto dump_mode = dump_json_parser.dump_mode();
@@ -795,9 +795,6 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     }
   }
   if (!mock) {
-    // collect weights and bias for dump mode
-    auto kernel_graph_ptr = std::make_shared<session::KernelGraph>(*graph);
-    debugger_->LoadParametersAndConst(kernel_graph_ptr);
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {

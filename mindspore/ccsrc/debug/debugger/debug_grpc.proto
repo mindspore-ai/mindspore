@@ -25,8 +25,8 @@ service EventListener {
   rpc SendMetadata (Metadata) returns (EventReply) {};
   rpc SendGraph (stream Chunk) returns (EventReply) {};
   rpc SendTensors (stream TensorProto) returns (EventReply) {};
-  rpc SendTensorBase (TensorBase) returns (EventReply) {};
-  rpc SendTensorStats (TensorSummary) returns (EventReply) {};
+  rpc SendTensorBase (stream TensorBase) returns (EventReply) {};
+  rpc SendTensorStats (stream TensorSummary) returns (EventReply) {};
   rpc SendWatchpointHits (stream WatchpointHit) returns (EventReply) {};
   rpc SendMultiGraphs (stream Chunk) returns (EventReply) {};
   rpc SendHeartbeat (Heartbeat) returns (EventReply) {};

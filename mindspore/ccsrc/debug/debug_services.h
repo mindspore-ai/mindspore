@@ -218,7 +218,7 @@ class DebugServices {
 
     uint64_t data_size = 0;
     int dtype = 0;
-    std::vector<int64_t> shape = {0};
+    std::vector<int64_t> shape;
     bool is_bool = false;
     double max_value = std::numeric_limits<double>::lowest();
     double min_value = std::numeric_limits<double>::max();
