@@ -131,7 +131,7 @@ bool Nc4hw4PassMatch(std::vector<kernel::LiteKernel *> *kernels, size_t index) {
   return true;
 }
 
-bool Nc4hw4PassValid(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels) {
+bool RuntimePassValid(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels) {
   if (context->IsGpuEnabled() || context->IsNpuEnabled()) {
     return false;
   }
@@ -173,10 +173,62 @@ void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tenso
   return;
 }
 
-void Nc4hw4Pass(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels,
-                std::vector<Tensor *> *tensors) {
-  if (Nc4hw4PassValid(context, kernels)) {
-    Nc4hw4PassAct(kernels, tensors);
+void ConvNormC4PassActReplace(kernel::LiteKernel *conv_op, kernel::LiteKernel *in_op) {
+  conv_op->out_tensors().front()->set_format(NC4HW4);
+  in_op->in_tensors().front()->set_format(NC4HW4);
+}
+
+void ConvNormC4PassActIndex(std::vector<kernel::LiteKernel *> *kernels, size_t index) {
+  kernel::LiteKernel *start_kernel = kernels->at(index);
+  if (start_kernel->type() != ConvNormC4OpConv2DFusion) {
+    return;
   }
+  if (start_kernel->out_kernels().size() != 1) {
+    return;
+  }
+  if (reinterpret_cast<ConvParameter *>(start_kernel->op_parameter())->group_ != 1) {
+    /* conv-depthwise and group-conv */
+    return;
+  }
+
+  kernel::LiteKernel *after_kernel = start_kernel->out_kernels().front();
+  if (after_kernel->type() == ConvNormC4OpActivation) {
+    if (after_kernel->out_kernels().size() != 1) {
+      return;
+    }
+    kernel::LiteKernel *end_kernel = after_kernel->out_kernels().front();
+    if (end_kernel->type() == ConvNormC4OpInstanceNorm) {
+      ConvNormC4PassActReplace(start_kernel, end_kernel);
+      return;
+    }
+    return;
+  }
+
+  if (after_kernel->type() == ConvNormC4OpInstanceNorm) {
+    ConvNormC4PassActReplace(start_kernel, after_kernel);
+    return;
+  }
+
+  return;
+}
+
+void ConvNormC4PassAct(std::vector<kernel::LiteKernel *> *kernels) {
+  size_t kernel_size = kernels->size();
+  size_t index = 0;
+  for (; index < kernel_size; index++) {
+    ConvNormC4PassActIndex(kernels, index);
+  }
+  return;
+}
+
+void RuntimePass(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels,
+                 std::vector<Tensor *> *tensors) {
+  if (!RuntimePassValid(context, kernels)) {
+    return;
+  }
+
+  Nc4hw4PassAct(kernels, tensors);
+
+  ConvNormC4PassAct(kernels);
 }
 }  // namespace mindspore::lite

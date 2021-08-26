@@ -179,7 +179,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   FindAllInoutKernels(*dst_kernels);
 
 #ifndef RUNTIME_PASS_CLIP
-  Nc4hw4Pass(context_, dst_kernels, src_tensors_);
+  RuntimePass(context_, dst_kernels, src_tensors_);
 #endif
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
