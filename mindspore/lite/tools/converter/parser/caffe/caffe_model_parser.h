@@ -66,7 +66,6 @@ class CaffeModelParser : public converter::ModelParser {
   caffe::NetParameter caffe_weight_;
   std::unordered_map<std::string, caffe::LayerParameter> caffe_layers_;
   std::unordered_map<std::string, AnfNodePtr> nodes_;
-  schema::QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 };
 }  // namespace mindspore::lite
 

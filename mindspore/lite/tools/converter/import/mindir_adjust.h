@@ -28,7 +28,6 @@ class MindirAdjust {
  public:
   MindirAdjust() {}
   ~MindirAdjust() = default;
-  void SetQuantType(QuantType quant_type) { quant_type_ = quant_type; }
   void SetFmkType(FmkType fmk_type) { fmk_type_ = fmk_type; }
   void SetTrainFlag(bool train_flag) { train_flag_ = train_flag; }
   bool Run(const FuncGraphPtr &graph);
@@ -37,7 +36,6 @@ class MindirAdjust {
   int ValueNodeInt64Convert(AnfNodePtr anf_node);
   int ComputeQuantParams(AnfNodePtr anf_node);
 
-  QuantType quant_type_ = QuantType::QuantType_QUANT_NONE;
   FmkType fmk_type_ = FmkType::kFmkTypeMs;
   bool train_flag_ = false;
 };

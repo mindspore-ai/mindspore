@@ -79,7 +79,6 @@ CaffeModelParser::~CaffeModelParser() = default;
 FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag) {
   auto model_file = flag.model_file;
   auto weight_file = flag.weight_file;
-  quant_type_ = flag.quant_type;
   STATUS status = InitOriginModel(model_file, weight_file);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -112,7 +111,7 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag)
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeCaffe, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeCaffe, false);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;

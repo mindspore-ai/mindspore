@@ -32,8 +32,7 @@ constexpr int kNumIndex_0 = 0;
 constexpr int kNumIndex_1 = 1;
 constexpr int kNumIndex_2 = 2;
 constexpr int kNumIndex_3 = 3;
-STATUS DecideMINDIRConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType quant_type,
-                                       schema::Format *src_format) {
+STATUS DecideMINDIRConvWeightSrcFormat(const CNodePtr &cnode, schema::Format *src_format) {
   MS_ASSERT(cnode != nullptr && src_format != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
@@ -47,13 +46,13 @@ STATUS DecideMINDIRConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType 
   } else if (format == schema::Format_NCHW) {
     *src_format = schema::Format_KCHW;
   } else {
-    MS_LOG(ERROR) << "cnode format is invalid.";
+    MS_LOG(ERROR) << "cnode format is invalid. " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-STATUS DecideTFConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType quant_type, schema::Format *src_format) {
+STATUS DecideTFConvWeightSrcFormat(const CNodePtr &cnode, schema::Format *src_format) {
   MS_ASSERT(cnode != nullptr && src_format != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
@@ -61,34 +60,22 @@ STATUS DecideTFConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType quan
     return lite::RET_ERROR;
   }
   bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
-  switch (quant_type) {
-    case schema::QuantType_AwareTraining:
-    case schema::QuantType_PostTraining:
-    case schema::QuantType_WeightQuant:
-    case schema::QuantType_QUANT_NONE: {
-      if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
-        if (!is_depth_wise) {
-          *src_format = schema::Format_HWCK;
-        } else {
-          *src_format = schema::Format_HWKC;
-        }
-      } else if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
-        *src_format = schema::Format::Format_HWCK;
-      } else {
-        MS_LOG(ERROR) << "depthwise-conv2dTranspose need to check.";
-        return RET_ERROR;
-      }
-    } break;
-    default: {
-      MS_LOG(ERROR) << "Unsupported op: " << cnode->fullname_with_scope();
-      return lite::RET_ERROR;
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
+    if (!is_depth_wise) {
+      *src_format = schema::Format_HWCK;
+    } else {
+      *src_format = schema::Format_HWKC;
     }
+  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
+    *src_format = schema::Format::Format_HWCK;
+  } else {
+    MS_LOG(ERROR) << "depthwise-conv2dTranspose need to check. " << cnode->fullname_with_scope();
+    return RET_ERROR;
   }
   return RET_OK;
 }
 
-STATUS DecideTFLITEConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType quant_type,
-                                       schema::Format *src_format) {
+STATUS DecideTFLITEConvWeightSrcFormat(const CNodePtr &cnode, schema::Format *src_format) {
   MS_ASSERT(cnode != nullptr && src_format != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
@@ -96,87 +83,49 @@ STATUS DecideTFLITEConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType 
     return lite::RET_ERROR;
   }
   bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
-  switch (quant_type) {
-    case schema::QuantType_AwareTraining:
-    case schema::QuantType_PostTraining:
-    case schema::QuantType_WeightQuant:
-    case schema::QuantType_QUANT_NONE: {
-      if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
-        if (!is_depth_wise) {
-          *src_format = schema::Format_KHWC;
-        } else {
-          *src_format = schema::Format_CHWK;
-        }
-      } else if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
-        *src_format = schema::Format_CHWK;
-      } else {
-        MS_LOG(ERROR) << "cannot decide weight format, current situation need to check.";
-        return RET_NOT_SUPPORT;
-      }
-    } break;
-    default: {
-      MS_LOG(ERROR) << "Unsupported quantType: " << EnumNameQuantType(quant_type)
-                    << ", node: " << cnode->fullname_with_scope();
-      return RET_ERROR;
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
+    if (!is_depth_wise) {
+      *src_format = schema::Format_KHWC;
+    } else {
+      *src_format = schema::Format_CHWK;
     }
+  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
+    *src_format = schema::Format_CHWK;
+  } else {
+    MS_LOG(ERROR) << "cannot decide weight format, current situation need to check. " << cnode->fullname_with_scope();
+    return RET_NOT_SUPPORT;
   }
   return RET_OK;
 }
 
-STATUS DecideCAFFEConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType quant_type, schema::Format *src_format) {
+STATUS DecideCAFFEConvWeightSrcFormat(const CNodePtr &cnode, schema::Format *src_format) {
   MS_ASSERT(cnode != nullptr && src_format != nullptr);
   *src_format = schema::Format_KCHW;
   return RET_OK;
 }
 
-STATUS DecideONNXConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType quant_type, schema::Format *src_format) {
+STATUS DecideONNXConvWeightSrcFormat(const CNodePtr &cnode, schema::Format *src_format) {
   MS_ASSERT(cnode != nullptr && src_format != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
     MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
     return lite::RET_ERROR;
   }
-  bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
   int64_t format =
     prim->GetAttr(ops::kOriginalFormat) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kOriginalFormat)) : 0;
-  switch (quant_type) {
-    case schema::QuantType_AwareTraining: {
-      if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
-        if (!is_depth_wise) {
-          *src_format = schema::Format_KHWC;
-        } else {
-          *src_format = schema::Format_CHWK;
-        }
-      } else if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
-        *src_format = schema::Format_KCHW;
-      } else {
-        MS_LOG(ERROR) << "Unsupported op: " << cnode->fullname_with_scope();
-        return lite::RET_ERROR;
-      }
-    } break;
-    case schema::QuantType_PostTraining:
-    case schema::QuantType_WeightQuant:
-    case schema::QuantType_QUANT_NONE: {
-      if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
-          opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
-        if (format == schema::Format_NHWC) {
-          *src_format = schema::Format_KHWC;
-        } else if (format == schema::Format_NCHW) {
-          *src_format = schema::Format_KCHW;
-        } else {
-          MS_LOG(ERROR) << "format is invalid, format is " << format;
-          return RET_ERROR;
-        }
-      } else {
-        MS_LOG(ERROR) << "d an unsupported op type, which need to check. the type is " << prim->name();
-        return RET_NOT_SUPPORT;
-      }
-    } break;
-    default: {
-      MS_LOG(ERROR) << "Unsupported quantType: " << EnumNameQuantType(quant_type)
-                    << ", node: " << cnode->fullname_with_scope();
-      return lite::RET_ERROR;
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
+      opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
+    if (format == schema::Format_NHWC) {
+      *src_format = schema::Format_KHWC;
+    } else if (format == schema::Format_NCHW) {
+      *src_format = schema::Format_KCHW;
+    } else {
+      MS_LOG(ERROR) << "format is invalid, format is " << format;
+      return RET_ERROR;
     }
+  } else {
+    MS_LOG(ERROR) << "unknown op, please check.";
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -246,12 +195,12 @@ STATUS UnifyFormatToNHWC::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode,
                                                           schema::Format *dst_format) {
   MS_ASSERT(cnode != nullptr && src_format != nullptr && dst_format != nullptr);
   *dst_format = schema::Format_KHWC;
-  std::map<converter::FmkType, std::function<int(const CNodePtr &, schema::QuantType, schema::Format *)>>
-    decide_functions = {{converter::kFmkTypeMs, DecideMINDIRConvWeightSrcFormat},
-                        {converter::kFmkTypeTf, DecideTFConvWeightSrcFormat},
-                        {converter::kFmkTypeTflite, DecideTFLITEConvWeightSrcFormat},
-                        {converter::kFmkTypeCaffe, DecideCAFFEConvWeightSrcFormat},
-                        {converter::kFmkTypeOnnx, DecideONNXConvWeightSrcFormat}};
+  std::map<converter::FmkType, std::function<int(const CNodePtr &, schema::Format *)>> decide_functions = {
+    {converter::kFmkTypeMs, DecideMINDIRConvWeightSrcFormat},
+    {converter::kFmkTypeTf, DecideTFConvWeightSrcFormat},
+    {converter::kFmkTypeTflite, DecideTFLITEConvWeightSrcFormat},
+    {converter::kFmkTypeCaffe, DecideCAFFEConvWeightSrcFormat},
+    {converter::kFmkTypeOnnx, DecideONNXConvWeightSrcFormat}};
   auto iter = decide_functions.find(fmk_type_);
   if (iter == decide_functions.end()) {
     MS_LOG(ERROR) << "current fmk don't support, please check.";
@@ -259,7 +208,7 @@ STATUS UnifyFormatToNHWC::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode,
   }
   auto decide_func = iter->second;
   MS_ASSERT(decide_func != nullptr);
-  if (decide_func(cnode, quant_type_, src_format) != RET_OK) {
+  if (decide_func(cnode, src_format) != RET_OK) {
     MS_LOG(ERROR) << "run decide function failed, cannot decide conv weight format.";
     return RET_ERROR;
   }

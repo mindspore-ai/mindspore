@@ -54,7 +54,6 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::st
 
 FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag) {
   auto model_file = flag.model_file;
-  quant_type_ = flag.quant_type;
   // load graph
   tflite_model_ = ReadTfliteModel(model_file);
   if (tflite_model_ == nullptr) {
@@ -105,7 +104,7 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeTflite, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeTflite, false);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;

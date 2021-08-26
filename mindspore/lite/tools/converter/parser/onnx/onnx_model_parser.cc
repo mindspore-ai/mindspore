@@ -60,7 +60,6 @@ std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
 
 FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) {
   string model_file = flag.model_file;
-  quant_type_ = flag.quant_type;
   NotSupportOp::GetInstance()->set_fmk_type("ONNX");
   res_graph_ = std::make_shared<FuncGraph>();
   auto status = InitOriginModel(model_file);
@@ -95,7 +94,7 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeOnnx, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeOnnx, false);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
