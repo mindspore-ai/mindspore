@@ -84,6 +84,73 @@
 #define NNACL_NC4HW4 13
 
 #ifndef ENABLE_HIGH_PERFORMANCE
+
+// Check whether value is true, if not return 'errcode'
+#define MS_CHECK_TRUE_RET(value, errcode) \
+  do {                                    \
+    if (!(value)) {                       \
+      return errcode;                     \
+    }                                     \
+  } while (0)
+
+// Check whether value is false, if not return 'errcode'
+#define MS_CHECK_FALSE(value, errcode) \
+  do {                                 \
+    if ((value)) {                     \
+      return errcode;                  \
+    }                                  \
+  } while (0)
+
+// Check whether value is true, if not return 'errcode'
+// and print error string msg
+#define MS_CHECK_TRUE_MSG(value, errcode, msg) \
+  do {                                         \
+    if (!(value)) {                            \
+      MS_LOG(ERROR) << #msg;                   \
+      return errcode;                          \
+    }                                          \
+  } while (0)
+
+#define MS_CHECK_FALSE_MSG(value, errcode, msg) \
+  do {                                          \
+    if ((value)) {                              \
+      MS_LOG(ERROR) << #msg;                    \
+      return errcode;                           \
+    }                                           \
+  } while (0)
+
+#define MS_CHECK_LT(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) >= (value2)) {                                                      \
+      MS_LOG(ERROR) << "check ge fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
+#define MS_CHECK_GT(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) <= (value2)) {                                                      \
+      MS_LOG(ERROR) << "check gt fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
+#define MS_CHECK_LE(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) > (value2)) {                                                       \
+      MS_LOG(ERROR) << "check le fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
+#define MS_CHECK_GE(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) < (value2)) {                                                       \
+      MS_LOG(ERROR) << "check ge fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
 #define CHECK_NULL_RETURN(ptr)                       \
   do {                                               \
     if ((ptr) == nullptr) {                          \
@@ -122,6 +189,16 @@
   } while (0);
 
 #else
+
+#define MS_CHECK_TRUE_RET(value, errcode)
+#define MS_CHECK_FALSE(value, errcode)
+#define MS_CHECK_TRUE_MSG(value, errcode)
+#define MS_CHECK_FALSE_MSG(value, errcode)
+#define MS_CHECK_LT(value1, value2, errcode)
+#define MS_CHECK_GT(value1, value2, errcode)
+#define MS_CHECK_LE(value1, value2, errcode)
+#define MS_CHECK_GE(value1, value2, errcode)
+
 #define CHECK_NULL_RETURN(ptr)
 #define CHECK_LESS_RETURN(size1, size2)
 #define NNACL_CHECK_ZERO_RETURN_ERR(val)
