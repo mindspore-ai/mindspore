@@ -97,3 +97,16 @@ def get_bprop_tensor_scatter_min(self):
         return dx, zeros_like(indices), dupdate
 
     return bprop
+
+
+@bprop_getters.register(P.SplitV)
+def get_bprop_split_v(self):
+    """Generate bprop for SplitV"""
+    split_dim = self.split_dim
+    concat_op = P.Concat(split_dim)
+
+    def bprop(x_input, output, dout):
+        dx = concat_op(dout)
+        return (dx,)
+
+    return bprop

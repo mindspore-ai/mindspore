@@ -6206,3 +6206,87 @@ class TensorScatterSub(PrimitiveWithInfer):
         args = {"x": x_dtype, "value": value_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
+
+
+class SplitV(Primitive):
+    r"""
+    Splits the input tensor into num_split tensors along the given dimension.
+
+    The `input_x` tensor will be split into sub-tensors with individual shapes given by `size_splits` along the split
+    dimension. This requires that `input_x.shape(split_dim)` is equal to the sum of `size_splits`.
+
+    The shape of `input_x` is :math:`(x_1, x_2, ..., x_M, ..., x_R)`. The rank of `input_x` is `R`. Set the given
+    `split_dim` as M, and :math:`-R \le M < R`. Set the given `num_split` as `N`, the given `size_splits` as
+    :math:`(x_{m_1}, x_{m_2}, ..., x_{m_N})`, :math:`x_M=\sum_{i=1}^Nx_{m_i}`. The output is a list of tensor objects,
+    for the :math:`i`-th tensor, it has the shape of :math:`(x_1, x_2, ..., x_{m_i}, ..., x_R)`. :math:`x_{m_i}` is the
+    :math:`M`-th dimension of the :math:`i`-th tensor. Then, the shape of the output tensor is
+
+    .. math::
+
+        ((x_1, x_2, ..., x_{m_1}, ..., x_R), (x_1, x_2, ..., x_{m_2}, ..., x_R), ...,
+         (x_1, x_2, ..., x_{m_N}, ..., x_R))
+
+    Args:
+        size_splits (Union[tuple, list]): The list containing the sizes of each output tensor along the split
+                                          dimension. Must sum to the dimension of value along `split_dim`.
+                                          Can contain one -1 indicating that dimension is to be inferred.
+        split_dim (int): The dimension along which to split. Must be in the range [-len(input_x.shape),
+                         len(input_x.shape)).
+        num_split (int): The number of output tensors. Must be positive int.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ...,x_M ..., x_R)`.
+
+    Outputs:
+        Tensor, a list of `num_split` Tensor objects with the shape :math:`((x_1, x_2, ..., x_{m_1}, ..., x_R),
+        (x_1, x_2, ..., x_{m_2}, ..., x_R), ..., (x_1, x_2, ..., x_{m_N}, ..., x_R))`, :math:`x_M=\sum_{i=1}^Nx_{m_i}`.
+        The data type is the same with `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `size_splits` is not a tuple or a list.
+        TypeError: If element of `size_splits` is not an int.
+        TypeError: If `split_dim` or `num_split` is not an int.
+        ValueError: If rank of the `size_splits` is not equal to `num_split`.
+        ValueError: If sum of the `size_splits` is not equal to the dimension of value along `split_dim`.
+        ValueError: If `split_dim` is out of the range [-len(input_x.shape), len(input_x.shape)).
+        ValueError: If the `num_split` is less than or equal to 0.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.int32)
+        >>> op = ops.SplitV(size_splits=[1, -1], split_dim=1, num_split=2)
+        >>> output = op(input_x)
+        >>> print(output)
+        (Tensor(shape=[3, 1], dtype=Int32, value=
+        [[1],
+         [4],
+         [7]]), Tensor(shape=[3, 2], dtype=Int32, value=
+        [[2, 3],
+         [5, 6],
+         [8, 9]]))
+        >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.int32)
+        >>> op = ops.SplitV(size_splits=[2, 1], split_dim=0, num_split=2)
+        >>> output = op(input_x)
+        >>> print(output)
+        (Tensor(shape=[2, 3], dtype=Int32, value=
+        [[1, 2, 3],
+         [4, 5, 6]]), Tensor(shape=[1, 3], dtype=Int32, value=
+        [[7, 8, 9]]))
+    """
+
+    @prim_attr_register
+    def __init__(self, size_splits, split_dim, num_split):
+        """Initialize SplitV"""
+        validator.check_value_type("size_splits", size_splits, [tuple, list], self.name)
+        for elements_of_size_splits in size_splits:
+            validator.check_value_type("elements of size_splits", elements_of_size_splits, [int], self.name)
+            if elements_of_size_splits != -1 and elements_of_size_splits < 1:
+                raise ValueError(f"For \'{self.name}\', all elements of size_splits must be positive (except at most "
+                                 f"one default value -1), but got: {elements_of_size_splits}.")
+        validator.check_value_type("split_dim", split_dim, [int], self.name)
+        validator.check_value_type("num_split", num_split, [int], self.name)
+        validator.check_positive_int(num_split, "num_split", self.name)
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])

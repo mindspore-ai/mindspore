@@ -347,7 +347,7 @@ from .data_format_dim_map import _data_format_dim_map_tbe
 from .histogram_fixed_width import _histogram_fixed_width_tbe
 from .tensor_scatter_update import _tensor_scatter_update_tbe
 from .inplace_update import _inplace_update_tbe
-from .splitv import _split_v_tbe
+from .split_v import _split_v_tbe
 from .in_top_k import _in_top_k_tbe
 from .lin_space import _lin_space_tbe
 from .diag import _diag_tbe
