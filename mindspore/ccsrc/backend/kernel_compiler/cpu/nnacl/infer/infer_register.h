@@ -56,7 +56,7 @@ enum PrimType {
   PrimType_Ceil = 29,
   PrimType_Clip = 30,
   PrimType_Concat = 31,
-  PrimType_ControlDepend = 32,
+  PrimType_Attention = 32,
   PrimType_Conv2DBackpropFilterFusion = 33,
   PrimType_Conv2DBackpropInputFusion = 34,
   PrimType_Conv2DFusion = 35,
@@ -191,11 +191,11 @@ enum PrimType {
   PrimType_UnsortedSegmentSum = 164,
   PrimType_Unsqueeze = 165,
   PrimType_Unstack = 166,
-  PrimType_While = 167,
+  PrimType_LSTMGrad = 167,
   PrimType_Where = 168,
   PrimType_ZerosLike = 169,
   PrimType_Select = 170,
-  PrimType_If = 171,
+  PrimType_ScatterNdUpdate = 171,
   PrimType_GRU = 172,
   PrimType_NonZero = 173,
   PrimType_InvertPermutation = 174,
@@ -225,11 +225,8 @@ enum PrimType {
   PrimType_TensorArrayRead = 198,
   PrimType_TensorArrayWrite = 199,
   PrimType_Affine = 200,
-  PrimType_Attention = 201,
-  PrimType_LSTMGrad = 202,
-  PrimType_ScatterNdUpdate = 203,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_ScatterNdUpdate + 1
+  PrimType_MAX = PrimType_Affine + 1
 };
 
 void RegInfer(int prim_type, InferShape func);
