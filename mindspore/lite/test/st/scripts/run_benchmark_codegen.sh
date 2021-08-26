@@ -269,9 +269,10 @@ fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" || $backend == "codegen_and_train" ]]; then
     # Run on x86-codegen-parallel
     echo "start Run x86 codegen parallel ..."
-    Run_x86_codegen ${build_path_parallel} ${ms_models_path} ${models_codegen_parallel_config} ${run_x86_codegen_parallel_log_file} ${run_benchmark_result_file} &
-    Run_x86_codegen_parallel_PID=$!
-    sleep 1
+    Run_x86_codegen ${build_path_parallel} ${ms_models_path} ${models_codegen_parallel_config} ${run_x86_codegen_parallel_log_file} ${run_benchmark_result_file}
+    Run_x86_codegen_parallel_status=$?
+    #Run_x86_codegen_parallel_PID=$!
+    #sleep 1
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" || $backend == "codegen_and_train" ]]; then
     # Run on codegen
@@ -300,8 +301,8 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" ||
     fi
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" || $backend == "codegen_and_train" ]]; then
-    wait ${Run_x86_codegen_parallel_PID}
-    Run_x86_codegen_parallel_status=$?
+#    wait ${Run_x86_codegen_parallel_PID}
+#    Run_x86_codegen_parallel_status=$?
     if [[ ${Run_x86_codegen_parallel_status} != 0 ]];then
         echo "Run_x86 codegen parallel failed"
         cat ${run_x86_codegen_log_file}
