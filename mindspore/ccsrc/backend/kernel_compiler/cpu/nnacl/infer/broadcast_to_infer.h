@@ -25,6 +25,10 @@ extern "C" {
 
 int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outpus_size,
                           OpParameter *parameter);
+void MakeUpInputShapes(const int input_shape0_size, const int input_shape1_size, const int *input_shape0,
+                       const int *input_shape1, int *ndim, int *in_shape0, int *in_shape1);
+int BroadCastOutputShape(const int *in_shape0, const int *in_shape1, const int ndim, int *out_shape,
+                         bool *has_broad_cast);
 
 #ifdef __cplusplus
 }

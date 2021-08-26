@@ -17,7 +17,7 @@
 #include "nnacl/infer/broadcast_to_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int GetShapeByType(const TensorC *shape_tensor, size_t shape_size, int32_t *dst_shape) {
+int GetShapeByType(const TensorC *shape_tensor, int shape_size, int *dst_shape) {
   if (shape_tensor == NULL || dst_shape == NULL) {
     return NNACL_ERR;
   }
@@ -27,31 +27,31 @@ int GetShapeByType(const TensorC *shape_tensor, size_t shape_size, int32_t *dst_
   switch (shape_tensor->data_type_) {
     case kNumberTypeInt8: {
       int8_t *data = (int8_t *)(shape_tensor->data_);
-      for (size_t i = 0; i < shape_size; i++) {
+      for (int i = 0; i < shape_size; i++) {
         dst_shape[i] = data[i];
       }
     } break;
     case kNumberTypeInt32: {
       int32_t *data = (int32_t *)(shape_tensor->data_);
-      for (size_t i = 0; i < shape_size; i++) {
+      for (int i = 0; i < shape_size; i++) {
         dst_shape[i] = data[i];
       }
     } break;
     case kNumberTypeInt64: {
       int64_t *data = (int64_t *)(shape_tensor->data_);
-      for (size_t i = 0; i < shape_size; i++) {
+      for (int i = 0; i < shape_size; i++) {
         dst_shape[i] = data[i];
       }
     } break;
     case kNumberTypeFloat: {
       float *data = (float *)(shape_tensor->data_);
-      for (size_t i = 0; i < shape_size; i++) {
+      for (int i = 0; i < shape_size; i++) {
         dst_shape[i] = data[i];
       }
     } break;
     case kNumberTypeUInt32: {
       uint32_t *data = (uint32_t *)(shape_tensor->data_);
-      for (size_t i = 0; i < shape_size; i++) {
+      for (int i = 0; i < shape_size; i++) {
         dst_shape[i] = data[i];
       }
     } break;
@@ -62,17 +62,74 @@ int GetShapeByType(const TensorC *shape_tensor, size_t shape_size, int32_t *dst_
   return NNACL_OK;
 }
 
-int CheckShape(const int *input_shape, const int *dst_shape, const int input_shape_index, const int dst_shape_index) {
-  if (dst_shape[dst_shape_index] < 0) {
-    return NNACL_ERR;
+void MakeUpInputShapes(const int input_shape0_size, const int input_shape1_size, const int *input_shape0,
+                       const int *input_shape1, int *ndim, int *in_shape0, int *in_shape1) {
+  if (input_shape0_size < input_shape1_size) {
+    *ndim = input_shape1_size;
+    int fill_dim_num = input_shape1_size - input_shape0_size;
+    int j = 0;
+    for (size_t i = 0; i < input_shape1_size; i++) {
+      if (i < fill_dim_num) {
+        in_shape0[i] = 1;
+      } else {
+        in_shape0[i] = input_shape0[j++];
+      }
+      in_shape1[i] = input_shape1[i];
+    }
+  } else if (input_shape0_size > input_shape1_size) {
+    *ndim = input_shape0_size;
+    int fill_dim_num = input_shape0_size - input_shape1_size;
+    int j = 0;
+    for (size_t i = 0; i < input_shape0_size; i++) {
+      if (i < fill_dim_num) {
+        in_shape1[i] = 1;
+      } else {
+        in_shape1[i] = input_shape1[j++];
+      }
+      in_shape0[i] = input_shape0[i];
+    }
+  } else {
+    for (size_t i = 0; i < input_shape0_size; i++) {
+      in_shape1[i] = input_shape1[i];
+      in_shape0[i] = input_shape0[i];
+    }
   }
-  if (input_shape_index >= 0) {
-    int input_shape_i = input_shape[input_shape_index];
-    if (input_shape_i != dst_shape[dst_shape_index] && input_shape_i != 1 && dst_shape[dst_shape_index] != 1) {
-      return NNACL_ERR;
+}
+
+int BroadCastOutputShape(const int *in_shape0, const int *in_shape1, const int ndim, int *out_shape,
+                         bool *has_broad_cast) {
+  for (int i = 0; i < ndim; i++) {
+    if (in_shape0[i] != in_shape1[i]) {
+      if (in_shape0[i] == 1) {
+        out_shape[i] = in_shape1[i];
+      } else if (in_shape1[i] == 1) {
+        out_shape[i] = in_shape0[i];
+      } else {
+        return NNACL_ERR;
+      }
+      *has_broad_cast = true;
+    } else {
+      out_shape[i] = in_shape0[i];
     }
   }
   return NNACL_OK;
+}
+
+int BroadCastToShape(const int input_shape0_size, const int input_shape1_size, const int *input_shape0,
+                     const int *input_shape1, int *ndim, int *out_shape, bool *has_broad_cast) {
+  if (input_shape0_size > MAX_SHAPE_SIZE || input_shape1_size > MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
+  }
+
+  int in_shape0[MAX_SHAPE_SIZE] = {0};
+  int in_shape1[MAX_SHAPE_SIZE] = {0};
+
+  MakeUpInputShapes(input_shape0_size, input_shape1_size, input_shape0, input_shape1, ndim, in_shape0, in_shape1);
+  if (*ndim >= MAX_SHAPE_SIZE) {
+    return NNACL_INFER_INVALID;
+  }
+
+  return BroadCastOutputShape(in_shape0, in_shape1, *ndim, out_shape, has_broad_cast);
 }
 
 int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
@@ -93,15 +150,20 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  int32_t dst_shape[MAX_SHAPE_SIZE] = {0};
-  size_t dst_shape_size;
+  int dst_shape[MAX_SHAPE_SIZE] = {0};
+  int dst_shape_size;
+  const int *input_shape = input->shape_;
+  int input_shape_size = input->shape_size_;
+  int output_shape[MAX_SHAPE_SIZE] = {0};
+  int ndim = input_shape_size;
+  bool has_broad_cast = false;
   if (inputs_size == 1) {
     BroadcastToParameter *param = (BroadcastToParameter *)parameter;
     dst_shape_size = param->shape_size_;
     if (dst_shape_size > MAX_SHAPE_SIZE) {
       return NNACL_PARAM_INVALID;
     }
-    for (size_t i = 0; i < dst_shape_size; i++) {
+    for (int i = 0; i < dst_shape_size; i++) {
       dst_shape[i] = param->shape_[i];
     }
   } else {
@@ -114,26 +176,19 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     if (ret != NNACL_OK) {
       return ret;
     }
-  }
-
-  for (size_t i = 0; i < dst_shape_size; ++i) {
-    if (dst_shape[i] == -1) {
-      dst_shape[i] = inputs[0]->shape_[i];
+    for (size_t i = 0; i < dst_shape_size; ++i) {
+      if (dst_shape[i] == -1) {
+        dst_shape[i] = inputs[0]->shape_[i];
+      }
     }
-  }
-  const int *input_shape = input->shape_;
-  size_t input_shape_size = input->shape_size_;
-  int shape[MAX_SHAPE_SIZE];
-  int input_shape_index = (int)(input_shape_size)-1;
 
-  for (int i = (int)(dst_shape_size)-1; i >= 0; --i) {
-    if (CheckShape(input_shape, dst_shape, input_shape_index, i) != NNACL_OK) {
+    if (BroadCastToShape(input_shape_size, dst_shape_size, input_shape, dst_shape, &ndim, output_shape,
+                         &has_broad_cast) != NNACL_OK) {
       return NNACL_ERR;
     }
-    shape[i] = dst_shape[i] == 1 ? input_shape[input_shape_index] : dst_shape[i];
-    --input_shape_index;
   }
-  SetShapeArray(outputs[0], shape, dst_shape_size);
+
+  SetShapeArray(outputs[0], output_shape, ndim);
   return NNACL_OK;
 }
 
