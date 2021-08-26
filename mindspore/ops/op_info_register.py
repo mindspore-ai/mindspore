@@ -384,22 +384,23 @@ class TBERegOp(RegOp):
         op_name (str):kernel name.
 
     Examples:
-        >>> from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
-        >>> abs_op_info = TBERegOp("Abs") \
-        ...    .fusion_type("ELEMWISE") \
-        ...    .async_flag(False) \
-        ...    .binfile_name("abs.so") \
-        ...    .compute_cost(10) \
-        ...    .kernel_name("abs") \
-        ...    .partial_flag(True) \
-        ...    .op_pattern("formatAgnostic") \
-        ...    .input(0, "x", None, "required", None) \
-        ...    .output(0, "y", True, "required", "all") \
-        ...    .dtype_format(DataType.F16_None, DataType.F16_None) \
-        ...    .dtype_format(DataType.F32_None, DataType.F32_None) \
-        ...    .dtype_format(DataType.I32_None, DataType.I32_None) \
-        ...    .get_op_info()
-        >>>
+        .. code-block::
+            >>> from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+            >>> abs_op_info = TBERegOp("Abs") \
+            ...    .fusion_type("ELEMWISE") \
+            ...    .async_flag(False) \
+            ...    .binfile_name("abs.so") \
+            ...    .compute_cost(10) \
+            ...    .kernel_name("abs") \
+            ...    .partial_flag(True) \
+            ...    .op_pattern("formatAgnostic") \
+            ...    .input(0, "x", None, "required", None) \
+            ...    .output(0, "y", True, "required", "all") \
+            ...    .dtype_format(DataType.F16_None, DataType.F16_None) \
+            ...    .dtype_format(DataType.F32_None, DataType.F32_None) \
+            ...    .dtype_format(DataType.I32_None, DataType.I32_None) \
+            ...    .get_op_info()
+            >>>
     """
 
     def __init__(self, op_name):
