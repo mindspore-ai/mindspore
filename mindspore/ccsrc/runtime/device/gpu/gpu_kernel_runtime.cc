@@ -731,7 +731,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   int exec_order = 1;
 #ifdef ENABLE_DUMP_IR
   std::string name = "mem_address_list";
-  (void)mindspore::RDR::RecordGPUMemAddressInfo(SubModuleId::SM_KERNEL, name, kernels.size());
+  (void)mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, name, kernels.size());
   size_t id = 0;
 #endif
   CNodePtr last_kernel = GetLastKernel(graph);
@@ -769,9 +769,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       return false;
     }
 #ifdef ENABLE_DUMP_IR
-    GPUMemInfo mem_info = {&kernel_inputs, &kernel_workspaces, &kernel_outputs};
+    MemInfo mem_info = {&kernel_inputs, &kernel_workspaces, &kernel_outputs};
     std::string op_name = kernel->fullname_with_scope();
-    (void)mindspore::RDR::UpdateGPUMemAddressInfo(SubModuleId::SM_KERNEL, name, op_name, mem_info, id++);
+    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info, id++);
 #endif
     if (!mock) {
       LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);
@@ -830,6 +830,9 @@ void GPUKernelRuntime::LaunchKernelWithoutMock(const session::KernelGraph *graph
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     if (!kernel_mod->Launch(inputs, workspaces, outputs, stream_)) {
+#ifdef ENABLE_DUMP_IR
+      mindspore::RDR::TriggerAll();
+#endif
       MS_LOG(EXCEPTION) << "Launch kernel failed: " << kernel->fullname_with_scope();
     }
     if (profiler_inst->GetEnableFlag()) {

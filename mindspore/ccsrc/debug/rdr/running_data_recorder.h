@@ -33,7 +33,7 @@ class Address;
 using AddressPtr = std::shared_ptr<Address>;
 }  // namespace kernel
 using AddressPtrList = std::vector<kernel::AddressPtr>;
-struct GPUMemInfo;
+struct MemInfo;
 #ifdef ENABLE_D
 namespace device {
 namespace ascend {
@@ -52,16 +52,16 @@ bool RecordGraphExecOrder(const SubModuleId module, const std::string &name,
                           const std::vector<CNodePtr> &final_exec_order);
 bool RecordString(SubModuleId module, const std::string &name, const std::string &data);
 bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, const std::vector<CNodePtr> &exec_order);
-bool RecordGPUMemAddressInfo(const SubModuleId module, const std::string &name, size_t nsize);
-bool UpdateGPUMemAddressInfo(const SubModuleId module, const std::string &name, const std::string &op_name,
-                             const GPUMemInfo &mem_info, size_t id);
+bool RecordMemAddressInfo(const SubModuleId module, const std::string &name, size_t nsize);
+bool UpdateMemAddress(const SubModuleId module, const std::string &name, const std::string &op_name,
+                      const MemInfo &mem_info, size_t id);
 #ifdef ENABLE_D
 bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
                          const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
 #endif  // ENABLE_D
 void TriggerAll();
 void ResetRecorder();
-void ClearGPUMemAddressInfo();
+void ClearMemAddressInfo();
 }  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_

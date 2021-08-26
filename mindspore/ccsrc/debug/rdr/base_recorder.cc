@@ -18,25 +18,10 @@
 #include <fstream>
 #include "debug/common.h"
 #include "utils/utils.h"
+#include "utils/ms_context.h"
+#include "utils/comm_manager.h"
 
 namespace mindspore {
-void BaseRecorder::SetDirectory(const std::string &directory) {
-  std::string error_message = module_ + ":" + name_ + " set directory failed.";
-  if (Common::IsPathValid(directory, MAX_DIRECTORY_LENGTH, error_message)) {
-    directory_ = directory;
-    if (directory_.back() != '/') {
-      directory_ += "/";
-    }
-  }
-}
-
-void BaseRecorder::SetFilename(const std::string &filename) {
-  std::string error_message = module_ + ":" + name_ + " set filename failed.";
-  if (Common::IsFilenameValid(filename, MAX_DIRECTORY_LENGTH, error_message)) {
-    filename_ = filename;
-  }
-}
-
 std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suffix) const {
   std::string filename;
   if (filename_.empty()) {
@@ -52,6 +37,12 @@ std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suff
     }
   }
   std::string file_path = directory_ + filename;
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto config_file = context->get_param<std::string>(MS_CTX_ENV_CONFIG_PATH);
+  if (config_file.empty()) {
+    file_path = directory_ + "rank_" + std::to_string(GetRank()) + "/rdr/" + filename;
+  }
   auto realpath = Common::GetRealPath(file_path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. "

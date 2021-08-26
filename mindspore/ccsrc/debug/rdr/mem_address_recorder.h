@@ -30,19 +30,19 @@ struct KernelLaunchInfo;
 using AddressPtr = std::shared_ptr<Address>;
 }  // namespace kernel
 using AddressPtrList = std::vector<kernel::AddressPtr>;
-struct GPUMemInfo {
+struct MemInfo {
   AddressPtrList *inputs_;
   AddressPtrList *workspaces_;
   AddressPtrList *outputs_;
 };
-class GPUMemAddressRecorder : public BaseRecorder {
+class MemAddressRecorder : public BaseRecorder {
  public:
-  GPUMemAddressRecorder() {}
-  GPUMemAddressRecorder(const std::string &module, const std::string &name) : BaseRecorder(module, name) {}
-  ~GPUMemAddressRecorder() {}
+  MemAddressRecorder() {}
+  MemAddressRecorder(const std::string &module, const std::string &name) : BaseRecorder(module, name) {}
+  ~MemAddressRecorder() {}
 
   virtual void Export();
-  void SaveMemInfo(const std::string &op_name, const GPUMemInfo &mem_info, size_t id);
+  void SaveMemInfo(const std::string &op_name, const MemInfo &mem_info, size_t id);
   void SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo *mem_info);
 
   void Reset(size_t nsize) {
@@ -61,6 +61,6 @@ class GPUMemAddressRecorder : public BaseRecorder {
   std::vector<AddressPtrList> mem_info_workspaces_;
   std::vector<AddressPtrList> mem_info_outputs_;
 };
-using GPUMemAddressRecorderPtr = std::shared_ptr<GPUMemAddressRecorder>;
+using MemAddressRecorderPtr = std::shared_ptr<MemAddressRecorder>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_MEM_ADDRESS_RECORDER_H_

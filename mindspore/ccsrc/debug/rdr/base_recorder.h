@@ -59,9 +59,6 @@ class BaseRecorder {
   std::string GetTimeStamp() const { return timestamp_; }
   std::optional<std::string> GetFileRealPath(const std::string &suffix = "") const;
 
-  void SetDirectory(const std::string &directory);
-  void SetFilename(const std::string &filename);
-  void SetModule(const std::string &module) { module_ = module; }
   virtual void Export() {}
   virtual void UpdateInfo(const BaseRecorder &recorder) {}
 
