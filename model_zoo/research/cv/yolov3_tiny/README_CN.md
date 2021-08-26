@@ -404,7 +404,7 @@ YOLOv3-tiny应用于118000张图像上（标注和数据格式必须与COCO 2017
 | 速度                       | 单卡：130imgs/s;  8卡：980imgs/s                            |
 | 总时长                     | 8卡: 10小时                                                 |
 | 参数(M)                    | 69                                                          |
-| 脚本                       | [YOLOv3_Tiny脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/YOLOv3_Tiny) |
+| 脚本                       | [YOLOv3_Tiny脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/yolov3_tiny) |
 
 ### 推理性能
 

@@ -236,7 +236,7 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 
 ## 快速入门
 
-参考[快速入门](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/quick_start/quick_start.html)实现图片分类。
+参考[快速入门](https://www.mindspore.cn/tutorials/zh-CN/master/quick_start.html)实现图片分类。
 
 ## 文档
 

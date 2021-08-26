@@ -186,7 +186,7 @@ bash run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optiona
 
 > 注意:
 
-  RANK_TABLE_FILE相关参考资料见[链接](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html), 获取device_ip方法详见[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
+  RANK_TABLE_FILE相关参考资料见[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ascend.html), 获取device_ip方法详见[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
 #### 运行
 

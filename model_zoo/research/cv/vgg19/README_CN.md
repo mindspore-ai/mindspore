@@ -448,7 +448,7 @@ train_parallel1/log:epcoh: 2 step: 97, loss is 1.7133579
 ...
 ```
 
-> 关于rank_table.json，可以参考[分布式并行训练](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/distributed_training_tutorials.html)。
+> 关于rank_table.json，可以参考[分布式并行训练](https://www.mindspore.cn/tutorials/zh-CN/master/distributed_training.html)。
 > **注意** 将根据`device_num`和处理器总数绑定处理器核。如果您不希望预训练中绑定处理器内核，请在`scripts/run_distribute_train.sh`脚本中移除`taskset`相关操作。
 
 ##### GPU处理器环境运行VGG19
