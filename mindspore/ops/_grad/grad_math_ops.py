@@ -27,14 +27,18 @@ from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
 from .grad_base import bprop_getters
 from ..primitive import constexpr
 from ..composite.multitype_ops import _constexpr_utils as const_utils
-
+from ..operations._inner_ops import DynamicStitch
+from ...common import Tensor
 
 shape_op = P.Shape()
+dyn_shape_op = P.DynamicShape()
+reduce_prod = P.ReduceProd()
 reduce_sum = P.ReduceSum()
 reshape = P.Reshape()
 tile = P.Tile()
 is_sub_class = P.IsSubClass()
-
+to_array = P.TupleToArray()
+real_div = P.RealDiv()
 
 def binop_grad_common(x, y, dx, dy):
     """
@@ -61,11 +65,37 @@ def binop_grad_common(x, y, dx, dy):
     return reduce_dx, reduce_dy
 
 
+def _dyn_reduced_shape(input_shape, axis):
+    """Dynamic reduce shape"""
+    input_shape = P.Cast()(input_shape, ms.int32)
+    if isinstance(axis, Tensor):
+        input_rank = P.Rank()(input_shape)
+        real_axis = (axis + input_rank) % input_rank
+        axis_shape = shape_op(real_axis)
+    else:
+        real_axis = ()
+        input_rank = len(input_shape)
+        if isinstance(axis, int):
+            axis = (axis,)
+        elif not axis:
+            axis = range(input_rank)
+        for i in axis:
+            real_axis += ((i + input_rank)%input_rank,)
+        axis_shape = (len(real_axis),)
+    return DynamicStitch()([to_array(range(input_rank)), to_array(axis)],
+                           [input_shape, P.Fill()(ms.int32, axis_shape, 1)])
+
+
 def _sum_grad(x, axis, dout):
     """Grad definition for `Sum` operation."""
     input_shape = shape_op(x)
-    output_shape_kept_dims = reduced_shape(input_shape, axis)
-    tile_scaling = tuple_div(input_shape, output_shape_kept_dims)
+    if -1 in input_shape:
+        input_shape = dyn_shape_op(x)
+        output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis)
+        tile_scaling = real_div(input_shape, output_shape_kept_dims)
+    else:
+        output_shape_kept_dims = reduced_shape(input_shape, axis)
+        tile_scaling = tuple_div(input_shape, output_shape_kept_dims)
     grad = reshape(dout, output_shape_kept_dims)
     return tile(grad, tile_scaling)
 
@@ -788,8 +818,16 @@ def get_bprop_reduce_mean(self):
 
     def bprop(x, axis, out, dout):
         grad = _sum_grad(x, axis, dout)
-        div_shape = F.shape_mul(shape_op(x)) / F.shape_mul(shape_op(out))
-        dx = div_op(grad, cast(F.scalar_to_array(div_shape), dtype(grad)))
+        shape_x = shape_op(x)
+        shape_out = shape_op(out)
+        if -1 in shape_x:
+            shape_x = dyn_shape_op(x)
+            shape_out = dyn_shape_op(out)
+            div_shape = reduce_prod(shape_x) / reduce_prod(shape_out)
+            dx = div_op(grad, cast(div_shape, dtype(grad)))
+        else:
+            div_shape = F.shape_mul(shape_x) / F.shape_mul(shape_out)
+            dx = div_op(grad, cast(F.scalar_to_array(div_shape), dtype(grad)))
         return dx, zeros_like(axis)
 
     return bprop
@@ -1171,6 +1209,7 @@ def get_bprop_imag(self):
         return (complex_op(zeros, zeros-1) * dout,)
 
     return bprop
+
 
 @bprop_getters.register(P.ScalarCast)
 def get_bprop_scalar_cast(self):

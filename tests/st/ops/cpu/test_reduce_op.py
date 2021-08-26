@@ -83,10 +83,35 @@ class NetReduceLogic(nn.Cell):
                 self.reduce_any(indice, self.axis3),)
 
 
+class NetReduceProd(nn.Cell):
+    def __init__(self):
+        super(NetReduceProd, self).__init__()
+        self.axis0 = 0
+        self.axis1 = 1
+        self.axis2 = -1
+        self.axis3 = (0, 1)
+        self.axis4 = ()
+        self.reduce_prod = P.ReduceProd(False)
+        self.reduce_prod_keep = P.ReduceProd(True)
+
+    @ms_function
+    def construct(self, indices):
+        return (self.reduce_prod(indices, self.axis0),
+                self.reduce_prod(indices, self.axis1),
+                self.reduce_prod(indices, self.axis2),
+                self.reduce_prod(indices, self.axis3),
+                self.reduce_prod_keep(indices, self.axis4))
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reduce():
+    """
+    /// Feature: Reduce
+    /// Description: reduce tensor elements, include reduce_mean, reduce_max, etc.
+    /// Expectation: Euqal to numpy results
+    """
     reduce = NetReduce()
     indice = Tensor(np.array([
         [[0., 2., 1., 4., 0., 2.], [3., 1., 2., 2., 4., 0.]],
@@ -151,6 +176,11 @@ def test_reduce():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reduce_logic():
+    """
+    /// Feature: Reduce logic
+    /// Description: Include reduce_all, reduce_any
+    /// Expectation: Euqal to numpy results
+    """
     reduce_logic = NetReduceLogic()
     indice_bool = Tensor([[[False, True, True, True, False, True],
                            [True, True, True, True, True, False]],
@@ -177,6 +207,39 @@ def test_reduce_logic():
     assert (output[5].asnumpy() == expect_any_2).all()
     assert (output[6].asnumpy() == expect_any_3).all()
     assert (output[7].asnumpy() == expect_any_4).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_reduce_prod():
+    """
+    /// Feature: Reduce prod
+    /// Description: Product of tensor elements
+    /// Expectation: Euqal to numpy results
+    """
+    reduce_prod = NetReduceProd()
+    indices = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+                               [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+                               [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]).astype(np.float32))
+    output = reduce_prod(indices)
+    expect_prod_0 = np.array([[28, 28, 28, 28, 28, 28],
+                              [80, 80, 80, 80, 80, 80],
+                              [162, 162, 162, 162, 162, 162]]).astype(np.float32)
+    expect_prod_1 = np.array([[6, 6, 6, 6, 6, 6],
+                              [120, 120, 120, 120, 120, 120],
+                              [504, 504, 504, 504, 504, 504]]).astype(np.float32)
+    expect_prod_2 = np.array([[1.00000e+00, 6.40000e+01, 7.29000e+02],
+                              [4.09600e+03, 1.56250e+04, 4.66560e+04],
+                              [1.17649e+05, 2.62144e+05, 5.31441e+05]]).astype(np.float32)
+    expect_prod_3 = np.array([362880, 362880, 362880, 362880, 362880, 362880]).astype(np.float32)
+    expect_prod_4 = np.array([[[2.2833798e+33]]]).astype(np.float32)
+    assert (output[0].asnumpy() == expect_prod_0).all()
+    assert (output[1].asnumpy() == expect_prod_1).all()
+    assert (output[2].asnumpy() == expect_prod_2).all()
+    assert (output[3].asnumpy() == expect_prod_3).all()
+    assert (output[4].asnumpy() == expect_prod_4).all()
+
 
 
 test_reduce()

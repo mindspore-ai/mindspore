@@ -28,13 +28,14 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
+using DataType = std::pair<TypeId, std::string>;
+
 void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
 // Indicate whether the kernel input/output number are variable.
 bool IsDynamicParamKernel(const std::string &op_name);
 
 class KernelAttr {
  public:
-  using DataType = std::pair<TypeId, std::string>;
   KernelAttr() : all_same_(0) {}
   ~KernelAttr() = default;
 
@@ -56,6 +57,9 @@ class KernelAttr {
   const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
   const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
   bool GetAllSame() const { return all_same_; }
+  void SetInputAttrList(const std::vector<DataType> &addr_list) {
+    input_type_.assign(addr_list.begin(), addr_list.end());
+  }
 
   size_t GetInputSize() const { return input_type_.size(); }
   size_t GetOutputSize() const { return output_type_.size(); }

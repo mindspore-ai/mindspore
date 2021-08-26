@@ -408,13 +408,11 @@ void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, py::dict *di
   MS_EXCEPTION_IF_NULL(arg_tensor);
   MS_EXCEPTION_IF_NULL(arg_tensor->shape());
   (*dic)[ATTR_SHAPE] = arg_tensor->shape()->shape();
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    const auto &min_shape = arg_tensor->shape()->min_shape();
-    const auto &max_shape = arg_tensor->shape()->max_shape();
-    if (!min_shape.empty() && !max_shape.empty()) {
-      (*dic)[ATTR_MIN_SHAPE] = min_shape;
-      (*dic)[ATTR_MAX_SHAPE] = max_shape;
-    }
+  const auto &min_shape = arg_tensor->shape()->min_shape();
+  const auto &max_shape = arg_tensor->shape()->max_shape();
+  if (!min_shape.empty() && !max_shape.empty()) {
+    (*dic)[ATTR_MIN_SHAPE] = min_shape;
+    (*dic)[ATTR_MAX_SHAPE] = max_shape;
   }
 
   auto min_value = arg_tensor->get_min_value();

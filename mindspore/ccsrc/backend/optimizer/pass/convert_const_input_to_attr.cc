@@ -56,6 +56,11 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
         MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
         return nullptr;
       }
+    } else if (device == kCPUDevice) {
+      if (DynamicShapeConstInputToAttrCPU.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttrCPU.end()) {
+        MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
+        return nullptr;
+      }
     } else {
       if (DynamicShapeConstInputToAttr.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttr.end()) {
         MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();

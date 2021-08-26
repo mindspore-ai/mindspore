@@ -94,6 +94,10 @@ class KernelActor : public DebugAwareActor {
   // The processing after kernel launch: 1.erase input, 2.free memory, 3.send output.
   void PostLaunchKernel(OpContext<DeviceTensor> *const context);
 
+  // The size of output address may be changed in dynamic shape scenario, for example, the output shape of operator
+  // 'Unique' will change after PostExecute, the output address size should update.
+  void UpdateOutputAddrSize();
+
   // The info of kernel.
   CNodePtr kernel_;
   KernelInfo *kernel_info_;

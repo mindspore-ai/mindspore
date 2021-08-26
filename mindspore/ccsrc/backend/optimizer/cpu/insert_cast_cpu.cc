@@ -36,7 +36,7 @@ namespace {
 constexpr unsigned int kLstmReserveIndex = 3;
 AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                                 const TypeId &input_type, const TypeId &output_type,
-                                const std::vector<size_t> &origin_shape, const TypeId &origin_type) {
+                                const abstract::BaseShapePtr &origin_shape, const TypeId &origin_type) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::string input_format = format;
   std::string output_format = format;
@@ -52,10 +52,29 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
     auto kernel_info = std::make_shared<device::KernelInfo>();
     cast->set_kernel_info(kernel_info);
   }
-  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
-  AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, cast.get());
+  if (origin_shape->IsDynamic()) {
+    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cast);
+    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cast);
+    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cast);
+  }
   AnfAlgo::SetNodeAttr("dst_type", TypeIdToType(output_type), cast);
+  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
+  AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, cast.get());
   AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
+  std::shared_ptr<kernel::CPUKernel> cpu_kernel = kernel::CPUKernelFactory::GetInstance().Create(kCastOpName, cast);
+  if (cpu_kernel == nullptr) {
+    MS_LOG(EXCEPTION) << "Operator[Cast] " << cast->kernel_info() << " is not support.";
+  }
+  try {
+    cpu_kernel->Init(cast);
+    cpu_kernel->InitDynamicKernel(cast);
+    auto cpu_dynamic_kernel = cpu_kernel->DynamicKernel();
+    MS_EXCEPTION_IF_NULL(cpu_dynamic_kernel);
+    cpu_dynamic_kernel->Initialize();
+  } catch (std::exception &e) {
+    MS_LOG(EXCEPTION) << e.what() << "\nTrace: " << trace::DumpSourceLines(cast);
+  }
+  AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
   return cast;
 }
 
@@ -74,7 +93,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       continue;
     }
     const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
-    const std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
+    const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
 
     if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {
       auto cast =
@@ -107,8 +126,8 @@ void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &cn
         }
         auto used_node_index = static_cast<size_t>(used_node_list->at(j).second - 1);
         auto cur_input = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(used_node), used_node_index);
-        const std::vector<size_t> origin_shape =
-          AnfAlgo::GetPrevNodeOutputInferShape(utils::cast<CNodePtr>(used_node), i);
+        const abstract::BaseShapePtr origin_shape =
+          AnfAlgo::GetPrevNodeOutputDetailShape(utils::cast<CNodePtr>(used_node), i);
         auto cast =
           AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, device_type, infer_type, origin_shape, infer_type);
         MS_EXCEPTION_IF_NULL(cast);

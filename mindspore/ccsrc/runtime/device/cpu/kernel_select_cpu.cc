@@ -162,11 +162,24 @@ int GetInputDtypeFormatMatchedNum(const KernelAttr &kernel_attr, const std::vect
 
 void ExpandKernelAttr(const CNodePtr &kernel_node, KernelAttr *kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_attr);
-  TypeId input_dtype = kernel_attr->GetInputAttr(0).first;
+  size_t attr_num = kernel_attr->GetInputSize();
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  for (size_t i = 1; i < input_num; ++i) {
-    kernel_attr->AddInputAttr(input_dtype);
+  if (attr_num == 0) {
+    MS_LOG(EXCEPTION) << "Input size is empty";
+    return;  // To pass the CI Check_Cppcheck
   }
+  // Only support one dynamic input like Concat or
+  // many dynamic input but each input has same number like DynamicStitch
+  std::string format = kOpFormat_DEFAULT;
+  std::vector<DataType> attr_list;
+  size_t each_attr_input_num = input_num / attr_num;
+  for (size_t i = 0; i < attr_num; ++i) {
+    TypeId input_dtype = kernel_attr->GetInputAttr(i).first;
+    for (size_t j = 0; j < each_attr_input_num; ++j) {
+      (void)attr_list.emplace_back(input_dtype, format);
+    }
+  }
+  kernel_attr->SetInputAttrList(attr_list);
 
   TypeId output_dtype = kernel_attr->GetOutputAttr(0).first;
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);

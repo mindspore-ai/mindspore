@@ -267,8 +267,18 @@ class ConcatOffset(PrimitiveWithInfer):
         axis = self.axis
         x_shp = input_x['shape']
         x_type = input_x['dtype']
-        offset, _, axis = get_concat_offset(x_shp, x_type, axis, self.name)
         self.add_prim_attr('T', x_type[0].element_type())
+
+        # if input_x is dynamic shape
+        for each in x_shp:
+            if -1 in each:
+                return {
+                    'shape': [len(x_shp), len(x_shp[0])],
+                    'dtype': mstype.int64,
+                    'value': None
+                }
+
+        offset, _, axis = get_concat_offset(x_shp, x_type, axis, self.name)
         offset_values = []
         for i in range(len(x_shp)):
             values = []
@@ -1791,12 +1801,22 @@ class SliceGrad(PrimitiveWithInfer):
     def __infer__(self, dy, x, begin, size):
         dy_shape, x_shape, size_value = dy['shape'], x['shape'], size['value']
         dy_shape_len = len(dy_shape)
-        for i in range(dy_shape_len):
-            validator.check(f'dy_shape[{i}]', dy_shape[i], f'x_shape[{i}]', x_shape[i], Rel.LE, self.name)
-            validator.check(f'dy_shape[{i}]', dy_shape[i], f'size_shape[{i}]', size_value[i], Rel.EQ, self.name)
+        if (size_value is not None) and (-1 not in x_shape):
+            for i in range(dy_shape_len):
+                validator.check(f'dy_shape[{i}]', dy_shape[i], f'x_shape[{i}]', x_shape[i], Rel.LE, self.name)
+                validator.check(f'dy_shape[{i}]', dy_shape[i], f'size_shape[{i}]', size_value[i], Rel.EQ, self.name)
+
+        if 'max_shape' in x:
+            max_shape = x['max_shape']
+            min_shape = x['min_shape']
+        else:
+            max_shape = [1] * dy_shape_len
+            min_shape = [1] * dy_shape_len
         return {'shape': x_shape,
                 'dtype': x['dtype'],
-                'value': None}
+                'value': None,
+                'max_shape': max_shape,
+                'min_shape': min_shape}
 
 
 class NLLLossGrad(PrimitiveWithInfer):

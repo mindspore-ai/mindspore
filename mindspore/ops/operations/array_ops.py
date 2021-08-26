@@ -484,6 +484,24 @@ class Reshape(PrimitiveWithInfer):
 
     def __infer__(self, x, shape):
         shape_v = shape['value']
+        if not shape_v and shape['shape']:
+            # for shape is not const value and not none
+            shape_rank = shape['shape'][0]
+
+            # unknown dims for shape
+            if shape_rank == -1:
+                shape_rank = 1
+            out_shape = [-1] * shape_rank
+            min_shape = [1] * shape_rank
+            max_shape = [1] * shape_rank
+            return {
+                'shape': out_shape,
+                'dtype': x['dtype'],
+                'value': None,
+                'max_shape': max_shape,
+                'min_shape': min_shape
+            }
+
         x_shp = x['shape']
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         validator.check_value_type("shape", shape_v, [tuple], self.name)
@@ -500,7 +518,7 @@ class Reshape(PrimitiveWithInfer):
             else:
                 dim_prod *= shp_i
         arr_prod = np.prod(x_shp)
-        if arr_prod <= 0:
+        if -1 in x_shp:
             if 'max_shape' in x:
                 x_max_shape = x['max_shape']
             else:
@@ -516,9 +534,7 @@ class Reshape(PrimitiveWithInfer):
             if neg_index != -1:
                 max_shape[neg_index] = int(max_arr_prod / dim_prod)
                 min_shape[neg_index] = int(min_arr_prod / dim_prod)
-            else:
-                raise ValueError(f"For '{self.name}', the 'input_shape' must have -1 in the case of dynamic shape, "
-                                 f"but got {shape_v}.")
+
             out = {'shape': shape['value'],
                    'dtype': x['dtype'],
                    'value': None,
@@ -1964,20 +1980,39 @@ class Tile(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'multiples'], outputs=['output'])
 
     def check_elim(self, base_tensor, multiplier):
-        if (not isinstance(base_tensor, Tensor)) or (not isinstance(multiplier, tuple)):
-            raise TypeError(f"For '{self.name}', the type of ('input_x', 'multiples') should be (Tensor, tuple), "
-                            f"but got ({type(base_tensor).__name__}, {type(multiplier).__name__}).")
+        if not isinstance(base_tensor, Tensor):
+            raise TypeError(f"For '{self.name}', the type of 'input_x' should be Tensor, "
+                            f"but got {type(base_tensor).__name__}.")
         if all(v == 1 for v in multiplier):
             return (True, base_tensor)
         return (False, None)
 
     def __infer__(self, x, multiples):
         multiples_v = multiples['value']
+        if multiples_v is None:
+            rank = max(len(x['shape']), multiples['shape'][0])
+            out_shape = [-1] * rank
+            if 'max_shape' not in x:
+                max_shape = x['shape']
+                min_shape = x['shape']
+            else:
+                max_shape = x['max_shape']
+                min_shape = x['min_shape']
+            return {'shape': out_shape,
+                    'dtype': x['dtype'],
+                    'value': None,
+                    'min_shape': min_shape,
+                    'max_shape': max_shape
+                    }
+
         x_shp = x['shape']
-        validator.check_value_type("multiples", multiples_v, [tuple], self.name)
+        validator.check_value_type(
+            "multiples", multiples_v, [tuple], self.name)
         for i, multiple in enumerate(multiples_v):
-            validator.check_positive_int(multiple, "multiples[%d]" % i, self.name)
-        validator.check_value_type("x[\'dtype\']", x["dtype"], mstype.tensor_type, self.name)
+            validator.check_positive_int(
+                multiple, "multiples[%d]" % i, self.name)
+        validator.check_value_type(
+            "x[\'dtype\']", x["dtype"], mstype.tensor_type, self.name)
         len_sub = len(multiples_v) - len(x_shp)
         multiples_w = None
         if len_sub == 0:
@@ -2800,25 +2835,35 @@ class Slice(PrimitiveWithInfer):
     def __infer__(self, x, begin, size):
         x_shape = x['shape']
         x_shp_len = len(x_shape)
-        validator.check_valid_input('begin', begin['value'], self.name)
-        validator.check_valid_input('size', size['value'], self.name)
         begin_v, size_v = begin['value'], size['value']
         if begin_v is None or size_v is None:
-            return {'shape': None,
+            out_shape = [-1] * size['shape'][0]
+            if 'max_shape' in x:
+                max_shape = x['max_shape']
+                min_shape = x['min_shape']
+            else:
+                min_shape = x['shape']
+                max_shape = x['shape']
+            return {'shape': out_shape,
                     'dtype': x['dtype'],
-                    'value': None}
+                    'value': None,
+                    'min_shape': min_shape,
+                    'max_shape': max_shape}
+        validator.check_valid_input('begin', begin['value'], self.name)
+        validator.check_valid_input('size', size['value'], self.name)
         validator.check_value_type("input begin", begin_v, [tuple, list], self.name)
         validator.check_value_type("input size", size_v, [tuple, list], self.name)
         for key, value in zip(('begin', 'size'), (begin_v, size_v)):
             validator.check(f'len of {key}', len(value),
                             'len x\'s dim', x_shp_len)
-        for i in range(x_shp_len):
-            validator.check_positive_int(size_v[i], f'input size[{i}]')
-            validator.check_non_negative_int(begin_v[i], f'input begin[{i}]')
-            if x_shape[i] < begin_v[i] + size_v[i]:
-                y = begin_v[i] + size_v[i]
-                raise ValueError(f"For '{self.name}', the sliced shape can not be greater than origin shape, but got "
-                                 f"sliced shape is {y}, and origin shape is {x_shape}.")
+        if -1 not in x_shape:
+            for i in range(x_shp_len):
+                validator.check_positive_int(size_v[i], f'input size[{i}]')
+                validator.check_non_negative_int(begin_v[i], f'input begin[{i}]')
+                if x_shape[i] < begin_v[i] + size_v[i]:
+                    y = begin_v[i] + size_v[i]
+                    raise ValueError(f"For '{self.name}', the sliced shape can not be greater than origin shape, "
+                                     f"but got sliced shape is {y}, and origin shape is {x_shape}.")
         return {'shape': size_v,
                 'dtype': x['dtype'],
                 'value': None}

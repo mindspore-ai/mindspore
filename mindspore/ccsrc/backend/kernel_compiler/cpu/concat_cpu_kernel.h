@@ -38,7 +38,6 @@ class ConcatCPUKernel : public CPUKernel {
 
  private:
   int axis_{0};
-  CNodeWeakPtr node_wpt_;
 };
 
 MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, float);

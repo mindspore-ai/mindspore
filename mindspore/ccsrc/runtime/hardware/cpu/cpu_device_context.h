@@ -49,6 +49,7 @@ class CPUDeviceContext : public DeviceContext {
 
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
+  void UpdateDynamicShape(const CNodePtr &kernel) const override;
 
   void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const override;
 

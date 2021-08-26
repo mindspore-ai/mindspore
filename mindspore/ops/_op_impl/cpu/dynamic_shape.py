@@ -13,25 +13,26 @@
 # limitations under the License.
 # ============================================================================
 
-"""Tile op"""
+"""DynamicShape op"""
 from mindspore.ops.op_info_register import op_info_register, CpuRegOp, DataType
 
-tile_op_info = CpuRegOp("Tile") \
-    .input(0, "x1", "required") \
+dynamic_shape_op_info = CpuRegOp("DynamicShape") \
+    .input(0, "x", "required") \
     .output(0, "y", "required") \
-    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.I16_Default, DataType.I16_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I64_Default) \
+    .dtype_format(DataType.I8_Default, DataType.I64_Default) \
+    .dtype_format(DataType.I16_Default, DataType.I64_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I64_Default) \
     .dtype_format(DataType.I64_Default, DataType.I64_Default) \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.U16_Default, DataType.U16_Default) \
-    .dtype_format(DataType.U32_Default, DataType.U32_Default) \
-    .dtype_format(DataType.U64_Default, DataType.U64_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U8_Default, DataType.I64_Default) \
+    .dtype_format(DataType.U16_Default, DataType.I64_Default) \
+    .dtype_format(DataType.U32_Default, DataType.I64_Default) \
+    .dtype_format(DataType.U64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.I64_Default) \
     .get_op_info()
 
-@op_info_register(tile_op_info)
-def _tile_cpu():
-    """Tile cpu register"""
+
+@op_info_register(dynamic_shape_op_info)
+def _dynamic_shape_cpu():
+    """DynamicShape cpu register"""
     return

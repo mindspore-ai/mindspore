@@ -36,7 +36,8 @@
 #include "abstract/infer_functions.h"
 #include "utils/ms_context.h"
 #include "ops/tile.h"
-
+#include "ops/slice.h"
+#include "ops/grad/slice_grad.h"
 namespace mindspore {
 namespace abstract {
 std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
@@ -53,9 +54,13 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   const auto kGatherV2 = prim::kPrimGatherV2->name();
   const auto kDynamicShape = prim::kPrimDynamicShape->name();
   const auto kRange = prim::kPrimRange->name();
+
   const auto kConv2DBackpropFilter = prim::kPrimConv2DBackpropFilter->name();
   const auto kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
-
+  const auto kTile = prim::kPrimTile->name();
+  const auto kSlice = prim::kPrimSlice->name();
+  const auto kSliceGrad = prim::kPrimSliceGrad->name();
+  const auto kReshape = prim::kPrimReshape->name();
   // common dynamic shape depends
   static std::map<std::string, std::vector<int64_t>> dynamic_shape_depends = {{kUnsortedSegmentSum, {2}},
                                                                               {kUnsortedSegmentMin, {2}},
@@ -69,7 +74,11 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
                                                                               {kOneHot, {1, 3}},
                                                                               {kDropoutGenMask, {0}},
                                                                               {kStridedSlice, {1, 2, 3}},
-                                                                              {kStridedSliceGrad, {1, 2, 3, 4}}};
+                                                                              {kStridedSliceGrad, {1, 2, 3, 4}},
+                                                                              {kTile, {1}},
+                                                                              {kReshape, {1}},
+                                                                              {kSlice, {1, 2}},
+                                                                              {kSliceGrad, {2, 3}}};
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -252,8 +261,11 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimShape, {InferImplShape, nullptr, false}},
     {prim::kPrimTranspose, {InferImplTranspose, nullptr, true}},
     {prim::kPrimStridedSlice, {ops::StridedSliceInfer, nullptr, true}},
+    {prim::kPrimSlice, {ops::SliceInfer, nullptr, true}},
+    {prim::kPrimSliceGrad, {ops::SliceGradInfer, nullptr, true}},
     {prim::kPrimReshape, {InferImplReshape, nullptr, true}},
     {prim::kPrimConcat, {InferImplConcat, nullptr, true}},
+    {prim::kPrimConcatOffset, {InferImplConcatOffset, nullptr, true}},
     {prim::kPrimArgMaxWithValue, {InferImplArgMaxWithValue, nullptr, true}},
     {prim::kPrimFusedSparseAdam, {InferImplFusedSparseAdam, nullptr, true}},
     {prim::kPrimTransData, {InferImplTransData, nullptr, true}},

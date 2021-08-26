@@ -26,9 +26,9 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-const std::set<std::string> same_op_name = {"Concat", "Pack", "Stack", "Split", "Transpose", "Unpack", "AddN"};
-}  // namespace
-
+const std::set<std::string> same_op_name = {"Concat", "Pack", "Stack",        "Split",        "Transpose",
+                                            "Unpack", "AddN", "ConcatOffset", "DynamicStitch"};
+}
 CPUKernelFactory &CPUKernelFactory::GetInstance() {
   static CPUKernelFactory instance;
   return instance;

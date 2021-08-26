@@ -20,6 +20,9 @@ from .pow import _pow_cpu
 from .real_div import _real_div_cpu
 from .div import _div_cpu
 from .concat import _concat_cpu
+from .concat_offset import _concat_offset_cpu
+from .dynamic_shape import _dynamic_shape_cpu
+from .dynamic_stitch import _dynamic_stitch_cpu
 from .split import _split_cpu
 from .adam import _adam_cpu
 from .adam_weight_decay import _adam_weight_decay_cpu
@@ -55,6 +58,7 @@ from .reduce_mean import _reduce_mean_cpu
 from .reduce_max import _reduce_max_cpu
 from .reduce_sum import _reduce_sum_cpu
 from .reduce_min import _reduce_min_cpu
+from .reduce_prod import _reduce_prod_cpu
 from .reduce_all import _reduce_all_cpu
 from .reduce_any import _reduce_any_cpu
 from .transpose import _transpose_cpu
