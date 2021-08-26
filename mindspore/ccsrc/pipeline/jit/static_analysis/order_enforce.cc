@@ -76,17 +76,15 @@ class OrderEnforcer {
     }
   }
 
-  std::unordered_set<AnfNodePtr> CheckMakeTupleHaveLoad(const CNodePtr &cnode) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    std::unordered_set<AnfNodePtr> loads;
+  bool CheckMakeTupleHaveLoad(const CNodePtr &cnode) {
     auto inputs = cnode->inputs();
     for (size_t index = 1; index < inputs.size(); index++) {
       auto input = cnode->input(index);
       if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
-        loads.insert(input);
+        return true;
       }
     }
-    return loads;
+    return false;
   }
 
   std::vector<AnfNodePtr> FindUpdateStateUsers(const CNodePtr &cnode) {
@@ -157,31 +155,23 @@ class OrderEnforcer {
   // u3 = UpdateState(u', maketuple2, addn) # need put addn or other-op into u3 inputs
   // assign = Assign(para2, inputs, u3)
   void HandleMakeTupleUsers(const AnfNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
     auto maketuple = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(maketuple);
-    std::unordered_set<AnfNodePtr> loads = CheckMakeTupleHaveLoad(maketuple);
-    if (!loads.empty()) {
+    if (CheckMakeTupleHaveLoad(maketuple)) {
       auto update_state = FindLastUpdateState(maketuple);
       if (update_state != nullptr) {
         std::unordered_set<AnfNodePtr> maketuple_users = GetSpecialOperatorRealUsers(maketuple);
-        std::unordered_set<AnfNodePtr> no_push_all_users;
+        std::unordered_set<AnfNodePtr> no_push_maketuple_users;
         // Push and Pull at the end of the execution order,
         // In order to ensure push and pull operator cut into the same graph, do not put push operator into updatestate
         for (auto maketuple_user : maketuple_users) {
           if (!IsPrimitiveCNode(maketuple_user, prim::kPrimPush)) {
-            no_push_all_users.insert(maketuple_user);
-          }
-        }
-        for (auto load : loads) {
-          std::unordered_set<AnfNodePtr> load_users = GetSpecialOperatorRealUsers(load);
-          for (auto load_user : load_users) {
-            no_push_all_users.insert(load_user);
+            no_push_maketuple_users.insert(maketuple_user);
           }
         }
         auto update_state_cnode = update_state->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(update_state_cnode);
-        AddInputEdges(update_state_cnode, no_push_all_users);
+        AddInputEdges(update_state_cnode, no_push_maketuple_users);
       }
     }
   }
@@ -275,8 +265,6 @@ class OrderEnforcer {
   // Add load users as input edges of the update_state node.
   void AddInputEdges(const CNodePtr &update_state, const std::unordered_set<AnfNodePtr> &load_users) {
     auto sorted_load_users = SortLoadUsers(load_users);
-    auto inputs = update_state->inputs();
-    size_t origin_size = inputs.size();
     for (auto &load_user : sorted_load_users) {
       if (IsPrimitiveCNode(load_user, prim::kPrimMakeTuple) || IsPrimitiveCNode(load_user, prim::kPrimUpdateState)) {
         continue;
@@ -284,15 +272,9 @@ class OrderEnforcer {
       if (!IsDependOn(load_user, update_state)) {
         processed_nodes_.insert(load_user);
         if (!IsInUpdateState(load_user, update_state)) {
-          inputs.emplace_back(load_user);
+          manager_->AddEdge(update_state, load_user);
         }
       }
-    }
-    if (inputs.size() > origin_size) {
-      auto new_update_state = func_graph_->NewCNode(inputs);
-      new_update_state->set_abstract(update_state->abstract());
-      new_update_state->set_scope(update_state->scope());
-      manager_->Replace(update_state, new_update_state);
     }
   }
 
