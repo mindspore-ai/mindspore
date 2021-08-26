@@ -1,0 +1,4 @@
+numpy >= 1.17.0
+scipy >= 1.6.3
+easydict >= 1.9
+pillow >= 8.2.0
