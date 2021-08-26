@@ -18,7 +18,7 @@
 #include <memory>
 #include "runtime/stream.h"
 #include "utils/ms_context.h"
-#include "framework/ge_runtime/task_info.h"
+#include "runtime/device/ascend/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {

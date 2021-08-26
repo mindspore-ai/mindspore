@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include "runtime/stream.h"
-#include "framework/ge_runtime/task_info.h"
+#include "runtime/device/ascend/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
 using mindspore::ge::model_runner::StreamSwitchTaskInfo;

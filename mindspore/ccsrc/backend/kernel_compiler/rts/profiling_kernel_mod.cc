@@ -18,7 +18,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "framework/ge_runtime/task_info.h"
+#include "runtime/device/ascend/ge_runtime/task_info.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/ascend/executor/rts/profiling_rts_dynamic_kernel.h"

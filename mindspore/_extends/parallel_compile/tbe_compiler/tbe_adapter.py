@@ -25,14 +25,14 @@ from te.platform.cce_policy import set_L1_info
 from te_fusion.compile_task_manager import dispatch_prebuild_task, dispatch_single_op_compile_task, import_py_module, \
     dispatch_fusion_op_compile_task, dispatch_autotune_task, sync_op_tune_params
 from te_fusion.compile_task_manager import sync_syspath
-from te_fusion.fusion_manager import check_supported, call_op_func, clear_fusion_params, check_op_impl_mode, \
+from te_fusion.fusion_manager import call_op_func, clear_fusion_params, check_op_impl_mode, \
     save_op_params, build_single_op_from_c, op_params_to_json
 from te_fusion.fusion_util import dump_fusion_json, fusion_op
 from te_fusion.parallel_compilation import init_multi_process_env, start_ga_multi_process, deinit_multi_process_env, \
     get_finished_compilation_task
 
 from .tbe_helper import get_soc_info, assemble_op_args, get_compute_op_list, get_options_info, get_fuzz_build_info, \
-    BuildType, adjust_custom_op_info, pack_op_args, get_module_name
+    adjust_custom_op_info, pack_op_args, get_module_name
 from .tbe_job import TbeJob, JobStatus
 
 PLATFORM_FLAG = ["Ascend310", "Ascend910", "Hi3796CV300ES", "Ascend710", "Ascend610", "Hi3796CV300CS", "SD3403"]
@@ -246,8 +246,7 @@ def check_support(job: TbeJob):
     py_module_path = compute_op_info["py_module_path"]
     _normalize_module_name(op_module_name, py_module_path)
     func_name = "check_supported"
-    fuzz_build = compute_op_info["build_type"] == BuildType.FUZZILY.value
-    res = check_supported(op_module_name, func_name, (inputs, outputs, attrs, fuzz_build))
+    res = call_op_func((inputs, outputs, attrs), op_module_name, func_name)
     if isinstance(res, tuple):
         result, reason = res
         result_str = str(result)
@@ -285,7 +284,7 @@ def select_op_format(job: TbeJob):
     py_module_path = compute_op_info["py_module_path"]
     _normalize_module_name(op_module_name, py_module_path)
     op_func_name = "op_select_format"
-    res = call_op_func(op_module_name, op_func_name, (inputs, outputs, attrs))
+    res = call_op_func((inputs, outputs, attrs), op_module_name, op_func_name)
     job.result = str(res)
     return True
 

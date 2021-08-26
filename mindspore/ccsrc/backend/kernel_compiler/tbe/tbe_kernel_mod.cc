@@ -18,7 +18,7 @@
 #include <algorithm>
 #include "runtime/rt.h"
 #include "utils/ms_context.h"
-#include "graphengine/inc/framework/ge_runtime/task_info.h"
+#include "runtime/device/ascend/ge_runtime/task_info.h"
 #include "runtime/device/ascend/executor/ai_core_dynamic_kernel.h"
 #include "runtime/device/kernel_runtime.h"
 
