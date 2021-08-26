@@ -26,6 +26,10 @@
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
+namespace prim {
+inline const PrimitivePtr kPrimUserDefined = std::make_shared<Primitive>("UserDefined");
+}
+
 namespace opt {
 class Graph;
 using GraphPtr = std::shared_ptr<Graph>;

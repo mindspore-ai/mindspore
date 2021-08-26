@@ -234,6 +234,7 @@ class PrimLib:
         'Gather': Prim(OPAQUE),
         'GatherNd': Prim(OPAQUE),
         'UnsortedSegmentSum': Prim(OPAQUE),
+        'UserDefined': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)
