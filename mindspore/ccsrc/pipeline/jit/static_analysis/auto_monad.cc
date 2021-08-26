@@ -801,7 +801,12 @@ class SideEffectFinder {
       auto cnode = dyn_cast<CNode>(user.first->first);
       MS_EXCEPTION_IF_NULL(cnode);
       if (cnode && input_index < cnode->size()) {
-        handler(cnode->input(input_index));
+        auto &real_arg = cnode->input(input_index);
+        if (real_arg == para) {
+          // Skip if the real argument is the given parameter.
+          continue;
+        }
+        handler(real_arg);
       }
     }
   }
