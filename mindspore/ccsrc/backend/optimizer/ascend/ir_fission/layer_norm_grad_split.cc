@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,16 +26,19 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
 constexpr size_t kLayerNormGradOutputGammaIndex = 1;
 constexpr size_t kLayerNormGradOutputBetaIndex = 2;
 constexpr size_t kLayerNormGradInputGammaIndex = 4;
-void LayerNormGradSplit::CreateOutputsOfLayerNormXBackprop(
+}  // namespace
+
+void LayerNormGradSplit::CreateOutputsOfLayerNormXBackpropV2(
   const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
   std::vector<AnfNodePtr> *layer_norm_x_backprop_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(layer_norm_grad);
   MS_EXCEPTION_IF_NULL(layer_norm_x_backprop_outputs);
-  auto prim = std::make_shared<Primitive>(kLayerNormXBackpropOpName);
+  auto prim = std::make_shared<Primitive>(kLayerNormXBackpropV2OpName);
   std::vector<AnfNodePtr> layer_norm_x_backprop_inputs = {NewValueNode(prim)};
   for (size_t i = 1; i < layer_norm_grad->inputs().size(); ++i) {
     layer_norm_x_backprop_inputs.push_back(layer_norm_grad->input(i));
@@ -44,23 +47,23 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackprop(
   MS_EXCEPTION_IF_NULL(layer_norm_x_backprop);
   layer_norm_x_backprop->set_scope(layer_norm_grad->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, 0)};
-  auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, 0)};
+  auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, 0), kNumberTypeFloat32};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, 0),
+                 AnfAlgo::GetPrevNodeOutputDetailShape(layer_norm_grad, 1)};
   AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, layer_norm_x_backprop.get());
 
-  (*layer_norm_x_backprop_outputs).push_back(layer_norm_x_backprop);
+  CreateMultipleOutputsOfAnfNode(graph, layer_norm_x_backprop, kLayerNormXBackpropV2OutputNum,
+                                 layer_norm_x_backprop_outputs);
 }
 
-void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackprop(
-  const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
+void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackpropV2(
+  const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad, const AnfNodePtr &res_for_gamma,
   std::vector<AnfNodePtr> *layer_norm_beta_gamma_backprop_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(layer_norm_grad);
-  auto prim = std::make_shared<Primitive>(kLayerNormBetaGammaBackpropOpName);
-  std::vector<AnfNodePtr> layer_norm_beta_gamma_backprop_inputs = {NewValueNode(prim)};
-  for (size_t i = 1; i < layer_norm_grad->inputs().size() - 1; ++i) {
-    layer_norm_beta_gamma_backprop_inputs.push_back(layer_norm_grad->input(i));
-  }
+  auto prim = std::make_shared<Primitive>(kLayerNormBetaGammaBackpropV2OpName);
+  std::vector<AnfNodePtr> layer_norm_beta_gamma_backprop_inputs = {NewValueNode(prim), layer_norm_grad->input(kIndex2),
+                                                                   res_for_gamma};
   auto layer_norm_beta_gamma_backprop = graph->NewCNode(layer_norm_beta_gamma_backprop_inputs);
   MS_EXCEPTION_IF_NULL(layer_norm_beta_gamma_backprop);
   auto kernel_info = std::make_shared<device::KernelInfo>();
@@ -99,15 +102,16 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
 
   // create layer_norm_x_backprop
   std::vector<AnfNodePtr> layer_norm_x_backprop_outputs;
-  CreateOutputsOfLayerNormXBackprop(graph, cnode, &layer_norm_x_backprop_outputs);
-  if (layer_norm_x_backprop_outputs.size() != kSingleOutputNum) {
+  CreateOutputsOfLayerNormXBackpropV2(graph, cnode, &layer_norm_x_backprop_outputs);
+  if (layer_norm_x_backprop_outputs.size() != kLayerNormXBackpropV2OutputNum) {
     MS_LOG(EXCEPTION) << "layer_norm_grad_outputs has wrong size"
                       << " trace: " << trace::DumpSourceLines(node);
   }
 
   // create layer_norm_beta_gamma_backprop
   std::vector<AnfNodePtr> layer_norm_beta_gamma_backprop_outputs;
-  CreateOutputsOfLayerNormBetaGammaBackprop(graph, cnode, &layer_norm_beta_gamma_backprop_outputs);
+  CreateOutputsOfLayerNormBetaGammaBackpropV2(graph, cnode, layer_norm_x_backprop_outputs[1],
+                                              &layer_norm_beta_gamma_backprop_outputs);
   if (layer_norm_beta_gamma_backprop_outputs.size() != kLayerNormBetaGammaBackpropOutputNum) {
     MS_LOG(EXCEPTION) << "layer_norm_beta_gamma_outputs has wrong size"
                       << " trace: " << trace::DumpSourceLines(node);

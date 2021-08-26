@@ -177,6 +177,7 @@ constexpr auto kSeed2 = "seed2";
 constexpr auto kSeqDim = "seq_dim";
 constexpr auto kSetattrFlag = "setattr_flag";
 constexpr auto kShape = "shape";
+constexpr auto kShapeGamma = "shape_gamma";
 constexpr auto kShapeSize = "shape_size";
 constexpr auto kShift = "shift";
 constexpr auto kShrinkAxisMask = "shrink_axis_mask";

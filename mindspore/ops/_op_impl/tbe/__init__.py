@@ -196,10 +196,14 @@ from .clip_by_norm_no_div_sum import _clip_by_norm_no_div_sum_tbe
 from .clip_by_value import _clip_by_value_tbe
 from .layer_norm_beta_gamma_backprop import _layer_norm_beta_gamma_backprop_tbe
 from .layer_norm_beta_gamma_backprop_ds import _layer_norm_beta_gamma_backprop_ds_tbe
+from .layer_norm_beta_gamma_backprop_v2 import _layer_norm_beta_gamma_backprop_v2_tbe
+from .layer_norm_beta_gamma_backprop_v2_ds import _layer_norm_beta_gamma_backprop_v2_ds_tbe
 from .layer_norm import _layer_norm_tbe
 from .layer_norm_ds import _layer_norm_ds_tbe
 from .layer_norm_grad import _layer_norm_grad_tbe
 from .layer_norm_x_backprop_ds import _layer_norm_x_backprop_ds_tbe
+from .layer_norm_x_backprop_v2 import _layer_norm_x_backprop_v2_tbe
+from .layer_norm_x_backprop_v2_ds import _layer_norm_x_backprop_v2_ds_tbe
 from .l2_loss import _l2_loss_tbe
 from .l2_normalize import _l2_normalize_tbe
 from .l2_normalize_grad import _l2_normalize_grad_tbe

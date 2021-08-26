@@ -20,8 +20,8 @@ from mindspore.ops import _constants as Constants
 make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 layer_norm_grad = G.LayerNormGrad()
-layer_norm_x_backprop = Primitive('LayerNormXBackprop')
-layer_norm_beta_gamma_backprop = Primitive('LayerNormBetaGammaBackprop')
+layer_norm_x_backprop = Primitive('LayerNormXBackpropV2')
+layer_norm_beta_gamma_backprop = Primitive('LayerNormBetaGammaBackpropV2')
 
 
 class FnDict:
@@ -51,10 +51,12 @@ def test_layer_norm_grad_split(tag):
     @fns
     def after(i0, i1, i2, i3, i4):
         layer_norm_x_output = layer_norm_x_backprop(i0, i1, i2, i3, i4)
-        layer_norm_beta_output = layer_norm_beta_gamma_backprop(i0, i1, i2, i3)
+        x_item0 = tuple_getitem(layer_norm_x_output, 0)
+        x_item1 = tuple_getitem(layer_norm_x_output, 1)
+        layer_norm_beta_output = layer_norm_beta_gamma_backprop(i1, x_item1)
         beta_item0 = tuple_getitem(layer_norm_beta_output, 0)
         beta_item1 = tuple_getitem(layer_norm_beta_output, 1)
-        mt = make_tuple(layer_norm_x_output, beta_item0, beta_item1)
+        mt = make_tuple(x_item0, beta_item0, beta_item1)
         item0 = tuple_getitem(mt, 0)
         item1 = tuple_getitem(mt, 1)
         item2 = tuple_getitem(mt, 2)

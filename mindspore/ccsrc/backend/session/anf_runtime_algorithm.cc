@@ -1157,6 +1157,11 @@ abstract::BaseShapePtr AnfRuntimeAlgorithm::GetOutputDetailShape(const AnfNodePt
                     << " trace: " << trace::DumpSourceLines(node);
 }
 
+abstract::BaseShapePtr AnfRuntimeAlgorithm::GetPrevNodeOutputDetailShape(const AnfNodePtr &node, size_t input_idx) {
+  KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, input_idx);
+  return AnfRuntimeAlgorithm::GetOutputDetailShape(kernel_with_index.first, kernel_with_index.second);
+}
+
 // set infer shapes and types of anf node
 void AnfRuntimeAlgorithm::SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
                                                       const std::vector<abstract::BaseShapePtr> &shapes,
@@ -1539,6 +1544,7 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
     {prim::kPrimLayerNormGrad->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
     {prim::kPrimLayerNormBetaGammaBackprop->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}}},
     {prim::kPrimLayerNormXBackprop->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
+    {prim::kPrimLayerNormXBackpropV2->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
     {prim::kPrimMinimumGrad->name(), {{0, 2}, {1, 0}, {2, 1}}},
     {prim::kPrimMaximumGrad->name(), {{0, 2}, {1, 0}, {2, 1}}},
     {prim::kPrimApplyCenteredRMSProp->name(),
