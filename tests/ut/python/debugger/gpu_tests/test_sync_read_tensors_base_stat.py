@@ -16,12 +16,10 @@
 Read tensor base and statistics test script for offline debugger APIs.
 """
 
-import tempfile
-import os
 import shutil
 import numpy as np
 import mindspore.offline_debug.dbg_services as d
-from dump_test_utils import compare_actual_with_expected
+from dump_test_utils import compare_actual_with_expected, build_dump_structure
 
 GENERATE_GOLDEN = False
 test_name = "sync_read_tensors_base_stat"
@@ -30,12 +28,27 @@ test_name = "sync_read_tensors_base_stat"
 def test_sync_read_tensors_base_stat():
 
     value_tensor = np.array([[7.5, 8.56, -9.78], [10.0, -11.0, 0.0]], np.float32)
-    inf_tensor = np.array([[1., -np.inf, np.inf, -np.inf, np.inf], [np.inf, 1., -np.inf, np.inf, np.inf]], np.float32)
-    nan_tensor = np.array([-2.1754317, 1.9901361, np.nan, np.nan, -1.8091936], np.float32)
+    name1 = "Add.Add-op4.0.0."
+    info1 = d.TensorInfo(node_name="Default/Add-op4",
+                         slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
 
-    value_path = build_dump_file_structure(value_tensor, "Add", "Add.Add-op4.0.0.")
-    inf_path = build_dump_file_structure(inf_tensor, "Inf", "Reciprocal.Reciprocal-op3.0.0.")
-    nan_path = build_dump_file_structure(nan_tensor, "Nan", "ReduceMean.ReduceMean-op92.0.0.")
+    inf_tensor = np.array([[1., -np.inf, np.inf, -np.inf, np.inf], [np.inf, 1., -np.inf, np.inf, np.inf]], np.float32)
+    name2 = "Reciprocal.Reciprocal-op3.0.0."
+    info2 = d.TensorInfo(node_name="Default/Reciprocal-op3",
+                         slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
+
+    nan_tensor = np.array([-2.1754317, 1.9901361, np.nan, np.nan, -1.8091936], np.float32)
+    name3 = "ReduceMean.ReduceMean-op92.0.0."
+    info3 = d.TensorInfo(node_name="Default/network-WithLossCell/_backbone-MockModel/ReduceMean-op92",
+                         slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
+
+    tensor_info_1 = [info1]
+    tensor_info_2 = [info2]
+    tensor_info_3 = [info3]
+    tensor_info = [info1, info2, info3]
+    value_path = build_dump_structure([name1], [value_tensor], "Add", tensor_info_1)
+    inf_path = build_dump_structure([name2], [inf_tensor], "Inf", tensor_info_2)
+    nan_path = build_dump_structure([name3], [nan_tensor], "Nan", tensor_info_3)
 
     debugger_backend = d.DbgServices(
         dump_file_path=value_path, verbose=True)
@@ -55,19 +68,6 @@ def test_sync_read_tensors_base_stat():
     _ = debugger_backend_3.initialize(
         net_name="Nan", is_sync_mode=True)
 
-    info1 = d.TensorInfo(node_name="Default/Add-op4",
-                         slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
-    info2 = d.TensorInfo(node_name="Default/Reciprocal-op3",
-                         slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
-    info3 = d.TensorInfo(node_name="Default/network-WithLossCell/_backbone-MockModel/ReduceMean-op92",
-                         slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
-
-
-    tensor_info_1 = [info1]
-    tensor_info_2 = [info2]
-    tensor_info_3 = [info3]
-    tensor_info = [info1, info2, info3]
-
     tensor_base_data_list = debugger_backend.read_tensor_base(tensor_info_1)
     tensor_base_data_list_2 = debugger_backend_2.read_tensor_base(tensor_info_2)
     tensor_base_data_list.extend(tensor_base_data_list_2)
@@ -84,20 +84,9 @@ def test_sync_read_tensors_base_stat():
     shutil.rmtree(inf_path)
     shutil.rmtree(nan_path)
     print_read_tensors(tensor_info, tensor_base_data_list, tensor_stat_data_list)
-    assert compare_actual_with_expected(test_name)
+    if not GENERATE_GOLDEN:
+        assert compare_actual_with_expected(test_name)
 
-
-def build_dump_file_structure(tensor_array, net_name, tensor_name):
-    debugger_temp_dir = tempfile.mkdtemp(prefix=net_name, dir="./")
-    print(debugger_temp_dir)
-    path = os.path.join(debugger_temp_dir, "rank_0", net_name, "0", "0")
-    print(path)
-    os.makedirs(path, exist_ok=True)
-    file = tempfile.mkstemp(prefix=tensor_name, suffix=".output.0.DefaultFormat.npy", dir=path)
-    full_path = file[1]
-    np.save(full_path, tensor_array)
-
-    return debugger_temp_dir
 
 def print_read_tensors(tensor_info, tensor_base_data_list, tensor_stat_data_list):
     """Print read tensors info."""

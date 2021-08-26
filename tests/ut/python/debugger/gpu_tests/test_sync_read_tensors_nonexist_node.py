@@ -16,39 +16,54 @@
 Read tensor test script for offline debugger APIs.
 """
 
-import mindspore.offline_debug.dbg_services as d
+import shutil
 import numpy as np
-from dump_test_utils import compare_actual_with_expected, skip_test
+import mindspore.offline_debug.dbg_services as d
+from dump_test_utils import compare_actual_with_expected, build_dump_structure
 
 GENERATE_GOLDEN = False
-test_name = "sync_trans_true_read_tensors_nonexist_node"
+test_name = "sync_read_tensors_nonexist_node"
 
 
 def test_sync_trans_read_tensors_nonexist_node():
 
-    if skip_test():
-        return
+    tensor1 = np.array([32.0, 4096.0], np.float32)
+    name1 = "CudnnUniformReal.CudnnUniformReal-op391.0.0."
+    info1 = d.TensorInfo(node_name="Default/CudnnUniformReal-op391",
+                         slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=False)
+    tensor2 = np.array([[0.0, 32.0, 4096.0], [4.5, 6.78, -11.0]], np.float32)
+    name2 = "ReluGradV2.ReluGradV2-op406.0.0."
+    info2 = d.TensorInfo(node_name="Gradients/Default/network-WithLossCell/_backbone-AlexNet/gradReLU/ReluGradV2-op406",
+                         slot=1, iteration=1, rank_id=0, root_graph_id=0, is_output=False)
+    # non-existing tensor with wrong op name
+    info3 = d.TensorInfo(node_name="Default/CudnnUniformReal-op390",
+                         slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=False)
 
-    debugger_backend = d.DbgServices(
-        dump_file_path="../data/dump/gpu_dumps/sync_trans_true/alexnet")
+    # non-existing tensor with wrong iteration number
+    info4 = d.TensorInfo(node_name="Gradients/Default/network-WithLossCell/_backbone-AlexNet/gradReLU/ReluGradV2-op406",
+                         slot=1, iteration=0, rank_id=0, root_graph_id=0, is_output=False)
+
+    tensor_name = [name1, name2]
+    tensor_create_info = [info1, info2]
+    tensor_list = [tensor1, tensor2]
+    temp_dir = build_dump_structure(tensor_name, tensor_list, "alexnet", tensor_create_info)
+    tensor_check_info = [info3, info4]
+
+    debugger_backend = d.DbgServices(dump_file_path=temp_dir)
 
     _ = debugger_backend.initialize(
-        net_name="Network Name goes here!", is_sync_mode=True)
+        net_name="alexnet", is_sync_mode=True)
 
-    # non-existing tensor with wrong op name
-    info1 = d.TensorInfo(node_name="Default/network-WithLossCell/_backbone-AlexNet/conv3-Conv2d/Conv2D-op318",
-                         slot=0, iteration=2, device_id=0, root_graph_id=0, is_parameter=False)
-
-    tensor_info = [info1]
-
-    tensor_data = debugger_backend.read_tensors(tensor_info)
+    tensor_data = debugger_backend.read_tensors(tensor_check_info)
 
     # Check the length of tensor list
-    assert len(tensor_info) == 1
-    assert len(tensor_data) == 1
+    assert len(tensor_check_info) == 2
+    assert len(tensor_data) == 2
 
-    print_read_tensors(tensor_info, tensor_data)
-    assert compare_actual_with_expected(test_name)
+    print_read_tensors(tensor_check_info, tensor_data)
+    shutil.rmtree(temp_dir)
+    if not GENERATE_GOLDEN:
+        assert compare_actual_with_expected(test_name)
 
 
 def print_read_tensors(tensor_info, tensor_data):
@@ -65,11 +80,11 @@ def print_read_tensors(tensor_info, tensor_data):
         f_write.write("node name =  " + tensor_info[x].node_name + "\n")
         f_write.write("slot =  " + str(tensor_info[x].slot) + "\n")
         f_write.write("iteration =  " + str(tensor_info[x].iteration) + "\n")
-        f_write.write("device_id =  " + str(tensor_info[x].device_id) + "\n")
+        f_write.write("rank_id =  " + str(tensor_info[x].rank_id) + "\n")
         f_write.write("root_graph_id =  " +
                       str(tensor_info[x].root_graph_id) + "\n")
-        f_write.write("is_parameter =  " +
-                      str(tensor_info[x].is_parameter) + "\n")
+        f_write.write("is_output =  " +
+                      str(tensor_info[x].is_output) + "\n")
         f_write.write("\n")
         f_write.write("tensor_data_" + str(x + 1) + " attributes:\n")
         f_write.write("data (printed in uint8) =  " + str(np.frombuffer(
