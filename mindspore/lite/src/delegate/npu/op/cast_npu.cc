@@ -17,10 +17,12 @@
 #include "src/delegate/npu/op/cast_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 int CastNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                          const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_LESS_RETURN(in_tensors.size(), 2);
   auto in_tensor = in_tensors[1];
   CHECK_NULL_RETURN(in_tensor);
   CHECK_NULL_RETURN(in_tensor.Data().get());
@@ -36,6 +38,7 @@ int CastNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<m
 
 int CastNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                     const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_LESS_RETURN(in_tensors.size(), 1);
   CHECK_NULL_RETURN(in_tensors[0]);
   CHECK_NULL_RETURN(cast_);
 

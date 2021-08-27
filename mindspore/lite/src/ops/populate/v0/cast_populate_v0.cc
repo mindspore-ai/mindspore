@@ -21,9 +21,8 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateCastParameter(const void *prim) {
-  if (prim == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+
   OpParameter *cast_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (cast_param == nullptr) {
     MS_LOG(ERROR) << "malloc CastParameter failed.";
