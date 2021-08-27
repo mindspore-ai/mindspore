@@ -29,6 +29,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from src.config import common_config, KingsCollege, StMarysChurch
 from src.dataset import data_to_mindrecord, create_posenet_dataset
 from src.loss import PosenetWithLoss
+from src.posenet import PoseTrainOneStepCell
 
 set_seed(1)
 
@@ -45,6 +46,9 @@ if __name__ == '__main__':
     parser.add_argument('--is_modelarts', type=ast.literal_eval, default=False, help='Train in Modelarts.')
     parser.add_argument('--data_url', default=None, help='Location of data.')
     parser.add_argument('--train_url', default=None, help='Location of training outputs.')
+    parser.add_argument('--device_target', type=str, default='Ascend',
+                        choices=['Ascend', 'GPU'],
+                        help='Name of device target.')
     args_opt = parser.parse_args()
 
     cfg = common_config
@@ -53,7 +57,7 @@ if __name__ == '__main__':
     elif args_opt.dataset == "StMarysChurch":
         dataset_cfg = StMarysChurch
 
-    device_target = cfg.device_target
+    device_target = args_opt.device_target
     context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
     if args_opt.run_distribute:
         if device_target == "Ascend":
@@ -104,7 +108,8 @@ if __name__ == '__main__':
     opt = Adagrad(params=net_with_loss.trainable_params(),
                   learning_rate=dataset_cfg.lr_init,
                   weight_decay=dataset_cfg.weight_decay)
-    model = Model(net_with_loss, optimizer=opt)
+    net_with_grad = PoseTrainOneStepCell(net_with_loss, opt)
+    model = Model(net_with_grad)
 
     time_cb = TimeMonitor(data_size=step_per_epoch)
     loss_cb = LossMonitor()

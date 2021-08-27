@@ -61,8 +61,8 @@ if __name__ == '__main__':
     if args.distribute:
         if target == "Ascend":
             init()
-            device_id = int(os.getenv('DEVICE_ID'))
-            context.set_auto_parallel_context(device_id=device_id,
+            device_num = int(os.getenv('RANK_SIZE'))
+            context.set_auto_parallel_context(device_num=device_num,
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
         if target == "GPU":
