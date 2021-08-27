@@ -66,12 +66,13 @@ if __name__ == "__main__":
     load_param_into_net(net, param_dict)
     net.set_train(False)
 
-    config.batch_size = 1
+    config.batch_size = 16
     data_path = os.path.join(config.data_dir, "val2014")
     datasets, data_size = create_yolo_dataset(data_path, config.annFile, is_training=False,
                                               batch_size=config.batch_size, max_epoch=1, device_num=1, rank=0,
                                               shuffle=False, config=config)
     ds = datasets.take(1)
-    shape = [config.batch_size, 3] + config.test_img_shape
+    export_batch_size = 1
+    shape = [export_batch_size, 3] + config.test_img_shape
     inputs = Tensor(np.zeros(shape), ms.float32)
     quant_yolov3(net, ds, inputs)

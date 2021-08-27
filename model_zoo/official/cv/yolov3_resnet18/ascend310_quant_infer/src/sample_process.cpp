@@ -84,7 +84,7 @@ Result SampleProcess::InitResource() {
 
 void SampleProcess::GetAllFiles(std::string path, std::vector<string> *files) {
     DIR *pDir = NULL;
-    struct dirent* ptr;
+    struct dirent* ptr = nullptr;
     if (!(pDir = opendir(path.c_str()))) {
         return;
     }
@@ -98,8 +98,8 @@ void SampleProcess::GetAllFiles(std::string path, std::vector<string> *files) {
 
 Result SampleProcess::Process(char *om_path, char *input_folder, char *shape_folder) {
     // model init
-    double second_to_millisecond = 1000;
-    double second_to_microsecond = 1000000;
+    const double second_to_millisecond = 1000;
+    const double second_to_microsecond = 1000000;
 
     double whole_cost_time = 0.0;
     struct timeval start_global = {0};
