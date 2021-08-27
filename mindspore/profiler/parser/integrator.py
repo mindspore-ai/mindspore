@@ -532,10 +532,9 @@ class BaseTimelineGenerator:
 
     def write_timeline_to_json_by_limitation(self, size_limit):
         """Write timeline to json by limitation."""
-        display_filename = self._display_filename.format(self._device_id)
         display_file_path = os.path.join(
             self._profiling_dir,
-            display_filename
+            self._display_filename
         )
         display_file_path = validate_and_normalize_path(display_file_path)
 
@@ -564,7 +563,7 @@ class BaseTimelineGenerator:
         """Write timeline summary to json."""
         timeline_summary_file_path = os.path.join(
             self._profiling_dir,
-            self._timeline_summary_filename.format(self._device_id)
+            self._timeline_summary_filename
         )
 
         timeline_summary_file_path = validate_and_normalize_path(timeline_summary_file_path)
@@ -737,6 +736,8 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         self._profiling_dir = profiling_dir
         self._device_id = device_id
         self._timeline_meta = []
+        self._display_filename = self._display_filename.format(device_id)
+        self._timeline_summary_filename = self._timeline_summary_filename.format(device_id)
 
     def _get_and_validate_path(self, file_name):
         """Generate op or activity file path from file name, and validate this path."""
@@ -990,9 +991,10 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     _timeline_summary_filename = 'ascend_timeline_summary_{}.json'
     _cluster_analyse_filename = 'ascend_cluster_analyse_{}_{}_{}_{}.csv'
 
-    def __init__(self, profiling_dir, device_id, rank_size):
+    def __init__(self, profiling_dir, device_id, rank_id, rank_size):
         self._profiling_dir = profiling_dir
         self._device_id = device_id
+        self._rank_id = rank_id
         self._tid_dict = {
             "aicore": 7999,
             "communication_not_overlapped": 8000,
@@ -1000,12 +1002,14 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             "free_time": 8002
         }
         self._rank_size = rank_size
+        self._display_filename = self._display_filename.format(rank_id)
+        self._timeline_summary_filename = self._timeline_summary_filename.format(rank_id)
 
     def _load_timeline_data(self):
         """Load timeline data from file."""
         file_path = os.path.join(
             self._profiling_dir,
-            self._output_timeline_data_file_path.format(self._device_id)
+            self._output_timeline_data_file_path.format(self._rank_id)
         )
         file_path = validate_and_normalize_path(file_path)
         if not os.path.exists(file_path):
@@ -1070,7 +1074,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         logger.info('Initiating timeline...')
         timeline_list = self._load_timeline_data()
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._device_id)
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id)
         cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
         if cpu_timeline_list:
             self._clock_synchronize_to_device(cpu_timeline_list, source_path)
@@ -1331,7 +1335,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         cluster_analyse_file_path = os.path.join(
             self._profiling_dir,
-            self._cluster_analyse_filename.format(parallel_mode, stage_num, self._rank_size, self._device_id)
+            self._cluster_analyse_filename.format(parallel_mode, stage_num, self._rank_size, self._rank_id)
         )
         cluster_analyse_file_path = validate_and_normalize_path(cluster_analyse_file_path)
 

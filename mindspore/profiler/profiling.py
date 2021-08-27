@@ -449,7 +449,7 @@ class Profiler:
             optime_parser (OPComputeTimeParserParser): The parser instance for AI Core
                 operator execution time calculation.
         """
-        timeline_analyser = AscendTimelineGenerator(self._output_path, self._rank_id, self._rank_size)
+        timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id, self._rank_size)
         # Get framework info
         integrator = Integrator(self._output_path, self._rank_id)
         aicore_detail_data = integrator.get_aicore_detail_data()
@@ -675,7 +675,7 @@ class Profiler:
             os.chmod(self._output_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         else:
             logger.warning("The target dir already exists. "
-                           "There may be some old profiling data, and they will be rewrote in the end.")
+                           "There may be some old profiling data, and they will be rewritten in the end.")
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""

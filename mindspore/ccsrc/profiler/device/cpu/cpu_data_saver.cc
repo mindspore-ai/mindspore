@@ -31,10 +31,20 @@ void CpuDataSaver::WriteFile(const std::string out_path_dir) {
     MS_LOG(INFO) << "No cpu operation detail infos to write.";
     return;
   }
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  device_id_ = std::to_string(device_id);
+  auto rank_id = common::GetEnv("RANK_ID");
+  // If RANK_ID is not set, default value is 0.
+  if (rank_id.empty()) {
+    rank_id = "0";
+  }
+  rank_id = std::string(rank_id);
+  // When the value of RANK_ID is not a number, set its value to 0.
+  for (int i = 0; i < static_cast<int>(rank_id.size()); i++) {
+    if (std::isdigit(rank_id[i]) == 0) {
+      rank_id = "0";
+      break;
+    }
+  }
+  device_id_ = rank_id;
   op_side_ = "cpu";
   WriteOpDetail(out_path_dir);
   WriteOpType(out_path_dir);
