@@ -38,6 +38,7 @@ constexpr static int kOutCurrentVarIdx = 4;
 void FusedBatchnormFp16CPUKernel::CalcMeanVar(float16_t *in, float16_t *scale, float16_t *offset, float16_t *save_mean,
                                               float16_t *save_variance) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  MS_ASSERT(param != nullptr);
   float16_t *current_mean = static_cast<float16_t *>(mean_);
   float16_t *current_var = static_cast<float16_t *>(variance_);
 
@@ -45,21 +46,25 @@ void FusedBatchnormFp16CPUKernel::CalcMeanVar(float16_t *in, float16_t *scale, f
   std::fill(current_var, current_var + in_tensors_.at(kInCurrentVarIdx)->ElementsNum(), 0.f);
   FusedBatchNormFp16MeanVar(in, current_mean, current_var, param, save_mean, save_variance);
 
+  MS_ASSERT(out_tensors_.at(kOutScaleIdx)->data_c() != nullptr);
+  MS_ASSERT(out_tensors_.at(kOutOffsetIdx)->data_c() != nullptr);
+  MS_ASSERT(out_tensors_.at(kOutCurrentMeanIdx)->data_c() != nullptr);
+  MS_ASSERT(out_tensors_.at(kOutCurrentVarIdx)->data_c() != nullptr);
   memcpy(out_tensors_.at(kOutScaleIdx)->data_c(), scale, out_tensors_.at(kOutScaleIdx)->Size());
   memcpy(out_tensors_.at(kOutOffsetIdx)->data_c(), offset, out_tensors_.at(kOutOffsetIdx)->Size());
   memcpy(out_tensors_.at(kOutCurrentMeanIdx)->data_c(), current_mean, out_tensors_.at(kOutCurrentMeanIdx)->Size());
   memcpy(out_tensors_.at(kOutCurrentVarIdx)->data_c(), current_var, out_tensors_.at(kOutCurrentVarIdx)->Size());
 
   // Copy to local variables
-  memcpy(scale_, scale, in_tensors_[kInScaleIdx]->Size());
-  memcpy(offset_, offset, in_tensors_[kInOffsetIdx]->Size());
+  memcpy(scale_, scale, in_tensors_.at(kInScaleIdx)->Size());
+  memcpy(offset_, offset, in_tensors_.at(kInOffsetIdx)->Size());
 
   trained_ = true;  // trained at least once
 }
 
 int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  MS_ASSERT(param);
+  MS_ASSERT(param != nullptr);
   if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
     MS_ASSERT(in_tensors_.size() == kMaxInIdx);
     MS_ASSERT(out_tensors_.size() == 1);
@@ -86,11 +91,11 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
       ms_context_->allocator->Free(output_fp16);
       return RET_ERROR;
     }
-    MS_ASSERT(input->data_c() != nullptr);
-    MS_ASSERT(scale->data_c() != nullptr);
-    MS_ASSERT(offset->data_c() != nullptr);
-    MS_ASSERT(mean->data_c() != nullptr);
-    MS_ASSERT(variance->data_c() != nullptr);
+    CHECK_NULL_RETURN(input->data_c());
+    CHECK_NULL_RETURN(scale->data_c());
+    CHECK_NULL_RETURN(offset->data_c());
+    CHECK_NULL_RETURN(mean->data_c());
+    CHECK_NULL_RETURN(variance->data_c());
     Float32ToFloat16(reinterpret_cast<float *>(input->data_c()), reinterpret_cast<float16_t *>(input_fp16),
                      input->ElementsNum());
     Float32ToFloat16(reinterpret_cast<float *>(scale->data_c()), reinterpret_cast<float16_t *>(scale_fp16),
@@ -121,8 +126,8 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     ms_context_->allocator->Free(output_fp16);
     return RET_OK;
   }
-  MS_ASSERT(in_tensors_.at(0)->data_c() != nullptr);
-  MS_ASSERT(out_tensors_.at(0)->data_c() != nullptr);
+  CHECK_NULL_RETURN(in_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(out_tensors_.at(0)->data_c());
   if (IsTrain() && IsTrainable() && in_tensors_.size() >= kMaxInIdx) {
     CalcMeanVar(static_cast<float16_t *>(in_tensors_.at(0)->data_c()),
                 static_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data_c()),
@@ -142,6 +147,10 @@ int FusedBatchnormFp16CPUKernel::Eval() {
     float16_t *save_var = static_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data_c());
     float16_t *scale = static_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data_c());
     float16_t *bias = static_cast<float16_t *>(in_tensors_.at(kInOffsetIdx)->data_c());
+    CHECK_NULL_RETURN(save_mean);
+    CHECK_NULL_RETURN(save_var);
+    CHECK_NULL_RETURN(scale);
+    CHECK_NULL_RETURN(bias);
 
     // Copy to local variables
     memcpy(scale_, scale, in_tensors_.at(kInScaleIdx)->Size());
