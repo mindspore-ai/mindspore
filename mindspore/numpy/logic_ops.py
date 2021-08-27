@@ -747,7 +747,7 @@ def array_equal(a1, a2, equal_nan=False):
     Returns `True` if input arrays have same shapes and all elements equal.
 
     Note:
-        In mindpsore, a bool tensor is returned instead, since in Graph mode, the
+        In mindspore, a bool tensor is returned instead, since in Graph mode, the
         value cannot be traced and computed at compile time.
 
         Since on Ascend, :class:`nan` is treated differently, currently the argument
@@ -793,7 +793,7 @@ def array_equiv(a1, a2):
     be broadcasted to create the same shape as the other one.
 
     Note:
-        In mindpsore, a bool tensor is returned instead, since in Graph mode, the
+        In mindspore, a bool tensor is returned instead, since in Graph mode, the
         value cannot be traced and computed at compile time.
 
     Args:

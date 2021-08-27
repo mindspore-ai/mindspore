@@ -83,6 +83,8 @@ def array(obj, dtype=None, copy=True, ndmin=0):
         >>> print(np.array([1,2,3]))
         [1 2 3]
     """
+    if dtype is not None:
+        dtype = _check_dtype(dtype)
     res = asarray(obj, dtype)
 
     if ndmin > res.ndim:
@@ -163,6 +165,8 @@ def asarray(a, dtype=None):
         >>> print(np.asarray([1,2,3]))
         [1 2 3]
     """
+    if dtype is not None:
+        dtype = _check_dtype(dtype)
     if isinstance(a, Tensor):
         if dtype is None or dtype == a.dtype:
             return a
