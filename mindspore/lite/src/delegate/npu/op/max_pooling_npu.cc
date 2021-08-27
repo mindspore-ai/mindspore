@@ -24,14 +24,6 @@ int MaxPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
-  auto stride_h = static_cast<int>(*(pooling_prim->strides()->begin()));
-  auto stride_w = static_cast<int>(*(pooling_prim->strides()->begin() + 1));
-  auto pad_u = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_UP));
-  auto pad_l = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_LEFT));
-  if (pad_u > stride_h || pad_l > stride_w) {
-    MS_LOG(WARNING) << "Npu pooling does not support pad > stride.";
-    return RET_NOT_SUPPORT;
-  }
   return RET_OK;
 }
 

@@ -83,15 +83,6 @@ int CalculateNewHeightAndWidth(const TensorC *const *inputs, size_t inputs_size,
   if (inputs_size == 2) {
     return HandleTwoInputs(inputs, param);
   } else if (inputs_size == 1) {
-  } else if (inputs_size == 4) {
-    if (inputs[3]->data_ == NULL) {
-      return NNACL_INFER_INVALID;
-    }
-    if (GetElementNum(inputs[3]) < 2) {
-      return NNACL_ERR;
-    }
-    const TensorC *inputs_tmp[2] = {inputs[0], inputs[3]};
-    return HandleTwoInputs(inputs_tmp, param);
   } else {
     return NNACL_ERR;
   }
