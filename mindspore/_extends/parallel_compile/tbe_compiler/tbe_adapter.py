@@ -250,20 +250,21 @@ def check_support(job: TbeJob):
     if isinstance(res, tuple):
         result, reason = res
         result_str = str(result)
-        if result_str == "True":
-            job.result = "FULLY_SUPPORTED"
-        elif result_str == "False":
-            job.result = "NOT_SUPPORTED"
-        elif result_str == "Unknown":
-            job.result = "PARTIALLY_SUPPORTED"
-            job.info("op module {} check support result is partially supported".format(op_module_name))
-        else:
-            job.result = "NOT_SUPPORTED"
-            job.info("op module {} check support result is {}, not supported".format(op_module_name, result_str))
-        if reason:
-            job.info("Unsupported reason is {}".format(reason))
     else:
-        job.result = str(res)
+        result_str = str(res)
+        reason = None
+    if result_str == "True":
+        job.result = "FULLY_SUPPORTED"
+    elif result_str == "False":
+        job.result = "NOT_SUPPORTED"
+    elif result_str == "Unknown":
+        job.result = "PARTIALLY_SUPPORTED"
+        job.info("op module {} check support result is partially supported".format(op_module_name))
+    else:
+        job.result = "NOT_SUPPORTED"
+        job.info("op module {} check support result is {}, not supported".format(op_module_name, result_str))
+    if reason:
+        job.info("Unsupported reason is {}".format(reason))
     return True
 
 
@@ -328,8 +329,7 @@ def _pre_build_compute_op_info(compute_op, job):
     unknown_shape = compute_op["unknown_shape"]
     int64_mode = compute_op["int64mode"]
     dynamic_compile_static = compute_op["dynamic_compile_static"]
-    res = check_op_impl_mode(op_module_name, op_func_name, op_type, inputs, outputs, unknown_shape,
-                             dynamic_compile_static)
+    res = check_op_impl_mode(op_module_name, op_func_name)
     op_impl_mode = job.content["SocInfo"]["op_impl_mode"]
     op_impl_mode_list = job.content["SocInfo"]["op_impl_mode_list"]
     if not res:

@@ -590,7 +590,8 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
     std::vector<size_t> in_size_list;
     std::vector<size_t> out_size_list;
     (void)TbeKernelBuild::GetIOSize2(kernel_json, &in_size_list, &out_size_list, node);
-    if (!is_tune_flag_ && build_manager_->SearchInCache(json_name, in_size_list, out_size_list, node.get())) {
+    if (!is_tune_flag_ && op_debug_level_ != "1" &&
+        build_manager_->SearchInCache(json_name, in_size_list, out_size_list, node.get())) {
       continue;
     }
     if (single_processed_kernels_.find(json_name) != single_processed_kernels_.end()) {
@@ -649,7 +650,7 @@ KernelModMap AscendKernelCompileManager::AscendFusionOpCompile(const std::vector
       continue;
     }
     // cache
-    if (!is_tune_flag_) {
+    if (!is_tune_flag_ && op_debug_level_ != "1") {
       auto kernel_pack = TbeUtils::SearchCache(json_name);
       if (kernel_pack != nullptr) {
         auto kernel_mod = build_manager_->GenKernelMod(input_size_list, output_size_list, kernel_pack);
@@ -718,6 +719,7 @@ void AscendKernelCompileManager::TbeInitialize() {
     MS_LOG(EXCEPTION) << "Assemble json failed. job type: Initialize.";
   }
   auto offline_tune = (init_json[kJobContent][kSocInfo][kOfflineTune]).get<bool>();
+  op_debug_level_ = (init_json[kJobContent][kSocInfo]["op_debug_level"]).get<std::string>();
   auto auto_tiling_mode = (init_json[kJobContent][kSocInfo]["autoTilingMode"]).get<std::string>();
   tbe_init_flag_ = true;
   is_tune_flag_ = offline_tune || (auto_tiling_mode != "NO_TUNE");

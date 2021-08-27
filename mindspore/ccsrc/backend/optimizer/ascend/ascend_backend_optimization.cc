@@ -444,6 +444,14 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
     MS_LOG(WARNING) << "Dynamic shape skip fusion";
     return;
   }
+  auto old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
+  if (old_build.empty()) {
+    auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
+    auto pre_build = common::GetEnv("MS_DISABLE_PREBUILD");
+    if (pre_build.empty()) {
+      build_manager.AscendPreBuild(kernel_graph);
+    }
+  }
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     std::string file_name = "hwopt_d_ub_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
