@@ -663,8 +663,12 @@ def set_context(**kwargs):
             you should make sure the network has not been changed since the last execution. By now, we have
             not support automatically checking the changes yet. Default: False.
             This is an experimental prototype that is subject to change and/or deletion.
-        pynative_synchronize (bool): Whether to enable asynchronous execution of the device in Pynative mode.
-            Default: False.
+        pynative_synchronize (bool): Whether to enable synchronous execution of the device in Pynative mode.
+            Default: False. When the value is set to False, the operator is executed asynchronously on the device.
+            When an error occurs in the execution of the operator, the specific error script code location cannot
+            be located; when the value is set to True, the operator is executed synchronously on the device. It will
+            reduce the execution performance of the program. At this time, when an error occurs in the execution of
+            the operator, the location of the error script code can be located according to the call stack of the error.
 
     Raises:
         ValueError: If input key is not an attribute in context.
