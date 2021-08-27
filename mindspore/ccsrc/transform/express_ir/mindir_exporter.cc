@@ -553,9 +553,13 @@ std::string IrExportBuilder::GetUniqueNodeName(const AnfNodePtr &node) {
     return iter->second;
   } else {
     std::string node_name = GetNodeName(node);
+    // Compatible before. CNode = FuncGraphName:CNodeName:index ,Parameter = FuncGraphName:ParameterName
+    if (node->isa<CNode>()) {
+      node_name = node_name + ":" + std::to_string(GetNodeIndex());
+    }
+    // Avoid duplicate name.
     while (nodeName_.count(node_name) > 0) {
-      auto node_idx = GetNodeIndex();
-      node_name = node_name + ":" + std::to_string(node_idx);
+      node_name = node_name + "_" + std::to_string(GetNodeIndex());
     }
     node_index_map_[node] = node_name;
     return node_name;
