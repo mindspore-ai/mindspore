@@ -39,11 +39,6 @@ class __attribute__((visibility("default"))) Statistics {
   /// \param[in] statistics the statistic needs to be saved
   static std::shared_ptr<Statistics> Build(std::string desc, const json &statistics);
 
-  /// \brief save the statistic from python and its description
-  /// \param[in] desc the statistic's description
-  /// \param[in] statistics the statistic needs to be saved
-  static std::shared_ptr<Statistics> Build(std::string desc, pybind11::handle statistics);
-
   ~Statistics() = default;
 
   /// \brief compare two statistics to judge if they are equal
@@ -58,10 +53,6 @@ class __attribute__((visibility("default"))) Statistics {
   /// \brief get the statistic
   /// \return json format of the statistic
   json GetStatistics() const;
-
-  /// \brief get the statistic for python
-  /// \return the python object of statistics
-  pybind11::object GetStatisticsForPython() const;
 
   /// \brief decode the bson statistics to json
   /// \param[in] encodedStatistics the bson type of statistics

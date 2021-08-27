@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
 
@@ -28,33 +27,29 @@ class __attribute__((visibility("default"))) ShardOperator {
  public:
   virtual ~ShardOperator() = default;
 
-  MSRStatus operator()(ShardTaskList &tasks) {
-    if (SUCCESS != this->PreExecute(tasks)) {
-      return FAILED;
-    }
-    if (SUCCESS != this->Execute(tasks)) {
-      return FAILED;
-    }
-    if (SUCCESS != this->SufExecute(tasks)) {
-      return FAILED;
-    }
-    return SUCCESS;
+  Status operator()(ShardTaskList &tasks) {
+    RETURN_IF_NOT_OK(this->PreExecute(tasks));
+    RETURN_IF_NOT_OK(this->Execute(tasks));
+    RETURN_IF_NOT_OK(this->SufExecute(tasks));
+    return Status::OK();
   }
 
   virtual bool HasChildOp() { return child_op_ != nullptr; }
 
-  virtual MSRStatus SetChildOp(std::shared_ptr<ShardOperator> child_op) {
-    if (child_op != nullptr) child_op_ = child_op;
-    return SUCCESS;
+  virtual Status SetChildOp(std::shared_ptr<ShardOperator> child_op) {
+    if (child_op != nullptr) {
+      child_op_ = child_op;
+    }
+    return Status::OK();
   }
 
   virtual std::shared_ptr<ShardOperator> GetChildOp() { return child_op_; }
 
-  virtual MSRStatus PreExecute(ShardTaskList &tasks) { return SUCCESS; }
+  virtual Status PreExecute(ShardTaskList &tasks) { return Status::OK(); }
 
-  virtual MSRStatus Execute(ShardTaskList &tasks) = 0;
+  virtual Status Execute(ShardTaskList &tasks) = 0;
 
-  virtual MSRStatus SufExecute(ShardTaskList &tasks) { return SUCCESS; }
+  virtual Status SufExecute(ShardTaskList &tasks) { return Status::OK(); }
 
   virtual int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) { return 0; }
 
@@ -72,9 +67,9 @@ class __attribute__((visibility("default"))) ShardOperator {
   std::shared_ptr<ShardOperator> child_op_ = nullptr;
 
   // indicate shard_id : inc_count
-  // 0 : 15  -  shard0 has 15 samples
-  // 1 : 41  -  shard1 has 26 samples
-  // 2 : 58  -  shard2 has 17 samples
+  //   // 0 : 15  -  shard0 has 15 samples
+  //     // 1 : 41  -  shard1 has 26 samples
+  //       // 2 : 58  -  shard2 has 17 samples
   std::vector<uint32_t> shard_sample_count_;
 
   dataset::ShuffleMode shuffle_mode_ = dataset::ShuffleMode::kGlobal;

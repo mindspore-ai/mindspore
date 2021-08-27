@@ -60,8 +60,8 @@ TEST_F(TestShardWriter, TestShardWriterOneSample) {
   std::string filename = "./OneSample.shard01";
 
   ShardReader dataset;
-  MSRStatus ret = dataset.Open({filename}, true, 4);
-  ASSERT_EQ(ret, SUCCESS);
+  auto status = dataset.Open({filename}, true, 4);
+  EXPECT_TRUE(status.IsOk());
   dataset.Launch();
 
   while (true) {
@@ -675,8 +675,8 @@ TEST_F(TestShardWriter, AllRawDataWrong) {
   fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
 
   // write rawdata
-  MSRStatus res = fw.WriteRawData(rawdatas, bin_data);
-  ASSERT_EQ(res, SUCCESS);
+  auto status = fw.WriteRawData(rawdatas, bin_data);
+  EXPECT_TRUE(status.IsOk());
   for (const auto &filename : file_names) {
     auto filename_db = filename + ".db";
     remove(common::SafeCStr(filename_db));
@@ -716,7 +716,8 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberColumnInIndex) {
   fields.push_back(index_field2);
 
   // add index to shardHeader
-  ASSERT_EQ(header_data.AddIndexFields(fields), SUCCESS);
+  auto status = header_data.AddIndexFields(fields);
+  EXPECT_TRUE(status.IsOk());
   MS_LOG(INFO) << "Init Index Fields Already.";
 
   // load  meta data
@@ -736,28 +737,34 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberColumnInIndex) {
   }
 
   mindrecord::ShardWriter fw_init;
-  ASSERT_TRUE(fw_init.Open(file_names) == SUCCESS);
+  status = fw_init.Open(file_names);
+  EXPECT_TRUE(status.IsOk());
 
   // set shardHeader
-  ASSERT_TRUE(fw_init.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data)) == SUCCESS);
+  status = fw_init.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
+  EXPECT_TRUE(status.IsOk());
+
 
   // write raw data
-  ASSERT_TRUE(fw_init.WriteRawData(rawdatas, bin_data) == SUCCESS);
-  ASSERT_TRUE(fw_init.Commit() == SUCCESS);
+  status = fw_init.WriteRawData(rawdatas, bin_data);
+  EXPECT_TRUE(status.IsOk());
+  status = fw_init.Commit();
+  EXPECT_TRUE(status.IsOk());
 
   // create the index file
   std::string filename = "./imagenet.shard01";
   mindrecord::ShardIndexGenerator sg{filename};
   sg.Build();
-  ASSERT_TRUE(sg.WriteToDatabase() == SUCCESS);
+  status = sg.WriteToDatabase();
+  EXPECT_TRUE(status.IsOk());
   MS_LOG(INFO) << "Done create index";
 
   // read the mindrecord file
   filename = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label", "file_name", "data"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open({filename}, true, 4, column_list);
-  ASSERT_EQ(ret, SUCCESS);
+  status = dataset.Open({filename}, true, 4, column_list);
+  EXPECT_TRUE(status.IsOk());
   dataset.Launch();
 
   int count = 0;
@@ -822,28 +829,34 @@ TEST_F(TestShardWriter, TestShardNoBlob) {
   }
 
   mindrecord::ShardWriter fw_init;
-  ASSERT_TRUE(fw_init.Open(file_names) == SUCCESS);
+  auto status = fw_init.Open(file_names);
+  EXPECT_TRUE(status.IsOk());
+
 
   // set shardHeader
-  ASSERT_TRUE(fw_init.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data)) == SUCCESS);
+  status = fw_init.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
+  EXPECT_TRUE(status.IsOk());
 
   // write raw data
-  ASSERT_TRUE(fw_init.WriteRawData(rawdatas, bin_data) == SUCCESS);
-  ASSERT_TRUE(fw_init.Commit() == SUCCESS);
+  status = fw_init.WriteRawData(rawdatas, bin_data);
+  EXPECT_TRUE(status.IsOk());
+  status = fw_init.Commit();
+  EXPECT_TRUE(status.IsOk());
 
   // create the index file
   std::string filename = "./imagenet.shard01";
   mindrecord::ShardIndexGenerator sg{filename};
   sg.Build();
-  ASSERT_TRUE(sg.WriteToDatabase() == SUCCESS);
+  status = sg.WriteToDatabase();
+  EXPECT_TRUE(status.IsOk());
   MS_LOG(INFO) << "Done create index";
 
   // read the mindrecord file
   filename = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label", "file_name"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open({filename}, true, 4, column_list);
-  ASSERT_EQ(ret, SUCCESS);
+  status = dataset.Open({filename}, true, 4, column_list);
+  EXPECT_TRUE(status.IsOk());
   dataset.Launch();
 
   int count = 0;
@@ -896,7 +909,8 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberNotColumnInIndex) {
   fields.push_back(index_field1);
 
   // add index to shardHeader
-  ASSERT_EQ(header_data.AddIndexFields(fields), SUCCESS);
+  auto status = header_data.AddIndexFields(fields);
+  EXPECT_TRUE(status.IsOk());
   MS_LOG(INFO) << "Init Index Fields Already.";
 
   // load  meta data
@@ -916,28 +930,34 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberNotColumnInIndex) {
   }
 
   mindrecord::ShardWriter fw_init;
-  ASSERT_TRUE(fw_init.Open(file_names) == SUCCESS);
+  status = fw_init.Open(file_names);
+  EXPECT_TRUE(status.IsOk());
+
 
   // set shardHeader
-  ASSERT_TRUE(fw_init.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data)) == SUCCESS);
+  status = fw_init.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
+  EXPECT_TRUE(status.IsOk());
 
   // write raw data
-  ASSERT_TRUE(fw_init.WriteRawData(rawdatas, bin_data) == SUCCESS);
-  ASSERT_TRUE(fw_init.Commit() == SUCCESS);
+  status = fw_init.WriteRawData(rawdatas, bin_data);
+  EXPECT_TRUE(status.IsOk());
+  status = fw_init.Commit();
+  EXPECT_TRUE(status.IsOk());
 
   // create the index file
   std::string filename = "./imagenet.shard01";
   mindrecord::ShardIndexGenerator sg{filename};
   sg.Build();
-  ASSERT_TRUE(sg.WriteToDatabase() == SUCCESS);
+  status = sg.WriteToDatabase();
+  EXPECT_TRUE(status.IsOk());
   MS_LOG(INFO) << "Done create index";
 
   // read the mindrecord file
   filename = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label", "data"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open({filename}, true, 4, column_list);
-  ASSERT_EQ(ret, SUCCESS);
+  status = dataset.Open({filename}, true, 4, column_list);
+  EXPECT_TRUE(status.IsOk());
   dataset.Launch();
 
   int count = 0;
@@ -1043,8 +1063,8 @@ TEST_F(TestShardWriter, TestShardWriter10Sample40Shard) {
 
   filename = "./TenSampleFortyShard.shard01";
   ShardReader dataset;
-  MSRStatus ret = dataset.Open({filename}, true, 4);
-  ASSERT_EQ(ret, SUCCESS);
+  auto status = dataset.Open({filename}, true, 4);
+  EXPECT_TRUE(status.IsOk());
   dataset.Launch();
 
   int count = 0;

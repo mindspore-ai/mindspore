@@ -31,19 +31,19 @@ class __attribute__((visibility("default"))) ShardShuffle : public ShardOperator
 
   ~ShardShuffle() override{};
 
-  MSRStatus Execute(ShardTaskList &tasks) override;
+  Status Execute(ShardTaskList &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 
  private:
   // Private helper function
-  MSRStatus CategoryShuffle(ShardTaskList &tasks);
+  Status CategoryShuffle(ShardTaskList &tasks);
 
   // Keep the file sequence the same but shuffle the data within each file
-  MSRStatus ShuffleInfile(ShardTaskList &tasks);
+  Status ShuffleInfile(ShardTaskList &tasks);
 
   // Shuffle the file sequence but keep the order of data within each file
-  MSRStatus ShuffleFiles(ShardTaskList &tasks);
+  Status ShuffleFiles(ShardTaskList &tasks);
 
   uint32_t shuffle_seed_;
   int64_t no_of_samples_;

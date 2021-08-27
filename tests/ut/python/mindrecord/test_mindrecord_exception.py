@@ -21,8 +21,7 @@ from utils import get_data
 
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter, FileReader, MindPage, SUCCESS
-from mindspore.mindrecord import MRMOpenError, MRMGenerateIndexError, ParamValueError, MRMGetMetaError, \
-    MRMFetchDataError
+from mindspore.mindrecord import ParamValueError, MRMGetMetaError
 
 CV_FILE_NAME = "./imagenet.mindrecord"
 NLP_FILE_NAME = "./aclImdb.mindrecord"
@@ -106,21 +105,19 @@ def create_cv_mindrecord(files_num):
 
 def test_lack_partition_and_db():
     """test file reader when mindrecord file does not exist."""
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         reader = FileReader('dummy.mindrecord')
         reader.close()
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Invalid file path:' in str(err.value)
 
 def test_lack_db(fixture_cv_file):
     """test file reader when db file does not exist."""
     create_cv_mindrecord(1)
     os.remove("{}.db".format(CV_FILE_NAME))
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         reader = FileReader(CV_FILE_NAME)
         reader.close()
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Invalid database file:' in str(err.value)
 
 def test_lack_some_partition_and_db(fixture_cv_file):
     """test file reader when some partition and db do not exist."""
@@ -129,11 +126,10 @@ def test_lack_some_partition_and_db(fixture_cv_file):
              for x in range(FILES_NUM)]
     os.remove("{}".format(paths[3]))
     os.remove("{}.db".format(paths[3]))
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Invalid file path:' in str(err.value)
 
 def test_lack_some_partition_first(fixture_cv_file):
     """test file reader when first partition does not exist."""
@@ -141,11 +137,10 @@ def test_lack_some_partition_first(fixture_cv_file):
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     os.remove("{}".format(paths[0]))
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Invalid file path:' in str(err.value)
 
 def test_lack_some_partition_middle(fixture_cv_file):
     """test file reader when some partition does not exist."""
@@ -153,11 +148,10 @@ def test_lack_some_partition_middle(fixture_cv_file):
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     os.remove("{}".format(paths[1]))
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Invalid file path:' in str(err.value)
 
 def test_lack_some_partition_last(fixture_cv_file):
     """test file reader when last partition does not exist."""
@@ -165,11 +159,10 @@ def test_lack_some_partition_last(fixture_cv_file):
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     os.remove("{}".format(paths[3]))
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Invalid file path:' in str(err.value)
 
 def test_mindpage_lack_some_partition(fixture_cv_file):
     """test page reader when some partition does not exist."""
@@ -177,10 +170,9 @@ def test_mindpage_lack_some_partition(fixture_cv_file):
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     os.remove("{}".format(paths[0]))
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         MindPage(CV_FILE_NAME + "0")
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Invalid file path:' in str(err.value)
 
 def test_lack_some_db(fixture_cv_file):
     """test file reader when some db does not exist."""
@@ -188,11 +180,10 @@ def test_lack_some_db(fixture_cv_file):
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     os.remove("{}.db".format(paths[3]))
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Invalid database file:' in str(err.value)
 
 
 def test_invalid_mindrecord():
@@ -200,10 +191,9 @@ def test_invalid_mindrecord():
     with open(CV_FILE_NAME, 'w') as f:
         dummy = 's' * 100
         f.write(dummy)
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         FileReader(CV_FILE_NAME)
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Invalid file content. path:' in str(err.value)
     os.remove(CV_FILE_NAME)
 
 def test_invalid_db(fixture_cv_file):
@@ -212,27 +202,26 @@ def test_invalid_db(fixture_cv_file):
     os.remove("imagenet.mindrecord.db")
     with open('imagenet.mindrecord.db', 'w') as f:
         f.write('just for test')
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         FileReader('imagenet.mindrecord')
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
-           in str(err.value)
+    assert 'Unexpected error. Error in execute sql:' in str(err.value)
 
 def test_overwrite_invalid_mindrecord(fixture_cv_file):
     """test file writer when overwrite invalid mindreocrd file."""
     with open(CV_FILE_NAME, 'w') as f:
         f.write('just for test')
-    with pytest.raises(MRMOpenError) as err:
+    with pytest.raises(RuntimeError) as err:
         create_cv_mindrecord(1)
-    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
+    assert 'Unexpected error. MindRecord file already existed, please delete file:' \
            in str(err.value)
 
 def test_overwrite_invalid_db(fixture_cv_file):
     """test file writer when overwrite invalid db file."""
     with open('imagenet.mindrecord.db', 'w') as f:
         f.write('just for test')
-    with pytest.raises(MRMGenerateIndexError) as err:
+    with pytest.raises(RuntimeError) as err:
         create_cv_mindrecord(1)
-    assert '[MRMGenerateIndexError]: Failed to generate index.' in str(err.value)
+    assert 'Unexpected error. Failed to write data to db.' in str(err.value)
 
 def test_read_after_close(fixture_cv_file):
     """test file reader when close read."""
@@ -302,7 +291,7 @@ def test_mindpage_pageno_pagesize_not_int(fixture_cv_file):
     with pytest.raises(ParamValueError):
         reader.read_at_page_by_name("822", 0, "qwer")
 
-    with pytest.raises(MRMFetchDataError, match="Failed to fetch data by category."):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid category id:"):
         reader.read_at_page_by_id(99999, 0, 1)
 
 
@@ -320,10 +309,10 @@ def test_mindpage_filename_not_exist(fixture_cv_file):
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
 
-    with pytest.raises(MRMFetchDataError):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid category id:"):
         reader.read_at_page_by_id(9999, 0, 1)
 
-    with pytest.raises(MRMFetchDataError):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid category name."):
         reader.read_at_page_by_name("abc.jpg", 0, 1)
 
     with pytest.raises(ParamValueError):
@@ -475,7 +464,7 @@ def test_write_with_invalid_data():
     mindrecord_file_name = "test.mindrecord"
 
     # field: file_name  =>  filename
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -510,7 +499,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field: mask  =>  masks
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -545,7 +534,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field: data  =>  image
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -580,7 +569,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field: label  =>  labels
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -615,7 +604,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field: score  =>  scores
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -650,7 +639,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # string type with int value
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -685,7 +674,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field with int64 type, but the real data is string
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -720,7 +709,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # bytes field is string
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -755,7 +744,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field is not numpy type
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -790,7 +779,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # not enough field
-    with pytest.raises(Exception, match="Failed to write dataset"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Data size is not positive."):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 

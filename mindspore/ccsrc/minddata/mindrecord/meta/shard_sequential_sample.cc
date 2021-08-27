@@ -38,7 +38,7 @@ int64_t ShardSequentialSample::GetNumSamples(int64_t dataset_size, int64_t num_c
   return std::min(static_cast<int64_t>(no_of_samples_), dataset_size);
 }
 
-MSRStatus ShardSequentialSample::Execute(ShardTaskList &tasks) {
+Status ShardSequentialSample::Execute(ShardTaskList &tasks) {
   int64_t taking;
   int64_t total_no = static_cast<int64_t>(tasks.sample_ids_.size());
   if (no_of_samples_ == 0 && (per_ >= -kEpsilon && per_ <= kEpsilon)) {
@@ -58,16 +58,15 @@ MSRStatus ShardSequentialSample::Execute(ShardTaskList &tasks) {
     ShardTaskList::TaskListSwap(tasks, new_tasks);
   } else {  // shuffled
     ShardTaskList new_tasks;
-    if (taking > static_cast<int64_t>(tasks.permutation_.size())) {
-      return FAILED;
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(taking <= static_cast<int64_t>(tasks.permutation_.size()),
+                                 "Taking is out of task range.");
     total_no = static_cast<int64_t>(tasks.permutation_.size());
     for (size_t i = offset_; i < taking + offset_; ++i) {
       new_tasks.AssignTask(tasks, tasks.permutation_[i % total_no]);
     }
     ShardTaskList::TaskListSwap(tasks, new_tasks);
   }
-  return SUCCESS;
+  return Status::OK();
 }
 
 }  // namespace mindrecord

@@ -57,26 +57,24 @@ bool ValidateFieldName(const std::string &str) {
   return true;
 }
 
-std::pair<MSRStatus, std::string> GetFileName(const std::string &path) {
+Status GetFileName(const std::string &path, std::shared_ptr<std::string> *fn_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(fn_ptr);
   char real_path[PATH_MAX] = {0};
   char buf[PATH_MAX] = {0};
   if (strncpy_s(buf, PATH_MAX, common::SafeCStr(path), path.length()) != EOK) {
-    MS_LOG(ERROR) << "Securec func [strncpy_s] failed, path: " << path;
-    return {FAILED, ""};
+    RETURN_STATUS_UNEXPECTED("Securec func [strncpy_s] failed, path: " + path);
   }
   char tmp[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
   if (_fullpath(tmp, dirname(&(buf[0])), PATH_MAX) == nullptr) {
-    MS_LOG(ERROR) << "Invalid file path, path: " << buf;
-    return {FAILED, ""};
+    RETURN_STATUS_UNEXPECTED("Invalid file path, path: " + std::string(buf));
   }
   if (_fullpath(real_path, common::SafeCStr(path), PATH_MAX) == nullptr) {
     MS_LOG(DEBUG) << "Path: " << common::SafeCStr(path) << "check successfully";
   }
 #else
   if (realpath(dirname(&(buf[0])), tmp) == nullptr) {
-    MS_LOG(ERROR) << "Invalid file path, path: " << buf;
-    return {FAILED, ""};
+    RETURN_STATUS_UNEXPECTED(std::string("Invalid file path, path: ") + buf);
   }
   if (realpath(common::SafeCStr(path), real_path) == nullptr) {
     MS_LOG(DEBUG) << "Path: " << path << "check successfully";
@@ -87,32 +85,32 @@ std::pair<MSRStatus, std::string> GetFileName(const std::string &path) {
   size_t i = s.rfind(sep, s.length());
   if (i != std::string::npos) {
     if (i + 1 < s.size()) {
-      return {SUCCESS, s.substr(i + 1)};
+      *fn_ptr = std::make_shared<std::string>(s.substr(i + 1));
+      return Status::OK();
     }
   }
-  return {SUCCESS, s};
+  *fn_ptr = std::make_shared<std::string>(s);
+  return Status::OK();
 }
 
-std::pair<MSRStatus, std::string> GetParentDir(const std::string &path) {
+Status GetParentDir(const std::string &path, std::shared_ptr<std::string> *pd_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(pd_ptr);
   char real_path[PATH_MAX] = {0};
   char buf[PATH_MAX] = {0};
   if (strncpy_s(buf, PATH_MAX, common::SafeCStr(path), path.length()) != EOK) {
-    MS_LOG(ERROR) << "Securec func [strncpy_s] failed, path: " << path;
-    return {FAILED, ""};
+    RETURN_STATUS_UNEXPECTED("Securec func [strncpy_s] failed, path: " + path);
   }
   char tmp[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
   if (_fullpath(tmp, dirname(&(buf[0])), PATH_MAX) == nullptr) {
-    MS_LOG(ERROR) << "Invalid file path, path: " << buf;
-    return {FAILED, ""};
+    RETURN_STATUS_UNEXPECTED("Invalid file path, path: " + std::string(buf));
   }
   if (_fullpath(real_path, common::SafeCStr(path), PATH_MAX) == nullptr) {
     MS_LOG(DEBUG) << "Path: " << common::SafeCStr(path) << "check successfully";
   }
 #else
   if (realpath(dirname(&(buf[0])), tmp) == nullptr) {
-    MS_LOG(ERROR) << "Invalid file path, path: " << buf;
-    return {FAILED, ""};
+    RETURN_STATUS_UNEXPECTED(std::string("Invalid file path, path: ") + buf);
   }
   if (realpath(common::SafeCStr(path), real_path) == nullptr) {
     MS_LOG(DEBUG) << "Path: " << path << "check successfully";
@@ -120,9 +118,11 @@ std::pair<MSRStatus, std::string> GetParentDir(const std::string &path) {
 #endif
   std::string s = real_path;
   if (s.rfind('/') + 1 <= s.size()) {
-    return {SUCCESS, s.substr(0, s.rfind('/') + 1)};
+    *pd_ptr = std::make_shared<std::string>(s.substr(0, s.rfind('/') + 1));
+    return Status::OK();
   }
-  return {SUCCESS, "/"};
+  *pd_ptr = std::make_shared<std::string>("/");
+  return Status::OK();
 }
 
 bool CheckIsValidUtf8(const std::string &str) {
@@ -163,15 +163,16 @@ bool IsLegalFile(const std::string &path) {
   return false;
 }
 
-std::pair<MSRStatus, uint64_t> GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type) {
+Status GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type, std::shared_ptr<uint64_t> *size_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(size_ptr);
 #if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
-  return {SUCCESS, 100};
+  *size_ptr = std::make_shared<uint64_t>(100);
+  return Status::OK();
 #else
   uint64_t ll_count = 0;
   struct statfs disk_info;
   if (statfs(common::SafeCStr(str_dir), &disk_info) == -1) {
-    MS_LOG(ERROR) << "Get disk size error";
-    return {FAILED, 0};
+    RETURN_STATUS_UNEXPECTED("Get disk size error.");
   }
 
   switch (disk_type) {
@@ -187,8 +188,8 @@ std::pair<MSRStatus, uint64_t> GetDiskSize(const std::string &str_dir, const Dis
       ll_count = 0;
       break;
   }
-
-  return {SUCCESS, ll_count};
+  *size_ptr = std::make_shared<uint64_t>(ll_count);
+  return Status::OK();
 #endif
 }
 
@@ -201,17 +202,15 @@ uint32_t GetMaxThreadNum() {
   return thread_num;
 }
 
-std::pair<MSRStatus, std::vector<std::string>> GetDatasetFiles(const std::string &path, const json &addresses) {
-  auto ret = GetParentDir(path);
-  if (SUCCESS != ret.first) {
-    return {FAILED, {}};
-  }
-  std::vector<std::string> abs_addresses;
+Status GetDatasetFiles(const std::string &path, const json &addresses, std::shared_ptr<std::vector<std::string>> *ds) {
+  RETURN_UNEXPECTED_IF_NULL(ds);
+  std::shared_ptr<std::string> parent_dir;
+  RETURN_IF_NOT_OK(GetParentDir(path, &parent_dir));
   for (const auto &p : addresses) {
-    std::string abs_path = ret.second + std::string(p);
-    abs_addresses.emplace_back(abs_path);
+    std::string abs_path = *parent_dir + std::string(p);
+    (*ds)->emplace_back(abs_path);
   }
-  return {SUCCESS, abs_addresses};
+  return Status::OK();
 }
 }  // namespace mindrecord
 }  // namespace mindspore

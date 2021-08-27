@@ -38,104 +38,74 @@ ShardHeader::ShardHeader() : shard_count_(0), header_size_(0), page_size_(0), co
   index_ = std::make_shared<Index>();
 }
 
-MSRStatus ShardHeader::InitializeHeader(const std::vector<json> &headers, bool load_dataset) {
+Status ShardHeader::InitializeHeader(const std::vector<json> &headers, bool load_dataset) {
   shard_count_ = headers.size();
   int shard_index = 0;
   bool first = true;
   for (const auto &header : headers) {
     if (first) {
       first = false;
-      if (ParseSchema(header["schema"]) != SUCCESS) {
-        return FAILED;
-      }
-      if (ParseIndexFields(header["index_fields"]) != SUCCESS) {
-        return FAILED;
-      }
-      if (ParseStatistics(header["statistics"]) != SUCCESS) {
-        return FAILED;
-      }
+      RETURN_IF_NOT_OK(ParseSchema(header["schema"]));
+      RETURN_IF_NOT_OK(ParseIndexFields(header["index_fields"]));
+      RETURN_IF_NOT_OK(ParseStatistics(header["statistics"]));
       ParseShardAddress(header["shard_addresses"]);
       header_size_ = header["header_size"].get<uint64_t>();
       page_size_ = header["page_size"].get<uint64_t>();
       compression_size_ = header.contains("compression_size") ? header["compression_size"].get<uint64_t>() : 0;
     }
-    if (SUCCESS != ParsePage(header["page"], shard_index, load_dataset)) {
-      return FAILED;
-    }
+    RETURN_IF_NOT_OK(ParsePage(header["page"], shard_index, load_dataset));
     shard_index++;
   }
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::CheckFileStatus(const std::string &path) {
+Status ShardHeader::CheckFileStatus(const std::string &path) {
   auto realpath = Common::GetRealPath(path);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << path;
-    return FAILED;
-  }
-
+  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path: " + path);
   std::ifstream fin(realpath.value(), std::ios::in | std::ios::binary);
-  if (!fin) {
-    MS_LOG(ERROR) << "File does not exist or permission denied. path: " << path;
-    return FAILED;
-  }
-  if (fin.fail()) {
-    MS_LOG(ERROR) << "Failed to open file. path: " << path;
-    return FAILED;
-  }
-
+  CHECK_FAIL_RETURN_UNEXPECTED(fin, "Failed to open file. path: " + path);
   // fetch file size
   auto &io_seekg = fin.seekg(0, std::ios::end);
   if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
     fin.close();
-    MS_LOG(ERROR) << "File seekg failed. path: " << path;
-    return FAILED;
+    RETURN_STATUS_UNEXPECTED("File seekg failed. path: " + path);
   }
 
   size_t file_size = fin.tellg();
   if (file_size < kMinFileSize) {
     fin.close();
-    MS_LOG(ERROR) << "Invalid file. path: " << path;
-    return FAILED;
+    RETURN_STATUS_UNEXPECTED("Invalid file. path: " + path);
   }
   fin.close();
-  return SUCCESS;
+  return Status::OK();
 }
 
-std::pair<MSRStatus, json> ShardHeader::ValidateHeader(const std::string &path) {
-  if (CheckFileStatus(path) != SUCCESS) {
-    return {FAILED, {}};
-  }
-
+Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json> *header_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(header_ptr);
+  RETURN_IF_NOT_OK(CheckFileStatus(path));
   // read header size
   json json_header;
   std::ifstream fin(common::SafeCStr(path), std::ios::in | std::ios::binary);
-  if (!fin.is_open()) {
-    MS_LOG(ERROR) << "File seekg failed. path: " << path;
-    return {FAILED, json_header};
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(fin.is_open(), "Failed to open file. path: " + path);
 
   uint64_t header_size = 0;
   auto &io_read = fin.read(reinterpret_cast<char *>(&header_size), kInt64Len);
   if (!io_read.good() || io_read.fail() || io_read.bad()) {
-    MS_LOG(ERROR) << "File read failed";
     fin.close();
-    return {FAILED, json_header};
+    RETURN_STATUS_UNEXPECTED("File read failed");
   }
 
   if (header_size > kMaxHeaderSize) {
     fin.close();
-    MS_LOG(ERROR) << "Invalid file content. path: " << path;
-    return {FAILED, json_header};
+    RETURN_STATUS_UNEXPECTED("Invalid file content. path: " + path);
   }
 
   // read header content
   std::vector<uint8_t> header_content(header_size);
   auto &io_read_content = fin.read(reinterpret_cast<char *>(&header_content[0]), header_size);
   if (!io_read_content.good() || io_read_content.fail() || io_read_content.bad()) {
-    MS_LOG(ERROR) << "File read failed. path: " << path;
     fin.close();
-    return {FAILED, json_header};
+    RETURN_STATUS_UNEXPECTED("File read failed. path: " + path);
   }
 
   fin.close();
@@ -144,34 +114,35 @@ std::pair<MSRStatus, json> ShardHeader::ValidateHeader(const std::string &path) 
   try {
     json_header = json::parse(raw_header_content);
   } catch (json::parse_error &e) {
-    MS_LOG(ERROR) << "Json parse error: " << e.what();
-    return {FAILED, json_header};
+    RETURN_STATUS_UNEXPECTED("Json parse error: " + std::string(e.what()));
   }
-  return {SUCCESS, json_header};
+  *header_ptr = std::make_shared<json>(json_header);
+  return Status::OK();
 }
 
-std::pair<MSRStatus, json> ShardHeader::BuildSingleHeader(const std::string &file_path) {
-  auto ret = ValidateHeader(file_path);
-  if (SUCCESS != ret.first) {
-    return {FAILED, json()};
-  }
-  json raw_header = ret.second;
+Status ShardHeader::BuildSingleHeader(const std::string &file_path, std::shared_ptr<json> *header_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(header_ptr);
+  std::shared_ptr<json> raw_header;
+  RETURN_IF_NOT_OK(ValidateHeader(file_path, &raw_header));
   uint64_t compression_size =
-    raw_header.contains("compression_size") ? raw_header["compression_size"].get<uint64_t>() : 0;
-  json header = {{"shard_addresses", raw_header["shard_addresses"]},
-                 {"header_size", raw_header["header_size"]},
-                 {"page_size", raw_header["page_size"]},
+    raw_header->contains("compression_size") ? (*raw_header)["compression_size"].get<uint64_t>() : 0;
+  json header = {{"shard_addresses", (*raw_header)["shard_addresses"]},
+                 {"header_size", (*raw_header)["header_size"]},
+                 {"page_size", (*raw_header)["page_size"]},
                  {"compression_size", compression_size},
-                 {"index_fields", raw_header["index_fields"]},
-                 {"blob_fields", raw_header["schema"][0]["blob_fields"]},
-                 {"schema", raw_header["schema"][0]["schema"]},
-                 {"version", raw_header["version"]}};
-  return {SUCCESS, header};
+                 {"index_fields", (*raw_header)["index_fields"]},
+                 {"blob_fields", (*raw_header)["schema"][0]["blob_fields"]},
+                 {"schema", (*raw_header)["schema"][0]["schema"]},
+                 {"version", (*raw_header)["version"]}};
+  *header_ptr = std::make_shared<json>(header);
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::BuildDataset(const std::vector<std::string> &file_paths, bool load_dataset) {
+Status ShardHeader::BuildDataset(const std::vector<std::string> &file_paths, bool load_dataset) {
   uint32_t thread_num = std::thread::hardware_concurrency();
-  if (thread_num == 0) thread_num = kThreadNumber;
+  if (thread_num == 0) {
+    thread_num = kThreadNumber;
+  }
   uint32_t work_thread_num = 0;
   uint32_t shard_count = file_paths.size();
   int group_num = ceil(shard_count * 1.0 / thread_num);
@@ -194,12 +165,10 @@ MSRStatus ShardHeader::BuildDataset(const std::vector<std::string> &file_paths, 
   }
   if (thread_status) {
     thread_status = false;
-    return FAILED;
+    RETURN_STATUS_UNEXPECTED("Error occurred in GetHeadersOneTask thread.");
   }
-  if (SUCCESS != InitializeHeader(headers, load_dataset)) {
-    return FAILED;
-  }
-  return SUCCESS;
+  RETURN_IF_NOT_OK(InitializeHeader(headers, load_dataset));
+  return Status::OK();
 }
 
 void ShardHeader::GetHeadersOneTask(int start, int end, std::vector<json> &headers,
@@ -208,48 +177,39 @@ void ShardHeader::GetHeadersOneTask(int start, int end, std::vector<json> &heade
     return;
   }
   for (int x = start; x < end; ++x) {
-    auto ret = ValidateHeader(realAddresses[x]);
-    if (SUCCESS != ret.first) {
+    std::shared_ptr<json> header;
+    if (ValidateHeader(realAddresses[x], &header).IsError()) {
       thread_status = true;
       return;
     }
-    json header;
-    header = ret.second;
-    header["shard_addresses"] = realAddresses;
-    if (std::find(kSupportedVersion.begin(), kSupportedVersion.end(), header["version"]) == kSupportedVersion.end()) {
-      MS_LOG(ERROR) << "Version wrong, file version is: " << header["version"].dump()
+    (*header)["shard_addresses"] = realAddresses;
+    if (std::find(kSupportedVersion.begin(), kSupportedVersion.end(), (*header)["version"]) ==
+        kSupportedVersion.end()) {
+      MS_LOG(ERROR) << "Version wrong, file version is: " << (*header)["version"].dump()
                     << ", lib version is: " << kVersion;
       thread_status = true;
       return;
     }
-    headers[x] = header;
+    headers[x] = *header;
   }
 }
 
-MSRStatus ShardHeader::InitByFiles(const std::vector<std::string> &file_paths) {
+Status ShardHeader::InitByFiles(const std::vector<std::string> &file_paths) {
   std::vector<std::string> file_names(file_paths.size());
   std::transform(file_paths.begin(), file_paths.end(), file_names.begin(), [](std::string fp) -> std::string {
-    if (GetFileName(fp).first == SUCCESS) {
-      return GetFileName(fp).second;
-    }
+    std::shared_ptr<std::string> fn;
+    return GetFileName(fp, &fn).IsOk() ? *fn : "";
   });
 
   shard_addresses_ = std::move(file_names);
   shard_count_ = file_paths.size();
-  if (shard_count_ == 0) {
-    return FAILED;
-  }
-  if (shard_count_ <= kMaxShardCount) {
-    pages_.resize(shard_count_);
-  } else {
-    return FAILED;
-  }
-  return SUCCESS;
+  CHECK_FAIL_RETURN_UNEXPECTED(shard_count_ != 0 && (shard_count_ <= kMaxShardCount),
+                               "shard count is invalid. shard count: " + std::to_string(shard_count_));
+  pages_.resize(shard_count_);
+  return Status::OK();
 }
 
-void ShardHeader::ParseHeader(const json &header) {}
-
-MSRStatus ShardHeader::ParseIndexFields(const json &index_fields) {
+Status ShardHeader::ParseIndexFields(const json &index_fields) {
   std::vector<std::pair<uint64_t, std::string>> parsed_index_fields;
   for (auto &index_field : index_fields) {
     auto schema_id = index_field["schema_id"].get<uint64_t>();
@@ -257,18 +217,15 @@ MSRStatus ShardHeader::ParseIndexFields(const json &index_fields) {
     std::pair<uint64_t, std::string> parsed_index_field(schema_id, field_name);
     parsed_index_fields.push_back(parsed_index_field);
   }
-  if (!parsed_index_fields.empty() && AddIndexFields(parsed_index_fields) != SUCCESS) {
-    return FAILED;
-  }
-  return SUCCESS;
+  RETURN_IF_NOT_OK(AddIndexFields(parsed_index_fields));
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
+Status ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
   // set shard_index when load_dataset is false
-  if (shard_count_ > kMaxFileCount) {
-    MS_LOG(ERROR) << "The number of mindrecord files is greater than max value: " << kMaxFileCount;
-    return FAILED;
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    shard_count_ <= kMaxFileCount,
+    "The number of mindrecord files is greater than max value: " + std::to_string(kMaxFileCount));
   if (pages_.empty() && shard_count_ <= kMaxFileCount) {
     pages_.resize(shard_count_);
   }
@@ -295,44 +252,37 @@ MSRStatus ShardHeader::ParsePage(const json &pages, int shard_index, bool load_d
       pages_[shard_index].push_back(std::move(parsed_page));
     }
   }
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::ParseStatistics(const json &statistics) {
+Status ShardHeader::ParseStatistics(const json &statistics) {
   for (auto &statistic : statistics) {
-    if (statistic.find("desc") == statistic.end() || statistic.find("statistics") == statistic.end()) {
-      MS_LOG(ERROR) << "Deserialize statistics failed, statistic: " << statistics.dump();
-      return FAILED;
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      statistic.find("desc") != statistic.end() && statistic.find("statistics") != statistic.end(),
+      "Deserialize statistics failed, statistic: " + statistics.dump());
     std::string statistic_description = statistic["desc"].get<std::string>();
     json statistic_body = statistic["statistics"];
     std::shared_ptr<Statistics> parsed_statistic = Statistics::Build(statistic_description, statistic_body);
-    if (!parsed_statistic) {
-      return FAILED;
-    }
+    RETURN_UNEXPECTED_IF_NULL(parsed_statistic);
     AddStatistic(parsed_statistic);
   }
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::ParseSchema(const json &schemas) {
+Status ShardHeader::ParseSchema(const json &schemas) {
   for (auto &schema : schemas) {
     // change how we get schemaBody once design is finalized
-    if (schema.find("desc") == schema.end() || schema.find("blob_fields") == schema.end() ||
-        schema.find("schema") == schema.end()) {
-      MS_LOG(ERROR) << "Deserialize schema failed. schema: " << schema.dump();
-      return FAILED;
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(schema.find("desc") != schema.end() && schema.find("blob_fields") != schema.end() &&
+                                   schema.find("schema") != schema.end(),
+                                 "Deserialize schema failed. schema: " + schema.dump());
     std::string schema_description = schema["desc"].get<std::string>();
     std::vector<std::string> blob_fields = schema["blob_fields"].get<std::vector<std::string>>();
     json schema_body = schema["schema"];
     std::shared_ptr<Schema> parsed_schema = Schema::Build(schema_description, schema_body);
-    if (!parsed_schema) {
-      return FAILED;
-    }
+    RETURN_UNEXPECTED_IF_NULL(parsed_schema);
     AddSchema(parsed_schema);
   }
-  return SUCCESS;
+  return Status::OK();
 }
 
 void ShardHeader::ParseShardAddress(const json &address) {
@@ -340,7 +290,7 @@ void ShardHeader::ParseShardAddress(const json &address) {
 }
 
 std::vector<std::string> ShardHeader::SerializeHeader() {
-  std::vector<string> header;
+  std::vector<std::string> header;
   auto index = SerializeIndexFields();
   auto stats = SerializeStatistics();
   auto schema = SerializeSchema();
@@ -406,45 +356,42 @@ std::string ShardHeader::SerializeSchema() {
 
 std::string ShardHeader::SerializeShardAddress() {
   json j;
-  (void)std::transform(shard_addresses_.begin(), shard_addresses_.end(), std::back_inserter(j),
-                       [](const std::string &addr) { return GetFileName(addr).second; });
+  std::shared_ptr<std::string> fn_ptr;
+  for (const auto &addr : shard_addresses_) {
+    (void)GetFileName(addr, &fn_ptr);
+    j.emplace_back(*fn_ptr);
+  }
   return j.dump();
 }
 
-std::pair<std::shared_ptr<Page>, MSRStatus> ShardHeader::GetPage(const int &shard_id, const int &page_id) {
+Status ShardHeader::GetPage(const int &shard_id, const int &page_id, std::shared_ptr<Page> *page_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(page_ptr);
   if (shard_id < static_cast<int>(pages_.size()) && page_id < static_cast<int>(pages_[shard_id].size())) {
-    return std::make_pair(pages_[shard_id][page_id], SUCCESS);
-  } else {
-    return std::make_pair(nullptr, FAILED);
+    *page_ptr = pages_[shard_id][page_id];
+    return Status::OK();
   }
+  page_ptr = nullptr;
+  RETURN_STATUS_UNEXPECTED("Failed to Get Page.");
 }
 
-MSRStatus ShardHeader::SetPage(const std::shared_ptr<Page> &new_page) {
-  if (new_page == nullptr) {
-    return FAILED;
-  }
+Status ShardHeader::SetPage(const std::shared_ptr<Page> &new_page) {
   int shard_id = new_page->GetShardID();
   int page_id = new_page->GetPageID();
   if (shard_id < static_cast<int>(pages_.size()) && page_id < static_cast<int>(pages_[shard_id].size())) {
     pages_[shard_id][page_id] = new_page;
-    return SUCCESS;
-  } else {
-    return FAILED;
+    return Status::OK();
   }
+  RETURN_STATUS_UNEXPECTED("Failed to Set Page.");
 }
 
-MSRStatus ShardHeader::AddPage(const std::shared_ptr<Page> &new_page) {
-  if (new_page == nullptr) {
-    return FAILED;
-  }
+Status ShardHeader::AddPage(const std::shared_ptr<Page> &new_page) {
   int shard_id = new_page->GetShardID();
   int page_id = new_page->GetPageID();
   if (shard_id < static_cast<int>(pages_.size()) && page_id == static_cast<int>(pages_[shard_id].size())) {
     pages_[shard_id].push_back(new_page);
-    return SUCCESS;
-  } else {
-    return FAILED;
+    return Status::OK();
   }
+  RETURN_STATUS_UNEXPECTED("Failed to Add Page.");
 }
 
 int64_t ShardHeader::GetLastPageId(const int &shard_id) {
@@ -468,20 +415,18 @@ int ShardHeader::GetLastPageIdByType(const int &shard_id, const std::string &pag
   return last_page_id;
 }
 
-const std::pair<MSRStatus, std::shared_ptr<Page>> ShardHeader::GetPageByGroupId(const int &group_id,
-                                                                                const int &shard_id) {
-  if (shard_id >= static_cast<int>(pages_.size())) {
-    MS_LOG(ERROR) << "Shard id is more than sum of shards.";
-    return {FAILED, nullptr};
-  }
+Status ShardHeader::GetPageByGroupId(const int &group_id, const int &shard_id, std::shared_ptr<Page> *page_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(page_ptr);
+  CHECK_FAIL_RETURN_UNEXPECTED(shard_id < static_cast<int>(pages_.size()), "Shard id is more than sum of shards.");
   for (uint64_t i = pages_[shard_id].size(); i >= 1; i--) {
     auto page = pages_[shard_id][i - 1];
     if (page->GetPageType() == kPageTypeBlob && page->GetPageTypeID() == group_id) {
-      return {SUCCESS, page};
+      *page_ptr = std::make_shared<Page>(*page);
+      return Status::OK();
     }
   }
-  MS_LOG(ERROR) << "Could not get page by group id " << group_id;
-  return {FAILED, nullptr};
+  page_ptr = nullptr;
+  RETURN_STATUS_UNEXPECTED("Failed to get page by group id: " + group_id);
 }
 
 int ShardHeader::AddSchema(std::shared_ptr<Schema> schema) {
@@ -524,151 +469,88 @@ std::shared_ptr<Index> ShardHeader::InitIndexPtr() {
   return index;
 }
 
-MSRStatus ShardHeader::CheckIndexField(const std::string &field, const json &schema) {
+Status ShardHeader::CheckIndexField(const std::string &field, const json &schema) {
   // check field name is or is not valid
-  if (schema.find(field) == schema.end()) {
-    MS_LOG(ERROR) << "Schema do not contain the field: " << field << ".";
-    return FAILED;
-  }
-
-  if (schema[field]["type"] == "bytes") {
-    MS_LOG(ERROR) << field << " is bytes type, can not be schema index field.";
-    return FAILED;
-  }
-
-  if (schema.find(field) != schema.end() && schema[field].find("shape") != schema[field].end()) {
-    MS_LOG(ERROR) << field << " array can not be schema index field.";
-    return FAILED;
-  }
-  return SUCCESS;
+  CHECK_FAIL_RETURN_UNEXPECTED(schema.find(field) != schema.end(), "Filed can not found in schema.");
+  CHECK_FAIL_RETURN_UNEXPECTED(schema[field]["type"] != "Bytes", "bytes can not be as index field.");
+  CHECK_FAIL_RETURN_UNEXPECTED(schema.find(field) == schema.end() || schema[field].find("shape") == schema[field].end(),
+                               "array can not be as index field.");
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::AddIndexFields(const std::vector<std::string> &fields) {
+Status ShardHeader::AddIndexFields(const std::vector<std::string> &fields) {
+  if (fields.empty()) {
+    return Status::OK();
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!GetSchemas().empty(), "Schema is empty.");
   // create index Object
   std::shared_ptr<Index> index = InitIndexPtr();
-
-  if (fields.size() == kInt0) {
-    MS_LOG(ERROR) << "There are no index fields";
-    return FAILED;
-  }
-
-  if (GetSchemas().empty()) {
-    MS_LOG(ERROR) << "No schema is set";
-    return FAILED;
-  }
-
   for (const auto &schemaPtr : schema_) {
-    auto result = GetSchemaByID(schemaPtr->GetSchemaID());
-    if (result.second != SUCCESS) {
-      MS_LOG(ERROR) << "Could not get schema by id.";
-      return FAILED;
-    }
-
-    if (result.first == nullptr) {
-      MS_LOG(ERROR) << "Could not get schema by id.";
-      return FAILED;
-    }
-
-    json schema = result.first->GetSchema().at("schema");
-
+    std::shared_ptr<Schema> schema_ptr;
+    RETURN_IF_NOT_OK(GetSchemaByID(schemaPtr->GetSchemaID(), &schema_ptr));
+    json schema = schema_ptr->GetSchema().at("schema");
     // checkout and add fields for each schema
     std::set<std::string> field_set;
     for (const auto &item : index->GetFields()) {
       field_set.insert(item.second);
     }
     for (const auto &field : fields) {
-      if (field_set.find(field) != field_set.end()) {
-        MS_LOG(ERROR) << "Add same index field twice";
-        return FAILED;
-      }
-
+      CHECK_FAIL_RETURN_UNEXPECTED(field_set.find(field) == field_set.end(), "Add same index field twice.");
       // check field name is or is not valid
-      if (CheckIndexField(field, schema) == FAILED) {
-        return FAILED;
-      }
+      RETURN_IF_NOT_OK(CheckIndexField(field, schema));
       field_set.insert(field);
-
       // add field into index
       index.get()->AddIndexField(schemaPtr->GetSchemaID(), field);
     }
   }
-
   index_ = index;
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::GetAllSchemaID(std::set<uint64_t> &bucket_count) {
+Status ShardHeader::GetAllSchemaID(std::set<uint64_t> &bucket_count) {
   // get all schema id
   for (const auto &schema : schema_) {
     auto bucket_it = bucket_count.find(schema->GetSchemaID());
-    if (bucket_it != bucket_count.end()) {
-      MS_LOG(ERROR) << "Schema duplication";
-      return FAILED;
-    } else {
-      bucket_count.insert(schema->GetSchemaID());
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(bucket_it == bucket_count.end(), "Schema duplication.");
+    bucket_count.insert(schema->GetSchemaID());
   }
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::AddIndexFields(std::vector<std::pair<uint64_t, std::string>> fields) {
+Status ShardHeader::AddIndexFields(std::vector<std::pair<uint64_t, std::string>> fields) {
+  if (fields.empty()) {
+    return Status::OK();
+  }
   // create index Object
   std::shared_ptr<Index> index = InitIndexPtr();
-
-  if (fields.size() == kInt0) {
-    MS_LOG(ERROR) << "There are no index fields";
-    return FAILED;
-  }
-
   // get all schema id
   std::set<uint64_t> bucket_count;
-  if (GetAllSchemaID(bucket_count) != SUCCESS) {
-    return FAILED;
-  }
-
+  RETURN_IF_NOT_OK(GetAllSchemaID(bucket_count));
   // check and add fields for each schema
   std::set<std::pair<uint64_t, std::string>> field_set;
   for (const auto &item : index->GetFields()) {
     field_set.insert(item);
   }
   for (const auto &field : fields) {
-    if (field_set.find(field) != field_set.end()) {
-      MS_LOG(ERROR) << "Add same index field twice";
-      return FAILED;
-    }
-
+    CHECK_FAIL_RETURN_UNEXPECTED(field_set.find(field) == field_set.end(), "Add same index field twice.");
     uint64_t schema_id = field.first;
     std::string field_name = field.second;
 
     // check schemaId is or is not valid
-    if (bucket_count.find(schema_id) == bucket_count.end()) {
-      MS_LOG(ERROR) << "Illegal schema id: " << schema_id;
-      return FAILED;
-    }
-
+    CHECK_FAIL_RETURN_UNEXPECTED(bucket_count.find(schema_id) != bucket_count.end(), "Invalid schema id: " + schema_id);
     // check field name is or is not valid
-    auto result = GetSchemaByID(schema_id);
-    if (result.second != SUCCESS) {
-      MS_LOG(ERROR) << "Could not get schema by id.";
-      return FAILED;
-    }
-    json schema = result.first->GetSchema().at("schema");
-    if (schema.find(field_name) == schema.end()) {
-      MS_LOG(ERROR) << "Schema " << schema_id << " do not contain the field: " << field_name;
-      return FAILED;
-    }
-
-    if (CheckIndexField(field_name, schema) == FAILED) {
-      return FAILED;
-    }
-
+    std::shared_ptr<Schema> schema_ptr;
+    RETURN_IF_NOT_OK(GetSchemaByID(schema_id, &schema_ptr));
+    json schema = schema_ptr->GetSchema().at("schema");
+    CHECK_FAIL_RETURN_UNEXPECTED(schema.find(field_name) != schema.end(),
+                                 "Schema " + std::to_string(schema_id) + " do not contain the field: " + field_name);
+    RETURN_IF_NOT_OK(CheckIndexField(field_name, schema));
     field_set.insert(field);
-
     // add field into index
-    index.get()->AddIndexField(schema_id, field_name);
+    index->AddIndexField(schema_id, field_name);
   }
   index_ = index;
-  return SUCCESS;
+  return Status::OK();
 }
 
 std::string ShardHeader::GetShardAddressByID(int64_t shard_id) {
@@ -686,103 +568,71 @@ std::vector<std::pair<uint64_t, std::string>> ShardHeader::GetFields() { return 
 
 std::shared_ptr<Index> ShardHeader::GetIndex() { return index_; }
 
-std::pair<std::shared_ptr<Schema>, MSRStatus> ShardHeader::GetSchemaByID(int64_t schema_id) {
+Status ShardHeader::GetSchemaByID(int64_t schema_id, std::shared_ptr<Schema> *schema_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(schema_ptr);
   int64_t schemaSize = schema_.size();
-  if (schema_id < 0 || schema_id >= schemaSize) {
-    MS_LOG(ERROR) << "Illegal schema id";
-    return std::make_pair(nullptr, FAILED);
-  }
-  return std::make_pair(schema_.at(schema_id), SUCCESS);
+  CHECK_FAIL_RETURN_UNEXPECTED(schema_id >= 0 && schema_id < schemaSize, "schema id is invalid.");
+  *schema_ptr = schema_.at(schema_id);
+  return Status::OK();
 }
 
-std::pair<std::shared_ptr<Statistics>, MSRStatus> ShardHeader::GetStatisticByID(int64_t statistic_id) {
+Status ShardHeader::GetStatisticByID(int64_t statistic_id, std::shared_ptr<Statistics> *statistics_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(statistics_ptr);
   int64_t statistics_size = statistics_.size();
-  if (statistic_id < 0 || statistic_id >= statistics_size) {
-    return std::make_pair(nullptr, FAILED);
-  }
-  return std::make_pair(statistics_.at(statistic_id), SUCCESS);
+  CHECK_FAIL_RETURN_UNEXPECTED(statistic_id >= 0 && statistic_id < statistics_size, "statistic id is invalid.");
+  *statistics_ptr = statistics_.at(statistic_id);
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::PagesToFile(const std::string dump_file_name) {
+Status ShardHeader::PagesToFile(const std::string dump_file_name) {
   auto realpath = Common::GetRealPath(dump_file_name);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << dump_file_name;
-    return FAILED;
-  }
-
+  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + dump_file_name);
   // write header content to file, dump whatever is in the file before
   std::ofstream page_out_handle(realpath.value(), std::ios_base::trunc | std::ios_base::out);
-  if (page_out_handle.fail()) {
-    MS_LOG(ERROR) << "Failed in opening page file";
-    return FAILED;
-  }
-
+  CHECK_FAIL_RETURN_UNEXPECTED(page_out_handle.good(), "Failed to open page file.");
   auto pages = SerializePage();
   for (const auto &shard_pages : pages) {
     page_out_handle << shard_pages << "\n";
   }
-
   page_out_handle.close();
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::FileToPages(const std::string dump_file_name) {
+Status ShardHeader::FileToPages(const std::string dump_file_name) {
   for (auto &v : pages_) {  // clean pages
     v.clear();
   }
-
   auto realpath = Common::GetRealPath(dump_file_name);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << dump_file_name;
-    return FAILED;
-  }
-
+  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + dump_file_name);
   // attempt to open the file contains the page in json
   std::ifstream page_in_handle(realpath.value());
-
-  if (!page_in_handle.good()) {
-    MS_LOG(INFO) << "No page file exists.";
-    return SUCCESS;
-  }
-
+  CHECK_FAIL_RETURN_UNEXPECTED(page_in_handle.good(), "No page file exists.");
   std::string line;
   while (std::getline(page_in_handle, line)) {
-    if (SUCCESS != ParsePage(json::parse(line), -1, true)) {
-      return FAILED;
-    }
+    RETURN_IF_NOT_OK(ParsePage(json::parse(line), -1, true));
   }
-
   page_in_handle.close();
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardHeader::Initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
-                                  const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
-                                  uint64_t &schema_id) {
-  if (header_ptr == nullptr) {
-    MS_LOG(ERROR) << "ShardHeader pointer is NULL.";
-    return FAILED;
-  }
+Status ShardHeader::Initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
+                               const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
+                               uint64_t &schema_id) {
+  RETURN_UNEXPECTED_IF_NULL(header_ptr);
   auto schema_ptr = Schema::Build("mindrecord", schema);
-  if (schema_ptr == nullptr) {
-    MS_LOG(ERROR) << "Got unexpected error when building mindrecord schema.";
-    return FAILED;
-  }
+  RETURN_UNEXPECTED_IF_NULL(schema_ptr);
   schema_id = (*header_ptr)->AddSchema(schema_ptr);
   // create index
   std::vector<std::pair<uint64_t, std::string>> id_index_fields;
   if (!index_fields.empty()) {
-    (void)std::transform(index_fields.begin(), index_fields.end(), std::back_inserter(id_index_fields),
-                         [schema_id](const std::string &el) { return std::make_pair(schema_id, el); });
-    if (SUCCESS != (*header_ptr)->AddIndexFields(id_index_fields)) {
-      MS_LOG(ERROR) << "Got unexpected error when adding mindrecord index.";
-      return FAILED;
-    }
+    (void)transform(index_fields.begin(), index_fields.end(), std::back_inserter(id_index_fields),
+                    [schema_id](const std::string &el) { return std::make_pair(schema_id, el); });
+    RETURN_IF_NOT_OK((*header_ptr)->AddIndexFields(id_index_fields));
   }
 
   auto build_schema_ptr = (*header_ptr)->GetSchemas()[0];
   blob_fields = build_schema_ptr->GetBlobFields();
-  return SUCCESS;
+  return Status::OK();
 }
 }  // namespace mindrecord
 }  // namespace mindspore

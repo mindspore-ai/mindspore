@@ -19,65 +19,55 @@
 
 #include <map>
 #include <string>
+#include "include/api/status.h"
 
 namespace mindspore {
 namespace mindrecord {
+#define RETURN_IF_NOT_OK(_s) \
+  do {                       \
+    Status __rc = (_s);      \
+    if (__rc.IsError()) {    \
+      return __rc;           \
+    }                        \
+  } while (false)
+
+#define RELEASE_AND_RETURN_IF_NOT_OK(_s, _db, _in) \
+  do {                                             \
+    Status __rc = (_s);                            \
+    if (__rc.IsError()) {                          \
+      if ((_db) != nullptr) {                      \
+        sqlite3_close(_db);                        \
+      }                                            \
+      (_in).close();                               \
+      return __rc;                                 \
+    }                                              \
+  } while (false)
+
+#define CHECK_FAIL_RETURN_UNEXPECTED(_condition, _e)                         \
+  do {                                                                       \
+    if (!(_condition)) {                                                     \
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, _e); \
+    }                                                                        \
+  } while (false)
+
+#define RETURN_UNEXPECTED_IF_NULL(_ptr)                                         \
+  do {                                                                          \
+    if ((_ptr) == nullptr) {                                                    \
+      std::string err_msg = "The pointer[" + std::string(#_ptr) + "] is null."; \
+      RETURN_STATUS_UNEXPECTED(err_msg);                                        \
+    }                                                                           \
+  } while (false)
+
+#define RETURN_STATUS_UNEXPECTED(_e)                                       \
+  do {                                                                     \
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, _e); \
+  } while (false)
+
 enum MSRStatus {
   SUCCESS = 0,
   FAILED = 1,
-  OPEN_FILE_FAILED,
-  CLOSE_FILE_FAILED,
-  WRITE_METADATA_FAILED,
-  WRITE_RAWDATA_FAILED,
-  GET_SCHEMA_FAILED,
-  ILLEGAL_RAWDATA,
-  PYTHON_TO_JSON_FAILED,
-  DIR_CREATE_FAILED,
-  OPEN_DIR_FAILED,
-  INVALID_STATISTICS,
-  OPEN_DATABASE_FAILED,
-  CLOSE_DATABASE_FAILED,
-  DATABASE_OPERATE_FAILED,
-  BUILD_SCHEMA_FAILED,
-  DIVISOR_IS_ILLEGAL,
-  INVALID_FILE_PATH,
-  SECURE_FUNC_FAILED,
-  ALLOCATE_MEM_FAILED,
-  ILLEGAL_FIELD_NAME,
-  ILLEGAL_FIELD_TYPE,
-  SET_METADATA_FAILED,
-  ILLEGAL_SCHEMA_DEFINITION,
-  ILLEGAL_COLUMN_LIST,
-  SQL_ERROR,
-  ILLEGAL_SHARD_COUNT,
-  ILLEGAL_SCHEMA_COUNT,
-  VERSION_ERROR,
-  ADD_SCHEMA_FAILED,
-  ILLEGAL_Header_SIZE,
-  ILLEGAL_Page_SIZE,
-  ILLEGAL_SIZE_VALUE,
-  INDEX_FIELD_ERROR,
-  GET_CANDIDATE_CATEGORYFIELDS_FAILED,
-  GET_CATEGORY_INFO_FAILED,
-  ILLEGAL_CATEGORY_ID,
-  ILLEGAL_ROWNUMBER_OF_PAGE,
-  ILLEGAL_SCHEMA_ID,
-  DESERIALIZE_SCHEMA_FAILED,
-  DESERIALIZE_STATISTICS_FAILED,
-  ILLEGAL_DB_FILE,
-  OVERWRITE_DB_FILE,
-  OVERWRITE_MINDRECORD_FILE,
-  ILLEGAL_MINDRECORD_FILE,
-  PARSE_JSON_FAILED,
-  ILLEGAL_PARAMETERS,
-  GET_PAGE_BY_GROUP_ID_FAILED,
-  GET_SYSTEM_STATE_FAILED,
-  IO_FAILED,
-  MATCH_HEADER_FAILED
 };
 
-// convert error no to string message
-std::string __attribute__((visibility("default"))) ErrnoToMessage(MSRStatus status);
 }  // namespace mindrecord
 }  // namespace mindspore
 

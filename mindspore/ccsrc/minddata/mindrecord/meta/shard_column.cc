@@ -72,36 +72,36 @@ void ShardColumn::Init(const json &schema_json, bool compress_integer) {
   num_blob_column_ = blob_column_.size();
 }
 
-std::pair<MSRStatus, ColumnCategory> ShardColumn::GetColumnTypeByName(const std::string &column_name,
-                                                                      ColumnDataType *column_data_type,
-                                                                      uint64_t *column_data_type_size,
-                                                                      std::vector<int64_t> *column_shape) {
+Status ShardColumn::GetColumnTypeByName(const std::string &column_name, ColumnDataType *column_data_type,
+                                        uint64_t *column_data_type_size, std::vector<int64_t> *column_shape,
+                                        ColumnCategory *column_category) {
+  RETURN_UNEXPECTED_IF_NULL(column_data_type);
+  RETURN_UNEXPECTED_IF_NULL(column_data_type_size);
+  RETURN_UNEXPECTED_IF_NULL(column_shape);
+  RETURN_UNEXPECTED_IF_NULL(column_category);
   // Skip if column not found
-  auto column_category = CheckColumnName(column_name);
-  if (column_category == ColumnNotFound) {
-    return {FAILED, ColumnNotFound};
-  }
+  *column_category = CheckColumnName(column_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(*column_category != ColumnNotFound, "Invalid column category.");
 
   // Get data type and size
   auto column_id = column_name_id_[column_name];
   *column_data_type = column_data_type_[column_id];
   *column_data_type_size = ColumnDataTypeSize[*column_data_type];
   *column_shape = column_shape_[column_id];
-
-  return {SUCCESS, column_category};
+  return Status::OK();
 }
 
-MSRStatus ShardColumn::GetColumnValueByName(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
-                                            const json &columns_json, const unsigned char **data,
-                                            std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *const n_bytes,
-                                            ColumnDataType *column_data_type, uint64_t *column_data_type_size,
-                                            std::vector<int64_t> *column_shape) {
+Status ShardColumn::GetColumnValueByName(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
+                                         const json &columns_json, const unsigned char **data,
+                                         std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *const n_bytes,
+                                         ColumnDataType *column_data_type, uint64_t *column_data_type_size,
+                                         std::vector<int64_t> *column_shape) {
+  RETURN_UNEXPECTED_IF_NULL(column_data_type);
+  RETURN_UNEXPECTED_IF_NULL(column_data_type_size);
+  RETURN_UNEXPECTED_IF_NULL(column_shape);
   // Skip if column not found
   auto column_category = CheckColumnName(column_name);
-  if (column_category == ColumnNotFound) {
-    return FAILED;
-  }
-
+  CHECK_FAIL_RETURN_UNEXPECTED(column_category != ColumnNotFound, "Invalid column category.");
   // Get data type and size
   auto column_id = column_name_id_[column_name];
   *column_data_type = column_data_type_[column_id];
@@ -110,37 +110,31 @@ MSRStatus ShardColumn::GetColumnValueByName(const std::string &column_name, cons
 
   // Retrieve value from json
   if (column_category == ColumnInRaw) {
-    if (GetColumnFromJson(column_name, columns_json, data_ptr, n_bytes) == FAILED) {
-      MS_LOG(ERROR) << "Error when get data from json, column name is " << column_name << ".";
-      return FAILED;
-    }
+    RETURN_IF_NOT_OK(GetColumnFromJson(column_name, columns_json, data_ptr, n_bytes));
     *data = reinterpret_cast<const unsigned char *>(data_ptr->get());
-    return SUCCESS;
+    return Status::OK();
   }
 
   // Retrieve value from blob
-  if (GetColumnFromBlob(column_name, columns_blob, data, data_ptr, n_bytes) == FAILED) {
-    MS_LOG(ERROR) << "Error when get data from blob, column name is " << column_name << ".";
-    return FAILED;
-  }
+  RETURN_IF_NOT_OK(GetColumnFromBlob(column_name, columns_blob, data, data_ptr, n_bytes));
   if (*data == nullptr) {
     *data = reinterpret_cast<const unsigned char *>(data_ptr->get());
   }
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardColumn::GetColumnFromJson(const std::string &column_name, const json &columns_json,
-                                         std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes) {
+Status ShardColumn::GetColumnFromJson(const std::string &column_name, const json &columns_json,
+                                      std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes) {
+  RETURN_UNEXPECTED_IF_NULL(n_bytes);
+  RETURN_UNEXPECTED_IF_NULL(data_ptr);
   auto column_id = column_name_id_[column_name];
   auto column_data_type = column_data_type_[column_id];
 
   // Initialize num bytes
   *n_bytes = ColumnDataTypeSize[column_data_type];
   auto json_column_value = columns_json[column_name];
-  if (!json_column_value.is_string() && !json_column_value.is_number()) {
-    MS_LOG(ERROR) << "Conversion failed (" << json_column_value << ").";
-    return FAILED;
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(json_column_value.is_string() || json_column_value.is_number(),
+                               "Conversion to string or number failed (" + json_column_value.dump() + ").");
   switch (column_data_type) {
     case ColumnFloat32: {
       return GetFloat<float>(data_ptr, json_column_value, false);
@@ -171,12 +165,13 @@ MSRStatus ShardColumn::GetColumnFromJson(const std::string &column_name, const j
       break;
     }
   }
-  return SUCCESS;
+  return Status::OK();
 }
 
 template <typename T>
-MSRStatus ShardColumn::GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value,
-                                bool use_double) {
+Status ShardColumn::GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value,
+                             bool use_double) {
+  RETURN_UNEXPECTED_IF_NULL(data_ptr);
   std::unique_ptr<T[]> array_data = std::make_unique<T[]>(1);
   if (json_column_value.is_number()) {
     array_data[0] = json_column_value;
@@ -189,8 +184,7 @@ MSRStatus ShardColumn::GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, cons
         array_data[0] = json_column_value.get<float>();
       }
     } catch (json::exception &e) {
-      MS_LOG(ERROR) << "Conversion to float failed (" << json_column_value << ").";
-      return FAILED;
+      RETURN_STATUS_UNEXPECTED("Conversion to float failed (" + json_column_value.dump() + ").");
     }
   }
 
@@ -199,54 +193,43 @@ MSRStatus ShardColumn::GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, cons
   for (uint32_t i = 0; i < sizeof(T); i++) {
     (*data_ptr)[i] = *(data + i);
   }
-
-  return SUCCESS;
+  return Status::OK();
 }
 
 template <typename T>
-MSRStatus ShardColumn::GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value) {
+Status ShardColumn::GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value) {
+  RETURN_UNEXPECTED_IF_NULL(data_ptr);
   std::unique_ptr<T[]> array_data = std::make_unique<T[]>(1);
   int64_t temp_value;
   bool less_than_zero = false;
 
   if (json_column_value.is_number_integer()) {
     const json json_zero = 0;
-    if (json_column_value < json_zero) less_than_zero = true;
+    if (json_column_value < json_zero) {
+      less_than_zero = true;
+    }
     temp_value = json_column_value;
   } else if (json_column_value.is_string()) {
     std::string string_value = json_column_value;
-
-    if (!string_value.empty() && string_value[0] == '-') {
-      try {
+    try {
+      if (!string_value.empty() && string_value[0] == '-') {
         temp_value = std::stoll(string_value);
         less_than_zero = true;
-      } catch (std::invalid_argument &e) {
-        MS_LOG(ERROR) << "Conversion to int failed, invalid argument.";
-        return FAILED;
-      } catch (std::out_of_range &e) {
-        MS_LOG(ERROR) << "Conversion to int failed, out of range.";
-        return FAILED;
-      }
-    } else {
-      try {
+      } else {
         temp_value = static_cast<int64_t>(std::stoull(string_value));
-      } catch (std::invalid_argument &e) {
-        MS_LOG(ERROR) << "Conversion to int failed, invalid argument.";
-        return FAILED;
-      } catch (std::out_of_range &e) {
-        MS_LOG(ERROR) << "Conversion to int failed, out of range.";
-        return FAILED;
       }
+    } catch (std::invalid_argument &e) {
+      RETURN_STATUS_UNEXPECTED("Conversion to int failed: " + std::string(e.what()));
+    } catch (std::out_of_range &e) {
+      RETURN_STATUS_UNEXPECTED("Conversion to int failed: " + std::string(e.what()));
     }
   } else {
-    MS_LOG(ERROR) << "Conversion to int failed.";
-    return FAILED;
+    RETURN_STATUS_UNEXPECTED("Conversion to int failed.");
   }
 
   if ((less_than_zero && temp_value < static_cast<int64_t>(std::numeric_limits<T>::min())) ||
       (!less_than_zero && static_cast<uint64_t>(temp_value) > static_cast<uint64_t>(std::numeric_limits<T>::max()))) {
-    MS_LOG(ERROR) << "Conversion to int failed. Out of range";
-    return FAILED;
+    RETURN_STATUS_UNEXPECTED("Conversion to int failed, out of range.");
   }
   array_data[0] = static_cast<T>(temp_value);
 
@@ -255,33 +238,26 @@ MSRStatus ShardColumn::GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const 
   for (uint32_t i = 0; i < sizeof(T); i++) {
     (*data_ptr)[i] = *(data + i);
   }
-
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardColumn::GetColumnFromBlob(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
-                                         const unsigned char **data, std::unique_ptr<unsigned char[]> *data_ptr,
-                                         uint64_t *const n_bytes) {
+Status ShardColumn::GetColumnFromBlob(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
+                                      const unsigned char **data, std::unique_ptr<unsigned char[]> *data_ptr,
+                                      uint64_t *const n_bytes) {
+  RETURN_UNEXPECTED_IF_NULL(data);
   uint64_t offset_address = 0;
   auto column_id = column_name_id_[column_name];
-  if (GetColumnAddressInBlock(column_id, columns_blob, n_bytes, &offset_address) == FAILED) {
-    return FAILED;
-  }
-
+  RETURN_IF_NOT_OK(GetColumnAddressInBlock(column_id, columns_blob, n_bytes, &offset_address));
   auto column_data_type = column_data_type_[column_id];
   if (has_compress_blob_ && column_data_type == ColumnInt32) {
-    if (UncompressInt<int32_t>(column_id, data_ptr, columns_blob, n_bytes, offset_address) == FAILED) {
-      return FAILED;
-    }
+    RETURN_IF_NOT_OK(UncompressInt<int32_t>(column_id, data_ptr, columns_blob, n_bytes, offset_address));
   } else if (has_compress_blob_ && column_data_type == ColumnInt64) {
-    if (UncompressInt<int64_t>(column_id, data_ptr, columns_blob, n_bytes, offset_address) == FAILED) {
-      return FAILED;
-    }
+    RETURN_IF_NOT_OK(UncompressInt<int64_t>(column_id, data_ptr, columns_blob, n_bytes, offset_address));
   } else {
     *data = reinterpret_cast<const unsigned char *>(&(columns_blob[offset_address]));
   }
 
-  return SUCCESS;
+  return Status::OK();
 }
 
 ColumnCategory ShardColumn::CheckColumnName(const std::string &column_name) {
@@ -296,7 +272,9 @@ ColumnCategory ShardColumn::CheckColumnName(const std::string &column_name) {
 std::vector<uint8_t> ShardColumn::CompressBlob(const std::vector<uint8_t> &blob, int64_t *compression_size) {
   // Skip if no compress columns
   *compression_size = 0;
-  if (!CheckCompressBlob()) return blob;
+  if (!CheckCompressBlob()) {
+    return blob;
+  }
 
   std::vector<uint8_t> dst_blob;
   uint64_t i_src = 0;
@@ -380,12 +358,14 @@ vector<uint8_t> ShardColumn::CompressInt(const vector<uint8_t> &src_bytes, const
   return dst_bytes;
 }
 
-MSRStatus ShardColumn::GetColumnAddressInBlock(const uint64_t &column_id, const std::vector<uint8_t> &columns_blob,
-                                               uint64_t *num_bytes, uint64_t *shift_idx) {
+Status ShardColumn::GetColumnAddressInBlock(const uint64_t &column_id, const std::vector<uint8_t> &columns_blob,
+                                            uint64_t *num_bytes, uint64_t *shift_idx) {
+  RETURN_UNEXPECTED_IF_NULL(num_bytes);
+  RETURN_UNEXPECTED_IF_NULL(shift_idx);
   if (num_blob_column_ == 1) {
     *num_bytes = columns_blob.size();
     *shift_idx = 0;
-    return SUCCESS;
+    return Status::OK();
   }
   auto blob_id = blob_column_id_[column_name_[column_id]];
 
@@ -396,13 +376,14 @@ MSRStatus ShardColumn::GetColumnAddressInBlock(const uint64_t &column_id, const 
 
   (*shift_idx) += kInt64Len;
 
-  return SUCCESS;
+  return Status::OK();
 }
 
 template <typename T>
-MSRStatus ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<unsigned char[]> *const data_ptr,
-                                     const std::vector<uint8_t> &columns_blob, uint64_t *num_bytes,
-                                     uint64_t shift_idx) {
+Status ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<unsigned char[]> *const data_ptr,
+                                  const std::vector<uint8_t> &columns_blob, uint64_t *num_bytes, uint64_t shift_idx) {
+  RETURN_UNEXPECTED_IF_NULL(data_ptr);
+  RETURN_UNEXPECTED_IF_NULL(num_bytes);
   auto num_elements = BytesBigToUInt64(columns_blob, shift_idx, kInt32Type);
   *num_bytes = sizeof(T) * num_elements;
 
@@ -421,19 +402,12 @@ MSRStatus ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<
 
   auto data = reinterpret_cast<const unsigned char *>(array_data.get());
   *data_ptr = std::make_unique<unsigned char[]>(*num_bytes);
-
   // field is none. for example: numpy is null
   if (*num_bytes == 0) {
-    return SUCCESS;
+    return Status::OK();
   }
-
-  int ret_code = memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes);
-  if (ret_code != 0) {
-    MS_LOG(ERROR) << "Failed to copy data!";
-    return FAILED;
-  }
-
-  return SUCCESS;
+  CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes) == 0, "Failed to copy data!");
+  return Status::OK();
 }
 
 uint64_t ShardColumn::BytesBigToUInt64(const std::vector<uint8_t> &bytes_array, const uint64_t &pos,

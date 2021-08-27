@@ -23,6 +23,7 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/mind_record_sampler.h"
+#include "minddata/mindrecord/include/shard_column.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/include/dataset/constants.h"
@@ -63,10 +64,8 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
 
 // Private helper method to encapsulate some common construction/reset tasks
 Status MindRecordOp::Init() {
-  auto rc = shard_reader_->Open(dataset_file_, load_dataset_, num_mind_record_workers_, columns_to_load_, operators_,
-                                num_padded_);
-
-  CHECK_FAIL_RETURN_UNEXPECTED(rc == MSRStatus::SUCCESS, "MindRecordOp init failed, " + ErrnoToMessage(rc));
+  RETURN_IF_NOT_OK(shard_reader_->Open(dataset_file_, load_dataset_, num_mind_record_workers_, columns_to_load_,
+                                       operators_, num_padded_));
 
   data_schema_ = std::make_unique<DataSchema>();
 
@@ -206,7 +205,9 @@ Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, uint64_t row_id, i
     fetched_row->setPath(file_path);
     fetched_row->setId(row_id);
   }
-  if (tupled_buffer.empty()) return Status::OK();
+  if (tupled_buffer.empty()) {
+    return Status::OK();
+  }
   if (task_type == mindrecord::TaskType::kCommonTask) {
     for (const auto &tupled_row : tupled_buffer) {
       std::vector<uint8_t> columns_blob = std::get<0>(tupled_row);
@@ -237,20 +238,15 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     // Get column data
     auto shard_column = shard_reader_->GetShardColumn();
     if (num_padded_ > 0 && task_type == mindrecord::TaskType::kPaddedTask) {
-      auto rc =
-        shard_column->GetColumnTypeByName(column_name, &column_data_type, &column_data_type_size, &column_shape);
-      if (rc.first != MSRStatus::SUCCESS) {
-        RETURN_STATUS_UNEXPECTED("Invalid parameter, column_name: " + column_name + "does not exist in dataset.");
-      }
-      if (rc.second == mindrecord::ColumnInRaw) {
-        auto column_in_raw = shard_column->GetColumnFromJson(column_name, sample_json_, &data_ptr, &n_bytes);
-        if (column_in_raw == MSRStatus::FAILED) {
-          RETURN_STATUS_UNEXPECTED("Invalid data, failed to retrieve raw data from padding sample.");
-        }
-      } else if (rc.second == mindrecord::ColumnInBlob) {
-        if (sample_bytes_.find(column_name) == sample_bytes_.end()) {
-          RETURN_STATUS_UNEXPECTED("Invalid data, failed to retrieve blob data from padding sample.");
-        }
+      mindrecord::ColumnCategory category;
+      RETURN_IF_NOT_OK(shard_column->GetColumnTypeByName(column_name, &column_data_type, &column_data_type_size,
+                                                         &column_shape, &category));
+      if (category == mindrecord::ColumnInRaw) {
+        RETURN_IF_NOT_OK(shard_column->GetColumnFromJson(column_name, sample_json_, &data_ptr, &n_bytes));
+      } else if (category == mindrecord::ColumnInBlob) {
+        CHECK_FAIL_RETURN_UNEXPECTED(sample_bytes_.find(column_name) != sample_bytes_.end(),
+                                     "Invalid data, failed to retrieve blob data from padding sample.");
+
         std::string ss(sample_bytes_[column_name]);
         n_bytes = ss.size();
         data_ptr = std::make_unique<unsigned char[]>(n_bytes);
@@ -262,12 +258,9 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
         data = reinterpret_cast<const unsigned char *>(data_ptr.get());
       }
     } else {
-      auto has_column =
-        shard_column->GetColumnValueByName(column_name, columns_blob, columns_json, &data, &data_ptr, &n_bytes,
-                                           &column_data_type, &column_data_type_size, &column_shape);
-      if (has_column == MSRStatus::FAILED) {
-        RETURN_STATUS_UNEXPECTED("Invalid data, failed to retrieve data from mindrecord reader.");
-      }
+      RETURN_IF_NOT_OK(shard_column->GetColumnValueByName(column_name, columns_blob, columns_json, &data, &data_ptr,
+                                                          &n_bytes, &column_data_type, &column_data_type_size,
+                                                          &column_shape));
     }
 
     std::shared_ptr<Tensor> tensor;
@@ -309,15 +302,10 @@ Status MindRecordOp::Reset() {
 }
 
 Status MindRecordOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
-  }
-
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  if (shard_reader_->Launch(true) == MSRStatus::FAILED) {
-    RETURN_STATUS_UNEXPECTED("MindRecordOp launch failed.");
-  }
+  RETURN_IF_NOT_OK(shard_reader_->Launch(true));
   // Launch main workers that load TensorRows by reading all images
   RETURN_IF_NOT_OK(
     tree_->LaunchWorkers(num_workers_, std::bind(&MindRecordOp::WorkerEntry, this, std::placeholders::_1), "", id()));
@@ -330,12 +318,7 @@ Status MindRecordOp::LaunchThreadsAndInitOp() {
 Status MindRecordOp::CountTotalRows(const std::vector<std::string> dataset_path, bool load_dataset,
                                     const std::shared_ptr<ShardOperator> &op, int64_t *count, int64_t num_padded) {
   std::unique_ptr<ShardReader> shard_reader = std::make_unique<ShardReader>();
-  MSRStatus rc = shard_reader->CountTotalRows(dataset_path, load_dataset, op, count, num_padded);
-  if (rc == MSRStatus::FAILED) {
-    RETURN_STATUS_UNEXPECTED(
-      "Invalid data, MindRecordOp failed to count total rows. Check whether there are corresponding .db files "
-      "and the value of dataset_file parameter is given correctly.");
-  }
+  RETURN_IF_NOT_OK(shard_reader->CountTotalRows(dataset_path, load_dataset, op, count, num_padded));
   return Status::OK();
 }
 

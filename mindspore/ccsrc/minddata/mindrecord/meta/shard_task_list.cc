@@ -85,15 +85,9 @@ uint32_t ShardTaskList::SizeOfRows() const {
   return nRows;
 }
 
-ShardTask &ShardTaskList::GetTaskByID(size_t id) {
-  MS_ASSERT(id < task_list_.size());
-  return task_list_[id];
-}
+ShardTask &ShardTaskList::GetTaskByID(size_t id) { return task_list_[id]; }
 
-int ShardTaskList::GetTaskSampleByID(size_t id) {
-  MS_ASSERT(id < sample_ids_.size());
-  return sample_ids_[id];
-}
+int ShardTaskList::GetTaskSampleByID(size_t id) { return sample_ids_[id]; }
 
 int ShardTaskList::GetRandomTaskID() {
   std::mt19937 gen = mindspore::dataset::GetRandomDevice();

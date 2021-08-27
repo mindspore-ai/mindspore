@@ -30,23 +30,24 @@
 
 namespace mindspore {
 namespace mindrecord {
-using INDEX_FIELDS = std::pair<MSRStatus, std::vector<std::tuple<std::string, std::string, std::string>>>;
-using ROW_DATA = std::pair<MSRStatus, std::vector<std::vector<std::tuple<std::string, std::string, std::string>>>>;
+using INDEX_FIELDS = std::vector<std::tuple<std::string, std::string, std::string>>;
+using ROW_DATA = std::vector<std::vector<std::tuple<std::string, std::string, std::string>>>;
 class __attribute__((visibility("default"))) ShardIndexGenerator {
  public:
   explicit ShardIndexGenerator(const std::string &file_path, bool append = false);
 
-  MSRStatus Build();
+  Status Build();
 
-  static std::pair<MSRStatus, std::string> GenerateFieldName(const std::pair<uint64_t, std::string> &field);
+  static Status GenerateFieldName(const std::pair<uint64_t, std::string> &field, std::shared_ptr<std::string> *fn_ptr);
 
   ~ShardIndexGenerator() {}
 
   /// \brief fetch value in json by field name
   /// \param[in] field
   /// \param[in] input
-  /// \return pair<MSRStatus, value>
-  std::pair<MSRStatus, std::string> GetValueByField(const string &field, json input);
+  /// \param[in] value
+  /// \return Status
+  Status GetValueByField(const string &field, json input, std::shared_ptr<std::string> *value);
 
   /// \brief fetch field type in schema n by field path
   /// \param[in] field_path
@@ -55,55 +56,54 @@ class __attribute__((visibility("default"))) ShardIndexGenerator {
   static std::string TakeFieldType(const std::string &field_path, json schema);
 
   /// \brief create databases for indexes
-  MSRStatus WriteToDatabase();
+  Status WriteToDatabase();
 
-  static MSRStatus Finalize(const std::vector<std::string> file_names);
+  static Status Finalize(const std::vector<std::string> file_names);
 
  private:
   static int Callback(void *not_used, int argc, char **argv, char **az_col_name);
 
-  static MSRStatus ExecuteSQL(const std::string &statement, sqlite3 *db, const string &success_msg = "");
+  static Status ExecuteSQL(const std::string &statement, sqlite3 *db, const string &success_msg = "");
 
   static std::string ConvertJsonToSQL(const std::string &json);
 
-  std::pair<MSRStatus, sqlite3 *> CreateDatabase(int shard_no);
+  Status CreateDatabase(int shard_no, sqlite3 **db);
 
-  std::pair<MSRStatus, std::vector<json>> GetSchemaDetails(const std::vector<uint64_t> &schema_lens, std::fstream &in);
+  Status GetSchemaDetails(const std::vector<uint64_t> &schema_lens, std::fstream &in,
+                          std::shared_ptr<std::vector<json>> *detail_ptr);
 
-  static std::pair<MSRStatus, std::string> GenerateRawSQL(const std::vector<std::pair<uint64_t, std::string>> &fields);
+  static Status GenerateRawSQL(const std::vector<std::pair<uint64_t, std::string>> &fields,
+                               std::shared_ptr<std::string> *sql_ptr);
 
-  std::pair<MSRStatus, sqlite3 *> CheckDatabase(const std::string &shard_address);
+  Status CheckDatabase(const std::string &shard_address, sqlite3 **db);
 
   ///
   /// \param shard_no
   /// \param blob_id_to_page_id
   /// \param raw_page_id
   /// \param in
-  /// \return field name, db type, field value
-  ROW_DATA GenerateRowData(int shard_no, const std::map<int, int> &blob_id_to_page_id, int raw_page_id,
-                           std::fstream &in);
+  /// \return Status
+  Status GenerateRowData(int shard_no, const std::map<int, int> &blob_id_to_page_id, int raw_page_id, std::fstream &in,
+                         std::shared_ptr<ROW_DATA> *row_data_ptr);
   ///
   /// \param db
   /// \param sql
   /// \param data
   /// \return
-  MSRStatus BindParameterExecuteSQL(
-    sqlite3 *db, const std::string &sql,
-    const std::vector<std::vector<std::tuple<std::string, std::string, std::string>>> &data);
+  Status BindParameterExecuteSQL(sqlite3 *db, const std::string &sql, const ROW_DATA &data);
 
-  INDEX_FIELDS GenerateIndexFields(const std::vector<json> &schema_detail);
+  Status GenerateIndexFields(const std::vector<json> &schema_detail, std::shared_ptr<INDEX_FIELDS> *index_fields_ptr);
 
-  MSRStatus ExecuteTransaction(const int &shard_no, std::pair<MSRStatus, sqlite3 *> &db,
-                               const std::vector<int> &raw_page_ids, const std::map<int, int> &blob_id_to_page_id);
+  Status ExecuteTransaction(const int &shard_no, sqlite3 *db, const std::vector<int> &raw_page_ids,
+                            const std::map<int, int> &blob_id_to_page_id);
 
-  MSRStatus CreateShardNameTable(sqlite3 *db, const std::string &shard_name);
+  Status CreateShardNameTable(sqlite3 *db, const std::string &shard_name);
 
-  MSRStatus AddBlobPageInfo(std::vector<std::tuple<std::string, std::string, std::string>> &row_data,
-                            const std::shared_ptr<Page> cur_blob_page, uint64_t &cur_blob_page_offset,
-                            std::fstream &in);
+  Status AddBlobPageInfo(std::vector<std::tuple<std::string, std::string, std::string>> &row_data,
+                         const std::shared_ptr<Page> cur_blob_page, uint64_t &cur_blob_page_offset, std::fstream &in);
 
-  void AddIndexFieldByRawData(const std::vector<json> &schema_detail,
-                              std::vector<std::tuple<std::string, std::string, std::string>> &row_data);
+  Status AddIndexFieldByRawData(const std::vector<json> &schema_detail,
+                                std::vector<std::tuple<std::string, std::string, std::string>> &row_data);
 
   void DatabaseWriter();  // worker thread
 

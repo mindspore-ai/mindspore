@@ -55,15 +55,11 @@ int64_t ShardDistributedSample::GetNumSamples(int64_t dataset_size, int64_t num_
   return 0;
 }
 
-MSRStatus ShardDistributedSample::PreExecute(ShardTaskList &tasks) {
+Status ShardDistributedSample::PreExecute(ShardTaskList &tasks) {
   auto total_no = tasks.Size();
   if (no_of_padded_samples_ > 0 && first_epoch_) {
-    if (total_no % denominator_ != 0) {
-      MS_LOG(ERROR) << "Dataset size plus number of padded samples is not divisible by number of shards. "
-                    << "task size: " << total_no << ", number padded: " << no_of_padded_samples_
-                    << ", denominator: " << denominator_;
-      return FAILED;
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(total_no % denominator_ == 0,
+                                 "Dataset size plus number of padded samples is not divisible by number of shards.");
   }
   if (first_epoch_) {
     first_epoch_ = false;
@@ -74,11 +70,9 @@ MSRStatus ShardDistributedSample::PreExecute(ShardTaskList &tasks) {
   if (shuffle_ == true) {
     shuffle_op_->SetShardSampleCount(GetShardSampleCount());
     shuffle_op_->UpdateShuffleMode(GetShuffleMode());
-    if (SUCCESS != (*shuffle_op_)(tasks)) {
-      return FAILED;
-    }
+    RETURN_IF_NOT_OK((*shuffle_op_)(tasks));
   }
-  return SUCCESS;
+  return Status::OK();
 }
 }  // namespace mindrecord
 }  // namespace mindspore

@@ -95,7 +95,7 @@ def test_invalid_mindrecord():
         f.write('just for test')
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    with pytest.raises(Exception, match="MindRecordOp init failed"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid file content. path:"):
         data_set = ds.MindDataset('dummy.mindrecord', columns_list, num_readers)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -114,7 +114,7 @@ def test_minddataset_lack_db():
     os.remove("{}.db".format(CV_FILE_NAME))
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    with pytest.raises(Exception, match="MindRecordOp init failed"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid database file:"):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -133,7 +133,7 @@ def test_cv_minddataset_pk_sample_error_class_column():
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(5, None, True, 'no_exist_column')
-    with pytest.raises(Exception, match="MindRecordOp launch failed"):
+    with pytest.raises(RuntimeError, match="Unexpected error. Failed to launch read threads."):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, sampler=sampler)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -162,7 +162,7 @@ def test_cv_minddataset_reader_different_schema():
     create_diff_schema_cv_mindrecord(1)
     columns_list = ["data", "label"]
     num_readers = 4
-    with pytest.raises(Exception, match="MindRecordOp init failed"):
+    with pytest.raises(RuntimeError, match="Mindrecord files meta information is different"):
         data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
                                   num_readers)
         num_iter = 0
@@ -179,7 +179,7 @@ def test_cv_minddataset_reader_different_page_size():
     create_diff_page_size_cv_mindrecord(1)
     columns_list = ["data", "label"]
     num_readers = 4
-    with pytest.raises(Exception, match="MindRecordOp init failed"):
+    with pytest.raises(RuntimeError, match="Mindrecord files meta information is different"):
         data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
                                   num_readers)
         num_iter = 0

@@ -256,9 +256,7 @@ Status SaveToDisk::Save() {
   auto mr_header = std::make_shared<mindrecord::ShardHeader>();
   auto mr_writer = std::make_unique<mindrecord::ShardWriter>();
   std::vector<std::string> blob_fields;
-  if (mindrecord::SUCCESS != mindrecord::ShardWriter::Initialize(&mr_writer, file_names)) {
-    RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardWriter, please check above `ERROR` level message.");
-  }
+  RETURN_IF_NOT_OK(mindrecord::ShardWriter::Initialize(&mr_writer, file_names));
 
   std::unordered_map<std::string, int32_t> column_name_id_map;
   for (auto el : tree_adapter_->GetColumnNameMap()) {
@@ -286,22 +284,16 @@ Status SaveToDisk::Save() {
       std::vector<std::string> index_fields;
       RETURN_IF_NOT_OK(FetchMetaFromTensorRow(column_name_id_map, row, &mr_json, &index_fields));
       MS_LOG(INFO) << "Schema of saved mindrecord: " << mr_json.dump();
-      if (mindrecord::SUCCESS !=
-          mindrecord::ShardHeader::Initialize(&mr_header, mr_json, index_fields, blob_fields, mr_schema_id)) {
-        RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardHeader.");
-      }
-      if (mindrecord::SUCCESS != mr_writer->SetShardHeader(mr_header)) {
-        RETURN_STATUS_UNEXPECTED("Error: failed to set header of ShardWriter.");
-      }
+      RETURN_IF_NOT_OK(
+        mindrecord::ShardHeader::Initialize(&mr_header, mr_json, index_fields, blob_fields, mr_schema_id));
+      RETURN_IF_NOT_OK(mr_writer->SetShardHeader(mr_header));
       first_loop = false;
     }
     // construct data
     if (!row.empty()) {  // write data
       RETURN_IF_NOT_OK(FetchDataFromTensorRow(row, column_name_id_map, &row_raw_data, &row_bin_data));
       std::shared_ptr<std::vector<uint8_t>> output_bin_data;
-      if (mindrecord::SUCCESS != mr_writer->MergeBlobData(blob_fields, row_bin_data, &output_bin_data)) {
-        RETURN_STATUS_UNEXPECTED("Error: failed to merge blob data of ShardWriter.");
-      }
+      RETURN_IF_NOT_OK(mr_writer->MergeBlobData(blob_fields, row_bin_data, &output_bin_data));
       std::map<std::uint64_t, std::vector<nlohmann::json>> raw_data;
       raw_data.insert(
         std::pair<uint64_t, std::vector<nlohmann::json>>(mr_schema_id, std::vector<nlohmann::json>{row_raw_data}));
@@ -309,18 +301,12 @@ Status SaveToDisk::Save() {
       if (output_bin_data != nullptr) {
         bin_data.emplace_back(*output_bin_data);
       }
-      if (mindrecord::SUCCESS != mr_writer->WriteRawData(raw_data, bin_data)) {
-        RETURN_STATUS_UNEXPECTED("Error: failed to write raw data to ShardWriter.");
-      }
+      RETURN_IF_NOT_OK(mr_writer->WriteRawData(raw_data, bin_data));
     }
   } while (!row.empty());
 
-  if (mindrecord::SUCCESS != mr_writer->Commit()) {
-    RETURN_STATUS_UNEXPECTED("Error: failed to commit ShardWriter.");
-  }
-  if (mindrecord::SUCCESS != mindrecord::ShardIndexGenerator::Finalize(file_names)) {
-    RETURN_STATUS_UNEXPECTED("Error: failed to finalize ShardIndexGenerator.");
-  }
+  RETURN_IF_NOT_OK(mr_writer->Commit());
+  RETURN_IF_NOT_OK(mindrecord::ShardIndexGenerator::Finalize(file_names));
   return Status::OK();
 }
 

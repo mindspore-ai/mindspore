@@ -80,7 +80,7 @@ int64_t ShardSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   return 0;
 }
 
-MSRStatus ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
+Status ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
   if (tasks.permutation_.empty()) {
     ShardTaskList new_tasks;
     int total_no = static_cast<int>(tasks.sample_ids_.size());
@@ -110,9 +110,7 @@ MSRStatus ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
     ShardTaskList::TaskListSwap(tasks, new_tasks);
   } else {
     ShardTaskList new_tasks;
-    if (taking > static_cast<int>(tasks.sample_ids_.size())) {
-      return FAILED;
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(taking <= static_cast<int>(tasks.sample_ids_.size()), "taking is out of range.");
     int total_no = static_cast<int>(tasks.permutation_.size());
     int cnt = 0;
     for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
@@ -122,10 +120,10 @@ MSRStatus ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
     }
     ShardTaskList::TaskListSwap(tasks, new_tasks);
   }
-  return SUCCESS;
+  return Status::OK();
 }
 
-MSRStatus ShardSample::Execute(ShardTaskList &tasks) {
+Status ShardSample::Execute(ShardTaskList &tasks) {
   if (offset_ != -1) {
     int64_t old_v = 0;
     int num_rows_ = static_cast<int>(tasks.sample_ids_.size());
@@ -146,10 +144,8 @@ MSRStatus ShardSample::Execute(ShardTaskList &tasks) {
     no_of_samples_ = std::min(no_of_samples_, total_no);
     taking = no_of_samples_ - no_of_samples_ % no_of_categories;
   } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
-    if (indices_.size() > static_cast<size_t>(total_no)) {
-      MS_LOG(ERROR) << "parameter indices's size is greater than dataset size.";
-      return FAILED;
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(indices_.size() <= static_cast<size_t>(total_no),
+                                 "Parameter indices's size is greater than dataset size.");
   } else {  // constructor TopPercent
     if (numerator_ > 0 && denominator_ > 0 && numerator_ <= denominator_) {
       if (numerator_ == 1 && denominator_ > 1) {  // sharding
@@ -159,20 +155,17 @@ MSRStatus ShardSample::Execute(ShardTaskList &tasks) {
         taking -= (taking % no_of_categories);
       }
     } else {
-      MS_LOG(ERROR) << "parameter numerator or denominator is illegal";
-      return FAILED;
+      RETURN_STATUS_UNEXPECTED("Parameter numerator or denominator is invalid.");
     }
   }
   return UpdateTasks(tasks, taking);
 }
 
-MSRStatus ShardSample::SufExecute(ShardTaskList &tasks) {
+Status ShardSample::SufExecute(ShardTaskList &tasks) {
   if (sampler_type_ == kSubsetRandomSampler) {
-    if (SUCCESS != (*shuffle_op_)(tasks)) {
-      return FAILED;
-    }
+    RETURN_IF_NOT_OK((*shuffle_op_)(tasks));
   }
-  return SUCCESS;
+  return Status::OK();
 }
 }  // namespace mindrecord
 }  // namespace mindspore

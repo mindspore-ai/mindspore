@@ -38,9 +38,8 @@ Status GraphFeatureParser::LoadFeatureTensor(const std::string &key, const std::
   uint64_t n_bytes = 0, col_type_size = 1;
   mindrecord::ColumnDataType col_type = mindrecord::ColumnNoDataType;
   std::vector<int64_t> column_shape;
-  MSRStatus rs = shard_column_->GetColumnValueByName(key, col_blob, {}, &data, &data_ptr, &n_bytes, &col_type,
-                                                     &col_type_size, &column_shape);
-  CHECK_FAIL_RETURN_UNEXPECTED(rs == mindrecord::SUCCESS, "fail to load column" + key);
+  RETURN_IF_NOT_OK(shard_column_->GetColumnValueByName(key, col_blob, {}, &data, &data_ptr, &n_bytes, &col_type,
+                                                       &col_type_size, &column_shape));
   if (data == nullptr) data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
   RETURN_IF_NOT_OK(Tensor::CreateFromMemory(std::move(TensorShape({static_cast<dsize_t>(n_bytes / col_type_size)})),
                                             std::move(DataType(mindrecord::ColumnDataTypeNameNormalized[col_type])),
@@ -57,9 +56,8 @@ Status GraphFeatureParser::LoadFeatureToSharedMemory(const std::string &key, con
   uint64_t n_bytes = 0, col_type_size = 1;
   mindrecord::ColumnDataType col_type = mindrecord::ColumnNoDataType;
   std::vector<int64_t> column_shape;
-  MSRStatus rs = shard_column_->GetColumnValueByName(key, col_blob, {}, &data, &data_ptr, &n_bytes, &col_type,
-                                                     &col_type_size, &column_shape);
-  CHECK_FAIL_RETURN_UNEXPECTED(rs == mindrecord::SUCCESS, "fail to load column" + key);
+  RETURN_IF_NOT_OK(shard_column_->GetColumnValueByName(key, col_blob, {}, &data, &data_ptr, &n_bytes, &col_type,
+                                                       &col_type_size, &column_shape));
   if (data == nullptr) data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
   std::shared_ptr<Tensor> tensor;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(std::move(TensorShape({2})), std::move(DataType(DataType::DE_INT64)), &tensor));
@@ -81,9 +79,8 @@ Status GraphFeatureParser::LoadFeatureIndex(const std::string &key, const std::v
   uint64_t n_bytes = 0, col_type_size = 1;
   mindrecord::ColumnDataType col_type = mindrecord::ColumnNoDataType;
   std::vector<int64_t> column_shape;
-  MSRStatus rs = shard_column_->GetColumnValueByName(key, col_blob, {}, &data, &data_ptr, &n_bytes, &col_type,
-                                                     &col_type_size, &column_shape);
-  CHECK_FAIL_RETURN_UNEXPECTED(rs == mindrecord::SUCCESS, "fail to load column:" + key);
+  RETURN_IF_NOT_OK(shard_column_->GetColumnValueByName(key, col_blob, {}, &data, &data_ptr, &n_bytes, &col_type,
+                                                       &col_type_size, &column_shape));
 
   if (data == nullptr) data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
 
