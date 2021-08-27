@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,20 @@
 
 package com.mindspore.lite;
 
+/**
+ * Define mindspore lite version info.
+ *
+ * @since v1.0
+ */
 public class Version {
     static {
         System.loadLibrary("mindspore-lite-jni");
     }
 
+    /**
+     * Get MindSpore Lite version info.
+     *
+     * @return MindSpore Lite version info.
+     */
     public static native String version();
 }
