@@ -150,10 +150,11 @@ def MLM_eval():
     res = net.eval(dataset, dataset_sink_mode=False)
     print("==============================================================")
     for _, v in res.items():
-        print("Accuracy is: ")
-        print(v)
+        print("Accuracy is: ", v)
     print("==============================================================")
 
 
 if __name__ == "__main__":
+    DEVICE_ID = 0
+    os.environ['DEVICE_ID'] = str(DEVICE_ID)
     MLM_eval()

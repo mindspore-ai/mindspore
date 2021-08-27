@@ -18,33 +18,33 @@ epoch_size: 40
 device_id: 0
 device_num: 1
 enable_save_ckpt: 'true'
-enable_lossscale: 'true'
+enable_lossscale: 'false'
 do_shuffle: 'true'
 enable_data_sink: 'true'
-data_sink_steps: 1
+data_sink_steps: 100
 accumulation_steps: 1
 allreduce_post_accumulation: 'true'
 save_checkpoint_path: ''
 load_checkpoint_path: ''
-save_checkpoint_steps: 10000
-train_steps: -1
-save_checkpoint_num: 1
+save_checkpoint_steps: 500
+train_steps: 2500
+save_checkpoint_num: 5
 data_dir: ''
 schema_dir: ''
 
 # ==============================================================================
 # pretrain related
-batch_size: 32
+batch_size: 20
 # Available: [base, nezha, large, large_acc]
-bert_network: 'base'
+bert_network: 'large_acc'
 loss_scale_value: 65536
 scale_factor: 2
 scale_window: 1000
-optimizer: 'Lamb'
+optimizer: 'Thor'
 enable_global_norm: False
 # pretrain_eval related
 data_file: ""
-schema_file: ""
+schema_file: null
 finetune_ckpt: ""
 # optimizer related
 AdamWeightDecay:
@@ -120,7 +120,7 @@ nezha_net_cfg:
     dtype: mstype.float32
     compute_type: mstype.float16
 # large
-large_batch_size: 24
+large_batch_size: 20
 large_net_cfg:
     seq_length: 512
     vocab_size: 30522
@@ -138,7 +138,7 @@ large_net_cfg:
     dtype: mstype.float32
     compute_type: mstype.float16
 # Accelerated large network which is only supported in Ascend yet.
-large_acc_batch_size: 24
+large_acc_batch_size: 20
 large_acc_net_cfg:
     seq_length: 512
     vocab_size: 30522
