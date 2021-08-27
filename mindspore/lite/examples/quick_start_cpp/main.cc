@@ -61,7 +61,7 @@ char *ReadFile(const char *file, size_t *size) {
     return nullptr;
   }
 
-  std::ifstream ifs(file);
+  std::ifstream ifs(file, std::ifstream::in | std::ifstream::binary);
   if (!ifs.good()) {
     std::cerr << "file: " << file << " is not exist." << std::endl;
     return nullptr;
