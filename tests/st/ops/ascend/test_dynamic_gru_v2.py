@@ -32,7 +32,7 @@ class DynamicGRUV2(nn.Cell):
         return self.dynamic_gru(x, weight_i, weight_h, bias_i, bias_h, None, init_h)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

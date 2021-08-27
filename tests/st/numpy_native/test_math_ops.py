@@ -1382,7 +1382,7 @@ def test_negative():
     match_array(mnp_neg.asnumpy(), onp_neg, 1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2132,7 +2132,7 @@ def test_digitize():
     match_res(mnp.digitize, onp.digitize, x, bins, right=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
