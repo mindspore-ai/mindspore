@@ -27,17 +27,23 @@ using mindspore::schema::PrimitiveType_BatchNorm;
 
 namespace mindspore::kernel {
 int BatchnormFp16CPUKernel::InitConstTensor() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   is_input_fp32_ = in_tensors_.at(0)->data_type() == kNumberTypeFloat32;
   is_output_fp32_ = out_tensors_.at(0)->data_type() == kNumberTypeFloat32;
   if (is_input_fp32_) {
     auto mean_fp32 = in_tensors_.at(1);
     auto variance_fp32 = in_tensors_.at(2);
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, mean_fp32->ElementsNum() * sizeof(float16_t));
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, variance_fp32->ElementsNum() * sizeof(float16_t));
     mean_ = malloc(mean_fp32->ElementsNum() * sizeof(float16_t));
     variance_ = malloc(variance_fp32->ElementsNum() * sizeof(float16_t));
     if (mean_ == nullptr || variance_ == nullptr) {
       FreeMeanAndVariance();
       return RET_ERROR;
     }
+    CHECK_NULL_RETURN(mean_fp32->data_c());
+    CHECK_NULL_RETURN(variance_fp32->data_c());
     Float32ToFloat16(reinterpret_cast<float *>(mean_fp32->data_c()), reinterpret_cast<float16_t *>(mean_),
                      mean_fp32->ElementsNum());
     Float32ToFloat16(reinterpret_cast<float *>(variance_fp32->data_c()), reinterpret_cast<float16_t *>(variance_),
@@ -55,6 +61,7 @@ int BatchnormFp16CPUKernel::InitConstTensor() {
 int BatchnormFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
+  CHECK_NULL_RETURN(this->ms_context_);
   input_ = ConvertInputFp32toFp16(input_tensor, static_cast<const lite::InnerContext *>(this->ms_context_));
   output_ = MallocOutputFp16(output_tensor, static_cast<const lite::InnerContext *>(this->ms_context_));
   if (input_ == nullptr || output_ == nullptr) {
@@ -68,6 +75,7 @@ int BatchnormFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
   if (is_output_fp32_) {
+    CHECK_NULL_RETURN(output_tensor->data_c());
     Float16ToFloat32(output_, reinterpret_cast<float *>(output_tensor->data_c()), output_tensor->ElementsNum());
   }
   FreeInputAndOutput();
@@ -76,6 +84,7 @@ int BatchnormFp16CPUKernel::Run() {
 
 int BatchnormFp16CPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
   BatchNormFp16(input_, mean_, variance_, param, task_id, output_);
   return RET_OK;
 }

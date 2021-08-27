@@ -74,6 +74,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter) {
+  MS_ASSERT(parameter != nullptr);
   if (inputs.empty()) {
     MS_LOG(ERROR) << "No input!";
     return RET_ERROR;

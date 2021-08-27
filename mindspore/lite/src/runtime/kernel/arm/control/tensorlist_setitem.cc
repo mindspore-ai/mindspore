@@ -27,7 +27,11 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListSetItem;
 
 namespace mindspore::kernel {
-int TensorListSetItemCPUKernel::Init() { return RET_OK; }
+int TensorListSetItemCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int TensorListSetItemCPUKernel::CheckParam() {
   if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {
@@ -56,7 +60,9 @@ int TensorListSetItemCPUKernel::IncrementOutputSize(int origin_size) {
 
 int TensorListSetItemCPUKernel::Run() {
   input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
+  CHECK_NULL_RETURN(input0_);
   output0_ = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
+  CHECK_NULL_RETURN(output0_);
   if (CheckParam() != RET_OK) {
     MS_LOG(ERROR) << "check param failed.";
     return RET_ERROR;
@@ -64,6 +70,7 @@ int TensorListSetItemCPUKernel::Run() {
 
   int dim0 = output0_->ElementsNum() - 1;
   index_ = reinterpret_cast<int *>(in_tensors_[1]->data_c())[0];
+  CHECK_NULL_RETURN(index_);
   if (index_ < 0 || index_ > dim0) {
     if (IncrementOutputSize(output0_->tensors().size()) != RET_OK) {
       MS_LOG(ERROR) << "Resizeoutput Error ,index tensor:[" << index_ << "] must be in [0, " << dim0 << "]!";

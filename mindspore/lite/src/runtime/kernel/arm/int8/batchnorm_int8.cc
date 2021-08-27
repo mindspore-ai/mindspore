@@ -47,12 +47,16 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
   auto output = out_tensors_.at(0);
 
   auto mean_ptr = reinterpret_cast<int8_t *>(mean->MutableData());
+  CHECK_NULL_RETURN(mean_ptr);
   auto var_ptr = reinterpret_cast<int8_t *>(variance->MutableData());
+  CHECK_NULL_RETURN(var_ptr);
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(mean->ElementsNum()) * sizeof(float));
   alpha_addr_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(mean->ElementsNum()) * sizeof(float)));
   if (alpha_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(variance->ElementsNum()) * sizeof(float));
   beta_addr_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(variance->ElementsNum()) * sizeof(float)));
   if (beta_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -80,6 +84,7 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
 }
 
 int BatchnormInt8CPUKernel::InitFusedConstTensor() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
   auto input = in_tensors_.at(0);
   auto scale = in_tensors_.at(1);
   auto offset = in_tensors_.at(2);
@@ -132,6 +137,8 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
 }
 
 int BatchnormInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];
@@ -178,6 +185,7 @@ int BatchnormInt8CPUKernel::DoExecute(int task_id) {
 }
 
 int BatchNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<BatchnormInt8CPUKernel *>(cdata);
   auto ret = g_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
@@ -189,7 +197,9 @@ int BatchNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 
 int BatchnormInt8CPUKernel::Run() {
   in_addr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(in_addr_);
   out_addr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(out_addr_);
 
   auto ret = ParallelLaunch(this->ms_context_, BatchNormInt8Run, this, batchnorm_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {

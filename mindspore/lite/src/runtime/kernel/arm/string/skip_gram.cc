@@ -27,6 +27,8 @@ using mindspore::schema::PrimitiveType_SkipGram;
 
 namespace mindspore::kernel {
 int SkipGramCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -36,6 +38,7 @@ int SkipGramCPUKernel::Init() {
 int SkipGramCPUKernel::ReSize() { return RET_OK; }
 
 void ParseSentenceToWords(const StringPack &sentence, std::vector<StringPack> *words) {
+  CHECK_NULL_RETURN(words);
   int pre = 0;
   int i;
   for (i = 0; i < sentence.len; i++) {
@@ -59,7 +62,7 @@ void ParseSentenceToWords(const StringPack &sentence, std::vector<StringPack> *w
 
 int SkipGramCPUKernel::Run() {
   skip_gram_parameter_ = reinterpret_cast<SkipGramParameter *>(op_parameter_);
-  MS_ASSERT(skip_gram_parameter_);
+  MS_ASSERT(skip_gram_parameter_ != nullptr);
   if (skip_gram_parameter_->ngram_size < 1) {
     MS_LOG(ERROR) << "Skip Gram Parameter Error, NgramSize should be at least 1, get "
                   << skip_gram_parameter_->ngram_size;
@@ -75,6 +78,7 @@ int SkipGramCPUKernel::Run() {
 
   int index = 1;
   int size = words.size();
+  CHECK_LESS_RETURN(stack.size(), index);
   while (index >= 0) {
     if (index < skip_gram_parameter_->ngram_size && stack.at(index) + 1 < size &&
         (index == 0 || stack.at(index) - stack.at(index - 1) <= skip_gram_parameter_->max_skip_size)) {

@@ -67,12 +67,17 @@ int AdderCPUKernel::InitWeightBias() {
   int out_channel = filter_tensor->Batch();
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
+  if (INT_MUL_OVERFLOW(kernel_h, kernel_w)) {
+    return RET_ERROR;
+  }
   int kernel_plane = kernel_h * kernel_w;
   const int oc_block = C4NUM;
   int oc_block_num = UP_DIV(out_channel, C4NUM);
   int pack_weight_size = oc_block_num * oc_block * in_channel * kernel_plane;
 
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->MutableData());
+  CHECK_NULL_RETURN(origin_weight);
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
   packed_weight_ = malloc(pack_weight_size * sizeof(float));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed weight failed.";
@@ -90,6 +95,7 @@ int AdderCPUKernel::InitWeightBias() {
 
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
+    CHECK_NULL_RETURN(ori_bias);
     memcpy(bias_data_, ori_bias, out_channel * sizeof(float));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -103,12 +109,14 @@ int AdderCPUKernel::RunImpl(int task_id) {
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->MutableData());
   MS_ASSERT(ori_input_data != nullptr);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  CHECK_NULL_RETURN(output_addr);
   AdderFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
             reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
   return RET_OK;
 }
 
 int AdderImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto adder = reinterpret_cast<AdderCPUKernel *>(cdata);
   auto error_code = adder->RunImpl(task_id);
   if (error_code != RET_OK) {

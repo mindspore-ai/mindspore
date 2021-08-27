@@ -53,6 +53,7 @@ void BatchnormCPUKernel::FillParam() {
   auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
   param->channel_ = input_shapes[n_dim - 1];
   param->unit_ = 1;
   for (size_t i = 0; i < n_dim - 1; i++) {
@@ -64,6 +65,8 @@ void BatchnormCPUKernel::FillParam() {
 }
 
 int BatchnormCPUKernel::InitConstTensor() {
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(1)->Size());
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(2)->Size());
   mean_ = malloc(in_tensors_.at(1)->Size());
   variance_ = malloc(in_tensors_.at(2)->Size());
   if (mean_ == nullptr || variance_ == nullptr) {
@@ -71,8 +74,14 @@ int BatchnormCPUKernel::InitConstTensor() {
     FreeMeanAndVariance();
     return RET_ERROR;
   }
-  memcpy(mean_, in_tensors_.at(1)->MutableData(), in_tensors_.at(1)->Size());
-  memcpy(variance_, in_tensors_.at(2)->MutableData(), in_tensors_.at(2)->Size());
+  auto in_tensor_mean_data = in_tensors_.at(1)->MutableData();
+  auto in_tensor_var_data = in_tensors_.at(2)->MutableData();
+  if (in_tensor_mean_data == nullptr || in_tensor_var_data == nullptr) {
+    FreeMeanAndVariance();
+    return RET_ERROR;
+  }
+  memcpy(mean_, in_tensor_mean_data, in_tensors_.at(1)->Size());
+  memcpy(variance_, in_tensor_var_data, in_tensors_.at(2)->Size());
   return RET_OK;
 }
 
@@ -86,11 +95,16 @@ int BatchnormCPUKernel::Run() {
 
 int BatchnormCPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  BatchNormFp32(in_tensors_.at(0)->MutableData(), mean_, variance_, param, task_id, out_tensors_.at(0)->MutableData());
+  auto in_tensor_data = in_tensors_.at(0)->MutableData();
+  CHECK_NULL_RETURN(in_tensor_data);
+  auto out_tensor_data = out_tensors_.at(0)->MutableData();
+  CHECK_NULL_RETURN(out_tensor_data);
+  BatchNormFp32(in_tensor_data, mean_, variance_, param, task_id, out_tensor_data);
   return RET_OK;
 }
 
 int BatchNormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<BatchnormCPUKernel *>(cdata);
   auto ret = kernel->DoExecute(task_id);
   if (ret != RET_OK) {
