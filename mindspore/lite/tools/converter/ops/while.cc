@@ -19,6 +19,7 @@
 #include "tools/converter/ops/while.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "nnacl/op_base.h"
 
 constexpr auto kCondSubgraphIndex = "cond_subgraph_index";
 constexpr auto kBodySubgraphIndex = "body_subgraph_index";
@@ -31,33 +32,49 @@ void While::Init(const int64_t cond_subgraph_index, const int64_t body_subgraph_
 }
 
 void While::set_cond_subgraph_index(const int64_t cond_subgraph_index) {
-  this->AddAttr(kCondSubgraphIndex, MakeValue(cond_subgraph_index));
+  auto value_ptr = MakeValue(cond_subgraph_index);
+  if (value_ptr == nullptr) {
+    MS_LOG(ERROR) << "value_ptr is nullptr.";
+    return;
+  }
+  this->AddAttr(kCondSubgraphIndex, value_ptr);
 }
 
 int64_t While::get_cond_subgraph_index() const {
   auto value_ptr = this->GetAttr(kCondSubgraphIndex);
+  MS_CHECK_TRUE_RET(value_ptr != nullptr, -1);
   return GetValue<int64_t>(value_ptr);
 }
 
 void While::set_body_subgraph_index(const int64_t body_subgraph_index) {
-  this->AddAttr(kBodySubgraphIndex, MakeValue(body_subgraph_index));
+  auto value_ptr = MakeValue(body_subgraph_index);
+  if (value_ptr == nullptr) {
+    MS_LOG(ERROR) << "value_ptr is nullptr.";
+    return;
+  }
+  this->AddAttr(kBodySubgraphIndex, value_ptr);
 }
 
 int64_t While::get_body_subgraph_index() const {
   auto value_ptr = this->GetAttr(kBodySubgraphIndex);
+  MS_CHECK_TRUE_RET(value_ptr != nullptr, -1);
   return GetValue<int64_t>(value_ptr);
 }
 
 AbstractBasePtr WhileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
+  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   auto While_prim = primitive->cast<PrimWhilePtr>();
-  MS_EXCEPTION_IF_NULL(While_prim);
+  MS_CHECK_TRUE_RET(While_prim != nullptr, nullptr);
   AbstractBasePtrList output;
   for (int64_t i = 0; i < (int64_t)input_args.size(); i++) {
-    auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->BuildShape())[kShape];
-    auto abstract_tensor = lite::CreateTensorAbstract(shape, input_args[i]->BuildType()->type_id());
-    MS_EXCEPTION_IF_NULL(abstract_tensor);
+    auto build_shape_ptr = input_args[i]->BuildShape();
+    MS_CHECK_TRUE_RET(build_shape_ptr != nullptr, nullptr);
+    auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(build_shape_ptr)[kShape];
+    auto build_type_ptr = input_args[i]->BuildType();
+    MS_CHECK_TRUE_RET(build_type_ptr != nullptr, nullptr);
+    auto abstract_tensor = lite::CreateTensorAbstract(shape, build_type_ptr->type_id());
+    MS_CHECK_TRUE_RET(abstract_tensor != nullptr, nullptr);
     output.push_back(abstract_tensor);
   }
   return std::make_shared<abstract::AbstractTuple>(output);

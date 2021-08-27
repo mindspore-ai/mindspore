@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace registry {
@@ -55,6 +56,7 @@ std::vector<opt::PassPtr> PassRegistry::GetPassFromStoreRoom(const std::vector<s
     if (iter == pass_store_room.end()) {
       continue;
     }
+    MS_CHECK_TRUE_RET(iter->second != nullptr, std::vector<opt::PassPtr>{});
     schedule_passes.push_back(iter->second);
   }
   return schedule_passes;

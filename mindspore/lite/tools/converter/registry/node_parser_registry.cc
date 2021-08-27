@@ -18,6 +18,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace registry {
@@ -36,6 +37,7 @@ converter::NodeParserPtr NodeParserRegistry::GetNodeParser(converter::FmkType fm
   if (iter_level1 == node_parser_room.end()) {
     return nullptr;
   }
+  MS_CHECK_FALSE(node_type.empty(), nullptr);
   auto iter_level2 = iter_level1->second.find(node_type);
   if (iter_level2 == iter_level1->second.end()) {
     return nullptr;
