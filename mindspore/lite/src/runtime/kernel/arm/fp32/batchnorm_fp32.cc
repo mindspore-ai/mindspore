@@ -19,6 +19,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNorm;
 
@@ -53,7 +54,6 @@ void BatchnormCPUKernel::FillParam() {
   auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  CHECK_NULL_RETURN(param);
   param->channel_ = input_shapes[n_dim - 1];
   param->unit_ = 1;
   for (size_t i = 0; i < n_dim - 1; i++) {

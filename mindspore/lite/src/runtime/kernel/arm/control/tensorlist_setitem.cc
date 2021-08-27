@@ -70,7 +70,6 @@ int TensorListSetItemCPUKernel::Run() {
 
   int dim0 = output0_->ElementsNum() - 1;
   index_ = reinterpret_cast<int *>(in_tensors_[1]->data_c())[0];
-  CHECK_NULL_RETURN(index_);
   if (index_ < 0 || index_ > dim0) {
     if (IncrementOutputSize(output0_->tensors().size()) != RET_OK) {
       MS_LOG(ERROR) << "Resizeoutput Error ,index tensor:[" << index_ << "] must be in [0, " << dim0 << "]!";

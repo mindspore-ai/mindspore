@@ -65,8 +65,8 @@ int SliceCPUKernel::ReSize() {
 }
 
 int SliceCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_, 3);
-  CHECK_LESS_RETURN(out_tensors_, 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
