@@ -342,7 +342,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
     // Multiple graph, and not the initial step,
     // stop only when receive the first sub run graph for each step
     // if we have stopped for the last kernel before, no need to stop again
-    if (pipeline::ExecutorPy::GetDebugTerminate()) {
+    if (pipeline::GraphExecutorPy::GetDebugTerminate()) {
       return;
     }
     if (!(run_level_ == "node" && suspended_at_last_kernel_)) {
@@ -449,7 +449,7 @@ void Debugger::PostExecuteGraphDebugger() {
 void Debugger::PostExecute() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  if (pipeline::ExecutorPy::GetDebugTerminate()) {
+  if (pipeline::GraphExecutorPy::GetDebugTerminate()) {
     return;
   }
   if (debugger_->DebuggerBackendEnabled()) {
@@ -486,7 +486,7 @@ bool Debugger::ReadNodeDataRequired(const CNodePtr &kernel) const {
 void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  if (pipeline::ExecutorPy::GetDebugTerminate()) {
+  if (pipeline::GraphExecutorPy::GetDebugTerminate()) {
     return;
   }
   if (debugger_enabled_ && !is_dataset_graph_) {
@@ -1074,7 +1074,7 @@ void Debugger::Exit() {
   // debugger will notify main thread to exit because main thread can only exit at step boundary.
   MS_LOG(INFO) << "Exit Debugger";
   SetEnableHeartbeat(false);
-  pipeline::ExecutorPy::DebugTerminate(true);
+  pipeline::GraphExecutorPy::DebugTerminate(true);
 }
 
 std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode, const CNodePtr &kernel,

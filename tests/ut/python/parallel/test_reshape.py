@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.common.parameter import ParameterTuple
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
@@ -305,7 +305,7 @@ class ReshapeNet6(nn.Cell):
 def compile_net(net, input_):
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, input_)
+    _cell_graph_executor.compile(net, input_)
 
 
 def reshape_net2(backbone):

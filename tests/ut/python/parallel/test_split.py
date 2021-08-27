@@ -17,7 +17,7 @@ import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor, Parameter
 import mindspore.nn as nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
 
@@ -80,7 +80,7 @@ def compile_net(net):
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
     train_net.set_train()
-    _executor.compile(train_net, _x)
+    _cell_graph_executor.compile(train_net, _x)
     context.reset_auto_parallel_context()
 
 
@@ -90,7 +90,7 @@ def compile_net1(net):
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
     train_net.set_train()
-    _executor.compile(train_net, _x1)
+    _cell_graph_executor.compile(train_net, _x1)
     context.reset_auto_parallel_context()
 
 

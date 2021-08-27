@@ -17,7 +17,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -66,7 +66,7 @@ def test_dropout_semi_auto():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_dropout_semi_auto2():
@@ -79,7 +79,7 @@ def test_dropout_semi_auto2():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_dropout_semi_auto3():
@@ -92,7 +92,7 @@ def test_dropout_semi_auto3():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_dropout_auto():
@@ -103,4 +103,4 @@ def test_dropout_auto():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)

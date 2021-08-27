@@ -17,7 +17,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
@@ -50,4 +50,4 @@ def test_momentum_compile():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)

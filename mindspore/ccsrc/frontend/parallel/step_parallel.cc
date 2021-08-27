@@ -2952,7 +2952,7 @@ static AnfNodePtr FindGrad(const CNodePtr &cnode, size_t curr_depth) {
 void HandleRootReshapeAndSaveStrategy(const std::vector<AnfNodePtr> &all_nodes) {
   // If root graph has reshape op. Find the corresponding parameter.
   // Reshape's shape is the shape of the parameter.
-  auto executor = pipeline::ExecutorPy::GetInstance();
+  auto executor = pipeline::GraphExecutorPy::GetInstance();
   for (auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
       continue;

@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
@@ -89,7 +89,7 @@ def test_star_strategy_consistency1():
     net.set_auto_parallel()
     reset_op_id()
     net.set_train()
-    _executor.compile(net, x, phase='train')
+    _cell_graph_executor.compile(net, x, phase='train')
 
 
 def test_star_strategy_consistency2():
@@ -104,7 +104,7 @@ def test_star_strategy_consistency2():
     net.set_auto_parallel()
     reset_op_id()
     net.set_train()
-    _executor.compile(net, x, phase='train')
+    _cell_graph_executor.compile(net, x, phase='train')
 
 
 def test_star_strategy_consistency3():
@@ -119,7 +119,7 @@ def test_star_strategy_consistency3():
     net.set_auto_parallel()
     reset_op_id()
     net.set_train()
-    _executor.compile(net, x, phase='train')
+    _cell_graph_executor.compile(net, x, phase='train')
 
 
 def test_star_strategy_consistency4():
@@ -135,4 +135,4 @@ def test_star_strategy_consistency4():
     reset_op_id()
     with pytest.raises(RuntimeError):
         net.set_train()
-        _executor.compile(net, x, phase='train')
+        _cell_graph_executor.compile(net, x, phase='train')

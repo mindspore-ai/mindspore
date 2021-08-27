@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.wrap.cell_wrapper import VirtualDatasetCellTriple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -69,7 +69,7 @@ def test_virtualdataset_cell_3_inputs():
     b = Tensor(np.ones([64, 2048]), dtype=ms.float32)
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, y, b)
+    _cell_graph_executor.compile(net, x, y, b)
 
 
 if __name__ == '__main__':

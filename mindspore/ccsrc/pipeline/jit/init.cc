@@ -44,7 +44,7 @@
 namespace py = pybind11;
 
 using EnvInstance = mindspore::EnvInstance;
-using ExecutorPy = mindspore::pipeline::ExecutorPy;
+using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;
 using Pipeline = mindspore::pipeline::Pipeline;
 using PrimitivePy = mindspore::PrimitivePy;
 using MetaFuncGraph = mindspore::MetaFuncGraph;
@@ -70,40 +70,41 @@ PYBIND11_MODULE(_c_expression, m) {
   mindspore::ScopedLongRunning::SetHook(std::make_unique<mindspore::GilScopedLongRunningHook>());
 
   // Class Pipeline interface
-  (void)py::class_<ExecutorPy, std::shared_ptr<ExecutorPy>>(m, "Executor_")
-    .def_static("get_instance", &ExecutorPy::GetInstance, "Executor get_instance.")
-    .def("__call__", &ExecutorPy::Run, py::arg("args"), py::arg("phase") = py::str(""), "Executor run function.")
-    .def("del_net_res", &ExecutorPy::DelNetRes, py::arg("network_id") = py::str(""), "Delete network resource.")
-    .def("get_func_graph", &ExecutorPy::GetFuncGraph, py::arg("phase") = py::str(""), "Get graph pointer.")
-    .def("get_func_graph_proto", &ExecutorPy::GetFuncGraphProto, py::arg("phase") = py::str(""),
+  (void)py::class_<GraphExecutorPy, std::shared_ptr<GraphExecutorPy>>(m, "GraphExecutor_")
+    .def_static("get_instance", &GraphExecutorPy::GetInstance, "Executor get_instance.")
+    .def("__call__", &GraphExecutorPy::Run, py::arg("args"), py::arg("phase") = py::str(""), "Executor run function.")
+    .def("del_net_res", &GraphExecutorPy::DelNetRes, py::arg("network_id") = py::str(""), "Delete network resource.")
+    .def("get_func_graph", &GraphExecutorPy::GetFuncGraph, py::arg("phase") = py::str(""), "Get graph pointer.")
+    .def("get_func_graph_proto", &GraphExecutorPy::GetFuncGraphProto, py::arg("phase") = py::str(""),
          py::arg("type") = py::str("onnx_ir"), "Get graph proto string by specifying ir type.")
-    .def("compile", &ExecutorPy::Compile, py::arg("obj"), py::arg("args"), py::arg("phase") = py::str(""),
+    .def("compile", &GraphExecutorPy::Compile, py::arg("obj"), py::arg("args"), py::arg("phase") = py::str(""),
          py::arg("use_vm") = py::bool_(false), py::arg("queue_name"), "Compile obj by executor.")
-    .def("updata_param_node_default_input", &ExecutorPy::UpdataParamNodeDefaultInput, py::arg("phase"),
+    .def("updata_param_node_default_input", &GraphExecutorPy::UpdataParamNodeDefaultInput, py::arg("phase"),
          py::arg("params"), "Fetch the inputs of Conv or Matmul for quant export.")
-    .def("get_parameter_layout", &ExecutorPy::GetParameterLayout, py::arg("phase") = py::str("train"),
+    .def("get_parameter_layout", &GraphExecutorPy::GetParameterLayout, py::arg("phase") = py::str("train"),
          "Get Parameter Tensor Layout Dictionary.")
-    .def("get_parallel_parameter_name_list", &ExecutorPy::GetParallelParameterNameList,
+    .def("get_parallel_parameter_name_list", &GraphExecutorPy::GetParallelParameterNameList,
          py::arg("phase") = py::str("train"), "Get Parallel Parameter Name List.")
-    .def("get_strategy", &ExecutorPy::GetCNodeStrategy, py::arg("phase") = py::str("train"),
+    .def("get_strategy", &GraphExecutorPy::GetCNodeStrategy, py::arg("phase") = py::str("train"),
          "Get CNode Strategy Dictionary.")
-    .def("get_num_parallel_ops", &ExecutorPy::GetNumOpsInfo, py::arg("phase") = py::str("train"),
+    .def("get_num_parallel_ops", &GraphExecutorPy::GetNumOpsInfo, py::arg("phase") = py::str("train"),
          "Get the number of parallel operators.")
-    .def("get_allreduce_fusion", &ExecutorPy::GetAllreduceFusion, py::arg("phase") = py::str("train"),
+    .def("get_allreduce_fusion", &GraphExecutorPy::GetAllreduceFusion, py::arg("phase") = py::str("train"),
          "Get Allreduce Fusion Dictionary.")
-    .def("fetch_info_for_quant_export", &ExecutorPy::FetchInfoForQuantExport, py::arg("phase") = py::str("train"),
+    .def("fetch_info_for_quant_export", &GraphExecutorPy::FetchInfoForQuantExport, py::arg("phase") = py::str("train"),
          "Fetch the inputs of Conv or Matmul for quant export.")
-    .def("build_data_graph", &ExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
+    .def("build_data_graph", &GraphExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
-    .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
-    .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.")
-    .def("set_py_exe_path", &ExecutorPy::PyExePath, py::arg("py_exe_path") = py::str(""), "set python executable path.")
-    .def("set_kernel_build_server_dir", &ExecutorPy::KernelBuildServerDir,
-         py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.");
+    .def("has_compiled", &GraphExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "Get if cell compiled.")
+    .def("run_init_graph", &GraphExecutorPy::RunInitGraph, "Run init Graph.")
+    .def("set_py_exe_path", &GraphExecutorPy::PyExePath, py::arg("py_exe_path") = py::str(""),
+         "Set python executable path.")
+    .def("set_kernel_build_server_dir", &GraphExecutorPy::KernelBuildServerDir,
+         py::arg("kernel_build_server_dir") = py::str(""), "Set kernel build server directory path.");
 
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 
-  (void)m.def("generate_key", &mindspore::pipeline::GenerateKey, "Generate the function graph key.");
+  (void)m.def("generate_arguments_key", &mindspore::pipeline::GenerateArgumentsKey, "Generate unique key of argument.");
   (void)m.def("real_run_op", &mindspore::pynative::RealRunOp, "Run op pynatively.");
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
   (void)m.def("init_hccl", &mindspore::pipeline::InitHccl, "Init Hccl");

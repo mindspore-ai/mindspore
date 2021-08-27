@@ -20,7 +20,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -70,7 +70,7 @@ def compile_graph(x, y, segments, strategy1, strategy2, auto=False):
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, segments)))
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_unsortedsegmentsum_model_parallel_slice_1d():

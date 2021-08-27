@@ -19,7 +19,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
@@ -54,7 +54,7 @@ class GradWrap(nn.Cell):
 def compile_net(net, x, y, b, phase):
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, y, b, phase=phase)
+    _cell_graph_executor.compile(net, x, y, b, phase=phase)
 
 
 def test_auto_parallel_arithmetic():
@@ -78,7 +78,7 @@ def test_auto_parallel_arithmetic():
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     b = Tensor(np.ones([64, 128]), dtype=ms.float32)
     compile_net(net, x, y, b, phase='train')
-    strategies = _executor._get_shard_strategy(net)
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
             assert v == [[2, 4], [2, 4]]
@@ -107,7 +107,7 @@ def test_auto_parallel_arithmetic_broadcast_both():
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
     compile_net(net, x, y, b, phase='train')
-    strategies = _executor._get_shard_strategy(net)
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
             assert v == [[8, 1], [1, 1]]
@@ -136,7 +136,7 @@ def test_auto_parallel_arithmetic_broadcast_right():
     y = Tensor(np.ones([32, 32]), dtype=ms.float32)
     b = Tensor(np.ones([32]), dtype=ms.float32)
     compile_net(net, x, y, b, phase='train')
-    strategies = _executor._get_shard_strategy(net)
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
             assert v == [[4, 2], [2]]
@@ -165,7 +165,7 @@ def test_auto_parallel_arithmetic_broadcast_left():
     y = Tensor(np.ones([32, 32]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
     compile_net(net, x, y, b, phase="train")
-    strategies = _executor._get_shard_strategy(net)
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
             assert v == [[4, 2], [1, 4, 2]]

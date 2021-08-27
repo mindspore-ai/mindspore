@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from .resnet_example import resnet50
 from ..train_step_wrap import train_step_with_loss_warp
 
@@ -31,4 +31,4 @@ def test_train_step():
     net.set_train()
     inp = Tensor(np.ones([1, 3, 224, 224], np.float32))
     label = Tensor(np.zeros([1, 10], np.float32))
-    _executor.compile(net, inp, label)
+    _cell_graph_executor.compile(net, inp, label)

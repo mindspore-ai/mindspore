@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from ....train_step_wrap import train_step_with_loss_warp, train_step_with_sens
 
@@ -53,14 +53,14 @@ def test_lenet5_train_step():
     predict = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
     net = train_step_with_loss_warp(LeNet5())
-    _executor.compile(net, predict, label)
+    _cell_graph_executor.compile(net, predict, label)
 
 
 def test_lenet5_train_sens():
     predict = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)
     sens = Tensor(np.ones([1, 10]).astype(np.float32))
     net = train_step_with_sens(LeNet5(), sens)
-    _executor.compile(net, predict)
+    _cell_graph_executor.compile(net, predict)
 
 
 def test_lenet5_train_step_training():
@@ -68,4 +68,4 @@ def test_lenet5_train_step_training():
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
     net = train_step_with_loss_warp(LeNet5())
     net.set_train()
-    _executor.compile(net, predict, label)
+    _cell_graph_executor.compile(net, predict, label)

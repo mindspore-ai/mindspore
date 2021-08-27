@@ -22,7 +22,7 @@ import logging
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 
@@ -82,4 +82,4 @@ def test_get_object_graph():
     Y = Tensor(np.ones([2, 2, 2]).astype(np.float32))
     network = SimpleNet(ResNet(X), Y, True)
     print(network.parameters_dict())
-    return _executor.compile(network, X, Y)
+    return _cell_graph_executor.compile(network, X, Y)

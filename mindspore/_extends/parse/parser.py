@@ -30,7 +30,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
-from mindspore.common.api import _MindSporeFunction
+from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common.dtype import pytype_to_dtype
 from .namespace import CellNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
@@ -177,8 +177,8 @@ def resolve_symbol(namespace, symbol):
         logger.debug("resolve exception occurred, value = %r", e)
         logger.debug("resolve type is invalid, namespace = %s, symbol = %s",
                      namespace.__str__(), symbol)
-    if isinstance(resolve_, _MindSporeFunction):
-        logger.debug("resolve class _MindSporeFunction, resolve fn instead.")
+    if isinstance(resolve_, _MindsporeFunctionExecutor):
+        logger.debug("resolve class _MindsporeFunctionExecutor, resolve fn instead.")
         resolve_ = resolve_.fn
     return resolve_
 

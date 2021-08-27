@@ -16,7 +16,7 @@ import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore import Tensor, context
@@ -67,7 +67,7 @@ def test_embeddinglookup_reducescatter_false():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_embeddinglookup_reducescatter_true():
@@ -79,7 +79,7 @@ def test_embeddinglookup_reducescatter_true():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_embeddinglookup_reducescatter_false_grad():
@@ -91,7 +91,7 @@ def test_embeddinglookup_reducescatter_false_grad():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_embeddinglookup_reducescatter_true_grad():
@@ -104,7 +104,7 @@ def test_embeddinglookup_reducescatter_true_grad():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_embeddinglookup_semi_auto1():
@@ -119,7 +119,7 @@ def test_embeddinglookup_semi_auto1():
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_embeddinglookup_semi_auto2():
@@ -134,4 +134,4 @@ def test_embeddinglookup_semi_auto2():
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)

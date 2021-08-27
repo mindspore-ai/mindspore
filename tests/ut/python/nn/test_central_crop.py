@@ -21,7 +21,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 
 class CentralCropNet(nn.Cell):
@@ -37,14 +37,14 @@ def test_compile_3d_central_crop():
     central_fraction = 0.2
     net = CentralCropNet(central_fraction)
     image = Tensor(np.random.random((3, 16, 16)), mstype.float32)
-    _executor.compile(net, image)
+    _cell_graph_executor.compile(net, image)
 
 
 def test_compile_4d_central_crop():
     central_fraction = 0.5
     net = CentralCropNet(central_fraction)
     image = Tensor(np.random.random((8, 3, 16, 16)), mstype.float32)
-    _executor.compile(net, image)
+    _cell_graph_executor.compile(net, image)
 
 
 def test_central_fraction_bool():
@@ -71,4 +71,4 @@ def test_central_crop_invalid_5d_input():
 
     net = CentralCropNet(central_fraction=0.5)
     with pytest.raises(ValueError):
-        _executor.compile(net, invalid_image)
+        _cell_graph_executor.compile(net, invalid_image)

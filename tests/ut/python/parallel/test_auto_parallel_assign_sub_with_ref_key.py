@@ -19,7 +19,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -62,8 +62,8 @@ def test_auto_parallel_assign_sub_with_ref_key():
     reset_op_id()
 
     net.set_train()
-    _executor.compile(net, x, phase="train")
-    strategies = _executor._get_shard_strategy(net)
+    _cell_graph_executor.compile(net, x, phase="train")
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('PReLU-op', k) is not None:
             assert v == [[1, 1, 1, 8], [1]]

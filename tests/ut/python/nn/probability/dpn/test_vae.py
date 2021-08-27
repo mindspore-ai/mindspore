@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.probability.dpn import VAE
 
 
@@ -54,4 +54,4 @@ def test_vae():
     decoder = Decoder()
     net = VAE(encoder, decoder, hidden_size=3, latent_size=2)
     input_data = Tensor(np.random.rand(32, 6), dtype=mstype.float32)
-    _executor.compile(net, input_data)
+    _cell_graph_executor.compile(net, input_data)

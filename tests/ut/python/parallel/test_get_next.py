@@ -16,7 +16,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
@@ -57,7 +57,7 @@ class GradWrap(nn.Cell):
 
 def compile_net(net):
     net.set_auto_parallel()
-    _executor.compile(net)
+    _cell_graph_executor.compile(net)
 
 
 def test_get_next_single():
@@ -74,7 +74,7 @@ def test_get_next_single():
             return x
 
     net = GradWrap(NetWithLoss(Net(), [ms.float32, ms.int32], [[32, 64], [32]], 2))
-    _executor.compile(net)
+    _cell_graph_executor.compile(net)
 
 
 def test_get_next_semi_auto_parallel():

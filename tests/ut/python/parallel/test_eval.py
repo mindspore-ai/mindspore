@@ -16,7 +16,7 @@ import numpy as np
 
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
@@ -60,11 +60,11 @@ def test_train_and_eval():
     eval_net = EvalNet(net, strategy2=strategy2)
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, _x, _b, phase='train', auto_parallel_mode=True)
+    _cell_graph_executor.compile(net, _x, _b, phase='train', auto_parallel_mode=True)
 
     eval_net.set_train(mode=False)
     eval_net.set_auto_parallel()
-    _executor.compile(eval_net, _x, _b, phase='eval', auto_parallel_mode=True)
+    _cell_graph_executor.compile(eval_net, _x, _b, phase='eval', auto_parallel_mode=True)
 
     context.reset_auto_parallel_context()
 
@@ -77,10 +77,10 @@ def test_train_and_eval_auto():
     eval_net = EvalNet(net, strategy2=strategy2)
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, _x, _b, phase='train', auto_parallel_mode=True)
+    _cell_graph_executor.compile(net, _x, _b, phase='train', auto_parallel_mode=True)
 
     eval_net.set_train(mode=False)
     eval_net.set_auto_parallel()
-    _executor.compile(eval_net, _x, _b, phase='eval', auto_parallel_mode=True)
+    _cell_graph_executor.compile(eval_net, _x, _b, phase='eval', auto_parallel_mode=True)
 
     context.reset_auto_parallel_context()

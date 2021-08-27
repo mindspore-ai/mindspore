@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim.adafactor import AdaFactor
 from mindspore.ops import operations as P
@@ -82,7 +82,7 @@ def test_adafactor_compile1():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_compile2():
@@ -97,7 +97,7 @@ def test_adafactor_compile2():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_compile3():
@@ -113,7 +113,7 @@ def test_adafactor_compile3():
                           warmup_init=False, compression=False)
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_compile4():
@@ -133,7 +133,7 @@ def test_adafactor_compile4():
                           warmup_init=warmup_init, compression=compression)
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_compile5():
@@ -153,7 +153,7 @@ def test_adafactor_compile5():
                           warmup_init=warmup_init, compression=compression)
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_compile6():
@@ -173,7 +173,7 @@ def test_adafactor_compile6():
                           warmup_init=warmup_init, compression=compression)
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_group1():
@@ -192,7 +192,7 @@ def test_adafactor_group1():
     optimizer = AdaFactor(group_params, learning_rate=poly_decay_lr, relative_step=False)
 
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_group2():
@@ -210,7 +210,7 @@ def test_adafactor_group2():
                     {'params': [all_params[1]]}]
     optimizer = AdaFactor(group_params, learning_rate=schedule_lr, relative_step=False)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_group3():
@@ -227,7 +227,7 @@ def test_adafactor_group3():
     optimizer = AdaFactor(group_params, learning_rate=None)
 
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_group4():
@@ -244,7 +244,7 @@ def test_adafactor_group4():
                     {'params': [all_params[1]]}]
     optimizer = AdaFactor(group_params, learning_rate=None)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_group5():
@@ -261,7 +261,7 @@ def test_adafactor_group5():
                     {'params': [all_params[1]]}]
     optimizer = AdaFactor(group_params, learning_rate=None, beta1=0.1)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adafactor_group6():
@@ -278,4 +278,4 @@ def test_adafactor_group6():
                     {'params': [all_params[1]]}]
     optimizer = AdaFactor(group_params, learning_rate=None, beta1=0.2)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)

@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import composite as C
@@ -100,7 +100,7 @@ def test_auto_parallel_arithmetic():
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64]), dtype=ms.int32)
     net.set_train()
-    _executor.compile(net, x, y, b)
+    _cell_graph_executor.compile(net, x, y, b)
 
 
 def test_auto_parallel_arithmetic_model():

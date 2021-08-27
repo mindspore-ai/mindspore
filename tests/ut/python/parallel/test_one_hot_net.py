@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.cell import Cell
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import composite as C
@@ -279,7 +279,7 @@ def test_bn_reshape_dense_bn_train_loss():
     net.set_auto_parallel()
 
     net.set_train()
-    _executor.compile(net, input_, label)
+    _cell_graph_executor.compile(net, input_, label)
 
 
 def test_semi_one_hot_net_batch():
@@ -294,7 +294,7 @@ def test_semi_one_hot_net_batch():
     net.set_auto_parallel()
 
     net.set_train()
-    _executor.compile(net, input_, label)
+    _cell_graph_executor.compile(net, input_, label)
 
 
 def test_semi_one_hot_net_model():

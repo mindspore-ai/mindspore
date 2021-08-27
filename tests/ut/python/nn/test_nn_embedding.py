@@ -18,7 +18,7 @@ import pytest
 
 from mindspore import Tensor
 from mindspore.common import dtype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Embedding, MultiFieldEmbeddingLookup
 from ..ut_filter import non_graph_engine
 
@@ -27,21 +27,21 @@ from ..ut_filter import non_graph_engine
 def test_check_embedding_1():
     net = Embedding(20000, 768, False)
     input_data = Tensor(np.ones([8, 128]), dtype.int32)
-    _executor.compile(net, input_data)
+    _cell_graph_executor.compile(net, input_data)
 
 
 @non_graph_engine
 def test_check_embedding_2():
     net = Embedding(20000, 768, True)
     input_data = Tensor(np.ones([8, 128]), dtype.int32)
-    _executor.compile(net, input_data)
+    _cell_graph_executor.compile(net, input_data)
 
 
 @non_graph_engine
 def test_check_embedding_3():
     net = Embedding(20000, 768, True, "zeros")
     input_data = Tensor(np.ones([8, 128]), dtype.int32)
-    _executor.compile(net, input_data)
+    _cell_graph_executor.compile(net, input_data)
 
 
 def compile_multi_field_embedding(shape_id, shape_value, shape_field,
@@ -50,7 +50,7 @@ def compile_multi_field_embedding(shape_id, shape_value, shape_field,
     input_data = Tensor(np.ones(shape_id), type_id)
     input_value = Tensor(np.ones(shape_value), type_value)
     input_field = Tensor(np.ones(shape_field), type_field)
-    _executor.compile(net, input_data, input_value, input_field)
+    _cell_graph_executor.compile(net, input_data, input_value, input_field)
 
 
 @non_graph_engine

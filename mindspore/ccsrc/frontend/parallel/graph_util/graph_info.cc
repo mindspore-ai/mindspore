@@ -70,7 +70,7 @@ bool GetLoopIndexFromCNode(const CNodePtr &cnode, size_t *loop_index) {
 }
 
 void SetOpsNumToExecutor(size_t num_ops) {
-  auto executor = pipeline::ExecutorPy::GetInstance();
+  auto executor = pipeline::GraphExecutorPy::GetInstance();
   executor->SetNumOpsInfo(num_ops);
 }
 }  // namespace parallel

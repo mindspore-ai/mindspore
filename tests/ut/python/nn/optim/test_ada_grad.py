@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adagrad
 from mindspore.ops import operations as P
@@ -55,4 +55,4 @@ def test_ada_grad():
     optimizer = Adagrad(net.trainable_params(), weight_decay=0.9, loss_scale=1024.0)
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)

@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 
 class AvgNet(nn.Cell):
@@ -36,7 +36,7 @@ class AvgNet(nn.Cell):
 def test_compile_avg():
     net = AvgNet(3, 1)
     x = Tensor(np.ones([1, 3, 16, 50]).astype(np.float32))
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 
 class MaxNet(nn.Cell):
@@ -58,7 +58,7 @@ class MaxNet(nn.Cell):
 def test_compile_max():
     net = MaxNet(3, stride=1, padding=0)
     x = Tensor(np.random.randint(0, 255, [1, 3, 6, 6]).astype(np.float32))
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 
 class Avg1dNet(nn.Cell):
@@ -75,4 +75,4 @@ class Avg1dNet(nn.Cell):
 def test_avg1d():
     net = Avg1dNet(6, 1)
     input_ = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
-    _executor.compile(net, input_)
+    _cell_graph_executor.compile(net, input_)

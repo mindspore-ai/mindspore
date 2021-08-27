@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn.optim import Momentum, LARS
 from mindspore.ops import operations as P
@@ -38,7 +38,7 @@ class NetWithLoss(nn.Cell):
 def compile_net(net, x, b):
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, b)
+    _cell_graph_executor.compile(net, x, b)
 
 
 def test_momentum():

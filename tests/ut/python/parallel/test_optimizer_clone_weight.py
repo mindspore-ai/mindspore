@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
-from mindspore.common.api import _Executor
+from mindspore.common.api import _CellGraphExecutor
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.ops import operations as P
@@ -37,7 +37,7 @@ class NetWithLoss(nn.Cell):
 
 def compile_net(net, x, b):
     net.set_auto_parallel()
-    _Executor().compile(net, x, b)
+    _CellGraphExecutor().compile(net, x, b)
 
 
 def test_optimizer_clone_weight():

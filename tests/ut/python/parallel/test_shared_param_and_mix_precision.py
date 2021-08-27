@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, Parameter
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.nn.optim import Momentum
@@ -71,7 +71,7 @@ def auto_parallel_compile_net(mode, dev_num, net, strategy1=None, strategy2=None
     train_network = TrainOneStepCell(net, optimizer).set_comm_fusion(4)
     train_network.set_auto_parallel()
     train_network.set_train()
-    _executor.compile(train_network, inputs, label, phase="train", auto_parallel_mode=True)
+    _cell_graph_executor.compile(train_network, inputs, label, phase="train", auto_parallel_mode=True)
     context.reset_auto_parallel_context()
     return train_network
 

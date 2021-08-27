@@ -28,7 +28,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.common.api import ms_function, _executor
+from mindspore.common.api import ms_function, _cell_graph_executor
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.functional import tensor_add
@@ -107,7 +107,7 @@ def test_var_parameter_case2():
     np2 = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input2 = ms.Tensor(np2)
 
-    _executor.compile(net, input_data, input1, input2)
+    _cell_graph_executor.compile(net, input_data, input1, input2)
 
 
 # Test case: test the global flag

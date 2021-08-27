@@ -19,7 +19,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 
@@ -118,15 +118,15 @@ class ParallelMulNet(nn.Cell):
 def compile_graph(x, net):
     net.set_auto_parallel()
     net.set_train(False)
-    _executor.compile(net, x, auto_parallel_mode=True)
-    strategies = _executor._get_shard_strategy(net)
+    _cell_graph_executor.compile(net, x, auto_parallel_mode=True)
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     return strategies
 
 def compile_graph_two_input(x, y, net):
     net.set_auto_parallel()
     net.set_train(False)
-    _executor.compile(net, x, y, auto_parallel_mode=True)
-    strategies = _executor._get_shard_strategy(net)
+    _cell_graph_executor.compile(net, x, y, auto_parallel_mode=True)
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     return strategies
 
 

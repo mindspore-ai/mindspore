@@ -20,7 +20,7 @@ import mindspore.nn as nn
 import mindspore.ops.functional as F
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.communication.management import init
 from mindspore.nn.loss.loss import _Loss
@@ -304,7 +304,7 @@ def test_train_32k_8p(batch_size=32, num_classes=32768):
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_shard_strategy(model._train_network)
+    strategies = _cell_graph_executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num

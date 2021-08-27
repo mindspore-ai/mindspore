@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as vision
 import mindspore.nn as nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.tensor import Tensor
 from mindspore.dataset.vision import Inter
 from mindspore.ops import operations as P
@@ -92,8 +92,8 @@ if __name__ == '__main__':
     net = dataiter()
     net.set_train()
 
-    _executor.init_dataset(ds1.queue_name, 39, batch_size,
-                           dataset_types, dataset_shapes, (), 'dataset')
+    _cell_graph_executor.init_dataset(ds1.queue_name, 39, batch_size,
+                                      dataset_types, dataset_shapes, (), 'dataset')
     ds1.send()
 
     for data in data_set.create_tuple_iterator(output_numpy=True, num_epochs=1):

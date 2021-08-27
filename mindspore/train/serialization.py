@@ -37,7 +37,7 @@ from mindspore.train.mind_ir_pb2 import GraphProto as graph_proto
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor as _executor
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import check_input_data, Validator
 from mindspore.compression.export import quant_export

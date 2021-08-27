@@ -17,7 +17,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Parameter, Tensor, context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -49,7 +49,7 @@ class GradWrap(nn.Cell):
 def compile_net(net, x, y, b):
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, y, b)
+    _cell_graph_executor.compile(net, x, y, b)
 
 
 def test_matmul_sub():
@@ -651,7 +651,7 @@ def test_assign_sub():
     def compile_sub_net(net, x):
         net.set_auto_parallel()
         net.set_train()
-        _executor.compile(net, x)
+        _cell_graph_executor.compile(net, x)
 
     context.set_auto_parallel_context(device_num=64, global_rank=15)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -699,7 +699,7 @@ def test_assign_add():
     def compile_sub_net(net, x):
         net.set_auto_parallel()
         net.set_train()
-        _executor.compile(net, x)
+        _cell_graph_executor.compile(net, x)
 
     context.set_auto_parallel_context(device_num=64, global_rank=15)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -747,7 +747,7 @@ def test_assign():
     def compile_sub_net(net, x):
         net.set_auto_parallel()
         net.set_train()
-        _executor.compile(net, x)
+        _cell_graph_executor.compile(net, x)
 
     context.set_auto_parallel_context(device_num=64, global_rank=15)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")

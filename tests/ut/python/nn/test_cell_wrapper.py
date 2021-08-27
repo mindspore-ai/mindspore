@@ -18,7 +18,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell, ParameterUpdate
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
@@ -50,7 +50,7 @@ def test_parameter_update_int32_and_tensor():
     train_network.set_train()
     inputs = Tensor(np.ones([1, 64]).astype(np.float32))
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
     # test tensor
     param_lr = train_network.parameters_dict()['learning_rate']
@@ -58,14 +58,14 @@ def test_parameter_update_int32_and_tensor():
     update_network.phase = 'update_param'
 
     input_lr = Tensor(np.array([0.2, 0.02, 0.002]), mstype.float32)
-    _executor.compile(update_network, input_lr)
+    _cell_graph_executor.compile(update_network, input_lr)
 
     # test int32
     param_step = train_network.parameters_dict()['global_step']
     update_global_step = ParameterUpdate(param_step)
 
     input_step = Tensor(np.array([1000]), mstype.int32)
-    _executor.compile(update_global_step, input_step)
+    _cell_graph_executor.compile(update_global_step, input_step)
 
 
 def test_parameter_update_float32():
@@ -81,7 +81,7 @@ def test_parameter_update_float32():
     train_network.set_train()
     inputs = Tensor(np.ones([1, 64]).astype(np.float32))
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
     # construct and compile update graph
     param_lr = train_network.parameters_dict()['learning_rate']
@@ -89,7 +89,7 @@ def test_parameter_update_float32():
     update_network.phase = 'update_param'
 
     input_lr = Tensor(0.0001, mstype.float32)
-    _executor.compile(update_network, input_lr)
+    _cell_graph_executor.compile(update_network, input_lr)
 
 
 def test_parameter_update_error():

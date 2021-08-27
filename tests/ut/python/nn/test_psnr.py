@@ -21,7 +21,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 
 class PSNRNet(nn.Cell):
@@ -38,7 +38,7 @@ def test_compile_psnr():
     net = PSNRNet(max_val)
     img1 = Tensor(np.random.random((8, 3, 16, 16)))
     img2 = Tensor(np.random.random((8, 3, 16, 16)))
-    _executor.compile(net, img1, img2)
+    _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_compile_psnr_grayscale():
@@ -46,7 +46,7 @@ def test_compile_psnr_grayscale():
     net = PSNRNet(max_val)
     img1 = Tensor(np.random.randint(0, 256, (8, 1, 16, 16), np.uint8))
     img2 = Tensor(np.random.randint(0, 256, (8, 1, 16, 16), np.uint8))
-    _executor.compile(net, img1, img2)
+    _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_psnr_max_val_negative():
@@ -74,7 +74,7 @@ def test_psnr_different_shape():
     img2 = Tensor(np.random.random(shape_2))
     net = PSNRNet()
     with pytest.raises(ValueError):
-        _executor.compile(net, img1, img2)
+        _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_psnr_different_dtype():
@@ -84,7 +84,7 @@ def test_psnr_different_dtype():
     img2 = Tensor(np.random.random((8, 3, 16, 16)), dtype=dtype_2)
     net = PSNRNet()
     with pytest.raises(TypeError):
-        _executor.compile(net, img1, img2)
+        _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_psnr_invalid_5d_input():
@@ -98,8 +98,8 @@ def test_psnr_invalid_5d_input():
 
     net = PSNRNet()
     with pytest.raises(ValueError):
-        _executor.compile(net, invalid_img1, img2)
+        _cell_graph_executor.compile(net, invalid_img1, img2)
     with pytest.raises(ValueError):
-        _executor.compile(net, img1, invalid_img2)
+        _cell_graph_executor.compile(net, img1, invalid_img2)
     with pytest.raises(ValueError):
-        _executor.compile(net, invalid_img1, invalid_img2)
+        _cell_graph_executor.compile(net, invalid_img1, invalid_img2)

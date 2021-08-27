@@ -19,7 +19,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, ParameterTuple
 from mindspore import context, Model
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.optim import Adam, FTRL
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -114,8 +114,8 @@ def test_double_subgraphs():
     x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
     reset_op_id()
     net.set_train()
-    _executor.compile(net, x, phase='train')
-    strategies = _executor._get_shard_strategy(net)
+    _cell_graph_executor.compile(net, x, phase='train')
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('ReduceMean-op', k) is not None:
             assert v == [[8, 1, 1, 1]]
@@ -165,7 +165,7 @@ def test_double_subgraphs_train():
     ds_train = DatasetLenet(Tensor(batch_ids), None)
     model = Model(net)
     model.train(1, ds_train, dataset_sink_mode=False)
-    strategies = _executor._get_shard_strategy(net)
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('ReduceMean-op', k) is not None:
             assert v == [[1, 1, 1, 1]]

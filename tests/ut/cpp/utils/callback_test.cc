@@ -38,7 +38,7 @@ class TestCallback : public UT::Common {
  * # ut and python static info not share
 TEST_F(TestCallback, test_get_anf_tensor_shape) {
   py::object obj = python_adapter::CallPyFn("gtest_input.pipeline.parse.parse_class", "test_get_object_graph");
-  FuncGraphPtr func_graph = pipeline::ExecutorPy::GetInstance()->GetFuncGraphPy(obj);
+  FuncGraphPtr func_graph = pipeline::GraphExecutorPy::GetInstance()->GetFuncGraphPy(obj);
   transform::DfGraphManager::GetInstance().SetAnfGraph(func_graph);
   std::shared_ptr<std::vector<int64_t>> param_shape_ptr = std::make_shared<std::vector<int64_t>>();
   bool get_shape = callbacks::GetParameterShape(func_graph, "weight", param_shape_ptr);
@@ -47,7 +47,7 @@ TEST_F(TestCallback, test_get_anf_tensor_shape) {
 
 TEST_F(TestCallback, test_checkpoint_save_op) {
   py::object obj = python_adapter::CallPyFn("gtest_input.pipeline.parse.parse_class", "test_get_object_graph");
-  FuncGraphPtr func_graph = pipeline::ExecutorPy::GetInstance()->GetFuncGraphPy(obj);
+  FuncGraphPtr func_graph = pipeline::GraphExecutorPy::GetInstance()->GetFuncGraphPy(obj);
   transform::DfGraphManager::GetInstance().SetAnfGraph(func_graph);
 
 #define DTYPE float

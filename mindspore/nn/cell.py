@@ -30,7 +30,7 @@ from .. import context
 from .._c_expression import init_pipeline, Cell_, FuncGraph
 from .._checkparam import Validator
 from ..common import dtype as mstype
-from ..common.api import _executor, _pynative_exec
+from ..common.api import _cell_graph_executor, _pynative_executor
 from ..common.parameter import Parameter, ParameterTuple
 from ..common.tensor import Tensor
 from ..ops.operations import HookBackward, Cast
@@ -98,7 +98,7 @@ class Cell(Cell_):
         self._parallel_parameter_name_list = ()
         self._parallel_parameter_merge_net_dict = {}
         self._create_time = int(time.time() * 1e9)
-        self.phase_prefix = ""
+        self.arguments_key = ""
         self.parameter_broadcast_done = False
         init_pipeline()
 
@@ -264,8 +264,8 @@ class Cell(Cell_):
 
     def get_func_graph_proto(self):
         """Return graph binary proto."""
-        return _executor._get_func_graph_proto(self, self.phase + "." + str(self.create_time) + '.' + str(id(self)),
-                                               "anf_ir", True)
+        exec_id = self.phase + "." + str(self.create_time) + '.' + str(id(self))
+        return _cell_graph_executor._get_func_graph_proto(self, exec_id, "anf_ir", True)
 
     def __getattr__(self, name):
         if '_params' in self.__dict__:
@@ -295,9 +295,9 @@ class Cell(Cell_):
 
     def __del__(self):
         if context.get_context is not None and context.get_context("mode") == context.PYNATIVE_MODE:
-            _pynative_exec.del_cell(str(id(self)))
+            _pynative_executor.del_cell(str(id(self)))
         if hasattr(self, "_create_time"):
-            _executor.del_net_res(str(self._create_time))
+            _cell_graph_executor.del_net_res(str(self._create_time))
 
     def __delattr__(self, name):
         if name in self._params:
@@ -338,7 +338,7 @@ class Cell(Cell_):
     def do_parameter_broadcast(self):
         if context.get_auto_parallel_context("parallel_mode") == ParallelMode.DATA_PARALLEL:
             if not self.parameter_broadcast_done:
-                _pynative_exec.parameter_broadcast(self, self.phase, self._auto_parallel_mode)
+                _pynative_executor.parameter_broadcast(self, self.phase, self._auto_parallel_mode)
                 self.parameter_broadcast_done = True
 
     def run_construct(self, cast_inputs, kwargs):
@@ -381,6 +381,8 @@ class Cell(Cell_):
             bound_args = inspect.signature(self.construct).bind(*inputs, **kwargs)
             inputs = bound_args.args
             kwargs = bound_args.kwargs
+
+        # Run in Graph mode.
         if context.get_context("mode") == context.GRAPH_MODE:
             self._check_construct_args(*inputs, **kwargs)
             if self.enable_hook:
@@ -388,13 +390,14 @@ class Cell(Cell_):
             out = self.compile_and_run(*inputs)
             return out
 
+        # Run in PyNative mode.
         self.do_parameter_broadcast()
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("The cell inputs should not be numpy arrays.")
         if self.requires_grad is True:
-            _pynative_exec.set_grad_flag(True)
-        _pynative_exec.new_graph(self, *inputs, **kwargs)
+            _pynative_executor.set_grad_flag(True)
+        _pynative_executor.new_graph(self, *inputs, **kwargs)
         cast_inputs = list()
         if hasattr(self, "_mindspore_flags"):
             if self._mindspore_flags.get('fp16'):
@@ -406,7 +409,7 @@ class Cell(Cell_):
         output = self.run_construct(cast_inputs, kwargs)
         if isinstance(output, Parameter):
             output = output.data
-        _pynative_exec.end_graph(self, output, *inputs, **kwargs)
+        _pynative_executor.end_graph(self, output, *inputs, **kwargs)
         return output
 
     def _add_attr(self, name, value):
@@ -551,7 +554,7 @@ class Cell(Cell_):
         """
         Replace parameters with sliced tensors by parallel strategies.
 
-        Please refer to the usage in source code of `mindspore.common._Executor.compile`.
+        Please refer to the usage in source code of `mindspore.common._CellGraphExecutor.compile`.
 
         Args:
             params (dict): The parameters dictionary used for initializing the data graph.
@@ -635,7 +638,7 @@ class Cell(Cell_):
         Args:
             inputs (tuple): Inputs of the Cell object.
         """
-        _executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
+        _cell_graph_executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
 
     def compile_and_run(self, *inputs):
         """
@@ -659,19 +662,19 @@ class Cell(Cell_):
 
         if self._auto_parallel_mode:
             if new_inputs and isinstance(new_inputs[0], Tensor) and inputs[0].virtual_flag:
-                # get parallel inputs in sink mode, parallel inputs set in _executor.compile
+                # get parallel inputs in sink mode, parallel inputs set in _cell_graph_executor.compile
                 parallel_inputs_run = self._parallel_inputs_run
             else:
                 parallel_inputs_run = new_inputs
-            return _executor(self, *parallel_inputs_run, phase=self.phase)
-        return _executor(self, *new_inputs, phase=self.phase)
+            return _cell_graph_executor(self, *parallel_inputs_run, phase=self.phase)
+        return _cell_graph_executor(self, *new_inputs, phase=self.phase)
 
     def auto_parallel_compile_and_run(self):
         return self._auto_parallel_compile_and_run
 
     def exec_checkpoint_graph(self):
         """Executes saving checkpoint graph operation."""
-        _executor(self, phase='save')
+        _cell_graph_executor(self, phase='save')
 
     def insert_param_to_cell(self, param_name, param, check_name=True):
         """

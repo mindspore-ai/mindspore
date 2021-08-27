@@ -23,7 +23,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C, operations as P
 from mindspore.ops.operations.comm_ops import AllReduce
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, Adam
 
 
@@ -69,7 +69,7 @@ def test_bprop_with_sparse_feature_allreduce(test_context):
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 
 def test_bprop_with_sparse_feature_mirror(test_context):
@@ -96,7 +96,7 @@ def test_bprop_with_sparse_feature_mirror(test_context):
         optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0, weight_decay=0.9)
         train_net = TrainOneStepCell(net, optimizer)
         train_net.set_train()
-        _executor.compile(train_net, _x, _b)
+        _cell_graph_executor.compile(train_net, _x, _b)
 
     net = Net()
     compile_net(net)
@@ -128,7 +128,7 @@ def test_bprop_with_sparse_feature_dataparallel(test_context):
         optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0, weight_decay=0.9)
         train_net = TrainOneStepCell(net, optimizer)
         train_net.set_train()
-        _executor.compile(train_net, _x, _b)
+        _cell_graph_executor.compile(train_net, _x, _b)
 
     net = Net()
     compile_net(net)

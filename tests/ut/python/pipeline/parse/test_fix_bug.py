@@ -21,7 +21,7 @@ from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common import dtype as ms
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 
 class assignment1_Net(nn.Cell):
@@ -63,7 +63,7 @@ def assignment_operator_base(number):
         net = assignment1_Net(x)
     else:
         net = assignment2_Net(x)
-    _executor.compile(net, input_me)
+    _cell_graph_executor.compile(net, input_me)
 
 
 def test_ME_assignment_operator_0010():
@@ -95,7 +95,7 @@ def test_compile_unspported():
     input_me = Tensor(input_np)
     net = unsupported_method_net()
     with pytest.raises(RuntimeError):
-        _executor.compile(net, input_me)
+        _cell_graph_executor.compile(net, input_me)
 
 
 def test_parser_map_0002():

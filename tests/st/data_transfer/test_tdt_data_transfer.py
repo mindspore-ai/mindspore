@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 from mindspore import context, nn, Tensor
 from mindspore import log as logger
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 import mindspore.dataset as de
@@ -121,7 +121,7 @@ def op_network_with_step_num(dataset, step_num):
     net = SingleOpNetwork(dataset_shapes)
     net_with_dataset = NetWithTDT(net, dataset_types, dataset_shapes, queue_name)
     # when device type is Davinci, net should has get_next operation before call init_dataset
-    _executor.init_dataset(dataset.queue_name, 1, batch_size, dataset_types, dataset_shapes, (), "")
+    _cell_graph_executor.init_dataset(dataset.queue_name, 1, batch_size, dataset_types, dataset_shapes, (), "")
     dataset_send_tdt(dataset)
     return op_network_with_epoch(net_with_dataset, step_num)
 

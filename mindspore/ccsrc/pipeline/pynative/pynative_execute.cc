@@ -2942,7 +2942,7 @@ void GradExecutor::GradMsFunction(const py::object &out, const py::args &args) {
   // Get ms_function func graph and grad graph.
   const auto &phase = graph_phase();
   MS_LOG(DEBUG) << "ms_function func graph phase: " << phase;
-  auto executor = pipeline::ExecutorPy::GetInstance();
+  auto executor = pipeline::GraphExecutorPy::GetInstance();
   FuncGraphPtr ms_func_graph = executor->GetFuncGraph(phase);
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   FuncGraphPtr grad_graph = executor->GetGradGraph(phase);

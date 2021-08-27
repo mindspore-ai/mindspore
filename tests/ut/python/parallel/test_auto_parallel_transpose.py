@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
@@ -77,8 +77,8 @@ def test_two_matmul_transpose():
     reset_op_id()
 
     net.set_train()
-    _executor.compile(net, x, y, b, phase='train')
-    strategies = _executor._get_shard_strategy(net)
+    _cell_graph_executor.compile(net, x, y, b, phase='train')
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     print(strategies)
     expected_strategies = {'Default/network-Net/Transpose-op0': [[1, 16]],
                            'Default/network-Net/Transpose-op1': [[16, 1]],

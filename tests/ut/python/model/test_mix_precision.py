@@ -19,7 +19,7 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.common import ParameterTuple
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell, WithLossCell
@@ -111,7 +111,7 @@ def test_data_parallel_with_cast():
     net = WithLossCell(net, loss_fn)
     net = TrainOneStepCell(net, optimizer)
 
-    _executor.compile(net, predict, label)
+    _cell_graph_executor.compile(net, predict, label)
     context.reset_auto_parallel_context()
 
 
@@ -128,7 +128,7 @@ def test_nn_prelu():
     x = Tensor(np.ones([1, 16, 10, 10]).astype(np.float32) * 0.01)
     net = NetForPReLU().set_train()
     net.add_flags_recursive(fp16=True)
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 
 class NetForCast(nn.Cell):

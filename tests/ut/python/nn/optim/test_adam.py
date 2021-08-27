@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam, AdamWeightDecay
 from mindspore.ops import operations as P
@@ -86,7 +86,7 @@ def test_adamw_compile():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adam_compile():
@@ -101,7 +101,7 @@ def test_adam_compile():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_sparse_adam_compile():
@@ -114,7 +114,7 @@ def test_sparse_adam_compile():
     optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0, weight_decay=0.9)
     optimizer.target = 'CPU'
     train_network = TrainOneStepCell(net, optimizer)
-    _executor.compile(train_network, indices, label)
+    _cell_graph_executor.compile(train_network, indices, label)
 
 
 def test_sparse_adam():
@@ -126,7 +126,7 @@ def test_sparse_adam():
 
     optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0, weight_decay=0.9)
     train_network = TrainOneStepCell(net, optimizer)
-    _executor.compile(train_network, indices, label)
+    _cell_graph_executor.compile(train_network, indices, label)
 
 
 def test_adam_group1():
@@ -146,7 +146,7 @@ def test_adam_group1():
     optimizer = nn.Adam(group_params, learning_rate=0.1)
 
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adam_group2():
@@ -164,7 +164,7 @@ def test_adam_group2():
                     {'params': [all_params[1]]}]
     optimizer = nn.Adam(group_params, learning_rate=schedule_lr)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adamweightdecay_group():
@@ -182,7 +182,7 @@ def test_adamweightdecay_group():
                     {'params': [all_params[1]]}]
     optimizer = nn.AdamWeightDecay(group_params, learning_rate=schedule_lr)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_adamoffload_group():
@@ -200,7 +200,7 @@ def test_adamoffload_group():
                     {'params': [all_params[1]]}]
     optimizer = nn.AdamOffload(group_params, learning_rate=schedule_lr)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_AdamWeightDecay_beta1():

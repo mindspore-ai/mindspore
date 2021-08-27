@@ -49,7 +49,7 @@ class Pipeline {
 
   ~Pipeline() = default;
 
-  void Run(const std::string &phase_s);
+  void Run(const std::string &phase);
 
   ResourcePtr resource() { return resource_; }
 
@@ -59,29 +59,29 @@ class Pipeline {
 };
 
 // A function pipeline.
-class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
+class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
  public:
-  static std::shared_ptr<ExecutorPy> GetInstance() {
+  static std::shared_ptr<GraphExecutorPy> GetInstance() {
     std::lock_guard<std::mutex> i_lock(instance_lock_);
     if (executor_ == nullptr) {
-      executor_ = std::shared_ptr<ExecutorPy>(new (std::nothrow) ExecutorPy());
+      executor_ = std::shared_ptr<GraphExecutorPy>(new (std::nothrow) GraphExecutorPy());
     }
     return executor_;
   }
 
-  ~ExecutorPy();
+  ~GraphExecutorPy();
 
   const std::string &phase() const { return phase_; }
-  void SaveCompiledGraph(const std::string &phase_s);
-  bool CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm,
+  void SaveCompiledGraph(const std::string &phase);
+  bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm,
                     const std::string &queue_name);
-  bool Compile(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm,
+  bool Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm,
                const std::string &queue_name);
 
   void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list);
 
   // for pynative mode when use_vm is on
-  py::object Run(const py::tuple &args, const py::object &phase);
+  py::object Run(const py::tuple &args, const py::object &phase_obj);
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
   FuncGraphPtr GetGradGraph(const std::string &phase);
@@ -105,17 +105,17 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   void SetNumOpsInfo(size_t);
   py::dict GetAllreduceFusion(const std::string &phase);
   void DelNetRes(const std::string &id);
-  void ReleaseResource(const py::object &phase);
+  void ReleaseResource(const py::object &phase_obj);
   static void ClearRes();
   static bool GetDebugTerminate() { return debugger_terminate_; }
   static void DebugTerminate(bool val) { debugger_terminate_ = val; }
   void TerminateDebugger();
 
   std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> FetchInfoForQuantExport(
-    const std::string &phase_s);
+    const std::string &phase);
 
  private:
-  ExecutorPy();
+  GraphExecutorPy();
   void ConvertObjectToTensors(const py::dict &dict, std::map<std::string, tensor::TensorPtr> *tensors);
   void GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
                      std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table);
@@ -125,18 +125,18 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   static std::vector<ActionItem> FilterActions(const std::vector<ActionItem> &actions, const std::string &phase);
 
   std::map<std::string, ExecutorInfoPtr> info_;
-  static std::shared_ptr<ExecutorPy> executor_;
+  static std::shared_ptr<GraphExecutorPy> executor_;
   static std::mutex instance_lock_;
   static bool debugger_terminate_;
   std::map<std::string, py::dict> stra_dict_;
   std::string phase_ = "";
   std::map<std::string, size_t> phase_to_num_op_info_;
 };
-using ExecutorPyPtr = std::shared_ptr<ExecutorPy>;
+using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 
 void CheckArgsValid(const py::tuple &args);
 // Generate a key for mapping function graph
-py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults);
+py::object GenerateArgumentsKey(const std::unordered_map<std::string, py::object> &args);
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs);
 
 bool InitDistribute(const std::map<std::string, std::string> &options);

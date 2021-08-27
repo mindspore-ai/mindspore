@@ -23,7 +23,7 @@ from mindspore.ops import _constants as Constants
 from mindspore.graph_utils.python_pass import register_pass, unregister_pass, set_renorm, gen_new_parameter,\
     cancel_new_parameter, set_reopt
 from mindspore.common.api import _generate_pip_args
-from mindspore._c_expression import generate_key, Executor_
+from mindspore._c_expression import generate_arguments_key, GraphExecutor_
 from mindspore.graph_utils.graph_pattern import OneOf, Prim, Call, NoneOf, Any, NewTensor, NewParameter, Imm
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -31,13 +31,10 @@ context.set_context(mode=context.GRAPH_MODE)
 def get_func_graph(obj, *args, phase="validate"):
     args_names, args_list = _generate_pip_args(obj, *args)
     dic = dict(zip(args_names, args_list))
-    key = generate_key(phase, dic)
-    phase_prefix = str(key[1])
-    if phase == 'export':
-        phase = phase + '.' + phase_prefix + '.' + str(obj.create_time)
-    else:
-        phase = phase_prefix + phase + '.' + str(obj.create_time)
-    _executor = Executor_.get_instance()
+    key = generate_arguments_key(dic)
+    obj.arguments_key = str(key)
+    phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
+    _executor = GraphExecutor_.get_instance()
     _executor.compile(obj, args_list, phase, False, "")
     return _executor.get_func_graph(phase)
 

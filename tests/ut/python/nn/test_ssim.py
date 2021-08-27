@@ -21,7 +21,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 
 class SSIMNet(nn.Cell):
@@ -37,7 +37,7 @@ def test_compile():
     net = SSIMNet()
     img1 = Tensor(np.random.random((8, 3, 16, 16)), mstype.float32)
     img2 = Tensor(np.random.random((8, 3, 16, 16)), mstype.float32)
-    _executor.compile(net, img1, img2)
+    _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_ssim_max_val_negative():
@@ -85,7 +85,7 @@ def test_ssim_different_shape():
     img2 = Tensor(np.random.random(shape_2))
     net = SSIMNet()
     with pytest.raises(TypeError):
-        _executor.compile(net, img1, img2)
+        _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_ssim_different_dtype():
@@ -95,7 +95,7 @@ def test_ssim_different_dtype():
     img2 = Tensor(np.random.random((8, 3, 16, 16)), dtype=dtype_2)
     net = SSIMNet()
     with pytest.raises(TypeError):
-        _executor.compile(net, img1, img2)
+        _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_ssim_invalid_5d_input():
@@ -109,8 +109,8 @@ def test_ssim_invalid_5d_input():
 
     net = SSIMNet()
     with pytest.raises(TypeError):
-        _executor.compile(net, invalid_img1, img2)
+        _cell_graph_executor.compile(net, invalid_img1, img2)
     with pytest.raises(TypeError):
-        _executor.compile(net, img1, invalid_img2)
+        _cell_graph_executor.compile(net, img1, invalid_img2)
     with pytest.raises(TypeError):
-        _executor.compile(net, invalid_img1, invalid_img2)
+        _cell_graph_executor.compile(net, invalid_img1, invalid_img2)

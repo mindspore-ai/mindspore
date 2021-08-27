@@ -19,7 +19,7 @@ from mindspore import Tensor
 from mindspore.common import dtype
 from mindspore.parallel.nn import MultiHeadAttention, FeedForward, TransformerEncoderLayer, TransformerEncoder, \
     TransformerDecoder, TransformerDecoderLayer, Transformer, CrossEntropyLoss, AttentionMask, FixedSparseAttention
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 
 def test_transformer_encoder_only():
@@ -34,7 +34,7 @@ def test_transformer_encoder_only():
     encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
     encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
 
-    _executor.compile(model, encoder_input_value, encoder_input_mask)
+    _cell_graph_executor.compile(model, encoder_input_value, encoder_input_mask)
 
 
 def test_transformer_encoder_log_softmax():
@@ -51,7 +51,7 @@ def test_transformer_encoder_log_softmax():
         encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
         encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
 
-        _executor.compile(model, encoder_input_value, encoder_input_mask)
+        _cell_graph_executor.compile(model, encoder_input_value, encoder_input_mask)
 
 
 def test_transformer_encoder_leakyrelu():
@@ -67,7 +67,7 @@ def test_transformer_encoder_leakyrelu():
     encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
     encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
 
-    _executor.compile(model, encoder_input_value, encoder_input_mask)
+    _cell_graph_executor.compile(model, encoder_input_value, encoder_input_mask)
 
 
 def test_transformer_encoder_logsigmoid():
@@ -83,7 +83,7 @@ def test_transformer_encoder_logsigmoid():
     encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
     encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
 
-    _executor.compile(model, encoder_input_value, encoder_input_mask)
+    _cell_graph_executor.compile(model, encoder_input_value, encoder_input_mask)
 
 
 def test_encoder_and_decoder():
@@ -102,10 +102,10 @@ def test_encoder_and_decoder():
     decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
     memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
 
-    _executor.compile(model, encoder_input_value, encoder_input_mask,
-                      decoder_input_value,
-                      decoder_input_mask,
-                      memory_mask)
+    _cell_graph_executor.compile(model, encoder_input_value, encoder_input_mask,
+                                 decoder_input_value,
+                                 decoder_input_mask,
+                                 memory_mask)
 
 
 def test_transformer_encoder():
@@ -119,9 +119,9 @@ def test_transformer_encoder():
     encoder_input_value = Tensor(np.ones((2, 16, 8)), dtype.float32)
     encoder_input_mask = Tensor(np.ones((2, 16, 16)), dtype.float16)
 
-    _executor.compile(model,
-                      encoder_input_value,
-                      encoder_input_mask)
+    _cell_graph_executor.compile(model,
+                                 encoder_input_value,
+                                 encoder_input_mask)
 
 
 def test_transformer_encoder_layer():
@@ -131,9 +131,9 @@ def test_transformer_encoder_layer():
     encoder_input_value = Tensor(np.ones((2, 16, 8)), dtype.float32)
     encoder_input_mask = Tensor(np.ones((2, 16, 16)), dtype.float16)
 
-    _executor.compile(model,
-                      encoder_input_value,
-                      encoder_input_mask)
+    _cell_graph_executor.compile(model,
+                                 encoder_input_value,
+                                 encoder_input_mask)
 
 
 def test_transformer_encoder_layer_post_ture():
@@ -145,9 +145,9 @@ def test_transformer_encoder_layer_post_ture():
     encoder_input_value = Tensor(np.ones((2, 16, 8)), dtype.float32)
     encoder_input_mask = Tensor(np.ones((2, 16, 16)), dtype.float16)
 
-    _executor.compile(model,
-                      encoder_input_value,
-                      encoder_input_mask)
+    _cell_graph_executor.compile(model,
+                                 encoder_input_value,
+                                 encoder_input_mask)
 
 
 def test_transformer_decoder():
@@ -165,9 +165,9 @@ def test_transformer_decoder():
     decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
     memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
 
-    _executor.compile(model, decoder_input_value, decoder_input_mask,
-                      encoder_input_value,
-                      memory_mask)
+    _cell_graph_executor.compile(model, decoder_input_value, decoder_input_mask,
+                                 encoder_input_value,
+                                 memory_mask)
 
 
 def test_transformer_decoder_layer():
@@ -185,9 +185,9 @@ def test_transformer_decoder_layer():
     decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
     memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
 
-    _executor.compile(model, decoder_input_value, decoder_input_mask,
-                      encoder_input_value,
-                      memory_mask)
+    _cell_graph_executor.compile(model, decoder_input_value, decoder_input_mask,
+                                 encoder_input_value,
+                                 memory_mask)
 
 
 def test_multihead_attention():
@@ -200,7 +200,7 @@ def test_multihead_attention():
     to_tensor = Tensor(np.ones((2, 20, 15)), dtype.float16)
     attention_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
 
-    _executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
+    _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
 
 
 def test_multihead_attention_wrong_batch():
@@ -214,7 +214,7 @@ def test_multihead_attention_wrong_batch():
     attention_mask = Tensor(np.ones((3, 20, 20)), dtype.float16)
 
     with pytest.raises(ValueError):
-        _executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
+        _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
 
 
 def test_feedforward_layer():
@@ -224,7 +224,7 @@ def test_feedforward_layer():
                         hidden_act='relu')
     tensor = Tensor(np.ones((2, 20, 15)), dtype.float32)
 
-    _executor.compile(model, tensor)
+    _cell_graph_executor.compile(model, tensor)
 
 
 def test_cross_entroy():
@@ -233,13 +233,13 @@ def test_cross_entroy():
     labels_np = np.array([1]).astype(np.int32)
     input_mask = Tensor(np.ones(1).astype(np.float32))
     labels = Tensor(labels_np)
-    _executor.compile(model, logits, labels, input_mask)
+    _cell_graph_executor.compile(model, logits, labels, input_mask)
 
 
 def test_attention_mask():
     model = AttentionMask(seq_length=19)
     inputs = Tensor(np.ones((2, 19)), dtype.float32)
-    _executor.compile(model, inputs)
+    _cell_graph_executor.compile(model, inputs)
 
 
 def test_sparse_attention():
@@ -252,4 +252,4 @@ def test_sparse_attention():
     k = Tensor(np.ones((2, 1024, 512)), dtype.float16)
     v = Tensor(np.ones((2, 1024, 512)), dtype.float16)
     mask = Tensor(np.ones((2, 1024)), dtype.float32)
-    _executor.compile(model, q, k, v, mask)
+    _cell_graph_executor.compile(model, q, k, v, mask)

@@ -20,7 +20,7 @@ import mindspore.ops.composite as C
 import mindspore.ops.functional as F
 import mindspore.ops.operations as P
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 
 grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
@@ -252,18 +252,18 @@ def get_loss_fun(construct_net, num_input, output_index):
 
 def build_construct_graph(net, *inputs, execute=True):
     net.set_train()
-    _executor.compile(net, *inputs)
+    _cell_graph_executor.compile(net, *inputs)
     if execute:
-        _executor(net, inputs)
+        _cell_graph_executor(net, inputs)
 
 
 def build_backward_graph(net, output_shapes, inputs, execute=True):
     inputs = append_sens_to_inputs(output_shapes, inputs)
     net = gen_backward_net(net, len(inputs) - 1)
     net.set_train()
-    _executor.compile(net, inputs)
+    _cell_graph_executor.compile(net, inputs)
     if execute:
-        _executor(net, inputs)
+        _cell_graph_executor(net, inputs)
 
 
 def convert(shp, dtype=np.float32, scale=6):

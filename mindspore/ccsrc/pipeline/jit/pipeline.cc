@@ -99,11 +99,11 @@ const char IR_TYPE_ANF[] = "anf_ir";
 const char IR_TYPE_ONNX[] = "onnx_ir";
 const char IR_TYPE_MINDIR[] = "mind_ir";
 
-ExecutorPyPtr ExecutorPy::executor_ = nullptr;
-std::mutex ExecutorPy::instance_lock_;
-bool ExecutorPy::debugger_terminate_ = false;
+GraphExecutorPyPtr GraphExecutorPy::executor_ = nullptr;
+std::mutex GraphExecutorPy::instance_lock_;
+bool GraphExecutorPy::debugger_terminate_ = false;
 
-std::unordered_map<abstract::AbstractBasePtrList, int64_t, abstract::AbstractBasePtrListHasher,
+std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBasePtrListHasher,
                    abstract::AbstractBasePtrListEqual>
   g_args_cache;
 
@@ -236,30 +236,33 @@ void CheckArgsValid(const py::tuple &args) {
   }
 }
 
-py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults) {
-  MS_LOG(DEBUG) << "GenerateKey args size:" << defaults.size();
+py::object GenerateArgumentsKey(const std::unordered_map<std::string, py::object> &args) {
+  MS_LOG(DEBUG) << "GenerateArgumentsKey args size:" << args.size();
   abstract::AbstractBasePtrList args_spec;
 
-  for (const auto &arg : defaults) {
+  for (const auto &arg : args) {
     if (py::isinstance<py::module>(arg.second)) {
-      MS_LOG(EXCEPTION) << "GenerateKey failed, argument input should not be py::module";
+      MS_LOG(EXCEPTION) << "GenerateArgumentsKey failed, argument input should not be py::module";
     }
     ValuePtr converted = nullptr;
     if (!parse::ConvertData(arg.second, &converted)) {
-      MS_LOG(EXCEPTION) << "GenerateKey convert arg failed";
+      MS_LOG(EXCEPTION) << "GenerateArgumentsKey convert arg failed";
     }
     args_spec.push_back(ArgsToAbstract(converted));
   }
-  if (g_args_cache.count(args_spec) == 0) {
-    static int64_t key = 0;
-    MS_LOG(INFO) << "Start new args and compile key:" << key;
-    g_args_cache[args_spec] = key++;
+
+  uint64_t key;
+  auto iter = g_args_cache.find(args_spec);
+  if (iter == g_args_cache.end()) {
+    static uint64_t key_counter = 0;
+    key = key_counter;
+    ++key_counter;
+    g_args_cache[args_spec] = key;
+    MS_LOG(INFO) << "Generate a new compile key for new args, key: " << key;
+  } else {
+    key = iter->second;
   }
-  constexpr size_t arg_size = 2;
-  auto argSpec = py::tuple(arg_size);
-  argSpec[0] = name;
-  argSpec[1] = g_args_cache[args_spec];
-  return argSpec;
+  return py::int_(key);
 }
 
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs) {
@@ -300,9 +303,9 @@ py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple 
   return true;
 }
 
-ExecutorPy::ExecutorPy() {}
+GraphExecutorPy::GraphExecutorPy() {}
 
-ResourcePtr ExecutorPy::GetResource(const std::string &phase) {
+ResourcePtr GraphExecutorPy::GetResource(const std::string &phase) {
   MS_LOG(DEBUG) << "Phase size:" << info_.size();
   if (info_.count(phase) == 0) {
     return nullptr;
@@ -310,14 +313,14 @@ ResourcePtr ExecutorPy::GetResource(const std::string &phase) {
   return info_[phase]->resource;
 }
 
-FuncGraphPtr ExecutorPy::GetFuncGraph(const std::string &phase) {
+FuncGraphPtr GraphExecutorPy::GetFuncGraph(const std::string &phase) {
   if (info_.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
+    MS_LOG(EXCEPTION) << "No executor info. found for phase: " << phase;
   }
   return info_[phase]->func_graph;
 }
 
-FuncGraphPtr ExecutorPy::GetGradGraph(const std::string &phase) {
+FuncGraphPtr GraphExecutorPy::GetGradGraph(const std::string &phase) {
   if (phase.empty()) {
     MS_LOG(EXCEPTION) << "The input phase is empty.";
   }
@@ -332,7 +335,7 @@ FuncGraphPtr ExecutorPy::GetGradGraph(const std::string &phase) {
   return grad_graph;
 }
 
-void ExecutorPy::SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase) {
+void GraphExecutorPy::SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase) {
   if (phase.empty()) {
     MS_LOG(EXCEPTION) << "The input phase is empty.";
   }
@@ -349,7 +352,7 @@ void ExecutorPy::SetGradGraph(const FuncGraphPtr &grad_graph, const std::string 
   execute_info->grad_graph = grad_graph;
 }
 
-compile::VmEvalFuncPtr ExecutorPy::GetVmEvalFunc(const std::string &phase) {
+compile::VmEvalFuncPtr GraphExecutorPy::GetVmEvalFunc(const std::string &phase) {
   ResourcePtr res = GetResource(phase);
   MS_EXCEPTION_IF_NULL(res);
   if (res->results().find(kOutput) != res->results().end() && res->results()[kOutput].is<compile::VmEvalFuncPtr>()) {
@@ -359,14 +362,14 @@ compile::VmEvalFuncPtr ExecutorPy::GetVmEvalFunc(const std::string &phase) {
   return nullptr;
 }
 
-bool ExecutorPy::HasCompiled(const std::string &phase) const {
+bool GraphExecutorPy::HasCompiled(const std::string &phase) const {
   if (info_.count(phase) == 0) {
     return false;
   }
   return true;
 }
 
-py::bytes ExecutorPy::GetFuncGraphProto(const std::string &phase, const std::string &ir_type) {
+py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std::string &ir_type) {
   FuncGraphPtr fg_ptr = GetFuncGraph(phase);
   if (fg_ptr == nullptr) {
     for (auto &item : info_) {
@@ -402,40 +405,40 @@ py::bytes ExecutorPy::GetFuncGraphProto(const std::string &phase, const std::str
   MS_LOG(EXCEPTION) << "Unknown ir type: " << ir_type;
 }
 
-py::dict ExecutorPy::GetParameterLayout(const std::string &phase) {
+py::dict GraphExecutorPy::GetParameterLayout(const std::string &phase) {
   MS_LOG(DEBUG) << "GetParameterLayout!";
   std::string layout_graph = phase + kStepParallelGraph;
   auto graph = GetFuncGraph(layout_graph);
   return mindspore::parallel::GetParameterLayout(graph);
 }
 
-py::dict ExecutorPy::GetCNodeStrategy(const std::string &phase) {
+py::dict GraphExecutorPy::GetCNodeStrategy(const std::string &phase) {
   MS_LOG(DEBUG) << "GetCNodeStrategy!";
   return stra_dict_[phase];
 }
 
-py::list ExecutorPy::GetParallelParameterNameList(const std::string &phase) {
+py::list GraphExecutorPy::GetParallelParameterNameList(const std::string &phase) {
   std::string param_graph = phase + kStepParallelGraph;
   auto graph = GetFuncGraph(param_graph);
   return mindspore::parallel::GetParallelParameterNameList(graph);
 }
 
-void ExecutorPy::SetCNodeStrategy(const std::string &name, const parallel::Strategys &strategy) {
+void GraphExecutorPy::SetCNodeStrategy(const std::string &name, const parallel::Strategys &strategy) {
   MS_LOG(DEBUG) << "SetCNodeStrategy!";
   stra_dict_[phase_][py::str(name)] = strategy;
 }
 
-size_t ExecutorPy::GetNumOpsInfo(const std::string &phase) {
+size_t GraphExecutorPy::GetNumOpsInfo(const std::string &phase) {
   MS_LOG(DEBUG) << "GetNumOpsInfo!";
   return phase_to_num_op_info_[phase];
 }
 
-void ExecutorPy::SetNumOpsInfo(size_t num_ops) {
+void GraphExecutorPy::SetNumOpsInfo(size_t num_ops) {
   MS_LOG(DEBUG) << "SetNumOpsInfo!";
   phase_to_num_op_info_[phase_] = num_ops;
 }
 
-py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
+py::dict GraphExecutorPy::GetAllreduceFusion(const std::string &phase) {
   MS_LOG(INFO) << "GetAllreduceFusion!";
   auto graph = GetFuncGraph(phase);
   return mindspore::parallel::GetAllreduceFusion(graph);
@@ -443,7 +446,7 @@ py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
 
 // Not support multi thread, not support nested call too.
 // Here using nested_called flg to avoid nested call.
-void ExecutorPy::DelNetRes(const std::string &id) {
+void GraphExecutorPy::DelNetRes(const std::string &id) {
   static bool nested_called = false;
   if (nested_called) {
     return;
@@ -479,18 +482,19 @@ void ExecutorPy::DelNetRes(const std::string &id) {
   nested_called = false;
 }
 
-void ExecutorPy::ClearRes() {
+void GraphExecutorPy::ClearRes() {
   MS_LOG(INFO) << "Clean executor resource!";
   executor_ = nullptr;
 }
 
-ExecutorPy::~ExecutorPy() {
+GraphExecutorPy::~GraphExecutorPy() {
   MS_LOG(INFO) << "Release Executor!";
   ConfigManager::GetInstance().ResetConfig();
 }
 
-void ExecutorPy::GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
-                               std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) {
+void GraphExecutorPy::GetWeightInfo(
+  const CNodePtr &root_node, const AnfNodePtr &weight_node,
+  std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) {
   MS_EXCEPTION_IF_NULL(root_node);
   MS_EXCEPTION_IF_NULL(fake_quant_table);
   std::string weight_name;
@@ -557,11 +561,11 @@ void ExecutorPy::GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weig
   (*fake_quant_table)[weight_name] = std::make_pair(quant_op->adapter(), fakequant_min_node_name);
 }
 
-std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> ExecutorPy::FetchInfoForQuantExport(
-  const std::string &phase_s) {
-  FuncGraphPtr func_graph = info_[phase_s]->resource->func_graph();
+std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> GraphExecutorPy::FetchInfoForQuantExport(
+  const std::string &phase) {
+  FuncGraphPtr func_graph = info_[phase]->resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_LOG(DEBUG) << "FetchInfoForQuantExport func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
+  MS_LOG(DEBUG) << "FetchInfoForQuantExport func graph(" << func_graph->ToString() << ") phase(" << phase << ")!";
   std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> fake_quant_table;
   auto filter = [](const AnfNodePtr &node) {
     return !(IsPrimitiveCNode(node, prim::kPrimConv2D) || IsPrimitiveCNode(node, prim::kPrimMatMul) ||
@@ -605,21 +609,21 @@ std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> ExecutorPy:
   return fake_quant_table;
 }
 
-void ExecutorPy::SaveCompiledGraph(const std::string &phase_s) {
-  // save the graph to ExecutorPy
-  FuncGraphPtr func_graph = info_[phase_s]->resource->func_graph();
+void GraphExecutorPy::SaveCompiledGraph(const std::string &phase) {
+  // save the graph to GraphExecutorPy
+  FuncGraphPtr func_graph = info_[phase]->resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
 
-  MS_LOG(INFO) << "Save compiled func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
-  info_[phase_s]->func_graph = func_graph;
+  MS_LOG(INFO) << "Save compiled func graph(" << func_graph->ToString() << ") phase(" << phase << ")!";
+  info_[phase]->func_graph = func_graph;
   if ((func_graph != nullptr) && func_graph->has_flag(parallel::AUTO_PARALLEL) &&
       ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
-    func_graph = info_[phase_s]->resource->results()[kStepParallelGraph].cast<FuncGraphPtr>();
+    func_graph = info_[phase]->resource->results()[kStepParallelGraph].cast<FuncGraphPtr>();
     ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
-    std::string layout_graph = phase_s + kStepParallelGraph;
+    std::string layout_graph = phase + kStepParallelGraph;
     executor_info->func_graph = func_graph;
     info_[layout_graph] = executor_info;
   } else {
@@ -628,7 +632,7 @@ void ExecutorPy::SaveCompiledGraph(const std::string &phase_s) {
   MS_LOG(INFO) << "End save compiled func graph!";
 }
 
-void ExecutorPy::GetGeBackendPolicy() const {
+void GraphExecutorPy::GetGeBackendPolicy() const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
@@ -637,24 +641,24 @@ void ExecutorPy::GetGeBackendPolicy() const {
   }
 }
 
-bool IsPhaseExportAir(const std::string &phase_s) {
+bool IsPhaseExportAir(const std::string &phase) {
   auto phase_to_export = "export.air";
-  return phase_s.rfind(phase_to_export) != std::string::npos;
+  return phase.rfind(phase_to_export) != std::string::npos;
 }
 
-bool IsPhaseTrain(const std::string &phase_s) {
+bool IsPhaseTrain(const std::string &phase) {
   const std::string phase_to_train = "train";
-  return phase_s.rfind(phase_to_train) != std::string::npos;
+  return phase.rfind(phase_to_train) != std::string::npos;
 }
 
-bool IsPhaseLoadFromMindIR(const std::string &phase_s) {
+bool IsPhaseLoadFromMindIR(const std::string &phase) {
   const std::string mindir_graph = "graph_load_from_mindir";
-  return phase_s.rfind(mindir_graph) != std::string::npos;
+  return phase.rfind(mindir_graph) != std::string::npos;
 }
 
-std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
+std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm) {
   MS_EXCEPTION_IF_NULL(resource);
-  bool is_air = IsPhaseExportAir(phase_s);
+  bool is_air = IsPhaseExportAir(phase);
 
   std::string backend = MsContext::GetInstance()->backend_policy();
 
@@ -682,11 +686,11 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     resource->results()[kBackend] = backend_ptr;
     // If the 'use_frontend_compile_cache' context has been set true and the cache is read successfully,
     // do the backend actions only.
-    if (IsPhaseTrain(phase_s) && MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE) &&
+    if (IsPhaseTrain(phase) && MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE) &&
         resource->func_graph() != nullptr) {
       return BackendPipeline();
     }
-    if (IsPhaseLoadFromMindIR(phase_s)) {
+    if (IsPhaseLoadFromMindIR(phase)) {
       return MindIRPipeline();
     }
     return VmPipeline();
@@ -694,28 +698,30 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   return GePipeline();
 }
 
-bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm,
-                              const std::string &queue_name) {
-  MS_LOG(DEBUG) << "Start ExecutorPy compile!";
-  if ((!py::isinstance<py::str>(phase))) {
-    MS_LOG(ERROR) << "Arg phase must be string.";
+bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj,
+                                   bool use_vm, const std::string &queue_name) {
+  // Check if the phase is valid.
+  if ((!py::isinstance<py::str>(phase_obj))) {
+    MS_LOG(ERROR) << "The `phase` must be string.";
     return false;
   }
-  // check the function or net is valid
-  if (py::isinstance<py::none>(obj)) {
-    MS_LOG(ERROR) << "Find error: parse obj is None.";
+  // Check if the function or net is valid.
+  if (py::isinstance<py::none>(source_obj)) {
+    MS_LOG(ERROR) << "The source object to compile should not be None.";
     return false;
   }
-  // check the args of function or net is valid
+  // Check if the args of function or net is valid.
   CheckArgsValid(args);
+
+  auto phase = py::cast<std::string>(phase_obj);
+  MS_LOG(INFO) << "Start compiling, phase: " << phase << ", source: {" << py::str(source_obj) << "}";
+  MS_LOG(DEBUG) << "args: " << py::str(const_cast<py::tuple &>(args));
+
 #ifdef ENABLE_GE
   GetGeBackendPolicy();
 #endif
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
-  auto phase_s = py::cast<std::string>(phase);
-  phase_ = phase_s;
-  MS_LOG(INFO) << "ExecutorPy compile phase:" << phase_s << "!";
-  ResourcePtr resource = std::make_shared<Resource>(obj);
+  ResourcePtr resource = std::make_shared<Resource>(source_obj);
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE)) {
 #ifdef ENABLE_PROFILE
@@ -728,41 +734,42 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
 #endif
   }
 
-  auto p_actions = GetPipeline(resource, phase_s, use_vm);
-  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(p_actions, phase_s));
+  phase_ = phase;
+  auto actions = GetPipeline(resource, phase, use_vm);
+  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase));
 
-  // get the parameters items and add the value to args_spec
+  // Get the parameters items and add the value to args_spec.
   abstract::AbstractBasePtrList args_spec;
   std::size_t size = args.size();
   for (std::size_t i = 0; i < size; i++) {
     ValuePtr converted = nullptr;
     bool succ = parse::ConvertData(args[i], &converted);
     if (!succ) {
-      MS_LOG(EXCEPTION) << "Args convert error";
+      MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
     }
     args_spec.push_back(ArgsToAbstract(converted));
   }
-
   resource->set_args_spec(args_spec);
   executor_info->arg_list_size = size;
   executor_info->resource = resource;
-  info_[phase_s] = executor_info;
-  pip->Run(phase_s);
+  info_[phase] = executor_info;
+  pip->Run(phase);
 
-  // save the run graph func to MsPipeLine
-  SaveCompiledGraph(phase_s);
+  // Save the compiled graph to MsPipeLine.
+  SaveCompiledGraph(phase);
 
   opt::python_pass::PyPassManager::GetInstance()->ClearPipelineRes();
   abstract::AnalysisContext::ClearContext();
-  // Reclaim all resource used by optimizer;
+  // Reclaim all resource used by optimizer.
   ReclaimOptimizer();
   resource->Clean();
 
-  MS_LOG(INFO) << "End ExecutorPy compile!";
+  MS_LOG(INFO) << "Finish compiling.";
   return true;
 }
 
-std::vector<ActionItem> ExecutorPy::FilterActions(const std::vector<ActionItem> &actions, const std::string &phase) {
+std::vector<ActionItem> GraphExecutorPy::FilterActions(const std::vector<ActionItem> &actions,
+                                                       const std::string &phase) {
   // filter action after validate when 'export'.
   if (GetPhasePrefix(phase).rfind("export", 0) == std::string::npos) {
     return actions;
@@ -778,7 +785,7 @@ std::vector<ActionItem> ExecutorPy::FilterActions(const std::vector<ActionItem> 
   return filtered_actions;
 }
 
-void ExecutorPy::ReleaseResource(const py::object &phase) {
+void GraphExecutorPy::ReleaseResource(const py::object &phase) {
   ResourcePtr res = GetResource(py::cast<std::string>(phase));
   if (res != nullptr) {
     res->Clean();
@@ -787,17 +794,11 @@ void ExecutorPy::ReleaseResource(const py::object &phase) {
   ReclaimOptimizer();
 }
 
-static std::string PrintArgs(const py::tuple &args) {
-  py::print(args);
-  return "";
-}
-
-bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm,
-                         const std::string &queue_name) {
+bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase, bool use_vm,
+                              const std::string &queue_name) {
   bool ret_value = false;
   try {
-    MS_LOG(DEBUG) << PrintArgs(args);
-    ret_value = CompileInner(obj, args, phase, use_vm, queue_name);
+    ret_value = CompileInner(source_obj, args, phase, use_vm, queue_name);
   } catch (const py::error_already_set &ex) {
     if (!StaticAnalysisException::Instance().HasException()) {
       // print function call stack info before release
@@ -840,8 +841,8 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   return ret_value;
 }
 
-void CacheValidateFuncGraph(const std::string &phase_s, const ResourcePtr &resource) {
-  if (IsPhaseTrain(phase_s) && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_COMPILE_CACHE)) {
+void CacheValidateFuncGraph(const std::string &phase, const ResourcePtr &resource) {
+  if (IsPhaseTrain(phase) && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_COMPILE_CACHE)) {
 #ifdef ENABLE_PROFILE
     double t1 = GetTime();
 #endif
@@ -853,12 +854,12 @@ void CacheValidateFuncGraph(const std::string &phase_s, const ResourcePtr &resou
   }
 }
 
-void Pipeline::Run(const std::string &phase_s) {
+void Pipeline::Run(const std::string &phase) {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
 
-  WITH(MsProfile::GetProfile())[&user_graph, &phase_s, this]() {
+  WITH(MsProfile::GetProfile())[&user_graph, &phase, this]() {
     size_t i = 0;
     for (auto &action : actions_) {
 #ifdef ENABLE_TIMELINE
@@ -874,7 +875,7 @@ void Pipeline::Run(const std::string &phase_s) {
       if (action.first == "task_emit") {
         SetLoopCount(resource_);
       } else if (action.first == "validate") {
-        CacheValidateFuncGraph(phase_s, resource_);
+        CacheValidateFuncGraph(phase, resource_);
       }
       if (!result) {
         MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
@@ -983,11 +984,11 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
   }
 }
 
-void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list) {
+void GraphExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list) {
   ProcessVmArgInner(args, GetResource(phase), arg_list);
 }
 
-void ExecutorPy::TerminateDebugger() {
+void GraphExecutorPy::TerminateDebugger() {
   if (debugger_terminate_) {
     MS_LOG(INFO) << "Terminate debugger and clear resources!";
     ClearResAtexit();
@@ -995,23 +996,23 @@ void ExecutorPy::TerminateDebugger() {
   }
 }
 
-py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
+py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_obj) {
   // Mindspore debugger notify main thread to exit after one step, and will not run next step
   TerminateDebugger();
   std::size_t size = args.size();
-  if (!py::isinstance<py::str>(phase)) {
+  if (!py::isinstance<py::str>(phase_obj)) {
     MS_LOG(EXCEPTION) << "Run failed, phase input is not a str";
   }
-  auto phase_s = py::cast<std::string>(phase);
+  auto phase = py::cast<std::string>(phase_obj);
   std::string backend = MsContext::GetInstance()->backend_policy();
 #ifdef ENABLE_GE
   if (backend == "ge") {
-    return ExecDFGraph(info_, args, phase_s);
+    return ExecDFGraph(info_, args, phase);
   }
 #else
   auto ret_val = std::make_shared<py::object>();
-  if (info_.count(phase_s) != 0 && info_[phase_s]->func_graph != nullptr) {
-    if (IsGraphOutputValueNodeOrParameter(info_[phase_s]->func_graph->output(), args, ret_val)) {
+  if (info_.count(phase) != 0 && info_[phase]->func_graph != nullptr) {
+    if (IsGraphOutputValueNodeOrParameter(info_[phase]->func_graph->output(), args, ret_val)) {
       // Check the input arg must be Tensor when backend is "ms".
       if (MsContext::GetInstance()->backend_policy() == kMsConvert) {
         for (std::size_t i = 0; i < size; i++) {
@@ -1032,24 +1033,24 @@ py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
     return args;
   }
 #endif
-  auto iter = info_.find(phase_s);
+  auto iter = info_.find(phase);
   if (iter == info_.end()) {
-    MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase_s);
+    MS_LOG(EXCEPTION) << "No executor info. found for phase: " << phase;
   }
   auto &execute_info = iter->second;
   MS_EXCEPTION_IF_NULL(execute_info);
   if (size > execute_info->arg_list_size) {
     MS_LOG(WARNING) << "The arg num : size = " << size << ". full_arg_size = " << execute_info->arg_list_size;
   }
-  ProcessVmArg(args, phase_s, &execute_info->arg_list);
+  ProcessVmArg(args, phase, &execute_info->arg_list);
   // Start to run phase.
-  compile::VmEvalFuncPtr run = GetVmEvalFunc(phase_s);
+  compile::VmEvalFuncPtr run = GetVmEvalFunc(phase);
   if (run == nullptr) {
-    MS_LOG(EXCEPTION) << "Can't find run graph func for " << phase_s;
+    MS_LOG(EXCEPTION) << "Can't find run graph func for " << phase;
   }
   // Set loopsink size for each phase.
-  bool vm_loop_flag = info_[phase_s]->resource->vm_loop_flag();
-  int64_t loop_size = info_[phase_s]->resource->loop_size();
+  bool vm_loop_flag = info_[phase]->resource->vm_loop_flag();
+  int64_t loop_size = info_[phase]->resource->loop_size();
   int64_t vm_loop = 1;
   if (vm_loop_flag) {
     vm_loop = loop_size;
@@ -1069,8 +1070,8 @@ py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
   return ret;
 }
 
-FuncGraphPtr ExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase,
-                                    const py::object &broadcast_params) {
+FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase,
+                                         const py::object &broadcast_params) {
 #if ((defined ENABLE_GE) || (defined ENABLE_D))
   return BuildDFGraph(info_, init_params, phase, broadcast_params);
 #else
@@ -1078,8 +1079,8 @@ FuncGraphPtr ExecutorPy::BuildGraph(const py::dict &init_params, const std::stri
 #endif
 }
 
-void ExecutorPy::UpdataParamNodeDefaultInput(const std::string &phase,
-                                             const std::unordered_map<std::string, tensor::TensorPtr> &params_value) {
+void GraphExecutorPy::UpdataParamNodeDefaultInput(
+  const std::string &phase, const std::unordered_map<std::string, tensor::TensorPtr> &params_value) {
   FuncGraphPtr func_graph = info_[phase]->resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(DEBUG) << "UpdataParamNodeDefaultInput for func graph(" << func_graph->ToString() << ") phase(" << phase
@@ -1096,13 +1097,13 @@ void ExecutorPy::UpdataParamNodeDefaultInput(const std::string &phase,
   }
 }
 
-void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &phase) const {
+void GraphExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &phase) const {
 #ifdef ENABLE_GE
   RunGEInitGraph(init_params, phase);
 #endif
 }
 
-void ExecutorPy::PyExePath(const py::object &py_exe_path) {
+void GraphExecutorPy::PyExePath(const py::object &py_exe_path) {
   if (!py::isinstance<py::str>(py_exe_path)) {
     MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
   }
@@ -1111,7 +1112,7 @@ void ExecutorPy::PyExePath(const py::object &py_exe_path) {
   ms_context->set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, py_exe_path_s);
 }
 
-void ExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server_dir) {
+void GraphExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server_dir) {
   if (!py::isinstance<py::str>(kernel_build_server_dir)) {
     MS_LOG(EXCEPTION) << "Failed, kernel_build_server_dir input is not a str";
   }
@@ -1423,7 +1424,7 @@ void ClearResAtexit() {
   abstract::ClearPrimEvaluatorMap();
   pipeline::GetMethodMap().clear();
   pipeline::GetAttrMap().clear();
-  pipeline::ExecutorPy::ClearRes();
+  pipeline::GraphExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
   pynative::PynativeExecutor::GetInstance()->ClearRes();
   opt::python_pass::PyPassManager::GetInstance()->ClearRes();

@@ -17,7 +17,7 @@ import numpy as np
 
 import mindspore as ms
 import mindspore.common.initializer as init
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
@@ -133,7 +133,7 @@ def test_tensor_method_sub():
 
     x = ms.Tensor(np.ones([5, 3], np.float32))
     y = ms.Tensor(np.ones([8, 5, 3], np.float32))
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_tensor_method_mul():
@@ -152,7 +152,7 @@ def test_tensor_method_mul():
 
     x = ms.Tensor(np.ones([5, 3], np.float32))
     y = ms.Tensor(np.ones([8, 5, 3], np.float32))
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_tensor_method_div():
@@ -171,4 +171,4 @@ def test_tensor_method_div():
 
     x = ms.Tensor(np.ones([5, 3], np.float32))
     y = ms.Tensor(np.ones([8, 5, 3], np.float32))
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)

@@ -16,7 +16,7 @@ import numpy as np
 
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
 
@@ -44,7 +44,7 @@ def compile_net(net):
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
     train_net.set_train()
-    _executor.compile(train_net, _x, _b)
+    _cell_graph_executor.compile(train_net, _x, _b)
     context.reset_auto_parallel_context()
 
 

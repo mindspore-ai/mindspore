@@ -18,7 +18,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.parallel import _cost_model_context as cost_model_context
@@ -120,7 +120,7 @@ def train_common(net):
     model = Model(net, loss, opt)
 
     model.train(epoch_size, dataset, dataset_sink_mode=False)
-    allreduce_fusion_dict = _executor._get_allreduce_fusion(model._train_network)
+    allreduce_fusion_dict = _cell_graph_executor._get_allreduce_fusion(model._train_network)
 
     print(allreduce_fusion_dict)
     return allreduce_fusion_dict

@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
@@ -71,4 +71,4 @@ def test_triangle_strategy_consistency():
     reset_op_id()
 
     net.set_train()
-    _executor.compile(net, x, phase='train')
+    _cell_graph_executor.compile(net, x, phase='train')

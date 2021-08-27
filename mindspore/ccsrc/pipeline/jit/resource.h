@@ -67,7 +67,7 @@ class Resource : public ResourceBase {
 
   static Any GetAttrPtr(const TypeId &type, const std::string &name);
 
-  const py::object &input() const { return input_; }
+  const py::object &source_input() const { return source_input_; }
 
   FuncGraphPtr func_graph() const { return func_graph_; }
   void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
@@ -84,7 +84,7 @@ class Resource : public ResourceBase {
   bool vm_loop_flag() { return vm_loop_flag_; }
   int64_t loop_size() { return loop_size_; }
   // Reclaim resource and clear the cache.
-  // ExecutorPy::Compile() can be called multiple times, so cache
+  // GraphExecutorPy::Compile() can be called multiple times, so cache
   // should be cleared.
   void Clean();
 
@@ -92,7 +92,8 @@ class Resource : public ResourceBase {
   abstract::AnalysisEnginePtr engine_;
   FuncGraphPtr func_graph_;
   abstract::AbstractBasePtrList args_spec_;
-  py::object input_;
+  // The source obj to compile, usually a `Cell` or `ms_function` decorated function.
+  py::object source_input_;
   bool is_cleaned_;
   // The func_graph_ is loaded from mindir
   bool is_load_{false};

@@ -19,7 +19,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.operations.comm_ops import _VirtualDataset
@@ -71,7 +71,7 @@ def compile_graph(x, y, segments, strategy1, strategy2, auto=False):
         context.set_auto_parallel_context(parallel_mode="auto_parallel")
     else:
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_unsortedsegmentmin_model_parallel_slice_1d():

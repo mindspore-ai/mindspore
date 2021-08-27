@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 
 class Net(nn.Cell):
@@ -34,4 +34,4 @@ class Net(nn.Cell):
 def test_compile():
     net = Net()
     input_data = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype(np.float32))
-    _executor.compile(net, input_data)
+    _cell_graph_executor.compile(net, input_data)
