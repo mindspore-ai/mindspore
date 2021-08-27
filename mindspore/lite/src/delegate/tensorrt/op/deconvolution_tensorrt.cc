@@ -27,7 +27,7 @@ int DeconvolutionTensorRT::IsSupport(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  if (in_tensors.size() != 2 && in_tensors.size() != 3) {
+  if (in_tensors.size() != INPUT_SIZE2 && in_tensors.size() != INPUT_SIZE3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
@@ -75,8 +75,8 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   // bias
   nvinfer1::Weights biasWeights{};
-  if (in_tensors_.size() >= 3) {
-    biasWeights = lite::ConvertWeight(in_tensors_[2]);
+  if (in_tensors_.size() >= INPUT_SIZE3) {
+    biasWeights = lite::ConvertWeight(in_tensors_[INPUT_SIZE3 - 1]);
   } else {
     biasWeights.type = nvinfer1::DataType::kFLOAT;
     biasWeights.count = 0;

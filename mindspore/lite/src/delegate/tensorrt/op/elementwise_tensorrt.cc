@@ -57,7 +57,7 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     }
   }
 
-  if (in_tensors.size() != 2) {
+  if (in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "invalid input tensort size: " << in_tensors.size();
     return RET_ERROR;
   }
@@ -82,7 +82,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   first_in_tensor_index_ = strcmp(tensorrt_in_tensors_[0]->getName(), in_tensors_[0].Name().c_str()) == 0 ? 0 : 1;
   // add elementwise
-  if (this->tensorrt_in_tensors_.size() != 2) {
+  if (this->tensorrt_in_tensors_.size() != INPUT_SIZE2) {
     // create ITensor from MS constant tensor of index 1 - first_in_tensor_index_
     nvinfer1::ITensor *constant_input = nullptr;
     if (this->in_tensors_[1 - first_in_tensor_index_].Shape().size() == 0) {

@@ -112,13 +112,25 @@ int TensorRTSubGraph::SetDeviceConfig() {
       input_dims_min.d[input_hw_index_] = 1;
       input_dims_min.d[input_hw_index_ + 1] = 1;
     }
-    profile->setDimensions(tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims_min);
+    if (!profile->setDimensions(tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims_min)) {
+      MS_LOG(ERROR) << "setDimensions of kMIN failed.";
+      return RET_ERROR;
+    }
     nvinfer1::Dims input_dims_opt = ConvertCudaDims(tensor.Shape());
-    profile->setDimensions(tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt);
+    if (!profile->setDimensions(tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt)) {
+      MS_LOG(ERROR) << "setDimensions of kOPT failed.";
+      return RET_ERROR;
+    }
     nvinfer1::Dims input_dims_max = ConvertCudaDims(tensor.Shape());
     // input_dims_max should be the same with input network dims
-    profile->setDimensions(tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims_max);
-    this->config_->addOptimizationProfile(profile);
+    if (!profile->setDimensions(tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims_max)) {
+      MS_LOG(ERROR) << "setDimensions of kMAX failed.";
+      return RET_ERROR;
+    }
+    if (this->config_->addOptimizationProfile(profile) == -1) {
+      MS_LOG(ERROR) << "addOptimizationProfile failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -282,7 +294,6 @@ int TensorRTSubGraph::Prepare() {
     tensor_bindings_[index] = device_ptr;
     trt_out_tensor_name_.push_back(tensor.Name());
   }
-
   return RET_OK;
 }
 
@@ -348,7 +359,11 @@ int TensorRTSubGraph::Execute() {
       return RET_ERROR;
     }
     runtime_->GetAllocator()->MarkMemValid(trt_in_tensor_name_[i], false);
-    runtime_->GetAllocator()->SyncMemInHostAndDevice(inputs_[i], trt_in_tensor_name_[i], true);
+    int ret = runtime_->GetAllocator()->SyncMemInHostAndDevice(inputs_[i], trt_in_tensor_name_[i], true);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "sync mem from host to device failed for " << trt_in_tensor_name_[i];
+      return ret;
+    }
   }
 
   if (!this->trt_context_->allInputDimensionsSpecified()) {
@@ -387,7 +402,11 @@ int TensorRTSubGraph::Execute() {
     }
     runtime_->GetAllocator()->MarkMemValid(trt_out_tensor_name_[i], true);
     tensor_bindings_[index] = device_ptr;
-    runtime_->GetAllocator()->SyncMemInHostAndDevice(outputs_[i], trt_out_tensor_name_[i], false);
+    int sync_ret = runtime_->GetAllocator()->SyncMemInHostAndDevice(outputs_[i], trt_out_tensor_name_[i], false);
+    if (sync_ret != RET_OK) {
+      MS_LOG(ERROR) << "sync mem from device to host failed for " << trt_out_tensor_name_[i];
+      return sync_ret;
+    }
   }
   return RET_OK;
 }

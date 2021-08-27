@@ -38,14 +38,14 @@ int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
       break;
     }
     case schema::PrimitiveType_Reshape: {
-      if (in_tensors.size() != 2) {
+      if (in_tensors.size() != INPUT_SIZE2) {
         MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();
         return RET_ERROR;
       }
       break;
     }
     case schema::PrimitiveType_Transpose: {
-      if (in_tensors.size() != 2) {
+      if (in_tensors.size() != INPUT_SIZE2) {
         MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();
         return RET_ERROR;
       }
@@ -266,6 +266,10 @@ int ShuffleTensorRT::InferReshapeDims(nvinfer1::Dims input_dims, nvinfer1::Dims 
     size_t tot_cnt = 1;
     for (int i = 0; i < input_dims.nbDims; i++) {
       tot_cnt *= input_dims.d[i];
+    }
+    if (known_cnt == 0) {
+      MS_LOG(ERROR) << "invalid known cnt for " << op_name_;
+      return RET_ERROR;
     }
     reshape_dims->d[infer_index] = tot_cnt / known_cnt;
     MS_LOG(INFO) << "reshape infer_index: " << infer_index << ", reshape infer value: " << reshape_dims->d[infer_index];
