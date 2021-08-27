@@ -32,7 +32,7 @@ STATUS FindAreaSurroundedByTranspose(const FuncGraphPtr &func_graph, const CNode
                                      std::set<CNodePtr> *middle_nodes) {
   MS_ASSERT(func_graph != nullptr && root_node != nullptr);
   MS_ASSERT(in_nodes != nullptr && out_nodes != nullptr && middle_nodes != nullptr);
-  std::queue<CNodePtr> queue_nodes;
+  std::queue<CNodePtr> queue_nodes{};
   queue_nodes.push(root_node);
   std::queue<bool> is_pre_nodes;
   is_pre_nodes.push(true);
@@ -62,6 +62,7 @@ STATUS FindAreaSurroundedByTranspose(const FuncGraphPtr &func_graph, const CNode
           continue;
         }
         auto cur_node_input = cur_node->input(i)->cast<CNodePtr>();
+        MS_ASSERT(cur_node_input != nullptr);
         if (middle_nodes->find(cur_node_input) != middle_nodes->end() ||
             in_nodes->find(cur_node_input) != in_nodes->end()) {
           continue;
@@ -153,6 +154,7 @@ void ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode
   int status;
   if (utils::isa<ParameterPtr>(cnode->input(index))) {
     auto input_node = cnode->input(index)->cast<ParameterPtr>();
+    MS_ASSERT(input_node != nullptr);
     if (!input_node->has_default()) {
       return;
     }
@@ -183,6 +185,7 @@ void ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode
     (void)TransFilterFormat(tensor, schema::Format_KCHW, schema::Format_KHWC);
   }
   auto param_node = func_graph->add_parameter();
+  MS_ASSERT(param_node != nullptr);
   param_node->set_name(cnode->input(index)->fullname_with_scope());
   status = lite::InitParameterFromTensorInfo(param_node, tensor);
   if (status != RET_OK) {
@@ -211,6 +214,7 @@ STATUS DecreaseTransposeAlgo::PostTransposeFusion(const FuncGraphPtr &func_graph
     if (CheckPrimitiveType(post_node, prim::kPrimTranspose)) {
       std::vector<int> post_trans_perm;
       auto post_trans_node = post_node->cast<CNodePtr>();
+      MS_ASSERT(post_trans_node != nullptr);
       if (GetTransposePerm(post_trans_node, &post_trans_perm) != lite::RET_OK) {
         MS_LOG(ERROR) << "get post transpose node perm failed.";
         return lite::RET_ERROR;
@@ -236,6 +240,7 @@ STATUS DecreaseTransposeAlgo::GenNewInput(const FuncGraphPtr &func_graph, const 
     return lite::RET_OK;
   } else if (utils::isa<CNodePtr>(new_input)) {
     auto new_cnode_input = new_input->cast<CNodePtr>();
+    MS_ASSERT(new_cnode_input != nullptr);
     int status = lite::RET_OK;
     if (CheckPrimitiveType(new_cnode_input, prim::kPrimTranspose)) {
       status = node_infer_shape_.InferShape(new_cnode_input);
@@ -378,6 +383,7 @@ STATUS DecreaseTransposeAlgo::InsertPostTransNode(const FuncGraphPtr &func_graph
         continue;
       }
       auto post_cnode = post_node->cast<CNodePtr>();
+      MS_ASSERT(post_cnode != nullptr);
       if (GenNewInput(func_graph, post_cnode, perm, false) != lite::RET_OK) {
         MS_LOG(ERROR) << "generate a new input failed.";
         return lite::RET_ERROR;
@@ -395,9 +401,9 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
   MS_ASSERT(func_graph != nullptr && cnode != nullptr && visit_transposes != nullptr);
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
-  std::set<CNodePtr> middle_nodes;
-  std::set<CNodePtr> in_nodes;
-  std::set<CNodePtr> out_nodes;
+  std::set<CNodePtr> middle_nodes{};
+  std::set<CNodePtr> in_nodes{};
+  std::set<CNodePtr> out_nodes{};
   auto status = FindAreaSurroundedByTranspose(func_graph, cnode, &in_nodes, &out_nodes, &middle_nodes);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "find an area surrounded by transpose failed.";
@@ -467,6 +473,7 @@ void DecreaseTransposeAlgo::SetSubGraphInput(const CNodePtr &cnode, const FuncGr
     if (utils::isa<CNodePtr>(cnode->input(index))) {
       ShapeVector shape_vec = {-1};
       auto out_cnode = cnode->input(index)->cast<CNodePtr>();
+      MS_ASSERT(out_cnode != nullptr);
       MS_ASSERT(trans_cnode != nullptr);
       auto out_prim = GetValueNode<PrimitivePtr>(out_cnode->input(0));
       if (out_prim->GetAttr(kInferDone) == nullptr || !GetValue<bool>(out_prim->GetAttr(kInferDone))) {
@@ -517,6 +524,7 @@ void DecreaseTransposeAlgo::ResetSubGraphInput() {
 void DecreaseTransposeAlgo::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
   MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
+  MS_ASSERT(return_node != nullptr);
   auto origin_input = return_node->inputs();
   lite::RemoveIfDepend(return_node);
   lite::RemoveIfMakeTuple(return_node);
@@ -569,6 +577,7 @@ void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const Fun
         input_cnode = input_cnode->input(1)->cast<CNodePtr>();
       }
       auto input_prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+      MS_ASSERT(input_prim != nullptr);
       if (input_prim->GetAttr(kInferDone) == nullptr || !GetValue<bool>(input_prim->GetAttr(kInferDone))) {
         infer_done = false;
       }
@@ -584,6 +593,7 @@ void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const Fun
     cnode->set_abstract(abstract_list.front());
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(prim != nullptr);
   prim->AddAttr(kInferDone, MakeValue<bool>(infer_done));
 }
 
@@ -615,6 +625,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &fun
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_ASSERT(cnode != nullptr);
     if (IsSpecialType(cnode)) {
       continue;
     }
@@ -674,6 +685,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForMultiOp(const FuncGraphPtr &func
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_ASSERT(cnode != nullptr);
     if (IsSpecialType(cnode) || visit_transposes.find(cnode) != visit_transposes.end()) {
       continue;
     }
@@ -689,7 +701,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForMultiOp(const FuncGraphPtr &func
       }
       (void)DecreaseTransposeForMultiOp(sub_func_graph);
     }
-    std::vector<int> perm;
+    std::vector<int> perm{};
     if (!CheckPrimitiveType(cnode, prim::kPrimTranspose) || GetTransposePerm(cnode, &perm) != lite::RET_OK ||
         perm != kNH2NC) {
       continue;
@@ -706,6 +718,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForMultiOp(const FuncGraphPtr &func
 bool DecreaseTransposeAlgo::RunDoFixFormat(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
+  MS_ASSERT(prim != nullptr);
   auto &nchw_op = GetNCHWOpMap();
   if (!utils::isa<CNodePtr>(cnode->input(1))) {
     return true;
@@ -727,6 +740,7 @@ bool DecreaseTransposeAlgo::DoFixFormat(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_ASSERT(cnode != nullptr);
     if (IsSpecialType(cnode)) {
       continue;
     }

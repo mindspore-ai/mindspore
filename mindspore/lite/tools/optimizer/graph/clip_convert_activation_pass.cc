@@ -41,6 +41,7 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto clip_cnode = node->cast<CNodePtr>();
+    MS_ASSERT(clip_cnode != nullptr);
     MS_ASSERT(clip_cnode->size() >= kClipMinIndex);
     auto clip_c = GetValueNode<ops::PrimClipPtr>(clip_cnode->input(0));
     MS_ASSERT(clip_c != nullptr);
@@ -78,14 +79,17 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     auto manager = graph->manager();
 
     auto primitive_c = std::make_shared<mindspore::ops::Activation>();
+    MS_ASSERT(primitive_c != nullptr);
     primitive_c->Init(0, min, max, mindspore::RELU6);
     if (min != 0 || max != 6) {
       primitive_c->set_activation_type(mindspore::HARD_TANH);
     }
     auto value_node = NewValueNode(primitive_c);
+    MS_ASSERT(value_node != nullptr);
     std::vector<AnfNodePtr> op_inputs = {value_node};
     op_inputs.push_back(clip_cnode->input(1));
     auto new_cnode = graph->NewCNode(op_inputs);
+    MS_ASSERT(new_cnode != nullptr);
     new_cnode->set_fullname_with_scope(node->fullname_with_scope());
     new_cnode->set_abstract(clip_cnode->abstract()->Clone());
     manager->Replace(node, new_cnode);

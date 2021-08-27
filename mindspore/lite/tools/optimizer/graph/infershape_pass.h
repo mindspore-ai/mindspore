@@ -43,7 +43,7 @@ class InferShapePass : public Pass {
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
   std::shared_ptr<NodeInferShape> node_infer_shape_{nullptr};
-  std::map<FuncGraphPtr, std::vector<AnfNodePtr>> sub_inputs_map_;
+  std::map<FuncGraphPtr, std::vector<AnfNodePtr>> sub_inputs_map_{};
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -182,6 +182,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       tensor_input->quantParams.clear();
       for (auto input_quant_param : input_quant_params[i]) {
         auto input_quant_param_ptr = std::make_unique<schema::QuantParamT>(input_quant_param);
+        MS_ASSERT(input_quant_param_ptr != nullptr);
         MS_LOG(DEBUG) << "[input][" << i << "]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
                       << " zp: " << input_quant_param_ptr->zeroPoint;
         tensor_input->quantParams.emplace_back(std::move(input_quant_param_ptr));
@@ -206,6 +207,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_WeightQuant) {
         std::unique_ptr<schema::QuantParamT> output_quant_param_ptr =
           std::make_unique<schema::QuantParamT>(channel_quant_param);
+        MS_ASSERT(output_quant_param_ptr != nullptr);
         MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
                       << " zp: " << output_quant_param_ptr->zeroPoint;
         output_tensor->quantParams.emplace_back(std::move(output_quant_param_ptr));
@@ -225,6 +227,7 @@ int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaG
     return RET_ERROR;
   }
   auto schema_tensor = std::make_unique<schema::TensorT>();
+  MS_ASSERT(schema_tensor != nullptr);
   schema_tensor->format = static_cast<schema::Format>(data_info.format_);
   schema_tensor->name = param_node->name();
   schema_tensor->dims = data_info.shape_;
@@ -421,7 +424,11 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       return ret;
     }
 
-    SetOpOutputNode(cnode, meta_graphT, node.get());
+    ret = SetOpOutputNode(cnode, meta_graphT, node.get());
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "SetOpOutputNode failed";
+      break;
+    }
     ret = ConvertQuantParam(meta_graphT, prim, node);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ConvertQuantParam failed";
@@ -553,6 +560,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
   this->reorder_input_ = !(train_flag) && !(ConverterContext::GetInstance()->GetGraphInputTensorNames().empty());
   this->graph_inputs_map_.clear();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
+  MS_ASSERT(meta_graphT != nullptr);
   auto fmk = func_graph->get_attr("fmk");
   MS_ASSERT(fmk != nullptr);
   meta_graphT->fmkType = GetValue<int>(fmk);
@@ -685,6 +693,7 @@ int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, cons
     return RET_ERROR;
   }
   auto schema_tensor = std::make_unique<schema::TensorT>();
+  MS_ASSERT(schema_tensor != nullptr);
   schema_tensor->format = static_cast<schema::Format>(data_info.format_);
   schema_tensor->name = param_node->name();
   schema_tensor->dims = data_info.shape_;
@@ -716,6 +725,7 @@ int AnfExporter::ConvertInputValueNode(const CNodePtr &cnode, size_t index, cons
     return status;
   }
   auto schema_tensor = std::make_unique<schema::TensorT>();
+  MS_ASSERT(schema_tensor != nullptr);
   schema_tensor->name = cnode->input(index)->fullname_with_scope();
   schema_tensor->format = static_cast<schema::Format>(data_info.format_);
   schema_tensor->dataType = data_info.data_type_;
@@ -776,8 +786,8 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
   return RET_OK;
 }
 
-void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
-                                  schema::CNodeT *fb_node) {
+int AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
+                                 schema::CNodeT *fb_node) {
   MS_ASSERT(meta_graphT != nullptr);
   MS_ASSERT(fb_node != nullptr);
   std::string cnode_name = fb_node->name;
@@ -786,14 +796,14 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
     auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
     if (tuple == nullptr) {
       MS_LOG(ERROR) << "tuple is nullptr";
-      return;
+      return RET_ERROR;
     }
     auto elements = tuple->elements();
     for (size_t i = 0; i < lite::GetCNodeOutputsSize(cnode, train_flag_); i++) {
       auto ms_tensor = new (std::nothrow) schema::TensorT();
       if (ms_tensor == nullptr) {
         MS_LOG(ERROR) << "new msTensor failed";
-        return;
+        return RET_ERROR;
       }
       ms_tensor->nodeType = NodeType_CNode;
       fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
@@ -827,7 +837,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
         if (!utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
           MS_LOG(ERROR) << "abstract is not AbstractTensor";
           delete (ms_tensor);
-          return;
+          return RET_ERROR;
         }
         auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(elements[i]);
         auto type_ptr = abstract_tensor->element()->GetTypeTrack();
@@ -843,7 +853,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
     auto ms_tensor = new (std::nothrow) schema::TensorT();
     if (ms_tensor == nullptr) {
       MS_LOG(ERROR) << "new tensor failed";
-      return;
+      return RET_ERROR;
     }
     auto type = kNumberTypeFloat32;
     if (utils::isa<abstract::AbstractTensorPtr>(cnode->abstract())) {
@@ -866,6 +876,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
     node_id_map_[key] = meta_graphT->allTensors.size();
     meta_graphT->allTensors.emplace_back(ms_tensor);
   }
+  return RET_OK;
 }
 
 CNodePtr AnfExporter::CreateCallCnode(const FuncGraphPtr &fg, const AnfNodePtr &node) {

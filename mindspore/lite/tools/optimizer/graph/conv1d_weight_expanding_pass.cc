@@ -55,6 +55,7 @@ lite::STATUS Conv1DWeightExpandingPass::ExpandFilterShape(const AnfNodePtr &weig
     return lite::RET_OK;
   }
   auto weight_param = weight_node->cast<ParameterPtr>();
+  MS_ASSERT(weight_param != nullptr);
   auto type = weight_tensor->data_type();
   weight_param->set_abstract(std::make_shared<abstract::AbstractTensor>(TypeIdToType(type), new_shape));
   return RET_OK;

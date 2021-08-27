@@ -47,7 +47,7 @@ bool ReduceSameActPass::Run(const FuncGraphPtr &func_graph) {
     // OrderedMap<AnfNodePtr, AnfNodeIndexSet>
     // OrderedSet<std::pair<AnfNodePtr, int>
     int relu_count = 0;
-    AnfNodePtr relu_anf_node_ptr;
+    AnfNodePtr relu_anf_node_ptr = nullptr;
     for (const auto &node_user : cur_node_users) {
       if (!CheckPrimitiveType(node_user.first, prim::kPrimActivation)) {
         continue;

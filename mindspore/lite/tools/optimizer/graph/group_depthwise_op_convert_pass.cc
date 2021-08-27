@@ -42,6 +42,7 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
     }
 
     auto conv_cnode = node->cast<CNodePtr>();
+    MS_ASSERT(conv_cnode != nullptr);
     auto prim_node = conv_cnode->input(0);
     MS_ASSERT(prim_node != nullptr);
     auto prim_value_node = prim_node->cast<ValueNodePtr>();

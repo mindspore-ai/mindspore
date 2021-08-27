@@ -639,6 +639,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       has_insert_for_graph_out = false;
     } else {
       auto &postNode = graphT->nodes.at(postNodeIdxes[is_output_index ? i - 1 : i]);
+      MS_ASSERT(postNode != nullptr);
       for (auto iter = postNode->inputIndex.begin(); iter != postNode->inputIndex.end(); iter++) {
         if (*iter == postTensorIdx) {
           *iter = toAddTensorIdx;

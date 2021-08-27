@@ -257,6 +257,7 @@ STATUS NodeInferShpae(const schema::CNodeT &node, const std::vector<Tensor *> &i
   auto ret = KernelInferShape(inputs, *outputs, parameter);
   fbb.Clear();
   free(parameter);
+  parameter = nullptr;
   return ret;
 }
 
@@ -326,6 +327,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
 }
 
 size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_flag) {
+  MS_ASSERT(anf_node != nullptr);
   auto cnode = anf_node->cast<CNodePtr>();
   if (train_flag &&
       (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) || opt::CheckPrimitiveType(cnode, prim::kPrimAdam))) {

@@ -68,7 +68,7 @@ class SubGraph {
   std::set<CNodePtr> nodes_;
   std::set<CNodePtr> in_nodes_;
   std::set<CNodePtr> out_nodes_;
-  const FuncGraphPtr belong_anf_;
+  const FuncGraphPtr belong_anf_ = nullptr;
   const std::string name_;
 };
 }  // namespace mindspore::lite

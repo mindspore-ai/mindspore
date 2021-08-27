@@ -36,6 +36,7 @@ int GetCNodeCertainInputFormat(const CNodePtr cnode, int index, mindspore::Forma
     return lite::RET_NO_CHANGE;
   }
   auto real_cnode = cnode->input(index)->cast<CNodePtr>();
+  MS_ASSERT(real_cnode != nullptr);
   if (CheckPrimitiveType(real_cnode, prim::kPrimTupleGetItem)) {
     real_cnode = real_cnode->input(1)->cast<CNodePtr>();
   }
@@ -121,6 +122,7 @@ bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_ASSERT(cnode != nullptr);
     if (IsSpecialType(cnode)) {
       continue;
     }
@@ -165,6 +167,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_ASSERT(cnode != nullptr);
     if (IsSpecialType(cnode)) {
       continue;
     }
@@ -258,6 +261,7 @@ void InferShapePass::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr 
 void InferShapePass::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
   MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
+  MS_ASSERT(return_node != nullptr);
   auto origin_input = return_node->inputs();
   lite::RemoveIfDepend(return_node);
   lite::RemoveIfMakeTuple(return_node);
@@ -272,6 +276,7 @@ void InferShapePass::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr
     auto trans_cnode = return_node->input(i)->cast<CNodePtr>();
     MS_ASSERT(trans_cnode != nullptr);
     auto trans_input = trans_cnode->input(1);
+    MS_ASSERT(trans_input != nullptr);
     auto trans_input_name = trans_input->fullname_with_scope();
     if (utils::isa<ParameterPtr>(trans_input)) {
       trans_input->cast<ParameterPtr>()->set_name(node_name);
@@ -287,6 +292,7 @@ void InferShapePass::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr
 void InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
   MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
+  MS_ASSERT(return_node != nullptr);
   auto origin_inputs = return_node->inputs();
   lite::RemoveIfDepend(return_node);
   lite::RemoveIfMakeTuple(return_node);
@@ -306,10 +312,12 @@ void InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphP
     }
     if (utils::isa<CNodePtr>(return_node->input(i))) {
       auto input_cnode = return_node->input(i)->cast<CNodePtr>();
+      MS_ASSERT(input_cnode != nullptr);
       if (opt::CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
         input_cnode = input_cnode->input(1)->cast<CNodePtr>();
       }
       auto input_prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+      MS_ASSERT(input_prim != nullptr);
       if (input_prim->GetAttr(opt::kInferDone) == nullptr || !GetValue<bool>(input_prim->GetAttr(opt::kInferDone))) {
         infer_done = false;
       }
@@ -325,6 +333,7 @@ void InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphP
     cnode->set_abstract(abstract_list.front());
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(prim != nullptr);
   prim->AddAttr(opt::kInferDone, MakeValue<bool>(infer_done));
 }
 

@@ -75,15 +75,19 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
   // for single output graph, create tuple for graph output
   // make_tuple node
   auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
+  MS_ASSERT(make_tuple_prim_ptr != nullptr);
   auto make_tuple_cnode =
     func_graph->NewCNode({NewValueNode(make_tuple_prim_ptr), output_node, tensor_array_write_node});
+  MS_ASSERT(make_tuple_cnode != nullptr);
   make_tuple_cnode->set_fullname_with_scope("return tuple");
 
   // return node
   auto return_prim_ptr = std::make_shared<lite::Return>();
+  MS_ASSERT(return_prim_ptr != nullptr);
   auto new_return_node = func_graph->NewCNode({NewValueNode(return_prim_ptr), make_tuple_cnode});
   new_return_node->set_fullname_with_scope(return_cnode->fullname_with_scope());
   func_graph->set_return(new_return_node);
+  MS_ASSERT(new_return_node != nullptr);
 
   return lite::RET_OK;
 }
@@ -143,6 +147,7 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
 
   // tensor_array
   auto tensor_array = std::make_shared<ops::TensorArray>();
+  MS_ASSERT(tensor_array != nullptr);
   std::vector<int> element_shape;
   std::for_each(tensor_info->shape().begin(), tensor_info->shape().end(),
                 [&element_shape](int64_t v) { element_shape.push_back(static_cast<int>(v)); });
@@ -157,18 +162,21 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
 
   // {"handle", "index", "flow_in"} -> {"tensor"}
   auto tensor_array_read = std::make_shared<ops::TensorArrayRead>();
+  MS_ASSERT(tensor_array_read != nullptr);
   auto tensor_array_read_node = func_graph->NewCNode({
     NewValueNode(tensor_array_read),
     tensor_array_node,
     NewValueNode(kDefaultIndex),
     NewValueNode(kFlowInPlaceHolder),
   });
+  MS_ASSERT(tensor_array_read_node != nullptr);
   tensor_array_read_node->set_abstract(abstract->Clone());
   tensor_array_read_node->set_fullname_with_scope(cnode->fullname_with_scope() + "_tensor_array_read");
   cnode->add_input(tensor_array_read_node);
 
   // {"handle", "index", "value", "flow_in"} -> {"flow_out"}
   auto tensor_array_write = std::make_shared<ops::TensorArrayWrite>();
+  MS_ASSERT(tensor_array_write != nullptr);
   auto tensor_array_write_node = func_graph->NewCNode({
     NewValueNode(tensor_array_write),
     tensor_array_node,
@@ -176,6 +184,7 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
     cnode,
     NewValueNode(kFlowInPlaceHolder),
   });
+  MS_ASSERT(rensor_array_write_node != nullptr);
   tensor_array_write_node->set_abstract(abstract->Clone());
   tensor_array_write_node->set_fullname_with_scope(cnode->fullname_with_scope() + "_tensor_array_write");
 

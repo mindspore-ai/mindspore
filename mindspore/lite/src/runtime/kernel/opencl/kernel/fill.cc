@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/opencl/kernel/fill.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#include "src/runtime/kernel/opencl/cl/shape.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -63,31 +62,20 @@ int FillOpenCLKernel::RunShape() {
   for (int i = 0; i < tensor_shape.size(); ++i) {
     fill_value.s[i] = reinterpret_cast<int *>(tensor_shape_data)[i];
   }
+  auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
+  auto region = cl::array<cl::size_type, 3U>{1, 1, 1};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
-
-  int arg_idx = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, fill_value) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
+  if (ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region) !=
+      CL_SUCCESS) {
+    MS_LOG(ERROR) << "enqueueFillImage failed.";
+    return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, *out_image) != CL_SUCCESS) {
-      MS_LOG(ERROR) << "SetKernelArg failed.";
-      return RET_ERROR;
-  }
-  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
-      MS_LOG(ERROR) << "RunKernel failed.";
-      return RET_ERROR;
-  }
-
   return RET_OK;
 }
 
 int FillOpenCLKernel::SetConstArgs() { return RET_OK; }
 
-void FillOpenCLKernel::SetGlobalLocal() {
-    global_size_ = {1,1};
-    AlignGlobalLocal(global_size_, {});
-}
+void FillOpenCLKernel::SetGlobalLocal() {}
 
 int FillOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
@@ -107,34 +95,7 @@ int FillOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-int FillOpenCLKernel::Prepare() {
-    auto param = this->op_parameter_;
-    if (param->type_ == PrimitiveType_Fill) {
-        return RET_OK;
-    } else {
-        std::string kernel_name_ = "Shape";
-        const std::string program_name = "Shape";
-        std::string source = shape_source;
-        if (!ocl_runtime_->LoadSource(program_name, source)) {
-            MS_LOG(ERROR) << "Load source failed.";
-            return RET_ERROR;
-        }
-        auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-        int error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name_, build_options_ext);
-        if (error_code != RET_OK) {
-            return error_code;
-        }
-
-        SetGlobalLocal();
-        if (SetConstArgs() != RET_OK) {
-            MS_LOG(ERROR) << "SeConstArgs failed.";
-            return RET_ERROR;
-        }
-        MS_LOG(DEBUG) << kernel_name_ << " Init Done!";
-        return RET_OK;
-    }
-    return RET_OK;
-}
+int FillOpenCLKernel::Prepare() { return RET_OK; }
 
 int FillOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
