@@ -40,6 +40,8 @@ class GraphKernelCluster : public Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
+  std::vector<PrimitivePtr> GetClusterableOpList();
+  bool IsClusterableOp(const AnfNodePtr &node);
   void Init(const FuncGraphPtr &func_graph);
   bool Process(const FuncGraphPtr &func_graph);
   std::vector<size_t> FindCandidates(size_t basenode_id);
@@ -57,9 +59,8 @@ class GraphKernelCluster : public Pass {
   std::vector<AnfNodePtr> nodes_;
   std::unordered_map<AnfNodePtr, size_t> node_idx_map_;
   std::stringstream dump_buf_;
+  std::vector<PrimitivePtr> op_list_;
 };
-
-bool IsClusterableOp(const AnfNodePtr &node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_CLUSTER_H_

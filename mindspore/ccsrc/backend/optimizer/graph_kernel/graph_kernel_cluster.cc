@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <set>
 #include <vector>
+#include <tuple>
 #include <memory>
 #include <utility>
 #include <fstream>
@@ -36,78 +37,81 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-std::vector<PrimitivePtr> GetClusterableOpList() {
-  std::vector<PrimitivePtr> clusterable_ops = {
-    prim::kPrimAbs,
-    prim::kPrimAdd,
-    prim::kPrimCast,
-    prim::kPrimEqual,
-    prim::kPrimExp,
-    prim::kPrimInplaceAssign,
-    prim::kPrimLog,
-    prim::kPrimMaximum,
-    prim::kPrimMinimum,
-    prim::kPrimMul,
-    prim::kPrimNeg,
-    prim::kPrimPow,
-    prim::kPrimRealDiv,
-    prim::kPrimReciprocal,
-    prim::kPrimReduceSum,
-    prim::kPrimReshape,
-    prim::kPrimRound,
-    prim::kPrimRsqrt,
-    prim::kPrimSqrt,
-    prim::kPrimSub,
-    prim::kPrimTanh,
-    prim::kPrimTranspose,
-#if ENABLE_D
-    prim::kPrimMatMul,
-    prim::kPrimTransData,
-    prim::kPrimBatchMatMul,
-#elif ENABLE_GPU
-    prim::kPrimACos,
-    prim::kPrimAcosh,
-    prim::kPrimArgMax,
-    prim::kPrimArgMin,
-    prim::kPrimAsin,
-    prim::kPrimAsinh,
-    prim::kPrimAssign,
-    prim::kPrimAtan,
-    prim::kPrimAtan2,
-    prim::kPrimCos,
-    prim::kPrimDiv,
-    prim::kPrimErf,
-    prim::kPrimExpm1,
-    prim::kPrimFloor,
-    prim::kPrimFloorDiv,
-    prim::kPrimFloorMod,
-    prim::kPrimGreater,
-    prim::kPrimGreaterEqual,
-    prim::kPrimIsFinite,
-    prim::kPrimIsInf,
-    prim::kPrimIsNan,
-    prim::kPrimLess,
-    prim::kPrimLessEqual,
-    prim::kPrimLogicalAnd,
-    prim::kPrimLogicalOr,
-    prim::kPrimLogicalNot,
-    prim::kPrimMod,
-    prim::kPrimNotEqual,
-    prim::kPrimReduceMax,
-    prim::kPrimReduceMin,
-    prim::kPrimSelect,
-    prim::kPrimSign,
-    prim::kPrimSin,
-    prim::kPrimStridedSlice,
-    prim::kPrimUserDefined,
-#endif
+using context::OpLevel_0;
+using context::OpLevel_1;
+std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
+  std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> clusterable_ops_with_level = {
+    // all target
+    {kAllTarget, OpLevel_0, prim::kPrimAbs},
+    {kAllTarget, OpLevel_0, prim::kPrimAdd},
+    {kAllTarget, OpLevel_0, prim::kPrimCast},
+    {kAllTarget, OpLevel_0, prim::kPrimEqual},
+    {kAllTarget, OpLevel_0, prim::kPrimExp},
+    {kAllTarget, OpLevel_0, prim::kPrimInplaceAssign},
+    {kAllTarget, OpLevel_0, prim::kPrimLog},
+    {kAllTarget, OpLevel_0, prim::kPrimMaximum},
+    {kAllTarget, OpLevel_0, prim::kPrimMinimum},
+    {kAllTarget, OpLevel_0, prim::kPrimMul},
+    {kAllTarget, OpLevel_0, prim::kPrimNeg},
+    {kAllTarget, OpLevel_0, prim::kPrimPow},
+    {kAllTarget, OpLevel_0, prim::kPrimRealDiv},
+    {kAllTarget, OpLevel_0, prim::kPrimReciprocal},
+    {kAllTarget, OpLevel_1, prim::kPrimReduceSum},
+    {kAllTarget, OpLevel_1, prim::kPrimReshape},
+    {kAllTarget, OpLevel_0, prim::kPrimRound},
+    {kAllTarget, OpLevel_0, prim::kPrimRsqrt},
+    {kAllTarget, OpLevel_0, prim::kPrimSqrt},
+    {kAllTarget, OpLevel_0, prim::kPrimSub},
+    {kAllTarget, OpLevel_0, prim::kPrimTanh},
+    {kAllTarget, OpLevel_1, prim::kPrimTranspose},
+    // ascend
+    {kAscendDevice, OpLevel_1, prim::kPrimMatMul},
+    {kAscendDevice, OpLevel_1, prim::kPrimTransData},
+    {kAscendDevice, OpLevel_1, prim::kPrimBatchMatMul},
+    // gpu
+    {kGPUDevice, OpLevel_0, prim::kPrimACos},
+    {kGPUDevice, OpLevel_0, prim::kPrimAcosh},
+    {kGPUDevice, OpLevel_1, prim::kPrimArgMax},
+    {kGPUDevice, OpLevel_1, prim::kPrimArgMin},
+    {kGPUDevice, OpLevel_0, prim::kPrimAsin},
+    {kGPUDevice, OpLevel_0, prim::kPrimAsinh},
+    {kGPUDevice, OpLevel_0, prim::kPrimAssign},
+    {kGPUDevice, OpLevel_0, prim::kPrimAtan},
+    {kGPUDevice, OpLevel_0, prim::kPrimAtan2},
+    {kGPUDevice, OpLevel_0, prim::kPrimCos},
+    {kGPUDevice, OpLevel_0, prim::kPrimDiv},
+    {kGPUDevice, OpLevel_0, prim::kPrimErf},
+    {kGPUDevice, OpLevel_0, prim::kPrimExpm1},
+    {kGPUDevice, OpLevel_0, prim::kPrimFloor},
+    {kGPUDevice, OpLevel_0, prim::kPrimFloorDiv},
+    {kGPUDevice, OpLevel_0, prim::kPrimFloorMod},
+    {kGPUDevice, OpLevel_0, prim::kPrimGreater},
+    {kGPUDevice, OpLevel_0, prim::kPrimGreaterEqual},
+    {kGPUDevice, OpLevel_0, prim::kPrimIsFinite},
+    {kGPUDevice, OpLevel_0, prim::kPrimIsInf},
+    {kGPUDevice, OpLevel_0, prim::kPrimIsNan},
+    {kGPUDevice, OpLevel_0, prim::kPrimLess},
+    {kGPUDevice, OpLevel_0, prim::kPrimLessEqual},
+    {kGPUDevice, OpLevel_0, prim::kPrimLogicalAnd},
+    {kGPUDevice, OpLevel_0, prim::kPrimLogicalOr},
+    {kGPUDevice, OpLevel_0, prim::kPrimLogicalNot},
+    {kGPUDevice, OpLevel_0, prim::kPrimMod},
+    {kGPUDevice, OpLevel_0, prim::kPrimNotEqual},
+    {kGPUDevice, OpLevel_1, prim::kPrimReduceMax},
+    {kGPUDevice, OpLevel_1, prim::kPrimReduceMin},
+    {kGPUDevice, OpLevel_0, prim::kPrimSelect},
+    {kGPUDevice, OpLevel_0, prim::kPrimSign},
+    {kGPUDevice, OpLevel_0, prim::kPrimSin},
+    {kGPUDevice, OpLevel_0, prim::kPrimStridedSlice},
+    {kGPUDevice, OpLevel_0, prim::kPrimUserDefined},
   };
   const auto &flags = context::GraphKernelFlags::GetInstance();
+  std::vector<PrimitivePtr> clusterable_ops = GetValidOps(clusterable_ops_with_level, flags.fusion_ops_level);
   OpListFilter(&clusterable_ops, flags.enable_cluster_ops_only, flags.enable_cluster_ops, flags.disable_cluster_ops);
   return clusterable_ops;
 }
 
+namespace {
 size_t CountGraphKernelInnerNodes(const AnfNodePtr &node) {
   AnfNodePtrList node_list;
   kernel::GetValidKernelNodes(AnfAlgo::GetCNodeFuncGraphPtr(node), &node_list);
@@ -115,15 +119,14 @@ size_t CountGraphKernelInnerNodes(const AnfNodePtr &node) {
 }
 }  // namespace
 
-bool IsClusterableOp(const AnfNodePtr &node) {
+bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (AnfAlgo::IsGraphKernel(node)) {
     return true;
   }
   if (IsKeepBasicNode(node)) {
     return false;
   }
-  auto op_list = GetClusterableOpList();
-  bool node_in_oplist = std::any_of(op_list.begin(), op_list.end(),
+  bool node_in_oplist = std::any_of(op_list_.begin(), op_list_.end(),
                                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
   if (!node_in_oplist) {
     return false;
@@ -496,6 +499,7 @@ void GraphKernelCluster::RemoveWildGetitem(std::vector<size_t> *candidates) {
 }
 
 void GraphKernelCluster::Init(const FuncGraphPtr &func_graph) {
+  op_list_ = GetClusterableOpList();
   // process cnode only
   nodes_ = TopoSort(func_graph->get_return(), SuccIncoming,
                     [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
