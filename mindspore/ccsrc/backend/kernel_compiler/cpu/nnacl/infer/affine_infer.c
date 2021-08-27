@@ -20,6 +20,7 @@
 int MatmulInfer(const AffineParameter *param, int a_shape[MAX_SHAPE_SIZE], size_t a_shape_size,
                 int b_shape[MAX_SHAPE_SIZE], size_t b_shape_size) {
   MatMulParameter *matmul_param = param->matmul_parameter_;
+  NNACL_CHECK_NULL_RETURN_ERR(matmul_param);
   if (matmul_param->a_transpose_) {
     if (a_shape_size < 2) {
       return NNACL_ERR;
@@ -37,12 +38,10 @@ int MatmulInfer(const AffineParameter *param, int a_shape[MAX_SHAPE_SIZE], size_
 
 int AffineInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 3, 4, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
   // splice + matmul
   TensorC *input0 = (TensorC *)inputs[0];
   TensorC *input1 = (TensorC *)inputs[1];

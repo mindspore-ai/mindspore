@@ -20,9 +20,8 @@ using mindspore::schema::PrimitiveType_RaggedRange;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateRaggedRangeParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-
   auto *param = reinterpret_cast<RaggedRangeParameter *>(malloc(sizeof(RaggedRangeParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc RaggedRangeParameter failed.";

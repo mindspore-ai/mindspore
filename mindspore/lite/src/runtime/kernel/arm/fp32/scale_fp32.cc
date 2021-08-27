@@ -68,7 +68,7 @@ int ScaleCPUKernel::InitScaleOffset() {
   } else if (in_tensors_.size() == 3 && reinterpret_cast<float *>(in_tensors_.at(2)->data_c()) != nullptr) {
     scale_param_->const_offset_ = true;
     auto offset_tensor = in_tensors_.at(2);
-    MS_ASSERT(scale_tensor->ElementsNum() == offset_tensor->ElementsNum());
+    MS_CHECK_TRUE_RET(scale_tensor->ElementsNum() == offset_tensor->ElementsNum(), RET_ERROR);
     offset_ = reinterpret_cast<float *>(malloc(offset_tensor->ElementsNum() * sizeof(float)));
     if (offset_ == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed";
@@ -180,13 +180,12 @@ int ScaleCPUKernel::Run() {
   if (!scale_param_->const_scale_) {
     auto scale_tensor = in_tensors_.at(1);
     scale_ = reinterpret_cast<float *>(scale_tensor->data_c());
-    MS_ASSERT(scale_ != nullptr);
+    CHECK_NULL_RETURN(scale_);
   }
   if (!scale_param_->const_offset_) {
-    MS_ASSERT(in_tensors_.size() == 3);
     auto offset_tensor = in_tensors_.at(2);
     offset_ = reinterpret_cast<float *>(offset_tensor->data_c());
-    MS_ASSERT(offset_ != nullptr);
+    CHECK_NULL_RETURN(offset_);
   }
   auto out_tensor = out_tensors_.front();
   output_ptr_ = reinterpret_cast<float *>(out_tensor->MutableData());

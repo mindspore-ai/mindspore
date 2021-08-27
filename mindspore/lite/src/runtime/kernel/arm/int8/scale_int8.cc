@@ -151,7 +151,7 @@ int ScaleInt8CPUKernel::InitParameter() {
       tile_para->out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
     }
   } else {
-    MS_ASSERT(input0_size > input1_size);
+    MS_CHECK_TRUE_RET(input0_size > input1_size, RET_ERROR);
     size_t fill_dim_num = input0_size - input1_size;
     int j = 0;
     for (size_t i = 0; i < output_size; i++) {
@@ -253,20 +253,21 @@ int ScaleInt8CPUKernel::ReSize() {
 }
 
 int ScaleInt8CPUKernel::Scale(int task_id) const {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, count_unit_, RET_ERROR);
   int real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
   if (real_dst_count <= 0) {
     return lite::RET_OK;
   }
   int8_t *cur_input0_data = input0_data_ + task_id * count_unit_;
-  MS_ASSERT(cur_input0_data);
+  CHECK_NULL_RETURN(cur_input0_data);
   int8_t *cur_input1_data = input1_data_ + task_id * count_unit_;
-  MS_ASSERT(cur_input1_data);
+  CHECK_NULL_RETURN(cur_input1_data);
   int8_t *cur_output_data = output_data_ + task_id * count_unit_;
-  MS_ASSERT(cur_output_data);
+  CHECK_NULL_RETURN(cur_output_data);
 
   if (has_bias_) {
     int8_t *cur_input2_data = input2_data_ + task_id * count_unit_;
-    MS_ASSERT(cur_input2_data);
+    CHECK_NULL_RETURN(cur_input2_data);
     DoScaleWithBiasInt8(cur_input0_data, cur_output_data, cur_input1_data, cur_input2_data, scale_param_,
                         real_dst_count);
   } else {

@@ -22,8 +22,8 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateScaleParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto scale_prim = primitive->value_as_Scale();
   if (scale_prim == nullptr) {
     MS_LOG(ERROR) << "scale_prim is nullptr";

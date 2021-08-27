@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/resize_infer.h"
 #include <math.h>
+#include <limits.h>
 #include "nnacl/infer/infer_register.h"
 
 int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
@@ -42,6 +43,9 @@ int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
         if (data == NULL) {
           return NNACL_INFER_INVALID;
         }
+
+        MS_CHECK_INT_MUL_NOT_OVERFLOW(data[1], GetHeight(input), NNACL_ERRCODE_MUL_OVERFLOW);
+        MS_CHECK_INT_MUL_NOT_OVERFLOW(data[2], GetWidth(input), NNACL_ERRCODE_MUL_OVERFLOW);
         param->new_height_ = round(data[1] * GetHeight(input));
         param->new_width_ = round(data[2] * GetWidth(input));
       }
@@ -68,6 +72,8 @@ int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
       } else {
         return NNACL_ERR;
       }
+      MS_CHECK_INT_MUL_NOT_OVERFLOW(GetHeight(input) - 1, scale - 1, NNACL_ERRCODE_MUL_OVERFLOW);
+      MS_CHECK_INT_MUL_NOT_OVERFLOW(GetWidth(input) - 1, scale - 1, NNACL_ERRCODE_MUL_OVERFLOW);
       param->new_height_ = GetHeight(input) + (GetHeight(input) - 1) * (scale - 1);
       param->new_width_ = GetWidth(input) + (GetWidth(input) - 1) * (scale - 1);
       break;
@@ -109,6 +115,7 @@ int ResizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     return NNACL_ERR;
   }
   ResizeParameter *param = (ResizeParameter *)parameter;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   ShapePush(output_shape, &output_shape_size, GetBatch(input));

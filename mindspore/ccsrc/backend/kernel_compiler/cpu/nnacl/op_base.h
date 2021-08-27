@@ -195,9 +195,9 @@
   } while (0)
 
 #define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode) \
-  MS_CHECK_TRUE(!(INT_MUL_OVERFLOW(value1, value2)), errcode)
+  MS_CHECK_TRUE_RET(!(INT_MUL_OVERFLOW(value1, value2)), errcode)
 #define MS_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode) \
-  MS_CHECK_TRUE(!(INT_ADD_OVERFLOW(value1, value2)), errcode)
+  MS_CHECK_TRUE_RET(!(INT_ADD_OVERFLOW(value1, value2)), errcode)
 
 #define NNACL_CHECK_ZERO_RETURN_ERR(val) \
   do {                                   \

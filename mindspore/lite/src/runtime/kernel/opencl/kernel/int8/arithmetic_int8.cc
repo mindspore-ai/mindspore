@@ -57,6 +57,7 @@ int ArithmeticInt8OpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
   if (!IsArithmetic(type())) {
     MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(type());
     return RET_ERROR;
@@ -183,6 +184,7 @@ int ArithmeticInt8OpenCLKernel::Prepare() {
   out_shape_ = GpuTensorInfo(out_tensors_[0]);
 
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
   if (type() == PrimitiveType_BiasAdd) {
     const_cast<ArithmeticParameter *>(param)->broadcasting_ = true;
   }

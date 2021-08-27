@@ -38,6 +38,7 @@ void RaggedRangeInt(const int *starts, const int *limits, const int *deltas, int
     int start = param->starts_is_scalar ? starts[0] : starts[i];
     int limit = param->limits_is_scalar ? limits[0] : limits[i];
     int delta = param->deltas_is_scalar ? deltas[0] : deltas[i];
+    NNACL_CHECK_ZERO_RETURN(delta);
     int len = MSMAX((int)ceil((float)(limit - start) / delta), 0);
     splits[i + 1] = splits[i] + len;
     for (int j = 0; j < len; j++) {

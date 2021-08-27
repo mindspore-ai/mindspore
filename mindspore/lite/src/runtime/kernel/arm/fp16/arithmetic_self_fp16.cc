@@ -56,7 +56,9 @@ ArithmeticSelfFp16Func ArithmeticSelfFp16CPUKernel::GetArithmeticSelfFp16Fun(int
 
 int ArithmeticSelfFp16CPUKernel::DoExecute(int task_id) {
   int elements_num = in_tensors_.at(0)->ElementsNum();
+  MS_CHECK_TRUE_RET(op_parameter_->thread_num_ != 0, RET_ERROR);
   int stride = UP_DIV(elements_num, op_parameter_->thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, stride, RET_ERROR);
   int offset = task_id * stride;
   int count = MSMIN(stride, elements_num - offset);
   if (count <= 0) {
@@ -76,8 +78,8 @@ int ArithmeticSelfFp16CPUKernel::DoExecute(int task_id) {
 int ArithmeticSelfFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-  MS_ASSERT(input_tensor != nullptr);
-  MS_ASSERT(output_tensor != nullptr);
+  CHECK_NULL_RETURN(input_tensor);
+  CHECK_NULL_RETURN(output_tensor);
   if (input_tensor->data_type() == kNumberTypeFloat32) {
     input_fp16_ptr_ = ConvertInputFp32toFp16(input_tensor, static_cast<const lite::InnerContext *>(ms_context_));
     if (input_fp16_ptr_ == nullptr) {
@@ -85,10 +87,10 @@ int ArithmeticSelfFp16CPUKernel::Run() {
     }
   } else {
     input_fp16_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-    MS_ASSERT(input_fp16_ptr_ != nullptr);
+    CHECK_NULL_RETURN(input_fp16_ptr_);
   }
   output_fp16_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
-  MS_ASSERT(output_fp16_ptr_ != nullptr);
+  CHECK_NULL_RETURN(output_fp16_ptr_);
 
   auto ret = ParallelLaunch(ms_context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {

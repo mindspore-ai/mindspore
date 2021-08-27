@@ -24,6 +24,7 @@ int GetShapeByType(const TensorC *shape_tensor, int shape_size, int *dst_shape) 
   if (shape_size == 0) {
     return NNACL_INFER_INVALID;
   }
+  NNACL_CHECK_NULL_RETURN_ERR(shape_tensor->data_);
   switch (shape_tensor->data_type_) {
     case kNumberTypeInt8: {
       int8_t *data = (int8_t *)(shape_tensor->data_);

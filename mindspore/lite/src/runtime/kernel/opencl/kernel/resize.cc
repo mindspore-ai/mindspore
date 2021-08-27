@@ -43,6 +43,7 @@ int ResizeOpenCLKernel::CheckSpecs() {
     return RET_PARAM_INVALID;
   }
   auto resize_param = reinterpret_cast<ResizeParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(resize_param);
   if (resize_param->method_ != schema::ResizeMethod_LINEAR && resize_param->method_ != schema::ResizeMethod_NEAREST) {
     MS_LOG(ERROR) << "unsupported resize method:" << resize_param->method_;
     return RET_PARAM_INVALID;
@@ -52,6 +53,7 @@ int ResizeOpenCLKernel::CheckSpecs() {
 
 int ResizeOpenCLKernel::Prepare() {
   auto resize_param = reinterpret_cast<ResizeParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(resize_param);
   alignCorner = resize_param->coordinate_transform_mode_ == 1;
   preserveAspectRatio = resize_param->preserve_aspect_ratio_;
   auto in_shape = in_tensors_[0]->shape();
@@ -93,6 +95,8 @@ float ResizeOpenCLKernel::getResizeScaleFactor(int input_size, int output_size) 
 int ResizeOpenCLKernel::SetConstArgs() {
   auto in_shape = in_tensors_[0]->shape();
   auto out_shape = out_tensors_[0]->shape();
+  MS_CHECK_GE(in_shape.size(), DIMENSION_4D, RET_ERROR);
+  MS_CHECK_GE(out_shape.size(), DIMENSION_4D, RET_ERROR);
   int n = out_shape[0];
   int h = out_shape[1];
   int w = out_shape[2];

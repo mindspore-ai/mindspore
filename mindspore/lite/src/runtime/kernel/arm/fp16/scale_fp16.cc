@@ -102,12 +102,12 @@ int ScaleFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int ScaleFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-  MS_ASSERT(input_tensor != nullptr);
-  MS_ASSERT(output_tensor != nullptr);
+  CHECK_NULL_RETURN(input_tensor);
+  CHECK_NULL_RETURN(output_tensor);
   input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
   output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
-  MS_ASSERT(input_ != nullptr);
-  MS_ASSERT(output_ != nullptr);
+  CHECK_NULL_RETURN(input_);
+  CHECK_NULL_RETURN(output_);
   auto ret = InitScaleOffset();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp16 InitScaleOffset failed.";
@@ -143,6 +143,7 @@ int ScaleFp16CPUKernel::MallocAssignTmpBuffer() {
       return RET_ERROR;
     }
   } else {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(in_tensors_.at(1)->ElementsNum(), sizeof(float16_t), RET_ERROR);
     offset_ = reinterpret_cast<float16_t *>(
       ms_context_->allocator->Malloc(in_tensors_.at(1)->ElementsNum() * sizeof(float16_t)));
     if (offset_ == nullptr) {

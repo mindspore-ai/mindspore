@@ -30,6 +30,7 @@ int CheckInputTensor(const TensorC *const *inputs) {
 
 int GetRows(const TensorC *const *inputs, bool starts_is_scalar, bool limits_is_scalar, bool deltas_is_scalar,
             int *rows) {
+  NNACL_CHECK_NULL_RETURN_ERR(rows);
   int sizes[3];
   int not_scalar_count = 0;
   if (!starts_is_scalar) {
@@ -61,6 +62,7 @@ int GetOutputValueElementNum(const TensorC *const *inputs, RaggedRangeParameter 
         int start = param->starts_is_scalar ? starts[0] : starts[i];
         int limit = param->limits_is_scalar ? limits[0] : limits[i];
         int delta = param->deltas_is_scalar ? deltas[0] : deltas[i];
+        NNACL_CHECK_ZERO_RETURN_ERR(delta);
         count += MSMAX((int)(ceil((float)(limit - start) / delta)), 0);
       }
     } break;
@@ -72,6 +74,7 @@ int GetOutputValueElementNum(const TensorC *const *inputs, RaggedRangeParameter 
         int start = param->starts_is_scalar ? starts[0] : starts[i];
         int limit = param->limits_is_scalar ? limits[0] : limits[i];
         int delta = param->deltas_is_scalar ? deltas[0] : deltas[i];
+        NNACL_CHECK_ZERO_RETURN_ERR(delta);
         count += MSMAX((int)(ceil((float)(limit - start) / delta)), 0);
       }
     } break;
@@ -85,15 +88,9 @@ int GetOutputValueElementNum(const TensorC *const *inputs, RaggedRangeParameter 
 
 int RaggedRangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 2);
   if (check_ret != NNACL_OK) {
     return check_ret;
-  }
-#endif
-
-  if (inputs_size != 3 || outputs_size != 2) {
-    return NNACL_INPUT_TENSOR_ERROR;
   }
 
   outputs[0]->data_type_ = kNumberTypeInt32;
@@ -108,6 +105,7 @@ int RaggedRangeInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     return ret;
   }
   RaggedRangeParameter *param = (RaggedRangeParameter *)parameter;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   param->starts_is_scalar = inputs[0]->shape_size_ == 0;
   param->limits_is_scalar = inputs[1]->shape_size_ == 0;
   param->deltas_is_scalar = inputs[2]->shape_size_ == 0;

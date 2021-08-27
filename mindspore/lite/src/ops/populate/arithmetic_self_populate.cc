@@ -35,8 +35,8 @@ using mindspore::schema::PrimitiveType_Square;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateArithmeticSelf(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
 
   auto *param = reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
   if (param == nullptr) {
