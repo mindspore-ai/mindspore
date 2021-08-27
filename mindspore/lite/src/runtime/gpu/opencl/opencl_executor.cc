@@ -49,47 +49,38 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
       }
     }
     auto *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel->kernel());
-    // Support ZeroShape
-    size_t zero_shape_num = 0;
+    // Don't support ZeroShape
     for (auto tensor : kernel->out_tensors()) {
       for (size_t i = 0; i < tensor->shape().size(); i++) {
         if (tensor->shape()[i] == 0) {
-          zero_shape_num++;
-          break;
+          MS_LOG(ERROR) << "Opencl don't support ZeroShape.";
+          return RET_ERROR;
         }
       }
     }
-    if (zero_shape_num != kernel->out_tensors().size()) {
-      if (is_tune) {
-        ret = op_kernel->PreProcess();
-        if (ret != RET_OK) {
-          MS_LOG(WARNING) << "PreProcess kernel failed, name: " << kernel->name() << " in tuning";
-          opencl_runtime_ins->SetProfiling(profiling_tmp);
-          return RET_OK;
-        }
-        ret = op_kernel->Tune();
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "tuning kernel failed, name: " << kernel->name();
-          return ret;
-        }
-        ret = op_kernel->PostProcess();
-        if (ret != RET_OK) {
-          MS_LOG(WARNING) << "PostProcess kernel failed, name: " << kernel->name() << " in tuning";
-          opencl_runtime_ins->SetProfiling(profiling_tmp);
-          return RET_OK;
-        }
-      } else {
-        ret = kernel->Execute();
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
-          return ret;
-        }
-        if (profiling_tmp) {
-          auto execute_time = op_kernel->GetProfilingTimeMs();
-          MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
-                       << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
-          callbackParam.execute_time = execute_time;
-        }
+    if (is_tune) {
+      ret = op_kernel->PreProcess();
+      if (RET_OK != ret) {
+        MS_LOG(WARNING) << "PreProcess kernel failed, name: " << kernel->name() << " in tuning";
+        opencl_runtime_ins->SetProfiling(profiling_tmp);
+        return RET_OK;
+      }
+      ret = op_kernel->Tune();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "tuning kernel failed, name: " << kernel->name();
+        return ret;
+      }
+    } else {
+      ret = kernel->Execute();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
+        return ret;
+      }
+      if (profiling_tmp) {
+        auto execute_time = op_kernel->GetProfilingTimeMs();
+        MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
+                     << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
+        callbackParam.execute_time = execute_time;
       }
     }
     if (after != nullptr) {

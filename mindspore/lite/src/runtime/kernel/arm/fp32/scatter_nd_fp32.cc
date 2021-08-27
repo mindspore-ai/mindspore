@@ -111,7 +111,7 @@ int ScatterNDCPUKernel::ReSize() {
   }
 
   int *indices_ptr = reinterpret_cast<int *>(indices->MutableData());
-  MS_ASSERT(indices_ptr != nullptr);
+  CHECK_NULL_RETURN(indices_ptr);
   output_unit_offsets_.clear();
   for (int i = 0; i < num_unit_; i++) {
     int tmp_stride = 0;
@@ -146,6 +146,7 @@ int ScatterNDCPUKernel::ScatterND(int task_id) {
 }
 
 int ScatterNDRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<ScatterNDCPUKernel *>(cdata);
   MS_ASSERT(g_kernel != nullptr);
   auto ret = g_kernel->ScatterND(task_id);

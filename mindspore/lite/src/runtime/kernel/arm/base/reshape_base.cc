@@ -42,6 +42,8 @@ int ReshapeBaseCPUKernel::Run() {
    * */
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
       op_parameter_->is_train_session_) {
+    CHECK_NULL_RETURN(out_tensor->data_c());
+    CHECK_NULL_RETURN(in_tensor->data_c());
     memcpy(out_tensor->data_c(), in_tensor->data_c(), in_tensor->Size());
     return RET_OK;
   }

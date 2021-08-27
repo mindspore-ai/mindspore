@@ -63,6 +63,7 @@ int SoftmaxFp16CPUKernel::ReSize() {
     if (sum_data_ != nullptr) {
       free(sum_data_);
     }
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, out_plane_size_ * in_plane_size_ * sizeof(float16_t));
     sum_data_ = reinterpret_cast<float16_t *>(malloc(out_plane_size_ * in_plane_size_ * sizeof(float16_t)));
     if (sum_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc data for softmax fail!";
@@ -74,9 +75,17 @@ int SoftmaxFp16CPUKernel::ReSize() {
 
 int SoftmaxFp16CPUKernel::DoSoftmaxLastAxis(int task_id) {
   int unit = UP_DIV(out_plane_size_, op_parameter_->thread_num_);
+  if (INT_MUL_OVERFLOW(task_id, unit)) {
+    MS_LOG(ERROR) << "int mul overflow.";
+    return RET_ERROR;
+  }
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, out_plane_size_);
   int channel = softmax_param_->input_shape_[softmax_param_->axis_];
+  if (INT_MUL_OVERFLOW(begin, channel)) {
+    MS_LOG(ERROR) << "int mul overflow.";
+    return RET_ERROR;
+  }
   int offset = begin * channel;
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data_c());
@@ -85,6 +94,7 @@ int SoftmaxFp16CPUKernel::DoSoftmaxLastAxis(int task_id) {
 }
 
 int SoftmaxLastAxisFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<SoftmaxFp16CPUKernel *>(cdata);
   auto ret = kernel->DoSoftmaxLastAxis(task_id);
   if (ret != RET_OK) {

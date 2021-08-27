@@ -62,6 +62,9 @@ int ActivationCPUKernel::DoActivation(int task_id) {
   if (count <= 0) {
     return RET_OK;
   }
+  if (INT_MUL_OVERFLOW(stride, task_id)) {
+    return RET_ERROR;
+  }
 
   auto ret = RET_OK;
 
@@ -98,6 +101,7 @@ int ActivationCPUKernel::DoActivation(int task_id) {
 }
 
 int ActivationRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto activation_kernel = reinterpret_cast<ActivationCPUKernel *>(cdata);
   MS_ASSERT(activation_kernel != nullptr);
   auto error_code = activation_kernel->DoActivation(task_id);
