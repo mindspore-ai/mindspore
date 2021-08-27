@@ -31,7 +31,7 @@ constexpr size_t kMirrorPadInputSize = 2;
 constexpr size_t kPadCommonInputSize = 2;
 }  // namespace
 int PadCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), kPadCommonInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;

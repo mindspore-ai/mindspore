@@ -22,8 +22,8 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateReverseSequenceParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto reverse_sequence_prim = primitive->value_as_ReverseSequence();
   if (reverse_sequence_prim == nullptr) {
     MS_LOG(ERROR) << "reverse_sequence_prim is nullptr";

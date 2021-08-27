@@ -60,6 +60,9 @@ int PoolingFp16CPUKernel::RunImpl(int task_id) {
     minf = 0.f;
     maxf = 6.f;
   }
+  CHECK_NULL_RETURN(fp16_input_);
+  CHECK_NULL_RETURN(fp16_output_);
+  CHECK_NULL_RETURN(pooling_param_);
   if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
     MaxPoolingFp16(fp16_input_, fp16_output_, pooling_param_, task_id, minf, maxf);
   } else {

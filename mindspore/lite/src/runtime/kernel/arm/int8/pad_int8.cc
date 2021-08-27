@@ -18,6 +18,7 @@
 #include <cfloat>
 #include <cmath>
 #include "src/kernel_registry.h"
+#include "nnacl/op_base.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
@@ -112,6 +113,9 @@ int PadInt8CPUKernel::ReSize() {
 
 int PadInt8CPUKernel::Init() {
   MS_ASSERT(pad_param_);
+  CHECK_LESS_RETURN(in_tensors_.size(), kInputSize1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(op_parameter_);
   auto error_code = SetQuantParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SetQuantParam failed. errorcode: " << error_code;
@@ -124,10 +128,10 @@ int PadInt8CPUKernel::Init() {
 }
 
 int PadInt8CPUKernel::RunImpl(int task_id) {
-  MS_ASSERT(in_data_);
-  MS_ASSERT(out_data_);
-  MS_ASSERT(in_dims_);
-  MS_ASSERT(out_dims_);
+  CHECK_NULL_RETURN(in_data_);
+  CHECK_NULL_RETURN(out_data_);
+  CHECK_NULL_RETURN(in_dims_);
+  CHECK_NULL_RETURN(out_dims_);
   return PadConstant4D(in_data_, out_data_, in_dims_, out_dims_, pad_param_->paddings_, task_id,
                        op_parameter_->thread_num_);
 }
@@ -159,6 +163,9 @@ int PadInt8CPUKernel::HandleMirrorPad() {
 void PadInt8CPUKernel::CalculateStrides() {
   pad_param_->in_strides[COMM_SHAPE_SIZE - 1] = 1;
   for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
+    if (INT_MUL_OVERFLOW(in_dims_[i + 1], pad_param_->in_strides[i + 1])) {
+      return;
+    }
     pad_param_->in_strides[i] = in_dims_[i + 1] * pad_param_->in_strides[i + 1];
   }
   for (auto i = 0; i < COMM_SHAPE_SIZE; ++i) {
@@ -166,6 +173,9 @@ void PadInt8CPUKernel::CalculateStrides() {
   }
   pad_param_->out_strides[COMM_SHAPE_SIZE - 1] = 1;
   for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
+    if (INT_MUL_OVERFLOW(out_dims_[i + 1], pad_param_->out_strides[i + 1])) {
+      return;
+    }
     pad_param_->out_strides[i] = out_dims_[i + 1] * pad_param_->out_strides[i + 1];
   }
 }
@@ -189,10 +199,10 @@ int PadInt8CPUKernel::RunMirrorPadImpl(int task_id) {
   auto output = out_tensors_.at(0);
   MS_ASSERT(output);
   auto input_data = reinterpret_cast<int8_t *>(input->MutableData());
-  MS_ASSERT(input_data);
+  CHECK_NULL_RETURN(input_data);
   auto output_data = reinterpret_cast<int8_t *>(output->MutableData());
-  MS_ASSERT(output_data);
-
+  CHECK_NULL_RETURN(output_data);
+  MS_CHECK_FALSE(op_parameter_->thread_num_ == 0, RET_ERROR);
   int unit = UP_DIV(output->ElementsNum(), op_parameter_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, output->ElementsNum());
@@ -263,8 +273,9 @@ int PadInt8CPUKernel::CopyPaddingFromInput() {
 
 int PadInt8CPUKernel::Run() {
   in_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(in_data_);
   out_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
-
+  CHECK_NULL_RETURN(out_data_);
   int error_code;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
     memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0],

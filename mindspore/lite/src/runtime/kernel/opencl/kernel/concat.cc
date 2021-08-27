@@ -59,8 +59,14 @@ void ConcatGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *
   const int max_divider = 8;
   const int max_x = 2, max_y = 8;
   int x = std::min(GetMaxDivisorStrategy1(global[0], max_divider), max_x);
+  if (x == 0) {
+    return;
+  }
   int yz = max_size / x;
   int y = std::min(std::min(GetMaxDivisorStrategy1(global[1], max_divider), yz), max_y);
+  if (y == 0) {
+    return;
+  }
   int z = std::min(yz / y, static_cast<int>(UP_DIV(global[2], 2)));
 
   local->clear();

@@ -94,7 +94,7 @@ int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParame
   double real_multiplier = pooling_param->quant_args_[0][0].scale_ / pooling_param->quant_args_[1][0].scale_;
   const int8_t out_min = INT8_MIN;
   const int8_t out_max = INT8_MAX;
-
+  NNACL_CHECK_ZERO_RETURN_ERR(output_w);
   for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
     int in_batch_offset = batch * pooling_param->input_h_ * in_w * channel;
     int out_batch_offset = batch * pooling_param->output_h_ * output_w * channel;
@@ -341,6 +341,7 @@ void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, Poolin
   int output_zp = pooling_param->quant_args_[1][0].zp_;
   double real_multiplier = input_scale / output_scale;
 
+  NNACL_CHECK_ZERO_RETURN(output_w);
   for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
     int in_batch_offset = batch * in_h * in_w * channel;
     int out_batch_offset = batch * pooling_param->output_h_ * output_w * channel;
@@ -428,6 +429,7 @@ void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
   int thread_num = MSMIN(out_tile_count, pooling_param->thread_num_);
   int8_t out_array[MAX_MAXPOOL_SIZE];
 
+  NNACL_CHECK_ZERO_RETURN(output_w);
   for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
     int in_batch_offset = batch * pooling_param->input_h_ * in_w * channel;
     int out_batch_offset = batch * pooling_param->output_h_ * output_w * channel;

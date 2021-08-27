@@ -54,6 +54,7 @@ int GetInputFlattenIndexInt8(int out_flatten_index, const int *input_shape, cons
   int i;
   for (i = 0; i < COMM_SHAPE_SIZE; ++i) {
     int left_pad = pad_param->paddings_[i * 2];
+    NNACL_CHECK_ZERO_RETURN_ERR(pad_param->out_strides[i]);
     int out_dim_index = out_flatten_index / pad_param->out_strides[i];
     out_flatten_index %= pad_param->out_strides[i];
     int in_dim_index = TransOut2InputDimIndexInt8(out_dim_index, left_pad, input_shape[i], pad_param->mirror_offset_);
