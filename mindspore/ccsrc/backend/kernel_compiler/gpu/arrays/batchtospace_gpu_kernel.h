@@ -118,7 +118,7 @@ class BatchToSpaceGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "input_shape[0] must be divisible by product of block_shape";
       return false;
     }
-    for (int idx = 0; idx < SHAPE_SIZE; ++idx) {
+    for (size_t idx = 0; idx < SHAPE_SIZE; ++idx) {
       if (input_shape[idx] < 1) {
         MS_LOG(ERROR) << "input_shape[" << idx << "] can not less than 1";
         return false;
