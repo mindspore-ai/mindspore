@@ -514,6 +514,10 @@ void GPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_gra
     Summary(kernel_graph.get());
   }
 
+  if (debugger_ && debugger_->DebuggerBackendEnabled()) {
+    debugger_->LoadParametersAndConst(kernel_graph);
+  }
+
   // debug used for dump
   if (debugger_ && debugger_->CheckDebuggerDumpEnabled()) {
     Dump(kernel_graph);

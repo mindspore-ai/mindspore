@@ -885,26 +885,18 @@ void Debugger::ViewValueLevel(const EventReply &reply) {
 }
 
 void Debugger::ViewStatLevel(const EventReply &reply) {
-  std::list<TensorSummary> tensor_stat_list = LoadTensorsStat(GetTensors(reply));
-  int index = 0;
-  for (auto tensor_stat : tensor_stat_list) {
-    EventReply send_tensors_stat_reply = grpc_client_->SendTensorStats(tensor_stat);
-    if (send_tensors_stat_reply.status() != debugger::EventReply::OK) {
-      MS_LOG(ERROR) << "Error: SendTensorsStats failed for tensor index " << index << ".";
-    }
-    index++;
+  std::list<TensorSummary> tensor_stats_list = LoadTensorsStat(GetTensors(reply));
+  EventReply send_tensors_stat_reply = grpc_client_->SendTensorStats(tensor_stats_list);
+  if (send_tensors_stat_reply.status() != debugger::EventReply::OK) {
+    MS_LOG(ERROR) << "Error: SendTensorsStats failed.";
   }
 }
 
 void Debugger::ViewBaseLevel(const EventReply &reply) {
-  std::list<TensorBase> tensors_base_list = LoadTensorsBase(GetTensors(reply));
-  int index = 0;
-  for (auto tensor_base : tensors_base_list) {
-    EventReply send_tensors_base_reply = grpc_client_->SendTensorBase(tensor_base);
-    if (send_tensors_base_reply.status() != debugger::EventReply::OK) {
-      MS_LOG(ERROR) << "Error: SendTensorsBase failed for tensor index " << index << ".";
-    }
-    index++;
+  std::list<TensorBase> tensor_base_list = LoadTensorsBase(GetTensors(reply));
+  EventReply send_tensor_base_reply = grpc_client_->SendTensorBase(tensor_base_list);
+  if (send_tensor_base_reply.status() != debugger::EventReply::OK) {
+    MS_LOG(ERROR) << "Error: SendTensorsBase failed.";
   }
 }
 
@@ -919,7 +911,7 @@ void AddTensorProtoInfo(TensorProto *tensor_item, const TensorProto &tensor) {
 }
 
 void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat, std::list<TensorSummary> *tensor_summary_list) {
-  if (!tensor_summary_list) {
+  if (tensor_summary_list == nullptr) {
     MS_LOG(DEBUG) << "tensor_summary_list is nullptr.";
     return;
   }
@@ -1367,14 +1359,14 @@ void Debugger::LoadParametersAndConst() {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   MS_EXCEPTION_IF_NULL(graph_ptr_);
   // load parameters
-  MS_LOG(INFO) << "Start to load Parameters for graph " << graph_ptr_->graph_id();
+  MS_LOG(INFO) << "Start to load Parameters for graph " << graph_ptr_->graph_id() << ".";
   const auto &parameters = graph_ptr_->inputs();
   for (auto &item : parameters) {
     LoadSingleAnfnode(item, PARAMETER_OUTPUT_INDEX);
   }
   // load value nodes
   // get all constant values from the graph
-  MS_LOG(INFO) << "Start to load value nodes!";
+  MS_LOG(INFO) << "Start to load value nodes for graph " << graph_ptr_->graph_id() << ".";
   const auto value_nodes = graph_ptr_->graph_value_nodes();
   for (auto &item : value_nodes) {
     LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX);
@@ -1385,14 +1377,14 @@ void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   MS_EXCEPTION_IF_NULL(graph);
   // load parameters
-  MS_LOG(INFO) << "Start to load Parameters for graph " << graph->graph_id();
+  MS_LOG(INFO) << "Start to load Parameters for graph " << graph->graph_id() << ".";
   const auto &parameters = graph_ptr_->inputs();
   for (auto &item : parameters) {
     LoadSingleAnfnode(item, PARAMETER_OUTPUT_INDEX);
   }
   // load value nodes
   // get all constant values from the graph
-  MS_LOG(INFO) << "Start to load value nodes for graph " << graph->graph_id();
+  MS_LOG(INFO) << "Start to load value nodes for graph " << graph->graph_id() << ".";
   const auto value_nodes = graph_ptr_->graph_value_nodes();
   for (auto &item : value_nodes) {
     LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX);

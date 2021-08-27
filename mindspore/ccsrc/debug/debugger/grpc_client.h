@@ -57,9 +57,9 @@ class GrpcClient {
 
   EventReply SendTensors(const std::list<TensorProto> &tensors);
 
-  EventReply SendTensorBase(const TensorBase &tensor_base);
+  EventReply SendTensorBase(const std::list<TensorBase> &tensor_base);
 
-  EventReply SendTensorStats(const TensorSummary &tensor_summary);
+  EventReply SendTensorStats(const std::list<TensorSummary> &tensor_summary);
 
   EventReply SendMultiGraphs(const std::list<Chunk> &chunks);
 

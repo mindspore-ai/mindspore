@@ -284,7 +284,7 @@ std::vector<TensorBaseData> DbgServices::ReadTensorsBase(std::vector<tensor_info
   for (auto result : result_list) {
     if (!result->GetByteSize()) {
       // tensor not found, adding empty tensor base.
-      TensorBaseData tensor_data_item(0, 0, {0});
+      TensorBaseData tensor_data_item(0, 0, {});
       tensors_read_base.push_back(tensor_data_item);
       continue;
     }
@@ -294,6 +294,20 @@ std::vector<TensorBaseData> DbgServices::ReadTensorsBase(std::vector<tensor_info
   return tensors_read_base;
 }
 
+void AddTensorStatInfo(const DebugServices::TensorStat &tensor_statistics,
+                       std::vector<TensorStatData> *tensors_read_stat) {
+  if (tensors_read_stat == nullptr) {
+    MS_LOG(DEBUG) << "tensors_read_stat is nullptr.";
+    return;
+  }
+  TensorStatData tensor_data_item(
+    tensor_statistics.data_size, tensor_statistics.dtype, tensor_statistics.shape, tensor_statistics.is_bool,
+    tensor_statistics.max_value, tensor_statistics.min_value, tensor_statistics.avg_value, tensor_statistics.count,
+    tensor_statistics.neg_zero_count, tensor_statistics.pos_zero_count, tensor_statistics.nan_count,
+    tensor_statistics.neg_inf_count, tensor_statistics.pos_inf_count, tensor_statistics.zero_count);
+  tensors_read_stat->push_back(tensor_data_item);
+}
+
 std::vector<TensorStatData> DbgServices::ReadTensorsStat(std::vector<tensor_info_t> info) {
   std::vector<TensorStatData> tensors_read_stat;
   std::vector<std::shared_ptr<TensorData>> result_list;
@@ -301,21 +315,11 @@ std::vector<TensorStatData> DbgServices::ReadTensorsStat(std::vector<tensor_info
   for (auto result : result_list) {
     if (!result->GetByteSize()) {
       DebugServices::TensorStat tensor_statistics;
-      TensorStatData tensor_data_item(
-        tensor_statistics.data_size, tensor_statistics.dtype, tensor_statistics.shape, tensor_statistics.is_bool,
-        tensor_statistics.max_value, tensor_statistics.min_value, tensor_statistics.avg_value, tensor_statistics.count,
-        tensor_statistics.neg_zero_count, tensor_statistics.pos_zero_count, tensor_statistics.nan_count,
-        tensor_statistics.neg_inf_count, tensor_statistics.pos_inf_count, tensor_statistics.zero_count);
-      tensors_read_stat.push_back(tensor_data_item);
+      AddTensorStatInfo(tensor_statistics, &tensors_read_stat);
       continue;
     }
     DebugServices::TensorStat tensor_statistics = debug_services_->GetTensorStatistics(result);
-    TensorStatData tensor_data_item(
-      tensor_statistics.data_size, tensor_statistics.dtype, tensor_statistics.shape, tensor_statistics.is_bool,
-      tensor_statistics.max_value, tensor_statistics.min_value, tensor_statistics.avg_value, tensor_statistics.count,
-      tensor_statistics.neg_zero_count, tensor_statistics.pos_zero_count, tensor_statistics.nan_count,
-      tensor_statistics.neg_inf_count, tensor_statistics.pos_inf_count, tensor_statistics.zero_count);
-    tensors_read_stat.push_back(tensor_data_item);
+    AddTensorStatInfo(tensor_statistics, &tensors_read_stat);
   }
 
   return tensors_read_stat;

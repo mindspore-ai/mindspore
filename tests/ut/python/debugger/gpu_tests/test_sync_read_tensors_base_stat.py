@@ -15,7 +15,6 @@
 """
 Read tensor base and statistics test script for offline debugger APIs.
 """
-
 import shutil
 import numpy as np
 import mindspore.offline_debug.dbg_services as d
@@ -42,13 +41,20 @@ def test_sync_read_tensors_base_stat():
     info3 = d.TensorInfo(node_name="Default/network-WithLossCell/_backbone-MockModel/ReduceMean-op92",
                          slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
 
+    invalid_tensor = np.array([[1.1, -2.2], [3.3, -4.4]], np.float32)
+    name4 = "Add.Add-op1.0.0."
+    info4 = d.TensorInfo(node_name="invalid_name_for_test",
+                         slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
+
     tensor_info_1 = [info1]
     tensor_info_2 = [info2]
     tensor_info_3 = [info3]
-    tensor_info = [info1, info2, info3]
+    tensor_info_4 = [info4]
+    tensor_info = [info1, info2, info3, info4]
     value_path = build_dump_structure([name1], [value_tensor], "Add", tensor_info_1)
     inf_path = build_dump_structure([name2], [inf_tensor], "Inf", tensor_info_2)
     nan_path = build_dump_structure([name3], [nan_tensor], "Nan", tensor_info_3)
+    inv_path = build_dump_structure([name4], [invalid_tensor], "Inv", tensor_info_4)
 
     debugger_backend = d.DbgServices(
         dump_file_path=value_path, verbose=True)
@@ -68,21 +74,32 @@ def test_sync_read_tensors_base_stat():
     _ = debugger_backend_3.initialize(
         net_name="Nan", is_sync_mode=True)
 
+    debugger_backend_4 = d.DbgServices(
+        dump_file_path=inv_path, verbose=True)
+
+    _ = debugger_backend_4.initialize(
+        net_name="Inv", is_sync_mode=True)
+
     tensor_base_data_list = debugger_backend.read_tensor_base(tensor_info_1)
     tensor_base_data_list_2 = debugger_backend_2.read_tensor_base(tensor_info_2)
     tensor_base_data_list.extend(tensor_base_data_list_2)
     tensor_base_data_list_3 = debugger_backend_3.read_tensor_base(tensor_info_3)
     tensor_base_data_list.extend(tensor_base_data_list_3)
+    tensor_base_data_list_4 = debugger_backend_4.read_tensor_base(tensor_info_4)
+    tensor_base_data_list.extend(tensor_base_data_list_4)
 
     tensor_stat_data_list = debugger_backend.read_tensor_stats(tensor_info_1)
     tensor_stat_data_list_2 = debugger_backend_2.read_tensor_stats(tensor_info_2)
     tensor_stat_data_list.extend(tensor_stat_data_list_2)
     tensor_stat_data_list_3 = debugger_backend_3.read_tensor_stats(tensor_info_3)
     tensor_stat_data_list.extend(tensor_stat_data_list_3)
+    tensor_stat_data_list_4 = debugger_backend_4.read_tensor_stats(tensor_info_4)
+    tensor_stat_data_list.extend(tensor_stat_data_list_4)
 
     shutil.rmtree(value_path)
     shutil.rmtree(inf_path)
     shutil.rmtree(nan_path)
+    shutil.rmtree(inv_path)
     print_read_tensors(tensor_info, tensor_base_data_list, tensor_stat_data_list)
     if not GENERATE_GOLDEN:
         assert compare_actual_with_expected(test_name)
@@ -94,42 +111,24 @@ def print_read_tensors(tensor_info, tensor_base_data_list, tensor_stat_data_list
         f_write = open(test_name + ".expected", "w")
     else:
         f_write = open(test_name + ".actual", "w")
-
-    for x, _ in enumerate(tensor_info):
+    for x, (tensor_info_item, tensor_base, tensor_stat) in enumerate(zip(tensor_info,
+                                                                         tensor_base_data_list,
+                                                                         tensor_stat_data_list)):
         f_write.write(
             "-----------------------------------------------------------\n")
         f_write.write("tensor_info_" + str(x+1) + " attributes:\n")
-        f_write.write("node name =  " + tensor_info[x].node_name + "\n")
-        f_write.write("slot =  " + str(tensor_info[x].slot) + "\n")
-        f_write.write("iteration =  " + str(tensor_info[x].iteration) + "\n")
-        f_write.write("rank_id =  " + str(tensor_info[x].rank_id) + "\n")
-        f_write.write("root_graph_id =  " +
-                      str(tensor_info[x].root_graph_id) + "\n")
-        f_write.write("is_output =  " +
-                      str(tensor_info[x].is_output) + "\n")
+        f_write.write("node name = " + tensor_info_item.node_name + "\n")
+        f_write.write("slot = " + str(tensor_info_item.slot) + "\n")
+        f_write.write("iteration = " + str(tensor_info_item.iteration) + "\n")
+        f_write.write("rank_id = " + str(tensor_info_item.rank_id) + "\n")
+        f_write.write("root_graph_id = " +
+                      str(tensor_info_item.root_graph_id) + "\n")
+        f_write.write("is_output = " +
+                      str(tensor_info_item.is_output) + "\n")
         f_write.write("\n")
         f_write.write("tensor_base_info:\n")
-        f_write.write("size in bytes =  " +
-                      str(tensor_base_data_list[x].data_size) + "\n")
-        f_write.write("debugger dtype =  " + str(tensor_base_data_list[x].dtype) + "\n")
-        f_write.write("shape =  " + str(tensor_base_data_list[x].shape) + "\n")
-
+        f_write.write(str(tensor_base) + "\n")
         f_write.write("\n")
         f_write.write("tensor_stat_info:\n")
-
-        f_write.write("size in bytes =  " +
-                      str(tensor_stat_data_list[x].data_size) + "\n")
-        f_write.write("debugger dtype =  " + str(tensor_stat_data_list[x].dtype) + "\n")
-        f_write.write("shape =  " + str(tensor_stat_data_list[x].shape) + "\n")
-        f_write.write("is_bool =  " + str(tensor_stat_data_list[x].is_bool) + "\n")
-        f_write.write("max_value =  " + str(tensor_stat_data_list[x].max_value) + "\n")
-        f_write.write("min_value =  " + str(tensor_stat_data_list[x].min_value) + "\n")
-        f_write.write("avg_value =  " + str(tensor_stat_data_list[x].avg_value) + "\n")
-        f_write.write("count =  " + str(tensor_stat_data_list[x].count) + "\n")
-        f_write.write("neg_zero_count =  " + str(tensor_stat_data_list[x].neg_zero_count) + "\n")
-        f_write.write("pos_zero_count =  " + str(tensor_stat_data_list[x].pos_zero_count) + "\n")
-        f_write.write("nan_count =  " + str(tensor_stat_data_list[x].nan_count) + "\n")
-        f_write.write("neg_inf_count =  " + str(tensor_stat_data_list[x].neg_inf_count) + "\n")
-        f_write.write("pos_inf_count =  " + str(tensor_stat_data_list[x].pos_inf_count) + "\n")
-        f_write.write("zero_count =  " + str(tensor_stat_data_list[x].zero_count) + "\n")
+        f_write.write(str(tensor_stat) + '\n')
     f_write.close()

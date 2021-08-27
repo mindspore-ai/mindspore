@@ -627,6 +627,14 @@ class TensorBaseData():
     def __init__(self, data_size, dtype, shape):
         self.instance = cds.TensorBaseData(data_size, dtype, shape)
 
+    def __str__(self):
+        tensor_base_info = (
+            f'size in bytes = {self.data_size}\n'
+            f'debugger dtype = {self.dtype}\n'
+            f'shape = {self.shape}'
+        )
+        return tensor_base_info
+
     @property
     def data_size(self):
         """
@@ -722,6 +730,24 @@ class TensorStatData():
                                            pos_zero_count, nan_count, neg_inf_count,
                                            pos_inf_count, zero_count)
 
+    def __str__(self):
+        tensor_stats_info = (
+            f'size in bytes = {self.data_size}\n'
+            f'debugger dtype = {self.dtype}\n'
+            f'shape = {self.shape}\n'
+            f'is_bool = {self.is_bool}\n'
+            f'max_value = {self.max_value}\n'
+            f'min_value = {self.min_value}\n'
+            f'avg_value = {self.avg_value}\n'
+            f'count = {self.count}\n'
+            f'neg_zero_count = {self.neg_zero_count}\n'
+            f'pos_zero_count = {self.pos_zero_count}\n'
+            f'nan_count = {self.nan_count}\n'
+            f'neg_inf_count = {self.neg_inf_count}\n'
+            f'pos_inf_count = {self.pos_inf_count}\n'
+            f'zero_count = {self.zero_count}\n'
+            )
+        return tensor_stats_info
 
     @property
     def data_size(self):
