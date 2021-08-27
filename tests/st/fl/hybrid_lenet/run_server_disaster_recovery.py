@@ -49,6 +49,9 @@ parser.add_argument("--dp_eps", type=float, default=50.0)
 parser.add_argument("--dp_delta", type=float, default=0.01)  # usually equals 1/start_fl_job_threshold
 parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
+parser.add_argument("--client_password", type=str, default="")
+parser.add_argument("--server_password", type=str, default="")
+parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
 
 
 args, _ = parser.parse_known_args()
@@ -80,6 +83,9 @@ dp_eps = args.dp_eps
 dp_delta = args.dp_delta
 dp_norm_clip = args.dp_norm_clip
 encrypt_type = args.encrypt_type
+client_password = args.client_password
+server_password = args.server_password
+enable_ssl = args.enable_ssl
 
 
 #Step 1: make the server offline.
@@ -126,6 +132,9 @@ cmd_server += " --pki_verify=" + str(pki_verify)
 cmd_server += " --root_first_crl_path=" + str(root_first_crl_path)
 cmd_server += " --root_second_crl_path=" + str(root_second_crl_path)
 cmd_server += " --root_second_crl_path=" + str(root_second_crl_path)
+cmd_server += " --client_password=" + str(client_password)
+cmd_server += " --server_password=" + str(server_password)
+cmd_server += " --enable_ssl=" + str(enable_ssl)
 cmd_server += " --sts_jar_path=" + str(sts_jar_path)
 cmd_server += " --sts_properties_path=" + str(sts_properties_path)
 cmd_server += " > server.log 2>&1 &"

@@ -16,6 +16,7 @@
 import argparse
 import subprocess
 import os
+import ast
 
 parser = argparse.ArgumentParser(description="Run test_hybrid_train_lenet.py case")
 parser.add_argument("--device_target", type=str, default="CPU")
@@ -45,6 +46,9 @@ parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
 parser.add_argument("--cipher_time_window", type=int, default=300000)
 parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
+parser.add_argument("--client_password", type=str, default="")
+parser.add_argument("--server_password", type=str, default="")
+parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -72,6 +76,9 @@ reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
 dp_eps = args.dp_eps
 dp_delta = args.dp_delta
 dp_norm_clip = args.dp_norm_clip
+client_password = args.client_password
+server_password = args.server_password
+enable_ssl = args.enable_ssl
 
 if local_server_num == -1:
     local_server_num = server_num
@@ -109,6 +116,9 @@ for i in range(local_server_num):
     cmd_server += " --reconstruct_secrets_threshold=" + str(reconstruct_secrets_threshold)
     cmd_server += " --dp_eps=" + str(dp_eps)
     cmd_server += " --dp_delta=" + str(dp_delta)
+    cmd_server += " --client_password=" + str(client_password)
+    cmd_server += " --server_password=" + str(server_password)
+    cmd_server += " --enable_ssl=" + str(enable_ssl)
     cmd_server += " --dp_norm_clip=" + str(dp_norm_clip)
     cmd_server += " > server.log 2>&1 &"
 

@@ -16,6 +16,7 @@
 import argparse
 import os
 import sys
+import ast
 from time import time
 import numpy as np
 from mindspore import context, Tensor
@@ -66,6 +67,9 @@ def parse_args():
     parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
     parser.add_argument("--cipher_time_window", type=int, default=300000)
     parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
+    parser.add_argument("--client_password", type=str, default="")
+    parser.add_argument("--server_password", type=str, default="")
+    parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
     return parser.parse_args()
 
 
@@ -100,6 +104,9 @@ def server_train(args):
     share_secrets_ratio = args.share_secrets_ratio
     cipher_time_window = args.cipher_time_window
     reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
+    client_password = args.client_password
+    server_password = args.server_password
+    enable_ssl = args.enable_ssl
 
     # Replace some parameters with federated learning parameters.
     train_cfg.max_global_epoch = fl_iteration_num
@@ -129,6 +136,9 @@ def server_train(args):
         "share_secrets_ratio": share_secrets_ratio,
         "cipher_time_window": cipher_time_window,
         "reconstruct_secrets_threshold": reconstruct_secrets_threshold,
+        "client_password": client_password,
+        "server_password": server_password,
+        "enable_ssl": enable_ssl
     }
 
     if not os.path.exists(output_dir):
