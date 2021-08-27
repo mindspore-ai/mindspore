@@ -371,6 +371,8 @@ class _Reduce(PrimitiveWithInfer):
         input_shp = input_x['shape']
         args = {'input_x': input_x['dtype']}
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtype, self.name)
+        if not isinstance(axis, mstype.tensor_type) and axis_v is None:
+            raise ValueError(f"For {self.name}, axis must be const.")
         out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
         if -1 in input_shp:
             if axis_v is None:
@@ -423,8 +425,6 @@ class _Reduce(PrimitiveWithInfer):
                 value = np_reduce_func(value, axis_v, keepdims=self.keep_dims)
                 value = np.array(value)
                 value = Tensor(value)
-        if (-1 in input_shp or axis_v is None) and context.get_context("device_target") == "Ascend":
-            self.init_prim_io_names(inputs=['x', 'axes'], outputs=['y'])
         return {'shape': out_shape,
                 'min_shape': output_min_shape,
                 'max_shape': output_max_shape,
