@@ -83,9 +83,12 @@ def _get_square_sum(grad, value):
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
 
 
-@apply_global_norm.register("Tensor", "Tensor", "Tensor")
-def _apply_global_norm(clip_norm, global_norm, grad):
-    grad = grad * clip_norm / global_norm
+@apply_global_norm.register("Bool", "Tensor", "Tensor", "Tensor")
+def _apply_global_norm(enable_grad_fp16, clip_norm, global_norm, grad):
+    if enable_grad_fp16:
+        grad = P.Cast()(grad * clip_norm / global_norm, mstype.float16)
+    else:
+        grad = grad * clip_norm / global_norm
     return grad
 
 
@@ -188,13 +191,17 @@ class ClipByGlobalNorm(nn.Cell):
         self.global_norm = GlobalNorm(params, config)
         self.clip_norm = Tensor([clip_norm], mstype.float32)
         self.hyper_map = C.HyperMap()
+        if config.param_init_type == mstype.float16 and config.enable_offload:
+            self.enable_grad_fp16 = True
+        else:
+            self.enable_grad_fp16 = False
 
     def construct(self, grads):
         """Clip grads by global norm construct"""
         global_norm_value = self.global_norm(grads)
         cond = P.GreaterEqual()(global_norm_value, self.clip_norm)
         global_norm = F.select(cond, global_norm_value, self.clip_norm)
-        grads = self.hyper_map(F.partial(apply_global_norm, self.clip_norm, global_norm), grads)
+        grads = self.hyper_map(F.partial(apply_global_norm, self.enable_grad_fp16, self.clip_norm, global_norm), grads)
         return grads, global_norm_value
 
 

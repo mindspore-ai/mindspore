@@ -23,6 +23,11 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kSizeFloat32 = sizeof(float);
+constexpr size_t kScalarIndex = 0;
+constexpr size_t kAdamWeightDecayInputNum = 9;
+constexpr size_t kAdamWeightDecayOutputNum = 3;
+
 class AdamWeightDecayCPUKernel : public CPUKernel {
  public:
   AdamWeightDecayCPUKernel() = default;
@@ -32,48 +37,15 @@ class AdamWeightDecayCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  template <typename T, typename S>
-  void LaunchFusedAdam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
   void LaunchAdamWeightDecay(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  size_t elem_num_{0};
+  void LaunchAdamWeightDecayNnacl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
   TypeId dtype_{kTypeUnknown};
-  TypeId gradient_dtype_{kTypeUnknown};
   enum input_list_ { VAR, M, V, LR, BETA1, BETA2, EPSILON, DECAY, GRAD };
 };
 
-MS_REG_CPU_KERNEL(AdamWeightDecay,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  AdamWeightDecayCPUKernel)
-
-MS_REG_CPU_KERNEL(AdamWeightDecay,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  AdamWeightDecayCPUKernel)
+MS_REG_CPU_KERNEL(AdamWeightDecay, KernelAttr(), AdamWeightDecayCPUKernel)
 }  // namespace kernel
 }  // namespace mindspore
 

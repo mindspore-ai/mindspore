@@ -44,7 +44,7 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
 from .control_ops import GeSwitch, Merge
 from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         MakeRefKey,
-                        FusedWeightScaleApplyMomentum, AdamWeightDecay)
+                        FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay)
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        BitwiseAnd, BitwiseOr,
@@ -65,8 +65,8 @@ from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, U
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
                          LogUniformCandidateSampler)
 
-from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam, ApplyMomentum,
-                     BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
+from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
+                     ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
                      DropoutDoMask, Dropout, Dropout2D, Dropout3D, DropoutGenMask, Flatten,
                      InstanceNorm, BNTrainingReduce, BNTrainingUpdate,

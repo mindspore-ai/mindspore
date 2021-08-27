@@ -19,7 +19,9 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
+from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
+from mindspore.common.parameter import ParameterTuple
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.nn.optim.optimizer import Optimizer
@@ -27,6 +29,11 @@ from mindspore.nn.optim.optimizer import Optimizer
 _adam_opt = C.MultitypeFuncGraph("adam_opt")
 _scaler_one = Tensor(1, mstype.int32)
 _scaler_ten = Tensor(10, mstype.float32)
+
+op_assign = P.Assign()
+op_assign.add_prim_attr("primitive_target", "CPU")
+op_cast = P.Cast()
+op_cast.add_prim_attr("primitive_target", "CPU")
 
 
 @_adam_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
@@ -127,16 +134,23 @@ class AdamWeightDecayOp(Optimizer):
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
    """
-    def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
+    def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0,
+                 param_init_type=mstype.float32):
         super(AdamWeightDecayOp, self).__init__(learning_rate, params, weight_decay)
         _check_param_value(beta1, beta2, eps, self.cls_name)
         self.beta1 = Tensor(np.array([beta1]).astype(np.float32))
         self.beta2 = Tensor(np.array([beta2]).astype(np.float32))
         self.eps = Tensor(np.array([eps]).astype(np.float32))
-        self.moments1 = self.parameters.clone(prefix="adam_m", init='zeros')
-        self.moments2 = self.parameters.clone(prefix="adam_v", init='zeros')
+        self.enable_init_fp16 = (param_init_type == mstype.float16)
+        if self.enable_init_fp16:
+            self.moments1 = self.clone_param32(prefix="adam_m", init='zeros')
+            self.moments2 = self.clone_param32(prefix="adam_v", init='zeros')
+            self.opt = P.FusedCastAdamWeightDecay()
+        else:
+            self.moments1 = self.parameters.clone(prefix="adam_m", init='zeros')
+            self.moments2 = self.parameters.clone(prefix="adam_v", init='zeros')
+            self.opt = P.AdamWeightDecay()
         self.hyper_map = C.HyperMap()
-        self.opt = P.AdamWeightDecay()
         self.opt.add_prim_attr("primitive_target", "CPU")
 
     def construct(self, gradients):
@@ -158,3 +172,27 @@ class AdamWeightDecayOp(Optimizer):
         if self.use_parallel:
             self.broadcast_params(optim_result)
         return optim_result
+
+    def clone_param32(self, prefix, init=None):
+        """
+        Clone the parameters in ParameterTuple element-wisely to generate a new ParameterTuple with float32 data type.
+        Inputs:
+            prefix (str): The prefix name of the parameters.
+            init (Union[Tensor, str, numbers.Number]): Initialize the shape and dtype of the parameters.
+                The definition of `init` is the same as in `Parameter` API. If `init` is 'same', the
+                parameters in the new parameter tuple are the same as those in the original parameter tuple.
+                Default: 'same'.
+        Returns:
+            Tuple, the new Parameter tuple.
+        """
+        new = []
+        for old_param in self.parameters:
+            param_init = init
+            if init is None:
+                param_init = old_param.init
+            new_state = old_param.clone()
+            new_state.set_dtype(mstype.float32)
+            new_state.set_data(initializer(param_init, shape=old_param.shape, dtype=mstype.float32))
+            new_state.name = prefix + '.' + new_state.name
+            new.append(new_state)
+        return ParameterTuple(new)

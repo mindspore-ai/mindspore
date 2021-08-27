@@ -205,6 +205,7 @@ constexpr auto kStridedReadOpName = "StridedRead";
 constexpr auto kStridedWriteOpName = "StridedWrite";
 constexpr auto kFusedAdamWeightDecayName = "FusedAdamWeightDecay";
 constexpr auto kAdamWeightDecayName = "AdamWeightDecay";
+constexpr auto kFusedCastAdamWeightDecayName = "FusedCastAdamWeightDecay";
 constexpr auto kFusedAdamName = "FusedAdam";
 constexpr auto kFusedSparseAdamName = "FusedSparseAdam";
 constexpr auto kFusedMatMulBiasAddName = "FusedMatMulBiasAdd";
@@ -599,6 +600,7 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kAdamApplyOneWithDecayAssignOpName,
                                                kFusedAdamWeightDecayName,
                                                kAdamWeightDecayName,
+                                               kFusedCastAdamWeightDecayName,
                                                kFusedAdamName,
                                                kFusedSparseAdamName,
                                                kFusedMulApplyMomentumOpName,

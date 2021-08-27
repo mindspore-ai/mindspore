@@ -140,11 +140,16 @@ void CPUKernelUtils::ParallelForAutoSearch(const CTask &task, size_t count, Para
 
 ActorThreadPool *GetActorMgrInnerThreadPool() {
   auto actor_manager = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actor_manager);
   auto thread_pool = actor_manager->GetActorThreadPool();
   // Init thread_pool if env is windows or ascend, in case that it won't be init in graph_scheduler.
   if (thread_pool == nullptr) {
     const size_t kMaxThreadNum = 23;
     size_t max_thread_num = std::thread::hardware_concurrency() - 1;
+#if ENABLE_D || ENABLE_GPU
+    const size_t kDeviceNum = 8;
+    max_thread_num /= kDeviceNum;
+#endif
     if (max_thread_num < 1) {
       max_thread_num = 1;
     }
