@@ -157,9 +157,7 @@ def test_if_after_if_in_if():
     control_flow_if_after_if_in_if(IfAfterIfInIfNet, x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="not supported side effect")
 def test_if_after_if_in_if_01():
     x = Tensor(2, mstype.int32)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet1, x)
