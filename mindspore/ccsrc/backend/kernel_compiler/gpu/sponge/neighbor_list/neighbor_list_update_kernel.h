@@ -103,7 +103,7 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
                          cutoff_square, cutoff_with_skin_square, grid_N, box_length, atom_numbers_in_grid_bucket,
                          grid_length_inverse, atom_in_grid_serial, d_bucket, crd, old_crd, crd_to_uint_crd_cof,
                          half_crd_to_uint_crd_cof, uint_crd, uint_dr_to_dr_cof, d_gpointer, nl, excluded_list_start,
-                         excluded_list, excluded_numbers, half_skin_square, need_refresh_flag,
+                         excluded_list, excluded_numbers, half_skin_square, need_refresh_flag, max_neighbor_numbers,
                          reinterpret_cast<cudaStream_t>(stream_ptr));
     CopyNeighborListAtomNumber(atom_numbers, nl, nl_atom_numbers, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
