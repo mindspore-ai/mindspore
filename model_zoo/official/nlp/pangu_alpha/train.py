@@ -98,8 +98,6 @@ def run_train(args_opt):
         print("rank_id is {}, device_num is {}".format(rank, device_num))
 
         context.reset_auto_parallel_context()
-        if args_opt.strategy_load_ckpt_path and not os.path.exists(args_opt.strategy_load_ckpt_path):
-            args_opt.strategy_load_ckpt_path = ""
 
         context.set_auto_parallel_context(
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, gradients_mean=False,
