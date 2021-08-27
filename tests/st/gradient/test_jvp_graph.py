@@ -19,7 +19,7 @@ import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.ops.functional import jvp
+from mindspore.nn.grad import Jvp
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -53,7 +53,7 @@ def test_jvp_single_input_single_output_default_v_graph():
     net = SingleInputSingleOutputNet()
     expect_primal = Tensor(np.array([[1, 8], [27, 64]]).astype(np.float32))
     expect_grad = Tensor(np.array([[3, 12], [27, 48]]).astype(np.float32))
-    primal, grad = jvp(net, x, v)
+    primal, grad = Jvp(net)(x, v)
     assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
@@ -67,7 +67,7 @@ def test_jvp_single_input_single_output_custom_v_graph():
     net = SingleInputSingleOutputNet()
     expect_primal = Tensor(np.array([[1, 8], [27, 64]]).astype(np.float32))
     expect_grad = Tensor(np.array([[3, 24], [81, 192]]).astype(np.float32))
-    primal, grad = jvp(net, x, v)
+    primal, grad = Jvp(net)(x, v)
     assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
@@ -83,7 +83,7 @@ def test_jvp_single_input_multiple_outputs_default_v_graph():
     expect_primal_1 = Tensor(np.array([[2, 4], [6, 8]]).astype(np.float32))
     expect_grad_0 = Tensor(np.array([[3, 12], [27, 48]]).astype(np.float32))
     expect_grad_1 = Tensor(np.array([[2, 2], [2, 2]]).astype(np.float32))
-    primal, grad = jvp(net, x, v)
+    primal, grad = Jvp(net)(x, v)
     assert isinstance(primal, tuple)
     assert len(primal) == 2
     assert np.allclose(primal[0].asnumpy(), expect_primal_0.asnumpy())
@@ -105,7 +105,7 @@ def test_jvp_single_input_multiple_outputs_custom_v_graph():
     expect_primal_1 = Tensor(np.array([[2, 4], [6, 8]]).astype(np.float32))
     expect_grad_0 = Tensor(np.array([[3, 24], [81, 192]]).astype(np.float32))
     expect_grad_1 = Tensor(np.array([[2, 4], [6, 8]]).astype(np.float32))
-    primal, grad = jvp(net, x, v)
+    primal, grad = Jvp(net)(x, v)
     assert isinstance(primal, tuple)
     assert len(primal) == 2
     assert np.allclose(primal[0].asnumpy(), expect_primal_0.asnumpy())
@@ -126,7 +126,7 @@ def test_jvp_multiple_inputs_single_output_default_v_graph():
     net = MultipleInputSingleOutputNet()
     expect_primal = Tensor(np.array([[5, 10], [15, 20]]).astype(np.float32))
     expect_grad = Tensor(np.array([[5, 5], [5, 5]]).astype(np.float32))
-    primal, grad = jvp(net, (x, y), (v, v))
+    primal, grad = Jvp(net)(x, y, (v, v))
     assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
@@ -142,7 +142,7 @@ def test_jvp_multiple_inputs_single_output_custom_v_graph():
     net = MultipleInputSingleOutputNet()
     expect_primal = Tensor(np.array([[5, 10], [15, 20]]).astype(np.float32))
     expect_grad = Tensor(np.array([[5, 8], [11, 14]]).astype(np.float32))
-    primal, grad = jvp(net, (x, y), (v1, v2))
+    primal, grad = Jvp(net)(x, y, (v1, v2))
     assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
@@ -159,7 +159,7 @@ def test_jvp_multiple_inputs_multiple_outputs_default_v_graph():
     expect_primal_1 = Tensor(np.array([[1, 8], [27, 64]]).astype(np.float32))
     expect_grad_0 = Tensor(np.array([[2, 2], [2, 2]]).astype(np.float32))
     expect_grad_1 = Tensor(np.array([[3, 12], [27, 48]]).astype(np.float32))
-    primal, grad = jvp(net, (x, y), (v, v))
+    primal, grad = Jvp(net)(x, y, (v, v))
     assert isinstance(primal, tuple)
     assert len(primal) == 2
     assert np.allclose(primal[0].asnumpy(), expect_primal_0.asnumpy())
@@ -183,7 +183,7 @@ def test_jvp_multiple_inputs_multiple_outputs_custom_v_graph():
     expect_primal_1 = Tensor(np.array([[1, 8], [27, 64]]).astype(np.float32))
     expect_grad_0 = Tensor(np.array([[2, 2], [2, 2]]).astype(np.float32))
     expect_grad_1 = Tensor(np.array([[3, 24], [81, 192]]).astype(np.float32))
-    primal, grad = jvp(net, (x, y), (v1, v2))
+    primal, grad = Jvp(net)(x, y, (v1, v2))
     assert isinstance(primal, tuple)
     assert len(primal) == 2
     assert np.allclose(primal[0].asnumpy(), expect_primal_0.asnumpy())
@@ -192,51 +192,3 @@ def test_jvp_multiple_inputs_multiple_outputs_custom_v_graph():
     assert len(grad) == 2
     assert np.allclose(grad[0].asnumpy(), expect_grad_0.asnumpy())
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_jvp_single_input_single_tensor_default_v():
-    x = Tensor(np.array([1]).astype(np.float32))
-    net = SingleInputSingleOutputNet()
-    expect_primal = Tensor(np.array([1]).astype(np.float32))
-    expect_grad = Tensor(np.array([3]).astype(np.float32))
-    primal, grad = jvp(net, x)
-    assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
-    assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_jvp_single_input_multiple_tensors_default_v():
-    x = Tensor(np.array([1, 2]).astype(np.float32))
-    net = SingleInputSingleOutputNet()
-    with pytest.raises(ValueError) as ex:
-        jvp(net, x)
-    assert "The vector v can only be None if the input is " in str(ex.value)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_jvp_single_input_multiple_tensors_wrong_shape_v():
-    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    v = Tensor(np.array([[1], [4]]).astype(np.float32))
-    net = SingleInputSingleOutputNet()
-    with pytest.raises(ValueError) as ex:
-        jvp(net, x, v)
-    assert "The tensor shape at the index 0 of v" in str(ex.value)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_jvp_single_input_multiple_tensors_wrong_tuple_v():
-    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    v = (Tensor(np.array([[1], [4]]).astype(np.float32)), Tensor(np.array([[1], [4]]).astype(np.float32)))
-    net = SingleInputSingleOutputNet()
-    with pytest.raises(ValueError) as ex:
-        jvp(net, x, v)
-    assert "v is not the same size as the function inputs." in str(ex.value)

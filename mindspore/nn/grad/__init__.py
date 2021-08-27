@@ -18,7 +18,7 @@ Grad
 Cells of grad function. Calculate the gradient of input network or function.
 """
 
-from .cell_grad import Jvp
+from .cell_grad import Jvp, Vjp
 
 
-__all__ = ['Jvp']
+__all__ = ['Jvp', 'Vjp']
