@@ -21,6 +21,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::StringPack;
 using mindspore::schema::PrimitiveType_SkipGram;
@@ -38,7 +39,7 @@ int SkipGramCPUKernel::Init() {
 int SkipGramCPUKernel::ReSize() { return RET_OK; }
 
 void ParseSentenceToWords(const StringPack &sentence, std::vector<StringPack> *words) {
-  CHECK_NULL_RETURN(words);
+  MS_ASSERT(words != nullptr);
   int pre = 0;
   int i;
   for (i = 0; i < sentence.len; i++) {
@@ -78,7 +79,7 @@ int SkipGramCPUKernel::Run() {
 
   int index = 1;
   int size = words.size();
-  CHECK_LESS_RETURN(stack.size(), index);
+  CHECK_LESS_RETURN(static_cast<int>(stack.size()), index);
   while (index >= 0) {
     if (index < skip_gram_parameter_->ngram_size && stack.at(index) + 1 < size &&
         (index == 0 || stack.at(index) - stack.at(index - 1) <= skip_gram_parameter_->max_skip_size)) {

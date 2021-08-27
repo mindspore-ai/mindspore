@@ -21,6 +21,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SliceFusion;
 
@@ -43,8 +44,8 @@ SliceFp16CPUKernel::~SliceFp16CPUKernel() {
 }
 
 int SliceFp16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_, 1);
-  CHECK_LESS_RETURN(out_tensors_, 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto input_tensor = in_tensors_.at(0);
   if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data_c() != nullptr) {
     input_data_ =

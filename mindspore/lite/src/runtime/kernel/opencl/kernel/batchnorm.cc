@@ -163,7 +163,10 @@ int BatchNormOpenCLKernel::Initweight() {
   memset(offset_, 0x00, weight_size);
   memset(mean_, 0x00, weight_size);
   memset(variance_, 0x00, weight_size);
-
+  CHECK_NULL_RETURN(in_tensors_.at(1)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(2)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(3)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(4)->data_c());
   if (weight_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_enable_) {
       memcpy(scale_, in_tensors_.at(1)->data_c(), weight_size);
@@ -251,6 +254,8 @@ int BatchNormOpenCLKernel::Prepare() {
 }
 
 int BatchNormOpenCLKernel::Run() {
+  CHECK_NULL_RETURN(in_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(out_tensors_.at(0)->data_c());
   MS_LOG(DEBUG) << this->name() << " Running! ";
   int arg_cn = 0;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
