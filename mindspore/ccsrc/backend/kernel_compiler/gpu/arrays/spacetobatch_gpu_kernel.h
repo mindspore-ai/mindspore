@@ -35,7 +35,7 @@ class SpaceToBatchGpuKernel : public GpuKernel {
   ~SpaceToBatchGpuKernel() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() = default;
+  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -150,6 +150,7 @@ class SpaceToBatchGpuKernel : public GpuKernel {
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
+  std::vector<size_t> workspace_size_list_;
   std::vector<std::vector<int64_t>> paddings_;
   std::vector<size_t> input_shape_;
   size_t block_size_;
