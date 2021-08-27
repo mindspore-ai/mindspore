@@ -77,8 +77,8 @@ This project is inherited by [huoyijie/AdvancedEAST](https://github.com/huoyijie
   ├── export.py                            # export model for inference
   ├── prepare_data.py                      # exec data preprocessing
   ├── eval.py                              # eval net
-  ├── train.py                             # train net
-  └── train_mindrecord.py                  # train net on user specified mindrecord
+  ├── train.py                             # train net on multi-size input
+  └── train_single_size.py                 # train net on fix-size input
 ```
 
 # [Dataset](#contents)
@@ -140,14 +140,14 @@ python train.py  --device_target="GPU" --is_distributed=0 --device_id=0  > outpu
 - single device with specific size
 
 ```bash
-python train_mindrecord.py  --device_target="Ascend" --is_distributed=0 --device_id=2 --size=256  > output.train.log 2>&1 &
+python train_single_size.py  --device_target="Ascend" --is_distributed=0 --device_id=2 --size=256  > output.train.log 2>&1 &
 ```
 
 - multi Ascends
 
 ```bash
 # running on distributed environment（8p）
-bash scripts/run_distribute_train.sh
+bash run_distribute_train.sh [DATSET_PATH] [RANK_TABLE_FILE]
 ```
 
 The detailed training parameters are in /src/config.py。

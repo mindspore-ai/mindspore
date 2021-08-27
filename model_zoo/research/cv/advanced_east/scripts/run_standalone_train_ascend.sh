@@ -20,5 +20,5 @@ echo "bash run_standalone_train_ascend.sh"
 echo "for example: bash run_standalone_train_ascend.sh"
 echo "=============================================================================================================="
 
-  python train_mindrecord.py  \
+  python train_single_size.py  \
     --device_target="Ascend" > output.train.log 2>&1 &

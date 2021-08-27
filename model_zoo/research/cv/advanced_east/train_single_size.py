@@ -28,7 +28,6 @@ from mindspore.nn.optim import AdamWeightDecay
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.serialization import load_param_into_net, load_checkpoint
 from src.logger import get_logger
-
 from src.config import config as cfg
 from src.dataset import load_adEAST_dataset
 from src.model import get_AdvancedEast_net

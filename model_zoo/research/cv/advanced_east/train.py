@@ -22,16 +22,16 @@ import time
 import ast
 
 from mindspore import context, Model
-from mindspore.communication.management import init, get_group_size, get_rank
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
-from mindspore.context import ParallelMode
-from mindspore.train.serialization import load_param_into_net, load_checkpoint
 from mindspore.common import set_seed
+from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.context import ParallelMode
 from mindspore.nn.optim import AdamWeightDecay
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
+from mindspore.train.serialization import load_param_into_net, load_checkpoint
 from src.logger import get_logger
+from src.config import config as cfg
 from src.dataset import load_adEAST_dataset
 from src.model import get_AdvancedEast_net
-from src.config import config as cfg
 
 set_seed(1)
 

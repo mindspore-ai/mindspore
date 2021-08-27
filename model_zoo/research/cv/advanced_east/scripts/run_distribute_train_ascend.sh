@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 PATH1=$1
+PATH2=$2
+
 
 ulimit -u unlimited
-export DEVICE_NUM=2
-export RANK_SIZE=2
-export RANK_TABLE_FILE=$PATH1
+export DEVICE_NUM=8
+export RANK_SIZE=8
+export RANK_TABLE_FILE=$PATH2
 
 for ((i = 0; i < ${DEVICE_NUM}; i++)); do
   export DEVICE_ID=$i
@@ -32,6 +33,6 @@ for ((i = 0; i < ${DEVICE_NUM}; i++)); do
   cd ./train_parallel$i || exit
   echo "start training for rank $RANK_ID, device $DEVICE_ID"
   env >env.log
-  python train_mindrecord.py --device_target Ascend --is_distributed 1 --device_id $i --data_path /disk1/adenew/icpr/advanced-east_448.mindrecord > log.txt 2>&1 &
+  python train_single_size.py --device_target Ascend --is_distributed 1 --device_id $i --data_path $PATH1 > log.txt 2>&1 &
   cd ..
 done
