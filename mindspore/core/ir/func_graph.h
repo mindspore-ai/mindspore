@@ -172,7 +172,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
 
   const std::vector<AnfNodePtr> &parameters() const final { return parameters_; }
   // Append
-  virtual ParameterPtr add_parameter();
+  ParameterPtr add_parameter() override;
   void add_parameter(const ParameterPtr &p) final;
   void append_parameter(const ParameterPtr &p) { parameters_.push_back(p); }
   // Prepend
@@ -185,7 +185,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
 
   // Create a cnode with given inputs, bound to this graph.
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>()) override;
-  CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
+  CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs) final;
 
   // Create a cnode with given inputs, bound to this graph and push back to order list.
   CNodePtr NewCNodeInOrder(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
@@ -251,7 +251,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   }
 
   CNodePtr get_return() const final { return return_; }
-  void set_return(const CNodePtr &cnode) { return_ = cnode; }
+  void set_return(const CNodePtr &cnode) final { return_ = cnode; }
 
   FuncGraphManagerPtr manager() const { return manager_.lock(); }
   void set_manager(const FuncGraphManagerPtr &m) { manager_ = std::weak_ptr<FuncGraphManager>(m); }
@@ -267,7 +267,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
     this->debug_info_ = info;
   }
   // Get all nodes belonging to this func graph.
-  const AnfNodeSet &nodes() const;
+  const AnfNodeSet &nodes() const final;
   void CopyNodes(const FuncGraphPtr &source);
   void ClearNodes();
   void AddNode(const AnfNodePtr &node);
