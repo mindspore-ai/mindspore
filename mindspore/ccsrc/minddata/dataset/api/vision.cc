@@ -26,6 +26,7 @@
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/center_crop_ir.h"
+#include "minddata/dataset/kernels/ir/vision/convert_color_ir.h"
 #include "minddata/dataset/kernels/ir/vision/crop_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutmix_batch_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
@@ -196,6 +197,20 @@ std::shared_ptr<TensorOperation> CenterCrop::Parse(const MapTargetDevice &env) {
   }
   return std::make_shared<CenterCropOperation>(data_->size_);
 }
+
+#ifndef ENABLE_ANDROID
+// ConvertColor Transform Operation.
+struct ConvertColor::Data {
+  explicit Data(ConvertMode convert_mode) : convert_mode_(convert_mode) {}
+  ConvertMode convert_mode_;
+};
+
+ConvertColor::ConvertColor(ConvertMode convert_mode) : data_(std::make_shared<Data>(convert_mode)) {}
+
+std::shared_ptr<TensorOperation> ConvertColor::Parse() {
+  return std::make_shared<ConvertColorOperation>(data_->convert_mode_);
+}
+#endif  // not ENABLE_ANDROID
 
 // Crop Transform Operation.
 struct Crop::Data {

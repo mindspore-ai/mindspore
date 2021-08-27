@@ -26,6 +26,30 @@ namespace dataset {
 using uchar = unsigned char;
 using dsize_t = int64_t;
 
+/// \brief The color conversion code
+enum class ConvertMode {
+  COLOR_BGR2BGRA = 0,                 ///< Add alpha channel to BGR image.
+  COLOR_RGB2RGBA = COLOR_BGR2BGRA,    ///< Add alpha channel to RGB image.
+  COLOR_BGRA2BGR = 1,                 ///< Remove alpha channel to BGR image.
+  COLOR_RGBA2RGB = COLOR_BGRA2BGR,    ///< Remove alpha channel to RGB image.
+  COLOR_BGR2RGBA = 2,                 ///< Convert BGR image to RGBA image.
+  COLOR_RGB2BGRA = COLOR_BGR2RGBA,    ///< Convert RGB image to BGRA image.
+  COLOR_RGBA2BGR = 3,                 ///< Convert RGBA image to BGR image.
+  COLOR_BGRA2RGB = COLOR_RGBA2BGR,    ///< Convert BGRA image to RGB image.
+  COLOR_BGR2RGB = 4,                  ///< Convert BGR image to RGB image.
+  COLOR_RGB2BGR = COLOR_BGR2RGB,      ///< Convert RGB image to BGR image.
+  COLOR_BGRA2RGBA = 5,                ///< Convert BGRA image to RGBA image.
+  COLOR_RGBA2BGRA = COLOR_BGRA2RGBA,  ///< Convert RGBA image to BGRA image.
+  COLOR_BGR2GRAY = 6,                 ///< Convert BGR image to GRAY image.
+  COLOR_RGB2GRAY = 7,                 ///< Convert RGB image to GRAY image.
+  COLOR_GRAY2BGR = 8,                 ///< Convert GRAY image to BGR image.
+  COLOR_GRAY2RGB = COLOR_GRAY2BGR,    ///< Convert GRAY image to RGB image.
+  COLOR_GRAY2BGRA = 9,                ///< Convert GRAY image to BGRA image.
+  COLOR_GRAY2RGBA = COLOR_GRAY2BGRA,  ///< Convert GRAY image to RGBA image.
+  COLOR_BGRA2GRAY = 10,               ///< Convert BGRA image to GRAY image.
+  COLOR_RGBA2GRAY = 11                ///< Convert RGBA image to GRAY image.
+};
+
 /// \brief Target devices to perform map operation.
 enum class MapTargetDevice {
   kCpu,       ///< CPU Device.

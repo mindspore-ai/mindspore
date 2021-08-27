@@ -1137,3 +1137,136 @@ TEST_F(MindDataTestPipeline, TestPad) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+TEST_F(MindDataTestPipeline, TestConvertColorSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorSuccess1.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
+  EXPECT_NE(ds, nullptr);
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
+  std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(ConvertMode::COLOR_RGB2GRAY));
+
+  ds = ds->Map({resize_op, convert});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape().size(), 2);
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestConvertColorSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorSuccess2.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
+  EXPECT_NE(ds, nullptr);
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
+  std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(ConvertMode::COLOR_RGB2BGR));
+
+  ds = ds->Map({resize_op, convert});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[2], 3);
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestConvertColorSuccess3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorSuccess3.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
+  EXPECT_NE(ds, nullptr);
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
+  std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(ConvertMode::COLOR_RGB2RGBA));
+
+  ds = ds->Map({resize_op, convert});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[2], 4);
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestConvertColorFail) {
+    MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorFail.";
+    // Create an ImageFolder Dataset
+    std::string folder_path = datasets_root_path_ + "/testPK/data/";
+    std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
+    EXPECT_NE(ds, nullptr);
+
+    ConvertMode error_convert_mode = static_cast<ConvertMode>(50);
+
+    // Create objects for the tensor ops
+    std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
+    std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(error_convert_mode));
+
+    ds = ds->Map({resize_op, convert});
+    EXPECT_NE(ds, nullptr);
+
+    // Create an iterator over the result of the above dataset
+    // This will trigger the creation of the Execution Tree and launch it.
+    std::shared_ptr<Iterator> iter = ds->CreateIterator();
+    EXPECT_EQ(iter, nullptr);
+}

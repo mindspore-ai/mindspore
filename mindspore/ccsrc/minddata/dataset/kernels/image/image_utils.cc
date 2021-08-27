@@ -63,6 +63,29 @@ int GetCVBorderType(BorderType type) {
   }
 }
 
+Status GetConvertShape(ConvertMode convert_mode, const std::shared_ptr<CVTensor> &input_cv,
+                       std::vector<dsize_t> *node) {
+  std::vector<ConvertMode> one_channels = {ConvertMode::COLOR_BGR2GRAY, ConvertMode::COLOR_RGB2GRAY,
+                                           ConvertMode::COLOR_BGRA2GRAY, ConvertMode::COLOR_RGBA2GRAY};
+  std::vector<ConvertMode> three_channels = {
+    ConvertMode::COLOR_BGRA2BGR, ConvertMode::COLOR_RGBA2RGB, ConvertMode::COLOR_RGBA2BGR, ConvertMode::COLOR_BGRA2RGB,
+    ConvertMode::COLOR_BGR2RGB,  ConvertMode::COLOR_RGB2BGR,  ConvertMode::COLOR_GRAY2BGR, ConvertMode::COLOR_GRAY2RGB};
+  std::vector<ConvertMode> four_channels = {ConvertMode::COLOR_BGR2BGRA,  ConvertMode::COLOR_RGB2RGBA,
+                                            ConvertMode::COLOR_BGR2RGBA,  ConvertMode::COLOR_RGB2BGRA,
+                                            ConvertMode::COLOR_BGRA2RGBA, ConvertMode::COLOR_RGBA2BGRA,
+                                            ConvertMode::COLOR_GRAY2BGRA, ConvertMode::COLOR_GRAY2RGBA};
+  if (std::find(three_channels.begin(), three_channels.end(), convert_mode) != three_channels.end()) {
+    *node = {input_cv->shape()[0], input_cv->shape()[1], 3};
+  } else if (std::find(four_channels.begin(), four_channels.end(), convert_mode) != four_channels.end()) {
+    *node = {input_cv->shape()[0], input_cv->shape()[1], 4};
+  } else if (std::find(one_channels.begin(), one_channels.end(), convert_mode) != one_channels.end()) {
+    *node = {input_cv->shape()[0], input_cv->shape()[1]};
+  } else {
+    RETURN_STATUS_UNEXPECTED("The mode of image channel conversion must be in ConvertMode.");
+  }
+  return Status::OK();
+}
+
 bool CheckTensorShape(const std::shared_ptr<Tensor> &tensor, const int &channel) {
   bool rc = false;
   if (tensor->Rank() != DEFAULT_IMAGE_RANK ||
@@ -429,6 +452,35 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Crop: " + std::string(e.what()));
+  }
+}
+
+Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, ConvertMode convert_mode) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    int num_channels = input_cv->shape()[CHANNEL_INDEX];
+    if (input_cv->Rank() != DEFAULT_IMAGE_RANK) {
+      RETURN_STATUS_UNEXPECTED("ConvertColor: invalid image Shape, only support <H,W,C> or <H,W>");
+    }
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("ConvertColor: load image failed.");
+    }
+    if (num_channels != 1 && num_channels != 3 && num_channels != 4) {
+      RETURN_STATUS_UNEXPECTED("ConvertColor: number of channels of image should be 1, 3, 4");
+    }
+    std::vector<dsize_t> node;
+    RETURN_IF_NOT_OK(GetConvertShape(convert_mode, input_cv, &node));
+    if (node.empty()) {
+      RETURN_STATUS_UNEXPECTED("ConvertColor: convert mode must be in ConvertMode.");
+    }
+    TensorShape out_shape = TensorShape(node);
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(out_shape, input_cv->type(), &output_cv));
+    cv::cvtColor(input_cv->mat(), output_cv->mat(), static_cast<int>(convert_mode));
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("ConvertColor: " + std::string(e.what()));
   }
 }
 
