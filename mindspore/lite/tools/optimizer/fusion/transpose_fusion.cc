@@ -153,12 +153,12 @@ AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const minds
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
-  if (CheckIfCNodeIsNull(node->cast<CNodePtr>()) != lite::RET_OK) {
+  if (node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }
   auto any_cnode = node->cast<CNodePtr>();
   const auto transpose_node = any_cnode->input(1);
-  if (CheckIfCNodeIsNull(transpose_node->cast<CNodePtr>()) != lite::RET_OK) {
+  if (transpose_node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }
   const CNodePtr &transpose_cnode = transpose_node->cast<CNodePtr>();

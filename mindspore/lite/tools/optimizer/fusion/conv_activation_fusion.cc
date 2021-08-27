@@ -26,7 +26,7 @@ constexpr size_t kActivationInputsLength = 2;
 }
 const BaseRef ConvActivationFusion::DefinePattern() const {
   auto conv_var = std::make_shared<CondVar>(IsConvNode);
-  auto act_var = std::make_shared<CondVar>(IsActivationNode);
+  auto act_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
   return VectorRef({act_var, conv_var});
 }
 
@@ -39,8 +39,7 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     return nullptr;
   }
   auto act_node = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(act_node) != lite::RET_OK ||
-      CheckInputSize(act_node, kActivationInputsLength) != lite::RET_OK ||
+  if (act_node == nullptr || act_node->size() != kInputSizeTwo ||
       !CheckPrimitiveType(act_node, prim::kPrimActivation)) {
     return nullptr;
   }

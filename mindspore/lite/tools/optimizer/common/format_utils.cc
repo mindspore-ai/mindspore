@@ -108,11 +108,8 @@ static const std::unordered_map<std::string, bool> DynamicFormatOpList = {
   {ops::kNameSliceFusion, true},    {ops::kNameStridedSlice, true}, {ops::kNameActivationGrad, false},
   {ops::kNameQuantDTypeCast, false}};
 
-static const std::unordered_map<int, int> NC2NHAxisMap = {{0, 0}, {1, 3}, {2, 1}, {3, 2}};
-
 const std::unordered_map<std::string, std::vector<size_t>> &GetNHWCOpMap() { return NHWCOpMap; }
 const std::unordered_map<std::string, std::vector<size_t>> &GetNCHWOpMap() { return NCHWOpMap; }
-const std::unordered_map<int, int> &GetNC2NHAxisMap() { return NC2NHAxisMap; }
 bool IsDynamicFormatOp(const std::string &op_type) {
   return DynamicFormatOpList.find(op_type) != DynamicFormatOpList.end();
 }
@@ -121,21 +118,8 @@ bool IsDynamicFormatOpWithAxis(const std::string &op_type) {
   return iter != DynamicFormatOpList.end() && iter->second;
 }
 
-Format GetFormat(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  auto prim_node = cnode->input(0);
-  MS_ASSERT(prim_node != nullptr);
-  auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_ASSERT(prim != nullptr);
-  Format format = NHWC;
-  if (prim->GetAttr(ops::kFormat) != nullptr) {
-    format = static_cast<Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat)));
-  }
-  return format;
-}
-
 STATUS GetTransposePerm(const CNodePtr &cnode, std::vector<int> *perm) {
-  MS_ASSERT(perm_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   if (cnode->size() != kInputSizeThree) {
     MS_LOG(ERROR) << "transpose op input size must be three.";
     return lite::RET_ERROR;
@@ -185,6 +169,10 @@ void RemoveIfMonad(const CNodePtr &cnode) {
 }
 
 bool IsMonadNode(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "input parameter is nullptr.";
+    return false;
+  }
   if (!utils::isa<ValueNodePtr>(node)) {
     return false;
   }

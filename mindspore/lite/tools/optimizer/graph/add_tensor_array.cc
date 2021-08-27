@@ -51,9 +51,9 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
     return lite::RET_ERROR;
   }
   auto return_cnode = return_node->cast<CNodePtr>();
-  if (int status = CheckIfCNodeIsNull(return_cnode); status != lite::RET_OK) {
+  if (return_cnode == nullptr) {
     MS_LOG(ERROR) << "graph return node is not cnode";
-    return status;
+    return lite::RET_NULL_PTR;
   }
   auto output_node = return_node->input(kInputIndex);
   if (output_node == nullptr) {
@@ -61,9 +61,9 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
     return lite::RET_NULL_PTR;
   }
   auto output_cnode = output_node->cast<CNodePtr>();
-  if (int status = CheckIfCNodeIsNull(output_cnode); status != lite::RET_OK) {
+  if (output_cnode == nullptr) {
     MS_LOG(ERROR) << "graph output node is not cnode";
-    return status;
+    return lite::RET_NULL_PTR;
   }
 
   // for multiple output graph, add output directly
@@ -106,7 +106,7 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(cnode) != lite::RET_OK) {
+  if (cnode == nullptr) {
     return nullptr;
   }
   MS_LOG(INFO) << "supported node detected:  " << cnode->fullname_with_scope();

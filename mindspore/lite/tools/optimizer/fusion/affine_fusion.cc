@@ -66,7 +66,7 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   auto matmul_node = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(matmul_node) != lite::RET_OK) {
+  if (matmul_node == nullptr) {
     MS_LOG(ERROR) << "the matmul_node is null.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;

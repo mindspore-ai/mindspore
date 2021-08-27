@@ -27,12 +27,6 @@
 
 namespace mindspore::opt {
 namespace {
-constexpr size_t kAddInputsLength = 3;
-constexpr size_t kAddWEIGHTINDEX = 2;
-constexpr size_t kConvWeightIndex = 2;
-constexpr size_t kConvBiasIndex = 3;
-constexpr size_t kConvNoBiasLen = 3;
-constexpr size_t kConvWithBiasLen = 4;
 bool IsConvExtendNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
@@ -96,7 +90,7 @@ bool ConvBiasaddFusion::CheckCanFusion(const FuncGraphPtr &func_graph, const Anf
     return false;
   }
   auto add_cnode = node->cast<CNodePtr>();
-  if (CheckInputSize(add_cnode, kAddInputsLength) != lite::RET_OK) {
+  if (add_cnode->size() != kInputSizeThree) {
     return false;
   }
   auto prim_add = GetValueNode<PrimitivePtr>(add_cnode->input(0));

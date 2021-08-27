@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace opt {
 const BaseRef EliminateConcatSplit::DefinePattern() const {
-  auto concat_var = std::make_shared<CondVar>(IsConcatNode);
+  auto concat_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimConcat>);
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
 
   return VectorRef({split_prim, concat_var});
@@ -59,10 +59,9 @@ CNodePtr GetRealPrevCNode(const AnfNodePtr &node) {
 }
 
 void ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto pre_cnode = GetRealPrevCNode(cnode->input(1));
-  CheckIfCNodeIsNull(pre_cnode);
-
-  if (!CheckPrimitiveType(pre_cnode, prim::kPrimConcat)) {
+  if (pre_cnode == nullptr || !CheckPrimitiveType(pre_cnode, prim::kPrimConcat)) {
     return;
   }
   std::unordered_map<std::string, std::vector<AnfNodePtr>> graph_node_outputs =
@@ -101,7 +100,7 @@ void ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
   for (int i = 0; i < out_num; i++) {
     auto tmp = it->second[i];
     auto tmp_cnode = tmp->cast<CNodePtr>();
-    if (CheckIfCNodeIsNull(tmp_cnode) != lite::RET_OK) {
+    if (tmp_cnode == nullptr) {
       return;
     }
     if (!CheckPrimitiveType(tmp_cnode, prim::kPrimTupleGetItem)) {
@@ -139,7 +138,7 @@ const AnfNodePtr EliminateConcatSplit::Process(const FuncGraphPtr &func_graph, c
     return nullptr;
   }
   auto split_cnode = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(split_cnode) != lite::RET_OK) {
+  if (split_cnode == nullptr) {
     return nullptr;
   }
   ConcatSplitEliminate(func_graph, split_cnode);

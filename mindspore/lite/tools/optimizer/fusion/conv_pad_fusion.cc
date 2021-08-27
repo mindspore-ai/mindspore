@@ -189,7 +189,7 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
   }
 
   MS_ASSERT(pad_cnode != nullptr);
-  if (CheckIfCNodeIsNull(pad_cnode) != lite::RET_OK || CheckInputSize(pad_cnode, kPadInputsLength) != lite::RET_OK) {
+  if (pad_cnode == nullptr || pad_cnode->size() != kInputSizeThree) {
     MS_LOG(WARNING) << "pad node inputs error ,name:" << pad_cnode->fullname_with_scope();
     return nullptr;
   }

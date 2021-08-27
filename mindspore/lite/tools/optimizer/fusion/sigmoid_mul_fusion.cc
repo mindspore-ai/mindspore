@@ -31,7 +31,7 @@ bool IsMulNode(const BaseRef &n) {
 }  // namespace
 const BaseRef SigmoidMulFusion::DefinePattern() const {
   auto input_var = std::make_shared<Var>();
-  auto activation_var = std::make_shared<CondVar>(IsActivationNode);
+  auto activation_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
   auto mul_var = std::make_shared<CondVar>(IsMulNode);
   auto activation_input = VectorRef({activation_var, input_var});
   return VectorRef({mul_var, input_var, activation_input});
