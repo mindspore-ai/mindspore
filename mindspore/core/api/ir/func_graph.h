@@ -34,12 +34,17 @@ class MS_CORE_API FuncGraph {
   virtual const std::vector<AnfNodePtr> get_inputs() const = 0;
   virtual const std::vector<AnfNodePtr> &parameters() const = 0;
   virtual void add_parameter(const ParameterPtr &p) = 0;
+  virtual ParameterPtr add_parameter() = 0;
 
   virtual AnfNodePtr output() const = 0;
   virtual CNodePtr get_return() const = 0;
   virtual void set_output(const AnfNodePtr &value, bool force_new_ret = false) = 0;
+  virtual void set_return(const CNodePtr &cnode) = 0;
 
   virtual CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>()) = 0;
+  virtual CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs) = 0;
+
+  virtual const AnfNodeSet &nodes() const = 0;
 
   virtual bool has_attr(const std::string &key) const = 0;
   virtual ValuePtr get_attr(const std::string &key) const = 0;
