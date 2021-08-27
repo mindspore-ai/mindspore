@@ -477,7 +477,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   std::vector<lite::Tensor *> outputs_;
   auto *deconv_param = new ConvParameter();
   auto *ctx = new lite::InnerContext;
-  ctx->thread_num_ = 1;
+  deconv_param->op_parameter_.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   float *correct;
   int total_size = DeConvTestInit1(&inputs_, &outputs_, deconv_param, &correct);
@@ -488,7 +488,6 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   deconv->Run();
 
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
-  delete deconv_param;
   delete deconv;
   delete ctx;
   for (auto t : inputs_) delete t;
@@ -548,7 +547,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
   float *correct;
   int total_size = DeConvTestInit2(&inputs_, &outputs_, deconv_param, &correct);
   auto *ctx = new lite::InnerContext;
-  ctx->thread_num_ = 1;
+  deconv_param->op_parameter_.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
@@ -627,7 +626,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   float *correct;
   int total_size = DeConvTestInit3(&inputs_, &outputs_, deconv_param, &correct);
   auto *ctx = new lite::InnerContext;
-  ctx->thread_num_ = 2;
+  deconv_param->op_parameter_.thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
@@ -635,92 +634,6 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   deconv->Init();
   deconv->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
-
-  delete deconv;
-  delete ctx;
-  for (auto t : inputs_) delete t;
-  for (auto t : outputs_) delete t;
-  free(correct);
-}
-
-int DeConvTestInit4(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
-                    ConvParameter *conv_param, float **correct) {
-  size_t buffer_size;
-  std::vector<int> in_nhwc_dims = {1, 300, 300, 30};
-  auto *in_t = new lite::Tensor(kNumberTypeFloat, in_nhwc_dims, mindspore::NHWC, lite::Tensor::Category::VAR);
-  in_t->MallocData();
-  std::string in_nhwc_path = "./deconv/deconv_fp32_nhwc_input1.bin";
-  auto in_nhwc = reinterpret_cast<float *>(mindspore::lite::ReadFile(in_nhwc_path.c_str(), &buffer_size));
-  memcpy(in_t->MutableData(), in_nhwc, buffer_size);
-  inputs_->push_back(in_t);
-
-  std::vector<int> w_nhwc_dims = {30, 3, 3, 40};
-  auto *weight_t =
-    new lite::Tensor(kNumberTypeFloat, w_nhwc_dims, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
-  weight_t->MallocData();
-  std::string weight_path = "./deconv/deconv_fp32_nchw_weight1.bin";
-  auto weight_nchw = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &buffer_size));
-  PackNCHWToNHWCFp32(weight_nchw, weight_t->MutableData(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
-                     weight_t->Channel(), 0, 0);
-  inputs_->push_back(weight_t);
-
-  auto *bias_t = new lite::Tensor(kNumberTypeFloat, {40}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
-  bias_t->MallocData();
-  std::string bias_path = "./deconv/deconv_fp32_nchw_bias1.bin";
-  auto bias = mindspore::lite::ReadFile(bias_path.c_str(), &buffer_size);
-  memcpy(bias_t->MutableData(), bias, buffer_size);
-  inputs_->push_back(bias_t);
-
-  std::vector<int> out_nhwc_dims = {1, 302, 302, 40};
-  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_nhwc_dims, mindspore::NHWC, lite::Tensor::Category::VAR);
-  out_t->MallocData();
-  outputs_->push_back(out_t);
-
-  std::string out_path = "./deconv/deconv_fp32_nchw_output1.bin";
-  auto out_nchw = mindspore::lite::ReadFile(out_path.c_str(), &buffer_size);
-  *correct = reinterpret_cast<float *>(malloc(buffer_size));
-  PackNCHWToNHWCFp32(out_nchw, *correct, out_t->Batch(), out_t->Width() * out_t->Height(), out_t->Channel(), 0, 0);
-
-  conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
-  conv_param->stride_h_ = conv_param->stride_w_ = 1;
-  conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_u_ = conv_param->pad_l_ = 0;
-  conv_param->act_type_ = ActType_No;
-
-  return out_t->ElementsNum();
-}
-
-TEST_F(TestDeConvolutionFp32, DeConvTest4) {
-  std::vector<lite::Tensor *> inputs_;
-  std::vector<lite::Tensor *> outputs_;
-  auto deconv_param = new ConvParameter();
-  float *correct;
-  int total_size = DeConvTestInit4(&inputs_, &outputs_, deconv_param, &correct);
-  auto *ctx = new lite::InnerContext;
-  ctx->thread_num_ = 2;
-  ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto *deconv =
-    new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
-
-  deconv->Init();
-  deconv->Run();
-  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
-
-  /* running warm up */
-  for (int i = 0; i < 0; i++) {
-    deconv->Run();
-  }
-
-  /* running time cost */
-  int loop_count = 1;
-  auto time_start = mindspore::lite::GetTimeUs();
-  for (int i = 0; i < loop_count; i++) {
-    deconv->Run();
-  }
-  auto time_end = mindspore::lite::GetTimeUs();
-  auto cost = time_end - time_start;
-  uint64_t time_avg = cost / loop_count;
-  printf("deconv fp32 average time : %f ms\n", time_avg / 1000.0f);
 
   delete deconv;
   delete ctx;

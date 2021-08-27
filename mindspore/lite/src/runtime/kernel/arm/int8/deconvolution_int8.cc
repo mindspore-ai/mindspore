@@ -31,6 +31,14 @@ DeConvInt8CPUKernel::~DeConvInt8CPUKernel() {
   FreeTmpBuffer();
   ConvolutionBaseCPUKernel::FreeQuantParam();
 
+  if (weight_ptr_ != nullptr) {
+    free(weight_ptr_);
+    weight_ptr_ = nullptr;
+  }
+  if (weight_sum_ != nullptr) {
+    free(weight_sum_);
+    weight_sum_ = nullptr;
+  }
   if (matmul_param_ != nullptr) {
     delete matmul_param_;
     matmul_param_ = nullptr;
@@ -38,17 +46,9 @@ DeConvInt8CPUKernel::~DeConvInt8CPUKernel() {
 }
 
 void DeConvInt8CPUKernel::FreeTmpBuffer() {
-  if (weight_ptr_ != nullptr) {
-    free(weight_ptr_);
-    weight_ptr_ = nullptr;
-  }
   if (input_ptr_ != nullptr) {
     free(input_ptr_);
     input_ptr_ = nullptr;
-  }
-  if (weight_sum_ != nullptr) {
-    free(weight_sum_);
-    weight_sum_ = nullptr;
   }
   return;
 }
@@ -100,6 +100,7 @@ int DeConvInt8CPUKernel::Init() {
     MS_LOG(ERROR) << "deconv int8 SetQuantParam error!";
     return error_code;
   }
+
   error_code = InitBiasWeight();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv int8 InitBiasWeight error!";
@@ -140,7 +141,8 @@ int DeConvInt8CPUKernel::InitParam() {
 }
 
 int DeConvInt8CPUKernel::InitBiasWeight() {
-  size_t size = UP_ROUND(conv_param_->output_channel_, C4NUM) * sizeof(int32_t);
+  auto weight_tensor = in_tensors_.at(1);
+  size_t size = UP_ROUND(weight_tensor->Channel(), C4NUM) * sizeof(int32_t);
   bias_data_ = malloc(size);
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "deconv int8 malloc bias_data_ error!";
@@ -155,27 +157,27 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(int32_t));
   }
 
-  size = UP_ROUND(conv_param_->output_channel_, C4NUM) * UP_ROUND(conv_param_->input_channel_, C16NUM) *
-         conv_param_->kernel_w_ * conv_param_->kernel_h_ * sizeof(int8_t);
-  weight_ptr_ = reinterpret_cast<int8_t *>(malloc(size));
+  size_t weight_col_size = UP_ROUND(weight_tensor->Channel(), C4NUM) * weight_tensor->Height() * weight_tensor->Width();
+  size_t weight_row_size = UP_ROUND(weight_tensor->Batch(), C16NUM);
+  size_t pack_weight_size = weight_col_size * weight_row_size;
+
+  weight_ptr_ = reinterpret_cast<int8_t *>(malloc(pack_weight_size * sizeof(int8_t)));
   if (weight_ptr_ == nullptr) {
     MS_LOG(ERROR) << "deconv int8 malloc weight_ptr_ error!";
     return RET_ERROR;
   }
-  memset(weight_ptr_, 0, size);
-  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(in_tensors_.at(1)->MutableData()), weight_ptr_,
-                        conv_param_->input_channel_, conv_param_->output_channel_,
-                        conv_param_->kernel_h_ * conv_param_->kernel_w_, support_optimize_);
+  memset(weight_ptr_, 0, pack_weight_size * sizeof(int8_t));
+  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(weight_tensor->data_c()), weight_ptr_, weight_tensor->Batch(),
+                        weight_tensor->Channel(), weight_tensor->Height() * weight_tensor->Width(), support_optimize_);
 
-  size = UP_ROUND(conv_param_->output_channel_, C4NUM) * conv_param_->kernel_h_ * conv_param_->kernel_w_;
-  weight_sum_ = reinterpret_cast<int32_t *>(malloc(size * sizeof(int32_t)));
+  weight_sum_ = reinterpret_cast<int32_t *>(malloc(weight_col_size * sizeof(int32_t)));
   if (weight_sum_ == nullptr) {
     MS_LOG(ERROR) << "deconv int8 malloc weight_sum_ error!";
     return RET_ERROR;
   }
-  memset(weight_sum_, 0, size * sizeof(int32_t));
+  memset(weight_sum_, 0, weight_col_size * sizeof(int32_t));
   DeConvPackWeightSum(weight_ptr_, weight_sum_, conv_param_->conv_quant_arg_.input_quant_args_[0].zp_,
-                      conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_, matmul_param_->deep_, size,
+                      conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_, weight_tensor->Batch(), weight_col_size,
                       support_optimize_);
 
   return RET_OK;
@@ -298,7 +300,7 @@ int DeConvInt8CPUKernel::Run() {
     }
   }
   FreeRunBuf();
-  return error_code;
+  return RET_OK;
 }
 
 kernel::InnerKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,

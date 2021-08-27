@@ -62,31 +62,31 @@ void CreateMultyModel1(mindspore::schema::MetaGraphT *meta_graph) {
   exp->name = "exp";
 
   /* CPU support */
-  auto elu = std::make_unique<mindspore::schema::CNodeT>();
-  elu->inputIndex = {2};
-  elu->outputIndex = {3};
-  elu->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
-  elu->primitive->value.type = mindspore::schema::PrimitiveType_Elu;
-  auto elu_primitive = new mindspore::schema::EluT;
-  elu->primitive->value.value = elu_primitive;
-  elu->name = "elu";
+  auto where = std::make_unique<mindspore::schema::CNodeT>();
+  where->inputIndex = {2, 5, 6};
+  where->outputIndex = {3};
+  where->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
+  where->primitive->value.type = mindspore::schema::PrimitiveType_Where;
+  auto where_primitive = new mindspore::schema::WhereT;
+  where->primitive->value.value = where_primitive;
+  where->name = "where";
 
   /* CPU NPU GPU support */
-  auto cos2 = std::make_unique<mindspore::schema::CNodeT>();
-  cos2->inputIndex = {3};
-  cos2->outputIndex = {4};
-  cos2->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
-  cos2->primitive->value.type = mindspore::schema::PrimitiveType_Cos;
-  auto cos2_primitive = new mindspore::schema::CosT;
-  cos2->primitive->value.value = cos2_primitive;
-  cos2->name = "cos2";
+  auto sin = std::make_unique<mindspore::schema::CNodeT>();
+  sin->inputIndex = {3};
+  sin->outputIndex = {4};
+  sin->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
+  sin->primitive->value.type = mindspore::schema::PrimitiveType_Sin;
+  auto sin_primitive = new mindspore::schema::SinT;
+  sin->primitive->value.value = sin_primitive;
+  sin->name = "sin";
 
   /* tensors */
   auto tensor0 = std::make_unique<mindspore::schema::TensorT>();
   tensor0->nodeType = mindspore::lite::NodeType_ValueNode;
   tensor0->format = mindspore::schema::Format_NHWC;
   tensor0->dataType = mindspore::TypeId::kNumberTypeFloat32;
-  tensor0->dims = {1, 2, 2, 1};
+  tensor0->dims = {1, 1, 1, 1};
   tensor0->offset = -1;
   tensor0->name = "tensor0";
 
@@ -94,7 +94,7 @@ void CreateMultyModel1(mindspore::schema::MetaGraphT *meta_graph) {
   tensor1->nodeType = mindspore::lite::NodeType_ValueNode;
   tensor1->format = mindspore::schema::Format_NHWC;
   tensor1->dataType = mindspore::TypeId::kNumberTypeFloat32;
-  tensor1->dims = {1, 2, 2, 1};
+  tensor1->dims = {1, 1, 1, 1};
   tensor1->offset = -1;
   tensor1->name = "tensor1";
 
@@ -102,7 +102,7 @@ void CreateMultyModel1(mindspore::schema::MetaGraphT *meta_graph) {
   tensor2->nodeType = mindspore::lite::NodeType_ValueNode;
   tensor2->format = mindspore::schema::Format_NHWC;
   tensor2->dataType = mindspore::TypeId::kNumberTypeFloat32;
-  tensor2->dims = {1, 2, 2, 1};
+  tensor2->dims = {1, 1, 1, 1};
   tensor2->offset = -1;
   tensor2->name = "tensor2";
 
@@ -110,7 +110,7 @@ void CreateMultyModel1(mindspore::schema::MetaGraphT *meta_graph) {
   tensor3->nodeType = mindspore::lite::NodeType_ValueNode;
   tensor3->format = mindspore::schema::Format_NHWC;
   tensor3->dataType = mindspore::TypeId::kNumberTypeFloat32;
-  tensor3->dims = {1, 2, 2, 1};
+  tensor3->dims = {1, 1, 1, 1};
   tensor3->offset = -1;
   tensor3->name = "tensor3";
 
@@ -118,20 +118,45 @@ void CreateMultyModel1(mindspore::schema::MetaGraphT *meta_graph) {
   tensor4->nodeType = mindspore::lite::NodeType_ValueNode;
   tensor4->format = mindspore::schema::Format_NHWC;
   tensor4->dataType = mindspore::TypeId::kNumberTypeFloat32;
-  tensor4->dims = {1, 2, 2, 1};
+  tensor4->dims = {1, 1, 1, 1};
   tensor4->offset = -1;
   tensor4->name = "tensor4";
 
+  auto tensor5 = std::make_unique<mindspore::schema::TensorT>();
+  tensor5->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor5->format = mindspore::schema::Format_NHWC;
+  tensor5->dataType = mindspore::TypeId::kNumberTypeFloat32;
+  tensor5->data.resize(4 * sizeof(float));
+  std::vector<float> t5 = {1.0, 2.0, 3.0, 4.0};
+  memcpy(tensor5->data.data(), t5.data(), 4 * sizeof(float));
+  tensor5->data.resize(4 * sizeof(float));
+  tensor5->dims = {1, 2, 2, 1};
+  tensor5->offset = -1;
+  tensor5->name = "tensor5";
+
+  auto tensor6 = std::make_unique<mindspore::schema::TensorT>();
+  tensor6->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor6->format = mindspore::schema::Format_NHWC;
+  tensor6->dataType = mindspore::TypeId::kNumberTypeFloat32;
+  tensor6->data.resize(4 * sizeof(float));
+  std::vector<float> t6 = {1.0, 2.0, 3.0, 4.0};
+  memcpy(tensor6->data.data(), t6.data(), 4 * sizeof(float));
+  tensor6->dims = {1, 2, 2, 1};
+  tensor6->offset = -1;
+  tensor6->name = "tensor6";
+
   meta_graph->nodes.emplace_back(std::move(cos));
   meta_graph->nodes.emplace_back(std::move(exp));
-  meta_graph->nodes.emplace_back(std::move(elu));
-  meta_graph->nodes.emplace_back(std::move(cos2));
+  meta_graph->nodes.emplace_back(std::move(where));
+  meta_graph->nodes.emplace_back(std::move(sin));
 
   meta_graph->allTensors.emplace_back(std::move(tensor0));
   meta_graph->allTensors.emplace_back(std::move(tensor1));
   meta_graph->allTensors.emplace_back(std::move(tensor2));
   meta_graph->allTensors.emplace_back(std::move(tensor3));
   meta_graph->allTensors.emplace_back(std::move(tensor4));
+  meta_graph->allTensors.emplace_back(std::move(tensor5));
+  meta_graph->allTensors.emplace_back(std::move(tensor6));
 
   meta_graph->inputIndex = {0};
   meta_graph->outputIndex = {4};
@@ -199,16 +224,16 @@ void CreateMultyModel2(mindspore::schema::MetaGraphT *meta_graph) {
 enum MultyDeviceMode1 { CPU, NPU, GPU, CPU_GPU, GPU_CPU, NPU_CPU, NPU_GPU_CPU, NPU2, GPU_NPU2 };
 void CheckResult(std::vector<mindspore::kernel::LiteKernel *> kernels, int mode) {
   /*
-   *          cos     exp   elu   cos2
-   * CPU       *       *     *     *
-   * GPU       *       *           *
-   * NPU       *                   *
+   *          cos     exp   where   sin
+   * CPU       *       *      *      *
+   * GPU       *       *             *
+   * NPU       *                     *
    *
    * */
 
   if (mode == CPU) {
     ASSERT_EQ(1, kernels.size());
-    /* CPU : cos exp elu cos2 */
+    /* CPU : cos exp where sin */
     auto subgraph1 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(0));
     ASSERT_EQ(4, subgraph1->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kCPU, subgraph1->desc().arch);
@@ -218,11 +243,11 @@ void CheckResult(std::vector<mindspore::kernel::LiteKernel *> kernels, int mode)
     /* NPU : cos */
     auto subgraph0 = kernels.at(0);
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kDelegate, subgraph0->desc().arch);
-    /* CPU : exp elu */
+    /* CPU : exp where */
     auto subgraph1 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(1));
     ASSERT_EQ(2, subgraph1->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kCPU, subgraph1->desc().arch);
-    /* NPU : cos2 */
+    /* NPU : sin */
     auto subgraph2 = kernels.at(2);
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kDelegate, subgraph2->desc().arch);
 
@@ -233,11 +258,11 @@ void CheckResult(std::vector<mindspore::kernel::LiteKernel *> kernels, int mode)
     auto subgraph0 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(0));
     ASSERT_EQ(2 + 2, subgraph0->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kGPU, subgraph0->desc().arch);
-    /* CPU : elu */
+    /* CPU : where */
     auto subgraph1 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(1));
     ASSERT_EQ(1, subgraph1->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kCPU, subgraph1->desc().arch);
-    /* GPU : to_format cos2 to_format */
+    /* GPU : to_format sin to_format */
     auto subgraph2 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(2));
     ASSERT_EQ(3, subgraph2->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kGPU, subgraph2->desc().arch);
@@ -252,11 +277,11 @@ void CheckResult(std::vector<mindspore::kernel::LiteKernel *> kernels, int mode)
     auto subgraph1 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(1));
     ASSERT_EQ(3, subgraph1->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kGPU, subgraph1->desc().arch);
-    /* CPU : elu */
+    /* CPU : where */
     auto subgraph2 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(2));
     ASSERT_EQ(1, subgraph2->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kCPU, subgraph2->desc().arch);
-    /* NPU : cos2 */
+    /* NPU : sin */
     auto subgraph3 = kernels.at(3);
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kDelegate, subgraph3->desc().arch);
   } else if (mode == NPU2) {
@@ -432,10 +457,10 @@ TEST_F(MultipleDeviceTest, NewApi5) {
   void *out_data = out.MutableData();
   float *fp32_data = reinterpret_cast<float *>(out_data);
 
-  ASSERT_LE(fabs(fp32_data[0] - (-0.14517)), 0.01);
-  ASSERT_LE(fabs(fp32_data[1] - (0.790252)), 0.01);
-  ASSERT_LE(fabs(fp32_data[2] - (0.931755)), 0.01);
-  ASSERT_LE(fabs(fp32_data[3] - (0.867795)), 0.01);
+  ASSERT_LE(fabs(fp32_data[0] - (0.841471)), 0.01);
+  ASSERT_LE(fabs(fp32_data[1] - (0.909297)), 0.01);
+  ASSERT_LE(fabs(fp32_data[2] - (0.141120)), 0.01);
+  ASSERT_LE(fabs(fp32_data[3] - (-0.756802)), 0.01);
 }
 
 TEST_F(MultipleDeviceTest, NewApi6) {
@@ -477,10 +502,10 @@ TEST_F(MultipleDeviceTest, NewApi6) {
   void *out_data = out.MutableData();
   float *fp32_data = reinterpret_cast<float *>(out_data);
 
-  ASSERT_LE(fabs(fp32_data[0] - (-0.14517)), 0.01);
-  ASSERT_LE(fabs(fp32_data[1] - (0.790252)), 0.01);
-  ASSERT_LE(fabs(fp32_data[2] - (0.931755)), 0.01);
-  ASSERT_LE(fabs(fp32_data[3] - (0.867795)), 0.01);
+  ASSERT_LE(fabs(fp32_data[0] - (0.841471)), 0.01);
+  ASSERT_LE(fabs(fp32_data[1] - (0.909297)), 0.01);
+  ASSERT_LE(fabs(fp32_data[2] - (0.141120)), 0.01);
+  ASSERT_LE(fabs(fp32_data[3] - (-0.756802)), 0.01);
 }
 
 TEST_F(MultipleDeviceTest, NewApi7) {
