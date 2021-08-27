@@ -299,13 +299,13 @@ class CosineDecayLR(LearningRateSchedule):
     def __init__(self, min_lr, max_lr, decay_steps):
         super(CosineDecayLR, self).__init__()
         if not isinstance(min_lr, float):
-            raise TypeError("min_lr must be float.")
+            raise TypeError("The min_lr must be float.")
         validator.check_non_negative_float(min_lr, "min_lr", self.cls_name)
         validator.check_positive_float(max_lr, 'max_lr', self.cls_name)
         validator.check_is_float(max_lr, 'max_lr', self.cls_name)
         validator.check_positive_int(decay_steps, "decay_steps", self.cls_name)
         if min_lr >= max_lr:
-            raise ValueError('`max_lr` should be greater than `min_lr`.')
+            raise ValueError('The `max_lr` should be greater than the `min_lr`.')
         self.min_lr = min_lr
         self.max_lr = max_lr
         self.decay_steps = decay_steps
@@ -453,7 +453,7 @@ class WarmUpLR(LearningRateSchedule):
     def __init__(self, learning_rate, warmup_steps):
         super(WarmUpLR, self).__init__()
         if not isinstance(learning_rate, float):
-            raise TypeError("learning_rate must be float.")
+            raise TypeError("The learning_rate must be float.")
         validator.check_non_negative_float(learning_rate, "learning_rate", self.cls_name)
         validator.check_positive_int(warmup_steps, 'warmup_steps', self.cls_name)
         self.warmup_steps = warmup_steps

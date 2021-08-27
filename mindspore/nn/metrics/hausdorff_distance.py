@@ -78,7 +78,7 @@ class HausdorffDistance(Metric):
         distance_metric (string): The parameter of calculating Hausdorff distance supports three measurement methods,
                                   "euclidean", "chessboard" or "taxicab". Default: "euclidean".
         percentile (float): Floating point numbers between 0 and 100. Specify the percentile parameter to get the
-                            percentile of the Hausdorff distance. Defaults: None.
+                            percentile of the Hausdorff distance. Default: None.
         directed (bool): It can be divided into directional and non directional Hausdorff distance,
                          and the default is non directional Hausdorff distance, specify the percentile parameter to get
                          the percentile of the Hausdorff distance. Default: False.

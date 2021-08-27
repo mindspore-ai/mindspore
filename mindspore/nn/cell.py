@@ -48,8 +48,8 @@ class Cell(Cell_):
     Note:
         In general, the autograd algorithm will automatically generate the implementation of the gradient function,
         but if back-propagation(bprop) method is implemented, the gradient function will be replaced by the bprop.
-        The bprop implementation will receive a Tensor `dout` containing the gradient of the loss w.r.t.
-        the output, and a Tensor `out` containing the forward result. The bprop needs to compute the
+        The bprop implementation will receive a tensor `dout` containing the gradient of the loss w.r.t.
+        the output, and a tensor `out` containing the forward result. The bprop needs to compute the
         gradient of the loss w.r.t. the inputs, gradient of the loss w.r.t. Parameter variables are not supported
         currently. The bprop method must contain the self parameter.
 
@@ -170,7 +170,7 @@ class Cell(Cell_):
             value (bool): Specifies whether to enable bprop debug. Default: False.
         """
         if not isinstance(value, bool):
-            raise TypeError("'bprop debug' value must be bool type.")
+            raise TypeError("The 'bprop debug' value must be a bool type.")
         self._bprop_debug = value
 
     def update_cell_prefix(self):
@@ -195,7 +195,7 @@ class Cell(Cell_):
     @cell_init_args.setter
     def cell_init_args(self, value):
         if not isinstance(value, str):
-            raise TypeError("'cell_init_args' must be string type.")
+            raise TypeError("The 'cell_init_args' must be a string type.")
         self._cell_init_args = value
 
     @property
@@ -205,7 +205,7 @@ class Cell(Cell_):
     @phase.setter
     def phase(self, value):
         if not isinstance(value, str):
-            raise TypeError("'phase' must be string type.")
+            raise TypeError("The 'phase' must be a string type.")
         self._phase = value
 
     @property
@@ -223,7 +223,7 @@ class Cell(Cell_):
     @parameter_layout_dict.setter
     def parameter_layout_dict(self, value):
         if not isinstance(value, dict):
-            raise TypeError("'parameter_layout_dict' must be dict type.")
+            raise TypeError("The 'parameter_layout_dict' must be a dict type.")
         self._parameter_layout_dict = value
 
     @property
@@ -233,7 +233,7 @@ class Cell(Cell_):
     @parallel_parameter_name_list.setter
     def parallel_parameter_name_list(self, value):
         if not isinstance(value, list):
-            raise TypeError("'parallel_parameter_name_list' must be list type.")
+            raise TypeError("The 'parallel_parameter_name_list' must be a list type.")
         self._parallel_parameter_name_list = value
 
     @property
@@ -259,7 +259,7 @@ class Cell(Cell_):
     @parallel_parameter_merge_net_dict.setter
     def parallel_parameter_merge_net_dict(self, value):
         if not isinstance(value, dict):
-            raise TypeError("'parallel_parameter_merge_net_dict' must be dict type.")
+            raise TypeError("The 'parallel_parameter_merge_net_dict' must be a dict type.")
         self._parallel_parameter_merge_net_dict = value
 
     def get_func_graph_proto(self):
@@ -291,7 +291,7 @@ class Cell(Cell_):
                     cast_list.append(self.cast_param(para))
                 para_list = ParameterTuple(cast_list)
                 return para_list
-        raise AttributeError("'{}' object has no attribute '{}'.".format(type(self).__name__, name))
+        raise AttributeError("The '{}' object has no attribute '{}'.".format(type(self).__name__, name))
 
     def __del__(self):
         if context.get_context is not None and context.get_context("mode") == context.PYNATIVE_MODE:
@@ -366,11 +366,11 @@ class Cell(Cell_):
 
         if len(inputs) < positional_args:
             raise TypeError(
-                f"The function construct need {positional_args} positional argument, but only provided {len(inputs)}.")
+                f"The function construct needs {positional_args} positional argument, but only provided {len(inputs)}.")
 
         if len(inputs) > positional_args + default_args:
             raise TypeError(
-                f"The function construct need {positional_args} positional argument and {default_args} default "
+                f"The function construct needs {positional_args} positional argument and {default_args} default "
                 f"argument, but provided {len(inputs)}")
 
     def __call__(self, *inputs, **kwargs):
@@ -391,7 +391,7 @@ class Cell(Cell_):
         self.do_parameter_broadcast()
         for item in inputs:
             if isinstance(item, numpy.ndarray):
-                raise TypeError("cell inputs should not be numpy array.")
+                raise TypeError("The cell inputs should not be numpy arrays.")
         if self.requires_grad is True:
             _pynative_exec.set_grad_flag(True)
         _pynative_exec.new_graph(self, *inputs, **kwargs)
@@ -562,10 +562,10 @@ class Cell(Cell_):
             for key in params:
                 tensor = params[key].data
                 if key not in self.parameter_layout_dict:
-                    logger.info("layout dict does not contain the key %s.", key)
+                    logger.info("The layout dict does not contain the key %s.", key)
                     continue
                 if params[key].sliced:
-                    logger.debug("Param %s is already sliced.", key)
+                    logger.debug("The param %s is already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
@@ -714,7 +714,7 @@ class Cell(Cell_):
             param (Parameter): Parameters, the type of which should be cast.
 
         Returns:
-            Parameter, the input parameter with type automatically casted.
+            Parameter, the input parameter with type automatically cast.
         """
         if hasattr(self, "_mindspore_flags"):
             if self._mindspore_flags.get('fp32'):
@@ -913,14 +913,14 @@ class Cell(Cell_):
         """
         Returns an iterator over cell parameters.
 
-        Yields parameters of this cell. If `expand` is True, yield parameters of this cell and all subcells.
+        Yields parameters of this cell. If `expand` is true, yield parameters of this cell and all subcells.
 
         Args:
             expand (bool): If true, yields parameters of this cell and all subcells. Otherwise, only yield parameters
                            that are direct members of this cell. Default: True.
 
         Returns:
-            Iteration, all parameters at the Cell.
+            Iteration, all parameters at the cell.
 
         Examples:
             >>> net = Net()
@@ -1110,17 +1110,17 @@ class Cell(Cell_):
             Multiple calls will overwrite.
 
         Args:
-            dst_type (:class:`mindspore.dtype`): Transfer Cell to Run with dst_type.
+            dst_type (:class:`mindspore.dtype`): Transfer cell to run with dst_type.
                 dst_type can be `mindspore.dtype.float16` or `mindspore.dtype.float32`.
 
         Returns:
             Cell, the cell itself.
 
         Raises:
-            ValueError: If dst_type is not float32 nor float16.
+            ValueError: If dst_type is not float32 or float16.
         """
         if dst_type not in (mstype.float16, mstype.float32):
-            raise ValueError("dst_type should inside float32 or float16.")
+            raise ValueError("The dst_type should inside float32 or float16.")
         flags = {'fp16': dst_type == mstype.float16, 'fp32': dst_type == mstype.float32}
         self.add_flags_recursive(**flags)
         self._add_init_args(**flags)
@@ -1147,7 +1147,7 @@ class Cell(Cell_):
             ValueError: If acc_type is not in the algorithm library.
         """
         if acc_type not in ("less_bn",):
-            raise ValueError("acc_type is not in the algorithm library.")
+            raise ValueError("The acc_type is not in the algorithm library.")
         flags = {"less_bn": acc_type == "less_bn"}
         self.add_flags_recursive(**flags)
         return self
@@ -1155,12 +1155,12 @@ class Cell(Cell_):
     def set_grad(self, requires_grad=True):
         """
         Sets the cell flag for gradient. In pynative mode, this parameter specifies whether the network require
-        gradients. If True, the backward network needed to compute the gradients will be generated when the forward
+        gradients. If true, the backward network needed to compute the gradients will be generated when the forward
         network is executed.
 
         Args:
             requires_grad (bool): Specifies if the net need to grad, if it is
-                True, cell will construct backward network in pynative mode. Default: True.
+                true, the cell will construct backward network in pynative mode. Default: True.
 
         Returns:
             Cell, the cell itself.
@@ -1174,7 +1174,7 @@ class Cell(Cell_):
 
         The cell itself and all children cells will be set to training mode. Layers that have different constructions
         for training and predicting, such as `BatchNorm`, will distinguish between the branches by this attribute. If
-        set to True, the training branch will be executed, otherwise another branch.
+        set to true, the training branch will be executed, otherwise another branch.
 
         Args:
             mode (bool): Specifies whether the model is training. Default: True.
@@ -1222,7 +1222,7 @@ class Cell(Cell_):
 
     def register_backward_hook(self, fn):
         """
-        Set the cell backward hook function. Note that this function is only supported in Pynative Mode.
+        Set the cell backward hook function. Note that this function is only supported in pynative mode.
 
         Note:
             fn must be defined as the following code. `cell_name` is the name of registered cell.
