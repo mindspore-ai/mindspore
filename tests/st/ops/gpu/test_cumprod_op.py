@@ -132,13 +132,13 @@ def cum_prod(nptype):
 def test_cum_prod_uint8():
     cum_prod(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_prod_int8():
     cum_prod(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_prod_int32():

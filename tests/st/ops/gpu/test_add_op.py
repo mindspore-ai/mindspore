@@ -145,7 +145,7 @@ def test_add_float32():
 
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_float16():
@@ -153,14 +153,14 @@ def test_add_float16():
 
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_int64():
     add(np.int64)
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_int32():
@@ -235,19 +235,19 @@ def test_add_dynamic_float64():
 def test_add_dynamic_float32():
     add_dynamic(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_float16():
     add_dynamic(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_int64():
     add_dynamic(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_int32():

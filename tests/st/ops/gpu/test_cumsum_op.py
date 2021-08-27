@@ -126,7 +126,7 @@ def cum_sum(nptype):
     assert np.all(diff6 < error6)
     assert output[6].shape == expect6.shape
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_sum_uint8():
@@ -138,7 +138,7 @@ def test_cum_sum_uint8():
 def test_cum_sum_int8():
     cum_sum(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_sum_int32():

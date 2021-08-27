@@ -29,7 +29,7 @@ def sin(nptype):
     output_np = np.sin(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sin_float16():

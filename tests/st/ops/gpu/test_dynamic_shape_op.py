@@ -92,7 +92,7 @@ def dynamic_shape(np_type):
     expected = np.array(shape)
     np.testing.assert_array_equal(ms_out, expected)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_shape_int32():
@@ -110,7 +110,7 @@ def test_dynamic_shape_float16():
 def test_dynamic_shape_float32():
     dynamic_shape(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_shape_bool():

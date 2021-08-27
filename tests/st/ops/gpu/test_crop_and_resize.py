@@ -30,7 +30,7 @@ class NetCropAndResize(nn.Cell):
         return self.op(image, boxes, box_index, channel)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_int8_bilinear(datatype=np.int8):
@@ -68,7 +68,7 @@ def test_crop_and_resize_int8_bilinear(datatype=np.int8):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_int16_nearest(datatype=np.int16):
@@ -106,7 +106,7 @@ def test_crop_and_resize_int16_nearest(datatype=np.int16):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
@@ -145,7 +145,7 @@ def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_float16_nearest(datatype=np.float16):
@@ -337,7 +337,7 @@ def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_uint8_nearest(datatype=np.uint8):
@@ -375,7 +375,7 @@ def test_crop_and_resize_uint8_nearest(datatype=np.uint8):
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_uint16_bilinear(datatype=np.uint16):

@@ -66,7 +66,7 @@ def relu_grad_grad_base(dtype, loss):
     assert np.allclose(dgrad_ms.asnumpy(), dgrad_np, loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_grad_grad_float16():
@@ -87,28 +87,28 @@ def test_relu_grad_grad_float64():
     relu_grad_grad_base(np.float64, 1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_grad_grad_int8():
     relu_grad_grad_base(np.int8, 1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_grad_grad_int16():
     relu_grad_grad_base(np.int16, 1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_grad_grad_int32():
     relu_grad_grad_base(np.int32, 1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_grad_grad_int64():

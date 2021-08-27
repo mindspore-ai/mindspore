@@ -63,7 +63,7 @@ def neg(nptype):
     assert np.all(diff1 < error1)
     assert output1.shape == expect1.shape
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_neg_float16():

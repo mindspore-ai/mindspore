@@ -51,37 +51,37 @@ def randperm(max_length, pad, dtype, n):
     print(output.dtype)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_int8():
     randperm(8, -1, mindspore.int8, 5)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_int16():
     randperm(3, 0, mindspore.int16, 3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_int32():
     randperm(4, -6, mindspore.int32, 2)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_int64():
     randperm(12, 128, mindspore.int64, 4)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_uint8():
     randperm(8, 1, mindspore.uint8, 5)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_uint16():

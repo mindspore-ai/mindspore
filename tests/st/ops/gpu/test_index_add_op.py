@@ -140,7 +140,7 @@ def test_index_add_int32():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_int8():
@@ -160,7 +160,7 @@ def test_index_add_int8():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_uint8():
@@ -316,7 +316,7 @@ def test_index_add_grad_float32():
     index_add_grad_with_type(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_float16():
@@ -326,7 +326,7 @@ def test_index_add_grad_float16():
     index_add_grad_with_type(np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_int32():
@@ -346,7 +346,7 @@ def test_index_add_grad_int16():
     index_add_grad_with_type(np.int16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_int8():
@@ -356,7 +356,7 @@ def test_index_add_grad_int8():
     index_add_grad_with_type(np.int8)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_uint8():
