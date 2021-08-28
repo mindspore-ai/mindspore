@@ -515,6 +515,11 @@ else()
             install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
+        if(MSLITE_ENABLE_ACL)
+            set(LITE_ACL_DIR ${TOP_DIR}/mindspore/lite/build/tools/converter/acl)
+            install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so
+                    DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         __install_micro_wrapper()
         __install_micro_codegen()
     endif()

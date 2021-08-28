@@ -6,7 +6,10 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         )
-set(ENABLE_GLIBCXX ON)
+if(NOT MSLITE_ENABLE_ACL)
+    set(ENABLE_GLIBCXX ON)
+endif()
+
 include(${TOP_DIR}/cmake/external_libs/opencv.cmake)
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
@@ -136,6 +139,14 @@ add_subdirectory(registry)
 add_subdirectory(preprocess)
 add_subdirectory(${CORE_DIR} mindspore_core)
 
+if(MSLITE_ENABLE_ACL)
+    set(MODE_ASCEND_ACL ON)
+    include(${TOP_DIR}/cmake/dependency_graphengine.cmake)
+
+    add_subdirectory(acl)
+    link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+endif()
+
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 set(API_SRC ${SRC_DIR}/cxx_api/context.cc)
 set(LITE_SRC
@@ -221,6 +232,12 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::flatbuffers
         preprocess_mid
         )
+
+if(MSLITE_ENABLE_ACL)
+    target_link_libraries(converter_lite PRIVATE
+            lite_acl_mid
+            mindspore_shared_lib)
+endif()
 
 if(NOT MSVC)
     target_link_libraries(converter_lite PRIVATE pthread)

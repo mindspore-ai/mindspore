@@ -32,7 +32,17 @@ OUTPUT_MAP(BatchNorm) = {{0, OUTPUT_DESC(y)},
                          {2, OUTPUT_DESC(batch_variance)},
                          {3, OUTPUT_DESC(reserve_space_1)},
                          {4, OUTPUT_DESC(reserve_space_2)}};
+// BNInference is BatchNorm for caffe
+INPUT_MAP(BNInference) = {{1, INPUT_DESC(x)},        {2, INPUT_DESC(mean)},  {3, INPUT_DESC(variance)},
+                          {4, INPUT_DESC(momentum)}, {5, INPUT_DESC(scale)}, {6, INPUT_DESC(offset)}};
+ATTR_MAP(BNInference) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
+                         {"use_global_stats", ATTR_DESC(use_global_stats, AnyTraits<bool>())},
+                         {"mode", ATTR_DESC(mode, AnyTraits<int64_t>())}};
+OUTPUT_MAP(BNInference) = {{0, OUTPUT_DESC(y)}};
+
+REG_ADPT_DESC(BNInference, kNameBNInference, ADPT_DESC(BNInference))
 REG_ADPT_DESC(BatchNorm, kNameBatchNorm, ADPT_DESC(BatchNorm))
+REG_ADPT_DESC(FusedBatchNorm, kNameFusedBatchNorm, ADPT_DESC(BatchNorm))
 
 // BatchNormGrad
 INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},
@@ -65,4 +75,5 @@ ATTR_MAP(L2Normalize) = {
   {"epsilon", ATTR_DESC(eps, AnyTraits<float>())}};
 OUTPUT_MAP(L2Normalize) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(L2Normalize, kNameL2Normalize, ADPT_DESC(L2Normalize))
+
 }  // namespace mindspore::transform

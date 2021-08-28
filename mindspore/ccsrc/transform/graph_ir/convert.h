@@ -158,6 +158,8 @@ class DfGraphConvertor {
   void ConvertTupleGetItem(const CNodePtr node);
   void ConvertMakeTuple(const CNodePtr node);
   void ConvertTopK(const CNodePtr node);
+  void ConvertReshape(const CNodePtr node);
+  std::vector<int64_t> CastToInt(const ValuePtr &value);
   bool CheckCNode(const std::string &name, const CNodePtr node);
   void TraceOutput(AnfNodePtr node);
   void TraceOutputFromParameter(const AnfNodePtr &anf_out);

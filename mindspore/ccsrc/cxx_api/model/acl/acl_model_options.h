@@ -33,7 +33,7 @@ class AclModelOptions {
   std::string GenAclOptionsKey() const;
   uint32_t GetDeviceID() const { return device_id_; }
   std::string GetDumpCfgPath() const { return dump_cfg_path_; }
-  void RenameInput(const std::vector<std::string> &);
+  void RenameInput(const std::vector<std::string> &name);
 
   // return tuple<init_options, build_options>
   std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> GenAclOptions() const;

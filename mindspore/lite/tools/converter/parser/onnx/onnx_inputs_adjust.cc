@@ -101,6 +101,7 @@ STATUS OnnxInputAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph
     }
     auto param_node_new = opt::BuildParameterNode(func_graph, param_node, tensor_info);
     manager->Replace(param_node, param_node_new);
+    func_graph->DropNode(param_node);
   } else {
     // set graph input
     param_node->abstract()->set_type(TypeIdToType(kNumberTypeInt32));

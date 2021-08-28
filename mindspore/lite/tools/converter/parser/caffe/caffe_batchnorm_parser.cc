@@ -19,6 +19,8 @@
 #include <memory>
 #include "tools/common/tensor_util.h"
 #include "ops/batch_norm.h"
+#include "ops/op_utils.h"
+#include "include/registry/parser_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -47,6 +49,9 @@ ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
   }
   prim->set_epsilon(epsilon);
 
+  prim->AddAttr(ops::kUseGlobalStats, MakeValue(true));
+  int fmk_type = converter::FmkType::kFmkTypeCaffe;
+  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   return prim.release();
 }
 

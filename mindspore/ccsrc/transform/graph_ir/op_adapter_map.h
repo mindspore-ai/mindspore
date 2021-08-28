@@ -313,6 +313,21 @@ constexpr const char kNameCTCGreedyDecoder[] = "CTCGreedyDecoder";
 constexpr const char kNameReverseV2[] = "ReverseV2";
 constexpr const char kNameLambApplyWeightAssign[] = "LambApplyWeightAssign";
 constexpr const char kNameLambApplyOptimizerAssign[] = "LambApplyOptimizerAssign";
+constexpr const char kNameScale[] = "Scale";
+constexpr const char kNameEltwise[] = "Eltwise";
+constexpr const char kNameFullConnection[] = "FullConnection";
+constexpr const char kNameFusedBatchNorm[] = "FusedBatchNorm";
+constexpr const char kNamePooling[] = "Pooling";
+constexpr const char kNameMaxPoolV3[] = "MaxPoolV3";
+constexpr const char kNameAvgPoolV2[] = "AvgPoolV2";
+constexpr const char kNameShape[] = "Shape";
+constexpr const char kNameGather[] = "Gather";
+constexpr const char kNameUnsqueeze[] = "Unsqueeze";
+constexpr const char kNamePadV3[] = "PadV3";
+constexpr const char kNameGlobalAvgPool[] = "GlobalAveragePool";
+constexpr const char kNameStridedSliceV2[] = "StridedSliceV2";
+constexpr const char kNameBNInference[] = "BNInference";
+constexpr const char kNameDeconvolution[] = "Deconvolution";
 
 class OpAdapterMap {
  public:

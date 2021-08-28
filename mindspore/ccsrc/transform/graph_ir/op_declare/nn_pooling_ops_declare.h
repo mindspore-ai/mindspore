@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/nn_ops.h"
+#include "ops/nn_pooling_ops.h"
 
 namespace mindspore::transform {
 DECLARE_OP_ADAPTER(MaxPoolWithArgmax)
@@ -55,5 +56,17 @@ DECLARE_OP_USE_OUTPUT(AvgPool)
 
 DECLARE_OP_ADAPTER(AvgPoolGrad)
 DECLARE_OP_USE_OUTPUT(AvgPoolGrad)
+
+DECLARE_OP_ADAPTER(Pooling)
+DECLARE_OP_USE_OUTPUT(Pooling)
+
+DECLARE_OP_ADAPTER(MaxPoolV3)
+DECLARE_OP_USE_OUTPUT(MaxPoolV3)
+
+DECLARE_OP_ADAPTER(AvgPoolV2)
+DECLARE_OP_USE_OUTPUT(AvgPoolV2)
+
+DECLARE_OP_ADAPTER(GlobalAveragePool)
+DECLARE_OP_USE_OUTPUT(GlobalAveragePool)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_POOLING_OPS_DECLARE_H_

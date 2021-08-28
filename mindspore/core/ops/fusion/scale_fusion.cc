@@ -16,6 +16,7 @@
 
 #include "ops/fusion/scale_fusion.h"
 #include <string>
+#include <memory>
 #include "ops/op_utils.h"
 
 namespace mindspore {

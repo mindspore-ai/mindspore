@@ -26,6 +26,9 @@ namespace mindspore::transform {
 DECLARE_OP_ADAPTER(BatchNorm)
 DECLARE_OP_USE_OUTPUT(BatchNorm)
 
+DECLARE_OP_ADAPTER(BNInference)
+DECLARE_OP_USE_OUTPUT(BNInference)
+
 DECLARE_OP_ADAPTER(BatchNormGrad)
 DECLARE_OP_USE_OUTPUT(BatchNormGrad)
 

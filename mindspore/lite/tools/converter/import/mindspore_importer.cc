@@ -120,6 +120,10 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   }
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
   func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeMs)));
+#ifdef ENABLE_LITE_ACL
+  MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend310.";
+  return func_graph;
+#endif
   STATUS status;
   if ((status = Mindir2AnfAdjust(func_graph, flag)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";

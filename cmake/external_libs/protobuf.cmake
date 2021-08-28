@@ -2,6 +2,9 @@ set(protobuf_USE_STATIC_LIBS ON)
 if(BUILD_LITE)
     set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter \
         -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+    if(ENABLE_ACL)
+        set(protobuf_CXXFLAGS "${protobuf_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+    endif()
 else()
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC \

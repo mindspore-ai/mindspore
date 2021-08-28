@@ -75,6 +75,7 @@
 #include "tools/optimizer/format/delete_redundant_transpose.h"
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
+#include "tools/converter/acl/acl_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -215,6 +216,13 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
 }
 
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+#ifdef ENABLE_LITE_ACL
+  auto acl_pass = std::make_shared<opt::AclPass>(config->fmk);
+  if (!acl_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Acl pass failed.";
+    return RET_ERROR;
+  }
+#endif
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());

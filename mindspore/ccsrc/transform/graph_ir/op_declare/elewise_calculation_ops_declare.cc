@@ -637,4 +637,13 @@ INPUT_MAP(LambApplyWeightAssign) = {{1, INPUT_DESC(input0)},
 ATTR_MAP(LambApplyWeightAssign) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LambApplyWeightAssign) = {{0, OUTPUT_DESC(input_param)}};
 REG_ADPT_DESC(LambApplyWeightAssign, kNameLambApplyWeightAssign, ADPT_DESC(LambApplyWeightAssign))
+
+// Eltwise
+INPUT_MAP(Eltwise) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(Eltwise) = {{1, DYN_INPUT_DESC(x)}};
+ATTR_MAP(Eltwise) = {{"n", ATTR_DESC(N, AnyTraits<int64_t>())},
+                     {"mode", ATTR_DESC(mode, AnyTraits<int64_t>())},
+                     {"coeff", ATTR_DESC(coeff, AnyTraits<std::vector<float>>(), AnyTraits<float>())}};
+OUTPUT_MAP(Eltwise) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Eltwise, kNameEltwise, ADPT_DESC(Eltwise))
 }  // namespace mindspore::transform

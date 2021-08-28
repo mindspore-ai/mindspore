@@ -23,6 +23,9 @@
 #include "ops/array_ops.h"
 
 namespace mindspore::transform {
+DECLARE_OP_ADAPTER(Shape)
+DECLARE_OP_USE_OUTPUT(Shape)
+
 DECLARE_OP_ADAPTER(Reshape)
 DECLARE_OP_USE_OUTPUT(Reshape)
 
@@ -57,5 +60,8 @@ DECLARE_OP_USE_OUTPUT(ReverseSequence)
 
 DECLARE_OP_ADAPTER(EditDistance)
 DECLARE_OP_USE_OUTPUT(EditDistance)
+
+DECLARE_OP_ADAPTER(Unsqueeze)
+DECLARE_OP_USE_OUTPUT(Unsqueeze)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_

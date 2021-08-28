@@ -146,4 +146,13 @@ INPUT_MAP(Centralization) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Centralization) = {{"axes", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Centralization) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Centralization, kNameCentralization, ADPT_DESC(Centralization))
+
+// Scale
+INPUT_MAP(Scale) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(scale)}, {3, INPUT_DESC(bias)}};
+ATTR_MAP(Scale) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())},
+                   {"num_axes", ATTR_DESC(num_axes, AnyTraits<int64_t>())},
+                   {"scale_from_blob", ATTR_DESC(scale_from_blob, AnyTraits<bool>())}};
+
+OUTPUT_MAP(Scale) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Scale, kNameScale, ADPT_DESC(Scale))
 }  // namespace mindspore::transform

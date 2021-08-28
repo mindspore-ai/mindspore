@@ -27,31 +27,44 @@
 namespace mindspore {
 class Buffer::Impl {
  public:
-  Impl() : data_() { MS_LOG(ERROR) << "Unsupported feature."; }
+  Impl() : data_() {}
   ~Impl() = default;
-  Impl(const void *data, size_t data_len) { MS_LOG(ERROR) << "Unsupported feature."; }
+  Impl(const void *data, size_t data_len) {
+    if (data != nullptr) {
+      (void)SetData(data, data_len);
+    } else {
+      ResizeData(data_len);
+    }
+  }
 
-  const void *Data() const {
-    MS_LOG(ERROR) << "Unsupported feature.";
-    return nullptr;
-  }
-  void *MutableData() {
-    MS_LOG(ERROR) << "Unsupported feature.";
-    return nullptr;
-  }
-  size_t DataSize() const {
-    MS_LOG(ERROR) << "Unsupported feature.";
-    return 0;
-  }
+  const void *Data() const { return data_.data(); }
+  void *MutableData() { return data_.data(); }
+  size_t DataSize() const { return data_.size(); }
 
   bool ResizeData(size_t data_len) {
-    MS_LOG(ERROR) << "Unsupported feature.";
-    return false;
+    data_.resize(data_len);
+    return true;
   }
 
   bool SetData(const void *data, size_t data_len) {
-    MS_LOG(ERROR) << "Unsupported feature.";
-    return false;
+    ResizeData(data_len);
+    if (DataSize() != data_len) {
+      MS_LOG(ERROR) << "Set data failed, tensor current data size " << DataSize() << " not match data len " << data_len;
+      return false;
+    }
+
+    if (data == nullptr) {
+      return data_len == 0;
+    }
+
+    if (MutableData() == nullptr) {
+      MS_LOG(ERROR) << "Set data failed, data len " << data_len;
+      return false;
+    }
+
+    memcpy(MutableData(), data, data_len);
+
+    return true;
   }
 
  protected:
@@ -343,38 +356,58 @@ void MSTensor::SetQuantParams(std::vector<QuantParam> quant_params) {
   return impl_->SetQuantParams(quant_params);
 }
 
-Buffer::Buffer() : impl_(nullptr) { MS_LOG(ERROR) << "Unsupported feature."; }
-Buffer::Buffer(const void *data, size_t data_len) : impl_(nullptr) { MS_LOG(ERROR) << "Unsupported feature."; }
+Buffer::Buffer() : impl_(std::make_shared<Impl>()) {}
+Buffer::Buffer(const void *data, size_t data_len) : impl_(std::make_shared<Impl>(data, data_len)) {}
 Buffer::~Buffer() = default;
 
 Buffer Buffer::Clone() const {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return Buffer();
+  Buffer ret;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "impl is nullptr.";
+    return ret;
+  }
+  ret.impl_ = std::make_shared<Impl>(*impl_);
+  return ret;
 }
 
 const void *Buffer::Data() const {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return nullptr;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "impl is nullptr.";
+    return nullptr;
+  }
+  return impl_->Data();
 }
 
 void *Buffer::MutableData() {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return nullptr;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "impl is nullptr.";
+    return nullptr;
+  }
+  return impl_->MutableData();
 }
 
 size_t Buffer::DataSize() const {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return 0;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "impl is nullptr.";
+    return 0;
+  }
+  return impl_->DataSize();
 }
 
 bool Buffer::ResizeData(size_t data_len) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return false;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "impl is nullptr.";
+    return false;
+  }
+  return impl_->ResizeData(data_len);
 }
 
 bool Buffer::SetData(const void *data, size_t data_len) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return false;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "impl is nullptr.";
+    return false;
+  }
+  return impl_->SetData(data, data_len);
 }
 
 std::vector<char> CharVersion() { return StringToChar(lite::Version()); }

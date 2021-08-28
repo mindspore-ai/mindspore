@@ -41,4 +41,11 @@ INPUT_MAP(FillD) = {{1, INPUT_DESC(value)}};
 ATTR_MAP(FillD) = {{"dims", ATTR_DESC(dims, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(FillD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FillD, kNameFillD, ADPT_DESC(FillD))
+
+// PadV3
+INPUT_MAP(PadV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}, {3, INPUT_DESC(constant_values)}};
+ATTR_MAP(PadV3) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())},
+                   {"pad_contiguous", ATTR_DESC(paddings_contiguous, AnyTraits<bool>())}};
+OUTPUT_MAP(PadV3) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(PadV3, kNamePadV3, ADPT_DESC(PadV3))
 }  // namespace mindspore::transform

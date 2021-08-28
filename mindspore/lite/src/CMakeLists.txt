@@ -233,6 +233,11 @@ add_subdirectory(runtime/kernel/arm)
 add_library(lite_src_mid OBJECT ${LITE_SRC})
 add_dependencies(lite_src_mid fbs_src)
 
+if(MSLITE_ENABLE_ACL)
+    add_subdirectory(runtime/kernel/ascend310)
+    link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+endif()
+
 add_library(mindspore-lite SHARED $<TARGET_OBJECTS:lite_src_mid>)
 set_target_properties(mindspore-lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
@@ -386,4 +391,9 @@ endif()
 if(ENABLE_MODEL_OBF)
     target_link_libraries(mindspore-lite ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
     target_link_libraries(mindspore-lite_static ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+endif()
+
+if(MSLITE_ENABLE_ACL)
+    target_link_libraries(mindspore-lite ascend310_kernel_mid)
+    target_link_libraries(mindspore-lite_static ascend310_kernel_mid)
 endif()

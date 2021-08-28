@@ -219,7 +219,14 @@ void FuncGraph::AddNode(const AnfNodePtr &node) { nodes_.add(node); }
 
 void FuncGraph::DropNode(const AnfNodePtr &node) {
   nodes_.erase(node);
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "Node is nullptr";
+    return;
+  }
   auto graph = node->func_graph();
+  if (node->isa<Parameter>()) {
+    parameters_.erase(std::remove(parameters_.begin(), parameters_.end(), node), parameters_.end());
+  }
   // Remove the node from order list.
   if (graph) {
     graph->EraseUnusedNodeInOrder(node);
