@@ -53,10 +53,10 @@ bert_net_cfg = BertConfig(
     seq_length=512,
     vocab_size=30522,
     hidden_size=1024,
-    num_hidden_layers=4,
+    num_hidden_layers=6,
     num_attention_heads=16,
     intermediate_size=4096,
-    hidden_act="gelu",
+    hidden_act="fast_gelu",
     hidden_dropout_prob=0.1,
     attention_probs_dropout_prob=0.1,
     max_position_embeddings=512,
@@ -166,7 +166,7 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
 
     lr = get_bert_thor_lr()
     damping = get_bert_thor_damping()
-    split_indices = None
+    split_indices = [13, 37, 41]
     optimizer = thor(net_with_loss, lr, damping, momentum, weight_decay, loss_scale, batch_size,
                      decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
                      split_indices=split_indices, enable_clip_grad=True, frequency=frequency)
@@ -233,7 +233,7 @@ def test_bert_thor_8p():
         os.system("rm -rf " + str(i))
 
     print("End training...")
-    assert mean_cost < 69
+    assert mean_cost < 96
     assert mean_loss < 8.125
 
 

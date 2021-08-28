@@ -30,6 +30,7 @@ python ${CUR_DIR}/scripts/ascend_distributed_launcher/get_distribute_pretrain_cm
     --data_dir=$1 \
     --hccl_config_dir=$2 \
     --hccl_time_out=600 \
+    --hccn_config_file='/etc/hccn.conf' \
     --cmd_file=distributed_cmd.sh
 
 bash distributed_cmd.sh

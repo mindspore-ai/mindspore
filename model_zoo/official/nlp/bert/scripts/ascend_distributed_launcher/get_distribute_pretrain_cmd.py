@@ -47,6 +47,8 @@ def parse_args():
     parser.add_argument("--hccl_time_out", type=int, default=120,
                         help="Seconds to determine the hccl time out,"
                              "default: 120, which is the same as hccl default config")
+    parser.add_argument("--hccn_config_file", type=str, default="/etc/hccn.conf",
+                        help="Path of the hccn.conf file.")
 
     args = parser.parse_args()
     return args
@@ -128,7 +130,7 @@ def distribute_pretrain():
     # get device_ips
     device_ips = {}
     physic_logic_ids = {}
-    with open('/etc/hccn.conf', 'r') as fin:
+    with open(args.hccn_config_file, 'r') as fin:
         for hccn_item in fin.readlines():
             if hccn_item.strip().startswith('address_'):
                 device_id, device_ip = hccn_item.split('=')
@@ -136,7 +138,7 @@ def distribute_pretrain():
                 device_ips[device_id] = device_ip.strip()
 
     if not device_ips:
-        raise ValueError("There is no address in /etc/hccn.conf")
+        raise ValueError("There is no address in hccn.conf file.")
 
     for logic_id, device_id in enumerate(sorted(device_ips.keys())):
         physic_logic_ids[device_id] = logic_id
