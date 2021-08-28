@@ -44,7 +44,7 @@ class ToFormatBase : public Pass {
   STATUS HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS InsertPostTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
-  STATUS GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm, bool before,
+  STATUS GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm, bool before,
                      size_t index = 0);
   STATUS ModifyCNode(const CNodePtr &cnode);
   STATUS ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<AnfNodePtr> *has_visited);

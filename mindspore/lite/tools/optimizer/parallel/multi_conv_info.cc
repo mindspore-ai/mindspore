@@ -40,6 +40,7 @@ int MultiConvSplit::GenSplitInfo() {
   }
   // only can get N && H && CIN &&
   std::vector<int64_t> tmp(split_info_.out_num, 0);
+  MS_CHECK_FALSE(this->strategy_.strategys.empty(), RET_ERROR);
   for (size_t i = 0; i < this->strategy_.strategys[0].size(); i++) {
     if (this->strategy_.strategys[0][i] == tmp) {
       continue;
@@ -63,7 +64,10 @@ bool MultiConvSplit::CheckSplitValid() {
   // check conv node prim
   for (const auto &conv_node : conv_nodes_) {
     auto conv_cnode = conv_node->cast<CNodePtr>();
+    MS_ASSERT(conv_cnode != nullptr);
     auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(conv_cnode->input(kAnfPrimitiveIndex));
+    MS_ASSERT(conv_prim != nullptr);
+    MS_CHECK_TRUE_RET(conv_prim->GetAttr(ops::kPadMode) != nullptr, false);
     if (conv_prim->get_pad_mode() != SAME) {
       return false;
     }
@@ -73,7 +77,7 @@ bool MultiConvSplit::CheckSplitValid() {
   int64_t visited_block = 0;
   auto final_ratios = split_info_.size_splits;
   for (int64_t i = 0; i < split_info_.out_num; ++i) {
-    if (final_ratios.at(i) <= 0) {
+    if (i >= static_cast<int64_t>(final_ratios.size()) || final_ratios.at(i) <= 0) {
       return false;
     }
     total_block_count += final_ratios.at(i);
@@ -113,8 +117,10 @@ int MultiConvSplit::GetMultiConvNodes(const AnfNodePtr &conv_node) {
   conv_nodes_.push_back(conv_node);
   int32_t index = 0;
   while (index < split_info_.in_num_conv - 1) {
+    MS_CHECK_LT(index, static_cast<int32_t>(conv_nodes_.size()), RET_ERROR);
     auto curr_node = conv_nodes_[index];
     auto curr_cnode = conv_nodes_[index]->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(curr_cnode != nullptr, RET_ERROR);
     auto tmp_node = curr_cnode->input(1);
     if (!IsConv2D(tmp_node)) {
       break;
@@ -138,6 +144,7 @@ int MultiConvSplit::GetMultiConvNodes(const AnfNodePtr &conv_node) {
 }
 
 AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
+  MS_ASSERT(node != nullptr);
   std::string conv_cnode_name = node->fullname_with_scope();
   // Create Split node and get outputs of Split
   std::vector<AnfNodePtr> split_outputs;
@@ -161,8 +168,11 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
 void MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vector<AnfNodePtr> &inputs_node,
                                      const std::vector<AnfNodePtr> &weight_nodes,
                                      const std::vector<AnfNodePtr> &bias_nodes, std::vector<AnfNodePtr> *outputs_node) {
+  MS_ASSERT(ori_node != nullptr && outputs_node != nullptr);
   auto ori_conv_cnode = ori_node->cast<CNodePtr>();
+  MS_ASSERT(ori_conv_cnode != nullptr);
   auto ori_attr = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(ori_conv_cnode->input(kAnfPrimitiveIndex));
+  MS_ASSERT(ori_attr != nullptr);
   for (int64_t output_conv_index = 0; output_conv_index < (split_info_.out_num); output_conv_index++) {
     // Create Conv node attr
     auto conv_prim = CopyConvPrim(ori_attr);
@@ -188,7 +198,9 @@ void MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vect
 void MultiConvSplit::AdJustInputs(const AnfNodePtr &ori_conv_node, const std::vector<AnfNodePtr> &new_inputs_node,
                                   const std::vector<AnfNodePtr> &weight_node, const std::vector<AnfNodePtr> &bias_nodes,
                                   int output_conv_index, std::vector<AnfNodePtr> *conv_inputs) {
+  MS_ASSERT(ori_conv_node != nullptr && conv_inputs != nullptr);
   auto ori_conv_cnode = ori_conv_node->cast<CNodePtr>();
+  MS_ASSERT(ori_conv_cnode != nullptr);
   // feature_map
   conv_inputs->push_back(new_inputs_node[output_conv_index]);
   // W+bias
@@ -199,10 +211,11 @@ void MultiConvSplit::AdJustInputs(const AnfNodePtr &ori_conv_node, const std::ve
 
 void MultiConvSplit::CreateNewConvNode(const AnfNodePtr &ori_conv_node, const std::vector<AnfNodePtr> &conv_inputs,
                                        int output_conv_index, std::vector<AnfNodePtr> *outputs_node) {
-  auto ori_conv_cnode = ori_conv_node->cast<CNodePtr>();
-  std::string ori_cnode_name = ori_conv_cnode->fullname_with_scope();
+  MS_ASSERT(ori_conv_node != nullptr && outputs_node != nullptr);
+  std::string ori_cnode_name = ori_conv_node->fullname_with_scope();
   // new conv_node
   auto conv_cnode = func_graph_->NewCNode(conv_inputs);
+  MS_ASSERT(conv_cnode != nullptr);
   conv_cnode->set_fullname_with_scope(ori_cnode_name + "_" + PARALLEL_NAME_SUFFIX +
                                       std::to_string(output_conv_index + 1));
   conv_cnode->AddAttr(mindspore::ops::kDeviceType,
@@ -215,6 +228,7 @@ void MultiConvSplit::CreateNewConvNode(const AnfNodePtr &ori_conv_node, const st
 }
 
 AnfNodePtr MultiConvSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+  MS_ASSERT(unc_graph != nullptr && node != nullptr);
   int ret = GenSplitInfo();
   if (ret != RET_OK) {
     return node;
@@ -228,6 +242,7 @@ AnfNodePtr MultiConvSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNode
 }
 
 AnfNodePtr MultiConvSplitN::SplitMultiConv(const AnfNodePtr &node) {
+  MS_ASSERT(node != nullptr);
   if (conv_nodes_.size() == 2 && split_info_.axis == CuttingStragedy::CUT_N) {
     return node;
   }
@@ -236,6 +251,7 @@ AnfNodePtr MultiConvSplitN::SplitMultiConv(const AnfNodePtr &node) {
 
 AnfNodePtr MultiConvSplitH::SplitMultiConv(const AnfNodePtr &node) {
   // update info, N do not need, C do not support
+  MS_ASSERT(node != nullptr);
   if (!UpdateSplitInfo(func_graph_, conv_nodes_, &split_info_)) {
     return node;
   }
@@ -247,9 +263,12 @@ AnfNodePtr MultiConvSplitH::SplitMultiConv(const AnfNodePtr &node) {
 
 void MultiConvSplitH::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
                                      const ShapeVector &input_shape, int output_conv_index) {
+  MS_ASSERT(conv_prim != nullptr);
+  MS_ASSERT(input_shape.size() == kInputSizeFour);
   int64_t input_h = input_shape.at(kAxisH);
   int64_t input_w = input_shape.at(kAxisW);
   auto pad_list = GetSplitPadList(conv_prim, input_h, input_w);
+  MS_ASSERT(pad_list.size() > 1);
   if (output_conv_index == 0) {
     pad_list[kPadDown] = 0;
   } else if (output_conv_index == static_cast<int>(split_info_.out_num - 1)) {

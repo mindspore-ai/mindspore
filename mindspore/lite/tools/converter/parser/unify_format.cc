@@ -181,6 +181,9 @@ bool UnifyFormatToNHWC::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_g
                                                       const ShapeVector &shape) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(input != nullptr);
+  if (shape.size() != opt::kInputSizeFour) {
+    return false;
+  }
   if (fmk_type_ == converter::kFmkTypeTf || fmk_type_ == converter::kFmkTypeTflite) {
     return false;
   }

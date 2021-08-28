@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace opt {
 STATUS ToNCHWFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) {
-  MS_ASSERT(cnode != nullptr);
+  MS_ASSERT(cnode != nullptr && trans_info != nullptr);
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
   MS_ASSERT(prim != nullptr);

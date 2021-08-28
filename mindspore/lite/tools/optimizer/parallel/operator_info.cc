@@ -23,6 +23,7 @@
 #include "utils/utils.h"
 #include "base/core_ops.h"
 #include "include/errorcode.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -59,8 +60,15 @@ void OperatorInfo::Init(const FuncGraphPtr &func_graph, const CNodePtr &cnode, i
 int OperatorInfo::SetCNodeBackend() {
   for (size_t i = 0; i < strategy_.dev_num; ++i) {
     lite::DeviceType dt_type;
+    MS_CHECK_LT(i, strategy_.dev_types.size(), lite::RET_ERROR);
     std::string type = strategy_.dev_types[i];
-    auto cnode = parallel_output_nodes_[i]->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
+    MS_CHECK_LT(i, parallel_output_nodes_.size(), lite::RET_ERROR);
+    auto post_node = parallel_output_nodes_[i];
+    MS_CHECK_TRUE_RET(post_node != nullptr, lite::RET_ERROR);
+    auto post_cnode = post_node->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(post_cnode != nullptr, lite::RET_ERROR);
+    auto cnode = post_cnode->input(1)->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(cnode != nullptr, lite::RET_ERROR);
     auto type_iter = kSupportSplitedDevices.find(type);
     if (type_iter == kSupportSplitedDevices.end()) {
       MS_LOG(ERROR) << "SetCnodeBackend: unknown device type.";
@@ -108,7 +116,9 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
   for (size_t i = 0; i < output_num; ++i) {
     auto idx = NewValueNode(SizeToInt(i));
     auto index = std::make_shared<Int32Imm>(SizeToInt(i));
+    MS_CHECK_TRUE_RET(index != nullptr, lite::RET_ERROR);
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(index);
+    MS_CHECK_TRUE_RET(abstract_scalar != nullptr, lite::RET_ERROR);
     idx->set_abstract(abstract_scalar);
     auto tuple_getitem = func_graph_->NewCNode({NewValueNode(std::make_shared<lite::TupleGetItem>()), node, idx});
     if (tuple_getitem == nullptr) {
@@ -132,8 +142,10 @@ AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std:
     return nullptr;
   }
   auto concat_prim = std::make_shared<ops::Concat>();
+  MS_CHECK_TRUE_RET(concat_prim != nullptr, nullptr);
   concat_prim->set_axis(concat_dim);
   auto value_node = NewValueNode(concat_prim);
+  MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> concat_inputs = {value_node};
   (void)std::transform(input_nodes.begin(), input_nodes.end(), std::back_inserter(concat_inputs),
                        [](const AnfNodePtr &p) { return p->cast<CNodePtr>()->input(1); });

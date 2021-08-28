@@ -65,6 +65,7 @@
 #include "ops/split.h"
 #include "ops/strided_slice.h"
 #include "tools/anf_exporter/fetch_content.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -119,7 +120,8 @@ bool IsDynamicFormatOpWithAxis(const std::string &op_type) {
 }
 
 STATUS GetTransposePerm(const CNodePtr &cnode, std::vector<int> *perm) {
-  MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_RET(cnode != nullptr, lite::RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(perm != nullptr, lite::RET_NULL_PTR);
   if (cnode->size() != kInputSizeThree) {
     MS_LOG(ERROR) << "transpose op input size must be three.";
     return lite::RET_ERROR;

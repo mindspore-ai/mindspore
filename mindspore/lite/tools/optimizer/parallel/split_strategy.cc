@@ -18,12 +18,16 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
 
 int64_t ApproximateFLOPs(const std::vector<int64_t> &strides, const std::vector<int64_t> &input_shape,
                          const std::vector<int64_t> &weight_shape) {
+  MS_CHECK_GT(strides.size(), 1, 0);
+  MS_CHECK_GT(input_shape.size(), kInputSize2, 0);
+  MS_CHECK_GT(weight_shape.size(), kInputSize1, 0);
   int64_t input_h = input_shape.at(kShapeH);
   int64_t input_w = input_shape.at(kShapeW);
   int64_t in_c = input_shape.at(kShapeC);
@@ -32,6 +36,10 @@ int64_t ApproximateFLOPs(const std::vector<int64_t> &strides, const std::vector<
   int64_t k_w = weight_shape.at(kShapeW);
   int64_t stride_h = strides.at(kIndexH);
   int64_t stride_w = strides.at(kIndexW);
+  if (stride_h == 0 || stride_w == 0) {
+    MS_LOG(ERROR) << "divisor is zero.";
+    return 0;
+  }
   return (input_h / stride_h) * (input_w / stride_w) * in_c * k_h * k_w * out_c / kPerFlops;
 }
 

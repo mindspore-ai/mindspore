@@ -17,6 +17,7 @@
 #include "tools/optimizer/format/delete_redundant_transpose.h"
 #include <vector>
 #include "tools/optimizer/common/format_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -26,6 +27,7 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
   MS_ASSERT(manager != nullptr);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
+    MS_CHECK_TRUE_RET(node != nullptr, lite::RET_NULL_PTR);
     if (!utils::isa<CNode>(node)) {
       continue;
     }
@@ -84,6 +86,7 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
   MS_ASSERT(func_graph != nullptr);
   auto node_lite = TopoSort(func_graph->get_return());
   for (auto &node : node_lite) {
+    MS_CHECK_TRUE_RET(node != nullptr, lite::RET_NULL_PTR);
     if (!utils::isa<CNode>(node)) {
       continue;
     }
@@ -163,7 +166,7 @@ STATUS DeleteRedundantTranspose::UpdateNodeFormat(const FuncGraphPtr &func_graph
 }
 
 bool DeleteRedundantTranspose::Run(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, false);
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr.";
