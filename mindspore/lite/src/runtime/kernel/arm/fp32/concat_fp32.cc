@@ -47,12 +47,16 @@ int ConcatCPUKernel::DoConcat(int task_id) {
   std::vector<std::vector<int>> shapes;
   for (size_t i = 0; i < input_num; ++i) {
     inputs_addr[i] = in_tensors_[i]->data_c();
+    CHECK_NULL_RETURN(inputs_addr[i]);
     shapes.push_back(in_tensors_[i]->shape());
+    MS_CHECK_LT(concat_param_->axis_, static_cast<int>(in_tensors_[i]->shape().size()), RET_ERROR);
     inputs_output_shape[i] = shapes[i].data();
   }
   auto output_shape = out_tensors_.at(0)->shape();
+  MS_CHECK_LT(concat_param_->axis_, static_cast<int>(output_shape.size()), RET_ERROR);
   inputs_output_shape[input_num] = output_shape.data();
   auto output_addr = out_tensors_.at(0)->data_c();
+  CHECK_NULL_RETURN(output_addr);
 
   Concat(inputs_addr.data(), input_num, concat_param_->axis_, inputs_output_shape.data(), output_shape.size(),
          output_addr, task_id, op_parameter_->thread_num_, sizeof(float));

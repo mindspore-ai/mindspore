@@ -37,6 +37,8 @@ int SparseToDenseCPUKernel::Init() {
   auto input3 = in_tensors_.at(3);
   MS_ASSERT(input3);
   sparse_values = reinterpret_cast<float *>(input2->MutableData());
+  CHECK_NULL_RETURN(sparse_values);
+  CHECK_NULL_RETURN(input3->MutableData());
   default_value = reinterpret_cast<float *>(input3->MutableData())[0];
   if (input2->ElementsNum() == 1) {
     isScalar = true;
@@ -74,10 +76,10 @@ int SparseToDenseCPUKernel::DoExcute(int task_id) {
     return RET_ERROR;
   }
   int out_width = output_num / index_num;
-  MS_ASSERT(sparse_indices_vect);
-  MS_ASSERT(output_shape);
-  MS_ASSERT(sparse_values);
-  MS_ASSERT(output_data);
+  CHECK_NULL_RETURN(sparse_indices_vect);
+  CHECK_NULL_RETURN(output_shape);
+  CHECK_NULL_RETURN(sparse_values);
+  CHECK_NULL_RETURN(output_data);
   SparseToDense(sparse_indices_vect, output_shape, sparse_values, default_value, output_data, isScalar, index_start,
                 index_end, out_width);
   return RET_OK;
@@ -108,6 +110,7 @@ int SparseToDenseCPUKernel::GenerateIndices() {
   }
   index_dim = static_cast<int>(input0->shape().size());
   int *sparse_indices = reinterpret_cast<int *>(input0->MutableData());
+  CHECK_NULL_RETURN(sparse_indices);
   switch (index_dim) {
     case 0:
     case 1: {
@@ -180,7 +183,7 @@ int SparseToDenseCPUKernel::Run() {
     }
   }
   output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  MS_ASSERT(output_data != nullptr);
+  CHECK_NULL_RETURN(output_data);
   count_unit_ = thread_count_ > 1 ? UP_DIV(index_num, thread_count_) : index_num;
   ret = ParallelLaunch(this->ms_context_, SparseToDenseRun, this, s2d_param->thread_num_);
   if (ret != RET_OK) {
@@ -191,7 +194,7 @@ int SparseToDenseCPUKernel::Run() {
   if (sparse_indices_vect != nullptr) {
     for (int i = 0; i < index_num; i++) {
       if (sparse_indices_vect[i] != nullptr) {
-        delete sparse_indices_vect[i];
+        delete[] sparse_indices_vect[i];
       }
     }
     ctx_->allocator->Free(sparse_indices_vect);

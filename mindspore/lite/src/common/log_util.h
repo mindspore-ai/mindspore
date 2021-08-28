@@ -34,7 +34,7 @@
       MS_LOG(ERROR) << "malloc data failed."; \
       return errcode;                         \
     }                                         \
-  } while (0);
+  } while (0)
 
 #ifndef ENABLE_HIGH_PERFORMANCE
 #define CHECK_NULL_RETURN(ptr)                       \
@@ -43,7 +43,7 @@
       MS_LOG(ERROR) << #ptr << " must not be null!"; \
       return mindspore::lite::RET_NULL_PTR;          \
     }                                                \
-  } while (0);
+  } while (0)
 
 #define CHECK_LESS_RETURN(size1, size2)                            \
   do {                                                             \
@@ -51,7 +51,8 @@
       MS_LOG(ERROR) << #size1 << " must not less than " << #size2; \
       return mindspore::lite::RET_ERROR;                           \
     }                                                              \
-  } while (0);
+  } while (0)
+
 #else
 #define CHECK_NULL_RETURN(ptr)
 #define CHECK_LESS_RETURN(size1, size2)

@@ -22,8 +22,9 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulatePadParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto pad_prim = primitive->value_as_Pad();
   if (pad_prim == nullptr) {
     MS_LOG(ERROR) << "pad_prim is nullptr";

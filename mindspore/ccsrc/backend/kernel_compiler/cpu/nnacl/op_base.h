@@ -49,6 +49,7 @@
 #define DOWN_ROUND(x, y) ((x) / (y) * (y))
 
 #define MSVALID(left, x, right) (MSMIN((MSMAX(left, x)), right))
+#define SIZE_MUL_OVERFLOW(x, y) (((x) == 0) ? false : (SIZE_MAX / (x)) < (y))
 #define INT_MUL_OVERFLOW(x, y)                                                             \
   ((x == 0) ? false                                                                        \
             : ((x) > 0 ? ((y >= 0) ? (INT_MAX / (x)) < (y) : (INT_MAX / (x)) < (-1 * (y))) \
@@ -156,21 +157,21 @@
     if ((val) == 0) {                    \
       return NNACL_ERR;                  \
     }                                    \
-  } while (0);
+  } while (0)
 
 #define NNACL_CHECK_ZERO_RETURN(val) \
   do {                               \
     if ((val) == 0) {                \
       return;                        \
     }                                \
-  } while (0);
+  } while (0)
 
 #define NNACL_CHECK_NULL_RETURN_ERR(ptr) \
   do {                                   \
     if ((ptr) == NULL) {                 \
       return NNACL_NULL_PTR;             \
     }                                    \
-  } while (0);
+  } while (0)
 
 #else
 

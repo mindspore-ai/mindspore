@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_ROIPooling;
 
 namespace mindspore::kernel {
 int ROIPoolingCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(in_tensors_.size(), kInputSize1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -69,6 +69,10 @@ int ROIPoolingCPUKernel::ReSize() {
     param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
   }
   param_->thread_num_ = MSMIN(param_->op_parameter_.thread_num_, out_shape.at(0));
+  if (INT_MUL_OVERFLOW(param_->input_c_, static_cast<int>(sizeof(float)))) {
+    MS_LOG(ERROR) << "int mul overflow";
+    return RET_ERROR;
+  }
   max_c_ = reinterpret_cast<float *>(malloc(param_->input_c_ * static_cast<int>(sizeof(float))));
   if (max_c_ == nullptr) {
     MS_LOG(ERROR) << "malloc max_c failed.";
@@ -78,11 +82,11 @@ int ROIPoolingCPUKernel::ReSize() {
 }
 
 int ROIPoolingCPUKernel::DoExecute(int task_id) {
-  MS_ASSERT(in_ptr_);
-  MS_ASSERT(out_ptr_);
-  MS_ASSERT(roi_ptr_);
-  MS_ASSERT(max_c_);
-  MS_ASSERT(param_);
+  CHECK_NULL_RETURN(in_ptr_);
+  CHECK_NULL_RETURN(out_ptr_);
+  CHECK_NULL_RETURN(roi_ptr_);
+  CHECK_NULL_RETURN(max_c_);
+  CHECK_NULL_RETURN(param_);
   auto ret = ROIPooling(in_ptr_, out_ptr_, roi_ptr_, max_c_, task_id, param_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling Execute error task_id[" << task_id << "] error_code[" << ret << "]";

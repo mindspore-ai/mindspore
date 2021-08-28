@@ -35,6 +35,7 @@ int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const Pool
   MS_FLOAT16X8 max_value = MS_MOVQ_F16(max);
 #endif
 
+  NNACL_CHECK_ZERO_RETURN_ERR(output_w);
   for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
     const float16_t *src_b_ptr = input_ptr + batch * in_h * in_w * channel;
     float16_t *dst_b_ptr = output_ptr + batch * output_h * output_w * channel;
@@ -268,6 +269,7 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const Poo
   int thread_num = pooling_param->thread_num_;
 
   // input channel is equal to output channel
+  NNACL_CHECK_ZERO_RETURN(output_w);
   for (int batch = 0; batch < output_batch; batch++) {
     int in_batch_offset = batch * in_h * in_w * channel;
     int out_batch_offset = batch * output_h * output_w * channel;

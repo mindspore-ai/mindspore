@@ -101,21 +101,27 @@ int ConcatFp16CPUKernel::Run() {
     if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
       auto in_tensor_data = reinterpret_cast<float *>(in_tensor->data_c());
       MS_ASSERT(in_tensor_data != nullptr);
+      CHECK_NULL_RETURN(in_tensor_data);
       Float32ToFloat16(in_tensor_data, fp16_inputs_[i], in_tensor->ElementsNum());
     } else {
       fp16_inputs_[i] = reinterpret_cast<float16_t *>(in_tensor->data_c());
       MS_ASSERT(fp16_inputs_[i] != nullptr);
+      CHECK_NULL_RETURN(fp16_inputs_[i]);
     }
 
     shapes.push_back(in_tensors_[i]->shape());
+    MS_CHECK_LT(concat_param_->axis_, static_cast<int>(in_tensors_[i]->shape().size()), RET_ERROR);
     inputs_output_shape[i] = shapes[i].data();
   }
   auto output_shape = out_tensors_.at(0)->shape();
+  MS_CHECK_LT(concat_param_->axis_, static_cast<int>(output_shape.size()), RET_ERROR);
   inputs_output_shape[input_num] = output_shape.data();
   auto output_addr = out_tensors_.at(0)->MutableData();
+  CHECK_NULL_RETURN(output_addr);
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat16) {
     fp16_output_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
     MS_ASSERT(fp16_output_ != nullptr);
+    CHECK_NULL_RETURN(fp16_output_);
   }
   int dtype_len = in_tensors_.at(0)->data_type() == kNumberTypeInt32 ? sizeof(int32_t) : sizeof(float16_t);
 

@@ -27,6 +27,7 @@ namespace mindspore::kernel {
 int UnstackCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(op_parameter_);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -59,6 +60,10 @@ int UnstackCPUKernel::ReSize() {
     free(output_addr_array_);
     output_addr_array_ = nullptr;
   }
+  if (SIZE_MUL_OVERFLOW(sizeof(void *), out_tensors_.size())) {
+    MS_LOG(ERROR) << "mul overflow";
+    return RET_ERROR;
+  }
   output_addr_array_ = reinterpret_cast<void **>(malloc(sizeof(void *) * out_tensors_.size()));
   if (output_addr_array_ == nullptr) {
     MS_LOG(ERROR) << "Failed to malloc memory";
@@ -69,12 +74,12 @@ int UnstackCPUKernel::ReSize() {
 
 int UnstackCPUKernel::Run() {
   float *input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  MS_ASSERT(input);
+  CHECK_NULL_RETURN(input);
   size_t out_num = out_tensors_.size();
   for (size_t i = 0; i < out_num; i++) {
     output_addr_array_[i] = out_tensors_.at(i)->data_c();
+    CHECK_NULL_RETURN(output_addr_array_[i]);
   }
-  MS_ASSERT(output_addr_array_);
   auto para = reinterpret_cast<UnstackParameter *>(op_parameter_);
   para->num_ = static_cast<int>(out_num);
   Unstack(input, output_addr_array_, para, sizeof(float));

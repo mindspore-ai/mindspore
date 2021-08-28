@@ -15,7 +15,6 @@
  */
 #include "src/runtime/kernel/arm/fp32/where_fp32.h"
 #include <vector>
-#include <algorithm>
 #include "schema/model_generated.h"
 #include "nnacl/fp32/where_fp32.h"
 #include "src/kernel_registry.h"
@@ -47,11 +46,11 @@ int WhereCPUKernel::PreProcess() {
 }
 
 int WhereCPUKernel::DoExcute(int task_id) {
-  MS_ASSERT(condition_);
-  MS_ASSERT(x_);
-  MS_ASSERT(y_);
-  MS_ASSERT(output_data_);
-  MS_ASSERT(where_param_);
+  CHECK_NULL_RETURN(condition_);
+  CHECK_NULL_RETURN(x_);
+  CHECK_NULL_RETURN(y_);
+  CHECK_NULL_RETURN(output_data_);
+  CHECK_NULL_RETURN(where_param_);
   WhereWithTripleInputs(condition_, x_, y_, output_data_, where_param_, task_id);
   return RET_OK;
 }
@@ -70,15 +69,15 @@ int WhereCPUKernel::RunWithSingleInput() {
   auto input = in_tensors_.at(0);
   MS_ASSERT(input);
   condition_ = reinterpret_cast<bool *>(input->data_c());
+  CHECK_NULL_RETURN(condition_);
   where_param_->condition_num_ = input->ElementsNum();
   where_param_->rank_ = static_cast<int>(input->shape().size());
   int strides[8];
   ComputeStrides(in_tensors_.at(0)->shape().data(), strides, where_param_->rank_);
-
   auto data = ms_context_->allocator->Malloc(where_param_->condition_num_ * where_param_->rank_ *
                                              static_cast<int>(sizeof(int32_t)));
   if (data == nullptr) {
-    MS_LOG(ERROR) << "macllov data is error!";
+    MS_LOG(ERROR) << "malloc data is error!";
     return RET_ERROR;
   }
   int *result = reinterpret_cast<int *>(data);
@@ -107,6 +106,7 @@ int WhereCPUKernel::RunWithSingleInput() {
     MS_LOG(ERROR) << "malloc out tensor failed.";
     return RET_ERROR;
   }
+  MS_CHECK_GE(where_param_->condition_num_, true_num, RET_ERROR);
   memcpy(out_data, result, true_num * where_param_->rank_ * static_cast<int>(sizeof(int32_t)));
   ms_context_->allocator->Free(data);
   return RET_OK;

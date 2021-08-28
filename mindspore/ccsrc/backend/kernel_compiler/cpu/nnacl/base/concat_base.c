@@ -36,6 +36,7 @@ void Concat(void **input, int input_num, int axis, int **inputs_output_shape, si
       continue;
     }
     int input_stride = after_axis_size * inputs_output_shape[i][axis];
+    NNACL_CHECK_ZERO_RETURN(thread_num);
     int offset = UP_DIV(input_stride, thread_num);
     int count = input_stride - offset * task_id;
     if (count <= 0) {

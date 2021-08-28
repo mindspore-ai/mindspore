@@ -22,8 +22,8 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateNonMaxSuppressionParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto non_max_suppression_prim = primitive->value_as_NonMaxSuppression();
   if (non_max_suppression_prim == nullptr) {
     MS_LOG(ERROR) << "non_max_suppression_prim is nullptr";

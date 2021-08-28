@@ -83,10 +83,10 @@ void PoolingBaseCPUKernel::FreeQuantParam() {
 }
 
 int PoolingBaseCPUKernel::Init() {
-  MS_ASSERT(in_tensors_.size() == 1);
-  MS_ASSERT(out_tensors_.size() == 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   pooling_param_->thread_num_ = thread_count_;
-  MS_ASSERT(this->op_parameter_ != nullptr);
+  CHECK_NULL_RETURN(op_parameter_);
   return RET_OK;
 }
 

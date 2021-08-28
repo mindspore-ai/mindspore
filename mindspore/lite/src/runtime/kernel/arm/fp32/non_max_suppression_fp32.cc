@@ -39,6 +39,8 @@ constexpr size_t kScoreTensorIndex = 1;
 constexpr size_t kMaxOutputNumTensorIndex = 2;
 constexpr size_t kIoUThresholdTensorIndex = 3;
 constexpr size_t kScoreThresholdTensorIndex = 4;
+constexpr size_t kScoreDimsBoxNumIndex = 2;
+constexpr size_t kBoxDimsBoxNumIndex = 1;
 constexpr size_t kYIndexA = 0;
 constexpr size_t kYIndexB = 2;
 constexpr size_t kXIndexA = 1;
@@ -47,8 +49,6 @@ constexpr int kBoxPointNum = 4;
 }  // namespace
 
 int NonMaxSuppressionCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   // boxes, scores, max_output_boxes, iou_threshold, score_threshold
   if (in_tensors_.size() < kMinInputsSize || in_tensors_.size() > kMaxInputsSize || out_tensors_.size() != kOutputNum) {
     MS_LOG(ERROR) << "NonMaxSuppression input size should be in [" << kMinInputsSize << ", " << kMaxInputsSize << "]"
@@ -166,7 +166,7 @@ int NonMaxSuppressionCPUKernel::Run_Selecte(bool simple_out, int box_num, int ba
   if (!simple_out) {
     const int output_last_dim = 3;
     output->set_shape({selected_num, output_last_dim});
-    MS_ASSERT(output_last_dim * sizeof(int32_t) == sizeof(NMSIndex));
+    MS_CHECK_TRUE_RET(output_last_dim * sizeof(int32_t) == sizeof(NMSIndex), RET_ERROR);
     auto *out_data = reinterpret_cast<int32_t *>(output->ReallocData());
     if (out_data == nullptr) {
       MS_LOG(ERROR) << "out_data is nullptr.";
@@ -220,8 +220,7 @@ int NonMaxSuppressionCPUKernel::Run() {
     MS_LOG(ERROR) << "Boxes tensor batch num should be equal to scores tensor's batch num.";
     return RET_ERROR;
   }
-  constexpr size_t kScoreDimsBoxNumIndex = 2;
-  constexpr size_t kBoxDimsBoxNumIndex = 1;
+
   if (score_dims.at(kScoreDimsBoxNumIndex) != box_dims.at(kBoxDimsBoxNumIndex)) {
     MS_LOG(ERROR) << "Boxes tensor spatial dimension should be equal to scores tensor's spatial dimension.";
     return RET_ERROR;

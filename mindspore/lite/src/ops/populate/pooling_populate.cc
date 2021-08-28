@@ -21,8 +21,8 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateAvgPoolParameter(const void *primitive) {
+  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   auto pooling_prim = static_cast<const schema::Primitive *>(primitive);
-  MS_ASSERT(pooling_prim != nullptr);
   auto value = pooling_prim->value_as_AvgPoolFusion();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";

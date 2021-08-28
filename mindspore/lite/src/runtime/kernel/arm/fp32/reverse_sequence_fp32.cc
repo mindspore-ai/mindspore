@@ -25,7 +25,7 @@ using mindspore::schema::PrimitiveType_ReverseSequence;
 
 namespace mindspore::kernel {
 int ReverseSequenceCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(in_tensors_.size(), kInputSize1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -94,11 +94,11 @@ int ReverseSequenceCPUKernel::Run() {
   void *input1 = in_tensors_.at(1)->MutableData();
   float *output = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   ReverseSequenceParameter *param = reinterpret_cast<ReverseSequenceParameter *>(op_parameter_);
-  MS_ASSERT(param);
+  CHECK_NULL_RETURN(param);
   param->is_seq_length_int32_ = in_tensors_.at(1)->data_type() == kNumberTypeInt32;
-  MS_ASSERT(input0);
-  MS_ASSERT(input1);
-  MS_ASSERT(output);
+  CHECK_NULL_RETURN(input0);
+  CHECK_NULL_RETURN(input1);
+  CHECK_NULL_RETURN(output);
   ReverseSequence(input0, input1, output, param);
   return RET_OK;
 }

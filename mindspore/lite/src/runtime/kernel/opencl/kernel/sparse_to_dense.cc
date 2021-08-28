@@ -55,6 +55,7 @@ int SparseToDenseOpenCLKernel::InitOutputToDefault() {
 
 int SparseToDenseOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
+  MS_CHECK_GE(in_tensors_.size(), 3, RET_ERROR);
   auto weight_tensor = in_tensors_[2];
   size_t size = 1;
   for (int i = 0; i < weight_tensor->shape().size(); ++i) {
@@ -177,6 +178,7 @@ void SparseToDenseOpenCLKernel::SetGlobalLocal() {
 int SparseToDenseOpenCLKernel::Prepare() {
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   input_dim_ = in_tensors_[0]->shape().size();
+  MS_CHECK_GE(input_dim_, 2, RET_ERROR);
   inshapeindex1_dim = in_tensors_[0]->shape()[1];
   weight_scalar_ = in_tensors_[2]->IsScalar();
   const std::string kernel_name = "SparseToDense" + std::string(weight_scalar_ ? "Scalar" : "Vector");
