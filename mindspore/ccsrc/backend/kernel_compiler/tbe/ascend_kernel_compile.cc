@@ -305,7 +305,7 @@ std::string AscendKernelCompileManager::FormatSelectResultProcess(const nlohmann
 }
 
 void AscendKernelCompileManager::QueryResultProcess(const nlohmann::json &json, TargetJobStatus *task_info,
-                                                    int adjust_log_level = 3) {
+                                                    int adjust_log_level = EXCEPTION) {
   auto job_type = GetJsonValue<std::string>(json, kJobType);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
   MS_LOG(DEBUG) << "Job: " << job_type << " post processing";
