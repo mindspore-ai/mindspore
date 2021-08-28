@@ -49,7 +49,7 @@ ITERATORS_LIST = list()
 def _cleanup():
     """Release all the Iterator."""
     _set_iterator_cleanup()
-    for itr_ref in ITERATORS_LIST:
+    for itr_ref in reversed(ITERATORS_LIST):
         itr = itr_ref()
         if itr is not None:
             itr.release()
@@ -102,6 +102,18 @@ class Iterator:
                 del self._iterator
             del self._runtime_context
             del self.dataset
+
+            # get weakref which is dead
+            dead_iterator = []
+            for index, item in enumerate(ITERATORS_LIST):
+                # item() == None indicate the object is dead
+                # id(item()) == id(self) indicate del self
+                if item() is None or id(item()) == id(self):
+                    dead_iterator.append(index)
+
+            # del dead weakref
+            for index in reversed(dead_iterator):
+                ITERATORS_LIST.pop(index)
 
     def release(self):
         self.stop()
