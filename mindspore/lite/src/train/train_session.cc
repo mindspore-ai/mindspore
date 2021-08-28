@@ -822,6 +822,10 @@ int TrainSession::FindExportKernels(std::vector<kernel::LiteKernel *> *export_ke
       need_kernel_names.push(kernel->name());
     }
   }
+  if (need_kernel_names.size() == 0) {
+    MS_LOG(ERROR) << "can not find tensor";
+    return RET_ERROR;
+  }
   // find all kernel
   while (!need_kernel_names.empty()) {
     auto kernel_name = need_kernel_names.front();
