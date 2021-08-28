@@ -192,6 +192,10 @@ int DeConvWgPostFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int DeConvolutionWinogradCPUKernel::InitComputeParam() {
+  MS_CHECK_TRUE_RET(conv_param_->stride_h_ != 0, RET_ERROR);
+  MS_CHECK_TRUE_RET(conv_param_->stride_w_ != 0, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+
   auto weight_tensor = in_tensors_[1];
   auto shape = weight_tensor->shape();
   if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
@@ -283,6 +287,7 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
 
 int DeConvolutionWinogradCPUKernel::InitDataParam() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
   auto nhwc_weight = reinterpret_cast<float *>(weight_tensor->data_c());
   if (nhwc_weight == nullptr) {
     MS_LOG(WARNING) << "The weight data is nullptr, will init data parameter in runtime.";
@@ -306,16 +311,26 @@ int DeConvolutionWinogradCPUKernel::InitDataParam() {
     return RET_NULL_PTR;
   }
   memset(bias_data_, 0, deconv_param_->oc_up4_ * sizeof(float));
-  if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
-      in_tensors_.at(kBiasIndex)->DimensionSize(0) == conv_param_->output_channel_) {
+
+  if (in_tensors_.size() == 3) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    MS_ASSERT(bias_tensor->data_c() != nullptr);
-    memcpy(bias_data_, bias_tensor->data_c(), conv_param_->output_channel_ * sizeof(float));
+    CHECK_NULL_RETURN(bias_tensor);
+    CHECK_NULL_RETURN(bias_tensor->data_c());
+    if (bias_tensor->shape().size() == 1 && bias_tensor->DimensionSize(0) == conv_param_->output_channel_) {
+      memcpy(bias_data_, bias_tensor->data_c(), conv_param_->output_channel_ * sizeof(float));
+    }
   }
   return RET_OK;
 }
 
 int DeConvolutionWinogradCPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
+  CHECK_NULL_RETURN(out_tensors_.at(kOutputIndex));
+  CHECK_NULL_RETURN(conv_param_);
+  CHECK_NULL_RETURN(deconv_param_);
+
   FreeResizeBuf();
   ConvolutionBaseCPUKernel::Init();
   if (!valid_weight_shape_) {
@@ -342,6 +357,11 @@ int DeConvolutionWinogradCPUKernel::ReSize() {
 int DeConvolutionWinogradCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
+  CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
+  CHECK_NULL_RETURN(out_tensors_.at(kOutputIndex));
+  CHECK_NULL_RETURN(conv_param_);
+
   deconv_param_ = new (std::nothrow) DeConvParam();
   if (deconv_param_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
@@ -463,10 +483,14 @@ int DeConvolutionWinogradCPUKernel::Run() {
     MS_LOG(ERROR) << "InitDataParam error!";
     return RET_ERROR;
   }
-  float *src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
-  float *src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
-  MS_ASSERT(src_in != nullptr);
-  MS_ASSERT(src_out != nullptr);
+
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
+  float *src_in = reinterpret_cast<float *>(input_tensor->data_c());
+  float *src_out = reinterpret_cast<float *>(output_tensor->data_c());
+  CHECK_NULL_RETURN(src_in);
+  CHECK_NULL_RETURN(src_out);
+
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     nhwc_input_ = src_in + batch_index * deconv_param_->input_plane_ * conv_param_->input_channel_;
     nhwc_output_ = src_out + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;

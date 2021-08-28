@@ -30,6 +30,9 @@ DeconvolutionDepthwiseFp16CPUKernel::~DeconvolutionDepthwiseFp16CPUKernel() {
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::InitSlideParam() {
+  MS_CHECK_TRUE_RET(in_tensors_.front()->shape().size() == DIMENSION_4D, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_tensors_.front()->shape().size() == DIMENSION_4D, RET_ERROR);
+
   conv_param_->input_batch_ = out_tensors_.front()->shape().at(kNHWC_N);
   conv_param_->input_h_ = out_tensors_.front()->shape().at(kNHWC_H);
   conv_param_->input_w_ = out_tensors_.front()->shape().at(kNHWC_W);
@@ -99,6 +102,8 @@ void DeconvolutionDepthwiseFp16CPUKernel::PackWeight() {
 int DeconvolutionDepthwiseFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(conv_param_);
+
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
@@ -123,6 +128,13 @@ int DeconvolutionDepthwiseFp16CPUKernel::Init() {
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.front());
+  CHECK_NULL_RETURN(out_tensors_.front());
+  CHECK_NULL_RETURN(conv_param_);
+  CHECK_NULL_RETURN(sliding_);
+
   auto ret = InitSlideParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitSlideParam failed!";
@@ -156,6 +168,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
   }
+
   auto ret = InitPackedInputOutput();
   if (ret != 0) {
     MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitPackedInputOutput failed.";
@@ -167,14 +180,12 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
-  MS_ASSERT(input_ptr != nullptr);
-  MS_ASSERT(output_ptr != nullptr);
-  if (input_ptr == nullptr || output_ptr == nullptr) {
-    MS_LOG(ERROR) << "Deconvolution depthwise Fp16 get null tensor data!";
-    return RET_ERROR;
-  }
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
+  auto *input_ptr = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  auto *output_ptr = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  CHECK_NULL_RETURN(input_ptr);
+  CHECK_NULL_RETURN(output_ptr);
 
   if (need_align_) {
     PackNHWCToNHWC8Fp16(input_ptr, packed_input_, conv_param_->input_batch_,

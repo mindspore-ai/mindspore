@@ -35,6 +35,11 @@ DeConvolutionFp16CPUKernel::~DeConvolutionFp16CPUKernel() {
 }
 
 int DeConvolutionFp16CPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(conv_param_);
+  CHECK_NULL_RETURN(matmul_param_);
+
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBaseCPUKernel Init error!";
@@ -97,6 +102,7 @@ int DeConvolutionFp16CPUKernel::InitParam() {
   matmul_param_->col_8_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * kernel_plane_;
 
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(conv_param_->output_channel_, C8NUM));
+  NNACL_CHECK_ZERO_RETURN_ERR(thread_count_);
   thread_stride_ = UP_DIV(UP_DIV(conv_param_->output_channel_, C8NUM), thread_count_);
   return RET_OK;
 }
@@ -176,6 +182,10 @@ int DeConvolutionFp16CPUKernel::DoDeconv(int task_id) {
 int DeConvolutionFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(conv_param_);
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
+  CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
+
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     auto input_channel = weight_tensor->Batch();
@@ -206,14 +216,14 @@ int DeConvolutionFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }
-  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
-  MS_ASSERT(input_ptr != nullptr);
-  MS_ASSERT(output_ptr != nullptr);
-  if (input_ptr == nullptr || output_ptr == nullptr) {
-    MS_LOG(ERROR) << "DeConvolution Fp16 get null tensor data!";
-    return RET_ERROR;
-  }
+
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
+  auto *input_ptr = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  auto *output_ptr = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  CHECK_NULL_RETURN(input_ptr);
+  CHECK_NULL_RETURN(output_ptr);
+
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv fp16 InitRunBuf error! error_code[" << error_code << "]";
@@ -242,7 +252,8 @@ int DeConvolutionFp16CPUKernel::Run() {
 kernel::InnerKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(op_parameter != nullptr);
+  MS_CHECK_TRUE_RET(op_parameter != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(ctx != nullptr, nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
   kernel::InnerKernel *kernel = nullptr;

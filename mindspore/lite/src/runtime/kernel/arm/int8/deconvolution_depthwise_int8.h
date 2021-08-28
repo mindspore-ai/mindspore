@@ -40,7 +40,7 @@ class DeconvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int Execute(int task_id);
 
  private:
-  SlidingWindowParam *sliding = nullptr;
+  SlidingWindowParam *sliding_ = nullptr;
   int16_t *packed_weight_ = nullptr;
   int16_t *packed_input_ = nullptr;
   int8_t *packed_output_ = nullptr;

@@ -34,6 +34,11 @@ DeConvolutionCPUKernel::~DeConvolutionCPUKernel() {
 }
 
 int DeConvolutionCPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(conv_param_);
+  CHECK_NULL_RETURN(matmul_param_);
+
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBaseCPUKernel init error!";
@@ -103,6 +108,8 @@ int DeConvolutionCPUKernel::InitParam() {
   matmul_param_->col_8_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * kernel_plane_;
 
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(conv_param_->output_channel_, C8NUM));
+  NNACL_CHECK_ZERO_RETURN_ERR(thread_count_);
+
 #ifdef ENABLE_AVX
   thread_stride_ = UP_DIV(UP_DIV(conv_param_->output_channel_, C8NUM * C3NUM), thread_count_) * C3NUM;
 #else
@@ -158,6 +165,10 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
 int DeConvolutionCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(conv_param_);
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
+  CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
+
 #if defined(ENABLE_ARM32) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
   row_tile_ = C4NUM;
 #else
@@ -238,10 +249,14 @@ int DeConvolutionCPUKernel::Run() {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }
-  float *src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
-  float *src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
-  MS_ASSERT(src_in != nullptr);
-  MS_ASSERT(src_out != nullptr);
+
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
+  float *src_in = reinterpret_cast<float *>(input_tensor->data_c());
+  float *src_out = reinterpret_cast<float *>(output_tensor->data_c());
+  CHECK_NULL_RETURN(src_in);
+  CHECK_NULL_RETURN(src_out);
+
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv fp32 InitRunBuf error! error_code[" << error_code << "]";
@@ -274,7 +289,9 @@ int DeConvolutionCPUKernel::Run() {
 kernel::InnerKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(op_parameter != nullptr);
+  MS_CHECK_TRUE_RET(op_parameter != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(ctx != nullptr, nullptr);
+
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);

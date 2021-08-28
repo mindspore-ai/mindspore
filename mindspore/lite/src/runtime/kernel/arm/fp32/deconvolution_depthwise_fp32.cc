@@ -29,6 +29,9 @@ DeconvolutionDepthwiseCPUKernel::~DeconvolutionDepthwiseCPUKernel() {
 }
 
 int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
+  MS_CHECK_TRUE_RET(in_tensors_.front()->shape().size() == DIMENSION_4D, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_tensors_.front()->shape().size() == DIMENSION_4D, RET_ERROR);
+
   conv_param_->input_batch_ = out_tensors_.front()->shape().at(kNHWC_N);
   conv_param_->input_h_ = out_tensors_.front()->shape().at(kNHWC_H);
   conv_param_->input_w_ = out_tensors_.front()->shape().at(kNHWC_W);
@@ -67,6 +70,8 @@ int DeconvolutionDepthwiseCPUKernel::InitPackedInputOutput() {
 int DeconvolutionDepthwiseCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(conv_param_);
+
   sliding_ = new (std::nothrow) SlidingWindowParam;
   if (sliding_ == nullptr) {
     MS_LOG(ERROR) << "new sliding window param failed.";
@@ -90,6 +95,13 @@ int DeconvolutionDepthwiseCPUKernel::Init() {
 }
 
 int DeconvolutionDepthwiseCPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.front());
+  CHECK_NULL_RETURN(out_tensors_.front());
+  CHECK_NULL_RETURN(conv_param_);
+  CHECK_NULL_RETURN(sliding_);
+
   auto ret = InitSlideParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitSlideParam is failed!";
@@ -129,6 +141,9 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
     return RET_ERROR;
   }
 
+  CHECK_NULL_RETURN(packed_weight_);
+  CHECK_NULL_RETURN(bias_data_);
+
   auto ret = InitPackedInputOutput();
   if (ret != 0) {
     MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitPackedInputOutput failed.ret: " << ret;
@@ -137,8 +152,15 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(input_tensor);
+  CHECK_NULL_RETURN(output_tensor);
+
   auto input_addr = reinterpret_cast<float *>(input_tensor->data_c());
-  MS_ASSERT(input_addr != nullptr);
+  auto output_addr = reinterpret_cast<float *>(output_tensor->data_c());
+  CHECK_NULL_RETURN(input_addr);
+  CHECK_NULL_RETURN(output_addr);
+
   if (need_align_) {
     PackNHWCToNHWC4Fp32(input_addr, packed_input_, conv_param_->input_batch_,
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
@@ -146,10 +168,8 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
     packed_input_ = input_addr;
   }
 
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
-  MS_ASSERT(output_addr != nullptr);
   if (!need_align_) {
-    memset(output_addr, 0, out_tensors_.at(kOutputIndex)->ElementsNum() * sizeof(float));
+    memset(output_addr, 0, output_tensor->ElementsNum() * sizeof(float));
     packed_output_ = output_addr;
   }
 
