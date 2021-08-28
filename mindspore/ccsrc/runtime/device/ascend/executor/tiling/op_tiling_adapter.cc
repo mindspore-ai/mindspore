@@ -269,6 +269,7 @@ ge::NodePtr OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
   const std::string &op_compile_info) {
   MS_EXCEPTION_IF_NULL(node);
   op_name_ = AnfAlgo::GetCNodeName(node);
+  MS_LOG(INFO) << "Convert anf node :" << op_name_ << " to ge node.";
   op_compile_info_ = op_compile_info;
   auto op_type = GetRealOpType(op_name_);
   (void)InitOpIoName(node);

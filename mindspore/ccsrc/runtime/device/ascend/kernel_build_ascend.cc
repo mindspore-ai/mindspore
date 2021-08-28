@@ -242,7 +242,7 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
   }
 
   if (parameters_indexs.size() < total_num) {
-    MS_LOG(EXCEPTION) << "parameters indexes size: " << parameters_indexs.size()
+    MS_LOG(EXCEPTION) << "Parameters indexes size: " << parameters_indexs.size()
                       << " less than total num: " << total_num;
   }
   // process output

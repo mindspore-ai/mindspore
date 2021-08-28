@@ -56,14 +56,14 @@ void AiCoreDynamicKernel::Execute() {
     const auto kernel_info = node_info + "/" + std::to_string(tiling_key_);
     if (RT_ERROR_NONE != rtKernelLaunchWithHandle(handle_, dev_func.c_str(), block_dim_, runtime_args_.data(),
                                                   args_size, l2ctrl, stream_, kernel_info.c_str())) {
-      MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunchWithHandle error.";
+      MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunchWithHandle error. Node info: " << node_info;
     }
   } else {
     if (RT_ERROR_NONE != rtKernelLaunch(stub_func_, block_dim_, runtime_args_.data(), args_size, l2ctrl, stream_)) {
-      MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunch error.";
+      MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunch error. Node info: " << node_info;
     }
   }
-  MS_LOG(INFO) << "End Execute node:" << cnode->fullname_with_scope();
+  MS_LOG(INFO) << "Execute node:" << cnode->fullname_with_scope() << " success.";
 }
 
 void AiCoreDynamicKernel::ParseCompileJson() {
@@ -77,15 +77,15 @@ void AiCoreDynamicKernel::ParseCompileJson() {
   std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
   if (!old_build.empty()) {
     if (!AnfAlgo::HasNodeAttr(kAttrCompileInfo, cnode)) {
-      MS_LOG(EXCEPTION) << "Get compile info failed.";
+      MS_LOG(EXCEPTION) << "Get compile info failed. node name: " << AnfAlgo::GetCNodeName(cnode);
     }
     op_compile_info_ = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrCompileInfo);
   } else {
     bool get_flag = true;
     TbeUtils::GetCompileInfo(cnode, &op_compile_info_, &get_flag);
     if (!get_flag) {
-      MS_LOG(EXCEPTION) << "Get compile_info failed. The compile result of [" << AnfAlgo::GetCNodeName(cnode)
-                        << "]maybe not in the json file(dir:./kernel_meta/) or the file had been deleted";
+      MS_LOG(EXCEPTION) << "Get compile_info failed. The compile result of [" << cnode->fullname_with_scope()
+                        << "] maybe not in the json file(kernel_meta/) or the file had been deleted.";
     }
   }
   MS_LOG(INFO) << "Get compile_info:" << op_compile_info_;
@@ -98,14 +98,13 @@ void AiCoreDynamicKernel::Initialize() {
 
 void AiCoreDynamicKernel::UpdateArgs() {
   ComputeTiling();
-
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
   if (!CopyTilingToDevice()) {
-    MS_LOG(EXCEPTION) << "Copy tiling to device failed";
+    MS_LOG(EXCEPTION) << "Copy tiling to device failed. op name: " << cnode->fullname_with_scope();
   }
 
   AllocateWorkspace();
-  auto cnode = cnode_ptr_.lock();
-  MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
@@ -134,7 +133,7 @@ void AiCoreDynamicKernel::UpdateArgs() {
 void AiCoreDynamicKernel::ComputeTiling() {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(INFO) << "Start compute tiling of:" << cnode->fullname_with_scope();
+  MS_LOG(INFO) << "Start compute tiling of: " << cnode->fullname_with_scope();
   // start compute tiling
   optiling::utils::OpRunInfo op_run_info_v2(-1, true, 0);
   tiling::OpTilingCalculateAdapter converter;
@@ -149,6 +148,8 @@ void AiCoreDynamicKernel::ComputeTiling() {
 }
 
 void AiCoreDynamicKernel::AllocateWorkspace() {
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -160,7 +161,7 @@ void AiCoreDynamicKernel::AllocateWorkspace() {
     auto device_address_ptr = std::make_shared<AscendDeviceAddress>(nullptr, size);
     auto device_ptr = runtime_instance->MallocMem(MemType::kDynamicMem, size, device_address_ptr);
     if (device_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "MallocMem from memory pool failed";
+      MS_LOG(EXCEPTION) << "MallocMem from memory pool failed. Node info :" << cnode->fullname_with_scope();
     }
     workspace_addr_.emplace_back(device_address_ptr);
   }
@@ -168,19 +169,19 @@ void AiCoreDynamicKernel::AllocateWorkspace() {
 
 bool AiCoreDynamicKernel::CopyTilingToDevice() {
   if (tiling_data_.size() > op_para_size_) {
-    MS_LOG(EXCEPTION) << "compute tiling size:" << tiling_data_.size()
+    MS_LOG(EXCEPTION) << "Compute tiling size:" << tiling_data_.size()
                       << " larger than tbe build op_para_size:" << op_para_size_;
   }
 
   if (tiling_data_.empty() || tiling_data_ptr_ == nullptr) {
-    MS_LOG(INFO) << "tiling size is 0, skip rtMemcpyAsync";
+    MS_LOG(INFO) << "Tiling size is 0, skip rtMemcpyAsync";
     return true;
   }
 
   auto ret = rtMemcpyAsync(tiling_data_ptr_, tiling_data_.size(), tiling_data_.c_str(), tiling_data_.size(),
                            RT_MEMCPY_HOST_TO_DEVICE_EX, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "tiling rtMemcpyAsync failed, ret:" << ret;
+    MS_LOG(EXCEPTION) << "Tiling rtMemcpyAsync failed, ret:" << ret;
   }
   return true;
 }

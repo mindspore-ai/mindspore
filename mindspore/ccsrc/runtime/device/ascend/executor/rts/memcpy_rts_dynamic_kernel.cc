@@ -24,7 +24,7 @@ namespace ascend {
 void MemcpyRtsDynamicKernel::Execute() {
   auto status = rtMemcpyAsync(dst_, dest_max_, src_, count_, RT_MEMCPY_DEVICE_TO_DEVICE, stream_);
   if (status != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "MemCpyAsync op rtMemcpyAsync failed!";
+    MS_LOG(EXCEPTION) << "MemCpyAsync op execute rtMemcpyAsync failed!";
   }
 }
 }  // namespace ascend

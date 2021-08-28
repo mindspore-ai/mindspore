@@ -39,7 +39,7 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
 
   auto ret = memcpy_s(ext_info_.get(), ext_info_len_, ext_info.c_str(), ext_info.size());
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "The memcpy_s failed, errorno(" << ret << ")";
+    MS_LOG(EXCEPTION) << "The memcpy_s failed, node: " << node_name_ << " error no (" << ret << ")";
   }
 
   input_shape_and_type_.clear();
@@ -53,17 +53,17 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
     switch (aicpu_ext_info->infoType) {
       case kernel::FWK_ADPT_EXT_SHAPE_TYPE:
         if (!ParseExtShapeType(aicpu_ext_info)) {
-          MS_LOG(EXCEPTION) << "Parse ext shape type failed.";
+          MS_LOG(EXCEPTION) << "Parse ext shape type failed, node: " << node_name_;
         }
         break;
       case kernel::FWK_ADPT_EXT_INPUT_SHAPE:
         if (!ParseExtInputShape(aicpu_ext_info)) {
-          MS_LOG(EXCEPTION) << "Parse ext input shape failed.";
+          MS_LOG(EXCEPTION) << "Parse ext input shape failed, node: " << node_name_;
         }
         break;
       case kernel::FWK_ADPT_EXT_OUTPUT_SHAPE:
         if (!ParseExtOutputShape(aicpu_ext_info)) {
-          MS_LOG(EXCEPTION) << "Parse ext output shape failed.";
+          MS_LOG(EXCEPTION) << "Parse ext output shape failed, node: " << node_name_;
         }
         break;
       default:
@@ -114,7 +114,7 @@ bool AicpuExtInfoHandler::ParseExtInputShape(AicpuExtInfo *aicpu_ext_info) {
   for (uint32_t index = 0; index < input_num_; ++index) {
     input_shape_and_type_.emplace_back(&input[index]);
   }
-  MS_LOG(INFO) << "Node:" << node_name_.c_str() << " parse ext input shape success infoLen=" << aicpu_ext_info->infoLen;
+  MS_LOG(INFO) << "Node:" << node_name_ << " parse ext input shape success infoLen=" << aicpu_ext_info->infoLen;
   return true;
 }
 
@@ -137,7 +137,7 @@ bool AicpuExtInfoHandler::ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info) {
 
 bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const NotNull<AnfNodePtr> &anf_node) {
   if (input_index >= input_num_) {
-    MS_LOG(ERROR) << "input_index=" << input_index << " >= input_num_:" << input_num_;
+    MS_LOG(ERROR) << "input_index: " << input_index << " >= input_num_: " << input_num_ << ", node: " << node_name_;
     return false;
   }
 
@@ -150,14 +150,15 @@ bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const No
 
 bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const NotNull<AnfNodePtr> &anf_node) {
   if (output_index >= output_num_) {
-    MS_LOG(ERROR) << "output_index:" << output_index << " >= output_num_:" << output_num_;
+    MS_LOG(ERROR) << "output_index:" << output_index << " >= output_num_:" << output_num_ << ", node: " << node_name_;
     return false;
   }
 
   auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
   auto max_shape = AnfAlgo::GetOutputMaxShape(anf_node, output_index);
   if (shape.size() != max_shape.size()) {
-    MS_LOG(ERROR) << "shape size != max_shape size";
+    MS_LOG(ERROR) << "shape size [" << shape.size() << "] != max_shape size [" << max_shape.size()
+                  << "], node: " << node_name_;
     return true;
   }
 
@@ -212,7 +213,7 @@ void AicpuExtInfoHandler::GetShapeAndType(NotNull<const AicpuShapeAndType *> sha
 
   auto ms_type = kernel::AicpuOpUtil::ProtoTypeToMsType(shape_and_type->type);
   if (ms_type == -1) {
-    MS_LOG(EXCEPTION) << "Unspport Proto Type:" << shape_and_type->type;
+    MS_LOG(EXCEPTION) << "Unsupported Proto Type:" << shape_and_type->type;
   }
   MS_LOG(INFO) << "Debug ms_type:" << ms_type;
   *data_type = static_cast<TypeId>(ms_type);

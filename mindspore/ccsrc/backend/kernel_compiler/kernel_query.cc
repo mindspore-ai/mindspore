@@ -47,7 +47,6 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
     kernel_info_list->clear();
     (void)std::copy(filtered_list.begin(), filtered_list.end(), std::back_inserter(*kernel_info_list));
   } else {
-    MS_LOG(INFO) << "All kernel Info list does not match any kernel info ";
     for (size_t index = 0; index < kernel_info_list->size(); ++index) {
       std::ostringstream buffer;
       auto &kernel_info = kernel_info_list->at(index);
@@ -59,11 +58,11 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
         buffer << "Kernel node's output size [" << input_tensor_num << "]"
                << " cannot match the kernel's output size [" << kernel_info->GetInputNum() << "]";
       }
-      MS_LOG(INFO) << "kernel [ " << index << " ] :" << kernel_info->ToString() << buffer.str();
+      MS_LOG(INFO) << "Kernel [ " << index << " ] :" << kernel_info->ToString() << buffer.str();
     }
     kernel_info_list->clear();
-    MS_LOG(INFO) << "node" << kernel_node->DebugString() << "'s output size : [" << output_tensor_num << "]"
-                 << "input size : [" << input_tensor_num << "] cannot match any kernelInfo !";
+    MS_LOG(INFO) << "Node: " << kernel_node->DebugString() << "'s output size : [" << output_tensor_num << "]"
+                 << "input size : [" << input_tensor_num << "] can not match any kernelInfo !";
   }
 }
 }  // namespace

@@ -140,7 +140,7 @@ bool SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *s
 }
 
 void AscendDeviceAddress::SyncStream() const {
-  MS_LOG(DEBUG) << "Start!";
+  MS_LOG(DEBUG) << "SyncStream Start!";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
@@ -155,7 +155,7 @@ void AscendDeviceAddress::SyncStream() const {
   if (!ret) {
     MS_LOG(EXCEPTION) << "Sync stream error!";
   }
-  MS_LOG(DEBUG) << "Finish!";
+  MS_LOG(DEBUG) << "SyncStream Finish!";
 }
 
 bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *const host_ptr) const {
@@ -198,7 +198,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
       const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size_};
       sync_ok = trans::TransDataType(type_args, host_ptr);
       if (!sync_ok) {
-        MS_LOG(ERROR) << "trans data type failed.";
+        MS_LOG(ERROR) << "Trans data type failed.";
         return false;
       }
     }
@@ -207,11 +207,11 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
     if (iter != kOpNeedTransFormat.end()) {
       sync_ok = SyncDeviceToHostAndConvertFormat(shape, size, type, host_ptr);
     } else {
-      MS_LOG(INFO) << "Can not find format transfer for :" << format_;
+      MS_LOG(INFO) << "Can not find format transfer function for :" << format_;
     }
   }
   if (!sync_ok) {
-    MS_LOG(ERROR) << "Not support to trans, dev_format:" << format_ << ", dev_type:" << TypeIdLabel(type_id_)
+    MS_LOG(ERROR) << "Unsupported to trans, dev_format:" << format_ << ", dev_type:" << TypeIdLabel(type_id_)
                   << ", host_type:" << TypeIdLabel(type);
     return false;
   }
@@ -262,7 +262,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   SyncStream();
   auto output_addr_vec = launch_transdata_->GetKernelOutputAddr();
   if (output_addr_vec.size() != 1) {
-    MS_LOG(EXCEPTION) << "launch transdata outputs should have only one output";
+    MS_LOG(EXCEPTION) << "Launch transdata outputs should have only one output";
     return false;
   }
   if (type_id_ == type) {
@@ -274,7 +274,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
-      MS_LOG(ERROR) << "Trans format failed.";
+      MS_LOG(ERROR) << "Trans data type failed.";
       return false;
     }
   }
@@ -318,7 +318,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
     const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
-      MS_LOG(ERROR) << "Trans format failed.";
+      MS_LOG(ERROR) << "Trans data type failed.";
       return false;
     }
   } else {
@@ -370,11 +370,11 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
     if (iter != kOpNeedTransFormat.end()) {
       sync_ok = ConvertFormatAndSyncHostToDevice(shape, size, type, host_ptr);
     } else {
-      MS_LOG(INFO) << "Can not find format transfer for :" << format_;
+      MS_LOG(INFO) << "Can not find format transfer function for :" << format_;
     }
   }
   if (!sync_ok) {
-    MS_LOG(ERROR) << "Not support to trans, dev_format:" << format_ << ", dev_type:" << TypeIdLabel(type_id_)
+    MS_LOG(ERROR) << "Unsupported trans, dev_format:" << format_ << ", dev_type:" << TypeIdLabel(type_id_)
                   << ", host_type:" << TypeIdLabel(type);
     return false;
   }
@@ -405,7 +405,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
     auto host_tmp = std::vector<uint8_t>(size_);
     sync_ok = trans::TransDataType(type_args, host_tmp.data());
     if (!sync_ok) {
-      MS_LOG(ERROR) << "Trans datatype failed.";
+      MS_LOG(ERROR) << "Trans data type failed.";
       return false;
     }
     const trans::FormatArgs format_args{host_tmp.data(), size_,        kOpFormat_NCHW, format_,
