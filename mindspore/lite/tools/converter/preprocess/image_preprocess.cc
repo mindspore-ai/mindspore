@@ -16,11 +16,17 @@
 
 #include "tools/converter/preprocess/image_preprocess.h"
 #include "src/common/log_adapter.h"
+#include "src/common/file_utils.h"
 #include "include/errorcode.h"
+#include "tools/converter/preprocess/opencv_utils.h"
 namespace mindspore {
 namespace lite {
 namespace preprocess {
 int ReadImage(const std::string &image_path, cv::Mat *image) {
+  if (image == nullptr) {
+    MS_LOG(ERROR) << "image is nullptr.";
+    return RET_ERROR;
+  }
   *image = cv::imread(image_path);
   if (image->empty() || image->data == nullptr) {
     MS_LOG(ERROR) << "missing file, improper permissions, unsupported or invalid format.";
@@ -30,6 +36,10 @@ int ReadImage(const std::string &image_path, cv::Mat *image) {
 }
 
 int ConvertImageFormat(cv::Mat *image, cv::ColorConversionCodes to_format) {
+  if (image == nullptr) {
+    MS_LOG(ERROR) << "image is nullptr.";
+    return RET_ERROR;
+  }
   if (to_format == cv::COLOR_COLORCVT_MAX) {
     MS_LOG(ERROR) << "to_format is cv::COLOR_COLORCVT_MAX";
     return RET_ERROR;
@@ -38,22 +48,36 @@ int ConvertImageFormat(cv::Mat *image, cv::ColorConversionCodes to_format) {
   return RET_OK;
 }
 
-int Normalize(cv::Mat *image, const std::vector<float> &mean, const std::vector<float> &std) {
-  if (static_cast<int>(mean.size()) != image->channels() && static_cast<int>(std.size()) != image->channels()) {
-    MS_LOG(ERROR) << "mean size:" << mean.size() << " != image->dims:" << image->dims << " or scale size:" << std.size()
-                  << " !=image->dims:" << image->dims;
+int Normalize(cv::Mat *image, const std::vector<double> &mean, const std::vector<double> &standard_deviation) {
+  if (image == nullptr) {
+    MS_LOG(ERROR) << "image is nullptr.";
     return RET_ERROR;
   }
-  std::vector<cv::Mat> channels(std.size());
+  if (static_cast<int>(mean.size()) != image->channels() ||
+      static_cast<int>(standard_deviation.size()) != image->channels()) {
+    MS_LOG(ERROR) << "mean size:" << mean.size() << " != image->dims:" << image->dims
+                  << " or scale size:" << standard_deviation.size() << " !=image->dims:" << image->dims;
+    return RET_ERROR;
+  }
+  std::vector<cv::Mat> channels(image->channels());
   cv::split(*image, channels);
   for (size_t i = 0; i < channels.size(); i++) {
-    channels[i].convertTo(channels[i], CV_32FC1, 1.0 / std[i], (0.0 - mean[i]) / std[i]);
+    channels[i].convertTo(channels[i], CV_32FC1, 1.0 / standard_deviation[i], (0.0 - mean[i]) / standard_deviation[i]);
   }
   cv::merge(channels, *image);
   return RET_OK;
 }
 
 int Resize(cv::Mat *image, int width, int height, cv::InterpolationFlags resize_method) {
+  if (image == nullptr) {
+    MS_LOG(ERROR) << "image is nullptr.";
+    return RET_ERROR;
+  }
+  if (width <= 0 || height <= 0) {
+    MS_LOG(ERROR) << "Both width and height must be > 0."
+                  << " width:" << width << " height:" << height;
+    return RET_ERROR;
+  }
   if (resize_method == cv::INTER_MAX) {
     MS_LOG(ERROR) << "resize method is cv::INTER_MAX";
     return RET_ERROR;
@@ -63,6 +87,15 @@ int Resize(cv::Mat *image, int width, int height, cv::InterpolationFlags resize_
 }
 
 int CenterCrop(cv::Mat *image, int width, int height) {
+  if (image == nullptr) {
+    MS_LOG(ERROR) << "image is nullptr.";
+    return RET_ERROR;
+  }
+  if (width <= 0 || height <= 0) {
+    MS_LOG(ERROR) << "Both width and height must be > 0."
+                  << " width:" << width << " height:" << height;
+    return RET_ERROR;
+  }
   if (width > image->cols || height > image->rows) {
     MS_LOG(ERROR) << "width:" << width << " > "
                   << "image->cols:" << image->cols << " or"
@@ -75,6 +108,123 @@ int CenterCrop(cv::Mat *image, int width, int height) {
   const cv::Rect roi(offsetW, offsetH, width, height);
   cv::Mat image_object = *(image);
   *(image) = image_object(roi).clone();
+  return RET_OK;
+}
+
+int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
+               int image_index, mindspore::tensor::MSTensor *tensor) {
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is nullptr.";
+    return RET_NULL_PTR;
+  }
+  size_t size;
+  char *data_buffer = nullptr;
+  auto ret =
+    PreProcess(data_pre_process_param, input_name, image_index, reinterpret_cast<void **>(&data_buffer), &size);
+  if (data_buffer == nullptr || size == 0) {
+    MS_LOG(ERROR) << "data_buffer is nullptr or size == 0";
+    return RET_OK;
+  }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Preprocess failed.";
+    delete[] data_buffer;
+    return RET_ERROR;
+  }
+  auto data = tensor->MutableData();
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "Get tensor MutableData return nullptr";
+    delete[] data_buffer;
+    return RET_NULL_PTR;
+  }
+  if (size != tensor->Size()) {
+    MS_LOG(ERROR) << "the input data is not consistent with model input, file_size: " << size
+                  << " input tensor size: " << tensor->Size();
+    delete[] data_buffer;
+    return RET_ERROR;
+  }
+  if (memcpy_s(data, tensor->Size(), data_buffer, size) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    delete[] data_buffer;
+    return RET_ERROR;
+  }
+  delete[] data_buffer;
+  return RET_OK;
+}
+
+int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::string &input_name, int image_index,
+               void **data, size_t *size) {
+  if (data == nullptr || size == nullptr) {
+    MS_LOG(ERROR) << "data or size is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto data_path = data_pre_process_param.calibrate_path_vector.at(input_name).at(image_index);
+  if (data_pre_process_param.input_type == IMAGE) {
+    cv::Mat mat;
+    auto ret = ReadImage(data_path, &mat);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Read image failed.";
+      return ret;
+    }
+    ret = ImagePreProcess(data_pre_process_param.image_pre_process, &mat, data, size);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Image Preprocess failed.";
+      return ret;
+    }
+  } else if (data_pre_process_param.input_type == BIN) {
+    *data = ReadFile(data_path.c_str(), size);
+    if (*data == nullptr || *size == 0) {
+      MS_LOG(ERROR) << "ReadFile return nullptr";
+      return RET_NULL_PTR;
+    }
+  } else {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: input_type must be IMAGE|BIN.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat *image, void **data, size_t *size) {
+  if (image == nullptr || data == nullptr || size == nullptr) {
+    MS_LOG(ERROR) << "data or size is nullptr.";
+    return RET_NULL_PTR;
+  }
+  int ret;
+  if (image_preprocess_param.image_to_format_code != cv::COLOR_COLORCVT_MAX) {
+    ret = ConvertImageFormat(image, image_preprocess_param.image_to_format_code);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "convert image format failed.";
+      return ret;
+    }
+  }
+  // normalize_mean and normalize_std vector size must equal.
+  if (!image_preprocess_param.normalize_mean.empty() || !image_preprocess_param.normalize_std.empty()) {
+    ret = Normalize(image, image_preprocess_param.normalize_mean, image_preprocess_param.normalize_std);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "image normalize failed.";
+      return ret;
+    }
+  }
+  if (image_preprocess_param.center_crop_height != -1 && image_preprocess_param.center_crop_width != -1) {
+    ret = CenterCrop(image, image_preprocess_param.center_crop_width, image_preprocess_param.center_crop_height);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "image center crop failed.";
+      return ret;
+    }
+  }
+  if (image_preprocess_param.resize_method != cv::INTER_MAX) {
+    ret = Resize(image, image_preprocess_param.resize_width, image_preprocess_param.resize_height,
+                 image_preprocess_param.resize_method);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "image reize failed.";
+      return ret;
+    }
+  }
+
+  ret = GetMatData(*image, data, size);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get mat data failed.";
+    return ret;
+  }
   return RET_OK;
 }
 }  // namespace preprocess

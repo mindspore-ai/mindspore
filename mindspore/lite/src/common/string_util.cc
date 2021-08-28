@@ -16,6 +16,10 @@
 
 #include "src/common/string_util.h"
 #include <algorithm>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <climits>
 #include "include/ms_tensor.h"
 
 namespace mindspore {

@@ -21,25 +21,25 @@
 #include <utility>
 #include <unordered_map>
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/preprocess/image_preprocess.h"
 
 using std::string;
 using std::vector;
 
 namespace mindspore::lite::quant {
-WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const PostQuantConfig &config) : Quantizer(std::move(graph)) {
+WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const FullQuantParam &config) : Quantizer(std::move(graph)) {
   quant_strategy_ = std::make_unique<QuantStrategy>(0, 0);
   config_param_ = config;
 }
 
 WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config) : Quantizer(std::move(graph)) {
-  this->config_file_ = config.configFile;
-  auto quant_size = config.quantWeightSize;
-  this->bit_num_ = config.bitNum;
+  auto quant_size = config.commonQuantParam.min_quant_weight_size;
+  this->bit_num_ = config.commonQuantParam.bit_num;
   if (this->bit_num_ == 0) {
     type_id_ = kNumberTypeInt16;
     this->is_mixed_bit_ = true;
   }
-  auto convQuantWeightChannelThreshold = config.quantWeightChannel;
+  auto convQuantWeightChannelThreshold = config.commonQuantParam.min_quant_weight_channel;
   quant_strategy_ = std::make_unique<QuantStrategy>(quant_size, convQuantWeightChannelThreshold);
   quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
   quant_min_ = -(1 << (unsigned int)(this->bit_num_ - 1));
@@ -457,7 +457,7 @@ STATUS WeightQuantizer::RunFp32Graph(const FuncGraphPtr &func_graph) {
     }
   }
   // 0.1 Create Fp32 Session
-  flags.quantType = schema::QuantType_QUANT_NONE;
+  flags.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   auto fp32_sm = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
   auto fp32_session = fp32_sm.session;
   auto fp32_model = fp32_sm.model;
@@ -471,7 +471,15 @@ STATUS WeightQuantizer::RunFp32Graph(const FuncGraphPtr &func_graph) {
   // 0.3 save fp32 output
   for (size_t i = 0; i < image_cnt; i++) {
     if (!config_param_.input_shapes.empty()) {
-      auto status = fp32_session->Resize(fp32_inputs, {config_param_.input_shapes[i]});
+      std::vector<std::vector<int>> shapes;
+      auto status = ConvertInputShapeMapToVector(&config_param_, fp32_session->GetInputs(), &shapes);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Convert input shape map to vector failed.";
+        delete fp32_sm.session;
+        delete fp32_sm.model;
+        return RET_ERROR;
+      }
+      status = fp32_session->Resize(fp32_inputs, shapes);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "session Resize fail";
         delete fp32_sm.session;
@@ -480,7 +488,8 @@ STATUS WeightQuantizer::RunFp32Graph(const FuncGraphPtr &func_graph) {
       }
     }
     for (size_t input_index = 0; input_index < fp32_inputs.size(); input_index++) {
-      auto status = CopyInputDataToTensor(input_index, i, images_, fp32_inputs[input_index]);
+      auto status = preprocess::PreProcess(flags.dataPreProcessParam, fp32_inputs[input_index]->tensor_name(), i,
+                                           fp32_inputs[input_index]);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "generate input data from images failed!";
         delete fp32_sm.session;
@@ -544,6 +553,7 @@ STATUS WeightQuantizer::CheckImageCnt() {
   }
   return RET_OK;
 }
+
 STATUS WeightQuantizer::GetParamNodeAndValue(const std::shared_ptr<AnfNode> &input_node, const std::string &op_name,
                                              ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {
   if (!input_node->isa<Parameter>()) {
@@ -596,9 +606,69 @@ STATUS WeightQuantizer::TryQuant(const int &bit_num_t, const ParameterPtr &param
   }
   return status;
 }
+
+STATUS WeightQuantizer::EvaluateQuant(const FuncGraphPtr &func_graph, size_t image_cnt, float *mean_error) {
+  if (mean_error == nullptr) {
+    MS_LOG(ERROR) << "mean_error is nullptr.";
+    return RET_ERROR;
+  }
+  // 2.1 create quant session, get input, output tensor
+  flags.commonQuantParam.quant_type = schema::QuantType_WeightQuant;
+  auto quant_sm = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
+  auto quant_session = std::unique_ptr<session::LiteSession>(quant_sm.session);
+  int status;
+  if (quant_session == nullptr) {
+    MS_LOG(ERROR) << "create session error.";
+    delete quant_sm.model;
+    return RET_ERROR;
+  }
+  auto quant_inputs = quant_session->GetInputs();
+
+  for (size_t i = 0; i < image_cnt; i++) {
+    if (!config_param_.input_shapes.empty()) {
+      std::vector<std::vector<int>> shapes;
+      status = ConvertInputShapeMapToVector(&config_param_, quant_session->GetInputs(), &shapes);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Convert input shape map to vector failed.";
+        delete quant_sm.model;
+        return RET_ERROR;
+      }
+      status = quant_session->Resize(quant_inputs, shapes);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "session Resize fail";
+        delete quant_sm.model;
+        return RET_ERROR;
+      }
+    }
+
+    // set multi-input data
+    for (size_t input_index = 0; input_index < quant_inputs.size(); input_index++) {
+      status = preprocess::PreProcess(flags.dataPreProcessParam, quant_inputs[input_index]->tensor_name(), i,
+                                      quant_inputs[input_index]);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "generate input data from images failed!";
+        delete quant_sm.model;
+        return RET_ERROR;
+      }
+    }
+    status = quant_session->RunGraph();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "quant session run error";
+      delete quant_sm.model;
+      return RET_ERROR;
+    }
+    // 3. compare between quant and fp32
+    auto quant_outputs = quant_session->GetOutputs();
+    (*mean_error) += CompareOutputData<float>(fp32_output_tensors_[i], quant_outputs);
+  }  // end_for: calib data loop
+  delete quant_sm.model;
+  (*mean_error) = (*mean_error) / image_cnt;
+  return RET_OK;
+}
+
 STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
-  auto image_cnt = images_.at(0).size();
+  size_t image_cnt = images_.at(0).size();
   int status = RET_OK;
   for (auto iter = cnodes.end(); iter != cnodes.begin();) {
     auto cnode = *(--iter);
@@ -636,49 +706,12 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
           return RET_ERROR;
         }
         // 2. evaluate the quant
-        // 2.1 create quant session, get input, output tensor
-        flags.quantType = schema::QuantType_WeightQuant;
-        auto quant_sm = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
-        auto quant_session = std::unique_ptr<session::LiteSession>(quant_sm.session);
-        if (quant_session == nullptr) {
-          MS_LOG(ERROR) << "create session error: " << status;
-          delete quant_sm.model;
+        float mean_error = 0.0f;
+        status = EvaluateQuant(func_graph, image_cnt, &mean_error);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "EvaluateQuant failed.";
           return RET_ERROR;
         }
-        auto quant_inputs = quant_session->GetInputs();
-
-        auto mean_error = 0.0f;
-        for (size_t i = 0; i < image_cnt; i++) {
-          if (!config_param_.input_shapes.empty()) {
-            status = quant_session->Resize(quant_inputs, {config_param_.input_shapes[i]});
-            if (status != RET_OK) {
-              MS_LOG(ERROR) << "session Resize fail";
-              delete quant_sm.model;
-              return RET_ERROR;
-            }
-          }
-
-          // set multi-input data
-          for (size_t input_index = 0; input_index < quant_inputs.size(); input_index++) {
-            status = CopyInputDataToTensor(input_index, i, images_, quant_inputs[input_index]);
-            if (status != RET_OK) {
-              MS_LOG(ERROR) << "generate input data from images failed!";
-              delete quant_sm.model;
-              return RET_ERROR;
-            }
-          }
-          status = quant_session->RunGraph();
-          if (status != RET_OK) {
-            MS_LOG(ERROR) << "quant session run error";
-            delete quant_sm.model;
-            return RET_ERROR;
-          }
-          // 3. compare between quant and fp32
-          auto quant_outputs = quant_session->GetOutputs();
-          mean_error += CompareOutputData<float>(fp32_output_tensors_[i], quant_outputs);
-        }  // end_for: calib data loop
-        delete quant_sm.model;
-        mean_error = mean_error / image_cnt;
         if (mean_error <= config_param_.mean_error_threshold) {
           MS_LOG(DEBUG) << "op: " << op_name << " got mixed bit: " << bit_num_t << " mean_error: " << mean_error;
           opname_bit_[op_name] = bit_num_t;
@@ -704,14 +737,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
 }
 
 STATUS WeightQuantizer::DoMixedQuant(const FuncGraphPtr &func_graph) {
-  // 0.2 Parse input calib files
-  auto status = CollectCalibInputs(config_param_.image_paths, config_param_.batch_count, &images_);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "CollectCalibInputs failed.";
-    return RET_ERROR;
-  }
-
-  status = RunFp32Graph(func_graph);
+  auto status = RunFp32Graph(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "RunFp32Graph failed.";
     return RET_ERROR;
@@ -810,15 +836,6 @@ STATUS WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_g
 
 STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_ASSERT(func_graph != nullptr);
-
-  if (!config_file_.empty()) {
-    auto ret = ParseConfigFile(config_file_, &config_param_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "ReadConfig error.";
-      return RET_ERROR;
-    }
-  }
-
   if (config_param_.mixed) {
     bit_num_ = kMaxBit;
     quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;

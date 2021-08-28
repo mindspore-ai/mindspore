@@ -102,7 +102,8 @@ int ConvertTensor2Quant(schema::TensorT *tensor_input, FSEQuant *quants) {
       uncompressed_freqs_to_compressed_sym[i] = sym;
       quants->frequency[sym] = uncompressed_frequency[i];
       quants->centroids[sym] =
-        tensor_input->quantParams.front()->varCorr * tensor_input->quantParams.front()->scale * (i + qmin) +
+        tensor_input->quantParams.front()->varCorr *
+          (tensor_input->quantParams.front()->scale - tensor_input->quantParams.front()->zeroPoint) * (i + qmin) +
         tensor_input->quantParams.front()->meanCorr;
       sym++;
     }

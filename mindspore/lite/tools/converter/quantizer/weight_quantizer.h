@@ -26,6 +26,8 @@
 #include <vector>
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "tools/converter/quantizer/quant_params.h"
+#include "tools/converter/preprocess/preprocess_param.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "include/model.h"
@@ -37,7 +39,7 @@ namespace mindspore::lite::quant {
 class WeightQuantizer : public Quantizer {
  public:
   WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config);
-  WeightQuantizer(FuncGraphPtr graph, const PostQuantConfig &config);
+  WeightQuantizer(FuncGraphPtr graph, const FullQuantParam &config);
   ~WeightQuantizer() override;
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
@@ -57,10 +59,9 @@ class WeightQuantizer : public Quantizer {
  private:
   std::unique_ptr<QuantStrategy> quant_strategy_;
   size_t bit_num_{8};
-  std::string config_file_;
   std::map<tensor::TensorPtr, ParameterPtr> weight_quantized_tensors_;
-  PostQuantConfig config_param_;
-  std::vector<std::vector<std::string>> images_;  // multi_input, [[mode_input_0], [model_input_1]...]
+  FullQuantParam config_param_;
+  std::map<std::string, std::vector<std::string>> images_;  // multi_input, [[mode_input_0], [model_input_1]...]
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
   bool is_mixed_bit_ = false;
 
@@ -79,6 +80,7 @@ class WeightQuantizer : public Quantizer {
   STATUS TryQuant(const int &bit_num_t, const ParameterPtr &param_node, const tensor::TensorPtr &tensor_info,
                   const PrimitivePtr &primitive);
   STATUS DoQuantSearch(const FuncGraphPtr &func_graph);
+  STATUS EvaluateQuant(const FuncGraphPtr &func_graph, size_t image_cnt, float *mean_error);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_

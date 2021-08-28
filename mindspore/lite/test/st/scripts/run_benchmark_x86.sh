@@ -52,7 +52,7 @@ function Run_Converter() {
     # Prepare the config file list
     local x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                              "$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_config" \
-                             "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
+                             "$models_tflite_awaretraining_config" "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
                              "$models_weightquant_9bit_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
@@ -103,7 +103,7 @@ function Run_x86() {
     # Prepare the config file list
     local x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                              "$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_fp16_config" \
-                             "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
+                             "$models_tflite_awaretraining_config" "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
                              "$models_weightquant_9bit_config" "$models_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
@@ -121,7 +121,7 @@ function Run_x86_sse() {
     # Prepare the config file list
     local sse_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                              "$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_fp16_config" \
-                             "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
+                             "$models_tflite_awaretraining_config" "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
                              "$models_weightquant_9bit_config" "$models_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
@@ -139,7 +139,7 @@ function Run_x86_avx() {
     # Prepare the config file list
     local avx_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                              "$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_fp16_config" \
-                             "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
+                             "$models_tflite_awaretraining_config" "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
                              "$models_weightquant_9bit_config" "$models_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:benchmark_mode
@@ -216,13 +216,14 @@ models_tflite_config=${basepath}/../config/models_tflite.cfg
 models_tf_config=${basepath}/../config/models_tf.cfg
 models_caffe_config=${basepath}/../config/models_caffe.cfg
 models_tflite_awaretraining_config=${basepath}/../config/models_tflite_awaretraining.cfg
-models_posttraining_config=${basepath}/../config/models_tflite_posttraining.cfg
+models_posttraining_config=${basepath}/../config/models_posttraining.cfg
 models_onnx_config=${basepath}/../config/models_onnx.cfg
 models_mindspore_config=${basepath}/../config/models_mindspore.cfg
 models_mindspore_train_config=${basepath}/../config/models_mindspore_train.cfg
+models_weightquant_0bit_config=${basepath}/../config/models_weightquant_0bit.cfg
 models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
 models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
-models_weightquant_config=${basepath}/../config/models_weightquant.cfg
+models_weightquant_8bit_config=${basepath}/../config/models_weightquant_8bit.cfg
 models_process_only_config=${basepath}/../config/models_process_only.cfg
 models_process_only_fp16_config=${basepath}/../config/models_process_only_fp16.cfg
 

@@ -24,6 +24,8 @@
 #include "tools/common/flag_parser.h"
 #include "ir/dtype/type_id.h"
 #include "schema/inner/model_generated.h"
+#include "tools/converter/preprocess/preprocess_param.h"
+#include "tools/converter/quantizer/quant_params.h"
 
 namespace mindspore {
 namespace converter {
@@ -49,12 +51,6 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int InitFmk();
 
-  bool IsValidNum(const std::string &str, int *num);
-
-  int QuantParamInputCheck();
-
-  int InitQuantParam();
-
   int InitTrainModel();
 
   int InitConfigFile();
@@ -75,20 +71,10 @@ class Flags : public virtual mindspore::lite::FlagParser {
   TypeId outputDataType;
   std::string saveFP16Str = "off";
   bool saveFP16 = false;
-  // used for quantization
-  std::string quantTypeStr;
-  schema::QuantType quantType;
   std::string inputDataTypeStr;
   std::string outputDataTypeStr;
-  // used for post-trainning-weight
-  std::string quantWeightSizeStr;
-  int quantWeightSize;
-  std::string bitNumIn;
-  int bitNum;
   ParallelSplitConfig parallel_split_config_{};
   std::string configFile;
-  std::string quantWeightChannelStr;
-  int quantWeightChannel;
   std::string trainModelIn;
   bool trainModel = false;
   std::vector<std::string> pluginsPath;
@@ -98,13 +84,16 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string dec_mode = "AES-GCM";
   std::string graphInputFormatStr;
   mindspore::Format graphInputFormat = mindspore::NHWC;
+
+  lite::quant::CommonQuantParam commonQuantParam;
+  lite::quant::MixedBitWeightQuantParam mixedBitWeightQuantParam;
+  lite::quant::FullQuantParam fullQuantParam;
+  lite::preprocess::DataPreProcessParam dataPreProcessParam;
 };
 
 bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
 
 std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
-
-std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter);
 }  // namespace converter
 }  // namespace mindspore
 

@@ -30,15 +30,6 @@
 
 namespace mindspore::lite::quant {
 using STATUS = int;
-enum QuantType {
-  QuantType_QUANT_NONE = 0,
-  QuantType_AwareTraining = 1,
-  QuantType_WeightQuant = 2,
-  QuantType_PostTraining = 3,
-  QuantType_MIN = QuantType_QUANT_NONE,
-  QuantType_MAX = QuantType_PostTraining
-};
-
 class Quantizer {
  public:
   explicit Quantizer(FuncGraphPtr graph) : funcGraph(std::move(graph)) {}

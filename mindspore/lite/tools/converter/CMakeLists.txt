@@ -6,11 +6,6 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         )
-if(NOT MSLITE_ENABLE_ACL)
-    set(ENABLE_GLIBCXX ON)
-endif()
-
-include(${TOP_DIR}/cmake/external_libs/opencv.cmake)
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 
@@ -39,6 +34,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/func_graph_subgraph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/storage.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/parse_config_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ir/primitive_t_value.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/dynamic_library_loader.cc
@@ -137,6 +133,7 @@ add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
 add_subdirectory(registry)
 add_subdirectory(preprocess)
+add_subdirectory(config_parser)
 add_subdirectory(${CORE_DIR} mindspore_core)
 
 if(MSLITE_ENABLE_ACL)
@@ -231,6 +228,7 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::protobuf
         mindspore::flatbuffers
         preprocess_mid
+        config_parser_mid
         )
 
 if(MSLITE_ENABLE_ACL)

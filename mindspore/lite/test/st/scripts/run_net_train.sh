@@ -110,6 +110,14 @@ function should_run_example() {
   return $ret
 }
 
+function GenerateWeightQuantConfig() {
+  echo "[common_quant_param]" > $4
+  echo "quant_type=WEIGHT_QUANT" >> $4
+  echo "bit_num=$1" >> $4
+  echo "min_quant_weight_size=$2" >> $4
+  echo "min_quant_weight_channel=$3" >> $4
+}
+
 function parse_line() {
     i=1
     loss_name=
@@ -126,7 +134,9 @@ function parse_line() {
         case ${line_array[i]} in
            "weight_quant")
             model_name="${line_array[0]}_train_quant"
-            WEIGHT_QUANT="--quantType=WeightQuant --bitNum=8 --quantWeightSize=0 --quantWeightChannel=0"
+            weight_quant_config="${model_name}.cfg"
+            GenerateWeightQuantConfig 8 0 0 ${weight_quant_config}
+            WEIGHT_QUANT="--configFile=${weight_quant_config}"
             ;;
           "vb")
             virtual_batch="true"

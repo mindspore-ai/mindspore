@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "tools/converter/preprocess/opencv_convert_utils.h"
+#include "tools/converter/preprocess/opencv_utils.h"
+#include <vector>
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 namespace mindspore {
@@ -31,17 +32,44 @@ cv::ColorConversionCodes ConvertColorConversionCodes(const std::string &format) 
   }
 }
 
-cv::InterpolationFlags ConvertResizeFlag(const std::string &flag) {
-  if (flag == "NEAREST") {
+cv::ColorConversionCodes ConvertColorConversionCodes(preprocess::ImageToFormat format) {
+  if (format == RGB) {
+    return cv::COLOR_BGR2RGB;
+  } else if (format == GRAY) {
+    return cv::COLOR_BGR2GRAY;
+  } else {
+    MS_LOG(ERROR) << "Unsupported format:" << format;
+    return cv::COLOR_COLORCVT_MAX;
+  }
+}
+
+cv::InterpolationFlags ConvertResizeMethod(const std::string &method) {
+  if (method == "NEAREST") {
     return cv::INTER_NEAREST;
-  } else if (flag == "LINEAR") {
+  } else if (method == "LINEAR") {
     return cv::INTER_LINEAR;
-  } else if (flag == "CUBIC") {
+  } else if (method == "CUBIC") {
     return cv::INTER_CUBIC;
   } else {
-    MS_LOG(ERROR) << "Unsupported resize method:" << flag;
+    MS_LOG(ERROR) << "Unsupported resize method:" << method;
     return cv::INTER_MAX;
   }
+}
+
+int GetMatData(const cv::Mat &mat, void **data, size_t *size) {
+  std::vector<char> array;
+  (*size) = 0;
+  for (int i = 0; i < mat.rows; ++i) {
+    array.insert(array.end(), mat.ptr(i), mat.ptr(i) + mat.cols * mat.elemSize());
+    (*size) += mat.cols * mat.elemSize();
+  }
+
+  (*data) = new char[*size];
+  if (memcpy_s(*data, *size, array.data(), array.size()) != EOK) {
+    MS_LOG(ERROR) << "memcpy failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 }  // namespace preprocess
 }  // namespace lite
