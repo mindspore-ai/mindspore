@@ -14,16 +14,10 @@
 # ============================================================================
 
 import os
-
 import cv2
 
 
-def resize_one_img(
-    org_img,
-    resize_to=(608, 608),
-    interpolation=cv2.INTER_LINEAR,
-    output_file_name=None,
-):
+def resize_one_img(org_img, resize_to=(608, 608), interpolation=cv2.INTER_LINEAR, output_file_name=None):
     if not output_file_name:
         output_file_name = "_boxed".join(os.path.splitext(org_img))
     else:
@@ -36,9 +30,7 @@ def resize_one_img(
     cv2.imwrite(output_file_name, resized_img)
 
 
-def resize_imgs(
-    img_dir, output_dir, resize_to=(608, 608), interpolation=cv2.INTER_LINEAR
-):
+def resize_imgs(img_dir, output_dir, resize_to=(608, 608), interpolation=cv2.INTER_LINEAR):
     imgs = os.listdir(img_dir)
     img_full_names = [
         os.path.join(img_dir, img)
