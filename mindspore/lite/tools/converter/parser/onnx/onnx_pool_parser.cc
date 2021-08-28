@@ -20,14 +20,16 @@
 #include "ops/fusion/avg_pool_fusion.h"
 #include "ops/fusion/max_pool_fusion.h"
 #include "include/registry/parser_context.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::AvgPoolFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_pad_mode(mindspore::PadMode::PAD);
-  mindspore::RoundMode roundMode = mindspore::RoundMode::FLOOR;
+  mindspore::RoundMode round_mode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
   std::vector<int64_t> strides;
   std::vector<int64_t> pads;
@@ -64,9 +66,9 @@ ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
     }
     if (attribute_name == "ceil_mode") {
       if (onnx_node_attr.i() == 0) {
-        roundMode = mindspore::RoundMode::FLOOR;
+        round_mode = mindspore::RoundMode::FLOOR;
       } else {
-        roundMode = mindspore::RoundMode::CEIL;
+        round_mode = mindspore::RoundMode::CEIL;
       }
     }
     if (attribute_name == "dilations") {
@@ -74,7 +76,7 @@ ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
       return nullptr;
     }
   }
-  prim->set_round_mode(roundMode);
+  prim->set_round_mode(round_mode);
 
   if (strides.empty()) {
     strides.push_back(1);
@@ -98,8 +100,9 @@ ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
 
 ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::MaxPoolFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
-  mindspore::RoundMode roundMode = mindspore::RoundMode::FLOOR;
+  mindspore::RoundMode round_mode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
   std::vector<int64_t> strides;
   std::vector<int64_t> pads;
@@ -137,9 +140,9 @@ ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
     }
     if (attribute_name == "ceil_mode") {
       if (onnx_node_attr.i() == 0) {
-        roundMode = mindspore::RoundMode::FLOOR;
+        round_mode = mindspore::RoundMode::FLOOR;
       } else {
-        roundMode = mindspore::RoundMode::CEIL;
+        round_mode = mindspore::RoundMode::CEIL;
       }
     }
     if (attribute_name == "dilations") {
@@ -147,7 +150,7 @@ ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
       return nullptr;
     }
   }
-  prim->set_round_mode(roundMode);
+  prim->set_round_mode(round_mode);
 
   if (pads.empty()) {
     pads = {0, 0, 0, 0};

@@ -21,12 +21,13 @@
 #include "ops/fusion/prelu_fusion.h"
 #include "ops/elu.h"
 #include "ops/fusion/activation.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU);
 
   return prim.release();
@@ -34,7 +35,7 @@ ops::PrimitiveC *OnnxReluParser::Parse(const onnx::GraphProto &onnx_graph, const
 
 ops::PrimitiveC *OnnxLeakyReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "alpha") {
@@ -49,7 +50,7 @@ ops::PrimitiveC *OnnxLeakyReluParser::Parse(const onnx::GraphProto &onnx_graph, 
 
 ops::PrimitiveC *OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::PReLUFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   std::vector<onnx::TensorProto> params;
   const auto &input_name = onnx_node.input(1);
   auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
@@ -77,6 +78,7 @@ ops::PrimitiveC *OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, cons
       prim->set_channel_shared(slope_size == 1);
     } else {
       const auto slope_raw_data = reinterpret_cast<const float *>(slope_data->raw_data().data());
+      MS_CHECK_TRUE_RET(slope_raw_data != nullptr, nullptr);
       const int64_t slope_size = slope_data->raw_data().size() / sizeof(float);
       slope.resize(slope_size);
       bool channel_shared = false;
@@ -85,7 +87,8 @@ ops::PrimitiveC *OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, cons
         channel_shared = true;
       } else {
         slope.resize(slope_size);
-        if (memcpy_s(slope.data(), slope_size * sizeof(float), slope_raw_data, slope_size * sizeof(float)) != EOK) {
+        if (memcpy_s(slope.data(), slope_data->raw_data().size(), slope_raw_data, slope_data->raw_data().size()) !=
+            EOK) {
           MS_LOG(ERROR) << "memcpy_s failed";
           return nullptr;
         }
@@ -102,7 +105,7 @@ ops::PrimitiveC *OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, cons
 
 ops::PrimitiveC *OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Elu>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "alpha") {
@@ -115,7 +118,7 @@ ops::PrimitiveC *OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph, const 
 
 ops::PrimitiveC *OnnxTanhParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::TANH);
 
   return prim.release();
@@ -123,7 +126,7 @@ ops::PrimitiveC *OnnxTanhParser::Parse(const onnx::GraphProto &onnx_graph, const
 
 ops::PrimitiveC *OnnxSigmoidParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::SIGMOID);
 
   return prim.release();

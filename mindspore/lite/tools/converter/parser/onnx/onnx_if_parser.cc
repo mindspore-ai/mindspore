@@ -18,11 +18,13 @@
 #include <memory>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include "tools/converter/ops/ops_def.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxIfParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<If>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 

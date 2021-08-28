@@ -14,24 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONSTANT_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONSTANT_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONV_BASE_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONV_BASE_PARSER_H
 
+#include <memory>
+#include <utility>
+#include <vector>
+#include <string>
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
-class OnnxConstantParser : public OnnxNodeParser {
+class OnnxConvBaseParser : public OnnxNodeParser {
  public:
-  OnnxConstantParser() : OnnxNodeParser("Constant") {}
-  ~OnnxConstantParser() override = default;
+  ~OnnxConvBaseParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
-
- private:
-  STATUS AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *prim);
+ protected:
+  explicit OnnxConvBaseParser(std::string nodeName) : OnnxNodeParser(std::move(nodeName)) {}
+  STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kernels, std::vector<int64_t> *strides,
+                      std::vector<int64_t> *dilation, std::vector<int64_t> *pads, bool *conv1d);
 };
+
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONSTANT_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONV_BASE_PARSER_H

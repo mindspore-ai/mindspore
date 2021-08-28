@@ -18,12 +18,13 @@
 #include <memory>
 #include <vector>
 #include "ops/fusion/pad_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::PadFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   mindspore::PaddingMode padding_mode;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();

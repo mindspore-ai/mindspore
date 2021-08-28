@@ -17,11 +17,13 @@
 #include "tools/converter/parser/onnx/onnx_biasadd_parser.h"
 #include <memory>
 #include "ops/bias_add.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxBiasAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::BiasAdd>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 

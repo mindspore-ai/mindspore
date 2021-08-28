@@ -18,13 +18,13 @@
 #include <memory>
 #include <vector>
 #include "ops/broadcast_to.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
-constexpr int kInputSize1 = 2;
 ops::PrimitiveC *OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::BroadcastTo>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   std::vector<int64_t> dst_shape;
   if (onnx_node.input_size() != kInputSize1) {
     for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -44,12 +44,12 @@ ops::PrimitiveC *OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, con
       MS_LOG(ERROR) << "can not find node: " << onnx_expand_power;
       return nullptr;
     }
-    for (const auto &attrPower : node_iter->attribute()) {
-      if (attrPower.name() == "value") {
-        const auto &t = attrPower.t();
-        auto *dataPtr = reinterpret_cast<const int64_t *>(t.raw_data().data());
+    for (const auto &attr_power : node_iter->attribute()) {
+      if (attr_power.name() == "value") {
+        const auto &t = attr_power.t();
+        auto *data_ptr = reinterpret_cast<const int64_t *>(t.raw_data().data());
         for (int i = 0; i < t.dims(0); ++i) {
-          dst_shape.emplace_back(dataPtr[i]);
+          dst_shape.emplace_back(data_ptr[i]);
         }
       }
     }

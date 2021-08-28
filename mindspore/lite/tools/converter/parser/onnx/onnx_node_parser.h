@@ -33,7 +33,7 @@ namespace mindspore {
 namespace lite {
 class OnnxNodeParser {
  public:
-  explicit OnnxNodeParser(std::string nodeName) : name(std::move(nodeName)) {}
+  explicit OnnxNodeParser(std::string node_name) : name_(std::move(node_name)) {}
 
   virtual ~OnnxNodeParser() = default;
 
@@ -41,23 +41,28 @@ class OnnxNodeParser {
     return nullptr;
   }
 
-  static STATUS set_opset_version(int version) {
+  static STATUS set_opset_version(int64_t version) {
     opset_version_ = version;
     return RET_OK;
   }
-  static int opset_version() { return opset_version_; }
+
+  static int64_t opset_version() { return opset_version_; }
+
+  static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor, const tensor::TensorPtr &tensor_info);
+
+  static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
+
+  static size_t GetOnnxElementNum(const onnx::TensorProto &onnx_tensor, bool *overflowed);
 
  protected:
   static mindspore::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
 
-  static STATUS GetPadMode(const onnx::AttributeProto &onnx_node_attr, std::string *mode);
+  static STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
 
-  STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
-
-  const std::string name;
+  const std::string name_;
 
  private:
-  static int opset_version_;
+  static int64_t opset_version_;
 };
 }  // namespace lite
 }  // namespace mindspore

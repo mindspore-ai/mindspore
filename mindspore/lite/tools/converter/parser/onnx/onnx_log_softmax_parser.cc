@@ -17,12 +17,13 @@
 #include "tools/converter/parser/onnx/onnx_log_softmax_parser.h"
 #include <memory>
 #include "ops/log_softmax.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxLogSoftmaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::LogSoftmax>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   int64_t axis;
   bool axis_is_def = true;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -35,7 +36,7 @@ ops::PrimitiveC *OnnxLogSoftmaxParser::Parse(const onnx::GraphProto &onnx_graph,
   if (axis_is_def) {
     axis = OnnxNodeParser::opset_version() >= 13 ? -1 : 1;
   }
-  prim->set_axis({axis});
+  prim->set_axis(axis);
 
   return prim.release();
 }

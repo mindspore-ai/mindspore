@@ -17,12 +17,13 @@
 #include "tools/converter/parser/onnx/onnx_lstm_parser.h"
 #include <memory>
 #include "ops/lstm.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxLstmParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::LSTM>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "direction") {
       const auto &direction = onnx_node_attr.s();

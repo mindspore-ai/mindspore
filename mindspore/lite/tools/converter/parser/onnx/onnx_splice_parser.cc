@@ -19,17 +19,19 @@
 #include <string>
 #include <memory>
 #include "ops/splice.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxSpliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx Splice Parser";
   auto primitive = std::make_unique<ops::Splice>();
+  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   std::vector<int64_t> context;
   std::vector<int64_t> forward_indexes;
   int64_t output_dim = 0;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const std::string attribute_name = onnx_node_attr.name();
+    const std::string &attribute_name = onnx_node_attr.name();
     if (attribute_name == "context") {
       const int32_t size = onnx_node_attr.ints_size();
       context.resize(size);

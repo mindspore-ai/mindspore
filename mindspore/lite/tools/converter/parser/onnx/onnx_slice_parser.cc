@@ -24,12 +24,13 @@
 #include "ops/strided_slice.h"
 #include "ops/op_utils.h"
 #include "include/registry/parser_context.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::StridedSlice>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   std::vector<int32_t> starts;
   std::vector<int32_t> ends;
   std::vector<int32_t> axes;

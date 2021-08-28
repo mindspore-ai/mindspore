@@ -18,12 +18,13 @@
 #include <memory>
 #include <vector>
 #include "ops/fusion/reduce_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::ReduceFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_keep_dims(true);
 
   std::vector<int32_t> axes = {};
