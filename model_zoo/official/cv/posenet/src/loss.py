@@ -14,7 +14,7 @@
 # ============================================================================
 """define evaluation loss function for network."""
 import mindspore.nn as nn
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -42,7 +42,7 @@ class EuclideanDistance(nn.Cell):
 
         return res
 
-class PoseLoss(_Loss):
+class PoseLoss(LossBase):
     """define loss function"""
     def __init__(self, w1_x, w2_x, w3_x, w1_q, w2_q, w3_q):
         super(PoseLoss, self).__init__()

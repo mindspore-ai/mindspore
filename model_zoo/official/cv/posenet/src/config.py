@@ -18,7 +18,6 @@ network config setting
 from easydict import EasyDict as edict
 
 common_config = edict({
-    'device_target': 'GPU',
     'device_id': 0,
     'pre_trained': True,
     'max_steps': 30000,

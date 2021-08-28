@@ -17,37 +17,30 @@
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "bash run.sh DATASET_NAME RANK_SIZE"
-echo "For example: bash run_distribute.sh dataset_name 8"
+echo "For example: bash run_distribute.sh dataset_name rank_table"
 echo "It is better to use the absolute path."
 echo "=============================================================================================================="
 set -e
+get_real_path(){
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
 
 DATASET_NAME=$1
-RANK_SIZE=$2
 export DATASET_NAME
-export RANK_SIZE
+export RANK_TABLE_FILE=$(get_real_path $2)
+export RANK_SIZE=8
 
 EXEC_PATH=$(pwd)
 echo "$EXEC_PATH"
 
-test_dist_8pcs()
-{
-    export RANK_TABLE_FILE=${EXEC_PATH}/rank_table_8pcs.json
-    export RANK_SIZE=8
-}
-
-test_dist_2pcs()
-{
-    export RANK_TABLE_FILE=${EXEC_PATH}/rank_table_2pcs.json
-    export RANK_SIZE=2
-}
-
-test_dist_${RANK_SIZE}pcs
-
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
 cd ../
-for((i=0;i<${RANK_SIZE};i++))
+for((i=0;i<8;i++))
 do
     rm -rf device$i
     mkdir device$i
@@ -61,7 +54,10 @@ do
     export RANK_ID=$i
     echo "start training for device $i"
     env > env$i.log
-    python train.py --run_distribute True --dataset $1 --device_num $2 --is_modelarts False > train$i.log 2>&1 &
+    python train.py --run_distribute True \
+                    --dataset $1 --device_num $2 \
+                    --is_modelarts False \
+                    --device_target "Ascend" > train$i.log 2>&1 &
     echo "$i finish"
     cd ../
 done
