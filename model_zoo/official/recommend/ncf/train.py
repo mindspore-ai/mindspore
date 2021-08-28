@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -79,8 +79,12 @@ def run_train():
                        mlp_reg_layers=[0.0, 0.0, 0.0, 0.0],
                        mf_dim=16)
     loss_net = NetWithLossClass(ncf_net)
-    train_net = TrainStepWrap(loss_net, ds_train.get_dataset_size() * (epochs + 1))
+    if config.device_target == "Ascend":
+        loss_scale = 16384.0
+    else:
+        loss_scale = 1.0
 
+    train_net = TrainStepWrap(loss_net, ds_train.get_dataset_size() * (epochs + 1), sens=loss_scale)
     train_net.set_train()
 
     model = Model(train_net)

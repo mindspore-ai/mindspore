@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ def run_eval():
         os.makedirs(config.output_path)
 
     context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Davinci",
+                        device_target=config.device_target,
                         save_graphs=False,
                         device_id=get_device_id())
 
