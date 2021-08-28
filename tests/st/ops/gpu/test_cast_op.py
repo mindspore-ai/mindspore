@@ -71,7 +71,7 @@ def test_cast():
     assert type1 == 'float32'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast1():
@@ -88,7 +88,7 @@ def test_cast1():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast2():
@@ -105,7 +105,7 @@ def test_cast2():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float64'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast3():
@@ -122,7 +122,7 @@ def test_cast3():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'int32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast4():
@@ -139,7 +139,7 @@ def test_cast4():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'int8'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast5():
@@ -156,7 +156,7 @@ def test_cast5():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'bool'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast6():
@@ -173,7 +173,7 @@ def test_cast6():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast7():
@@ -190,7 +190,7 @@ def test_cast7():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast8():
@@ -207,7 +207,7 @@ def test_cast8():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'int16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast9():
@@ -241,7 +241,7 @@ def test_cast10():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float64'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast11():
@@ -258,7 +258,7 @@ def test_cast11():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'int32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast12():
@@ -275,7 +275,7 @@ def test_cast12():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast13():
@@ -309,7 +309,7 @@ def test_cast14():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast15():
@@ -326,7 +326,7 @@ def test_cast15():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'int32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast16():
@@ -343,7 +343,7 @@ def test_cast16():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float64'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast17():
@@ -360,7 +360,7 @@ def test_cast17():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast18():
@@ -377,7 +377,7 @@ def test_cast18():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast19():
@@ -394,7 +394,7 @@ def test_cast19():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'bool'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast20():
@@ -411,7 +411,7 @@ def test_cast20():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'bool'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast21():
@@ -428,7 +428,7 @@ def test_cast21():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'bool'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast22():
@@ -445,7 +445,7 @@ def test_cast22():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'bool'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast23():
@@ -462,7 +462,7 @@ def test_cast23():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast24():
@@ -479,7 +479,7 @@ def test_cast24():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'int32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast25():
@@ -496,7 +496,7 @@ def test_cast25():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'int8'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast26():
@@ -513,7 +513,7 @@ def test_cast26():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float64'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast27():
@@ -530,7 +530,7 @@ def test_cast27():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'uint64'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast28():
@@ -564,7 +564,7 @@ def test_cast29():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'uint8'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast30():
@@ -581,7 +581,7 @@ def test_cast30():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'uint32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast31():

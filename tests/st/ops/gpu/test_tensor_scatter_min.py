@@ -86,19 +86,19 @@ def test_scatter_float16():
 def test_scatter_float32():
     scatter(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_uint8():
     scatter_unsigned(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_int8():
     scatter(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_int32():

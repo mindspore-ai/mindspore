@@ -101,25 +101,25 @@ def test_stack_graph_float32():
 def test_stack_graph_float16():
     stack(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_graph_int32():
     stack(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_graph_int16():
     stack(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_graph_uint8():
     stack(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_graph_bool():
@@ -137,25 +137,25 @@ def test_stack_pynative_float32():
 def test_stack_pynative_float16():
     stack_pynative(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_pynative_int32():
     stack_pynative(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_pynative_int16():
     stack_pynative(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_pynative_uint8():
     stack_pynative(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_pynative_bool():

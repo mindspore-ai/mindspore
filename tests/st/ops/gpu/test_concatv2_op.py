@@ -63,19 +63,19 @@ def test_axis32_float64():
 def test_axis32_float32():
     axis32(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis32_int16():
     axis32(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis32_uint8():
     axis32(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis32_bool():
@@ -124,7 +124,7 @@ def test_axis43_float64():
 def test_axis43_float32():
     axis43(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis43_int16():
@@ -136,7 +136,7 @@ def test_axis43_int16():
 def test_axis43_uint8():
     axis43(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis43_bool():
@@ -179,7 +179,7 @@ def test_axis21_float64():
 def test_axis21_float32():
     axis21(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis21_int16():
@@ -191,7 +191,7 @@ def test_axis21_int16():
 def test_axis21_uint8():
     axis21(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis21_bool():
@@ -237,19 +237,19 @@ def test_concat_3i_float64():
 def test_concat_3i_float32():
     concat_3i(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_3i_int16():
     concat_3i(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_3i_uint8():
     concat_3i(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_3i_bool():
@@ -310,19 +310,19 @@ def test_concat_4i_float64():
 def test_concat_4i_float32():
     concat_4i(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_4i_int16():
     concat_4i(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_4i_uint8():
     concat_4i(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_4i_bool():

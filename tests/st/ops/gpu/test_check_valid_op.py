@@ -59,13 +59,13 @@ def test_check_valid_float32():
 def test_check_valid_float16():
     check_valid(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_check_valid_int16():
     check_valid(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_check_valid_uint8():

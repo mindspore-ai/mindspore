@@ -90,7 +90,7 @@ def zeros_like_dynamic(x):
     net = ZerosLikeDynamicNet()
     return net(x)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeros_like_dynamic_bool():
@@ -99,7 +99,7 @@ def test_zeros_like_dynamic_bool():
     expected = np.zeros([3, 4, 1, 2, 5])
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeros_like_dynamic_int8():
@@ -108,7 +108,7 @@ def test_zeros_like_dynamic_int8():
     expected = np.zeros([1, 4, 1, 6])
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeros_like_dynamic_uint8():
@@ -117,7 +117,7 @@ def test_zeros_like_dynamic_uint8():
     expected = np.zeros([3, 2, 5])
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeros_like_dynamic_int32():
@@ -126,7 +126,7 @@ def test_zeros_like_dynamic_int32():
     expected = np.zeros([2, 2, 2, 2])
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeros_like_dynamic_float16():

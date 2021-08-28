@@ -89,7 +89,7 @@ def test_layernormgrad0():
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-6, atol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernormgrad1():
@@ -143,7 +143,7 @@ def test_layernormgrad2():
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-6, atol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernormgrad3():
@@ -169,7 +169,7 @@ def test_layernormgrad3():
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-6, atol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernormgrad4():

@@ -69,28 +69,28 @@ def test_reverse_v2_float32():
     reverse_v2_1d(np.float32)
     reverse_v2_3d(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reverse_v2_uint8():
     reverse_v2_1d(np.uint8)
     reverse_v2_3d(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reverse_v2_int16():
     reverse_v2_1d(np.int16)
     reverse_v2_3d(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reverse_v2_int32():
     reverse_v2_1d(np.int32)
     reverse_v2_3d(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reverse_v2_int64():

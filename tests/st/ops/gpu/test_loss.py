@@ -95,7 +95,7 @@ def custom_loss(nptype):
     diff = test_output - output_data * 2.0
     assert np.all(abs(diff.asnumpy()) < error_range)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_custom_loss_float16():

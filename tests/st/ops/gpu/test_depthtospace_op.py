@@ -87,49 +87,49 @@ def test_depthtospace_graph_float32():
 def test_depthtospace_graph_float16():
     DepthToSpace(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_int32():
     DepthToSpace(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_int64():
     DepthToSpace(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_int8():
     DepthToSpace(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_int16():
     DepthToSpace(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_uint8():
     DepthToSpace(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_uint16():
     DepthToSpace(np.uint16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_uint32():
     DepthToSpace(np.uint32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_uint64():
@@ -147,49 +147,49 @@ def test_depthtospace_pynative_float32():
 def test_depthtospace_pynative_float16():
     DepthToSpace_pynative(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_int32():
     DepthToSpace_pynative(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_int64():
     DepthToSpace_pynative(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_int8():
     DepthToSpace_pynative(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_int16():
     DepthToSpace_pynative(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_uint8():
     DepthToSpace_pynative(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_uint16():
     DepthToSpace_pynative(np.uint16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_uint32():
     DepthToSpace_pynative(np.uint32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_uint64():

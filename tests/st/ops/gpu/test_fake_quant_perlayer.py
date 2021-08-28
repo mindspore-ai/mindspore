@@ -64,7 +64,7 @@ def test_fake_quant1():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant2():
@@ -86,7 +86,7 @@ def test_fake_quant2():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant3():
@@ -106,7 +106,7 @@ def test_fake_quant3():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant4():
@@ -126,7 +126,7 @@ def test_fake_quant4():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant5():
@@ -146,7 +146,7 @@ def test_fake_quant5():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant6():
@@ -166,7 +166,7 @@ def test_fake_quant6():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant7():
@@ -186,7 +186,7 @@ def test_fake_quant7():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant8():
@@ -206,7 +206,7 @@ def test_fake_quant8():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant9():
@@ -226,7 +226,7 @@ def test_fake_quant9():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant10():
@@ -246,7 +246,7 @@ def test_fake_quant10():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant11():
@@ -266,7 +266,7 @@ def test_fake_quant11():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant12():
@@ -286,7 +286,7 @@ def test_fake_quant12():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant13():
@@ -306,7 +306,7 @@ def test_fake_quant13():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant14():
@@ -326,7 +326,7 @@ def test_fake_quant14():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant15():

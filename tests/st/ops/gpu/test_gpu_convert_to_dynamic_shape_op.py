@@ -86,7 +86,7 @@ def gpu_convert_to_dynamic_shape_int(dtype):
     ms_out = gpu_convert_to_dynamic_shape(x)
     np.testing.assert_array_equal(x, ms_out)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_bool():
@@ -97,7 +97,7 @@ def test_gpu_convert_to_dynamic_shape_bool():
     ms_out = gpu_convert_to_dynamic_shape(x)
     np.testing.assert_array_equal(x, ms_out)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_float16():
@@ -115,49 +115,49 @@ def test_gpu_convert_to_dynamic_shape_float32():
 def test_gpu_convert_to_dynamic_shape_float64():
     gpu_convert_to_dynamic_shape_float(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_int8():
     gpu_convert_to_dynamic_shape_int(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_int16():
     gpu_convert_to_dynamic_shape_int(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_int32():
     gpu_convert_to_dynamic_shape_int(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_int64():
     gpu_convert_to_dynamic_shape_int(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_uint8():
     gpu_convert_to_dynamic_shape_int(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_uint16():
     gpu_convert_to_dynamic_shape_int(np.uint16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_uint32():
     gpu_convert_to_dynamic_shape_int(np.uint32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_uint64():
