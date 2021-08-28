@@ -83,18 +83,18 @@ void PoolingBaseCPUKernel::FreeQuantParam() {
 }
 
 int PoolingBaseCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_CHECK_TRUE_RET(in_tensors_.size() == 1, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_NULL_RETURN(pooling_param_);
   pooling_param_->thread_num_ = thread_count_;
-  CHECK_NULL_RETURN(op_parameter_);
   return RET_OK;
 }
 
 int PoolingBaseCPUKernel::ReSize() {
   auto in_tensor = this->in_tensors_.front();
   auto out_tensor = this->out_tensors_.front();
-  MS_ASSERT(in_tensor != nullptr);
-  MS_ASSERT(out_tensor != nullptr);
   pooling_param_->input_batch_ = in_tensor->Batch();
   pooling_param_->input_channel_ = in_tensor->Channel();
   pooling_param_->input_h_ = in_tensor->Height();

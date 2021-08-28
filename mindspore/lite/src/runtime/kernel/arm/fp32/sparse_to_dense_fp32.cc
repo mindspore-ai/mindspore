@@ -30,12 +30,14 @@ using mindspore::schema::PrimitiveType_SparseToDense;
 
 namespace mindspore::kernel {
 int SparseToDenseCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_CHECK_TRUE_RET(in_tensors_.size() == kInputSize2, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(in_tensors_[2]);
+  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
+  CHECK_NULL_RETURN(out_tensors_.front());
   auto input2 = in_tensors_.at(2);
-  MS_ASSERT(input2);
   auto input3 = in_tensors_.at(3);
-  MS_ASSERT(input3);
   sparse_values = reinterpret_cast<float *>(input2->MutableData());
   CHECK_NULL_RETURN(sparse_values);
   CHECK_NULL_RETURN(input3->MutableData());
@@ -54,6 +56,7 @@ int SparseToDenseCPUKernel::ReSize() {
   std::vector<int> out_shape_tensor = output0->shape();
   auto output_shape_tmp = reinterpret_cast<int *>(out_shape_tensor.data());
   int output_dim = static_cast<int>(output0->shape().size());
+  MS_CHECK_TRUE_MSG(output_dim <= DIMENSION_4D, RET_ERROR, "output_dim should <= 4");
   for (int i = 0; i < DIMENSION_4D - output_dim; i++) {
     output_shape[i] = 1;
   }
@@ -71,13 +74,9 @@ int SparseToDenseCPUKernel::DoExcute(int task_id) {
   }
   int index_start = task_id * count_unit_;
   int index_end = index_start + real_dst_count;
-  if (index_num == 0) {
-    MS_LOG(ERROR) << "invalid index_num div";
-    return RET_ERROR;
-  }
+  MS_CHECK_FALSE_MSG(index_num == 0, RET_ERROR, "div zero");
   int out_width = output_num / index_num;
   CHECK_NULL_RETURN(sparse_indices_vect);
-  CHECK_NULL_RETURN(output_shape);
   CHECK_NULL_RETURN(sparse_values);
   CHECK_NULL_RETURN(output_data);
   SparseToDense(sparse_indices_vect, output_shape, sparse_values, default_value, output_data, isScalar, index_start,
@@ -184,6 +183,7 @@ int SparseToDenseCPUKernel::Run() {
   }
   output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(output_data);
+  MS_CHECK_FALSE_MSG(thread_count_ == 0, RET_ERROR, "div zero");
   count_unit_ = thread_count_ > 1 ? UP_DIV(index_num, thread_count_) : index_num;
   ret = ParallelLaunch(this->ms_context_, SparseToDenseRun, this, s2d_param->thread_num_);
   if (ret != RET_OK) {

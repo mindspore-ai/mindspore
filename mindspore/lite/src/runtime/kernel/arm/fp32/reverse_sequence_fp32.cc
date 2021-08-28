@@ -25,8 +25,12 @@ using mindspore::schema::PrimitiveType_ReverseSequence;
 
 namespace mindspore::kernel {
 int ReverseSequenceCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), kInputSize1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_CHECK_TRUE_RET(in_tensors_.size() == kInputSize1, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_NULL_RETURN(op_parameter_);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -57,8 +61,6 @@ int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, i
 int ReverseSequenceCPUKernel::ReSize() {
   auto input0 = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  MS_ASSERT(input0 != nullptr);
-  MS_ASSERT(output != nullptr);
 
   auto para = reinterpret_cast<ReverseSequenceParameter *>(op_parameter_);
 

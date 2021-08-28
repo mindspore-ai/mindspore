@@ -31,8 +31,11 @@ constexpr size_t kMirrorPadInputSize = 2;
 constexpr size_t kPadCommonInputSize = 2;
 }  // namespace
 int PadCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), kPadCommonInputSize);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_CHECK_TRUE_RET(in_tensors_.size() == kPadCommonInputSize || in_tensors_.size() == kInputSize2, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -105,8 +108,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
   output_separate_stride.resize(output_separate_dims.size());
   GetStride(output_separate_stride.data(), output_separate_dims.data(), output_separate_dims.size());
   /* init separate stride */
-  std::vector<int> remain_stride;
-  remain_stride.resize(0);
+  std::vector<int> remain_stride(0);
   int remain_size = GetStride(remain_stride.data(), output_separate_dims.data(), remain_stride.size());
   std::vector<int> right_pads(separate_offset.size());
   for (size_t i = 0; i < right_pads.size(); ++i) {
@@ -135,6 +137,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
       int dst_offset = dst_basic_offset;
       int value = index;
       for (size_t i = 0; i < pad_region.size() && pad_region_stride[i] != 0; ++i) {
+        NNACL_CHECK_ZERO_RETURN(pad_region_stride[i]);
         pad_cord[i] = value / pad_region_stride[i];
         value = value % pad_region_stride[i];
       }
@@ -216,12 +219,10 @@ int PadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int PadCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  MS_ASSERT(input);
-  MS_ASSERT(output);
   auto input_data = reinterpret_cast<float *>(input->data_c());
   auto output_data = reinterpret_cast<float *>(output->data_c());
-  MS_ASSERT(input_data);
-  MS_ASSERT(output_data);
+  CHECK_NULL_RETURN(input_data);
+  CHECK_NULL_RETURN(output_data);
   Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
 
   return RET_OK;
@@ -241,8 +242,9 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
   auto input_data = reinterpret_cast<float *>(input->data_c());
+  CHECK_NULL_RETURN(input_data);
   auto output_data = reinterpret_cast<float *>(output->data_c());
-
+  CHECK_NULL_RETURN(output_data);
   /* Fast Mirror pad */
   if (mirror_pad_block_.size() != 0) {
     /* copy center part */
@@ -273,6 +275,7 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
   }
 
   /* Common Mirror pad */
+  MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "div zero");
   int unit = UP_DIV(output->ElementsNum(), op_parameter_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, output->ElementsNum());
@@ -314,10 +317,7 @@ int PadCPUKernel::CopyPaddingFromInput() {
   }
   auto padding_tensor = in_tensors_.at(1);
   auto paddings = reinterpret_cast<int *>(padding_tensor->data_c());
-  if (paddings == nullptr) {
-    MS_LOG(ERROR) << "Pad second input data nullptr";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(paddings);
   auto input_shape = in_tensors_.at(0)->shape();
   int rank = static_cast<int>(input_shape.size());
   if (padding_tensor->ElementsNum() != rank * 2) {

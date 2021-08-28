@@ -26,7 +26,10 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
 int ConcatCPUKernel::Init() {
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_CHECK_TRUE_RET(in_tensors_.size() >= 1, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_.front());
+  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
+  CHECK_NULL_RETURN(out_tensors_.front());
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -58,6 +61,7 @@ int ConcatCPUKernel::DoConcat(int task_id) {
   auto output_addr = out_tensors_.at(0)->data_c();
   CHECK_NULL_RETURN(output_addr);
 
+  MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "div zero");
   Concat(inputs_addr.data(), input_num, concat_param_->axis_, inputs_output_shape.data(), output_shape.size(),
          output_addr, task_id, op_parameter_->thread_num_, sizeof(float));
   return RET_OK;

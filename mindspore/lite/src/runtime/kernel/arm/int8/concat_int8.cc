@@ -26,23 +26,20 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
 int ConcatInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.front());
+  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
+  CHECK_NULL_RETURN(out_tensors_.front());
   concat_param_->input_shapes_ = nullptr;
   auto input_num = in_tensors_.size();
-  MS_CHECK_FALSE(input_num == 0, RET_ERROR);
-  if (SIZE_MUL_OVERFLOW(sizeof(int8_t *), input_num)) {
-    MS_LOG(ERROR) << "mul overflow";
-    return RET_ERROR;
-  }
+  MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(sizeof(int8_t *), input_num), RET_ERROR, "mul overflow");
   input_data_ = reinterpret_cast<int8_t **>(malloc(sizeof(int8_t *) * input_num));
   if (input_data_ == nullptr) {
     MS_LOG(ERROR) << "Null pointer reference: inputs_array.";
     return RET_ERROR;
   }
 
-  if (SIZE_MUL_OVERFLOW(sizeof(QuantArg), input_num)) {
-    MS_LOG(ERROR) << "mul overflow";
-    return RET_ERROR;
-  }
+  MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(sizeof(QuantArg), input_num), RET_ERROR, "mul overflow");
   concat_param_->quant_arg_.in_args_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg) * input_num));
   if (concat_param_->quant_arg_.in_args_ == nullptr) {
     MS_LOG(ERROR) << "Null pointer reference: quant_concat_parm_->in_quant_args_.";
@@ -75,10 +72,7 @@ int ConcatInt8CPUKernel::ReSize() {
 
   auto input_num = in_tensors_.size();
   concat_param_->input_num_ = static_cast<int>(input_num);
-  if (SIZE_MUL_OVERFLOW(sizeof(int *), input_num)) {
-    MS_LOG(ERROR) << "mul overflow";
-    return RET_ERROR;
-  }
+  MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(sizeof(int *), input_num), RET_ERROR, "mul overflow");
   concat_param_->input_shapes_ = reinterpret_cast<int **>(malloc(sizeof(int *) * input_num));
   if (concat_param_->input_shapes_ == nullptr) {
     MS_LOG(ERROR) << "malloc concat_param_->input_shapes_ failed.";
@@ -86,10 +80,7 @@ int ConcatInt8CPUKernel::ReSize() {
   }
   for (size_t i = 0; i < input_num; i++) {
     auto in_shape = in_tensors_.at(i)->shape();
-    if (SIZE_MUL_OVERFLOW(in_shape.size(), sizeof(int))) {
-      MS_LOG(ERROR) << "mul overflow";
-      return RET_ERROR;
-    }
+    MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(in_shape.size(), sizeof(int)), RET_ERROR, "mul overflow");
     concat_param_->input_shapes_[i] = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
     if (concat_param_->input_shapes_[i] == nullptr) {
       MS_LOG(ERROR) << "malloc concat_param_->input_shapes_[" << i << "]"
@@ -108,10 +99,7 @@ int ConcatInt8CPUKernel::ReSize() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   auto out_shape = output_tensor->shape();
   size_t output_dim = out_shape.size();
-  if (SIZE_MUL_OVERFLOW(output_dim, sizeof(int))) {
-    MS_LOG(ERROR) << "mul overflow";
-    return RET_ERROR;
-  }
+  MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(output_dim, sizeof(int)), RET_ERROR, "mul overflow");
   concat_param_->output_shapes_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
   if (concat_param_->output_shapes_ == nullptr) {
     MS_LOG(ERROR) << "malloc concat_param_->output_shapes_ failed.";
@@ -129,7 +117,7 @@ int ConcatInt8CPUKernel::ReSize() {
 
 int ConcatInt8CPUKernel::Run() {
   auto input_num = concat_param_->input_num_;
-  MS_CHECK_FALSE(op_parameter_->thread_num_ == 0, RET_ERROR);
+  MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "div zero");
   count_unit_ =
     op_parameter_->thread_num_ > 1 ? UP_DIV(before_axis_size, op_parameter_->thread_num_) : before_axis_size;
   concat_param_->count_unit_ = count_unit_;

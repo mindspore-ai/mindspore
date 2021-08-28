@@ -112,10 +112,12 @@ int PadInt8CPUKernel::ReSize() {
 }
 
 int PadInt8CPUKernel::Init() {
-  MS_ASSERT(pad_param_);
-  CHECK_LESS_RETURN(in_tensors_.size(), kInputSize1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(op_parameter_);
+  MS_CHECK_TRUE_RET(in_tensors_.size() == kInputSize1 || in_tensors_.size() == kInputSize2, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_NULL_RETURN(pad_param_);
   auto error_code = SetQuantParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SetQuantParam failed. errorcode: " << error_code;
@@ -130,7 +132,6 @@ int PadInt8CPUKernel::Init() {
 int PadInt8CPUKernel::RunImpl(int task_id) {
   CHECK_NULL_RETURN(in_data_);
   CHECK_NULL_RETURN(out_data_);
-  CHECK_NULL_RETURN(in_dims_);
   CHECK_NULL_RETURN(out_dims_);
   return PadConstant4D(in_data_, out_data_, in_dims_, out_dims_, pad_param_->paddings_, task_id,
                        op_parameter_->thread_num_);
@@ -155,17 +156,18 @@ int PadInt8CPUKernel::HandleMirrorPad() {
   if (ret != RET_OK) {
     return ret;
   }
-  CalculateStrides();
+  ret = CalculateStrides();
+  if (ret != RET_OK) {
+    return ret;
+  }
   pad_param_->mirror_offset_ = pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_REFLECT) ? 1 : 0;
   return RET_OK;
 }
 
-void PadInt8CPUKernel::CalculateStrides() {
+int PadInt8CPUKernel::CalculateStrides() {
   pad_param_->in_strides[COMM_SHAPE_SIZE - 1] = 1;
   for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
-    if (INT_MUL_OVERFLOW(in_dims_[i + 1], pad_param_->in_strides[i + 1])) {
-      return;
-    }
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(in_dims_[i + 1], pad_param_->in_strides[i + 1]), RET_ERROR, "mul overflow");
     pad_param_->in_strides[i] = in_dims_[i + 1] * pad_param_->in_strides[i + 1];
   }
   for (auto i = 0; i < COMM_SHAPE_SIZE; ++i) {
@@ -173,11 +175,10 @@ void PadInt8CPUKernel::CalculateStrides() {
   }
   pad_param_->out_strides[COMM_SHAPE_SIZE - 1] = 1;
   for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
-    if (INT_MUL_OVERFLOW(out_dims_[i + 1], pad_param_->out_strides[i + 1])) {
-      return;
-    }
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(out_dims_[i + 1], pad_param_->out_strides[i + 1]), RET_ERROR, "mul overflow");
     pad_param_->out_strides[i] = out_dims_[i + 1] * pad_param_->out_strides[i + 1];
   }
+  return RET_OK;
 }
 
 int PadInt8CPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length) const {
@@ -195,14 +196,13 @@ int PadInt8CPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_p
 
 int PadInt8CPUKernel::RunMirrorPadImpl(int task_id) {
   auto input = in_tensors_.at(0);
-  MS_ASSERT(input);
   auto output = out_tensors_.at(0);
-  MS_ASSERT(output);
   auto input_data = reinterpret_cast<int8_t *>(input->MutableData());
   CHECK_NULL_RETURN(input_data);
   auto output_data = reinterpret_cast<int8_t *>(output->MutableData());
   CHECK_NULL_RETURN(output_data);
-  MS_CHECK_FALSE(op_parameter_->thread_num_ == 0, RET_ERROR);
+
+  MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "div zero");
   int unit = UP_DIV(output->ElementsNum(), op_parameter_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, output->ElementsNum());
