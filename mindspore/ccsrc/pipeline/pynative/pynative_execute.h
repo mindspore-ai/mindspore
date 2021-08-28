@@ -174,6 +174,8 @@ class GradExecutor {
   FuncGraphPtr curr_g() const;
   TopCellInfoPtr top_cell() const;
   void CheckNeedCompileGraph();
+  void PushHighOrderGraphStack(const TopCellInfoPtr &top_cell);
+  size_t GetHighOrderStackSize() const { return high_order_stack_.size(); }
   TopCellInfoPtr GetTopCell(const string &cell_id) const;
   void EnableOpGraphCache(bool is_enable);
   bool need_renormalize() const { return need_renormalize_; }
@@ -209,12 +211,10 @@ class GradExecutor {
   // Higher derivative
   bool IsNestedGrad() const;
   void SwitchTopcell();
-  size_t GetHighOrderStackSize() const { return high_order_stack_.size(); }
   void MakeNestedCnode(const py::object &cell, const std::string &cell_id, const py::args &forward_args,
                        const pipeline::ResourcePtr &resource, const py::object &out);
   void PushCellStack(const std::string &cell_id);
   void PopCellStack();
-  void PushHighOrderGraphStack(const TopCellInfoPtr &top_cell);
   TopCellInfoPtr PopHighOrderGraphStack();
   // Manage information of top cell.
   FuncGraphPtr GetDfbuilder(const std::string &cell_id = "");

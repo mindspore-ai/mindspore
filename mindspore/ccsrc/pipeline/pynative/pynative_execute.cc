@@ -1337,6 +1337,7 @@ TopCellInfoPtr GradExecutor::GetTopCell(const std::string &cell_id) const {
 }
 
 void GradExecutor::EnableOpGraphCache(bool is_enable) {
+  MS_LOG(DEBUG) << "Op cache is enable: " << is_enable;
   enable_op_cache_ = is_enable;
   const auto inst = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
@@ -2041,6 +2042,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
         ResetTopCellInfo(pre_top_cell, args);
         PushHighOrderGraphStack(pre_top_cell);
         set_top_cell(pre_top_cell);
+        grad_order_ = pre_top_cell->grad_order();
         return;
       }
     } else if ((top_cell()->IsSubCell(cell_id) || GetHighOrderStackSize() >= 1) &&
@@ -2096,7 +2098,7 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::args &args, 
   top_cell_list_.emplace_back(top_cell);
   PushHighOrderGraphStack(top_cell);
   set_top_cell(top_cell);
-  MS_LOG(DEBUG) << "New top graph, df_builder ptr " << df_builder.get() << " resource ptr " << resource.get();
+  MS_LOG(DEBUG) << "New top graph, curr_g ptr " << curr_g_.get() << " resource ptr " << resource.get();
 }
 
 void GradExecutor::SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
@@ -2496,8 +2498,10 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
 
 py::object GradExecutor::CheckGraph(const py::object &cell, const py::args &args) {
   BaseRef ret = false;
-  ++grad_order_;
   check_graph_cell_id_ = GetCellId(cell, args);
+  if (!(top_cell_ != nullptr && top_cell_->cell_id() == check_graph_cell_id_ && grad_order_ >= 1)) {
+    ++grad_order_;
+  }
   if (!grad_is_running_) {
     MS_LOG(DEBUG) << "Grad not running yet";
     return BaseRefToPyData(ret);
@@ -2524,18 +2528,22 @@ py::object PynativeExecutor::CheckAlreadyRun(const py::object &cell, const py::a
   const auto &cell_id = grad_executor()->GetCellId(cell, args);
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {
-    input_args_id = input_args_id + GetId(args[i]) + "_";
+    input_args_id += GetId(args[i]) + "_";
   }
   // Check whether need to run forward process
   auto top_cell = grad_executor()->GetTopCell(cell_id);
   if (top_cell != nullptr) {
     forward_run = top_cell->forward_already_run();
+    auto curr_top_cell = grad_executor()->top_cell();
     grad_executor()->set_top_cell(top_cell);
     bool input_args_changed = !top_cell->input_args_id().empty() && top_cell->input_args_id() != input_args_id;
     if (forward_run && input_args_changed && top_cell->is_dynamic()) {
       MS_LOG(WARNING) << "The construct of running cell is dynamic and the input info of this cell has changed, "
                          "forward process will run again";
       forward_run = false;
+    }
+    if (forward_run && grad_executor()->GetHighOrderStackSize() >= 1) {
+      grad_executor()->PushHighOrderGraphStack(curr_top_cell);
     }
   }
   MS_LOG(DEBUG) << "Graph have already ran " << forward_run << " top cell id " << cell_id;
