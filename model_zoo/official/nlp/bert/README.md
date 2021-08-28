@@ -33,6 +33,7 @@
         - [Inference Process](#inference-process)
             - [Usage](#usage)
             - [result](#result)
+        - [Export ONNX model and inference](#export-onnx-model-and-inference)
     - [Model Description](#model-description)
     - [Performance](#performance)
         - [Pretraining Performance](#pretraining-performance)
@@ -713,6 +714,31 @@ Inference result is saved in current path, you can find result in acc.log file.
 ```eval log
 F1 0.931243
 ```
+
+### [Export ONNX model and inference](#contents)
+
+Currently, the ONNX model of Bert classification task can be exported, and third-party tools such as ONNXRuntime can be used to load ONNX for inference.
+
+- export ONNX
+
+```shell
+python export.py --config_path [../../task_classifier_config.yaml] --file_format ["ONNX"] --export_ckpt_file [CKPT_PATH] --num_class [NUM_CLASS] --export_file_name [EXPORT_FILE_NAME]
+```
+
+'CKPT_PATH' is mandatory, it is the path of the CKPT file that has been trained for a certain classification task model.
+'NUM_CLASS' is mandatory, it is the number of categories in the classification task model.
+'EXPORT_FILE_NAME' is optional, it is the name of the exported ONNX model. If not set, the ONNX model will be saved in the current directory with the default name.
+
+After running, the ONNX model of Bert will be saved in the current file directory.
+
+- Load ONNX and inference
+
+```shell
+python run_eval_onnx.py --config_path [../../task_classifier_config.yaml] --eval_data_file_path [EVAL_DATA_FILE_PATH] -export_file_name [EXPORT_FILE_NAME]
+```
+
+'EVAL_DATA_FILE_PATH' is mandatory, it is the eval data of the dataset used by the classification task.
+'EXPORT_FILE_NAME' is optional, it is the model name of the ONNX in the step of export ONNX, which is used to load the specified ONNX model for inference.
 
 ## [Model Description](#contents)
 

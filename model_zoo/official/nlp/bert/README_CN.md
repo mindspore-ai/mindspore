@@ -34,6 +34,7 @@
     - [推理过程](#推理过程)
         - [用法](#用法-2)
         - [结果](#结果)
+    - [导出onnx模型与推理](#导出onnx模型与推理)
     - [模型描述](#模型描述)
     - [性能](#性能)
         - [预训练性能](#预训练性能)
@@ -674,6 +675,31 @@ bash run_infer_310.sh [MINDIR_PATH] [LABEL_PATH] [DATA_FILE_PATH] [DATASET_FORMA
 ```eval log
 F1 0.931243
 ```
+
+## 导出onnx模型与推理
+
+当前已支持导出bert分类任务的ONNX模型, 并可通过ONNXRuntime等第三方工具加载ONNX进行推理。
+
+- 导出ONNX
+
+```shell
+python export.py --config_path [../../task_classifier_config.yaml] --file_format ["ONNX"] --export_ckpt_file [CKPT_PATH] --num_class [NUM_CLASS] --export_file_name [EXPORT_FILE_NAME]
+```
+
+`CKPT_PATH`为必选项, 是某个分类任务模型训练完毕的ckpt文件路径。
+`NUM_CLASS`为必选项, 是该分类任务模型的类别数。
+`EXPORT_FILE_NAME`为可选项, 是导出ONNX模型的名字, 如果未设置则ONNX模型会以默认名保存在当前目录下。
+
+运行结束后, 当前文件目录下会保存bert该分类任务模型的ONNX模型。
+
+- 加载ONNX并推理
+
+```shell
+python run_eval_onnx.py --config_path [../../task_classifier_config.yaml] --eval_data_file_path [EVAL_DATA_FILE_PATH] --export_file_name [EXPORT_FILE_NAME]
+```
+
+`EVAL_DATA_FILE_PATH`为必选项, 是该分类任务所用数据集的eval数据。
+`EXPORT_FILE_NAME`为可选项, 是导出ONNX步骤中ONNX的模型名, 此处用于加载指定ONNX模型进行推理。
 
 ## 模型描述
 

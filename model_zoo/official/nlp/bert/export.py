@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,28 +44,26 @@ def run_export():
     if args.device_target == "Ascend":
         context.set_context(device_id=args.device_id)
 
-    label_list = []
-    with open(args.label_file_path) as f:
-        for label in f:
-            label_list.append(label.strip())
-
-    tag_to_index = convert_labels_to_index(label_list)
-
-    if args.use_crf.lower() == "true":
-        max_val = max(tag_to_index.values())
-        tag_to_index["<START>"] = max_val + 1
-        tag_to_index["<STOP>"] = max_val + 2
-        number_labels = len(tag_to_index)
-    else:
-        number_labels = len(tag_to_index)
     if args.description == "run_ner":
+        label_list = []
+        with open(args.label_file_path) as f:
+            for label in f:
+                label_list.append(label.strip())
+
+        tag_to_index = convert_labels_to_index(label_list)
+
         if args.use_crf.lower() == "true":
+            max_val = max(tag_to_index.values())
+            tag_to_index["<START>"] = max_val + 1
+            tag_to_index["<STOP>"] = max_val + 2
+            number_labels = len(tag_to_index)
             net = BertNER(bert_net_cfg, args.export_batch_size, False, num_labels=number_labels,
                           use_crf=True, tag_to_index=tag_to_index)
         else:
+            number_labels = len(tag_to_index)
             net = BertNERModel(bert_net_cfg, False, number_labels, use_crf=(args.use_crf.lower() == "true"))
     elif args.description == "run_classifier":
-        net = BertCLSModel(bert_net_cfg, False, num_labels=number_labels)
+        net = BertCLSModel(bert_net_cfg, False, num_labels=args.num_class)
     elif args.description == "run_squad":
         net = BertSquadModel(bert_net_cfg, False)
     else:
