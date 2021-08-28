@@ -41,7 +41,7 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
   auto rank = x_shape.size();
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", dim_val, kIncludeBoth, {-rank - 1, rank}, prim_name);
   if (dim_val < 0) {
-    dim_val += x_shape.size() + 1;
+    dim_val += SizeToLong(x_shape.size()) + 1;
   }
   auto out_shape = x_shape;
   (void)out_shape.insert(out_shape.begin() + dim_val, 1, 1);

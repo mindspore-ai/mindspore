@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const Primiti
     }
   }
   auto min_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr(kMinSizes));
-  int64_t num_priors_box = min_sizes.size() * different_aspect_ratios.size() + min_sizes.size();
+  int64_t num_priors_box = SizeToLong(min_sizes.size() * different_aspect_ratios.size() + min_sizes.size());
   auto input = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   int64_t h = input[0] * input[1] * num_priors_box * 4;
   std::vector<int64_t> output_shape{1, h, 1, 2};

@@ -30,7 +30,7 @@ namespace ops {
 ValuePtr DTypeInferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("dtype infer", input_args.size(), kEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("dtype infer", int64_t(input_args.size()), kEqual, 1, op_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   const std::set<TypePtr> valid_types = {kTensorType};
   auto type =

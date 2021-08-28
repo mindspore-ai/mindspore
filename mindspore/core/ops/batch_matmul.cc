@@ -144,7 +144,8 @@ bool BatchMatmul::get_transpose_b() const {
 AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  (void)CheckAndConvertUtils::CheckInteger("BatchMatmul infer", input_args.size(), kGreaterEqual, 2, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("BatchMatmul infer", SizeToLong(input_args.size()), kGreaterEqual, 2,
+                                           primitive->name());
   return abstract::MakeAbstract(BatchMatmulInferShape(primitive, input_args),
                                 BatchMatmulInferType(primitive, input_args));
 }

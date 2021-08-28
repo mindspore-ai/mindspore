@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
                                            prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto prod = 1;
-  int64_t size = x_shape.size();
+  int64_t size = SizeToLong(x_shape.size());
   for (int64_t i = 1; i < size; i++) {
     prod = prod * x_shape[i];
   }

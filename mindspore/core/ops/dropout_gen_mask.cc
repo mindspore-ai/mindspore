@@ -94,7 +94,7 @@ ShapeVector CalOutputShape(const AbstractBasePtrList shape_list) {
 
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("infer shape", input_args.size(), kGreaterEqual, 2, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("infer shape", SizeToLong(input_args.size()), kGreaterEqual, 2, op_name);
   AbstractBasePtr shape_args = input_args[0];
   MS_EXCEPTION_IF_NULL(shape_args);
 

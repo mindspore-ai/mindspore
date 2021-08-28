@@ -73,9 +73,11 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   const int64_t input_num_bias = 3;
   const int64_t input_num = 2;
   if (has_bias) {
-    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, input_num_bias, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", SizeToLong(input_args.size()), kEqual, input_num_bias,
+                                             prim_name);
   } else {
-    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, input_num, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", SizeToLong(input_args.size()), kEqual, input_num,
+                                             prim_name);
   }
   auto use_axis = GetValue<bool>(primitive->GetAttr(kUseAxis));
   if (use_axis && (prim_axis < 1 || prim_axis > (int64_t)input0_shape.size())) {
