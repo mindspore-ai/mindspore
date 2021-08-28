@@ -34,7 +34,10 @@ int QuantDTypeCastFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto in_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
+  CHECK_NULL_RETURN(in_tensor);
+  CHECK_NULL_RETURN(out_tensor);
   auto param = reinterpret_cast<QuantDTypeCastParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
   if (param->dstT == kNumberTypeInt8) {
     if (in_tensor->data_type() != kNumberTypeFloat16 || out_tensor->data_type() != kNumberTypeInt8) {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
@@ -126,6 +129,7 @@ int QuantDTypeCastFp16CPUKernel::QuantDTypeCast(int task_id) {
 }
 
 int QuantDTypeCastFP16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<QuantDTypeCastFp16CPUKernel *>(cdata);
   auto ret = g_kernel->QuantDTypeCast(task_id);
   if (ret != RET_OK) {
@@ -140,18 +144,26 @@ int QuantDTypeCastFp16CPUKernel::Run() {
       out_tensors_.at(0)->data_type() == TypeId::kNumberTypeFloat16) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
     float16_ptr_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+    CHECK_NULL_RETURN(int8_ptr_);
+    CHECK_NULL_RETURN(float16_ptr_);
   } else if (in_tensors_.at(0)->data_type() == TypeId::kNumberTypeFloat16 &&
              out_tensors_.at(0)->data_type() == TypeId::kNumberTypeInt8) {
     float16_ptr_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
     int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+    CHECK_NULL_RETURN(float16_ptr_);
+    CHECK_NULL_RETURN(int8_ptr_);
   } else if (in_tensors_.at(0)->data_type() == TypeId::kNumberTypeUInt8 &&
              out_tensors_.at(0)->data_type() == TypeId::kNumberTypeFloat16) {
     uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(0)->data_c());
     float16_ptr_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+    CHECK_NULL_RETURN(uint8_ptr_);
+    CHECK_NULL_RETURN(float16_ptr_);
   } else if (in_tensors_.at(0)->data_type() == TypeId::kNumberTypeFloat16 &&
              out_tensors_.at(0)->data_type() == TypeId::kNumberTypeUInt8) {
     float16_ptr_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
     uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(0)->data_c());
+    CHECK_NULL_RETURN(float16_ptr_);
+    CHECK_NULL_RETURN(uint8_ptr_);
   } else {
     MS_LOG(ERROR) << "QuantDTypeCastFp16 not support input or output type";
     return RET_ERROR;

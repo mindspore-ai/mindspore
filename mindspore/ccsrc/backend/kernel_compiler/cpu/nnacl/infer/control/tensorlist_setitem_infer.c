@@ -42,13 +42,9 @@ int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   }
 
   TensorListC *input0 = (TensorListC *)(inputs[0]);
-  NNACL_CHECK_NULL_RETURN_ERR(input0);
   const TensorC *get_index = inputs[1];
-  NNACL_CHECK_NULL_RETURN_ERR(get_index);
   const TensorC *value_tensor = inputs[2];
-  NNACL_CHECK_NULL_RETURN_ERR(value_tensor);
   TensorListC *output0 = (TensorListC *)(outputs[0]);
-  NNACL_CHECK_NULL_RETURN_ERR(output0);
   output0->data_type_ = input0->data_type_;
   output0->format_ = input0->format_;
   output0->tensors_data_type_ = value_tensor->data_type_;
@@ -94,6 +90,7 @@ int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     output0->element_num_ = input0->element_num_;
     for (size_t i = 0; i < input0->element_num_; ++i) {
       TensorC *src_ptr = &input0->tensors_[i];
+      NNACL_CHECK_NULL_RETURN_ERR(src_ptr);
       if (src_ptr->data_type_ != kTypeUnknown) {
         out_shape.shape_[out_shape.size_] = src_ptr->shape_;
         out_shape.shape_size_[out_shape.size_] = (int)(src_ptr->shape_size_);

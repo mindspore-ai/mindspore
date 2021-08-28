@@ -30,6 +30,8 @@ namespace mindspore::kernel {
 int SkipGramCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -79,7 +81,6 @@ int SkipGramCPUKernel::Run() {
 
   int index = 1;
   int size = words.size();
-  CHECK_LESS_RETURN(static_cast<int>(stack.size()), index);
   while (index >= 0) {
     if (index < skip_gram_parameter_->ngram_size && stack.at(index) + 1 < size &&
         (index == 0 || stack.at(index) - stack.at(index - 1) <= skip_gram_parameter_->max_skip_size)) {

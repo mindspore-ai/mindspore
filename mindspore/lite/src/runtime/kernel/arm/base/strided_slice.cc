@@ -30,6 +30,9 @@ namespace mindspore::kernel {
 int StridedSliceCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -107,19 +110,8 @@ int StridedSliceCPUKernel::FastRunImpl(int task_id) {
   auto in_shape = in_tensors_.front()->shape();
   auto out_shape = out_tensors_.front()->shape();
   int begin_index = param_->begins_[split_axis_];
-  if (INT_MUL_OVERFLOW(task_id, cal_num_per_thread_)) {
-    MS_LOG(ERROR) << "int mul overflow.";
-    return RET_ERROR;
-  }
   int caled_num = task_id * cal_num_per_thread_;
   if (parallel_on_outer_) {
-    if (INT_MUL_OVERFLOW(caled_num, in_shape[split_axis_]) ||
-        INT_MUL_OVERFLOW(caled_num * in_shape[split_axis_] + begin_index, static_cast<int>(inner_size_)) ||
-        INT_MUL_OVERFLOW(caled_num, out_shape[split_axis_]) ||
-        INT_MUL_OVERFLOW(caled_num * out_shape[split_axis_], static_cast<int>(inner_size_))) {
-      MS_LOG(ERROR) << "int mul overflow.";
-      return RET_ERROR;
-    }
     uint8_t *cur_in_ptr = input_ptr_ + (caled_num * in_shape[split_axis_] + begin_index) * inner_size_;
     uint8_t *cur_out_ptr = output_ptr_ + caled_num * out_shape[split_axis_] * inner_size_;
     int cur_outer = outer_ - caled_num;
@@ -132,12 +124,6 @@ int StridedSliceCPUKernel::FastRunImpl(int task_id) {
     FastStride(cur_in_ptr, cur_out_ptr, out_shape[split_axis_], param_->strides_[split_axis_], cur_outer, inner_size_,
                in_shape[split_axis_] * inner_size_);
   } else {
-    if (INT_MUL_OVERFLOW(caled_num, param_->strides_[split_axis_]) ||
-        INT_MUL_OVERFLOW(caled_num * param_->strides_[split_axis_] + begin_index, static_cast<int>(inner_size_)) ||
-        INT_MUL_OVERFLOW(caled_num, static_cast<int>(inner_size_))) {
-      MS_LOG(ERROR) << "int mul overflow.";
-      return RET_ERROR;
-    }
     MS_ASSERT(parallel_on_split_axis_);
     uint8_t *cur_in_ptr = input_ptr_ + (caled_num * param_->strides_[split_axis_] + begin_index) * inner_size_;
     uint8_t *cur_out_ptr = output_ptr_ + caled_num * inner_size_;
@@ -186,7 +172,9 @@ int StridedSliceCPUKernel::FastRun() {
       return RET_ERROR;
   }
   input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.front()->data_c());
+  CHECK_NULL_RETURN(input_ptr_);
   output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.front()->data_c());
+  CHECK_NULL_RETURN(output_ptr_);
   if (input_ptr_ == nullptr || output_ptr_ == nullptr) {
     return RET_NULL_PTR;
   }
@@ -200,7 +188,6 @@ int StridedSliceCPUKernel::FastRun() {
 
 int StridedSliceCPUKernel::NormalRun() {
   auto input = in_tensors_.at(0);
-  MS_ASSERT(input);
   switch (input->data_type()) {
     case kNumberTypeInt8:
       param_->data_type = kDataTypeInt8;
@@ -219,7 +206,8 @@ int StridedSliceCPUKernel::NormalRun() {
       return RET_ERROR;
   }
   auto output = out_tensors_.at(0);
-  MS_ASSERT(output);
+  CHECK_NULL_RETURN(input->data_c());
+  CHECK_NULL_RETURN(output->data_c());
   auto ret = DoStridedSlice(input->data_c(), output->data_c(), param_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSlice error error_code[" << ret << "]";

@@ -25,11 +25,17 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListSetItem;
-
+namespace {
+constexpr int kNumInputSize = 3;
+}
 namespace mindspore::kernel {
 int TensorListSetItemCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(in_tensors_.at(2));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   return RET_OK;
 }
 
@@ -77,7 +83,6 @@ int TensorListSetItemCPUKernel::Run() {
     }
   }
   input2_ = in_tensors_[2];
-  MS_ASSERT(input2_ != nullptr);
   if (!input0_->IsCompatibleShape(input2_->shape())) {
     return RET_ERROR;
   }

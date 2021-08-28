@@ -89,20 +89,28 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
   auto input = in_tensors_.at(0);
   auto scale = in_tensors_.at(1);
   auto offset = in_tensors_.at(2);
+  CHECK_NULL_RETURN(in_tensors_.at(3));
   auto mean = in_tensors_.at(3);
+  CHECK_NULL_RETURN(in_tensors_.at(4));
   auto variance = in_tensors_.at(4);
   auto output = out_tensors_.at(0);
 
   auto scale_ptr = reinterpret_cast<int8_t *>(scale->MutableData());
+  CHECK_NULL_RETURN(scale_ptr);
   auto offset_ptr = reinterpret_cast<int8_t *>(offset->MutableData());
+  CHECK_NULL_RETURN(offset_ptr);
   auto mean_ptr = reinterpret_cast<int8_t *>(mean->MutableData());
+  CHECK_NULL_RETURN(mean_ptr);
   auto var_ptr = reinterpret_cast<int8_t *>(variance->MutableData());
+  CHECK_NULL_RETURN(var_ptr);
 
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(mean->ElementsNum()) * sizeof(float));
   alpha_addr_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(mean->ElementsNum()) * sizeof(float)));
   if (alpha_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(variance->ElementsNum()) * sizeof(float));
   beta_addr_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(variance->ElementsNum()) * sizeof(float)));
   if (beta_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -140,6 +148,11 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
 int BatchnormInt8CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(in_tensors_[2]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_NULL_RETURN(batchnorm_param_);
   auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];

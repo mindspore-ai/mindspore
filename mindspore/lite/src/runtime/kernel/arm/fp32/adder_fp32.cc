@@ -34,6 +34,9 @@ namespace mindspore::kernel {
 int AdderCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
@@ -61,6 +64,7 @@ int AdderCPUKernel::ReSize() {
 }
 
 int AdderCPUKernel::InitWeightBias() {
+  CHECK_NULL_RETURN(conv_param_);
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   int kernel_h = filter_tensor->Height();
   int kernel_w = filter_tensor->Width();
@@ -68,9 +72,7 @@ int AdderCPUKernel::InitWeightBias() {
   int out_channel = filter_tensor->Batch();
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
-  if (INT_MUL_OVERFLOW(kernel_h, kernel_w)) {
-    return RET_ERROR;
-  }
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(kernel_h, kernel_w), RET_ERROR);
   int kernel_plane = kernel_h * kernel_w;
   const int oc_block = C4NUM;
   int oc_block_num = UP_DIV(out_channel, C4NUM);
@@ -86,7 +88,7 @@ int AdderCPUKernel::InitWeightBias() {
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   RowMajor2Col4Major(origin_weight, reinterpret_cast<float *>(packed_weight_), out_channel, in_channel * kernel_plane);
-
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, oc_block_num * oc_block * sizeof(float));
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias failed.";
@@ -95,6 +97,7 @@ int AdderCPUKernel::InitWeightBias() {
   memset(bias_data_, 0, oc_block_num * oc_block * sizeof(float));
 
   if (in_tensors_.size() == kInputSize2) {
+    CHECK_NULL_RETURN(in_tensors_.at(kBiasIndex));
     auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
     CHECK_NULL_RETURN(ori_bias);
     memcpy(bias_data_, ori_bias, out_channel * sizeof(float));

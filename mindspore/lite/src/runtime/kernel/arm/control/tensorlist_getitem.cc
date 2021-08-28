@@ -24,18 +24,21 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListGetItem;
+namespace {
+constexpr int kNumInputSize = 2;
+}
 
 namespace mindspore::kernel {
 int TensorListGetItemCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   return RET_OK;
 }
 
 int TensorListGetItemCPUKernel::Run() {
-  MS_ASSERT(in_tensors_.at(0) != nullptr);
-  MS_ASSERT(in_tensors_.at(1) != nullptr);
-  MS_ASSERT(out_tensors_.at(0) != nullptr);
   auto input0 = reinterpret_cast<lite::TensorList *>(in_tensors_.at(0));
   CHECK_NULL_RETURN(input0);
   dtype_ = input0->tensors_data_type();

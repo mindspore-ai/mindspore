@@ -26,8 +26,6 @@ int SkipGramInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
-  NNACL_CHECK_NULL_RETURN_ERR(input);
-  NNACL_CHECK_NULL_RETURN_ERR(output);
 
   SetDataTypeFormat(output, input);
   if (input->data_ == NULL) {

@@ -25,11 +25,8 @@ int CustomExtractFeaturesInferShape(const TensorC *const *inputs, size_t inputs_
   }
 
   const TensorC *input = inputs[0];
-  NNACL_CHECK_NULL_RETURN_ERR(input);
   TensorC *output0 = outputs[0];
-  NNACL_CHECK_NULL_RETURN_ERR(output0);
   TensorC *output1 = outputs[1];
-  NNACL_CHECK_NULL_RETURN_ERR(output1);
 
   output0->data_type_ = kNumberTypeInt32;
   output0->format_ = input->format_;
