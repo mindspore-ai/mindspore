@@ -97,16 +97,9 @@ def test_invalid_mindrecord():
     num_readers = 4
     with pytest.raises(RuntimeError, match="Unexpected error. Invalid file content. path:"):
         data_set = ds.MindDataset('dummy.mindrecord', columns_list, num_readers)
-        num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
-            num_iter += 1
-        try:
-            assert num_iter == 0
-        except Exception as error:
-            os.remove('dummy.mindrecord')
-            raise error
-        else:
-            os.remove('dummy.mindrecord')
+            pass
+    os.remove('dummy.mindrecord')
 
 
 def test_minddataset_lack_db():
