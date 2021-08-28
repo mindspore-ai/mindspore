@@ -124,6 +124,7 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
                    [onnx_conv_weight](const onnx::TensorProto &proto) { return proto.name() == onnx_conv_weight; });
     if (node_iter == onnx_graph.initializer().end()) {
       MS_LOG(WARNING) << "not find node: " << onnx_conv_weight;
+      return RET_NO_CHANGE;
     } else {
       std::vector<int> weight_shape;
       auto size = (*node_iter).dims_size();
@@ -151,6 +152,12 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
         return RET_ERROR;
       }
       dims.insert(dims.begin(), iter->ints().begin(), iter->ints().end());
+    } else {
+      return RET_NO_CHANGE;
+    }
+    if (dims.size() < kNumDim4) {
+      MS_LOG(ERROR) << "conv weight size is not 4D, please check.";
+      return RET_ERROR;
     }
     *channel_out = dims.at(0);
     *channel_in = dims.at(3) * group;
@@ -211,11 +218,13 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
   }
 
   // get channel_out and channel_in
-  if (GetConvChannel(onnx_graph, onnx_node, group, &channel_out, &channel_in) != RET_OK) {
+  auto status = GetConvChannel(onnx_graph, onnx_node, group, &channel_out, &channel_in);
+  if (status == RET_OK) {
+    prim->set_in_channel(channel_in);
+    prim->set_out_channel(channel_out);
+  } else if (status != RET_NO_CHANGE) {
     return nullptr;
   }
-  prim->set_in_channel(channel_in);
-  prim->set_out_channel(channel_out);
 
   // parse activationType
   prim->set_activation_type(mindspore::ActivationType::NO_ACTIVATION);

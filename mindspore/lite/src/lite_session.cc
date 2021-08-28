@@ -609,6 +609,7 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
 
   // init init_ref_count for subgraphs and kernels
   for (auto *kernel : this->kernels_) {
+    kernel->InitOutTensorInitRefCount();
 #ifndef DELEGATE_CLIP
     if (kernel->desc().arch == kernel::kDelegate) {
       continue;
@@ -617,7 +618,6 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
     if (IsIsolatedSubGraph(kernel)) {
       static_cast<kernel::SubGraphKernel *>(kernel)->InitInputTensorInitRefCount();
     }
-    kernel->InitOutTensorInitRefCount();
   }
   AdjustModelOutputTensorInitRefCount(model);
   for (auto kernel : this->kernels_) {

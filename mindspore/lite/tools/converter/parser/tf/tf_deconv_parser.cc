@@ -60,9 +60,6 @@ ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
     prim->set_out_channel(kernels[2]);
     prim->set_in_channel(kernels[3]);
   } else {
-    prim->set_kernel_size({-1, -1});
-    prim->set_out_channel(-1);
-    prim->set_in_channel(-1);
     MS_LOG(WARNING) << "parsing of kernelH/W channelIn/Out is delayed";
   }
 

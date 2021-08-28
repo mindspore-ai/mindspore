@@ -77,9 +77,6 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
     std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
                  [onnx_conv_weight](const onnx::TensorProto &proto) { return proto.name() == onnx_conv_weight; });
   if (node_iter == onnx_graph.initializer().end()) {
-    // in_channel and out_channnel is set to 1 by default.
-    prim->set_in_channel(1);
-    prim->set_out_channel(1);
     MS_LOG(WARNING) << "parsing of channelIn/Out is delayed.";
   } else {
     std::vector<int> weight_shape;

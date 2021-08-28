@@ -15,75 +15,87 @@
  */
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
 #include <memory>
+#include <utility>
 #include <vector>
 #include "ops/fusion/conv2d_fusion.h"
 #include "mindspore/lite/include/errorcode.h"
 
 namespace mindspore::opt {
 namespace {
-constexpr size_t kNumDim0 = 0;
-constexpr size_t kNumDim1 = 1;
-constexpr size_t kNumDim2 = 2;
-constexpr size_t kNumDim3 = 3;
-constexpr int kAnfPopulaterInputNumTwo = 2;
-}  // namespace
-
-lite::STATUS UpdateConv2DParamPass::UpdateCommonConv2D(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  if (fmk_type_ != converter::kFmkTypeTf) {
-    return lite::RET_OK;
-  }
-  auto conv = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode->input(0));
-  if (conv == nullptr) {
-    MS_LOG(DEBUG) << "cnode is invalid.";
-    return lite::RET_ERROR;
-  }
-  if (conv->GetAttr(ops::kFormat) == nullptr ||
-      (conv->get_format() != mindspore::NHWC && conv->get_format() != mindspore::KHWC)) {
-    return lite::RET_OK;
-  }
-  auto weight_node = cnode->input(kAnfPopulaterInputNumTwo);
-  if (weight_node == nullptr) {
-    MS_LOG(DEBUG) << "Conv2D weight node is nullptr.";
-    return lite::RET_ERROR;
-  }
-  if (!weight_node->isa<Parameter>()) {
-    MS_LOG(DEBUG) << "Conv2D weight node is not parameter.";
-    return lite::RET_NO_CHANGE;
-  }
-  auto weight_param = weight_node->cast<ParameterPtr>();
-  if (!weight_param->has_default()) {
-    MS_LOG(DEBUG) << "Conv2D weight node is not parameter.";
-    return lite::RET_NO_CHANGE;
-  }
-  auto default_param = weight_param->default_param();
-  auto weight_tensor = std::dynamic_pointer_cast<tensor::Tensor>(default_param);
-  auto weight_shape = weight_tensor->shape();
-  std::vector<int64_t> kernel_size = {weight_shape[kNumDim1], weight_shape[kNumDim2]};
-  conv->set_kernel_size(kernel_size);
-  conv->set_in_channel(weight_shape[kNumDim3]);
-  conv->set_out_channel(weight_shape[kNumDim0]);
-  return lite::RET_OK;
-}
-
-lite::STATUS UpdateConv2DParamPass::UpdateDepthWiseConv2D(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  auto conv = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode->input(0));
-  if (conv == nullptr) {
-    MS_LOG(ERROR) << "cnode is invalid.";
-    return lite::RET_ERROR;
-  }
-  int64_t channel_in = conv->GetAttr(ops::kInChannel) != nullptr ? conv->get_in_channel() : -1;
-  if (channel_in == -1) {
-    auto input_node = cnode->input(kAnfPopulaterInputNumTwo);
-    MS_ASSERT(input_node != nullptr);
-    if (input_node->isa<Parameter>()) {
-      auto param_node = input_node->cast<ParameterPtr>();
-      auto param = param_node->default_param();
-      auto weight = std::dynamic_pointer_cast<tensor::Tensor>(param);
-      conv->set_in_channel(static_cast<int64_t>(weight->shape().at(0)));
+void SetConvAttr(const PrimitivePtr &prim, const std::vector<int64_t> &kernel_size, int64_t in_channel,
+                 int64_t out_channel) {
+  MS_ASSERT(prim != nullptr);
+  if (prim->GetAttr(ops::kKernelSize) == nullptr) {
+    prim->AddAttr(ops::kKernelSize, MakeValue(kernel_size));
+  } else {
+    auto origin_kernel_size = GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kKernelSize));
+    if (std::any_of(origin_kernel_size.begin(), origin_kernel_size.end(), [](int64_t size) { return size <= 0; })) {
+      prim->AddAttr(ops::kKernelSize, MakeValue(kernel_size));
     }
   }
+  if (prim->GetAttr(ops::kInChannel) == nullptr || GetValue<int64_t>(prim->GetAttr(ops::kInChannel)) <= 0) {
+    prim->AddAttr(ops::kInChannel, MakeValue(in_channel));
+  }
+  if (prim->GetAttr(ops::kOutChannel) == nullptr || GetValue<int64_t>(prim->GetAttr(ops::kOutChannel)) <= 0) {
+    prim->AddAttr(ops::kOutChannel, MakeValue(out_channel));
+  }
+}
+}  // namespace
+
+STATUS UpdateConv2DParamPass::UpdateConv2DAttr(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  if (cnode->size() < kInputSizeThree) {
+    MS_LOG(ERROR) << "conv2d's input size is invalid, now is " << cnode->size() - 1;
+    return lite::RET_ERROR;
+  }
+  auto weight = cnode->input(kInputIndexTwo);
+  if (weight == nullptr) {
+    MS_LOG(ERROR) << "conv2d's weight is invalid, now is nullptr.";
+    return lite::RET_ERROR;
+  }
+  auto abstract = weight->abstract();
+  ShapeVector shape;
+  if (FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
+    MS_LOG(ERROR) << "fetch shape from abstract failed.";
+    return lite::RET_ERROR;
+  }
+  if (shape.empty()) {
+    return lite::RET_OK;
+  }
+  if (shape.size() != kInputSizeFour) {
+    MS_LOG(ERROR) << "conv2d weight shape size is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim->GetAttr(ops::kFormat) == nullptr) {
+    MS_LOG(ERROR) << "current conv2d's format is undefined.";
+    return lite::RET_ERROR;
+  }
+  auto format = static_cast<mindspore::Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat)));
+  if (format != mindspore::NHWC && format != mindspore::NCHW) {
+    MS_LOG(ERROR) << "conv2d's format only support nhwc or nchw, now is " << format;
+    return lite::RET_ERROR;
+  }
+  auto kernel_size = format == mindspore::NHWC ? ShapeVector{shape[1], shape[kInputIndexTwo]}
+                                               : ShapeVector{shape[kInputIndexTwo], shape[kInputIndexThree]};
+  int64_t in_channel = format == mindspore::NHWC ? shape[kInputIndexThree] : shape[1];
+  int64_t out_channel = shape[0];
+  if (prim->GetAttr(ops::kGroup) == nullptr) {
+    bool is_depth_wise =
+      prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
+    prim->AddAttr(ops::kGroup, MakeValue(is_depth_wise ? out_channel : 1));
+  }
+  auto group = GetValue<int64_t>(prim->GetAttr(ops::kGroup));
+  if (CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
+    std::swap(in_channel, out_channel);
+  }
+  if (CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
+    in_channel *= group;
+  } else {
+    out_channel *= group;
+  }
+
+  SetConvAttr(prim, kernel_size, in_channel, out_channel);
   return lite::RET_OK;
 }
 
@@ -92,28 +104,17 @@ bool UpdateConv2DParamPass::Run(const FuncGraphPtr &func_graph) {
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
   auto node_list = TopoSort(func_graph->get_return());
-  int status = lite::RET_OK;
   for (auto &node : node_list) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
-    if (!CheckPrimitiveType(node, prim::kPrimConv2DFusion)) {
-      continue;
-    }
     auto cnode = node->cast<CNodePtr>();
-    auto conv = GetValueNode<std::shared_ptr<mindspore::ops::Conv2DFusion>>(cnode->input(0));
-    if (conv == nullptr) {
-      MS_LOG(ERROR) << "Depthwise conv2D node has no primitiveC.";
-      return RET_ERROR;
-    }
-    if (conv->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(conv->GetAttr(ops::kIsDepthWise))) {
-      status = UpdateDepthWiseConv2D(cnode);
-    } else {
-      status = UpdateCommonConv2D(cnode);
-    }
-    if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "update con2d failed.";
-      return false;
+    if (CheckPrimitiveType(node, prim::kPrimConv2DFusion) ||
+        CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
+      if (UpdateConv2DAttr(cnode) != lite::RET_OK) {
+        MS_LOG(ERROR) << "update conv2d attr failed.";
+        return false;
+      }
     }
   }
   return true;

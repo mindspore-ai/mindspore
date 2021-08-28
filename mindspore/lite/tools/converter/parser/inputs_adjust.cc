@@ -37,42 +37,38 @@ STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePt
     MS_LOG(DEBUG) << "there is no attr :" << attr_name;
     return lite::RET_NO_CHANGE;
   }
-  auto inputs = cnode->inputs();
-  if (static_cast<int>(inputs.size()) > input_num) {
+  if (static_cast<int>(cnode->size()) > input_num) {
     primitive_c->EraseAttr(attr_name);
-    MS_LOG(DEBUG) << "input num has been meet, which is " << inputs.size();
+    MS_LOG(DEBUG) << "input num has been meet, which is " << cnode->size();
     return lite::RET_OK;
-  } else if (static_cast<int>(inputs.size()) < input_num) {
+  } else if (static_cast<int>(cnode->size()) < input_num) {
     MS_LOG(ERROR) << "input num is invalid.";
     return lite::RET_ERROR;
   }
+  AnfNodePtr param_node;
   switch (flag) {
     case 1: {
       auto value_data = opt::CastToInt(value_ptr).front();
-      auto param_node =
+      param_node =
         opt::BuildIntValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
       break;
     }
     case kBuildInputFlagTwo: {
       auto value_data = opt::CastToInt(value_ptr);
-      auto param_node =
+      param_node =
         opt::BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
       break;
     }
     case kBuildInputFlagThree: {
       auto value_data = opt::CastToVec2DInt(value_ptr);
-      auto param_node =
+      param_node =
         opt::BuildIntVec2DParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
       break;
     }
     case kBuildInputFlagFour: {
       auto value_data = GetValue<float>(value_ptr);
-      auto param_node =
+      param_node =
         opt::BuildFloatValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
       break;
     }
     default: {
@@ -80,8 +76,11 @@ STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePt
       return lite::RET_ERROR;
     }
   }
-  cnode->set_inputs(inputs);
-
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  auto tr = manager->Transact();
+  tr.AddEdge(cnode, param_node);
+  tr.Commit();
   return lite::RET_OK;
 }
 

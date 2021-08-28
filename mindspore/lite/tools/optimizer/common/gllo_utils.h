@@ -82,8 +82,7 @@ int CheckIfNodeIsParamOrValue(const AnfNodePtr &node);
 
 int CheckLeastInputSize(const CNodePtr &node, int size);
 
-ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
-                            const tensor::TensorPtr &weight_tensor);
+ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num, TypeId type_id);
 
 bool IsParamNode(const BaseRef &n);
 

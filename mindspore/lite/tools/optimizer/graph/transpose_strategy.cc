@@ -16,6 +16,8 @@
 
 #include "tools/optimizer/graph/transpose_strategy.h"
 #include <algorithm>
+#include <functional>
+#include <map>
 #include <memory>
 #include <vector>
 #include <string>
@@ -24,7 +26,7 @@
 #include "ops/fusion/activation.h"
 #include "ops/fusion/slice_fusion.h"
 #include "ops/op_utils.h"
-#include "ops/strided_slice.h"
+#include "tools/anf_exporter/fetch_content.h"
 
 namespace mindspore {
 namespace opt {
@@ -32,7 +34,9 @@ namespace {
 constexpr size_t kFirstInput = 1;
 constexpr size_t kHalfDivisor = 2;
 constexpr size_t kOnnxStridedSlice = 6;
+constexpr int kPaddingListLength = 8;
 STATUS GetPostNodes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<AnfNodePtr> *out_nodes) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr && out_nodes != nullptr);
   auto manager = func_graph->manager();
   if (manager == nullptr) {
     manager = Manage(func_graph, true);
@@ -48,6 +52,268 @@ STATUS GetPostNodes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::
   }
   std::transform(node_users.begin(), node_users.end(), std::back_inserter(*out_nodes),
                  [](const std::pair<AnfNodePtr, int> &node_user) { return node_user.first; });
+  return lite::RET_OK;
+}
+
+bool JudgeIs4DInput(NodeInferShape *node_infer_shape, const CNodePtr &cnode) {
+  MS_ASSERT(node_infer_shape != nullptr && cnode != nullptr);
+  auto shape = node_infer_shape->GetInputShape(cnode, 1);
+  if (shape.size() != kInputSizeFour) {
+    if (cnode->size() > kInputSizeTwo) {
+      shape = node_infer_shape->GetInputShape(cnode, kInputIndexTwo);
+      if (shape.size() != kInputSizeFour && !shape.empty()) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+std::vector<int> TransformOpAxesAttr(const std::vector<int> &origin_axes, FormatTransNodeType trans_type) {
+  std::vector<int> cur_axes;
+  for (size_t i = 0; i < origin_axes.size(); ++i) {
+    int axis = origin_axes[i];
+    if (axis < 0) {
+      axis += kInputSizeFour;
+    }
+    MS_ASSERT(axis >= 0 && axis < kInputSizeFour);
+    int cur_axis = kNH2NC[axis];
+    if (trans_type == kNHWC2NCHW) {
+      cur_axis = kNC2NH[axis];
+    }
+    cur_axes.push_back(cur_axis);
+  }
+  std::sort(cur_axes.begin(), cur_axes.end());
+  return cur_axes;
+}
+
+void TransformAttrByAxes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
+                         const std::vector<int> &axes, FormatTransNodeType trans_type,
+                         NodeInferShape *node_infer_shape) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr && node_infer_shape != nullptr);
+  if (input_index >= cnode->size() || axes.empty()) {
+    return;
+  }
+  auto origin_input = node_infer_shape->GetIntVecInput(cnode, input_index);
+  if (origin_input.size() != axes.size()) {
+    return;
+  }
+  std::vector<int> cur_input;
+  for (int dim = 0; dim < static_cast<int>(kInputSizeFour); ++dim) {
+    for (size_t index = 0; index < axes.size(); ++index) {
+      int axis = axes[index];
+      if (axis < 0) {
+        axis += kInputSizeFour;
+      }
+      MS_ASSERT(axis >= 0 && axis < kInputSizeFour);
+      int cur_axis = kNH2NC[axis];
+      if (trans_type == kNHWC2NCHW) {
+        cur_axis = kNC2NH[axis];
+      }
+      if (cur_axis == dim) {
+        cur_input.push_back(origin_input[index]);
+      }
+    }
+  }
+  auto param_node = BuildIntVecParameterNode(func_graph, cur_input, cnode->input(input_index)->fullname_with_scope());
+  func_graph->manager()->Replace(cnode->input(input_index), param_node);
+}
+
+STATUS ChangeCommonOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type,
+                      NodeInferShape *node_infer_shape) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr && node_infer_shape != nullptr);
+  if (trans_type == kNONE) {
+    MS_LOG(ERROR) << "trans_type is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(prim != nullptr);
+  if (prim->GetAttr(ops::kAxis) == nullptr) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  auto axis = GetValue<int64_t>(prim->GetAttr(ops::kAxis));
+  if (axis < 0) {
+    axis += kInputSizeFour;
+  }
+  auto new_axis = kNH2NC[axis];
+  if (trans_type == kNHWC2NCHW) {
+    new_axis = kNC2NH[axis];
+  }
+  prim->AddAttr(ops::kAxis, MakeValue<int64_t>(new_axis));
+  return lite::RET_OK;
+}
+
+STATUS ChangeOpCrop(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type,
+                    NodeInferShape *node_infer_shape) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr && node_infer_shape != nullptr);
+  if (trans_type == kNONE) {
+    MS_LOG(ERROR) << "trans_type is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto crop_prim = GetValueNode<std::shared_ptr<ops::Crop>>(cnode->input(0));
+  if (crop_prim == nullptr) {
+    MS_LOG(ERROR) << "cnode is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto axis = crop_prim->get_axis();
+  if (axis < 0) {
+    axis += kInputSizeFour;
+  }
+  MS_ASSERT(axis >= 0 && axis < kInputSizeFour);
+  auto offsets = crop_prim->get_offsets();
+  if (trans_type == kNCHW2NHWC) {
+    auto new_axis = kNH2NC[axis];
+    if (new_axis == 0) {
+      offsets = {offsets[0], offsets[kInputIndexTwo], offsets[kInputIndexThree], offsets[1]};
+    } else if (new_axis == kInputIndexThree) {
+      offsets = {offsets[1], offsets[kInputIndexTwo], offsets[0]};
+    } else {
+      offsets.push_back(0);
+    }
+    crop_prim->set_axis(new_axis);
+    crop_prim->set_offsets(offsets);
+  } else {
+    auto new_axis = kNC2NH[axis];
+    if (new_axis == 0) {
+      offsets = {offsets[0], offsets[kInputIndexThree], offsets[1], offsets[kInputIndexTwo]};
+    } else if (new_axis == kInputIndexThree) {
+      offsets = {offsets[kInputIndexTwo], offsets[0], offsets[1]};
+    } else {
+      offsets.pop_back();
+    }
+    crop_prim->set_axis(new_axis);
+    crop_prim->set_offsets(offsets);
+  }
+  return lite::RET_OK;
+}
+
+STATUS ChangeOpPad(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type,
+                   NodeInferShape *node_infer_shape) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr && node_infer_shape != nullptr);
+  if (trans_type == kNONE) {
+    MS_LOG(ERROR) << "trans_type is invalid.";
+    return lite::RET_ERROR;
+  }
+  if (cnode->size() < kInputSizeThree) {
+    MS_LOG(ERROR) << "pad op need three inputs.";
+    return lite::RET_INPUT_TENSOR_ERROR;
+  }
+  auto second_input = cnode->input(kInputIndexTwo);
+  lite::DataInfo data_info;
+  int status;
+  if (utils::isa<Parameter>(second_input)) {
+    status = lite::FetchDataFromParameterNode(cnode, kInputIndexTwo, converter::kFmkTypeMs, false, &data_info);
+  } else if (utils::isa<ValueNode>(second_input)) {
+    status = lite::FetchDataFromValueNode(cnode, kInputIndexTwo, converter::kFmkTypeMs, false, &data_info);
+  } else {
+    return lite::RET_NOT_SUPPORT;
+  }
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "get paddings failed.";
+    return status;
+  }
+  if (std::accumulate(data_info.shape_.begin(), data_info.shape_.end(), 1, std::multiplies<int>()) !=
+      kPaddingListLength) {
+    return lite::RET_OK;
+  }
+  std::vector<std::vector<int32_t>> padding_list(kInputSizeFour, std::vector<int32_t>(kInputSizeTwo));
+  auto data = reinterpret_cast<int32_t *>(data_info.data_.data());
+  for (int i = 0; i < kPaddingListLength; ++i) {
+    padding_list[i / kInputIndexTwo][i % kInputIndexTwo] = *data;
+    data += 1;
+  }
+  if (trans_type == kNCHW2NHWC) {
+    auto chanel_pad = padding_list[1];
+    padding_list.erase(padding_list.begin() + 1);
+    padding_list.push_back(chanel_pad);
+  } else {
+    auto chanel_pad = padding_list.back();
+    padding_list.pop_back();
+    padding_list.insert(padding_list.begin() + 1, chanel_pad);
+  }
+  auto param_node =
+    BuildIntVec2DParameterNode(func_graph, padding_list, cnode->input(kInputIndexTwo)->fullname_with_scope());
+  func_graph->manager()->Replace(cnode->input(kInputIndexTwo), param_node);
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(prim != nullptr);
+  if (prim->GetAttr(ops::kPaddings) != nullptr) {
+    std::vector<std::vector<int64_t>> padding_attr;
+    (void)std::transform(padding_list.begin(), padding_list.end(), std::back_inserter(padding_attr),
+                         [](const std::vector<int> &val) { return std::vector<int64_t>(val.begin(), val.end()); });
+    prim->AddAttr(ops::kPaddings, MakeValue(padding_attr));
+  }
+  return lite::RET_OK;
+}
+
+STATUS ChangeOpSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type,
+                     NodeInferShape *node_infer_shape) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr && node_infer_shape != nullptr);
+  if (trans_type == kNONE) {
+    MS_LOG(ERROR) << "trans_type is invalid.";
+    return lite::RET_ERROR;
+  }
+  for (size_t i = 2; i < cnode->size(); ++i) {
+    if (utils::isa<CNodePtr>(cnode->input(i))) {
+      return lite::RET_NOT_SUPPORT;
+    }
+  }
+  auto shape = node_infer_shape->GetInputShape(cnode, kInputIndexTwo);
+  if (shape.empty()) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  int element_num = shape.front();
+  auto prim = GetValueNode<std::shared_ptr<ops::SliceFusion>>(cnode->input(0));
+  std::vector<int> axes;
+  if (prim->GetAttr(ops::kAxes) == nullptr || prim->get_axes().empty()) {
+    for (int index = 0; index < element_num; ++index) {
+      axes.push_back(index);
+    }
+  } else {
+    auto origin_axes = prim->get_axes();
+    std::transform(origin_axes.begin(), origin_axes.end(), std::back_inserter(axes),
+                   [](int64_t v) { return static_cast<int>(v); });
+  }
+  for (size_t i = 2; i < cnode->size(); ++i) {
+    TransformAttrByAxes(func_graph, cnode, i, axes, trans_type, node_infer_shape);
+  }
+  auto tmp_axes = TransformOpAxesAttr(axes, trans_type);
+  std::vector<int64_t> new_axes(tmp_axes.begin(), tmp_axes.end());
+  prim->set_axes(new_axes);
+  return lite::RET_OK;
+}
+
+STATUS ChangeOpStrideSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type,
+                           NodeInferShape *node_infer_shape) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr && node_infer_shape != nullptr);
+  if (trans_type == kNONE) {
+    MS_LOG(ERROR) << "trans_type is invalid.";
+    return lite::RET_ERROR;
+  }
+  if (cnode->size() != kOnnxStridedSlice) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  for (size_t i = 2; i < cnode->size(); ++i) {
+    if (utils::isa<CNodePtr>(cnode->input(i))) {
+      return lite::RET_NOT_SUPPORT;
+    }
+  }
+  std::vector<int> axes = node_infer_shape->GetIntVecInput(cnode, kInputIndexFour);
+  if (axes.empty()) {
+    MS_LOG(ERROR) << "strided slice input invalid.";
+    return lite::RET_ERROR;
+  }
+  for (size_t index = 2; index < cnode->size(); ++index) {
+    if (index == kInputIndexFour) {
+      continue;
+    }
+    TransformAttrByAxes(func_graph, cnode, index, axes, trans_type, node_infer_shape);
+  }
+  auto cur_axes = TransformOpAxesAttr(axes, trans_type);
+  auto param_node =
+    BuildIntVecParameterNode(func_graph, cur_axes, cnode->input(kInputIndexFour)->fullname_with_scope());
+  func_graph->manager()->Replace(cnode->input(kInputIndexFour), param_node);
   return lite::RET_OK;
 }
 }  // namespace
@@ -138,30 +404,29 @@ bool TransposeStrategy::CanFusionIfInsert(const FuncGraphPtr &func_graph, const 
 
 bool TransposeStrategy::CanChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  auto shape = node_infer_shape_.GetInputShape(cnode, 1);
-  if (shape.size() != kInputSizeFour) {
-    if (cnode->size() > kInputSizeTwo) {
-      shape = node_infer_shape_.GetInputShape(cnode, kInputIndexTwo);
-      if (shape.size() != kInputSizeFour && !shape.empty()) {
-        return false;
-      }
-    } else {
-      return false;
-    }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(prim != nullptr);
+  if (!IsDynamicFormatOp(prim->name())) {
+    return false;
   }
-  if (CheckPrimitiveType(cnode, prim::kPrimConcat) || CheckPrimitiveType(cnode, prim::kPrimSplit)) {
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (prim->GetAttr(ops::kAxis) == nullptr) {
-      return false;
-    }
+  if (IsDynamicFormatOpWithAxis(prim->name()) && !JudgeIs4DInput(&node_infer_shape_, cnode)) {
+    return false;
   }
-  if (CheckPrimitiveType(cnode, prim::kPrimSliceFusion) || CheckPrimitiveType(cnode, prim::kPrimStridedSlice)) {
+  if (CheckPrimitiveType(cnode, prim::kPrimSliceFusion) || CheckPrimitiveType(cnode, prim::kPrimStridedSlice) ||
+      CheckPrimitiveType(cnode, prim::kPrimPadFusion)) {
     for (size_t i = 2; i < cnode->size(); ++i) {
       if (utils::isa<CNodePtr>(cnode->input(i))) {
         return false;
       }
+      if (utils::isa<Parameter>(cnode->input(i)) && !cnode->input(i)->cast<ParameterPtr>()->has_default()) {
+        return false;
+      }
     }
     if (CheckPrimitiveType(cnode, prim::kPrimStridedSlice) && cnode->size() != kOnnxStridedSlice) {
+      return false;
+    }
+  } else if (IsDynamicFormatOpWithAxis(prim->name())) {
+    if (prim->GetAttr(ops::kAxis) == nullptr) {
       return false;
     }
   }
@@ -171,28 +436,20 @@ bool TransposeStrategy::CanChangeOpAxis(const FuncGraphPtr &func_graph, const CN
 STATUS TransposeStrategy::ChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                        FormatTransNodeType trans_type) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  auto shape = node_infer_shape_.GetInputShape(cnode, 1);
-  if (shape.size() != kInputSizeFour) {
-    if (cnode->size() > kInputSizeTwo) {
-      shape = node_infer_shape_.GetInputShape(cnode, kInputIndexTwo);
-      if (shape.size() != kInputSizeFour && !shape.empty()) {
-        return lite::RET_NOT_SUPPORT;
-      }
-    } else {
-      return lite::RET_NOT_SUPPORT;
-    }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(prim != nullptr);
+  if (IsDynamicFormatOpWithAxis(prim->name()) && !JudgeIs4DInput(&node_infer_shape_, cnode)) {
+    return lite::RET_NOT_SUPPORT;
   }
-  if (CheckPrimitiveType(cnode, prim::kPrimConcat) || CheckPrimitiveType(cnode, prim::kPrimSplit)) {
-    return ChangeCommonOp(cnode, trans_type);
-  }
-  if (CheckPrimitiveType(cnode, prim::kPrimCrop)) {
-    return ChangeOpCrop(cnode, trans_type);
-  }
-  if (CheckPrimitiveType(cnode, prim::kPrimSliceFusion)) {
-    return ChangeOpSlice(func_graph, cnode, trans_type);
-  }
-  if (CheckPrimitiveType(cnode, prim::kPrimStridedSlice)) {
-    return ChangeOpStrideSlice(func_graph, cnode, trans_type);
+  std::map<std::string,
+           std::function<STATUS(const FuncGraphPtr &, const CNodePtr &, FormatTransNodeType, NodeInferShape *)>>
+    process_funcs = {
+      {prim::kPrimConcat->name(), ChangeCommonOp},     {prim::kPrimSplit->name(), ChangeCommonOp},
+      {prim::kPrimCrop->name(), ChangeOpCrop},         {prim::kPrimPadFusion->name(), ChangeOpPad},
+      {prim::kPrimSliceFusion->name(), ChangeOpSlice}, {prim::kPrimStridedSlice->name(), ChangeOpStrideSlice}};
+  auto iter = process_funcs.find(prim->name());
+  if (iter != process_funcs.end()) {
+    return iter->second(func_graph, cnode, trans_type, &node_infer_shape_);
   }
   return lite::RET_OK;
 }
@@ -272,191 +529,6 @@ void TransposeStrategy::DecidePreAndPostTransType(TransTypePair *trans_info, Tra
     trans_insert_info->pre_ = trans_info->pre_ == kNHWC2NCHW ? kNCHW2NHWC : kNHWC2NCHW;
     trans_insert_info->post_ = trans_info->pre_ == kNHWC2NCHW ? kNHWC2NCHW : kNCHW2NHWC;
   }
-}
-
-STATUS TransposeStrategy::ChangeCommonOp(const CNodePtr &cnode, FormatTransNodeType trans_type) {
-  MS_ASSERT(cnode != nullptr);
-  if (trans_type == kNONE) {
-    MS_LOG(ERROR) << "trans_type is invalid.";
-    return lite::RET_ERROR;
-  }
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
-  if (prim->GetAttr(ops::kAxis) == nullptr) {
-    return lite::RET_NOT_SUPPORT;
-  }
-  auto axis = GetValue<int64_t>(prim->GetAttr(ops::kAxis));
-  if (axis < 0) {
-    axis += kInputSizeFour;
-  }
-  auto new_axis = kNH2NC[axis];
-  if (trans_type == kNHWC2NCHW) {
-    new_axis = kNC2NH[axis];
-  }
-  prim->AddAttr(ops::kAxis, MakeValue<int64_t>(new_axis));
-  return lite::RET_OK;
-}
-
-STATUS TransposeStrategy::ChangeOpCrop(const CNodePtr &cnode, FormatTransNodeType trans_type) {
-  MS_ASSERT(cnode != nullptr);
-  if (trans_type == kNONE) {
-    MS_LOG(ERROR) << "trans_type is invalid.";
-    return lite::RET_ERROR;
-  }
-  auto crop_prim = GetValueNode<std::shared_ptr<ops::Crop>>(cnode->input(0));
-  if (crop_prim == nullptr) {
-    MS_LOG(ERROR) << "cnode is invalid.";
-    return lite::RET_ERROR;
-  }
-  auto axis = crop_prim->get_axis();
-  if (axis < 0) {
-    axis += kInputSizeFour;
-  }
-  MS_ASSERT(axis >= 0 && axis < kInputSizeFour);
-  auto offsets = crop_prim->get_offsets();
-  if (trans_type == kNCHW2NHWC) {
-    auto new_axis = kNH2NC[axis];
-    if (new_axis == 0) {
-      offsets = {offsets[0], offsets[kInputIndexTwo], offsets[kInputIndexThree], offsets[1]};
-    } else if (new_axis == kInputIndexThree) {
-      offsets = {offsets[1], offsets[kInputIndexTwo], offsets[0]};
-    } else {
-      offsets.push_back(0);
-    }
-    crop_prim->set_axis(new_axis);
-    crop_prim->set_offsets(offsets);
-  } else {
-    auto new_axis = kNC2NH[axis];
-    if (new_axis == 0) {
-      offsets = {offsets[0], offsets[kInputIndexThree], offsets[1], offsets[kInputIndexTwo]};
-    } else if (new_axis == kInputIndexThree) {
-      offsets = {offsets[kInputIndexTwo], offsets[0], offsets[1]};
-    } else {
-      offsets.pop_back();
-    }
-    crop_prim->set_axis(new_axis);
-    crop_prim->set_offsets(offsets);
-  }
-  return lite::RET_OK;
-}
-
-STATUS TransposeStrategy::ChangeOpSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                        FormatTransNodeType trans_type) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  if (trans_type == kNONE) {
-    MS_LOG(ERROR) << "trans_type is invalid.";
-    return lite::RET_ERROR;
-  }
-  for (size_t i = 2; i < cnode->size(); ++i) {
-    if (utils::isa<CNodePtr>(cnode->input(i))) {
-      return lite::RET_NOT_SUPPORT;
-    }
-  }
-  auto shape = node_infer_shape_.GetInputShape(cnode, kInputIndexTwo);
-  if (shape.empty()) {
-    return lite::RET_NOT_SUPPORT;
-  }
-  int element_num = shape.front();
-  auto prim = GetValueNode<std::shared_ptr<ops::SliceFusion>>(cnode->input(0));
-  std::vector<int> axes;
-  if (prim->GetAttr(ops::kAxes) == nullptr || prim->get_axes().empty()) {
-    for (int index = 0; index < element_num; ++index) {
-      axes.push_back(index);
-    }
-  } else {
-    auto origin_axes = prim->get_axes();
-    std::transform(origin_axes.begin(), origin_axes.end(), std::back_inserter(axes),
-                   [](int64_t v) { return static_cast<int>(v); });
-  }
-  for (size_t i = 2; i < cnode->size(); ++i) {
-    TransformAttrByAxes(func_graph, cnode, i, axes, trans_type);
-  }
-  auto tmp_axes = TransformOpAxesAttr(axes, trans_type);
-  std::vector<int64_t> new_axes(tmp_axes.begin(), tmp_axes.end());
-  prim->set_axes(new_axes);
-  return lite::RET_OK;
-}
-
-STATUS TransposeStrategy::ChangeOpStrideSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                              FormatTransNodeType trans_type) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  if (trans_type == kNONE) {
-    MS_LOG(ERROR) << "trans_type is invalid.";
-    return lite::RET_ERROR;
-  }
-  if (cnode->size() != kOnnxStridedSlice) {
-    return lite::RET_NOT_SUPPORT;
-  }
-  for (size_t i = 2; i < cnode->size(); ++i) {
-    if (utils::isa<CNodePtr>(cnode->input(i))) {
-      return lite::RET_NOT_SUPPORT;
-    }
-  }
-  std::vector<int> axes = node_infer_shape_.GetIntVecInput(cnode, kInputIndexFour);
-  if (axes.empty()) {
-    MS_LOG(ERROR) << "strided slice input invalid.";
-    return lite::RET_ERROR;
-  }
-  for (size_t index = 2; index < cnode->size(); ++index) {
-    if (index == kInputIndexFour) {
-      continue;
-    }
-    TransformAttrByAxes(func_graph, cnode, index, axes, trans_type);
-  }
-  auto cur_axes = TransformOpAxesAttr(axes, trans_type);
-  auto param_node =
-    BuildIntVecParameterNode(func_graph, cur_axes, cnode->input(kInputIndexFour)->fullname_with_scope());
-  func_graph->manager()->Replace(cnode->input(kInputIndexFour), param_node);
-  return lite::RET_OK;
-}
-
-void TransposeStrategy::TransformAttrByAxes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
-                                            const std::vector<int> &axes, FormatTransNodeType trans_type) {
-  if (cnode == nullptr || input_index >= cnode->size() || axes.empty()) {
-    return;
-  }
-  auto origin_input = node_infer_shape_.GetIntVecInput(cnode, input_index);
-  if (origin_input.size() != axes.size()) {
-    return;
-  }
-  std::vector<int> cur_input;
-  for (int dim = 0; dim < static_cast<int>(kInputSizeFour); ++dim) {
-    for (size_t index = 0; index < axes.size(); ++index) {
-      int axis = axes[index];
-      if (axis < 0) {
-        axis += kInputSizeFour;
-      }
-      MS_ASSERT(axis >= 0 && axis < kInputSizeFour);
-      int cur_axis = kNH2NC[axis];
-      if (trans_type == kNHWC2NCHW) {
-        cur_axis = kNC2NH[axis];
-      }
-      if (cur_axis == dim) {
-        cur_input.push_back(origin_input[index]);
-      }
-    }
-  }
-  auto param_node = BuildIntVecParameterNode(func_graph, cur_input, cnode->input(input_index)->fullname_with_scope());
-  func_graph->manager()->Replace(cnode->input(input_index), param_node);
-}
-
-std::vector<int> TransposeStrategy::TransformOpAxesAttr(const std::vector<int> &origin_axes,
-                                                        FormatTransNodeType trans_type) {
-  std::vector<int> cur_axes;
-  for (size_t i = 0; i < origin_axes.size(); ++i) {
-    int axis = origin_axes[i];
-    if (axis < 0) {
-      axis += kInputSizeFour;
-    }
-    MS_ASSERT(axis >= 0 && axis < kInputSizeFour);
-    int cur_axis = kNH2NC[axis];
-    if (trans_type == kNHWC2NCHW) {
-      cur_axis = kNC2NH[axis];
-    }
-    cur_axes.push_back(cur_axis);
-  }
-  std::sort(cur_axes.begin(), cur_axes.end());
-  return cur_axes;
 }
 }  // namespace opt
 }  // namespace mindspore

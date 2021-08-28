@@ -41,20 +41,30 @@ OpParameter *PopulateConvParameter(const void *prim) {
   auto stride = value->stride();
   auto pad_list = value->pad_list();
   auto dilation = value->dilation();
-  if (kernel_size == nullptr || stride == nullptr || dilation == nullptr) {
+  if (kernel_size != nullptr) {
+    if (kernel_size->size() < kMinShapeSizeTwo) {
+      MS_LOG(ERROR) << "kernel size is invalid.";
+      free(param);
+      return nullptr;
+    }
+    param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
+    param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
+  } else {
+    param->kernel_h_ = -1;
+    param->kernel_w_ = -1;
+  }
+  if (stride == nullptr || dilation == nullptr) {
     MS_LOG(ERROR) << "kernel_size/stride/dilation is nullptr";
     free(param);
     return nullptr;
   }
-  if (kernel_size->size() < kMinShapeSizeTwo || stride->size() < kMinShapeSizeTwo ||
-      dilation->size() < kMinShapeSizeTwo) {
+  if (stride->size() < kMinShapeSizeTwo || dilation->size() < kMinShapeSizeTwo) {
     MS_LOG(ERROR) << "Invalid shape size!kernel_size size: " << kernel_size->size()
                   << ", stride size: " << stride->size() << ", dilation size: " << dilation->size();
     free(param);
     return nullptr;
   }
-  param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
-  param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
+
   param->group_ = static_cast<int>(value->group());
   param->stride_h_ = static_cast<int>(*(stride->begin()));
   param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
