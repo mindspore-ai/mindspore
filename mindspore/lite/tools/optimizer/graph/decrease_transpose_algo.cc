@@ -714,71 +714,6 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForMultiOp(const FuncGraphPtr &func
   return true;
 }
 
-bool DecreaseTransposeAlgo::RunDoFixFormat(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  auto prim_node = cnode->input(0);
-  auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_CHECK_TRUE_MSG(prim != nullptr, false, "GetValueNode Failed");
-  auto &nchw_op = GetNCHWOpMap();
-  if (!utils::isa<CNodePtr>(cnode->input(1))) {
-    return true;
-  }
-  if (utils::isa<CNodePtr>(cnode->input(1))) {
-    auto format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-    if (nchw_op.find(prim->name()) != nchw_op.end() && format != NCHW) {
-      InsertPreTransNode(func_graph, cnode, kNH2NC);
-      InsertPostTransNode(func_graph, cnode, kNC2NH);
-    }
-  }
-  return true;
-}
-
-bool DecreaseTransposeAlgo::DoFixFormat(const FuncGraphPtr &func_graph) {
-  auto node_list = TopoSort(func_graph->get_return());
-  for (auto &node : node_list) {
-    if (!utils::isa<CNodePtr>(node)) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    MS_ASSERT(cnode != nullptr);
-    if (IsSpecialType(cnode)) {
-      continue;
-    }
-    if (CheckPrimitiveType(cnode, prim::kPrimIf) || CheckPrimitiveType(cnode, prim::kPrimWhile)) {
-      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
-      }
-      SetSubGraphInput(cnode, sub_func_graph);
-      if (!DoFixFormat(sub_func_graph)) {
-        MS_LOG(ERROR) << "subgraph infer shape failed.";
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
-        return false;
-      }
-      SetSubGraphOutput(cnode, sub_func_graph);
-
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
-      }
-      SetSubGraphInput(cnode, sub_func_graph);
-      if (!DoFixFormat(sub_func_graph)) {
-        MS_LOG(ERROR) << "subgraph infer shape failed.";
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
-        return false;
-      }
-      SetSubGraphOutput(cnode, sub_func_graph);
-      SetSubGraphAbstract(cnode, sub_func_graph);
-      continue;
-    }
-    if (!RunDoFixFormat(func_graph, cnode)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 bool DecreaseTransposeAlgo::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   node_infer_shape_.Init(fmk_type_, train_flag_);
@@ -787,20 +722,6 @@ bool DecreaseTransposeAlgo::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Run delete-redundant-transpose pass failed.";
     return false;
   }
-  auto node_list = TopoSort(func_graph->get_return());
-  for (auto &node : node_list) {
-    auto prim = GetValueNode<PrimitivePtr>(node);
-    if (prim == nullptr) {
-      continue;
-    }
-  }
-
-  if (!DoFixFormat(func_graph)) {
-    MS_LOG(ERROR) << "DoFixFormat failed.";
-    return false;
-  }
-  ResetSubGraphInput();
-
   if (!DecreaseTransposeForSingleOp(func_graph)) {
     MS_LOG(ERROR) << "run local trans insert optimizer failed.";
     return false;

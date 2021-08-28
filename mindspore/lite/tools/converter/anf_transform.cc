@@ -60,6 +60,7 @@
 #include "tools/optimizer/graph/reduce_same_act_pass.h"
 #include "tools/optimizer/graph/split_one_pass.h"
 #include "tools/optimizer/graph/decrease_transpose_algo.h"
+#include "tools/optimizer/graph/special_node_postprocess.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/optimizer/graph/dump_graph.h"
 #include "tools/converter/quantizer/full_quant_quantizer.h"
@@ -472,12 +473,12 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
 
   if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
     MS_LOG(WARNING) << "Run infershape opt pass failed.";
-    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat"})) {
+    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "SpecialNodePostProcess"})) {
       MS_LOG(ERROR) << "specify the input format of exported model failed.";
       return nullptr;
     }
   } else {
-    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "DecreaseTransposeAlgo"})) {
+    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "SpecialNodePostProcess", "DecreaseTransposeAlgo"})) {
       MS_LOG(ERROR) << "Run transpose opt pass failed.";
       return nullptr;
     }
@@ -518,6 +519,7 @@ bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
     {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train)},
     {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train)},
     {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>()},
+    {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>()},
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train)},
     {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(config->graphInputFormat)}};
   bool succeed_store = true;
