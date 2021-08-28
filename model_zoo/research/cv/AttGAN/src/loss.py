@@ -90,10 +90,9 @@ class WGANGPGradientPenalty(nn.Cell):
 class GenLoss(nn.Cell):
     """Define total Generator loss"""
 
-    def __init__(self, args, encoder, decoder, discriminator):
+    def __init__(self, args, generator, discriminator):
         super().__init__()
-        self.encoder = encoder
-        self.decoder = decoder
+        self.generator = generator
         self.discriminator = discriminator
 
         self.lambda_1 = Tensor(args.lambda_1, mstype.float32)
@@ -108,9 +107,9 @@ class GenLoss(nn.Cell):
     def construct(self, img_a, att_a, att_a_, att_b, att_b_):
         """Get generator loss"""
         # generate
-        zs_a = self.encoder(img_a)
-        img_fake = self.decoder(zs_a, att_b_)
-        img_recon = self.decoder(zs_a, att_a_)
+        zs_a = self.generator(img_a, mode="enc")
+        img_fake = self.generator(zs_a, att_b_, mode="dec")
+        img_recon = self.generator(zs_a, att_a_, mode="dec")
 
         # discriminate
         d_fake, dc_fake = self.discriminator(img_fake)
@@ -128,10 +127,9 @@ class GenLoss(nn.Cell):
 class DisLoss(nn.Cell):
     """Define total discriminator loss"""
 
-    def __init__(self, args, encoder, decoder, discriminator):
+    def __init__(self, args, generator, discriminator):
         super().__init__()
-        self.encoder = encoder
-        self.decoder = decoder
+        self.generator = generator
         self.discriminator = discriminator
 
         self.cyc_loss = P.ReduceMean()
@@ -146,8 +144,7 @@ class DisLoss(nn.Cell):
     def construct(self, img_a, att_a, att_a_, att_b, att_b_):
         """Get discriminator loss"""
         # generate
-        z = self.encoder(img_a)
-        img_fake = self.decoder(z, att_b_)
+        img_fake = self.generator(img_a, att_b_, mode="enc-dec")
 
         # discriminate
         d_real, dc_real = self.discriminator(img_a)

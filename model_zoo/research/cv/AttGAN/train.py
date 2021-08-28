@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ============================================================================sss
+# ============================================================================
 """Entry point for training AttGAN network"""
 
 import argparse
@@ -32,12 +32,12 @@ from mindspore.context import ParallelMode
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, _InternalCallbackParam, RunContext
 from mindspore.train.serialization import load_param_into_net
 
-from src.attgan import Genc, Gdec, Dis
+from src.attgan import Gen, Dis
 from src.cell import TrainOneStepCellGen, TrainOneStepCellDis, init_weights
 from src.data import data_loader
 from src.helpers import Progressbar
 from src.loss import GenLoss, DisLoss
-from src.utils import resume_model, resume_discriminator
+from src.utils import resume_generator, resume_discriminator
 
 attrs_default = [
     'Bald', 'Bangs', 'Black_Hair', 'Blond_Hair', 'Brown_Hair', 'Bushy_Eyebrows',
@@ -94,8 +94,7 @@ def parse(arg=None):
                         default=datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"))
     parser.add_argument("--run_distribute", type=int, default=0, help="Run distribute, default: false.")
     parser.add_argument('--resume_model', action='store_true')
-    parser.add_argument('--enc_ckpt_name', type=str, default='')
-    parser.add_argument('--dec_ckpt_name', type=str, default='')
+    parser.add_argument('--gen_ckpt_name', type=str, default='')
     parser.add_argument('--dis_ckpt_name', type=str, default='')
 
     return parser.parse_args(arg)
@@ -150,32 +149,28 @@ if __name__ == '__main__':
     print('Training images:', train_length)
 
     # Define network
-    genc = Genc(args.enc_dim, args.enc_layers, args.enc_norm, args.enc_acti, mode='train')
-    gdec = Gdec(args.dec_dim, args.dec_layers, args.dec_norm, args.dec_acti, args.n_attrs, args.shortcut_layers,
-                args.inject_layers, args.img_size, mode='train')
+    gen = Gen(args.enc_dim, args.enc_layers, args.enc_norm, args.enc_acti, args.dec_dim, args.dec_layers, args.dec_norm,
+              args.dec_acti, args.n_attrs, args.shortcut_layers, args.inject_layers, args.img_size, mode='train')
     dis = Dis(args.dis_dim, args.dis_norm, args.dis_acti, args.dis_fc_dim, args.dis_fc_norm, args.dis_fc_acti,
               args.dis_layers, args.img_size, mode='train')
 
     # Initialize network
-    init_weights(genc, 'KaimingUniform', math.sqrt(5))
-    init_weights(gdec, 'KaimingUniform', math.sqrt(5))
+    init_weights(gen, 'KaimingUniform', math.sqrt(5))
     init_weights(dis, 'KaimingUniform', math.sqrt(5))
 
     # Resume from checkpoint
     if args.resume_model:
-        para_genc, para_gdec = resume_model(args, genc, gdec, args.enc_ckpt_name, args.dec_ckpt_name)
+        para_gen = resume_generator(args, gen, args.gen_ckpt_name)
         para_dis = resume_discriminator(args, dis, args.dis_ckpt_name)
-        load_param_into_net(genc, para_genc)
-        load_param_into_net(gdec, para_gdec)
+        load_param_into_net(gen, para_gen)
         load_param_into_net(dis, para_dis)
 
     # Define network with loss
-    G_loss_cell = GenLoss(args, genc, gdec, dis)
-    D_loss_cell = DisLoss(args, genc, gdec, dis)
+    G_loss_cell = GenLoss(args, gen, dis)
+    D_loss_cell = DisLoss(args, gen, dis)
 
     # Define Optimizer
-    G_trainable_params = genc.trainable_params() + gdec.trainable_params()
-    optimizer_G = nn.Adam(params=G_trainable_params, learning_rate=args.lr, beta1=args.beta1, beta2=args.beta2)
+    optimizer_G = nn.Adam(params=gen.trainable_params(), learning_rate=args.lr, beta1=args.beta1, beta2=args.beta2)
     optimizer_D = nn.Adam(params=dis.trainable_params(), learning_rate=args.lr, beta1=args.beta1, beta2=args.beta2)
 
     # Define One Step Train
@@ -193,21 +188,14 @@ if __name__ == '__main__':
 
     if rank == 0:
         local_train_url = os.path.join('output', args.experiment_name, 'checkpoint/rank{}'.format(rank))
-        ckpt_cb_genc = ModelCheckpoint(config=ckpt_config, directory=local_train_url, prefix='encoder')
-        ckpt_cb_gdec = ModelCheckpoint(config=ckpt_config, directory=local_train_url, prefix='decoder')
+        ckpt_cb_gen = ModelCheckpoint(config=ckpt_config, directory=local_train_url, prefix='generator')
         ckpt_cb_dis = ModelCheckpoint(config=ckpt_config, directory=local_train_url, prefix='discriminator')
 
-        cb_params_genc = _InternalCallbackParam()
-        cb_params_genc.train_network = genc
-        cb_params_genc.cur_epoch_num = 0
-        genc_run_context = RunContext(cb_params_genc)
-        ckpt_cb_genc.begin(genc_run_context)
-
-        cb_params_gdec = _InternalCallbackParam()
-        cb_params_gdec.train_network = gdec
-        cb_params_gdec.cur_epoch_num = 0
-        gdec_run_context = RunContext(cb_params_gdec)
-        ckpt_cb_gdec.begin(gdec_run_context)
+        cb_params_gen = _InternalCallbackParam()
+        cb_params_gen.train_network = gen
+        cb_params_gen.cur_epoch_num = 0
+        gen_run_context = RunContext(cb_params_gen)
+        ckpt_cb_gen.begin(gen_run_context)
 
         cb_params_dis = _InternalCallbackParam()
         cb_params_dis.train_network = dis
@@ -243,16 +231,12 @@ if __name__ == '__main__':
                                 gr_loss=gr_loss, dc_loss=dc_loss, df_gp=df_gp)
 
             if (epoch + 1) % 5 == 0 and (it + 1) % args.save_interval == 0 and rank == 0:
-                cb_params_genc.cur_epoch_num = epoch + 1
-                cb_params_gdec.cur_epoch_num = epoch + 1
+                cb_params_gen.cur_epoch_num = epoch + 1
                 cb_params_dis.cur_epoch_num = epoch + 1
-                cb_params_genc.cur_step_num = it + 1
-                cb_params_gdec.cur_step_num = it + 1
+                cb_params_gen.cur_step_num = it + 1
                 cb_params_dis.cur_step_num = it + 1
-                cb_params_genc.batch_num = it + 2
-                cb_params_gdec.batch_num = it + 2
+                cb_params_gen.batch_num = it + 2
                 cb_params_dis.batch_num = it + 2
-                ckpt_cb_genc.step_end(genc_run_context)
-                ckpt_cb_gdec.step_end(gdec_run_context)
+                ckpt_cb_gen.step_end(gen_run_context)
                 ckpt_cb_dis.step_end(dis_run_context)
             it += 1

@@ -28,12 +28,12 @@ import mindspore.dataset as de
 from mindspore import context, Tensor, ops
 from mindspore.train.serialization import load_param_into_net
 
-from src.attgan import Genc, Gdec
+from src.attgan import Gen
 from src.cell import init_weights
 from src.data import check_attribute_conflict
 from src.data import get_loader, Custom
 from src.helpers import Progressbar
-from src.utils import resume_model, denorm
+from src.utils import resume_generator, denorm
 
 device_id = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
@@ -45,8 +45,7 @@ def parse(arg=None):
     parser.add_argument('--experiment_name', dest='experiment_name', required=True)
     parser.add_argument('--test_int', dest='test_int', type=float, default=1.0)
     parser.add_argument('--num_test', dest='num_test', type=int)
-    parser.add_argument('--enc_ckpt_name', type=str, default='')
-    parser.add_argument('--dec_ckpt_name', type=str, default='')
+    parser.add_argument('--gen_ckpt_name', type=str, default='')
     parser.add_argument('--custom_img', action='store_true')
     parser.add_argument('--custom_data', type=str, default='../data/custom')
     parser.add_argument('--custom_attr', type=str, default='../data/list_attr_custom.txt')
@@ -62,8 +61,7 @@ with open(join('output', args_.experiment_name, 'setting.txt'), 'r') as f:
     args = json.load(f, object_hook=lambda d: argparse.Namespace(**d))
 args.test_int = args_.test_int
 args.num_test = args_.num_test
-args.enc_ckpt_name = args_.enc_ckpt_name
-args.dec_ckpt_name = args_.dec_ckpt_name
+args.gen_ckpt_name = args_.gen_ckpt_name
 args.custom_img = args_.custom_img
 args.custom_data = args_.custom_data
 args.custom_attr = args_.custom_attr
@@ -101,15 +99,15 @@ else:
     print('Testing images:', min(test_len, args.num_test))
 
 # Model loader
-genc = Genc(mode='test')
-gdec = Gdec(shortcut_layers=args.shortcut_layers, inject_layers=args.inject_layers, mode='test')
+gen = Gen(args.enc_dim, args.enc_layers, args.enc_norm, args.enc_acti, args.dec_dim, args.dec_layers, args.dec_norm,
+          args.dec_acti, args.n_attrs, args.shortcut_layers, args.inject_layers, args.img_size, mode='test')
 
 # Initialize network
-init_weights(genc, 'KaimingUniform', math.sqrt(5))
-init_weights(gdec, 'KaimingUniform', math.sqrt(5))
-para_genc, para_gdec = resume_model(args, genc, gdec, args.enc_ckpt_name, args.dec_ckpt_name)
-load_param_into_net(genc, para_genc)
-load_param_into_net(gdec, para_gdec)
+init_weights(gen, 'KaimingUniform', math.sqrt(5))
+para_gen = resume_generator(args, gen, args.gen_ckpt_name)
+load_param_into_net(gen, para_gen)
+
+print("Network initializes successfully.")
 
 progressbar = Progressbar()
 it = 0
@@ -134,8 +132,7 @@ for data in test_dataset_iter:
         att_b_ = (att_b * 2 - 1) * args.thres_int
         if i > 0:
             att_b_[..., i - 1] = att_b_[..., i - 1] * args.test_int / args.thres_int
-        a_enc = genc(img_a)
-        samples.append(gdec(a_enc, att_b_))
+        samples.append(gen(img_a, att_b_, mode="enc-dec"))
     cat = ops.Concat(axis=3)
     samples = cat(samples).asnumpy()
     result = denorm(samples)

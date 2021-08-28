@@ -22,12 +22,15 @@ from src.block import LinearBlock, Conv2dBlock, ConvTranspose2dBlock
 # Image size 128 x 128
 MAX_DIM = 64 * 16
 
-
-class Genc(nn.Cell):
-    """Generator encoder"""
+class Gen(nn.Cell):
+    """Generator"""
     def __init__(self, enc_dim=64, enc_layers=5, enc_norm_fn="batchnorm", enc_acti_fn="lrelu",
-                 mode='test'):
+                 dec_dim=64, dec_layers=5, dec_norm_fn="batchnorm", dec_acti_fn="relu",
+                 n_attrs=13, shortcut_layers=1, inject_layers=1, img_size=128, mode="test"):
         super().__init__()
+        self.shortcut_layers = min(shortcut_layers, dec_layers - 1)
+        self.inject_layers = min(inject_layers, dec_layers - 1)
+        self.f_size = img_size // 2 ** dec_layers  # f_size = 4 for 128x128
 
         layers = []
         n_in = 3
@@ -39,27 +42,7 @@ class Genc(nn.Cell):
             n_in = n_out
         self.enc_layers = nn.CellList(layers)
 
-    def construct(self, x):
-        """Encoder construct"""
-        z = x
-        zs = []
-        for layer in self.enc_layers:
-            z = layer(z)
-            zs.append(z)
-        return zs
-
-
-class Gdec(nn.Cell):
-    """Generator decoder"""
-    def __init__(self, dec_dim=64, dec_layers=5, dec_norm_fn="batchnorm", dec_acti_fn="relu", n_attrs=13,
-                 shortcut_layers=1, inject_layers=1, img_size=128, mode='test'):
-        super().__init__()
-        self.shortcut_layers = min(shortcut_layers, dec_layers - 1)
-        self.inject_layers = min(inject_layers, dec_layers - 1)
-        self.f_size = img_size // 2 ** dec_layers  # f_size = 4 for 128x128
-
         layers = []
-        n_in = 1024
         n_in = n_in + n_attrs  # 1024 + 13
         for i in range(dec_layers):
             if i < dec_layers - 1:
@@ -80,7 +63,16 @@ class Gdec(nn.Cell):
         self.repeat = P.Tile()
         self.cat = P.Concat(1)
 
-    def construct(self, zs, a):
+    def encoder(self, x):
+        """Encoder construct"""
+        z = x
+        zs = []
+        for layer in self.enc_layers:
+            z = layer(z)
+            zs.append(z)
+        return zs
+
+    def decoder(self, zs, a):
         """Decoder construct"""
         a_tile = self.view(a, (a.shape[0], -1, 1, 1))
         multiples = (1, 1, self.f_size, self.f_size)
@@ -100,6 +92,16 @@ class Gdec(nn.Cell):
             i = i + 1
         return z
 
+    def construct(self, x, a=None, mode="enc-dec"):
+        result = None
+        if mode == "enc-dec":
+            out = self.encoder(x)
+            result = self.decoder(out, a)
+        if mode == "enc":
+            result = self.encoder(x)
+        if mode == "dec":
+            result = self.decoder(x, a)
+        return result
 
 class Dis(nn.Cell):
     """Discriminator"""
