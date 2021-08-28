@@ -211,7 +211,7 @@ class Slice(TensorOperation):
 
 
 class Relational(IntEnum):
-    """"
+    """
     Relationship operator.
 
     Possible enumeration values are: Relational.EQ, Relational.NE, Relational.GT, Relational.GE, Relational.LT,
