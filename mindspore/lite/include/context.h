@@ -31,6 +31,7 @@ typedef struct CpuDeviceInfo {
 /// \brief GpuDeviceInfo defined for GPU's configuration information.
 typedef struct GpuDeviceInfo {
   bool enable_float16_ = false; /**< prior enable float16 inference */
+  uint32_t gpu_device_id_ = 0;
 } GpuDeviceInfo;
 
 /// \brief NpuDeviceInfo defined for NPU's configuration information.

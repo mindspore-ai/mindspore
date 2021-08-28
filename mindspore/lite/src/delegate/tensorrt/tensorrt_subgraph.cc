@@ -256,6 +256,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
 }
 
 int TensorRTSubGraph::Prepare() {
+  lite::SetCudaDevice(device_info_);
   if (this->engine_ == nullptr) {
     MS_LOG(ERROR) << "engine_ is null in this builder_";
     return RET_ERROR;
@@ -342,6 +343,7 @@ int TensorRTSubGraph::ReSize() {
 }
 
 int TensorRTSubGraph::Execute() {
+  lite::SetCudaDevice(device_info_);
   if (runtime_->GetBatchSize() <= 0) {
     MS_LOG(ERROR) << "TensorRTSubGraph has invalid batch size.";
     return RET_ERROR;
@@ -421,20 +423,5 @@ nvinfer1::ITensor *TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, cons
     }
   }
   return nullptr;
-}
-void TensorRTSubGraph::SetCudaDevice() {
-  int device = 0;
-  if (cudaGetDevice(&device) != cudaSuccess) {
-    MS_LOG(WARNING) << "cudaGetDevice failed, device is untrustable.";
-  }
-  if (device != static_cast<int>(device_info_->GetDeviceID())) {
-    if (cudaSetDevice(device_info_->GetDeviceID()) != cudaSuccess) {
-      MS_LOG(WARNING) << "cudaSetDevice failed.";
-    }
-  }
-  if (cudaGetDevice(&device) != cudaSuccess) {
-    MS_LOG(WARNING) << "cudaGetDevice failed, device is untrustable.";
-  }
-  MS_LOG(INFO) << "cuda is running on device: " << device;
 }
 }  // namespace mindspore::lite

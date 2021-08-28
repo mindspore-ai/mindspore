@@ -19,6 +19,8 @@ function Run_Build_x86() {
   export MSLITE_ENABLE_NNIE=on
   export MSLITE_ENABLE_CONVERTER=off
   export MSLITE_ENABLE_TRAIN=off
+  export MSLITE_ENABLE_TOOLS=off
+  export MSLITE_ENABLE_TESTCASES=off
   bash ${nnie_code_path}/mindspore/build.sh -I x86_64 -j ${thread_num}
   if [ $? = 0 ]; then
     echo "build x86 for nnie success"

@@ -25,7 +25,7 @@
 namespace mindspore::lite {
 struct CudaTensorParam {
   void *data = nullptr;
-  bool isValidMem = false;
+  bool is_valid_mem = false;
   size_t size = 0;
 };
 class TensorRTAllocator {

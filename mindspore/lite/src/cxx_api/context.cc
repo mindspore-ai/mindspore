@@ -30,6 +30,7 @@
 namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
 constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
+constexpr auto kModelOptionGPUDeviceID = "mindspore.option.gpu.device_id";
 constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
 constexpr auto kModelOptionProvider = "mindspore.option.provider";
 constexpr auto kModelOptionProviderDevice = "mindspore.option.provider.device";
@@ -276,10 +277,20 @@ int KirinNPUDeviceInfo::GetFrequency() const {
   return GetValue<int>(data_, kModelOptionKirinNpuFrequency);
 }
 
-void GPUDeviceInfo::SetDeviceID(uint32_t device_id) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void GPUDeviceInfo::SetDeviceID(uint32_t device_id) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionGPUDeviceID] = device_id;
+}
+
 uint32_t GPUDeviceInfo::GetDeviceID() const {
-  MS_LOG(ERROR) << "Unsupported Feature.";
-  return 0;
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return 0;
+  }
+  return GetValue<uint32_t>(data_, kModelOptionGPUDeviceID);
 }
 
 void GPUDeviceInfo::SetGpuTrtInferMode(bool gpu_trt_infer_mode) { MS_LOG(ERROR) << "Unsupported Feature."; }

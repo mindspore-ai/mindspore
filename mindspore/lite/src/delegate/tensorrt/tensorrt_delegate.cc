@@ -98,6 +98,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Flatten, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
   };
+  lite::SetCudaDevice(device_info_);
   if (runtime_ == nullptr) {
     runtime_ = new (std::nothrow) TensorRTRuntime();
   }
@@ -109,6 +110,7 @@ Status TensorRTDelegate::Init() {
 }
 
 Status TensorRTDelegate::Build(DelegateModel *model) {
+  lite::SetCudaDevice(device_info_);
   KernelIter from, end;
   std::vector<TensorRTOp *> tensorrt_ops;
   int graph_index = 0;

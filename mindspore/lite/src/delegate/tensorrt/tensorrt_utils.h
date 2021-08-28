@@ -17,6 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_
 #include <vector>
 #include <NvInfer.h>
+#include <memory>
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "schema/ops_generated.h"
@@ -59,5 +60,6 @@ nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, float **
 
 nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor);
 
+void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_

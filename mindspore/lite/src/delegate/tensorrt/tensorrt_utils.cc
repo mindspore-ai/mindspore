@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/tensorrt/tensorrt_utils.h"
+#include <cuda_runtime_api.h>
 #include <map>
 
 namespace mindspore::lite {
@@ -233,5 +234,24 @@ nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor) {
     MS_LOG(ERROR) << "ConvertWeight from a MSTensor with nullptr data";
   }
   return weights;
+}
+
+void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_) {
+  int device = 0;
+  auto ret = cudaGetDevice(&device);
+  if (ret != cudaSuccess) {
+    MS_LOG(WARNING) << "cudaGetDevice failed, device is untrustable. error code: " << ret;
+  }
+  int set_device_id = static_cast<int>(device_info_->GetDeviceID());
+  if (device != set_device_id) {
+    ret = cudaSetDevice(set_device_id);
+    if (ret != cudaSuccess) {
+      MS_LOG(WARNING) << "cudaSetDevice failed, error code: " << ret;
+    }
+  }
+  if (cudaGetDevice(&device) != cudaSuccess) {
+    MS_LOG(WARNING) << "cudaGetDevice failed, device is untrustable.";
+  }
+  MS_LOG(INFO) << "cuda is running on device: " << device;
 }
 }  // namespace mindspore::lite
