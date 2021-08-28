@@ -15,13 +15,17 @@
  */
 #include "tools/converter/quantizer/quant_helper/conv_quant_param_propogator.h"
 #include "mindspore/core/ir/dtype/type_id.h"
+#include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 static constexpr size_t kBiasAdd = 3;
 
 STATUS ConvQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGraphT *graph,
                                                       const mindspore::schema::CNodeT &node) {
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
   if (node.inputIndex.size() == kBiasAdd) {
+    MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(kBiasAdd - 1));
     auto &bias_tensor = graph->allTensors.at(node.inputIndex.at(kBiasAdd - 1));
     if (bias_tensor->quantParams.empty() || !bias_tensor->quantParams.front()->inited) {
       // check input and weight quant params
@@ -38,6 +42,7 @@ STATUS ConvQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGra
       std::vector<std::unique_ptr<schema::QuantParamT>> bias_quant_params;
       for (auto &weight_quant_param : weight_tensor->quantParams) {
         auto bias_quant_param = std::make_unique<schema::QuantParamT>();
+        MS_CHECK_TRUE_MSG(bias_quant_param != nullptr, RET_NULL_PTR, "bias_quant_param is nullptr.");
         bias_quant_param->min = 0.0;
         bias_quant_param->max = 0.0;
         bias_quant_param->dstDtype = kNumberTypeInt32;

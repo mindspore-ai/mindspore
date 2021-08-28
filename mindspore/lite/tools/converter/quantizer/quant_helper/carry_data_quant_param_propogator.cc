@@ -18,12 +18,17 @@
 #include <utility>
 #include <memory>
 #include "tools/common/tensor_util.h"
+#include "nnacl/op_base.h"
 namespace mindspore::lite {
 STATUS CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *graph, const schema::CNodeT &node) {
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "Graph is nullptr.");
   UpdateQuantParamsNum(*graph, node);
 
+  MS_CHECK_FALSE_MSG(graph->allTensors.empty(), RET_ERROR, "Tensors is empty.");
   // refresh in_tensor quant_params by out_tensor quant_params
   if (input_inited_quant_params_ < 1) {
+    MS_CHECK_FALSE_MSG(node.outputIndex.empty(), RET_ERROR, "OutputIndex is empty.");
+    MS_ASSERT(graph->allTensors.size() > node.outputIndex.at(0));
     auto &out_tensor = graph->allTensors.at(node.outputIndex.at(0));
     auto out_quant_param = GetTensorQuantParam(out_tensor);
     MS_ASSERT(out_quant_param != nullptr);
@@ -42,6 +47,7 @@ STATUS CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *g
 
   // refresh out_tensor quant_params by in_tensor quant_params
   if (output_inited_quant_params_ < 1) {
+    MS_CHECK_FALSE_MSG(node.inputIndex.empty(), RET_ERROR, "inputIndex is empty.");
     MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
     auto &in_tensor = graph->allTensors.at(node.inputIndex.at(0));
     MS_ASSERT(in_tensor != nullptr);
@@ -51,7 +57,7 @@ STATUS CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *g
       return RET_ERROR;
     }
     for (unsigned int i : node.outputIndex) {
-      MS_ASSERT(graph->allTensors.size() > node.outputIndex.at(i));
+      MS_ASSERT(graph->allTensors.size() > i);
       auto &out_tensor = graph->allTensors.at(i);
       MS_ASSERT(out_tensor != nullptr);
       auto out_quant_param = GetTensorQuantParam(out_tensor);

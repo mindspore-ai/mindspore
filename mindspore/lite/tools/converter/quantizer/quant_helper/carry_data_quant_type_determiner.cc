@@ -17,12 +17,15 @@
 #include <utility>
 #include <memory>
 #include "tools/common/tensor_util.h"
+#include "nnacl/op_base.h"
 namespace mindspore::lite {
 bool CarryDataQuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
   MS_ASSERT(node->inputIndex.size() >= 1);
   MS_ASSERT(node->outputIndex.size() >= 1);
+  MS_CHECK_TRUE_MSG(node != nullptr, false, "node is nullptr.");
 
   // check first in tensor
+  MS_ASSERT(graph.allTensors.size() > node->inputIndex.at(0));
   auto &in_tensor = graph.allTensors.at(node->inputIndex.at(0));
   if (!in_tensor->quantParams.empty()) {
     if (std::any_of(in_tensor->quantParams.begin(), in_tensor->quantParams.end(),
@@ -34,6 +37,7 @@ bool CarryDataQuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &g
   }
 
   // check first out tensor
+  MS_ASSERT(graph.allTensors.size() > node->outputIndex.at(0));
   auto &out_tensor = graph.allTensors.at(node->outputIndex.at(0));
   if (!out_tensor->quantParams.empty()) {
     if (std::any_of(out_tensor->quantParams.begin(), out_tensor->quantParams.end(),

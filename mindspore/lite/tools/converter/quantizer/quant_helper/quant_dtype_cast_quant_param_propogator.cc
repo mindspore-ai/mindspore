@@ -16,15 +16,19 @@
 #include "tools/converter/quantizer/quant_helper/quant_dtype_cast_quant_param_propogator.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/core/ir/dtype/type_id.h"
+#include "nnacl/op_base.h"
+
 namespace mindspore::lite {
-static constexpr size_t kInputIndex = 0;
-static constexpr size_t kWeightIndex = 1;
 
 STATUS QuantDtypeCastQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *graph, const schema::CNodeT &node) {
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
+  MS_CHECK_TRUE_MSG(node.inputIndex.empty(), RET_ERROR, "inputIndex is empty.");
+  MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
   auto &input_tensor = graph->allTensors.at(node.inputIndex.at(0));
   if (!input_tensor->quantParams.empty() && input_tensor->quantParams.front()->inited) {
     input_tensor->quantParams.front()->dstDtype = input_tensor->dataType;
   }
+  MS_ASSERT(graph->allTensors.size() > node.outputIndex.at(0));
   auto &output_tensor = graph->allTensors.at(node.outputIndex.at(0));
   if (!output_tensor->quantParams.empty() && output_tensor->quantParams.front()->inited) {
     output_tensor->quantParams.front()->dstDtype = output_tensor->dataType;
