@@ -151,7 +151,9 @@ int TransposeNPUKernel::Execute() {
   mindspore::MSTensor in_tensor = inputs()[0];
   mindspore::MSTensor out_tensor = outputs()[0];
   auto input = in_tensor.Data().get();
+  MS_ASSERT(input);
   auto output = out_tensor.MutableData();
+  MS_ASSERT(output);
   if (perm_ == nh2nc_perm) {
     PackNHWCToNCHWFp32(input, output, shape[NHWC_N], shape[NHWC_H] * shape[NHWC_W], shape[NHWC_C]);
   } else if (perm_ == nc2nh_perm) {

@@ -43,7 +43,11 @@ int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<minds
   ge::TensorDesc size_splits_tensor_desc(ge::Shape({size}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr size_splits_tensor = std::make_shared<hiai::Tensor>(size_splits_tensor_desc);
   size_splits_tensor->SetData(reinterpret_cast<uint8_t *>(sizes_split_vec.data()), size * sizeof(int));
-  size_splits_ = new hiai::op::Const(name_ + "_size");
+  size_splits_ = new (std::nothrow) hiai::op::Const(name_ + "_size");
+  if (size_splits_ == nullptr) {
+    MS_LOG(ERROR) << "create const NPU op failed for " << name_;
+    return RET_ERROR;
+  }
   size_splits_->set_attr_value(size_splits_tensor);
   split_->set_input_size_splits(*size_splits_);
 
@@ -61,6 +65,10 @@ int SplitNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
   vector<int32_t> split_dim_data_value = {axis_};
   split_dim_tensor->SetData(reinterpret_cast<uint8_t *>(split_dim_data_value.data()), 1 * sizeof(int));
   split_dim_ = new hiai::op::Const(name_ + "_dim");
+  if (split_dim_ == nullptr) {
+    MS_LOG(ERROR) << "create const NPU op failed for " << name_;
+    return RET_ERROR;
+  }
   split_dim_->set_attr_value(split_dim_tensor);
   split_->set_input_split_dim(*split_dim_);
 

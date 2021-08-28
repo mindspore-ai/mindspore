@@ -85,7 +85,11 @@ int PadNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspo
   ge::TensorPtr constant_values_tensor = std::make_shared<hiai::Tensor>(constant_values_tensor_desc);
   vector<float> constant_values_data_value = {pad_prim->constant_value()};
   constant_values_tensor->SetData(reinterpret_cast<uint8_t *>(constant_values_data_value.data()), 1 * sizeof(float));
-  constant_value_ = new hiai::op::Const(name_ + "constant");
+  constant_value_ = new (std::nothrow) hiai::op::Const(name_ + "constant");
+  if (constant_value_ == nullptr) {
+    MS_LOG(ERROR) << "create const NPU op failed for " << name_;
+    return RET_ERROR;
+  }
   constant_value_->set_attr_value(constant_values_tensor);
   pad_->set_input_constant_values(*constant_value_);
   return RET_OK;
@@ -98,7 +102,11 @@ int PadNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
   ge::TensorDesc padding_tensor_desc(ge::Shape({size / PAD_PAIR_SIZE, PAD_PAIR_SIZE}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr padding_tensor = std::make_shared<hiai::Tensor>(padding_tensor_desc);
   padding_tensor->SetData(reinterpret_cast<uint8_t *>(paddings_vec_.data()), size * sizeof(int));
-  paddings_ = new hiai::op::Const(name_ + "paddings");
+  paddings_ = new (std::nothrow) hiai::op::Const(name_ + "paddings");
+  if (paddings_ == nullptr) {
+    MS_LOG(ERROR) << "create padding_tensor const NPU op failed for " << name_;
+    return RET_ERROR;
+  }
   paddings_->set_attr_value(padding_tensor);
   pad_->set_input_paddings(*paddings_);
 

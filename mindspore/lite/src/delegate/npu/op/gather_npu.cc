@@ -27,6 +27,7 @@ int GatherNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
     return RET_NOT_SUPPORT;
   }
   if (in_tensors.size() >= GATHER_INPUT_SIZE && in_tensors[AXIS_INDEX].ElementNum() == 1) {
+    MS_ASSERT(in_tensors[AXIS_INDEX].Data());
     axis_ = static_cast<const int *>(in_tensors[AXIS_INDEX].Data().get())[0];
   } else {
     MS_LOG(WARNING) << "NPU axis is attribute.";
