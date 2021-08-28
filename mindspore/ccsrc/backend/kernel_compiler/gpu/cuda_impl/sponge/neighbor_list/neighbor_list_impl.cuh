@@ -55,6 +55,6 @@ void Neighbor_List_Update(int grid_numbers, int atom_numbers, int* d_refresh_cou
                           float *crd_to_uint_crd_cof, float *half_crd_to_uint_crd_cof, unsigned int *uint_crd,
                           float *uint_dr_to_dr_cof, GRID_POINTER *gpointer, NEIGHBOR_LIST *d_nl,
                           int *excluded_list_start, int *excluded_list, int *excluded_numbers, float half_skin_square,
-                          int *is_need_refresh_neighbor_list, cudaStream_t stream);
+                          int *is_need_refresh_neighbor_list, int max_neighbor_number, cudaStream_t stream);
 
 #endif

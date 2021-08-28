@@ -100,6 +100,15 @@ __global__ void Clear_Grid_Bucket(const int grid_numbers, int *atom_numbers_in_g
   }
 }
 
+__global__ void Clear_Neighbor_List_Serial(const int atom_numbers, int max_neighbor_number, NEIGHBOR_LIST *nl) {
+  int atom_i = blockDim.x * blockIdx.x + threadIdx.x;
+  if (atom_i < atom_numbers) {
+    for (int i = 0; i < max_neighbor_number; i ++) {
+      nl[atom_i].atom_serial[i] = atom_numbers;
+    }
+  }
+}
+
 __global__ void Find_Atom_In_Grid_Serial(const int atom_numbers, const float *grid_length_inverse, const VECTOR *crd,
                                          const int *grid_N, const int gridxy, int *atom_in_grid_serial) {
   int atom_i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -241,11 +250,14 @@ void Refresh_Neighbor_List(int *refresh_sign, const int thread, const int atom_n
                            GRID_BUCKET *bucket, int *atom_numbers_in_grid_bucket, NEIGHBOR_LIST *d_nl,
                            int *excluded_list_start, int *excluded_list, int *excluded_numbers,
                            float cutoff_skin_square, int grid_numbers, float *grid_length_inverse, int *grid_N, int Nxy,
-                           cudaStream_t stream) {
+                           int max_neighbor_number, cudaStream_t stream) {
   if (refresh_sign[0] == 1) {
     VECTOR trans_vec = {-skin, -skin, -skin};
     Clear_Grid_Bucket<<<ceilf(static_cast<float>(grid_numbers) / thread), thread, 0, stream>>>(
       grid_numbers, atom_numbers_in_grid_bucket, bucket);
+
+    Clear_Neighbor_List_Serial<<<ceilf(static_cast<float>(atom_numbers) / thread), thread, 0, stream>>>(
+      atom_numbers, max_neighbor_number, d_nl);
 
     Vector_Translation<<<ceilf(static_cast<float>(atom_numbers) / thread), thread, 0, stream>>>(atom_numbers, crd,
                                                                                                 trans_vec);
@@ -290,10 +302,12 @@ void Refresh_Neighbor_List_First_Time(int *refresh_sign, const int thread, const
                                       int *atom_numbers_in_grid_bucket, NEIGHBOR_LIST *d_nl, int *excluded_list_start,
                                       int *excluded_list, int *excluded_numbers, float cutoff_skin_square,
                                       int grid_numbers, float *grid_length_inverse, int *grid_N, int Nxy,
-                                      cudaStream_t stream) {
+                                      int max_neighbor_number, cudaStream_t stream) {
   VECTOR trans_vec = {skin, skin, skin};
   Clear_Grid_Bucket<<<ceilf(static_cast<float>(grid_numbers) / 32), 32, 0, stream>>>(
     grid_numbers, atom_numbers_in_grid_bucket, bucket);
+  Clear_Neighbor_List_Serial<<<ceilf(static_cast<float>(atom_numbers) / 32), 32, 0, stream>>>(
+    atom_numbers, max_neighbor_number, d_nl);
   Crd_Periodic_Map<<<ceilf(static_cast<float>(atom_numbers) / 32), 32, 0, stream>>>(atom_numbers, crd, box_length);
   Find_Atom_In_Grid_Serial<<<ceilf(static_cast<float>(atom_numbers) / 32), 32, 0, stream>>>(
     atom_numbers, grid_length_inverse, crd, grid_N, Nxy, atom_in_grid_serial);
@@ -344,11 +358,14 @@ void Refresh_Neighbor_List_No_Check(int grid_numbers, int atom_numbers, float sk
                                     VECTOR *crd, VECTOR *old_crd, float *crd_to_uint_crd_cof,
                                     UNSIGNED_INT_VECTOR *uint_crd, float *uint_dr_to_dr_cof, GRID_POINTER *gpointer,
                                     NEIGHBOR_LIST *d_nl, int *excluded_list_start, int *excluded_list,
-                                    int *excluded_numbers, cudaStream_t stream) {
+                                    int *excluded_numbers, int max_neighbor_number, cudaStream_t stream) {
   VECTOR trans_vec = {-skin, -skin, -skin};
 
   Clear_Grid_Bucket<<<ceilf(static_cast<float>(grid_numbers) / 32), 32, 0, stream>>>(
     grid_numbers, atom_numbers_in_grid_bucket, bucket);
+
+  Clear_Neighbor_List_Serial<<<ceilf(static_cast<float>(atom_numbers) / 32), 32, 0, stream>>>(
+    atom_numbers, max_neighbor_number, d_nl);
 
   Vector_Translation<<<ceilf(static_cast<float>(atom_numbers) / 32), 32, 0, stream>>>(atom_numbers, crd, trans_vec);
 
@@ -391,7 +408,7 @@ void Neighbor_List_Update(int grid_numbers, int atom_numbers, int *d_refresh_cou
                           float *crd_to_uint_crd_cof, float *half_crd_to_uint_crd_cof, unsigned int *uint_crd,
                           float *uint_dr_to_dr_cof, GRID_POINTER *gpointer, NEIGHBOR_LIST *d_nl,
                           int *excluded_list_start, int *excluded_list, int *excluded_numbers, float half_skin_square,
-                          int *is_need_refresh_neighbor_list, cudaStream_t stream) {
+                          int *is_need_refresh_neighbor_list, int max_neighbor_number, cudaStream_t stream) {
   if (not_first_time) {
     if (refresh_interval > 0) {
       std::vector<int> refresh_count_list(1);
@@ -406,7 +423,7 @@ void Neighbor_List_Update(int grid_numbers, int atom_numbers, int *d_refresh_cou
                                        reinterpret_cast<VECTOR *>(crd), reinterpret_cast<VECTOR *>(old_crd),
                                        half_crd_to_uint_crd_cof, reinterpret_cast<UNSIGNED_INT_VECTOR *>(uint_crd),
                                        uint_dr_to_dr_cof, gpointer, d_nl, excluded_list_start, excluded_list,
-                                       excluded_numbers, stream);
+                                       excluded_numbers, max_neighbor_number, stream);
       }
       refresh_count += 1;
       cudaMemcpyAsync(d_refresh_count, &refresh_count, sizeof(int), cudaMemcpyHostToDevice, stream);
@@ -420,7 +437,7 @@ void Neighbor_List_Update(int grid_numbers, int atom_numbers, int *d_refresh_cou
                             half_crd_to_uint_crd_cof, uint_dr_to_dr_cof, atom_in_grid_serial, skin, box_length,
                             gpointer, bucket, atom_numbers_in_grid_bucket, d_nl, excluded_list_start, excluded_list,
                             excluded_numbers, cutoff_with_skin_square, grid_numbers, grid_length_inverse, grid_N, Nxy,
-                            stream);
+                            max_neighbor_number, stream);
     }
   } else {
     Mul_half<<<1, 3, 0, stream>>>(crd_to_uint_crd_cof, half_crd_to_uint_crd_cof);
@@ -429,6 +446,6 @@ void Neighbor_List_Update(int grid_numbers, int atom_numbers, int *d_refresh_cou
       reinterpret_cast<VECTOR *>(old_crd), reinterpret_cast<UNSIGNED_INT_VECTOR *>(uint_crd), half_crd_to_uint_crd_cof,
       uint_dr_to_dr_cof, atom_in_grid_serial, skin, box_length, gpointer, bucket, atom_numbers_in_grid_bucket, d_nl,
       excluded_list_start, excluded_list, excluded_numbers, cutoff_with_skin_square, grid_numbers, grid_length_inverse,
-      grid_N, Nxy, stream);
+      grid_N, Nxy, max_neighbor_number, stream);
   }
 }
