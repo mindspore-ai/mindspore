@@ -713,7 +713,9 @@ bool AscendKernelRuntime::LaunchKernel(const AnfNodePtr &kernel) {
   return ret;
 }
 
-void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernels) {
+void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernels,
+                                             std::vector<size_t> *last_stream_nodes) {
+  std::map<void *, size_t> last_kernel;
   for (size_t i = 0; i < kernels.size(); ++i) {
     auto &node = kernels[i];
     auto kernel_mod = AnfAlgo::GetKernelMod(node);
@@ -733,14 +735,17 @@ void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernel
         stream_id_map_[id] = stream;
         AnfAlgo::SetStreamId(id, node.get());
         ascend_kernel_mod->SetStream(stream);
+        last_kernel[stream] = i;
       } else {
         auto id = iter->second;
         AnfAlgo::SetStreamId(id, node.get());
         ascend_kernel_mod->SetStream(stream_id_map_[id]);
+        last_kernel[stream_id_map_[id]] = i;
       }
     } else if (AnfAlgo::IsIndependentNode(node)) {
       AnfAlgo::SetStreamId(1, node.get());
       ascend_kernel_mod->SetStream(independent_stream_);
+      last_kernel[independent_stream_] = i;
     } else {
       AnfAlgo::SetStreamId(0, node.get());
       ascend_kernel_mod->SetStream(stream_);
@@ -756,6 +761,8 @@ void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernel
       ascend_kernel_mod->SetStream(stream_id_map_[stream_id]);
     }
   }
+  (void)std::transform(last_kernel.begin(), last_kernel.end(), std::back_inserter(*last_stream_nodes),
+                       [](const std::pair<void *, size_t> &item) { return item.second; });
 }
 
 void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
@@ -764,29 +771,14 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
   if (kernels.empty() || graph_kernel_events_map_.find(graph->graph_id()) != graph_kernel_events_map_.end()) {
     return;
   }
-  SetKernelModStream(kernels);
+  std::vector<size_t> last_stream_nodes;
+  SetKernelModStream(kernels, &last_stream_nodes);
   auto kernel_events =
     std::pair<std::vector<std::vector<std::function<void()>>>, std::vector<std::vector<std::function<void()>>>>();
   auto &kernel_pre_run_events = kernel_events.first;
   auto &kernel_post_run_events = kernel_events.second;
   kernel_pre_run_events.resize(kernels.size());
   kernel_post_run_events.resize(kernels.size());
-  auto kernel_size = kernels.size() - 1;
-  for (auto &iter : stream_id_map_) {
-    auto stream = iter.second;
-    if (stream != stream_) {
-      auto pre_event = CreateDeviceEvent();
-      pre_event->set_wait_stream(stream);
-      pre_event->set_record_stream(stream_);
-      kernel_pre_run_events[0].emplace_back([pre_event]() { pre_event->RecordEvent(); });
-      kernel_pre_run_events[0].emplace_back([pre_event]() { pre_event->WaitEvent(); });
-      auto post_event = CreateDeviceEvent();
-      post_event->set_wait_stream(stream_);
-      post_event->set_record_stream(stream);
-      kernel_post_run_events[kernel_size].emplace_back([post_event]() { post_event->RecordEvent(); });
-      kernel_post_run_events[kernel_size].emplace_back([post_event]() { post_event->WaitEvent(); });
-    }
-  }
   for (size_t i = 0; i < kernels.size(); ++i) {
     auto &kernel = kernels[i];
     auto curr_stream_id = AnfAlgo::GetStreamId(kernel);
@@ -798,15 +790,18 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
     std::vector<bool> stream_hit(stream_num, false);
     std::vector<AnfNodePtr> visited_kernels;
     AnfAlgo::GetAllVisitedCNode(kernel, &visited_kernels);
+    bool found_depend = false;
     for (int k = SizeToInt(i) - 1; k >= 0; --k) {
       auto pre_cnode = kernels[k];
       auto pre_cnode_stream_id = AnfAlgo::GetStreamId(pre_cnode);
       if (pre_cnode_stream_id == curr_stream_id) {
+        found_depend = true;
         continue;
       }
       for (auto &visited : visited_kernels) {
         if (visited == pre_cnode && !stream_hit[pre_cnode_stream_id]) {
           stream_hit[pre_cnode_stream_id] = true;
+          found_depend = true;
           auto record_stream = stream_id_map_[pre_cnode_stream_id];
           auto event = CreateDeviceEvent();
           event->set_wait_stream(wait_stream);
@@ -816,8 +811,55 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
         }
       }
     }
+    if (!found_depend && wait_stream != stream_) {
+      auto pre_event = CreateDeviceEvent();
+      pre_event->set_wait_stream(wait_stream);
+      pre_event->set_record_stream(stream_);
+      kernel_pre_run_events[i].emplace_back([pre_event]() { pre_event->RecordEvent(); });
+      kernel_pre_run_events[i].emplace_back([pre_event]() { pre_event->WaitEvent(); });
+    }
   }
+  ProcessBoundaryEvent(kernels, &kernel_post_run_events, last_stream_nodes);
   graph_kernel_events_map_[graph->graph_id()] = std::move(kernel_events);
+}
+
+void AscendKernelRuntime::ProcessBoundaryEvent(const std::vector<CNodePtr> &kernels,
+                                               std::vector<std::vector<std::function<void()>>> *kernel_run_events,
+                                               const std::vector<size_t> &last_stream_nodes) {
+  for (auto &i : last_stream_nodes) {
+    if (i >= kernels.size()) {
+      MS_LOG(ERROR) << "Node index exceed kernel size.";
+      continue;
+    }
+    auto &kernel = kernels[i];
+    MS_EXCEPTION_IF_NULL(kernel);
+    bool found_nearest_child = false;
+    for (size_t j = i + 1; j < kernels.size(); ++j) {
+      auto &child = kernels[j];
+      MS_EXCEPTION_IF_NULL(child);
+      auto input_size = child->inputs().size() - 1;
+      for (size_t k = 0; k < input_size; ++k) {
+        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0, true);
+        if (kernel_index.first == kernel) {
+          found_nearest_child = true;
+          break;
+        }
+      }
+      if (found_nearest_child) {
+        break;
+      }
+    }
+    if (!found_nearest_child) {
+      auto post_event = CreateDeviceEvent();
+      MS_EXCEPTION_IF_NULL(post_event);
+      auto id = AnfAlgo::GetStreamId(kernel);
+      auto record_stream = stream_id_map_[id];
+      post_event->set_wait_stream(stream_);
+      post_event->set_record_stream(record_stream);
+      (*kernel_run_events)[i].emplace_back([post_event]() { post_event->RecordEvent(); });
+      (*kernel_run_events)[i].emplace_back([post_event]() { post_event->WaitEvent(); });
+    }
+  }
 }
 
 bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *graph) {
