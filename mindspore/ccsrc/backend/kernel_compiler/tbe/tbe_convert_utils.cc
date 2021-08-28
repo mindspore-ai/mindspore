@@ -49,7 +49,7 @@ const std::unordered_map<std::string, TypeId> type_str_id_maps = {
 const std::map<TypeId, std::string> type_id_str_maps = {
   {TypeId::kNumberTypeFloat32, "float32"},
   {TypeId::kNumberTypeFloat16, "float16"},
-  {TypeId::kNumberTypeFloat, "float"},
+  {TypeId::kNumberTypeFloat, "float32"},
   {TypeId::kNumberTypeFloat64, "float64"},
   {TypeId::kNumberTypeInt, "int"},
   {TypeId::kNumberTypeInt8, "int8"},
