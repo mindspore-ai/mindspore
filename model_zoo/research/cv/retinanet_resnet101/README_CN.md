@@ -2,7 +2,7 @@
 
 <!-- TOC -->
 
-- <span id="content">[Retinanet 描述](#-Retinanet-描述)</span>
+- [Retinanet 描述](#retinanet描述)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
 - [环境要求](#环境要求)
@@ -14,9 +14,16 @@
         - [运行](#运行)
         - [结果](#结果)
     - [评估过程](#评估过程)
-        - [用法](#usage)
-        - [运行](#running)
-        - [结果](#outcome)
+        - [用法](#用-法)
+        - [运行](#运-行)
+        - [结果](#结-果)
+    - [模型导出](#模型导出)
+        - [用途](#用途)
+        - [运行方式](#运行方式)
+    - [推理过程](#推理过程)
+        - [用途](#用-途)
+        - [运行方式](#运行-方式)
+        - [运行结果](#运行结果)
     - [模型说明](#模型说明)
         - [性能](#性能)
             - [训练性能](#训练性能)
@@ -26,7 +33,7 @@
 
 <!-- /TOC -->
 
-## [Retinanet 描述](#content)
+## [Retinanet描述](#content)
 
 RetinaNet算法源自2018年Facebook AI Research的论文 Focal Loss for Dense Object Detection。该论文最大的贡献在于提出了Focal Loss用于解决类别不均衡问题，从而创造了RetinaNet（One Stage目标检测算法）这个精度超越经典Two Stage的Faster-RCNN的目标检测网络。
 
@@ -73,6 +80,7 @@ MSCOCO2017
 .
 └─Retinanet_resnet101
   ├─README.md
+  ├─ascend310_infer                           # 实现310推理源代码
   ├─scripts
     ├─run_single_train.sh                     # 使用Ascend环境单卡训练
     ├─run_distribute_train.sh                 # 使用Ascend环境八卡并行训练
@@ -168,11 +176,11 @@ MSCOCO2017
 # 八卡并行训练示例：
 
 创建 RANK_TABLE_FILE
-sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR DATASET RANK_TABLE_FILE PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+bash run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR DATASET RANK_TABLE_FILE PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 # 单卡训练示例：
 
-sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+bash run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 ```
 
@@ -196,12 +204,12 @@ sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional)
 
       # 八卡并行训练示例(在retinanet目录下运行)：
 
-      sh scripts/run_distribute_train.sh 8 500 0.1 coco RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) PRE_TRAINED(预训练checkpoint地址) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小）
-      例如：sh scripts/run_distribute_train.sh 8 500 0.1 coco scripts/rank_table_8pcs.json /dataset/retinanet-322_458.ckpt 322
+      bash scripts/run_distribute_train.sh 8 500 0.1 coco RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) PRE_TRAINED(预训练checkpoint地址) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小）
+      例如：bash scripts/run_distribute_train.sh 8 500 0.1 coco scripts/rank_table_8pcs.json /dataset/retinanet-322_458.ckpt 322
 
       # 单卡训练示例(在retinanet目录下运行)：
 
-      sh scripts/run_single_train.sh 0 500 0.1 coco /dataset/retinanet-322_458.ckpt 322
+      bash scripts/run_single_train.sh 0 500 0.1 coco /dataset/retinanet-322_458.ckpt 322
 
 ```
 
@@ -226,15 +234,15 @@ epoch time: 314138.455 ms, per step time: 685.892 ms
 
 ### [评估过程](#content)
 
-#### <span id="usage">用法</span>
+#### 用 法
 
 您可以使用python或shell脚本进行训练。shell脚本的用法如下:
 
 ```eval
-sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
+bash scripts/run_eval.sh [DATASET] [DEVICE_ID]
 ```
 
-#### <span id="running">运行</span>
+#### 运 行
 
 ```eval运行
 # 验证示例
@@ -243,12 +251,12 @@ sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
       Ascend: python eval.py
   checkpoint 的路径在config里设置
   shell:
-      Ascend: sh scripts/run_eval.sh coco 0
+      Ascend: bash scripts/run_eval.sh coco 0
 ```
 
 > checkpoint 可以在训练过程中产生.
 
-#### <span id="outcome">结果</span>
+#### 结 果
 
 计算结果将存储在示例路径中，您可以在 `eval.log` 查看.
 
@@ -269,6 +277,83 @@ sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
 ========================================
 
 mAP: 0.3710347196613514
+```
+
+### [模型导出](#content)
+
+#### 用途
+
+导出模型前要修改config.py文件中的checkpoint_path配置项，值为checkpoint的路径。
+
+```shell
+python export.py --file_name [RUN_PLATFORM] --file_format[EXPORT_FORMAT] --checkpoint_path [CHECKPOINT PATH]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
+
+#### 运行方式
+
+```运行
+python export.py
+```
+
+- 在modelarts上导出MindIR
+
+```Modelarts
+在ModelArts上导出MindIR示例
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "file_name=retinanet"
+#          设置 "file_format=MINDIR"
+#          设置 "checkpoint_path=/cache/data/checkpoint/checkpoint file name"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/retinanet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../MindRecord_COCO"(选择MindRecord_COCO文件夹路径) ,
+# MindIR的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+```
+
+### [推理过程](#content)
+
+#### 用 途
+
+在推理之前需要在昇腾910环境上完成模型的导出。推理时要将iscrowd为true的图片排除掉。在ascend310_infer目录下保存了去排除后的图片id。
+还需要修改config.py文件中的coco_root、val_data_type、instances_set配置项，值分别取coco数据集的目录，推理所用数据集的目录名称，推理完成后计算精度用的annotation文件，instances_set是用val_data_type拼接起来的，要保证文件正确并且存在。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+```
+
+#### 运行 方式
+
+```运行
+bash run_infer_310.sh ../retinanet.mindir /home/sysu/data/val2017 0
+```
+
+#### 运行结果
+
+推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
+
+```mAP
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.369
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.520
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.404
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.146
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.391
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.535
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.316
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.431
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.433
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.162
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.459
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.633
+mAP: 0.36858371862143824
+
 ```
 
 ## [模型说明](#content)
@@ -312,4 +397,4 @@ mAP: 0.3710347196613514
 
 # [ModelZoo 主页](#内容)
 
-请核对官方 [主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
+请核对官方 [主页](hsttps://gitee.com/mindspore/mindspore/tree/master/model_zoo).
