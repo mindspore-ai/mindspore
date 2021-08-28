@@ -26,6 +26,8 @@ using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
 int SplitBaseCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   output_ptr_.resize(param->num_split_);
   for (size_t i = 0; i < output_ptr_.size(); i++) {
     output_ptr_.at(i) = nullptr;
@@ -39,31 +41,35 @@ int SplitBaseCPUKernel::Init() {
 int SplitBaseCPUKernel::CheckAndInitSplitParam(const lite::Tensor &in_tensor, SplitParameter *param) {
   auto input_shape = in_tensor.shape();
 
-  MS_ASSERT(param);
-  MS_ASSERT(!input_shape.empty() && input_shape.size() <= SPLIT_STRIDES_SIZE);
+  CHECK_NULL_RETURN(param);
+  CHECK_LESS_RETURN(input_shape.size(), 1);
+  CHECK_LESS_RETURN(SPLIT_STRIDES_SIZE - 1, input_shape.size());
   auto split_dim = param->split_dim_;
   param->split_dim_ = split_dim >= 0 ? split_dim : input_shape.size() + split_dim;
   param->strides_[input_shape.size() - 1] = 1;
   for (int i = input_shape.size() - 2; i >= 0; i--) {
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(param->strides_[i + 1], input_shape.at(i + 1)), RET_ERROR);
     param->strides_[i] = param->strides_[i + 1] * input_shape.at(i + 1);
   }
-
+  CHECK_LESS_RETURN(static_cast<int>(input_shape.size()), param->split_dim_ + 1);
   if (input_shape.at(param->split_dim_) == 0) {
     MS_LOG(ERROR) << "input_shape[" << param->split_dim_ << "] must not be zero!";
     return RET_ERROR;
   }
+  CHECK_LESS_RETURN(SPLIT_STRIDES_SIZE, param->split_dim_ + 1);
   if (param->strides_[param->split_dim_] == 0) {
     MS_LOG(ERROR) << "param->strides_[" << param->split_dim_ << "] must not be zero!";
     return RET_ERROR;
   }
+  CHECK_LESS_RETURN((input_shape.at(param->split_dim_) * param->strides_[param->split_dim_]), 1);
 
-  MS_ASSERT(static_cast<size_t>(param->split_dim_) < input_shape.size());
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(param->strides_[0], input_shape.at(0)), RET_ERROR);
   param->split_count_ =
     param->strides_[0] * input_shape.at(0) / (input_shape.at(param->split_dim_) * param->strides_[param->split_dim_]);
   param->n_dims_ = input_shape.size();
-
+  CHECK_LESS_RETURN(param->num_split_, 1);
+  CHECK_LESS_RETURN(input_shape[param->split_dim_], static_cast<int>(param->num_split_));
   if (param->split_sizes_[0] == 0) {
-    MS_ASSERT(param->num_split_ > 0 && static_cast<int>(param->num_split_) <= input_shape[param->split_dim_]);
     if (input_shape[param->split_dim_] % param->num_split_ != 0) {
       MS_LOG(ERROR) << "Default split size is not usable.";
       return RET_ERROR;
@@ -86,6 +92,7 @@ int SplitBaseCPUKernel::CheckAndInitSplitParam(const lite::Tensor &in_tensor, Sp
 
 int SplitBaseCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
+  CHECK_NULL_RETURN(param);
   auto status = CheckAndInitSplitParam(*in_tensor, param);
   if (RET_OK != status) {
     MS_LOG(ERROR) << "CheckAndInitSplitParam failed";
@@ -94,6 +101,7 @@ int SplitBaseCPUKernel::ReSize() {
 
   // split_count means the previous dims num before split dim
   // e.g. input dims is [1, 3, 4, 8], split axis is 2, num_split is 2, so split_count_ is 1*3, num_unit_ is 1*3*2
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(param->split_count_, param->num_split_), RET_ERROR);
   num_unit_ = param->split_count_ * param->num_split_;
   thread_n_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
   if (thread_n_num_ != 0) {
@@ -103,10 +111,12 @@ int SplitBaseCPUKernel::ReSize() {
 }
 
 int SplitBaseCPUKernel::Split(int task_id) {
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(task_id, thread_n_stride_), RET_ERROR);
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
   }
+
   int thread_offset = task_id * thread_n_stride_;
   auto ret = DoSplit(input_ptr_, output_ptr_.data(), in_tensors_.front()->shape().data(), thread_offset,
                      num_unit_thread, param, lite::DataTypeSize(in_tensors_.front()->data_type()));
@@ -118,6 +128,7 @@ int SplitBaseCPUKernel::Split(int task_id) {
 }
 
 static int SplitRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<SplitBaseCPUKernel *>(cdata);
   auto ret = g_kernel->Split(task_id);
   if (ret != RET_OK) {
@@ -134,6 +145,7 @@ int SplitBaseCPUKernel::Run() {
     return RET_NULL_PTR;
   }
 
+  CHECK_NULL_RETURN(param);
   for (int i = 0; i < param->num_split_; i++) {
     auto output_tensor = out_tensors_.at(i);
     output_ptr_.at(i) = output_tensor->data_c();

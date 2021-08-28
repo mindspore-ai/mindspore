@@ -22,6 +22,7 @@
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/base/stack_base.h"
+#include "nnacl/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -82,20 +83,25 @@ int StackFp16CPUKernel::Init() {
   return ReSize();
 }
 
-void StackFp16CPUKernel::Execute(int task_id) {
+int StackFp16CPUKernel::Execute(int task_id) {
   auto inputs = buffers_.data();
   void *output_data = reinterpret_cast<void *>(out_buffer_);
   auto step = UP_DIV(outer_size_, num_threads_);
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(task_id, step), RET_ERROR);
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
   auto input_num = in_tensors_.size();
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_num * start, copy_size_), RET_ERROR);
   void *output = reinterpret_cast<char *>(output_data) + input_num * start * copy_size_;
   Stack(inputs, reinterpret_cast<void *>(output), input_num, copy_size_, start, end);
+  return RET_OK;
 }
 
 static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto stack = reinterpret_cast<StackFp16CPUKernel *>(cdata);
-  stack->Execute(task_id);
+  if (stack->Execute(task_id) != RET_OK) {
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

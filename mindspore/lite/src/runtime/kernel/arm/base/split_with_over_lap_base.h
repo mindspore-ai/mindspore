@@ -39,7 +39,7 @@ class SplitWithOverlapBaseCPUKernel : public InnerKernel {
   int Split(int task_id);
 
  private:
-  void CalculateSplitedShapes(const std::vector<int> &shape);
+  int CalculateSplitedShapes(const std::vector<int> &shape);
 
  private:
   // range: [start, end)

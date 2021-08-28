@@ -16,6 +16,7 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/compat/attr_transfer_common.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -31,7 +32,7 @@ int TransferReshapeAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_te
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  MS_ASSERT(prim != nullptr);
+  CHECK_NULL_RETURN(prim);
   auto param = prim->value_as_Reshape();
   if (param == nullptr) {
     MS_LOG(ERROR) << "param is nullptr";

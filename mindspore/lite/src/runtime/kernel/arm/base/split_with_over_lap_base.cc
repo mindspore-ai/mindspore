@@ -17,6 +17,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/tensor.h"
+#include "nnacl/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -27,12 +28,13 @@ using mindspore::schema::PrimitiveType_SplitWithOverlap;
 
 namespace mindspore::kernel {
 
-void SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const std::vector<int> &shape) {
+int SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const std::vector<int> &shape) {
   int total_block_count = 0;
+  CHECK_LESS_RETURN(SPLIT_MAX_SLICE_NUM, param_->num_split_ + 1);
   for (auto i = 0; i < param_->num_split_; i++) {
     total_block_count += param_->ratio_[i];
   }
-
+  CHECK_LESS_RETURN(static_cast<int>(shape.size()), param_->split_dim_ + 1);
   auto split_dim_size = shape[param_->split_dim_];
 
   std::vector<int> borders;
@@ -40,6 +42,7 @@ void SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const std::vector<int
   int visited_block = 0;
   for (auto i = 0; i < param_->num_split_ - 1; i++) {
     visited_block += param_->ratio_[i];
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(split_dim_size, visited_block), RET_ERROR);
     auto cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
     borders.emplace_back(cur_border);
   }
@@ -53,10 +56,13 @@ void SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const std::vector<int
     start_indices_[i] -= param_->extend_top_[i];
     end_indices_[i] += param_->extend_bottom_[i];
   }
+  return RET_OK;
 }
 
 int SplitWithOverlapBaseCPUKernel::Init() {
-  MS_ASSERT(param_->num_split_ > 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_LESS_RETURN(param_->num_split_, 2);
   return ReSize();
 }
 
@@ -67,7 +73,10 @@ int SplitWithOverlapBaseCPUKernel::ReSize() {
   start_indices_.clear();
   end_indices_.clear();
 
-  CalculateSplitedShapes(input_shape);
+  if (CalculateSplitedShapes(input_shape) != RET_OK) {
+    MS_LOG(ERROR) << "CalculateSplitedShapes error.";
+    return RET_ERROR;
+  }
 
   param_->element_bytes_ = static_cast<int>(lite::DataTypeSize(in_tensor->data_type()));
 
@@ -92,13 +101,16 @@ int SplitWithOverlapBaseCPUKernel::ReSize() {
 
 int SplitWithOverlapBaseCPUKernel::Split(int task_id) {
   for (int current_slice_task = task_id; current_slice_task < param_->num_split_; current_slice_task += thread_count_) {
-    DoSplitWithOverlapParallel(input_ptr_, output_ptr_.data(), current_slice_task, param_, start_indices_.data(),
-                               end_indices_.data());
+    if (DoSplitWithOverlapParallel(input_ptr_, output_ptr_.data(), current_slice_task, param_, start_indices_.data(),
+                                   end_indices_.data()) != NNACL_OK) {
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
 
 int SplitWithOverlapRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<SplitWithOverlapBaseCPUKernel *>(cdata);
   auto ret = g_kernel->Split(task_id);
   if (ret != RET_OK) {
@@ -115,6 +127,7 @@ int SplitWithOverlapBaseCPUKernel::Run() {
     return RET_NULL_PTR;
   }
   output_ptr_.clear();
+  CHECK_LESS_RETURN(static_cast<int>(out_tensors_.size()), param_->num_split_);
   for (int i = 0; i < param_->num_split_; i++) {
     output_ptr_.push_back(reinterpret_cast<char *>(out_tensors_.at(i)->data_c()));
     if (output_ptr_.at(i) == nullptr) {

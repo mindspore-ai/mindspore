@@ -21,6 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateAssertParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   OpParameter *assert_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (assert_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc AssertParameter failed.";

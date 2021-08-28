@@ -21,6 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateExpandDimsParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   OpParameter *expand_dims_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (expand_dims_param == nullptr) {
     MS_LOG(ERROR) << "malloc ExpandDimsParameter failed.";

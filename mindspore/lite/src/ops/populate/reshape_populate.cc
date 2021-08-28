@@ -20,8 +20,8 @@ using mindspore::schema::PrimitiveType_Reshape;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateReshapeParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
 
   auto *param = reinterpret_cast<ReshapeParameter *>(malloc(sizeof(ReshapeParameter)));
   if (param == nullptr) {

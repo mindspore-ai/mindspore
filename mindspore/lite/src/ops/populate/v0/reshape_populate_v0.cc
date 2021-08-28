@@ -23,6 +23,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateReshapeParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   ReshapeParameter *reshape_param = reinterpret_cast<ReshapeParameter *>(malloc(sizeof(ReshapeParameter)));
   if (reshape_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReshapeParameter failed.";

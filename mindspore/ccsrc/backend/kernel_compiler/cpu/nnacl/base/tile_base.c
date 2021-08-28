@@ -16,6 +16,7 @@
 
 #include "nnacl/base/tile_base.h"
 #include <string.h>
+#include "nnacl/errorcode.h"
 
 void DoCopyData(const uint8_t *input_data, uint8_t *output_data, size_t size, size_t data_size, size_t multiple) {
   uint8_t *out_data = output_data;
@@ -29,7 +30,7 @@ int DoTileOneDimension(uint8_t *input_data, uint8_t *output_data, size_t dim, co
   int src_dim_size = parameter->in_shape_[dim];
   if (dim == parameter->in_dim_ - 1) {
     DoCopyData(input_data, output_data, src_dim_size, parameter->data_size_, parameter->multiples_[dim]);
-    return 0;
+    return NNACL_OK;
   }
   for (int i = 0; i < src_dim_size; ++i) {
     for (int j = 0; j < parameter->multiples_[dim]; ++j) {
@@ -39,7 +40,7 @@ int DoTileOneDimension(uint8_t *input_data, uint8_t *output_data, size_t dim, co
                          dim + 1, parameter);
     }
   }
-  return 0;
+  return NNACL_OK;
 }
 
 void Tile(void *input_data, void *output_data, const TileParameter *parameter) {

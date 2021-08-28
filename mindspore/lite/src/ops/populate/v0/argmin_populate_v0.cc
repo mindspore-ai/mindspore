@@ -22,8 +22,8 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateArgMinParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto argmin_prim = primitive->value_as_ArgMin();
   if (argmin_prim == nullptr) {
     MS_LOG(ERROR) << "argmin_prim is nullptr";

@@ -20,6 +20,7 @@ using mindspore::schema::PrimitiveType_ArgMaxFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateArgMaxParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
   if (arg_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArgMinMaxParameter failed.";

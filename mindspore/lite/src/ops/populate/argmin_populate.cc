@@ -20,6 +20,7 @@ using mindspore::schema::PrimitiveType_ArgMinFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateArgMinParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_ArgMinFusion();
   if (value == nullptr) {

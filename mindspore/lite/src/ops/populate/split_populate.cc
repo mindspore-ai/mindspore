@@ -15,13 +15,14 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/split_parameter.h"
+#include "nnacl/op_base.h"
 using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSplitParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Split();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";
@@ -44,6 +45,10 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   }
 
   /* free split_sizes_ in split op base */
+  if (INT_MUL_OVERFLOW(static_cast<size_t>(param->num_split_), sizeof(int))) {
+    free(param);
+    return nullptr;
+  }
   param->split_sizes_ = reinterpret_cast<int *>(malloc(static_cast<size_t>(param->num_split_) * sizeof(int)));
   if (param->split_sizes_ == nullptr) {
     MS_LOG(ERROR) << "malloc param split_sizes_ error";

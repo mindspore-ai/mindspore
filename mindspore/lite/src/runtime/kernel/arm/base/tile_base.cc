@@ -16,7 +16,9 @@
 
 #include "src/runtime/kernel/arm/base/tile_base.h"
 #include "src/kernel_registry.h"
+#include "nnacl/nnacl_common.h"
 #include "include/errorcode.h"
+#include "nnacl/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -28,23 +30,17 @@ namespace {
 constexpr size_t kDoubleInputsSize = 2;
 }
 int TileCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-void TileCPUKernel::ComputeStrides(const int *shape, int *strides, int ndim) const {
-  int stride = 1;
-  for (int i = ndim - 1; i >= 0; i--) {
-    strides[i] = stride;
-    stride *= shape[i];
-  }
-}
-
 int TileCPUKernel::ReSize() {
   tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
-  MS_ASSERT(tile_parameter_);
+  CHECK_NULL_RETURN(tile_parameter_);
   if (in_tensors_.size() == kDoubleInputsSize) {
     if (in_tensors_[1]->ElementsNum() > static_cast<int>(in_tensors_[0]->shape().size())) {
       MS_LOG(ERROR) << "tile's input1 data_num cannot be larger than input0's shape_size.";
@@ -62,6 +58,7 @@ int TileCPUKernel::ReSize() {
     }
   }
   tile_parameter_->in_dim_ = in_tensors_.at(0)->shape().size();
+  CHECK_LESS_RETURN(tile_parameter_->in_dim_, 1);
   for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
     tile_parameter_->in_shape_[i] = in_tensors_.at(0)->shape().at(i);
     tile_parameter_->out_shape_[i] = out_tensors_.at(0)->shape().at(i);
@@ -79,11 +76,11 @@ int TileCPUKernel::ReSize() {
     return RET_ERROR;
   }
 
-  FillOneDimTileParam();
-  return RET_OK;
+  return FillOneDimTileParam();
 }
 
 int SimpleTile(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<TileCPUKernel *>(cdata);
   auto ret = kernel->SimpleTileImpl(task_id);
   if (ret != RET_OK) {
@@ -93,11 +90,12 @@ int SimpleTile(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   return RET_OK;
 }
 
-void TileCPUKernel::FillOneDimTileParam() {
+int TileCPUKernel::FillOneDimTileParam() {
   // check if tile exact one dim
   int large_one_multiple_count = 0;
   int multiple = 0;
   int mul_index = 0;
+  CHECK_LESS_RETURN(MAX_TILE_DIM_SIZE - 1, tile_parameter_->in_dim_);
   for (auto i = 0; i < tile_parameter_->in_dim_; ++i) {
     if (tile_parameter_->multiples_[i] > 1) {
       large_one_multiple_count++;
@@ -108,19 +106,24 @@ void TileCPUKernel::FillOneDimTileParam() {
   one_dim_tile_ = large_one_multiple_count == 1;
   if (one_dim_tile_) {
     tile_parameter_->fast_multiple_ = static_cast<size_t>(multiple);
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(tile_parameter_->in_shape_[mul_index], tile_parameter_->in_strides_[mul_index]),
+                   mindspore::lite::RET_ERROR);
     tile_parameter_->fast_stride_ =
       static_cast<size_t>(tile_parameter_->in_shape_[mul_index] * tile_parameter_->in_strides_[mul_index]);
+    CHECK_LESS_RETURN(tile_parameter_->fast_stride_, 1);
     tile_parameter_->fast_outer_size_ =
       static_cast<size_t>(in_tensors_.at(0)->ElementsNum()) / tile_parameter_->fast_stride_;
   }
-  return;
+  return RET_OK;
 }
 
 int TileCPUKernel::SimpleTileImpl(int task_id) {
+  CHECK_LESS_RETURN(static_cast<size_t>(op_parameter_->thread_num_), 1);
   size_t unit = UP_DIV(tile_parameter_->fast_outer_size_, static_cast<size_t>(op_parameter_->thread_num_));
   if (unit == 0 && task_id > 0) {
     return RET_OK;
   }
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(unit, static_cast<size_t>(task_id)), RET_ERROR);
   size_t begin = unit * static_cast<size_t>(task_id);
   size_t end = MSMIN(begin + unit, tile_parameter_->fast_outer_size_);
   TileSimple(input_addr_, output_addr_, begin, end, tile_parameter_);
@@ -141,8 +144,8 @@ int TileCPUKernel::Run() {
   tile_parameter_->data_size_ = lite::DataTypeSize(data_type);
   input_addr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(0)->data_c());
   output_addr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(0)->data_c());
-  MS_ASSERT(input_addr_ != nullptr);
-  MS_ASSERT(output_addr_ != nullptr);
+  CHECK_NULL_RETURN(input_addr_);
+  CHECK_NULL_RETURN(output_addr_);
   if (one_dim_tile_) {
     return RunSimpleTile();
   }
