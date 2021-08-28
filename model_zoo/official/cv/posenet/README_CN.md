@@ -79,7 +79,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
   bash run_standalone_train.sh [DATASET_NAME] [DEVICE_ID]
 
   # 运行分布式训练示例
-  bash run_distribute_train.sh [DATASET_NAME] [RANK_SIZE]
+  bash run_distribute_train.sh [DATASET_NAME] [RANK_TABLE]
 
   # 运行评估示例
   bash run_eval.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
@@ -100,7 +100,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
   bash run_standalone_train_gpu.sh [DATASET_NAME] [DEVICE_ID]
 
   # 运行分布式训练示例
-  bash run_distribute_train_gpu.sh [DATASET_NAME] [RANK_SIZE]
+  bash run_distribute_train_gpu.sh [DATASET_NAME] [RANK_TABLE]
 
   # 运行评估示例
   bash run_eval_gpu.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
@@ -211,7 +211,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 - Ascend处理器环境运行
 
   ```bash
-  bash run_distribute_train.sh [DATASET_NAME] [RANK_SIZE]
+  bash run_distribute_train.sh [DATASET_NAME] [RANK_TABLE]
   ```
 
   上述shell脚本将在后台运行分布训练。您可以通过device[X]/log文件查看结果。采用以下方式达到损失值：

@@ -45,7 +45,10 @@ cd ./train
 env > env0.log
 
 echo "Standalone train begin."
-python train.py --run_distribute False --device_id $2 --dataset $1 --device_num 1 --is_modelarts False > ./train_alone.log 2>&1 &
+python train.py --run_distribute False \
+                --device_id $2 --dataset $1 \
+                --device_num 1 --is_modelarts False \
+                --device_target "Ascend" > ./train_alone.log 2>&1 &
 
 if [ $? -eq 0 ];then
     echo "training success"

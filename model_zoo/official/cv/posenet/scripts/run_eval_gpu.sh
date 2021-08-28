@@ -46,7 +46,7 @@ cd ./eval
 
 env > env0.log
 echo "Eval begin."
-python eval.py --device_id $1 --dataset $2 --ckpt_url $3 --is_modelarts False > ./eval.log 2>&1 &
+python eval.py --device_id $1 --dataset $2 --ckpt_url $3 --is_modelarts False --device_target "GPU" > ./eval.log 2>&1 &
 
 if [ $? -eq 0 ];then
     echo "evaling success"
