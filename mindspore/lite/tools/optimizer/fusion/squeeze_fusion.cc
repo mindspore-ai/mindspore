@@ -43,19 +43,19 @@ const AnfNodePtr SqueezeFusion::Process(const FuncGraphPtr &func_graph, const An
   }
 
   auto act_node = unsqueeze_node->cast<CNodePtr>()->input(1);
-  if (CheckIfCNodeIsNull(act_node->cast<CNodePtr>()) != lite::RET_OK) {
+  if (act_node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }
   auto bn_node = act_node->cast<CNodePtr>()->input(1);
-  if (CheckIfCNodeIsNull(bn_node->cast<CNodePtr>()) != lite::RET_OK) {
+  if (bn_node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }
   auto squeeze_node = bn_node->cast<CNodePtr>()->input(1);
-  if (CheckIfCNodeIsNull(squeeze_node->cast<CNodePtr>()) != lite::RET_OK) {
+  if (squeeze_node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }
   auto pre_node = squeeze_node->cast<CNodePtr>()->input(1);
-  if (CheckIfCNodeIsNull(pre_node->cast<CNodePtr>()) != lite::RET_OK) {
+  if (pre_node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }
 

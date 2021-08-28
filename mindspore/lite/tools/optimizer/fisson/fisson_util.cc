@@ -241,12 +241,13 @@ void GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePt
     return;
   }
   auto cnode = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(cnode)) {
+  if (cnode == nullptr) {
     return;
   }
   for (size_t i = 0; i < output_num; i++) {
     auto index = NewValueNode(SizeToInt(i));
-    if (CheckIfValueNodeIsNull(index)) {
+    if (index == nullptr) {
+      MS_LOG(ERROR) << "new a valueNode failed.";
       return;
     }
     size_t temp = SizeToInt(i);
@@ -254,7 +255,7 @@ void GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePt
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
     index->set_abstract(abstract_scalar);
     auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, index});
-    if (CheckIfCNodeIsNull(tuple_getitem)) {
+    if (tuple_getitem == nullptr) {
       return;
     }
     tuple_getitem->set_fullname_with_scope(cnode->fullname_with_scope() + "_TupleGetItem_" + std::to_string(i + 1));

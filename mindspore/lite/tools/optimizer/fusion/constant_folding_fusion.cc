@@ -302,7 +302,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
     return nullptr;
   }
   auto any_node = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(any_node) != lite::RET_OK) {
+  if (any_node == nullptr) {
     return nullptr;
   }
   bool changed = false;

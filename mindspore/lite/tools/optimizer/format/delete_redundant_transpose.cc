@@ -20,10 +20,6 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-constexpr size_t kDimNumber = 4;
-}  // namespace
-
 STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
@@ -75,7 +71,10 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
         MS_LOG(ERROR) << "update cnode format failed.";
         return lite::RET_ERROR;
       }
-      manager->Replace(node, cnode->input(1));
+      if (!manager->Replace(node, cnode->input(1))) {
+        MS_LOG(ERROR) << "replace old node failed, please check.";
+        return lite::RET_ERROR;
+      }
     }
   }
   return lite::RET_OK;
@@ -127,7 +126,10 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
       return lite::RET_ERROR;
     }
     if ((pre_perm == kNH2NC && post_perm == kNC2NH) || (pre_perm == kNC2NH && post_perm == kNH2NC)) {
-      func_graph->manager()->Replace(cnode, pre_cnode->input(1));
+      if (!func_graph->manager()->Replace(cnode, pre_cnode->input(1))) {
+        MS_LOG(ERROR) << "replace old node failed, please check.";
+        return lite::RET_ERROR;
+      }
     }
   }
   return lite::RET_OK;

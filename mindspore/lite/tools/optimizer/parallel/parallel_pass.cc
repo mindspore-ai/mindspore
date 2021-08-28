@@ -111,7 +111,7 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     return node;
   }
   auto cnode = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(cnode) != RET_OK) {
+  if (cnode == nullptr) {
     return node;
   }
 

@@ -25,10 +25,6 @@
 using mindspore::lite::NHWC_SHAPE;
 namespace mindspore {
 namespace opt {
-namespace {
-constexpr size_t kDimNumber = 4;
-}  // namespace
-
 STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm,
                                  bool before, size_t index) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
@@ -36,6 +32,7 @@ STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr 
   std::string trans_name = before ? cnode->fullname_with_scope() + "_pre_" + std::to_string(index - 1)
                                   : cnode->fullname_with_scope() + "_post";
   auto trans_cnode = opt::GenTransposeNode(func_graph, trans_input, perm, trans_name);
+  MS_ASSERT(trans_cnode != nullptr);
   if (DecideWhetherInferShapeForNewNode()) {
     auto status = node_infer_shape_->InferShape(trans_cnode);
     if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
@@ -49,6 +46,7 @@ STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr 
     }
   }
   auto trans_prim = GetValueNode<PrimitivePtr>(trans_cnode->cast<CNodePtr>()->input(0));
+  MS_ASSERT(trans_prim != nullptr);
   if (perm == kNC2NH) {
     trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
   } else if (perm == kNH2NC) {
@@ -59,12 +57,13 @@ STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr 
     manager = Manage(func_graph, true);
   }
   MS_ASSERT(manager != nullptr);
-  auto tr = manager->Transact();
   if (before) {
-    tr.SetEdge(cnode, index, trans_cnode);
-    tr.Commit();
+    manager->SetEdge(cnode, index, trans_cnode);
   } else {
-    func_graph->manager()->Replace(cnode, trans_cnode);
+    if (!func_graph->manager()->Replace(cnode, trans_cnode)) {
+      MS_LOG(ERROR) << "replace old node failed, please check.";
+      return lite::RET_ERROR;
+    }
   }
   return lite::RET_OK;
 }
@@ -81,6 +80,7 @@ STATUS ToFormatBase::ModifyCNode(const CNodePtr &cnode) {
     prim->AddAttr(ops::kFormat, MakeValue<int64_t>(format_));
   }
   auto abstract_base = cnode->abstract();
+  MS_ASSERT(tract_base != nullptr);
   std::vector<AbstractBasePtr> abstracts;
   if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
     auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract_base);
@@ -94,7 +94,7 @@ STATUS ToFormatBase::ModifyCNode(const CNodePtr &cnode) {
       MS_LOG(ERROR) << "fetch shape failed, " << cnode->fullname_with_scope();
       return lite::RET_ERROR;
     }
-    if (shape.size() != kDimNumber) {
+    if (shape.size() != kInputSizeFour) {
       MS_LOG(DEBUG) << "shape don't need to modify.";
       continue;
     }
@@ -171,7 +171,10 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
         return lite::RET_ERROR;
       }
       if (tuple_get_item != nullptr) {
-        func_graph->manager()->Replace(tuple_get_item, tuple_get_item->input(1));
+        if (!func_graph->manager()->Replace(tuple_get_item, tuple_get_item->input(1))) {
+          MS_LOG(ERROR) << "replace old node failed. please check.";
+          return lite::RET_ERROR;
+        }
       }
     }
   }
@@ -216,7 +219,7 @@ STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "fetch shape failed." << input->fullname_with_scope();
       return lite::RET_ERROR;
     }
-    if (shape.size() != kDimNumber || !DecideWhetherHandleGraphInput(func_graph, input_param, shape)) {
+    if (shape.size() != kInputSizeFour || !DecideWhetherHandleGraphInput(func_graph, input_param, shape)) {
       continue;
     }
     ShapeVector transfer_shape;
@@ -244,7 +247,10 @@ STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
     }
     trans_cnode->set_abstract(abstract->Clone());
     abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
-    func_graph->manager()->Replace(input, trans_cnode);
+    if (!func_graph->manager()->Replace(input, trans_cnode)) {
+      MS_LOG(ERROR) << "replace old node failed, please check.";
+      return lite::RET_ERROR;
+    }
   }
   return lite::RET_OK;
 }
@@ -297,23 +303,31 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
       }
-      (void)BasicProcess(sub_func_graph, false);
+      if (!BasicProcess(sub_func_graph, false)) {
+        MS_LOG(ERROR) << "process sub graph failed.";
+        return false;
+      }
       sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
       }
-      (void)BasicProcess(sub_func_graph, false);
+      if (!BasicProcess(sub_func_graph, false)) {
+        MS_LOG(ERROR) << "process sub graph failed.";
+        return false;
+      }
       continue;
     }
     status = HandleGraphNode(func_graph, cnode);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "handle node failed.";
       return false;
     }
   }
   if (main_graph) {
     status = HandleGraphInput(func_graph);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "handle graph input failed.";
       return false;
     }
   }

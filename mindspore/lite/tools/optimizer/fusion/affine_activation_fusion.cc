@@ -30,7 +30,7 @@ static bool IsAffineNode(const BaseRef &n) {
 }
 
 const BaseRef AffineActivationFusion::DefinePattern() const {
-  auto activation_var = std::make_shared<CondVar>(IsActivationNode);
+  auto activation_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
   auto affine_var = std::make_shared<CondVar>(IsAffineNode);
   return VectorRef({activation_var, affine_var});
 }
@@ -49,7 +49,7 @@ const AnfNodePtr AffineActivationFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
   auto activation_node = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(activation_node) != lite::RET_OK) {
+  if (activation_node == nullptr) {
     MS_LOG(ERROR) << "the matmul_node is null.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;

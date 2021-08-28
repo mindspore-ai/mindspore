@@ -626,7 +626,7 @@ const AnfNodePtr TfliteLstmCellFusion::Process(const FuncGraphPtr &func_graph, c
   }
   auto while_cnode = utils::cast<CNodePtr>(while_node);
 
-  if (CheckIfCNodeIsNull(while_cnode) != RET_OK || CheckInputSize(while_cnode, while_inputs_num_) != RET_OK) {
+  if (while_cnode == nullptr || while_cnode->size() != while_inputs_num_) {
     return nullptr;
   }
   if (!CheckReferencedOutputs(func_graph, while_cnode)) {

@@ -95,7 +95,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   }
   // transform node means scale,bn
   auto transform_node = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(transform_node) != lite::RET_OK || CheckLeastInputSize(transform_node, 2) != lite::RET_OK) {
+  if (transform_node == nullptr || transform_node->size() < kInputSizeTwo) {
     return nullptr;
   }
 

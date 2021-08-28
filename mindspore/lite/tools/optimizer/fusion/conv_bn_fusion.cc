@@ -160,8 +160,8 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
     bn_mean_node = bn_node->input(kCaffeBNMeanIndex);
     bn_variance_node = bn_node->input(kCaffeBNVarIndex);
     AnfNodePtr bn_scale_factor_node = bn_node->input(kCaffeBNScaleFactorIndex);
-    if (CheckIfNodeIsParam(bn_mean_node) != lite::RET_OK || CheckIfNodeIsParam(bn_variance_node) != lite::RET_OK ||
-        CheckIfNodeIsParam(bn_scale_factor_node) != lite::RET_OK) {
+    if (!bn_mean_node->isa<Parameter>() || !bn_variance_node->isa<Parameter>() ||
+        !bn_scale_factor_node->isa<Parameter>()) {
       return;
     }
     MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::BatchNorm>>(primitive_c));
@@ -192,7 +192,7 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
     return;
   }
-  if (CheckIfNodeIsParam(bn_mean_node) != lite::RET_OK || CheckIfNodeIsParam(bn_variance_node) != lite::RET_OK) {
+  if (!bn_mean_node->isa<Parameter>() || !bn_variance_node->isa<Parameter>()) {
     return;
   }
   if (eps < kEps) {

@@ -66,22 +66,6 @@ int CheckIfFuncGraphIsNull(const FuncGraphPtr &graph);
 
 int CheckIfAnfNodeIsNull(const AnfNodePtr &node);
 
-int CheckIfCNodeIsNull(const CNodePtr &node);
-
-int CheckIfParameterIsNull(const ParameterPtr &node);
-
-int CheckIfValueNodeIsNull(const ValueNodePtr &node);
-
-int CheckIfVarIsNull(const VarPtr &var);
-
-int CheckInputSize(const CNodePtr &node, int size);
-
-int CheckIfNodeIsParam(const AnfNodePtr &node);
-
-int CheckIfNodeIsParamOrValue(const AnfNodePtr &node);
-
-int CheckLeastInputSize(const CNodePtr &node, int size);
-
 ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num, TypeId type_id);
 
 bool IsParamNode(const BaseRef &n);
@@ -92,14 +76,6 @@ bool IsParallelSplitConvNode(const BaseRef &n);
 
 bool IsConvNode(const BaseRef &n);
 
-bool IsDwConvNode(const BaseRef &n);
-
-bool IsPoolingNode(const BaseRef &n);
-
-bool IsQuantNode(const BaseRef &n);
-
-bool IsActivationNode(const BaseRef &n);
-
 bool IsOpType(const BaseRef &n, const PrimitivePtr &prim);
 
 bool CheckIsAllInputsParam(const AnfNodePtr &node);
@@ -108,54 +84,11 @@ size_t GetOutputTensorNum(const AnfNodePtr &node);
 
 bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
-bool IsConcatNode(const BaseRef &n);
-
 size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
-
-std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
 
 tensor::TensorPtr GetTensorInfo(const AnfNodePtr &node);
 
 AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index);
-
-enum kTransFilterType {
-  kKCHW2HWCK,  // 0
-  kKCHW2KHWC,
-  kCKHW2KHWC,
-  kCKHW2HWCK,
-  kKCHW2HWKC,
-  kCKHW2HWKC,
-  kHWCK2KCHW,
-  kHWCK2CKHW,
-  kHWKC2KCHW,
-  kHWKC2CKHW,
-  kNHWC2KCHW,  // 10
-  kNHWC2CKHW,
-  kNHWC2HWCK,
-  kKHWC2HWCK,
-  kCHWK2HWCK,
-  kKHWC2CHWK,
-  kCHWK2KHWC,
-  kKHWC2KCHW,
-  kCKHW2KCHW,
-  kCHWK2KCHW,
-  kKCHW2CKHW,  // 20
-  kHWCK2KHWC,
-  kHWKC2KHWC
-};
-
-STATUS GetFilterDim(const std::vector<int64_t> &oriDims, kTransFilterType type, int64_t *filterK, int64_t *filterC,
-                    int64_t *filterH, int64_t *filterW);
-
-STATUS SetFilterDim(const tensor::TensorPtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
-                    int32_t filterH, int32_t filterW);
-
-template <typename T>
-static STATUS TransFilterData(const tensor::TensorPtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
-                              int32_t filterH, int32_t filterW);
-
-template <typename T>
-static lite::STATUS TransFilterFormat(const tensor::TensorPtr &tensor, kTransFilterType type);
 
 STATUS TransFilterFormat(const tensor::TensorPtr &tensor, schema::Format src_format, schema::Format dst_format);
 

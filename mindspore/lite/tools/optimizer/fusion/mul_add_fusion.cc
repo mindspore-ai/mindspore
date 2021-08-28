@@ -80,7 +80,7 @@ bool MulAddFusion::CheckMulNode(const FuncGraphPtr &func_graph) const {
     MS_LOG(DEBUG) << "Only support mul node with no activation";
     return false;
   }
-  if (CheckIfCNodeIsNull(mul_node) != lite::RET_OK || CheckInputSize(mul_node, kMulInputsLength) != lite::RET_OK) {
+  if (mul_node == nullptr || mul_node->size() != kInputSizeThree) {
     MS_LOG(DEBUG) << "Mul op is null or has error input size";
     return false;
   }
@@ -143,7 +143,7 @@ bool MulAddFusion::CheckAddNode() const {
     return false;
   }
   auto add_cnode = add_anode_->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(add_cnode) != lite::RET_OK || CheckInputSize(add_cnode, kAddInputsLength) != lite::RET_OK) {
+  if (add_cnode == nullptr || add_cnode->size() != kInputSizeThree) {
     MS_LOG(DEBUG) << "Add op is null or has error input size";
     return false;
   }

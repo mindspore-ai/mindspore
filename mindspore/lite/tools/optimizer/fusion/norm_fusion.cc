@@ -168,7 +168,7 @@ bool NormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type
   // beta
   auto beta_node = utils::cast<AnfNodePtr>((*equiv)[beta_]);
   MS_ASSERT(beta_node != nullptr);
-  if (CheckIfNodeIsParam(beta_node) != lite::RET_OK) {
+  if (!beta_node->isa<Parameter>()) {
     return false;
   }
   auto beta_param = beta_node->cast<ParameterPtr>()->default_param();
@@ -179,7 +179,7 @@ bool NormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type
   // gamma
   auto gamma_node = utils::cast<AnfNodePtr>((*equiv)[gamma_]);
   MS_ASSERT(gamma_node != nullptr);
-  if (CheckIfNodeIsParam(gamma_node) != lite::RET_OK) {
+  if (!gamma_node->isa<Parameter>()) {
     return false;
   }
   auto gamma_param = gamma_node->cast<ParameterPtr>()->default_param();
@@ -190,7 +190,7 @@ bool NormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type
   // epsilon
   auto epsilon_node = utils::cast<AnfNodePtr>((*equiv)[epsilon_]);
   MS_ASSERT(epsilon_node != nullptr);
-  if (CheckIfNodeIsParam(epsilon_node) != lite::RET_OK) {
+  if (!epsilon_node->isa<Parameter>()) {
     return false;
   }
   auto epsilon_param = epsilon_node->cast<ParameterPtr>()->default_param();

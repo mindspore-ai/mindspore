@@ -36,7 +36,7 @@ const BaseRef ConvTupleActivationFusion::DefinePattern() const {
   auto tuple_getitem_var = std::make_shared<CondVar>(IsTupleGetItemNode);
   auto tuple_index = std::make_shared<Var>();
   VectorRef tuple_get_item = VectorRef({tuple_getitem_var, conv_var, tuple_index});
-  auto act_var = std::make_shared<CondVar>(IsActivationNode);
+  auto act_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
   return VectorRef({act_var, tuple_get_item});
 }
 
@@ -48,8 +48,7 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
     return nullptr;
   }
   auto act_node = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(act_node) != lite::RET_OK ||
-      CheckInputSize(act_node, kActivationInputsLength) != lite::RET_OK) {
+  if (act_node == nullptr || act_node->size() != kInputSizeTwo) {
     return nullptr;
   }
 
