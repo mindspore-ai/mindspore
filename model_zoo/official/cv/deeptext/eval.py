@@ -31,10 +31,9 @@ from model_utils.config import config
 from model_utils.moxing_adapter import moxing_wrapper
 from model_utils.device_adapter import get_device_id, get_device_num
 
-
 set_seed(1)
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
 
 
 def deeptext_eval_test(dataset_path='', ckpt_path=''):
@@ -113,7 +112,7 @@ def deeptext_eval_test(dataset_path='', ckpt_path=''):
     print("\n========================================\n", flush=True)
     for i in range(config.num_classes - 1):
         j = i + 1
-        f1 = (2 *  precisions[j] * recalls[j]) / (precisions[j] + recalls[j] + 1e-6)
+        f1 = (2 * precisions[j] * recalls[j]) / (precisions[j] + recalls[j] + 1e-6)
         print("class {} precision is {:.2f}%, recall is {:.2f}%,"
               "F1 is {:.2f}%".format(j, precisions[j] * 100, recalls[j] * 100, f1 * 100), flush=True)
         if config.use_ambigous_sample:
@@ -122,6 +121,7 @@ def deeptext_eval_test(dataset_path='', ckpt_path=''):
 
 def modelarts_pre_process():
     '''modelarts pre process function.'''
+
     def unzip(zip_file, save_dir):
         import zipfile
         s_time = time.time()

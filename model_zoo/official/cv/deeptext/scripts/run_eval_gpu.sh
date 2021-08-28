@@ -31,6 +31,10 @@ PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
 PATH3=$(get_real_path $3)
 PATH4=$(get_real_path $4)
+DEVICE_ID=0
+if [ $# == 5 ]; then
+    DEVICE_ID=$5
+fi
 echo $PATH1
 echo $PATH2
 echo $PATH3
@@ -66,5 +70,11 @@ cp -r ../model_utils ./eval
 cd ./eval || exit
 env > env.log
 echo "start eval for device $DEVICE_ID"
-CUDA_VISIBLE_DEVICE=$DEVICE_ID python eval.py --imgs_path=$PATH1 --annos_path=$PATH2 --checkpoint_path=$PATH3 &> log &
+export CUDA_VISIBLE_DEVICES=$DEVICE_ID
+python eval.py \
+  --device_target="GPU" \
+  --export_device_target="GPU" \
+  --imgs_path=$PATH1 \
+  --annos_path=$PATH2 \
+  --checkpoint_path=$PATH3 &> log &
 cd ..

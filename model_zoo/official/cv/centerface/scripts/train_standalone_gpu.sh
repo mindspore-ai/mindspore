@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ]
+if [ $# != 4 ]
 then
     echo "Usage: bash train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [ANNOTATIONS] [DATASET]"
     exit 1

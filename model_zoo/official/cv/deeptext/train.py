@@ -47,6 +47,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target,
 
 def modelarts_pre_process():
     '''modelarts pre process function.'''
+
     def unzip(zip_file, save_dir):
         import zipfile
         s_time = time.time()
@@ -98,23 +99,21 @@ def modelarts_pre_process():
 
     config.save_checkpoint_path = os.path.join(config.output_path, config.save_checkpoint_path)
 
+
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
     device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "GPU"
     if config.run_distribute:
+        init()
         if device_type == "Ascend":
             rank = get_rank_id()
             device_num = get_device_num()
-
         else:
             context.reset_auto_parallel_context()
             rank = get_rank()
             device_num = get_group_size()
-
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
-        init()
-
     else:
         rank = get_rank_id()
         device_num = 1
