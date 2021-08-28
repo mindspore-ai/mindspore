@@ -257,6 +257,11 @@ void Debugger::Reset() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   // reset components
+  if (heartbeat_thread_ && heartbeat_thread_->joinable()) {
+    heartbeat_thread_->join();
+    MS_LOG(INFO) << "Join Heartbeat thread.";
+  }
+  heartbeat_thread_ = nullptr;
   device_id_ = 0;
   device_target_ = "";
   num_step_ = 0;
@@ -268,6 +273,7 @@ void Debugger::Reset() {
   debug_services_ = nullptr;
   graph_proto_list_.clear();
   graph_ptr_list_.clear();
+  MS_LOG(INFO) << "Release Debugger resource.";
 }
 
 void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs) {
@@ -1065,13 +1071,9 @@ std::list<TensorSummary> Debugger::LoadTensorsStat(const ProtoVector<TensorProto
 }
 
 void Debugger::Exit() {
-  // clear resource before exit
   // debugger will notify main thread to exit because main thread can only exit at step boundary.
+  MS_LOG(INFO) << "Exit Debugger";
   SetEnableHeartbeat(false);
-  if (heartbeat_thread_ && heartbeat_thread_->joinable()) {
-    heartbeat_thread_->join();
-    MS_LOG(INFO) << "Join Heartbeat thread.";
-  }
   pipeline::ExecutorPy::DebugTerminate(true);
 }
 

@@ -530,7 +530,7 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
         return;
       }
       struct dirent *dir = nullptr;
-      while ((dir = readdir(d_handle)) != NULL) {
+      while ((dir = readdir(d_handle)) != nullptr) {
         if (dir->d_type == DT_REG) {
           std::string candidate = dir->d_name;
           for (const std::string &file_to_find : files_to_convert_in_dir) {
@@ -605,29 +605,28 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
     if (d == nullptr) {
       MS_LOG(ERROR) << "Directory does not exist in ConvertReadTensors.";
       return;
-    } else {
-      struct dirent *dir = nullptr;
-      while ((dir = readdir(d)) != NULL) {
-        if (dir->d_type == DT_REG) {
-          std::string file_name = dir->d_name;
-          std::string file_name_w_o_perfix = file_name.substr(file_name.find('.') + 1);
-          if (file_name_w_o_perfix.rfind(prefix_dump_file_name) != std::string::npos &&
-              file_name.rfind(file_format) == std::string::npos) {
-            // if file matches prefix and is in device format add to candidate files to convert.
-            dir_to_files_map[specific_dump_dir].push_back(file_name);
-          } else if (file_name_w_o_perfix.rfind(prefix_dump_file_name) != std::string::npos &&
-                     file_name.rfind(file_format) != std::string::npos) {
-            // otherwise, if file matches prefix and already has been converted to host format
-            // add to result of converted files.
-            std::string found_file = specific_dump_dir + "/" + file_name;
-            if (std::find(result_list->begin(), result_list->end(), found_file) == result_list->end()) {
-              result_list->push_back(found_file);
-            }
+    }
+    struct dirent *dir = nullptr;
+    while ((dir = readdir(d)) != nullptr) {
+      if (dir->d_type == DT_REG) {
+        std::string file_name = dir->d_name;
+        std::string file_name_w_o_perfix = file_name.substr(file_name.find('.') + 1);
+        if (file_name_w_o_perfix.rfind(prefix_dump_file_name) != std::string::npos &&
+            file_name.rfind(file_format) == std::string::npos) {
+          // if file matches prefix and is in device format add to candidate files to convert.
+          dir_to_files_map[specific_dump_dir].push_back(file_name);
+        } else if (file_name_w_o_perfix.rfind(prefix_dump_file_name) != std::string::npos &&
+                   file_name.rfind(file_format) != std::string::npos) {
+          // otherwise, if file matches prefix and already has been converted to host format
+          // add to result of converted files.
+          std::string found_file = specific_dump_dir + "/" + file_name;
+          if (std::find(result_list->begin(), result_list->end(), found_file) == result_list->end()) {
+            result_list->push_back(found_file);
           }
         }
       }
-      (void)closedir(d);
     }
+    (void)closedir(d);
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
 }
@@ -646,29 +645,28 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
     if (d == nullptr) {
       MS_LOG(ERROR) << "Directory " << specific_dump_dir.c_str() << " does not exist in ConvertWatchPointNodes.";
       return;
-    } else {
-      struct dirent *dir = nullptr;
-      while ((dir = readdir(d)) != NULL) {
-        if (dir->d_type == DT_REG) {
-          std::string file_name = dir->d_name;
-          std::string file_name_w_o_perfix = file_name.substr(file_name.find('.') + 1);
-          if (file_name_w_o_perfix.rfind(dump_name) != std::string::npos &&
-              file_name.rfind(file_format) == std::string::npos) {
-            // if file matches prefix and is in device format add to candidate files to convert.
-            dir_to_files_map[specific_dump_dir].push_back(file_name);
-          } else if (file_name_w_o_perfix.rfind(dump_name) != std::string::npos &&
-                     file_name.rfind(file_format) != std::string::npos) {
-            // otherwise, if file matches prefix and already has been converted to host format
-            // add to result of converted files.
-            std::string found_file = specific_dump_dir + "/" + file_name;
-            if (std::find(result_list->begin(), result_list->end(), found_file) == result_list->end()) {
-              result_list->push_back(found_file);
-            }
+    }
+    struct dirent *dir = nullptr;
+    while ((dir = readdir(d)) != nullptr) {
+      if (dir->d_type == DT_REG) {
+        std::string file_name = dir->d_name;
+        std::string file_name_w_o_perfix = file_name.substr(file_name.find('.') + 1);
+        if (file_name_w_o_perfix.rfind(dump_name) != std::string::npos &&
+            file_name.rfind(file_format) == std::string::npos) {
+          // if file matches prefix and is in device format add to candidate files to convert.
+          dir_to_files_map[specific_dump_dir].push_back(file_name);
+        } else if (file_name_w_o_perfix.rfind(dump_name) != std::string::npos &&
+                   file_name.rfind(file_format) != std::string::npos) {
+          // otherwise, if file matches prefix and already has been converted to host format
+          // add to result of converted files.
+          std::string found_file = specific_dump_dir + "/" + file_name;
+          if (std::find(result_list->begin(), result_list->end(), found_file) == result_list->end()) {
+            result_list->push_back(found_file);
           }
         }
       }
-      (void)closedir(d);
     }
+    (void)closedir(d);
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
 }
@@ -708,7 +706,7 @@ void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::str
       tensor_data->SetIteration(iteration);
       tensor_data->SetDeviceId(device_id);
       tensor_data->SetRootGraphId(root_graph_id);
-      tensor_data->SetDataPtr(NULL);
+      tensor_data->SetDataPtr(nullptr);
       tensor_data->SetByteSize(0);
       tensor_data->SetType("");
       tensor_data->SetShape(shape);
@@ -736,7 +734,7 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
   if (data_size) {
     tensor_data->SetDataPtr(buffer->data());
   } else {
-    tensor_data->SetDataPtr(NULL);
+    tensor_data->SetDataPtr(nullptr);
   }
   tensor_data->SetByteSize(data_size);
   tensor_data->SetType(type_name);
@@ -811,7 +809,7 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
                                          const std::string &backend_name, size_t slot, unsigned int device_id,
                                          unsigned int iteration, unsigned int root_graph_id, const bool &is_output,
                                          std::vector<std::shared_ptr<TensorData>> *result_list) {
-  std::vector<char> *buffer = NULL;
+  std::vector<char> *buffer = nullptr;
   std::string type_name = "";
   std::vector<int64_t> shape;
   uint64_t data_size = 0;
@@ -820,25 +818,24 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
   bool found_file = false;
   std::vector<std::string> matched_paths;
   if (d == nullptr) {
-    MS_LOG(ERROR) << "Directory " << specific_dump_dir << " does not exist!";
-    return;
-  }
-  struct dirent *dir = nullptr;
-  while ((dir = readdir(d)) != NULL) {
-    if (dir->d_type == DT_REG) {
-      std::string file_name = dir->d_name;
-      std::string stripped_file_name = GetStrippedFilename(file_name);
-      if (stripped_file_name.empty()) {
-        continue;
+    MS_LOG(INFO) << "Directory " << specific_dump_dir << " does not exist!";
+  } else {
+    struct dirent *dir = nullptr;
+    while ((dir = readdir(d)) != nullptr) {
+      if (dir->d_type == DT_REG) {
+        std::string file_name = dir->d_name;
+        std::string stripped_file_name = GetStrippedFilename(file_name);
+        if (stripped_file_name.empty()) {
+          continue;
+        }
+        std::size_t found = stripped_file_name.rfind(prefix_dump_file_name, 0);
+        if (found != 0) {
+          continue;
+        }
+        std::string full_path = specific_dump_dir + "/" + file_name;
+        matched_paths.push_back(full_path);
+        found_file = true;
       }
-      std::size_t found = stripped_file_name.rfind(prefix_dump_file_name, 0);
-      if (found != 0) {
-        continue;
-      }
-
-      std::string full_path = specific_dump_dir + "/" + file_name;
-      matched_paths.push_back(full_path);
-      found_file = true;
     }
   }
 
@@ -862,7 +859,7 @@ void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, 
                                           unsigned int root_graph_id, const bool &is_output,
                                           const std::vector<std::string> &async_file_pool,
                                           std::vector<std::shared_ptr<TensorData>> *result_list) {
-  std::vector<char> *buffer = NULL;
+  std::vector<char> *buffer = nullptr;
   std::string type_name = "";
   std::vector<int64_t> shape;
   uint64_t data_size = 0;
@@ -977,7 +974,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
         MS_LOG(ERROR) << "Directory " << specific_dump_dir.c_str() << " does not exist in ReadNeededDumpedTensors.";
       } else {
         struct dirent *dir = nullptr;
-        while ((dir = readdir(d)) != NULL) {
+        while ((dir = readdir(d)) != nullptr) {
           if (dir->d_type == DT_REG) {
             std::string file_name = dir->d_name;
             for (auto &node : proto_to_dump) {
@@ -995,8 +992,8 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
                 std::string output_str = dump_name.substr(dump_name.rfind(".") + 1);
                 bool output_flag = (output_str == "output");
 
-                AddToTensorData(orig_name, slot, iteration, device_id, root_graph_id, output_flag, 0, "", shape, NULL,
-                                &tensor_list);
+                AddToTensorData(orig_name, slot, iteration, device_id, root_graph_id, output_flag, 0, "", shape,
+                                nullptr, &tensor_list);
                 break;
               }
             }
