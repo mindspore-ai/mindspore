@@ -156,6 +156,11 @@ NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<mindsp
     op = new (std::nothrow) ConvolutionNPUOp(primitive, in_tensors, out_tensors, name);
   }
 
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "create conv op for Npu failed.";
+    return nullptr;
+  }
+
   auto ret = op->IsSupport(primitive, in_tensors, out_tensors);
   if (ret != RET_OK) {
     delete op;

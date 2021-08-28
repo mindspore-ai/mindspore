@@ -42,6 +42,10 @@ int FullconnectionNPUOp::Init(const schema::Primitive *primitive, const std::vec
     col *= input_shape[i];
   }
   reshape_op_ = new (std::nothrow) hiai::op::Const(name_ + "_reshape_data");
+  if (reshape_op_ == nullptr) {
+    MS_LOG(ERROR) << "New Const operator for fullconnection op " << name_ << " failed.";
+    return RET_ERROR;
+  }
   vector<int> reshape_data = {static_cast<int>(input_shape[0]), col};
   ge::TensorDesc reshape_tensor_desc(ge::Shape({FC_INPUT_DIM}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr reshape_tensor = std::make_shared<hiai::Tensor>(reshape_tensor_desc);

@@ -26,6 +26,7 @@ int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::
     vector<int> axes;
     size_t size = in_tensors[STRIDE_INDEX].Shape()[0];
     axes.resize(size);
+    MS_ASSERT(in_tensors[STRIDE_INDEX].Data());
     memcpy(axes.data(), in_tensors[STRIDE_INDEX].Data().get(), sizeof(int) * size);
     for (int i = 0; i < axes.size(); ++i) {
       if (i != axes[i]) {

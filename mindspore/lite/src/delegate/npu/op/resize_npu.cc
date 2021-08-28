@@ -71,6 +71,10 @@ int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
   vector<int32_t> dataValue = {static_cast<int32_t>(new_height_), static_cast<int32_t>(new_width_)};
   sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), SHAPE_SIZE * sizeof(int32_t));
   out_size_ = new (std::nothrow) hiai::op::Const(name_ + "_size");
+  if (out_size_ == nullptr) {
+    MS_LOG(ERROR) << "create const NPU op failed for " << name_;
+    return RET_ERROR;
+  }
   out_size_->set_attr_value(sizeTensor);
 
   if (resize_method_ == schema::ResizeMethod_LINEAR) {

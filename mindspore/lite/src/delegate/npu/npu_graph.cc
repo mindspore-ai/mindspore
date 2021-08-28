@@ -304,7 +304,10 @@ int NPUGraph::Prepare() {
     }
     for (auto output : all_kernels_[i]->outputs()) {
       if (find(outputs_.begin(), outputs_.end(), output) == outputs_.end()) {
-        output.MutableData();
+        if (output.MutableData() == nullptr) {
+          MS_LOG(ERROR) << "NPU Subgraph " << all_kernels_[i]->name() << " prepare malloc output tensor failed.";
+          return RET_ERROR;
+        }
       }
     }
   }
@@ -316,7 +319,10 @@ int NPUGraph::Execute() {
     // 1. malloc graph output data
     for (auto output : all_kernels_[i]->outputs()) {
       if (find(outputs_.begin(), outputs_.end(), output) != outputs_.end()) {
-        output.MutableData();
+        if (output.MutableData() == nullptr) {
+          MS_LOG(ERROR) << "NPU Subgraph " << output.Name() << " execute malloc output tensor failed.";
+          return RET_ERROR;
+        }
       }
     }
     // 2. execute

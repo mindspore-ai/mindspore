@@ -251,16 +251,20 @@ int NPUFusionPass::ConcatFusion(NPUOp *cur_op) {
   if (cur_op == nullptr) {
     return RET_ERROR;
   }
-  auto ret = UpdateOp(cur_op);
+  int ret = UpdateOp(cur_op);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UpdateOp failed.";
-    return RET_ERROR;
+    return ret;
   }
   if (cur_op->type() != schema::PrimitiveType_Concat) {
     return RET_ERROR;
   }
   auto concat_op = static_cast<ConcatNPUOp *>(cur_op);
-  concat_op->HandleAxis();
+  ret = concat_op->HandleAxis();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "HandleAxis failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -268,7 +272,7 @@ int NPUFusionPass::SplitFusion(NPUOp *cur_op) {
   if (cur_op == nullptr) {
     return RET_ERROR;
   }
-  auto ret = UpdateOp(cur_op);
+  int ret = UpdateOp(cur_op);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UpdateOp failed.";
     return RET_ERROR;
@@ -277,7 +281,11 @@ int NPUFusionPass::SplitFusion(NPUOp *cur_op) {
     return RET_ERROR;
   }
   auto split_op = static_cast<SplitNPUOp *>(cur_op);
-  split_op->HandleAxis();
+  ret = split_op->HandleAxis();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "HandleAxis failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -285,16 +293,20 @@ int NPUFusionPass::PadFusion(NPUOp *cur_op) {
   if (cur_op == nullptr) {
     return RET_ERROR;
   }
-  auto ret = UpdateOp(cur_op);
+  int ret = UpdateOp(cur_op);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UpdateOp failed.";
-    return RET_ERROR;
+    return ret;
   }
   if (cur_op->type() != schema::PrimitiveType_PadFusion) {
     return RET_ERROR;
   }
   auto pad_op = static_cast<PadNPUOp *>(cur_op);
-  pad_op->HandleAxis();
+  ret = pad_op->HandleAxis();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "HandleAxis failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -303,10 +315,10 @@ int NPUFusionPass::StridedSliceFusion(NPUOp *cur_op) {
   if (cur_op == nullptr) {
     return RET_ERROR;
   }
-  auto ret = UpdateOp(cur_op);
+  int ret = UpdateOp(cur_op);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UpdateOp failed.";
-    return RET_ERROR;
+    return ret;
   }
   if (cur_op->inputs().size() < kNumInputSize) {
     MS_LOG(ERROR) << "in tensors size < " << kNumInputSize;
@@ -317,19 +329,26 @@ int NPUFusionPass::StridedSliceFusion(NPUOp *cur_op) {
   }
   auto begin_tensor = cur_op->inputs().at(BEGIN_INDEX);
   int *begin = reinterpret_cast<int *>(begin_tensor.MutableData());
+  MS_ASSERT(begin);
   (void)NPUPassUtils::AssistDataNHWC2NCHW(begin, 1);
   auto end_tensor = cur_op->inputs().at(END_INDEX);
   int *end = reinterpret_cast<int *>(end_tensor.MutableData());
+  MS_ASSERT(end);
   NPUPassUtils::AssistDataNHWC2NCHW(end, 1);
   auto stride_tensor = cur_op->inputs().at(STRIDE_INDEX);
   if (cur_op->inputs().size() == ONNX_INPUT_SIZE) {
     stride_tensor = cur_op->inputs().at(ONNX_STRIDE_INDEX);
   }
   int *stride = reinterpret_cast<int *>(stride_tensor.MutableData());
+  MS_ASSERT(stride);
   NPUPassUtils::AssistDataNHWC2NCHW(stride, 1);
 
   auto stride_slice_op = static_cast<StridedSliceNPUOp *>(cur_op);
-  stride_slice_op->HandleAxis();
+  ret = stride_slice_op->HandleAxis();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "HandleAxis failed.";
+    return ret;
+  }
   return RET_OK;
 }
 

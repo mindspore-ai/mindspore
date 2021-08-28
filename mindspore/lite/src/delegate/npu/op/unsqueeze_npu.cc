@@ -46,6 +46,10 @@ int UnsqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<m
   ge::TensorPtr tensor = std::make_shared<hiai::Tensor>(desc);
   tensor->SetData(reinterpret_cast<uint8_t *>(axis_.data()), size * sizeof(int));
   axis_const_ = new hiai::op::Const(name_ + "_axis");
+  if (axis_const_ == nullptr) {
+    MS_LOG(ERROR) << "create const NPU op failed for " << name_;
+    return RET_ERROR;
+  }
   axis_const_->set_attr_value(tensor);
   unsqueeze_->set_input_axis(*axis_const_);
   return RET_OK;

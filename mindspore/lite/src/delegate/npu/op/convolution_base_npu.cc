@@ -53,6 +53,7 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
   }
   auto w_shape = inputs[1].Shape();
   auto origin_weight = inputs[1].Data().get();
+  MS_ASSERT(origin_weight);
 
   nchw_weight_ = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
   if (nchw_weight_ == nullptr) {
