@@ -676,7 +676,7 @@ class Profiler:
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""
-        hccl_path = os.path.join(self._output_path, "hccl_info")
+        hccl_path = os.path.join(self._output_path, "hccl_info_{}".format(self._rank_id))
         if not os.path.exists(hccl_path):
             os.makedirs(hccl_path, exist_ok=True)
             os.chmod(hccl_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
