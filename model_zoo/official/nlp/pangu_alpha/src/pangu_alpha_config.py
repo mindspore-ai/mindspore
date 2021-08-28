@@ -42,7 +42,8 @@ class PANGUALPHAConfig:
                  micro_size=32,
                  load_ckpt_path=None,
                  use_top_query_attention=True,
-                 param_init_type=mstype.float32):
+                 param_init_type=mstype.float32,
+                 enable_offload=False):
         self.batch_size = batch_size
         self.seq_length = seq_length
         self.vocab_size = vocab_size
@@ -67,6 +68,7 @@ class PANGUALPHAConfig:
         self.load_ckpt_path = load_ckpt_path
         self.use_top_query_attention = use_top_query_attention
         self.param_init_type = param_init_type
+        self.enable_offload = enable_offload
 
     def __str__(self):
         info = "[PANGUALPHAConfig]" + '===' * 10 + '\n'

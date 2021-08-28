@@ -22,6 +22,7 @@ from .div import _div_cpu
 from .concat import _concat_cpu
 from .split import _split_cpu
 from .adam import _adam_cpu
+from .adam_weight_decay import _adam_weight_decay_cpu
 from .arg_max import _arg_max_cpu
 from .arg_min_with_value import _arg_min_with_value_cpu
 from .arg_max_with_value import _arg_max_with_value_cpu

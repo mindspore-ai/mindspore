@@ -453,9 +453,11 @@ class FusedWeightScaleApplyMomentum(PrimitiveWithInfer):
         return v_dtype
 
 
-class AdamWeightDecay(PrimitiveWithInfer):
+class FusedCastAdamWeightDecay(PrimitiveWithInfer):
     r"""
-    Updates gradients by the Adaptive Moment Estimation (AdamWeightDecay) algorithm with weight decay.
+    Updates gradients by the Adaptive Moment Estimation (AdamWeightDecay) algorithm with weight decay. This operator
+    updates parameters of float16 using gradients of float16 when parameters are initialized with dtype of float16 and
+    compute with dtype of float16.
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
@@ -479,15 +481,14 @@ class AdamWeightDecay(PrimitiveWithInfer):
             If false, the result is unpredictable. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Weights to be updated.
-        - **m** (Tensor) - The 1st moment vector in the updating formula, has the same type as `var`.
-        - **v** (Tensor) - the 2nd moment vector in the updating formula.
-          Mean square gradients with the same type as `var`.
-        - **lr** (float) - :math:`l` in the updating formula.
+        - **var** (Tensor) - Weights to be updated with the type float16 or float32.
+        - **m** (Tensor) - The 1st moment vector in the updating formula with the type float32.
+        - **v** (Tensor) - the 2nd moment vector in the updating formula with the type float32.
+        - **lr** (float) - :math:`lr` in the updating formula.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimations.
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimations.
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
-        - **gradient** (Tensor) - Gradient, has the same type as `var`.
+        - **gradient** (Tensor) - Gradient, has the type float16.
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
@@ -497,27 +498,10 @@ class AdamWeightDecay(PrimitiveWithInfer):
         - **v** (Tensor) - The same shape and data type as `v`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter, ops
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.adam_weight_decay = ops.AdamWeightDecay()
-        ...         self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
-        ...         self.m = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="m")
-        ...         self.v = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="v")
-        ...     def construct(self, lr, beta1, beta2, epsilon, decay, grad):
-        ...         out = self.adam_weight_decay(self.var, self.m, self.v, lr, beta1, beta2,
-        ...                               epsilon, decay, grad)
-        ...         return out
-        >>> np.random.seed(0)
-        >>> net = Net()
-        >>> gradient = Tensor(np.random.rand(2, 2).astype(np.float32))
-        >>> output = net(0.9, 0.9, 0.999, 1e-8, 1e-5, gradient)
+
     """
 
     @prim_attr_register
@@ -534,11 +518,11 @@ class AdamWeightDecay(PrimitiveWithInfer):
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, lr_dtype, beta1_dtype, beta2_dtype,
                     epsilon_dtype, decay, grad_dtype):
-        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype}
+        args = {"m": m_dtype, "v": v_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        validator.check_scalar_or_tensor_types_same({"grad": grad_dtype}, [mstype.float16, mstype.float32], self.name)
+        validator.check_scalar_or_tensor_types_same({"var": var_dtype}, [mstype.float16, mstype.float32], self.name)
+        validator.check_scalar_or_tensor_types_same({"grad": grad_dtype}, [mstype.float16], self.name)
 
-        args = {"lr": lr_dtype, "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype,
-                "decay": decay}
+        args = {"lr": lr_dtype, "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype, "decay": decay}
         validator.check_scalar_or_tensor_types_same(args, [mstype.float32], self.name, True)
         return var_dtype, m_dtype, v_dtype

@@ -152,104 +152,98 @@ int AdamDeltaFp32(float *delta, float *m, float *v, float lr, float beta1, float
   return NNACL_OK;
 }
 
-size_t AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon,
-                           float decay, const float *gradient, size_t start, size_t end) {
+int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
+                        const float *gradient, size_t start, size_t end) {
   size_t c1 = start;
+  const float beta1_minus = 1 - beta1;
+  const float beta2_minus = 1 - beta2;
 #ifdef ENABLE_AVX512
-  struct AVX_Data beta1_r, beta2_r, beta1_minus_r, beta2_minus_r, lr_neg_r, epsilon_r, decay_r;
-  beta1_r.data = _mm512_set1_ps(beta1);
-  beta2_r.data = _mm512_set1_ps(beta2);
-  beta1_minus_r.data = _mm512_set1_ps(1.0f - beta1);
-  beta2_minus_r.data = _mm512_set1_ps(1.0f - beta2);
-  lr_neg_r.data = _mm512_set1_ps(-lr);
-  epsilon_r.data = _mm512_set1_ps(epsilon);
-  decay_r.data = _mm512_set1_ps(decay);
+  __m512 beta1_r = _mm512_set1_ps(beta1);
+  __m512 beta2_r = _mm512_set1_ps(beta2);
+  __m512 beta1_minus_r = _mm512_set1_ps(beta1_minus);
+  __m512 beta2_minus_r = _mm512_set1_ps(beta2_minus);
+  __m512 lr_neg_r = _mm512_set1_ps(-lr);
+  __m512 epsilon_r = _mm512_set1_ps(epsilon);
+  __m512 decay_r = _mm512_set1_ps(decay);
   size_t c16 = ((end - start) / C16NUM) * C16NUM + start;
-  size_t c64 = ((end - start) / C64NUM) * C64NUM + start;
 
   const float *gradient_ptr = gradient + start;
   float *var_ptr = var + start;
   float *m_ptr = m + start;
   float *v_ptr = v + start;
 
-  for (; c1 < c64; c1 += C64NUM) {
-    struct AVX_Data g_r[kUnrollSize], var_r[kUnrollSize], m_r[kUnrollSize], v_r[kUnrollSize];
-    LoadStep4(g_r, gradient_ptr, kUnrollSize);
-    LoadStep4(var_r, var_ptr, kUnrollSize);
-    LoadStep4(m_r, m_ptr, kUnrollSize);
-    LoadStep4(v_r, v_ptr, kUnrollSize);
-
-    m_r[0].data = _mm512_mul_ps(m_r[0].data, beta1_r.data);
-    m_r[1].data = _mm512_mul_ps(m_r[1].data, beta1_r.data);
-    m_r[2].data = _mm512_mul_ps(m_r[2].data, beta1_r.data);
-    m_r[3].data = _mm512_mul_ps(m_r[3].data, beta1_r.data);
-    m_r[0].data = _mm512_fmadd_ps(g_r[0].data, beta1_minus_r.data, m_r[0].data);
-    m_r[1].data = _mm512_fmadd_ps(g_r[1].data, beta1_minus_r.data, m_r[1].data);
-    m_r[2].data = _mm512_fmadd_ps(g_r[2].data, beta1_minus_r.data, m_r[2].data);
-    m_r[3].data = _mm512_fmadd_ps(g_r[3].data, beta1_minus_r.data, m_r[3].data);
-
-    v_r[0].data = _mm512_mul_ps(v_r[0].data, beta2_r.data);
-    v_r[1].data = _mm512_mul_ps(v_r[1].data, beta2_r.data);
-    v_r[2].data = _mm512_mul_ps(v_r[2].data, beta2_r.data);
-    v_r[3].data = _mm512_mul_ps(v_r[3].data, beta2_r.data);
-    g_r[0].data = _mm512_mul_ps(g_r[0].data, g_r[0].data);
-    g_r[1].data = _mm512_mul_ps(g_r[1].data, g_r[1].data);
-    g_r[2].data = _mm512_mul_ps(g_r[2].data, g_r[2].data);
-    g_r[3].data = _mm512_mul_ps(g_r[3].data, g_r[3].data);
-    v_r[0].data = _mm512_fmadd_ps(g_r[0].data, beta2_minus_r.data, v_r[0].data);
-    v_r[1].data = _mm512_fmadd_ps(g_r[1].data, beta2_minus_r.data, v_r[1].data);
-    v_r[2].data = _mm512_fmadd_ps(g_r[2].data, beta2_minus_r.data, v_r[2].data);
-    v_r[3].data = _mm512_fmadd_ps(g_r[3].data, beta2_minus_r.data, v_r[3].data);
-
-    g_r[0].data = _mm512_sqrt_ps(v_r[0].data);
-    g_r[1].data = _mm512_sqrt_ps(v_r[1].data);
-    g_r[2].data = _mm512_sqrt_ps(v_r[2].data);
-    g_r[3].data = _mm512_sqrt_ps(v_r[3].data);
-    g_r[0].data = _mm512_div_ps(m_r[0].data, _mm512_add_ps(g_r[0].data, epsilon_r.data));
-    g_r[1].data = _mm512_div_ps(m_r[1].data, _mm512_add_ps(g_r[1].data, epsilon_r.data));
-    g_r[2].data = _mm512_div_ps(m_r[2].data, _mm512_add_ps(g_r[2].data, epsilon_r.data));
-    g_r[3].data = _mm512_div_ps(m_r[3].data, _mm512_add_ps(g_r[3].data, epsilon_r.data));
-    g_r[0].data = _mm512_fmadd_ps(var_r[0].data, decay_r.data, g_r[0].data);
-    g_r[1].data = _mm512_fmadd_ps(var_r[1].data, decay_r.data, g_r[1].data);
-    g_r[2].data = _mm512_fmadd_ps(var_r[2].data, decay_r.data, g_r[2].data);
-    g_r[3].data = _mm512_fmadd_ps(var_r[3].data, decay_r.data, g_r[3].data);
-
-    var_r[0].data = _mm512_fmadd_ps(g_r[0].data, lr_neg_r.data, var_r[0].data);
-    var_r[1].data = _mm512_fmadd_ps(g_r[1].data, lr_neg_r.data, var_r[1].data);
-    var_r[2].data = _mm512_fmadd_ps(g_r[2].data, lr_neg_r.data, var_r[2].data);
-    var_r[3].data = _mm512_fmadd_ps(g_r[3].data, lr_neg_r.data, var_r[3].data);
-
-    StoreStep4(var_ptr, var_r, kUnrollSize);
-    StoreStep4(m_ptr, m_r, kUnrollSize);
-    StoreStep4(v_ptr, v_r, kUnrollSize);
-
-    gradient_ptr += C64NUM;
-    var_ptr += C64NUM;
-    m_ptr += C64NUM;
-    v_ptr += C64NUM;
-  }
   for (; c1 < c16; c1 += C16NUM) {
-    struct AVX_Data g_r, var_r, m_r, v_r;
-    g_r.data = _mm512_loadu_ps(gradient_ptr);
-    var_r.data = _mm512_loadu_ps(var_ptr);
-    m_r.data = _mm512_loadu_ps(m_ptr);
-    v_r.data = _mm512_loadu_ps(v_ptr);
+    __m512 g_r = _mm512_loadu_ps(gradient_ptr);
+    __m512 var_r = _mm512_loadu_ps(var_ptr);
+    __m512 m_r = _mm512_loadu_ps(m_ptr);
+    __m512 v_r = _mm512_loadu_ps(v_ptr);
 
-    m_r.data = _mm512_mul_ps(m_r.data, beta1_r.data);
-    v_r.data = _mm512_mul_ps(v_r.data, beta2_r.data);
-    struct AVX_Data avx_r0;
-    avx_r0.data = _mm512_mul_ps(g_r.data, g_r.data);
-    m_r.data = _mm512_fmadd_ps(g_r.data, beta1_minus_r.data, m_r.data);
-    v_r.data = _mm512_fmadd_ps(avx_r0.data, beta2_minus_r.data, v_r.data);
-    avx_r0.data = _mm512_sqrt_ps(v_r.data);
-    avx_r0.data = _mm512_div_ps(m_r.data, _mm512_add_ps(avx_r0.data, epsilon_r.data));
-    avx_r0.data = _mm512_fmadd_ps(var_r.data, decay_r.data, avx_r0.data);
-    var_r.data = _mm512_fmadd_ps(avx_r0.data, lr_neg_r.data, var_r.data);
-    _mm512_storeu_ps(var_ptr, var_r.data);
-    _mm512_storeu_ps(m_ptr, m_r.data);
-    _mm512_storeu_ps(v_ptr, v_r.data);
+    m_r = _mm512_mul_ps(m_r, beta1_r);
+    v_r = _mm512_mul_ps(v_r, beta2_r);
+    __m512 avx_r0 = _mm512_mul_ps(g_r, g_r);
+    m_r = _mm512_fmadd_ps(g_r, beta1_minus_r, m_r);
+    v_r = _mm512_fmadd_ps(avx_r0, beta2_minus_r, v_r);
+    avx_r0 = _mm512_sqrt_ps(v_r);
+    avx_r0 = _mm512_div_ps(m_r, _mm512_add_ps(avx_r0, epsilon_r));
+    avx_r0 = _mm512_fmadd_ps(var_r, decay_r, avx_r0);
+    var_r = _mm512_fmadd_ps(avx_r0, lr_neg_r, var_r);
+    _mm512_storeu_ps(var_ptr, var_r);
+    _mm512_storeu_ps(m_ptr, m_r);
+    _mm512_storeu_ps(v_ptr, v_r);
 
     gradient_ptr += C16NUM;
+    var_ptr += C16NUM;
+    m_ptr += C16NUM;
+    v_ptr += C16NUM;
+  }
+#endif
+  // remaining
+  for (; c1 < end; c1++) {
+    m[c1] += (gradient[c1] - m[c1]) * beta1_minus;
+    v[c1] += (gradient[c1] * gradient[c1] - v[c1]) * beta2_minus;
+    var[c1] -= lr * (m[c1] / (sqrt(v[c1]) + epsilon) + decay * var[c1]);
+  }
+  return NNACL_OK;
+}
+
+size_t FusedCastAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
+                         const int16_t *gradient16, size_t start, size_t end) {
+  size_t c1 = start;
+#ifdef ENABLE_AVX512
+  __m512 beta1_r = _mm512_set1_ps(beta1);
+  __m512 beta2_r = _mm512_set1_ps(beta2);
+  __m512 beta1_minus_r = _mm512_set1_ps(1.0f - beta1);
+  __m512 beta2_minus_r = _mm512_set1_ps(1.0f - beta2);
+  __m512 lr_neg_r = _mm512_set1_ps(-lr);
+  __m512 epsilon_r = _mm512_set1_ps(epsilon);
+  __m512 decay_r = _mm512_set1_ps(decay);
+  size_t c16 = ((end - start) / C16NUM) * C16NUM + start;
+
+  const int16_t *gradient16_ptr = gradient16 + start;
+  float *var_ptr = var + start;
+  float *m_ptr = m + start;
+  float *v_ptr = v + start;
+
+  for (; c1 < c16; c1 += C16NUM) {
+    __m512 g_r = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr)));
+    __m512 var_r = _mm512_loadu_ps(var_ptr);
+    __m512 m_r = _mm512_loadu_ps(m_ptr);
+    __m512 v_r = _mm512_loadu_ps(v_ptr);
+
+    m_r = _mm512_mul_ps(m_r, beta1_r);
+    v_r = _mm512_mul_ps(v_r, beta2_r);
+    __m512 avx_r0 = _mm512_mul_ps(g_r, g_r);
+    m_r = _mm512_fmadd_ps(g_r, beta1_minus_r, m_r);
+    v_r = _mm512_fmadd_ps(avx_r0, beta2_minus_r, v_r);
+    avx_r0 = _mm512_sqrt_ps(v_r);
+    avx_r0 = _mm512_div_ps(m_r, _mm512_add_ps(avx_r0, epsilon_r));
+    avx_r0 = _mm512_fmadd_ps(var_r, decay_r, avx_r0);
+    var_r = _mm512_fmadd_ps(avx_r0, lr_neg_r, var_r);
+    _mm512_storeu_ps(var_ptr, var_r);
+    _mm512_storeu_ps(m_ptr, m_r);
+    _mm512_storeu_ps(v_ptr, v_r);
+
+    gradient16_ptr += C16NUM;
     var_ptr += C16NUM;
     m_ptr += C16NUM;
     v_ptr += C16NUM;
@@ -258,109 +252,45 @@ size_t AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1
   return c1;
 }
 
-size_t FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
-                     const int16_t *gradient16, size_t start, size_t end) {
+size_t FusedCastAdamFp16(int16_t *var16, float *m, float *v, float lr, float beta1, float beta2, float epsilon,
+                         float decay, const int16_t *gradient16, size_t start, size_t end) {
   size_t c1 = start;
 #ifdef ENABLE_AVX512
-  struct AVX_Data beta1_r, beta2_r, beta1_minus_r, beta2_minus_r, lr_neg_r, epsilon_r, decay_r;
-  beta1_r.data = _mm512_set1_ps(beta1);
-  beta2_r.data = _mm512_set1_ps(beta2);
-  beta1_minus_r.data = _mm512_set1_ps(1.0f - beta1);
-  beta2_minus_r.data = _mm512_set1_ps(1.0f - beta2);
-  lr_neg_r.data = _mm512_set1_ps(-lr);
-  epsilon_r.data = _mm512_set1_ps(epsilon);
-  decay_r.data = _mm512_set1_ps(decay);
+  __m512 beta1_r = _mm512_set1_ps(beta1);
+  __m512 beta2_r = _mm512_set1_ps(beta2);
+  __m512 beta1_minus_r = _mm512_set1_ps(1.0f - beta1);
+  __m512 beta2_minus_r = _mm512_set1_ps(1.0f - beta2);
+  __m512 lr_neg_r = _mm512_set1_ps(-lr);
+  __m512 epsilon_r = _mm512_set1_ps(epsilon);
+  __m512 decay_r = _mm512_set1_ps(decay);
   size_t c16 = ((end - start) / C16NUM) * C16NUM + start;
-  size_t c64 = ((end - start) / C64NUM) * C64NUM + start;
 
   const int16_t *gradient16_ptr = gradient16 + start;
-  float *var_ptr = var + start;
+  int16_t *var16_ptr = var16 + start;
   float *m_ptr = m + start;
   float *v_ptr = v + start;
 
-  for (; c1 < c64; c1 += C64NUM) {
-    struct AVX_Data g_r[kUnrollSize], var_r[kUnrollSize], m_r[kUnrollSize], v_r[kUnrollSize];
-    g_r[0].data = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr)));
-    g_r[1].data = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr + C16NUM)));
-    g_r[2].data = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr + C16NUM * 2)));
-    g_r[3].data = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr + C16NUM * 3)));
-
-    LoadStep4(var_r, var_ptr, kUnrollSize);
-    LoadStep4(m_r, m_ptr, kUnrollSize);
-    LoadStep4(v_r, v_ptr, kUnrollSize);
-
-    m_r[0].data = _mm512_mul_ps(m_r[0].data, beta1_r.data);
-    m_r[1].data = _mm512_mul_ps(m_r[1].data, beta1_r.data);
-    m_r[2].data = _mm512_mul_ps(m_r[2].data, beta1_r.data);
-    m_r[3].data = _mm512_mul_ps(m_r[3].data, beta1_r.data);
-    m_r[0].data = _mm512_fmadd_ps(g_r[0].data, beta1_minus_r.data, m_r[0].data);
-    m_r[1].data = _mm512_fmadd_ps(g_r[1].data, beta1_minus_r.data, m_r[1].data);
-    m_r[2].data = _mm512_fmadd_ps(g_r[2].data, beta1_minus_r.data, m_r[2].data);
-    m_r[3].data = _mm512_fmadd_ps(g_r[3].data, beta1_minus_r.data, m_r[3].data);
-
-    v_r[0].data = _mm512_mul_ps(v_r[0].data, beta2_r.data);
-    v_r[1].data = _mm512_mul_ps(v_r[1].data, beta2_r.data);
-    v_r[2].data = _mm512_mul_ps(v_r[2].data, beta2_r.data);
-    v_r[3].data = _mm512_mul_ps(v_r[3].data, beta2_r.data);
-    g_r[0].data = _mm512_mul_ps(g_r[0].data, g_r[0].data);
-    g_r[1].data = _mm512_mul_ps(g_r[1].data, g_r[1].data);
-    g_r[2].data = _mm512_mul_ps(g_r[2].data, g_r[2].data);
-    g_r[3].data = _mm512_mul_ps(g_r[3].data, g_r[3].data);
-    v_r[0].data = _mm512_fmadd_ps(g_r[0].data, beta2_minus_r.data, v_r[0].data);
-    v_r[1].data = _mm512_fmadd_ps(g_r[1].data, beta2_minus_r.data, v_r[1].data);
-    v_r[2].data = _mm512_fmadd_ps(g_r[2].data, beta2_minus_r.data, v_r[2].data);
-    v_r[3].data = _mm512_fmadd_ps(g_r[3].data, beta2_minus_r.data, v_r[3].data);
-
-    g_r[0].data = _mm512_sqrt_ps(v_r[0].data);
-    g_r[1].data = _mm512_sqrt_ps(v_r[1].data);
-    g_r[2].data = _mm512_sqrt_ps(v_r[2].data);
-    g_r[3].data = _mm512_sqrt_ps(v_r[3].data);
-    g_r[0].data = _mm512_div_ps(m_r[0].data, _mm512_add_ps(g_r[0].data, epsilon_r.data));
-    g_r[1].data = _mm512_div_ps(m_r[1].data, _mm512_add_ps(g_r[1].data, epsilon_r.data));
-    g_r[2].data = _mm512_div_ps(m_r[2].data, _mm512_add_ps(g_r[2].data, epsilon_r.data));
-    g_r[3].data = _mm512_div_ps(m_r[3].data, _mm512_add_ps(g_r[3].data, epsilon_r.data));
-    g_r[0].data = _mm512_fmadd_ps(var_r[0].data, decay_r.data, g_r[0].data);
-    g_r[1].data = _mm512_fmadd_ps(var_r[1].data, decay_r.data, g_r[1].data);
-    g_r[2].data = _mm512_fmadd_ps(var_r[2].data, decay_r.data, g_r[2].data);
-    g_r[3].data = _mm512_fmadd_ps(var_r[3].data, decay_r.data, g_r[3].data);
-
-    var_r[0].data = _mm512_fmadd_ps(g_r[0].data, lr_neg_r.data, var_r[0].data);
-    var_r[1].data = _mm512_fmadd_ps(g_r[1].data, lr_neg_r.data, var_r[1].data);
-    var_r[2].data = _mm512_fmadd_ps(g_r[2].data, lr_neg_r.data, var_r[2].data);
-    var_r[3].data = _mm512_fmadd_ps(g_r[3].data, lr_neg_r.data, var_r[3].data);
-
-    StoreStep4(var_ptr, var_r, kUnrollSize);
-    StoreStep4(m_ptr, m_r, kUnrollSize);
-    StoreStep4(v_ptr, v_r, kUnrollSize);
-
-    gradient16_ptr += C64NUM;
-    var_ptr += C64NUM;
-    m_ptr += C64NUM;
-    v_ptr += C64NUM;
-  }
   for (; c1 < c16; c1 += C16NUM) {
-    struct AVX_Data g_r, var_r, m_r, v_r;
-    g_r.data = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr)));
-    var_r.data = _mm512_loadu_ps(var_ptr);
-    m_r.data = _mm512_loadu_ps(m_ptr);
-    v_r.data = _mm512_loadu_ps(v_ptr);
+    __m512 g_r = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr)));
+    __m512 var_r = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(var16_ptr)));
+    __m512 m_r = _mm512_loadu_ps(m_ptr);
+    __m512 v_r = _mm512_loadu_ps(v_ptr);
 
-    m_r.data = _mm512_mul_ps(m_r.data, beta1_r.data);
-    v_r.data = _mm512_mul_ps(v_r.data, beta2_r.data);
-    struct AVX_Data avx_r0;
-    avx_r0.data = _mm512_mul_ps(g_r.data, g_r.data);
-    m_r.data = _mm512_fmadd_ps(g_r.data, beta1_minus_r.data, m_r.data);
-    v_r.data = _mm512_fmadd_ps(avx_r0.data, beta2_minus_r.data, v_r.data);
-    avx_r0.data = _mm512_sqrt_ps(v_r.data);
-    avx_r0.data = _mm512_div_ps(m_r.data, _mm512_add_ps(avx_r0.data, epsilon_r.data));
-    avx_r0.data = _mm512_fmadd_ps(var_r.data, decay_r.data, avx_r0.data);
-    var_r.data = _mm512_fmadd_ps(avx_r0.data, lr_neg_r.data, var_r.data);
-    _mm512_storeu_ps(var_ptr, var_r.data);
-    _mm512_storeu_ps(m_ptr, m_r.data);
-    _mm512_storeu_ps(v_ptr, v_r.data);
+    m_r = _mm512_mul_ps(m_r, beta1_r);
+    v_r = _mm512_mul_ps(v_r, beta2_r);
+    __m512 avx_r0 = _mm512_mul_ps(g_r, g_r);
+    m_r = _mm512_fmadd_ps(g_r, beta1_minus_r, m_r);
+    v_r = _mm512_fmadd_ps(avx_r0, beta2_minus_r, v_r);
+    avx_r0 = _mm512_sqrt_ps(v_r);
+    avx_r0 = _mm512_div_ps(m_r, _mm512_add_ps(avx_r0, epsilon_r));
+    avx_r0 = _mm512_fmadd_ps(var_r, decay_r, avx_r0);
+    var_r = _mm512_fmadd_ps(avx_r0, lr_neg_r, var_r);
+    _mm512_storeu_ps(m_ptr, m_r);
+    _mm512_storeu_ps(v_ptr, v_r);
+    _mm256_storeu_si256((__m256i *)var16_ptr, _mm512_cvtps_ph(var_r, 0));
 
     gradient16_ptr += C16NUM;
-    var_ptr += C16NUM;
+    var16_ptr += C16NUM;
     m_ptr += C16NUM;
     v_ptr += C16NUM;
   }

@@ -40,7 +40,6 @@ from src.callbacks import EvalCallBack, LossCallBack
 from src.metrics import PPLMetric
 
 
-
 project_root = os.path.abspath(
     os.path.dirname(os.path.realpath(__file__)) + os.path.sep + "..")
 print('project_root:', project_root)
@@ -110,7 +109,7 @@ def run_train(args_opt):
         stage_num=args_opt.stage_num, micro_size=args_opt.micro_size,
         eod_reset=bool(args_opt.eod_reset), load_ckpt_path=args_opt.load_ckpt_path,
         param_init_type=mstype.float32 if args_opt.param_init_type == 'fp32' else mstype.float16,
-        word_emb_dp=bool(args_opt.word_emb_dp))
+        word_emb_dp=bool(args_opt.word_emb_dp), enable_offload=bool(args_opt.opt_offload))
     print("===config is: ", config, flush=True)
     # Define network
     pangu_alpha = PanguAlpha(config)
@@ -126,7 +125,8 @@ def run_train(args_opt):
     if args_opt.optimizer == "lamb":
         optimizer = nn.Lamb(group_params, learning_rate=lr)
     elif args_opt.opt_offload:
-        optimizer = AdamWeightDecayOp(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95)
+        optimizer = AdamWeightDecayOp(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95,
+                                      param_init_type=config.param_init_type)
     else:
         optimizer = FP32StateAdamWeightDecay(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95)
     # Initial scaling sens
@@ -219,7 +219,7 @@ def run_train_pipeline(args_opt):
         use_past=False,
         stage_num=args_opt.stage_num,
         micro_size=args_opt.micro_size,
-        word_emb_dp=bool(args_opt.word_emb_dp))
+        word_emb_dp=bool(args_opt.word_emb_dp), enable_offload=bool(args_opt.opt_offload))
     print("===config is: ", config, flush=True)
     pangu_alpha = PanguAlpha(config)
     loss = CrossEntropyLoss(config)
@@ -233,7 +233,8 @@ def run_train_pipeline(args_opt):
     if args_opt.optimizer == "lamb":
         optimizer = nn.Lamb(group_params, learning_rate=lr)
     elif args_opt.opt_offload:
-        optimizer = AdamWeightDecayOp(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95)
+        optimizer = AdamWeightDecayOp(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95,
+                                      param_init_type=config.param_init_type)
     else:
         optimizer = nn.AdamWeightDecay(group_params, learning_rate=lr, beta1=0.9, beta2=0.95, eps=1e-8)
 

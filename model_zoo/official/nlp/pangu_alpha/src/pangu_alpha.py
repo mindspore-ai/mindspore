@@ -934,7 +934,8 @@ class PanguAlpha_Model(nn.Cell):
         self.is_pipeline = (config.stage_num > 1)
         if self.is_pipeline:
             self.top_query_embedding_table = Parameter(initializer(TruncatedNormal(0.02),
-                                                                   [config.seq_length, config.embedding_size]),
+                                                                   [config.seq_length, config.embedding_size],
+                                                                   config.param_init_type),
                                                        name='embedding_table', parallel_optimizer=False)
             self.top_query_embedding = EmbeddingLookup()
             for i in range(config.num_layers):
@@ -1084,7 +1085,8 @@ class PanguAlpha(nn.Cell):
                     raise ValueError(f"{embedding_path} file not exits, "
                                      f"please check whether word_embedding file exist.")
             else:
-                self.embedding_table = Parameter(initializer(Normal(0.02), [self.vocab_size, self.embedding_size]),
+                self.embedding_table = Parameter(initializer(Normal(0.02), [self.vocab_size, self.embedding_size],
+                                                             config.param_init_type),
                                                  name="embedding_table", parallel_optimizer=False)
 
     def construct(self, input_ids, input_mask, input_position, attention_mask,
