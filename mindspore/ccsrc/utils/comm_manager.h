@@ -45,5 +45,7 @@ class CommManager {
 };
 
 uint32_t GetRank();
+
+bool IsStandAlone();
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_COMMUNICATION_MANAGER_H

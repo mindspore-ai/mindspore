@@ -126,15 +126,15 @@ def test_sit_auto_mix_precision_model_o0():
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
     model = Model(net, loss, opt, amp_level="O0")
     model.train(1, dataset1, dataset_sink_mode=False)
-    contend = read_validateir_file('./test_amp_o0/rank_0/ir_dump')
+    contend = read_validateir_file('./test_amp_o0/')
     castnum = re.findall(r"Cast\(", contend)
     assert len(castnum) == 5
     clean_all_ir_files('./test_amp_o0')
     model.predict(Tensor(input_data))
-    contend = read_validateir_file('./test_amp_o0/rank_0/ir_dump')
+    contend = read_validateir_file('./test_amp_o0/')
     castnum = re.findall(r"Cast\(", contend)
     assert len(castnum) == 11
-    clean_all_ir_files('./test_amp_o0/rank_0/ir_dump')
+    clean_all_ir_files('./test_amp_o0/')
 
 
 @pytest.mark.level0
@@ -162,10 +162,10 @@ def test_sit_auto_mix_precision_model_o2():
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
     model = Model(net, loss, opt, amp_level="O2")
     model.train(1, dataset1, dataset_sink_mode=False)
-    contend = read_validateir_file('./test_amp_o2/rank_0/ir_dump')
+    contend = read_validateir_file('./test_amp_o2/')
     castnum = re.findall(r"Cast\(", contend)
     assert len(castnum) == 14
-    clean_all_ir_files('./test_amp_o2/rank_0/ir_dump')
+    clean_all_ir_files('./test_amp_o2/')
     out_graph = model.predict(Tensor(input_data))
 
     # pynative mode

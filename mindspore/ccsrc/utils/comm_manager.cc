@@ -233,4 +233,10 @@ uint32_t GetRank() {
   }
   return rank_id;
 }
+
+bool IsStandAlone() {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  return parallel_context->parallel_mode() == parallel::STAND_ALONE;
+}
 }  // namespace mindspore

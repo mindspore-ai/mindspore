@@ -447,6 +447,7 @@ def set_auto_parallel_context(**kwargs):
     """
     _set_auto_parallel_context(**kwargs)
 
+
 def get_auto_parallel_context(attr_key):
     """
     Get auto parallel context attribute value according to the key.
@@ -566,9 +567,8 @@ def set_context(**kwargs):
         save_graphs (bool): Whether to save graphs. Default: False.
         save_graphs_path (str): Path to save graphs. Default: ".".
 
-             Graphs will be saved to the directory of `save_graphs_path/rank_${rank_id}/ir_dump`.
-             When distributed training, `rank_id` is the ID of the current device in the cluster.
-             Otherwise, `rank_id` is `0`.
+             During distributed training, graphs will be saved to the directory of
+             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
         enable_graph_kernel (bool): Whether to enable graph kernel fusion to optimize network execution performance.
              Default: False.
         graph_kernel_flags (str): Optimization options of graph kernel fusion. Experienced user only.
