@@ -688,9 +688,9 @@ FuncGraphPtr Cloner::operator[](const FuncGraphPtr &func_graph) {
   return ((repl_func_graph_.count(func_graph) == 0) ? func_graph : repl_func_graph_[func_graph]);
 }
 
-FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph) {
+FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  Cloner cloner({func_graph}, false, true, true, std::make_shared<TraceCopy>(), nullptr);
+  Cloner cloner({func_graph}, clone_value_nodes, true, true, std::make_shared<TraceCopy>(), nullptr);
   return cloner[func_graph];
 }
 

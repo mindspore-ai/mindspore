@@ -619,6 +619,76 @@ void ResetTopCellInfo(const TopCellInfoPtr &top_cell, const py::args &args) {
   top_cell->set_input_args_id(input_args_id);
 }
 
+void CreateNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, const OpExecInfoPtr &op_exec_info,
+                                 const py::object &added_out, const FuncGraphPtr &ms_func_graph,
+                                 const FuncGraphPtr &grad_graph) {
+  MS_EXCEPTION_IF_NULL(top_cell);
+  MS_EXCEPTION_IF_NULL(grad_graph);
+  MS_EXCEPTION_IF_NULL(op_exec_info);
+  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  // Get Added forward nodes.
+  auto merge_node = ms_func_graph->output();
+  MS_EXCEPTION_IF_NULL(merge_node);
+  auto merge_make_tuple = merge_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(merge_make_tuple);
+  if (merge_make_tuple->size() != 3) {
+    MS_LOG(EXCEPTION) << "The input size of merge make tuple node should be 3, but it is: " << merge_make_tuple->size();
+  }
+  const auto &added_forward_node = merge_make_tuple->input(2);
+  MS_EXCEPTION_IF_NULL(added_forward_node);
+  if (added_forward_node->isa<ValueNode>()) {
+    MS_LOG(DEBUG) << "The added forward make tuple node info: " << added_forward_node->DebugString();
+    std::vector<tensor::TensorPtr> total_output_tensors;
+    TensorValueToTensor(PyAttrValue(added_out), &total_output_tensors);
+    top_cell->set_op_info_with_ms_func_forward_tensors(op_exec_info->op_info, total_output_tensors);
+    return;
+  }
+  auto added_make_tuple = added_forward_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(added_make_tuple);
+  MS_LOG(DEBUG) << "The added forward make tuple node info: " << added_make_tuple->DebugString();
+
+  // Get Added forward output tensors when forward func graph has been ran.
+  std::vector<tensor::TensorPtr> total_output_tensors;
+  TensorValueToTensor(PyAttrValue(added_out), &total_output_tensors);
+  // Create new output tensors for forward nodes, it will also work in grad graph with same value node.
+  size_t index = 0;
+  for (size_t i = 1; i < added_make_tuple->size(); ++i) {
+    auto cnode = added_make_tuple->input(i)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    MS_LOG(DEBUG) << "Create New output tensor for cnode: " << cnode->DebugString();
+    auto output_vnode = cnode->forward().first;
+    MS_EXCEPTION_IF_NULL(output_vnode);
+    grad_graph->AddValueNode(output_vnode);
+    MS_LOG(DEBUG) << "Original output value node: " << output_vnode << " info: " << output_vnode->ToString();
+    // Create new tensor.
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    if (index + output_num > total_output_tensors.size()) {
+      MS_LOG(EXCEPTION) << "The size of total_output_tensors: " << total_output_tensors.size()
+                        << ", but the current index: " << index << ", output num: " << output_num;
+    }
+    std::vector<ValuePtr> new_values;
+    std::for_each(total_output_tensors.begin() + index, total_output_tensors.begin() + index + output_num,
+                  [&new_values](const auto &tensor) { new_values.push_back(tensor); });
+    index = index + output_num;
+    // Create new value.
+    if (output_num == 1) {
+      output_vnode->set_value(new_values[0]);
+    } else if (output_num > 1) {
+      output_vnode->set_value(std::make_shared<ValueTuple>(new_values));
+    } else {
+      MS_LOG(EXCEPTION) << "The output value of forward cnode is empty, forward cnode info: " << cnode->ToString();
+    }
+    MS_LOG(DEBUG) << "New output value node: " << output_vnode << " info: " << output_vnode->ToString();
+  }
+
+  // Save op info with new tensors for current running ms_function func graph.
+  if (index != total_output_tensors.size()) {
+    MS_LOG(EXCEPTION) << "The index: " << index
+                      << " should be equal to the size of total_output_tensors: " << total_output_tensors.size();
+  }
+  top_cell->set_op_info_with_ms_func_forward_tensors(op_exec_info->op_info, total_output_tensors);
+}
+
 void SaveOpInfo(const TopCellInfoPtr &top_cell, const std::string &op_info,
                 const std::vector<tensor::TensorPtr> &op_out_tensors) {
   MS_EXCEPTION_IF_NULL(top_cell);
@@ -636,6 +706,10 @@ void SaveOpInfo(const TopCellInfoPtr &top_cell, const std::string &op_info,
 
 void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<tensor::TensorPtr> &pre_tensors) {
   MS_EXCEPTION_IF_NULL(new_tensor);
+  if (pre_tensors.empty()) {
+    MS_LOG(EXCEPTION) << "The size of pre tensors is empty.";
+  }
+
   auto device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   for (auto &pre_tensor : pre_tensors) {
     MS_EXCEPTION_IF_NULL(pre_tensor);
@@ -761,6 +835,7 @@ void TopCellInfo::ClearDeviceMemory() {
   }
   for (const auto &elem : tensors_in_bprop_graph) {
     MS_EXCEPTION_IF_NULL(elem);
+    MS_LOG(DEBUG) << "Clear device address for tensor: " << elem->ToString();
     elem->set_device_address(nullptr);
   }
 }
@@ -785,9 +860,9 @@ void TopCellInfo::Clear() {
   k_pynative_cell_ptr_ = nullptr;
   graph_info_map_.clear();
   sub_cell_list_.clear();
-  ms_function_grad_cache_.clear();
   op_info_with_tensor_id_.clear();
   tensor_id_with_tensor_object_.clear();
+  op_info_with_ms_func_forward_tensors_.clear();
 }
 
 void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_info) {
@@ -1292,7 +1367,7 @@ AnfNodePtr GradExecutor::GetObjNode(const py::object &obj, const std::string &ob
   auto abs = node->abstract();
   ValuePtr out_obj = nullptr;
   if (node->forward().first != nullptr) {
-    out_obj = node->forward().first;
+    out_obj = node->forward().first->value();
   } else {
     out_obj = PyAttrValue(obj);
   }
@@ -1303,7 +1378,7 @@ AnfNodePtr GradExecutor::GetObjNode(const py::object &obj, const std::string &ob
       node->add_input_value(out_obj, "");
       node->add_input_value(MakeValue(idx), "");
       out_obj = (*out_obj->cast<ValueTuplePtr>())[static_cast<size_t>(idx)];
-      node->set_forward(out_obj, "");
+      node->set_forward(NewValueNode(out_obj), "");
     }
     if (abs != nullptr && abs->isa<abstract::AbstractTuple>()) {
       auto prim_abs = dyn_cast<abstract::AbstractTuple>(abs)->elements()[static_cast<size_t>(idx)];
@@ -1427,11 +1502,33 @@ void GradExecutor::DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr 
   }
 }
 
-void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args,
-                                          const OpExecInfoPtr &op_exec_info, ValuePtrList *input_values,
-                                          CNodePtr *ms_function_cnode) {
+void GradExecutor::UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const py::object &added_out) {
+  MS_LOG(DEBUG) << "Ms func graph has already ran before. The graph phase is: " << graph_phase();
+  auto new_forward_value = PyAttrValue(added_out);
+  MS_EXCEPTION_IF_NULL(new_forward_value);
+  MS_LOG(DEBUG) << "The output values of added forward nodes are: " << new_forward_value->ToString();
+  std::vector<tensor::TensorPtr> new_tensors;
+  TensorValueToTensor(new_forward_value, &new_tensors);
+  if (new_tensors.empty()) {
+    MS_LOG(DEBUG) << "The size of added forward tensors is zero, no need to update.";
+    return;
+  }
+
   MS_EXCEPTION_IF_NULL(op_exec_info);
-  op_exec_info->op_inputs = args;
+  const auto &old_tensors = top_cell()->op_info_with_ms_func_forward_tensors().at(op_exec_info->op_info);
+  if (old_tensors.size() != new_tensors.size()) {
+    MS_LOG(EXCEPTION) << "The size of old tensors is: " << old_tensors.size()
+                      << ", but the size of new tensors is: " << new_tensors.size()
+                      << ", the current op info is: " << op_exec_info->op_info;
+  }
+  for (size_t i = 0; i < new_tensors.size(); ++i) {
+    UpdateTensorInfo(new_tensors[i], {old_tensors[i]});
+    old_tensors[i]->set_sync_status(kNeedSyncDeviceToHost);
+  }
+}
+
+void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args,
+                                          ValuePtrList *input_values, CNodePtr *ms_function_cnode) {
   // Get input node info of ms_function
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   std::vector<AnfNodePtr> input_nodes{NewValueNode(ms_func_graph)};
@@ -1447,25 +1544,37 @@ void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, con
     (*input_values).emplace_back(inp_i_value);
   }
 
-  // Get weights info of ms_function
+  // Get dfbuilder and graph info map
   auto df_builder = GetDfbuilder(top_cell()->cell_id());
   MS_EXCEPTION_IF_NULL(df_builder);
+  const auto &graph_info = top_cell()->graph_info_map().at(df_builder);
+  MS_EXCEPTION_IF_NULL(graph_info);
+  // Get weights info of ms_function
+  std::vector<AnfNodePtr> new_params;
+  auto manage = Manage(ms_func_graph, false);
   for (const auto &anf_node : ms_func_graph->parameters()) {
     MS_EXCEPTION_IF_NULL(anf_node);
     auto param = anf_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param);
-    if (param->has_default()) {
-      input_nodes.emplace_back(param);
-      auto default_value = param->default_param();
-      MS_EXCEPTION_IF_NULL(default_value);
-      (*input_values).emplace_back(default_value);
-      op_exec_info->op_inputs.append(default_value);
-      // Add weights to df_builder
-      SetParamNodeMapInGraphInfoMap(df_builder, param->name(), param);
-      MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
-                    << default_value->ToString() << ". Its name is: " << param->name();
+    if (!param->has_default()) {
+      new_params.push_back(param);
+      continue;
     }
+    if (graph_info->params.count(param->name())) {
+      // Share same weight parameter in different ms_function call.
+      auto same_param = graph_info->params.at(param->name());
+      manage->Replace(anf_node, same_param);
+      param = same_param;
+    }
+    new_params.push_back(param);
+    input_nodes.emplace_back(param);
+    (*input_values).emplace_back(param->default_param());
+    SetParamNodeMapInGraphInfoMap(df_builder, param->name(), param);
+    MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
+                  << param->default_param()->ToString() << ". Its name is: " << param->name();
   }
+  ms_func_graph->set_parameters(new_params);
+  manage->Clear();
 
   // Make a CNode which includes ms_function fprop graph and inputs node
   MS_EXCEPTION_IF_NULL(ms_function_cnode);
@@ -1474,28 +1583,23 @@ void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, con
 }
 
 // Make adjoint for ms_function fprop graph and connect it with previous op
-void GradExecutor::MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &fprop_g,
-                                            const py::object &out, const py::args &args,
+void GradExecutor::MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
+                                            const py::object &actual_out, const py::args &args,
                                             const std::string &graph_phase) {
   ValuePtrList input_values;
   CNodePtr ms_function_cnode = nullptr;
-  OpExecInfoPtr op_exec_info = std::make_shared<OpExecInfo>();
-  MakeCNodeForMsFunction(ms_func_graph, args, op_exec_info, &input_values, &ms_function_cnode);
+  MakeCNodeForMsFunction(ms_func_graph, args, &input_values, &ms_function_cnode);
   MS_EXCEPTION_IF_NULL(ms_function_cnode);
-  SetTupleArgsToGraphInfoMap(curr_g_, out, ms_function_cnode);
-  SetNodeMapInGraphInfoMap(curr_g_, GetId(out), ms_function_cnode);
-  // Record ms_function cnode info and update forward tensors
-  op_exec_info->op_name = graph_phase;
-  RecordGradOpInfo(op_exec_info, out);
-  MS_LOG(DEBUG) << "Ms_function cnode op info: " << op_exec_info->op_info;
-  UpdateForwardTensorInfoInBpropGraph(op_exec_info, out);
-  // Add out and dout
-  auto out_value = parse::data_converter::PyDataToValue(out);
+  SetTupleArgsToGraphInfoMap(curr_g_, actual_out, ms_function_cnode);
+  SetNodeMapInGraphInfoMap(curr_g_, GetId(actual_out), ms_function_cnode);
+
+  // Connect grad graph of ms_function to context.
+  auto out_value = parse::data_converter::PyDataToValue(actual_out);
   MS_EXCEPTION_IF_NULL(out_value);
-  // Do ad grad for ms_function cnode
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
-  if (!k_pynative_cell_ptr->KPynativeWithFProp(ms_function_cnode, input_values, out_value, fprop_g)) {
+  MS_EXCEPTION_IF_NULL(grad_graph);
+  if (!k_pynative_cell_ptr->KPynativeWithFProp(ms_function_cnode, input_values, out_value, grad_graph)) {
     MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: "
                       << ms_function_cnode->DebugString();
   }
@@ -2460,9 +2564,11 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
                                          const std::vector<AnfNodePtr> &weights, size_t arg_size,
                                          const py::args &args) {
   bool build_formal_param = false;
-  if ((!py::hasattr(cell, parse::CUSTOM_BPROP_NAME) && !cell_stack_.empty() && IsNestedGrad()) ||
-      top_cell()->ms_function_flag()) {
+  if (!py::hasattr(cell, parse::CUSTOM_BPROP_NAME) && !cell_stack_.empty() && IsNestedGrad()) {
     build_formal_param = true;
+    need_renormalize_ = true;
+  }
+  if (top_cell()->ms_function_flag()) {
     need_renormalize_ = true;
   }
 
@@ -2777,43 +2883,72 @@ void GradExecutor::EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell) {
   (void)top_cell_list_.erase(iter);
 }
 
-void GradExecutor::GradMsFunction(const py::object &out, const py::args &args) {
-  if (!need_construct_graph()) {
-    MS_LOG(DEBUG) << "The grad flag is set to false or the cell stack is empty. No need to make grad for ms_function";
-    set_graph_phase("");
+void GradExecutor::GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
+                                       const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) {
+  // Get actual output value and added output value.
+  if (!py::isinstance<py::tuple>(out)) {
+    MS_LOG(EXCEPTION) << "The output value of ms_function func graph should be a tuple.";
+  }
+  auto tuple_out = py::cast<py::tuple>(out);
+  if (tuple_out.size() != 2) {
+    MS_LOG(EXCEPTION) << "The tuple size of output value of ms_function func graph should be 2.";
+  }
+  py::object actual_out = tuple_out[0];
+  py::object added_out = tuple_out[1];
+  MS_LOG(DEBUG) << "Added output value is: " << PyAttrValue(added_out)->ToString();
+
+  // Identity op info for current running ms_func graph.
+  OpExecInfoPtr op_exec_info = std::make_shared<OpExecInfo>();
+  op_exec_info->op_name = phase;
+  RecordGradOpInfo(op_exec_info, actual_out);
+  MS_LOG(DEBUG) << "ms_function cnode op info: " << op_exec_info->op_info;
+
+  // Step 1: Update actual output tensors used in grad graph.
+  MS_LOG(DEBUG) << "ms_function actual output value: " << PyAttrValue(actual_out)->ToString();
+  UpdateForwardTensorInfoInBpropGraph(op_exec_info, actual_out);
+
+  // Step 2: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
+  if (top_cell()->op_info_with_ms_func_forward_tensors().count(op_exec_info->op_info)) {
+    UpdateMsFunctionForwardTensors(op_exec_info, added_out);
     return;
   }
-  // Get ms_function graph by phase
+
+  MS_LOG(DEBUG) << "Ms func graph run firstly. The graph phase is: " << graph_phase();
+  if (!need_construct_graph()) {
+    MS_LOG(EXCEPTION) << "The flag of need construct graph is False.";
+  }
+  CreateNewTensorsInGradGraph(top_cell(), op_exec_info, added_out, ms_func_graph, grad_graph);
+
+  // Clone new ms_function func graph and grad graph.
+  auto new_ms_func_graph = BasicClone(ms_func_graph);
+  auto new_grad_graph = BasicClone(grad_graph, true);
+  auto new_make_tuple = new_ms_func_graph->output()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(new_make_tuple);
+  new_ms_func_graph->set_output(new_make_tuple->input(1));
+
+  // Make Adjoint for grad graph
+  MakeAdjointForMsFunction(new_ms_func_graph, new_grad_graph, actual_out, args, phase);
+}
+
+void GradExecutor::GradMsFunction(const py::object &out, const py::args &args) {
+  if (!grad_flag_) {
+    MS_LOG(DEBUG) << "Only run forward infer computation, no need to construct grad graph.";
+    return;
+  }
   if (graph_phase().empty()) {
-    MS_LOG(EXCEPTION) << "The graph phase is empty, can not obtain backend graph which is complied by ms_function";
+    MS_LOG(EXCEPTION) << "The graph phase is empty, can not obtain ms_function func graph.";
   }
-  MS_LOG(DEBUG) << "Ms_function graph phase: " << graph_phase();
-  // Get fprop graph of ms_function
+
+  // Get ms_function func graph and grad graph.
+  const auto &phase = graph_phase();
+  MS_LOG(DEBUG) << "ms_function func graph phase: " << phase;
   auto executor = pipeline::ExecutorPy::GetInstance();
-  MS_EXCEPTION_IF_NULL(executor);
-  FuncGraphPtr fprop_g = nullptr;
-  FuncGraphPtr ms_func_graph = nullptr;
-  const auto &ms_function_grad_cache = top_cell()->ms_function_grad_cache();
-  auto iter = ms_function_grad_cache.find(graph_phase());
-  if (iter == ms_function_grad_cache.end()) {
-    ms_func_graph = BasicClone(executor->GetFuncGraph(graph_phase()));
-    MS_EXCEPTION_IF_NULL(ms_func_graph);
-    pipeline::ResourcePtr res = std::make_shared<pipeline::Resource>();
-    res->set_func_graph(ms_func_graph);
-    res->manager()->AddFuncGraph(ms_func_graph, true);
-    fprop_g = ad::Grad(ms_func_graph, res, true);
-    MS_EXCEPTION_IF_NULL(fprop_g);
-    top_cell()->set_ms_function_grad_cache(graph_phase(), ms_func_graph, fprop_g);
-  } else {
-    ms_func_graph = iter->second.first;
-    MS_EXCEPTION_IF_NULL(ms_func_graph);
-    fprop_g = iter->second.second;
-    MS_EXCEPTION_IF_NULL(fprop_g);
-  }
-  DumpGraphIR("before_grad_ms_function.ir", ms_func_graph);
-  DumpGraphIR("after_grad_ms_function.ir", fprop_g);
-  // Make adjoint for fprop graph of ms function graph
-  MakeAdjointForMsFunction(ms_func_graph, fprop_g, out, args, graph_phase());
+  FuncGraphPtr ms_func_graph = executor->GetFuncGraph(phase);
+  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  FuncGraphPtr grad_graph = executor->GetGradGraph(phase);
+  MS_EXCEPTION_IF_NULL(grad_graph);
+
+  GradMsFunctionInner(phase, out, args, ms_func_graph, grad_graph);
   set_graph_phase("");
 }
 
@@ -2832,9 +2967,10 @@ void GradExecutor::ClearRes() {
   grad_order_ = 0;
   top_cell_switch_counts_ = 0;
   grad_flag_ = false;
-  need_renormalize_ = false;
-  grad_is_running_ = false;
   enable_op_cache_ = true;
+  grad_is_running_ = false;
+  need_renormalize_ = false;
+  eliminate_forward_ = true;
   top_cell_ = nullptr;
   curr_g_ = nullptr;
   bprop_cell_list_.clear();

@@ -98,10 +98,15 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   // Replace the primal graph with k graph
   void EliminatePrimalGraph();
   // Pynative specialize
-  void ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_morph);
-  ValuePtr GenNewTensorInner(const ValuePtr &value);
-  ValuePtr GenNewTensor(const FuncGraphManagerPtr &mng, const AnfNodePtr &node, const ValuePtr &value,
-                        bool need_replace_forward);
+  ValueNodePtr GenNewTensor(const CNodePtr &forward_node);
+  tensor::TensorPtr GenNewTensorInner(const TypePtr &type_elem, const BaseShapePtr &shape_elem);
+  void GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNodePtr *forward_node, FuncGraphPtr *bprop_graph,
+                                      FuncGraphPtr *fprop_graph);
+  std::vector<AnfNodePtr> RunOutputReplace(const CNodePtr &forward_node, const FuncGraphPtr &bprop_graph,
+                                           const FuncGraphPtr &fprop_graph, const CNodePtr &cnode_morph);
+  std::vector<AnfNodePtr> RunInputReplace(const FuncGraphPtr &bprop_graph, const FuncGraphPtr &fprop_graph,
+                                          const CNodePtr &cnode_morph);
+  void ReplaceEquivdout(const CNodePtr &k_app, const CNodePtr &cnode_morph);
 
   std::unordered_map<AnfNodePtr, AdjointPtr> anfnode_to_adjoin_;
   // Cache for indirect fv backpropagation, K o K can only do backprop layer by layer.

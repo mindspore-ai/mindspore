@@ -129,7 +129,7 @@ ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &r
 
 FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph,
                                 const TraceInfoPtr &relation = std::make_shared<TraceTransform>());
-FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph);
+FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes = false);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_FUNC_GRAPH_CLONER_H_

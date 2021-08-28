@@ -42,9 +42,9 @@
 
 namespace mindspore::pynative {
 namespace py = pybind11;
-using MsFunctionGradCache = std::unordered_map<std::string, std::pair<FuncGraphPtr, FuncGraphPtr>>;
 using OpInfoWithTensorId = std::unordered_map<std::string, std::vector<std::string>>;
 using TensorIdWithTensorObject = std::unordered_map<std::string, std::vector<tensor::TensorPtr>>;
+using OpInfoWithMsFuncForwardTensors = std::unordered_map<std::string, std::vector<tensor::TensorPtr>>;
 
 py::object RealRunOp(const py::args &args);
 
@@ -103,10 +103,12 @@ class TopCellInfo {
   void set_k_pynative_cell_ptr(const ad::KPynativeCellPtr &k_pynative_cell_ptr) {
     k_pynative_cell_ptr_ = k_pynative_cell_ptr;
   }
-  const MsFunctionGradCache &ms_function_grad_cache() const { return ms_function_grad_cache_; }
-  void set_ms_function_grad_cache(const std::string &graph_phase, const FuncGraphPtr &func_graph,
-                                  const FuncGraphPtr &grad_graph) {
-    ms_function_grad_cache_[graph_phase] = std::make_pair(func_graph, grad_graph);
+  const OpInfoWithMsFuncForwardTensors &op_info_with_ms_func_forward_tensors() const {
+    return op_info_with_ms_func_forward_tensors_;
+  }
+  void set_op_info_with_ms_func_forward_tensors(const std::string &op_info,
+                                                const std::vector<tensor::TensorPtr> &forward_tensors) {
+    op_info_with_ms_func_forward_tensors_[op_info] = forward_tensors;
   }
   void ClearDeviceMemory();
   void Clear();
@@ -132,7 +134,7 @@ class TopCellInfo {
   std::unordered_set<std::string> sub_cell_list_;
   OpInfoWithTensorId op_info_with_tensor_id_;
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
-  MsFunctionGradCache ms_function_grad_cache_;
+  OpInfoWithMsFuncForwardTensors op_info_with_ms_func_forward_tensors_;
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
 
@@ -191,17 +193,23 @@ class GradExecutor {
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
   void DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &op_out);
-  void MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &fprop_g, const py::object &out,
-                                const py::args &args, const std::string &graph_phase);
-  void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args,
-                              const OpExecInfoPtr &op_exec_info, ValuePtrList *input_values,
+  // Construct grad graph for ms_function
+  bool eliminate_forward() const { return eliminate_forward_; }
+  void set_eliminate_forward(bool eliminate_forward) { eliminate_forward_ = eliminate_forward; }
+  void GradMsFunction(const py::object &out, const py::args &args);
+  void GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
+                           const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph);
+  void UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const py::object &added_out);
+  void MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
+                                const py::object &actual_out, const py::args &args, const std::string &graph_phase);
+  void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args, ValuePtrList *input_values,
                               CNodePtr *ms_function_cnode);
+  // Update forward tensors info
   void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   py::object CheckGraph(const py::object &cell, const py::args &args);
   void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args);
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
-  void GradMsFunction(const py::object &out, const py::args &args);
   void ClearGrad(const py::object &cell, const py::args &args);
   void ClearRes();
   void ClearCellRes(const std::string &cell_id = "");
@@ -239,7 +247,7 @@ class GradExecutor {
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
   abstract::AbstractBasePtrList GetArgsSpec(const py::list &args, const FuncGraphPtr &bprop_graph);
   // Manage resource for construct forward graph.
-  std::string &graph_phase() { return graph_phase_; }
+  const std::string &graph_phase() const { return graph_phase_; }
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
   void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,
@@ -261,9 +269,10 @@ class GradExecutor {
 
  private:
   bool grad_flag_{false};
-  bool need_renormalize_{false};
-  bool grad_is_running_{false};
   bool enable_op_cache_{true};
+  bool grad_is_running_{false};
+  bool need_renormalize_{false};
+  bool eliminate_forward_{true};
   int custom_bprop_cell_count_{0};
   size_t grad_order_{0};
   size_t top_cell_switch_counts_{0};
