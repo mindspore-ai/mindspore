@@ -15,6 +15,7 @@
 """
 PanguAlpha train script
 """
+import datetime
 import glob
 import os
 import math
@@ -97,6 +98,7 @@ def run_train(args_opt):
         print("rank_id is {}, device_num is {}".format(rank, device_num))
 
         context.reset_auto_parallel_context()
+
         context.set_auto_parallel_context(
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, gradients_mean=False,
             full_batch=bool(args_opt.full_batch), strategy_ckpt_load_file=args_opt.strategy_load_ckpt_path,
@@ -180,7 +182,7 @@ def run_train(args_opt):
     model = Model(pangu_alpha_with_grads)
 
     if args_opt.pre_trained:
-        load_checkpoint(args_opt, callback_size, ds, model, rank)
+        load_checkpoint(args_opt, callback_size, ds, model, device_num)
 
     add_checkpoint_callback_policy(args_opt, callback, rank)
 
@@ -205,9 +207,8 @@ def add_checkpoint_callback_policy(args_param, callback, rank_id):
     """
     if args_param.save_checkpoint:
         # checkpoint store epoch_num and step_num info
-        ckpt_append_info = ["epoch_num", "step_num", {"epoch_num": args_param.has_trained_epoches,
-                                                      "step_num": args_param.has_trained_steps}]
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args_param.keep_checkpoint_max,
+        ckpt_append_info = [{"epoch_num": args_param.has_trained_epoches, "step_num": args_param.has_trained_steps}]
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=args_param.save_checkpoint_steps,
                                        keep_checkpoint_max=args_param.keep_checkpoint_max,
                                        integrated_save=False,
                                        append_info=ckpt_append_info
@@ -220,7 +221,7 @@ def add_checkpoint_callback_policy(args_param, callback, rank_id):
         callback.append(ckpoint_cb)
 
 
-def load_checkpoint(args_param, sink_size, dataset, model, rank_id):
+def load_checkpoint(args_param, sink_size, dataset, model, device_num):
     r"""
     Load checkpoint process.
     """
@@ -231,29 +232,39 @@ def load_checkpoint(args_param, sink_size, dataset, model, rank_id):
     ckpt_name = args_param.ckpt_name_prefix
     if os.path.isdir(args_param.pre_trained):
         ckpt_pattern = os.path.join(args_param.save_checkpoint_path,
-                                    f"{ckpt_name}{str(rank_id)} *.ckpt")
+                                    f"{ckpt_name}*.ckpt")
         ckpt_files = glob.glob(ckpt_pattern)
         if not ckpt_files:
             print(f"There is no ckpt file in {args_param.load_ckpt_path}, "
                   f"pre_trained is unsupported.")
         else:
             ckpt_files.sort(key=os.path.getmtime, reverse=True)
-            first_ckpt_file = ckpt_files[0]
-            prefix_first_ckpt_file = first_ckpt_file.split("-")
-            if len(prefix_first_ckpt_file) < 2:
-                print(f"Invalid ckpt file {first_ckpt_file}.")
-            else:
-                ckpt_step = prefix_first_ckpt_file[-1].split("_")[0]
-                ckpt_sink_size = prefix_first_ckpt_file[-1].split("_")[-1]
+            time_stamp = datetime.datetime.now()
+            print(f"time stamp {time_stamp.strftime('%Y.%m.%d-%H:%M:%S')} pre trained ckpt model {ckpt_files} loading",
+                  flush=True)
+            ckpt_file = os.path.basename(ckpt_files[0])
+            ckpt_file_length = ckpt_file.split("_")
+            if len(ckpt_file_length) == 3:
+                depulicate_num = ckpt_file.split("-")[0].split("_")[-1]
+                step_size = ckpt_file.split("-")[-1].split("_")[0]
+                sink_size = ckpt_file.split("-")[-1].split("_")[-1].split(".")[0]
                 ckpt_file_list = [os.path.join(args_param.save_checkpoint_path,
-                                               f"{ckpt_name}{ckpt_rank}-{ckpt_step}_{ckpt_sink_size}.ckpt") for
-                                  ckpt_rank in
-                                  range(D.get_group_size())]
-                print(f"Loading from path {ckpt_file_list[0]}", flush=True)
+                                               f"{ckpt_name}{ckpt_rank}_{depulicate_num}-{step_size}_{sink_size}.ckpt")
+                                  for ckpt_rank in range(device_num)]
                 # Load checkpoint files
                 load_distributed_checkpoint(model.train_network, ckpt_file_list, strategy)
+            elif len(ckpt_file_length) == 2:
+                step_size = ckpt_file.split("-")[-1].split("_")[0]
+                sink_size = ckpt_file.split("-")[-1].split("_")[-1].split(".")[0]
+                ckpt_file_list = [os.path.join(args_param.save_checkpoint_path,
+                                               f"{ckpt_name}{ckpt_rank}-{step_size}_{sink_size}.ckpt")
+                                  for ckpt_rank in range(device_num)]
+                # Load checkpoint files
+                load_distributed_checkpoint(model.train_network, ckpt_file_list, strategy)
+            else:
+                print(f"Please check {args_param.pre_trained} value.")
     else:
-        print(f"please check {args_param.pre_trained} value.")
+        print(f"Please check {args_param.pre_trained} value.")
 
 
 def run_train_pipeline(args_opt):

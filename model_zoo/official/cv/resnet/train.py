@@ -194,9 +194,9 @@ def load_pre_trained_checkpoint():
     Load checkpoint according to pre_trained path.
     """
     param_dict = None
-    ckpt_save_dir = set_save_ckpt_dir()
     if config.pre_trained:
         if os.path.isdir(config.pre_trained):
+            ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path, "ckpt_0")
             ckpt_pattern = os.path.join(ckpt_save_dir, "*.ckpt")
             ckpt_files = glob.glob(ckpt_pattern)
             if not ckpt_files:
