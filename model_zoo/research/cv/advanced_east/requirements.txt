@@ -1,4 +1,5 @@
 numpy
+opencv
 pillow
-tqdm
 shapely
+tqdm

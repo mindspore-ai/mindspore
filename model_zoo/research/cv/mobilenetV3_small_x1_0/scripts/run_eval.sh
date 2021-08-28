@@ -19,7 +19,6 @@ DATA_DIR=$2
 PATH_CHECKPOINT=$3
 
 python ./eval.py  \
-    --device_target=Ascend \
     --device_id=$DEVICE_ID \
     --checkpoint_path=$PATH_CHECKPOINT \
     --dataset_path=$DATA_DIR > eval.log 2>&1 &
