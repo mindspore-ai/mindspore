@@ -17,6 +17,8 @@ The basic layer of the Transformer Networks. This is an experimental interface t
 change and/or deletion.
 """
 
+import math
+import numpy as np
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Tensor
 import mindspore.common.dtype as mstype
@@ -24,6 +26,56 @@ from mindspore.ops import operations as P
 from mindspore._extends import cell_attr_register
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer import Dense
+import mindspore.nn as nn
+from mindspore.ops import functional as F
+from mindspore._checkparam import Validator
+from mindspore.ops.primitive import constexpr
+from .op_parallel_config import default_dpmp_config, OpParallelConfig
+
+__all__ = [
+    "FixedSparseAttention"
+]
+
+
+@constexpr
+def _check_input_shape(input_shape, param_name, func_name, target_len):
+    if len(input_shape) != target_len:
+        raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
+    return True
+
+
+@constexpr
+def _check_past_none_input_none(use_past, param_name, func_name, input_tensor, default_value=None):
+    """ If the past is True, check whether the inputs is None"""
+    if not use_past and input_tensor is not default_value:
+        raise ValueError(f"{func_name} {param_name} should be {default_value}, if use_past is False.")
+    if use_past and input_tensor is default_value:
+        raise ValueError(f"{func_name} {param_name} should not be {default_value}, if use_past is True.")
+    return True
+
+
+@constexpr
+def _check_shape_equal(input_shape, param_name, func_name, target_shape):
+    if len(input_shape) != len(target_shape):
+        raise ValueError(f"{func_name} {param_name} shape should be {target_shape},"
+                         f"but got {input_shape}")
+    for i in range(len(input_shape)):
+        if input_shape[i] != target_shape[i]:
+            raise ValueError(f"{func_name} {param_name} shape should be {target_shape},"
+                             f"but got {input_shape}")
+    return True
+
+
+@constexpr
+def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
+    Validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
+
+
+@constexpr
+def _check_input_shape_value(input_shape, dim, param_name, cls_name, target_value):
+    if input_shape[dim] != target_value:
+        raise ValueError(f"{cls_name} {param_name} at {dim} shape should be {target_value},"
+                         f"but got {input_shape[dim]}")
 
 
 class _LayerNorm(Cell):
@@ -232,3 +284,206 @@ class _Linear(Dense):
                 getattr(self.activation, self.act_name).shard(strategy_activation)
 
         return self
+
+
+class FixedSparseAttention(nn.Cell):
+    """
+    Fixed Sparse Attention Layer
+
+    This function contains the sparse attention primitives used in Sparse Transformers (see paper).
+    https://arxiv.org/abs/1904.10509
+    Specifically, it includes the following:
+    1. A faster implementation of normal attention (the upper triangle is not computed, and many operations are fused).
+    2. An implementation of "strided" and "fixed" attention, as in the Sparse Transformers paper.
+
+    Args:
+        batch_size (int): Number of input batch size.
+        num_heads (int): Number of attention heads.
+        block_size (int): An integer determining the block size. Current implementation of sparse self-attention
+                          is based on blocked sparse matrices. In which this parameter defines size of such blocks,
+                          Block X Block. only supports 64 for now
+        seq_length (int): length of input sequence, only supports 1024 for now
+        num_different_global_patterns (int):An integer determining number of different global attentions layouts.
+                                            While global attention can be fixed by which block/s are representative of
+                                            any local window, since there are multi-heads, each head can use a
+                                            different global representative, only supports 4 for now
+        size_per_head (int): An integer determining embedding size of each attention head,
+                             only supports 64, 80, 96, 112, 128 for now
+
+    Inputs:
+        - **q** - Tensor uery (:class:`mstype.fp16` [batch_size, seq_length, hidden_size]): Sequence of
+          queries to query the context.
+        - **k** - Tensor key (:class:`mstype.fp16` [batch_size, seq_length, hidden_size]): Sequence of
+          queries to query the context.
+        - **v** - Tensor value (:class:`mstype.fp16` [batch size, sequence length, Embedding Size]): Sequence of
+          queries to query the context.
+        - **input_mask** - Tensor the mask of (:class:`mstype.fp32` [batch_size, seq_length]):
+          Sequence of 0 and 1 to pass masked information.
+
+    Outputs:
+        A Tensor. The output of the attention with shape [batch_size, seq_length, hidden_size]
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> model = FixedSparseAttention(batch_size=2,
+        ...                              num_heads=8,
+        ...                              size_per_head=64,
+        ...                              block_size=64)
+        >>> q = Tensor(np.ones((2, 1024, 8*64)), dtype.float16)
+        >>> k = Tensor(np.ones((2, 1024, 8*64)), dtype.float16)
+        >>> v = Tensor(np.ones((2, 1024, 8*64)), dtype.float16)
+        >>> input_mask = Tensor(np.ones((2, 1024)), dtype.float16)
+        >>> output = model(q, k, v, input_mask)
+        >>> print(output.shape)
+        (2, 1024, 512)
+    """
+
+    def __init__(self,
+                 batch_size,
+                 num_heads,
+                 size_per_head,
+                 block_size,
+                 seq_length=1024,
+                 num_different_global_patterns=4,
+                 parallel_config=default_dpmp_config):
+        super(FixedSparseAttention, self).__init__()
+        if not isinstance(parallel_config, OpParallelConfig):
+            raise ValueError(
+                f"The parallel_config should be a OpParallelConfig type, but found {type(parallel_config)}")
+        dp, mp = parallel_config.data_parallel, parallel_config.model_parallel
+        self.seq_length = seq_length
+        self.batch_size = batch_size
+        self.hidden_size = size_per_head * num_heads
+        self.num_heads = num_heads
+        self.block_size = block_size
+        self.block_num = seq_length // block_size
+        self.size_per_head = size_per_head
+        self.global_size = seq_length // 4
+        self.reshape = P.Reshape()
+        self.transpose = P.Transpose().shard(((dp, 1, mp, 1),))
+        self.batch_matmul = P.BatchMatMul().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
+        self.multiply = P.Mul().shard(((dp, 1, 1, 1), (1, 1, 1)))
+        self.multiply_data = Tensor([-10000.0,], dtype=mstype.float32)
+        self.parallel_config = parallel_config
+        size_per_head_list = [64, 128]
+        if self.seq_length != 1024:
+            raise ValueError("seq_length only supports 1024 for now.")
+        if self.block_size != 64:
+            raise ValueError("block_size only supports 64 for now.")
+        if num_different_global_patterns != 4:
+            raise ValueError("num_different_global_patterns only supports 4 for now.")
+        if self.size_per_head not in size_per_head_list:
+            raise ValueError(f"size_per_head only supports {size_per_head_list} for now, "
+                             f"but found {self.size_per_head}")
+        local_ones = np.ones((self.block_size, self.block_size),
+                             dtype=np.float16)
+        global_mask_original = np.ones((self.seq_length, self.global_size), dtype=np.float16)
+        for i in range(self.seq_length):
+            for j in range(self.global_size):
+                if i // 16 >= (j // 16 + 1) * 4:
+                    global_mask_original[i, j] = 0.0
+
+        global_mask_original = -10000 * global_mask_original
+        global_mask_fx = global_mask_original.reshape((self.seq_length // 16, 16, self.global_size // 16, 16))
+        global_mask = np.transpose(global_mask_fx, (2, 0, 1, 3))
+        global_mask = np.repeat(global_mask[np.newaxis, :, :, :, :,], self.batch_size, axis=0)
+        global_mask = global_mask.reshape((self.batch_size * self.global_size // 16, self.seq_length // 16, 16, 16))
+        self.global_mask = Tensor(global_mask, mstype.float32)
+        self.local_mask_triangle = Tensor(np.tril(local_ones), mstype.float32)
+        self.scale_factor = Tensor((math.sqrt(self.size_per_head)))
+        self.matmul_dds = P.MatmulDDS(self.batch_size, self.num_heads).shard(((mp, dp, 1, 1),
+                                                                              (mp, dp, 1, 1),
+                                                                              (1, dp, 1, 1),
+                                                                              (dp, 1, 1, 1)))
+        self.matmul_dsd = P.DSDMatmul().shard(((dp, mp, 1, 1, 1, 1, 1), (dp, mp, 1, 1, 1, 1, 1), (dp, mp, 1, 1)))
+        self.sub1 = P.Sub().shard(((1,), (dp, 1, 1, 1)))
+        self.mul1 = P.Mul().shard(((dp, 1, 1, 1), (1,)))
+        self.transpose1 = P.Transpose().shard(((dp, 1, 1, 1),))
+        self.transpose2 = P.Transpose().shard(((dp, 1, 1, 1),))
+        self.transpose3 = P.Transpose().shard(((dp, mp, 1, 1, 1, 1),))
+        self.transpose4 = P.Transpose().shard(((dp, mp, 1, 1),))
+
+    def _transpose_inputs(self, q, k, v):
+        """
+        do reshape and transpose to inputs
+        """
+        q = self.transpose(
+            self.reshape(
+                q,
+                (-1, 16, self.num_heads * self.size_per_head // 16, 16)),
+            (2, 0, 1, 3))
+        k = self.transpose(
+            self.reshape(
+                k, (-1, 16, self.num_heads * self.size_per_head // 16, 16)),
+            (2, 0, 1, 3))
+        v = self.transpose(
+            self.reshape(
+                v,
+                (-1, 16, self.num_heads * self.size_per_head // 16, 16)),
+            (0, 2, 3, 1))
+
+        return q, k, v
+
+    def _generate_attention_mask(self, input_mask):
+        """
+        generate attention mask from input mask
+        """
+        input_shape = P.Shape()(input_mask)  # bs, seq_length
+        # bs, block_num, 1, block_size
+        local_shape_right = (input_shape[0], self.block_num, 1, self.block_size)
+        # bs, block_num, block_size, 1
+        local_shape_left = (input_shape[0], self.block_num, self.block_size, 1)
+        local_mask_left = self.reshape(input_mask, local_shape_left)
+        local_mask_right = self.reshape(input_mask, local_shape_right)
+        # bs, block_num, block_size, block_size
+        local_attention_mask = self.batch_matmul(local_mask_left, local_mask_right)
+        lower_triangle = P.ExpandDims()(self.local_mask_triangle, 0)
+        local_attention_mask = self.multiply(local_attention_mask, lower_triangle)
+        local_multiplied_out = self.sub1(P.Cast()(F.tuple_to_array((1.0,)), mstype.float32),
+                                         P.Cast()(local_attention_mask, mstype.float32))
+        local_adder = self.mul1(local_multiplied_out, self.multiply_data)
+        local_mask_original = self.transpose1(local_adder, (0, 2, 1, 3))
+        local_mask_original = self.reshape(
+            local_mask_original,
+            (self.batch_size * self.block_size, self.block_num * self.block_size))
+        local_mask_fx = self.reshape(
+            local_mask_original,
+            (self.batch_size * self.block_size // 16, 16,
+             self.block_num * self.block_size // 16, 16))
+        local_mask = self.transpose2(local_mask_fx, (2, 0, 1, 3))
+        global_mask = self.global_mask
+
+        return local_mask, global_mask
+
+    def construct(self, q, k, v, input_mask):
+        _check_shape_equal(F.shape(q), "q", self.cls_name,
+                           [self.batch_size, self.seq_length, self.hidden_size])
+        _check_input_dtype(F.dtype(q), "q", [mstype.float16], self.cls_name)
+        _check_shape_equal(F.shape(k), "k", self.cls_name,
+                           [self.batch_size, self.seq_length, self.hidden_size])
+        _check_input_dtype(F.dtype(k), "k", [mstype.float16], self.cls_name)
+        _check_shape_equal(F.shape(v), "v", self.cls_name,
+                           [self.batch_size, self.seq_length, self.hidden_size])
+        _check_input_dtype(F.dtype(v), "v", [mstype.float16], self.cls_name)
+        _check_shape_equal(F.shape(input_mask), "input_mask", self.cls_name,
+                           [self.batch_size, self.seq_length])
+        _check_input_dtype(F.dtype(input_mask), "input_mask", [mstype.float32], self.cls_name)
+
+        q, k, v = self._transpose_inputs(q, k, v)
+        local_mask, global_mask = self._generate_attention_mask(input_mask)
+        q = q / F.cast(self.scale_factor, F.dtype(q))
+        k = k / F.cast(self.scale_factor, F.dtype(k))
+        local_prob, global_prob = self.matmul_dds(q, k, local_mask, global_mask)
+        attention = self.matmul_dsd(local_prob, global_prob, v)
+        attention_merge = self.transpose3(attention, (0, 1, 3, 4, 2, 5))
+        attention_merge = F.reshape(
+            attention_merge,
+            (-1, self.num_heads, self.seq_length, self.size_per_head))
+        attention_merge = self.transpose4(attention_merge, (0, 2, 1, 3))
+        attention_merge = F.reshape(
+            attention_merge,
+            (-1, self.seq_length, self.size_per_head * self.num_heads))
+
+        return attention_merge

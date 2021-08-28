@@ -18,7 +18,7 @@ import pytest
 from mindspore import Tensor
 from mindspore.common import dtype
 from mindspore.parallel.nn import MultiHeadAttention, FeedForward, TransformerEncoderLayer, TransformerEncoder, \
-    TransformerDecoder, TransformerDecoderLayer, Transformer, CrossEntropyLoss, AttentionMask
+    TransformerDecoder, TransformerDecoderLayer, Transformer, CrossEntropyLoss, AttentionMask, FixedSparseAttention
 from mindspore.common.api import _executor
 
 
@@ -240,3 +240,16 @@ def test_attention_mask():
     model = AttentionMask(seq_length=19)
     inputs = Tensor(np.ones((2, 19)), dtype.float32)
     _executor.compile(model, inputs)
+
+
+def test_sparse_attention():
+    model = FixedSparseAttention(batch_size=2,
+                                 seq_length=1024,
+                                 size_per_head=64,
+                                 num_heads=8,
+                                 block_size=64)
+    q = Tensor(np.ones((2, 1024, 512)), dtype.float16)
+    k = Tensor(np.ones((2, 1024, 512)), dtype.float16)
+    v = Tensor(np.ones((2, 1024, 512)), dtype.float16)
+    mask = Tensor(np.ones((2, 1024)), dtype.float32)
+    _executor.compile(model, q, k, v, mask)

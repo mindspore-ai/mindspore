@@ -17,7 +17,7 @@ from te import tik
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 
-matmul_dds_grad_op_info = TBERegOp("CusMatmulDDSGrad") \
+matmul_dds_grad_op_info = TBERegOp("MatmulDDSGrad") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("matmul_dds_grad.so") \

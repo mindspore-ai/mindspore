@@ -28,9 +28,9 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator
-from mindspore.ops.primitive import constexpr
 from mindspore import log as logger
-from .layers import _LayerNorm, _Linear
+from .layers import _LayerNorm, _Linear, _check_input_shape,\
+    _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value
 from .op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, _Config, _check_config
 
 __all__ = [
@@ -45,47 +45,6 @@ __all__ = [
     "Transformer",
     "TransformerOpParallelConfig",
     "EmbeddingOpParallelConfig"]
-
-
-@constexpr
-def _check_input_shape(input_shape, param_name, func_name, target_len):
-    if len(input_shape) != target_len:
-        raise ValueError(f"{func_name} {param_name} should be {target_len}d, but got shape {input_shape}")
-    return True
-
-
-@constexpr
-def _check_past_none_input_none(use_past, param_name, func_name, input_tensor, default_value=None):
-    """ If the past is True, check whether the inputs is None"""
-    if not use_past and input_tensor is not default_value:
-        raise ValueError(f"{func_name} {param_name} should be {default_value}, if use_past is False.")
-    if use_past and input_tensor is default_value:
-        raise ValueError(f"{func_name} {param_name} should not be {default_value}, if use_past is True.")
-    return True
-
-
-@constexpr
-def _check_shape_equal(input_shape, param_name, func_name, target_shape):
-    if len(input_shape) != len(target_shape):
-        raise ValueError(f"{func_name} {param_name} shape should be {target_shape},"
-                         f"but got {input_shape}")
-    for i in range(len(input_shape)):
-        if input_shape[i] != target_shape[i]:
-            raise ValueError(f"{func_name} {param_name} shape should be {target_shape},"
-                             f"but got {input_shape}")
-    return True
-
-
-@constexpr
-def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
-    Validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
-
-
-@constexpr
-def _check_input_shape_value(input_shape, dim, param_name, cls_name, target_value):
-    if input_shape[dim] != target_value:
-        raise ValueError(f"{cls_name} {param_name} at {dim} shape should be {target_value},"
-                         f"but got {input_shape[dim]}")
 
 
 class EmbeddingOpParallelConfig(_Config):

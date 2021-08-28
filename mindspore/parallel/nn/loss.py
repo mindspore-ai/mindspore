@@ -22,7 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn import Cell
 from mindspore.nn.loss.loss import _check_is_tensor
-from mindspore.parallel.nn.transformer import _check_input_dtype, _check_input_shape
+from mindspore.parallel.nn.layers import _check_input_dtype, _check_input_shape
 from .op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = ["CrossEntropyLoss"]

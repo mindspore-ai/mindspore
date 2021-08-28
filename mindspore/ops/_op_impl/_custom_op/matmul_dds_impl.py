@@ -16,12 +16,12 @@
 from te import tik
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-matmul_dds_op_info = TBERegOp("CusMatmulDDS") \
+matmul_dds_op_info = TBERegOp("MatmulDDS") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("matmul_dds.so") \
     .compute_cost(10) \
-    .kernel_name("CusMatmulDDSImpl") \
+    .kernel_name("MatmulDDSImpl") \
     .partial_flag(True) \
     .attr("bs", "required", "int", "all") \
     .attr("heads", "required", "int", "all") \
@@ -38,15 +38,15 @@ matmul_dds_op_info = TBERegOp("CusMatmulDDS") \
 
 
 @op_info_register(matmul_dds_op_info)
-def CusMatmulDDSImpl(q,
-                     k,
-                     local_mask,
-                     global_mask,
-                     local_prob,
-                     global_prob,
-                     bs,
-                     heads,
-                     kernel_name="CusMatmulDDSImpl"):
+def MatmulDDSImpl(q,
+                  k,
+                  local_mask,
+                  global_mask,
+                  local_prob,
+                  global_prob,
+                  bs,
+                  heads,
+                  kernel_name="MatmulDDSImpl"):
     """
     :param q: the dict of input q (bs*seq_len, embedding_size) zN
     :param k: the dict of input k (bs*seq_len, embedding_size) nZ

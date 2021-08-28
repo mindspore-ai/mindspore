@@ -1293,3 +1293,85 @@ class Roll(Primitive):
         elif isinstance(shift, int) and isinstance(axis, int):
             validator.check_equal_int(axis, 0, "axis", self.name)
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+
+class DSDMatmul(PrimitiveWithInfer):
+    """
+    The definition of the CusSquare primitive.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['input_w1', 'input_w2', 'input_v'], outputs=['output_y'])
+
+    def infer_shape(self, input_w1_shape, input_w2_shape, input_v_shape):
+        batch_size = input_w1_shape[0]
+        head = input_w1_shape[1]
+        v_embedding = input_v_shape[1] * 16 // head
+        seq_len = input_v_shape[0] * 16 // batch_size
+        return (batch_size, head, v_embedding // 16, seq_len // 16, 16, 16)
+
+    def infer_dtype(self, data_dtype1, data_dtype2, data_dtype3):
+        return data_dtype1
+
+
+class MatmulDDS(PrimitiveWithInfer):
+    """MatmulDDS definition"""
+
+    @prim_attr_register
+    def __init__(self, bs, heads):
+        """init MatmulDDS"""
+        self.init_prim_io_names(inputs=['q', 'k', 'local_mask', 'global_mask'],
+                                outputs=['local_prob', 'global_prob'])
+
+        self.heads = heads
+
+    def infer_shape(self, q, k, local_mask, global_mask):
+        seq_len = local_mask[0] * local_mask[-1]
+        bs = q[1] * q[2] // seq_len
+        global_size = seq_len // 4
+        size_per_head = q[0] * q[-1] // self.heads
+        heads = q[0] * q[-1] // size_per_head
+        # size_per_head = k[0] * k[-1] // heads
+        block_size = local_mask[1] * local_mask[2] // bs
+        block_num = seq_len // block_size
+        l_size = (bs, heads, block_num, block_size // 16, block_size // 16, 16, 16)
+        g_size = (bs, heads, block_num, global_size // 16, block_size // 16, 16, 16)
+
+        return l_size, g_size
+
+    def infer_dtype(self, q, k, local_mask, global_mask):
+        return q, q
+
+
+class DSDGrad(PrimitiveWithInfer):
+    """
+    The definition of the CusSquare primitive.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['w1_gm', 'w2_gm', 'v_gm', 'a_gm', 'd_a_gm'],
+                                outputs=['d_w1_gm', 'd_w2_gm', 'd_v_gm'])
+
+    def infer_shape(self, input_w1_shape, input_w2_shape, input_v_shape, input_a_shape, input_da_shape):
+        return input_w1_shape, input_w2_shape, input_v_shape
+
+    def infer_dtype(self, data_dtype1, data_dtype2, data_dtype3, data_dtype4, data_dtype5):
+        return data_dtype1, data_dtype1, data_dtype1
+
+
+class MatmulDDSGrad(PrimitiveWithInfer):
+    """MatmulDDS definition"""
+
+    @prim_attr_register
+    def __init__(self):
+        """init MatmulDDS"""
+        self.init_prim_io_names(inputs=['q', 'k', 'local_prob', 'global_prob', 'local_prob_grad', 'global_prob_grad'],
+                                outputs=['dq', 'dk'])
+
+    def infer_shape(self, q, k, local_prob, global_prob, local_prob_grad, global_prob_grad):
+        k_size = (q[1], q[0], q[3], q[2])
+
+        return q, k_size
+
+    def infer_dtype(self, q, k, local_prob, global_prob, local_prob_grad, global_prob_grad):
+        return q, k
