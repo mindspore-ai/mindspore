@@ -113,7 +113,7 @@ class FlagRegister {
     return !result->empty();
   }
 
-  bool ParseValue(const std::string &s, bool *result) {
+  bool ParseValue(const std::string &s, bool *result) const {
     *result = (s.empty() || s == "true" || s == "on" || s == "1");
     return *result || s == "false" || s == "off" || s == "0";
   }

@@ -180,11 +180,10 @@ def test_if_after_if_02():
     control_flow_if_after_if(IfAfterIfNet2, x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-# Now in ascend result is not correct
-# @pytest.mark.platform_arm_ascend_training
-# @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_after_if_03():
     x = Tensor(2, mstype.int32)
@@ -192,8 +191,7 @@ def test_if_after_if_03():
     control_flow_if_after_if(IfAfterIfNet3, x, y)
 
 
-@pytest.mark.skip(reason="Result is not correct in multigraph sink.")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
