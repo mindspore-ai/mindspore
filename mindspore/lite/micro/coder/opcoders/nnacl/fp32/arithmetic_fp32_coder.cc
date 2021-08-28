@@ -93,7 +93,7 @@ int ArithmeticFP32Coder::ReSize(CoderContext *const context) {
   if (arithmetic_parameter_->broadcasting_) {
     outside_ = 1;
     int resize_n_index = static_cast<int>(arithmetic_parameter_->ndim_) - 1;
-    if (resize_n_index < 0) {
+    if (resize_n_index < 0 || resize_n_index >= 10) {
       return RET_ERROR;
     }
     for (auto i = resize_n_index; i >= 0; --i) {
@@ -149,6 +149,7 @@ bool ArithmeticFP32Coder::IsBatchScalarCalc() {
     return false;
   }
   size_t break_axis = 0;
+  MS_CHECK_TRUE_RET(arithmetic_parameter_->ndim_ <= 10, false);
   for (size_t i = 0; i < arithmetic_parameter_->ndim_; i++) {
     if (arithmetic_parameter_->in_shape0_[i] != arithmetic_parameter_->in_shape1_[i]) {
       break_axis = i;
@@ -379,6 +380,7 @@ int ArithmeticFP32Coder::BatchScalarCalc(int task_id, CoderContext *const contex
 }
 
 int ArithmeticFP32Coder::BiasCalc(int task_id, CoderContext *const context, NNaclFp32Serializer *const code) {
+  MS_CHECK_TRUE_RET(arithmetic_parameter_->ndim_ - 1 >= 0 && arithmetic_parameter_->ndim_ - 1 < 10, RET_ERROR);
   int last_shape = arithmetic_parameter_->out_shape_[arithmetic_parameter_->ndim_ - 1];
   int batch = arithmetic_parameter_->out_elements_num_ / last_shape;
   int batch_per_thread = UP_DIV(batch, thread_num_);

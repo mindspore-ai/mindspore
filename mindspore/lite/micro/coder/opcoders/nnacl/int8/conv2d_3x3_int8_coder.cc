@@ -71,7 +71,7 @@ int Conv2D3x3Int8Coder::InitWeightBias() {
     MS_CHECK_RET_CODE(memcpy_s(new_bias_addr_, new_bias_size, ori_bias_addr, output_channel * sizeof(int32_t)),
                       "memset_s new_bias_addr_ failed.");
   } else {
-    MS_ASSERT(input_tensors_.size() == kInputSize1);
+    MS_CHECK_TRUE_RET(input_tensors_.size() == kInputSize1, RET_ERROR);
   }
   return RET_OK;
 }

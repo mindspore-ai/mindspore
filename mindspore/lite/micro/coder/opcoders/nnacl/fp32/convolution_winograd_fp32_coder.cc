@@ -149,7 +149,8 @@ int ConvolutionWinogradFP32Coder::InitWeightBias() {
   ret = CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, coef, output_unit_, kernel_unit_);
   MS_CHECK_RET_CODE(ret, "CookToomFilter failed!");
   auto out_channel_size = static_cast<size_t>(out_channel);
-  auto weight_data = reinterpret_cast<float *>(filter_tensor_->MutableData());
+  auto weight_data = reinterpret_cast<float *>(filter_tensor_->data_c());
+  MS_CHECK_PTR(weight_data);
   ret = WinogradFilterTransform(weight_data, matrix_g, matrix_gt, oc_block);
   MS_CHECK_RET_CODE(ret, "winograd filter transform failed!");
   // init bias
@@ -161,6 +162,7 @@ int ConvolutionWinogradFP32Coder::InitWeightBias() {
   MS_CHECK_RET_CODE(ret, "memset_s failed!");
   if (input_tensors_.size() == kInputSize2) {
     auto ori_bias_addr = reinterpret_cast<float *>(bias_tensor_->data_c());
+    MS_CHECK_PTR(ori_bias_addr);
     MS_CHECK_RET_CODE(memcpy_s(new_bias_, new_bias_ele_size, ori_bias_addr, out_channel_size * sizeof(float)),
                       "memcpy_s failed!");
   } else {
@@ -178,6 +180,7 @@ int ConvolutionWinogradFP32Coder::ConfigInputOutput() {
 }
 
 std::string ConvolutionWinogradFP32Coder::GetInputTransFunc(int input_unit) {
+  MS_CHECK_TRUE_RET(input_unit_ >= 0 && input_unit_ < static_cast<int>(InputTransFuncList.size()), std::string());
   return InputTransFuncList.at(input_unit);
 }
 

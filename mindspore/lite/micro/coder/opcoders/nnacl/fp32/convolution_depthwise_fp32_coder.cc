@@ -31,6 +31,7 @@ int ConvolutionDepthwiseFP32Coder::Prepare(CoderContext *const context) {
 
 int ConvolutionDepthwiseFP32Coder::InitWeightBias() {
   auto *origin_weight = reinterpret_cast<float *>(filter_tensor_->data_c());
+  MS_CHECK_PTR(origin_weight);
   int channel = filter_tensor_->Batch();
   size_t pack_weight_size = filter_tensor_->Batch() * filter_tensor_->Height() * filter_tensor_->Width();
   size_t packed_weight_data_size = pack_weight_size * sizeof(float);

@@ -29,6 +29,7 @@ namespace mindspore::lite::micro::nnacl {
 constexpr int kLeftShift = 20;
 
 int AddInt8Coder::Prepare(CoderContext *const context) {
+  MS_CHECK_TRUE_RET(input_tensors().size() == 2, RET_ERROR);
   input0 = input_tensors().at(0);
   input1 = input_tensors().at(1);
   MS_CHECK_PTR(input0);

@@ -43,6 +43,7 @@ int LstmFP32Coder::InitInputWeightBias(CoderContext *const context) {
   Tensor *bias_i = input_tensors_.at(kInputSize2);
   MS_CHECK_PTR(bias_i);
   input_bias_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
+  MS_CHECK_PTR(input_bias_);
   size_t bias_i_size = weight_batch_ * lstm_param_->input_col_align_ * sizeof(float);
   init_code.CodeMallocExpression(input_bias_, bias_i_size);
   init_code.CodeFunction("memset", input_bias_, 0, bias_i_size);

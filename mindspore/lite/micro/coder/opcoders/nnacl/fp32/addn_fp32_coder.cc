@@ -22,6 +22,7 @@
 using mindspore::schema::PrimitiveType_AddN;
 namespace mindspore::lite::micro::nnacl {
 int AddNFP32Coder::DoCode(CoderContext *const context) {
+  MS_CHECK_TRUE_RET(input_tensors_.size() >= 2, RET_ERROR);
   Tensor *input0 = input_tensors_.at(kInputIndex);
   Tensor *input1 = input_tensors_.at(1);
   int elements_num = input0->ElementsNum();
