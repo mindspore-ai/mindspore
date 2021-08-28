@@ -76,7 +76,7 @@ class AutoAcc:
             optimizer_process.origin_params = \
                 self._param_processer.generate_group_params(group_params, optimizer_process.origin_params)
             if self._gc_flag:
-                optimizer_process.add_grad_centralization()
+                optimizer_process.add_grad_centralization(network)
             optimizer = optimizer_process.generate_new_optimizer()
 
         if self._acc_config["grad_freeze"]:

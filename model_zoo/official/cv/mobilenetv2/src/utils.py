@@ -67,10 +67,9 @@ def set_context(config):
                             device_target=config.platform, save_graphs=False)
 
 
-def config_ckpoint(config, lr, step_size):
-    cb = None
+def config_ckpoint(config, lr, step_size, model=None, eval_dataset=None):
+    cb = [Monitor(lr_init=lr.asnumpy(), model=model, eval_dataset=eval_dataset)]
     if config.platform in ("CPU", "GPU") or config.rank_id == 0:
-        cb = [Monitor(lr_init=lr.asnumpy())]
 
         if config.save_checkpoint:
             config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,

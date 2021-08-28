@@ -48,30 +48,32 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1, enable_cache=Fa
     else:
         nfs_dataset_cache = None
 
+    num_workers = config.num_workers
     if config.platform == "Ascend":
         rank_size = int(os.getenv("RANK_SIZE", '1'))
         rank_id = int(os.getenv("RANK_ID", '0'))
         if rank_size == 1:
-            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_workers, shuffle=True,
                                              cache=nfs_dataset_cache)
         else:
-            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_workers, shuffle=True,
                                              num_shards=rank_size, shard_id=rank_id, cache=nfs_dataset_cache)
     elif config.platform == "GPU":
         if do_train:
             if config.run_distribute:
                 from mindspore.communication.management import get_rank, get_group_size
-                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_workers, shuffle=True,
                                                  num_shards=get_group_size(), shard_id=get_rank(),
                                                  cache=nfs_dataset_cache)
             else:
-                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_workers, shuffle=True,
                                                  cache=nfs_dataset_cache)
         else:
-            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_workers, shuffle=True,
                                              cache=nfs_dataset_cache)
     elif config.platform == "CPU":
-        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True, cache=nfs_dataset_cache)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_workers, \
+            shuffle=True, cache=nfs_dataset_cache)
 
     resize_height = config.image_height
     resize_width = config.image_width
@@ -96,7 +98,7 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1, enable_cache=Fa
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=num_workers)
     data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply shuffle operations
