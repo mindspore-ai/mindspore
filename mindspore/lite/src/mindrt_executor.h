@@ -36,8 +36,8 @@ class MindrtExecutor : public Executor {
               const std::vector<Tensor *> &outputs, const lite::InnerContext *ctx) override;
 
   int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-          const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
-          const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
+          const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before = nullptr,
+          const KernelCallBack &after = nullptr) override;
 
   int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
              const std::vector<std::vector<int>> &dims) override;

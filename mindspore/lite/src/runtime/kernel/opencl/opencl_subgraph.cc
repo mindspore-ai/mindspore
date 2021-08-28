@@ -336,7 +336,7 @@ int OpenCLSubGraph::Prepare() {
   if (all_kernels_infer_done_) {
     auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
     // If tuning_mode is DEFAULT, just malloc memory for reuse.
-    auto ret = opencl_exec->RunOrTune(in_tensors(), out_tensors(), nodes_, allocator_.get(), nullptr, nullptr, true);
+    auto ret = opencl_exec->RunOrTune(in_tensors(), out_tensors(), nodes_, nullptr, nullptr, true);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Run opencl Tuning failed: " << ret;
       return ret;
@@ -414,7 +414,7 @@ int OpenCLSubGraph::Execute() {
     }
   }
 
-  ret = executor_->Run(in_tensors(), out_tensors(), nodes_, allocator_.get());
+  ret = executor_->Run(in_tensors(), out_tensors(), nodes_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
     return ret;
@@ -444,7 +444,7 @@ int OpenCLSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &
     }
   }
 
-  ret = executor_->Run(in_tensors(), out_tensors(), nodes_, allocator_.get(), before, after);
+  ret = executor_->Run(in_tensors(), out_tensors(), nodes_, before, after);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
     return ret;

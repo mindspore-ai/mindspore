@@ -16,7 +16,6 @@
 
 #include "src/inner_kernel.h"
 #include <algorithm>
-#include <set>
 #include "src/tensor.h"
 #include "src/common/utils.h"
 #include "src/runtime/infer_manager.h"

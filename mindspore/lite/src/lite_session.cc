@@ -645,9 +645,9 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   }
   MS_ASSERT(this->context_ != nullptr);
   if (before == nullptr && after == nullptr) {
-    ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
+    ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_);
   } else {
-    ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get(), before, after);
+    ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, before, after);
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunGraph failed : " << ret;

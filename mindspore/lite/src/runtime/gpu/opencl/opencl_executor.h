@@ -37,11 +37,11 @@ class OpenCLExecutor : public Executor {
   }
 
   int Run(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
-          const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
-          const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
+          const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before = nullptr,
+          const KernelCallBack &after = nullptr) override;
   int RunOrTune(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
-                const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
-                const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr, bool is_tune = false);
+                const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before = nullptr,
+                const KernelCallBack &after = nullptr, bool is_tune = false);
 
  protected:
   InnerContext *context = nullptr;

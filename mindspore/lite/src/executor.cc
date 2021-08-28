@@ -21,9 +21,8 @@
 
 namespace mindspore::lite {
 int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
-                  const KernelCallBack &before, const KernelCallBack &after) {
-  MS_ASSERT(allocator != nullptr);
+                  const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before,
+                  const KernelCallBack &after) {
   // clear ref_count
   for (auto *kernel : kernels) {
     for (auto *tensor : kernel->in_tensors()) {

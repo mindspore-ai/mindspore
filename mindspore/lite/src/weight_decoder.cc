@@ -15,7 +15,6 @@
  */
 #include <cmath>
 #include <string>
-#include <memory>
 #include "src/weight_decoder.h"
 #include "src/huffman_decode.h"
 
