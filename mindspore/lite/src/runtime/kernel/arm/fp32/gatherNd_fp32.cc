@@ -81,7 +81,8 @@ void GatherNdCPUKernel::InitOffset() {
   int indices_rank = indices_shape.size();
   int in_rank = in_shape.size();
   int idx_lastshape = indices_shape[indices_rank - 1];
-  auto indices_ptr = reinterpret_cast<int *>(indices_tensor->MutableData());
+  auto indices_ptr = reinterpret_cast<int *>(indices_tensor->data_c());
+  MS_ASSERT(indices_ptr != nullptr);
   area_ = 1;
   for (int i = idx_lastshape; i < in_rank; ++i) {
     area_ *= in_shape[i];
@@ -126,8 +127,10 @@ int GatherNdRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int GatherNdCPUKernel::Run() {
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->data_c());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->data_c());
+  CHECK_NULL_RETURN(in_ptr_);
+  CHECK_NULL_RETURN(out_ptr_);
   InitOffset();
   auto ret = ParallelLaunch(this->ms_context_, GatherNdRun, this, thread_sz_count_);
   if (ret != RET_OK) {

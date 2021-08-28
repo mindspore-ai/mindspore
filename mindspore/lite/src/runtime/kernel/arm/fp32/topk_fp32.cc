@@ -45,22 +45,23 @@ int TopKCPUKernel::ReSize() {
 }
 
 int TopKCPUKernel::Run() {
-  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  MS_ASSERT(input_data);
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  MS_ASSERT(output_data);
-  auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->MutableData());
-  MS_ASSERT(output_index);
+  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(input_data);
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(output_data);
+  auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->data_c());
+  CHECK_NULL_RETURN(output_index);
 
-  MS_ASSERT(ms_context_->allocator != nullptr);
   if (in_tensors_.size() == 2) {
-    auto input_k = reinterpret_cast<int *>(in_tensors_.at(1)->MutableData());
+    auto input_k = reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
+    CHECK_NULL_RETURN(input_k);
     topk_param_->k_ = input_k[0];
   }
   if (topk_param_->k_ > in_tensors_.at(0)->ElementsNum()) {
     MS_LOG(ERROR) << "The k value is out of the data size range.";
     return RET_ERROR;
   }
+  MS_ASSERT(ms_context_->allocator != nullptr);
   topk_param_->topk_node_list_ =
     ms_context_->allocator->Malloc(static_cast<int>(sizeof(TopkNode)) * topk_param_->last_dim_size_);
   if (topk_param_->topk_node_list_ == nullptr) {

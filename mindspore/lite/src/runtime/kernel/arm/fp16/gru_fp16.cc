@@ -88,8 +88,7 @@ int GruFp16CPUKernel::InitInputWeightBias() {
   // weight -- row: hidden_size; col: input_size, need transpose
   // result -- row: seq_len * batch; col: hidden_size
   auto weight_g = in_tensors_.at(1);
-  MS_ASSERT(weight_g != nullptr);
-  MS_ASSERT(weight_g->data_c() != nullptr);
+  CHECK_NULL_RETURN(weight_g->data_c());
   weight_g_ptr_ = reinterpret_cast<float16_t *>(
     malloc(weight_batch_ * gru_param_->input_col_align_ * gru_param_->input_size_ * sizeof(float16_t)));
   if (weight_g_ptr_ == nullptr) {
@@ -109,8 +108,7 @@ int GruFp16CPUKernel::InitInputWeightBias() {
 
   // input bias
   auto bias = in_tensors_.at(3);
-  MS_ASSERT(bias != nullptr);
-  MS_ASSERT(bias->data_c() != nullptr);
+  CHECK_NULL_RETURN(bias->data_c());
   input_bias_ = reinterpret_cast<float16_t *>(malloc(weight_batch_ * gru_param_->input_col_align_ * sizeof(float16_t)));
   if (input_bias_ == nullptr) {
     MS_LOG(ERROR) << "GruFp16CPUKernel malloc input_bias_ error.";
@@ -136,8 +134,7 @@ int GruFp16CPUKernel::InitStateWeightBias() {
   // weight -- row: hidden_size; col: hidden_size, need transpose
   // result -- row: batch; col: hidden_size
   auto weight_r = in_tensors_.at(2);
-  MS_ASSERT(weight_r != nullptr);
-  MS_ASSERT(weight_r->data_c() != nullptr);
+  CHECK_NULL_RETURN(weight_r->data_c());
   weight_r_ptr_ = reinterpret_cast<float16_t *>(
     malloc(weight_batch_ * gru_param_->state_col_align_ * gru_param_->hidden_size_ * sizeof(float16_t)));
   if (weight_r_ptr_ == nullptr) {
@@ -169,8 +166,7 @@ int GruFp16CPUKernel::InitStateWeightBias() {
 
   // state bias
   auto bias = in_tensors_.at(3);
-  MS_ASSERT(bias != nullptr);
-  MS_ASSERT(bias->data_c() != nullptr);
+  CHECK_NULL_RETURN(bias->data_c());
   state_bias_ = reinterpret_cast<float16_t *>(malloc(weight_batch_ * gru_param_->state_col_align_ * sizeof(float16_t)));
   if (state_bias_ == nullptr) {
     MS_LOG(ERROR) << "GruFp16CPUKernel malloc state_bias_ error.";
@@ -263,18 +259,15 @@ int GruFp16CPUKernel::MallocRunBuffer() {
 
 int GruFp16CPUKernel::Run() {
   auto input = in_tensors_.at(kInputIndex);
-  MS_ASSERT(input != nullptr);
-  auto hidden_state = in_tensors_.at(4);
-  MS_ASSERT(hidden_state != nullptr);
-  auto output = out_tensors_.at(0);
-  MS_ASSERT(output != nullptr);
   auto input_ptr = reinterpret_cast<float16_t *>(input->data_c());
-  MS_ASSERT(input_ptr);
+  CHECK_NULL_RETURN(input_ptr);
+  auto output = out_tensors_.at(0);
   auto output_ptr = reinterpret_cast<float16_t *>(output->data_c());
-  MS_ASSERT(output_ptr);
-  auto output_hidden_state = out_tensors_[1];
-  MS_ASSERT(output_hidden_state->data_c() != nullptr);
-  MS_ASSERT(hidden_state->data_c() != nullptr);
+  CHECK_NULL_RETURN(output_ptr);
+  auto hidden_state = in_tensors_.at(4);
+  auto output_hidden_state = out_tensors_.at(1);
+  CHECK_NULL_RETURN(output_hidden_state->data_c());
+  CHECK_NULL_RETURN(hidden_state->data_c());
   memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float16_t));
   int check_seq_len = gru_param_->seq_len_;
   if (in_tensors_.size() == 6) {

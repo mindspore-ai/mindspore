@@ -25,6 +25,8 @@ using mindspore::schema::PrimitiveType_TopKFusion;
 
 namespace mindspore::kernel {
 int TopKInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -33,9 +35,8 @@ int TopKInt8CPUKernel::Init() {
 
 int TopKInt8CPUKernel::ReSize() {
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
-  MS_ASSERT(parameter);
+  CHECK_NULL_RETURN(parameter);
   lite::Tensor *input = in_tensors_.at(0);
-  MS_ASSERT(input);
   parameter->last_dim_size_ = input->shape().at(input->shape().size() - 1);
   parameter->loop_num_ = 1;
   for (size_t i = 0; i < input->shape().size() - 1; ++i) {
@@ -45,12 +46,12 @@ int TopKInt8CPUKernel::ReSize() {
 }
 
 int TopKInt8CPUKernel::Run() {
-  int8_t *input_data = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
-  MS_ASSERT(input_data);
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
-  MS_ASSERT(output_data);
-  int32_t *output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->MutableData());
-  MS_ASSERT(output_index);
+  int8_t *input_data = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(input_data);
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(output_data);
+  int32_t *output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->data_c());
+  CHECK_NULL_RETURN(output_index);
 
   MS_ASSERT(ms_context_->allocator != nullptr);
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
