@@ -74,9 +74,7 @@ __kernel void Conv2D_H1W1C1(__read_only image2d_t input, __write_only image2d_t 
     }
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -149,10 +147,8 @@ __kernel void Conv2D_H2W1C1(__read_only image2d_t input, __write_only image2d_t 
     }
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -248,12 +244,10 @@ __kernel void Conv2D_H2W1C2(__read_only image2d_t input, __write_only image2d_t 
     }
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-    out_h0_w0_c1 += bias[co_slice1];
-    out_h1_w0_c1 += bias[co_slice1];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
+  out_h0_w0_c1 += bias[co_slice1];
+  out_h1_w0_c1 += bias[co_slice1];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -375,12 +369,10 @@ __kernel void Conv2D_H2W2C1(__read_only image2d_t input, __write_only image2d_t 
     }
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h0_w1_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-    out_h1_w1_c0 += bias[co_slice0];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h0_w1_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
+  out_h1_w1_c0 += bias[co_slice0];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -520,16 +512,14 @@ __kernel void Conv2D_H2W2C2(__read_only image2d_t input, __write_only image2d_t 
     }
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h0_w1_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-    out_h1_w1_c0 += bias[co_slice0];
-    out_h0_w0_c1 += bias[co_slice1];
-    out_h0_w1_c1 += bias[co_slice1];
-    out_h1_w0_c1 += bias[co_slice1];
-    out_h1_w1_c1 += bias[co_slice1];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h0_w1_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
+  out_h1_w1_c0 += bias[co_slice0];
+  out_h0_w0_c1 += bias[co_slice1];
+  out_h0_w1_c1 += bias[co_slice1];
+  out_h1_w0_c1 += bias[co_slice1];
+  out_h1_w1_c1 += bias[co_slice1];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -708,16 +698,14 @@ __kernel void Conv2D_H2W2C2_Img(__read_only image2d_t input, __write_only image2
     }
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h0_w1_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-    out_h1_w1_c0 += bias[co_slice0];
-    out_h0_w0_c1 += bias[co_slice1];
-    out_h0_w1_c1 += bias[co_slice1];
-    out_h1_w0_c1 += bias[co_slice1];
-    out_h1_w1_c1 += bias[co_slice1];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h0_w1_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
+  out_h1_w1_c0 += bias[co_slice0];
+  out_h0_w0_c1 += bias[co_slice1];
+  out_h0_w1_c1 += bias[co_slice1];
+  out_h1_w0_c1 += bias[co_slice1];
+  out_h1_w1_c1 += bias[co_slice1];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -835,9 +823,7 @@ __kernel void Conv2D_H1W1C1_1x1(__read_only image2d_t input, __write_only image2
     weight_ptr += 4;
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -906,10 +892,8 @@ __kernel void Conv2D_H2W1C1_1x1(__read_only image2d_t input, __write_only image2
     weight_ptr += 4;
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -1001,12 +985,10 @@ __kernel void Conv2D_H2W1C2_1x1(__read_only image2d_t input, __write_only image2
     weight_ptr += 8;
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-    out_h0_w0_c1 += bias[co_slice1];
-    out_h1_w0_c1 += bias[co_slice1];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
+  out_h0_w0_c1 += bias[co_slice1];
+  out_h1_w0_c1 += bias[co_slice1];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -1124,12 +1106,10 @@ __kernel void Conv2D_H2W2C1_1x1(__read_only image2d_t input, __write_only image2
     weight_ptr += 4;
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h0_w1_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-    out_h1_w1_c0 += bias[co_slice0];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h0_w1_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
+  out_h1_w1_c0 += bias[co_slice0];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -1261,16 +1241,14 @@ __kernel void Conv2D_H2W2C2_1x1(__read_only image2d_t input, __write_only image2
     weight_ptr += 8;
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h0_w1_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-    out_h1_w1_c0 += bias[co_slice0];
-    out_h0_w0_c1 += bias[co_slice1];
-    out_h0_w1_c1 += bias[co_slice1];
-    out_h1_w0_c1 += bias[co_slice1];
-    out_h1_w1_c1 += bias[co_slice1];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h0_w1_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
+  out_h1_w1_c0 += bias[co_slice0];
+  out_h0_w0_c1 += bias[co_slice1];
+  out_h0_w1_c1 += bias[co_slice1];
+  out_h1_w0_c1 += bias[co_slice1];
+  out_h1_w1_c1 += bias[co_slice1];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));
@@ -1446,16 +1424,14 @@ __kernel void Conv2D_H2W2C2_Img_1x1(__read_only image2d_t input, __write_only im
     out_h1_w1_c1 += filter_ci3_co1 * in_h1_w1.w;
   }
 
-  if (bias != 0) {
-    out_h0_w0_c0 += bias[co_slice0];
-    out_h0_w1_c0 += bias[co_slice0];
-    out_h1_w0_c0 += bias[co_slice0];
-    out_h1_w1_c0 += bias[co_slice0];
-    out_h0_w0_c1 += bias[co_slice1];
-    out_h0_w1_c1 += bias[co_slice1];
-    out_h1_w0_c1 += bias[co_slice1];
-    out_h1_w1_c1 += bias[co_slice1];
-  }
+  out_h0_w0_c0 += bias[co_slice0];
+  out_h0_w1_c0 += bias[co_slice0];
+  out_h1_w0_c0 += bias[co_slice0];
+  out_h1_w1_c0 += bias[co_slice0];
+  out_h0_w0_c1 += bias[co_slice1];
+  out_h0_w1_c1 += bias[co_slice1];
+  out_h1_w0_c1 += bias[co_slice1];
+  out_h1_w1_c1 += bias[co_slice1];
 
   if (act_type == ActivationType_RELU) {
     out_h0_w0_c0 = max(out_h0_w0_c0, (FLT4)(0.0f));

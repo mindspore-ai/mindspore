@@ -36,9 +36,6 @@ int CastOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
 
-  CHECK_NULL_RETURN(in_tensors_.front());
-  CHECK_NULL_RETURN(out_tensors_.front());
-
   if (in_tensors_.front()->shape() != out_tensors_.front()->shape()) {
     MS_LOG(ERROR) << "input shape must be equal to output shape";
     return RET_ERROR;
@@ -71,11 +68,6 @@ void CastOpenCLKernel::SetGlobalLocal() {
 }
 
 int CastOpenCLKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.front());
-  CHECK_NULL_RETURN(out_tensors_.front());
-
   shape_ = GpuTensorInfo(in_tensors_.front());
   std::map<int, std::string> dtype_names = {
     {kNumberTypeFloat32, "fp32"},
@@ -102,11 +94,6 @@ int CastOpenCLKernel::Prepare() {
 }
 
 int CastOpenCLKernel::Run() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.front());
-  CHECK_NULL_RETURN(out_tensors_.front());
-
   MS_LOG(DEBUG) << this->name() << " Running! ";
   if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
