@@ -59,7 +59,10 @@ inline std::string GetSaveGraphsPathName(const std::string &file_name, const std
   } else {
     save_graphs_path = save_path;
   }
-  return save_graphs_path + "/rank_" + std::to_string(GetRank()) + "/ir_dump/" + file_name;
+  if (IsStandAlone()) {
+    return save_graphs_path + "/" + file_name;
+  }
+  return save_graphs_path + "/rank_" + std::to_string(GetRank()) + "/" + file_name;
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_COMMON_H_
