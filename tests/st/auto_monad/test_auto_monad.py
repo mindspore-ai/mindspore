@@ -320,7 +320,7 @@ def test_assign():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -341,7 +341,7 @@ def test_assign_implicit():
     assert out.dtype == ms.float32
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -370,7 +370,7 @@ def test_assign_write_after_read():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -424,7 +424,7 @@ def test_assign_if():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -450,7 +450,7 @@ def test_if():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -471,7 +471,7 @@ def test_while():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -497,7 +497,7 @@ def test_assign_while():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -597,7 +597,7 @@ def test_print_assign_for():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -684,7 +684,7 @@ def test_if_lambda():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -712,7 +712,7 @@ def test_multi_assign():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -771,7 +771,7 @@ def test_multi_assign_print():
         net.para2.data.asnumpy(), expect_para2.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -808,7 +808,7 @@ def test_matmul_assign_biasadd():
         context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -874,7 +874,7 @@ def test_isolate_call():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1370,7 +1370,7 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
 
 # op_cast should be located in order_list after abstract_specialize.
 # Besides Ascend, it can work on CPU.
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

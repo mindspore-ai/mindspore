@@ -72,7 +72,7 @@ class GradOfAllInputs(_Grad):
                          network=network, real_inputs_count=real_inputs_count)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -120,7 +120,7 @@ def test_row_tensor_in_while():
     assert dense_shape == out[2]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

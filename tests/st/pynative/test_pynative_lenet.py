@@ -128,7 +128,7 @@ class GradWrap(nn.Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu
@@ -166,7 +166,7 @@ def test_ascend_pynative_lenet():
     assert loss_output.asnumpy() > 0.003
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu

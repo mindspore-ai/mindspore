@@ -37,7 +37,7 @@ class AdamNet(nn.Cell):
         return self.var, self.m, self.v
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -264,7 +264,7 @@ class ApplyFtrlNet(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -321,7 +321,7 @@ class ApplyMomentumNet(nn.Cell):
         return self.var, self.accum
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -351,7 +351,7 @@ class ApplyPowerSignNet(nn.Cell):
         return self.var, self.m
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -439,7 +439,7 @@ class ApplyRMSPropNet(nn.Cell):
         return self.var
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -508,7 +508,7 @@ class FusedSparseFtrlNet(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -576,7 +576,7 @@ class FusedSparseProximalAdagradNet(nn.Cell):
         return self.var, self.accum
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -667,7 +667,7 @@ class SparseApplyFtrlNet(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -699,7 +699,7 @@ class SparseApplyFtrlV2Net(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -729,7 +729,7 @@ class SparseApplyProximalAdagradNet(nn.Cell):
         return self.var, self.accum
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

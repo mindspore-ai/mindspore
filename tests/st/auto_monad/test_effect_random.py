@@ -42,7 +42,7 @@ class Sampling(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -68,7 +68,7 @@ class CompositeNormalNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -95,7 +95,7 @@ class CompositeLaplaceNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -122,7 +122,7 @@ class CompositeGammaNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -175,7 +175,7 @@ class CompositeUniformNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -231,7 +231,7 @@ class StandardLaplaceNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

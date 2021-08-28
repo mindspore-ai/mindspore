@@ -64,7 +64,7 @@ class TestLocalization:
         self.saliency_gt = mock_gradient_call(self.explainer, self.data, self.target)
         self.num_class = 2
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
@@ -81,7 +81,7 @@ class TestLocalization:
             res = pg.evaluate(self.explainer, self.data, targets=self.target, mask=self.masks)
         assert np.max(np.abs(np.array([res_gt]) - res)) < 1e-5
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
@@ -100,7 +100,7 @@ class TestLocalization:
 
         assert np.allclose(np.array([res_gt]), res)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
@@ -116,7 +116,7 @@ class TestLocalization:
         res = pg.evaluate(self.explainer, self.data, targets=self.target, mask=self.masks, saliency=self.saliency_gt)
         assert np.allclose(np.array([res_gt]), res)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard

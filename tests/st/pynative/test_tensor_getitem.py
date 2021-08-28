@@ -79,7 +79,7 @@ class NetWorkSliceEllipsis(Cell):
         return ret0, ret1, ret2, ret3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -111,7 +111,7 @@ class NetWorkReduceDimension(Cell):
         return ret1, ret2, ret3, ret4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -171,7 +171,7 @@ class TensorGetItemByThreeTensors(Cell):
         return ret0, ret1, ret2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -359,7 +359,7 @@ class TensorSetItemByMixedTensors_0(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -399,7 +399,7 @@ class TensorSetItemByMixedTensors_1(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -803,7 +803,7 @@ def test_setitem_by_tensor_with_tuple_of_tensor_error():
         net(index_0_ms, index_1_ms, index_2_ms, value_0_ms, value_1_ms)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -903,7 +903,7 @@ def test_tensor_assign_slice_value_1():
     assert np.all(z == out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1099,7 +1099,7 @@ class TensorAssignWithBoolTensorIndex2Error(Cell):
         return a
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

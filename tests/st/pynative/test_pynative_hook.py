@@ -161,7 +161,7 @@ class Ms_Cell_Change_Shape(nn.Cell):
         return dout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -185,7 +185,7 @@ def test_pynative_lenet_train_hook_function_print_and_save_grad():
     assert success
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -198,7 +198,7 @@ def test_pynative_custom_bprop_and_Cell_MulAdd():
            (Tensor(1.0, mstype.float32), Tensor(2.0, mstype.float32))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -211,7 +211,7 @@ def test_pynative_custom_bprop_and_Cell_Ms_Cell_Change_Shape():
     assert "Shapes of input and parameter are different, input index" in str(ex.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
