@@ -257,6 +257,10 @@ kernel::InnerKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inpu
     MS_LOG(WARNING) << "kernel " << opParameter->name_ << "don't infer shape yet!";
     return kernel;
   }
+  if (std::find(shape.begin(), shape.end(), 0) != shape.end()) {
+    MS_LOG(WARNING) << "kernel " << opParameter->name_ << "don't support output shape has zero.";
+    return nullptr;
+  }
   auto ret = kernel->CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";

@@ -41,12 +41,13 @@ int L2NormCPUKernel::Init() {
 
 int L2NormCPUKernel::MallocTmpBuffer() {
   auto shape = in_tensors_.at(kInputIndex)->shape();
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, shape.size() * sizeof(int));
   l2_norm_param_->shape_ = reinterpret_cast<int *>(malloc(shape.size() * sizeof(int)));
   if (l2_norm_param_->shape_ == nullptr) {
     MS_LOG(ERROR) << "Malloc data failed";
     return RET_ERROR;
   }
-
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, kMaxThreadNum * sizeof(float));
   tmp_sum_ = reinterpret_cast<float *>(malloc(kMaxThreadNum * sizeof(float)));
   if (tmp_sum_ == nullptr) {
     MS_LOG(ERROR) << "Malloc data failed";
@@ -90,6 +91,10 @@ int L2NormCPUKernel::ReSize() {
 
 int L2NormCPUKernel::CalcSquareSum(int task_id) {
   int unit = UP_DIV(l2_norm_param_->data_num_, op_parameter_->thread_num_);
+  if (INT_MUL_OVERFLOW(task_id, unit)) {
+    MS_LOG(ERROR) << "int mul overflow.";
+    return RET_ERROR;
+  }
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, l2_norm_param_->data_num_);
   return CalcThreadSquareSum(input_ptr_, tmp_sum_ + task_id, begin, end);
@@ -97,6 +102,10 @@ int L2NormCPUKernel::CalcSquareSum(int task_id) {
 
 int L2NormCPUKernel::DivSqrtSum(int task_id) {
   int unit = UP_DIV(l2_norm_param_->data_num_, op_parameter_->thread_num_);
+  if (INT_MUL_OVERFLOW(task_id, unit)) {
+    MS_LOG(ERROR) << "int mul overflow.";
+    return RET_ERROR;
+  }
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, l2_norm_param_->data_num_);
   return ThreadDivSqrtSum(input_ptr_, output_ptr_, l2_norm_param_, sqrt_sum_, begin, end);
@@ -110,6 +119,10 @@ int L2NormCPUKernel::CalcL2NormTrailingAxis(int task_id) {
   }
   int outer_size = input->ElementsNum() / input->shape().back();
   int unit = UP_DIV(outer_size, op_parameter_->thread_num_);
+  if (INT_MUL_OVERFLOW(task_id, unit)) {
+    MS_LOG(ERROR) << "int mul overflow.";
+    return RET_ERROR;
+  }
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, outer_size);
   return ThreadTrailingAxis(input_ptr_, output_ptr_, l2_norm_param_, begin, end);
@@ -126,6 +139,7 @@ int SquareSumRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int L2NormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<L2NormCPUKernel *>(cdata);
   auto ret = kernel->DivSqrtSum(task_id);
   if (ret != RET_OK) {
@@ -136,6 +150,7 @@ int L2NormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int L2NormTrailingAxisRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<L2NormCPUKernel *>(cdata);
   auto ret = kernel->CalcL2NormTrailingAxis(task_id);
   if (ret != RET_OK) {

@@ -48,14 +48,14 @@ int SoftmaxInt8CPUKernel::Init() {
   }
 
   auto *input_tensor = in_tensors_.at(kInputIndex);
-  MS_ASSERT(input_tensor);
+  MS_ASSERT(input_tensor != nullptr);
 
   auto in_quant_args = input_tensor->quant_params();
   quant_param_->in_quant_args_.scale_ = in_quant_args.front().scale;
   quant_param_->in_quant_args_.zp_ = -in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
-  MS_ASSERT(out_tensor);
+  MS_ASSERT(out_tensor != nullptr);
 
   auto out_quant_args = out_tensor->quant_params();
   quant_param_->out_quant_arg_.scale_ = out_quant_args.front().scale;
@@ -97,6 +97,10 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   }
 
   int stride = UP_DIV(outter_size, thread_count_);
+  if (INT_MUL_OVERFLOW(task_id, stride)) {
+    MS_LOG(ERROR) << "int mul overflow.";
+    return RET_ERROR;
+  }
   int count = MSMIN(stride, outter_size - stride * task_id);
   int stride_size = stride * task_id * inner_size;
 
@@ -110,6 +114,7 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
 }
 
 int SoftmaxRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto softmax_kernel = reinterpret_cast<SoftmaxInt8CPUKernel *>(cdata);
   auto error_code = softmax_kernel->DoSoftmax(task_id);
   if (error_code != RET_OK) {
@@ -120,9 +125,14 @@ int SoftmaxRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int SoftmaxInt8CPUKernel::Run() {
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, softmax_param_->element_size_ * sizeof(int));
   exp_data_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(softmax_param_->element_size_ * sizeof(int)));
   int inner_size = 1;
   for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
+    if (INT_MUL_OVERFLOW(inner_size, softmax_param_->input_shape_[i])) {
+      MS_LOG(ERROR) << "int mul overflow.";
+      return RET_ERROR;
+    }
     inner_size *= softmax_param_->input_shape_[i];
   }
   sum_data_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(inner_size * sizeof(int)));

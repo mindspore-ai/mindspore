@@ -96,6 +96,7 @@ int SqueezeInt8CPUKernel::Run() {
 }
 
 int SqueezeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto Squeeze = reinterpret_cast<SqueezeInt8CPUKernel *>(cdata);
   Squeeze->DoExecute(task_id);
   return RET_OK;

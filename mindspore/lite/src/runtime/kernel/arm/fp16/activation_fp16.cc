@@ -58,7 +58,10 @@ int ActivationFp16CPUKernel::DoActivation(int task_id) {
   if (count <= 0) {
     return RET_OK;
   }
-
+  if (INT_MUL_OVERFLOW(stride, task_id)) {
+    MS_LOG(ERROR) << "int mul overflow.";
+    return RET_ERROR;
+  }
   int error_code;
   if (type_ == schema::ActivationType_RELU) {
     error_code = ReluFp16(fp16_input_ + stride * task_id, fp16_output_ + stride * task_id, count);
@@ -89,6 +92,7 @@ int ActivationFp16CPUKernel::DoActivation(int task_id) {
 }
 
 int ActivationFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto activation_kernel = reinterpret_cast<ActivationFp16CPUKernel *>(cdata);
   MS_ASSERT(activation_kernel != nullptr);
   auto error_code = activation_kernel->DoActivation(task_id);
