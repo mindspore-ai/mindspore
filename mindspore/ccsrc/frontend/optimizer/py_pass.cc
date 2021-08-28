@@ -201,7 +201,7 @@ void ReflectParamBackToPython(const AnfNodePtr &param, const string &param_name,
   // 1. Get current cell object
   auto ppm = opt::python_pass::PyPassManager::GetInstance();
   auto resource = ppm->GetResource();
-  py::object top_cell = resource->input();
+  py::object top_cell = resource->source_input();
   if (py::isinstance<py::none>(top_cell)) {
     MS_LOG(EXCEPTION) << "Failed to get top cell from resource.";
   }

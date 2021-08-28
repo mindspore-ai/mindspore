@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, ParameterTuple
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.optim import Adam, FTRL
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -130,7 +130,7 @@ def test_double_subgraphs():
     x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
     reset_op_id()
     net.set_train()
-    _executor.compile(net, x, phase='train')
-    num_ops = _executor._get_num_parallel_ops(net)
+    _cell_graph_executor.compile(net, x, phase='train')
+    num_ops = _cell_graph_executor._get_num_parallel_ops(net)
     expected_num = 7
     assert expected_num == num_ops

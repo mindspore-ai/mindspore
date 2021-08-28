@@ -19,7 +19,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from ..ut_filter import non_graph_engine
 
 
@@ -63,7 +63,7 @@ def test_compile_train_eval():
     train_input_data = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
     context.set_context(mode=context.GRAPH_MODE)
 
-    ms_executor = _executor
+    ms_executor = _cell_graph_executor
 
     ms_executor.init_dataset("train", 1, 1, [ms.float32], [[1, 3, 32, 32]], (), 'dataset')
 

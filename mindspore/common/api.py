@@ -25,7 +25,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
 from .tensor import Tensor as MsTensor
-from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, PynativeExecutor_
+from .._c_expression import generate_arguments_key, GraphExecutor_, Tensor, MetaTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
 from ..parallel._ps_context import _is_role_pserver
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
@@ -92,7 +92,7 @@ def _wrap_func(fn):
 
 def _exec_init_graph(obj, init_phase):
     """Execute the parameter initializer graph."""
-    inst_executor = Executor_.get_instance()
+    inst_executor = GraphExecutor_.get_instance()
     param_dict = OrderedDict()
     for name, param in obj.parameters_dict().items():
         if not param.is_init:
@@ -104,11 +104,11 @@ def _exec_init_graph(obj, init_phase):
         inst_executor.run_init_graph(param_dict, init_phase)
 
 
-class _MindSporeFunction:
+class _MindsporeFunctionExecutor:
     """
-    Represents a function compiled by mind expression.
+    Represents a function compiled by graph compiler.
 
-    _MindSporeFunction will compile the original function for every combination
+    _MindsporeFunctionExecutor will compile the original function for every combination
     of argument types and shapes it is given (as well as their values, optionally).
 
     Args:
@@ -127,22 +127,23 @@ class _MindSporeFunction:
         self.obj = None
         if hasattr(obj, fn.__name__):
             self.obj = obj
-        self._executor = Executor_.get_instance()
+        self._graph_executor = GraphExecutor_.get_instance()
 
     def build_data_init_graph(self, graph_name):
         """Build GE data graph and init graph for the given graph name."""
         if self.obj is None:
             logger.warning("Make sure parameter should not be used in function")
             para_dict = OrderedDict()
-            self._executor.build_data_graph(para_dict, graph_name)
+            self._graph_executor.build_data_graph(para_dict, graph_name)
             return
-        self._executor.build_data_graph(self.obj.parameters_dict(), graph_name, self.obj.parameters_broadcast_dict())
+        self._graph_executor.build_data_graph(self.obj.parameters_dict(), graph_name,
+                                              self.obj.parameters_broadcast_dict())
         init_phase = "init_subgraph" + graph_name[graph_name.find("."):]
         _exec_init_graph(self.obj, init_phase)
 
     def compile(self, args_list, arg_names, method_name):
         """Returns pipeline for the given args."""
-        # verify the signature for both function and method
+        # Verify the signature for both function and method
         if self.input_signature is not None:
             signatures = []
             for sig_spec in self.input_signature:
@@ -155,35 +156,32 @@ class _MindSporeFunction:
 
         dic = dict(zip(arg_names, args_list))
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-            str(self.fn.__code__.co_firstlineno)
+            str(self.fn.__code__.co_firstlineno) + '.' + str(id(self.fn))
         self.fn.__parse_method__ = method_name
 
-        # add key with obj
-        identify = ""
-        if self.obj is None:
-            identify = str(id(self.fn))
-        else:
+        # Add key with obj
+        if self.obj is not None:
+            if self.obj.__module__ != self.fn.__module__:
+                logger.error(f'`obj` module not equal to `fn` module: {self.obj.__module__}, {self.fn.__module__}')
             self.obj.__parse_method__ = method_name
-            generate_name = self.obj.__module__ + "." + generate_name
-            identify = str(self.obj.create_time) + "_" + str(id(self.obj)) + '_' + str(id(self.fn))
+            generate_name = generate_name + '.' + str(self.obj.create_time) + '.' + str(id(self.obj))
 
-        generate_name = generate_name + "." + identify
-        key = generate_key(generate_name, dic)
-        phase = str(key[1]) + generate_name
-        if key not in ms_compile_cache.keys():
+        key = generate_arguments_key(dic)
+        phase = generate_name + '.' + str(key)
+        if phase not in ms_compile_cache.keys():
             is_compile = False
             if self.obj is None:
-                is_compile = self._executor.compile(self.fn, args_list, phase, True, "")
+                is_compile = self._graph_executor.compile(self.fn, args_list, phase, True, "")
             else:
-                is_compile = self._executor.compile(self.obj, args_list, phase, True, "")
+                is_compile = self._graph_executor.compile(self.obj, args_list, phase, True, "")
             if not is_compile:
                 raise RuntimeError("Executor compile failed.")
             if context.get_context("enable_ge"):
                 self.build_data_init_graph(phase)
-            ms_compile_cache[key] = phase
+            ms_compile_cache[phase] = phase
             return phase
 
-        return ms_compile_cache[key]
+        return phase
 
     @_wrap_func
     def __call__(self, *args):
@@ -208,12 +206,13 @@ class _MindSporeFunction:
                 new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)
-        output = self._executor(tuple(new_inputs), phase)
+        output = self._graph_executor(tuple(new_inputs), phase)
 
         if context.get_context("mode") == context.PYNATIVE_MODE:
-            _pynative_exec.set_graph_phase(phase)
-            _pynative_exec.grad_ms_function(output, *new_inputs)
+            _pynative_executor.set_graph_phase(phase)
+            _pynative_executor.grad_ms_function(output, *new_inputs)
             output = output[0]
+
         return output
 
 
@@ -283,7 +282,7 @@ def ms_function(fn=None, obj=None, input_signature=None):
             process_obj = None
             if args and not isinstance(args[0], MsTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
-            out = _MindSporeFunction(func, input_signature, process_obj)(*args)
+            out = _MindsporeFunctionExecutor(func, input_signature, process_obj)(*args)
             return out
 
         return staging_specialize
@@ -420,9 +419,9 @@ class _PynativeExecutor:
         return self._executor(obj, args)
 
 
-class _Executor:
+class _CellGraphExecutor:
     """
-    An executor used to compile/manage/run graph.
+    An executor used to compile/manage/run graph for a Cell.
 
     Including data_graph, train_graph, eval_graph and predict graph.
 
@@ -437,10 +436,10 @@ class _Executor:
     def __init__(self):
         # create needed graph by lazy mode
         self.is_init = False
-        self._executor = Executor_.get_instance()
+        self._graph_executor = GraphExecutor_.get_instance()
         self.compile_cache = {}
-        self._executor.set_py_exe_path(sys.executable)
-        self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
+        self._graph_executor.set_py_exe_path(sys.executable)
+        self._graph_executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
         self.queue_name = ""
 
     def init_dataset(self, queue_name, dataset_size, batch_size, dataset_types, dataset_shapes,
@@ -472,7 +471,7 @@ class _Executor:
         return True
 
     def _build_data_graph(self, obj, phase):
-        self._executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
+        self._graph_executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
 
     def _set_dataset_mode(self, args_list):
         """set dataset mode."""
@@ -501,12 +500,9 @@ class _Executor:
 
         args_names, args_list = _generate_pip_args(obj, *args)
         dic = dict(zip(args_names, args_list))
-        key = generate_key(phase, dic)
-        obj.phase_prefix = str(key[1])
-        if 'export' in phase:
-            phase = phase + '.' + obj.phase_prefix + '.' + str(obj.create_time) + '.' + str(id(obj))
-        else:
-            phase = obj.phase_prefix + phase + '.' + str(obj.create_time) + '.' + str(id(obj))
+        key = generate_arguments_key(dic)
+        obj.arguments_key = str(key)
+        phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
 
         if phase in self.compile_cache.keys():
             logger.debug("%r graph has existed.", phase)
@@ -524,11 +520,11 @@ class _Executor:
         enable_debug_runtime = context.get_context("enable_debug_runtime")
         enable_ge = context.get_context("enable_ge")
         use_vm = not enable_ge or (enable_debug_runtime and context.get_context("mode") == context.PYNATIVE_MODE)
-        result = self._executor.compile(obj, args_list, phase, use_vm, self.queue_name)
+        result = self._graph_executor.compile(obj, args_list, phase, use_vm, self.queue_name)
         self.compile_cache[phase] = phase
         if not result:
             raise RuntimeError("Executor compile failed.")
-        graph = self._executor.get_func_graph(phase)
+        graph = self._graph_executor.get_func_graph(phase)
 
         if graph is None:
             raise RuntimeError("Compile graph failed for phase {}.".format(phase))
@@ -541,7 +537,6 @@ class _Executor:
         # the following GE init process is not needed when use vm or ms backend
         if enable_ge:
             self._build_data_graph(obj, phase)
-
             if "export" not in phase:
                 init_phase = "init_subgraph." + str(obj.create_time) + "." + str(id(obj))
                 _exec_init_graph(obj, init_phase)
@@ -559,8 +554,8 @@ class _Executor:
             self._updata_param_node_default_input(phase, replace)
             return
 
-        obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
-        obj.parallel_parameter_name_list = self._executor.get_parallel_parameter_name_list(phase)
+        obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
+        obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
         replace = obj.init_parameters_data(auto_parallel_mode=True)
         if _get_pipeline_stages() > 1 and (not hasattr(obj, "is_first_iteration") or not obj.is_first_iteration):
             obj.remove_redundant_parameters()
@@ -575,19 +570,19 @@ class _Executor:
 
     def _updata_param_node_default_input(self, phase, replace):
         new_param = {x.name: replace[x] for x in replace if id(x) != id(replace[x])}
-        return self._executor.updata_param_node_default_input(phase, new_param)
+        return self._graph_executor.updata_param_node_default_input(phase, new_param)
 
     def _get_shard_strategy(self, obj):
-        real_phase = obj.phase_prefix + obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj))
-        return self._executor.get_strategy(real_phase)
+        real_phase = obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
+        return self._graph_executor.get_strategy(real_phase)
 
     def _get_num_parallel_ops(self, obj):
-        real_phase = obj.phase_prefix + obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj))
-        return self._executor.get_num_parallel_ops(real_phase)
+        real_phase = obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
+        return self._graph_executor.get_num_parallel_ops(real_phase)
 
     def _get_allreduce_fusion(self, obj):
-        real_phase = obj.phase_prefix + obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj))
-        return self._executor.get_allreduce_fusion(real_phase)
+        real_phase = obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
+        return self._graph_executor.get_allreduce_fusion(real_phase)
 
     def has_compiled(self, phase='predict'):
         """
@@ -599,7 +594,7 @@ class _Executor:
         Returns:
             bool, specifies whether the specific graph has been compiled.
         """
-        return self._executor.has_compiled(phase)
+        return self._graph_executor.has_compiled(phase)
 
     def __call__(self, obj, *args, phase='predict'):
         if context.get_context("precompile_only") or _is_role_pserver():
@@ -615,7 +610,7 @@ class _Executor:
             raise RuntimeError('Process method parameter is failure')
         args_list = tuple(arguments_dict.values())
         obj.__parse_method__ = parse_method
-        return self._executor(args_list, phase)
+        return self._graph_executor(args_list, phase)
 
     def run(self, obj, *args, phase='predict'):
         """
@@ -628,23 +623,23 @@ class _Executor:
             Tensor/Tuple, return execute result.
         """
         if phase == 'save':
-            return self._executor((), phase + '.' + str(obj.create_time) + '.' + str(id(obj)))
+            return self._graph_executor((), phase + '.' + str(obj.create_time) + '.' + str(id(obj)))
 
-        phase_real = obj.phase_prefix + phase + '.' + str(obj.create_time) + '.' + str(id(obj))
+        phase_real = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
         if self.has_compiled(phase_real):
             return self._exec_pip(obj, *args, phase=phase_real)
         raise KeyError('{} graph is not exist.'.format(phase_real))
 
     def del_net_res(self, net_id):
-        self._executor.del_net_res(net_id)
+        self._graph_executor.del_net_res(net_id)
 
     def _get_func_graph_proto(self, obj, exec_id, ir_type="onnx_ir", use_prefix=False):
         """Get graph proto from pipeline."""
         if use_prefix:
-            exec_id = obj.phase_prefix + exec_id
-        if self._executor.has_compiled(exec_id) is False:
+            exec_id = exec_id + '.' + obj.arguments_key
+        if self._graph_executor.has_compiled(exec_id) is False:
             return None
-        return self._executor.get_func_graph_proto(exec_id, ir_type)
+        return self._graph_executor.get_func_graph_proto(exec_id, ir_type)
 
     def export(self, file_name, graph_id):
         """
@@ -659,12 +654,12 @@ class _Executor:
 
     def fetch_info_for_quant_export(self, exec_id):
         """Get graph proto from pipeline."""
-        if self._executor.has_compiled(exec_id) is False:
+        if self._graph_executor.has_compiled(exec_id) is False:
             return None
-        return self._executor.fetch_info_for_quant_export(exec_id)
+        return self._graph_executor.fetch_info_for_quant_export(exec_id)
 
 
-_executor = _Executor()
-_pynative_exec = _PynativeExecutor()
+_cell_graph_executor = _CellGraphExecutor()
+_pynative_executor = _PynativeExecutor()
 
 __all__ = ['ms_function']

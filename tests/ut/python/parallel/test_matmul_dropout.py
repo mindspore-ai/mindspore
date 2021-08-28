@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore import context
 import mindspore.common.dtype as mstype
 from mindspore.common.seed import _get_graph_seed
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore._checkparam import Validator
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import composite as C
@@ -128,4 +128,4 @@ def test_two_matmul_dropout():
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y, b)
+    _cell_graph_executor.compile(net, x, y, b)

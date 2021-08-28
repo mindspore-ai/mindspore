@@ -246,7 +246,7 @@ BuiltInTypeMap &GetAttrMap() {
 
 Resource::Resource(const py::object &obj)
     : engine_(std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager_)),
-      input_(obj),
+      source_input_(obj),
       is_cleaned_(false) {}
 
 Resource::~Resource() {
@@ -313,7 +313,7 @@ Any Resource::GetAttrPtr(const TypeId &type, const std::string &name) {
 void Resource::Clean() {
   // AbstractTensor->elements() will be saved in AbstractBasePtrList
   args_spec_.clear();
-  input_ = py::none();
+  source_input_ = py::none();
   // Context with AbstractBasePtrList may be saved in GraphEvaluator
   // some Evaluator like ResolveEvaluator may save Python object in cache,
   // it should be cleaned before Python Interpreter destructed.

@@ -37,7 +37,7 @@ from ..context import ParallelMode
 from ..parallel._cost_model_context import _set_multi_subgraphs
 from .dataset_helper import DatasetHelper, connect_network_with_dataset
 from . import amp
-from ..common.api import _pynative_exec
+from ..common.api import _pynative_executor
 
 
 def _transfer_tensor_to_tuple(inputs):
@@ -53,7 +53,7 @@ def _transfer_tensor_to_tuple(inputs):
 class _StepSync(Callback):
     @staticmethod
     def step_end(run_context):
-        _pynative_exec.sync()
+        _pynative_executor.sync()
 
 
 class Model:

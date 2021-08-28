@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.communication.management import init
 from mindspore.nn import Dense
 from mindspore.nn import Momentum
@@ -62,4 +62,4 @@ def test_dense_gen_graph():
     predict = Tensor(np.ones([64, 512]).astype(np.float32) * 0.01)
     label = Tensor(np.zeros([64, 32]).astype(np.float32))
     network.set_auto_parallel()
-    _executor.compile(network, predict, label)
+    _cell_graph_executor.compile(network, predict, label)

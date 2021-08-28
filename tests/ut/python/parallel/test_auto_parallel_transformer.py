@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -113,4 +113,4 @@ def test_dmnet_train_step():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, input_)
+    _cell_graph_executor.compile(net, input_)

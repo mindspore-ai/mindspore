@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.communication._comm_helper import Backend
 from mindspore.communication.management import HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, GlobalComm, init
 from mindspore.nn import Dense
@@ -154,7 +154,7 @@ def run_allreduce(op):
                          momentum=0.9)
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
-    _executor.compile(network, input_tensor, label_tensor)
+    _cell_graph_executor.compile(network, input_tensor, label_tensor)
 
 
 def test_allreduce():
@@ -178,7 +178,7 @@ def test_allgather():
                          momentum=0.9)
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
-    _executor.compile(network, input_tensor, label_tensor)
+    _cell_graph_executor.compile(network, input_tensor, label_tensor)
 
 def test_allswap():
     """run_allswap"""
@@ -192,7 +192,7 @@ def test_allswap():
                          momentum=0.9)
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
-    _executor.compile(network, input_tensor, label_tensor)
+    _cell_graph_executor.compile(network, input_tensor, label_tensor)
 
 
 def run_reducescatter(op):
@@ -207,7 +207,7 @@ def run_reducescatter(op):
                          momentum=0.9)
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
-    _executor.compile(network, input_tensor, label_tensor)
+    _cell_graph_executor.compile(network, input_tensor, label_tensor)
 
 
 def test_reducescatter():
@@ -228,7 +228,7 @@ def test_broadcast():
                          momentum=0.9)
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
-    _executor.compile(network, input_tensor_1, label_tensor)
+    _cell_graph_executor.compile(network, input_tensor_1, label_tensor)
 
 
 def test_alltoall():
@@ -243,4 +243,4 @@ def test_alltoall():
                          momentum=0.9)
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
-    _executor.compile(network, input_tensor, label_tensor)
+    _cell_graph_executor.compile(network, input_tensor, label_tensor)

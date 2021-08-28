@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 import mindspore.common.dtype as mstype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.nn.loss.loss import LossBase
 from mindspore.nn.optim.momentum import Momentum
@@ -116,7 +116,7 @@ def all_to_all_common():
     model = Model(net, loss, opt)
 
     model.train(epoch_size, dataset, dataset_sink_mode=False)
-    strategys = _executor._get_shard_strategy(model._train_network)
+    strategys = _cell_graph_executor._get_shard_strategy(model._train_network)
     return strategys
 
 

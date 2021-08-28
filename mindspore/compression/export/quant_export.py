@@ -22,7 +22,7 @@ from ... import nn, ops
 from ..._checkparam import Validator
 from ...common import Tensor
 from ...common import dtype as mstype
-from ...common.api import _executor
+from ...common.api import _cell_graph_executor as _executor
 from ...common.parameter import Parameter
 from ...nn import Cell
 from ...nn.layer import quant

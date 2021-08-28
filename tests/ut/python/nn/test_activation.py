@@ -17,7 +17,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from ..ut_filter import non_graph_engine
 
 
@@ -74,7 +74,7 @@ class Net1(nn.Cell):
 def test_compile_relu():
     net = Net1()
     input_data = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]], dtype=np.float32))
-    _executor.compile(net, input_data)
+    _cell_graph_executor.compile(net, input_data)
 
 
 class Net_gelu(nn.Cell):
@@ -89,7 +89,7 @@ class Net_gelu(nn.Cell):
 def test_compile_gelu():
     net = Net_gelu()
     input_data = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]], dtype=np.float32))
-    _executor.compile(net, input_data)
+    _cell_graph_executor.compile(net, input_data)
 
 
 class NetLeakyReLU(nn.Cell):
@@ -104,4 +104,4 @@ class NetLeakyReLU(nn.Cell):
 def test_compile_leaky_relu():
     net = NetLeakyReLU(alpha=0.1)
     input_data = Tensor(np.array([[1.6, 0, 0.6], [6, 0, -6]], dtype=np.float32))
-    _executor.compile(net, input_data)
+    _cell_graph_executor.compile(net, input_data)

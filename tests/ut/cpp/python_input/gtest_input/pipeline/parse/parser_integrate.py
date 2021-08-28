@@ -19,7 +19,7 @@ import numpy as np
 import mindspore._c_expression as me
 import mindspore.nn as nn
 from mindspore.common import dtype
-from mindspore.common.api import ms_function, _executor
+from mindspore.common.api import ms_function, _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
@@ -153,7 +153,7 @@ class TestNet(nn.Cell):
 def test_compile_conv2d():
     net = Net()
     inputs = Tensor(np.ones([1, 3, 16, 50]).astype(np.float32))
-    _executor.compile(net, inputs)
+    _cell_graph_executor.compile(net, inputs)
 
 
 def test_none(x, y):

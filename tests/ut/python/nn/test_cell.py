@@ -19,7 +19,7 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 
 class ModA(nn.Cell):
@@ -299,4 +299,4 @@ def test_cell_names():
     ta = Tensor(np.ones([2, 3]))
     mn = ModelName(ta)
     with pytest.raises(ValueError):
-        _executor.compile(mn)
+        _cell_graph_executor.compile(mn)

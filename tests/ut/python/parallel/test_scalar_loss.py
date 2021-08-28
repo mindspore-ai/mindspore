@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -61,4 +61,4 @@ def test_sum_as_loss():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)

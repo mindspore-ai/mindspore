@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
@@ -74,4 +74,4 @@ def test_auto_parallel_bn_with_prelu():
     net = GradWrap(NetWithLoss(Net()))
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)

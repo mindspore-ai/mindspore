@@ -442,7 +442,7 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr &graph, const std::ve
 
 void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr> &info, const py::tuple &args, const std::string &phase,
                   std::vector<tensor::TensorPtr> *inputs) {
-  // check the arg and use the ExecutorPy args
+  // check the arg and use the GraphExecutorPy args
   std::size_t size = args.size();
 
   if (info.count(phase) == 0) {

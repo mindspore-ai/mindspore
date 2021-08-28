@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
@@ -69,8 +69,8 @@ def test_common_parameter():
     reset_op_id()
 
     net.set_train()
-    _executor.compile(net, x, y, phase='train')
-    strategies = _executor._get_shard_strategy(net)
+    _cell_graph_executor.compile(net, x, y, phase='train')
+    strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('MatMul-op', k) is not None:
             assert v == [[8, 1], [1, 1]]

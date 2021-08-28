@@ -16,7 +16,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from ....train_step_wrap import train_step_with_loss_warp
 
@@ -52,4 +52,4 @@ def test_dmnet_train_step():
     net = DenseMutMulNet()
     net = train_step_with_loss_warp(DenseMutMulNet())
     net.set_train()
-    _executor.compile(net, input_, label)
+    _cell_graph_executor.compile(net, input_, label)

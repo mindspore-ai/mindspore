@@ -21,7 +21,7 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore import nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
@@ -63,7 +63,7 @@ def test_net_without_construct():
     """ test_net_without_construct """
     net = NetMissConstruct()
     inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
-    _executor.compile(net, inp)
+    _cell_graph_executor.compile(net, inp)
 
 
 class NetWithRaise(nn.Cell):
@@ -83,7 +83,7 @@ def test_net_with_raise():
     net = NetWithRaise()
     inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
     with pytest.raises(RuntimeError) as err:
-        _executor.compile(net, inp)
+        _cell_graph_executor.compile(net, inp)
     assert "Unsupported syntax 'Raise'." in str(err.value)
 
 

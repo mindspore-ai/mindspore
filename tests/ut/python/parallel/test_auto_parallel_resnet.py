@@ -20,7 +20,7 @@ import mindspore.nn as nn
 import mindspore.ops.functional as F
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.communication.management import init
 from mindspore.nn.loss.loss import LossBase
@@ -302,7 +302,7 @@ def test_train_32k_8p(batch_size=32, num_classes=32768):
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_shard_strategy(model._train_network)
+    strategies = _cell_graph_executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num
@@ -311,7 +311,7 @@ def test_train_32k_8p(batch_size=32, num_classes=32768):
         elif re.search('ReduceSum-op', k) is not None:
             assert v == [[dev_num, 1]]
 
-    allreduce_fusion_dict = _executor._get_allreduce_fusion(model._train_network)
+    allreduce_fusion_dict = _cell_graph_executor._get_allreduce_fusion(model._train_network)
     print(allreduce_fusion_dict)
     return allreduce_fusion_dict
 
@@ -678,7 +678,7 @@ def test_train_64k_8p(batch_size=32, num_classes=65536):  # 1048576 #131072 #327
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_shard_strategy(model._train_network)
+    strategies = _cell_graph_executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num
@@ -706,7 +706,7 @@ def test_train_8k_8p_gpu(batch_size=32, num_classes=8192):
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_shard_strategy(model._train_network)
+    strategies = _cell_graph_executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num
@@ -732,7 +732,7 @@ def test_train_8k_8p_gpu_approxi(batch_size=32, num_classes=8192):
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_shard_strategy(model._train_network)
+    strategies = _cell_graph_executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num
@@ -758,7 +758,7 @@ def test_train_4k_8p_gpu(batch_size=32, num_classes=4096):
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_shard_strategy(model._train_network)
+    strategies = _cell_graph_executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num

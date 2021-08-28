@@ -17,7 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, Parameter, ParameterTuple, context
 from mindspore import nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.optim import Adam, FTRL
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -108,4 +108,4 @@ def test_two_subgraphs():
     input_x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, input_x)
+    _cell_graph_executor.compile(net, input_x)

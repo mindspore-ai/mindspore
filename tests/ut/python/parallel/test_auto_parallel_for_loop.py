@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P, functional as F
 from mindspore.common.initializer import initializer
 import mindspore.common.dtype as mstype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from tests.dataset_mock import MindData
 
 
@@ -123,7 +123,7 @@ def test_auto_parallel():
     net = Full(_w1, 3)
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, _x, phase='train')
-    num_ops = _executor._get_num_parallel_ops(net)
+    _cell_graph_executor.compile(net, _x, phase='train')
+    num_ops = _cell_graph_executor._get_num_parallel_ops(net)
     expected_num = 16
     assert num_ops == expected_num

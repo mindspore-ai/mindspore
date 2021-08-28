@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, ParameterTuple
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
@@ -81,4 +81,4 @@ def test_two_weights_parameter():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     train_net.set_auto_parallel()
     train_net.set_train()
-    _executor.compile(train_net, x, b)
+    _cell_graph_executor.compile(train_net, x, b)

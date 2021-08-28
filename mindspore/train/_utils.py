@@ -22,7 +22,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import dtype_to_nptype, pytype_to_dtype
 from mindspore.common import dtype as mstype
 from mindspore import log as logger
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.node_strategy_pb2 import ParallelStrategyMap as ckpt_strategy
@@ -64,13 +64,13 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_inf
     send_epoch_end = bool(dataset_size == -1)
     exec_dataset = exec_dataset.device_que(send_epoch_end=send_epoch_end, create_data_info_queue=create_data_info_queue)
 
-    _executor.init_dataset(exec_dataset.queue_name,
-                           dataset_size,
-                           batch_size,
-                           dataset_types,
-                           dataset_shapes,
-                           input_indexs,
-                           phase=phase)
+    _cell_graph_executor.init_dataset(exec_dataset.queue_name,
+                                      dataset_size,
+                                      batch_size,
+                                      dataset_types,
+                                      dataset_shapes,
+                                      input_indexs,
+                                      phase=phase)
 
     return exec_dataset
 

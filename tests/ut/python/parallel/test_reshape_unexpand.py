@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -68,7 +68,7 @@ def test_reshape_unexpand():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 def test_reshape_unexpand_1():
     class Net(nn.Cell):
@@ -91,7 +91,7 @@ def test_reshape_unexpand_1():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 def test_reshape_unexpand_2():
     class Net(nn.Cell):
@@ -114,7 +114,7 @@ def test_reshape_unexpand_2():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 def test_reshape_unexpand_3():
     class Net(nn.Cell):
@@ -138,7 +138,7 @@ def test_reshape_unexpand_3():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 def test_reshape_unexpand_4():
     class Net(nn.Cell):
@@ -162,7 +162,7 @@ def test_reshape_unexpand_4():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 def test_reshape_unexpand_5():
     class Net(nn.Cell):
@@ -186,7 +186,7 @@ def test_reshape_unexpand_5():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 def test_reshape_unexpand_6():
     class Net(nn.Cell):
@@ -210,7 +210,7 @@ def test_reshape_unexpand_6():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 def test_reshape_unexpand_7():
     class Net(nn.Cell):
@@ -244,7 +244,7 @@ def test_reshape_unexpand_7():
     net = GradWrap(NetWithLoss(Net()))
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)
 
 def test_reshape_unexpand_8():
     class Net(nn.Cell):
@@ -267,4 +267,4 @@ def test_reshape_unexpand_8():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x)
+    _cell_graph_executor.compile(net, x)

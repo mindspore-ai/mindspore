@@ -18,7 +18,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum, SGD, RMSProp, Adam
@@ -80,7 +80,7 @@ def test_group_lr():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, opt)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_group_dynamic_1():
@@ -114,7 +114,7 @@ def test_group_dynamic_1():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, opt)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_group_dynamic_2():
@@ -144,7 +144,7 @@ def test_group_dynamic_2():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, opt)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_group_dynamic_no_same_size():
@@ -214,7 +214,7 @@ def test_weight_decay():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, opt)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_group_repeat_param():

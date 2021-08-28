@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -73,7 +73,7 @@ def test_gatherv2_semi_auto0():
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_semi_auto1():
@@ -86,7 +86,7 @@ def test_gatherv2_semi_auto1():
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_semi_auto2():
@@ -99,7 +99,7 @@ def test_gatherv2_semi_auto2():
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_semi_auto3():
@@ -112,7 +112,7 @@ def test_gatherv2_semi_auto3():
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_semi_auto4():
@@ -125,7 +125,7 @@ def test_gatherv2_semi_auto4():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_semi_auto5():
@@ -138,7 +138,7 @@ def test_gatherv2_semi_auto5():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_semi_auto6():
@@ -150,7 +150,7 @@ def test_gatherv2_semi_auto6():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_semi_auto7():
@@ -162,7 +162,7 @@ def test_gatherv2_semi_auto7():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_auto0():
@@ -172,7 +172,7 @@ def test_gatherv2_auto0():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_auto1():
@@ -182,7 +182,7 @@ def test_gatherv2_auto1():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_cpu0():
@@ -195,7 +195,7 @@ def test_gatherv2_cpu0():
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_cpu1():
@@ -208,7 +208,7 @@ def test_gatherv2_cpu1():
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 
 def test_gatherv2_cpu2():
@@ -221,4 +221,4 @@ def test_gatherv2_cpu2():
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)

@@ -20,7 +20,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
@@ -97,7 +97,7 @@ def all_to_all_common(strategy1):
     model = Model(net, loss, opt)
 
     model.train(epoch_size, dataset, dataset_sink_mode=False)
-    strategys = _executor._get_shard_strategy(model._train_network)
+    strategys = _cell_graph_executor._get_shard_strategy(model._train_network)
     return strategys
 
 
@@ -137,7 +137,7 @@ def test_all_to_all_success():
             return out
 
     net = Net()
-    _executor.compile(net, _x1)
+    _cell_graph_executor.compile(net, _x1)
 
 
 def test_all_to_all_invalid_split_count_value_failed():
@@ -159,7 +159,7 @@ def test_all_to_all_invalid_split_count_value_failed():
 
     with pytest.raises(ValueError):
         net = Net()
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_all_to_all_invalid_split_count_type_failed():
@@ -181,7 +181,7 @@ def test_all_to_all_invalid_split_count_type_failed():
 
     with pytest.raises(TypeError):
         net = Net()
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_all_to_all_invalid_split_dim_value_failed():
@@ -203,7 +203,7 @@ def test_all_to_all_invalid_split_dim_value_failed():
 
     with pytest.raises(IndexError):
         net = Net()
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_all_to_all_invalid_split_dim_type_failed():
@@ -225,7 +225,7 @@ def test_all_to_all_invalid_split_dim_type_failed():
 
     with pytest.raises(TypeError):
         net = Net()
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_all_to_all_invalid_concat_dim_value_failed():
@@ -247,7 +247,7 @@ def test_all_to_all_invalid_concat_dim_value_failed():
 
     with pytest.raises(IndexError):
         net = Net()
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_all_to_all_invalid_concat_dim_type_failed():
@@ -269,7 +269,7 @@ def test_all_to_all_invalid_concat_dim_type_failed():
 
     with pytest.raises(TypeError):
         net = Net()
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_all_to_all_invalid_split_count_cannot_be_divisible_failed():
@@ -291,7 +291,7 @@ def test_all_to_all_invalid_split_count_cannot_be_divisible_failed():
 
     with pytest.raises(ValueError):
         net = Net()
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_all_to_all_invalid_group_type_failed():
@@ -313,7 +313,7 @@ def test_all_to_all_invalid_group_type_failed():
 
     with pytest.raises(TypeError):
         net = Net()
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 if __name__ == '__main__':

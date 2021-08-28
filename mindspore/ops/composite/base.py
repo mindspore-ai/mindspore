@@ -23,7 +23,7 @@ from mindspore import context
 from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, \
     TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_
 from ...common import dtype as mstype
-from ...common.api import ms_function, _pynative_exec, _wrap_func
+from ...common.api import ms_function, _pynative_executor, _wrap_func
 from ..primitive import Primitive
 from ..operations import _grad_ops
 from .. import operations as P
@@ -341,14 +341,14 @@ class GradOperation(GradOperation_):
                 new_kwargs = kwargs.copy()
                 new_kwargs.pop('sens')
         if isinstance(fn, FunctionType):
-            if not _pynative_exec.check_run(fn, *args, **new_kwargs):
-                _pynative_exec.set_grad_flag(True)
-                _pynative_exec.new_graph(fn, *args, **new_kwargs)
+            if not _pynative_executor.check_run(fn, *args, **new_kwargs):
+                _pynative_executor.set_grad_flag(True)
+                _pynative_executor.new_graph(fn, *args, **new_kwargs)
                 output = fn(*args, **new_kwargs)
-                _pynative_exec.end_graph(fn, output, *args, **new_kwargs)
+                _pynative_executor.end_graph(fn, output, *args, **new_kwargs)
         else:
             # Check if fn have run already
-            if not _pynative_exec.check_run(fn, *args, **new_kwargs):
+            if not _pynative_executor.check_run(fn, *args, **new_kwargs):
                 fn.set_grad()
                 fn(*args, **new_kwargs)
 
@@ -368,12 +368,12 @@ class GradOperation(GradOperation_):
         else:
             @_wrap_func
             def after_grad(*args, **kwargs):
-                if _pynative_exec.check_graph(fn, *args, **kwargs):
+                if _pynative_executor.check_graph(fn, *args, **kwargs):
                     print("Another grad step is running")
                 self._pynative_forward_run(args, kwargs, fn)
-                _pynative_exec.grad(grad_, fn, weights, *args, **kwargs)
-                out = _pynative_exec(fn, *args, **kwargs)
-                _pynative_exec.clear_grad(fn, *args, **kwargs)
+                _pynative_executor.grad(grad_, fn, weights, *args, **kwargs)
+                out = _pynative_executor(fn, *args, **kwargs)
+                _pynative_executor.clear_grad(fn, *args, **kwargs)
                 return out
         self.grad_fn = after_grad
         self.fn = fn

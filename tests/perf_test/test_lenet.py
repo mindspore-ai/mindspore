@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops.composite as C
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -59,7 +59,7 @@ def test_compile():
                                           height,
                                           weight) * 3, np.float32))
 
-    _executor.compile(net, inp)
+    _cell_graph_executor.compile(net, inp)
 
 
 def test_compile_grad():
@@ -72,4 +72,4 @@ def test_compile_grad():
     sens = Tensor(np.ones([batch_size, num_class]).astype(np.float32))
     grad_op = LeNetGrad(net)
 
-    _executor.compile(grad_op, inp, sens)
+    _cell_graph_executor.compile(grad_op, inp, sens)

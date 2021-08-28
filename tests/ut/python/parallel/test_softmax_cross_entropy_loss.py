@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
@@ -49,7 +49,7 @@ class GradWrap(nn.Cell):
 def compile_net(net, x, y, b):
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, y, b)
+    _cell_graph_executor.compile(net, x, y, b)
 
 
 def test_softmax_cross_entropy_loss():

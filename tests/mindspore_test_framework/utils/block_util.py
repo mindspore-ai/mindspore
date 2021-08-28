@@ -21,7 +21,7 @@ import numpy as np
 
 from mindspore import ParameterTuple
 from mindspore import nn, context
-from mindspore.common.api import _executor, ms_function
+from mindspore.common.api import _cell_graph_executor, ms_function
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -45,7 +45,7 @@ def set_block_param_with_rand(net, rand_func=None):
 def compile_block(net, *inputs, rand_func=None, training=True):
     set_block_training(net, training)
     set_block_param_with_rand(net, rand_func)
-    return _executor.compile(net, *inputs)
+    return _cell_graph_executor.compile(net, *inputs)
 
 
 def run_block(net, *inputs, rand_func=None, training=True):

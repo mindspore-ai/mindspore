@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
@@ -77,7 +77,7 @@ def compile_graph(strategy1, strategy2, strategy3, strategy4, auto=False, onthot
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64]), dtype=ms.int32)
     net.set_train()
-    _executor.compile(net, x, y, b)
+    _cell_graph_executor.compile(net, x, y, b)
 
 
 def test_onehot_model_parallel():

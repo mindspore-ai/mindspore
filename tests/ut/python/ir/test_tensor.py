@@ -286,7 +286,7 @@ def test_return_tensor():
     net = Net(0)
     input_data = ms.Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
     input_data.set_dtype(ms.float32)
-    exe = me._executor
+    exe = me._cell_graph_executor
     exe.compile(net, input_data)
     tensor_ = exe(net, input_data)
 

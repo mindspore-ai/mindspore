@@ -19,7 +19,7 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
@@ -67,12 +67,12 @@ class GradWrap4(nn.Cell):
 def compile_net(net, x, y, b):
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, y, b)
+    _cell_graph_executor.compile(net, x, y, b)
 
 def compile_net_no_bias(net, x, y):
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
 
 def test_no_grad():
     class Net(nn.Cell):
@@ -123,7 +123,7 @@ def test_grad_sens_parameter_type():
     sens = Tensor(np.ones([128, 64]), dtype=ms.float32)
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, y, b, sens, phase='train', auto_parallel_mode=True)
+    _cell_graph_executor.compile(net, x, y, b, sens, phase='train', auto_parallel_mode=True)
     x_layout = ([8, 8], [1, -1], [16, 32], 0, True, '')
     y_layout = ([8, 8], [-1, 0], [32, 8], 0, True, '')
     b_layout = ([8, 8], [0, -1], [8, 64], 0, True, '')

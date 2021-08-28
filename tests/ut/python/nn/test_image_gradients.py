@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.api import ms_function
 
 context.set_context(device_target="Ascend")
@@ -40,7 +40,7 @@ def test_compile():
     # input shape 1 x 1 x 2 x 2
     image = Tensor(np.array([[[[1, 2], [3, 4]]]]), dtype=mstype.int32)
     net = Net()
-    _executor.compile(net, image)
+    _cell_graph_executor.compile(net, image)
 
 
 def test_compile_multi_channel():
@@ -51,7 +51,7 @@ def test_compile_multi_channel():
                              [[[5, 10], [15, 20]], [[25, 30], [35, 40]]],
                              [[[10, 20], [30, 40]], [[50, 60], [70, 80]]]]), dtype=dtype)
     net = Net()
-    _executor.compile(net, image)
+    _cell_graph_executor.compile(net, image)
 
 
 def test_invalid_5d_input():
@@ -59,4 +59,4 @@ def test_invalid_5d_input():
     image = Tensor(np.random.random([4, 1, 16, 16, 1]), dtype=dtype)
     net = Net()
     with pytest.raises(ValueError):
-        _executor.compile(net, image)
+        _cell_graph_executor.compile(net, image)

@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor, Parameter
 import mindspore.nn as nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
 from mindspore.ops.operations._inner_ops import NeighborExchange
@@ -33,7 +33,7 @@ def compile_net(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_train()
-    _executor.compile(train_net, _x1, _x2)
+    _cell_graph_executor.compile(train_net, _x1, _x2)
 
 
 def test_NeighborExchange_two_inputs_success():
@@ -110,7 +110,7 @@ def test_NeighborExchange_empty_send_success():
             return x1
 
     net = Net()
-    _executor.compile(net, _x1)
+    _cell_graph_executor.compile(net, _x1)
 
 
 def test_NeighborExchange_empty_recv_success():
@@ -132,7 +132,7 @@ def test_NeighborExchange_empty_recv_success():
             return x1
 
     net = Net()
-    _executor.compile(net, _x1)
+    _cell_graph_executor.compile(net, _x1)
 
 
 def test_NeighborExchange_empty_send_empty_recv_success():
@@ -154,7 +154,7 @@ def test_NeighborExchange_empty_send_empty_recv_success():
             return x1
 
     net = Net()
-    _executor.compile(net, _x1)
+    _cell_graph_executor.compile(net, _x1)
 
 
 def test_NeighborExchange_recv_shape_num_diff_with_recv_rank_size_failed():
@@ -291,7 +291,7 @@ def test_NeighborExchange_attr_check_send_rank_ids_is_tuple_failed():
 
     net = Net()
     with pytest.raises(TypeError):
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_NeighborExchange_attr_check_send_rank_ids_is_float_failed():
@@ -315,7 +315,7 @@ def test_NeighborExchange_attr_check_send_rank_ids_is_float_failed():
 
     net = Net()
     with pytest.raises(TypeError):
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_NeighborExchange_attr_check_recv_rank_ids_is_tuple_failed():
@@ -339,7 +339,7 @@ def test_NeighborExchange_attr_check_recv_rank_ids_is_tuple_failed():
 
     net = Net()
     with pytest.raises(TypeError):
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_NeighborExchange_attr_check_recv_rank_ids_is_float_failed():
@@ -363,7 +363,7 @@ def test_NeighborExchange_attr_check_recv_rank_ids_is_float_failed():
 
     net = Net()
     with pytest.raises(TypeError):
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_NeighborExchange_attr_check_send_shape_not_tuple_failed():
@@ -387,7 +387,7 @@ def test_NeighborExchange_attr_check_send_shape_not_tuple_failed():
 
     net = Net()
     with pytest.raises(TypeError):
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_NeighborExchange_attr_check_recv_type_numpy_failed():
@@ -411,7 +411,7 @@ def test_NeighborExchange_attr_check_recv_type_numpy_failed():
 
     net = Net()
     with pytest.raises(TypeError):
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)
 
 
 def test_NeighborExchange_attr_invalid_grpup_failed():
@@ -435,4 +435,4 @@ def test_NeighborExchange_attr_invalid_grpup_failed():
 
     net = Net()
     with pytest.raises(TypeError):
-        _executor.compile(net, _x1)
+        _cell_graph_executor.compile(net, _x1)

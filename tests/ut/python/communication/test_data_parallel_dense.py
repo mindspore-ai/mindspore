@@ -21,7 +21,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
@@ -70,5 +70,5 @@ def test_data_parallel_dense():
     net = WithLossCell(net, loss_fn)
     net = TrainOneStepCell(net, optimizer)
 
-    _executor.compile(net, inp, label)
+    _cell_graph_executor.compile(net, inp, label)
     context.reset_auto_parallel_context()

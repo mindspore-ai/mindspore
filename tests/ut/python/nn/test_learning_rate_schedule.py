@@ -17,7 +17,7 @@ import pytest
 
 from mindspore import Tensor
 from mindspore.nn import learning_rate_schedule as lr_schedules
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 import mindspore.common.dtype as mstype
 
 
@@ -124,34 +124,34 @@ class TestInit:
 
 def test_exponential_decay():
     lr_schedule = lr_schedules.ExponentialDecayLR(learning_rate, decay_rate, decay_steps, True)
-    _executor.compile(lr_schedule, global_step)
+    _cell_graph_executor.compile(lr_schedule, global_step)
 
 
 def test_enatural_exp_decay():
     lr_schedule = lr_schedules.NaturalExpDecayLR(learning_rate, decay_rate, decay_steps, True)
-    _executor.compile(lr_schedule, global_step)
+    _cell_graph_executor.compile(lr_schedule, global_step)
 
 
 def test_inverse_decay():
     lr_schedule = lr_schedules.InverseDecayLR(learning_rate, decay_rate, decay_steps, True)
-    _executor.compile(lr_schedule, global_step)
+    _cell_graph_executor.compile(lr_schedule, global_step)
 
 
 def test_cosine_decay():
     lr_schedule = lr_schedules.CosineDecayLR(min_lr, max_lr, decay_steps)
-    _executor.compile(lr_schedule, global_step)
+    _cell_graph_executor.compile(lr_schedule, global_step)
 
 
 def test_polynomial_decay():
     lr_schedule = lr_schedules.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
-    _executor.compile(lr_schedule, global_step)
+    _cell_graph_executor.compile(lr_schedule, global_step)
 
 
 def test_polynomial_decay2():
     lr_schedule = lr_schedules.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power, True)
-    _executor.compile(lr_schedule, global_step)
+    _cell_graph_executor.compile(lr_schedule, global_step)
 
 
 def test_warmup():
     lr_schedule = lr_schedules.WarmUpLR(learning_rate, warmup_steps)
-    _executor.compile(lr_schedule, global_step)
+    _cell_graph_executor.compile(lr_schedule, global_step)

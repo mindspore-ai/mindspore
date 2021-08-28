@@ -20,7 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.composite import GradOperation
 from mindspore.nn import Cell
-from mindspore.common.api import _pynative_exec
+from mindspore.common.api import _pynative_executor
 
 from . import jacobian as jb
 from . import listvec as lv
@@ -231,7 +231,7 @@ class LMSolver:
         return mem
 
     def timing(self):
-        _pynative_exec.sync()
+        _pynative_executor.sync()
         return time()
 
     def initialize_variables(self):

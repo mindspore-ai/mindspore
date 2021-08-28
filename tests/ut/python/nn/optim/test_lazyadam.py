@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import LazyAdam
 from mindspore.ops import operations as P
@@ -70,7 +70,7 @@ def test_lazy_adam_compile():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_spares_lazy_adam_compile():
@@ -83,7 +83,7 @@ def test_spares_lazy_adam_compile():
     optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1, weight_decay=0.9, loss_scale=2.0)
     optimizer.target = 'CPU'
     train_network = TrainOneStepCell(net, optimizer)
-    _executor.compile(train_network, indices, label)
+    _cell_graph_executor.compile(train_network, indices, label)
 
 
 def test_spares_lazy_adam():
@@ -96,7 +96,7 @@ def test_spares_lazy_adam():
     optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1, weight_decay=0.9, loss_scale=2.0)
     optimizer.target = 'Ascend'
     train_network = TrainOneStepCell(net, optimizer)
-    _executor.compile(train_network, indices, label)
+    _cell_graph_executor.compile(train_network, indices, label)
 
 
 def test_lazy_adam_error():

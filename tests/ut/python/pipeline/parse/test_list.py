@@ -17,7 +17,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell
 
 
@@ -37,11 +37,11 @@ def test_list1():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
     net = Net1([1])
-    _executor.compile(net, input_me)
+    _cell_graph_executor.compile(net, input_me)
 
 
 def test_list2():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
     net = Net1([1, 2])
-    _executor.compile(net, input_me)
+    _cell_graph_executor.compile(net, input_me)

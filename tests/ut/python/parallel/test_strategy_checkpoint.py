@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.context import set_auto_parallel_context, reset_auto_parallel_context
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -89,7 +89,7 @@ def test_six_matmul_save():
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x1, x6)
+    _cell_graph_executor.compile(net, x1, x6)
 
 
 # remove matmul2, add matmul7
@@ -153,7 +153,7 @@ def test_six_matmul_load():
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     x7 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x1, x6, x7)
+    _cell_graph_executor.compile(net, x1, x6, x7)
 
 
 # model_parallel test
@@ -210,7 +210,7 @@ def test_six_matmul_save_auto():
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x1, x6)
+    _cell_graph_executor.compile(net, x1, x6)
 
 
 # remove matmul2, add matmul7
@@ -271,4 +271,4 @@ def test_six_matmul_load_auto():
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     x7 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x1, x6, x7)
+    _cell_graph_executor.compile(net, x1, x6, x7)

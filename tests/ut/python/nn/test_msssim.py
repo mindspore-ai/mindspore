@@ -21,7 +21,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 
 _MSSSIM_WEIGHTS = (0.0448, 0.2856, 0.3001, 0.2363, 0.1333)
 
@@ -39,7 +39,7 @@ def test_compile():
     net = MSSSIMNet(power_factors=factors)
     img1 = Tensor(np.random.random((8, 3, 128, 128)))
     img2 = Tensor(np.random.random((8, 3, 128, 128)))
-    _executor.compile(net, img1, img2)
+    _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_compile_grayscale():
@@ -48,7 +48,7 @@ def test_compile_grayscale():
     net = MSSSIMNet(max_val=max_val, power_factors=factors)
     img1 = Tensor(np.random.randint(0, 256, (8, 3, 128, 128), np.uint8))
     img2 = Tensor(np.random.randint(0, 256, (8, 3, 128, 128), np.uint8))
-    _executor.compile(net, img1, img2)
+    _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_msssim_max_val_negative():
@@ -102,7 +102,7 @@ def test_msssim_different_shape():
     img2 = Tensor(np.random.random(shape_2))
     net = MSSSIMNet(power_factors=factors)
     with pytest.raises(ValueError):
-        _executor.compile(net, img1, img2)
+        _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_msssim_different_dtype():
@@ -113,7 +113,7 @@ def test_msssim_different_dtype():
     img2 = Tensor(np.random.random((8, 3, 128, 128)), dtype=dtype_2)
     net = MSSSIMNet(power_factors=factors)
     with pytest.raises(TypeError):
-        _executor.compile(net, img1, img2)
+        _cell_graph_executor.compile(net, img1, img2)
 
 
 def test_msssim_invalid_5d_input():
@@ -128,8 +128,8 @@ def test_msssim_invalid_5d_input():
 
     net = MSSSIMNet(power_factors=factors)
     with pytest.raises(ValueError):
-        _executor.compile(net, invalid_img1, img2)
+        _cell_graph_executor.compile(net, invalid_img1, img2)
     with pytest.raises(ValueError):
-        _executor.compile(net, img1, invalid_img2)
+        _cell_graph_executor.compile(net, img1, invalid_img2)
     with pytest.raises(ValueError):
-        _executor.compile(net, invalid_img1, invalid_img2)
+        _cell_graph_executor.compile(net, invalid_img1, invalid_img2)

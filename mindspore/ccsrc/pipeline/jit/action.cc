@@ -319,11 +319,11 @@ void CheckRootInputShapeAndType(const ResourcePtr &res, const FuncGraphPtr &load
 
 bool ParseAction(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
-  if (!res->input()) {
+  if (!res->source_input()) {
     MS_LOG(EXCEPTION) << "Parse error";
   }
 
-  py::object input = res->input();
+  py::object input = res->source_input();
   parse::Parser::InitParserEnvironment(input);
   py::module path = py::module::import("os.path");
   std::string dir = path.attr("dirname")(py::globals()["__file__"]).cast<std::string>();
@@ -642,7 +642,7 @@ bool EliminateForwardCNode(const ResourcePtr &res) {
     return true;
   }
 
-  auto graph_executor = pipeline::ExecutorPy::GetInstance();
+  auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
   MS_EXCEPTION_IF_NULL(graph_executor);
   auto phase = graph_executor->phase();
   MS_LOG(DEBUG) << "The phase of current pipeline graph is: " << phase;
@@ -913,7 +913,7 @@ bool ValidateAction(const ResourcePtr &res) { return ValidatePass(res); }
 bool SetMindIRGraphAction(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   res->set_is_load(true);
-  auto cell = py::cast<CellPtr>(res->input());
+  auto cell = py::cast<CellPtr>(res->source_input());
   if (cell == nullptr) {
     MS_LOG(EXCEPTION) << "The graph loaded from mindir is null.";
   }

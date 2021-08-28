@@ -47,7 +47,7 @@ def check_initializer_weight_slice(init_name="Uniform"):
         strategy1 = ((2, 1), (4, 1))
         strategy2 = ((2, 4),)
         context.set_context(mode=context.GRAPH_MODE)
-        exe = me._executor
+        exe = me._cell_graph_executor
 
         x = Tensor(np.ones([32, 32]), dtype=ms.float32)
         weight = initializer(init_name, [64, 32], ms.float32)
@@ -84,7 +84,7 @@ def test_wrong_order_set_parallel_mode_with_initializer():
     strategy1 = ((2, 1), (4, 1))
     strategy2 = ((2, 4),)
     net = Net(strategy1, strategy2, weight)
-    exe = me._executor
+    exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     net.set_auto_parallel()
@@ -97,7 +97,7 @@ def test_wrong_order_set_same_parallel_mode_with_initializer():
     strategy1 = ((2, 1), (4, 1))
     strategy2 = ((2, 4),)
     net = Net(strategy1, strategy2, weight)
-    exe = me._executor
+    exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net.set_auto_parallel()
@@ -108,7 +108,7 @@ def test_wrong_order_set_parallel_mode_without_initializer():
     strategy1 = ((2, 1), (4, 1))
     strategy2 = ((2, 4),)
     net = Net(strategy1, strategy2, weight)
-    exe = me._executor
+    exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     net.set_auto_parallel()
@@ -126,7 +126,7 @@ def test_check_initializer_weight_slice_seed(init_name="Uniform"):
         strategy1 = ((2, 1), (4, 1))
         strategy2 = ((2, 4),)
         context.set_context(mode=context.GRAPH_MODE)
-        exe = me._executor
+        exe = me._cell_graph_executor
 
         x = Tensor(np.ones([32, 32]), dtype=ms.float32)
         weight = initializer(init_name, [64, 32], ms.float32)

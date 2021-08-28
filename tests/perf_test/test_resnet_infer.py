@@ -18,11 +18,11 @@
 import numpy as np
 
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from .resnet_example import resnet50
 
 
 def test_compile():
     net = resnet50()
     inp = Tensor(np.ones([1, 3, 224, 224]).astype(np.float32))
-    _executor.compile(net, inp)
+    _cell_graph_executor.compile(net, inp)

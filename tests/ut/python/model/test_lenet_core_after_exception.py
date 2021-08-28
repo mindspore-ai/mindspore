@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from ....train_step_wrap import train_step_with_loss_warp
@@ -54,5 +54,5 @@ def test_lenet5_exception():
     label = Tensor(in2)
     net = train_step_with_loss_warp(LeNet5())
     with pytest.raises(RuntimeError) as info:
-        _executor.compile(net, predict, label)
+        _cell_graph_executor.compile(net, predict, label)
     assert "x_shape[C_in] / group must equal to w_shape[C_in] = " in str(info.value)

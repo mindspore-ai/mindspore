@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import LARS, Momentum
 from mindspore.ops import operations as P
@@ -61,7 +61,7 @@ def test_lars_multi_step_lr():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_lars_float_lr():
@@ -78,4 +78,4 @@ def test_lars_float_lr():
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)

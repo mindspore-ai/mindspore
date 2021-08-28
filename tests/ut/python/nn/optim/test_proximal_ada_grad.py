@@ -18,7 +18,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import ProximalAdagrad
 from mindspore.ops import operations as P
@@ -66,7 +66,7 @@ def test_proximal_ada_grad():
     optimizer = ProximalAdagrad(net.trainable_params(), weight_decay=0.9, loss_scale=1024.0)
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
-    _executor.compile(train_network, inputs, label)
+    _cell_graph_executor.compile(train_network, inputs, label)
 
 
 def test_spares_proximal_ada_grad_compile():
@@ -79,7 +79,7 @@ def test_spares_proximal_ada_grad_compile():
     optimizer = ProximalAdagrad(net.trainable_params(), weight_decay=0.9, loss_scale=1024.0)
     optimizer.target = 'CPU'
     train_network = TrainOneStepCell(net, optimizer)
-    _executor.compile(train_network, indices, label)
+    _cell_graph_executor.compile(train_network, indices, label)
 
 
 def test_spares_proximal_ada_grad():
@@ -91,4 +91,4 @@ def test_spares_proximal_ada_grad():
 
     optimizer = ProximalAdagrad(net.trainable_params(), weight_decay=0.9, loss_scale=1024.0)
     train_network = TrainOneStepCell(net, optimizer)
-    _executor.compile(train_network, indices, label)
+    _cell_graph_executor.compile(train_network, indices, label)

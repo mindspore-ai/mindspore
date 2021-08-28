@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore.nn as nn  # pylint: disable=C0414
 from mindspore import Tensor
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops.operations import Add
 from ...train_step_wrap import train_step_with_loss_warp
 
@@ -244,14 +244,14 @@ def resnet9():
 def test_compile():
     net = resnet18()
     input_data = Tensor(np.ones([1, 3, 224, 224]))
-    _executor.compile(net, input_data)
+    _cell_graph_executor.compile(net, input_data)
 
 
 def test_train_step():
     net = train_step_with_loss_warp(resnet9())
     input_data = Tensor(np.ones([1, 3, 224, 224]))
     label = Tensor(np.zeros([1, 10]))
-    _executor.compile(net, input_data, label)
+    _cell_graph_executor.compile(net, input_data, label)
 
 
 def test_train_step_training():
@@ -259,4 +259,4 @@ def test_train_step_training():
     input_data = Tensor(np.ones([1, 3, 224, 224]))
     label = Tensor(np.zeros([1, 10]))
     net.set_train()
-    _executor.compile(net, input_data, label)
+    _cell_graph_executor.compile(net, input_data, label)

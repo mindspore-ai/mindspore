@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
@@ -67,4 +67,4 @@ def test_softmax_cross_entropy_loss_auto_parallel():
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     net.set_train()
-    _executor.compile(net, x, y, b)
+    _cell_graph_executor.compile(net, x, y, b)

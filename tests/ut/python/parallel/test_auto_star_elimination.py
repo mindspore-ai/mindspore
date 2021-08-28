@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
+from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -90,4 +90,4 @@ def test_marin_loss():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     net.set_train()
-    _executor.compile(net, x, y)
+    _cell_graph_executor.compile(net, x, y)
