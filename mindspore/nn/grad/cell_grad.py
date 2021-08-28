@@ -15,8 +15,8 @@
 """cell grad"""
 from ..cell import Cell
 from ...ops import composite as C
-from ...ops.primitive import Primitive
 from ...ops import operations as P
+from ...ops.primitive import Primitive
 from ...common import dtype as mstype
 from ...common.api import ms_function
 
@@ -73,9 +73,9 @@ class Jvp(Cell):
         self.tuple_len = Primitive("tuple_len")
 
     @ms_function
-    def construct(self, *total_input):
-        jvp_input = total_input[0:-1]
-        v = total_input[-1]
+    def construct(self, *args):
+        jvp_input = args[0:-1]
+        v = args[-1]
         output = self.fn(*jvp_input)
 
         if self.issubclass_(self.typeof(output), mstype.tuple_):
@@ -91,4 +91,43 @@ class Jvp(Cell):
         else:
             second_gradient_net = self.second_grad_op(self.first_grad)
             gradient_output = second_gradient_net(u, jvp_input, v)
+        return output, gradient_output
+
+
+class Vjp(Cell):
+    """
+    Computes the dot product between a vector `v` and the Jacobian of the given network at the point
+    given by the inputs.
+
+    Args:
+        network (Cell): The network that takes Tensor inputs and returns a tuple of Tensors or a Tensor.
+
+    Inputs:
+        - **inputs** (Tensors) - The inputs to `net`. Must be a tuple or a list.
+        - **v** (tuple of Tensors or Tensor) - The vector for which the vector Jacobian product is computed.
+          Must have the same size as the output of `network`.
+
+    Outputs:
+        A tuple with:
+            net_output (Tuple(Tensor...)) - The output of `network(inputs)`.
+            vjp (Tuple(Tensor...)) - The result of the dot product.
+    """
+
+    def __init__(self, fn):
+        super(Vjp, self).__init__()
+        self.fn = fn
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad_single_value = C.GradOperation(sens_param=True)
+        self.issubclass_ = P.IsSubClass()
+        self.typeof = Primitive('typeof')
+        self.tuple_len = Primitive("tuple_len")
+
+    @ms_function
+    def construct(self, *args):
+        front_input = args[0:-1]
+        output = self.fn(*front_input)
+        if self.tuple_len(front_input) == 1:
+            gradient_output = self.grad_single_value(self.fn)(*args)
+        else:
+            gradient_output = self.grad(self.fn)(*args)
         return output, gradient_output
