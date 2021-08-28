@@ -159,11 +159,7 @@ uuid RandomBasedGenerator::GenerateRandomUuid() {
   static std::atomic<uint64_t> ul(1);
   uint64_t lCount = ul.fetch_add(1);
   uint64_t offSet = distribution(gen) % RIGHT_SHIFT_BITS;
-  auto ret = memcpy(tmpUUID.BeginAddress() + offSet, &lCount, sizeof(lCount));
-  if (ret != 0) {
-    MS_LOG(ERROR) << "memcpy_s error.";
-    MINDRT_OOM_EXIT(tmpUUID.BeginAddress());
-  }
+  memcpy(tmpUUID.BeginAddress() + offSet, &lCount, sizeof(lCount));
 
   // set the variant
   *(tmpUUID.BeginAddress() + VARIANT_BIT_OFFSET) &= 0xBF;

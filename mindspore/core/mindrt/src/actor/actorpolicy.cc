@@ -30,6 +30,7 @@ SingleThread::SingleThread() {}
 SingleThread::~SingleThread() {}
 
 void SingleThread::Terminate(const ActorBase *actor) {
+  MINDRT_OOM_EXIT(actor);
   std::string actorName = actor->GetAID().Name();
   MS_LOG(DEBUG) << "ACTOR SingleThread received terminate message, v=" << actorName.c_str();
   // remove actor from actorMgr

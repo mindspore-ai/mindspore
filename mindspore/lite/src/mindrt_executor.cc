@@ -22,8 +22,8 @@
 #include "nnacl/base/cast_base.h"
 
 namespace mindspore::lite {
-void MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels,
-                                      const std::vector<Tensor *> &inputs) {
+int MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels,
+                                     const std::vector<Tensor *> &inputs) {
   for (size_t i = 0; i < inputs.size(); ++i) {
     for (size_t j = 0; j < kernels.size(); ++j) {
       auto in_tensor_size = kernels[j]->in_tensors().size();
@@ -32,14 +32,19 @@ void MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &k
           continue;
         }
         auto data = std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), inputs[i], static_cast<int>(k));
+        if (data == nullptr) {
+          MS_LOG(ERROR) << "new opdata failed.";
+          return RET_NULL_PTR;
+        }
         input_data_.emplace_back(data);
       }
     }
   }
+  return RET_OK;
 }
 
-void MindrtExecutor::PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels,
-                                       const std::vector<Tensor *> &outputs) {
+int MindrtExecutor::PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels,
+                                      const std::vector<Tensor *> &outputs) {
   for (size_t i = 0; i < outputs.size(); ++i) {
     Tensor *graph_output_tensor = outputs[i];
     auto current_output_map =
@@ -60,11 +65,16 @@ void MindrtExecutor::PrepareOutputData(const std::vector<kernel::LiteKernel *> &
         }
         auto data =
           std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), subgraph_output_tensor, static_cast<int>(k));
+        if (data == nullptr) {
+          MS_LOG(ERROR) << "new opdata failed.";
+          return RET_NULL_PTR;
+        }
         op_actors_[j]->AddResultIndex(output_data_.size());
         output_data_.emplace_back(data);
       }
     }
   }
+  return RET_OK;
 }
 
 int MindrtExecutor::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
@@ -88,12 +98,24 @@ int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, co
     return RET_ERROR;
   }
 
-  PrepareInputData(kernels, inputs);
+  ret = PrepareInputData(kernels, inputs);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "PrepareInputData failed";
+    return ret;
+  }
 
-  PrepareOutputData(kernels, outputs);
+  ret = PrepareOutputData(kernels, outputs);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "PrepareOutputData failed";
+    return ret;
+  }
 
   for (auto actor : op_actors_) {
-    actor->LiteActorInit(&op_actors_);
+    ret = actor->LiteActorInit(&op_actors_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "LiteActorInit failed, actor aid: " << actor->GetAID();
+      return ret;
+    }
   }
 
   return RET_OK;

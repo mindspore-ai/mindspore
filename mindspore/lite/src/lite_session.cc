@@ -191,7 +191,6 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
 int LiteSession::ConvertTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   uint32_t tensor_count = model->all_tensors_.size();
-  MS_ASSERT(!model->sub_graphs_.empty());
   auto model_input_indices = model->input_indices_;
   auto model_output_indices = model->output_indices_;
   for (uint32_t i = 0; i < tensor_count; ++i) {
@@ -236,7 +235,6 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
 
 void LiteSession::InitGraphInputTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  MS_ASSERT(!(model->sub_graphs_.empty()));
   auto graph_in_size = model->input_indices_.size();
   for (size_t i = 0; i < graph_in_size; ++i) {
     auto in_tensor_idx = model->input_indices_[i];
@@ -307,7 +305,6 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
 
 void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  MS_ASSERT(!(model->sub_graphs_.empty()));
   auto graph_output_node_indexes = GetGraphOutputNodes(model);
   auto graph_out_size = model->output_indices_.size();
   for (auto out_node_index : graph_output_node_indexes) {
@@ -387,10 +384,14 @@ void LiteSession::InitGraphInOutTensorsMap(const lite::Model *model) {
   }
 }
 
-void LiteSession::IsolateOutputTensor() {
+int LiteSession::IsolateOutputTensor() {
   for (Tensor *src_tensor : outputs_) {
     Tensor *new_tensor =
       new Tensor(src_tensor->data_type(), src_tensor->shape(), src_tensor->format(), Tensor::GRAPH_OUTPUT);
+    if (new_tensor == nullptr) {
+      MS_LOG(ERROR) << "duplicate new outptu failed.";
+      return RET_NULL_PTR;
+    }
     new_tensor->set_allocator(src_tensor->allocator()); /* GPU use opencl allocator */
     new_tensor->set_tensor_name(src_tensor->tensor_name() + "_duplicate");
     for (LiteQuantParam quant : src_tensor->quant_params()) {
@@ -441,7 +442,7 @@ void LiteSession::IsolateOutputTensor() {
       }
     }
   }
-  return;
+  return RET_OK;
 }
 
 void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels) {
@@ -536,7 +537,12 @@ int LiteSession::CompileGraph(Model *model) {
 
 #ifdef ENABLE_MINDRT
   if (use_mindrt_run) {
-    IsolateOutputTensor();
+    ret = IsolateOutputTensor();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Isolate output tensor failed.";
+      is_running_.store(false);
+      return ret;
+    }
     executor_ = new (std::nothrow) MindrtExecutor(&graph_output_map_);
   } else {
 #endif
@@ -988,6 +994,11 @@ session::LiteSession *session::LiteSession::CreateSession(const lite::Context *c
   }
 
   mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
+  if (inner_context == nullptr) {
+    MS_LOG(ERROR) << "new inner context failed";
+    delete session;
+    return nullptr;
+  }
 
   auto ret = session->Init(inner_context);
   if (ret != mindspore::lite::RET_OK) {

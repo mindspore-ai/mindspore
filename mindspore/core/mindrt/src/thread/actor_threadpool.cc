@@ -132,7 +132,10 @@ void ActorThreadPool::PushActorToQueue(ActorBase *actor) {
 
 int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num, const std::vector<int> &core_list) {
 #ifdef USE_HQUEUE
-  actor_queue_.Init(MAX_READY_ACTOR_NR);
+  if (actor_queue_.Init(MAX_READY_ACTOR_NR) != THREAD_OK) {
+    THREAD_ERROR("init actor queue failed.");
+    return THREAD_ERROR;
+  }
 #endif
 #ifdef BIND_CORE
   affinity_->SetCoreId(core_list);

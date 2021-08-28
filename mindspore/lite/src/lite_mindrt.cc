@@ -96,7 +96,7 @@ void LiteOpActor::ReplaceNodeInTensor(kernel::LiteKernel *kernel, Tensor *old_te
   new_tensor->set_init_ref_count(ref_count);
 }
 
-void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
+int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
   std::vector<kernel::LiteKernel *> kernels{};
   std::transform(actors->begin(), actors->end(), std::back_inserter(kernels),
                  [](std::shared_ptr<LiteOpActor> actor) { return actor->kernel_; });
@@ -127,6 +127,10 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
     }
 
     Tensor *new_tensor = new Tensor(new_data_type, old_tensor->shape(), old_tensor->format(), old_tensor->category());
+    if (new_tensor == nullptr) {
+      MS_LOG(ERROR) << "new Tensor failed.";
+      return RET_NULL_PTR;
+    }
     new_tensor->set_allocator(old_tensor->allocator());
     if (new_tensor->allocator() == nullptr && kernel_->Context() != nullptr &&
         kernel_->desc().arch != kernel::kDelegate) {
@@ -142,18 +146,30 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
     /* set subgraph input for copy data */
     kernel_->set_in_tensor(new_tensor, i);
   }
-  return;
+  return RET_OK;
 }
 
 int LiteOpActor::LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
   /* Init output arrow */
-  CompileArrow();
+  auto ret = CompileArrow();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "compile arrow failed.";
+    return ret;
+  }
 
   /* Init Actor output data */
-  PrepareOutputData();
+  ret = PrepareOutputData();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "prepare output data failed.";
+    return ret;
+  }
 
   /* subgraph transaction isolation */
-  IsolateInputData(actors);
+  ret = IsolateInputData(actors);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "isolate input data failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -595,6 +611,10 @@ int LiteSwitchOpActor::PrepareOutputData() {
     auto data =
       std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
                                        static_cast<int>(arrow->to_input_index_));
+    if (data == nullptr) {
+      MS_LOG(ERROR) << "new true_branch_output_data failed.";
+      return RET_NULL_PTR;
+    }
     true_branch_outputs_data_.at(i) = data;
   }
 
@@ -604,6 +624,10 @@ int LiteSwitchOpActor::PrepareOutputData() {
     auto data =
       std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
                                        static_cast<int>(arrow->to_input_index_));
+    if (data == nullptr) {
+      MS_LOG(ERROR) << "new alse_branch_output_data failed.";
+      return RET_NULL_PTR;
+    }
     auto iter = std::find_if(true_branch_outputs_data_.begin(), true_branch_outputs_data_.end(),
                              [&data](const auto &true_branch_data) { return true_branch_data->data_ == data->data_; });
     if (iter != true_branch_outputs_data_.end() && !data->data_->IsConst()) {
@@ -747,6 +771,10 @@ int LiteOpActor::PrepareOutputData() {
     auto data =
       std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
                                        static_cast<int>(arrow->to_input_index_));
+    if (data == nullptr) {
+      MS_LOG(ERROR) << "new output_data failed.";
+      return RET_NULL_PTR;
+    }
     outputs_data_.at(i) = data;
   }
   return RET_OK;

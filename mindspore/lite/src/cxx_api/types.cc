@@ -83,7 +83,9 @@ bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
 
 bool MSTensor::operator!=(std::nullptr_t) const { return impl_ != nullptr; }
 
-bool MSTensor::operator==(const MSTensor &tensor) const { return impl_->lite_tensor() == tensor.impl_->lite_tensor(); }
+bool MSTensor::operator==(const MSTensor &tensor) const {
+  return impl_ == nullptr ? false : impl_->lite_tensor() == tensor.impl_->lite_tensor();
+}
 
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                  const void *data, size_t data_len) noexcept {

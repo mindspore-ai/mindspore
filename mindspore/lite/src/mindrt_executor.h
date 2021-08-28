@@ -47,8 +47,8 @@ class MindrtExecutor : public Executor {
   void FreeOutputTensor();
 
  protected:
-  void PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs);
-  void PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &outputs);
+  int PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs);
+  int PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &outputs);
   std::vector<std::shared_ptr<LiteOpActor>> op_actors_;
   std::vector<OpDataPtr<Tensor>> input_data_;
   std::vector<OpDataPtr<Tensor>> output_data_;
