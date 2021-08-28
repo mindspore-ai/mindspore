@@ -1162,7 +1162,7 @@ class Tensor(Tensor_):
             >>> x = Tensor([1, 2, 3, -4, 0, 3, 2, 0]).astype("float32")
             >>> output = x.clip(0, 2)
             >>> print(output)
-            [1 2 2 0 0 2 2 0]
+            [1. 2. 2. 0. 0. 2. 2. 0.]
         """
         if xmin is None and xmax is None:
             raise ValueError("One of max or min must be given.")
