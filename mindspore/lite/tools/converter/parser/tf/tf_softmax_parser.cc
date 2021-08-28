@@ -27,7 +27,7 @@ ops::PrimitiveC *TFSoftmaxParser::Parse(const tensorflow::NodeDef &tf_op,
                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                         std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Softmax>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   int axis = -1;
   if (TensorFlowUtils::FindAttrValue(tf_op, "axis", &attr_value)) {

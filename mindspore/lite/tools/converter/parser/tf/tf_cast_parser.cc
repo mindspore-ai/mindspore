@@ -27,7 +27,7 @@ ops::PrimitiveC *TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                      std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Cast>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto dst_type = TensorFlowUtils::ParseAttrDataType(tf_op, "DstT");
   if (dst_type == kTypeUnknown) {
     MS_LOG(ERROR) << "Get attr DstT failed";

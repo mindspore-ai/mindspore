@@ -27,7 +27,7 @@ ops::PrimitiveC *TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::ReduceFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (tf_op.op() == "Sum") {
     prim->set_mode(mindspore::ReduceMode::Reduce_Sum);
   } else if (tf_op.op() == "Max") {

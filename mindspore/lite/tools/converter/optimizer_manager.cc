@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "backend/optimizer/common/pass.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -33,6 +34,7 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
   }
   int index = 0;
   for (auto &pass : schedule_passes) {
+    CHECK_NULL_RETURN(pass);
     if (!pass->Run(func_graph)) {
       MS_LOG(ERROR) << "run pass failed, pass name is " << pass_names[index];
       return false;

@@ -27,7 +27,7 @@ ops::PrimitiveC *TFNonMaxSuppressionParser::Parse(const tensorflow::NodeDef &tf_
                                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                                   std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::NonMaxSuppression>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_center_point_box(0);
 
   *output_size = 1;

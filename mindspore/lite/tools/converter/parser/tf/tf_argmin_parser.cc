@@ -27,7 +27,7 @@ ops::PrimitiveC *TFArgMinParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::ArgMinFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   auto axis_node = tf_node_map.at(tf_op.input(tf_op.input_size() - 1));
   if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {

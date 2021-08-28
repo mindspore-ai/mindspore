@@ -25,6 +25,7 @@
 #include "ir/dtype/type_id.h"
 #include "common/file_utils.h"
 #include "tools/common/string_util.h"
+#include "common/log_util.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/config_parser/config_file_parser.h"
 #include "tools/converter/config_parser/preprocess_parser.h"
@@ -171,6 +172,7 @@ int Flags::InitInTensorShape() {
   for (const auto &shape_str : shape_strs) {
     shape.clear();
     auto string_split = lite::StrSplit(shape_str, std::string(":"));
+    CHECK_LESS_RETURN(string_split.size(), 2);
     auto name = string_split[0];
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
@@ -357,6 +359,7 @@ int Flags::Init(int argc, const char **argv) {
 bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config) {
   // device: [device0 device1] ---> {cpu, gpu}
   // computeRate: [x: y] x >=0 && y >=0 && x/y < 10
+  MS_ASSERT(parallel_split_config != nullptr);
   std::vector<std::string> config_devices = {"cpu", "gpu", "npu"};
   auto compute_rate_result = GetStrFromConfigFile(file, kComputeRate);
   if (compute_rate_result.empty()) {
@@ -396,11 +399,11 @@ bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *pa
   int64_t bigger_rate = INT32_MIN;
   int64_t smaller_rate = INT32_MAX;
   for (const auto &rate : parallel_split_config->parallel_compute_rates_) {
-    bigger_rate = std::max(rate, bigger_rate);
-    smaller_rate = std::min(rate, smaller_rate);
     if (rate <= 0 || rate > INT32_MAX) {
       return false;
     }
+    bigger_rate = std::max(rate, bigger_rate);
+    smaller_rate = std::min(rate, smaller_rate);
   }
   parallel_split_config->parallel_devices_.push_back(device0_result);
   parallel_split_config->parallel_devices_.push_back(device1_result);

@@ -28,7 +28,7 @@ ops::PrimitiveC *TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
                                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                            std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (tf_op.op() == "Relu") {
     prim->set_activation_type(mindspore::ActivationType::RELU);
   } else if (tf_op.op() == "Relu6") {
