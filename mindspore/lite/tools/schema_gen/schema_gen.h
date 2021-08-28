@@ -35,7 +35,7 @@ class SchemaGen {
   int Init();
 
  private:
-  SchemaGenFlags *flags_;
+  SchemaGenFlags *flags_ = nullptr;
 };
 
 int RunSchemaGen(int argc, const char **argv);
