@@ -2568,6 +2568,75 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     assert datas_epoch2 not in (datas_epoch1, datas_epoch3)
     assert datas_epoch3 not in (datas_epoch2, datas_epoch1)
 
+def test_for_loop_dataset_iterator(add_and_remove_nlp_compress_file):
+    """test for loop dataset iterator"""
+    data = []
+    for row_id in range(16):
+        data.append({
+            "label": row_id,
+            "array_a": np.reshape(np.array([0, 1, -1, 127, -128, 128, -129,
+                                            255, 256, -32768, 32767, -32769, 32768, -2147483648,
+                                            2147483647], dtype=np.int32), [-1]),
+            "array_b": np.reshape(np.array([0, 1, -1, 127, -128, 128, -129, 255,
+                                            256, -32768, 32767, -32769, 32768,
+                                            -2147483648, 2147483647, -2147483649, 2147483649,
+                                            -922337036854775808, 9223372036854775807]), [1, -1]),
+            "array_c": str.encode("nlp data"),
+            "array_d": np.reshape(np.array([[-10, -127], [10, 127]]), [2, -1])
+        })
+    num_readers = 1
+    data_set = ds.MindDataset(
+        NLP_FILE_NAME + "0", None, num_readers, shuffle=False)
+    assert data_set.get_dataset_size() == 16
+
+    # create_dict_iterator in for loop
+    for _ in range(10):
+        num_iter = 0
+        for x, item in zip(data, data_set.create_dict_iterator(num_epochs=1, output_numpy=True)):
+            assert (item["array_a"] == x["array_a"]).all()
+            assert (item["array_b"] == x["array_b"]).all()
+            assert item["array_c"].tobytes() == x["array_c"]
+            assert (item["array_d"] == x["array_d"]).all()
+            assert item["label"] == x["label"]
+            num_iter += 1
+        assert num_iter == 16
+
+    # create_dict_iterator beyond for loop
+    dataset_iter = data_set.create_dict_iterator(num_epochs=10, output_numpy=True)
+    new_data = data * 10
+    for _ in range(10):
+        num_iter = 0
+        for x, item in zip(new_data, dataset_iter):
+            assert (item["array_a"] == x["array_a"]).all()
+            assert (item["array_b"] == x["array_b"]).all()
+            assert item["array_c"].tobytes() == x["array_c"]
+            assert (item["array_d"] == x["array_d"]).all()
+            assert item["label"] == x["label"]
+            num_iter += 1
+        assert num_iter == 16
+
+    # create mulit iter by user
+    dataset_iter2 = data_set.create_dict_iterator(num_epochs=1, output_numpy=True)
+    assert (next(dataset_iter2)["array_a"] == data[0]["array_a"]).all()
+    assert (next(dataset_iter2)["array_a"] == data[1]["array_a"]).all()
+
+    dataset_iter3 = data_set.create_dict_iterator(num_epochs=1, output_numpy=True)
+    assert (next(dataset_iter3)["array_a"] == data[0]["array_a"]).all()
+    assert (next(dataset_iter3)["array_a"] == data[1]["array_a"]).all()
+    assert (next(dataset_iter3)["array_a"] == data[2]["array_a"]).all()
+
+    assert (next(dataset_iter2)["array_a"] == data[2]["array_a"]).all()
+    assert (next(dataset_iter2)["array_a"] == data[3]["array_a"]).all()
+
+    dataset_iter4 = data_set.create_dict_iterator(num_epochs=1, output_numpy=True)
+    assert (next(dataset_iter4)["array_a"] == data[0]["array_a"]).all()
+    assert (next(dataset_iter4)["array_a"] == data[1]["array_a"]).all()
+    assert (next(dataset_iter4)["array_a"] == data[2]["array_a"]).all()
+
+    assert (next(dataset_iter3)["array_a"] == data[3]["array_a"]).all()
+    assert (next(dataset_iter3)["array_a"] == data[4]["array_a"]).all()
+    assert (next(dataset_iter3)["array_a"] == data[5]["array_a"]).all()
+
 if __name__ == '__main__':
     test_nlp_compress_data(add_and_remove_nlp_compress_file)
     test_nlp_compress_data_old_version(add_and_remove_nlp_compress_file)
@@ -2603,3 +2672,4 @@ if __name__ == '__main__':
     test_shuffle_with_global_infile_files(create_multi_mindrecord_files)
     test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_files)
     test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files)
+    test_for_loop_dataset_iterator(add_and_remove_nlp_compress_file)
