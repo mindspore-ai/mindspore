@@ -37,6 +37,7 @@
 #include "debug/debugger/debugger.h"
 #endif
 #include "runtime/hardware/device_context.h"
+#include "backend/session/pynative_task_manager.h"
 
 namespace mindspore {
 namespace runtime {
@@ -86,7 +87,6 @@ struct GraphOutputInfo {
   std::vector<tensor::TensorPtr> graph_output_tensors;
 };
 
-using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::KernelWithIndexCmp>;
 class Executor;
 
@@ -147,9 +147,10 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
                                                       const std::vector<tensor::TensorPtr> &input_tensors,
                                                       const std::vector<int64_t> &tensors_mask, bool is_ascend = false);
-  void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask, std::vector<tensor::TensorPtr> *input_tensors);
+  void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask,
+                            std::vector<tensor::TensorPtr> *input_tensors) const;
   void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) const;
-  void RunOpHideNopNode(const KernelGraphPtr &kernel_graph) const;
+  static void RunOpHideNopNode(const KernelGraphPtr &kernel_graph);
   virtual void ReportWarningMessage() {}
   virtual void ReportErrorMessage() {}
 #ifdef ENABLE_DEBUGGER
@@ -225,6 +226,9 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                          std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                          const std::vector<int64_t> &tensors_mask) {}
+  virtual void RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+                               std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                               const std::vector<int64_t> &tensors_mask) {}
   void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   virtual void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
                                const std::vector<tensor::TensorPtr> &graph_inputs,
@@ -241,10 +245,13 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
     LoadInputData(kernel_graph, inputs_const);
   }
 
+  virtual void ExecuteAllTaskInQueue() {}
+
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                              const std::vector<tensor::TensorPtr> &inputs_const) const {}
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
-                     const std::vector<tensor::TensorPtr> &input_tensors) const;
+                     const std::vector<tensor::TensorPtr> &input_tensors,
+                     std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) const;
   void UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kernel_graph, OpRunInfo *op_run_info) const;
   void Summary(KernelGraph *graph);
   // create graph output for RunOp

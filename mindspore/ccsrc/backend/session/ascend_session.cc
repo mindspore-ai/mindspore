@@ -18,6 +18,7 @@
 #include <map>
 #include <tuple>
 #include <set>
+#include <unordered_set>
 #include <string>
 #include <list>
 
@@ -240,14 +241,14 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
 }
 
 bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor) {
+  if (tensor->NeedSyncHostToDevice()) {
+    return true;
+  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_address = AnfAlgo::GetMutableOutputAddr(parameter, 0);
   if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
     return tensor->device_address().get() == nullptr || tensor->device_address() != device_address;
-  }
-  if (tensor->NeedSyncHostToDevice()) {
-    return true;
   }
   auto tensor_address = tensor->device_address();
   if (tensor_address != device_address) {
@@ -651,12 +652,167 @@ KernelGraphPtr AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const Gr
   return graph;
 }
 
+void AscendSession::BindAddressToTensor(
+  const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  for (const auto &item : tensor_to_node) {
+    auto &tensor = item.first;
+    auto &node = item.second.first;
+    auto &output_index = item.second.second;
+    DeviceAddressPtr address = nullptr;
+    if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+      address = AnfAlgo::GetMutableOutputAddr(node, output_index, false);
+    } else {
+      address = AnfAlgo::GetMutableOutputAddr(node, output_index);
+    }
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensor->set_device_address(address);
+  }
+}
+
+void AscendSession::LaunchFunc(const KernelGraphPtr &graph, const std::vector<int64_t> &tensors_mask,
+                               const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                               bool is_dynamic_shape, const std::vector<tensor::TensorPtr> &input_tensors) {
+  // Wait for AllReduce
+  for (auto &tensor : input_tensors) {
+    if (tensor->NeedWaitDevice()) {
+      tensor->WaitDevice();
+    }
+  }
+
+  RunOpRemoveNopNode(graph);
+  RunOpMemoryAllocNew(input_tensors, tensor_to_node, graph.get());
+  AnfAlgo::CacheAddrForGraph(graph);
+  // Bind Device Ptr to DeviceAddress of Tensor
+  BindAddressToTensor(tensor_to_node);
+  RunOpGenKernelEvent(graph.get());
+
+  if (is_dynamic_shape) {
+    BuildDynamicKernel(graph);
+  }
+
+  LoadInputData(graph, input_tensors);
+  Execute(graph, false);
+  RunOpMemoryClear(graph.get());
+}
+
+void AscendSession::BatchBuildKernel(const std::vector<std::shared_ptr<SessionTask>> &build_tasks) {
+  std::vector<CNodePtr> node_to_build;
+  std::vector<KernelGraphPtr> graphs;
+
+  // Hide Nop Node && Collect nodes to build.
+  for (const auto &task : build_tasks) {
+    MS_EXCEPTION_IF_NULL(task);
+    const auto &context = task->context();
+    MS_EXCEPTION_IF_NULL(context);
+    const auto &graph = context->graph();
+    MS_EXCEPTION_IF_NULL(graph);
+
+    RunOpHideNopNode(graph);
+
+    const auto &nodes = graph->execution_order();
+    std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
+    graphs.push_back(graph);
+  }
+
+  // Build first time.
+  BuildKernel(node_to_build);
+
+  std::vector<CNodePtr> atomic_node_to_build;
+  for (auto &graph : graphs) {
+    device::ascend::KernelBuildPreprocess(graph.get());
+    const auto &nodes = graph->execution_order();
+    std::copy(nodes.begin(), nodes.end(), std::back_inserter(atomic_node_to_build));
+  }
+  // Build AtomicClean.
+  BuildKernel(atomic_node_to_build);
+}
+
+void AscendSession::PrepareForOutputTensor(const KernelGraphPtr &graph,
+                                           const std::vector<tensor::TensorPtr> &input_tensors,
+                                           std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                                           VectorRef *outputs) const {
+  // Create DeviceAddress For Output Tensor(contain: Shape, Format, DType)
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  runtime_instance->RunOpMallocPre(*graph, input_tensors);
+  runtime_instance->UpdateRefNodeOutputMem(graph.get());
+  // CREATE OUTPUT TENSOR ADDRESS
+  UpdateOutputs(graph, outputs, input_tensors, tensor_to_node);
+}
+
+void StoreCNodePrimitive(const KernelGraphPtr &graph) {
+  const auto &nodes = graph->execution_order();
+  for (auto &node : nodes) {
+    auto primitive = AnfAlgo::GetCNodePrimitive(node);
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto new_primitive = std::make_shared<Primitive>(*primitive);
+    node->set_input(kAnfPrimitiveIndex, NewValueNode(new_primitive));
+  }
+}
+
 void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                               std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                               const std::vector<int64_t> &tensors_mask) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode || op_run_info->is_dynamic_shape) {
+    session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
+    RunOpImplOrigin(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+
+  bool cache_miss = false;
+  auto iter = run_op_graphs_.find(graph_info);
+  if (iter == run_op_graphs_.end()) {
+    auto graph = PreBuildOp(*op_run_info, *input_tensors, tensors_mask);
+    MS_EXCEPTION_IF_NULL(graph);
+    InitRuntimeResource();
+    run_op_graphs_[graph_info] = graph;
+    cache_miss = true;
+  }
+
+  EraseValueNodeTensor(tensors_mask, input_tensors);
+
+  auto &graph = run_op_graphs_[graph_info];
+  MS_EXCEPTION_IF_NULL(graph);
+  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
+  PrepareForOutputTensor(graph, *input_tensors, &tensor_to_node, outputs);
+
+  auto &task_manager = PynativeTaskManager::GetInstance();
+  if (!cache_miss && task_manager.QueueEmpty()) {
+    // Cache match and there are no task in Queue. Just Launch immediately.
+    LaunchFunc(graph, tensors_mask, tensor_to_node, op_run_info->is_dynamic_shape, *input_tensors);
+  } else {
+    auto run_op_context = std::make_shared<RunOpContext>(graph_info, op_run_info->is_dynamic_shape, graph, tensors_mask,
+                                                         *input_tensors, tensor_to_node);
+    task_manager.PushLaunchTask(std::make_shared<LaunchTask>(run_op_context));
+
+    if (cache_miss) {
+      // Copy Primitive. The attributes of Primitive will be modified.
+      StoreCNodePrimitive(graph);
+      task_manager.PushBuildTask(std::make_shared<BuildTask>(run_op_context));
+    }
+  }
+
+  std::call_once(registered_,
+                 [this, &task_manager]() { task_manager.RegisterExecuteFunc([this]() { ExecuteAllTaskInQueue(); }); });
+
+  if (task_manager.QueueFull()) {
+    task_manager.ExecuteRemainingTasks();
+  }
+}
+
+void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+                                    std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                                    const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
   const auto &graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
+
   EraseValueNodeTensor(tensors_mask, input_tensors);
 
   // wait for allreduce
@@ -679,7 +835,8 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   // run op
   Execute(graph, false);
   // get output
-  UpdateOutputs(graph, outputs, *input_tensors);
+  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
+  UpdateOutputs(graph, outputs, *input_tensors, &tensor_to_node);
   // update output abstract of dynamic op to op_run_info
   if (op_run_info->is_dynamic_shape) {
     UpdateOutputAbstract(graph, op_run_info);
@@ -917,7 +1074,7 @@ void AscendSession::BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph
   BuildKernel(kernel_graph->execution_order());
 }
 
-void AscendSession::BuildKernel(const std::vector<CNodePtr> &kernels) const {
+void AscendSession::BuildKernel(const std::vector<CNodePtr> &kernels) {
   MS_LOG(INFO) << "Start!";
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
@@ -1095,6 +1252,15 @@ void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
+}
+
+void AscendSession::RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &input_tensors,
+                                        const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                                        KernelGraph *kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph, tensor_to_node);
 }
 
 void AscendSession::RunOpGenKernelEvent(const KernelGraph *graph) const {
@@ -1550,6 +1716,33 @@ void AscendSession::ReportErrorMessage() {
   if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
     MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
   }
+}
+
+void AscendSession::ExecuteAllTaskInQueue() {
+  // Execute All Task
+  auto &task_manager = PynativeTaskManager::GetInstance();
+  if (task_manager.QueueEmpty()) {
+    return;
+  }
+
+  auto ms_context = MsContext::GetInstance();
+  auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
+
+  BatchBuildKernel(task_manager.GetAllBuildTasks());
+  task_manager.ClearAllBuildTasks();
+
+  // Launch one by one
+  auto &launch_tasks = task_manager.GetAllLaunchTasks();
+  while (!launch_tasks.empty()) {
+    auto &launch_task = launch_tasks.front();
+    const auto &context = launch_task->context();
+    LaunchFunc(context->graph(), context->tensor_mask(), context->tensor_to_node(), context->is_dynamic_shape(),
+               context->input_tensors());
+    launch_tasks.pop();
+  }
+
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
 }
 }  // namespace session
 }  // namespace mindspore

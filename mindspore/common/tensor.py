@@ -21,6 +21,7 @@ from mindspore.communication.management import get_rank, get_group_size
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
 from .._c_expression import Tensor as Tensor_
+from .._c_expression import PynativeExecutor_
 from .._checkparam import Validator as validator
 
 __all__ = ['Tensor', 'RowTensor', 'SparseTensor']
@@ -341,6 +342,11 @@ class Tensor(Tensor_):
         """
         return Tensor(Tensor_.from_numpy(array))
 
+    def assign_value(self, value):
+        PynativeExecutor_.get_instance().execute_all_task()
+        self.assign_value_cpp(value)
+        return self
+
     def item(self, index=None):
         """
         Getitem from the Tensor with the index.
@@ -412,6 +418,7 @@ class Tensor(Tensor_):
     def asnumpy(self):
         """Convert tensor to numpy array."""
         self.init_check()
+        PynativeExecutor_.get_instance().execute_all_task()
         return Tensor_.asnumpy(self)
 
     def flush_from_cache(self):

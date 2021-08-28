@@ -63,6 +63,8 @@ using mindspore::dataset::TdtHandle;
 #include "debug/rdr/running_data_recorder.h"
 #endif
 
+#include "backend/session/pynative_task_manager.h"
+
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
 using mindspore::device::ascend::tasksink::TaskGenerator;
@@ -904,6 +906,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 
 bool AscendKernelRuntime::SyncStream() {
   SetCurrentContext();
+  session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   for (auto &iter : stream_id_map_) {
     if (rtStreamSynchronize(iter.second) != RT_ERROR_NONE) {  // o for switch stream
       MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";

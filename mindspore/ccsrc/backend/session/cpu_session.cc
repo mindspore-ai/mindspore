@@ -261,6 +261,12 @@ void CPUSession::UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, Kern
   }
 }
 
+void CPUSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+                                 std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                                 const std::vector<int64_t> &tensors_mask) {
+  RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
+}
+
 void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                            std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                            const std::vector<int64_t> &tensors_mask) {
