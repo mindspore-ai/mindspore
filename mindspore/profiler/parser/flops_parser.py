@@ -238,10 +238,13 @@ class FlopsParser:
         top_level_scope = scope_list[0]
         suffix_name = ""
         if op_name.startswith("Gradients/recompute_Default"):
-            suffix_name = "(recompute_Gradients)"
+            suffix_name = "recompute_Gradients"
         else:
-            suffix_name = f"({top_level_scope})"
-        scope_list = list(map(lambda x: x + suffix_name, scope_list))
+            suffix_name = top_level_scope
+        # To distinguish the same scope name at different scope level and different top level scope,
+        # the scope level and top level scope is added.
+        for level, scope_name in enumerate(scope_list):
+            scope_list[level] = scope_name + f"({level}_{suffix_name})"
         scope_list[0] = top_level_scope
 
         # Add root node (refers to total flops).
