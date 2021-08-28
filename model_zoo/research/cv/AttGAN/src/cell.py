@@ -116,8 +116,7 @@ class TrainOneStepCellGen(nn.Cell):
         grads = self.grad(self.network, weights)(img_a, att_a, att_a_, att_b, att_b_, sens)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        self.optimizer(grads)
-        return loss, gf_loss, gc_loss, gr_loss
+        return F.depend(loss, self.optimizer(grads)), gf_loss, gc_loss, gr_loss
 
 
 class TrainOneStepCellDis(nn.Cell):
@@ -153,5 +152,4 @@ class TrainOneStepCellDis(nn.Cell):
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
 
-        self.optimizer(grads)
-        return loss, d_real_loss, d_fake_loss, dc_loss, df_gp
+        return F.depend(loss, self.optimizer(grads)), d_real_loss, d_fake_loss, dc_loss, df_gp
