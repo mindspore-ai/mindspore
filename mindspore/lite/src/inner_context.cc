@@ -42,11 +42,13 @@ void InnerContext::InitDeviceFp16() {
 }
 
 InnerContext::InnerContext(const Context *context) {
-  this->allocator = context->allocator;
-  this->thread_num_ = context->thread_num_;
-  this->enable_parallel_ = context->enable_parallel_;
-  this->affinity_core_list_ = context->affinity_core_list_;
-  SetContextDevice(context);
+  if (context != nullptr) {
+    this->allocator = context->allocator;
+    this->thread_num_ = context->thread_num_;
+    this->enable_parallel_ = context->enable_parallel_;
+    this->affinity_core_list_ = context->affinity_core_list_;
+    SetContextDevice(context);
+  }
   InitDeviceFp16();
 }
 

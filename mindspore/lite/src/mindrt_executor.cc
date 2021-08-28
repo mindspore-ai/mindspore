@@ -147,8 +147,8 @@ void MindrtExecutor::FreeOutputTensor() {
 }
 
 int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                        const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
-                        const KernelCallBack &before, const KernelCallBack &after) {
+                        const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before,
+                        const KernelCallBack &after) {
   FreeOutputTensor();
 
   auto ret = MindrtRun<Tensor>(input_data_, &output_data_, &before, &after);

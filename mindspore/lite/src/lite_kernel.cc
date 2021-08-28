@@ -16,10 +16,8 @@
 
 #include "src/lite_kernel.h"
 #include <algorithm>
-#include <set>
 #include "src/tensor.h"
 #include "src/common/utils.h"
-#include "src/runtime/infer_manager.h"
 #include "src/common/version_manager.h"
 
 namespace mindspore::kernel {

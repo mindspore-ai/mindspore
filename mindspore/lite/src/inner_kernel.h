@@ -126,14 +126,20 @@ class InnerKernel : public Kernel {
   void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) { this->in_tensors_ = in_tensors; }
 
   virtual void set_in_tensor(lite::Tensor *in_tensor, size_t index) {
-    MS_ASSERT(index < in_tensors_.size());
+    if (index >= in_tensors_.size()) {
+      MS_LOG(ERROR) << "index: " << index << " larger than in_tensors size: " << in_tensors_.size();
+      return;
+    }
     this->in_tensors_[index] = in_tensor;
   }
 
   void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) { this->out_tensors_ = out_tensors; }
 
   virtual void set_out_tensor(lite::Tensor *out_tensor, size_t index) {
-    MS_ASSERT(index < out_tensors_.size());
+    if (index >= out_tensors_.size()) {
+      MS_LOG(ERROR) << "index: " << index << " larger than out_tensors size: " << out_tensors_.size();
+      return;
+    }
     this->out_tensors_[index] = out_tensor;
   }
 

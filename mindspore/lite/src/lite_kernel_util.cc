@@ -16,7 +16,6 @@
 
 #include "src/lite_kernel_util.h"
 #include <queue>
-#include <set>
 #include "src/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
@@ -25,6 +24,7 @@ using mindspore::lite::RET_OK;
 std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputNodes(const std::vector<kernel::LiteKernel *> &kernels) {
   std::vector<kernel::LiteKernel *> input_nodes;
   for (const auto &kernel : kernels) {
+    MS_ASSERT(kernel != nullptr);
     // if kernel has no pre-kernel, kernel is a graph input, it must be a subgraph input
     if (kernel->in_kernels().empty() && !kernel->in_tensors().empty()) {
       if (!lite::IsContain(input_nodes, kernel)) {
@@ -65,6 +65,7 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputNodes(
   std::vector<kernel::LiteKernel *> output_nodes;
   // if kernel has no post-kernel, kernel is a graph output, it must be a subgraph output
   for (const auto &kernel : kernels) {
+    MS_ASSERT(kernel != nullptr);
     if (kernel->is_model_output() || (kernel->out_kernels().empty() && !kernel->out_tensors().empty())) {
       if (!lite::IsContain(output_nodes, kernel)) {
         output_nodes.push_back(kernel);

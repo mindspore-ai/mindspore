@@ -19,7 +19,6 @@
 #include <string>
 #include <utility>
 #include <algorithm>
-#include <functional>
 #include "securec/include/securec.h"
 #include "include/errorcode.h"
 

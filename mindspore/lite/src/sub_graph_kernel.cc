@@ -79,8 +79,7 @@ int SubGraphKernel::Execute(const KernelCallBack &before, const KernelCallBack &
     MS_LOG(ERROR) << "executor is nullptr";
     return RET_ERROR;
   }
-  auto ret = executor_->Run(this->in_tensors(), this->out_tensors(), this->nodes_, this->Context()->allocator.get(),
-                            before, after);
+  auto ret = executor_->Run(this->in_tensors(), this->out_tensors(), this->nodes_, before, after);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run sub graph failed: " << ret;
     return ret;
