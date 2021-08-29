@@ -21,6 +21,7 @@
 #include "ops/fusion/pad_fusion.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -99,7 +100,7 @@ void ReplaceParamsAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &conv_
 
   // delete padFusion
   auto manager = func_graph->manager();
-  manager->Replace(pad_cnode, pad_cnode->input(1));
+  (void)manager->Replace(pad_cnode, pad_cnode->input(1));
 }
 
 bool IsPrimitiveProper(const CNodePtr &conv_cnode, const CNodePtr &pad_cnode) {
@@ -110,12 +111,17 @@ bool IsPrimitiveProper(const CNodePtr &conv_cnode, const CNodePtr &pad_cnode) {
   }
   auto pad_primitive = GetValueNode<std::shared_ptr<ops::PadFusion>>(pad_cnode->input(0));
   MS_ASSERT(pad_primitive != nullptr);
+  if (!pad_primitive->HasAttr(ops::kPaddingMode)) {
+    return false;
+  }
   int64_t pad_mode = pad_primitive->get_padding_mode();
   if (pad_mode != PaddingMode::CONSTANT) {
     return false;
   }
   ValuePtr pad_constant_node = pad_primitive->GetAttr(ops::kConstantValue);
-  MS_ASSERT(pad_constant_node != nullptr);
+  if (pad_constant_node == nullptr) {
+    return false;
+  }
   float pad_value = GetValue<float>(pad_constant_node);
   if (pad_value != 0) {
     return false;
@@ -126,23 +132,33 @@ bool IsPrimitiveProper(const CNodePtr &conv_cnode, const CNodePtr &pad_cnode) {
 }  // namespace
 
 VectorRef ConvPadFusion::DefinePadConvPattern() const {
-  auto pad_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimPadFusion>);
-  auto conv_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimConv2DFusion>);
-  auto weight_var = std::make_shared<CondVar>(IsParamNode);
-  auto bias_var = std::make_shared<SeqVar>();
-  return VectorRef({conv_var, pad_var, weight_var, bias_var});
+  auto is_pad = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimPadFusion>);
+  MS_CHECK_TRUE_RET(is_pad != nullptr, {});
+  auto is_conv = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimConv2DFusion>);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
+  auto is_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  return VectorRef({is_conv, is_pad, is_param, is_seq_var});
 }
 
 VectorRef ConvPadFusion::DefinePadTransposeConvPattern() const {
-  auto pad_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimPadFusion>);
-  auto transpose_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  auto transpose_param = std::make_shared<CondVar>(IsParamNode);
-  VectorRef transpose_conv_ref = VectorRef({transpose_var, pad_var, transpose_param});
+  auto is_pad = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimPadFusion>);
+  MS_CHECK_TRUE_RET(is_pad != nullptr, {});
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_param_perm = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param_perm != nullptr, {});
+  VectorRef transpose_conv_ref = VectorRef({is_transpose, is_pad, is_param_perm});
 
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
-  auto weight_var = std::make_shared<CondVar>(IsParamNode);
-  auto bias_var = std::make_shared<SeqVar>();
-  VectorRef trans_conv_ref = VectorRef({conv_var, transpose_conv_ref, weight_var, bias_var});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
+  auto is_param_weight = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param_weight != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  VectorRef trans_conv_ref = VectorRef({is_conv, transpose_conv_ref, is_param_weight, is_seq_var});
   return trans_conv_ref;
 }
 
@@ -155,22 +171,21 @@ std::unordered_map<std::string, VectorRef> ConvPadFusion::DefinePatterns() const
 
 AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                   const AnfNodePtr &node, const EquivPtr &equiv) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr || equiv != nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
 
   auto conv_cnode = node->cast<CNodePtr>();
-  MS_ASSERT(conv_cnode != nullptr);
+  MS_CHECK_TRUE_RET(conv_cnode != nullptr, nullptr);
   if (conv_cnode->inputs().size() != kConvWithBiasLen && conv_cnode->inputs().size() != kConvNoBiasLen) {
     MS_LOG(WARNING) << "conv node inputs error ,name:" << conv_cnode->fullname_with_scope();
     return nullptr;
   }
   CNodePtr pad_cnode = nullptr;
   if (pattern_name == "PadTransposeConvPatternName") {
-    CNodePtr transpose_cnode = conv_cnode->input(1)->cast<CNodePtr>();
+    auto transpose_cnode = conv_cnode->input(1)->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(transpose_cnode != nullptr, nullptr);
     if (IsMultiOutputTensors(func_graph, transpose_cnode)) {
       MS_LOG(WARNING) << "transpose node is used as input by multiple cnodes, Fusion failed! ,name:"
                       << transpose_cnode->fullname_with_scope();
@@ -181,6 +196,7 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
   } else {
     pad_cnode = conv_cnode->input(1)->cast<CNodePtr>();
   }
+  MS_CHECK_TRUE_RET(pad_cnode != nullptr, nullptr);
 
   if (IsMultiOutputTensors(func_graph, pad_cnode)) {
     MS_LOG(WARNING) << "pad node is used as input by multiple cnodes, Fusion failed! ,name:"
@@ -188,8 +204,7 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
     return nullptr;
   }
 
-  MS_ASSERT(pad_cnode != nullptr);
-  if (pad_cnode == nullptr || pad_cnode->size() != kInputSizeThree) {
+  if (pad_cnode->size() != kInputSizeThree) {
     MS_LOG(WARNING) << "pad node inputs error ,name:" << pad_cnode->fullname_with_scope();
     return nullptr;
   }

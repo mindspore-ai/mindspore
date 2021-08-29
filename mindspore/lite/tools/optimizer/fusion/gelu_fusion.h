@@ -28,7 +28,7 @@ namespace mindspore {
 namespace opt {
 class GeLUFusion : public PatternProcessPass {
  public:
-  explicit GeLUFusion(const std::string &name = "gelu_fusion", bool multigraph = true)
+  explicit GeLUFusion(const std::string &name = "GeLUFusion", bool multigraph = true)
       : PatternProcessPass(name, multigraph), input_(std::make_shared<Var>()) {}
 
   ~GeLUFusion() override = default;
@@ -37,12 +37,12 @@ class GeLUFusion : public PatternProcessPass {
  protected:
   virtual bool CheckPattern(const EquivPtr &equiv) const = 0;
   const float GetParameterValue(const EquivPtr &equiv, const VarPtr &input) const;
-  VarPtr input_ = nullptr;
 
  private:
   CNodePtr CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
 
  protected:
+  VarPtr input_{nullptr};
   mutable bool approximate_{false};
 };
 }  // namespace opt

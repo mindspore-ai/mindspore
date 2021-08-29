@@ -24,9 +24,11 @@ namespace mindspore {
 namespace opt {
 class ConvActivationFusion : public PatternProcessPass {
  public:
-  explicit ConvActivationFusion(bool multigraph = true, const std::string &name = "conv_activation_fusion")
+  explicit ConvActivationFusion(bool multigraph = true, const std::string &name = "ConvActivationFusion")
       : PatternProcessPass(name, multigraph) {}
   ~ConvActivationFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

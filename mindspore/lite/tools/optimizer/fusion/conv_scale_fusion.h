@@ -22,8 +22,13 @@
 namespace mindspore::opt {
 class ConvScaleFusion : public ConvTransformFusion {
  public:
-  explicit ConvScaleFusion(bool multigraph = true) : ConvTransformFusion(multigraph, "conv_scale_fusion") {}
+  explicit ConvScaleFusion(FmkType fmk_type = converter::kFmkTypeMs, bool multigraph = true)
+      : ConvTransformFusion(multigraph, "ConvScaleFusion") {
+    fmk_type_ = fmk_type;
+  }
   ~ConvScaleFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   void InitTransParam(const CNodePtr &, int, float *, float *) const override;
 };

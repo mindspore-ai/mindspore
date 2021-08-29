@@ -29,16 +29,15 @@ namespace mindspore {
 namespace opt {
 class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
  public:
-  explicit MultiHeadAttentionFusion(const std::string &name = "multi_head_attention_fusion", bool multigraph = true);
+  explicit MultiHeadAttentionFusion(const std::string &name = "MultiHeadAttentionFusion", bool multigraph = true);
 
   ~MultiHeadAttentionFusion() override = default;
 
+ protected:
   std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
 
   AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
                      const EquivPtr &) const override;
-
- protected:
   // define patterns
   VectorRef DefineMPWithMaskPattern() const;
   VectorRef DefineMPWithoutMaskPattern() const;
@@ -54,23 +53,23 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   const std::string kMPAWithoutMaskPatternName = "MPAWithoutMaskPattern";
   const std::string kMPAWithMaskPatternName = "MPAWithMaskPattern";
 
-  VarPtr input_q_;
-  VarPtr input_k_;
-  VarPtr input_v_;
+  VarPtr input_q_{nullptr};
+  VarPtr input_k_{nullptr};
+  VarPtr input_v_{nullptr};
 
-  VarPtr weight_q_;
-  VarPtr weight_k_;
-  VarPtr weight_v_;
-  VarPtr weight_o_;
-  VarPtr bias_q_;
-  VarPtr bias_k_;
-  VarPtr bias_v_;
-  VarPtr bias_o_;
+  VarPtr weight_q_{nullptr};
+  VarPtr weight_k_{nullptr};
+  VarPtr weight_v_{nullptr};
+  VarPtr weight_o_{nullptr};
+  VarPtr bias_q_{nullptr};
+  VarPtr bias_k_{nullptr};
+  VarPtr bias_v_{nullptr};
+  VarPtr bias_o_{nullptr};
 
-  VarPtr mask_;
+  VarPtr mask_{nullptr};
 
-  VarPtr reshape_k_;
-  VarPtr reshape_v_;
+  VarPtr reshape_k_{nullptr};
+  VarPtr reshape_v_{nullptr};
 };
 
 }  // namespace opt

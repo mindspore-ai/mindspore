@@ -17,30 +17,22 @@
 #include <memory>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
-namespace {
-constexpr size_t kTupleGetItemLen = 3;
-bool IsTupleGetItemNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    auto anf_node = utils::cast<AnfNodePtr>(n);
-    return CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem);
-  }
-  return false;
-}
-}  // namespace
-
 const BaseRef ConvTupleGetItemFusion::DefinePattern() const {
-  auto tuple_var = std::make_shared<CondVar>(IsTupleGetItemNode);
-  auto tuple_index = std::make_shared<Var>();
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
-  return VectorRef({tuple_var, conv_var, tuple_index});
+  auto is_tuple_getitem = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTupleGetItem>);
+  MS_CHECK_TRUE_RET(is_tuple_getitem != nullptr, {});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
+  auto is_var = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var != nullptr, {});
+  return VectorRef({is_tuple_getitem, is_conv, is_var});
 }
 
 const AnfNodePtr ConvTupleGetItemFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const EquivPtr &equiv) const {
-  MS_LOG(DEBUG) << "conv_tuplegetitem_fusion pass";
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
@@ -54,7 +46,7 @@ const AnfNodePtr ConvTupleGetItemFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
   auto conv_node = tuple_cnode->input(1);
-  if (CheckIfAnfNodeIsNull(conv_node) != lite::RET_OK) {
+  if (conv_node == nullptr) {
     return nullptr;
   }
   auto conv_cnode = conv_node->cast<CNodePtr>();

@@ -19,35 +19,33 @@
 #include "ops/op_utils.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
-namespace {
-bool IsMulNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimMulFusion);
-  }
-  return false;
-}
-}  // namespace
 const BaseRef SigmoidMulFusion::DefinePattern() const {
-  auto input_var = std::make_shared<Var>();
-  auto activation_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
-  auto mul_var = std::make_shared<CondVar>(IsMulNode);
-  auto activation_input = VectorRef({activation_var, input_var});
-  return VectorRef({mul_var, input_var, activation_input});
+  auto is_activation = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
+  MS_CHECK_TRUE_RET(is_activation != nullptr, {});
+  auto is_var = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var != nullptr, {});
+  auto activation_input = VectorRef({is_activation, is_var});
+  auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  return VectorRef({is_mul, is_var, activation_input});
 }
 
 // x * sigmoid(x) ->swish(x)
 const AnfNodePtr SigmoidMulFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                            const EquivPtr &) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
+  if (func_graph == nullptr || node == nullptr) {
+    return nullptr;
+  }
   auto mul_cnode = node->cast<CNodePtr>();
-  MS_ASSERT(mul_cnode != nullptr);
-  auto activation_cnode = mul_cnode->input(2)->cast<CNodePtr>();
-  MS_ASSERT(activation_cnode != nullptr);
+  MS_CHECK_TRUE_RET(mul_cnode != nullptr, nullptr);
+  auto activation_cnode = mul_cnode->input(kInputIndexTwo)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(activation_cnode != nullptr, nullptr);
   // activation must sigmoid
   auto activation_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(activation_cnode->input(0));
+  MS_CHECK_TRUE_RET(activation_prim != nullptr, nullptr);
   if (activation_prim == nullptr || (activation_prim->GetAttr(ops::kActivationType) != nullptr &&
                                      activation_prim->get_activation_type() != mindspore::SIGMOID)) {
     return nullptr;

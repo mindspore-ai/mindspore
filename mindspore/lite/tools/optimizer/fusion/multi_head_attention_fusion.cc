@@ -17,6 +17,7 @@
 #include <functional>
 #include <utility>
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -48,96 +49,166 @@ MultiHeadAttentionFusion::MultiHeadAttentionFusion(const string &name, bool mult
 
 namespace {
 VectorRef DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &bias) {
-  auto dense = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), input, weight, bias});
-  auto reshape =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), dense, std::make_shared<Var>()});
-  return VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), reshape,
-                    std::make_shared<CondVar>(IsParamNode)});
+  auto is_matmul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
+  auto dense = VectorRef({is_matmul, input, weight, bias});
+  auto is_reshape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
+  auto is_var = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var != nullptr, {});
+  auto reshape = VectorRef({is_reshape, dense, is_var});
+  auto is_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param != nullptr, {});
+  return VectorRef({is_transpose, reshape, is_param});
 }
 
 VectorRef DefineMask(const BaseRef &mask_input) {
-  auto expand_dims = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimExpandDims)), mask_input,
-                                std::make_shared<CondVar>(IsParamNode)});
-  auto sub = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSubFusion)),
-                        std::make_shared<CondVar>(IsParamNode), expand_dims});
-  return VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMulFusion)), sub,
-                    std::make_shared<CondVar>(IsParamNode)});
+  auto is_expand_dims = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimExpandDims));
+  MS_CHECK_TRUE_RET(is_expand_dims != nullptr, {});
+  auto is_param1 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
+  auto expand_dims = VectorRef({is_expand_dims, mask_input, is_param1});
+  auto is_sub = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSubFusion));
+  MS_CHECK_TRUE_RET(is_sub != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
+  auto sub = VectorRef({is_sub, is_param2, expand_dims});
+  auto is_mul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMulFusion));
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  auto is_param3 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param3 != nullptr, {});
+  return VectorRef({is_mul, sub, is_param3});
 }
 }  // namespace
 
 VectorRef MultiHeadAttentionFusion::DefineMPWithMaskPattern() const {
   auto q_embedding = DefineEmbedding(input_q_, weight_q_, bias_q_);
+  MS_CHECK_TRUE_RET(!q_embedding.empty(), {});
   auto k_embedding = DefineEmbedding(input_k_, weight_k_, bias_k_);
+  MS_CHECK_TRUE_RET(!k_embedding.empty(), {});
   auto v_embedding = DefineEmbedding(input_v_, weight_v_, bias_v_);
-  auto q2k =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), q_embedding, k_embedding});
-  auto q2k_normed = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMulFusion)), q2k,
-                               std::make_shared<CondVar>(IsParamNode)});
+  MS_CHECK_TRUE_RET(!v_embedding.empty(), {});
+  auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul1 != nullptr, {});
+  auto q2k = VectorRef({is_matmul1, q_embedding, k_embedding});
+  auto is_mul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMulFusion));
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  auto is_param1 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
+  auto q2k_normed = VectorRef({is_mul, q2k, is_param1});
   auto mask = DefineMask(mask_);
-  auto q2k_normed_masked =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), q2k_normed, mask});
-  auto softmax = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax)), q2k_normed_masked});
-  auto softmax2v =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), softmax, v_embedding});
-  auto softmax2v_transposed = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)),
-                                         softmax2v, std::make_shared<CondVar>(IsParamNode)});
-  auto softmax2v_transposed_reshaped =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), softmax2v_transposed,
-               std::make_shared<Var>()});
-  return VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)),
-                    softmax2v_transposed_reshaped, weight_o_, bias_o_});
+  MS_CHECK_TRUE_RET(!mask.empty(), {});
+  auto is_add = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  auto q2k_normed_masked = VectorRef({is_add, q2k_normed, mask});
+  auto is_softmax = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax));
+  MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
+  auto softmax = VectorRef({is_softmax, q2k_normed_masked});
+  auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul2 != nullptr, {});
+  auto softmax2v = VectorRef({is_matmul2, softmax, v_embedding});
+  auto is_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
+  auto softmax2v_transposed = VectorRef({is_transpose, softmax2v, is_param2});
+  auto is_reshape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
+  auto is_var = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var != nullptr, {});
+  auto softmax2v_transposed_reshaped = VectorRef({is_reshape, softmax2v_transposed, is_var});
+  auto is_matmul3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul3 != nullptr, {});
+  return VectorRef({is_matmul3, softmax2v_transposed_reshaped, weight_o_, bias_o_});
 }
 
 namespace {
 VectorRef DefineDensePattern(const BaseRef &input, const BaseRef &weight, const BaseRef &bias) {
-  auto transpose = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), input,
-                              std::make_shared<CondVar>(IsParamNode)});
-  auto reshape1 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), transpose,
-                             std::make_shared<CondVar>(IsParamNode)});
-  auto matmul = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), reshape1, weight});
-  auto reshape2 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), matmul,
-                             std::make_shared<CondVar>(IsParamNode)});
+  auto is_tranpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_tranpose != nullptr, {});
+  auto is_param1 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
+  auto transpose = VectorRef({is_tranpose, input, is_param1});
+  auto is_reshape1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape1 != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
+  auto reshape1 = VectorRef({is_reshape1, transpose, is_param2});
+  auto is_matmul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
+  auto matmul = VectorRef({is_matmul, reshape1, weight});
+  auto is_reshape2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape2 != nullptr, {});
+  auto is_param3 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param3 != nullptr, {});
+  auto reshape2 = VectorRef({is_reshape2, matmul, is_param3});
   if (bias == nullptr) {
     return reshape2;
   }
-  auto bias_add = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimBiasAdd)), reshape2, bias});
+  auto is_bias_add = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimBiasAdd));
+  MS_CHECK_TRUE_RET(is_bias_add != nullptr, {});
+  auto bias_add = VectorRef({is_bias_add, reshape2, bias});
   return bias_add;
 }
 
 VectorRef DefineProcessInputPattern(const BaseRef &input, const BaseRef &weight, const BaseRef &bias,
                                     const BaseRef &reshape_shape, bool transpose = false) {
   auto input_after_dense = DefineDensePattern(input, weight, bias);
-  auto result = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), input_after_dense, reshape_shape});
+  MS_CHECK_TRUE_RET(!input_after_dense.empty(), {});
+  auto is_reshape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
+  auto result = VectorRef({is_reshape, input_after_dense, reshape_shape});
   if (transpose) {
-    result = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), result,
-                        std::make_shared<CondVar>(IsParamNode)});
+    auto is_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+    MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+    auto is_param = std::make_shared<CondVar>(IsParamNode);
+    result = VectorRef({is_transpose, result, is_param});
   }
   return result;
 }
 
 VectorRef DefineProcessOutputPattern(const BaseRef &input, const BaseRef &weight, const BaseRef &bias) {
-  auto transpose = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), input,
-                              std::make_shared<CondVar>(IsParamNode)});
-  auto reshape = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), transpose,
-                            std::make_shared<CondVar>(IsParamNode)});
+  auto is_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_param1 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
+  auto transpose = VectorRef({is_transpose, input, is_param1});
+  auto is_reshape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
+  auto reshape = VectorRef({is_reshape, transpose, is_param2});
   return DefineDensePattern(reshape, weight, bias);
 }
 }  // namespace
 
 VectorRef MultiHeadAttentionFusion::DefineMPWithoutMaskPattern() const {
-  auto query = DefineProcessInputPattern(input_q_, weight_q_, bias_q_, std::make_shared<CondVar>(IsParamNode));
-  auto query_div = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimDivFusion)), query,
-                              std::make_shared<CondVar>(IsParamNode)});
+  auto is_param1 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
+  auto query = DefineProcessInputPattern(input_q_, weight_q_, bias_q_, is_param1);
+  MS_CHECK_TRUE_RET(!query.empty(), {});
+  auto is_div = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimDivFusion));
+  MS_CHECK_TRUE_RET(is_div != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
+  auto query_div = VectorRef({is_div, query, is_param2});
 
   auto key = DefineProcessInputPattern(input_k_, weight_k_, bias_k_, reshape_k_);
-  auto query_mul_key =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), query_div, key});
-  auto softmax = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax)), query_mul_key});
+  MS_CHECK_TRUE_RET(!key.empty(), {});
+  auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul1 != nullptr, {});
+  auto query_mul_key = VectorRef({is_matmul1, query_div, key});
+  auto is_softmax = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax));
+  MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
+  auto softmax = VectorRef({is_softmax, query_mul_key});
 
   auto value = DefineProcessInputPattern(input_v_, weight_v_, bias_v_, reshape_v_);
-  auto softmax_mul_val =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), softmax, value});
+  MS_CHECK_TRUE_RET(!value.empty(), {});
+  auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul2 != nullptr, {});
+  auto softmax_mul_val = VectorRef({is_matmul2, softmax, value});
 
   return DefineProcessOutputPattern(softmax_mul_val, weight_o_, bias_o_);
 }
@@ -152,6 +223,9 @@ std::unordered_map<std::string, VectorRef> MultiHeadAttentionFusion::DefinePatte
 AnfNodePtr MultiHeadAttentionFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
                                              const mindspore::AnfNodePtr &node,
                                              const mindspore::EquivPtr &equiv) const {
+  if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
+    return nullptr;
+  }
   if (pattern_name == kMPAWithoutMaskPatternName) {
     return CreateMultiHeadAttentionNode(func_graph, equiv, node->fullname_with_scope(), 0);
   } else if (pattern_name == kMPAWithMaskPatternName) {
@@ -171,6 +245,7 @@ CNodePtr MultiHeadAttentionFusion::CreateMultiHeadAttentionNode(const FuncGraphP
     return nullptr;
   }
   auto value_node = NewValueNode(attention_prim);
+  MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   auto input_q = utils::cast<AnfNodePtr>((*equiv)[input_q_]);
   auto input_k = utils::cast<AnfNodePtr>((*equiv)[input_k_]);
   auto input_v = utils::cast<AnfNodePtr>((*equiv)[input_v_]);
@@ -188,12 +263,13 @@ CNodePtr MultiHeadAttentionFusion::CreateMultiHeadAttentionNode(const FuncGraphP
   std::vector<AnfNodePtr> new_node_inputs = {value_node, input_q,  input_k, input_v, weight_q, weight_k,
                                              weight_v,   weight_o, bias_q,  bias_k,  bias_v,   bias_o};
   auto new_node = func_graph->NewCNode(new_node_inputs);
+  MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
   new_node->set_fullname_with_scope(base_name);
   return new_node;
 }
 
 STATUS GetIntParameterData(const ParameterPtr &param_ptr, std::vector<int> *result) {
-  if (!param_ptr->has_default()) {
+  if (param_ptr == nullptr || !param_ptr->has_default()) {
     MS_LOG(DEBUG) << "param not have default";
     return RET_ERROR;
   }
@@ -217,6 +293,7 @@ STATUS GetIntParameterData(const ParameterPtr &param_ptr, std::vector<int> *resu
 }
 
 std::shared_ptr<ops::Attention> MultiHeadAttentionFusion::BuildAttentionPrim(const EquivPtr &equiv) const {
+  MS_ASSERT(equiv != nullptr);
   auto attention_prim = std::make_shared<ops::Attention>();
   if (attention_prim == nullptr) {
     MS_LOG(ERROR) << "Build attention primitive failed.";
@@ -264,6 +341,7 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
     return nullptr;
   }
   auto value_node = NewValueNode(attention_prim);
+  MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   auto input_q = utils::cast<AnfNodePtr>((*equiv)[input_q_]);
   auto input_k = utils::cast<AnfNodePtr>((*equiv)[input_k_]);
   auto input_v = utils::cast<AnfNodePtr>((*equiv)[input_v_]);
@@ -282,6 +360,7 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
   std::vector<AnfNodePtr> new_node_inputs = {value_node, input_q, input_k, input_v, weight_q, weight_k, weight_v,
                                              weight_o,   bias_q,  bias_k,  bias_v,  bias_o,   mask};
   auto new_node = func_graph->NewCNode(new_node_inputs);
+  MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
   new_node->set_fullname_with_scope(base_name);
   return new_node;
 }

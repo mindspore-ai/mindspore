@@ -16,6 +16,7 @@
 
 #include "tools/optimizer/fusion/tf_gelu_fusion.h"
 #include "ops/op_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -27,8 +28,7 @@ constexpr float MUL2_X = 0.79788;
 constexpr float ADD2_X = 1.0;
 constexpr float MUL3_X = 0.5;
 bool CheckTanh(const EquivPtr &equiv, const VarPtr &input) {
-  MS_ASSERT(equiv != nullptr);
-  MS_ASSERT(input != nullptr);
+  MS_ASSERT(equiv != nullptr && input != nullptr);
   auto anf_node = utils::cast<AnfNodePtr>((*equiv)[input]);
   MS_ASSERT(anf_node != nullptr);
   AnfNodePtr value_node = anf_node;
@@ -47,13 +47,25 @@ bool CheckTanh(const EquivPtr &equiv, const VarPtr &input) {
 // gelu(x) = 1/2 * x * [1 + tanh(0.79788 * (x + 0.044715 * x ^ 3))]
 const BaseRef TfGeLUFusion::DefinePattern() const {
   VectorRef pow_ref({power_, input_, power_y_});
-  VectorRef mul1_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>), mul1_x_, pow_ref});
-  VectorRef add1_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>), input_, mul1_ref});
-  VectorRef mul2_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>), mul2_x_, add1_ref});
+  auto is_mul1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul1 != nullptr, {});
+  VectorRef mul1_ref({is_mul1, mul1_x_, pow_ref});
+  auto is_add1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  MS_CHECK_TRUE_RET(is_add1 != nullptr, {});
+  VectorRef add1_ref({is_add1, input_, mul1_ref});
+  auto is_mul2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul2 != nullptr, {});
+  VectorRef mul2_ref({is_mul2, mul2_x_, add1_ref});
   VectorRef tanh_ref({tanh_, mul2_ref});
-  VectorRef add2_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>), add2_x_, tanh_ref});
-  VectorRef mul3_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>), mul3_x_, add2_ref});
-  VectorRef mul4_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>), input_, mul3_ref});
+  auto is_add2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  MS_CHECK_TRUE_RET(is_add2 != nullptr, {});
+  VectorRef add2_ref({is_add2, add2_x_, tanh_ref});
+  auto is_mul3 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul3 != nullptr, {});
+  VectorRef mul3_ref({is_mul3, mul3_x_, add2_ref});
+  auto is_mul4 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul4 != nullptr, {});
+  VectorRef mul4_ref({is_mul4, input_, mul3_ref});
   return mul4_ref;
 }
 

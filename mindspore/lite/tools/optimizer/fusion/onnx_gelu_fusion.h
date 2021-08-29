@@ -26,7 +26,7 @@ namespace mindspore {
 namespace opt {
 class OnnxGeLUFusion : public GeLUFusion {
  public:
-  explicit OnnxGeLUFusion(const std::string &name = "onnx_gelu_fusion", bool multigraph = true)
+  explicit OnnxGeLUFusion(const std::string &name = "OnnxGeLUFusion", bool multigraph = true)
       : GeLUFusion(name, multigraph) {
     div_y_ = std::make_shared<Var>();
     add_y_ = std::make_shared<Var>();

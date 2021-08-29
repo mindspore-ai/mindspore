@@ -22,8 +22,13 @@
 namespace mindspore::opt {
 class ConvBatchNormFusion : public ConvTransformFusion {
  public:
-  explicit ConvBatchNormFusion(bool multigraph = true) : ConvTransformFusion(multigraph, "conv_batchnorm_fusion") {}
+  explicit ConvBatchNormFusion(FmkType fmk_type = converter::kFmkTypeMs, bool multigraph = true)
+      : ConvTransformFusion(multigraph, "ConvBatchNormFusion") {
+    fmk_type_ = fmk_type;
+  }
   ~ConvBatchNormFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   void InitTransParam(const CNodePtr &, int, float *, float *) const override;
 };

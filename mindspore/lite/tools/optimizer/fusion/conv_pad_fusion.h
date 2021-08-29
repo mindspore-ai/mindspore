@@ -26,10 +26,11 @@ namespace mindspore {
 namespace opt {
 class ConvPadFusion : public MultiplePatternProcessPass {
  public:
-  explicit ConvPadFusion(const std::string &name = "conv_pad_fusion", bool multigraph = true)
+  explicit ConvPadFusion(const std::string &name = "ConvPadFusion", bool multigraph = true)
       : MultiplePatternProcessPass(name, multigraph) {}
   ~ConvPadFusion() override = default;
 
+ private:
   std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
   VectorRef DefinePadConvPattern() const;
   VectorRef DefinePadTransposeConvPattern() const;

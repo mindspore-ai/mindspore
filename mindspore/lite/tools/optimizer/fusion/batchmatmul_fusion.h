@@ -24,8 +24,10 @@ namespace mindspore {
 namespace opt {
 class BatchMatMulFusion : public PatternProcessPass {
  public:
-  explicit BatchMatMulFusion(bool multigraph = true) : PatternProcessPass("slice_fullconnect_fusion", multigraph) {}
+  explicit BatchMatMulFusion(bool multigraph = true) : PatternProcessPass("BatchMatMulFusion", multigraph) {}
   ~BatchMatMulFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

@@ -19,32 +19,25 @@
 #include "ops/fusion/activation.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
-namespace {
-constexpr size_t kActivationInputsLength = 2;
-bool IsTupleGetItemNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    auto anf_node = utils::cast<AnfNodePtr>(n);
-    return CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem);
-  }
-  return false;
-}
-}  // namespace
 const BaseRef ConvTupleActivationFusion::DefinePattern() const {
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
-  auto tuple_getitem_var = std::make_shared<CondVar>(IsTupleGetItemNode);
-  auto tuple_index = std::make_shared<Var>();
-  VectorRef tuple_get_item = VectorRef({tuple_getitem_var, conv_var, tuple_index});
-  auto act_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
-  return VectorRef({act_var, tuple_get_item});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
+  auto is_tuple_getitem = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTupleGetItem>);
+  MS_CHECK_TRUE_RET(is_tuple_getitem != nullptr, {});
+  auto is_var = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var != nullptr, {});
+  auto tuple_get_item = VectorRef({is_tuple_getitem, is_conv, is_var});
+  auto is_activation = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
+  MS_CHECK_TRUE_RET(is_activation != nullptr, {});
+  return VectorRef({is_activation, tuple_get_item});
 }
 
 const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                     const EquivPtr &) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr) {
     return nullptr;
   }
   auto act_node = node->cast<CNodePtr>();
@@ -64,10 +57,8 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
   AnfNodePtr tuple_node = act_node->input(1);
   MS_ASSERT(tuple_node != nullptr);
   auto tuple_cnode = tuple_node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(tuple_cnode != nullptr, nullptr);
   auto conv_node = tuple_cnode->input(1);
-  if (CheckIfAnfNodeIsNull(conv_node) != lite::RET_OK) {
-    return nullptr;
-  }
   if (conv_node != nullptr && conv_node->isa<CNode>()) {
     if (IsMultiOutputTensors(func_graph, conv_node)) {
       return nullptr;

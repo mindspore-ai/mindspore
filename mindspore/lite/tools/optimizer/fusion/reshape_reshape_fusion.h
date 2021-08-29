@@ -26,15 +26,15 @@ namespace mindspore {
 namespace opt {
 class ReshapeReshapeFusion : public PatternProcessPass {
  public:
-  explicit ReshapeReshapeFusion(bool multigraph = true, const std::string &name = "conv_activation_fusion")
+  explicit ReshapeReshapeFusion(bool multigraph = true, const std::string &name = "ReshapeReshapeFusion")
       : PatternProcessPass(name, multigraph) {}
   ~ReshapeReshapeFusion() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  VarPtr reshape_input_ = std::make_shared<Var>();
-  VarPtr reshape_shape_ = std::make_shared<Var>();
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  VarPtr reshape_input_{std::make_shared<Var>()};
+  VarPtr reshape_shape_{std::make_shared<Var>()};
 };
 }  // namespace opt
 }  // namespace mindspore

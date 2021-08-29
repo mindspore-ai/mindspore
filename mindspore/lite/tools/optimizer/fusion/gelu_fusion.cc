@@ -20,27 +20,28 @@
 #include "ops/fusion/activation.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
 CNodePtr GeLUFusion::CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                     const EquivPtr &equiv) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
+  MS_ASSERT(func_graph != nullptr && node != nullptr && equiv != nullptr);
   auto gelu_prim = std::make_shared<ops::Activation>();
+  MS_CHECK_TRUE_RET(gelu_prim != nullptr, nullptr);
   gelu_prim->set_activation_type(mindspore::GELU);
   gelu_prim->set_approximate(approximate_);
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
   MS_ASSERT(input_node != nullptr);
   auto gelu_cnode = func_graph->NewCNode(gelu_prim, {input_node});
+  MS_CHECK_TRUE_RET(gelu_cnode != nullptr, nullptr);
   gelu_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_gelu");
   gelu_cnode->set_abstract(node->abstract()->Clone());
   return gelu_cnode;
 }
 
 const float GeLUFusion::GetParameterValue(const EquivPtr &equiv, const VarPtr &input) const {
-  MS_ASSERT(equiv != nullptr);
-  MS_ASSERT(input != nullptr);
+  MS_ASSERT(equiv != nullptr && input != nullptr);
   const float value = -1;
   auto node = utils::cast<AnfNodePtr>((*equiv)[input]);
   if (node == nullptr || !utils::isa<ParameterPtr>(node)) {
@@ -65,10 +66,9 @@ const float GeLUFusion::GetParameterValue(const EquivPtr &equiv, const VarPtr &i
 
 const AnfNodePtr GeLUFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                      const EquivPtr &equiv) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
-  MS_ASSERT(equiv != nullptr);
-  MS_LOG(DEBUG) << "gelu_fusion pass";
+  if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
+    return nullptr;
+  }
   if (!utils::isa<CNodePtr>(node)) {
     return nullptr;
   }

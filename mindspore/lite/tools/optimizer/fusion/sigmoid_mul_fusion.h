@@ -24,8 +24,10 @@ namespace mindspore {
 namespace opt {
 class SigmoidMulFusion : public PatternProcessPass {
  public:
-  explicit SigmoidMulFusion(bool multigraph = true) : PatternProcessPass("sigmoid_mul_fusion", multigraph) {}
+  explicit SigmoidMulFusion(bool multigraph = true) : PatternProcessPass("SigmoidMulFusion", multigraph) {}
   ~SigmoidMulFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

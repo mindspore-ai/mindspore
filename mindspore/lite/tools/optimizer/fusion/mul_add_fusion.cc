@@ -21,22 +21,19 @@
 #include "ops/fusion/scale_fusion.h"
 #include "ops/op_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
-namespace {
-constexpr size_t kMulInputsLength = 3;
-constexpr size_t kAddInputsLength = 3;
-}  // namespace
-
 const BaseRef MulAddFusion::DefinePattern() const {
-  auto mul_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
-  auto add_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
-  return VectorRef({add_var, mul_var});
+  auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  return VectorRef({is_add, is_mul});
 }
 
 bool MulAddFusion::ScaleInputShapeValid() const {
-  MS_ASSERT(scale_tensor_ != nullptr);
-  MS_ASSERT(bias_tensor_ != nullptr);
+  MS_ASSERT(scale_tensor_ != nullptr && bias_tensor_ != nullptr);
   auto scale_shape = scale_tensor_->shape_c();
   auto offset_shape = bias_tensor_->shape_c();
   if (mul_input_shape_.size() < scale_shape.size() || scale_shape.size() == 0) {
@@ -54,11 +51,6 @@ bool MulAddFusion::ScaleInputShapeValid() const {
   return true;
 }
 
-namespace {
-constexpr int kInputIndex1 = 1;
-constexpr int kInputIndex2 = 2;
-}  // namespace
-
 bool MulAddFusion::CheckMulNode(const FuncGraphPtr &func_graph) const {
   MS_ASSERT(func_graph != nullptr);
   if (mul_anode_ == nullptr) {
@@ -69,31 +61,33 @@ bool MulAddFusion::CheckMulNode(const FuncGraphPtr &func_graph) const {
     return false;
   }
   auto mul_node = mul_anode_->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(mul_node != nullptr, false);
   if (!CheckPrimitiveType(mul_node, prim::kPrimMulFusion)) {
     MS_LOG(DEBUG) << "Mul add fusion pass match only mul or add";
     return false;
   }
   auto mul_primitive = GetValueNode<std::shared_ptr<ops::MulFusion>>(mul_node->input(0));
   MS_ASSERT(mul_primitive != nullptr);
+  MS_CHECK_TRUE_RET(mul_primitive->HasAttr(ops::kActivationType), false);
   auto mul_act_type = mul_primitive->get_activation_type();
   if (mul_act_type != ActivationType::NO_ACTIVATION) {
     MS_LOG(DEBUG) << "Only support mul node with no activation";
     return false;
   }
-  if (mul_node == nullptr || mul_node->size() != kInputSizeThree) {
+  if (mul_node->size() != kInputSizeThree) {
     MS_LOG(DEBUG) << "Mul op is null or has error input size";
     return false;
   }
   // find mul's const input and mul input
   AnfNodePtr mul_pre_input_node = nullptr;
   AnfNodePtr mul_pre_const_node = nullptr;
-  auto mul_pre_node_1 = mul_node->input(kInputIndex1);
-  if (CheckIfAnfNodeIsNull(mul_pre_node_1) != lite::RET_OK) {
+  auto mul_pre_node_1 = mul_node->input(1);
+  if (mul_pre_node_1 == nullptr) {
     MS_LOG(DEBUG) << "Pre-node of mul op is nullptr";
     return false;
   }
-  auto mul_pre_node_2 = mul_node->input(kInputIndex2);
-  if (CheckIfAnfNodeIsNull(mul_pre_node_2) != lite::RET_OK) {
+  auto mul_pre_node_2 = mul_node->input(kInputIndexTwo);
+  if (mul_pre_node_2 == nullptr) {
     MS_LOG(DEBUG) << "Pre-node of mul op is nullptr";
     return false;
   }
@@ -126,7 +120,7 @@ bool MulAddFusion::CheckMulNode(const FuncGraphPtr &func_graph) const {
     }
     mul_tensor = mul_bias_node->value()->cast<tensor::TensorPtr>();
   } else {
-    MS_ASSERT(false);
+    MS_LOG(DEBUG) << "mul_pre_const_node is ambiguous.";
   }
   if (mul_tensor == nullptr) {
     MS_LOG(DEBUG) << "Const input of add op should has data";
@@ -153,6 +147,7 @@ bool MulAddFusion::CheckAddNode() const {
   }
   auto add_primitive = GetValueNode<std::shared_ptr<ops::AddFusion>>(add_cnode->input(0));
   MS_ASSERT(add_primitive != nullptr);
+  MS_CHECK_TRUE_RET(add_primitive->HasAttr(ops::kActivationType), false);
   auto add_act_type = add_primitive->get_activation_type();
   if (add_act_type != ActivationType::RELU && add_act_type != ActivationType::RELU6 &&
       add_act_type != ActivationType::NO_ACTIVATION) {
@@ -163,13 +158,13 @@ bool MulAddFusion::CheckAddNode() const {
   // find add's const input and mul input
   AnfNodePtr add_pre_input_node = nullptr;
   AnfNodePtr add_pre_const_node = nullptr;
-  auto add_pre_node_1 = add_cnode->input(kInputIndex1);
-  if (CheckIfAnfNodeIsNull(add_pre_node_1) != lite::RET_OK) {
+  auto add_pre_node_1 = add_cnode->input(1);
+  if (add_pre_node_1 == nullptr) {
     MS_LOG(DEBUG) << "Pre-node of add op is nullptr";
     return false;
   }
-  auto add_pre_node_2 = add_cnode->input(kInputIndex2);
-  if (CheckIfAnfNodeIsNull(add_pre_node_2) != lite::RET_OK) {
+  auto add_pre_node_2 = add_cnode->input(kInputIndexTwo);
+  if (add_pre_node_2 == nullptr) {
     MS_LOG(DEBUG) << "Pre-node of add op is nullptr";
     return false;
   }
@@ -202,7 +197,7 @@ bool MulAddFusion::CheckAddNode() const {
     }
     add_tensor = add_bias_node->value()->cast<tensor::TensorPtr>();
   } else {
-    MS_ASSERT(false);
+    MS_LOG(DEBUG) << "add_pre_const_node is ambiguous.";
   }
   if (add_tensor == nullptr) {
     MS_LOG(DEBUG) << "Const input of add op should has data";
@@ -217,22 +212,7 @@ bool MulAddFusion::CheckAddNode() const {
 bool MulAddFusion::GetMulInputShape() const {
   MS_ASSERT(mul_input_anode_ != nullptr);
   ShapeVector mul_input_shape;
-  AbstractBasePtr mul_input_abstract = nullptr;
-  if (utils::isa<ParameterPtr>(mul_input_anode_)) {
-    auto mul_input_node = mul_input_anode_->cast<ParameterPtr>();
-    MS_ASSERT(mul_bias_node != nullptr);
-    mul_input_abstract = mul_input_node->abstract();
-  } else if (utils::isa<ValueNodePtr>(mul_input_anode_)) {
-    auto mul_input_node = mul_input_anode_->cast<ValueNodePtr>();
-    MS_ASSERT(mul_input_node != nullptr);
-    mul_input_abstract = mul_input_node->abstract();
-  } else if (utils::isa<CNodePtr>(mul_input_anode_)) {
-    auto mul_input_node = mul_input_anode_->cast<CNodePtr>();
-    MS_ASSERT(mul_input_node != nullptr);
-    mul_input_abstract = mul_input_node->abstract();
-  } else {
-    MS_ASSERT(false);
-  }
+  auto mul_input_abstract = mul_input_anode_->abstract();
   if (mul_input_abstract == nullptr) {
     MS_LOG(DEBUG) << "Mul input node has no abstract";
     return false;
@@ -243,7 +223,7 @@ bool MulAddFusion::GetMulInputShape() const {
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(mul_input_abstract);
   MS_ASSERT(abstract_tensor != nullptr);
-  MS_ASSERT(abstract_tensor->BuildShape() != nullptr);
+  MS_CHECK_TRUE_RET(abstract_tensor->BuildShape() != nullptr, false);
   if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
     MS_LOG(DEBUG) << "BuildShape of abstract of mul input node should be ShapePtr";
     return false;
@@ -253,9 +233,7 @@ bool MulAddFusion::GetMulInputShape() const {
 }
 
 const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
@@ -284,7 +262,7 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   // create scale primitive
-  auto scale_primitive = new (std::nothrow) mindspore::ops::ScaleFusion();
+  auto scale_primitive = std::make_shared<ops::ScaleFusion>();
   if (scale_primitive == nullptr) {
     MS_LOG(ERROR) << "new scale primitive failed";
     return nullptr;
@@ -292,8 +270,7 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &func_graph, const Anf
   scale_primitive->set_activation_type(scale_act_type_);
   scale_primitive->set_axis(-(bias_tensor_->shape_c().size()));
   // create scale op
-  auto scale_node = func_graph->NewCNode(std::shared_ptr<ops::PrimitiveC>(scale_primitive),
-                                         {mul_input_anode_, mul_const_anode_, add_const_anode_});
+  auto scale_node = func_graph->NewCNode(scale_primitive, {mul_input_anode_, mul_const_anode_, add_const_anode_});
   return scale_node;
 }
 }  // namespace mindspore::opt

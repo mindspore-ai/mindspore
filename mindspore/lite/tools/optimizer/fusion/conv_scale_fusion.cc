@@ -18,6 +18,7 @@
 #include <memory>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -25,21 +26,18 @@ constexpr size_t kScaleWeightIndex = 2;
 constexpr size_t kScaleBiasIndex = 3;
 constexpr size_t kScaleNoBiasLen = 3;
 constexpr size_t kScaleWithBiasLen = 4;
-bool IsScaleNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    auto anf_node = utils::cast<AnfNodePtr>(n);
-    return CheckPrimitiveType(anf_node, prim::kPrimScaleFusion);
-  }
-  return false;
-}
 }  // namespace
 
 const BaseRef ConvScaleFusion::DefinePattern() const {
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
-  auto bn_var = std::make_shared<CondVar>(IsScaleNode);
-  auto weight_var = std::make_shared<CondVar>(IsParamNode);
-  auto bias_var = std::make_shared<SeqVar>();
-  return VectorRef({bn_var, conv_var, weight_var, bias_var});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
+  auto is_scale = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimScaleFusion>);
+  MS_CHECK_TRUE_RET(is_scale != nullptr, {});
+  auto is_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  return VectorRef({is_scale, is_conv, is_param, is_seq_var});
 }
 void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num, float *trans_scale,
                                      float *trans_bias) const {

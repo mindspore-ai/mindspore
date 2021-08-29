@@ -34,16 +34,16 @@ class GLUFusion : public PatternProcessPass {
         split_prim_(std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSplit>)) {}
 
   ~GLUFusion() override = default;
+
+ private:
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   const BaseRef DefinePattern() const override;
+  CNodePtr CreateGLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
 
  protected:
   VarPtr input_ = nullptr;
   VarPtr axis_ = nullptr;
   VarPtr split_prim_ = nullptr;
-
- private:
-  CNodePtr CreateGLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
 };
 }  // namespace opt
 }  // namespace mindspore

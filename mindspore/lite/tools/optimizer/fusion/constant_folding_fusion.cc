@@ -54,7 +54,7 @@ void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *out
 }
 
 std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, converter::FmkType fmk_type) {
-  MS_ASSERT(CNode != nullptr);
+  MS_ASSERT(cnode != nullptr);
   std::vector<Tensor *> tensors;
   for (size_t i = 1; i < cnode->size(); ++i) {
     int status = 0;
@@ -138,6 +138,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(tensor != nullptr);
   auto parameter = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(parameter != nullptr, nullptr);
   std::vector<int> shape(tensor->shape());
   std::vector<int64_t> shape_vector;
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
@@ -165,7 +166,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
 }
 kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> *outputs, const CNodePtr &cnode,
                                   lite::InnerContext *context, mindspore::Context *ms_context) {
-  MS_ASSERT(cnode != nullptr && context != nullptr);
+  MS_ASSERT(outputs != nullptr && cnode != nullptr && context != nullptr && ms_context != nullptr);
   auto prim_t = lite::GetPrimitiveT(cnode->input(0));
   if (prim_t == nullptr) {
     return nullptr;
@@ -260,6 +261,7 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
                              const std::vector<Tensor *> &outputs) {
   MS_ASSERT(cnode != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_RET(prim != nullptr, lite::RET_ERROR);
   auto quant_tensor_info_ptr = prim->GetAttr("quant_params");
   if (quant_tensor_info_ptr == nullptr) {
     return lite::RET_OK;
@@ -295,10 +297,27 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
 }
 }  //  namespace
 
+bool ConstFoldPass::PreProcess() const {
+  if (context_ == nullptr) {
+    context_ = std::make_shared<lite::InnerContext>();
+    MS_CHECK_TRUE_RET(context_ != nullptr, false);
+    if (context_->Init() != RET_OK) {
+      return false;
+    }
+  }
+  if (ms_context_ == nullptr) {
+    ms_context_ = std::shared_ptr<mindspore::Context>(lite::MSContextFromContext(context_.get()));
+    MS_CHECK_TRUE_RET(ms_context_ != nullptr, false);
+  }
+  return true;
+}
 const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK ||
-      !node->isa<CNode>()) {
+  if (!PreProcess()) {
+    MS_LOG(ERROR) << "run pre-process failed.";
+    return nullptr;
+  }
+  if (func_graph == nullptr || node == nullptr) {
     return nullptr;
   }
   auto any_node = node->cast<CNodePtr>();
@@ -324,7 +343,13 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
     auto output_nums = GetOutputTensorNum(input_cnode);
     std::vector<Tensor *> output_tensors;
     for (size_t j = 0; j < output_nums; j++) {
-      output_tensors.push_back(new (std::nothrow) Tensor());
+      auto out_tensor = new (std::nothrow) Tensor();
+      if (out_tensor == nullptr) {
+        MS_LOG(ERROR) << "new a tensor failed.";
+        FreeTensors(&input_tensors, &output_tensors);
+        return nullptr;
+      }
+      output_tensors.push_back(out_tensor);
     }
     if (CopyQuantParams(input_cnode, input_tensors, output_tensors) != lite::RET_OK) {
       MS_LOG(ERROR) << "copy quant params failed.";

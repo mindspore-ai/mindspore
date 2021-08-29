@@ -19,26 +19,20 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/fusion/activation.h"
 #include "ops/affine.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
-static bool IsAffineNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    auto anf_node = utils::cast<AnfNodePtr>(n);
-    return CheckPrimitiveType(anf_node, prim::kPrimAffine);
-  }
-  return false;
-}
-
 const BaseRef AffineActivationFusion::DefinePattern() const {
-  auto activation_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
-  auto affine_var = std::make_shared<CondVar>(IsAffineNode);
-  return VectorRef({activation_var, affine_var});
+  auto is_activation = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
+  MS_CHECK_TRUE_RET(is_activation != nullptr, {});
+  auto is_affine = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAffine>);
+  MS_CHECK_TRUE_RET(is_affine != nullptr, {});
+  return VectorRef({is_activation, is_affine});
 }
 
 const AnfNodePtr AffineActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const EquivPtr &equiv) const {
-  MS_ASSERT(equiv != nullptr);
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
@@ -63,7 +57,7 @@ const AnfNodePtr AffineActivationFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
   auto affine_node = pre_node->cast<CNodePtr>();
-  if (CheckIfAnfNodeIsNull(pre_node) != lite::RET_OK) {
+  if (pre_node == nullptr) {
     MS_LOG(ERROR) << "the splice_node is null.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;

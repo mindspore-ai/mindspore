@@ -16,23 +16,21 @@
 
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kAddInputSize = 3;
-constexpr size_t kMatMulInputSize = 3;
 bool CheckAndGetMatMulIndex(const CNodePtr &cnode, size_t *index) {
-  MS_ASSERT(cnode != nullptr);
-  MS_ASSERT(index != nullptr);
-  if (cnode->size() != kAddInputSize) {
+  MS_ASSERT(cnode != nullptr && index != nullptr);
+  if (cnode->size() != kInputSizeThree) {
     return false;
   }
   size_t matmul_index = 0;
   for (size_t i = 1; i < cnode->size(); ++i) {
     if (CheckPrimitiveType(cnode->input(i), prim::kPrimMatMul)) {
       auto matmul_cnode = cnode->input(i)->cast<CNodePtr>();
-      if (matmul_cnode->size() > kMatMulInputSize) {
+      if (matmul_cnode->size() > kInputSizeThree) {
         continue;
       }
       matmul_index = i;
@@ -51,6 +49,7 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nulltr);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
+    MS_CHECK_TRUE_RET(node != nullptr, false);
     if (!utils::isa<CNode>(node)) {
       continue;
     }
@@ -63,7 +62,7 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto matmul_cnode = cnode->input(index)->cast<CNodePtr>();
-    auto bias_node = cnode->input(kAddInputSize - index);
+    auto bias_node = cnode->input(kInputSizeThree - index);
     if (!utils::isa<ValueNode>(bias_node) &&
         (!utils::isa<Parameter>(bias_node) || !bias_node->cast<ParameterPtr>()->default_param())) {
       continue;
@@ -71,10 +70,8 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
     auto manager = func_graph->manager();
     MS_ASSERT(manager != nullptr);
     matmul_cnode->set_fullname_with_scope(node->fullname_with_scope());
-    auto tr = manager->Transact();
-    tr.AddEdge(matmul_cnode, bias_node);
-    tr.Commit();
-    manager->Replace(node, matmul_cnode);
+    manager->AddEdge(matmul_cnode, bias_node);
+    (void)manager->Replace(node, matmul_cnode);
   }
   return false;
 }

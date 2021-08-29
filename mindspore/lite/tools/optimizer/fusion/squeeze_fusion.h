@@ -25,9 +25,11 @@ namespace mindspore {
 namespace opt {
 class SqueezeFusion : public PatternProcessPass {
  public:
-  explicit SqueezeFusion(bool multigraph = true, const std::string &name = "squeeze_fusion")
+  explicit SqueezeFusion(bool multigraph = true, const std::string &name = "SqueezeFusion")
       : PatternProcessPass(name, multigraph) {}
   ~SqueezeFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

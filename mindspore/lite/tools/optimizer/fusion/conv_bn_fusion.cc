@@ -21,6 +21,7 @@
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -44,8 +45,11 @@ bool IsBatchNode(const BaseRef &n) {
 }
 void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node, float *trans_scale, float eps,
                  int kernel_num) {
+  MS_ASSERT(bn_scale_node != nullptr && bn_var_node != nullptr && trans_scale != nullptr);
   auto bn_var_param = bn_var_node->cast<ParameterPtr>()->default_param();
+  MS_ASSERT(bn_var_param != nullptr);
   auto bn_var_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_var_param);
+  MS_ASSERT(bn_var_tensor != nullptr);
   auto bn_var_data = reinterpret_cast<float *>(bn_var_tensor->data_c());
   // cal transScale, tf : scale/sqrt(variance + eps); caffe : 1/sqrt(variance + eps)
   if (memcpy_s(trans_scale, kernel_num * sizeof(float), bn_var_data, kernel_num * sizeof(float)) != EOK) {
@@ -66,7 +70,9 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
   }
   if (bn_scale_node != nullptr) {
     auto bn_scale_param = bn_scale_node->cast<ParameterPtr>()->default_param();
+    MS_ASSERT(bn_scale_param != nullptr);
     auto bn_scale_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_scale_param);
+    MS_ASSERT(bn_scale_tensor != nullptr);
     auto bn_scale_data = reinterpret_cast<float *>(bn_scale_tensor->data_c());
     // scale/sqrt(variance + eps)
     for (int32_t i = 0; i < kernel_num; i++) {
@@ -76,8 +82,11 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
 }
 void CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node, const float *trans_scale,
                   float *trans_bias, int kernel_num) {
+  MS_ASSERT(bn_mean_node != nullptr && bn_bias_node != nullptr && trans_scale != nullptr && trans_bias != nullptr);
   auto bn_mean_param = bn_mean_node->cast<ParameterPtr>()->default_param();
+  MS_ASSERT(bn_mean_param != nullptr);
   auto bn_mean_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_mean_param);
+  MS_ASSERT(bn_mean_tensor != nullptr);
   auto bn_mean_data = reinterpret_cast<float *>(bn_mean_tensor->data_c());
   // cal transBias, tf : -scale*mean/sqrt(variance + eps) + bias; caffe : -mean/sqrt(variance + eps)
   // -mean/sqrt(variance + eps)
@@ -87,7 +96,9 @@ void CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node
 
   if (bn_bias_node != nullptr) {
     auto bn_bias_param = bn_bias_node->cast<ParameterPtr>()->default_param();
+    MS_ASSERT(bn_bias_param != nullptr);
     auto bn_bias_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_bias_param);
+    MS_ASSERT(bn_bias_tensor != nullptr);
     auto bn_bias_data = reinterpret_cast<float *>(bn_bias_tensor->data_c());
     // -scale*mean/sqrt(variance + eps) + bias
     for (int32_t i = 0; i < kernel_num; i++) {
@@ -107,11 +118,15 @@ STATUS CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_f
     return RET_ERROR;
   }
   auto origin_param = origin_node->cast<ParameterPtr>()->default_param();
+  MS_CHECK_TRUE_RET(origin_param != nullptr, RET_ERROR);
   auto origin_tensor = std::dynamic_pointer_cast<tensor::Tensor>(origin_param);
+  MS_CHECK_TRUE_RET(origin_tensor != nullptr, RET_ERROR);
   auto origin_data = reinterpret_cast<float *>(origin_tensor->data_c());
 
   auto scale_factor_param = scale_factor_node->cast<ParameterPtr>()->default_param();
+  MS_CHECK_TRUE_RET(scale_factor_param != nullptr, RET_ERROR);
   auto scale_factor_tensor = std::dynamic_pointer_cast<tensor::Tensor>(scale_factor_param);
+  MS_CHECK_TRUE_RET(scale_factor_tensor != nullptr, RET_ERROR);
   if (scale_factor_tensor->DataSize() < 1) {
     MS_LOG(ERROR) << "scale factor data size is not equal to 1";
     return RET_ERROR;
@@ -125,12 +140,17 @@ STATUS CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_f
 }
 }  // namespace
 const BaseRef ConvBatchNormFusion::DefinePattern() const {
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
-  auto bn_var = std::make_shared<CondVar>(IsBatchNode);
-  auto bn_mean_var = std::make_shared<CondVar>(IsParamNode);
-  auto bn_variable_var = std::make_shared<CondVar>(IsParamNode);
-  auto bn_other_var = std::make_shared<SeqVar>();
-  return VectorRef({bn_var, conv_var, bn_mean_var, bn_variable_var, bn_other_var});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
+  auto is_bn = std::make_shared<CondVar>(IsBatchNode);
+  MS_CHECK_TRUE_RET(is_bn != nullptr, nullptr);
+  auto is_param_bn_mean = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param_bn_mean != nullptr, nullptr);
+  auto is_param_bn_var = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param_bn_var != nullptr, nullptr);
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, nullptr);
+  return VectorRef({is_bn, is_conv, is_param_bn_mean, is_param_bn_var, is_seq_var});
 }
 
 void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num, float *trans_scale,
@@ -156,6 +176,7 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
   AnfNodePtr bn_bias_node = nullptr;
   float eps = 0;
   auto primitive_c = GetValueNode<PrimitiveCPtr>(bn_node->input(0));
+  MS_ASSERT(primitive_c != nullptr);
   if (CheckPrimitiveType(bn_node, prim::kPrimBatchNorm)) {
     bn_mean_node = bn_node->input(kCaffeBNMeanIndex);
     bn_variance_node = bn_node->input(kCaffeBNVarIndex);
@@ -164,7 +185,6 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
         !bn_scale_factor_node->isa<Parameter>()) {
       return;
     }
-    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::BatchNorm>>(primitive_c));
     auto primc = utils::cast<std::shared_ptr<mindspore::ops::BatchNorm>>(primitive_c);
     MS_ASSERT(primc != nullptr);
     if (primc->GetAttr("epsilon") != nullptr) {
@@ -179,7 +199,6 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
     bn_bias_node = bn_node->input(kTFBNBiasIndex);
     bn_mean_node = bn_node->input(kTFBNMeanIndex);
     bn_variance_node = bn_node->input(kTFBNVarIndex);
-    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::FusedBatchNorm>>(primitive_c));
     auto primc = utils::cast<std::shared_ptr<mindspore::ops::FusedBatchNorm>>(primitive_c);
     MS_ASSERT(primc != nullptr);
     if (primc->GetAttr("epsilon") != nullptr) {
