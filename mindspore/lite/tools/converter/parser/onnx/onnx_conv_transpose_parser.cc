@@ -19,13 +19,13 @@
 #include <memory>
 #include <algorithm>
 #include "ops/fusion/conv2d_transpose_fusion.h"
-#include "tools/converter/parser/onnx/onnx_conv_parser.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_pad({0, 0, 0, 0});
   mindspore::PadMode pad_mode = mindspore::PadMode::PAD;
   std::vector<int64_t> kernel, dilate, stride, pads, output_paddings;
@@ -90,6 +90,10 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
       return nullptr;
     }
     prim->set_in_channel(weight_shape[0]);
+    if (INT_MUL_OVERFLOW_THRESHOLD(weight_shape[1], group, INT64_MAX)) {
+      MS_LOG(ERROR) << "channel out overflow";
+      return nullptr;
+    }
     prim->set_out_channel(weight_shape[1] * group);
 
     if (group != 1 && weight_shape[1] == 1) {

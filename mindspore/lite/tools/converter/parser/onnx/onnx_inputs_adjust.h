@@ -26,16 +26,7 @@ using mindspore::converter::FmkType;
 namespace mindspore::lite {
 class OnnxInputAdjust {
  public:
-  OnnxInputAdjust() {}
-  ~OnnxInputAdjust() = default;
-  static STATUS ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node);
-  static STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  static STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  static STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
-                               const std::string &attr_name);
-  static STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  STATUS AdjustResize(const CNodePtr &cnode);
-  bool Run(const FuncGraphPtr &func_graph);
+  static bool Adjust(const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_INPUTS_ADJUST_H_

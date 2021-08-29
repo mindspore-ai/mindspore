@@ -17,12 +17,13 @@
 #include "tools/converter/parser/onnx/onnx_lrn_parser.h"
 #include <memory>
 #include "ops/lrn.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::LRN>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   int64_t size = 0;
   float alpha = 0;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {

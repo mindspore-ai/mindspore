@@ -18,14 +18,14 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_DECONV_PARSER_H
 
 #include <memory>
-#include "tools/converter/parser/onnx/onnx_node_parser.h"
+#include "tools/converter/parser/onnx/onnx_conv_base_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-class OnnxDeConvParser : public OnnxNodeParser {
+class OnnxDeConvParser : public OnnxConvBaseParser {
  public:
-  OnnxDeConvParser() : OnnxNodeParser("DeConv") {}
+  OnnxDeConvParser() : OnnxConvBaseParser("DeConv") {}
   ~OnnxDeConvParser() override = default;
 
   ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;

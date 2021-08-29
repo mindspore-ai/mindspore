@@ -16,23 +16,30 @@
 
 #include "tools/converter/parser/onnx/onnx_given_tensor_fill_parser.h"
 #include <functional>
+#include <algorithm>
 #include <memory>
 #include <vector>
-#include <algorithm>
 #include "tools/common/tensor_util.h"
 #include "tools/converter/ops/ops_def.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
-                                                              const std::vector<int> &shape) {
-  int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+namespace {
+STATUS ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
+                                   const std::vector<int> &shape) {
+  MS_ASSERT(prim != nullptr);
+  int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "values"; });
   if (iter == onnx_node.attribute().end()) {
     return RET_OK;
   }
   ShapeVector shape_vector(shape.begin(), shape.end());
+  if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(int64_t), SIZE_MAX)) {
+    MS_LOG(ERROR) << "data_size overflow";
+    return RET_ERROR;
+  }
   size_t data_size = data_count * sizeof(int64_t) / sizeof(uint8_t);
   auto tensor_info = CreateTensorInfo(iter->ints().data(), data_size, shape_vector, kNumberTypeInt64);
   if (tensor_info == nullptr) {
@@ -43,9 +50,10 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodePr
   return RET_OK;
 }
 
-STATUS OnnxGivenTensorFillParser::ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
-                                                           const std::vector<int> &shape) {
-  int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+STATUS ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
+                                const std::vector<int> &shape) {
+  MS_ASSERT(prim != nullptr);
+  int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "values"; });
   if (iter == onnx_node.attribute().end()) {
@@ -60,10 +68,12 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenTensorFill(const onnx::NodeProto
   prim->set_attr("const_data", tensor_info);
   return RET_OK;
 }
+}  // namespace
+
 ops::PrimitiveC *OnnxGivenTensorFillParser::Parse(const onnx::GraphProto &onnx_graph,
                                                   const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<lite::Constant>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   std::vector<int64_t> shape_vector;
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "shape"; });

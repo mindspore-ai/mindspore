@@ -18,12 +18,13 @@
 #include <vector>
 #include <memory>
 #include "ops/reshape.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Reshape>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   std::vector<int32_t> shape;
   shape.clear();
   if (onnx_node.input_size() != 2) {

@@ -29,11 +29,6 @@ class OnnxGivenTensorFillParser : public OnnxNodeParser {
   ~OnnxGivenTensorFillParser() override = default;
 
   ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
-
-  STATUS ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
-                                     const std::vector<int> &shape);
-  STATUS ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
-                                  const std::vector<int> &shape);
 };
 }  // namespace lite
 }  // namespace mindspore

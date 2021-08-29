@@ -30,17 +30,29 @@ OnnxNodeParserRegistry::~OnnxNodeParserRegistry() {
   }
 }
 
-OnnxNodeParserRegistry *OnnxNodeParserRegistry::GetInstance() {
+OnnxNodeParserRegistry &OnnxNodeParserRegistry::GetInstance() {
   static OnnxNodeParserRegistry instance;
-  return &instance;
+  return instance;
 }
 
-OnnxNodeParser *OnnxNodeParserRegistry::GetNodeParser(const std::string &name) {
+OnnxNodeParser *OnnxNodeParserRegistry::GetNodeParser(const std::string &name) const {
   auto it = parsers.find(name);
   if (it != parsers.end()) {
     return it->second;
   }
   return nullptr;
+}
+
+void OnnxNodeParserRegistry::RegNodeParser(const std::string &name, OnnxNodeParser *parser) {
+  if (parser == nullptr) {
+    MS_LOG(WARNING) << "Input OnnxNodeParser is nullptr";
+    return;
+  }
+  if (this->parsers.find(name) != this->parsers.end()) {
+    MS_LOG(WARNING) << "OnnxNodeParser " << name << " is already exist";
+    return;
+  }
+  this->parsers[name] = parser;
 }
 }  // namespace lite
 }  // namespace mindspore

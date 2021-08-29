@@ -19,13 +19,14 @@
 #include <vector>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include "ops/constant_of_shape.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_graph,
                                                   const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::ConstantOfShape>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   int data_type = 0;
   std::vector<float> values;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -33,11 +34,11 @@ ops::PrimitiveC *OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_g
     if (attribute_name == "value") {
       switch (onnx_node_attr.type()) {
         case onnx::AttributeProto_AttributeType_FLOAT:
-          data_type = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_FLOAT);
+          data_type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_FLOAT);
           values.push_back(onnx_node_attr.f());
           break;
         case onnx::AttributeProto_AttributeType_INT:
-          data_type = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
+          data_type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
           values.push_back(static_cast<float>(onnx_node_attr.i()));
           break;
         case onnx::AttributeProto_AttributeType_TENSOR: {

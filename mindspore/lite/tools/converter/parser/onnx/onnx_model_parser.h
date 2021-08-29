@@ -44,34 +44,18 @@ class OnnxModelParser : public converter::ModelParser {
 
   FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
-  static int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
-
-  static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
-  static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor,
-                                   const tensor::TensorPtr &param_value_lite);
-  STATUS InitOriginModel(const std::string &model_file);
-
  private:
+  STATUS InitOriginModel(const std::string &model_file);
   STATUS ConvertNodes(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
                       std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, std::vector<AnfNodePtr> *graph_inputs,
                       const std::string &root_node_name);
   STATUS ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
                           std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
                           std::vector<AnfNodePtr> *graph_inputs, const std::string &root_node_name);
-  static STATUS ConvertConstTensors(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
-                                    std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map);
-  static STATUS ConvertGraphInputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
-                                   std::unordered_map<std::string, AnfNodePtr> *nodes_map);
-  static STATUS ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
-                                    const std::unordered_map<std::string, AnfNodePtr> &anf_nodes_map);
-  static STATUS BuildReturnNode(const FuncGraphPtr &func_graph_ptr, const std::vector<AnfNodePtr> &return_inputs);
-  static STATUS BuildParameterNode(const ParameterPtr &parameter_node, const onnx::TensorProto &tensor);
   STATUS BuildParameterNodeForQuantParam(const void *data, const std::string &name, TypeId type);
   STATUS BuildCNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
                     std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, std::vector<AnfNodePtr> *graph_inputs,
                     ops::PrimitiveC *primitive_c, std::string loop_name);
-  static STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
-                               std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, const CNodePtr &cnode);
   STATUS ConvertOpQuantParams(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c);
   STATUS ParseQuantParam(const onnx::NodeProto &onnx_node);
   STATUS SetTensorQuantParam(const std::string &tensor_name, std::vector<schema::QuantParamT> *quant_params);
@@ -87,18 +71,18 @@ class OnnxModelParser : public converter::ModelParser {
                             int act_output_num);
   STATUS AddTensorListStackNode(const AnfNodePtr &root_while_node, const onnx::NodeProto &onnx_node, int act_output_num,
                                 int body_output_size);
-  static STATUS BuildCondGraph(const FuncGraphPtr &cond_graph, const AnfNodePtr &root_while_node, int inputs_num,
-                               const std::string &cond_graph_name);
+  FuncGraphPtr BuildBodyGraph(const onnx::NodeProto &loop_node, const onnx::GraphProto &subgraph_proto,
+                              int *cond_graph_input_num);
   STATUS ConvertIfSubgraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,
                            const std::string &subgrah_name, const std::string &if_node_name,
                            const std::string &root_node_name);
 
-  onnx::ModelProto onnx_model_;
-  onnx::GraphProto onnx_root_graph_;
-  std::vector<FuncGraphPtr> all_subgraphs_;
-  std::unordered_map<std::string, AnfNodePtr> anf_nodes_map_;
-  std::unordered_map<std::string, std::unordered_map<std::string, AnfNodePtr> *> control_nodes_map_;
-  std::unordered_map<std::string, std::string> child_root_map_;  // for nest control flow node
+  onnx::ModelProto onnx_model_{};
+  onnx::GraphProto onnx_root_graph_{};
+  std::vector<FuncGraphPtr> all_subgraphs_{};
+  std::unordered_map<std::string, AnfNodePtr> anf_nodes_map_{};
+  std::unordered_map<std::string, std::unordered_map<std::string, AnfNodePtr> *> control_nodes_map_{};
+  std::unordered_map<std::string, std::string> child_root_map_{};  // for nest control flow node
 };
 }  // namespace lite
 }  // namespace mindspore

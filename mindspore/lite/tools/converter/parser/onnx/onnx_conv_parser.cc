@@ -20,103 +20,13 @@
 #include <vector>
 #include <string>
 #include "ops/fusion/conv2d_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
-namespace {
-constexpr size_t kNumDim1 = 1;
-constexpr size_t kNumDim2 = 2;
-constexpr size_t kNumDim3 = 3;
-constexpr size_t kNumDim4 = 4;
-}  // namespace
-STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kernels, std::vector<int64_t> *strides,
-                    std::vector<int64_t> *dilation, std::vector<int64_t> *pads, bool *conv1d) {
-  for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    if (onnx_node_attr.name() == "dilations") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim1:
-          *conv1d = true;
-          dilation->push_back(1);
-          dilation->push_back(onnx_node_attr.ints(0));
-          break;
-        case kNumDim2:
-          dilation->push_back(onnx_node_attr.ints(0));
-          dilation->push_back(onnx_node_attr.ints(1));
-          break;
-        default:
-          MS_LOG(ERROR) << "dilations size " << onnx_node_attr.ints().size() << " is not 1 or 2";
-          return RET_ERROR;
-      }
-    } else if (onnx_node_attr.name() == "kernels") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim1:
-          *conv1d = true;
-          kernels->push_back(1);
-          kernels->push_back(onnx_node_attr.ints(0));
-          break;
-        case kNumDim2:
-          kernels->push_back(onnx_node_attr.ints(0));
-          kernels->push_back(onnx_node_attr.ints(1));
-          break;
-        default:
-          MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 1 or 2";
-          return RET_ERROR;
-      }
-    } else if (onnx_node_attr.name() == "kernel_shape") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim1:
-          *conv1d = true;
-          kernels->push_back(1);
-          kernels->push_back(onnx_node_attr.ints(0));
-          break;
-        case kNumDim2:
-          kernels->push_back(onnx_node_attr.ints(0));
-          kernels->push_back(onnx_node_attr.ints(1));
-          break;
-        default:
-          MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 1 or 2";
-          return RET_ERROR;
-      }
-    } else if (onnx_node_attr.name() == "pads") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim2:
-          *conv1d = true;
-          pads->push_back(0);
-          pads->push_back(0);
-          pads->push_back(onnx_node_attr.ints(0));
-          pads->push_back(onnx_node_attr.ints(1));
-          break;
-        case kNumDim4:
-          pads->push_back(onnx_node_attr.ints(0));
-          pads->push_back(onnx_node_attr.ints(2));
-          pads->push_back(onnx_node_attr.ints(1));
-          pads->push_back(onnx_node_attr.ints(3));
-          break;
-        default:
-          MS_LOG(ERROR) << "pads size " << onnx_node_attr.ints().size() << " is not 2 or 4";
-          return RET_ERROR;
-      }
-    } else if (onnx_node_attr.name() == "strides") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim1:
-          *conv1d = true;
-          strides->push_back(1);
-          strides->push_back(onnx_node_attr.ints(0));
-          break;
-        case kNumDim2:
-          strides->push_back(onnx_node_attr.ints(0));
-          strides->push_back(onnx_node_attr.ints(1));
-          break;
-        default:
-          MS_LOG(ERROR) << "strides size " << onnx_node_attr.ints().size() << " is not 1 or 2";
-          return RET_ERROR;
-      }
-    }
-  }
-  return RET_OK;
-}
-
 STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, int64_t group,
                       int64_t *channel_out, int64_t *channel_in) {
+  MS_ASSERT(channel_out != nullptr);
+  MS_ASSERT(channel_in != nullptr);
   const auto &onnx_conv_weight = onnx_node.input(1);
   if (onnx_node.op_type() == "Conv") {
     auto node_iter =
@@ -132,7 +42,15 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
       for (int i = 0; i < size; ++i) {
         weight_shape.emplace_back((*node_iter).dims(i));
       }
+      if (size < 2) {
+        MS_LOG(ERROR) << "index out of dims range";
+        return RET_ERROR;
+      }
       *channel_out = weight_shape[0];
+      if (INT_MUL_OVERFLOW_THRESHOLD(weight_shape[1], group, INT64_MAX)) {
+        MS_LOG(ERROR) << "channel in overflow";
+        return RET_ERROR;
+      }
       *channel_in = weight_shape[1] * group;
     }
   } else {
@@ -155,11 +73,15 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
     } else {
       return RET_NO_CHANGE;
     }
-    if (dims.size() < kNumDim4) {
-      MS_LOG(ERROR) << "conv weight size is not 4D, please check.";
+    if (dims.size() < 4) {
+      MS_LOG(ERROR) << "index out of dims range";
       return RET_ERROR;
     }
     *channel_out = dims.at(0);
+    if (INT_MUL_OVERFLOW_THRESHOLD(dims.at(3), group, INT64_MAX)) {
+      MS_LOG(ERROR) << "channel in overflow";
+      return RET_ERROR;
+    }
     *channel_in = dims.at(3) * group;
   }
   return RET_OK;
@@ -167,7 +89,7 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
 
 ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Conv2DFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_pad({0, 0, 0, 0});
   mindspore::Format format = mindspore::Format::NCHW;
   mindspore::PadMode pad_mode = mindspore::PadMode::PAD;

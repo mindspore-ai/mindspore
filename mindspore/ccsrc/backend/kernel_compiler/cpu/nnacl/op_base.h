@@ -54,7 +54,15 @@
   ((x == 0) ? false                                                                        \
             : ((x) > 0 ? ((y >= 0) ? (INT_MAX / (x)) < (y) : (INT_MAX / (x)) < (-1 * (y))) \
                        : ((y >= 0) ? (INT_MAX / (x)) > (-1 * (y)) : (INT_MAX / (x)) > (y))))
+
+#define INT_MUL_OVERFLOW_THRESHOLD(x, y, threshold)                                                \
+  ((x == 0) ? false                                                                                \
+            : ((x) > 0 ? ((y >= 0) ? ((threshold) / (x)) < (y) : ((threshold) / (x)) < (-1 * (y))) \
+                       : ((y >= 0) ? ((threshold) / (x)) > (-1 * (y)) : ((threshold) / (x)) > (y))))
+
 #define INT_ADD_OVERFLOW(x, y) (INT_MAX - (x)) < (y)
+
+#define INT_ADD_OVERFLOW_THRESHOLD(x, y, threshold) ((threshold) - (x)) < (y)
 
 #define COMM_SHAPE_SIZE 4
 #define MAX_SHAPE_SIZE 8
@@ -84,8 +92,20 @@
 #define FLT16_MAX 65504
 #define NNACL_NC4HW4 13
 
-#ifndef ENABLE_HIGH_PERFORMANCE
+#if ENABLE_HIGH_PERFORMANCE
+#define MS_CHECK_TRUE_RET(value, errcode)
+#define MS_CHECK_FALSE(value, errcode)
+#define MS_CHECK_TRUE_MSG(value, errcode, msg)
+#define MS_CHECK_FALSE_MSG(value, errcode, msg)
+#define MS_CHECK_LT(value1, value2, errcode)
+#define MS_CHECK_GT(value1, value2, errcode)
+#define MS_CHECK_LE(value1, value2, errcode)
+#define MS_CHECK_GE(value1, value2, errcode)
 
+#define NNACL_CHECK_ZERO_RETURN_ERR(val)
+#define NNACL_CHECK_ZERO_RETURN(val)
+#define NNACL_CHECK_NULL_RETURN_ERR(ptr)
+#else
 // Check whether value is true, if not return 'errcode'
 #define MS_CHECK_TRUE_RET(value, errcode) \
   do {                                    \
@@ -172,21 +192,6 @@
       return NNACL_NULL_PTR;             \
     }                                    \
   } while (0)
-
-#else
-
-#define MS_CHECK_TRUE_RET(value, errcode)
-#define MS_CHECK_FALSE(value, errcode)
-#define MS_CHECK_TRUE_MSG(value, errcode)
-#define MS_CHECK_FALSE_MSG(value, errcode)
-#define MS_CHECK_LT(value1, value2, errcode)
-#define MS_CHECK_GT(value1, value2, errcode)
-#define MS_CHECK_LE(value1, value2, errcode)
-#define MS_CHECK_GE(value1, value2, errcode)
-
-#define NNACL_CHECK_ZERO_RETURN_ERR(val)
-#define NNACL_CHECK_ZERO_RETURN(val)
-#define NNACL_CHECK_NULL_RETURN_ERR(ptr)
 #endif
 
 typedef enum LiteDataType {

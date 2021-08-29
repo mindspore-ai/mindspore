@@ -17,12 +17,13 @@
 #include "tools/converter/parser/onnx/onnx_instance_norm_parser.h"
 #include <memory>
 #include "ops/instance_norm.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxInstanceNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::InstanceNorm>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (!onnx_node.attribute().empty()) {
     auto onnx_node_attr = onnx_node.attribute().at(0);
     if (onnx_node_attr.name() == "epsilon") {

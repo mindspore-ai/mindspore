@@ -16,23 +16,23 @@
 #include "tools/converter/parser/onnx/onnx_pad_adjust.h"
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <memory>
 #include "ops/reshape.h"
 #include "ops/transpose.h"
 #include "ops/primitive_c.h"
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 namespace {
 constexpr uint32_t kTripleNum = 3;
 constexpr uint32_t kQuadraNum = 4;
-}  // namespace
-ParameterPtr OnnxPadAdjust::CreateNewParameter(const FuncGraphPtr &func_graph, const std::vector<int> &data) {
+
+ParameterPtr CreateNewParameter(const FuncGraphPtr &func_graph, const std::vector<int> &data) {
   MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(data != nullptr);
   auto parameter = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(parameter != nullptr, nullptr);
   ShapeVector shape_vector;
   shape_vector.push_back(static_cast<int64_t>(data.size()));
   size_t size = data.size() * sizeof(int);
@@ -51,8 +51,9 @@ ParameterPtr OnnxPadAdjust::CreateNewParameter(const FuncGraphPtr &func_graph, c
   return parameter;
 }
 
-CNodePtr OnnxPadAdjust::NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
-                                         const std::vector<int> &shape) {
+CNodePtr NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &shape) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(input_node != nullptr);
   auto reshape_prim = std::make_shared<ops::Reshape>();
   if (reshape_prim == nullptr) {
     MS_LOG(ERROR) << "create reshape failed.";
@@ -60,16 +61,21 @@ CNodePtr OnnxPadAdjust::NewReshapeOpNode(const FuncGraphPtr &func_graph, const A
   }
   reshape_prim->set_attr("shape", MakeValue(shape));
   ValueNodePtr value_node = NewValueNode(reshape_prim);
+  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "create valuenode return nullptr");
   auto new_parameter = CreateNewParameter(func_graph, shape);
+  MS_CHECK_TRUE_MSG(new_parameter != nullptr, nullptr, "create parameter return nullptr");
   new_parameter->set_name(input_node->fullname_with_scope() + "_reshape/shape");
   std::vector<AnfNodePtr> op_inputs = {value_node, input_node, new_parameter};
   auto reshape = func_graph->NewCNode(op_inputs);
+  MS_CHECK_TRUE_MSG(reshape != nullptr, nullptr, "create cnode return nullptr");
   reshape->set_fullname_with_scope(input_node->fullname_with_scope() + "_reshape");
   return reshape;
 }
 
-CNodePtr OnnxPadAdjust::NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
-                                           std::vector<int> perm) {
+CNodePtr NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                            const std::vector<int> &perm) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(input_node != nullptr);
   auto transpose_prim = std::make_shared<ops::Transpose>();
   if (transpose_prim == nullptr) {
     MS_LOG(ERROR) << "create transpose failed.";
@@ -77,15 +83,19 @@ CNodePtr OnnxPadAdjust::NewTransposeOpNode(const FuncGraphPtr &func_graph, const
   }
   transpose_prim->set_attr("perm", MakeValue(perm));
   ValueNodePtr value_node = NewValueNode(transpose_prim);
+  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "create valuenode return nullptr");
   auto new_parameter = CreateNewParameter(func_graph, perm);
+  MS_CHECK_TRUE_MSG(new_parameter != nullptr, nullptr, "create parameter return nullptr");
   new_parameter->set_name(input_node->fullname_with_scope() + "_transpose/perm");
   std::vector<AnfNodePtr> op_inputs = {value_node, input_node, new_parameter};
   auto reshape = func_graph->NewCNode(op_inputs);
+  MS_CHECK_TRUE_MSG(reshape != nullptr, nullptr, "create cnode return nullptr");
   reshape->set_fullname_with_scope(input_node->fullname_with_scope() + "_transpose");
   return reshape;
 }
+}  // namespace
 
-bool OnnxPadAdjust::Run(const FuncGraphPtr &func_graph) {
+bool OnnxPadAdjust::Adjust(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {

@@ -24,15 +24,7 @@
 namespace mindspore::lite {
 class OnnxPadAdjust {
  public:
-  OnnxPadAdjust() {}
-  ~OnnxPadAdjust() = default;
-
-  bool Run(const FuncGraphPtr &func_graph);
-
- private:
-  ParameterPtr CreateNewParameter(const FuncGraphPtr &func_graph, const std::vector<int> &data);
-  CNodePtr NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node, const std::vector<int> &shape);
-  CNodePtr NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node, std::vector<int> perm);
+  static bool Adjust(const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_PAD_ADJUST_H_

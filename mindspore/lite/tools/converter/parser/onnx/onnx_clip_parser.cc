@@ -17,12 +17,13 @@
 #include "tools/converter/parser/onnx/onnx_clip_parser.h"
 #include <memory>
 #include "ops/clip.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Clip>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_min(-1);
   prim->set_max(-1);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {

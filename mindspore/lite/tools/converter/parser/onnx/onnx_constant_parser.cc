@@ -20,12 +20,14 @@
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include "tools/converter/ops/ops_def.h"
 #include "tools/common/tensor_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *prim) {
+  MS_ASSERT(prim != nullptr);
   auto data_type =
-    OnnxModelParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type()));
+    OnnxNodeParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type()));
   if (data_type == kTypeUnknown) {
     MS_LOG(ERROR) << "not support onnx data type "
                   << static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type());
@@ -37,7 +39,7 @@ STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_t
     MS_LOG(ERROR) << "new a tensor::Tensor failed.";
     return RET_ERROR;
   }
-  if (OnnxModelParser::CopyOnnxTensorData(onnx_const_tensor, tensor_info) != RET_OK) {
+  if (OnnxNodeParser::CopyOnnxTensorData(onnx_const_tensor, tensor_info) != RET_OK) {
     MS_LOG(ERROR) << "get value failed.";
     return RET_ERROR;
   }
@@ -47,7 +49,7 @@ STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_t
 
 ops::PrimitiveC *OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<lite::Constant>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &attr : onnx_node.attribute()) {
     if (attr.name() == "sparse_value") {
       MS_LOG(WARNING) << "sparse_value";

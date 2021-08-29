@@ -17,12 +17,13 @@
 #include "tools/converter/parser/onnx/onnx_gather_parser.h"
 #include <memory>
 #include "ops/gather.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Gather>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   int32_t axis = 0;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
