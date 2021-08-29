@@ -18,11 +18,13 @@
 #include <memory>
 #include <vector>
 #include "ops/fusion/reduce_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeReduceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::ReduceFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_keep_dims(false);
   prim->set_reduce_to_end(true);
@@ -51,7 +53,9 @@ ops::PrimitiveC *CaffeReduceParser::Parse(const caffe::LayerParameter &proto, co
   } else {
     axes = std::vector<int>(1, 0);
   }
-  prim->AddAttr("axes", MakeValue(axes));
+  auto value_ptr = MakeValue(axes);
+  MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
+  prim->AddAttr("axes", value_ptr);
 
   return prim.release();
 }

@@ -48,10 +48,14 @@ ops::PrimitiveC *TfliteArgminParser::Parse(const std::unique_ptr<tflite::Operato
     return nullptr;
   }
   auto data_ptr = buf_data->data.data();
+<<<<<<< Updated upstream
   if (data_ptr == nullptr) {
     MS_LOG(ERROR) << "the data is null";
     return nullptr;
   }
+=======
+  MS_CHECK_TRUE_MSG(data_ptr != nullptr, nullptr, "the data_ptr is nullptr");
+>>>>>>> Stashed changes
   prim->set_axis(*(static_cast<int64_t *>(static_cast<void *>(data_ptr))));
 
   return prim.release();

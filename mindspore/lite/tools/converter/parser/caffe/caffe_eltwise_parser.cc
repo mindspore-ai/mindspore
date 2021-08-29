@@ -18,12 +18,14 @@
 #include <cmath>
 #include <memory>
 #include "ops/eltwise.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Eltwise>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (proto.bottom_size() < 2) {
     MS_LOG(ERROR) << "Eltwise Op " << proto.name() << " need at least 2 inputs,but input size is "
                   << proto.bottom_size();

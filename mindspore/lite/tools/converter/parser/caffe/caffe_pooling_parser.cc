@@ -20,10 +20,12 @@
 #include "ops/fusion/max_pool_fusion.h"
 #include "ops/op_utils.h"
 #include "include/registry/parser_context.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *pad) {
+  MS_ASSERT(pad != nullptr);
   if (poolingParam.has_pad_h() && poolingParam.has_pad_w()) {
     if (poolingParam.has_pad()) {
       MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both";
@@ -43,6 +45,7 @@ STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam
 }
 
 STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *strides) {
+  MS_ASSERT(strides != nullptr);
   if (poolingParam.has_stride_h() && poolingParam.has_stride_w()) {
     if (poolingParam.has_stride()) {
       MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
@@ -58,6 +61,7 @@ STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingPa
 }
 
 STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *windows) {
+  MS_ASSERT(windows != nullptr);
   if (poolingParam.has_global_pooling() && poolingParam.global_pooling()) {
     if (poolingParam.has_kernel_size() || poolingParam.has_kernel_h() || poolingParam.has_kernel_w()) {
       MS_LOG(ERROR) << "With Global_pooling: true Filter size cannot specified";
@@ -128,6 +132,7 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
   auto roundMode = ParseRoundMode(poolingParam);
   if (poolingParam.pool() == caffe::PoolingParameter::MAX) {
     auto prim = std::make_unique<ops::MaxPoolFusion>();
+    MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
     prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
     prim->set_pad_mode(mindspore::PadMode::PAD);
     prim->set_kernel_size(windows);
@@ -140,6 +145,7 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
     return prim.release();
   } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
     auto prim = std::make_unique<ops::AvgPoolFusion>();
+    MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
     prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
     prim->set_pad_mode(mindspore::PadMode::PAD);
     prim->set_kernel_size(windows);

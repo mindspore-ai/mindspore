@@ -64,10 +64,14 @@ ops::PrimitiveC *TfliteSplitParser::Parse(const std::unique_ptr<tflite::Operator
     return nullptr;
   }
   prim->set_axis(axis);
+<<<<<<< Updated upstream
   if (num_splits == 0) {
     MS_LOG(ERROR) << "divide-by-zero error: num_splits should not be zero";
     return nullptr;
   }
+=======
+  MS_CHECK_TRUE_MSG(num_splits != 0, nullptr, "split num should not be 0.");
+>>>>>>> Stashed changes
   if (tensor_shape.at(axis) % num_splits != 0 && tensor_shape.at(axis) / num_splits != 0) {
     MS_LOG(ERROR) << "num_splits can't divide tensor's length at axis " << axis;
     return nullptr;

@@ -17,12 +17,14 @@
 #include "tools/converter/parser/caffe/caffe_permute_parser.h"
 #include <memory>
 #include "ops/transpose.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffePermuteParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Transpose>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   std::vector<int32_t> perm;
   const caffe::PermuteParameter &permuteParam = proto.permute_param();
   const int num_order_dims = permuteParam.order_size();
@@ -30,7 +32,9 @@ ops::PrimitiveC *CaffePermuteParser::Parse(const caffe::LayerParameter &proto, c
   for (int i = 0; i < num_order_dims; ++i) {
     perm[i] = permuteParam.order()[i];
   }
-  prim->AddAttr("perm", MakeValue(perm));
+  auto value_ptr = MakeValue(perm);
+  MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
+  prim->AddAttr("perm", value_ptr);
 
   return prim.release();
 }

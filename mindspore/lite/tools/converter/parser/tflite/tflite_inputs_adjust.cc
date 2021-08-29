@@ -62,6 +62,10 @@ lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
   auto old_quant_params = input_quant_params_holder->get_input_quant_params();
   auto new_input_quant_holder =
     std::make_shared<lite::QuantParamHolder>(perm.size(), input_quant_params_holder->get_output_quant_params().size());
+<<<<<<< Updated upstream
+=======
+  MS_ASSERT(new_input_quant_holder != nullptr);
+>>>>>>> Stashed changes
   // add inputs as perm order
   size_t new_idx = 0;
   for (size_t idx : perm) {

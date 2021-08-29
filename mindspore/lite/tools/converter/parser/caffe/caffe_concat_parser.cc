@@ -17,12 +17,14 @@
 #include "tools/converter/parser/caffe/caffe_concat_parser.h"
 #include <memory>
 #include "ops/concat.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Concat>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   const caffe::ConcatParameter &concatParam = proto.concat_param();
   if (concatParam.has_axis() && concatParam.has_concat_dim()) {
     MS_LOG(ERROR) << "Concat param in caffe have concat_dim and axis simultaneously, return fail";

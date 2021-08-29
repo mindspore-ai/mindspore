@@ -21,6 +21,7 @@
 #include "ops/batch_norm.h"
 #include "ops/op_utils.h"
 #include "include/registry/parser_context.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -28,8 +29,11 @@ using STATUS = int;
 ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::BatchNorm>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_is_training(false);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  auto value_ptr = MakeValue<int64_t>(mindspore::Format::NCHW);
+  MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
 
   const caffe::BatchNormParameter &batchNormParam = proto.batch_norm_param();
   if (proto.bottom_size() != 1) {

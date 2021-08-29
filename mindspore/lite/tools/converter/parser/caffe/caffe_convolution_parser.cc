@@ -17,6 +17,7 @@
 #include "tools/converter/parser/caffe/caffe_convolution_parser.h"
 #include <memory>
 #include "ops/fusion/conv2d_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -24,9 +25,12 @@ ops::PrimitiveC *CaffeConvolutionParser::Parse(const caffe::LayerParameter &prot
                                                const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Conv2DFusion>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_pad({0, 0, 0, 0});
   prim->set_pad_mode(mindspore::PadMode::PAD);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  auto value_ptr = MakeValue<int64_t>(mindspore::Format::NCHW);
+  MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
   prim->set_activation_type(mindspore::NO_ACTIVATION);
 
   const caffe::ConvolutionParameter &convParam = proto.convolution_param();
@@ -79,7 +83,9 @@ ops::PrimitiveC *CaffeConvolutionParser::Parse(const caffe::LayerParameter &prot
   prim->set_in_channel(channelIn);
 
   if (group != 1 && group == channel_out) {
-    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    auto bool_ptr = MakeValue<bool>(true);
+    MS_CHECK_TRUE_RET(bool_ptr != nullptr, nullptr);
+    prim->AddAttr(ops::kIsDepthWise, bool_ptr);
   }
 
   return prim.release();

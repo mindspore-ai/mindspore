@@ -17,11 +17,13 @@
 #include "tools/converter/parser/caffe/caffe_reshape_parser.h"
 #include <memory>
 #include "ops/reshape.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Reshape>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   const caffe::ReshapeParameter &reshapeParam = proto.reshape_param();
   if (!reshapeParam.has_shape()) {
@@ -33,7 +35,9 @@ ops::PrimitiveC *CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, c
   for (int i = 0; i < blob_shape.dim_size(); i++) {
     shape.push_back(blob_shape.dim(i));
   }
-  prim->AddAttr("shape", MakeValue(shape));
+  auto value_ptr = MakeValue(shape);
+  MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
+  prim->AddAttr("shape", value_ptr);
 
   return prim.release();
 }

@@ -17,12 +17,14 @@
 #include "tools/converter/parser/caffe/caffe_crop_parser.h"
 #include <memory>
 #include "ops/crop.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Crop>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (!proto.has_crop_param()) {
     prim->set_axis(2);
     std::vector<int64_t> offsets(2, 0);

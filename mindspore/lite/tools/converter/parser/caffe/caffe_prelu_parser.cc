@@ -17,11 +17,13 @@
 #include "tools/converter/parser/caffe/caffe_prelu_parser.h"
 #include <memory>
 #include "ops/fusion/prelu_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffePReluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::PReLUFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   const caffe::PReLUParameter &prelu_param = proto.prelu_param();
   if (prelu_param.has_channel_shared()) {

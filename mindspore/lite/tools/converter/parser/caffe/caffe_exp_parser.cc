@@ -18,12 +18,14 @@
 #include <memory>
 #include <vector>
 #include "ops/fusion/exp_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeExpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::ExpFusion>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   const caffe::ExpParameter &exp_param = proto.exp_param();
   if (exp_param.has_base()) {
     prim->set_base(exp_param.base());

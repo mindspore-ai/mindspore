@@ -23,6 +23,11 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                                             const std::unique_ptr<tflite::ModelT> &tfliteModel) {
+<<<<<<< Updated upstream
+=======
+  MS_CHECK_TRUE_RET(tfliteOp != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tfliteModel != nullptr, nullptr);
+>>>>>>> Stashed changes
   auto prim = std::make_unique<ops::Reshape>();
 
   MS_ASSERT(tfliteOp != nullptr);

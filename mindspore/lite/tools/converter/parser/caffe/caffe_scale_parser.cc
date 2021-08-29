@@ -17,10 +17,12 @@
 #include "tools/converter/parser/caffe/caffe_scale_parser.h"
 #include <memory>
 #include "ops/fusion/scale_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index) {
+  MS_ASSERT(axis_index != nullptr);
   if (axis < -4 || axis >= 4) {
     MS_LOG(ERROR) << "Scale axis value(" << axis << ") is not correct";
     return RET_ERROR;
@@ -36,6 +38,7 @@ STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index)
 
 ops::PrimitiveC *CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::ScaleFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   if (weight.blobs_size() + weight.bottom_size() < 2) {
     MS_LOG(ERROR) << "Scale bottom size:" << weight.bottom_size() << ", blobs size:" << weight.blobs_size()
