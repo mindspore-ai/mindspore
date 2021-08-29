@@ -38,14 +38,13 @@ int SliceCPUKernel::ReSize() {
   auto in_tensor = in_tensors_[0];
   auto begin_tensor = in_tensors_[1];
   auto size_tensor = in_tensors_[2];
-  CHECK_NULL_RETURN(in_tensor);
-  CHECK_NULL_RETURN(begin_tensor);
-  CHECK_NULL_RETURN(size_tensor);
   MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(begin_tensor->ElementsNum()));
   MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(size_tensor->ElementsNum()));
   MS_ASSERT(in_tensor->shape().size() <= DIMENSION_8D);
   auto begin = reinterpret_cast<int32_t *>(begin_tensor->data_c());
+  CHECK_NULL_RETURN(begin);
   auto size = reinterpret_cast<int32_t *>(size_tensor->data_c());
+  CHECK_NULL_RETURN(size);
 
   param_->param_length_ = in_tensor->shape().size();
   if (param_->param_length_ > DIMENSION_8D) {
@@ -67,6 +66,10 @@ int SliceCPUKernel::ReSize() {
 int SliceCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(in_tensors_[2]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (!InferShapeDone()) {
     return RET_OK;
   }

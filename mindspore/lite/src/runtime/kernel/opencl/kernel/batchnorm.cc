@@ -42,6 +42,12 @@ int BatchNormOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "  Unsupported batch_size >1 ";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(in_tensors_[2]);
+  CHECK_NULL_RETURN(in_tensors_[3]);
+  CHECK_NULL_RETURN(in_tensors_[4]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   return RET_OK;
 }
 

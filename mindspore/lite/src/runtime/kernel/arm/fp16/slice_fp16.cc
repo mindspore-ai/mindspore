@@ -27,7 +27,6 @@ using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
 int SliceFp16Launch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
     return RET_ERROR;
@@ -46,12 +45,13 @@ SliceFp16CPUKernel::~SliceFp16CPUKernel() {
 int SliceFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   auto input_tensor = in_tensors_.at(0);
   if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data_c() != nullptr) {
     input_data_ =
       reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
     CHECK_NULL_RETURN(input_data_);
-    CHECK_NULL_RETURN(input_tensor->data_c());
     Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
   }
   return SliceCPUKernel::Init();

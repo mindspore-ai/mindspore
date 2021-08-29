@@ -24,11 +24,16 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListReserve;
-
+namespace {
+constexpr int kNumInputSize = 2;
+}
 namespace mindspore::kernel {
 int TensorListReserveCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   return RET_OK;
 }
 
@@ -38,6 +43,7 @@ int TensorListReserveCPUKernel::Run() {
   MS_ASSERT(input1->data_c() != nullptr);
   int num_elements = reinterpret_cast<int *>(input1->data_c())[0];
   auto output = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
+  CHECK_NULL_RETURN(output);
   if (output->tensors().size() < static_cast<uint32_t>(num_elements)) {
     auto ele_shape_ptr = reinterpret_cast<int *>(input0->data_c());
     if (ele_shape_ptr == nullptr) {

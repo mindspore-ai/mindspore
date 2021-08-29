@@ -71,9 +71,6 @@ int QuantDTypeCastCPUKernel::ReSize() {
 }
 
 int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
-  if (INT_MUL_OVERFLOW(task_id, thread_n_stride_)) {
-    return RET_ERROR;
-  }
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;

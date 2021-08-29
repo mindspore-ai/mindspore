@@ -30,6 +30,9 @@ namespace mindspore::kernel {
 int LshProjectionCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -105,9 +108,6 @@ void LshProjectionCPUKernel::FreeKeys() {
 }
 
 int LshProjectionCPUKernel::DoExecute(int task_id) {
-  if (INT_MUL_OVERFLOW(task_id, static_cast<int>(param_->thread_stride_))) {
-    return RET_ERROR;
-  }
   int cur_group_num = MSMIN(param_->hash_shape_[0] - task_id * param_->thread_stride_, param_->thread_stride_);
   int start = task_id * param_->thread_stride_;
   int end = start + cur_group_num;

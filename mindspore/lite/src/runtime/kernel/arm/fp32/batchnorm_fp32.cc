@@ -27,6 +27,11 @@ namespace mindspore::kernel {
 int BatchnormCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(in_tensors_[2]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_NULL_RETURN(op_parameter_);
   if (!InferShapeDone()) {
     return RET_OK;
   }
