@@ -180,6 +180,7 @@ void UnifyFormatToNHWC::SetSensitiveOps() {
 bool UnifyFormatToNHWC::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ParameterPtr &input,
                                                       const ShapeVector &shape) {
   MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(input != nullptr);
   if (fmk_type_ == converter::kFmkTypeTf || fmk_type_ == converter::kFmkTypeTflite) {
     return false;
   }
@@ -355,6 +356,7 @@ bool UnifyFormatToNHWC::ProcessResizeAndFormat(const FuncGraphPtr &func_graph) {
 }
 
 bool UnifyFormatToNHWC::Run(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
   if (!ProcessResizeAndFormat(func_graph)) {
     MS_LOG(ERROR) << "ProcessResizeAndFormat failed.";
     return false;
