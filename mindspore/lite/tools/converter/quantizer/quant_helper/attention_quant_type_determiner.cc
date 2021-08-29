@@ -18,6 +18,8 @@
 #include "tools/converter/quantizer/quantize_util.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/core/ir/dtype/type_id.h"
+#include "nnacl/op_base.h"
+
 namespace mindspore::lite {
 const size_t kWeightQueryIndex = 4;
 const size_t kWeightKeyIndex = 5;
@@ -26,12 +28,19 @@ const size_t kWeightOutputIndex = 10;
 
 bool AttentionQuantTypeDeterminer::DetermineQuantWeight(const mindspore::schema::MetaGraphT &graph,
                                                         mindspore::schema::CNodeT *node) {
-  MS_ASSERT(node->inputIndex.size() >= 2);
-  auto &input_tensor = graph.allTensors.at(node->inputIndex.at(kInputIndex));
-  auto &weight_query_tensor = graph.allTensors.at(node->inputIndex.at(kWeightQueryIndex));
-  auto &weight_key_tensor = graph.allTensors.at(node->inputIndex.at(kWeightKeyIndex));
-  auto &weight_value_tensor = graph.allTensors.at(node->inputIndex.at(kWeightValueIndex));
-  auto &weight_output_tensor = graph.allTensors.at(node->inputIndex.at(kWeightOutputIndex));
+  MS_CHECK_TRUE_MSG(node != nullptr, false, "node is nullptr.");
+  auto input_index = node->inputIndex;
+  MS_CHECK_FALSE_MSG(input_index.empty(), false, "inputIndex is empty.");
+  MS_CHECK_TRUE_MSG(input_index.size() > kInputIndex, false, "invalid access.");
+  auto &input_tensor = graph.allTensors.at(input_index.at(kInputIndex));
+  MS_CHECK_TRUE_MSG(input_index.size() > kWeightQueryIndex, false, "invalid access.");
+  auto &weight_query_tensor = graph.allTensors.at(input_index.at(kWeightQueryIndex));
+  MS_CHECK_TRUE_MSG(input_index.size() > kWeightKeyIndex, false, "invalid access.");
+  auto &weight_key_tensor = graph.allTensors.at(input_index.at(kWeightKeyIndex));
+  MS_CHECK_TRUE_MSG(input_index.size() > kWeightValueIndex, false, "invalid access.");
+  auto &weight_value_tensor = graph.allTensors.at(input_index.at(kWeightValueIndex));
+  MS_CHECK_TRUE_MSG(input_index.size() > kWeightOutputIndex, false, "invalid access.");
+  auto &weight_output_tensor = graph.allTensors.at(input_index.at(kWeightOutputIndex));
 
   if (!quant::TensorQuantParamsInited(*input_tensor) && quant::TensorQuantParamsInited(*weight_query_tensor) &&
       quant::TensorQuantParamsInited(*weight_key_tensor) && quant::TensorQuantParamsInited(*weight_value_tensor) &&

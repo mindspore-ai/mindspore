@@ -15,11 +15,14 @@
  */
 #include "tools/converter/quantizer/quant_helper/bias_add_quant_param_propogator.h"
 #include "mindspore/core/ir/dtype/type_id.h"
+#include "mindspore/core/utils/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 static constexpr size_t kBiasAddSize = 2;
 STATUS BiasAddQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGraphT *graph,
                                                          const mindspore::schema::CNodeT &node) {
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
   if (node.inputIndex.size() == kBiasAddSize) {
     auto &bias_tensor = graph->allTensors.at(node.inputIndex.at(kBiasAddSize - 1));
     for (auto &quantParam : bias_tensor->quantParams) {

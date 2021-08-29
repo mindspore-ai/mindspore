@@ -26,12 +26,14 @@
 #include "tools/converter/quantizer/quant_helper/default_quant_all_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/only_need_inputs_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/quant_dtype_cast_quant_param_propogator.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const schema::CNodeT &node) {
   // update input quant params num
   input_inited_quant_params_ = 0;
   for (auto index : node.inputIndex) {
+    MS_ASSERT(graph.allTensors.size() > index);
     auto &input_tensor = graph.allTensors.at(index);
     if (!input_tensor->quantParams.empty()) {
       bool is_quant_params_inited =
@@ -47,6 +49,7 @@ void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const 
   // update output quant params num
   output_inited_quant_params_ = 0;
   for (auto index : node.outputIndex) {
+    MS_ASSERT(graph.allTensors.size() > index);
     auto &output_tensor = graph.allTensors.at(index);
     if (!output_tensor->quantParams.empty()) {
       bool is_quant_params_inited =
@@ -61,6 +64,7 @@ void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const 
 }
 
 bool QuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
+  MS_ASSERT(node != nullptr);
   if (node->quantType != schema::QuantType_QUANT_NONE) {
     return node->quantType == schema::QuantType_QUANT_ALL;
   }
@@ -78,6 +82,7 @@ bool QuantTypeDeterminer::DetermineQuantWeight(const schema::MetaGraphT &graph, 
 }
 
 void QuantNodeHelper::NodeQuantPreprocess(schema::MetaGraphT *graph, schema::CNodeT *node) {
+  MS_ASSERT(node != nullptr);
   if (quant_type_determiner_->DetermineQuantWeight(*graph, node)) {
     return;
   }

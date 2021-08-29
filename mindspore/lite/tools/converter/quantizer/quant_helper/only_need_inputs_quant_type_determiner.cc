@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 #include "tools/converter/quantizer/quant_helper/only_need_inputs_quant_type_determiner.h"
+#include "mindspore/core/utils/log_adapter.h"
 
 namespace mindspore::lite {
 bool OnlyNeedInputsQuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
+  MS_ASSERT(node != nullptr);
   UpdateQuantParamsNum(graph, *node);
   if (input_inited_quant_params_ == node->inputIndex.size()) {
     node->quantType = schema::QuantType_QUANT_ALL;

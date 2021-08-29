@@ -20,10 +20,12 @@
 #include "src/common/log_adapter.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 STATUS ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGraphT *graph,
                                                         const mindspore::schema::CNodeT &node) {
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
   UpdateQuantParamsNum(*graph, node);
 
   if (input_inited_quant_params_ != node.inputIndex.size()) {
@@ -38,7 +40,7 @@ STATUS ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaG
     bool narrow_range = false;
     int num_bits = -1;
     for (size_t i = 0; i < node.inputIndex.size(); i++) {
-      MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(i));
+      MS_ASSERT(graph->allTensors.size() > i);
       auto &in_tensor = graph->allTensors.at(i);
       MS_ASSERT(in_tensor != nullptr);
       auto in_quant_param = GetTensorQuantParam(in_tensor);
@@ -70,6 +72,7 @@ STATUS ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaG
     auto &out_tensor = graph->allTensors.at(node.outputIndex.front());
     MS_ASSERT(out_tensor != nullptr);
     auto out_quant_param = std::make_unique<QuantParamT>();
+    MS_CHECK_TRUE_MSG(out_quant_param != nullptr, RET_NULL_PTR, "out_quant_param is nullptr.");
 
     auto status = quant::CalQuantizationParams(out_quant_param.get(), min_min, max_max, narrow_range, num_bits);
     if (status != RET_OK) {
