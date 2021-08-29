@@ -47,6 +47,7 @@ constexpr auto kGetGraphKernelOpExpander = "get_op_expander";
 constexpr auto kJsonKeyMultiGraph = "multi_graph";
 constexpr auto kJsonKeyGraphDesc = "graph_desc";
 constexpr auto kJsonKeyGraphMode = "graph_mode";
+constexpr auto kAllTarget = "ALL";
 
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
 inline const PrimitivePtr kPrimUnPadAkg = std::make_shared<Primitive>("UnPadAkg");
@@ -141,6 +142,9 @@ FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, Anf
 
 // remove parameter which is not used
 void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
+
+std::vector<PrimitivePtr> GetValidOps(
+  const std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> &ops_with_level, unsigned int level);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_

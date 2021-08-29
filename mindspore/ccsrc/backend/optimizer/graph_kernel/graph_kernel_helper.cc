@@ -951,5 +951,21 @@ void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList
   func_graph->set_parameters(new_parameter);
   *inputs = std::move(new_inputs);
 }
+
+std::vector<PrimitivePtr> GetValidOps(
+  const std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> &ops_with_level, unsigned int level) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  std::vector<PrimitivePtr> valid_ops;
+  for (const auto &[op_target, op_level, op] : ops_with_level) {
+    if (op_target == kAllTarget || op_target == target) {
+      if (level >= op_level) {
+        valid_ops.emplace_back(op);
+      }
+    }
+  }
+  return valid_ops;
+}
 }  // namespace opt
 }  // namespace mindspore

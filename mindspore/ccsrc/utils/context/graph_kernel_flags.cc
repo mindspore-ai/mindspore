@@ -170,6 +170,9 @@ void GraphKernelFlags::Refresh() {
 
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
   FlagRegister reg(flag_map);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
 
   // Set opt_level first, some flags' default value depends on it.
   // Default optimization level is level 2 when enable graphkernel
@@ -185,6 +188,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_recompute_fusion", &enable_recompute_fusion, opt_level >= OptLevel_2);
   reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion, opt_level == OptLevel_3);
   reg.AddFlag("enable_low_precision", &enable_low_precision);
+  reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_gpu ? OpLevel_MAX : OpLevel_0);
 
   // Integer flags
   reg.AddFlag("online_tuning", &online_tuning);
@@ -215,6 +219,7 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_low_precision"] = enable_low_precision;
 
   json["opt_level"] = opt_level;
+  json["fusion_ops_level"] = fusion_ops_level;
   json["online_tuning"] = online_tuning;
 
   json["repository_path"] = repository_path;
