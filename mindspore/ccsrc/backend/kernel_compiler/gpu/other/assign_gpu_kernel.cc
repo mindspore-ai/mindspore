@@ -39,5 +39,8 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   Assign, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
   AssignGpuKernel, unsigned int)
+MS_REG_GPU_KERNEL_ONE(
+  Assign, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  AssignGpuKernel, bool)
 }  // namespace kernel
 }  // namespace mindspore
