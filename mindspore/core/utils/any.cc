@@ -15,7 +15,9 @@
  */
 
 #include "utils/any.h"
+#ifndef _MSC_VER
 #include <cxxabi.h>
+#endif
 #include <memory>
 
 namespace mindspore {

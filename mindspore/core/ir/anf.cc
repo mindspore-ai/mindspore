@@ -347,7 +347,7 @@ bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner) {
   outer_loads.merge(inner_loads);
   auto &monad = (*outer_loads.begin())->inputs().at(kMonadInput);
   return std::all_of(++outer_loads.begin(), outer_loads.end(),
-                     [&monad](const CNodePtr &load) { return load->inputs().at(kMonadInput) == monad; });
+                     [&monad, kMonadInput](const CNodePtr &load) { return load->inputs().at(kMonadInput) == monad; });
 }
 
 size_t NewSeenGeneration() {

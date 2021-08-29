@@ -16,7 +16,9 @@
 
 #include "tools/common/storage.h"
 #include <sys/stat.h>
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 #include "flatbuffers/flatbuffers.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
@@ -38,9 +40,11 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
   if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
     filename = filename + ".ms";
   }
+#ifndef _MSC_VER
   if (access(filename.c_str(), F_OK) == 0) {
     chmod(filename.c_str(), S_IWUSR);
   }
+#endif
   std::ofstream output(filename, std::ofstream::binary);
   if (!output.is_open()) {
     MS_LOG(ERROR) << "Can not open output file: " << filename;
@@ -49,7 +53,9 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
 
   output.write((const char *)content, size);
   output.close();
+#ifndef _MSC_VER
   chmod(filename.c_str(), S_IRUSR);
+#endif
   return RET_OK;
 }
 

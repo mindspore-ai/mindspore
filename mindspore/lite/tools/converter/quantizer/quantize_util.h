@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_
 
+#ifndef _MSC_VER
 #include <dirent.h>
+#endif
 #include <sys/stat.h>
 #include <memory>
 #include <string>

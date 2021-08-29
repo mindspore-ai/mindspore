@@ -20,10 +20,10 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include "schema/model_generated.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "tools/optimizer/fisson/fisson_util.h"
 #include "tools/optimizer/parallel/split_strategy.h"
-#include "schema/model_generated.h"
 #include "tools/optimizer/parallel/multi_node_split.h"
 
 using mindspore::schema::PrimitiveType;

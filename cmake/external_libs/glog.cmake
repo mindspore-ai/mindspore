@@ -1,7 +1,13 @@
 if(BUILD_LITE)
-    set(glog_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 ${SECURE_CXX_FLAGS} -Dgoogle=mindspore_private")
-    set(glog_CFLAGS "-D_FORTIFY_SOURCE=2 -O2 ${SECURE_C_FLAGS}")
-    set(glog_LDFLAGS "${SECURE_SHARED_LINKER_FLAGS}")
+    if(MSVC)
+        set(flatbuffers_CXXFLAGS "${CMAKE_CXX_FLAGS}")
+        set(flatbuffers_CFLAGS "${CMAKE_C_FLAGS}")
+        set(flatbuffers_LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+    else()
+        set(glog_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 ${SECURE_CXX_FLAGS} -Dgoogle=mindspore_private")
+        set(glog_CFLAGS "-D_FORTIFY_SOURCE=2 -O2 ${SECURE_C_FLAGS}")
+        set(glog_LDFLAGS "${SECURE_SHARED_LINKER_FLAGS}")
+    endif()
     set(glog_patch "")
     set(glog_lib glog)
 else()
@@ -23,9 +29,10 @@ else()
     set(MD5 "0daea8785e6df922d7887755c3d100d0")
 endif()
 
-set(glog_option -DBUILD_TESTING=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=ON -DWITH_GFLAGS=OFF)
+set(glog_option -DBUILD_TESTING=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=ON -DWITH_GFLAGS=OFF
+        -DCMAKE_BUILD_TYPE=Release)
 
-if(WIN32)
+if(WIN32 AND NOT MSVC)
     execute_process(COMMAND "${CMAKE_C_COMPILER}" -dumpmachine
         OUTPUT_VARIABLE i686_or_x86_64
     )

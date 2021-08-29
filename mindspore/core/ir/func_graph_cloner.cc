@@ -47,7 +47,8 @@ Cloner::Cloner(const FuncGraphVector &func_graphs, bool clone_all_valuenodes, bo
 void Cloner::AddClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
                       const AnfNodePtrList &params, CloneType type) {
   if (func_graph != nullptr) {
-    todo_.push_back({.origin = func_graph, .target = target_func_graph, .params = params});
+    CloneInfo clone = {func_graph, target_func_graph, params};
+    todo_.push_back(clone);
     type_ = type;
   }
 }

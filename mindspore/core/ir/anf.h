@@ -452,7 +452,11 @@ class MS_CORE_API Value : public Base {
   MS_DECLARE_PARENT(Value, Base)
 
   TypePtr type() const { return type_; }
-  virtual abstract::AbstractBasePtr ToAbstract() { MS_LOG(EXCEPTION) << "ToAbstract error"; }
+  virtual abstract::AbstractBasePtr ToAbstract() {
+    MS_LOG(EXCEPTION) << "ToAbstract error";
+    abstract::AbstractBasePtr result;
+    return result;
+  }
 
   virtual bool operator==(const Value &rhs) const = 0;
   virtual Value &operator=(const Value &other) {

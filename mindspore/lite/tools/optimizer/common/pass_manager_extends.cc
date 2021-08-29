@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 #include "backend/optimizer/common/pass_manager.h"
+#ifndef _MSC_VER
 #include <sys/time.h>
+#endif
 #include <deque>
 #include <string>
 #include <algorithm>

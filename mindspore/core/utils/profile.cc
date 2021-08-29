@@ -15,8 +15,12 @@
  */
 
 #include "utils/profile.h"
+#ifdef _MSC_VER
+#include <time.h>
+#else
 #include <sys/time.h>
 #include <unistd.h>
+#endif
 #include <numeric>
 #include <cstdio>
 #include <sstream>
@@ -119,9 +123,13 @@ void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent
 }  // namespace
 
 double GetTime(void) {
+#ifdef _MSC_VER
+  return time(NULL);
+#else
   struct timeval tv = {0, 0};
   (void)gettimeofday(&tv, nullptr);
   return tv.tv_sec + tv.tv_usec * 1.0e-6;
+#endif
 }
 
 TimeInfo::~TimeInfo() {

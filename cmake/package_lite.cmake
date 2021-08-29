@@ -302,8 +302,8 @@ elseif(WIN32)
     file(GLOB LIB_LIST ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll
             ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_*-1.dll)
     if(MSLITE_ENABLE_CONVERTER)
-        install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/build/mindspore/tools/converter/converter_lite.exe
+                DESTINATION ${CONVERTER_ROOT_DIR}/converter COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${CONVERTER_ROOT_DIR}/include
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h"
                 PATTERN "train*" EXCLUDE PATTERN "delegate.h" EXCLUDE PATTERN "lite_session.h" EXCLUDE)
@@ -359,9 +359,10 @@ elseif(WIN32)
                 ${opencv_LIBPATH}/../bin/libopencv_imgproc*
                 )
         install(FILES ${OPENCV_LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
-
-        __install_micro_wrapper()
-        __install_micro_codegen()
+        if(NOT MSVC)
+            __install_micro_wrapper()
+            __install_micro_codegen()
+        endif()
     endif()
     if(MSLITE_ENABLE_TOOLS)
         if(MSVC)

@@ -108,7 +108,8 @@ class Float16 {
     constexpr unsigned int exponent_bits = 13;
     constexpr unsigned int sign_bit_shift = 16;
     // Exponent/mantissa bits.
-    Union32 f32{.u = (static_cast<uint32_t>(f16.value_ & value_mask) << exponent_bits)};
+    Union32 f32;
+    f32.u = (static_cast<uint32_t>(f16.value_ & value_mask) << exponent_bits);
     // Just the exponent.
     unsigned int exp = (shifted_exp & f32.u);
     f32.u += exponent_adjust;
@@ -137,7 +138,8 @@ class Float16 {
     constexpr unsigned int sign_mask = 0x80000000u;
     constexpr uint32_t rouding_bias_part1 = ((unsigned int)(15 - 127) << 23) + 0xfff;
 
-    Union32 f{.f = f32};
+    Union32 f;
+    f.f = f32;
     unsigned int sign = f.u & sign_mask;
     f.u ^= sign;
     uint16_t result = 0;

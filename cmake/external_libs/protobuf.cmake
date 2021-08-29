@@ -1,9 +1,18 @@
 set(protobuf_USE_STATIC_LIBS ON)
 if(BUILD_LITE)
-    set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter \
-        -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
-    if(ENABLE_ACL)
-        set(protobuf_CXXFLAGS "${protobuf_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+    if(MSVC)
+        set(protobuf_CXXFLAGS "${CMAKE_CXX_FLAGS}")
+        set(protobuf_CFLAGS "${CMAKE_C_FLAGS}")
+        set(protobuf_LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+        set(_ms_tmp_CMAKE_STATIC_LIBRARY_PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
+        set(CMAKE_STATIC_LIBRARY_PREFIX "lib")
+    else()
+        set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter \
+            -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+        if(ENABLE_ACL)
+            set(protobuf_CXXFLAGS "${protobuf_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+        endif()
+        set(protobuf_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
     endif()
 else()
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -19,9 +28,9 @@ else()
             set(protobuf_CXXFLAGS "${protobuf_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
         endif()
     endif()
+    set(protobuf_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 endif()
 
-set(protobuf_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 set(_ms_tmp_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 set(CMAKE_CXX_FLAGS ${_ms_tmp_CMAKE_CXX_FLAGS})
 string(REPLACE " -Wall" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -42,11 +51,14 @@ mindspore_add_pkg(protobuf
         URL ${REQ_URL}
         MD5 ${MD5}
         CMAKE_PATH cmake/
-        CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF)
+        CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release)
 
 include_directories(${protobuf_INC})
 add_library(mindspore::protobuf ALIAS protobuf::protobuf)
 set(CMAKE_CXX_FLAGS  ${_ms_tmp_CMAKE_CXX_FLAGS})
+if(MSVC)
+    set(CMAKE_STATIC_LIBRARY_PREFIX, ${_ms_tmp_CMAKE_STATIC_LIBRARY_PREFIX})
+endif()
 
 function(common_protobuf_generate path c_var h_var)
     if(NOT ARGN)
