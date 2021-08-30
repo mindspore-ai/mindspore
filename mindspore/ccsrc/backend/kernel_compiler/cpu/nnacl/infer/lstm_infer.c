@@ -32,6 +32,7 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   }
 
   LstmParameter *param = (LstmParameter *)parameter;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }

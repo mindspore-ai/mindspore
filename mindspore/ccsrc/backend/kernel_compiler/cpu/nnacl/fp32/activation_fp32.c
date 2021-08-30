@@ -284,3 +284,22 @@ int Softplus(const float *src, int length, float *dst) {
   }
   return NNACL_OK;
 }
+
+int Elu(const float *src, int length, float *dst, float alpha) {
+  int i = 0;
+#if defined(ENABLE_ARM)
+  MS_FLOAT32X4 one = MS_MOVQ_F32(1.0f);
+  for (; i <= length - 4; i += 4) {
+    MS_FLOAT32X4 src_tmp = MS_LDQ_F32(src + i);
+    MS_FLOAT32X4 exp_tmp = VexpFp32(src_tmp);  // exp(x)
+    exp_tmp = MS_SUBQ_F32(exp_tmp, one);       // exp(x) - 1
+    MS_FLOAT32X4 elu_tmp = MS_MULQ_N_F32(exp_tmp, alpha);
+    MS_UINT32X4 mask = MS_CMPGTQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
+    MS_STQ_F32(dst + i, MS_BLENDQ_F32(elu_tmp, src_tmp, mask));
+  }
+#endif
+  for (; i < length; ++i) {
+    dst[i] = src[i] > 0 ? src[i] : (expm1(src[i]) * alpha);
+  }
+  return NNACL_OK;
+}

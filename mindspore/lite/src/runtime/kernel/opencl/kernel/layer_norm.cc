@@ -32,19 +32,24 @@ using mindspore::schema::PrimitiveType_LayerNormFusion;
 namespace mindspore::kernel {
 int LayerNormOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<LayerNormParameter *>(this->op_parameter_);
+  CHECK_NULL_RETURN(param);
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_3 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "UnSupported in_tensors_.size: " << in_tensors_.size()
                   << " out_tensors_.size(): " << out_tensors_.size();
     return RET_ERROR;
   }
-  if (in_tensors_.at(0)->shape().size() != DIMENSION_4D) {
-    MS_LOG(ERROR) << "UnSupported in_tensors_.shape.size: " << in_tensors_.at(0)->shape().size();
+  auto *input = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
+  auto *output = out_tensors_.at(0);
+  CHECK_NULL_RETURN(output);
+  if (input->shape().size() != DIMENSION_4D) {
+    MS_LOG(ERROR) << "UnSupported in_tensors_.shape.size: " << input->shape().size();
     return RET_ERROR;
   }
   normalized_axis_ = param->begin_params_axis_;
   epsilon_ = param->epsilon_;
   if (normalized_axis_ < 0) {
-    normalized_axis_ += in_tensors_.at(0)->shape().size();
+    normalized_axis_ += input->shape().size();
   }
   if (normalized_axis_ != 3) {
     MS_LOG(ERROR) << "UnSupported normalized_axis_ : " << param->normalized_dims_;
@@ -57,8 +62,10 @@ void LayerNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t
   const int max_divider = 8;
   const int max_x = 4, max_y = 8;
   int x = std::min(GetMaxDivisorStrategy1(global[0], max_divider), max_x);
+  MS_ASSERT(x);
   int yz = max_size / x;
   int y = std::min(std::min(GetMaxDivisorStrategy1(global[1], max_divider), yz), max_y);
+  MS_ASSERT(y);
   int z = std::min(yz / y, static_cast<int>(UP_DIV(global[2], 2)));
 
   local->clear();
@@ -117,8 +124,10 @@ void LayerNormOpenCLKernel::SetGlobalLocal() {
 
 int LayerNormOpenCLKernel::Initweight() {
   auto allocator = ocl_runtime_->GetAllocator();
+  CHECK_NULL_RETURN(allocator);
   GpuTensorInfo img_info(in_tensors_.at(1));
   auto weight_tensor = in_tensors_.at(1);
+  CHECK_NULL_RETURN(weight_tensor);
   size_t weight_size = img_info.Image2DSize;
   // allocated memory for weight and init value
   gamma_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
@@ -141,8 +150,9 @@ int LayerNormOpenCLKernel::Initweight() {
   }
   memset(gamma_, 0x01, weight_size);
   memset(beta_, 0x00, weight_size);
-  MS_ASSERT(in_tensors_.at(1)->data_c());
-  MS_ASSERT(in_tensors_.at(INPUT_TENSOR_SIZE_2)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(1)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(2));
+  CHECK_NULL_RETURN(in_tensors_.at(2)->data_c());
 
   if (weight_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_enable_) {

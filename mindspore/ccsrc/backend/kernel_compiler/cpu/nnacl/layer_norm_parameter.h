@@ -18,11 +18,6 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
-#define GAMMA_INDEX 1
-#define BETA_INDEX 2
-#define MEAN_INDEX 1
-#define VARIANCE_INDEX 2
-
 enum ElementwiseMode { ELEMENTWISE_NOT = 0, ELEMENTWISE_PER_CHANNEL = 1, ELEMENTWISE_PER_NUM = 2 };
 typedef struct LayerNormParameter {
   // Primitive parameter

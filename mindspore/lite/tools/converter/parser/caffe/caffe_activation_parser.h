@@ -54,6 +54,14 @@ class CaffeTanhParser : public CaffeNodeParser {
 
   ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
+
+class CaffeEluParser : public CaffeNodeParser {
+ public:
+  CaffeEluParser() : CaffeNodeParser("elu") {}
+  ~CaffeEluParser() override = default;
+
+  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+};
 }  // namespace lite
 }  // namespace mindspore
 

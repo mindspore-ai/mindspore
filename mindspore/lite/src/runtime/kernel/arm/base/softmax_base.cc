@@ -40,6 +40,7 @@ int SoftmaxBaseCPUKernel::Init() {
 
 int SoftmaxBaseCPUKernel::ReSize() {
   auto input_tensor = in_tensors_.front();
+  CHECK_NULL_RETURN(input_tensor);
   auto in_shape = input_tensor->shape();
   auto in_dims = in_shape.size();
   int ele_size = 1;

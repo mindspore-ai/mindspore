@@ -27,11 +27,7 @@ class LogSoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
   LogSoftmaxCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx), tmp_data_(nullptr) {}
-  ~LogSoftmaxCPUKernel() override {
-    if (tmp_data_ != nullptr) {
-      free(tmp_data_);
-    }
-  };
+  ~LogSoftmaxCPUKernel() override;
 
   int Init() override;
   int ReSize() override;

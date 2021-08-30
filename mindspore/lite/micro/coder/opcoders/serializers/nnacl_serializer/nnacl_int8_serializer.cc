@@ -100,7 +100,7 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const PoolingParam
   MS_CHECK_PTR_IF_NULL(in_quant_args);
   MS_CHECK_PTR_IF_NULL(out_quant_args);
 
-  code << "static QuantArg " << in_quant_name << " = " << *out_quant_args << ";\n";
+  code << "static QuantArg " << in_quant_name << " = " << *in_quant_args << ";\n";
   code << "static QuantArg " << out_quant_name << " = " << *out_quant_args << ";\n";
 
   code << "static QuantArg *" << quant_name << "[2] = {"

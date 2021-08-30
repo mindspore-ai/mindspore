@@ -37,6 +37,8 @@ int LayerNormInt8(const int8_t *src_data, const float *gamma_data, const float *
   if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL) {
     return NNACL_NULL_PTR;
   }
+  NNACL_CHECK_ZERO_RETURN_ERR(param->params_inner_size_);
+  NNACL_CHECK_ZERO_RETURN_ERR(param->params_outer_size_);
 
   int step = UP_DIV(param->norm_outer_size_, param->op_parameter_.thread_num_);
   int thread_end = MSMIN((task_id + 1) * step, param->norm_outer_size_);

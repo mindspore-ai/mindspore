@@ -36,7 +36,7 @@ class LstmCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
 
-  int InputWeightMatMul(int task_id);
+  void InputWeightMatMul(int task_id);
 
  private:
   void FreeTmpBuffer();
