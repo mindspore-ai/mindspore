@@ -70,6 +70,9 @@ const char MIN_PERIODS[] = "min_periods";
 const char CENTER[] = "center";
 const char METHOD[] = "method";
 const char CLOSED[] = "closed";
+const char NA_OPTION[] = "na_option";
+const char ASCENDING[] = "ascending";
+const char PCT[] = "pct";
 
 enum OperateType {
   ADD = 0,
@@ -237,6 +240,27 @@ void ParallelLaunch(const CTask &task, size_t count, float block_size = 128.0, C
 void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
                               ParallelSearchInfo *parallel_search_info);
 
+class AxisIterator {
+ public:
+  AxisIterator() = default;
+  virtual ~AxisIterator() = default;
+  void Init(const std::vector<size_t> &input_shape, size_t axis);
+
+  inline void SetOffset(size_t outer_index, size_t inner_index) {
+    axis_offset_ = outer_index * axis_size_ * inner_size_ + inner_index;
+  }
+  inline size_t GetPos(int i) const { return axis_offset_ + i * inner_size_; }
+
+  inline size_t OuterSize() const { return outer_size_; }
+  inline size_t AxisSize() const { return axis_size_; }
+  inline size_t InnerSize() const { return inner_size_; }
+
+ private:
+  size_t outer_size_{0};
+  size_t axis_size_{0};
+  size_t inner_size_{0};
+  size_t axis_offset_{0};
+};
 }  // namespace kernel
 }  // namespace mindspore
 

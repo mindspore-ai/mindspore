@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-
+using rolling::Method;
 template <typename T, typename S>
 void RollingCpuKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);

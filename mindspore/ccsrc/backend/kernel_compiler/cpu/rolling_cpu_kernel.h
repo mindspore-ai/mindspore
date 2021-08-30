@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
+namespace rolling {
 enum Method : int {
   Max,
   Min,
@@ -32,6 +33,7 @@ enum Method : int {
   Std,
   Var,
 };
+}
 template <typename T, typename S>
 class RollingCpuKernel : public CPUKernel {
  public:
@@ -53,7 +55,7 @@ class RollingCpuKernel : public CPUKernel {
   size_t axis_{0};
   bool center_{false};
   std::string closed_{};
-  Method method_{};
+  rolling::Method method_{};
   std::function<S(const T *input_addr, int outer_offset, size_t start, size_t end, int col)> reduceMethod_{};
   // shape info
   size_t outer_size_{0};
