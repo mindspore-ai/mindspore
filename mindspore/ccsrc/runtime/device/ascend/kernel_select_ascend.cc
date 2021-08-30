@@ -409,6 +409,9 @@ bool RefreshCastAndParamWeightFormat(const AnfNodePtr &input_node, const string 
   if (AnfAlgo::IsFeatureMapOutput(cast_node)) {
     return true;
   }
+  if (format == kOpFormat_FRACTAL_ZN_RNN || format == kOpFormat_ND_RNN_BIAS) {
+    return true;
+  }
   auto info_builder =
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(input_node));
   info_builder->SetInputsFormat({format});
