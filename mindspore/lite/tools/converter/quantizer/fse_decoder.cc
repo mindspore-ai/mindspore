@@ -108,6 +108,7 @@ int FSEDecoder::FSEDecode(BitStream *bs, float *buff, int buff_count, uint16_t *
 }
 
 int FSEDecoder::DeCompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
+  MS_ASSERT(dst_tensor != nullptr);
   if (dst_tensor->MutableData() == nullptr) {
     MS_LOG(ERROR) << "tensor data is nullptr.";
     return RET_ERROR;

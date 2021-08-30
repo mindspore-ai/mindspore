@@ -29,6 +29,7 @@ class BitPack {
 
   template <typename T1, typename T2>
   static void BitPacking(int bit_num, const std::vector<T1> &origin_data_vec, std::vector<T2> *packed_data_vec) {
+    MS_ASSERT(packed_data_vec != nullptr);
     std::stack<bool> bit_data_vec;
     for (size_t i = 0; i < origin_data_vec.size(); i++) {
       T2 tmp = origin_data_vec[i] + static_cast<T2>(pow(2, bit_num - 1));
@@ -46,6 +47,7 @@ class BitPack {
  private:
   template <typename T2>
   static void PackFromOriginToUint(std::stack<bool> *ans, std::vector<T2> *packed_data_vec) {
+    MS_ASSERT(ans != nullptr);
     uint32_t result = 0;
     for (size_t i = 0; i < sizeof(T2) * 8; i++) {
       bool bit_tmp = ans->top();
@@ -57,6 +59,7 @@ class BitPack {
 
   template <typename T2>
   static void DoBinary(int bin_num, T2 n, std::stack<bool> *ans, std::vector<T2> *packed_data_vec) {
+    MS_ASSERT(ans != nullptr);
     for (int bit_count = 0; bit_count < bin_num; bit_count++) {
       bool a = n % 2;
       n = n / 2;
