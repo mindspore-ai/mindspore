@@ -632,9 +632,9 @@ std::string AscendKernelRuntime::GetDumpPath() {
   std::string path;
   if (ms_om_path.empty()) {
     MS_LOG(WARNING) << "MS_OM_PATH is null, so dump to process local path, as ./rank_id/...";
-    path = "./" + std::to_string(rank_id);
+    path = "./rank_" + std::to_string(rank_id);
   } else {
-    path = ms_om_path + "/" + std::to_string(rank_id);
+    path = ms_om_path + "/rank_" + std::to_string(rank_id);
   }
   return path;
 }
