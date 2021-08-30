@@ -25,7 +25,7 @@ from mindspore.common.parameter import Parameter
 class SpaceToBatchNet(nn.Cell):
     def __init__(self, nptype, block_size=2, input_shape=(1, 1, 4, 4)):
         super(SpaceToBatchNet, self).__init__()
-        self.SpaceToBatch = P.SpaceToBatch(block_size=block_size, paddings=[[0,0],[0,0]])
+        self.SpaceToBatch = P.SpaceToBatch(block_size=block_size, paddings=[[0, 0], [0, 0]])
         input_size = 1
         for i in input_shape:
             input_size = input_size*i
@@ -72,7 +72,7 @@ def SpaceToBatch_pynative(nptype, block_size=2, input_shape=(1, 1, 4, 4)):
                        [[[5, 7],
                          [13, 15]]]]).astype(nptype)
 
-    dts = P.SpaceToBatch(block_size=block_size, paddings=[[0,0],[0,0]])
+    dts = P.SpaceToBatch(block_size=block_size, paddings=[[0, 0], [0, 0]])
     arr_input = Tensor(np.arange(input_size).reshape(input_shape).astype(nptype))
     output = dts(arr_input)
 

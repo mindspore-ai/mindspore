@@ -23,9 +23,9 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
 class BatchToSpaceNet(nn.Cell):
-    def __init__(self, nptype, block_size=2, input_shape=(4,1,2,2)):
+    def __init__(self, nptype, block_size=2, input_shape=(4, 1, 2, 2)):
         super(BatchToSpaceNet, self).__init__()
-        self.BatchToSpace = P.BatchToSpace(block_size=block_size, crops=[[0,0],[0,0]])
+        self.BatchToSpace = P.BatchToSpace(block_size=block_size, crops=[[0, 0], [0, 0]])
         input_size = 1
         for i in input_shape:
             input_size = input_size*i
@@ -39,14 +39,14 @@ class BatchToSpaceNet(nn.Cell):
         return y1
 
 
-def BatchToSpace(nptype, block_size=2, input_shape=(4,1,2,2)):
+def BatchToSpace(nptype, block_size=2, input_shape=(4, 1, 2, 2)):
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_size = 1
     for i in input_shape:
         input_size = input_size*i
-    expect = np.array([[[[0,  4,   1,  5],
-                         [8,  12,  9, 13],
-                         [2,   6,  3,  7],
+    expect = np.array([[[[0, 4, 1, 5],
+                         [8, 12, 9, 13],
+                         [2, 6, 3, 7],
                          [10, 14, 11, 15]]]]).astype(nptype)
 
     dts = BatchToSpaceNet(nptype, block_size, input_shape)
@@ -54,17 +54,17 @@ def BatchToSpace(nptype, block_size=2, input_shape=(4,1,2,2)):
 
     assert (output.asnumpy() == expect).all()
 
-def BatchToSpace_pynative(nptype, block_size=2, input_shape=(4,1,2,2)):
+def BatchToSpace_pynative(nptype, block_size=2, input_shape=(4, 1, 2, 2)):
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_size = 1
     for i in input_shape:
         input_size = input_size*i
-    expect = np.array([[[[0,  4,   1,  5],
-                         [8,  12,  9, 13],
-                         [2,   6,  3,  7],
+    expect = np.array([[[[0, 4, 1, 5],
+                         [8, 12, 9, 13],
+                         [2, 6, 3, 7],
                          [10, 14, 11, 15]]]]).astype(nptype)
 
-    dts = P.BatchToSpace(block_size=block_size, crops=[[0,0],[0,0]])
+    dts = P.BatchToSpace(block_size=block_size, crops=[[0, 0], [0, 0]])
     arr_input = Tensor(np.arange(input_size).reshape(input_shape).astype(nptype))
     output = dts(arr_input)
 
