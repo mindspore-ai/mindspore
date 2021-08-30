@@ -17,9 +17,9 @@
 #ifndef MXBASE_DPN_H
 #define MXBASE_DPN_H
 #include <opencv2/opencv.hpp>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 #include "MxBase/DvppWrapper/DvppWrapper.h"
 #include "MxBase/ModelInfer/ModelInferenceProcessor.h"
 // #include "ClassPostProcessors/DPN92PostProcess.h"

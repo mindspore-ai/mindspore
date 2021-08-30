@@ -15,17 +15,17 @@
  */
 
 #include "DPN.h"
-#include <iostream>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
+#include <map>
+#include <iostream>
 #include "MxBase/DeviceManager/DeviceManager.h"
 #include <opencv2/dnn.hpp>
 #include "MxBase/Log/Log.h"
 
-
-using namespace MxBase;
-using namespace cv::dnn;
+using  MxBase;
+using  cv::dnn;
 namespace {
     const uint32_t YUV_BYTE_NU = 3;
     const uint32_t YUV_BYTE_DE = 2;
@@ -110,7 +110,7 @@ APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &te
         }
         for (uint32_t i = 0; i < shape.size(); ++i) {
             dataSize *= shape[i];
-        } 
+        }
     }
 
     // mat NCHW to NHWC
@@ -158,13 +158,13 @@ APP_ERROR DPN::Inference(const std::vector<MxBase::TensorBase> &inputs,
         }
         outputs.push_back(tensor);
     }
-    
     DynamicInfo dynamicInfo = {};
     dynamicInfo.dynamicType = DynamicType::STATIC_BATCH;
     auto startTime = std::chrono::high_resolution_clock::now();
     APP_ERROR ret = model_->ModelInference(inputs, outputs, dynamicInfo);
     auto endTime = std::chrono::high_resolution_clock::now();
-    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();// save time
+    // save time
+    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
     inferCostTimeMilliSec += costMs;
     if (ret != APP_ERR_OK) {
         LogError << "ModelInference failed, ret=" << ret << ".";
@@ -183,10 +183,10 @@ APP_ERROR DPN::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::SaveResult(const std::vector<std::string> &batchImgPaths, 
+APP_ERROR DPN::SaveResult(const std::vector<std::string> &batchImgPaths,
                             const std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos) {
     uint32_t batchIndex = 0;
-    for(auto &imgPath: batchImgPaths){
+    for (auto &imgPath : batchImgPaths) {
         std::string fileName = imgPath.substr(imgPath.find_last_of("/") + 1);
         size_t dot = fileName.find_last_of(".");
         std::string resFileName = "../results/" + fileName.substr(0, dot) + "_1.txt";
@@ -217,8 +217,7 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths) {
     std::string imgPath;
     imgPath = batchImgPaths[0];
     std::vector<std::string> repeat_batchImgPaths;
-    
-    for (auto &imgPath: batchImgPaths) {
+    for (auto &imgPath : batchImgPaths) {
         cv::Mat imageMat;
         ret = ReadImage(imgPath, imageMat);
         if (ret != APP_ERR_OK) {
@@ -228,7 +227,6 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths) {
         ResizeImage(imageMat, imageMat);
         batchImgMat.push_back(imageMat);
     }
-
     cv::Mat inputBlob = cv::dnn::blobFromImages(batchImgMat, 1.0f, cv::Size(), cv::Scalar(), false, false);
     inputBlob.convertTo(inputBlob, CV_8U);
     TensorBase tensorBase;
@@ -238,7 +236,6 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths) {
         return ret;
     }
     inputs.push_back(tensorBase);
-    
     auto startTime = std::chrono::high_resolution_clock::now();
     ret = Inference(inputs, outputs);
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -255,13 +252,11 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths) {
         LogError << "PostProcess failed, ret=" << ret << ".";
         return ret;
     }
-
     ret = SaveResult(batchImgPaths, BatchClsInfos);
     if (ret != APP_ERR_OK) {
         LogError << "Save infer results into file failed. ret = " << ret << ".";
         return ret;
     }
-
     return APP_ERR_OK;
 }
 
