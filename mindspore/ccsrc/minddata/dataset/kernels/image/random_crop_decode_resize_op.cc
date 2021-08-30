@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,30 +27,37 @@ RandomCropDecodeResizeOp::RandomCropDecodeResizeOp(int32_t target_height, int32_
     : RandomCropAndResizeOp(target_height, target_width, scale_lb, scale_ub, aspect_lb, aspect_ub, interpolation,
                             max_attempts) {}
 
-Status RandomCropDecodeResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  if (input == nullptr) {
-    RETURN_STATUS_UNEXPECTED("RandomCropDecodeResize: input image is empty.");
+Status RandomCropDecodeResizeOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
+  const int output_count = input.size();
+  output->resize(output_count);
+  int x = 0;
+  int y = 0;
+  int crop_height = 0;
+  int crop_width = 0;
+  TensorRow decoded;
+  decoded.resize(output_count);
+  for (size_t i = 0; i < input.size(); i++) {
+    if (input[i] == nullptr) {
+      RETURN_STATUS_UNEXPECTED("RandomCropDecodeResize: input image is empty.");
+    }
+    if (!IsNonEmptyJPEG(input[i])) {
+      DecodeOp op(true);
+      RETURN_IF_NOT_OK(op.Compute(input[i], &decoded[i]));
+      RETURN_IF_NOT_OK(RandomCropAndResizeOp::Compute(decoded, output));
+    } else {
+      int h_in = 0;
+      int w_in = 0;
+      RETURN_IF_NOT_OK(GetJpegImageInfo(input[i], &w_in, &h_in));
+      if (i == 0) {
+        (void)GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width);
+      }
+      std::shared_ptr<Tensor> decoded_tensor = nullptr;
+      RETURN_IF_NOT_OK(JpegCropAndDecode(input[i], &decoded_tensor, x, y, crop_width, crop_height));
+      RETURN_IF_NOT_OK(Resize(decoded_tensor, &(*output)[i], target_height_, target_width_, 0.0, 0.0, interpolation_));
+    }
   }
-  if (!IsNonEmptyJPEG(input)) {
-    DecodeOp op(true);
-    std::shared_ptr<Tensor> decoded;
-    RETURN_IF_NOT_OK(op.Compute(input, &decoded));
-    return RandomCropAndResizeOp::Compute(decoded, output);
-  } else {
-    int h_in = 0;
-    int w_in = 0;
-    RETURN_IF_NOT_OK(GetJpegImageInfo(input, &w_in, &h_in));
-
-    int x = 0;
-    int y = 0;
-    int crop_height = 0;
-    int crop_width = 0;
-    (void)GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width);
-
-    std::shared_ptr<Tensor> decoded;
-    RETURN_IF_NOT_OK(JpegCropAndDecode(input, &decoded, x, y, crop_width, crop_height));
-    return Resize(decoded, output, target_height_, target_width_, 0.0, 0.0, interpolation_);
-  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

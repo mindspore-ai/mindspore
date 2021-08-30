@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestRandomHorizontalFlipOp : public UT::CVOP::CVOpCommon {
  protected:
@@ -31,9 +31,12 @@ class MindDataTestRandomHorizontalFlipOp : public UT::CVOP::CVOpCommon {
 TEST_F(MindDataTestRandomHorizontalFlipOp, TestOp) {
   MS_LOG(INFO) << "Doing testHorizontalFlip.";
   // flip
+  TensorRow input_tensor_row;
+  input_tensor_row.push_back(input_tensor_);
+  input_tensor_row.push_back(input_tensor_);
+  TensorRow output_tensor_row;
   std::unique_ptr<RandomHorizontalFlipOp> op(new RandomHorizontalFlipOp(0.5));
-  EXPECT_TRUE(op->OneToOne());
-  Status s = op->Compute(input_tensor_, &input_tensor_);
+  Status s = op->Compute(input_tensor_row, &output_tensor_row);
   EXPECT_TRUE(s.IsOk());
   CheckImageShapeAndData(input_tensor_, kFlipHorizontal);
   MS_LOG(INFO) << "testHorizontalFlip end.";

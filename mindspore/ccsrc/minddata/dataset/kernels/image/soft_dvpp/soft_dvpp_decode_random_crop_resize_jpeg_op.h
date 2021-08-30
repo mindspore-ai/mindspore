@@ -28,8 +28,15 @@
 
 namespace mindspore {
 namespace dataset {
-class SoftDvppDecodeRandomCropResizeJpegOp : public RandomCropAndResizeOp {
+class SoftDvppDecodeRandomCropResizeJpegOp : public TensorOp {
  public:
+  static const float kDefScaleLb;
+  static const float kDefScaleUb;
+  static const float kDefAspectLb;
+  static const float kDefAspectUb;
+  static const InterpolationMode kDefInterpolation;
+  static const int32_t kDefMaxIter;
+
   SoftDvppDecodeRandomCropResizeJpegOp(int32_t target_height, int32_t target_width, float scale_lb = kDefScaleLb,
                                        float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb,
                                        float aspect_ub = kDefAspectUb, int32_t max_attempts = kDefMaxIter);
@@ -43,6 +50,14 @@ class SoftDvppDecodeRandomCropResizeJpegOp : public RandomCropAndResizeOp {
 
  protected:
   Status GetCropInfo(const std::shared_ptr<Tensor> &input, SoftDpCropInfo *crop_info);
+
+  int32_t target_height_;
+  int32_t target_width_;
+  float scale_lb_;
+  float scale_ub_;
+  float aspect_lb_;
+  float aspect_ub_;
+  int32_t max_attempts_;
 };
 }  // namespace dataset
 }  // namespace mindspore

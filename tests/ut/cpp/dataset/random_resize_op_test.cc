@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestRandomResize : public UT::CVOP::CVOpCommon {
  public:
@@ -34,11 +34,13 @@ TEST_F(MindDataTestRandomResize, TestOp) {
   TensorShape s = input_tensor_->shape();
   int output_h = 0.5 * s[0];
   int output_w = 0.5 * s[1];
-  std::shared_ptr<Tensor> output_tensor;
+  TensorRow input_tensor_row;
+  input_tensor_row.push_back(input_tensor_);
+  input_tensor_row.push_back(input_tensor_);
+  TensorRow output_tensor_row;
   // Resizing
   std::unique_ptr<RandomResizeOp> op(new RandomResizeOp(output_h, output_w));
-  EXPECT_TRUE(op->OneToOne());
-  Status st = op->Compute(input_tensor_, &output_tensor);
+  Status st = op->Compute(input_tensor_row, &output_tensor_row);
   EXPECT_TRUE(st.IsOk());
   MS_LOG(INFO) << "testResize end.";
 }

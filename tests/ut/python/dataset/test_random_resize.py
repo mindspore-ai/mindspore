@@ -16,9 +16,10 @@
 Testing RandomResize op in DE
 """
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.c_transforms as ops
 import mindspore.dataset.vision.c_transforms as vision
 from mindspore import log as logger
-from util import visualize_list, save_and_check_md5, \
+from util import visualize_list, save_and_check_md5, diff_mse, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -77,7 +78,33 @@ def test_random_resize_md5():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+def test_random_resize_op_1():
+    """
+    Test RandomResize with different fields.
+    """
+    logger.info("Test RandomResize with different fields.")
+
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = data.map(operations=ops.Duplicate(), input_columns=["image"],
+                    output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
+    resize_op = vision.RandomResize(10)
+    decode_op = vision.Decode()
+
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=decode_op, input_columns=["image_copy"])
+    data = data.map(operations=resize_op, input_columns=["image", "image_copy"])
+
+    num_iter = 0
+    for data1 in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        image = data1["image"]
+        image_copy = data1["image_copy"]
+        mse = diff_mse(image, image_copy)
+        logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
+        assert mse == 0
+        num_iter += 1
+
 
 if __name__ == "__main__":
     test_random_resize_op(plot=True)
     test_random_resize_md5()
+    test_random_resize_op_1()

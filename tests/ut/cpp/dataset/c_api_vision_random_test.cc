@@ -336,6 +336,49 @@ TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestRandomCropWithMultiField) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropWithMultiField.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Segmentation", "train", {}, true, std::make_shared<SequentialSampler>(0, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  transforms::Duplicate duplicate = transforms::Duplicate();
+  std::shared_ptr<TensorTransform> random_crop(new mindspore::dataset::vision::RandomCrop({500, 500}));
+
+  // Create a Map operation on ds
+  ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->Map({random_crop}, {"image", "image_copy"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    auto image_copy = row["image_copy"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor image_copy shape: " << image_copy.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestRandomCropFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropFail with invalid parameters.";
   // Create an VOC Dataset
@@ -661,6 +704,50 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlip) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestRandomResizeWithMultiField) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeWithMultiField with single integer input.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  transforms::Duplicate duplicate = transforms::Duplicate();
+  std::shared_ptr<TensorTransform> random_resize(new vision::RandomResize({100}));
+
+  // Create a Map operation on ds
+  ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->Map({random_resize}, {"image", "image_copy"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    auto image_copy = row["image_copy"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor image_copy shape: " << image_copy.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomPosterizeSuccess1 with non-default parameters.";
 
@@ -878,7 +965,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess1) {
   }
 
   EXPECT_EQ(i, 3);
-  
+
   // Manually terminate the pipeline
   iter->Stop();
   config::set_seed(current_seed);
@@ -1552,6 +1639,141 @@ TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxSuccess) {
   }
 
   EXPECT_EQ(i, 3);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlipWithMultiField) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalAndVerticalFlipWithMultiField for horizontal and "
+                  "vertical flips.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  transforms::Duplicate duplicate = transforms::Duplicate();
+  std::shared_ptr<TensorTransform> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlip>(1);
+  std::shared_ptr<TensorTransform> random_horizontal_flip_op = std::make_shared<vision::RandomHorizontalFlip>(1);
+
+  // Create a Map operation on ds
+  ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->Map({random_vertical_flip_op}, {"image", "image_copy"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    auto image_copy = row["image_copy"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor image_copy shape: " << image_copy.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomCropDecodeResizeWithMultiField) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropDecodeResizeWithMultiField.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<RandomSampler>(false, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  transforms::Duplicate duplicate = transforms::Duplicate();
+  std::shared_ptr<TensorTransform> random_crop_decode_resize(new vision::RandomCropDecodeResize({500, 500}));
+
+  // Create a Map operation on ds
+   ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
+   EXPECT_NE(ds, nullptr);
+
+   ds = ds->Map({random_crop_decode_resize}, {"image", "image_copy"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    auto image_copy = row["image_copy"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor image_copy shape: " << image_copy.Shape();
+    
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomCropResizeWithMultiField) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropResizeWithMultiField.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  transforms::Duplicate duplicate = transforms::Duplicate();
+  std::shared_ptr<TensorTransform> random_crop_decode_resize(new vision::RandomResizedCrop({500, 500}));
+
+  // Create a Map operation on ds
+  ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->Map({random_crop_decode_resize}, {"image", "image_copy"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    auto image_copy = row["image_copy"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor image_copy shape: " << image_copy.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+
   // Manually terminate the pipeline
   iter->Stop();
 }
