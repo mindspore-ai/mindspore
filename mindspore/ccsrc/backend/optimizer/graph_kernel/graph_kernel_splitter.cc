@@ -26,7 +26,6 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/context/graph_kernel_flags.h"
@@ -427,7 +426,7 @@ class AreaGraph {
         auto getitem_node = main_func_graph->NewCNode(getitem_inputs);
         auto abs_tuple = dyn_cast<abstract::AbstractTuple>(main_cnodes[input_area]->abstract());
         if (idx_val < SizeToLong(abs_tuple->size())) {
-          getitem_node->set_abstract(abs_tuple->elements()[idx_val]);
+          getitem_node->set_abstract(abs_tuple->elements()[LongToSize(idx_val)]);
         } else {
           getitem_node->set_abstract(main_cnodes[input_area]->abstract());
         }
@@ -759,7 +758,6 @@ class CostModelSplitSchemer : public SplitSchemer {
 
   virtual bool DecodeJson(const std::string &json_desc, const std::map<std::string, AnfNodePtr> &address_node_map) {
     auto kernel_json = nlohmann::json::parse(json_desc);
-    kernel::AkgKernelJsonDecoder akg_kernel_json_decoder;
     std::vector<nlohmann::json> graph_descs = kernel_json[kJsonKeyGraphDesc];
     std::vector<std::string> graph_modes = kernel_json[kJsonKeyGraphMode];
     if (graph_modes.size() != graph_descs.size()) {

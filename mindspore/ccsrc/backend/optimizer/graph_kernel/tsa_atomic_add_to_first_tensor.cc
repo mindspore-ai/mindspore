@@ -39,7 +39,6 @@
 
 namespace mindspore {
 namespace opt {
-
 class TsaChecker : public AtomicAddChecker {
  public:
   explicit TsaChecker(const PrimitivePtr &target) { target_type_ = target; }
@@ -98,11 +97,9 @@ AnfNodePtr TsaAtomicAddToFirstTensor::ProcessTsaFirstNode(const KernelGraphPtr &
   // find first input of tsa
   auto tsa_first_input = FindTsaFirstRealInputInGraph(main_graph, node);
   auto users = mng->node_users()[tsa_first_input];
-
   if (users.size() == 1 && !(utils::isa<ValueNodePtr>(tsa_first_input) || utils::isa<ParameterPtr>(tsa_first_input))) {
     return tsa_first_input;
   }
-
   // Create composite op's sub-graph.
   auto new_sub_graph = std::make_shared<FuncGraph>();
   auto parameter = new_sub_graph->add_parameter();

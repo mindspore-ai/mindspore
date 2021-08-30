@@ -40,9 +40,8 @@
 
 namespace mindspore {
 namespace kernel {
-
 #define INIT_SET_FROM_2D_ARRAY(set_var, list_idx) \
-  std::set<size_t> set_var(kernel_lists_[list_idx], kernel_lists_[list_idx] + kernel_lists_[list_idx][kMaxKernelNum_]);
+  std::set<size_t> set_var(kernel_lists_[list_idx], kernel_lists_[list_idx] + kernel_lists_[list_idx][kMaxKernelNum_])
 
 #define LIST_BEGIN(list_idx) kernel_lists_[list_idx]
 #define LIST_END(list_idx) (kernel_lists_[list_idx] + kernel_lists_[list_idx][kMaxKernelNum_])
@@ -53,7 +52,7 @@ namespace kernel {
 constexpr int32_t PROCESS_NUM = 16;
 constexpr int32_t TIME_OUT = 300;
 
-bool AkgKernelPool::LockMng::TryLock() {
+bool AkgKernelPool::LockMng::TryLock() const {
   // Try to lock 100 times. Return errno if lock unsuccessfully
   uint32_t trial = 100;
 
@@ -65,7 +64,7 @@ bool AkgKernelPool::LockMng::TryLock() {
     }
 
     trial--;
-    usleep(5000);
+    (void)usleep(5000);
   }
 
   if (ret == -1) {
@@ -76,14 +75,14 @@ bool AkgKernelPool::LockMng::TryLock() {
   return true;
 }
 
-void AkgKernelPool::LockMng::Unlock() {
+void AkgKernelPool::LockMng::Unlock() const {
   auto ret = lockf(fd_, F_ULOCK, 0);
   if (ret == -1) {
     MS_LOG(ERROR) << "Failed to release the lock, errno:" << strerror(errno);
   }
 }
 
-std::string AkgKernelPool::GetCurrentPath() {
+std::string AkgKernelPool::GetCurrentPath() const {
   char cwd[PATH_MAX];
   char *ret = getcwd(cwd, sizeof(cwd));
   if (ret == nullptr) {
@@ -162,7 +161,7 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
   }
 
   if (is_creator_) {
-    (void)memset(local_addr, 0, mem_size);
+    (void)memset_s(local_addr, mem_size, 0, mem_size);
   }
 
   return local_addr;
@@ -190,7 +189,7 @@ int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
   auto ret = AddKernels(build_args);
   if (ret != 0) {
     MS_LOG(ERROR) << "AkgKernelPool AddKernels failed.";
-    return false;
+    return -1;
   }
 
   return 0;
@@ -258,7 +257,7 @@ int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
       return -1;
     }
 
-    self_kernel_ids_.emplace(hash_id);
+    (void)self_kernel_ids_.emplace(hash_id);
   }
 
   std::set<size_t> diff_from_todo;
@@ -266,12 +265,12 @@ int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
   std::set<size_t> diff_from_done;
 
   // add the unique kernel only once, so need to check if it exists in todo_list, doing_list, or done_list
-  std::set_difference(self_kernel_ids_.begin(), self_kernel_ids_.end(), todo_list.begin(), todo_list.end(),
-                      std::inserter(diff_from_todo, diff_from_todo.begin()));
-  std::set_difference(diff_from_todo.begin(), diff_from_todo.end(), doing_list.begin(), doing_list.end(),
-                      std::inserter(diff_from_doing, diff_from_doing.begin()));
-  std::set_difference(diff_from_doing.begin(), diff_from_doing.end(), done_list.begin(), done_list.end(),
-                      std::inserter(diff_from_done, diff_from_done.begin()));
+  (void)std::set_difference(self_kernel_ids_.begin(), self_kernel_ids_.end(), todo_list.begin(), todo_list.end(),
+                            std::inserter(diff_from_todo, diff_from_todo.begin()));
+  (void)std::set_difference(diff_from_todo.begin(), diff_from_todo.end(), doing_list.begin(), doing_list.end(),
+                            std::inserter(diff_from_doing, diff_from_doing.begin()));
+  (void)std::set_difference(diff_from_doing.begin(), diff_from_doing.end(), done_list.begin(), done_list.end(),
+                            std::inserter(diff_from_done, diff_from_done.begin()));
 
   auto new_kernel_size = diff_from_done.size();
   if (new_kernel_size + todo_list.size() > static_cast<size_t>(kMaxKernelNum_)) {
@@ -280,7 +279,7 @@ int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
     return -1;
   }
 
-  std::copy(diff_from_done.begin(), diff_from_done.end(), LIST_END(kToDoIdx_));
+  (void)std::copy(diff_from_done.begin(), diff_from_done.end(), LIST_END(kToDoIdx_));
   INCREASE_LIST_SIZE(kToDoIdx_, new_kernel_size);
 
   return 0;
@@ -298,18 +297,18 @@ int32_t AkgKernelPool::FetchKernels(std::set<size_t> *out) {
   // filter out kernels which belongs to other processes
   auto FilterBySelfList = [&left_in_todo_list, &out, this](size_t id) {
     if (this->self_kernel_ids_.count(id) != 0) {
-      out->emplace(id);
+      (void)out->emplace(id);
     } else {
-      left_in_todo_list.emplace(id);
+      (void)left_in_todo_list.emplace(id);
     }
   };
 
-  std::for_each(LIST_BEGIN(kToDoIdx_), LIST_END(kToDoIdx_), FilterBySelfList);
+  (void)std::for_each(LIST_BEGIN(kToDoIdx_), LIST_END(kToDoIdx_), FilterBySelfList);
 
-  std::copy(out->begin(), out->end(), LIST_END(kDoingIdx_));
+  (void)std::copy(out->begin(), out->end(), LIST_END(kDoingIdx_));
   INCREASE_LIST_SIZE(kDoingIdx_, out->size());
 
-  std::copy(left_in_todo_list.begin(), left_in_todo_list.end(), LIST_BEGIN(kToDoIdx_));
+  (void)std::copy(left_in_todo_list.begin(), left_in_todo_list.end(), LIST_BEGIN(kToDoIdx_));
   RESET_LIST_SIZE(kToDoIdx_, left_in_todo_list.size());
 
   return 0;
@@ -324,16 +323,16 @@ int32_t AkgKernelPool::UpdateAndWait(const std::set<size_t> &ids) {
     }
 
     // update the state of finished kernels to `done`
-    std::copy(ids.begin(), ids.end(), LIST_END(kDoneIdx_));
+    (void)std::copy(ids.begin(), ids.end(), LIST_END(kDoneIdx_));
     INCREASE_LIST_SIZE(kDoneIdx_, ids.size());
 
     // delete the finished kernels from doing_list
     std::vector<size_t> left_in_doing_list;
     INIT_SET_FROM_2D_ARRAY(doing_list, kDoingIdx_);
-    std::set_difference(doing_list.begin(), doing_list.end(), ids.begin(), ids.end(),
-                        std::inserter(left_in_doing_list, left_in_doing_list.begin()));
+    (void)std::set_difference(doing_list.begin(), doing_list.end(), ids.begin(), ids.end(),
+                              std::inserter(left_in_doing_list, left_in_doing_list.begin()));
 
-    std::copy(left_in_doing_list.begin(), left_in_doing_list.end(), LIST_BEGIN(kDoingIdx_));
+    (void)std::copy(left_in_doing_list.begin(), left_in_doing_list.end(), LIST_BEGIN(kDoingIdx_));
     RESET_LIST_SIZE(kDoingIdx_, left_in_doing_list.size());
   }
 
@@ -346,7 +345,7 @@ int32_t AkgKernelPool::UpdateAndWait(const std::set<size_t> &ids) {
   return 0;
 }
 
-int32_t AkgKernelPool::Wait() {
+int32_t AkgKernelPool::Wait() const {
   // wait until all the kernels which belong to this process finish compiling
   uint32_t trials = 1000;
 
@@ -366,7 +365,7 @@ int32_t AkgKernelPool::Wait() {
       }
     }
 
-    usleep(1000000);
+    (void)usleep(1000000);
     trials--;
   }
 
@@ -390,11 +389,11 @@ std::vector<JsonNodePair> AkgKernelBuilder::GetNotCachedKernels(const std::vecto
     }
 
     if (kernel_name_set.count(kernel_name) != 0) {
-      repeat_nodes_.push_back({json_generator, anf_node});
+      (void)repeat_nodes_.emplace_back(json_generator, anf_node);
       continue;
     }
     kernel_name_set.insert(kernel_name);
-    new_build_args.push_back({json_generator, anf_node});
+    (void)new_build_args.emplace_back(json_generator, anf_node);
   }
   return new_build_args;
 }
@@ -431,18 +430,15 @@ bool AkgKernelBuilder::HandleRepeatNodes() {
 }
 
 std::vector<std::string> AkgKernelBuilder::GetKernelJsonsByHashId(const std::vector<JsonNodePair> &build_args,
-                                                                  std::set<size_t> fetched_ids) {
+                                                                  const std::set<size_t> fetched_ids) {
   std::vector<std::string> jsons;
   for (const auto &[json_generator, anf_node] : build_args) {
     MS_EXCEPTION_IF_NULL(anf_node);
     auto kernel_name = json_generator.kernel_name();
-
     auto hash_id = std::hash<std::string>()(kernel_name);
-
     if (fetched_ids.count(hash_id) == 0) {
       continue;
     }
-
     auto kernel_json = json_generator.kernel_json_str();
     AkgSaveJsonInfo(kernel_name, kernel_json);
     jsons.push_back(kernel_json);

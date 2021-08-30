@@ -36,7 +36,7 @@ graphkernel::LiteGraphPtr OpExpander::Run(const BaseInfoList &inputs, const Base
   }
   this->CheckInputs();
   for (auto &inp : inputs) {
-    gb.Parameter(inp);
+    (void)gb.Parameter(inp);
   }
   auto result = this->Expand();
   gb.SetOutputs(result);

@@ -15,8 +15,10 @@
 """generate json desc for SquareSumAll"""
 from ._utils import Expander
 
+
 class SquareSumAll(Expander):
     """SquareSumAll expander"""
+
     def _check(self):
         """check inputs"""
         input_num = len(self.inputs)

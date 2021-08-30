@@ -43,10 +43,10 @@ bool EliminateRedudantComplexInGraphkernel(const FuncGraphPtr &func_graph) {
         auto getitem_cnode = getitem->cast<CNodePtr>();
         // Find all complex users which are CReal or CImag, then use Complex inputs replace them.
         if (IsPrimitiveCNode(getitem_cnode, std::make_shared<Primitive>("CReal"))) {
-          mng->Replace(getitem, cnode->inputs()[1]);
+          (void)mng->Replace(getitem, cnode->inputs()[1]);
           changed = true;
         } else if (IsPrimitiveCNode(getitem_cnode, std::make_shared<Primitive>("CImag"))) {
-          mng->Replace(getitem, cnode->inputs()[2]);
+          (void)mng->Replace(getitem, cnode->inputs()[2]);
           changed = true;
         }
       }

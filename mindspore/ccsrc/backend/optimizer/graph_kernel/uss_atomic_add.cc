@@ -84,6 +84,5 @@ bool UssAtomicAdd::Run(const FuncGraphPtr &func_graph) {
 
   return changed;
 }
-
 }  // namespace opt
 }  // namespace mindspore

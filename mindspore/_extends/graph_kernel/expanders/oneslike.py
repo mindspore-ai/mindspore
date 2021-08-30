@@ -15,8 +15,10 @@
 """generate json desc for OnesLike"""
 from ._utils import Expander
 
+
 class OnesLike(Expander):
     """OnesLike expander"""
+
     def _expand(self, graph_builder):
         input_x = self.inputs[0]
         const_one = graph_builder.value(input_x.dtype, 1)

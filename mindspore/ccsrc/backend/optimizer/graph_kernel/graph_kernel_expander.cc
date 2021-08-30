@@ -142,13 +142,13 @@ FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
   expanders::BaseInfoList outputs(AnfAlgo::GetOutputTensorNum(node));
   for (size_t i = 0; i < inputs.size(); i++) {
     auto shape = AnfAlgo::GetInputDeviceShape(node, i);
-    std::transform(shape.begin(), shape.end(), std::back_inserter(inputs[i].shape), SizeToLong);
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(inputs[i].shape), SizeToLong);
     inputs[i].type = AnfAlgo::GetInputDeviceDataType(node, i);
     inputs[i].format = AnfAlgo::GetInputFormat(node, i);
   }
   for (size_t i = 0; i < outputs.size(); i++) {
     auto shape = AnfAlgo::GetOutputDeviceShape(node, i);
-    std::transform(shape.begin(), shape.end(), std::back_inserter(outputs[i].shape), SizeToLong);
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(outputs[i].shape), SizeToLong);
     outputs[i].type = AnfAlgo::GetOutputDeviceDataType(node, i);
     outputs[i].format = AnfAlgo::GetOutputFormat(node, i);
   }
@@ -275,7 +275,7 @@ bool ComplexOpExpander::ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *k
   AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, cnode.get());
   std::vector<size_t> original_shape = AnfAlgo::GetOutputInferShape(cnode, 0);
   ShapeVector real_shape;
-  std::copy(original_shape.begin(), original_shape.end(), std::back_inserter(real_shape));
+  (void)std::copy(original_shape.begin(), original_shape.end(), std::back_inserter(real_shape));
   auto complex_shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(real_shape));
   TypeId complex_type = kNumberTypeComplex64;
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(complex_type), complex_shape_ptr);

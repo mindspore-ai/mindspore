@@ -30,10 +30,8 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/optimizer/graph_kernel/decrease_transfer_precision.h"
-
 namespace mindspore {
 namespace opt {
-
 static const size_t GK_MIN_SIZE = 2;  // 2
 
 int64_t ObtainGetItemIndex(const AnfNodePtr &getitem) {
@@ -113,7 +111,7 @@ bool DecreaseTransferPrecision::Run(const FuncGraphPtr &func_graph) {
         if (IsPrimitive(in_node->input(0), prim::kPrimTupleGetItem)) {
           auto tuple_node = in_node->input(1);
           auto tuple_index = ObtainGetItemIndex(in_node);
-          auto has_reduce_output = IsPreNodeReduce(func_graph, tuple_node, true, tuple_index);
+          auto has_reduce_output = IsPreNodeReduce(func_graph, tuple_node, true, LongToSize(tuple_index));
           auto fail_flag = !IsCandidateNode(tuple_node) ||
                            (users_map[in_node].size() > 1 && IsAllUserCandidateNode(users_map[in_node])) ||
                            has_reduce_output;
@@ -121,11 +119,11 @@ bool DecreaseTransferPrecision::Run(const FuncGraphPtr &func_graph) {
             continue;
           }
           // mutate father
-          Process_Father(func_graph, tuple_node, true, tuple_index);
+          (void)Process_Father(func_graph, tuple_node, true, LongToSize(tuple_index));
           in_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat16, GetShape(in_node)));
           // mutate sons
           for (auto each_out : users_map[in_node]) {
-            Process_Son(func_graph, each_out.first, each_out.second);
+            (void)Process_Son(func_graph, each_out.first, IntToSize(each_out.second));
           }
         }
         if (IsCandidateNode(in_node)) {
@@ -134,9 +132,9 @@ bool DecreaseTransferPrecision::Run(const FuncGraphPtr &func_graph) {
             continue;
           }
           // mutate father
-          Process_Father(func_graph, in_node, false, 0);
+          (void)Process_Father(func_graph, in_node, false, 0);
           // mutate sons
-          Process_Son(func_graph, cnode, index);
+          (void)Process_Son(func_graph, cnode, index);
         }
       }
     }
@@ -212,7 +210,7 @@ bool DecreaseTransferPrecision::Process_Father(const FuncGraphPtr &func_graph, c
     // Update MakeTuple node abstract
     AbstractBasePtrList abstract_list;
     for (size_t i = 1; i < tuple_output->size(); ++i) {
-      abstract_list.emplace_back(tuple_output->input(i)->abstract());
+      (void)abstract_list.emplace_back(tuple_output->input(i)->abstract());
     }
     tuple_output->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
 
@@ -259,7 +257,7 @@ bool DecreaseTransferPrecision::Process_Son(const FuncGraphPtr &func_graph, cons
     auto user_node = user.first;
     if (IsPrimitiveCNode(user_node, prim::kPrimCast) &&
         AnfAlgo::GetOutputDeviceDataType(user_node, 0) == kNumberTypeFloat16) {
-      mng->Replace(user_node, old_input);
+      (void)mng->Replace(user_node, old_input);
       return true;
     }
   }
@@ -267,7 +265,6 @@ bool DecreaseTransferPrecision::Process_Son(const FuncGraphPtr &func_graph, cons
   auto tensor_input = node->cast<CNodePtr>()->input(index);
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), old_input};
   auto cnode = gk_graph->NewCNode(inputs);
-
   gk_graph->AddNode(cnode);
   cnode->set_abstract(old_input->abstract());
   cnode->set_scope(old_input->scope());
@@ -289,9 +286,8 @@ bool DecreaseTransferPrecision::Process_Son(const FuncGraphPtr &func_graph, cons
   node_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
   auto info_1 = node_info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(info_1, cnode.get());
-  mng->Replace(old_input, cnode);
+  (void)mng->Replace(old_input, cnode);
   return true;
 }
-
 }  // namespace opt
 }  // namespace mindspore
