@@ -18,12 +18,11 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
+  if (input_num != INPUT_NUMS) {
     MS_LOG(ERROR) << "Input num is " << input_num << ", but BoundingBoxDecode needs 2 inputs.";
   }
 
@@ -58,10 +57,10 @@ void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
   std::vector<int64_t> max_shape_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "max_shape");
   (void)std::transform(max_shape_me.begin(), max_shape_me.end(), std::back_inserter(max_shape_),
-                       [](const int64_t &value) { return static_cast<int>(value); });
+                       [](const int64_t &value) { return LongToInt(value); });
   wh_ratio_clip_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "wh_ratio_clip");
 
-  if (max_shape_.size() < 2) {
+  if (max_shape_.size() < MIN_MAX_SHAPE_SIZE) {
     MS_LOG(EXCEPTION) << "The size of max_shape is less than 2.";
   }
 }
@@ -91,42 +90,49 @@ bool BoundingBoxDecodeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
   }
 
   size_t elem_num = block_size / coordinate;
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &deltas, &anchor_box, &bboxes, ms1, ms2](size_t start, size_t end) {
+    constexpr size_t X_INDEX = 0;
+    constexpr size_t Y_INDEX = 1;
+    constexpr size_t W_INDEX = 2;
+    constexpr size_t H_INDEX = 3;
+    const T ZERO = static_cast<T>(0);
+    const T HALF = static_cast<T>(0.5);
+    const T ONE = static_cast<T>(1);
     for (size_t i = start; i < end; i++) {
       const size_t left_x = i * 4;
       const size_t left_y = i * 4 + 1;
       const size_t right_x = i * 4 + 2;
       const size_t right_y = i * 4 + 3;
 
-      T dx = deltas[left_x] * static_cast<T>(stds_[0]) + static_cast<T>(means_[0]);
-      T dy = deltas[left_y] * static_cast<T>(stds_[1]) + static_cast<T>(means_[1]);
-      T dw = deltas[right_x] * static_cast<T>(stds_[2]) + static_cast<T>(means_[2]);
-      T dh = deltas[right_y] * static_cast<T>(stds_[3]) + static_cast<T>(means_[3]);
+      T dx = deltas[left_x] * static_cast<T>(stds_[X_INDEX]) + static_cast<T>(means_[X_INDEX]);
+      T dy = deltas[left_y] * static_cast<T>(stds_[Y_INDEX]) + static_cast<T>(means_[Y_INDEX]);
+      T dw = deltas[right_x] * static_cast<T>(stds_[W_INDEX]) + static_cast<T>(means_[W_INDEX]);
+      T dh = deltas[right_y] * static_cast<T>(stds_[H_INDEX]) + static_cast<T>(means_[H_INDEX]);
 
       T max_ratio = static_cast<T>(abs(log(wh_ratio_clip_)));
 
       dw = dw > max_ratio ? max_ratio : (dw < (-max_ratio) ? (-max_ratio) : dw);
       dh = dh > max_ratio ? max_ratio : (dh < (-max_ratio) ? (-max_ratio) : dh);
 
-      T px = (anchor_box[left_x] + anchor_box[right_x]) * static_cast<T>(0.5);
-      T py = (anchor_box[left_y] + anchor_box[right_y]) * static_cast<T>(0.5);
-      T pw = anchor_box[right_x] - anchor_box[left_x] + static_cast<T>(1.0);
-      T ph = anchor_box[right_y] - anchor_box[left_y] + static_cast<T>(1.0);
+      T px = (anchor_box[left_x] + anchor_box[right_x]) * HALF;
+      T py = (anchor_box[left_y] + anchor_box[right_y]) * HALF;
+      T pw = anchor_box[right_x] - anchor_box[left_x] + ONE;
+      T ph = anchor_box[right_y] - anchor_box[left_y] + ONE;
 
       T gx = px + pw * dx;
       T gy = py + ph * dy;
       T gw = pw * exp(dw);
       T gh = ph * exp(dh);
 
-      T x1 = gx - gw * static_cast<T>(0.5) + static_cast<T>(0.5);
-      T y1 = gy - gh * static_cast<T>(0.5) + static_cast<T>(0.5);
-      T x2 = gx + gw * static_cast<T>(0.5) - static_cast<T>(0.5);
-      T y2 = gy + gh * static_cast<T>(0.5) - static_cast<T>(0.5);
+      T x1 = gx - gw * HALF + HALF;
+      T y1 = gy - gh * HALF + HALF;
+      T x2 = gx + gw * HALF - HALF;
+      T y2 = gy + gh * HALF - HALF;
 
-      x1 = x1 > ms2 ? ms2 : (x1 < static_cast<T>(0) ? static_cast<T>(0) : x1);
-      y1 = y1 > ms1 ? ms1 : (y1 < static_cast<T>(0) ? static_cast<T>(0) : y1);
-      x2 = x2 > ms2 ? ms2 : (x2 < static_cast<T>(0) ? static_cast<T>(0) : x2);
-      y2 = y2 > ms1 ? ms1 : (y2 < static_cast<T>(0) ? static_cast<T>(0) : y2);
+      x1 = x1 > ms2 ? ms2 : (x1 < ZERO ? ZERO : x1);
+      y1 = y1 > ms1 ? ms1 : (y1 < ZERO ? ZERO : y1);
+      x2 = x2 > ms2 ? ms2 : (x2 < ZERO ? ZERO : x2);
+      y2 = y2 > ms1 ? ms1 : (y2 < ZERO ? ZERO : y2);
 
       bboxes[left_x] = x1;
       bboxes[left_y] = y1;

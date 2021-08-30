@@ -22,6 +22,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t MIN_MAX_SHAPE_SIZE = 2;
+constexpr size_t INPUT_NUMS = 2;
 template <typename T>
 class BoundingBoxDecodeCPUKernel : public CPUKernel {
  public:
@@ -37,7 +39,7 @@ class BoundingBoxDecodeCPUKernel : public CPUKernel {
   std::vector<float> means_;
   std::vector<float> stds_;
   std::vector<int> max_shape_;
-  float wh_ratio_clip_;
+  float wh_ratio_clip_{0.016};
 };
 
 MS_REG_CPU_KERNEL_T(

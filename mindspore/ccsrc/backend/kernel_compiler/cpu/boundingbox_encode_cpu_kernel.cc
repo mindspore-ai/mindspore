@@ -18,12 +18,11 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void BoundingBoxEncodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
+  if (input_num != INPUT_NUMS) {
     MS_LOG(ERROR) << "Input num is " << input_num << ", but BoundingBoxEncode needs 2 inputs.";
   }
 
@@ -79,32 +78,38 @@ bool BoundingBoxEncodeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
   }
 
   size_t elem_num = block_size / coordinate;
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &anchor_box, &groundtruth_box, &deltas](size_t start, size_t end) {
+    constexpr size_t X_INDEX = 0;
+    constexpr size_t Y_INDEX = 1;
+    constexpr size_t W_INDEX = 2;
+    constexpr size_t H_INDEX = 3;
+    const T HALF = static_cast<T>(0.5);
+    const T ONE = static_cast<T>(1);
     for (size_t i = start; i < end; i++) {
       const size_t left_x = i * 4;
       const size_t left_y = i * 4 + 1;
       const size_t right_x = i * 4 + 2;
       const size_t right_y = i * 4 + 3;
 
-      T px = (anchor_box[left_x] + anchor_box[right_x]) * static_cast<T>(0.5);
-      T py = (anchor_box[left_y] + anchor_box[right_y]) * static_cast<T>(0.5);
-      T pw = anchor_box[right_x] - anchor_box[left_x] + static_cast<T>(1.0);
-      T ph = anchor_box[right_y] - anchor_box[left_y] + static_cast<T>(1.0);
+      T px = (anchor_box[left_x] + anchor_box[right_x]) * HALF;
+      T py = (anchor_box[left_y] + anchor_box[right_y]) * HALF;
+      T pw = anchor_box[right_x] - anchor_box[left_x] + ONE;
+      T ph = anchor_box[right_y] - anchor_box[left_y] + ONE;
 
-      T gx = (groundtruth_box[left_x] + groundtruth_box[right_x]) * static_cast<T>(0.5);
-      T gy = (groundtruth_box[left_y] + groundtruth_box[right_y]) * static_cast<T>(0.5);
-      T gw = groundtruth_box[right_x] - groundtruth_box[left_x] + static_cast<T>(1.0);
-      T gh = groundtruth_box[right_y] - groundtruth_box[left_y] + static_cast<T>(1.0);
+      T gx = (groundtruth_box[left_x] + groundtruth_box[right_x]) * HALF;
+      T gy = (groundtruth_box[left_y] + groundtruth_box[right_y]) * HALF;
+      T gw = groundtruth_box[right_x] - groundtruth_box[left_x] + ONE;
+      T gh = groundtruth_box[right_y] - groundtruth_box[left_y] + ONE;
 
       T dx = (gx - px) / pw;
       T dy = (gy - py) / ph;
       T dw = log(gw / pw);
       T dh = log(gh / ph);
 
-      deltas[left_x] = (dx - static_cast<T>(means_[0])) / static_cast<T>(stds_[0]);
-      deltas[left_y] = (dy - static_cast<T>(means_[1])) / static_cast<T>(stds_[1]);
-      deltas[right_x] = (dw - static_cast<T>(means_[2])) / static_cast<T>(stds_[2]);
-      deltas[right_y] = (dh - static_cast<T>(means_[3])) / static_cast<T>(stds_[3]);
+      deltas[left_x] = (dx - static_cast<T>(means_[X_INDEX])) / static_cast<T>(stds_[X_INDEX]);
+      deltas[left_y] = (dy - static_cast<T>(means_[Y_INDEX])) / static_cast<T>(stds_[Y_INDEX]);
+      deltas[right_x] = (dw - static_cast<T>(means_[W_INDEX])) / static_cast<T>(stds_[W_INDEX]);
+      deltas[right_y] = (dh - static_cast<T>(means_[H_INDEX])) / static_cast<T>(stds_[H_INDEX]);
     }
   };
   CPUKernelUtils::ParallelFor(task, elem_num);

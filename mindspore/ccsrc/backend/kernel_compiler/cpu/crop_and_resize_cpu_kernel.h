@@ -23,6 +23,20 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int BILINEAR = 1;
+constexpr int NEAREST = 2;
+constexpr int BILINEAR_V2 = 3;
+constexpr size_t INPUT_NUM = 4;
+constexpr size_t OUTPUT_NUM = 1;
+constexpr size_t BOX_RANK = 2;
+constexpr size_t CROP_SIZE_LEN = 2;
+constexpr size_t IMAGE_DIM = 4;
+constexpr size_t IMAGE = 0;
+constexpr size_t BOXES = 1;
+constexpr size_t BOX_INDEX = 2;
+constexpr size_t CROP_SIZE = 3;
+constexpr size_t IMAGE_HEIGHT = 1;
+constexpr size_t IMAGE_WEIGHT = 2;
 template <typename T>
 class CropAndResizeCPUKernel : public CPUKernel {
  public:

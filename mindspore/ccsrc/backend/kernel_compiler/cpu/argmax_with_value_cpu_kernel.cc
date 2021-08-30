@@ -53,21 +53,21 @@ void ArgMaxWithValueCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t shape_len = shape_.size();
   int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  axis += static_cast<int64_t>(shape_len);
+  axis += SizeToLong(shape_len);
   if (axis < 0) {
     MS_LOG(EXCEPTION) << "Invalid axis:" << axis << ", should in range [-1, " << (shape_len - 1) << "]";
   }
-  axis = axis % static_cast<int64_t>(shape_len);
+  axis = axis % SizeToLong(shape_len);
   num_before_axis_ = 1;
   num_after_axis_ = 1;
   for (size_t i = 0; i < shape_len; i++) {
-    if (static_cast<int64_t>(i) < axis) {
+    if (SizeToLong(i) < axis) {
       num_before_axis_ *= shape_[i];
-    } else if (static_cast<int64_t>(i) > axis) {
+    } else if (SizeToLong(i) > axis) {
       num_after_axis_ *= shape_[i];
     }
   }
-  dim_axis_ = shape_[axis];
+  dim_axis_ = shape_[IntToSize(axis)];
 }
 
 template <typename T>

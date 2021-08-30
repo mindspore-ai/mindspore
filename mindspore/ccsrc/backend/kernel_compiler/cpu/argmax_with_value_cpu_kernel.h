@@ -37,9 +37,9 @@ class ArgMaxWithValueCPUKernel : public CPUKernel {
 
  private:
   std::vector<size_t> shape_;
-  size_t num_before_axis_;
-  size_t num_after_axis_;
-  size_t dim_axis_;
+  size_t num_before_axis_{0};
+  size_t num_after_axis_{0};
+  size_t dim_axis_{0};
 };
 
 MS_REG_CPU_KERNEL_T(ArgMaxWithValue, KernelAttr(), ArgMaxWithValueCPUKernel, float);

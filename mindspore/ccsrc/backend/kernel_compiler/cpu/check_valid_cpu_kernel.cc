@@ -38,23 +38,27 @@ bool CheckValidCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &input
   auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);
   auto img_metas = reinterpret_cast<T *>(inputs[1]->addr);
   auto output = reinterpret_cast<bool *>(outputs[0]->addr);
-  const size_t coordinate = 4;
-  const size_t elem_num = inputs[0]->size / sizeof(T) / coordinate;
+  const size_t elem_num = inputs[0]->size / sizeof(T) / COORDINATE;
 
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &anchor_box, &img_metas, &output](size_t start, size_t end) {
+    const T ZERO = static_cast<T>(0);
+    const T ONE = static_cast<T>(1);
+    constexpr size_t OFFSET_ZERO = 0;
+    constexpr size_t OFFSET_ONE = 1;
+    constexpr size_t OFFSET_TWO = 2;
     for (size_t i = start; i < end; i++) {
       const size_t left_x = i * 4;
       const size_t left_y = i * 4 + 1;
       const size_t right_x = i * 4 + 2;
       const size_t right_y = i * 4 + 3;
 
-      bool valid_flag = false;
-      valid_flag |= !(anchor_box[left_x] >= static_cast<T>(0.0));
-      valid_flag |= !(anchor_box[left_y] >= static_cast<T>(0.0));
-      valid_flag |= !(img_metas[1] * img_metas[2] - static_cast<T>(1.0) >= anchor_box[right_x]);
-      valid_flag |= !(img_metas[0] * img_metas[2] - static_cast<T>(1.0) >= anchor_box[right_y]);
+      size_t valid_flag = 0;
+      valid_flag |= !IntToSize(anchor_box[left_x] >= ZERO);
+      valid_flag |= !IntToSize(anchor_box[left_y] >= ZERO);
+      valid_flag |= !IntToSize(img_metas[OFFSET_ONE] * img_metas[OFFSET_TWO] - ONE >= anchor_box[right_x]);
+      valid_flag |= !IntToSize(img_metas[OFFSET_ZERO] * img_metas[OFFSET_TWO] - ONE >= anchor_box[right_y]);
 
-      output[i] = !valid_flag;
+      output[i] = !static_cast<bool>(valid_flag);
     }
   };
   CPUKernelUtils::ParallelFor(task, elem_num);
@@ -75,10 +79,9 @@ void CheckValidCPUKernel<T>::CheckParams(const std::vector<AddressPtr> &inputs,
     MS_LOG(EXCEPTION) << "Output number is: " << outputs.size() << ", but CheckValid needs " << kOutputSize
                       << "outputs.";
   }
-  if (outputs[0]->size / sizeof(bool) != inputs[0]->size / sizeof(T) / 4) {
+  if (outputs[0]->size / sizeof(bool) != inputs[0]->size / sizeof(T) / COORDINATE) {
     MS_LOG(EXCEPTION) << "The output dimensions must match the dimensions of img_metas.";
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore

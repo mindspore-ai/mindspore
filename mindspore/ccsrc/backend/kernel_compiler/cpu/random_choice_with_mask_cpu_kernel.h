@@ -23,6 +23,9 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int MAX_INPUT_DIMS = 5;
+constexpr size_t INPUT_NUM = 1;
+constexpr size_t OUTPUT_NUM = 2;
 
 class RandomChoiceWithMaskCPUKernel : public CPUKernel {
  public:
@@ -35,9 +38,12 @@ class RandomChoiceWithMaskCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  bool padding_flag = false;
+  int32_t output_length = 0;
+  int32_t output_non_zero_length = 0;
   int32_t count_{0};
-  std::vector<int64_t> dims_;
-  int input_shape_size_{0};
+  std::vector<int32_t> dims_;
+  size_t input_shape_size_{0};
   int seed_{0};
   int seed2_{0};
   int input_size_{1};
