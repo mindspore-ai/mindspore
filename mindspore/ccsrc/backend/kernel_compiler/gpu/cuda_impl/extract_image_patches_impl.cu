@@ -36,7 +36,7 @@ __global__ void ExtractImagePatches(size_t output_size, int64_t stride_row, int6
     const int64_t input_row = row_index * stride_row + row_offset * rate_row - row_padding_top;
     if (input_row < 0 || input_row >= input_row_size) {
       output[pos] = static_cast<T>(0);
-      return;
+      continue;
     }
     // col
     const int64_t col_index = patch_index - row_index * output_cols;
@@ -44,7 +44,7 @@ __global__ void ExtractImagePatches(size_t output_size, int64_t stride_row, int6
     const int64_t input_col = col_index * stride_col + col_offset * rate_col - col_padding_left;
     if (input_col < 0 || input_col >= input_col_size) {
       output[pos] = static_cast<T>(0);
-      return;
+      continue;
     }
     // depth
     const int64_t depth = inner_index - (inner_index / output_depth) * output_depth;
