@@ -99,7 +99,7 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   void *packed_bias_{nullptr};
   void *stored_bias_{nullptr};
   MemType filter_type_{MemType::BUF};
-  bool has_bias_{false};
+
   int TILE_HW_{};
 
  private:

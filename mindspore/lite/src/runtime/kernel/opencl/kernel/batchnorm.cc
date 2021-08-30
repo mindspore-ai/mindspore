@@ -260,8 +260,6 @@ int BatchNormOpenCLKernel::Prepare() {
 }
 
 int BatchNormOpenCLKernel::Run() {
-  CHECK_NULL_RETURN(in_tensors_.at(0)->data_c());
-  CHECK_NULL_RETURN(out_tensors_.at(0)->data_c());
   MS_LOG(DEBUG) << this->name() << " Running! ";
   int arg_cn = 0;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {

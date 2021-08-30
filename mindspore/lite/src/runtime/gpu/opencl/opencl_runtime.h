@@ -77,6 +77,10 @@ class OpenCLRuntime {
   typename std::enable_if<std::is_pointer<T>::value, cl_int>::type SetKernelArg(const cl::Kernel &kernel,
                                                                                 uint32_t index, const T value,
                                                                                 const MemType mem_type = MemType::IMG) {
+    if (value == nullptr) {
+      MS_LOG(ERROR) << "value is nullptr.";
+      return CL_INVALID_VALUE;
+    }
     switch (mem_type) {
       case MemType::BUF: {
         auto svm_capabilities = GetSVMCapabilities();
@@ -85,6 +89,10 @@ class OpenCLRuntime {
           return clSetKernelArgSVMPointer(kernel.get(), index, value);
         }
         cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
+        if (buffer == nullptr) {
+          MS_LOG(ERROR) << "buffer is nullptr.";
+          return CL_INVALID_VALUE;
+        }
         MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
         return const_cast<cl::Kernel &>(kernel).setArg(index, *buffer);
       }
@@ -93,6 +101,10 @@ class OpenCLRuntime {
         if (image == nullptr) {
           MS_LOG(WARNING) << "Can't get Image2D, try to use Buffer. Please confirm the buffer type.";
           cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
+          if (buffer == nullptr) {
+            MS_LOG(ERROR) << "buffer is nullptr.";
+            return CL_INVALID_VALUE;
+          }
           MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
           return const_cast<cl::Kernel &>(kernel).setArg(index, *buffer);
         }

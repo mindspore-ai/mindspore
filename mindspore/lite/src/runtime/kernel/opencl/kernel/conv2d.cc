@@ -138,7 +138,6 @@ void Conv2DOpenCLKernel::InitAttrs() {
   CO_SLICES_ = UP_DIV(CO_, CO_TILE);
   KH_ = param_->kernel_h_;
   KW_ = param_->kernel_w_;
-  has_bias_ = in_tensors_.size() == INPUT_TENSOR_SIZE_3;
   // note: TILE_HW_ is only used when use_winograd_=true
   TILE_HW_ = UP_DIV(OW_, 4) * UP_DIV(OH_, 4);
 }
@@ -249,10 +248,12 @@ void Conv2DOpenCLKernel::SetMaliFp16BlockSize(int task_size_per_cu, bool w_kerne
 
 int Conv2DOpenCLKernel::InitWeights() {
   if (InitFilter() != RET_OK) {
+    MS_LOG(ERROR) << "init filter failed.";
     return RET_ERROR;
   }
-  if (has_bias_) {
-    return InitBias();
+  if (InitBias() != RET_OK) {
+    MS_LOG(ERROR) << "init bias failed.";
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -362,12 +363,8 @@ int Conv2DOpenCLKernel::InitFilter() {
 }
 
 int Conv2DOpenCLKernel::InitBias() {
-  auto allocator = ocl_runtime_->GetAllocator();
-
   // align bias from C to C4
-  auto bias_tensor = in_tensors_.at(2);
-  void *src_data = stored_bias_ == nullptr ? bias_tensor->data_c() : stored_bias_;
-  MS_ASSERT(src_data);
+  auto allocator = ocl_runtime_->GetAllocator();
   size_t packed_bias_size = UP_ROUND(CO_SLICES_, block_size_.C) * CO_TILE * sizeof_FLT_;
   packed_bias_ = allocator->Malloc(packed_bias_size, lite::opencl::MemType::BUF);
   if (packed_bias_ == nullptr) {
@@ -380,27 +377,33 @@ int Conv2DOpenCLKernel::InitBias() {
     return RET_ERROR;
   }
   memset(packed_bias_, 0x00, packed_bias_size);
-  if (bias_tensor->data_type() == kNumberTypeFloat16) {
-    if (use_fp16_) {
-      memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
-    } else {
-      auto packed_bias_fp32 = reinterpret_cast<float *>(packed_bias_);
-      auto origin_bias_fp16 = reinterpret_cast<float16_t *>(src_data);
-      MS_ASSERT(origin_bias_fp16);
-      for (int i = 0; i < CO_; ++i) {
-        packed_bias_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
-      }
-    }
-  } else {
-    if (use_fp16_) {
-      auto packed_bias_fp16 = reinterpret_cast<float16_t *>(packed_bias_);
-      auto origin_bias_fp32 = reinterpret_cast<float *>(src_data);
-      MS_ASSERT(origin_bias_fp32);
-      for (int i = 0; i < CO_; ++i) {
-        packed_bias_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
+    auto bias_tensor = in_tensors_.at(2);
+    void *src_data = stored_bias_ == nullptr ? bias_tensor->data_c() : stored_bias_;
+    MS_ASSERT(src_data);
+
+    if (bias_tensor->data_type() == kNumberTypeFloat16) {
+      if (use_fp16_) {
+        memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
+      } else {
+        auto packed_bias_fp32 = reinterpret_cast<float *>(packed_bias_);
+        auto origin_bias_fp16 = reinterpret_cast<float16_t *>(src_data);
+        MS_ASSERT(origin_bias_fp16);
+        for (int i = 0; i < CO_; ++i) {
+          packed_bias_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
+        }
       }
     } else {
-      memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
+      if (use_fp16_) {
+        auto packed_bias_fp16 = reinterpret_cast<float16_t *>(packed_bias_);
+        auto origin_bias_fp32 = reinterpret_cast<float *>(src_data);
+        MS_ASSERT(origin_bias_fp32);
+        for (int i = 0; i < CO_; ++i) {
+          packed_bias_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
+        }
+      } else {
+        memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
+      }
     }
   }
   if (allocator->UnmapBuffer(packed_bias_) != RET_OK) {

@@ -38,8 +38,6 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
 
   auto *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6) {
@@ -58,12 +56,6 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
 }
 
 int Conv2dTransposeOpenCLKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
-
   const std::string kernel_name = "conv2d_transpose";
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   std::string source = GetActDefines() + conv2d_transpose_source;
@@ -267,7 +259,6 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
   }
   memset(bias_, 0x00, div_co * C4NUM * data_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
-    CHECK_NULL_RETURN(in_tensors_.at(kBiasIndex));
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
     MS_ASSERT(src_data);
     auto bias_dtype = in_tensors_[2]->data_type();
@@ -292,13 +283,6 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
 }
 
 int Conv2dTransposeOpenCLKernel::Run() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(0)->data_c());
-  CHECK_NULL_RETURN(out_tensors_.at(0)->data_c());
-
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_cnt = 0;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
