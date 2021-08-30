@@ -45,9 +45,8 @@ void InstanceNormFp16CPUKernel::FreeTmpBuffer() {
 int InstanceNormFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto gamma = in_tensors_[1];
-  MS_ASSERT(gamma != nullptr);
-  MS_ASSERT(gamma->data_c() != nullptr);
+  auto gamma = in_tensors_.at(1);
+  CHECK_NULL_RETURN(gamma->data_c());
   if (gamma->data_type() == kNumberTypeFloat32) {
     gamma_data_ = reinterpret_cast<float16_t *>(malloc(gamma->ElementsNum() * sizeof(float16_t)));
     if (gamma_data_ == nullptr) {
@@ -62,9 +61,8 @@ int InstanceNormFp16CPUKernel::Init() {
     return RET_ERROR;
   }
 
-  auto beta = in_tensors_[2];
-  MS_ASSERT(beta != nullptr);
-  MS_ASSERT(beta->data_c() != nullptr);
+  auto beta = in_tensors_.at(2);
+  CHECK_NULL_RETURN(beta->data_c());
   if (beta->data_type() == kNumberTypeFloat32) {
     beta_data_ = reinterpret_cast<float16_t *>(malloc(beta->ElementsNum() * sizeof(float16_t)));
     if (beta_data_ == nullptr) {
@@ -95,7 +93,7 @@ int InstanceNormFp16CPUKernel::ReSize() {
 
 int InstanceNormFp16CPUKernel::DoInstanceNorm(int task_id) {
   int ret = RET_OK;
-  if (in_tensors_[0]->format() == NC4HW4) {
+  if (in_tensors_.at(0)->format() == NC4HW4) {
     ret = InstanceNormNC8HW8Fp16(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
   } else {
     ret = InstanceNormFp16(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
@@ -118,10 +116,10 @@ int InstanceNormFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int InstanceNormFp16CPUKernel::Run() {
-  src_data_ = reinterpret_cast<float16_t *>(in_tensors_[0]->data_c());
-  dst_data_ = reinterpret_cast<float16_t *>(out_tensors_[0]->data_c());
-  MS_ASSERT(src_data_ != nullptr);
-  MS_ASSERT(dst_data_ != nullptr);
+  src_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  dst_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(src_data_);
+  CHECK_NULL_RETURN(dst_data_);
   auto ret = ParallelLaunch(this->ms_context_, InstanceNormFp16Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InstanceNormFp16Run error error_code[" << ret << "]";

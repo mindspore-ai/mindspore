@@ -63,10 +63,10 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
     return RET_ERROR;
   }
 
-  MS_ASSERT(scale->data_c() != nullptr);
-  MS_ASSERT(offset->data_c() != nullptr);
-  MS_ASSERT(mean->data_c() != nullptr);
-  MS_ASSERT(variance->data_c() != nullptr);
+  CHECK_NULL_RETURN(scale->data_c());
+  CHECK_NULL_RETURN(offset->data_c());
+  CHECK_NULL_RETURN(mean->data_c());
+  CHECK_NULL_RETURN(variance->data_c());
   memcpy(scale_, scale->data_c(), scale->Size());
   memcpy(offset_, offset->data_c(), offset->Size());
   memcpy(mean_, mean->data_c(), mean->Size());

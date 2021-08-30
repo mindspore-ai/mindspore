@@ -111,6 +111,7 @@ int GruCPUKernel::InitInputWeightBias() {
     return RET_ERROR;
   }
   auto weight_g_data = reinterpret_cast<float *>(weight_g->data_c());
+  CHECK_NULL_RETURN(weight_g_data);
   PackLstmWeight(weight_g_ptr_, weight_g_data, weight_batch_, gru_param_->input_size_, gru_param_->hidden_size_,
                  gru_param_->input_col_align_);
 
@@ -121,8 +122,10 @@ int GruCPUKernel::InitInputWeightBias() {
     return RET_ERROR;
   }
   memset(input_bias_, 0, weight_batch_ * gru_param_->input_col_align_ * sizeof(float));
-  PackLstmBias(input_bias_, reinterpret_cast<float *>(in_tensors_.at(bias_index)->data_c()), weight_batch_,
-               gru_param_->hidden_size_, gru_param_->input_col_align_, gru_param_->bidirectional_);
+  auto bias_g_data = reinterpret_cast<float *>(in_tensors_.at(bias_index)->data_c());
+  CHECK_NULL_RETURN(bias_g_data);
+  PackLstmBias(input_bias_, bias_g_data, weight_batch_, gru_param_->hidden_size_, gru_param_->input_col_align_,
+               gru_param_->bidirectional_);
   return RET_OK;
 }
 
@@ -134,6 +137,7 @@ int GruCPUKernel::InitStateWeightBias() {
   auto weight_r = in_tensors_.at(weight_r_index);
   MS_ASSERT(weight_r != nullptr);
   auto weight_r_data = reinterpret_cast<float *>(weight_r->data_c());
+  CHECK_NULL_RETURN(weight_r_data);
   if (!is_vec_) {
     weight_r_ptr_ = reinterpret_cast<float *>(
       malloc(weight_batch_ * gru_param_->state_col_align_ * gru_param_->hidden_size_ * sizeof(float)));
@@ -154,8 +158,9 @@ int GruCPUKernel::InitStateWeightBias() {
     return RET_ERROR;
   }
   memset(state_bias_, 0, weight_batch_ * gru_param_->state_col_align_ * sizeof(float));
-  auto state_bias =
-    reinterpret_cast<float *>(in_tensors_.at(bias_index)->data_c()) + gate_num * gru_param_->hidden_size_;
+  auto bias_r_data = reinterpret_cast<float *>(in_tensors_.at(bias_index)->data_c());
+  CHECK_NULL_RETURN(bias_r_data);
+  auto state_bias = bias_r_data + gate_num * gru_param_->hidden_size_;
   PackLstmBias(state_bias_, state_bias, weight_batch_, gru_param_->hidden_size_, gru_param_->state_col_align_,
                gru_param_->bidirectional_);
   return RET_OK;
@@ -232,21 +237,21 @@ int GruCPUKernel::MallocRunBuffer() {
 
 int GruCPUKernel::Run() {
   auto input = in_tensors_.at(kInputIndex);
-  MS_ASSERT(input != nullptr);
-  auto hidden_state = in_tensors_.at(4);
-  MS_ASSERT(hidden_state != nullptr);
-  auto output = out_tensors_.at(0);
-  MS_ASSERT(output != nullptr);
   auto input_ptr = reinterpret_cast<float *>(input->data_c());
-  MS_ASSERT(input_ptr);
+  CHECK_NULL_RETURN(input_ptr);
+  auto output = out_tensors_.at(0);
   auto output_ptr = reinterpret_cast<float *>(output->data_c());
-  MS_ASSERT(output_ptr);
-  auto output_hidden_state = out_tensors_[1];
+  CHECK_NULL_RETURN(output_ptr);
+  auto hidden_state = in_tensors_.at(4);
+  auto output_hidden_state = out_tensors_.at(1);
+  CHECK_NULL_RETURN(output_hidden_state->data_c());
+  CHECK_NULL_RETURN(hidden_state->data_c());
   memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float));
   int check_seq_len = gru_param_->seq_len_;
 
   if (in_tensors_.size() == 6) {
     auto seq_len = reinterpret_cast<int *>(in_tensors_.at(5)->data_c());
+    CHECK_NULL_RETURN(seq_len);
     if (!std::equal(seq_len + 1, seq_len + gru_param_->batch_, seq_len)) {
       MS_LOG(ERROR) << "different batch seq_len is currently not supported";
       return RET_ERROR;

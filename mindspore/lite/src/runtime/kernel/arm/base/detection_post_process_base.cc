@@ -49,10 +49,10 @@ int DetectionPostProcessBaseCPUKernel::Init() {
   params_->selected_ = nullptr;
   params_->anchors_ = nullptr;
   auto anchor_tensor = in_tensors_.at(2);
+  CHECK_NULL_RETURN(anchor_tensor->data_c());
   if (anchor_tensor->data_type() == kNumberTypeInt8) {
     auto quant_param = anchor_tensor->quant_params().front();
     auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->data_c());
-    MS_ASSERT(anchor_int8 != nullptr);
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
     if (anchor_fp32 == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";
@@ -64,7 +64,6 @@ int DetectionPostProcessBaseCPUKernel::Init() {
   } else if (anchor_tensor->data_type() == kNumberTypeUInt8) {
     auto quant_param = anchor_tensor->quant_params().front();
     auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->data_c());
-    MS_ASSERT(anchor_uint8 != nullptr);
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
     if (anchor_fp32 == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";

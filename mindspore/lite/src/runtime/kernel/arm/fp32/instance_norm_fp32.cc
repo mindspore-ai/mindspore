@@ -73,10 +73,10 @@ int InstanceNormCPUKernel::Run() {
   gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   beta_data_ = reinterpret_cast<float *>(in_tensors_.at(2)->data_c());
   dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  MS_ASSERT(src_data_ != nullptr);
-  MS_ASSERT(gamma_data_ != nullptr);
-  MS_ASSERT(beta_data_ != nullptr);
-  MS_ASSERT(dst_data_ != nullptr);
+  CHECK_NULL_RETURN(src_data_);
+  CHECK_NULL_RETURN(gamma_data_);
+  CHECK_NULL_RETURN(beta_data_);
+  CHECK_NULL_RETURN(dst_data_);
   auto ret = ParallelLaunch(this->ms_context_, InstanceNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InstanceNormRun error error_code[" << ret << "]";

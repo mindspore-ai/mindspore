@@ -69,12 +69,16 @@ int BroadcastToCPUKernel::Run() {
     case kNumberTypeFloat32: {
       const auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
       auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+      CHECK_NULL_RETURN(input_data);
+      CHECK_NULL_RETURN(output_data);
       return BroadcastTo(float, input_data, shape_info_, output_data);
     }
     case kNumberTypeInt32:
     case kNumberTypeInt: {
       const auto input_data = reinterpret_cast<int *>(in_tensors_.at(0)->data_c());
       auto output_data = reinterpret_cast<int *>(out_tensors_.at(0)->data_c());
+      CHECK_NULL_RETURN(input_data);
+      CHECK_NULL_RETURN(output_data);
       return BroadcastTo(int, input_data, shape_info_, output_data);
     }
     default:

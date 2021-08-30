@@ -93,7 +93,8 @@ int GatherNdInt8CPUKernel::InitOffset() {
     return RET_ERROR;
   }
   int idx_lastshape = indices_shape.at(indices_rank - 1);
-  auto indices_ptr = reinterpret_cast<int8_t *>(indices_tensor->MutableData());
+  auto indices_ptr = reinterpret_cast<int8_t *>(indices_tensor->data_c());
+  CHECK_NULL_RETURN(indices_ptr);
   area_ = 1;
   for (int i = idx_lastshape; i < in_rank; ++i) {
     area_ *= in_shape.at(i);
@@ -140,8 +141,10 @@ int GatherNdInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 }
 
 int GatherNdInt8CPUKernel::Run() {
-  in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.front()->MutableData());
-  out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.front()->MutableData());
+  in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.front()->data_c());
+  out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.front()->data_c());
+  CHECK_NULL_RETURN(in_ptr_);
+  CHECK_NULL_RETURN(out_ptr_);
   auto ret = InitOffset();
   if (ret != RET_OK) {
     return ret;
