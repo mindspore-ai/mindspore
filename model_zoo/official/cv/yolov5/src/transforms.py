@@ -22,6 +22,7 @@ from PIL import Image
 import cv2
 import mindspore.dataset.vision.py_transforms as PV
 
+
 def _rand(a=0., b=1.):
     return np.random.rand() * (b - a) + a
 
@@ -64,7 +65,7 @@ def statistic_normalize_img(img, statistic_norm):
     # img: RGB
     if isinstance(img, Image.Image):
         img = np.array(img)
-    img = img/255.
+    img = img / 255.
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
     if statistic_norm:
@@ -137,16 +138,15 @@ def _preprocess_true_boxes(true_boxes, anchors, in_shape, num_classes, max_boxes
     """
     Introduction
     ------------
-        对训练数据的ground truth box进行预处理
+        preprocessing ground truth box
     Parameters
     ----------
-        true_boxes: ground truth box 形状为[boxes, 5], x_min, y_min, x_max, y_max, class_id
+        true_boxes: ground truth box shape as [boxes, 5], x_min, y_min, x_max, y_max, class_id
     """
     anchors = np.array(anchors)
     num_layers = anchors.shape[0] // 3
     anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
     true_boxes = np.array(true_boxes, dtype='float32')
-    # input_shape = np.array([in_shape, in_shape], dtype='int32')
     input_shape = np.array(in_shape, dtype='int32')
     boxes_xy = (true_boxes[..., 0:2] + true_boxes[..., 2:4]) // 2.
     # trans to box center point
@@ -160,17 +160,14 @@ def _preprocess_true_boxes(true_boxes, anchors, in_shape, num_classes, max_boxes
     y_true = [np.zeros((grid_shapes[l][0], grid_shapes[l][1], len(anchor_mask[l]),
                         5 + num_classes), dtype='float32') for l in range(num_layers)]
     # y_true [gridy, gridx]
-    # 这里扩充维度是为了后面应用广播计算每个图中所有box的anchor互相之间的iou
     anchors = np.expand_dims(anchors, 0)
     anchors_max = anchors / 2.
     anchors_min = -anchors_max
-    # 因为之前对box做了padding, 因此需要去除全0行
     valid_mask = boxes_wh[..., 0] > 0
     wh = boxes_wh[valid_mask]
     if wh.size != 0:
-        # 为了应用广播扩充维度
         wh = np.expand_dims(wh, -2)
-        # wh 的shape为[box_num, 1, 2]
+        # wh shape[box_num, 1, 2]
         boxes_max = wh / 2.
         boxes_min = -boxes_max
         intersect_min = np.maximum(boxes_min, anchors_min)
@@ -180,10 +177,8 @@ def _preprocess_true_boxes(true_boxes, anchors, in_shape, num_classes, max_boxes
         box_area = wh[..., 0] * wh[..., 1]
         anchor_area = anchors[..., 0] * anchors[..., 1]
         iou = intersect_area / (box_area + anchor_area - intersect_area)
-        #topk iou
-        # 找出和ground truth box的iou最大的anchor box,
-        # 然后将对应不同比例的负责该ground turth box 的位置置为ground truth box坐标
 
+        # topk iou
         topk = 4
         topk_flag = iou.argsort()
         topk_flag = topk_flag >= topk_flag.shape[1] - topk
@@ -210,7 +205,7 @@ def _preprocess_true_boxes(true_boxes, anchors, in_shape, num_classes, max_boxes
                         y_true[l][j, i, k, 5 + c] = 1 - label_smooth_factor
                     else:
                         y_true[l][j, i, k, 5 + c] = 1.
-        #best anchor for gt
+        # best anchor for gt
         best_anchor = np.argmax(iou, axis=-1)
         for t, n in enumerate(best_anchor):
             for l in range(num_layers):
@@ -352,9 +347,7 @@ def _choose_candidate_by_constraints(max_trial, input_w, input_h, image_w, image
             (None, 1),
         )
     else:
-        constraints = (
-            (None, None),
-        )
+        constraints = ((None, None),)
     # add default candidate
     candidates = [(0, 0, input_w, input_h)]
     for constraint in constraints:
@@ -411,7 +404,8 @@ def _correct_bbox_by_candidates(candidates, input_w, input_h, image_w,
         if allow_outside_center:
             pass
         else:
-            t_box = t_box[np.logical_and((t_box[:, 0] + t_box[:, 2])/2. >= 0., (t_box[:, 1] + t_box[:, 3])/2. >= 0.)]
+            t_box = t_box[
+                np.logical_and((t_box[:, 0] + t_box[:, 2]) / 2. >= 0., (t_box[:, 1] + t_box[:, 3]) / 2. >= 0.)]
             t_box = t_box[np.logical_and((t_box[:, 0] + t_box[:, 2]) / 2. <= input_w,
                                          (t_box[:, 1] + t_box[:, 3]) / 2. <= input_h)]
 
@@ -455,24 +449,12 @@ def _data_aug(image, box, jitter, hue, sat, val, image_input_size, max_boxes,
     flip = _rand() < .5
     box_data = np.zeros((max_boxes, 5))
 
-    candidates = _choose_candidate_by_constraints(use_constraints=False,
-                                                  max_trial=max_trial,
-                                                  input_w=input_w,
-                                                  input_h=input_h,
-                                                  image_w=image_w,
-                                                  image_h=image_h,
-                                                  jitter=jitter,
-                                                  box=box)
-    box_data, candidate = _correct_bbox_by_candidates(candidates=candidates,
-                                                      input_w=input_w,
-                                                      input_h=input_h,
-                                                      image_w=image_w,
-                                                      image_h=image_h,
-                                                      flip=flip,
-                                                      box=box,
-                                                      box_data=box_data,
-                                                      allow_outside_center=True,
-                                                      max_boxes=max_boxes)
+    candidates = _choose_candidate_by_constraints(use_constraints=False, max_trial=max_trial, input_w=input_w,
+                                                  input_h=input_h, image_w=image_w, image_h=image_h,
+                                                  jitter=jitter, box=box)
+    box_data, candidate = _correct_bbox_by_candidates(candidates=candidates, input_w=input_w, input_h=input_h,
+                                                      image_w=image_w, image_h=image_h, flip=flip, box=box,
+                                                      box_data=box_data, allow_outside_center=True, max_boxes=max_boxes)
     dx, dy, nw, nh = candidate
     interp = get_interp_method(interp=10)
     image = image.resize((nw, nh), pil_image_reshape(interp))
@@ -514,6 +496,7 @@ def reshape_fn(image, img_id, config):
 
 class MultiScaleTrans:
     """Multi scale transform."""
+
     def __init__(self, config, device_num):
         self.config = config
         self.seed = 0

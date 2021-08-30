@@ -83,7 +83,6 @@ class DetectionEngine:
         self.nms_thresh = args_detection.nms_thresh
         self.multi_label = args_detection.multi_label
         self.multi_label_thresh = args_detection.multi_label_thresh
-        # self.coco_catids = self._coco.getCatIds()
         self.coco_catIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27,
                             28, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53,
                             54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 70, 72, 73, 74, 75, 76, 77, 78, 79, 80,
@@ -91,18 +90,15 @@ class DetectionEngine:
 
     def do_nms_for_results(self):
         """Get result boxes."""
-        # np.save('/opt/disk1/hjc/yolov5_positive_policy/result.npy', self.results)
         for image_id in self.results:
             for clsi in self.results[image_id]:
                 dets = self.results[image_id][clsi]
                 dets = np.array(dets)
                 keep_index = self._diou_nms(dets, thresh=self.nms_thresh)
 
-                keep_box = [{'image_id': int(image_id),
-                             'category_id': int(clsi),
+                keep_box = [{'image_id': int(image_id), 'category_id': int(clsi),
                              'bbox': list(dets[i][:4].astype(float)),
-                             'score': dets[i][4].astype(float)}
-                            for i in keep_index]
+                             'score': dets[i][4].astype(float)} for i in keep_index]
                 self.det_boxes.extend(keep_box)
 
     def _nms(self, predicts, threshold):

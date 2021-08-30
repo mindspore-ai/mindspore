@@ -24,29 +24,28 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
-from src.yolov5_backbone import YOLOv5Backbone, Conv, C3
+from src.backbone import YOLOv5Backbone, Conv, BottleneckCSP
 from src.config import ConfigYOLOV5
 from src.loss import ConfidenceLoss, ClassLoss
 
 
-class YOLOv5(nn.Cell):
-    def __init__(self, backbone, out_channel):
-        super(YOLOv5, self).__init__()
-        self.out_channel = out_channel
+class YOLO(nn.Cell):
+    def __init__(self, backbone, shape):
+        super(YOLO, self).__init__()
         self.backbone = backbone
+        self.config = ConfigYOLOV5()
 
-        self.conv1 = Conv(512, 256, k=1, s=1)  # 10
-        self.C31 = C3(512, 256, n=1, shortcut=False)  # 11
-        self.conv2 = Conv(256, 128, k=1, s=1)
-        self.C32 = C3(256, 128, n=1, shortcut=False)  # 13
-        self.conv3 = Conv(128, 128, k=3, s=2)
-        self.C33 = C3(256, 256, n=1, shortcut=False)  # 15
-        self.conv4 = Conv(256, 256, k=3, s=2)
-        self.C34 = C3(512, 512, n=1, shortcut=False)  # 17
-
-        self.backblock1 = YoloBlock(128, 255)
-        self.backblock2 = YoloBlock(256, 255)
-        self.backblock3 = YoloBlock(512, 255)
+        self.conv1 = Conv(shape[5], shape[4], k=1, s=1)
+        self.CSP5 = BottleneckCSP(shape[5], shape[4], n=1*shape[6], shortcut=False)
+        self.conv2 = Conv(shape[4], shape[3], k=1, s=1)
+        self.CSP6 = BottleneckCSP(shape[4], shape[3], n=1*shape[6], shortcut=False)
+        self.conv3 = Conv(shape[3], shape[3], k=3, s=2)
+        self.CSP7 = BottleneckCSP(shape[4], shape[4], n=1*shape[6], shortcut=False)
+        self.conv4 = Conv(shape[4], shape[4], k=3, s=2)
+        self.CSP8 = BottleneckCSP(shape[5], shape[5], n=1*shape[6], shortcut=False)
+        self.back_block1 = YoloBlock(shape[3], self.config.out_channel)
+        self.back_block2 = YoloBlock(shape[4], self.config.out_channel)
+        self.back_block3 = YoloBlock(shape[5], self.config.out_channel)
 
         self.concat = P.Concat(axis=1)
 
@@ -57,29 +56,32 @@ class YOLOv5(nn.Cell):
         feature_map2 is (batch_size, backbone_shape[3], h/16, w/16)
         feature_map3 is (batch_size, backbone_shape[4], h/32, w/32)
         """
-        img_hight = P.Shape()(x)[2] * 2
+        img_height = P.Shape()(x)[2] * 2
         img_width = P.Shape()(x)[3] * 2
 
-        backbone4, backbone6, backbone9 = self.backbone(x)
+        feature_map1, feature_map2, feature_map3 = self.backbone(x)
 
-        cv1 = self.conv1(backbone9)  # 10
-        ups1 = P.ResizeNearestNeighbor((img_hight / 16, img_width / 16))(cv1)
-        concat1 = self.concat((ups1, backbone6))
-        bcsp1 = self.C31(concat1)  # 13
-        cv2 = self.conv2(bcsp1)
-        ups2 = P.ResizeNearestNeighbor((img_hight / 8, img_width / 8))(cv2)  # 15
-        concat2 = self.concat((ups2, backbone4))
-        bcsp2 = self.C32(concat2)  # 17
-        cv3 = self.conv3(bcsp2)
+        c1 = self.conv1(feature_map3)
+        ups1 = P.ResizeNearestNeighbor((img_height // 16, img_width // 16))(c1)
+        c2 = self.concat((ups1, feature_map2))
+        c3 = self.CSP5(c2)
+        c4 = self.conv2(c3)
+        ups2 = P.ResizeNearestNeighbor((img_height // 8, img_width // 8))(c4)
+        c5 = self.concat((ups2, feature_map1))
+        # out
+        c6 = self.CSP6(c5)
+        c7 = self.conv3(c6)
 
-        concat3 = self.concat((cv3, cv2))
-        bcsp3 = self.C33(concat3)  # 20
-        cv4 = self.conv4(bcsp3)
-        concat4 = self.concat((cv4, cv1))
-        bcsp4 = self.C34(concat4)  # 23
-        small_object_output = self.backblock1(bcsp2)  # h/8, w/8
-        medium_object_output = self.backblock2(bcsp3)  # h/16, w/16
-        big_object_output = self.backblock3(bcsp4)  # h/32, w/32
+        c8 = self.concat((c7, c4))
+        # out
+        c9 = self.CSP7(c8)
+        c10 = self.conv4(c9)
+        c11 = self.concat((c10, c1))
+        # out
+        c12 = self.CSP8(c11)
+        small_object_output = self.back_block1(c6)
+        medium_object_output = self.back_block2(c9)
+        big_object_output = self.back_block3(c12)
         return small_object_output, medium_object_output, big_object_output
 
 
@@ -98,18 +100,16 @@ class YoloBlock(nn.Cell):
         YoloBlock(12, 255)
 
     """
-
     def __init__(self, in_channels, out_channels):
         super(YoloBlock, self).__init__()
 
-        self.cv = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, has_bias=True)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, has_bias=True)
 
     def construct(self, x):
         """construct method"""
 
-        out = self.cv(x)
+        out = self.conv(x)
         return out
-
 
 class DetectionBlock(nn.Cell):
     """
@@ -146,13 +146,14 @@ class DetectionBlock(nn.Cell):
             raise KeyError("Invalid scale value for DetectionBlock")
         self.anchors = Tensor([self.config.anchor_scales[i] for i in idx], ms.float32)
         self.num_anchors_per_scale = 3
-        self.num_attrib = 4 + 1 + self.config.num_classes
+        self.num_attrib = 4+1+self.config.num_classes
         self.lambda_coord = 1
 
         self.sigmoid = nn.Sigmoid()
         self.reshape = P.Reshape()
         self.tile = P.Tile()
         self.concat = P.Concat(axis=-1)
+        self.pow = P.Pow()
         self.conf_training = is_training
 
     def construct(self, x, input_shape):
@@ -190,6 +191,7 @@ class DetectionBlock(nn.Cell):
                  P.Cast()(F.tuple_to_array((grid_size[1], grid_size[0])), ms.float32)
         # box_wh is w->h
         box_wh = P.Exp()(box_wh) * self.anchors / input_shape
+
         box_confidence = self.sigmoid(box_confidence)
         box_probs = self.sigmoid(box_probs)
 
@@ -200,7 +202,6 @@ class DetectionBlock(nn.Cell):
 
 class Iou(nn.Cell):
     """Calculate the iou of boxes"""
-
     def __init__(self):
         super(Iou, self).__init__()
         self.min = P.Minimum()
@@ -214,8 +215,8 @@ class Iou(nn.Cell):
         """
         box1_xy = box1[:, :, :, :, :, :2]
         box1_wh = box1[:, :, :, :, :, 2:4]
-        box1_mins = box1_xy - box1_wh / F.scalar_to_array(2.0)  # topLeft
-        box1_maxs = box1_xy + box1_wh / F.scalar_to_array(2.0)  # rightDown
+        box1_mins = box1_xy - box1_wh / F.scalar_to_array(2.0) # topLeft
+        box1_maxs = box1_xy + box1_wh / F.scalar_to_array(2.0) # rightDown
 
         box2_xy = box2[:, :, :, :, :, :2]
         box2_wh = box2[:, :, :, :, :, 2:4]
@@ -239,7 +240,6 @@ class YoloLossBlock(nn.Cell):
     """
     Loss block cell of YOLOV5 network.
     """
-
     def __init__(self, scale, config=ConfigYOLOV5()):
         super(YoloLossBlock, self).__init__()
         self.config = config
@@ -261,7 +261,7 @@ class YoloLossBlock(nn.Cell):
         self.class_loss = ClassLoss()
 
         self.reduce_sum = P.ReduceSum()
-        self.giou = Giou()
+        self.g_iou = GIou()
 
     def construct(self, prediction, pred_xy, pred_wh, y_true, gt_box, input_shape):
         """
@@ -315,15 +315,15 @@ class YoloLossBlock(nn.Cell):
         pred_boxes_me = P.Reshape()(pred_boxes_me, (-1, 4))
         true_boxes_me = xywh2x1y1x2y2(true_boxes)
         true_boxes_me = P.Reshape()(true_boxes_me, (-1, 4))
-        ciou = self.giou(pred_boxes_me, true_boxes_me)
-        ciou_loss = object_mask_me * box_loss_scale_me * (1 - ciou)
-        ciou_loss_me = self.reduce_sum(ciou_loss, ())
-        loss = ciou_loss_me * 4 + confidence_loss + class_loss
+        c_iou = self.g_iou(pred_boxes_me, true_boxes_me)
+        c_iou_loss = object_mask_me * box_loss_scale_me * (1 - c_iou)
+        c_iou_loss_me = self.reduce_sum(c_iou_loss, ())
+        loss = c_iou_loss_me * 4 + confidence_loss + class_loss
         batch_size = P.Shape()(prediction)[0]
         return loss / batch_size
 
 
-class YOLOV5s(nn.Cell):
+class YOLOV5(nn.Cell):
     """
     YOLOV5 network.
 
@@ -337,13 +337,13 @@ class YOLOV5s(nn.Cell):
         YOLOV5s(True)
     """
 
-    def __init__(self, is_training):
-        super(YOLOV5s, self).__init__()
+    def __init__(self, is_training, version=0):
+        super(YOLOV5, self).__init__()
         self.config = ConfigYOLOV5()
 
         # YOLOv5 network
-        self.feature_map = YOLOv5(backbone=YOLOv5Backbone(),
-                                  out_channel=self.config.out_channel)
+        self.shape = self.config.input_shape[version]
+        self.feature_map = YOLO(backbone=YOLOv5Backbone(shape=self.shape), shape=self.shape)
 
         # prediction on the default anchor boxes
         self.detect_1 = DetectionBlock('l', is_training=is_training)
@@ -364,18 +364,17 @@ class YOLOV5s_Infer(nn.Cell):
     YOLOV5 Infer.
     """
 
-    def __init__(self, inputshape):
+    def __init__(self, input_shape, version=0):
         super(YOLOV5s_Infer, self).__init__()
-        self.network = YOLOV5s(is_training=False)
-        self.inputshape = inputshape
+        self.network = YOLOV5(is_training=False, version=version)
+        self.input_shape = input_shape
 
     def construct(self, x):
-        return self.network(x, self.inputshape)
+        return self.network(x, self.input_shape)
 
 
 class YoloWithLossCell(nn.Cell):
     """YOLOV5 loss."""
-
     def __init__(self, network):
         super(YoloWithLossCell, self).__init__()
         self.yolo_network = network
@@ -398,7 +397,6 @@ class YoloWithLossCell(nn.Cell):
 
 class TrainingWrapper(nn.Cell):
     """Training wrapper."""
-
     def __init__(self, network, optimizer, sens=1.0):
         super(TrainingWrapper, self).__init__(auto_prefix=False)
         self.network = network
@@ -427,15 +425,13 @@ class TrainingWrapper(nn.Cell):
         grads = self.grad(self.network, weights)(*args, sens)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))
 
 
-class Giou(nn.Cell):
+class GIou(nn.Cell):
     """Calculating giou"""
-
     def __init__(self):
-        super(Giou, self).__init__()
+        super(GIou, self).__init__()
         self.cast = P.Cast()
         self.reshape = P.Reshape()
         self.min = P.Minimum()

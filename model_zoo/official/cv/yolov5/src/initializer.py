@@ -20,7 +20,7 @@ from mindspore.common import initializer as init
 from mindspore.common.initializer import Initializer as MeInitializer
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.nn as nn
-from .util import load_backbone
+
 
 def calculate_gain(nonlinearity, param=None):
     r"""Return the recommended gain value for the given nonlinearity function.
@@ -58,7 +58,8 @@ def calculate_gain(nonlinearity, param=None):
             # True/False are instances of int, hence check above
             negative_slope = param
         else:
-            raise ValueError("negative_slope {} not a valid number".format(param))
+            raise ValueError(
+                "negative_slope {} not a valid number".format(param))
         return math.sqrt(2.0 / (1 + negative_slope ** 2))
 
     raise ValueError("Unsupported nonlinearity {}".format(nonlinearity))
@@ -118,7 +119,8 @@ def kaiming_uniform_(arr, a=0, mode='fan_in', nonlinearity='leaky_relu'):
     fan = _calculate_correct_fan(arr, mode)
     gain = calculate_gain(nonlinearity, a)
     std = gain / math.sqrt(fan)
-    bound = math.sqrt(3.0) * std  # Calculate uniform bounds from standard deviation
+    # Calculate uniform bounds from standard deviation
+    bound = math.sqrt(3.0) * std
     return np.random.uniform(-bound, bound, arr.shape)
 
 
@@ -141,6 +143,7 @@ def _calculate_fan_in_and_fan_out(arr):
 
 class KaimingUniform(MeInitializer):
     """Kaiming uniform initializer."""
+
     def __init__(self, a=0, mode='fan_in', nonlinearity='leaky_relu'):
         super(KaimingUniform, self).__init__()
         self.a = a
@@ -156,34 +159,23 @@ def default_recurisive_init(custom_cell):
     """Initialize parameter."""
     for _, cell in custom_cell.cells_and_names():
         if isinstance(cell, nn.Conv2d):
-            cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)),
-                                                  cell.weight.shape,
-                                                  cell.weight.dtype))
+            cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)), cell.weight.shape, cell.weight.dtype))
             if cell.bias is not None:
                 fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight)
                 bound = 1 / math.sqrt(fan_in)
-                cell.bias.set_data(init.initializer(init.Uniform(bound),
-                                                    cell.bias.shape,
-                                                    cell.bias.dtype))
+                cell.bias.set_data(init.initializer(init.Uniform(bound), cell.bias.shape, cell.bias.dtype))
         elif isinstance(cell, nn.Dense):
-            cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)),
-                                                  cell.weight.shape,
-                                                  cell.weight.dtype))
+            cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)), cell.weight.shape, cell.weight.dtype))
             if cell.bias is not None:
                 fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight)
                 bound = 1 / math.sqrt(fan_in)
-                cell.bias.set_data(init.initializer(init.Uniform(bound),
-                                                    cell.bias.shape,
-                                                    cell.bias.dtype))
+                cell.bias.set_data(init.initializer(init.Uniform(bound), cell.bias.shape, cell.bias.dtype))
         elif isinstance(cell, (nn.BatchNorm2d, nn.BatchNorm1d)):
             pass
 
+
 def load_yolov5_params(args, network):
     """Load yolov5 backbone parameter from checkpoint."""
-    if args.pretrained_backbone:
-        network = load_backbone(network, args.pretrained_backbone, args)
-        args.logger.info('load pre-trained backbone {} into network'.format(args.pretrained_backbone))
-
     if args.resume_yolov5:
         param_dict = load_checkpoint(args.resume_yolov5)
         param_dict_new = {}
@@ -200,3 +192,20 @@ def load_yolov5_params(args, network):
         args.logger.info('resume finished')
         load_param_into_net(network, param_dict_new)
         args.logger.info('load_model {} success'.format(args.resume_yolov5))
+
+    if args.pretrained_backbone:
+        param_dict = load_checkpoint(args.pretrained_backbone)
+        param_dict_new = {}
+        for key, values in param_dict.items():
+            if key.startswith('moments.'):
+                continue
+            elif key.startswith('yolo_network.'):
+                param_dict_new[key[13:]] = values
+                args.logger.info('in resume {}'.format(key))
+            else:
+                param_dict_new[key] = values
+                args.logger.info('in resume {}'.format(key))
+
+        args.logger.info('pretrained finished')
+        load_param_into_net(network, param_dict_new)
+        args.logger.info('load_model {} success'.format(args.pretrained_backbone))

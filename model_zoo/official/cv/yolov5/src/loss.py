@@ -16,8 +16,10 @@
 from mindspore.ops import operations as P
 import mindspore.nn as nn
 
+
 class ConfidenceLoss(nn.Cell):
     """Loss for confidence."""
+
     def __init__(self):
         super(ConfidenceLoss, self).__init__()
         self.cross_entropy = P.SigmoidCrossEntropyWithLogits()
@@ -32,6 +34,7 @@ class ConfidenceLoss(nn.Cell):
 
 class ClassLoss(nn.Cell):
     """Loss for classification."""
+
     def __init__(self):
         super(ClassLoss, self).__init__()
         self.cross_entropy = P.SigmoidCrossEntropyWithLogits()
