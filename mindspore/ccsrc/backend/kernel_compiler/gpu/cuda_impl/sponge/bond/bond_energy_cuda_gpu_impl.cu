@@ -33,23 +33,29 @@ __global__ void BondEnergyCudaKernel(const int bond_numbers, const UNSIGNED_INT_
 
     float r1 = norm3df(dr.x, dr.y, dr.z);
     float tempf = r1 - r0;
-
-    bond_ene[bond_i] = k * tempf * tempf;
+    float temp = k * tempf * tempf;
+    bond_ene[bond_i] = temp;
   }
 }
 
-void BondEnergy(int bond_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
-                const int *atom_b, const float *bond_k, const float *bond_r0, float *bond_ene, cudaStream_t stream) {
+void BondEnergy(int bond_numbers, int atom_numbers, const unsigned int *uint_crd_f, const float *scaler_f,
+                const int *atom_a, const int *atom_b, const float *bond_k, const float *bond_r0, float *bond_ene,
+                cudaStream_t stream) {
   size_t thread_per_block = 128;
   size_t block_per_grid = ceilf(static_cast<float>(bond_numbers) / 128);
   UNSIGNED_INT_VECTOR *uint_crd =
     const_cast<UNSIGNED_INT_VECTOR *>(reinterpret_cast<const UNSIGNED_INT_VECTOR *>(uint_crd_f));
   VECTOR *scaler = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(scaler_f));
 
-  BondEnergyCudaKernel<<<block_per_grid, thread_per_block, 0, stream>>>(bond_numbers, uint_crd, scaler, atom_a, atom_b,
-                                                                        bond_k, bond_r0, bond_ene);
+  Reset_List<<<(unsigned int)ceilf(static_cast<float>(bond_numbers) / 128), 128, 0, stream>>>(bond_numbers,
+                                                                                              bond_ene, 0.);
+
+  BondEnergyCudaKernel<<<block_per_grid, thread_per_block, 0, stream>>>(bond_numbers, uint_crd, scaler,
+                                                                        atom_a, atom_b, bond_k, bond_r0,
+                                                                        bond_ene);
   return;
 }
 
-void BondEnergy(int bond_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
-                const int *atom_b, const float *bond_k, const float *bond_r0, float *bond_ene, cudaStream_t stream);
+void BondEnergy(int bond_numbers, int atom_numbers, const unsigned int *uint_crd_f, const float *scaler_f,
+                const int *atom_a, const int *atom_b, const float *bond_k, const float *bond_r0,
+                float *bond_ene, cudaStream_t stream);

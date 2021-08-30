@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(Dihedral14LJCFForceWithAtomEnergyAndVirial,
+MS_REG_GPU_KERNEL_TWO(Dihedral14ForceWithAtomEnergyVirial,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddInputAttr(kNumberTypeInt32)

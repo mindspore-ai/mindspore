@@ -36,8 +36,6 @@ void GetCenterOfGeometry(const int center_numbers, float center_numbers_inverse,
   GetCenterOfGeometryKernel<<<ceilf(static_cast<float>(center_numbers) / 32), 32, 0, stream>>>(
     center_numbers, center_numbers_inverse, center_atoms, crd, center_of_geometry);
 
-  cudaStreamSynchronize(stream);
-
   return;
 }
 
