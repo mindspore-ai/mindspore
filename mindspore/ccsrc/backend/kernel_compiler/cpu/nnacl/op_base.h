@@ -102,6 +102,9 @@
 #define MS_CHECK_LE(value1, value2, errcode)
 #define MS_CHECK_GE(value1, value2, errcode)
 
+#define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode)
+#define MS_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode)
+
 #define NNACL_CHECK_ZERO_RETURN_ERR(val)
 #define NNACL_CHECK_ZERO_RETURN(val)
 #define NNACL_CHECK_NULL_RETURN_ERR(ptr)
@@ -171,6 +174,11 @@
       return errcode;                                                                \
     }                                                                                \
   } while (0)
+
+#define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode) \
+  MS_CHECK_TRUE(!(INT_MUL_OVERFLOW(value1, value2)), errcode)
+#define MS_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode) \
+  MS_CHECK_TRUE(!(INT_ADD_OVERFLOW(value1, value2)), errcode)
 
 #define NNACL_CHECK_ZERO_RETURN_ERR(val) \
   do {                                   \
