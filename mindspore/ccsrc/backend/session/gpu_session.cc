@@ -543,12 +543,13 @@ void GPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) 
 }
 
 void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
-                                     const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
+                                     const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                                     std::map<DeviceAddressPtr, DeviceAddressPtr> *new_to_old_device_address) {
   MS_EXCEPTION_IF_NULL(outputs);
   for (const auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       const auto &vector_ref = utils::cast<VectorRef>(item);
-      UpdateOutputTensors(&vector_ref, tensor_to_node);
+      UpdateOutputTensors(&vector_ref, tensor_to_node, new_to_old_device_address);
     } else if (utils::isa<tensor::TensorPtr>(item)) {
       const auto &tensor = utils::cast<tensor::TensorPtr>(item);
       MS_EXCEPTION_IF_NULL(tensor);
@@ -557,10 +558,17 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
         const auto &node = iter->second.first;
         const auto &output_index = iter->second.second;
         MS_EXCEPTION_IF_NULL(node);
-        const auto &address = AnfAlgo::GetMutableOutputAddr(node, output_index);
+        auto address = AnfAlgo::GetMutableOutputAddr(node, output_index);
         // The outputs may have the same tensor, so need skip when the tensor has been set to device address.
         if ((address == nullptr) || (address->GetPtr() == nullptr)) {
-          continue;
+          // If the device address in the node is invalid, you need to find out whether there is a corresponding
+          // device address in the new to old device address map to check whether the device address in the node
+          // has been replaced with a new one.
+          if ((*new_to_old_device_address).find(address) != (*new_to_old_device_address).end()) {
+            address = (*new_to_old_device_address)[address];
+          } else {
+            continue;
+          }
         }
         tensor->set_device_address(address);
 
@@ -575,6 +583,7 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
         if (node->isa<CNode>() && !AnfAlgo::IsCommunicationOp(node) && !ps_mode) {
           auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
           AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
+          (*new_to_old_device_address)[new_address] = address;
           if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
             auto runtime_instance =
               device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
