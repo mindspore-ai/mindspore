@@ -99,9 +99,12 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
   for (const auto &node : nodes) {
     auto output_num = AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {
-      std::string output_format = AnfAlgo::GetOutputFormat(node, i);
-      auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
-      auto tensor_size = AnfAlgo::GetOutputTensorMemSize(node, i);
+      MS_EXCEPTION_IF_NULL(node);
+      auto runtime_info = node->user_data<session::OpRuntimeInfo>();
+      MS_EXCEPTION_IF_NULL(runtime_info);
+      auto const &output_format = runtime_info->output_format(i);
+      auto output_type = runtime_info->output_type(i);
+      auto tensor_size = runtime_info->output_tensor_size(i);
       // Create DeviceAddress without ptr.
       // Get real device ptr after KernelBuild finish.
       auto device_address = CreateDeviceAddress(nullptr, tensor_size, output_format, output_type);
@@ -130,13 +133,13 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
         AnfAlgo::SetOutputAddr(output_address, index, item.get());
         continue;
       }
-      TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
-      if (output_type_id == kTypeUnknown) {
-        output_type_id = AnfAlgo::GetOutputInferDataType(item, index);
-      }
-      auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
+      auto op_runtime_info = item->user_data<session::OpRuntimeInfo>();
+
+      TypeId output_type_id = op_runtime_info->output_type(index);
+      auto output_tensor_size = op_runtime_info->output_tensor_size(index);
+      auto output_format = op_runtime_info->output_format(index);
       auto device_address =
-        CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
+        CreateDeviceAddress(nullptr, output_tensor_size, output_format, output_type_id, {item, index});
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
       current_tensor->set_device_address(device_address);
       current_tensor->set_sync_status(kNeedSyncHostToDevice);
