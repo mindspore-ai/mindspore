@@ -19,11 +19,10 @@ import argparse
 import glob
 import ast
 import moxing as mox
-
 import numpy as np
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
-from ast import literal_eval
+# from ast import literal_eval
 from mindspore import context
 from mindspore import Tensor
 from mindspore import export
@@ -221,12 +220,11 @@ def dpn_train(config_args, ma_config):
     elif config_args.lr_schedule == 'warmup':
         print("lr_schedule:warmup")
         lr = Tensor(get_lr_warmup(global_step=config_args.global_step,
-                                total_epochs=config_args.epoch_size,
-                                steps_per_epoch=train_step_size,
-                                lr_init=config_args.lr_init,
-                                lr_max=config_args.lr_max,
-                                warmup_epochs=config_args.warmup_epochs))
-    
+                                  total_epochs=config_args.epoch_size,
+                                  steps_per_epoch=train_step_size,
+                                  lr_init=config_args.lr_init,
+                                  lr_max=config_args.lr_max,
+                                  warmup_epochs=config_args.warmup_epochs))
 
     # optimizer
     opt = SGD(net.trainable_params(),
@@ -282,7 +280,6 @@ def dpn_export(config_args, ma_config):
     if not ckpt_list:
         print('Freezing model failed!')
         print("can not find ckpt files. ")
-        return 0
     else:
         ckpt_list.sort(key=os.path.getmtime)
         ckpt_name = ckpt_list[-1]
@@ -304,13 +301,11 @@ def dpn_export(config_args, ma_config):
 def main():
     # parser arguments
     config_args = _parse_args()
-
     # create local path
     if not os.path.exists(config_args.data_path):
             os.makedirs(config_args.data_path, exist_ok=True)
     if not os.path.exists(config_args.output_path):
             os.makedirs(config_args.output_path, exist_ok=True)
-
     ma_config = {}
     # init context
     ma_config["checkpoint_path"] = os.path.join(config_args.output_path, config_args.checkpoint_dir)
@@ -319,7 +314,6 @@ def main():
     ma_config["device_id"] = get_device_id()
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=config_args.device_target, save_graphs=False, device_id=ma_config["device_id"])
-    
     # init distributed
     ma_config["rank"] = 0
     if config_args.is_distributed:
@@ -329,7 +323,6 @@ def main():
         ma_config["device_num"] = get_device_num()
         context.set_auto_parallel_context(device_num=ma_config["device_num"], parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
-   
     # select for master rank save ckpt or all rank save, compatible for model parallel
     ma_config["rank_save_ckpt_flag"] = 0
     if config_args.is_save_on_master:
@@ -337,14 +330,11 @@ def main():
             ma_config["rank_save_ckpt_flag"] = 1
     else:
         ma_config["rank_save_ckpt_flag"] = 1
-
     # data sync
     mox.file.copy_parallel(config_args.data_url, config_args.data_path)
-
     # train 
     dpn_train(config_args, ma_config)
     print('DPN training success!')
-
     # export
     if config_args.export_dir is not None:
         dpn_export(config_args, ma_config)
@@ -352,7 +342,6 @@ def main():
     # data sync
     mox.file.copy_parallel(config_args.output_path, config_args.train_url)
     return 0
-    
 
 if __name__ == '__main__':
     main()

@@ -58,7 +58,6 @@ if __name__ == '__main__':
 
         with open(file_path, 'rb') as f:
             data_input.data = f.read()
-       
         stream_name = b'im_dpn'
         in_plugin_id = 0
         unique_id = stream_manager_api.SendData(stream_name, in_plugin_id, data_input)
@@ -77,7 +76,6 @@ if __name__ == '__main__':
         # print the infer result
         infer_res = infer_result.data.decode()
         print("process img: {}, infer result: {}".format(file_name, infer_res))
-        
         load_dict = json.loads(infer_result.data.decode())
         if load_dict.get('MxpiClass') is None:
             with open(res_dir_name + "/" + file_name[:-5] + '.txt', 'w') as f_write:
