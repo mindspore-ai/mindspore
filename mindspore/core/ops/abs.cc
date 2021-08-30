@@ -17,10 +17,8 @@
 #include "ops/abs.h"
 #include <string>
 #include <algorithm>
-#include <memory>
 #include <set>
 #include <map>
-#include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
@@ -28,26 +26,107 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+template <typename T>
+void ImpleAbs(void *origin, void *target, size_t size) {
+  MS_EXCEPTION_IF_NULL(origin);
+  MS_EXCEPTION_IF_NULL(target);
+  auto origin_data = reinterpret_cast<T *>(origin);
+  auto target_data = reinterpret_cast<T *>(target);
+  MS_EXCEPTION_IF_NULL(origin_data);
+  MS_EXCEPTION_IF_NULL(target_data);
+  auto zero_val = static_cast<T>(0);
+  for (size_t i = 0; i < size; ++i) {
+    target_data[i] = origin_data[i] >= zero_val ? origin_data[i] : -origin_data[i];
+  }
+}
+
+abstract::ShapePtr AbsInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("input_x", input_args[0]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+TypePtr AbsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto x_type = input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim->name());
+  return x_type;
 }
-}  // namespace
 
 AbstractBasePtr AbsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args));
+
+  return abstract::MakeAbstract(AbsInferShape(primitive, input_args), AbsInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameAbs, Abs);
+
+ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto x = input_args[0]->BuildValue();
+  if (x == nullptr) {
+    return nullptr;
+  }
+  auto x_tensor = x->cast<tensor::TensorPtr>();
+
+  MS_EXCEPTION_IF_NULL(x_tensor);
+
+  auto data_size = x_tensor->DataSize();
+  auto dtype = x_tensor->data_type();
+  auto shape = AbsInferShape(prim, input_args);
+  auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape->shape());
+  auto x_datac = x_tensor->data_c();
+  auto result_datac = result_tensor->data_c();
+  switch (dtype) {
+    case kNumberTypeInt8: {
+      ImpleAbs<int8_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeInt16: {
+      ImpleAbs<int16_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeInt32: {
+      ImpleAbs<int32_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeInt64: {
+      ImpleAbs<int64_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt8: {
+      ImpleAbs<uint8_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt16: {
+      ImpleAbs<uint16_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt32: {
+      ImpleAbs<uint32_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt64: {
+      ImpleAbs<uint64_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeFloat16: {
+      ImpleAbs<float16>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeFloat32: {
+      ImpleAbs<float>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeFloat64: {
+      ImpleAbs<double>(x_datac, result_datac, data_size);
+      break;
+    }
+    default: {
+      MS_EXCEPTION(TypeError) << "Abs unsupported data type: " << x_tensor->ToString();
+    }
+  }
+  return result_tensor;
+}
+}  // namespace
+REGISTER_PRIMITIVE_EVAL_IMPL(Abs, prim::kPrimAbs, AbsInfer, AbsInferValue, true);
 }  // namespace ops
 }  // namespace mindspore
