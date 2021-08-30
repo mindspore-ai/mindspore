@@ -120,6 +120,9 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   }
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
   func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeMs)));
+  for (auto input : func_graph->get_inputs()) {
+    ConverterContext::GetInstance()->AddGraphInputTensorNames(input->fullname_with_scope());
+  }
 #ifdef ENABLE_LITE_ACL
   MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend310.";
   return func_graph;
