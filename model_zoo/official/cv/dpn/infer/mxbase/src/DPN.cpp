@@ -68,8 +68,8 @@ APP_ERROR DPN::Init(const InitParam &initParam)
     config["postProcessConfigContent"] = std::make_shared<std::string>(jsonStr);
     config["labelPath"] = std::make_shared<std::string>(initParam.labelPath);
 
-    post_ = std::make_shared<MxBase::Resnet50PostProcess>();
-    ret = post_->Init(config);
+    postprocessor_ = std::make_shared<MxBase::Resnet50PostProcess>();
+    ret = postprocessor_->Init(config);
     if (ret != APP_ERR_OK) {
         LogError << "PostProcess init failed, ret=" << ret << ".";
         return ret;
@@ -81,7 +81,7 @@ APP_ERROR DPN::DeInit()
 {
     dvppWrapper_->DeInit();
     model_->DeInit();
-    post_->DeInit();
+    postprocessor_->DeInit();
     MxBase::DeviceManager::GetInstance()->DestroyDevices();
     return APP_ERR_OK;
 }
@@ -103,26 +103,26 @@ APP_ERROR DPN::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat)
 
 APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase)
 {
-    uint32_t dataSize=1;
-    for (size_t i=0; i<modelDesc_.inputTensors.size(); ++i) {
+    uint32_t dataSize = 1;
+    for (size_t i = 0; i < modelDesc_.inputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
         for (size_t j = 0; j < modelDesc_.inputTensors[i].tensorDims.size(); ++j) {
             shape.push_back((uint32_t)modelDesc_.inputTensors[i].tensorDims[j]);
         }
-        for(uint32_t i=0; i<shape.size(); ++i){
+        for(uint32_t i = 0; i < shape.size(); ++i){
             dataSize *= shape[i];
         } 
     }
 
     // mat NCHW to NHWC
-    size_t N=32,H=224,W=224,C=3;
+    size_t N = 32, H = 224, W = 224, C = 3;
     unsigned char *mat_data = new unsigned char[dataSize];
-    uint32_t idx=0;
-    for(size_t n=0; n<N; n++){
+    uint32_t idx = 0;
+    for(size_t n = 0; n < N; n++){
         int id = 0;
-        for(size_t h=0; h<H; h++){
-            for(size_t w=0; w<W; w++){
-                for(size_t c=0; c<C; c++){
+        for(size_t h = 0; h < H; h++){
+            for(size_t w = 0; w < W; w++){
+                for(size_t c = 0; c < C; c++){
                     id = n*(H*W*C) + c*(H*W) + h*W + w;
                     unsigned char *tmp = (unsigned char *)(imageMat.data + id);
                     mat_data[idx++] = *tmp;
@@ -178,7 +178,7 @@ APP_ERROR DPN::Inference(const std::vector<MxBase::TensorBase> &inputs,
 APP_ERROR DPN::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
                                         std::vector<std::vector<MxBase::ClassInfo>> &clsInfos)
 {
-    APP_ERROR ret = post_->Process(inputs, clsInfos);
+    APP_ERROR ret = postprocessor_->Process(inputs, clsInfos);
     if (ret != APP_ERR_OK) {
         LogError << "Process failed, ret=" << ret << ".";
         return ret;

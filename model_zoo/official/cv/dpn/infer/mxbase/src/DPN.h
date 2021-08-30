@@ -50,7 +50,8 @@ class DPN {
         double GetInferCostMilliSec() const {return inferCostTimeMilliSec;}
 
     private:
-        APP_ERROR SaveResult(const std::vector<std::string> &batchImgPaths, const std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos);
+        APP_ERROR SaveResult(const std::vector<std::string> &batchImgPaths, 
+                                const std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos);
     private:
         std::shared_ptr<MxBase::DvppWrapper> dvppWrapper_;
         std::shared_ptr<MxBase::ModelInferenceProcessor> model_;
