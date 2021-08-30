@@ -19,16 +19,19 @@
 #include <vector>
 #include <memory>
 #include "ops/space_to_depth.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSpaceToDepthParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::SpaceToDepth>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_format(mindspore::Format::NHWC);
 
-  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsSpaceToDepthOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get SpaceToDepth attr failed";

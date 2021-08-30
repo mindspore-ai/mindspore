@@ -21,11 +21,12 @@
 #include "ops/op_utils.h"
 #include "include/registry/parser_context.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
 STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *pad) {
-  MS_ASSERT(pad != nullptr);
+  MSLITE_CHECK_PTR(pad);
   if (poolingParam.has_pad_h() && poolingParam.has_pad_w()) {
     if (poolingParam.has_pad()) {
       MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both";
@@ -45,7 +46,7 @@ STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam
 }
 
 STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *strides) {
-  MS_ASSERT(strides != nullptr);
+  MSLITE_CHECK_PTR(strides);
   if (poolingParam.has_stride_h() && poolingParam.has_stride_w()) {
     if (poolingParam.has_stride()) {
       MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
@@ -61,7 +62,7 @@ STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingPa
 }
 
 STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *windows) {
-  MS_ASSERT(windows != nullptr);
+  MSLITE_CHECK_PTR(windows);
   if (poolingParam.has_global_pooling() && poolingParam.global_pooling()) {
     if (poolingParam.has_kernel_size() || poolingParam.has_kernel_h() || poolingParam.has_kernel_w()) {
       MS_LOG(ERROR) << "With Global_pooling: true Filter size cannot specified";

@@ -32,6 +32,7 @@
 #include "tools/converter/parser/tflite/tflite_inputs_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
+#include "nnacl/op_base.h"
 
 using mindspore::converter::kFmkTypeTflite;
 namespace mindspore::lite {
@@ -69,7 +70,10 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
     return nullptr;
   }
   res_graph_ = std::make_shared<FuncGraph>();
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTflite)));
+  MS_CHECK_TRUE_RET(res_graph_ != nullptr, nullptr);
+  auto type_value = MakeValue(static_cast<int>(converter::kFmkTypeTflite));
+  MS_CHECK_TRUE_RET(type_value != nullptr, nullptr);
+  res_graph_->set_attr("fmk", type_value);
 
   auto status = ConvertGraphInputs();
   if (status != RET_OK) {
@@ -91,7 +95,9 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  res_graph_->set_attr("graph_name", MakeValue("main_graph"));
+  auto attr_value = MakeValue("main_graph");
+  MS_CHECK_TRUE_RET(attr_value != nullptr, nullptr);
+  res_graph_->set_attr("graph_name", attr_value);
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
 
@@ -106,6 +112,7 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
     return nullptr;
   }
   auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeTflite, false);
+  MS_CHECK_TRUE_RET(unify_format != nullptr, nullptr);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;

@@ -18,20 +18,25 @@
 #include <vector>
 #include <memory>
 #include "ops/gather.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteGatherParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Gather>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
-  MS_ASSERT(tfliteOp != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsGatherOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op gather attr failed";
     return nullptr;
   }
-  prim->AddAttr("axis", MakeValue(static_cast<int32_t>(tflite_attr->axis)));
+  auto axis_value = MakeValue(static_cast<int32_t>(tflite_attr->axis));
+  MS_CHECK_TRUE_RET(axis_value != nullptr, nullptr);
+  prim->AddAttr("axis", axis_value);
 
   return prim.release();
 }

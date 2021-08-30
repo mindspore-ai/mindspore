@@ -18,18 +18,21 @@
 #include <vector>
 #include <memory>
 #include "ops/fusion/full_connection.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::FullConnection>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_axis(1);
   prim->set_use_axis(false);
   prim->set_has_bias(tflite_op->inputs.size() > 2 && tflite_op->inputs.at(2) != -1);
 
-  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsFullyConnectedOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get FullConnection attr failed";

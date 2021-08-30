@@ -19,14 +19,17 @@
 #include <memory>
 #include <algorithm>
 #include "ops/squeeze.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSqueezeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Squeeze>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
-  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsSqueezeOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op squeeze attr failed";

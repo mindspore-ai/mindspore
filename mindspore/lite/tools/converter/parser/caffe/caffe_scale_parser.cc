@@ -18,11 +18,12 @@
 #include <memory>
 #include "ops/fusion/scale_fusion.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
 STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index) {
-  MS_ASSERT(axis_index != nullptr);
+  MSLITE_CHECK_PTR(axis_index);
   if (axis < -4 || axis >= 4) {
     MS_LOG(ERROR) << "Scale axis value(" << axis << ") is not correct";
     return RET_ERROR;

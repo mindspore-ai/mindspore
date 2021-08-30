@@ -20,6 +20,7 @@
 #include "ir/dtype/type_id.h"
 #include "src/common/utils.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -90,7 +91,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
 }
 
 STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape) {
-  MS_ASSERT(shape != nullptr);
+  CHECK_NULL_RETURN(shape);
 
   shape->clear();
   if (proto.has_num() || proto.has_channels() || proto.has_height() || proto.has_width()) {

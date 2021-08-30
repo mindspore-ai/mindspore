@@ -30,13 +30,14 @@
 #include "ops/fft_imag.h"
 #include "ops/mfcc.h"
 #include "ops/rfft.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteCustomParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   const auto &custom_attr = tflite_op->custom_options;
   const auto &opnode = tflite_model->operator_codes.at(tflite_op->opcode_index);
   if (opnode == nullptr) {
@@ -70,7 +71,9 @@ ops::PrimitiveC *TfliteCustomParser::Parse(const std::unique_ptr<tflite::Operato
 
 ops::PrimitiveC *TfliteCustomParser::DetectPostProcess(const std::vector<uint8_t> &custom_attr,
                                                        const std::unique_ptr<tflite::OperatorT> &tflite_op) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
   auto prim = std::make_unique<ops::DetectionPostProcess>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_format(mindspore::Format::NHWC);
   prim->set_input_size(tflite_op->inputs.size());
@@ -104,6 +107,7 @@ ops::PrimitiveC *TfliteCustomParser::DetectPostProcess(const std::vector<uint8_t
 
 ops::PrimitiveC *TfliteCustomParser::AudioSpectrogram(const std::vector<uint8_t> &custom_attr) {
   auto prim = std::make_unique<ops::AudioSpectrogram>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   auto attr_map = flexbuffers::GetRoot(custom_attr).AsMap();
   prim->set_window_size(attr_map["window_size"].AsInt64());
@@ -115,6 +119,7 @@ ops::PrimitiveC *TfliteCustomParser::AudioSpectrogram(const std::vector<uint8_t>
 
 ops::PrimitiveC *TfliteCustomParser::Mfcc(const std::vector<uint8_t> &custom_attr) {
   auto prim = std::make_unique<ops::Mfcc>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   auto attr_map = flexbuffers::GetRoot(custom_attr).AsMap();
   prim->set_freq_upper_limit(attr_map["upper_frequency_limit"].AsFloat());
@@ -127,6 +132,7 @@ ops::PrimitiveC *TfliteCustomParser::Mfcc(const std::vector<uint8_t> &custom_att
 
 ops::PrimitiveC *TfliteCustomParser::Predict(const std::vector<uint8_t> &custom_attr) {
   auto prim = std::make_unique<ops::CustomPredict>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_output_num(reinterpret_cast<const int64_t *>(custom_attr.data())[0]);
   prim->set_weight_threshold(reinterpret_cast<const float *>(custom_attr.data())[1]);
@@ -136,18 +142,23 @@ ops::PrimitiveC *TfliteCustomParser::Predict(const std::vector<uint8_t> &custom_
 
 ops::PrimitiveC *TfliteCustomParser::Normalize() {
   auto prim = std::make_unique<ops::CustomNormalize>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::ExtractFeatures() {
   auto prim = std::make_unique<ops::CustomExtractFeatures>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_attr,
                                           const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Rfft>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -168,16 +179,19 @@ ops::PrimitiveC *TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_att
 
 ops::PrimitiveC *TfliteCustomParser::FftReal() {
   auto prim = std::make_unique<ops::FftReal>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::FftImag() {
   auto prim = std::make_unique<ops::FftImag>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::Identity() {
   auto prim = std::make_unique<ops::Identity>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 

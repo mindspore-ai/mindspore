@@ -19,17 +19,20 @@
 #include <vector>
 #include <memory>
 #include "ops/fusion/l2_normalize_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteL2NormParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::L2NormalizeFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_axis({-1});
   prim->set_epsilon(1e-6f);
 
-  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsL2NormOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get L2NormalizeFusion attr failed";

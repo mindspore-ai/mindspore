@@ -19,14 +19,17 @@
 #include <vector>
 #include <memory>
 #include "tools/converter/ops/while.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteWhileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<While>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
-  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsWhileOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get While attr failed";
