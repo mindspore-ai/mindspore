@@ -100,6 +100,10 @@ std::string TbeUtils::GetTuneDumpPath() {
 }
 
 std::string TbeUtils::GetOpDebugPath() {
+  static std::string debug_path = "";
+  if (debug_path != "") {
+    return debug_path;
+  }
   auto old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
   std::string config_path;
   if (!Common::CommonFuncForConfigPath("./", common::GetEnv(kCOMPILER_CACHE_PATH), &config_path)) {
@@ -107,9 +111,10 @@ std::string TbeUtils::GetOpDebugPath() {
   }
   if (!old_build.empty()) {
     if (config_path[config_path.length() - 1] == '/') {
-      return config_path;
+      debug_path = config_path;
     }
-    return config_path + "/";
+    debug_path = config_path + "/";
+    return debug_path;
   } else {
     std::string rank_id_str = common::GetEnv(kRankID);
     if (rank_id_str.empty()) {
@@ -117,9 +122,10 @@ std::string TbeUtils::GetOpDebugPath() {
       rank_id_str = "0";
     }
     if (config_path[config_path.length() - 1] == '/') {
-      return config_path + "rank_" + rank_id_str + "/";
+      debug_path = config_path + "rank_" + rank_id_str + "/";
     }
-    return config_path + "/" + "rank_" + rank_id_str + "/";
+    debug_path = config_path + "/" + "rank_" + rank_id_str + "/";
+    return debug_path;
   }
 }
 
@@ -138,35 +144,39 @@ std::string GetOpDebugLevel() {
   return op_debug_level;
 }
 
-void TbeUtils::GenSocInfo(nlohmann::json *soc_info_json) {
+nlohmann::json TbeUtils::GenSocInfo() {
+  static nlohmann::json soc_info_json;
+  if (!soc_info_json.empty()) {
+    return soc_info_json;
+  }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  MS_EXCEPTION_IF_NULL(soc_info_json);
   std::list<int64_t> list;
-  (*soc_info_json)["coreNum"] = "";
-  (*soc_info_json)["coreType"] = "";
-  (*soc_info_json)["op_impl_mode"] = "";
-  (*soc_info_json)["vector_fp_ceiling"] = "";
-  (*soc_info_json)["op_impl_mode_list"] = list;
-  (*soc_info_json)["l2Mode"] = "2";
-  (*soc_info_json)["l1Fusion"] = "false";
-  (*soc_info_json)["l2Fusion"] = "false";
-  (*soc_info_json)["op_bank_update"] = false;
-  (*soc_info_json)["socVersion"] = GetSocVersion();
-  (*soc_info_json)["offlineTune"] = CheckOfflineTune();
-  (*soc_info_json)["op_debug_dir"] = GetOpDebugPath();
-  (*soc_info_json)["op_debug_level"] = GetOpDebugLevel();
-  (*soc_info_json)["autoTilingMode"] = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
-  (*soc_info_json)["deviceId"] = std::to_string(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
+  soc_info_json["coreNum"] = "";
+  soc_info_json["coreType"] = "";
+  soc_info_json["op_impl_mode"] = "";
+  soc_info_json["vector_fp_ceiling"] = "";
+  soc_info_json["op_impl_mode_list"] = list;
+  soc_info_json["l2Mode"] = "2";
+  soc_info_json["l1Fusion"] = "false";
+  soc_info_json["l2Fusion"] = "false";
+  soc_info_json["op_bank_update"] = false;
+  soc_info_json["socVersion"] = GetSocVersion();
+  soc_info_json["offlineTune"] = CheckOfflineTune();
+  soc_info_json["op_debug_dir"] = GetOpDebugPath();
+  soc_info_json["op_debug_level"] = GetOpDebugLevel();
+  soc_info_json["autoTilingMode"] = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
+  soc_info_json["deviceId"] = std::to_string(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   std::string config_path;
   if (!Common::CommonFuncForConfigPath("", common::GetEnv("OP_BANK_PATH"), &config_path)) {
     MS_LOG(EXCEPTION) << "Invalid env OP_BANK_PATH : " << common::GetEnv("OP_BANK_PATH");
   }
-  (*soc_info_json)["op_bank_path"] = config_path;
+  soc_info_json["op_bank_path"] = config_path;
   if (!Common::CommonFuncForConfigPath("", common::GetEnv("MDL_BANK_PATH"), &config_path)) {
     MS_LOG(EXCEPTION) << "Invalid env MDL_BANK_PATH : " << common::GetEnv("MDL_BANK_PATH");
   }
-  (*soc_info_json)["mdl_bank_path"] = config_path;
+  soc_info_json["mdl_bank_path"] = config_path;
+  return soc_info_json;
 }
 
 void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &info) {

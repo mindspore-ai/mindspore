@@ -108,8 +108,7 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     }
     (void)processed_fusion_kernel.insert(json_name);
     // generate soc info json
-    nlohmann::json soc_info_json;
-    TbeUtils::GenSocInfo(&soc_info_json);
+    nlohmann::json soc_info_json = TbeUtils::GenSocInfo();
     soc_info_json["autoTilingMode"] = tune_mode;
     auto soc_version = TbeKernelJsonCreator::GetSocVersion();
     soc_info_json["socVersion"] = soc_version;

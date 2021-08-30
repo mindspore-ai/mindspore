@@ -229,8 +229,7 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
   // generate soc info json
-  nlohmann::json soc_info_json;
-  TbeUtils::GenSocInfo(&soc_info_json);
+  nlohmann::json soc_info_json = TbeUtils::GenSocInfo();
   soc_info_json[kAutoTilingMode] = tune_mode;
 
   std::string json_str = op_info_json.dump() + soc_info_json.dump();
