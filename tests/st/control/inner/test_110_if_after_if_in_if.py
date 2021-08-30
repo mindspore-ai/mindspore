@@ -149,6 +149,7 @@ def control_flow_if_after_if_in_if(input_net, x):
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -157,19 +158,25 @@ def test_if_after_if_in_if():
     control_flow_if_after_if_in_if(IfAfterIfInIfNet, x)
 
 
-@pytest.mark.skip(reason="not supported side effect")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_if_after_if_in_if_01():
     x = Tensor(2, mstype.int32)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet1, x)
 
 
-@pytest.mark.skip(reason="not supported side effect")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_if_after_if_in_if_02():
     x = Tensor(2, mstype.int32)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet2, x)
 
 
-@pytest.mark.skip(reason="not supported side effect")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_if_after_if_in_if_03():
     x = Tensor(2, mstype.int32)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet3, x)
