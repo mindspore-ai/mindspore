@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,70 +18,150 @@ package com.mindspore.lite;
 
 import java.nio.ByteBuffer;
 
+/**
+ * MSTensor defined tensor in MindSpore Lite.
+ *
+ * @since v1.0
+ */
 public class MSTensor {
     private long tensorPtr;
 
+    /**
+     * MSTensor construct function.
+     */
     public MSTensor() {
         this.tensorPtr = 0;
     }
 
+    /**
+     * MSTensor construct function.
+     *
+     * @param tensorPtr tensor pointer.
+     */
     public MSTensor(long tensorPtr) {
         this.tensorPtr = tensorPtr;
     }
 
+    /**
+     * MSTensor construct function.
+     *
+     * @param tensorName tensor name
+     * @param buffer     tensor buffer
+     */
     public MSTensor(String tensorName, ByteBuffer buffer) {
-          this.tensorPtr = createTensor(tensorName, buffer);
+        this.tensorPtr = createTensor(tensorName, buffer);
     }
 
+    /**
+     * Get the shape of the MindSpore Lite MSTensor.
+     *
+     * @return A array of int as the shape of the MindSpore Lite MSTensor.
+     */
     public int[] getShape() {
         return this.getShape(this.tensorPtr);
     }
 
+    /**
+     * DataType is defined in com.mindspore.lite.DataType.
+     *
+     * @return The MindSpore Lite data type of the MindSpore Lite MSTensor class.
+     */
     public int getDataType() {
         return this.getDataType(this.tensorPtr);
     }
 
+    /**
+     * Get output data of MSTensor, the data type is byte.
+     *
+     * @return The byte array containing all MSTensor output data.
+     */
     public byte[] getByteData() {
         return this.getByteData(this.tensorPtr);
     }
 
+    /**
+     * Get output data of MSTensor, the data type is float.
+     *
+     * @return The float array containing all MSTensor output data.
+     */
     public float[] getFloatData() {
         return this.getFloatData(this.tensorPtr);
     }
 
+    /**
+     * Get output data of MSTensor, the data type is int.
+     *
+     * @return The int array containing all MSTensor output data.
+     */
     public int[] getIntData() {
         return this.getIntData(this.tensorPtr);
     }
 
+    /**
+     * Get output data of MSTensor, the data type is long.
+     *
+     * @return The long array containing all MSTensor output data.
+     */
     public long[] getLongData() {
         return this.getLongData(this.tensorPtr);
     }
 
-    public void setData(byte[] data) {
-        this.setData(this.tensorPtr, data, data.length);
+    /**
+     * Set the input data of MSTensor.
+     *
+     * @param data Input data of byte[] type.
+     * @return whether set data success.
+     */
+    public boolean setData(byte[] data) {
+        return this.setData(this.tensorPtr, data, data.length);
     }
 
-    public void setData(ByteBuffer data) {
-        this.setByteBufferData(this.tensorPtr, data);
+    /**
+     * Set the input data of MSTensor.
+     *
+     * @param data data Input data of ByteBuffer type
+     * @return whether set data success.
+     */
+    public boolean setData(ByteBuffer data) {
+        return this.setByteBufferData(this.tensorPtr, data);
     }
 
+    /**
+     * Get the size of the data in MSTensor in bytes.
+     *
+     * @return The size of the data in MSTensor in bytes.
+     */
     public long size() {
         return this.size(this.tensorPtr);
     }
 
+    /**
+     * Get the number of elements in MSTensor.
+     *
+     * @return The number of elements in MSTensor.
+     */
     public int elementsNum() {
         return this.elementsNum(this.tensorPtr);
     }
 
+    /**
+     * Free all temporary memory in MindSpore Lite MSTensor.
+     */
     public void free() {
         this.free(this.tensorPtr);
         this.tensorPtr = 0;
     }
 
+    /**
+     * @return Get tensor name
+     */
     public String tensorName() {
         return this.tensorName(this.tensorPtr);
     }
 
+    /**
+     * @return MSTensor pointer
+     */
     protected long getMSTensorPtr() {
         return tensorPtr;
     }

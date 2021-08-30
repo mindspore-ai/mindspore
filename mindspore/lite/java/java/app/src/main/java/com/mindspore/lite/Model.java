@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,11 @@ import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
+/**
+ * Model defines model in MindSpore Lite for managing graph.
+ *
+ * @since v1.0
+ */
 public class Model {
     static {
         System.loadLibrary("mindspore-lite-jni");
@@ -32,14 +37,24 @@ public class Model {
 
     private long modelPtr;
 
+    /**
+     * Model construct function
+     */
     public Model() {
         this.modelPtr = 0;
     }
 
+    /**
+     * Load the MindSpore Lite model from Assets.
+     *
+     * @param context   Context in Android.
+     * @param modelName Model file name.
+     * @return Whether the load is successful.
+     */
     public boolean loadModel(Context context, String modelName) {
         FileInputStream fis = null;
         AssetFileDescriptor fileDescriptor = null;
-        boolean ret = false;
+        boolean isReturnSuccess = false;
         try {
             fileDescriptor = context.getAssets().openFd(modelName);
             fis = new FileInputStream(fileDescriptor.getFileDescriptor());
@@ -48,42 +63,51 @@ public class Model {
             long declaredLen = fileDescriptor.getDeclaredLength();
             MappedByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLen);
             this.modelPtr = loadModel(buffer);
-            ret = this.modelPtr != 0;
+            isReturnSuccess = this.modelPtr != 0;
         } catch (IOException e) {
             this.modelPtr = 0;
             Log.e("MS_LITE", "Load model failed");
-            ret = false;
         } finally {
-            if (null != fis) {
+            if (fis != null) {
                 try {
                     fis.close();
                 } catch (IOException e) {
                     Log.e("MS_LITE", "Close file failed");
-                    ret = false;
                 }
             }
-            if (null != fileDescriptor) {
+            if (fileDescriptor != null) {
                 try {
                     fileDescriptor.close();
                 } catch (IOException e) {
                     Log.e("MS_LITE", "Close fileDescriptor failed");
-                    ret = false;
                 }
             }
         }
-        return ret;
+        return isReturnSuccess;
     }
 
+    /**
+     * Load the MindSpore Lite model from path.
+     *
+     * @param modelPath Model file path.
+     * @return Whether the load is successful.
+     */
     public boolean loadModel(String modelPath) {
         this.modelPtr = loadModelByPath(modelPath);
         return this.modelPtr != 0;
     }
 
+    /**
+     * Free all temporary memory in MindSpore Lite Model.
+     */
     public void free() {
         this.free(this.modelPtr);
         this.modelPtr = 0;
     }
 
+    /**
+     * Free MetaGraph in MindSpore Lite Model to reduce memory usage during inference.
+     */
     public void freeBuffer() {
         this.freeBuffer(this.modelPtr);
     }
