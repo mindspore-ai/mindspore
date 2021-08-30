@@ -75,6 +75,7 @@
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/grad/resize_grad.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "nnacl/op_base.h"
 using mindspore::ops::kNameAdd;
 using mindspore::ops::kNameAdder;
 using mindspore::ops::kNameArgMax;
@@ -171,6 +172,7 @@ std::map<std::string, mindspore::ReduceMode> reduce_map = {
   {ops::kNameReduceSum, mindspore::Reduce_Sum}, {ops::kNameReduceSumSquare, mindspore::Reduce_Sum_Square}};
 
 int AttrAdjust(const PrimitivePtr &prim, const std::string &name, const std::vector<int> &position) {
+  MS_ASSERT(prim != nullptr);
   if (prim->GetAttr(name) == nullptr) {
     return lite::RET_OK;
   }
@@ -213,7 +215,7 @@ int MoveAttrMapCommon(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<T>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
   return lite::RET_OK;
@@ -229,7 +231,7 @@ int MoveAttrMapActivation(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::Activation>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   auto iter = activation_map.find(src_prim->name());
   if (iter == activation_map.end()) {
@@ -251,7 +253,7 @@ int MoveAttrMapActivationGrad(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::ActivationGrad>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   auto iter = activation_map.find(src_prim->name());
   if (iter == activation_map.end()) {
@@ -273,7 +275,7 @@ int MoveAttrMapReduce(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::ReduceFusion>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   auto iter = reduce_map.find(src_prim->name());
   if (iter == reduce_map.end()) {
@@ -296,7 +298,7 @@ int MoveAttrMapConv2D(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::Conv2DFusion>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   auto status = AttrAdjust(dst_prim, ops::kStride, {2, 3});
   if (status != lite::RET_OK) {
@@ -337,13 +339,15 @@ int MoveAttrPool(const CNodePtr &cnode) {
   PrimitivePtr dst_prim;
   if (src_prim->name() == kNameAvgPool) {
     dst_prim = std::make_shared<ops::AvgPoolFusion>();
+    MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   } else if (src_prim->name() == kNameMaxPool) {
     dst_prim = std::make_shared<ops::MaxPoolFusion>();
+    MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   } else {
     MS_LOG(ERROR) << "unsupported pooling type.";
     return lite::RET_ERROR;
   }
-  MS_ASSERT(dst_prim != nullptr);
+
   dst_prim->SetAttrs(src_prim->attrs());
   auto status = AttrAdjust(dst_prim, ops::kKernelSize, {2, 3});
   if (status != lite::RET_OK) {
@@ -372,13 +376,14 @@ int MoveAttrPoolGrad(const CNodePtr &cnode) {
   if (src_prim->name() == kNameAvgPoolGrad || src_prim->name() == kNameAvgPoolGradGpu ||
       src_prim->name() == kNameAvgPoolGradCpu) {
     dst_prim = std::make_shared<ops::AvgPoolGrad>();
+    MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   } else if (src_prim->name() == kNameMaxPoolGrad) {
     dst_prim = std::make_shared<ops::MaxPoolGrad>();
+    MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   } else {
     MS_LOG(ERROR) << "unsupported pooling type.";
     return lite::RET_ERROR;
   }
-  MS_ASSERT(dst_prim != nullptr);
   dst_prim->SetAttrs(src_prim->attrs());
   auto status = AttrAdjust(dst_prim, ops::kKernelSize, {2, 3});
   if (status != lite::RET_OK) {
@@ -404,7 +409,7 @@ int MoveAttrMapAdder(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::AdderFusion>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   auto status = AttrAdjust(dst_prim, ops::kStride, {2, 3});
   if (status != lite::RET_OK) {
@@ -435,7 +440,7 @@ int MoveAttrMapLayerNorm(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::LayerNormFusion>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   dst_prim->set_elementwise_affine(true);
   if (dst_prim->GetAttr(ops::kEpsilon) == nullptr) {
@@ -455,7 +460,7 @@ int MoveAttrMapResize(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::Resize>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   auto size = GetValue<std::vector<int64_t>>(src_prim->GetAttr(ops::kSize));
   dst_prim->set_new_height(size[0]);
   dst_prim->set_new_width(size[1]);
@@ -481,7 +486,7 @@ int MoveAttrSlice(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::SliceFusion>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   auto begin = GetValueNode<ValuePtr>(cnode->input(opt::kInputIndexTwo));
   auto begin_value = GetValue<std::vector<int64_t>>(begin);
 
@@ -505,7 +510,7 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::ResizeGrad>();
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
 
   if (src_prim->name() == kNameResizeBilinearGrad) {
     dst_prim->set_method(ResizeMethod::LINEAR);
