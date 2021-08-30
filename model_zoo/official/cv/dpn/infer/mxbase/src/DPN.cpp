@@ -71,8 +71,8 @@ APP_ERROR DPN::Init(const InitParam &initParam) {
     config["postProcessConfigContent"] = std::make_shared<std::string>(jsonStr);
     config["labelPath"] = std::make_shared<std::string>(initParam.labelPath);
 
-    postprocessor_ = std::make_shared<MxBase::Resnet50PostProcess>();
-    ret = postprocessor_->Init(config);
+    post_ = std::make_shared<MxBase::Resnet50PostProcess>();
+    ret = post_->Init(config);
     if (ret != APP_ERR_OK) {
         LogError << "PostProcess init failed, ret=" << ret << ".";
         return ret;
@@ -83,7 +83,7 @@ APP_ERROR DPN::Init(const InitParam &initParam) {
 APP_ERROR DPN::DeInit() {
     dvppWrapper_->DeInit();
     model_->DeInit();
-    postprocessor_->DeInit();
+    post_->DeInit();
     MxBase::DeviceManager::GetInstance()->DestroyDevices();
     return APP_ERR_OK;
 }
@@ -108,8 +108,8 @@ APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &te
         for (size_t j = 0; j < modelDesc_.inputTensors[i].tensorDims.size(); ++j) {
             shape.push_back((uint32_t)modelDesc_.inputTensors[i].tensorDims[j]);
         }
-        for (uint32_t i = 0; i < shape.size(); ++i) {
-            dataSize *= shape[i];
+        for (uint32_t s = 0; s < shape.size(); ++s) {
+            dataSize *= shape[s];
         }
     }
 
@@ -175,7 +175,7 @@ APP_ERROR DPN::Inference(const std::vector<MxBase::TensorBase> &inputs,
 
 APP_ERROR DPN::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
                                         std::vector<std::vector<MxBase::ClassInfo>> &clsInfos) {
-    APP_ERROR ret = postprocessor_->Process(inputs, clsInfos);
+    APP_ERROR ret = post_->Process(inputs, clsInfos);
     if (ret != APP_ERR_OK) {
         LogError << "Process failed, ret=" << ret << ".";
         return ret;
@@ -214,9 +214,6 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths) {
     std::vector<MxBase::TensorBase> inputs = {};
     std::vector<MxBase::TensorBase> outputs = {};
     std::vector<cv::Mat> batchImgMat;
-    std::string imgPath;
-    imgPath = batchImgPaths[0];
-    std::vector<std::string> repeat_batchImgPaths;
     for (auto &imgPath : batchImgPaths) {
         cv::Mat imageMat;
         ret = ReadImage(imgPath, imageMat);
