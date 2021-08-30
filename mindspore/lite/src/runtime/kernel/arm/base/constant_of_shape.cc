@@ -27,6 +27,7 @@ using mindspore::schema::PrimitiveType_ConstantOfShape;
 
 namespace mindspore::kernel {
 int ConstantOfShapeRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<ConstantOfShapeCPUKernel *>(cdata);
   auto ret = g_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
@@ -67,12 +68,12 @@ int ConstantOfShapeCPUKernel::DoExecute(int task_id) {
 
 int ConstantOfShapeCPUKernel::Run() {
   auto output = out_tensors_.front();
+  CHECK_NULL_RETURN(output);
   param_->data_type_ = output->data_type();
   param_->element_size_ = output->ElementsNum();
   output_ptr_ = output->data_c();
-  if (output_ptr_ == nullptr) {
-    return RET_NULL_PTR;
-  }
+  CHECK_NULL_RETURN(output_ptr_);
+
   int thread_count = MSMIN(op_parameter_->thread_num_, param_->element_size_);
   if (thread_count == 0) {
     MS_LOG(ERROR) << "div zero";

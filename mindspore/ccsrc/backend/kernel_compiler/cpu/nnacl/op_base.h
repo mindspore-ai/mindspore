@@ -94,6 +94,7 @@
 
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)
+#define MS_CHECK_TRUE_RET_VOID(value)
 #define MS_CHECK_FALSE(value, errcode)
 #define MS_CHECK_TRUE_MSG(value, errcode, msg)
 #define MS_CHECK_FALSE_MSG(value, errcode, msg)
@@ -108,6 +109,7 @@
 #define NNACL_CHECK_ZERO_RETURN_ERR(val)
 #define NNACL_CHECK_ZERO_RETURN(val)
 #define NNACL_CHECK_NULL_RETURN_ERR(ptr)
+#define NNACL_CHECK_NULL_RETURN_VOID(ptr)
 #else
 // Check whether value is true, if not return 'errcode'
 #define MS_CHECK_TRUE_RET(value, errcode) \
@@ -115,6 +117,13 @@
     if (!(value)) {                       \
       return errcode;                     \
     }                                     \
+  } while (0)
+
+#define MS_CHECK_TRUE_RET_VOID(value) \
+  do {                                \
+    if (!(value)) {                   \
+      return;                         \
+    }                                 \
   } while (0)
 
 // Check whether value is false, if not return 'errcode'
@@ -200,6 +209,14 @@
       return NNACL_NULL_PTR;             \
     }                                    \
   } while (0)
+
+#define NNACL_CHECK_NULL_RETURN_VOID(ptr) \
+  do {                                    \
+    if ((ptr) == NULL) {                  \
+      return;                             \
+    }                                     \
+  } while (0)
+
 #endif
 
 typedef enum LiteDataType {

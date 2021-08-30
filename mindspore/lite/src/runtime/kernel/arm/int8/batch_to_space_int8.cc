@@ -38,13 +38,16 @@ BatchToSpaceInt8CPUKernel::~BatchToSpaceInt8CPUKernel() {
 }
 
 int BatchToSpaceInt8CPUKernel::Init() {
-  MS_ASSERT(in_tensors_.at(0)->format() == mindspore::NHWC);
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_1D);
+  CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
+  MS_ASSERT(in_tensors_.front()->format() == mindspore::NHWC);
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (in_quant_arg_ == nullptr) {
     MS_LOG(ERROR) << "Malloc QuantArg for BatchToSpace int8 op failed!";
     return RET_ERROR;
   }
-  auto *input_tensor = in_tensors_.at(kInputIndex);
+  auto *input_tensor = in_tensors_[kInputIndex];
+  CHECK_NULL_RETURN(input_tensor);
   auto in_quant_args = input_tensor->quant_params();
   in_quant_arg_->scale_ = in_quant_args.front().scale;
   in_quant_arg_->zp_ = in_quant_args.front().zeroPoint;
@@ -54,7 +57,8 @@ int BatchToSpaceInt8CPUKernel::Init() {
     MS_LOG(ERROR) << "Malloc QuantArg for BatchToSpace int8 op failed!";
     return RET_ERROR;
   }
-  auto *out_tensor = out_tensors_.at(kOutputIndex);
+  auto *out_tensor = out_tensors_[kOutputIndex];
+  CHECK_NULL_RETURN(out_tensor);
   auto out_quant_args = out_tensor->quant_params();
   out_quant_arg_->scale_ = out_quant_args.front().scale;
   out_quant_arg_->zp_ = out_quant_args.front().zeroPoint;
@@ -65,15 +69,17 @@ int BatchToSpaceInt8CPUKernel::Init() {
 }
 
 int BatchToSpaceInt8CPUKernel::ReSize() {
-  MS_ASSERT(in_tensors_.at(0)->shape().size() == DIMENSION_4D);
+  MS_ASSERT(in_tensors_.front()->shape().size() == DIMENSION_4D);
   return RET_OK;
 }
 
 int BatchToSpaceInt8CPUKernel::Run() {
-  auto input = in_tensors_[0];
-  auto output = out_tensors_[0];
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(input->MutableData());
-  int8_t *output_data = reinterpret_cast<int8_t *>(output->MutableData());
+  auto input = in_tensors_[kInputIndex];
+  auto output = out_tensors_[kOutputIndex];
+  CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(output);
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(input->data_c());
+  int8_t *output_data = reinterpret_cast<int8_t *>(output->data_c());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);

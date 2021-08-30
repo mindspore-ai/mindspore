@@ -24,13 +24,11 @@ using mindspore::schema::PrimitiveType_TensorArrayWrite;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateTensorArrayParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_TensorArray();
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "cast to tensor array primitive failed!";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(value != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(value->element_shape() != nullptr, nullptr);
 
   auto param = reinterpret_cast<TensorArrayParameter *>(malloc(sizeof(TensorArrayParameter)));
   if (param == nullptr) {
@@ -60,8 +58,8 @@ OpParameter *PopulateTensorArrayParameter(const void *prim) {
 }
 
 OpParameter *PopulateTACommonParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
 
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {

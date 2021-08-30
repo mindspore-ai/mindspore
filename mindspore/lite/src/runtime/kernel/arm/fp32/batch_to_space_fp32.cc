@@ -25,12 +25,17 @@ using mindspore::schema::PrimitiveType_BatchToSpaceND;
 
 namespace mindspore::kernel {
 int BatchToSpaceCPUKernel::Processinput() {
-  MS_ASSERT(in_tensors_[1]->data_c() != nullptr);
-  MS_ASSERT(in_tensors_[2]->data_c() != nullptr);
-  auto block_shape_data = in_tensors_[1]->data_c();
-  auto crops_data = in_tensors_[2]->data_c();
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
+  CHECK_NULL_RETURN(in_tensors_[DIMENSION_1D]);
+  CHECK_NULL_RETURN(in_tensors_[DIMENSION_2D]);
+  auto block_shape_data = in_tensors_[DIMENSION_1D]->data_c();
+  auto crops_data = in_tensors_[DIMENSION_2D]->data_c();
+  CHECK_NULL_RETURN(block_shape_data);
+  CHECK_NULL_RETURN(crops_data);
   auto block_shape = static_cast<int *>(block_shape_data);
   auto crops = static_cast<int *>(crops_data);
+  CHECK_LESS_RETURN(in_tensors_[DIMENSION_1D]->ElementsNum(), BATCH_TO_SPACE_BLOCK_SHAPE_SIZE);
+  CHECK_LESS_RETURN(in_tensors_[DIMENSION_2D]->ElementsNum(), COMM_SHAPE_SIZE);
   for (int i = 0; i < BATCH_TO_SPACE_BLOCK_SHAPE_SIZE; ++i) {
     block_shape_[i] = block_shape[i];
   }
@@ -47,7 +52,7 @@ int BatchToSpaceCPUKernel::Processinput() {
 int BatchToSpaceCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  MS_ASSERT(in_tensors_.at(0)->format() == mindspore::NHWC);
+  MS_ASSERT(in_tensors_[0]->format() == mindspore::NHWC);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -55,15 +60,17 @@ int BatchToSpaceCPUKernel::Init() {
 }
 
 int BatchToSpaceCPUKernel::ReSize() {
-  MS_ASSERT(in_tensors_.at(0)->shape().size() == COMM_SHAPE_SIZE);
+  MS_ASSERT(in_tensors_[0]->shape().size() == COMM_SHAPE_SIZE);
   return RET_OK;
 }
 
 int BatchToSpaceCPUKernel::Run() {
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
+  CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(output);
   const float *input_data = reinterpret_cast<const float *>(input->data_c());
-  float *output_data = reinterpret_cast<float *>(output->MutableData());
+  float *output_data = reinterpret_cast<float *>(output->data_c());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
   if (in_tensors_.size() == 1) {

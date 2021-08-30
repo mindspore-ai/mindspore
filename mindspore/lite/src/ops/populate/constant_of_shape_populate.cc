@@ -21,14 +21,17 @@ using mindspore::schema::PrimitiveType_ConstantOfShape;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  auto value = primitive->value_as_ConstantOfShape();
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
+  auto attr = primitive->value_as_ConstantOfShape();
+  MS_CHECK_TRUE_RET(attr != nullptr, nullptr);
+  auto value = attr->value();
+  MS_CHECK_TRUE_RET(value != nullptr, nullptr);
+  auto val = std::vector<float>(value->begin(), value->end());
+  if (val.empty() || val.size() > 1) {
+    MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
     return nullptr;
   }
-
   auto *param = reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ConstantOfShapeParameter failed.";
@@ -37,31 +40,18 @@ OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
   memset(param, 0, sizeof(ConstantOfShapeParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
-  auto prim_val = value->value();
-  if (prim_val == nullptr) {
-    MS_LOG(ERROR) << "val is nullptr";
-    free(param);
-    return nullptr;
-  }
-  auto val = std::vector<float>(prim_val->begin(), prim_val->end());
-  param->data_type_ = static_cast<int>(value->data_type());
-  if (val.empty() || val.size() > 1) {
-    MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
-    free(param);
-    return nullptr;
-  } else {
-    switch (param->data_type_) {
-      case kNumberTypeFloat32:
-        param->value_.f32_value_ = *(prim_val->begin());
-        break;
-      case kNumberTypeInt32:
-        param->value_.int32_value_ = static_cast<int32_t>(*(prim_val->begin()));
-        break;
-      default:
-        MS_LOG(ERROR) << "The value of constant of shape is invalid";
-        free(param);
-        return nullptr;
-    }
+  param->data_type_ = static_cast<int>(attr->data_type());
+  switch (param->data_type_) {
+    case kNumberTypeFloat32:
+      param->value_.f32_value_ = val[0];
+      break;
+    case kNumberTypeInt32:
+      param->value_.int32_value_ = static_cast<int32_t>(val[0]);
+      break;
+    default:
+      MS_LOG(ERROR) << "The value of constant of shape is invalid";
+      free(param);
+      return nullptr;
   }
   return reinterpret_cast<OpParameter *>(param);
 }

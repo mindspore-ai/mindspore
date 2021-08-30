@@ -20,14 +20,13 @@
 
 int TensorArrayReadInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
-#ifdef Debug
   // { prim, handle, index } -> node
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
-
+  MS_CHECK_TRUE_RET(inputs_size >= 1, NNACL_ERR);
+  MS_CHECK_TRUE_RET(outputs_size >= 1, NNACL_ERR);
   TensorC *handle = (TensorC *)inputs[0];
   TensorC *output = outputs[0];
 

@@ -21,6 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateCommonParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = reinterpret_cast<const schema::v0::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
 

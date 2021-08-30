@@ -22,6 +22,7 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int MatmulBaseInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto op = reinterpret_cast<MatmulBaseInt8CPUKernel *>(cdata);
   auto ret = op->RunImpl(task_id);
   if (ret != RET_OK) {
@@ -106,6 +107,7 @@ int MatmulBaseInt8CPUKernel::MallocQuantParam() {
     MS_LOG(ERROR) << "Malloc MatmulQuantParameter for Matmul int8 op failed!";
     return RET_ERROR;
   }
+  memset(quant_param_, 0, sizeof(MatmulQuantParameter));
   quant_param_->filter_scale_ = reinterpret_cast<float *>(malloc(init_size * sizeof(float)));
   if (quant_param_->filter_scale_ == nullptr) {
     return RET_ERROR;
@@ -319,6 +321,8 @@ int MatmulBaseInt8CPUKernel::Run() {
 
   int8_t *a_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
   int8_t *c_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(a_ptr);
+  CHECK_NULL_RETURN(c_ptr);
   int32_t tmp_weight_zp = filter_per_channel_ ? 1 : quant_param_->filter_zp_[0];
   for (int i = 0; i < param_->batch; i++) {
     auto current_src_a = a_ptr + i * param_->row_ * param_->deep_;

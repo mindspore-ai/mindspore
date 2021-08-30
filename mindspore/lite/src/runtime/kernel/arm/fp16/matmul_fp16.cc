@@ -29,6 +29,7 @@ void MatmulFP16CPUKernel::InitAShape() {
   if (a_shape.empty()) {
     return;
   }
+  MS_CHECK_TRUE_RET_VOID(a_shape.size() >= 2);
   int batch = 1;
   for (size_t i = 0; i < a_shape.size() - 2; ++i) {
     batch *= a_shape[i];
@@ -44,6 +45,7 @@ void MatmulFP16CPUKernel::InitBShape() {
   if (b_shape.empty()) {
     return;
   }
+  MS_CHECK_TRUE_RET_VOID(b_shape.size() >= 2);
   int batch = 1;
   for (size_t i = 0; i < b_shape.size() - 2; ++i) {
     batch *= b_shape[i];

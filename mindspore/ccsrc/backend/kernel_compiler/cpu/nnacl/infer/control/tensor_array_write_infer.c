@@ -20,14 +20,12 @@
 
 int TensorArrayWriteInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                                OpParameter *parameter) {
-#ifdef Debug
   // { handle, index, value, flow_in } -> empty
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 4, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
-
+  MS_CHECK_TRUE_RET(inputs_size >= 3, NNACL_ERR);
   TensorC *handle = (TensorC *)inputs[0];
   TensorC *value = (TensorC *)inputs[2];
 

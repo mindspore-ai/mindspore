@@ -20,13 +20,10 @@ using mindspore::schema::PrimitiveType_MatMul;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateMatMulParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_MatMul();
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(value != nullptr, nullptr);
 
   auto *param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (param == nullptr) {
@@ -34,12 +31,12 @@ OpParameter *PopulateMatMulParameter(const void *prim) {
     return nullptr;
   }
   memset(param, 0, sizeof(MatMulParameter));
-
   param->op_parameter_.type_ = primitive->value_type();
   param->b_transpose_ = value->transpose_b();
   param->a_transpose_ = value->transpose_a();
   param->has_bias_ = false;
   param->act_type_ = ActType_No;
+
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_MatMul, PopulateMatMulParameter, SCHEMA_CUR)
