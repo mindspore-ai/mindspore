@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,14 +63,19 @@ class DenseLayer(nn.Cell):
 
         self.activation = get_activation(activation)
         self.activation_flag = self.activation is not None
+        self.is_ascend = context.get_context("device_target") == "Ascend"
 
     def construct(self, x):
         """
         dense layer construct method
         """
-        x = self.cast(x, mstype.float16)
-        weight = self.cast(self.weight, mstype.float16)
-        bias = self.cast(self.bias, mstype.float16)
+        if self.is_ascend:
+            x = self.cast(x, mstype.float16)
+            weight = self.cast(self.weight, mstype.float16)
+            bias = self.cast(self.bias, mstype.float16)
+        else:
+            weight = self.weight
+            bias = self.bias
 
         output = self.matmul(x, weight)
         if self.has_bias:

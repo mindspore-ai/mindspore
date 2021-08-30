@@ -94,14 +94,20 @@ After installing MindSpore via the official website, you can start training and 
 #run data process
 bash scripts/run_download_dataset.sh
 
-# run training example
+# run training example on Ascend
 bash scripts/run_train.sh
+
+# run training example on GPU
+bash scripts/run_train_gpu.sh
 
 # run distributed training example
 bash scripts/run_train.sh rank_table.json
 
-# run evaluation example
+# run evaluation example on Ascend
 bash run_eval.sh
+
+# run evaluation example on GPU
+bash run_eval_gpu.sh
 ```
 
 If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
@@ -158,9 +164,11 @@ If you want to run in modelarts, please check the official documentation of [mod
     │   ├──ascend_distributed_launcher
     │       ├──__init__.py                      // init file
     │       ├──get_distribute_pretrain_cmd.py   // create distribute shell script
-    │   ├──run_train.sh                    // shell script for train
+    │   ├──run_train.sh                    // shell script for train on Ascend
     │   ├──run_distribute_train.sh         // shell script for distribute train
-    │   ├──run_eval.sh                     // shell script for evaluation
+    │   ├──run_eval.sh                     // shell script for evaluation on Ascend
+    │   ├──run_train_gpu.sh                // shell script for train on GPU
+    │   ├──run_eval_gpu.sh                 // shell script for evaluation on GPU
     │   ├──run_download_dataset.sh         // shell script for dataget and process
     │   ├──run_transfer_ckpt_to_air.sh     // shell script for transfer model style
     ├── src
@@ -204,8 +212,16 @@ Parameters for both training and evaluation can be set in config.py.
 
 ### Training
 
+- on Ascend
+
   ```python
   bash scripts/run_train.sh
+  ```
+
+- on GPU
+
+  ```python
+  bash scripts/run_train_gpu.sh
   ```
 
   The python command above will run in the background, you can view the results through the file `train.log`. After training, you'll get some checkpoint files under the script folder by default. The loss value will be achieved as follows:
@@ -238,6 +254,14 @@ Parameters for both training and evaluation can be set in config.py.
   ```python
   # grep "accuracy: " eval.log
   HR:0.6846,NDCG:0.410
+  ```
+
+- evaluation on ml-1m dataset when running on GPU
+
+  For details, see the above contents `evaluation on ml-1m dataset when running on Ascend`.
+
+  ```python
+  bash scripts/run_eval_gpu.sh
   ```
 
 ## Inference Process
@@ -277,19 +301,19 @@ Inference result is saved in current path, you can find result like this in acc.
 
 ### Evaluation Performance
 
-| Parameters                 | Ascend                                                       |
-| -------------------------- | ------------------------------------------------------------ |
-| Model Version              | NCF                                                 |
-| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8             |
-| uploaded Date              | 10/23/2020 (month/day/year)                                  |
-| MindSpore Version          | 1.0.0                                                |
-| Dataset                    | ml-1m                                                        |
-| Training Parameters        | epoch=25, steps=19418, batch_size = 256, lr=0.00382059       |
-| Optimizer                  | GradOperation                                                |
-| Loss Function              | Softmax Cross Entropy                                        |
-| outputs                    | probability                                                  |
-| Speed                      | 1pc: 0.575 ms/step                                          |
-| Total time                 | 1pc: 5 mins                       |
+| Parameters                 | Ascend                                                       | GPU                                                       |
+| -------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Model Version              | NCF                                                 | NCF                                                 |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8             | NV SMX2 V100-32G             |
+| uploaded Date              | 10/23/2020 (month/day/year)                                  | 08/28/2021 (month/day/year)                                  |
+| MindSpore Version          | 1.0.0                                                | 1.4.0                                                |
+| Dataset                    | ml-1m                                                        | ml-1m                                                        |
+| Training Parameters        | epoch=25, steps=19418, batch_size = 256, lr=0.00382059       | epoch=25, steps=19418, batch_size = 256, lr=0.00382059       |
+| Optimizer                  | GradOperation                                                | GradOperation                                                |
+| Loss Function              | Softmax Cross Entropy                                        | Softmax Cross Entropy                                        |
+| outputs                    | probability                                                  | probability                                                  |
+| Speed                      | 1pc: 0.575 ms/step                                          | 1pc: 2.5 ms/step                                          |
+| Total time                 | 1pc: 5 mins                       | 1pc: 25 mins                       |
 
 ### Inference Performance
 
