@@ -107,6 +107,7 @@ int DWConvInt8Coder::SetParameters() {
   output_ch_ = output_tensor_->Channel();
 
   // depth_multiplier
+  MS_CHECK_TRUE(input_tensor_->Channel() > 0, "input_tensor_->Channel() should larger than 0.");
   ch_mult_ = output_tensor_->Channel() / input_tensor_->Channel();
 
   kernel_x_ = filter_tensor_->Width();
@@ -118,7 +119,9 @@ int DWConvInt8Coder::SetParameters() {
   stride_y_ = conv_param_->stride_h_;
   stride_x_ = conv_param_->stride_w_;
 
+  MS_CHECK_TRUE(!input_tensor_->quant_params().empty(), "input quant params shouldn't be empty");
   LiteQuantParam input_quant_arg = input_tensor_->quant_params().at(0);
+  MS_CHECK_TRUE(!output_tensor_->quant_params().empty(), "output quant params shouldn't be empty");
   LiteQuantParam output_quant_arg = output_tensor_->quant_params().at(0);
 
   output_x_ = output_tensor_->Width();

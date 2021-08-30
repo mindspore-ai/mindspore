@@ -39,9 +39,9 @@ STATUS ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaG
     float max_max = FLT_MIN;
     bool narrow_range = false;
     int num_bits = -1;
-    for (size_t i = 0; i < node.inputIndex.size(); i++) {
-      MS_ASSERT(graph->allTensors.size() > i);
-      auto &in_tensor = graph->allTensors.at(i);
+    for (size_t index : node.inputIndex) {
+      MS_ASSERT(graph->allTensors.size() > index);
+      auto &in_tensor = graph->allTensors.at(index);
       MS_ASSERT(in_tensor != nullptr);
       auto in_quant_param = GetTensorQuantParam(in_tensor);
       if (in_quant_param == nullptr || !in_quant_param->inited) {

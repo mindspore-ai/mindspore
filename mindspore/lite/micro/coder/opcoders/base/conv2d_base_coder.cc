@@ -263,6 +263,7 @@ int Conv2DBaseCoder::SetQuantMultiplier() {
   for (int i = 0; i < weight_arg_num; ++i) {
     const auto in_scale =
       static_cast<double>(conv_quant_arg_->input_quant_args_[0].scale_ * conv_quant_arg_->filter_quant_args_[i].scale_);
+    MS_CHECK_TRUE(conv_quant_arg_->output_quant_args_[0].scale_ != 0, "output scale can't be 0.");
     double real_multiplier = in_scale / static_cast<double>(conv_quant_arg_->output_quant_args_[0].scale_);
     conv_quant_arg_->real_multiplier_[i] = real_multiplier;
     if (conv_quant_arg_->quant_multiplier_mode_ == Method_SinglePrecision) {

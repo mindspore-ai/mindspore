@@ -101,6 +101,7 @@
 #define MS_CHECK_GT(value1, value2, errcode)
 #define MS_CHECK_LE(value1, value2, errcode)
 #define MS_CHECK_GE(value1, value2, errcode)
+#define MS_CHECK_PTR_IF_NULL(ptr)
 
 #define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode)
 #define MS_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode)
@@ -173,6 +174,14 @@
       MS_LOG(ERROR) << "check ge fail, value1: " << value1 << " value2: " << value2; \
       return errcode;                                                                \
     }                                                                                \
+  } while (0)
+
+#define MS_CHECK_PTR_IF_NULL(ptr)                                \
+  do {                                                           \
+    if ((ptr) == nullptr) {                                      \
+      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
+      return;                                                    \
+    }                                                            \
   } while (0)
 
 #define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode) \

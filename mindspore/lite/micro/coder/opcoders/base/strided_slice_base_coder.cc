@@ -17,6 +17,7 @@
 #include "coder/opcoders/base/strided_slice_base_coder.h"
 #include <math.h>
 #include <string>
+#include "mindspore/lite/src/common/log_util.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/parallel.h"
@@ -59,9 +60,10 @@ bool StridedSliceBaseCoder::MatchFastPattern() {
   return false;
 }
 
-void StridedSliceBaseCoder::InitFastRunParam() {
+int StridedSliceBaseCoder::InitFastRunParam() {
   std::vector<int> in_shape = input_tensor_->shape();
   std::vector<int> out_shape = output_tensor_->shape();
+  MS_CHECK_LT(static_cast<unsigned int>(split_axis_), in_shape.size(), RET_ERROR);
   // reset && cal inner, outer
   for (int i = 0; i < split_axis_; ++i) {
     outer_ *= in_shape[i];
@@ -78,12 +80,13 @@ void StridedSliceBaseCoder::InitFastRunParam() {
     parallel_on_outer_ = true;
     cal_num_per_thread_ = UP_DIV(outer_, thread_num);
   }
+  return RET_OK;
 }
 
 int StridedSliceBaseCoder::ReSize() {
   fast_run_ = MatchFastPattern();
   if (fast_run_) {
-    InitFastRunParam();
+    return InitFastRunParam();
   }
   return RET_OK;
 }

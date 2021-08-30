@@ -30,6 +30,7 @@ void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocTyp
   MS_CHECK_TRUE_RET_NULL(item != size_map.end(), "unsupported type idnex");
 
   size_t type_size = item->second;
+  MS_CHECK_TRUE_RET_NULL(type_size > 0, "type size should");
   std::vector<int> shape = {1, static_cast<int>(size / type_size)};
   auto cate = type == kOfflinePackWeight ? Tensor::Category::CONST_TENSOR : Tensor::Category::VAR;
   Tensor *weight = new (std::nothrow) lite::Tensor(type_id, shape, mindspore::NHWC, cate);

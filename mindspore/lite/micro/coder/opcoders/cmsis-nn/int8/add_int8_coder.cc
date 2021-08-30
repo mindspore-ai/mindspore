@@ -27,6 +27,7 @@ using mindspore::schema::PrimitiveType_AddFusion;
 
 namespace mindspore::lite::micro::cmsis {
 int AddInt8Coder::Prepare(CoderContext *const context) {
+  MS_CHECK_GE(input_tensors_.size(), 2, RET_ERROR);
   input1_ = input_tensors_.at(0);
   input2 = input_tensors_.at(1);
 
@@ -45,6 +46,8 @@ int AddInt8Coder::Prepare(CoderContext *const context) {
   const double output_scale = output_tensor_->quant_params().at(0).scale;
   left_shift_ = 20;
   const double twice_max_input_scale = 2 * std::max(input1_scale, input2_scale);
+  MS_CHECK_TRUE(twice_max_input_scale > 0, "twice_max_input_scale should larger than 0.");
+  MS_CHECK_TRUE(output_scale > 0, "output_scale should larger than 0.");
   const double real_input1_multiplier = static_cast<double>(input1_scale) / twice_max_input_scale;
   const double real_input2_multiplier = static_cast<double>(input2_scale) / twice_max_input_scale;
   const double real_output_multiplier =

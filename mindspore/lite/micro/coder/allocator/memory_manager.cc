@@ -16,6 +16,7 @@
 
 #include "coder/allocator/memory_manager.h"
 #include <vector>
+#include "mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/op_base.h"
 #include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro {
@@ -97,6 +98,7 @@ void MemoryManager::AssignNewMembuf(Tensor *key, size_t size) {
   MS_LOG(DEBUG) << "assign new membuf: " << size;
   size_t offset = GetAllocatedSize();
   auto membuf = std::make_shared<Membuf>(key, kReused, size, offset);
+  MS_CHECK_PTR_IF_NULL(membuf);
   membuf_list_.push_back(membuf);
   variables_offset_.insert(std::make_pair(key, offset));
 }
@@ -118,6 +120,7 @@ void MemoryManager::UpdataMembufInfo(const MembufPtr &membuf, Tensor *key) {
 void MemoryManager::SplitMembuf(size_t index, size_t size) {
   if (index >= membuf_list_.size()) {
     MS_LOG(ERROR) << "Index out of vector range.";
+    return;
   }
   auto membuf = membuf_list_[index];
   size_t bias = membuf->size_ - size;
@@ -126,7 +129,8 @@ void MemoryManager::SplitMembuf(size_t index, size_t size) {
   }
   membuf->size_ = size;
   auto new_membuf = std::make_shared<Membuf>(kUnused, bias, membuf->offset_ + membuf->size_);
-  (void)membuf_list_.insert(membuf_list_.begin() + index + 1, new_membuf);
+  MS_CHECK_PTR_IF_NULL(new_membuf);
+  membuf_list_.insert(membuf_list_.begin() + index + 1, new_membuf);
 }
 
 void MemoryManager::MergeMembuf() {
@@ -144,8 +148,7 @@ void MemoryManager::MergeMembuf() {
         temp.emplace_back(membuf);
         is_continue = true;
       } else {
-        auto back = temp.back();
-        back->size_ += membuf->size_;
+        temp[temp.size() - 1]->size_ = temp[temp.size() - 1]->size_ + membuf->size_;
       }
     }
   }
