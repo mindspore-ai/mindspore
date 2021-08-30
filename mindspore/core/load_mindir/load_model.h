@@ -30,6 +30,7 @@ std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(const std::vector<std::strin
                                                     const unsigned char *dec_key = nullptr, const size_t key_len = 0,
                                                     const std::string &dec_mode = std::string("AES-GCM"),
                                                     bool inc_load = true);
+std::string LoadPreprocess(const std::string &file_name);
 std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file);
 std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite = false);
 }  // namespace mindspore

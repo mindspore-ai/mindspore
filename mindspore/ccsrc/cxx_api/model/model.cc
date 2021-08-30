@@ -94,6 +94,15 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
   return impl_->Predict(inputs, outputs);
 }
 
+Status Model::Predict(const std::vector<char> &input, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
+                      const MSKernelCallBack &after) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Failed because this model has not been built.";
+    return kMCFailed;
+  }
+  return impl_->Predict(CharToString(input), outputs);
+}
+
 std::vector<MSTensor> Model::GetInputs() {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Failed because this model has not been built.";

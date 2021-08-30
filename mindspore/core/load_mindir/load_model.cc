@@ -169,6 +169,33 @@ bool ParseGraphProto(mind_ir::GraphProto *graph, const std::string &path, const 
   return true;
 }
 
+std::string LoadPreprocess(const std::string &file_name) {
+  if (file_name.length() > PATH_MAX) {
+    MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
+    return nullptr;
+  }
+  const char *file_path = file_name.c_str();
+  char abs_path_buff[PATH_MAX];
+
+#ifdef _WIN32
+  _fullpath(abs_path_buff, file_path, PATH_MAX);
+#else
+  if (!realpath(file_path, abs_path_buff)) {
+    MS_LOG(ERROR) << "Load MindIR get absolute path failed";
+  }
+#endif
+
+  // Read graph
+  mind_ir::ModelProto origin_model;
+  std::fstream mindir_stream(std::string(std::string(abs_path_buff)), std::ios::in | std::ios::binary);
+  if (!mindir_stream || !origin_model.ParseFromIstream(&mindir_stream)) {
+    MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file.";
+    return std::string();
+  }
+
+  return origin_model.preprocessor();
+}
+
 std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(std::vector<std::string> file_names, bool is_lite,
                                                     const unsigned char *dec_key, const size_t key_len,
                                                     const std::string &dec_mode, bool inc_load) {

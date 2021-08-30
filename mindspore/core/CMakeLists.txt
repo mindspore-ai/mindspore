@@ -1,6 +1,8 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 add_subdirectory(gvar)
 
 if("${ENABLE_HIDDEN}" STREQUAL "OFF" AND NOT MSVC)

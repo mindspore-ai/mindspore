@@ -43,7 +43,8 @@ HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${FLATBUFFERS}
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema/inner
--I${MINDSPORE_HOME}/mindspore/ccsrc/backend/kernel_compiler/cpu"
+-I${MINDSPORE_HOME}/mindspore/ccsrc/backend/kernel_compiler/cpu
+-I${MINDSPORE_HOME}/mindspore/ccsrc/minddata/dataset"
 
 REMOVE_LISTS_STR=""
 getDeep() {
