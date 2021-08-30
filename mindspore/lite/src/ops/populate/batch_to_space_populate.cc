@@ -21,13 +21,10 @@ using mindspore::schema::PrimitiveType_BatchToSpaceND;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateBatchToSpaceParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_BatchToSpace();
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(value != nullptr, nullptr);
 
   auto *param = reinterpret_cast<BatchToSpaceParameter *>(malloc(sizeof(BatchToSpaceParameter)));
   if (param == nullptr) {

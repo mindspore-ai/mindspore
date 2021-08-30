@@ -20,13 +20,10 @@ using mindspore::schema::PrimitiveType_CropAndResize;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateCropAndResizeParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  auto value = primitive->value_as_CropAndResize();
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
-    return nullptr;
-  }
+  auto attr = primitive->value_as_CropAndResize();
+  MS_CHECK_TRUE_RET(attr != nullptr, nullptr);
 
   auto *param = reinterpret_cast<CropAndResizeParameter *>(malloc(sizeof(CropAndResizeParameter)));
   if (param == nullptr) {
@@ -36,8 +33,8 @@ OpParameter *PopulateCropAndResizeParameter(const void *prim) {
   memset(param, 0, sizeof(CropAndResizeParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
-  param->method_ = static_cast<int>(value->method());
-  param->extrapolation_value_ = value->extrapolation_value();
+  param->method_ = static_cast<int>(attr->method());
+  param->extrapolation_value_ = attr->extrapolation_value();
   return reinterpret_cast<OpParameter *>(param);
 }
 

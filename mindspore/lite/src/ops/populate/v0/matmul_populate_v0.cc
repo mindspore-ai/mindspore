@@ -22,13 +22,11 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateMatMulParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  auto matmul_prim = primitive->value_as_MatMul();
-  if (matmul_prim == nullptr) {
-    MS_LOG(ERROR) << "matmul_prim is nullptr";
-    return nullptr;
-  }
+  auto value = primitive->value_as_MatMul();
+  MS_CHECK_TRUE_RET(value != nullptr, nullptr);
+
   auto *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param == nullptr) {
     MS_LOG(ERROR) << "malloc MatMulParameter failed.";
@@ -36,8 +34,8 @@ OpParameter *PopulateMatMulParameter(const void *prim) {
   }
   memset(matmul_param, 0, sizeof(MatMulParameter));
   matmul_param->op_parameter_.type_ = schema::PrimitiveType_MatMul;
-  matmul_param->b_transpose_ = matmul_prim->transposeB();
-  matmul_param->a_transpose_ = matmul_prim->transposeA();
+  matmul_param->b_transpose_ = value->transposeB();
+  matmul_param->a_transpose_ = value->transposeA();
   matmul_param->has_bias_ = false;
   matmul_param->act_type_ = ActType_No;
 

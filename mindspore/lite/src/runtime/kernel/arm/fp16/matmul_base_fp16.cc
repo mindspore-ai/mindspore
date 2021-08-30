@@ -26,6 +26,7 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int MatmulBaseFP16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto op = reinterpret_cast<MatmulBaseFP16CPUKernel *>(cdata);
   auto error_code = op->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -65,6 +66,8 @@ void MatmulBaseFP16CPUKernel::FreeResizeBufB() {
 }
 
 void MatmulBaseFP16CPUKernel::InitParameter() {
+  NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[0]);
+  NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[1]);
   params_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
   params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
 }
@@ -79,6 +82,7 @@ int MatmulBaseFP16CPUKernel::InitBias() {
     }
     if (in_tensors_.size() == 3) {
       auto bias_tensor = in_tensors_[2];
+      CHECK_NULL_RETURN(bias_tensor);
       memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(float16_t));
     } else {
       memset(bias_ptr_, 0, max_bias_data * sizeof(float16_t));
@@ -156,6 +160,7 @@ int MatmulBaseFP16CPUKernel::InitBufferB() {
 }
 
 void MatmulBaseFP16CPUKernel::InitMatrixA(const void *src_ptr) {
+  NNACL_CHECK_NULL_RETURN_VOID(src_ptr);
   auto src_data_type = in_tensors_[0]->data_type();
 
   if (vec_matmul_) {
@@ -189,6 +194,7 @@ void MatmulBaseFP16CPUKernel::InitMatrixA(const void *src_ptr) {
 }
 
 void MatmulBaseFP16CPUKernel::InitMatrixB(const void *src_ptr, TypeId src_data_type) {
+  NNACL_CHECK_NULL_RETURN_VOID(src_ptr);
   const int8_t *int8_src = reinterpret_cast<const int8_t *>(src_ptr);
 
   if (vec_matmul_) {
@@ -306,22 +312,21 @@ int MatmulBaseFP16CPUKernel::RunImpl(int task_id) {
 }
 
 int MatmulBaseFP16CPUKernel::Run() {
-  auto c_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto c_ptr = reinterpret_cast<float16_t *>(out_tensors_[0]->data_c());
+  CHECK_NULL_RETURN(c_ptr);
 
   if ((params_->a_const_ == false) || IsRepack()) {
     if (RET_OK != InitBufferA()) {
       return RET_ERROR;
     }
-    MS_ASSERT(in_tensors_.at(0)->data_c() != nullptr);
-    InitMatrixA(in_tensors_.at(0)->data_c());
+    InitMatrixA(in_tensors_[0]->data_c());
   }
   if ((params_->b_const_ == false) || IsRepack()) {
     if (RET_OK != InitBufferB()) {
       FreeResizeBufA();
       return RET_ERROR;
     }
-    MS_ASSERT(in_tensors_.at(1)->data_c() != nullptr);
-    InitMatrixB(in_tensors_.at(1)->data_c(), in_tensors_.at(1)->data_type());
+    InitMatrixB(in_tensors_[1]->data_c(), in_tensors_[1]->data_type());
     InitBias();
   }
 

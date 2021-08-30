@@ -26,8 +26,9 @@ using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
 void MatmulCPUKernel::InitShapeA() {
-  auto a_shape = in_tensors_.at(0)->shape();
+  auto a_shape = in_tensors_[kInputIndex]->shape();
   int batch = 1;
+  MS_CHECK_TRUE_RET_VOID(a_shape.size() >= 2);
   for (size_t i = 0; i < a_shape.size() - 2; ++i) {
     batch *= a_shape[i];
   }
@@ -37,8 +38,9 @@ void MatmulCPUKernel::InitShapeA() {
 }
 
 void MatmulCPUKernel::InitShapeB() {
-  auto b_shape = in_tensors_.at(1)->shape();
+  auto b_shape = in_tensors_[kWeightIndex]->shape();
   int batch = 1;
+  MS_CHECK_TRUE_RET_VOID(b_shape.size() >= 2);
   for (size_t i = 0; i < b_shape.size() - 2; ++i) {
     batch *= b_shape[i];
   }

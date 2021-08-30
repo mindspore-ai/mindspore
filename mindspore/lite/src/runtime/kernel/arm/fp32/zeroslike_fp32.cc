@@ -34,8 +34,8 @@ int ZerosLikeCPUKernel::Init() {
 }
 
 int ZerosLikeCPUKernel::Run() {
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  ApproximateZerosLike(output_data, in_tensors_.at(0)->ElementsNum(), sizeof(float));
+  auto output_data = static_cast<float *>(out_tensors_[0]->data_c());
+  ApproximateZerosLike(output_data, in_tensors_[0]->ElementsNum(), sizeof(float));
   return RET_OK;
 }
 

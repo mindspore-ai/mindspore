@@ -40,8 +40,10 @@ int CropAndResizeCPUKernel::Init() {
 }
 
 int CropAndResizeCPUKernel::ReSize() {
-  new_height_ = out_tensors_.at(0)->shape()[1];
-  new_width_ = out_tensors_.at(0)->shape()[2];
+  const auto &shape = out_tensors_[0]->shape();
+  CHECK_LESS_RETURN(shape.size(), DIMENSION_3D);
+  new_height_ = shape[1];
+  new_width_ = shape[2];
   return RET_OK;
 }
 
@@ -98,9 +100,17 @@ void CropAndResizeCPUKernel::FreeTmpBuffer() {
   ms_context_->allocator->Free(x_rights_);
   ms_context_->allocator->Free(x_left_weights_);
   ms_context_->allocator->Free(line_buffer_);
+  y_bottoms_ = nullptr;
+  y_tops_ = nullptr;
+  y_bottom_weights_ = nullptr;
+  x_lefts_ = nullptr;
+  x_rights_ = nullptr;
+  x_left_weights_ = nullptr;
+  line_buffer_ = nullptr;
 }
 
 int CropAndResizeImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto resize = reinterpret_cast<CropAndResizeCPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -113,29 +123,21 @@ int CropAndResizeImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale
 int CropAndResizeCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto input_data = reinterpret_cast<float *>(input->data_c());
-  if (input_data == nullptr) {
-    return RET_NULL_PTR;
-  }
+  CHECK_NULL_RETURN(input_data);
   auto boxes = reinterpret_cast<float *>(in_tensors_.at(kBoxIndex)->data_c());
-  if (boxes == nullptr) {
-    return RET_NULL_PTR;
-  }
+  CHECK_NULL_RETURN(boxes);
   auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(kBoxIdIndex)->data_c());
-  if (box_idx == nullptr) {
-    return RET_NULL_PTR;
-  }
+  CHECK_NULL_RETURN(box_idx);
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  if (output_data == nullptr) {
-    return RET_NULL_PTR;
-  }
-  auto input_shape = input->shape();
+  CHECK_NULL_RETURN(output_data);
   int unit = UP_DIV(new_height_, op_parameter_->thread_num_);
   int h_begin = unit * task_id;
   int h_end = MSMIN(h_begin + unit, new_height_);
   if (h_end <= h_begin) {
     return RET_OK;
   }
-  int c = in_tensors_.at(0)->shape().at(3);
+  const auto &input_shape = input->shape();
+  int c = input_shape[3];
   float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
   float *line1 = line0 + new_width_ * c;
   auto ret = CropAndResizeBilinear(input_data, output_data, box_idx, boxes, param_, input_shape.data(),
@@ -155,8 +157,11 @@ int CropAndResizeCPUKernel::Run() {
   auto input_shape = input->shape();
   auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
-  ret = PrepareCropAndResizeBilinear(input_shape.data(), boxes, box_idx, out_tensors_.at(0)->shape().data(), y_bottoms_,
-                                     y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
+  CHECK_LESS_RETURN(input_shape.size(), DIMENSION_4D);
+  const auto &output_shape = out_tensors_.at(0)->shape();
+  CHECK_LESS_RETURN(output_shape.size(), DIMENSION_4D);
+  ret = PrepareCropAndResizeBilinear(input_shape.data(), boxes, box_idx, output_shape.data(), y_bottoms_, y_tops_,
+                                     x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PrepareCropAndResizeBilinear, error_code[" << ret << "]";
     FreeTmpBuffer();

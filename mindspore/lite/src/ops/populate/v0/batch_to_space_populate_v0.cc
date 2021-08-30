@@ -22,13 +22,26 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateBatchToSpaceParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  auto batch_to_space_prim = primitive->value_as_BatchToSpace();
-  if (batch_to_space_prim == nullptr) {
-    MS_LOG(ERROR) << "batch_to_space_prim is nullptr";
+
+  auto attr = primitive->value_as_BatchToSpace();
+  MS_CHECK_TRUE_RET(attr != nullptr, nullptr);
+
+  auto block_shape = attr->blockShape();
+  MS_CHECK_TRUE_RET(block_shape != nullptr, nullptr);
+  if (block_shape->size() != BATCH_TO_SPACE_BLOCK_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "batch_to_space blockShape size should be " << BATCH_TO_SPACE_BLOCK_SHAPE_SIZE;
     return nullptr;
   }
+
+  auto crops = attr->crops();
+  MS_CHECK_TRUE_RET(crops != nullptr, nullptr);
+  if (crops->size() != COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "batch_to_space crops size should be " << COMM_SHAPE_SIZE;
+    return nullptr;
+  }
+
   auto *batch_space_param = reinterpret_cast<BatchToSpaceParameter *>(malloc(sizeof(BatchToSpaceParameter)));
   if (batch_space_param == nullptr) {
     MS_LOG(ERROR) << "malloc BatchToSpaceParameter failed.";
@@ -39,30 +52,6 @@ OpParameter *PopulateBatchToSpaceParameter(const void *prim) {
     batch_space_param->op_parameter_.type_ = schema::PrimitiveType_BatchToSpace;
   } else {
     batch_space_param->op_parameter_.type_ = schema::PrimitiveType_BatchToSpaceND;
-  }
-
-  auto block_shape = batch_to_space_prim->blockShape();
-  if (block_shape == nullptr) {
-    MS_LOG(ERROR) << "block_shape is nullptr";
-    free(batch_space_param);
-    return nullptr;
-  }
-  if (block_shape->size() != BATCH_TO_SPACE_BLOCK_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "batch_to_space blockShape size should be " << BATCH_TO_SPACE_BLOCK_SHAPE_SIZE;
-    free(batch_space_param);
-    return nullptr;
-  }
-
-  auto crops = batch_to_space_prim->crops();
-  if (crops == nullptr) {
-    MS_LOG(ERROR) << "crops is nullptr";
-    free(batch_space_param);
-    return nullptr;
-  }
-  if (crops->size() != COMM_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "batch_to_space crops size should be " << COMM_SHAPE_SIZE;
-    free(batch_space_param);
-    return nullptr;
   }
 
   for (int i = 0; i < BATCH_TO_SPACE_BLOCK_SHAPE_SIZE; ++i) {
