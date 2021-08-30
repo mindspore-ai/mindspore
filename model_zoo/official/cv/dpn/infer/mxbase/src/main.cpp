@@ -23,7 +23,7 @@ namespace {
     const uint32_t BATCH_SIZE = 32;
 }  // namespace
 
-APP_ERROR ScanImages(const std::string &path, const std::vector<std::string> &imgFiles) {
+APP_ERROR ScanImages(const std::string &path, std::vector<std::string> &imgFiles) {
     DIR *dirPtr = opendir(path.c_str());
     if (dirPtr == nullptr) {
         LogError << "opendir failed. dir:" << path;
