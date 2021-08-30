@@ -798,8 +798,9 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
     }
   }
 
-  std::call_once(registered_,
-                 [this, &task_manager]() { task_manager.RegisterExecuteFunc([this]() { ExecuteAllTaskInQueue(); }); });
+  if (!task_manager.inited()) {
+    task_manager.Init([this]() { ExecuteAllTaskInQueue(); });
+  }
 
   if (task_manager.QueueFull()) {
     task_manager.ExecuteRemainingTasks();
@@ -1747,10 +1748,10 @@ void AscendSession::ExecuteAllTaskInQueue() {
     ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
     MS_LOG(DEBUG) << "End";
   } catch (const std::exception &ex) {
-    task_manager.ClearAllResources();
+    task_manager.Reset();
     throw(std::runtime_error(ex.what()));
   } catch (...) {
-    task_manager.ClearAllResources();
+    task_manager.Reset();
     std::string exName(abi::__cxa_current_exception_type()->name());
     MS_LOG(EXCEPTION) << "Error occurred when execute task in queue. Exception name: " << exName;
   }
