@@ -36,6 +36,11 @@ class Task {
   virtual void *Args() { return nullptr; }
 
   virtual std::string task_name() const { return ""; }
+
+  void set_model_handle(rtModel_t model_handle) { model_handle_ = model_handle; }
+
+ protected:
+  rtModel_t model_handle_{nullptr};
 };
 
 template <class T>

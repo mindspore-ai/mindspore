@@ -189,6 +189,7 @@ void RuntimeModel::DistributeTask() {
   MS_LOG(INFO) << "DistributeTask start.";
   for (auto &task : task_list_) {
     MS_EXCEPTION_IF_NULL(task);
+    task->set_model_handle(rt_model_handle_);
     task->Distribute();
 
     uint32_t task_id = 0;
