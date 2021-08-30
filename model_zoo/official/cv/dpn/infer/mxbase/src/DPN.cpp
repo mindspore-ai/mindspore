@@ -16,6 +16,9 @@
 
 #include "DPN.h"
 #include <iostream>
+#include <vector>
+#include <string>
+#include <memory>
 #include "MxBase/DeviceManager/DeviceManager.h"
 #include <opencv2/dnn.hpp>
 #include "MxBase/Log/Log.h"
@@ -30,8 +33,7 @@ namespace {
     const uint32_t BATCH_SIZE = 32;
 }  // namespace
 
-APP_ERROR DPN::Init(const InitParam &initParam)
-{
+APP_ERROR DPN::Init(const InitParam &initParam) {
     deviceId_ = initParam.deviceId;
     APP_ERROR ret = MxBase::DeviceManager::GetInstance()->InitDevices();
     if (ret != APP_ERR_OK) {
@@ -78,8 +80,7 @@ APP_ERROR DPN::Init(const InitParam &initParam)
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::DeInit()
-{
+APP_ERROR DPN::DeInit() {
     dvppWrapper_->DeInit();
     model_->DeInit();
     postprocessor_->DeInit();
@@ -87,14 +88,12 @@ APP_ERROR DPN::DeInit()
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::ReadImage(const std::string &imgPath, cv::Mat &imageMat)
-{
+APP_ERROR DPN::ReadImage(const std::string &imgPath, cv::Mat &imageMat) {
     imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat)
-{
+APP_ERROR DPN::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat) {
     static constexpr uint32_t resizeHeight = 224;
     static constexpr uint32_t resizeWidth = 224;
 
@@ -102,15 +101,14 @@ APP_ERROR DPN::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat)
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase)
-{
+APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase) {
     uint32_t dataSize = 1;
     for (size_t i = 0; i < modelDesc_.inputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
         for (size_t j = 0; j < modelDesc_.inputTensors[i].tensorDims.size(); ++j) {
             shape.push_back((uint32_t)modelDesc_.inputTensors[i].tensorDims[j]);
         }
-        for(uint32_t i = 0; i < shape.size(); ++i){
+        for (uint32_t i = 0; i < shape.size(); ++i) {
             dataSize *= shape[i];
         } 
     }
@@ -119,11 +117,11 @@ APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &te
     size_t N = 32, H = 224, W = 224, C = 3;
     unsigned char *mat_data = new unsigned char[dataSize];
     uint32_t idx = 0;
-    for(size_t n = 0; n < N; n++){
+    for (size_t n = 0; n < N; n++) {
         int id = 0;
-        for(size_t h = 0; h < H; h++){
-            for(size_t w = 0; w < W; w++){
-                for(size_t c = 0; c < C; c++){
+        for (size_t h = 0; h < H; h++) {
+            for (size_t w = 0; w < W; w++) {
+                for (size_t c = 0; c < C; c++) {
                     id = n*(H*W*C) + c*(H*W) + h*W + w;
                     unsigned char *tmp = (unsigned char *)(imageMat.data + id);
                     mat_data[idx++] = *tmp;
@@ -145,8 +143,7 @@ APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &te
 }
 
 APP_ERROR DPN::Inference(const std::vector<MxBase::TensorBase> &inputs,
-                                      std::vector<MxBase::TensorBase> &outputs)
-{
+                                      std::vector<MxBase::TensorBase> &outputs) {
     auto dtypes = model_->GetOutputDataType();
     for (size_t i = 0; i < modelDesc_.outputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
@@ -177,8 +174,7 @@ APP_ERROR DPN::Inference(const std::vector<MxBase::TensorBase> &inputs,
 }
 
 APP_ERROR DPN::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
-                                        std::vector<std::vector<MxBase::ClassInfo>> &clsInfos)
-{
+                                        std::vector<std::vector<MxBase::ClassInfo>> &clsInfos) {
     APP_ERROR ret = postprocessor_->Process(inputs, clsInfos);
     if (ret != APP_ERR_OK) {
         LogError << "Process failed, ret=" << ret << ".";
@@ -188,8 +184,7 @@ APP_ERROR DPN::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
 }
 
 APP_ERROR DPN::SaveResult(const std::vector<std::string> &batchImgPaths, 
-                            const std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos)
-{
+                            const std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos) {
     uint32_t batchIndex = 0;
     for(auto &imgPath: batchImgPaths){
         std::string fileName = imgPath.substr(imgPath.find_last_of("/") + 1);
@@ -214,8 +209,7 @@ APP_ERROR DPN::SaveResult(const std::vector<std::string> &batchImgPaths,
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths)
-{
+APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths) {
     APP_ERROR ret = APP_ERR_OK;
     std::vector<MxBase::TensorBase> inputs = {};
     std::vector<MxBase::TensorBase> outputs = {};
@@ -224,7 +218,7 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths)
     imgPath = batchImgPaths[0];
     std::vector<std::string> repeat_batchImgPaths;
     
-    for(auto &imgPath: batchImgPaths){
+    for (auto &imgPath: batchImgPaths) {
         cv::Mat imageMat;
         ret = ReadImage(imgPath, imageMat);
         if (ret != APP_ERR_OK) {
@@ -248,7 +242,8 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths)
     auto startTime = std::chrono::high_resolution_clock::now();
     ret = Inference(inputs, outputs);
     auto endTime = std::chrono::high_resolution_clock::now();
-    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();// save time
+    // save time
+    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();  
     inferCostTimeMilliSec += costMs;
     if (ret != APP_ERR_OK) {
         LogError << "Inference failed, ret=" << ret << ".";
