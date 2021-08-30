@@ -18,20 +18,23 @@
 #include <climits>
 #include <cstdlib>
 #include <string>
-#include <algorithm>
 #include <fstream>
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include "ir/dtype/type_id.h"
 #include "common/file_utils.h"
+#include "tools/common/string_util.h"
 #include "tools/converter/converter_context.h"
+#include "tools/converter/config_parser/config_file_parser.h"
+#include "tools/converter/config_parser/preprocess_parser.h"
+#include "tools/converter/config_parser/quant_param_parser.h"
 
 namespace mindspore {
 namespace converter {
 using mindspore::lite::RET_INPUT_PARAM_INVALID;
 using mindspore::lite::RET_OK;
 namespace {
-constexpr int kBase = 10;
 constexpr int kQuantBitNumInt16 = 16;
 constexpr int kPathLengthUpperLimit = 1024;
 }  // namespace
@@ -49,10 +52,6 @@ Flags::Flags() {
           "Data type of output and output tensors, default is same with the type defined in model. FLOAT | INT8 | "
           "UINT8 | DEFAULT",
           "DEFAULT");
-  AddFlag(&Flags::quantTypeStr, "quantType", "Quantization Type. PostTraining | WeightQuant", "");
-  AddFlag(&Flags::bitNumIn, "bitNum", "Weight quantization bitNum", "8");
-  AddFlag(&Flags::quantWeightSizeStr, "quantWeightSize", "Weight quantization size threshold", "0");
-  AddFlag(&Flags::quantWeightChannelStr, "quantWeightChannel", "Channel threshold for weight quantization", "16");
   AddFlag(&Flags::configFile, "configFile",
           "Configuration for post-training, offline split op to parallel,"
           "disable op fusion ability and set plugin so path",
@@ -135,64 +134,6 @@ int Flags::InitFmk() {
   return RET_OK;
 }
 
-bool Flags::IsValidNum(const std::string &str, int *num) {
-  char *ptr = nullptr;
-  *num = strtol(str.c_str(), &ptr, kBase);
-  return ptr == (str.c_str() + str.size());
-}
-
-int Flags::QuantParamInputCheck() {
-  if (!Flags::IsValidNum(this->quantWeightChannelStr, &this->quantWeightChannel)) {
-    std::cerr << "quantWeightChannel should be a valid number." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  if (this->quantWeightChannel < 0) {
-    std::cerr << "quantWeightChannel should be greater than or equal to zero." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  if (!Flags::IsValidNum(this->quantWeightSizeStr, &this->quantWeightSize)) {
-    std::cerr << "quantWeightSize should be a valid number." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  if (this->quantWeightSize < 0) {
-    std::cerr << "quantWeightSize should be greater than or equal to zero." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  if (!Flags::IsValidNum(this->bitNumIn, &this->bitNum)) {
-    std::cerr << "bitNum should be a valid number." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  if (this->quantType == schema::QuantType_WeightQuant) {
-    if (this->bitNum < 0 || this->bitNum > kQuantBitNumInt16) {
-      std::cerr << "bitNum should be greater than zero and less than 16 currently." << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
-  } else {
-    if (this->bitNum <= 0 || this->bitNum > kQuantBitNumInt16) {
-      std::cerr << "bitNum should be greater or equal to zero and less than 16 currently." << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
-  }
-
-  return RET_OK;
-}
-
-int Flags::InitQuantParam() {
-  if (this->quantTypeStr == "WeightQuant") {
-    this->quantType = schema::QuantType_WeightQuant;
-  } else if (this->quantTypeStr == "PostTraining") {
-    this->quantType = schema::QuantType_PostTraining;
-  } else if (this->quantTypeStr.empty()) {
-    this->quantType = schema::QuantType_QUANT_NONE;
-  } else {
-    std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  auto ret = QuantParamInputCheck();
-  return ret;
-}
-
 int Flags::InitTrainModel() {
   if (this->trainModelIn == "true") {
     this->trainModel = true;
@@ -268,10 +209,39 @@ int Flags::InitGraphInputFormat() {
 }
 
 int Flags::InitConfigFile() {
+  lite::ConfigFileParser config_file_parser;
+  auto ret = config_file_parser.ParseConfigFile(this->configFile);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse config file failed.";
+    return ret;
+  }
+  lite::PreprocessParser preprocess_parser;
+  ret = preprocess_parser.ParsePreprocess(config_file_parser.GetDataPreProcessString(), &this->dataPreProcessParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse preprocess failed.";
+    return ret;
+  }
+  lite::QuantParamParser quant_param_parser;
+  ret = quant_param_parser.ParseCommonQuant(config_file_parser.GetCommonQuantString(), &this->commonQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse common quant param failed.";
+    return ret;
+  }
+  ret = quant_param_parser.ParseFullQuant(config_file_parser.GetFullQuantString(), &this->fullQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse full quant param failed.";
+    return ret;
+  }
+  ret = quant_param_parser.ParseMixedBitWeightQuant(config_file_parser.GetMixedBitWeightQuantString(),
+                                                    &this->mixedBitWeightQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse mixed bit weight quant param failed.";
+    return ret;
+  }
   auto plugins_path_str = GetStrFromConfigFile(this->configFile, "plugin_path");
   if (!plugins_path_str.empty()) {
     const char *delimiter = ";";
-    auto relative_path = SplitStringToVector(plugins_path_str, *delimiter);
+    auto relative_path = lite::SplitStringToVector(plugins_path_str, *delimiter);
     for (size_t i = 0; i < relative_path.size(); i++) {
       this->pluginsPath.push_back(lite::RealPath(relative_path[i].c_str()));
     }
@@ -364,12 +334,6 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  ret = InitQuantParam();
-  if (ret != RET_OK) {
-    std::cerr << "Init quant param failed." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
   ret = InitTrainModel();
   if (ret != RET_OK) {
     std::cerr << "Init train model failed." << std::endl;
@@ -420,10 +384,10 @@ bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *pa
     return false;
   }
   const char *delimiter = ";";
-  std::vector<std::string> device_rates = SplitStringToVector(compute_rate_result, *delimiter);
+  std::vector<std::string> device_rates = lite::SplitStringToVector(compute_rate_result, *delimiter);
   const char *colon = ":";
   for (const auto &device : device_rates) {
-    std::vector<std::string> rate = SplitStringToVector(device, *colon);
+    std::vector<std::string> rate = lite::SplitStringToVector(device, *colon);
     parallel_split_config->parallel_compute_rates_.push_back(std::stoi(rate.back()));
   }
   if (parallel_split_config->parallel_compute_rates_.size() != 2) {
@@ -479,7 +443,7 @@ std::string GetStrFromConfigFile(const std::string &file, const std::string &tar
   std::string line;
   while (std::getline(ifs, line)) {
     lite::Trim(&line);
-    if (line.empty()) {
+    if (line.empty() || line.at(0) == '#' || line.at(0) == '[') {
       continue;
     }
     auto index = line.find('=');
@@ -494,26 +458,6 @@ std::string GetStrFromConfigFile(const std::string &file, const std::string &tar
     if (key == target_key) {
       return value;
     }
-  }
-  return res;
-}
-
-std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter) {
-  if (raw_str.empty()) {
-    MS_LOG(ERROR) << "input string is empty.";
-    return {};
-  }
-  std::vector<std::string> res;
-  std::string::size_type last_pos = 0;
-  auto cur_pos = raw_str.find(delimiter);
-  while (cur_pos != std::string::npos) {
-    res.push_back(raw_str.substr(last_pos, cur_pos - last_pos));
-    cur_pos++;
-    last_pos = cur_pos;
-    cur_pos = raw_str.find(delimiter, cur_pos);
-  }
-  if (last_pos < raw_str.size()) {
-    res.push_back(raw_str.substr(last_pos, raw_str.size() - last_pos + 1));
   }
   return res;
 }

@@ -287,6 +287,8 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/common/tensor_util.cc
             ${LITE_DIR}/tools/common/node_util.cc
             ${LITE_DIR}/tools/common/storage.cc
+            ${LITE_DIR}/tools/common/parse_config_utils.cc
+            ${LITE_DIR}/tools/common/string_util.cc
             ${LITE_DIR}/tools/converter/parser/inputs_adjust.cc
             ${LITE_DIR}/tools/converter/parser/unify_format.cc
             ${LITE_DIR}/tools/converter/parser/lstm_adjust_pass.cc
@@ -452,6 +454,8 @@ if(MSLITE_ENABLE_CONVERTER)
             mindspore::json
             -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
             mindspore::glog
+            preprocess_mid
+            config_parser_mid
             )
 endif()
 if(ENABLE_MODEL_OBF)

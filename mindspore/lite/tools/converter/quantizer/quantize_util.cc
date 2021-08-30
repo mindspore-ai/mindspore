@@ -442,11 +442,11 @@ static std::vector<float> InitClusters(float *data, size_t elem_count, size_t k)
   }
   // init cluster
   MS_ASSERT(k != 1);
-  float ratio = static_cast<float>(data_unique.size()) / (k - 1);
+  float cluster_ratio = static_cast<float>(data_unique.size()) / (k - 1);
   std::sort(data_unique.begin(), data_unique.end());
   for (size_t i = 0; i < k; i++) {
-    size_t index = std::floor(i * ratio);
-    if (i * ratio - index > 0) {
+    size_t index = std::floor(i * cluster_ratio);
+    if (i * cluster_ratio - index > 0) {
       clusters.emplace_back((data_unique[index] + data_unique[index + 1]) / 2);
     } else {
       clusters.emplace_back(data_unique[index]);
@@ -513,202 +513,6 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
   return primitive_c->name();
 }
 
-std::vector<int> DataToVector(const string &str) {
-  std::vector<int> result;
-  auto raw_datas = str;
-  auto ind = raw_datas.find(',');
-  while (ind != std::string::npos) {
-    auto data = raw_datas.substr(0, ind);
-    Trim(&data);
-    result.push_back(std::stoul(data));
-    raw_datas = raw_datas.substr(ind + 1);
-    Trim(&raw_datas);
-    ind = raw_datas.find(',');
-  }
-  if (!raw_datas.empty()) {
-    result.push_back(std::stoul(raw_datas));
-  }
-  if (result.empty()) {
-    MS_LOG(ERROR) << "result is empty";
-  }
-  return result;
-}
-
-std::vector<std::vector<int>> DataToVectors(const string &str) {
-  std::vector<std::vector<int>> result;
-  auto raw_datas = str;
-  auto ind = raw_datas.find(';');
-  while (ind != std::string::npos) {
-    auto data = raw_datas.substr(0, ind);
-    Trim(&data);
-    result.push_back(DataToVector(data));
-    raw_datas = raw_datas.substr(ind + 1);
-    Trim(&raw_datas);
-    ind = raw_datas.find(';');
-  }
-  if (!raw_datas.empty()) {
-    result.push_back(DataToVector(raw_datas));
-  }
-  if (result.empty()) {
-    MS_LOG(ERROR) << "result is empty";
-  }
-  return result;
-}
-
-void ParseInputShape(PostQuantConfig *post_quant_config, std::string raw_shape) {
-  MS_ASSERT(post_quant_config != nullptr);
-  auto ind = raw_shape.find('/');
-  while (ind != std::string::npos) {
-    auto shape = raw_shape.substr(0, ind);
-    Trim(&shape);
-    post_quant_config->input_shapes.push_back(DataToVectors(shape));
-    raw_shape = raw_shape.substr(ind + 1);
-    Trim(&raw_shape);
-    ind = raw_shape.find('/');
-  }
-  if (!raw_shape.empty()) {
-    post_quant_config->input_shapes.push_back(DataToVectors(raw_shape));
-  }
-}
-
-void ParseImagePath(PostQuantConfig *post_quant_config, std::string raw_image_paths) {
-  MS_ASSERT(post_quant_config != nullptr);
-  auto ind = raw_image_paths.find(',');
-  while (ind != std::string::npos) {
-    auto image_path = raw_image_paths.substr(0, ind);
-    Trim(&image_path);
-    post_quant_config->image_paths.push_back(image_path);
-    raw_image_paths = raw_image_paths.substr(ind + 1);
-    Trim(&raw_image_paths);
-    ind = raw_image_paths.find(',');
-  }
-  post_quant_config->image_paths.push_back(raw_image_paths);
-}
-
-void ParseBatchCount(PostQuantConfig *post_quant_config, const std::string &value) {
-  MS_ASSERT(post_quant_config != nullptr);
-  post_quant_config->batch_count = std::stoul(value);
-}
-
-void ParseThreadNum(PostQuantConfig *post_quant_config, const std::string &value) {
-  MS_ASSERT(post_quant_config != nullptr);
-  post_quant_config->thread_num = std::stoul(value);
-}
-
-void ParseMethodX(PostQuantConfig *post_quant_config, const std::string &value) {
-  MS_ASSERT(post_quant_config != nullptr);
-  if (value != kMethodKL && value != kMethodMaxMin && value != kMethodOutlier) {
-    MS_LOG(WARNING) << "unsupported method_x: " << value << ". Use default value.";
-  } else {
-    post_quant_config->method_x = value;
-  }
-}
-
-void ParseMixed(PostQuantConfig *post_quant_config, std::string value) {
-  MS_ASSERT(post_quant_config != nullptr);
-  std::for_each(value.begin(), value.end(), ::tolower);
-  if (value == "true") {
-    post_quant_config->mixed = true;
-  }
-}
-
-void ParseMeanErrorThreshold(PostQuantConfig *post_quant_config, const std::string &value) {
-  MS_ASSERT(post_quant_config != nullptr);
-  post_quant_config->mean_error_threshold = std::stof(value);
-}
-
-void ParseBiasCorrection(PostQuantConfig *post_quant_config, std::string value) {
-  MS_ASSERT(post_quant_config != nullptr);
-  std::for_each(value.begin(), value.end(), ::tolower);
-  if (value == "true") {
-    post_quant_config->bias_correction = true;
-  }
-}
-
-STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_config) {
-  MS_ASSERT(post_quant_config != nullptr);
-
-  if (config_file.empty() || config_file.length() >= PATH_MAX) {
-    MS_LOG(ERROR) << "invalid config path!";
-    return RET_PARAM_INVALID;
-  }
-  // check whether config file path is valid
-  auto resolved_path = std::make_unique<char[]>(PATH_MAX);
-  if (resolved_path == nullptr) {
-    MS_LOG(ERROR) << "New an object failed.";
-    return RET_ERROR;
-  }
-#ifdef _WIN32
-  if (_fullpath(resolved_path.get(), config_file.c_str(), kMaxNum1024) != nullptr) {
-    config_file = string(resolved_path.get());
-  }
-#else
-  if (realpath(config_file.c_str(), resolved_path.get()) != nullptr) {
-    config_file = string(resolved_path.get());
-  }
-#endif
-  std::ifstream fs(config_file.c_str(), std::ifstream::in);
-  if (!fs.is_open()) {
-    MS_LOG(ERROR) << "config file open failed: " << config_file;
-    return RET_PARAM_INVALID;
-  }
-
-  std::string INPUT_SHAPES = "input_shapes";
-  std::string IMAGE_PATH = "image_path";
-  std::string BATCH_COUNT = "batch_count";
-  std::string THREAD_NUM = "thread_num";
-  std::string METHOD_X = "method_x";
-  std::string MIXED = "mixed";
-  std::string MEAN_ERROR_THRESHOLD = "mean_error_threshold";
-  std::string BIAS_CORRECTION = "bias_correction";
-
-  std::map<std::string, std::function<void(PostQuantConfig *, std::string)>> value_parser;
-  value_parser[INPUT_SHAPES] = ParseInputShape;
-  value_parser[IMAGE_PATH] = ParseImagePath;
-  value_parser[BATCH_COUNT] = ParseBatchCount;
-  value_parser[THREAD_NUM] = ParseThreadNum;
-  value_parser[METHOD_X] = ParseMethodX;
-  value_parser[MIXED] = ParseMixed;
-  value_parser[MEAN_ERROR_THRESHOLD] = ParseMeanErrorThreshold;
-  value_parser[BIAS_CORRECTION] = ParseBiasCorrection;
-
-  std::string line;
-  while (std::getline(fs, line)) {
-    Trim(&line);
-    if (line.empty()) {
-      continue;
-    }
-    auto index = line.find('=');
-    if (index == std::string::npos) {
-      MS_LOG(ERROR) << "the config file is invalid, can not find '=', please check";
-      return RET_PARAM_INVALID;
-    }
-    auto key = line.substr(0, index);
-    auto value = line.substr(index + 1);
-    Trim(&key);
-    Trim(&value);
-    auto it = value_parser.find(key);
-    if (it != value_parser.end()) {
-      it->second(post_quant_config, value);
-    } else {
-      MS_LOG(WARNING) << "unsupported parameter: " << key;
-    }
-  }
-
-  for (const auto &path : post_quant_config->image_paths) {
-    MS_LOG(DEBUG) << "calibration data_path: " << path;
-  }
-  MS_LOG(DEBUG) << "batch_count: " << post_quant_config->batch_count << "\n"
-                << "method_x: " << post_quant_config->method_x << "\n"
-                << "thread_num: " << post_quant_config->thread_num << "\n"
-                << "bias_correction: " << post_quant_config->bias_correction << "\n"
-                << "mixed: " << post_quant_config->mixed << "\n"
-                << "mean_error_threshold: " << post_quant_config->mean_error_threshold;
-  post_quant_config->inited = true;
-  fs.close();
-  return RET_OK;
-}
-
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num) {
   SessionModel sm;
   auto meta_graph = Export(func_graph, true, true);
@@ -767,97 +571,6 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   sm.session = session;
   sm.model = model;
   return sm;
-}
-
-STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t count_limited,
-                          std::vector<std::vector<std::string>> *inputs) {
-  if (inputs == nullptr) {
-    MS_LOG(ERROR) << "inputs is null";
-    return RET_ERROR;
-  }
-  auto AddImage = [&inputs](const std::string &file, size_t index) {
-    if (index >= inputs->size()) {
-      MS_LOG(ERROR) << "images_ size: " << inputs->size() << " but input index: " << index;
-      return;
-    }
-    struct stat buf {};
-    if (stat(file.c_str(), &buf) == 0) {
-      inputs->at(index).push_back(file);
-    } else {
-      MS_LOG(WARNING) << "invalid image file path: " << file;
-    }
-  };
-
-  inputs->resize(input_dirs.size());
-  auto input_i = 0;
-  bool multi_input = input_dirs.size() > 1;
-  for (const auto &image_path : input_dirs) {
-    DIR *root = opendir(image_path.c_str());
-    if (root == nullptr) {
-      MS_LOG(ERROR) << "invalid image path: " << image_path;
-      return RET_PARAM_INVALID;
-    }
-    struct dirent *image_dir = readdir(root);
-    size_t count = 0;
-    while (image_dir != nullptr) {
-      string file_name(image_dir->d_name);
-      if (file_name != "." && file_name != "..") {
-        const std::string file_path = image_path + "/" + file_name;
-        if (multi_input || count == 0 || count < count_limited) {
-          AddImage(file_path, input_i);
-          count++;
-        } else {
-          break;
-        }
-      }
-      image_dir = readdir(root);
-    }
-    std::sort(inputs->at(input_i).begin(), inputs->at(input_i).end());
-    if (count_limited != 0 && count_limited < inputs->at(input_i).size()) {
-      inputs->at(input_i).resize(count_limited);
-    }
-    closedir(root);
-    input_i++;
-  }
-  return RET_OK;
-}
-
-STATUS CopyInputDataToTensor(size_t input_index, size_t image_index,
-                             const std::vector<std::vector<std::string>> &images, mindspore::tensor::MSTensor *tensor) {
-  MS_ASSERT(tensor != nullptr);
-  if (input_index >= images.size()) {
-    MS_LOG(ERROR) << "images_ size: " << images.size() << " but input_index: " << input_index;
-    return RET_ERROR;
-  }
-  if (image_index >= images[input_index].size()) {
-    MS_LOG(ERROR) << "images_[input_index] size: " << images[input_index].size() << " but image_index: " << image_index;
-    return RET_ERROR;
-  }
-  string path = images[input_index][image_index];
-  MS_LOG(INFO) << "read image: " << path;
-  size_t size;
-  char *bin_buf = ReadFile(path.c_str(), &size);
-  if (bin_buf == nullptr) {
-    MS_LOG(ERROR) << "ReadFile return nullptr";
-    return RET_NULL_PTR;
-  }
-  auto data = tensor->MutableData();
-  if (data == nullptr) {
-    MS_LOG(ERROR) << "Get tensor MutableData return nullptr";
-    return RET_NULL_PTR;
-  }
-  if (size != tensor->Size()) {
-    MS_LOG(ERROR) << "the input data is not consistent with model input, file_size: " << size
-                  << " input tensor size: " << tensor->Size();
-    return RET_ERROR;
-  }
-  if (memcpy_s(data, tensor->Size(), bin_buf, size) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    delete[] bin_buf;
-    return RET_ERROR;
-  }
-  delete[] bin_buf;
-  return RET_OK;
 }
 
 FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &func_graph) {
@@ -1063,6 +776,21 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
     quant_param_holder->set_input_quant_param(index, quant_params);
   }
   return ret;
+}
+
+int ConvertInputShapeMapToVector(FullQuantParam *config_param_, const std::vector<tensor::MSTensor *> &inputs,
+                                 std::vector<std::vector<int>> *shapes) {
+  if (shapes == nullptr || config_param_ == nullptr) {
+    MS_LOG(ERROR) << "shapes  or config_param is nullptr.";
+    return RET_ERROR;
+  }
+  for (auto input : inputs) {
+    auto tensor_name = input->tensor_name();
+    if (config_param_->input_shapes.find(tensor_name) == config_param_->input_shapes.end()) {
+      shapes->push_back(config_param_->input_shapes[tensor_name]);
+    }
+  }
+  return RET_OK;
 }
 
 }  // namespace mindspore::lite::quant

@@ -278,14 +278,14 @@ void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGr
 
 int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   // quant
-  if (config->quantType == schema::QuantType_PostTraining) {
-    this->m_quantizer_ = std::make_unique<quant::PostTrainingQuantizer>(old_graph, config->configFile, config->bitNum);
+  if (config->commonQuantParam.quant_type == schema::QuantType_PostTraining) {
+    this->m_quantizer_ = std::make_unique<quant::PostTrainingQuantizer>(old_graph, config->commonQuantParam.bit_num);
     if (m_quantizer_ == nullptr) {
       MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
-  } else if (config->quantType == schema::QuantType_WeightQuant) {
+  } else if (config->commonQuantParam.quant_type == schema::QuantType_WeightQuant) {
     this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(old_graph, *config);
     if (m_quantizer_ == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";

@@ -62,22 +62,6 @@ constexpr size_t kMillisecondsBase = 10;
 constexpr size_t kWightIndex = 1;
 constexpr double kScaleThreashold = 1e-38;
 
-const char kMethodMaxMin[] = "MAX_MIN";
-const char kMethodKL[] = "KL";
-const char kMethodOutlier[] = "RemovalOutlier";
-
-struct PostQuantConfig {
-  std::vector<std::string> image_paths;
-  uint32_t batch_count{100};
-  std::string method_x{kMethodKL};
-  uint32_t thread_num{1};
-  bool bias_correction{false};
-  bool mixed{false};
-  float mean_error_threshold{0.04};
-  std::vector<std::vector<std::vector<int>>> input_shapes;  // different input
-  bool inited{false};
-};
-
 struct SessionModel {
   session::LiteSession *session{nullptr};
   Model *model{nullptr};
@@ -250,18 +234,13 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
 
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
-STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_config);
-
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num);
-
-STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t count_limited,
-                          std::vector<std::vector<std::string>> *inputs);
-
-STATUS CopyInputDataToTensor(size_t input_index, size_t image_index,
-                             const std::vector<std::vector<std::string>> &images, mindspore::tensor::MSTensor *tensor);
 
 FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &);
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
+
+int ConvertInputShapeMapToVector(FullQuantParam *config_param_, const std::vector<tensor::MSTensor *> &inputs,
+                                 std::vector<std::vector<int>> *shapes);
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_

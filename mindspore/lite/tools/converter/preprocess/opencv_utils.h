@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_CONVERT_UTILS_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_CONVERT_UTILS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H
 #include <string>
 #include <opencv2/opencv.hpp>
+#include "tools/converter/preprocess/preprocess_param.h"
+
 namespace mindspore {
 namespace lite {
 namespace preprocess {
 cv::ColorConversionCodes ConvertColorConversionCodes(const std::string &format);
 
-cv::InterpolationFlags ConvertResizeFlag(const std::string &flag);
+cv::ColorConversionCodes ConvertColorConversionCodes(preprocess::ImageToFormat format);
+
+cv::InterpolationFlags ConvertResizeMethod(const std::string &method);
+
+int GetMatData(const cv::Mat &mat, void **data, size_t *size);
 }  // namespace preprocess
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_CONVERT_UTILS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H

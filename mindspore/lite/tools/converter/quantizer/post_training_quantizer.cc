@@ -44,6 +44,7 @@
 #include "src/common/quant_utils.h"
 #include "src/common/utils.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
+#include "tools/converter/preprocess/image_preprocess.h"
 
 using std::string;
 using std::vector;
@@ -56,7 +57,7 @@ STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, cons
   MS_ASSERT(raw_datas != nullptr && quant_param_holder != nullptr);
   MS_ASSERT(quant_params != nullptr && quant_datas != nullptr);
   double bias_scale_tmp;
-  const constexpr int32_t quanted_bias_abs_limit = 0.5 * INT32_MAX;
+  const constexpr double quanted_bias_abs_limit = 0.5 * INT32_MAX;
   auto weight_quant_params = quant_param_holder->get_input_quant_params().at(1);
   auto shape_size = quant_datas->size();
   if (bias_scales.size() == shape_size) {
@@ -120,7 +121,7 @@ STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, cons
 }
 }  // namespace
 
-STATUS DivergInfo::RecordMaxValue(const std::vector<float> &data) {
+STATUS DivergInfo::RecordMaxMinValue(const std::vector<float> &data) {
   for (float val : data) {
     max = std::max(val, max);
     min = std::min(val, min);
@@ -128,7 +129,7 @@ STATUS DivergInfo::RecordMaxValue(const std::vector<float> &data) {
   return RET_OK;
 }
 
-STATUS DivergInfo::RecordMaxValueArray(const std::vector<float> &data) {
+STATUS DivergInfo::RecordMaxMinValueArray(const std::vector<float> &data) {
   if (data.empty()) {
     return RET_ERROR;
   }
@@ -238,13 +239,13 @@ void DivergInfo::HandleBinForKL(int quant_bint_nums, int bin_index, std::vector<
 }
 
 STATUS DivergInfo::ComputeThreshold() {
-  if (method_x == kMethodMaxMin) {
+  if (activation_quant_method == MAX_MIN) {
     this->best_T = std::max(fabs(this->max), fabs(this->min));
     MS_LOG(DEBUG) << "using MAX_MIN, T: " << this->best_T;
     return RET_OK;
   }
 
-  if (method_x == kMethodOutlier && !this->min_datas.empty()) {
+  if (activation_quant_method == REMOVAL_OUTLIER && !this->min_datas.empty()) {
     this->percent_result = OutlierMethod(min_datas, max_datas);
     this->best_T = std::max(std::fabs(percent_result.first), std::fabs(percent_result.second));
     return RET_OK;
@@ -299,7 +300,7 @@ std::pair<CNodePtr, float> DivergInfo::GetScale() {
   float max_value = this->best_T;
   float min_value = -max_value;
 
-  if (this->method_x == kMethodOutlier) {
+  if (this->activation_quant_method == REMOVAL_OUTLIER) {
     min_value = percent_result.first;
     max_value = percent_result.second;
   }
@@ -320,7 +321,7 @@ std::pair<CNodePtr, int32_t> DivergInfo::GetZeropoint() {
   } else {
     MS_LOG(WARNING) << "unexpected quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
   }
-  if (this->method_x == kMethodOutlier) {
+  if (this->activation_quant_method == REMOVAL_OUTLIER) {
     MS_ASSERT(fabs(scale_tmp) <= 0.0f);
     zero_point = std::round(quant_max - percent_result.second / scale_tmp);
   }
@@ -382,9 +383,17 @@ std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *Calib
   return &this->outputs_diverg_info_;
 }
 
-STATUS Calibrator::RecordMaxValue(const vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info) {
-  diverg_info->RecordMaxValue(data);
-  diverg_info->RecordMaxValueArray(data);
+STATUS Calibrator::RecordMaxMinValue(const vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info) {
+  auto ret = diverg_info->RecordMaxMinValue(data);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Record max min value failed.";
+    return ret;
+  }
+  diverg_info->RecordMaxMinValueArray(data);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Record max min value array failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -452,32 +461,22 @@ STATUS Calibrator::AddQuantizedOp(const CNodePtr &node) {
     return RET_ERROR;
   }
   string node_name = node->fullname_with_scope();
-  std::unique_ptr<DivergInfo> input_diverg =
-    std::make_unique<DivergInfo>(node, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, config_param_.method_x);
-  std::unique_ptr<DivergInfo> output_diverg =
-    std::make_unique<DivergInfo>(node, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, config_param_.method_x);
+  std::unique_ptr<DivergInfo> input_diverg = std::make_unique<DivergInfo>(
+    node, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
+  std::unique_ptr<DivergInfo> output_diverg = std::make_unique<DivergInfo>(
+    node, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
 
   inputs_diverg_info_[node_name].push_back(std::move(input_diverg));
   outputs_diverg_info_[node_name].push_back(std::move(output_diverg));
   return RET_OK;
 }
 
-STATUS Calibrator::GenerateInputData(size_t input_index, size_t image_index,
+STATUS Calibrator::GenerateInputData(const std::string &input_name, size_t image_index,
                                      mindspore::tensor::MSTensor *tensor) const {
-  return CopyInputDataToTensor(input_index, image_index, images_, tensor);
+  return preprocess::PreProcess(data_pre_process_param_, input_name, image_index, tensor);
 }
 
-STATUS Calibrator::CollectImages() {
-  return CollectCalibInputs(config_param_.image_paths, config_param_.batch_count, &images_);
-}
-
-STATUS Calibrator::ReadConfig() { return ParseConfigFile(config_path_, &config_param_); }
-
-Calibrator::Calibrator(string path, size_t bit_num, int quant_max, int quant_min)
-    : config_path_(std::move(path)), bit_num_(bit_num), quant_max_(quant_max), quant_min_(quant_min) {}
-
-PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, int bit_num, TypeId target_type,
-                                             bool per_channel)
+PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type, bool per_channel)
     : Quantizer(std::move(graph)) {
   MS_ASSERT(graph != nullptr);
   this->per_channel_ = per_channel;
@@ -492,7 +491,7 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, in
   } else {
     MS_LOG(ERROR) << "unsupported quant value type: " << target_type;
   }
-  calibrator_ = std::make_unique<Calibrator>(std::move(path), this->bit_num, quant_max, quant_min);
+  calibrator_ = std::make_unique<Calibrator>(this->bit_num, quant_max, quant_min);
   if (calibrator_ == nullptr) {
     MS_LOG(ERROR) << "create calibrator failed!";
     return;
@@ -549,7 +548,7 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
 }
 
 STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight,
-                                            const PrimitivePtr &primitive, bool perchanel) const {
+                                            const PrimitivePtr &primitive, bool per_channel) const {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   // perlayer
@@ -570,7 +569,7 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
   auto bit_num_t = bit_num;
   auto quant_max_t = quant_max;
   auto quant_min_t = quant_min;
-  if (calibrator_->config_param_.mixed) {
+  if (calibrator_->full_quant_param_.mixed) {
     auto opname_iter = opname_bit_.find(op_name);
     if (opname_iter == opname_bit_.end()) {
       MS_LOG(WARNING) << op_name << " not in the opname_bit_ map";
@@ -580,7 +579,7 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
       quant_min_t = -(1 << (unsigned int)(bit_num_t - 1));
     }
   }
-  auto weight_quant_type = perchanel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
+  auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
   auto status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_PostTraining, quant_max_t, quant_min_t, bit_num_t,
                                     weight_quant_type, kNumberTypeInt8);
   if (status != RET_OK) {
@@ -841,11 +840,11 @@ STATUS PostTrainingQuantizer::QuantNode() {
       DoQuantInput(input_scale, input_zp, &input_min_max, primitive);
       // do weight quant
       auto weight = cnode->input(2);
-      bool perchannel = false;
+      bool per_channel = false;
       if (op_type == ops::kNameConv2DFusion || op_type == ops::kNameFullConnection) {
-        perchannel = true;
+        per_channel = true;
       }
-      DoWeightQuant(op_name, weight, primitive, perchannel);
+      DoWeightQuant(op_name, weight, primitive, per_channel);
       // do bias quant
       if (cnode->inputs().size() == 4) {
         auto bias = cnode->input(3);
@@ -890,12 +889,6 @@ STATUS PostTrainingQuantizer::UpdateDivergInverval() {
  * 3. save quantied node
  **/
 STATUS PostTrainingQuantizer::PreProcess() {
-  // 2. collect image files
-  auto status = calibrator_->CollectImages();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "collect images failed!";
-    return status;
-  }
   // 3. collect to be quantized operators
   // from user input
   QuantStrategy strategy(kMillisecondsBase);
@@ -906,7 +899,7 @@ STATUS PostTrainingQuantizer::PreProcess() {
       MS_LOG(ERROR) << " cnode is null";
       return RET_NULL_PTR;
     }
-    if (strategy.CanOpPostQuantized(anf)) {
+    if (mindspore::lite::quant::QuantStrategy::CanOpPostQuantized(anf)) {
       calibrator_->AddQuantizedOp(cnode);
     }
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -947,14 +940,15 @@ STATUS PostTrainingQuantizer::DoInference() {
   // get input tensor
   vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
   if (inputs.size() != calibrator_->GetInputNum()) {
-    MS_LOG(ERROR) << "model's input tensor cnt: " << inputs.size() << " != " << calibrator_->GetInputNum();
+    MS_LOG(ERROR) << "model's input tensor count: " << inputs.size() << " != "
+                  << " calibrator count:" << calibrator_->GetInputNum();
     return RET_ERROR;
   }
 
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
     // set multi-input data
     for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
-      STATUS status = calibrator_->GenerateInputData(input_index, i, inputs[input_index]);
+      STATUS status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), i, inputs[input_index]);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "generate input data from images failed!";
         return RET_ERROR;
@@ -986,7 +980,7 @@ STATUS PostTrainingQuantizer::DoInference() {
         MS_ASSERT(tensor_data != nullptr);
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
-        this->calibrator_->RecordMaxValue(data, (*diverg_info_map)[callParam.node_name][i]);
+        this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][i]);
       }
       return true;
     };
@@ -1013,7 +1007,7 @@ STATUS PostTrainingQuantizer::DoInference() {
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
-        this->calibrator_->RecordMaxValue(data, (*diverg_info_map)[callParam.node_name][output_i]);
+        this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][output_i]);
         output_i++;
       }
       return true;
@@ -1068,7 +1062,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
   // fp32 inference
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
     for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
-      STATUS status = calibrator_->GenerateInputData(input_index, i, inputs[input_index]);
+      STATUS status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), i, inputs[input_index]);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "generate input data from images failed!";
         return RET_ERROR;
@@ -1091,7 +1085,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
     return RET_ERROR;
   }
   if (calibrator_->GetBatchNum() == 0) {
-    MS_LOG(ERROR) << "divisor 'batch_count' cannot be 0.";
+    MS_LOG(ERROR) << "divisor 'calibrate_size' cannot be 0.";
     return RET_ERROR;
   }
   for (auto &key_value : op_bias_diff_map) {
@@ -1205,7 +1199,7 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
     // set multi-input data
     for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
-      STATUS status = calibrator_->GenerateInputData(input_index, i, inputs[input_index]);
+      STATUS status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), i, inputs[input_index]);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "generate input data from images failed!";
         return RET_ERROR;
@@ -1273,20 +1267,16 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "calibrator is null!";
     return RET_ERROR;
   }
-  // 1. generate config param
-  STATUS status = calibrator_->ReadConfig();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "read proto text failed!";
-    return status;
-  }
-
-  if (calibrator_->config_param_.mixed) {  // get opname_bit map
+  calibrator_->full_quant_param_ = flags.fullQuantParam;
+  calibrator_->data_pre_process_param_ = flags.dataPreProcessParam;
+  STATUS status;
+  if (calibrator_->full_quant_param_.mixed) {  // get opname_bit map
     auto weight_quant_func_graph = CopyFuncGraph(func_graph);
     if (weight_quant_func_graph == nullptr) {
       MS_LOG(ERROR) << "CopyFuncGraph error";
       return RET_ERROR;
     }
-    WeightQuantizer weight_quantizer(weight_quant_func_graph, calibrator_->config_param_);
+    WeightQuantizer weight_quantizer(weight_quant_func_graph, calibrator_->full_quant_param_);
     weight_quantizer.flags = flags;
     status = weight_quantizer.DoQuantize(weight_quant_func_graph);
     if (status != RET_OK) {
@@ -1303,7 +1293,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
 
   // anf -- fb
-  flags.quantType = schema::QuantType_QUANT_NONE;
+  flags.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   MS_LOG(INFO) << "start create session";
   auto sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
   fp32_session_ = sm.session;
@@ -1351,7 +1341,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   if (calibrator_->GetBiasCorrection()) {
     // init in8 session
     MS_LOG(INFO) << "create quant session";
-    flags.quantType = schema::QuantType_PostTraining;
+    flags.commonQuantParam.quant_type = schema::QuantType_PostTraining;
     auto int8_sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
     int8_session_ = int8_sm.session;
     int8_model_ = int8_sm.model;

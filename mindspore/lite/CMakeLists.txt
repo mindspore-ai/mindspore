@@ -124,6 +124,10 @@ if(DEFINED ENV{MSLITE_ENABLE_ACL})
     set(MSLITE_ENABLE_ACL $ENV{MSLITE_ENABLE_ACL})
 endif()
 
+if(NOT MSLITE_ENABLE_ACL)
+    set(ENABLE_GLIBCXX ON)
+endif()
+
 if(PLATFORM_ARM64)
     if(MSLITE_GPU_BACKEND STREQUAL "")
         set(MSLITE_GPU_BACKEND "opencl")
@@ -414,6 +418,7 @@ if(ENABLE_MODEL_OBF)
 endif()
 
 if(MSLITE_ENABLE_CONVERTER)
+    include(${TOP_DIR}/cmake/external_libs/opencv.cmake)
     include_directories(${PYTHON_INCLUDE_DIRS})
     include(${TOP_DIR}/cmake/external_libs/eigen.cmake)
     include(${TOP_DIR}/cmake/external_libs/protobuf.cmake)

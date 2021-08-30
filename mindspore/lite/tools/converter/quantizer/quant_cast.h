@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__QUANT_CAST_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__QUANT_CAST_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_CAST_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_CAST_H
 
 #include "include/errorcode.h"
 #include "ir/anf.h"
@@ -34,4 +34,4 @@ class QuantCast {
   TypeId input_data_dtype_ = kNumberTypeFloat32;
 };
 }  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__QUANT_CAST_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_CAST_H

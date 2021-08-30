@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 #include <opencv2/opencv.hpp>
+#include "tools/converter/preprocess/preprocess_param.h"
+#include "include/ms_tensor.h"
 namespace mindspore {
 namespace lite {
 namespace preprocess {
@@ -26,11 +28,21 @@ int ReadImage(const std::string &image_path, cv::Mat *image);
 
 int ConvertImageFormat(cv::Mat *image, cv::ColorConversionCodes to_format);
 
-int Normalize(cv::Mat *image, const std::vector<float> &mean, const std::vector<float> &std);
+int Normalize(cv::Mat *image, const std::vector<double> &mean, const std::vector<double> &standard_deviation);
 
 int Resize(cv::Mat *image, int width, int height, cv::InterpolationFlags resize_method);
 
 int CenterCrop(cv::Mat *image, int width, int height);
+
+// NOTE:`data` must be use delete[] to free buffer.
+int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::string &input_name, int image_index,
+               void **data, size_t *size);
+
+int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
+               int image_index, mindspore::tensor::MSTensor *tensor);
+
+int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat *image, void **data, size_t *size);
+
 }  // namespace preprocess
 }  // namespace lite
 }  // namespace mindspore

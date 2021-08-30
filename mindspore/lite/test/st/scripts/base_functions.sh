@@ -4,7 +4,7 @@
 function Convert() {
   # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
-        quant_type bit_num config_file quant_weight_chn train_model in_dtype out_dtype converter_result cfg_file
+        quant_type bit_num config_file train_model in_dtype out_dtype converter_result cfg_file
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
@@ -16,6 +16,7 @@ function Convert() {
       extra_info=${model_info##*;}
       model_type=${model_name##*.}
       cfg_file_name=${cfg_file##*/}
+      quant_config_path="${cfg_file%/*}/quant"
       case $model_type in
         pb)
           model_fmk="TF"
@@ -45,24 +46,21 @@ function Convert() {
       quant_type=""
       bit_num=8
       config_file=""
-      quant_weight_chn=0
       train_model="false"
       in_dtype="DEFAULT"
       out_dtype="DEFAULT"
-      if [[ ${cfg_file_name} =~ "bit" ]]; then
+      if [[ ${cfg_file_name} =~ "weightquant" ]]; then
         postfix=${cfg_file##*_}
         bit_num=${postfix:0:1}
         quant_type="WeightQuant"
         output_file=${output_file}"_${bit_num}bit"
-      elif [[ ${cfg_file_name} =~ "weightquant" ]]; then
-        quant_type="WeightQuant"
-        output_file=${output_file}"_weightquant"
+        config_file="${quant_config_path}/weight_quant_${bit_num}bit.cfg"
       elif [[ ${cfg_file_name} =~ "_train" ]]; then
         train_model="true"
       elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
         quant_type="PostTraining"
         output_file=${output_file}"_posttraining"
-        config_file=${model_file}"_posttraining.config"
+        config_file="${quant_config_path}/${model_name}_posttraining.config"
       elif [[ ${cfg_file_name} =~ "awaretraining" || ${extra_info} =~ "aware_training" ]]; then
         in_dtype="FLOAT"
         out_dtype="FLOAT"
@@ -70,11 +68,11 @@ function Convert() {
       # start running converter
       echo ${model_name} >> "$4"
       echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
-        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --quantType='${quant_type}' --bitNum='${bit_num}\
-        ' --quantWeightChannel='${quant_weight_chn}' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
+        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' \
+         --configFile='${config_file}' --trainModel='${train_model} >> "$4"
       ./converter_lite  --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
-        --inputDataType=${in_dtype} --outputDataType=${out_dtype} --quantType=${quant_type} --bitNum=${bit_num}\
-        --quantWeightChannel=${quant_weight_chn} --configFile=${config_file} --trainModel=${train_model} >> "$4"
+        --inputDataType=${in_dtype} --outputDataType=${out_dtype} \
+        --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
@@ -158,14 +156,11 @@ function Run_Benchmark() {
       fi
       # adjust file name
       infix=""
-      if [[ ${cfg_file_name} =~ "bit" ]]; then
+      if [[ ${cfg_file_name} =~ "weightquant" ]]; then
         infix="_${cfg_file##*_}"
         infix=${infix%.*}
       elif [[ ${cfg_file_name} =~ "_train" ]]; then
         infix="_train"
-      elif [[ ${cfg_file_name} =~ "_weightquant" ]]; then
-        infix="_weightquant"
-        benchmark_mode="calib"
       elif [[ ${cfg_file_name} =~ "_posttraining" ]]; then
         model_name=${model_name}"_posttraining"
       elif [[ ${cfg_file_name} =~ "_process_only" ]]; then
@@ -236,9 +231,9 @@ function Run_Benchmark() {
           ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --numThreads=${threads} >> "$4"
         fi
         if [ $? = 0 ]; then
-          run_result="$6_$7_${mode}: ${model_name} pass"; echo ${run_result} >> $5
+          run_result="$6_$7_${mode}: ${model_file##*/} pass"; echo ${run_result} >> $5
         else
-          run_result="$6_$7_${mode}: ${model_name} failed"; echo ${run_result} >> $5; return 1
+          run_result="$6_$7_${mode}: ${model_file##*/} failed"; echo ${run_result} >> $5; return 1
         fi
       fi
       # run benchmark without clib data recurrently for guarding the repeated graph execution scene
@@ -259,9 +254,9 @@ function Run_Benchmark() {
           ./benchmark --inDataFile=${input_files} --modelFile=${model_file} --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 --numThreads=${threads} >> "$4"
         fi
         if [ $? = 0 ]; then
-            run_result="$6_$7_${mode}_loop: ${model_name} pass"; echo ${run_result} >> $5
+            run_result="$6_$7_${mode}_loop: ${model_file##*/} pass"; echo ${run_result} >> $5
         else
-            run_result="$6_$7_${mode}_loop: ${model_name} failed"; echo ${run_result} >> $5; return 1
+            run_result="$6_$7_${mode}_loop: ${model_file##*/} failed"; echo ${run_result} >> $5; return 1
         fi
       fi
     done < ${cfg_file}
