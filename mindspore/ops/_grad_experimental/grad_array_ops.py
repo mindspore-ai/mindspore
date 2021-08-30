@@ -49,31 +49,38 @@ def get_bprop_masked_select(self):
 def get_bprop_tensor_scatter_sub(self):
     """Generate bprop for TensorScatterSub"""
     gather_nd = P.GatherNd()
+    neg = P.Neg()
 
     def bprop(x, indices, update, out, dout):
-        update_grad = gather_nd(dout, indices)
+        update_grad = neg(gather_nd(dout, indices))
         return dout, zeros_like(indices), update_grad
 
     return bprop
 
 
+def tensor_scatter_possible_replacement(x, indices, updates, out, dout):
+    """bpropr for any TensorScatter* op that possibly replaces values in the input tensor"""
+    gather_nd = P.GatherNd()
+    scatter_nd = P.ScatterNd()
+    equal = P.Equal()
+    shape = P.Shape()
+
+    x_indicators = F.cast(equal(x, out), mstype.int32)
+    possibly_updated = gather_nd(out, indices)
+    out_indicators = F.cast(equal(updates, possibly_updated), mstype.int32)
+    scattered_out_indicators = scatter_nd(indices, out_indicators, shape(x))
+    indicators = x_indicators + scattered_out_indicators
+    dx = dout * F.cast(x_indicators, F.dtype(dout)) / F.cast(indicators, F.dtype(dout))
+    dupdates = gather_nd(dout / F.cast(indicators, F.dtype(dout)), indices) * F.cast(out_indicators, F.dtype(dout))
+
+    return F.cast(dx, F.dtype(x)), zeros_like(indices), F.cast(dupdates, F.dtype(updates))
+
+
 @bprop_getters.register(P.TensorScatterMax)
 def get_bprop_tensor_scatter_max(self):
     """Generate bprop for TensorScatterMax"""
-    gather_nd = P.GatherNd()
-    select = P.Select()
-    equal = P.Equal()
-
-    def bprop(x, indices, update, out, dout):
-        select_condition = equal(x, out)
-        dx = select(select_condition, dout, zeros_like(x))
-
-        possibly_updated_values = gather_nd(out, indices)
-        update_loss = gather_nd(dout, indices)
-        select_condition = equal(possibly_updated_values, update)
-        dupdate = select(select_condition, update_loss, zeros_like(update))
-
-        return dx, zeros_like(indices), dupdate
+    def bprop(x, indices, updates, out, dout):
+        return tensor_scatter_possible_replacement(x, indices, updates, out, dout)
 
     return bprop
 
@@ -81,20 +88,8 @@ def get_bprop_tensor_scatter_max(self):
 @bprop_getters.register(P.TensorScatterMin)
 def get_bprop_tensor_scatter_min(self):
     """Generate bprop for TensorScatterMin"""
-    gather_nd = P.GatherNd()
-    select = P.Select()
-    equal = P.Equal()
-
-    def bprop(x, indices, update, out, dout):
-        select_condition = equal(x, out)
-        dx = select(select_condition, dout, zeros_like(x))
-
-        possibly_updated_values = gather_nd(out, indices)
-        update_loss = gather_nd(dout, indices)
-        select_condition = equal(possibly_updated_values, update)
-        dupdate = select(select_condition, update_loss, zeros_like(update))
-
-        return dx, zeros_like(indices), dupdate
+    def bprop(x, indices, updates, out, dout):
+        return tensor_scatter_possible_replacement(x, indices, updates, out, dout)
 
     return bprop
 
