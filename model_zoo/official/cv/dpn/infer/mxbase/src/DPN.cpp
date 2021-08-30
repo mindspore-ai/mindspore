@@ -24,8 +24,8 @@
 #include <opencv2/dnn.hpp>
 #include "MxBase/Log/Log.h"
 
-using  MxBase;
-using  cv::dnn;
+using  namespace MxBase;
+using  namespace cv::dnn;
 namespace {
     const uint32_t YUV_BYTE_NU = 3;
     const uint32_t YUV_BYTE_DE = 2;
