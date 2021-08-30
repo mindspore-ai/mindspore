@@ -37,7 +37,7 @@ class IOMgr;
 
 class ActorMgr {
  public:
-  static inline std::shared_ptr<ActorMgr> &GetActorMgrRef() { return actorMgr; }
+  static inline ActorMgr *GetActorMgrRef() { return &actorMgr; }
 
   static std::shared_ptr<IOMgr> &GetIOMgrRef(const std::string &protocol = "tcp");
 
@@ -99,7 +99,7 @@ class ActorMgr {
   std::map<std::string, std::string> procotols;
   std::set<std::string> urls;
   std::string delegate;
-  static std::shared_ptr<ActorMgr> actorMgr;
+  static ActorMgr actorMgr;
   static std::map<std::string, std::shared_ptr<IOMgr> > ioMgrs;
 };  // end of class ActorMgr
 

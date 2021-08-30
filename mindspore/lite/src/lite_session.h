@@ -98,7 +98,7 @@ class LiteSession : public session::LiteSession {
 
   void InitGraphInOutTensorsMap(const lite::Model *model);
 
-  void IsolateOutputTensor();
+  int IsolateOutputTensor();
 
   void InitGraphInputTensors(const lite::Model *model);
 

@@ -163,6 +163,7 @@ class ActorBase : std::enable_shared_from_this<ActorBase> {
   template <typename T>
   static void BehaviorBase(T *t, void (T::*method)(const mindspore::AID &, std::string &&, std::string &&),
                            const std::unique_ptr<MessageBase> &msg) {
+    MINDRT_OOM_EXIT(msg);
     if (msg->type != MessageBase::Type::KMSG) {
       MS_LOG(ERROR) << "Drop non-tcp message: from:" << std::string(msg->from).c_str()
                     << ",to:" << std::string(msg->to).c_str() << ",name:" << msg->name.c_str();
@@ -175,6 +176,7 @@ class ActorBase : std::enable_shared_from_this<ActorBase> {
   template <typename T>
   static void BehaviorBase1(T *t, void (T::*method)(mindspore::AID, std::string &&, std::string &&),
                             const std::unique_ptr<MessageBase> &msg) {
+    MINDRT_OOM_EXIT(msg);
     if (msg->type != MessageBase::Type::KMSG) {
       MS_LOG(ERROR) << "Drop non-tcp message:  from:" << std::string(msg->from).c_str()
                     << ",to:" << std::string(msg->to).c_str() << ",name:" << msg->name.c_str();
@@ -187,6 +189,7 @@ class ActorBase : std::enable_shared_from_this<ActorBase> {
   template <typename T>
   static void BehaviorBaseForUdp(T *t, void (T::*method)(const mindspore::AID &, std::string &&, std::string &&),
                                  const std::unique_ptr<MessageBase> &msg) {
+    MINDRT_OOM_EXIT(msg);
     if (msg->type != MessageBase::Type::KUDP) {
       MS_LOG(ERROR) << "Drop non-udp message:  from:" << std::string(msg->from).c_str()
                     << ",to:" << std::string(msg->to).c_str() << ",name:" << msg->name.c_str();

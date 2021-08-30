@@ -68,6 +68,7 @@ class AppActor : public ActorBase {
 
   template <typename T, typename M>
   static void BehaviorBase(T *t, void (T::*method)(const AID &, std::unique_ptr<M>), std::unique_ptr<MessageBase> msg) {
+    MINDRT_OOM_EXIT(msg);
     (t->*method)(msg->From(),
                  std::move(std::unique_ptr<M>(reinterpret_cast<M *>(static_cast<MessageLocal *>(msg.get())->ptr))));
     return;
@@ -76,6 +77,7 @@ class AppActor : public ActorBase {
  protected:
   // KLOCALMsg handler
   virtual void HandleLocalMsg(std::unique_ptr<MessageBase> msg) {
+    MINDRT_OOM_EXIT(msg);
     auto it = appBehaviors.find(msg->Name());
     if (it != appBehaviors.end()) {
       it->second(std::move(msg));

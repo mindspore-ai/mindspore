@@ -19,6 +19,7 @@
 #include <atomic>
 #include <vector>
 #include "actor/log.h"
+#include "thread/threadlog.h"
 
 namespace mindspore {
 // implement a lock-free queue
@@ -49,9 +50,10 @@ class HQueue {
   HQueue() {}
   virtual ~HQueue() {}
 
-  void Init(int32_t sz) {
+  int Init(int32_t sz) {
     for (int32_t i = 0; i < sz; i++) {
       auto node = new HQNode<T>();
+      THREAD_ERROR_IF_NULL(node);
       node->value = nullptr;
       node->free = true;
       node->next = {-1, 0};
@@ -62,7 +64,7 @@ class HQueue {
     qhead = {0, 0};
     qtail = {0, 0};
     nodes[0]->free = false;
-    return;
+    return THREAD_OK;
   }
 
   void Clean() {

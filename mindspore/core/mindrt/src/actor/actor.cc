@@ -35,6 +35,7 @@ void ActorBase::Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<A
   waiterLock.lock();
 
   actorPolicy = std::move(thread);
+  MINDRT_OOM_EXIT(actorPolicy);
 }
 void ActorBase::SetRunningStatus(bool start) { actorPolicy->SetRunningStatus(start); }
 

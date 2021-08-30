@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <cstdlib>
 #include <atomic>
 #include "src/actor/actormgr.h"
 #include "src/actor/iomgr.h"
@@ -47,15 +46,12 @@ namespace mindspore {
 
 namespace local {
 
-static MindrtAddress *g_mindrtAddress = new (std::nothrow) MindrtAddress();
+static MindrtAddress g_mindrtAddress = MindrtAddress();
 static std::atomic_bool g_finalizeMindrtStatus(false);
 
 }  // namespace local
 
-const MindrtAddress &GetMindrtAddress() {
-  MINDRT_OOM_EXIT(local::g_mindrtAddress);
-  return *local::g_mindrtAddress;
-}
+const MindrtAddress &GetMindrtAddress() { return local::g_mindrtAddress; }
 
 class MindrtExit {
  public:
@@ -85,7 +81,7 @@ int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv, const st
 
 AID Spawn(ActorReference actor, bool sharedThread, bool start) {
   if (actor == nullptr) {
-    MS_LOG(DEBUG) << "Actor is nullptr.";
+    MS_LOG(ERROR) << "Actor is nullptr.";
     MINDRT_EXIT("Actor is nullptr.");
   }
 

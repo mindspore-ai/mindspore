@@ -1102,6 +1102,10 @@ kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *
   }
   auto subgraph_index = GetPartialGraphIndex(src_node->primitive_, schema_version_);
   auto subgraph_kernel = SchedulePartialToSubGraphKernel(subgraph_index);
+  if (subgraph_kernel == nullptr) {
+    MS_LOG(ERROR) << "SchedulePartialToSubGraphKernel failed, subgraph_index: " << subgraph_index;
+    return {};
+  }
   subgraph_kernel->set_name("subgraph_" + std::to_string(subgraph_index));
   return subgraph_kernel;
 }
@@ -1176,7 +1180,7 @@ kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgra
   auto ret = ScheduleSubGraphToKernels(subgraph_index, &kernels, &in_tensors, &out_tensors, prefer_data_type);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule subgraph failed, index: " << subgraph_index;
-    return {};
+    return nullptr;
   }
   FindAllInoutKernels(kernels);
   kernel::SubGraphType cur_sub_graph_type = kernel::kCpuFP32SubGraph;
@@ -1267,8 +1271,8 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
   MS_ASSERT(dst_kernels != nullptr);
   MS_ASSERT(dst_kernels->empty());
   auto subgraph = src_model_->sub_graphs_.at(subgraph_index);
+  auto ret = RET_OK;
   for (auto node_index : subgraph->node_indices_) {
-    auto ret = RET_OK;
     auto node = src_model_->all_nodes_[node_index];
     MS_ASSERT(node != nullptr);
     auto *primitive = node->primitive_;

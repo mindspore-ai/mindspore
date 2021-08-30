@@ -25,7 +25,7 @@
 
 namespace mindspore {
 
-std::shared_ptr<ActorMgr> ActorMgr::actorMgr = std::make_shared<ActorMgr>();
+ActorMgr ActorMgr::actorMgr;
 std::map<std::string, std::shared_ptr<IOMgr>> ActorMgr::ioMgrs;
 
 std::shared_ptr<IOMgr> &ActorMgr::GetIOMgrRef(const std::string &protocol) {
@@ -73,6 +73,7 @@ void ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t m
 void ActorMgr::SetActorReady(const ActorReference &actor) const {
   // use inner thread pool or actor thread pool created externally
   // priority to use actor thread pool
+  MINDRT_OOM_EXIT(actor);
   ActorThreadPool *pool = actor->pool_ ? actor->pool_ : inner_pool_;
   if (pool == nullptr) {
     MS_LOG(ERROR) << "ThreadPool is nullptr, " << actor->pool_ << ", " << inner_pool_
