@@ -8916,3 +8916,117 @@ class HShrink(Primitive):
         if lambd < 0.0:
             lambd = 0.0
             self.add_prim_attr('lambd', lambd)
+
+
+class ApplyAdagradDA(Primitive):
+    r"""
+    Update `var` according to the proximal adagrad scheme.
+
+    .. math::
+        \begin{array}{ll} \\
+            grad_accum += grad \\
+            grad_squared_accum += grad * grad \\
+            tmp_val=sign(grad_accum) * max\left \{|grad_accum|-l1*global_step, 0\right \}
+                    if l1>0 else grad_accum \\
+            x_value = -1 * lr * tmp_val \\
+            y_value = l2 * global_step * lr + \sqrt{grad_squared_accum} \\
+            var = x_value / y_value
+        \end{array}
+
+    Inputs of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
+    comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
+    Args:
+        use_locking (bool): If `True`, updating of the `var` and `accum` tensors will be protected by a lock.
+                            Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
+
+    Inputs:
+        - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **gradient_accumulator** (Parameter) - The dict of mutable tensor gradient_accumulator. Must have the same
+          shape and dtype as `var`.
+        - **gradient_squared_accumulator** (Parameter) - The dict of mutable tensor gradient_squared_accumulator.
+          Must have the same shape and dtype as `var`.
+        - **grad** (Tensor) - A tensor for gradient. Must have the same shape and dtype as `var`.
+        - **lr** ([Number, Tensor]) - Scaling factor. Must be a scalar. With float32 or float16 data type.
+        - **l1** ([Number, Tensor]) -  L1 regularization. Must be a scalar. With float32 or float16 data type.
+        - **l2** ([Number, Tensor]) -  L2 regularization. Must be a scalar. With float32 or float16 data type.
+        - **global_step** ([Number, Tensor]) - Training step number. Must be a scalar. With int32 or int64 data type.
+
+    Outputs:
+        Tuple of 3 Tensors, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **gradient_accumulator** (Tensor) - The same shape and data type as `gradient_accumulator`.
+        - **gradient_squared_accumulator** (Tensor) - The same shape and data type as `gradient_squared_accumulator`.
+
+    Raises:
+        TypeError: If `var`, `gradient_accumulator`, `gradient_squared_accumulator` is not a Parameter.
+        TypeError: If `grad` is not a Tensor.
+        TypeError: If `lr`, `l1`, `l2` or `global_step` is neither a Number nor a Tensor.
+        TypeError: If use_locking is not a bool.
+        TypeError: If dtype of `var`, `gradient_accumulator`, `gradient_squared_accumulator`, `gradient_accumulator`,
+                   `lr`, `l1`, `l2` is neither float16 nor float32.
+        TypeError: If dtype of `gradient_accumulator`, `gradient_squared_accumulator`, `gradient_accumulator`
+                     is not same as `var`.
+        TypeError: If dtype of `global_step` is not int32 or int64.
+        ValueError: If the shape size of `lr`, `l1`, `l2` and `global_step` is not 0.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> class ApplyAdagradDANet(nn.Cell):
+        ...     def __init__(self, use_locking=False):
+        ...         super(ApplyAdagradDANet, self).__init__()
+        ...         self.apply_adagrad_d_a = P.ApplyAdagradDA(use_locking)
+        ...         self.var = Parameter(Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32)), name="var")
+        ...         self.gradient_accumulator = Parameter(Tensor(np.array([[0.1, 0.3],
+        ...                                                                [0.1, 0.5]]).astype(np.float32)),
+        ...                                               name="gradient_accumulator")
+        ...         self.gradient_squared_accumulator = Parameter(Tensor(np.array([[0.2, 0.1],
+        ...                                                                        [0.1, 0.2]]).astype(np.float32)),
+        ...                                                       name="gradient_squared_accumulator")
+        ...         self.gradient_accumulator = Parameter(Tensor(np.array([[0.1, 0.3],
+        ...                                                                [0.1, 0.5]]).astype(np.float32)),
+        ...                                               name="gradient_accumulator")
+        ...     def construct(self, grad, lr, l1, l2, global_step):
+        ...         out = self.apply_adagrad_d_a(self.var, self.gradient_accumulator,
+        ...                                      self.gradient_squared_accumulator, grad, lr, l1, l2, global_step)
+        ...         return out
+        ...
+        >>> net = ApplyAdagradDANet()
+        >>> grad = Tensor(np.array([[0.3, 0.4], [0.1, 0.2]]).astype(np.float32))
+        >>> lr = Tensor(0.001, mstype.float32)
+        >>> l1 = Tensor(0.001, mstype.float32)
+        >>> l2 = Tensor(0.001, mstype.float32)
+        >>> global_step = Tensor(2, mstype.int32)
+        >>> output = net(grad, lr, l1, l2, global_step)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[-7.39064650e-04, -1.36888528e-03],
+         [-5.96988888e-04, -1.42478070e-03]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 4.00000006e-01,  7.00000048e-01],
+         [ 2.00000003e-01,  6.99999988e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.90000021e-01,  2.60000020e-01],
+         [ 1.09999999e-01,  2.40000010e-01]]))
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('gradient_accumulator', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('gradient_squared_accumulator', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T1),
+        sig.make_sig('l1', dtype=sig.sig_dtype.T2),
+        sig.make_sig('l2', dtype=sig.sig_dtype.T3),
+        sig.make_sig('global_step', dtype=sig.sig_dtype.T4)
+    )
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ApplyAdagradDA"""
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)

@@ -1013,6 +1013,20 @@ class EditDistance(nn.Cell):
                                   truth_indices, truth_values, self.truth_shape)
 
 
+class ApplyAdagradDANet(nn.Cell):
+    def __init__(self, use_locking=False):
+        super(ApplyAdagradDANet, self).__init__()
+        self.apply_adagrad_d_a = P.ApplyAdagradDA(use_locking)
+        self.var = Parameter(Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32)), name="var")
+        self.gradient_accumulator = Parameter(Tensor(np.array([[0.1, 0.3], [0.1, 0.5]]).astype(np.float32)),
+                                              name="gradient_accumulator")
+        self.gradient_squared_accumulator = Parameter(Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32)),
+                                                      name="gradient_squared_accumulator")
+    def construct(self, grad, lr, l1, l2, global_step):
+        out = self.apply_adagrad_d_a(self.var, self.gradient_accumulator, self.gradient_squared_accumulator, grad,
+                                     lr, l1, l2, global_step)
+        return out
+
 test_case_math_ops = [
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
@@ -2257,6 +2271,14 @@ test_case_nn_ops = [
         'block': G.HShrinkGrad(),
         'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]), mstype.float16),
                         Tensor(np.array([[-4, -3, -2], [1, 2, 4]]), mstype.float16)],
+        'skip': ['backward']}),
+    ('ApplyAdagradDA', {
+        'block': ApplyAdagradDANet(),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.4], [0.1, 0.2]]).astype(np.float32)),
+                        Tensor(0.001, mstype.float32),
+                        Tensor(0.001, mstype.float32),
+                        Tensor(0.001, mstype.float32),
+                        Tensor(2, mstype.int32)],
         'skip': ['backward']}),
 ]
 

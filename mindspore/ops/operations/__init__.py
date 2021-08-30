@@ -84,7 +84,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      TopK, BinaryCrossEntropy, KLDivLoss, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
                      ApplyProximalAdagrad, SparseApplyProximalAdagrad, SparseApplyAdagradV2, SparseApplyFtrlV2,
                      FusedSparseFtrl, FusedSparseProximalAdagrad,
-                     ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
+                     ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2, ApplyAdagradDA,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink)
 from . import _quant_ops
@@ -416,6 +416,7 @@ __all__ = [
     "ApplyAdadelta",
     "ApplyAdagrad",
     "ApplyAdagradV2",
+    "ApplyAdagradDA",
     "ApplyAddSign",
     "ApplyPowerSign",
     "ApplyGradientDescent",
