@@ -54,6 +54,12 @@ void DeConvInt8CPUKernel::FreeTmpBuffer() {
 }
 
 int DeConvInt8CPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
+  CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
+  CHECK_NULL_RETURN(conv_param_);
+  CHECK_NULL_RETURN(matmul_param_);
+
   FreeTmpBuffer();
 
   int error_code = ConvolutionBaseCPUKernel::Init();
@@ -67,12 +73,6 @@ int DeConvInt8CPUKernel::ReSize() {
     return error_code;
   }
 
-  error_code = InitBiasWeight();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv int8 InitBiasWeight error!";
-    return error_code;
-  }
-
   error_code = InitData();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv int8 InitData error!";
@@ -82,8 +82,15 @@ int DeConvInt8CPUKernel::ReSize() {
 }
 
 int DeConvInt8CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
+  CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
+  CHECK_NULL_RETURN(conv_param_);
+
+  matmul_param_ = new (std::nothrow) MatMulParameter();
+  if (matmul_param_ == nullptr) {
+    MS_LOG(ERROR) << "new MatMulParameter fail!";
+    return RET_ERROR;
   }
 
   CheckSupportOptimize();
@@ -92,6 +99,15 @@ int DeConvInt8CPUKernel::Init() {
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv int8 SetQuantParam error!";
     return error_code;
+  }
+  error_code = InitBiasWeight();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv int8 InitBiasWeight error!";
+    return error_code;
+  }
+
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   return ReSize();
 }
@@ -112,17 +128,13 @@ void DeConvInt8CPUKernel::CheckSupportOptimize() {
 }
 
 int DeConvInt8CPUKernel::InitParam() {
-  matmul_param_ = new (std::nothrow) MatMulParameter();
-  if (matmul_param_ == nullptr) {
-    MS_LOG(ERROR) << "new MatMulParameter fail!";
-    return RET_ERROR;
-  }
   matmul_param_->row_ = conv_param_->input_h_ * conv_param_->input_w_;
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_ * conv_param_->kernel_h_ * conv_param_->kernel_w_;
 
   int oc4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   thread_count_ = MSMIN(op_parameter_->thread_num_, oc4);
+  NNACL_CHECK_ZERO_RETURN_ERR(thread_count_);
   thread_stride_ = UP_DIV(oc4, thread_count_);
   return RET_OK;
 }
@@ -136,7 +148,11 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
   }
   memset(bias_data_, 0, size);
   if (in_tensors_.size() == kInputSize2) {
-    memcpy(bias_data_, in_tensors_.at(0)->MutableData(), conv_param_->output_channel_ * sizeof(int32_t));
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
+    CHECK_NULL_RETURN(bias_tensor);
+    auto ori_bias = bias_tensor->data_c();
+    CHECK_NULL_RETURN(ori_bias);
+    memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(int32_t));
   }
 
   size = UP_ROUND(conv_param_->output_channel_, C4NUM) * UP_ROUND(conv_param_->input_channel_, C16NUM) *
@@ -254,8 +270,12 @@ int DeConvInt8CPUKernel::DoDeconv(int task_id) {
 }
 
 int DeConvInt8CPUKernel::Run() {
-  int8_t *src_in = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
-  int8_t *src_out = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto output_tensor = out_tensors_.at(kOutputIndex);
+  auto src_in = reinterpret_cast<int8_t *>(input_tensor->data_c());
+  auto src_out = reinterpret_cast<int8_t *>(output_tensor->data_c());
+  CHECK_NULL_RETURN(src_in);
+  CHECK_NULL_RETURN(src_out);
 
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
@@ -284,7 +304,9 @@ int DeConvInt8CPUKernel::Run() {
 kernel::InnerKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(op_parameter != nullptr);
+  MS_CHECK_TRUE_RET(op_parameter != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(ctx != nullptr, nullptr);
+
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);

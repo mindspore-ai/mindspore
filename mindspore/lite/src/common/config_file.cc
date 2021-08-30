@@ -97,16 +97,18 @@ void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
   for (auto info : *config_infos) {
     std::string op_name = info.first;
     std::string value = info.second;
-    if (value[0] == '"') {
+    if (value[0] == '"' && value[value.length() - 1] == '"') {
       value = value.substr(1, value.length() - 2);
     }
     auto index = value.find(':');
     if (index == std::string::npos) {
+      MS_LOG(WARNING) << "Invalid info in execution_plan: " << value;
       continue;
     }
     auto data_type_key = value.substr(0, index);
     auto data_type_value = value.substr(index + 1);
     if (data_type_key != "data_type") {
+      MS_LOG(WARNING) << "Invalid key in execution_plan: " << value;
       continue;
     }
     TypeId type_id = kTypeUnknown;
@@ -115,6 +117,7 @@ void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
     } else if (data_type_value == "float16") {
       type_id = kNumberTypeFloat16;
     } else {
+      MS_LOG(WARNING) << "Invalid value in execution_plan: " << value;
       continue;
     }
     data_type_plan->insert(std::make_pair(op_name, type_id));
