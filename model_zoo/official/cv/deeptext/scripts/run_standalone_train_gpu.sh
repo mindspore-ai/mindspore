@@ -36,6 +36,10 @@ PATH3=$(get_real_path $3)
 echo $PATH3
 PATH4=$(get_real_path $4)
 echo $PATH4
+DEVICE_ID=0
+if [ $# == 5 ]; then
+    DEVICE_ID=$5
+fi
 
 if [ ! -f $PATH3 ]
 then 
@@ -56,11 +60,18 @@ cp ../*.yaml ./train
 cp *.sh ./train
 cp -r ../src ./train
 cp -r ../model_utils ./train
-cd ./train_parallel || exit
+cd ./train || exit
 
 export RANK_SIZE=1
 cp $PATH4 ../src/
 
 echo "======start training======"
 
-CUDA_VISIBLE_DEVICE=$DEVICE_ID python train.py --imgs_path=$PATH1 --annos_path=$PATH2 --run_distribute=False --device_target="GPU" --pre_trained=$PATH3 > log &
+export CUDA_VISIBLE_DEVICES=$DEVICE_ID
+python train.py \
+  --imgs_path=$PATH1 \
+  --annos_path=$PATH2 \
+  --run_distribute=False \
+  --device_target="GPU" \
+  --export_device_target="GPU" \
+  --pre_trained=$PATH3 > log.txt 2>&1 &

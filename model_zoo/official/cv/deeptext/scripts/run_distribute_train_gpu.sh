@@ -63,5 +63,12 @@ cp $PATH4 ../src/
 
 echo "======start training======"
 
-mpirun -n $RANK_SIZE python train.py --imgs_path=$PATH1 --annos_path=$PATH2 --run_distribute=True --device_target="GPU" --pre_trained=$PATH3 > log &
+mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
+nohup python train.py \
+  --imgs_path=$PATH1 \
+  --annos_path=$PATH2 \
+  --run_distribute=True \
+  --device_target="GPU" \
+  --export_device_target="GPU" \
+  --pre_trained=$PATH3 > log.txt 2>&1 &
 cd ..
