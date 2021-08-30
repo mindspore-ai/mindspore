@@ -21,6 +21,7 @@ void LayerNormFp16Grad(const float16_t *x, const float16_t *dy, const float16_t 
                        const float16_t *gamma, int param_num, int param_size, int block_num, int block_size,
                        float16_t *dx, float16_t *dg, float16_t *db) {
   // var is actually 1/sqrf(var)-> var^0.5
+  NNACL_CHECK_ZERO_RETURN(block_size);
   const float16_t *var_sqrt_rev = var;
   for (size_t i = 0; i < param_num; ++i) {
     float dgamma = 0.0f;

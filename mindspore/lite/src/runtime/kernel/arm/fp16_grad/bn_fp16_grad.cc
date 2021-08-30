@@ -45,6 +45,17 @@ constexpr int kNumOutputDim_2 = 2;
 constexpr int kNumJobs = 4;
 }  // namespace
 int BNGradCPUKernelFp16::ReSize() {
+  CHECK_NULL_RETURN(op_parameter_);
+  CHECK_LESS_RETURN(in_tensors_.size(), 5);
+  CHECK_LESS_RETURN(out_tensors_.size(), 3);
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_0));
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_1));
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_2));
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_3));
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_4));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_NULL_RETURN(out_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(kNumOutputDim_2));
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
   ws_size_ = 2 * channels;
@@ -77,7 +88,9 @@ int BNGradCPUKernelFp16::Execute(int task_id) {
   int stage = stage_;
   int thread_num = thread_num_;
   float16_t *save_mean = reinterpret_cast<float16_t *>(input_mean->data_c());
+  CHECK_NULL_RETURN(save_mean);
   float16_t *save_var = reinterpret_cast<float16_t *>(input_var->data_c());
+  CHECK_NULL_RETURN(save_var);
 
   auto *output_dx = out_tensors_.at(0);
   auto *output_scale = out_tensors_.at(1);
@@ -87,6 +100,7 @@ int BNGradCPUKernelFp16::Execute(int task_id) {
   int32_t spatial = input_x->Height() * input_x->Width();
 
   float *workspace_temp = static_cast<float *>(workspace());
+  CHECK_NULL_RETURN(workspace_temp);
   float *dxhat_sum = workspace_temp;
   float *dxhathat_sum = dxhat_sum + channels;
   float16_t *x = reinterpret_cast<float16_t *>(input_x->data_c());
@@ -137,7 +151,7 @@ int BNGradCPUKernelFp16::Execute(int task_id) {
 }
 
 int BNGradFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto bn_kernel = reinterpret_cast<BNGradCPUKernelFp16 *>(cdata);
   auto error_code = bn_kernel->Execute(task_id);
   if (error_code != RET_OK) {

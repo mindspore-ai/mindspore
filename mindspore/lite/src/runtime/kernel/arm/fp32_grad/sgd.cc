@@ -70,9 +70,13 @@ int DoSgdInit(float *weight, float *accumulate, float *gradient, float *stat, fl
 
 int SgdCPUKernel::Execute(int task_id) {
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(weight);
   auto accumulate = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
+  CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
   auto gradient = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(gradient);
+  CHECK_NULL_RETURN(in_tensors_.at(4)->MutableData());
   float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
   int length = in_tensors_.at(0)->ElementsNum();
 
@@ -90,13 +94,18 @@ int SgdCPUKernel::Execute(int task_id) {
 
 int SgdCPUKernel::ExecuteInit(int task_id) {
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(weight);
   auto accumulate = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
+  CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
   auto gradient = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(gradient);
+  CHECK_NULL_RETURN(in_tensors_.at(4)->MutableData());
   float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
   auto stat = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
+  CHECK_NULL_RETURN(stat);
   int length = in_tensors_.at(0)->ElementsNum();
-
+  MS_CHECK_GT(thread_count_, 0, RET_ERROR);
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
 
@@ -111,6 +120,7 @@ int SgdCPUKernel::ExecuteInit(int task_id) {
 
 int SgdRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sgd_kernel = reinterpret_cast<SgdCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(sgd_kernel);
   auto error_code = RET_OK;
   if (sgd_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
     error_code = sgd_kernel->ExecuteVirtualBatch(task_id);
@@ -126,6 +136,7 @@ int SgdRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int SgdRunInit(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sgd_kernel = reinterpret_cast<SgdCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(sgd_kernel);
   auto error_code = RET_OK;
   if (sgd_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
     error_code = sgd_kernel->ExecuteVirtualBatch(task_id);
@@ -141,6 +152,7 @@ int SgdRunInit(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int SgdCPUKernel::Run() {
   auto stat = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
+  CHECK_NULL_RETURN(stat);
   auto error_code = RET_OK;
   if (*stat > 0.0f) {
     error_code = ParallelLaunch(this->ms_context_, SgdRunInit, this, thread_count_);
@@ -155,6 +167,14 @@ int SgdCPUKernel::Run() {
 }
 
 int SgdCPUKernel::Init() {
+  CHECK_NULL_RETURN(sgd_param_);
+  CHECK_LESS_RETURN(in_tensors_.size(), 6);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(in_tensors_.at(2));
+  CHECK_NULL_RETURN(in_tensors_.at(3));
+  CHECK_NULL_RETURN(in_tensors_.at(4));
+  CHECK_NULL_RETURN(in_tensors_.at(5));
   if (sgd_param_->dampening_ < 0.0f) {
     MS_LOG(ERROR) << "dampening should be at least 0.0";
     return RET_ERROR;
@@ -174,9 +194,13 @@ int SgdCPUKernel::Init() {
 
 int SgdCPUKernel::OptimizerStep() {
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+
   auto accumulate = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
+  CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
   auto stat = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
+  CHECK_NULL_RETURN(stat);
+  CHECK_NULL_RETURN(in_tensors_.at(4)->MutableData());
   float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
   size_t length = in_tensors_.at(0)->ElementsNum();
 
@@ -199,6 +223,7 @@ int SgdCPUKernel::OptimizerStep() {
 kernel::InnerKernel *CpuSgdFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SGD);
   auto *kernel =
     new (std::nothrow) SgdCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

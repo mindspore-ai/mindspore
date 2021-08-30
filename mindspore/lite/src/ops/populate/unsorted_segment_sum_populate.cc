@@ -20,7 +20,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateUnsortedSegmentSumParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
 
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {

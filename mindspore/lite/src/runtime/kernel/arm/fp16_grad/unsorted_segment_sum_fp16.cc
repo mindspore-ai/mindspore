@@ -30,6 +30,11 @@ using mindspore::schema::PrimitiveType_UnsortedSegmentSum;
 
 namespace mindspore::kernel {
 int UnsortedSegmentSumCPUKernelFp16::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -55,8 +60,9 @@ int UnsortedSegmentSumCPUKernelFp16::Init() {
 int UnsortedSegmentSumCPUKernelFp16::ReSize() { return RET_OK; }
 
 int UnsortedSegmentSumFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<UnsortedSegmentSumCPUKernelFp16 *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto error_code = kernel->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "UnsortedSegmentSum Run error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -75,15 +81,17 @@ int UnsortedSegmentSumCPUKernelFp16::Run() {
 }
 
 int UnsortedSegmentSumCPUKernelFp16::Execute(int task_id) {
-  int ret;
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);
   auto output_tensor = out_tensors_.at(0);
   float16_t *input = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  CHECK_NULL_RETURN(input);
   int *indices = reinterpret_cast<int *>(indices_tensor->data_c());
+  CHECK_NULL_RETURN(indices);
   float16_t *output = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  CHECK_NULL_RETURN(output);
   std::fill(output, output + output_tensor->ElementsNum(), 0.f);
-  ret = UnsortedSegmentSumFp16(input, unit_num_, input_dim1_, indices, output, output_dim0_, output_dim1_);
+  int ret = UnsortedSegmentSumFp16(input, unit_num_, input_dim1_, indices, output, output_dim0_, output_dim1_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsortedSegmentSumFp16 error error_code[" << ret << "]";
     return RET_ERROR;

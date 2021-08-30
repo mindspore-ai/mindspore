@@ -31,7 +31,13 @@ using mindspore::schema::PrimitiveType_MaxPoolGrad;
 namespace mindspore::kernel {
 int PoolingGradCPUKernel::ReSize() {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
-
+  CHECK_NULL_RETURN(pool_param);
+  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(in_tensors_.at(2));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   auto in_shape = in_tensors_.at(0)->shape();
   auto out_shape = in_tensors_.at(1)->shape();
 
@@ -64,7 +70,9 @@ int PoolingGradCPUKernel::Init() { return ReSize(); }
 int PoolingGradCPUKernel::Execute(int task_id) {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(input_ptr);
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(output_ptr);
   int stride = UP_DIV(pool_param->output_batch_, thread_num_);
   int count = MSMIN(stride, pool_param->output_batch_ - stride * task_id);
   if (count > 0) {
@@ -86,7 +94,7 @@ int PoolingGradCPUKernel::Execute(int task_id) {
 }
 
 int PoolingGradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto pooling = reinterpret_cast<PoolingGradCPUKernel *>(cdata);
   auto error_code = pooling->Execute(task_id);
   if (error_code != RET_OK) {
@@ -111,7 +119,6 @@ kernel::InnerKernel *CpuPoolingGradFp32KernelCreator(const std::vector<lite::Ten
                                                      OpParameter *opParameter, const lite::Context *ctx,
                                                      const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
-
   auto *kernel =
     new (std::nothrow) PoolingGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {

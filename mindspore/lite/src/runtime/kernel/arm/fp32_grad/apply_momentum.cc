@@ -47,9 +47,13 @@ static int DoApplyMomentum(float *weight, float *accumulate, float learning_rate
 
 int ApplyMomentumCPUKernel::Execute(int task_id) {
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(weight);
   auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
   auto gradient = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
+  CHECK_NULL_RETURN(gradient);
+  CHECK_NULL_RETURN(in_tensors_.at(4)->MutableData());
   float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
   int length = in_tensors_.at(0)->ElementsNum();
 
@@ -65,7 +69,7 @@ int ApplyMomentumCPUKernel::Execute(int task_id) {
 }
 
 int ApplyMomentumRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto applyMomentum_kernel = reinterpret_cast<ApplyMomentumCPUKernel *>(cdata);
   auto error_code = RET_OK;
   if (applyMomentum_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
@@ -90,6 +94,13 @@ int ApplyMomentumCPUKernel::Run() {
 }
 
 int ApplyMomentumCPUKernel::Init() {
+  CHECK_NULL_RETURN(apply_momentum_param_);
+  CHECK_LESS_RETURN(in_tensors_.size(), 5);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(in_tensors_.at(2));
+  CHECK_NULL_RETURN(in_tensors_.at(3));
+  CHECK_NULL_RETURN(in_tensors_.at(4));
   auto ret = OptimizerKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Failed to initialize Apply Momentum Kernel";
@@ -100,9 +111,13 @@ int ApplyMomentumCPUKernel::Init() {
 
 int ApplyMomentumCPUKernel::OptimizerStep() {
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(weight);
   auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
+  CHECK_NULL_RETURN(in_tensors_.at(4)->MutableData());
   float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+
   size_t length = in_tensors_.at(0)->ElementsNum();
 
   if (grad_sum_ != nullptr && valid_grad_sum_) {

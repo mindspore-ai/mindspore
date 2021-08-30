@@ -22,6 +22,8 @@ static size_t CalcIndex(const int *shape, size_t size, int i, size_t pos) {
   for (size_t j = 0; j < size; j++) {
     res *= shape[((size_t)(i) + 1) + j];
   }
+  NNACL_CHECK_ZERO_RETURN_ERR(res);
+  NNACL_CHECK_ZERO_RETURN_ERR(shape[i]);
   return (pos / res % shape[i]);
 }
 

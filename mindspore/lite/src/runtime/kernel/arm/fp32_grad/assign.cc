@@ -31,9 +31,10 @@ int AssignCPUKernel::ReSize() { return RET_OK; }
 
 int AssignCPUKernel::Execute(int task_id) {
   auto x = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(x);
   auto y = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(y);
   int length = in_tensors_.at(0)->ElementsNum();
-
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
 
@@ -46,7 +47,7 @@ int AssignCPUKernel::Execute(int task_id) {
 }
 
 int AssignRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto Assign_kernel = reinterpret_cast<AssignCPUKernel *>(cdata);
   auto error_code = Assign_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -65,7 +66,14 @@ int AssignCPUKernel::Run() {
   return RET_OK;
 }
 
-int AssignCPUKernel::Init() { return RET_OK; }
+int AssignCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
+  return RET_OK;
+}
 
 kernel::InnerKernel *CpuAssignFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,

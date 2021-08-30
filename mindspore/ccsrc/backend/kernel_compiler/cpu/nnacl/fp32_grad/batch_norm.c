@@ -30,6 +30,7 @@ void backwardAll(const float *restrict in, const float *restrict yt, const float
                  const float *restrict invar, const float *restrict scale, int size, int ch, float *restrict dxhat_sum,
                  float *restrict dxhathat_sum, float *restrict dbias, float *restrict dscale, float *restrict dx) {
 #endif
+  NNACL_CHECK_ZERO_RETURN(size);
   float N = (float)size;
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {
@@ -86,6 +87,7 @@ void backwardP2(const float *restrict in, const float *restrict yt, const float 
                 const float *restrict invar, const float *restrict scale, int size, int total_size, int ch,
                 const float *dxhat_sum, const float *dxhathat_sum, float *restrict dx) {
 #endif
+  NNACL_CHECK_ZERO_RETURN(total_size);
   const float N = (float)total_size;
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {

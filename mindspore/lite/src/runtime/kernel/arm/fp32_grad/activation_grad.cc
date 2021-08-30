@@ -34,6 +34,11 @@ using mindspore::schema::PrimitiveType_ActivationGrad;
 
 namespace mindspore::kernel {
 int ActivationGradCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   if (in_tensors_.size() < 2) {
     MS_LOG(ERROR) << "ActivationGrad should have more than 2 input tensors";
     return RET_ERROR;
@@ -45,8 +50,11 @@ int ActivationGradCPUKernel::ReSize() { return RET_OK; }
 
 int ActivationGradCPUKernel::DoActivation(int task_id) {
   const auto yt_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(yt_addr);
   const auto input_addr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(input_addr);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(output_addr);
   int length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);
@@ -86,7 +94,7 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
 }
 
 int ActivationGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto activationGrad_kernel = reinterpret_cast<ActivationGradCPUKernel *>(cdata);
   auto error_code = activationGrad_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {

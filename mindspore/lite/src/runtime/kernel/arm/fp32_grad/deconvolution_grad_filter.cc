@@ -32,13 +32,16 @@ int DeConvolutionGradFilterCPUKernel::Init() {
   // dy is in input 0
   // x is in input 1
   // dw is output 0
-
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   auto *x_tensor = in_tensors_.at(1);
-  MS_ASSERT(x_tensor != nullptr);
   auto *dy_tensor = in_tensors_.at(0);
-  MS_ASSERT(dy_tensor != nullptr);
 
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(conv_param);
   conv_param->output_batch_ = dy_tensor->shape().at(kNHWC_N);
   conv_param->input_batch_ = x_tensor->shape().at(kNHWC_N);
   conv_param->input_h_ = x_tensor->shape().at(kNHWC_H);
@@ -71,8 +74,11 @@ int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto *out_dw = out_tensors_.at(0);
 
   auto x_addr = reinterpret_cast<float *>(input_x->MutableData());
+  CHECK_NULL_RETURN(x_addr);
   auto dy_addr = reinterpret_cast<float *>(input_dy->MutableData());
+  CHECK_NULL_RETURN(dy_addr);
   auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
+  CHECK_NULL_RETURN(dw_addr);
 
   int i, j;
   int in_ch = conv_param->input_channel_;
@@ -90,6 +96,7 @@ int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
   const int n = k_h * k_w * out_ch / groups;
 
   float *workspace_temp = reinterpret_cast<float *>(workspace());
+  CHECK_NULL_RETURN(workspace_temp);
   float *mat_workspace = workspace_temp + ws_size;
   // zero out pointer
   memset(dw_addr, 0, out_dw->Size());
@@ -111,6 +118,7 @@ int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
 }
 
 int DeConvolutionGradFilterRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto convfilter_kernel = reinterpret_cast<DeConvolutionGradFilterCPUKernel *>(cdata);
   auto error_code = convfilter_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -133,7 +141,6 @@ kernel::InnerKernel *CpuDeConvGradFilterFp32KernelCreator(const std::vector<lite
                                                           const std::vector<lite::Tensor *> &outputs,
                                                           OpParameter *opParameter, const lite::Context *ctx,
                                                           const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2DGradFilter);
 
   auto *kernel = new (std::nothrow)

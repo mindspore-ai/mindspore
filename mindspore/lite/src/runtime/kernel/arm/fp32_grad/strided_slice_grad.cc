@@ -35,8 +35,13 @@ int StridedSliceGradCPUKernel::Init() {
     return RET_OK;
   }
   param_ = reinterpret_cast<StridedSliceParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param_);
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   auto input = in_tensors_.at(0);
-  MS_ASSERT(input);
+  CHECK_NULL_RETURN(input);
   switch (input->data_type()) {
     case kNumberTypeFloat32:
       param_->data_type = kDataTypeFloat;
@@ -111,7 +116,7 @@ void StridedSliceGradCPUKernel::FillOutputDim() {
 int StridedSliceGradCPUKernel::ReSize() { return RET_OK; }
 
 int StridedSliceGradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto slice = reinterpret_cast<StridedSliceGradCPUKernel *>(cdata);
   auto error_code = slice->Execute(task_id);
   if (error_code != RET_OK) {
@@ -133,12 +138,13 @@ int StridedSliceGradCPUKernel::Run() {
 int StridedSliceGradCPUKernel::Execute(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  MS_ASSERT(output);
 
   int *po = output_shape_.data();
   auto dx = reinterpret_cast<float *>(output->MutableData());
   auto dy = reinterpret_cast<float *>(input->MutableData());
-
+  CHECK_NULL_RETURN(po);
+  CHECK_NULL_RETURN(dx);
+  CHECK_NULL_RETURN(dy);
   std::fill(dx, dx + output->ElementsNum(), 0.f);
   auto ret = DoStridedSliceGrad(dy, dx, po, param_);
   if (ret != RET_OK) {

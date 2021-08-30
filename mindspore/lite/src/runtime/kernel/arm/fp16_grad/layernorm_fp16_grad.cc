@@ -44,7 +44,18 @@ int LayerNormGradCPUKernelFp16::ReSize() { return RET_OK; }
 
 int LayerNormGradCPUKernelFp16::Init() {
   auto lngrad_param = reinterpret_cast<LayerNormGradParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(lngrad_param);
+  CHECK_LESS_RETURN(in_tensors_.size(), 5);
+  CHECK_LESS_RETURN(out_tensors_.size(), 3);
   auto *input_x = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input_x);
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_1));
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_2));
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_3));
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_4));
+  CHECK_NULL_RETURN(out_tensors_.at(kNumOutputDim_0));
+  CHECK_NULL_RETURN(out_tensors_.at(kNumOutputDim_1));
+  CHECK_NULL_RETURN(out_tensors_.at(kNumOutputDim_2));
   std::vector<int> x_shape = input_x->shape();
   int begin_norm_axis = lngrad_param->begin_norm_axis_;
   if (begin_norm_axis < 0) {
@@ -83,20 +94,29 @@ int LayerNormGradCPUKernelFp16::Execute(int task_id) {
   auto output_db = out_tensors_.at(kNumOutputDim_2);
 
   float16_t *x = reinterpret_cast<float16_t *>(input_x->data_c());
+  CHECK_NULL_RETURN(x);
   float16_t *dy = reinterpret_cast<float16_t *>(input_dy->data_c());
+  CHECK_NULL_RETURN(dy);
   float16_t *var = reinterpret_cast<float16_t *>(input_var->data_c());
+  CHECK_NULL_RETURN(var);
   float16_t *mean = reinterpret_cast<float16_t *>(input_mean->data_c());
+  CHECK_NULL_RETURN(mean);
   float16_t *gamma = reinterpret_cast<float16_t *>(input_gamma->data_c());
+  CHECK_NULL_RETURN(gamma);
   float16_t *dx = reinterpret_cast<float16_t *>(output_dx->data_c());
+  CHECK_NULL_RETURN(dx);
   float16_t *dg = reinterpret_cast<float16_t *>(output_dg->data_c());
+  CHECK_NULL_RETURN(dg);
   float16_t *db = reinterpret_cast<float16_t *>(output_db->data_c());
+  CHECK_NULL_RETURN(db);
   LayerNormFp16Grad(x, dy, var, mean, gamma, param_num_, param_size_, block_num_, block_size_, dx, dg, db);
   return RET_OK;
 }
 
 int LayerNormF16GradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto ln_kernel = reinterpret_cast<LayerNormGradCPUKernelFp16 *>(cdata);
+  CHECK_NULL_RETURN(ln_kernel);
   auto error_code = ln_kernel->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "LayerNormGradRun error task_id[" << task_id << "] error_code[" << error_code << "]";
