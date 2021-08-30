@@ -28,6 +28,7 @@
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
+#include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 
@@ -140,6 +141,17 @@ PYBIND_REGISTER(
           THROW_IF_ERROR(frequency_masking->ValidateParams());
           return frequency_masking;
         }));
+  }));
+
+PYBIND_REGISTER(
+  LowpassBiquadOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::LowpassBiquadOperation, TensorOperation, std::shared_ptr<audio::LowpassBiquadOperation>>(
+      *m, "LowpassBiquadOperation")
+      .def(py::init([](int sample_rate, float cutoff_freq, float Q) {
+        auto lowpass_biquad = std::make_shared<audio::LowpassBiquadOperation>(sample_rate, cutoff_freq, Q);
+        THROW_IF_ERROR(lowpass_biquad->ValidateParams());
+        return lowpass_biquad;
+      }));
   }));
 
 PYBIND_REGISTER(

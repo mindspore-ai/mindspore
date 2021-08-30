@@ -25,7 +25,8 @@ import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_masking, check_time_stretch
+    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_lowpass_biquad, check_masking, \
+    check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -297,6 +298,34 @@ class FrequencyMasking(AudioTensorOperation):
     def parse(self):
         return cde.FrequencyMaskingOperation(self.iid_masks, self.frequency_mask_param, self.mask_start,
                                              self.mask_value)
+
+
+class LowpassBiquad(AudioTensorOperation):
+    """
+    Design biquad lowpass filter and perform filtering. Similar to SoX implementation.
+
+    Args:
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        cutoff_freq (float): Filter cutoff frequency.
+        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
+        ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.LowpassBiquad(4000, 1500, 0.7)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+    @check_lowpass_biquad
+    def __init__(self, sample_rate, cutoff_freq, Q=0.707):
+        self.sample_rate = sample_rate
+        self.cutoff_freq = cutoff_freq
+        self.Q = Q
+
+    def parse(self):
+        return cde.LowpassBiquadOperation(self.sample_rate, self.cutoff_freq, self.Q)
 
 
 class TimeMasking(AudioTensorOperation):

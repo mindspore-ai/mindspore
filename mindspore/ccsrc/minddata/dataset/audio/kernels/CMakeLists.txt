@@ -12,6 +12,7 @@ add_library(audio-kernels OBJECT
         bass_biquad_op.cc
         complex_norm_op.cc
         frequency_masking_op.cc
+        lowpass_biquad_op.cc
         time_masking_op.cc
         time_stretch_op.cc
         )
