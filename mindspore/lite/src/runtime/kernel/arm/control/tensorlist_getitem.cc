@@ -24,13 +24,10 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListGetItem;
-namespace {
-constexpr int kNumInputSize = 2;
-}
 
 namespace mindspore::kernel {
 int TensorListGetItemCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
+  CHECK_LESS_RETURN(in_tensors_.size(), kInputSize1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));
   CHECK_NULL_RETURN(in_tensors_.at(1));

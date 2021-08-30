@@ -34,6 +34,7 @@ int SliceInt8CPUKernel::Init() {
   auto output = out_tensors_.at(0);
   CHECK_NULL_RETURN(input);
   CHECK_NULL_RETURN(output);
+  CHECK_NULL_RETURN(param_);
 
   auto in_quant_args = input->quant_params();
   param_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;

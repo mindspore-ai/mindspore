@@ -76,6 +76,7 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     if (!TensorListIsFullyDefined(element_shape, element_shape_size)) {
       for (size_t i = 0; i < input0->element_num_; ++i) {
         TensorC *input = &input0->tensors_[i];
+        NNACL_CHECK_NULL_RETURN_ERR(input);
         if (input->data_type_ != kTypeUnknown) {
           status = TensorListMergeShape(element_shape, &element_shape_size, input->shape_, input->shape_size_);
           if (status != NNACL_OK) {

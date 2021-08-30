@@ -52,7 +52,7 @@ void DoSlice(const void *input, void *output, const SliceParameter *param, int t
   for (int i = 6; i >= 0; --i) {
     out_stride[i] = out_stride[i + 1] * param->size_[i + 1];
   }
-
+  NNACL_CHECK_ZERO_RETURN(param->op_parameter_.thread_num_);
   int count_per_thread = UP_DIV(param->size_[5], param->op_parameter_.thread_num_);
   int thread_begin = thread_id * count_per_thread;
   int thread_end = MSMIN(param->size_[5], thread_begin + count_per_thread);

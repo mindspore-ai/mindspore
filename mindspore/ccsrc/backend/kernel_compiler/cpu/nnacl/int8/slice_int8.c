@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/int8/slice_int8.h"
+#include "nnacl/errorcode.h"
 
 int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param, int thread_id) {
   double input_scale = param->quant_arg_.in_args_.scale_;
@@ -30,6 +31,7 @@ int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param, int th
   for (int i = 6; i >= 0; --i) {
     out_stride[i] = out_stride[i + 1] * param->size_[i + 1];
   }
+  NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
   int count_per_thread = UP_DIV(param->size_[5], param->op_parameter_.thread_num_);
   size_t thread_begin = thread_id * count_per_thread;
   size_t thread_end = MSMIN(param->size_[5], thread_begin + count_per_thread);

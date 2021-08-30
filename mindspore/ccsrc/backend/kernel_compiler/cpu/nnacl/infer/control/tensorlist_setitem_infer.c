@@ -90,7 +90,11 @@ int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     output0->element_num_ = input0->element_num_;
     for (size_t i = 0; i < input0->element_num_; ++i) {
       TensorC *src_ptr = &input0->tensors_[i];
-      NNACL_CHECK_NULL_RETURN_ERR(src_ptr);
+      if (src_ptr == NULL) {
+        free(out_shape.shape_);
+        free(out_shape.shape_size_);
+        return NNACL_NULL_PTR;
+      }
       if (src_ptr->data_type_ != kTypeUnknown) {
         out_shape.shape_[out_shape.size_] = src_ptr->shape_;
         out_shape.shape_size_[out_shape.size_] = (int)(src_ptr->shape_size_);
