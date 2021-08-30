@@ -15,10 +15,11 @@
  */
 
 #include "DPN.h"
-#include "MxBase/DeviceManager/DeviceManager.h"
-#include "MxBase/Log/Log.h"
 #include <iostream>
+#include "MxBase/DeviceManager/DeviceManager.h"
 #include <opencv2/dnn.hpp>
+#include "MxBase/Log/Log.h"
+
 
 using namespace MxBase;
 using namespace cv::dnn;
@@ -27,7 +28,7 @@ namespace {
     const uint32_t YUV_BYTE_DE = 2;
     const uint32_t VPC_H_ALIGN = 2;
     const uint32_t BATCH_SIZE = 32;
-} // namespace
+}  // namespace
 
 APP_ERROR DPN::Init(const InitParam &initParam)
 {

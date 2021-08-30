@@ -87,8 +87,8 @@ def _parse_args():
                         help='number of parallel workers')
     parser.add_argument('--dataset', type=str, default='imagenet-1K',
                         help='train dataset')
-    parser.add_argument('--keep_checkpoint_max', type=int, default=3, 
-                        help='keep checkpoint max') 
+    parser.add_argument('--keep_checkpoint_max', type=int, default=3,
+                        help='keep checkpoint max')
     parser.add_argument('--num_classes', type=int, default=1000,
                         help='number of classes')
     parser.add_argument('--label_smooth', action='store_true',
@@ -107,13 +107,13 @@ def _parse_args():
                         help='pretrained checkpoint file name')
     parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
                         help="Filter head weight parameters, default is False.")
-    parser.add_argument('--eval_each_epoch', type=int, default=0, 
+    parser.add_argument('--eval_each_epoch', type=int, default=0,
                         help='evaluate on each epoch')
-    parser.add_argument('--global_step', type=int, default=0, 
+    parser.add_argument('--global_step', type=int, default=0,
                         help='global step')
-    parser.add_argument('--epoch_size', type=int, default=1, 
+    parser.add_argument('--epoch_size', type=int, default=1,
                         help='epoch size')
-    parser.add_argument('--loss_scale_num', type=int, default=1024, 
+    parser.add_argument('--loss_scale_num', type=int, default=1024,
                         help='loss scale num')
     parser.add_argument('--momentum', type=float, default=0.5,
                         help='momentum')
@@ -131,21 +131,20 @@ def _parse_args():
                         help='max learning rate')
     parser.add_argument('--factor', type=float, default=0.1,
                         help='decay factor')
-    parser.add_argument('--warmup_epochs', type=int, default=5, 
+    parser.add_argument('--warmup_epochs', type=int, default=5,
                         help='warmup epochs')
 
     # export configs
     parser.add_argument('--export_dir', type=str, default='',
                         help='dircetory to save exported model, frozen model if not None')
-    parser.add_argument('--width', type=int, default=224, 
+    parser.add_argument('--width', type=int, default=224,
                         help='export width')
-    parser.add_argument('--height', type=int, default=224, 
+    parser.add_argument('--height', type=int, default=224,
                         help='export height')
     parser.add_argument('--file_name', type=str, default='dpn92',
                         help='export file name')
     parser.add_argument('--file_format', type=str, default='AIR',
                         help='export file format')
-    
     # args, _ = parser.parse_known_args()
     _args = parser.parse_args()
     return _args
@@ -162,7 +161,7 @@ def filter_weight_by_list(origin_dict, param_filter):
 def dpn_train(config_args, ma_config):
     ma_config["training_data"] = config_args.data_path + "/train"
     ma_config["image_size"] = [config_args.image_size_height, config_args.image_size_width]
-    train_dataset = classification_dataset(ma_config["training_data"], 
+    train_dataset = classification_dataset(ma_config["training_data"],
                                            image_size=ma_config["image_size"],
                                            per_batch_size=config_args.batch_size,
                                            max_epoch=1,
@@ -329,7 +328,7 @@ def main():
         ma_config["rank_save_ckpt_flag"] = 1
     # data sync
     mox.file.copy_parallel(config_args.data_url, config_args.data_path)
-    # train 
+    # train
     dpn_train(config_args, ma_config)
     print('DPN training success!')
     # export

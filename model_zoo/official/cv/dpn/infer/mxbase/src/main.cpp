@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#include "DPN.h"
-#include "MxBase/Log/Log.h"
 #include <dirent.h>
+#include "MxBase/Log/Log.h"
+#include "DPN.h"
 
 namespace {
-const uint32_t CLASS_NUM = 1000;
-const uint32_t BATCH_SIZE = 32;
-} // namespace
+    const uint32_t CLASS_NUM = 1000;
+    const uint32_t BATCH_SIZE = 32;
+}  // namespace
 
-APP_ERROR ScanImages(const std::string &path, std::vector<std::string> &imgFiles)
-{
+APP_ERROR ScanImages(const std::string &path, const std::vector<std::string> &imgFiles){
     DIR *dirPtr = opendir(path.c_str());
     if (dirPtr == nullptr) {
         LogError << "opendir failed. dir:" << path;
@@ -43,8 +42,7 @@ APP_ERROR ScanImages(const std::string &path, std::vector<std::string> &imgFiles
     return APP_ERR_OK;
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]){
     if (argc <= 1) {
         LogWarn << "Please input image path, such as '../../data/images'.";
         return APP_ERR_OK;
@@ -74,7 +72,7 @@ int main(int argc, char* argv[])
     auto startTime = std::chrono::high_resolution_clock::now();
     int inferImgsCount = 0;
     LogInfo << "Number of total images load from input data path: " << imgFilePaths.size();
-    for(uint32_t i = 0; i <= imgFilePaths.size() - BATCH_SIZE; i += BATCH_SIZE){
+    for( uint32_t i = 0; i <= imgFilePaths.size() - BATCH_SIZE; i += BATCH_SIZE) {
         std::vector<std::string>batchImgFilePaths(imgFilePaths.begin()+i, imgFilePaths.begin()+(i+BATCH_SIZE));
         ret = dpn->Process(batchImgFilePaths);
         if (ret != APP_ERR_OK) {
