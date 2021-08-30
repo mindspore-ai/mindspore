@@ -1725,24 +1725,35 @@ void AscendSession::ExecuteAllTaskInQueue() {
     return;
   }
 
-  auto ms_context = MsContext::GetInstance();
-  auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
+  try {
+    MS_LOG(DEBUG) << "Start";
+    auto ms_context = MsContext::GetInstance();
+    auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
+    ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
 
-  BatchBuildKernel(task_manager.GetAllBuildTasks());
-  task_manager.ClearAllBuildTasks();
+    BatchBuildKernel(task_manager.GetAllBuildTasks());
+    task_manager.ClearAllBuildTasks();
 
-  // Launch one by one
-  auto &launch_tasks = task_manager.GetAllLaunchTasks();
-  while (!launch_tasks.empty()) {
-    auto &launch_task = launch_tasks.front();
-    const auto &context = launch_task->context();
-    LaunchFunc(context->graph(), context->tensor_mask(), context->tensor_to_node(), context->is_dynamic_shape(),
-               context->input_tensors());
-    launch_tasks.pop();
+    // Launch one by one
+    auto &launch_tasks = task_manager.GetAllLaunchTasks();
+    while (!launch_tasks.empty()) {
+      auto &launch_task = launch_tasks.front();
+      const auto &context = launch_task->context();
+      LaunchFunc(context->graph(), context->tensor_mask(), context->tensor_to_node(), context->is_dynamic_shape(),
+                 context->input_tensors());
+      launch_tasks.pop();
+    }
+
+    ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
+    MS_LOG(DEBUG) << "End";
+  } catch (const std::exception &ex) {
+    task_manager.ClearAllResources();
+    throw(std::runtime_error(ex.what()));
+  } catch (...) {
+    task_manager.ClearAllResources();
+    std::string exName(abi::__cxa_current_exception_type()->name());
+    MS_LOG(EXCEPTION) << "Error occurred when execute task in queue. Exception name: " << exName;
   }
-
-  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
 }
 }  // namespace session
 }  // namespace mindspore
