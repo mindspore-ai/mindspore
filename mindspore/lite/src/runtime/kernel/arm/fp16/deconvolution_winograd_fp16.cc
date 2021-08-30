@@ -405,7 +405,7 @@ int DeConvWinogradFp16CPUKernel::Init() {
   CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
   CHECK_NULL_RETURN(out_tensors_.at(kOutputIndex));
   CHECK_NULL_RETURN(conv_param_);
-
+  UpdateOriginWeightAndBias();
   deconv_param_ = new (std::nothrow) DeConvParam();
   if (deconv_param_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
