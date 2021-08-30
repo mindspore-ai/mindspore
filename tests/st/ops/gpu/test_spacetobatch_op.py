@@ -35,7 +35,7 @@ class SpaceToBatchNet(nn.Cell):
 
     @ms_function
     def construct(self):
-        y1 = self.BatchToSpace(self.x1)
+        y1 = self.SpaceToBatch(self.x1)
         return y1
 
 
