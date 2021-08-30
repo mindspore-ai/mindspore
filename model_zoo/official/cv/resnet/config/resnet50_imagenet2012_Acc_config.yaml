@@ -16,24 +16,25 @@ checkpoint_file_path: ""
 
 # ==============================================================================
 # Training options
-optimizer: "Momentum"
+optimizer: "LARS"
 infer_label: ""
 class_num: 1001
+train_image_size: 192
 batch_size: 256
 loss_scale: 1024
-momentum: 0.9
-weight_decay: 0.0001
-epoch_size: 90
+momentum: 0.85
+weight_decay: 5.0e-5
+epoch_size: 38
 pretrain_epoch_size: 0
-save_checkpoint: True
+save_checkpoint: False
 save_checkpoint_epochs: 5
 keep_checkpoint_max: 10
-warmup_epochs: 5
-lr_decay_mode: "cosine"
+warmup_epochs: 1
+lr_decay_mode: "poly"
 use_label_smooth: True
 label_smooth_factor: 0.1
 lr_init: 0
-lr_max: 0.8
+lr_max: 13.96
 lr_end: 0.0
 lars_epsilon: 0.0
 lars_coefficient: 0.001
@@ -43,18 +44,19 @@ dataset: "imagenet2012"
 device_num: 1
 pre_trained: ""
 run_eval: False
+eval_image_size: 224
 eval_dataset_path: ""
 parameter_server: False
 filter_weight: False
 save_best_ckpt: True
-eval_start_epoch: 40
+eval_start_epoch: 1
 eval_interval: 1
 enable_cache: False
 cache_session_id: ""
 mode_name: "GRAPH"
 acc_mode: "O1"
-conv_init: "XavierUniform"
-dense_init: "TruncatedNormal"
+conv_init: "TruncatedNormal"
+dense_init: "RandomNormal"
 all_reduce_fusion_config:
     - 85
     - 160

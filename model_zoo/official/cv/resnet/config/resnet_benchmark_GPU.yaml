@@ -18,10 +18,12 @@ checkpoint_file_path: ''
 # Training options
 optimizer: "Momentum"
 infer_label: ""
+train_image_size: 224
 batch_size: 256
 epoch_size: 2
 print_per_steps: 20
 eval: False
+eval_image_size: 224
 save_ckpt: False
 mode_name: "GRAPH"
 dtype: "fp16"

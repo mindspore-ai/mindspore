@@ -121,8 +121,8 @@ do
     if [ $# == 5 ]
     then
       taskset -c $cmdopt python train.py --run_distribute=True --device_num=$RANK_SIZE --data_path=$PATH2 \
-      --run_eval=$RUN_EVAL --eval_data_path=$EVAL_DATASET_PATH --enable_cache=True --cache_session_id=$CACHE_SESSION_ID \
-      --config_path=$CONFIG_FILE --output_path './output' &> log &
+      --run_eval=$RUN_EVAL --eval_dataset_path=$EVAL_DATASET_PATH --enable_cache=True \
+      --cache_session_id=$CACHE_SESSION_ID --config_path=$CONFIG_FILE --output_path './output' &> log &
       if [ "x${RUN_EVAL}" == "xTrue" ]
       then
         echo -e "\nWhen training run is done, remember to shut down the cache server via \"cache_admin --stop\""

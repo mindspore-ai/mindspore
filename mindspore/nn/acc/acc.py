@@ -28,7 +28,7 @@ _acc_config_level = {
         "adasum": False},
     "O1": {
         "less_bn": True,
-        "grad_freeze": False,
+        "grad_freeze": True,
         "adasum": False},
     "O2": {
         "less_bn": True,
@@ -53,8 +53,8 @@ class AutoAcc:
         self._gc_flag = True
         self._param_groups = 10
         self._freeze_type = 1
-        self._freeze_p = 0.5
-        self._total_steps = -1
+        self._freeze_p = 0.7
+        self._total_steps = 65536
         self._gradient_groups = None
         self._get_configuration(kwargs)
         self._param_processer = ParameterProcess()

@@ -59,10 +59,12 @@ class FreezeOpt(Cell):
             self.opt_class = type(opt.opt)
             self.opt_init_args = opt.opt.init_args
             self.lars_init_args = opt.init_args
+            self.parameters = opt.opt.parameters
         else:
             self.is_lars = False
             self.opt_class = type(opt)
             self.opt_init_args = opt.init_args
+            self.parameters = opt.parameters
         self.opts = []
 
         if train_parameter_groups is None:

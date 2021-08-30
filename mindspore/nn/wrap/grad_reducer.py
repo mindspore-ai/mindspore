@@ -30,14 +30,14 @@ reduce_opt = C.MultitypeFuncGraph("reduce_opt")
 def _init_allreduce_operators(length, split_indices, group=GlobalComm.WORLD_COMM_GROUP):
     """ initialize allreduce communication operators"""
     fusion_type = 2 ** 10
-    split = 1
+    split = 0
     fusion = ()
     for i in range(length):
         fusion = fusion + (fusion_type,)
-        if split_indices[split - 1] <= i + 1:
-            if split >= len(split_indices):
-                continue
-            fusion_type += split
+        if split >= len(split_indices):
+            continue
+        if split_indices[split] <= i:
+            fusion_type += 1
             split += 1
     index = tuple(range(1, length + 1))
     op_list = ()
