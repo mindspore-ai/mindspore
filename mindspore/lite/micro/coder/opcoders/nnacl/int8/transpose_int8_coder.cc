@@ -71,7 +71,7 @@ int TransposeInt8Coder::DoCode(CoderContext *const context) {
     code.CodeFunction("PackNCHWToNHWCInt8", input_tensors_[0], output_tensors_[0], out_shape[0],
                       out_shape[1] * out_shape[2], out_shape[3]);
   } else if (param_->perm_[0] == 0 && param_->perm_[1] == 3 && param_->perm_[2] == 1 && param_->perm_[3] == 2) {
-    code.CodeFunction("PackNCHWToNHWCInt8", input_tensors_[0], output_tensors_[0], out_shape[0],
+    code.CodeFunction("PackNHWCToNCHWInt8", input_tensors_[0], output_tensors_[0], out_shape[0],
                       out_shape[2] * out_shape[3], out_shape[1]);
   }
   context->AppendCode(code.str());

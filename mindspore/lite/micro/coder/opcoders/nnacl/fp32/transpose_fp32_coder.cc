@@ -30,10 +30,10 @@ int TransposeFp32Coder::Resize() {
     return RET_OK;
   }
   // get perm data
-  MS_ASSERT(input_tensors_.size() == DIMENSION_2D);
+  MS_CHECK_TRUE_RET(input_tensors_.size() == DIMENSION_2D, RET_ERROR);
   auto perm_tensor = input_tensors_.at(1);
   int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
-  MS_ASSERT(perm_data != nullptr);
+  MS_CHECK_TRUE_RET(perm_data != nullptr, RET_ERROR);
   for (int i = 0; i < param_->num_axes_; ++i) {
     param_->perm_[i] = perm_data[i];
   }
@@ -88,8 +88,6 @@ void TransposeFp32Coder::GetNHNCTransposeFunc() {
 }
 
 int TransposeFp32Coder::DoCode(CoderContext *const context) {
-  MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
-  MS_ASSERT(out_tensors_.size() == 1);
   Collect(context,
           {
             "nnacl/transpose.h",
@@ -108,8 +106,8 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
   }
   if (input_tensors_.size() == 2) {
     auto input_perm = input_tensors_.at(1);
-    MS_ASSERT(input_perm != nullptr);
-    MS_ASSERT(input_perm->data_c() != nullptr);
+    MS_CHECK_TRUE_RET(input_perm != nullptr, RET_ERROR);
+    MS_CHECK_TRUE_RET(input_perm->data_c() != nullptr, RET_ERROR);
     int *perm_data = reinterpret_cast<int *>(input_perm->data_c());
     for (int i = 0; i < input_perm->ElementsNum(); ++i) {
       param_->perm_[i] = perm_data[i];

@@ -27,9 +27,6 @@ namespace mindspore::lite::micro::nnacl {
 int PowerFP32Coder::DoCode(CoderContext *const context) {
   scale_ = reinterpret_cast<PowerParameter *>(parameter_)->scale_;
   shift_ = reinterpret_cast<PowerParameter *>(parameter_)->shift_;
-
-  Tensor *filter_tensor = input_tensors_.at(kWeightIndex);
-  MS_CHECK_PTR(filter_tensor);
   int size = input_tensor_->ElementsNum();
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(size, thread_num_);
@@ -37,6 +34,8 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
   std::string exp_addr;
   bool broadcast = true;
   if (input_tensors_.size() == DIMENSION_2D) {
+    Tensor *filter_tensor = input_tensors_.at(kWeightIndex);
+    MS_CHECK_PTR(filter_tensor);
     exp_addr = allocator_->GetRuntimeAddr(filter_tensor, true);
     broadcast = !(input_tensor_->shape() == filter_tensor->shape());
   }

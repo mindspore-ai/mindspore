@@ -26,10 +26,11 @@ using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int SubInt8Coder::Prepare(CoderContext *const context) {
+  MS_CHECK_TRUE_RET(input_tensors_.size() == 2, RET_ERROR);
   input0 = input_tensors_.at(0);
   input1 = input_tensors_.at(1);
-  MS_ASSERT(input0);
-  MS_ASSERT(input1);
+  MS_CHECK_PTR(input0);
+  MS_CHECK_PTR(input1);
 
   broadcast_ = input0->ElementsNum() != input1->ElementsNum();
 

@@ -66,6 +66,7 @@ int MatMulFP32Coder::ReSize() {
 
 int MatMulFP32Coder::Prepare(CoderContext *const context) {
   params_ = reinterpret_cast<MatMulParameter *>(parameter_);
+  MS_CHECK_TRUE_RET(input_tensors_.size() >= kBiasIndex, RET_ERROR);
   filter_tensor_ = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(filter_tensor_);
   if (input_tensors_.size() == kInputSize2) {

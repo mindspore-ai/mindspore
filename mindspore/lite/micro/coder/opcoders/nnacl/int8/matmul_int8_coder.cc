@@ -19,6 +19,7 @@
 using mindspore::schema::PrimitiveType_MatMul;
 namespace mindspore::lite::micro::nnacl {
 int MatMulInt8Coder::Prepare(CoderContext *const context) {
+  MS_CHECK_TRUE_RET(input_tensors_.size() >= 2, RET_ERROR);
   filter_tensor_ = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(filter_tensor_);
   if (input_tensors_.size() == kInputSize2) {
