@@ -27,11 +27,6 @@ FusionPattern::FusionPattern(std::string name) { this->name = std::move(name); }
 
 FusionPattern::~FusionPattern() = default;
 
-FusionPattern &FusionPattern::SetName(const std::string &name) {
-  this->name = name;
-  return *this;
-}
-
 FusionPattern &FusionPattern::AddPatternOp(const std::string &id,
                                            const std::initializer_list<schema::PrimitiveType> &types) {
   return AddPatternOp(id, std::vector<schema::PrimitiveType>(types));
@@ -41,17 +36,20 @@ FusionPattern &FusionPattern::AddPatternOp(const std::string &id, const std::vec
   if (id.empty()) {
     MS_LOG(ERROR) << "Id cannot be empty";
     hasError = true;
+    return *this;
   }
 
   if (GetPatternOp(id) != nullptr) {
     MS_LOG(ERROR) << "Id repeated. id: " << id;
     hasError = true;
+    return *this;
   }
 
   auto op = std::make_shared<PatternOp>();
   if (op == nullptr) {
     MS_LOG(ERROR) << "new an object failed";
     hasError = true;
+    return *this;
   } else {
     op->id = id;
     op->types = types;
@@ -59,18 +57,6 @@ FusionPattern &FusionPattern::AddPatternOp(const std::string &id, const std::vec
     opMap[id] = op;
   }
 
-  return *this;
-}
-
-FusionPattern &FusionPattern::RemovePatternOp(const std::string &id) {
-  for (uint32_t loop = 0; loop < ops.size(); loop++) {
-    std::shared_ptr<PatternOp> op = ops.at(loop);
-    if (op->id == id) {
-      ops.erase(ops.begin() + loop);
-      opMap.erase(id);
-      break;
-    }
-  }
   return *this;
 }
 
@@ -88,37 +74,28 @@ bool FusionPattern::Check() {
   return true;
 }
 
-void FusionPattern::Dump() const {
-  std::ostringstream oss;
-  oss << std::endl << "Pattern " << name << std::endl;
-  for (const auto op : ops) {
-    oss << "  " << op->id << ": {";
-    for (auto &type : op->types) {
-      oss << schema::EnumNamePrimitiveType(type) << ", ";
-    }
-    oss << "} {";
-    if (op->left != nullptr) {
-      oss << "leftPreNode: " << op->left->id << ", ";
-    }
-    if (op->right != nullptr) {
-      oss << "rightPreNode: " << op->right->id << ", ";
-    }
-    oss << "}";
-
-    oss << std::endl;
-  }
-}
-
 std::shared_ptr<PatternOp> FusionPattern::GetPatternOp(const std::string &id) const {
   auto it = opMap.find(id);
-  if (it != opMap.end()) return it->second;
-
+  if (it != opMap.end()) {
+    return it->second;
+  }
   return nullptr;
 }
 
 std::string FusionPattern::GetOutput() const { return this->outputOpId; }
 
 FusionPattern &FusionPattern::AddPatternOp(const std::shared_ptr<PatternOp> &patternOp) {
+  if (patternOp == nullptr) {
+    MS_LOG(ERROR) << "Input pattern op is nullptr";
+    hasError = true;
+    return *this;
+  }
+  if (GetPatternOp(patternOp->id) != nullptr) {
+    MS_LOG(ERROR) << "Id repeated. id: " << patternOp->id;
+    hasError = true;
+    return *this;
+  }
+
   ops.push_back(patternOp);
   opMap[patternOp->id] = patternOp;
   return *this;
@@ -128,7 +105,8 @@ FusionPattern &FusionPattern::Finish() {
   std::vector<std::string> ids;
   std::set<std::string> nodeInputIds;
   std::vector<std::string> inputNodeIds;
-  for (auto patternOp : ops) {
+  for (const auto &patternOp : ops) {
+    MS_ASSERT(patternOp != nullptr);
     if (IsContain(ids, patternOp->id)) {
       MS_LOG(ERROR) << "Duplicate id find: " << patternOp->id;
       hasError = true;
@@ -162,13 +140,13 @@ FusionPattern &FusionPattern::Finish() {
     hasError = true;
     return *this;
   }
-  this->outputOpId = ids.front();
+  this->outputOpId = std::string(ids.front());
   auto outputNode = GetPatternOp(this->outputOpId);
   if (outputNode != nullptr) {
     outputNode->isTail = true;
   }
 
-  for (auto inputNodeId : inputNodeIds) {
+  for (const auto &inputNodeId : inputNodeIds) {
     auto inputNode = GetPatternOp(inputNodeId);
     if (inputNode != nullptr) {
       inputNode->isHead = true;

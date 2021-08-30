@@ -23,9 +23,53 @@
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
+namespace {
+STATUS AddNewScaleNode(MetaGraphT *graph, const std::unique_ptr<CNodeT> &mulNode, CNodeT *addNode,
+                       uint32_t addBiasIndex) {
+  MS_ASSERT(graph != nullptr);
+  MS_ASSERT(mulNode != nullptr);
+  MS_ASSERT(addNode != nullptr);
+  // replace mulNode as scale
+  mulNode->primitive->value.type = schema::PrimitiveType_ScaleFusion;
+  auto scaleParam = std::make_unique<ScaleFusionT>();
+  if (scaleParam == nullptr) {
+    MS_LOG(ERROR) << "new transposeParam failed";
+    return RET_ERROR;
+  }
+  // NHWC
+  auto shape_size = graph->allTensors.at(addBiasIndex)->dims.size();
+  scaleParam->axis = 0 - shape_size;
+  mulNode->inputIndex.push_back(addBiasIndex);
+  MS_ASSERT(addNode->primitive != nullptr);
+  MS_ASSERT(addNode->primitive->value.AsAddFusion() != nullptr);
+  auto activationType = addNode->primitive->value.AsAddFusion()->activation_type;
+  if (activationType == ActivationType_RELU || activationType == ActivationType_RELU6 ||
+      activationType == ActivationType_NO_ACTIVATION) {
+    // delete addnode
+    scaleParam->activation_type = activationType;
+    auto status = IsolateOneWayNode(graph, addNode);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "IsolateOneWayNode failed";
+      return status;
+    }
+  } else {
+    // replace addnode as activation
+    auto activationParam = std::make_unique<ActivationT>();
+    MS_ASSERT(addNode->primitive != nullptr);
+    MS_ASSERT(addNode->primitive->value.AsAddFusion() != nullptr);
+    activationParam->activation_type = addNode->primitive->value.AsAddFusion()->activation_type;
+    addNode->primitive->value.type = schema::PrimitiveType_Activation;
+    addNode->primitive->value.value = activationParam.release();
+    addNode->inputIndex.pop_back();
+  }
+  mulNode->primitive->value.value = scaleParam.release();
+  return RET_OK;
+}
+}  // namespace
 #define MUL_ADD_MATCH_PATH_LEN 2
 #define ADD_OP_BIAS_INDEX 1
 #define MUL_OP_INPUT_INDEX 0
@@ -37,18 +81,17 @@ STATUS MulAddFusionPass::Run(MetaGraphT *graph) { return FusionPass::Run(graph);
 
 STATUS MulAddFusionPass::DefinePattern() {
   auto mulOp = std::make_shared<PatternOp>();
+  MS_CHECK_TRUE_MSG(mulOp != nullptr, RET_NULL_PTR, "create PatternOp failed");
   mulOp->id = MUL_NAME;
   mulOp->types = {schema::PrimitiveType_MulFusion};
   auto baOp = std::make_shared<PatternOp>();
+  MS_CHECK_TRUE_MSG(baOp != nullptr, RET_NULL_PTR, "create PatternOp failed");
   baOp->id = ADD_NAME;
   baOp->types = {schema::PrimitiveType_AddFusion};
   baOp->left = mulOp;
 
   auto fusionPattern = std::make_unique<FusionPattern>("MulAddFusion");
-  if (fusionPattern == nullptr) {
-    MS_LOG(ERROR) << "new fusionPattern failed";
-    return RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(fusionPattern != nullptr, RET_NULL_PTR, "create FusionPattern failed");
   fusionPattern->AddPatternOp(mulOp);
   fusionPattern->AddPatternOp(baOp);
   fusionPattern->Finish();
@@ -60,7 +103,7 @@ STATUS MulAddFusionPass::DefinePattern() {
 
 bool ScaleInputShapeValid(const std::vector<int> &input_shape, const std::vector<int> &scale_shape,
                           const std::vector<int> &offset_shape) {
-  if (input_shape.size() < scale_shape.size() || scale_shape.size() == 0) {
+  if (input_shape.size() < scale_shape.size() || scale_shape.empty()) {
     return false;
   }
   size_t rank_diff = input_shape.size() - scale_shape.size();
@@ -85,10 +128,13 @@ STATUS MulAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternN
 
   auto mulPath = matchedPath[MUL_NAME];
   auto addPath = matchedPath[ADD_NAME];
+  MS_ASSERT(mulPath != nullptr);
+  MS_ASSERT(addPath != nullptr);
+  MS_ASSERT(graph->nodes.size() > mulPath->nodeIdx);
+  MS_ASSERT(graph->nodes.size() > addPath->nodeIdx);
   auto &mulNode = graph->nodes.at(mulPath->nodeIdx);
   auto &addNode = graph->nodes.at(addPath->nodeIdx);
   // can not check shape because there is now shape infer in converter
-  MS_ASSERT(mulNode != nullptr);
   auto mulNodeInputIndex = mulNode->inputIndex;
   MS_ASSERT(mulNodeInputIndex.size() == MUL_OP_INPUT_NUM);
   MS_ASSERT(graph->allTensors.size() > mulNodeInputIndex.at(MUL_OP_BIAS_INDEX));
@@ -117,6 +163,7 @@ STATUS MulAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternN
   }
   // scale requires scale shape tail sub of input shape, scale shape same as bias shape
   const auto &mulNodeInputTensor = graph->allTensors.at(mulNodeInputIndex.at(MUL_OP_INPUT_INDEX));
+  MS_ASSERT(mulNodeInputTensor != nullptr);
   if (!ScaleInputShapeValid(mulNodeInputTensor->dims, mulNodeBiasTensor->dims, addNodeBiasTensor->dims)) {
     return RET_OK;
   }
@@ -127,48 +174,6 @@ STATUS MulAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternN
     return status;
   }
 
-  return RET_OK;
-}
-
-STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_ptr<CNodeT> &mulNode, CNodeT *addNode,
-                                         uint32_t addBiasIndex) {
-  MS_ASSERT(graph != nullptr);
-  MS_ASSERT(mulNode != nullptr);
-  MS_ASSERT(addNode != nullptr);
-  // replace mulNode as scale
-  mulNode->primitive->value.type = schema::PrimitiveType_ScaleFusion;
-  auto scaleParam = std::make_unique<ScaleFusionT>();
-  if (scaleParam == nullptr) {
-    MS_LOG(ERROR) << "new transposeParam failed";
-    return RET_ERROR;
-  }
-  // NHWC
-  int shape_size = graph->allTensors.at(addBiasIndex)->dims.size();
-  scaleParam->axis = 0 - shape_size;
-  mulNode->inputIndex.push_back(addBiasIndex);
-  MS_ASSERT(addNode->primitive != nullptr);
-  MS_ASSERT(addNode->primitive->value.AsAddFusion() != nullptr);
-  auto activationType = addNode->primitive->value.AsAddFusion()->activation_type;
-  if (activationType == ActivationType_RELU || activationType == ActivationType_RELU6 ||
-      activationType == ActivationType_NO_ACTIVATION) {
-    // delete addnode
-    scaleParam->activation_type = activationType;
-    auto status = IsolateOneWayNode(graph, addNode);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "IsolateOneWayNode failed";
-      return status;
-    }
-  } else {
-    // replace addnode as activation
-    auto activationParam = std::make_unique<ActivationT>();
-    MS_ASSERT(addNode->primitive != nullptr);
-    MS_ASSERT(addNode->primitive->value.AsAddFusion() != nullptr);
-    activationParam->activation_type = addNode->primitive->value.AsAddFusion()->activation_type;
-    addNode->primitive->value.type = schema::PrimitiveType_Activation;
-    addNode->primitive->value.value = activationParam.release();
-    addNode->inputIndex.pop_back();
-  }
-  mulNode->primitive->value.value = scaleParam.release();
   return RET_OK;
 }
 }  // namespace lite

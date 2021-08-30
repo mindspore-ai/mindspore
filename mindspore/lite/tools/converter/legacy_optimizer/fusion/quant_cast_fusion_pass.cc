@@ -19,7 +19,6 @@
 #include <memory>
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
 #include "src/common/log_adapter.h"
-#include "securec/include/securec.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
@@ -90,18 +89,17 @@ STATUS QuantCastFusionPass::DefinePattern() {
   // quantCast + quantCast
   {
     auto srcOp = std::make_shared<PatternOp>();
+    MS_CHECK_TRUE_MSG(srcOp != nullptr, RET_NULL_PTR, "create PatternOp return nullptr");
     srcOp->id = kQuantCastSrcOp;
     srcOp->types = {schema::PrimitiveType_QuantDTypeCast};
     auto dstOp = std::make_shared<PatternOp>();
+    MS_CHECK_TRUE_MSG(dstOp != nullptr, RET_NULL_PTR, "create PatternOp return nullptr");
     dstOp->id = kQuantCastDstOp;
     dstOp->types = {schema::PrimitiveType_QuantDTypeCast};
     dstOp->left = srcOp;
 
     auto fusionPattern = std::make_unique<FusionPattern>(kQuantCastFusionPattern);
-    if (fusionPattern == nullptr) {
-      MS_LOG(ERROR) << "new fusionPattern failde";
-      return RET_ERROR;
-    }
+    MS_CHECK_TRUE_MSG(fusionPattern != nullptr, RET_NULL_PTR, "create FusionPattern return nullptr");
     fusionPattern->AddPatternOp(srcOp);
     fusionPattern->AddPatternOp(dstOp);
     fusionPattern->Finish();
@@ -111,22 +109,22 @@ STATUS QuantCastFusionPass::DefinePattern() {
   // quantCast + formatTrans + quantCast
   {
     auto srcOp = std::make_shared<PatternOp>();
+    MS_CHECK_TRUE_MSG(srcOp != nullptr, RET_NULL_PTR, "create PatternOp return nullptr");
     srcOp->id = kQuantCastSrcOp;
     srcOp->types = {schema::PrimitiveType_QuantDTypeCast};
     auto formatOp = std::make_shared<PatternOp>();
+    MS_CHECK_TRUE_MSG(srcOp != nullptr, RET_NULL_PTR, "create PatternOp return nullptr");
     formatOp->id = kFormatTransOp;
     formatOp->types = {PrimitiveType_Transpose};
     formatOp->left = srcOp;
     auto dstOp = std::make_shared<PatternOp>();
+    MS_CHECK_TRUE_MSG(srcOp != nullptr, RET_NULL_PTR, "create PatternOp return nullptr");
     dstOp->id = kQuantCastDstOp;
     dstOp->types = {schema::PrimitiveType_QuantDTypeCast};
     dstOp->left = formatOp;
 
     auto fusionPattern = std::make_unique<FusionPattern>(kQuantCastPassFusionPattern);
-    if (fusionPattern == nullptr) {
-      MS_LOG(ERROR) << "new fusionPattern failde";
-      return RET_ERROR;
-    }
+    MS_CHECK_TRUE_MSG(fusionPattern != nullptr, RET_NULL_PTR, "create FusionPattern return nullptr");
     fusionPattern->AddPatternOp(srcOp);
     fusionPattern->AddPatternOp(formatOp);
     fusionPattern->AddPatternOp(dstOp);

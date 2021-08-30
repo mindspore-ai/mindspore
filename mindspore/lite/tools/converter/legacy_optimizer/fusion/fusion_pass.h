@@ -28,24 +28,6 @@
 
 namespace mindspore {
 namespace lite {
-#define CONV_OP_NO_BIAS_WEIGHT_NUM 1
-#define CONV_OP_HAS_BIAS_WEIGHT_NUM 2
-#define CONV_OP_NO_BIAS_INPUT_NUM 2
-#define CONV_OP_HAS_BIAS_INPUT_NUM 3
-
-#define CONV_OP_FILTER_INDEX_IN_WEIGHT 0
-#define CONV_OP_BIAS_INDEX_IN_WEIGHT 1
-#define CONV_OP_FILTER_INDEX_IN_INPUT 1
-#define CONV_OP_BIAS_INDEX_IN_INPUT 2
-
-#define CONV_FILTER_SHAPE_SIZE 4
-
-// PatternOp Ids
-constexpr const char *kConvName = "CONVOLUTION";
-constexpr const char *DST_NAME = "DESTINATION";
-constexpr const char *ACTIVATION_NAME = "ACTIVATION";
-constexpr const char *BIASADD_NAME = "BIASADD";
-
 class FusionPass : public GraphPass {
  public:
   FusionPass() = default;
@@ -56,10 +38,10 @@ class FusionPass : public GraphPass {
 
   STATUS Run(schema::MetaGraphT *graph) override;
 
+ protected:
   virtual STATUS DoFusion(schema::MetaGraphT *graph, const std::string &patternName,
                           std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) = 0;
 
- protected:
   STATUS MatchPatterns(schema::MetaGraphT *graph);
 
   STATUS MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pattern);
@@ -71,16 +53,13 @@ class FusionPass : public GraphPass {
                         std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes);
   static bool CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<PatternOp> &patternOp);
 
-  void MergeNodeAttrFromPost(std::unique_ptr<schema::CNodeT> &dstOp, std::unique_ptr<schema::CNodeT> &postOp,
-                             size_t dstOpOutIdx = 0);
-
   STATUS Fuse(schema::MetaGraphT *graph);
 
  protected:
-  std::vector<FusionPattern *> patterns;
-  std::map<std::string, std::vector<std::shared_ptr<PatternOp>>> matchedPaths;
+  std::vector<FusionPattern *> patterns{};
+  std::map<std::string, std::vector<std::shared_ptr<PatternOp>>> matchedPaths{};
   // {name of pattern, vector<{name of pattern node, path}>}
-  std::map<std::string, std::vector<std::unordered_map<std::string, std::shared_ptr<Path>>>> mapedMatchedPaths;
+  std::map<std::string, std::vector<std::unordered_map<std::string, std::shared_ptr<Path>>>> mapedMatchedPaths{};
 };
 }  // namespace lite
 }  // namespace mindspore

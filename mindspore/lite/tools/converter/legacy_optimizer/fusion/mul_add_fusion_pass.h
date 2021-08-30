@@ -34,18 +34,15 @@ class MulAddFusionPass : public FusionPass {
  public:
   MulAddFusionPass() = default;
 
-  ~MulAddFusionPass() = default;
+  ~MulAddFusionPass() override = default;
 
+  STATUS Run(MetaGraphT *graph) override;
+
+ private:
   STATUS DefinePattern() override;
 
   STATUS DoFusion(MetaGraphT *graph, const std::string &patternName,
                   std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) override;
-
-  STATUS Run(MetaGraphT *graph) override;
-
- protected:
-  static STATUS AddNewScaleNode(MetaGraphT *graph, const std::unique_ptr<CNodeT> &mulNode, CNodeT *addNode,
-                                uint32_t addBiasIndex);
 };
 }  // namespace lite
 }  // namespace mindspore
