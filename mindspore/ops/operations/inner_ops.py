@@ -456,10 +456,11 @@ class FusedWeightScaleApplyMomentum(PrimitiveWithInfer):
 class FusedCastAdamWeightDecay(PrimitiveWithInfer):
     r"""
     Updates gradients by the Adaptive Moment Estimation (AdamWeightDecay) algorithm with weight decay. This operator
-    updates parameters of float16 using gradients of float16 when parameters are initialized with dtype of float16 and
-    compute with dtype of float16.
+    incorporates type conversion when parameters are initialized with dtype of float16.
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
+    The AdamWeightDecay variant was proposed in `Decoupled Weight Decay Regularization
+    <https://arxiv.org/abs/1711.05101>`_.
 
     The updating formulas are as follows,
 
@@ -467,13 +468,21 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         \begin{array}{ll} \\
             m = \beta_1 * m + (1 - \beta_1) * g \\
             v = \beta_2 * v + (1 - \beta_2) * g * g \\
-            w = w - lr * \frac{m}{\sqrt{v} + \epsilon}
+            update = \frac{m}{\sqrt{v} + eps} \\
+            update =
+            \begin{cases}
+                update + weight\_decay * w
+                    & \text{ if } weight\_decay > 0 \\
+                update
+                    & \text{ otherwise }
+            \end{cases} \\
+            w  = w - lr * update
         \end{array}
 
     :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
     `gradient`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`\lr` represents `learning_rate`, :math:`w` represents `var`, :math:`\epsilon` represents
-    `epsilon`.
+    :math:`\lr` represents `learning_rate`, :math:`w` represents `var`, :math:`decay` represents `weight_decay`,
+    :math:`\epsilon` represents `epsilon`.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
@@ -488,6 +497,7 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         - **beta1** (float) - The exponential decay rate for the 1st moment estimations.
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimations.
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
+        - **decay** (float) - The weight decay value, must be a scalar tensor with float data type.
         - **gradient** (Tensor) - Gradient, has the type float16.
 
     Outputs:
@@ -501,7 +511,27 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         ``CPU``
 
     Examples:
-
+        >>> import numpy as np
+        >>> import mindspore.context as context
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as P
+        >>> from mindspore.common import dtype as mstype
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.opt = P.FusedCastAdamWeightDecay()
+        ...         self.var = Parameter(Tensor(np.ones([2, 2]), mstype.float16), name="var")
+        ...         self.m = Parameter(Tensor(np.ones([2, 2]), mstype.float32), name="m")
+        ...         self.v = Parameter(Tensor(np.ones([2, 2]), mstype.float32), name="v")
+        ...     def construct(self, lr, beta1, beta2, epsilon, decay, grad):
+        ...         out = self.opt(self.var, self.m, self.v, lr, beta1, beta2, epsilon, decay, grad)
+        ...         return out
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+        >>> net = Net()
+        >>> gradient = Tensor(np.ones([2, 2]), mstype.float16)
+        >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient)
+        >>> print(net.var.asnumpy())
     """
 
     @prim_attr_register

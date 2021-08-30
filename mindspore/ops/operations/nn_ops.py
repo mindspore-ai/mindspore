@@ -4551,6 +4551,8 @@ class AdamWeightDecay(PrimitiveWithInfer):
     Updates gradients by the Adaptive Moment Estimation (AdamWeightDecay) algorithm with weight decay.
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
+    The AdamWeightDecay variant was proposed in `Decoupled Weight Decay Regularization
+    <https://arxiv.org/abs/1711.05101>`_.
 
     The updating formulas are as follows,
 
@@ -4558,13 +4560,21 @@ class AdamWeightDecay(PrimitiveWithInfer):
         \begin{array}{ll} \\
             m = \beta_1 * m + (1 - \beta_1) * g \\
             v = \beta_2 * v + (1 - \beta_2) * g * g \\
-            w = w - lr * \frac{m}{\sqrt{v} + \epsilon}
+            update = \frac{m}{\sqrt{v} + eps} \\
+            update =
+            \begin{cases}
+                update + weight\_decay * w
+                    & \text{ if } weight\_decay > 0 \\
+                update
+                    & \text{ otherwise }
+            \end{cases} \\
+            w  = w - lr * update
         \end{array}
 
     :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
     `gradient`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`\lr` represents `learning_rate`, :math:`w` represents `var`, :math:`\epsilon` represents
-    `epsilon`.
+    :math:`\lr` represents `learning_rate`, :math:`w` represents `var`, :math:`decay` represents `weight_decay`,
+    :math:`\epsilon` represents `epsilon`.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
@@ -4585,6 +4595,8 @@ class AdamWeightDecay(PrimitiveWithInfer):
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimations,
           the data type value should be the same as `var`. The paper suggested value is :math:`0.999`
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
+        - **decay** (float) - The weight decay value, must be a scalar tensor with float data type.
+          Default: 0.0.
         - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
@@ -4611,10 +4623,10 @@ class AdamWeightDecay(PrimitiveWithInfer):
         ...         out = self.adam_weight_decay(self.var, self.m, self.v, lr, beta1, beta2,
         ...                               epsilon, decay, grad)
         ...         return out
-        >>> np.random.seed(0)
         >>> net = Net()
-        >>> gradient = Tensor(np.random.rand(2, 2).astype(np.float32))
-        >>> output = net(0.9, 0.9, 0.999, 1e-8, 1e-5, gradient)
+        >>> gradient = Tensor(np.ones([2, 2]).astype(np.float32))
+        >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient)
+        >>> print(net.var.asnumpy())
     """
 
     @prim_attr_register
