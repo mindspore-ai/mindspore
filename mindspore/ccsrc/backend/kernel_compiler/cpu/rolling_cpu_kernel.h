@@ -50,18 +50,18 @@ class RollingCpuKernel : public CPUKernel {
 
   int64_t window_{0};
   int64_t min_periods_{0};
-  int axis_{0};
+  size_t axis_{0};
   bool center_{false};
   std::string closed_{};
   Method method_{};
-  std::function<S(const T *input_addr, int outer_offset, int w, int col)> reduceMethod_{};
+  std::function<S(const T *input_addr, int outer_offset, size_t start, size_t end, int col)> reduceMethod_{};
   // shape info
-  int outer_size_{0};
-  int axis_size_{0};
-  int inner_size_{0};
+  size_t outer_size_{0};
+  size_t axis_size_{0};
+  size_t inner_size_{0};
   // rolling info
-  std::vector<int> starts_{};
-  std::vector<int> ends_{};
+  std::vector<size_t> starts_{};
+  std::vector<size_t> ends_{};
 };
 
 MS_REG_CPU_KERNEL_T_S(Rolling, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
