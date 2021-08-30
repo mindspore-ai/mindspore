@@ -22,6 +22,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "tools/converter/ops/ops_def.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -29,10 +30,15 @@ namespace {
 constexpr size_t kNumFwVars = 4;
 constexpr size_t kNumBwVars = 4;
 const auto &p1 = std::placeholders::_1;
-BaseRef GetPrim(const PrimitivePtr &prim) { return std::make_shared<CondVar>(std::bind(IsOpType, p1, prim)); }
+BaseRef GetPrim(const PrimitivePtr &prim) {
+  auto ptr = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim));
+  MS_CHECK_TRUE_MSG(ptr != nullptr, nullptr, "is nullptr.");
+  return ptr;
+}
 
 BaseRef GetPrim(const std::string &prim_name) {
   auto prim = std::make_shared<Primitive>(prim_name);
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "is nullptr.");
   return GetPrim(prim);
 }
 }  // namespace
@@ -193,19 +199,17 @@ const AnfNodePtr TfBidirectionGruCfFusion::Process(const FuncGraphPtr &func_grap
 
   const std::string gru_name = "gru_" + concat_node->fullname_with_scope();
   auto gru_node = CreateBiDirectionGruNode(func_graph, transpose_input, equiv, gru_name, 0);
-  if (gru_node == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(gru_node != nullptr, nullptr, "gru_node is nullptr.");
+
   if (TfliteLstmCellFusion::SetAbstractTuple(gru_node, 2) != RET_OK) {
     return nullptr;
   }
 
   auto get_item_node = TfliteLstmCellFusion::CreateOutputGetItem(func_graph, gru_node, 0);
-  if (get_item_node == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(get_item_node != nullptr, nullptr, "get_item_node is nullptr.");
 
   auto output_node = GetPostProcessNode(func_graph, get_item_node, gru_node->fullname_with_scope());
+  MS_CHECK_TRUE_MSG(output_node != nullptr, nullptr, "output_node is nullptr.");
   MS_LOG(INFO) << "gru node:" << gru_node->fullname_with_scope() << " fusion success";
   return output_node;
 }

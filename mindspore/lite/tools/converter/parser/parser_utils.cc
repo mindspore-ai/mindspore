@@ -49,14 +49,21 @@ void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all
   auto nodes = func_graph->nodes();
   for (auto &node : nodes) {
     if (IsValueNode<FuncGraph>(node)) {
+      MS_ASSERT(node->cast<ValueNodePtr>() != nullptr);
+      MS_ASSERT(node->cast<ValueNodePtr>()->value() != nullptr);
+      MS_ASSERT((node->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>() != nullptr);
       auto new_fg = (node->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
       GetAllFuncGraph(new_fg, all_func_graphs);
     }
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = node->cast<CNodePtr>();
+      MS_ASSERT(cnode != nullptr);
       for (auto &input : cnode->inputs()) {
         if (input->isa<ValueNode>()) {
           if (IsValueNode<FuncGraph>(input)) {
+            MS_ASSERT(input->cast<ValueNodePtr>() != nullptr);
+            MS_ASSERT(input->cast<ValueNodePtr>()->value() != nullptr);
+            MS_ASSERT((input->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>() != nullptr);
             auto new_fg = (input->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
             GetAllFuncGraph(new_fg, all_func_graphs);
           }
@@ -70,7 +77,9 @@ int CommonAnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   for (auto func_graph : all_func_graphs) {
     {
       auto asylic_optimizer = std::make_shared<opt::GraphOptimizer>();
+      MS_ASSERT(asylic_optimizer != nullptr);
       auto asylic_pm = std::make_shared<opt::PassManager>("asylic pass manager", false);
+      MS_ASSERT(asylic_pm != nullptr);
       // fuse tf1.x bidirection_gru into GRU, must be placed here because graph is cyclic
       asylic_pm->AddPass(std::make_shared<opt::TfBidirectionGruCfFusion>());
       // remove remaining cyclic nodes
@@ -83,12 +92,14 @@ int CommonAnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
       }
     }
     auto adjust_input = std::make_shared<InputAdjust>();
+    MS_ASSERT(adjust_input != nullptr);
     if (!adjust_input->Run(func_graph)) {
       MS_LOG(ERROR) << "adjust input failed.";
       return RET_ERROR;
     }
     // adjust for conv1d
     auto conv1d_adjust = std::make_shared<Conv1DInOutAdjust>();
+    MS_ASSERT(conv1d_adjust != nullptr);
     if (!conv1d_adjust->Run(func_graph)) {
       MS_LOG(ERROR) << "adjust conv1d failed.";
       return RET_ERROR;
@@ -184,6 +195,7 @@ int UnifyConvWeightFormat(const FuncGraphPtr &graph, const CNodePtr &cnode, sche
     is_const_weight = false;
   } else if (utils::isa<Parameter>(weight_node)) {
     auto weight_param_node = weight_node->cast<ParameterPtr>();
+    MS_ASSERT(weight_param_node != nullptr);
     if (!weight_param_node->has_default()) {
       is_const_weight = false;
     }
@@ -254,6 +266,7 @@ int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_
       trans_cnode->set_abstract(abstract);
     }
     auto post_cnode = post_node->cast<CNodePtr>();
+    MS_ASSERT(post_cnode != nullptr);
     auto tr = manager->Transact();
     tr.SetEdge(post_cnode, weight_node_user.second, trans_cnode);
     tr.Commit();
@@ -344,6 +357,7 @@ int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &wei
       trans_cnode->set_abstract(abstract);
     }
     auto post_cnode = post_node->cast<CNodePtr>();
+    MS_ASSERT(post_cnode != nullptr);
     auto tr = manager->Transact();
     tr.SetEdge(post_cnode, weight_node_user.second, trans_cnode);
     tr.Commit();

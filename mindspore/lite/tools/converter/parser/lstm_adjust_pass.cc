@@ -22,12 +22,13 @@
 #include "tools/anf_exporter/fetch_content.h"
 #include "tools/common/tensor_util.h"
 #include "utils/check_convert_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kMindLstmInputs = 5;
-constexpr size_t kWeightIndex = 4;
+constexpr size_t kLSTMWeightIndex = 4;
 constexpr int kGateNums = 4;  // it,ft,gt,ot
 constexpr int kBiasNums = 2;  // b_ih,b_hh
 constexpr int kWeightInputIndex = 2;
@@ -50,6 +51,7 @@ AnfNodePtr GetRealLstmWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
       return nullptr;
     }
     auto weight_cnode = weight_node->cast<CNodePtr>();
+    MS_ASSERT(weight_cnode != nullptr);
     weight_node = weight_cnode->input(1);
     is_real_weight = !opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) &&
                      !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
@@ -64,10 +66,7 @@ AnfNodePtr GetRealLstmWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
 int InitLstmWeight(const ParameterPtr &parameter, void *data, size_t data_size, const std::vector<int64_t> &shape,
                    TypeId data_type, bool is_bias = false, size_t num_directions = 1) {
   auto tensor_info = lite::CreateTensorInfo(nullptr, 0, shape, data_type);
-  if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "Create tensor info failed";
-    return RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_ERROR, "Create tensor info failed.");
   // lite input weight order should wii,wio,wif,wig
   size_t combined_num = is_bias ? static_cast<size_t>(kBiasNums) : 1;  // ih_bias and hh_bias are combined
   const auto &weight_order = kNH2NC;
@@ -148,16 +147,16 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
   // bias include ih bias and hh bias
   std::vector<int64_t> bias_shape = {num_directions, kGateNums * kBiasNums * hidden_size};
 
-  auto lstm_weight_node = GetRealLstmWeightNode(func_graph, lstm_cnode, kWeightIndex);
+  auto lstm_weight_node = GetRealLstmWeightNode(func_graph, lstm_cnode, kLSTMWeightIndex);
   lite::DataInfo data_info;
   if (lstm_weight_node->isa<Parameter>()) {
-    auto ret = FetchDataFromParameterNode(lstm_cnode, kWeightIndex, converter::kFmkTypeMs, false, &data_info);
+    auto ret = FetchDataFromParameterNode(lstm_cnode, kLSTMWeightIndex, converter::kFmkTypeMs, false, &data_info);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "parse const node failed.";
       return RET_ERROR;
     }
   } else if (lstm_weight_node->isa<ValueNode>()) {
-    auto ret = FetchDataFromValueNode(lstm_cnode, kWeightIndex, converter::kFmkTypeMs, false, &data_info);
+    auto ret = FetchDataFromValueNode(lstm_cnode, kLSTMWeightIndex, converter::kFmkTypeMs, false, &data_info);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "parse const node failed.";
       return RET_ERROR;
@@ -209,6 +208,7 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
                                              hh_weight_paramter,   bias_paramter, inputs.at(kHiddenIndex),
                                              inputs.at(kCellIndex)};
   auto new_lstm_cnode = func_graph->NewCNode(new_lstm_inputs);
+  MS_CHECK_TRUE_MSG(new_lstm_cnode != nullptr, false, "New lstm cnode failed.");
   new_lstm_cnode->set_fullname_with_scope(lstm_name);
   new_lstm_cnode->set_abstract(lstm_cnode->abstract()->Clone());
   (void)manager->Replace(lstm_cnode, new_lstm_cnode);
@@ -255,14 +255,17 @@ bool LstmAdjustPass::Run(const FuncGraphPtr &func_graph) {
     }
     auto get_item_name = cnode->fullname_with_scope();
     auto transpose_prim = std::make_shared<ops::Transpose>();
+    MS_CHECK_TRUE_MSG(transpose_prim != nullptr, false, "transpose_prim is nullptr.");
     std::vector<int> perm_value = {0, kOutputBatchIndex, 1, kOutputHiddenIndex};
     auto transpose_perm = BuildIntVecParameterNode(func_graph, perm_value, "transpose_" + get_item_name + "_perm");
     auto new_transpose_node = func_graph->NewCNode(transpose_prim, {cnode, transpose_perm});
+    MS_CHECK_TRUE_MSG(new_transpose_node != nullptr, false, "New transpose node failed.");
 
     auto reshape_prim = std::make_shared<ops::Reshape>();
+    MS_CHECK_TRUE_MSG(reshape_prim != nullptr, false, "reshape_prim is nullptr.");
     auto reshape_perm = BuildIntVecParameterNode(func_graph, {0, 0, -1}, "reshape_" + get_item_name + "_perm");
-
     auto new_reshape_node = func_graph->NewCNode(reshape_prim, {new_transpose_node, reshape_perm});
+    MS_CHECK_TRUE_MSG(new_reshape_node != nullptr, false, "New reshape node failed.");
     (void)manager->Replace(cnode, new_reshape_node);
   }
   return true;

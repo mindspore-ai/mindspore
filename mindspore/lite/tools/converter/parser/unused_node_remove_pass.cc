@@ -35,6 +35,7 @@ STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph) {
     q.pop_front();
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
+      MS_ASSERT(cnode != nullptr);
       for (auto &input : cnode->inputs()) {
         if (vis.find(input) == vis.end()) {
           q.push_back(input);
@@ -43,6 +44,7 @@ STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph) {
     }
     if (utils::isa<ValueNode>(node) && GetValueNode<FuncGraphPtr>(node) != nullptr) {
       auto sub_graph = GetValueNode<FuncGraphPtr>(node);
+      MS_ASSERT(sub_graph != nullptr);
       auto status = ProcessGraph(sub_graph);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "process sub graph failed";
