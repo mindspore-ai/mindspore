@@ -14,17 +14,16 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 5 ]
+if [ $# != 4 ]
 then
-    echo "Usage: sh run_eval.sh [EXPERIMENT_NAME] [CUSTOM_DATA_PATH] [CUSTOM_ATTR_PATH] [ENC_CKPT_NAME] [DEC_CKPT_NAME]"
+    echo "Usage: sh run_eval.sh [EXPERIMENT_NAME] [CUSTOM_DATA_PATH] [CUSTOM_ATTR_PATH] [GEN_CKPT_NAME]"
     exit 1
 fi
 
 experiment_name=$1
 data_path=$2
 attr_path=$3
-enc_name=$4
-dec_name=$5
+gen_ckpt_name=$4
 
 cores=`cat /proc/cpuinfo|grep "processor" |wc -l`
 echo "The number of logical core" $cores
@@ -47,5 +46,4 @@ python eval.py  \
 --custom_data $data_path \
 --custom_attr $attr_path \
 --custom_img \
---enc_ckpt_name $enc_name \
---dec_ckpt_name $dec_name > ./scripts/EVAL_LOG/log.txt 2>&1 &
+--gen_ckpt_name $gen_ckpt_name > ./scripts/EVAL_LOG/log.txt 2>&1 &
