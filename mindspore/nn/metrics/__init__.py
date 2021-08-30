@@ -21,7 +21,7 @@ on the evaluation dataset. It's used to choose the best model.
 from .accuracy import Accuracy
 from .hausdorff_distance import HausdorffDistance
 from .error import MAE, MSE
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 from .precision import Precision
 from .recall import Recall
 from .fbeta import Fbeta, F1
@@ -43,7 +43,7 @@ __all__ = [
     "get_metric_fn",
     "Accuracy",
     "MAE", "MSE",
-    "Metric",
+    "Metric", "rearrange_inputs",
     "Precision",
     "HausdorffDistance",
     "Recall",
