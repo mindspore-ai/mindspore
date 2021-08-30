@@ -191,5 +191,4 @@ int ConvolutionDepthwiseSWCPUKernel::MallocWeightBiasData() {
   conv_param_->thread_num_ = MSMIN(thread_count_, OC4);
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

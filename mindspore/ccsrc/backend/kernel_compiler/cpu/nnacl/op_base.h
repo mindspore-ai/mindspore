@@ -68,6 +68,12 @@
 #define COMM_SHAPE_SIZE 4
 #define MAX_SHAPE_SIZE 8
 
+#define FIRST_INPUT 0
+#define SECOND_INPUT 1
+#define THIRD_INPUT 2
+#define FOURTH_INPUT 3
+#define FIFTH_INPUT 4
+
 #define DIMENSION_1D 1
 #define DIMENSION_2D 2
 #define DIMENSION_3D 3

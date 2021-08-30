@@ -47,10 +47,10 @@ void FusedBatchnormCPUKernel::FreeScaleAndOffset() {
 }
 
 int FusedBatchnormCPUKernel::InitConstTensor() {
-  auto scale = in_tensors_.at(1);
-  auto offset = in_tensors_.at(2);
-  auto mean = in_tensors_.at(3);
-  auto variance = in_tensors_.at(4);
+  auto scale = in_tensors_.at(SECOND_INPUT);
+  auto offset = in_tensors_.at(THIRD_INPUT);
+  auto mean = in_tensors_.at(FOURTH_INPUT);
+  auto variance = in_tensors_.at(FIFTH_INPUT);
 
   scale_ = malloc(scale->Size());
   offset_ = malloc(offset->Size());
@@ -78,35 +78,35 @@ int FusedBatchnormCPUKernel::Run() {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   MS_ASSERT(param != nullptr);
   if (IsTrain() && IsTrainable() && in_tensors_.size() >= kNumInputSize) {
-    float *in = static_cast<float *>(in_tensors_.at(0)->data_c());
-    float *scale = static_cast<float *>(in_tensors_.at(1)->data_c());
-    float *offset = static_cast<float *>(in_tensors_.at(2)->data_c());
+    float *in = static_cast<float *>(in_tensors_.at(FIRST_INPUT)->data_c());
+    float *scale = static_cast<float *>(in_tensors_.at(SECOND_INPUT)->data_c());
+    float *offset = static_cast<float *>(in_tensors_.at(THIRD_INPUT)->data_c());
     float *current_mean = static_cast<float *>(mean_);
     float *current_var = static_cast<float *>(variance_);
-    float *save_mean = static_cast<float *>(in_tensors_.at(3)->data_c());
-    float *save_variance = static_cast<float *>(in_tensors_.at(4)->data_c());
+    float *save_mean = static_cast<float *>(in_tensors_.at(FOURTH_INPUT)->data_c());
+    float *save_variance = static_cast<float *>(in_tensors_.at(FIFTH_INPUT)->data_c());
     if (in == nullptr || scale == nullptr || offset == nullptr || current_mean == nullptr || current_var == nullptr ||
         save_mean == nullptr || save_variance == nullptr) {
       MS_LOG(ERROR) << "The input data is nullptr.";
       return RET_ERROR;
     }
-    std::fill(current_mean, current_mean + in_tensors_.at(3)->ElementsNum(), 0.f);
-    std::fill(current_var, current_var + in_tensors_.at(4)->ElementsNum(), 0.f);
+    std::fill(current_mean, current_mean + in_tensors_.at(FOURTH_INPUT)->ElementsNum(), 0.f);
+    std::fill(current_var, current_var + in_tensors_.at(FIFTH_INPUT)->ElementsNum(), 0.f);
     FusedBatchNormFp32MeanVar(in, current_mean, current_var, param, static_cast<float *>(save_mean),
                               static_cast<float *>(save_variance));
 
-    CHECK_NULL_RETURN(out_tensors_.at(1)->data_c());
-    CHECK_NULL_RETURN(out_tensors_.at(2)->data_c());
-    CHECK_NULL_RETURN(out_tensors_.at(3)->data_c());
-    CHECK_NULL_RETURN(out_tensors_.at(4)->data_c());
-    memcpy(out_tensors_.at(1)->data_c(), scale, out_tensors_.at(1)->Size());
-    memcpy(out_tensors_.at(2)->data_c(), offset, out_tensors_.at(2)->Size());
-    memcpy(out_tensors_.at(3)->data_c(), current_mean, out_tensors_.at(3)->Size());
-    memcpy(out_tensors_.at(4)->data_c(), current_var, out_tensors_.at(4)->Size());
+    CHECK_NULL_RETURN(out_tensors_.at(SECOND_INPUT)->data_c());
+    CHECK_NULL_RETURN(out_tensors_.at(THIRD_INPUT)->data_c());
+    CHECK_NULL_RETURN(out_tensors_.at(FOURTH_INPUT)->data_c());
+    CHECK_NULL_RETURN(out_tensors_.at(FIFTH_INPUT)->data_c());
+    memcpy(out_tensors_.at(SECOND_INPUT)->data_c(), scale, out_tensors_.at(SECOND_INPUT)->Size());
+    memcpy(out_tensors_.at(THIRD_INPUT)->data_c(), offset, out_tensors_.at(THIRD_INPUT)->Size());
+    memcpy(out_tensors_.at(FOURTH_INPUT)->data_c(), current_mean, out_tensors_.at(FOURTH_INPUT)->Size());
+    memcpy(out_tensors_.at(FIFTH_INPUT)->data_c(), current_var, out_tensors_.at(FIFTH_INPUT)->Size());
 
     // Copy to local variables
-    memcpy(scale_, scale, in_tensors_.at(1)->Size());
-    memcpy(offset_, offset, in_tensors_.at(2)->Size());
+    memcpy(scale_, scale, in_tensors_.at(SECOND_INPUT)->Size());
+    memcpy(offset_, offset, in_tensors_.at(THIRD_INPUT)->Size());
 
     trained_ = true;  // trained at least once
   }
@@ -120,20 +120,20 @@ int FusedBatchnormCPUKernel::Run() {
 int FusedBatchnormCPUKernel::Eval() {
   InnerKernel::Eval();
   if (trained_) {
-    float *save_mean = static_cast<float *>(in_tensors_.at(3)->data_c());
-    float *save_var = static_cast<float *>(in_tensors_.at(4)->data_c());
-    float *scale = static_cast<float *>(in_tensors_.at(1)->data_c());
-    float *bias = static_cast<float *>(in_tensors_.at(2)->data_c());
+    float *save_mean = static_cast<float *>(in_tensors_.at(FOURTH_INPUT)->data_c());
+    float *save_var = static_cast<float *>(in_tensors_.at(FIFTH_INPUT)->data_c());
+    float *scale = static_cast<float *>(in_tensors_.at(SECOND_INPUT)->data_c());
+    float *bias = static_cast<float *>(in_tensors_.at(THIRD_INPUT)->data_c());
     CHECK_NULL_RETURN(save_mean);
     CHECK_NULL_RETURN(save_var);
     CHECK_NULL_RETURN(scale);
     CHECK_NULL_RETURN(bias);
 
     // Copy to local variables
-    memcpy(scale_, scale, in_tensors_.at(1)->Size());
-    memcpy(offset_, bias, in_tensors_.at(2)->Size());
-    memcpy(mean_, save_mean, in_tensors_.at(3)->Size());
-    memcpy(variance_, save_var, in_tensors_.at(4)->Size());
+    memcpy(scale_, scale, in_tensors_.at(SECOND_INPUT)->Size());
+    memcpy(offset_, bias, in_tensors_.at(THIRD_INPUT)->Size());
+    memcpy(mean_, save_mean, in_tensors_.at(FOURTH_INPUT)->Size());
+    memcpy(variance_, save_var, in_tensors_.at(FIFTH_INPUT)->Size());
   }
   return RET_OK;
 }

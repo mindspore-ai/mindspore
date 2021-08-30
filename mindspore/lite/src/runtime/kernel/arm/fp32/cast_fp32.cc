@@ -169,8 +169,8 @@ int CastCPUKernel::DoCast(int thread_id) {
   auto output_data_type = output->data_type();
   if (input_data_type == output_data_type) {
     auto datalen = lite::DataTypeSize(input_data_type);
-    memcpy(reinterpret_cast<char *>(output_data) + offset * datalen,
-           reinterpret_cast<char *>(input_data) + offset * datalen, data_num * datalen);
+    memcpy(reinterpret_cast<int8_t *>(output_data) + offset * datalen,
+           reinterpret_cast<int8_t *>(input_data) + offset * datalen, data_num * datalen);
     return RET_OK;
   }
   if (output_data_type == kNumberTypeFloat32) {

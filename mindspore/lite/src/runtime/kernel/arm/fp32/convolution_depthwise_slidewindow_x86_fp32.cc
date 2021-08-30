@@ -194,6 +194,5 @@ int ConvolutionDepthwiseSWCPUKernelX86::MallocWeightBiasData() {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel
 #endif

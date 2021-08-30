@@ -216,7 +216,7 @@ int ConvolutionWinogradCPUKernel::MallocWeightBiasData() {
   float matrix_b[64];
   float matrix_bt[64];
   float coef = 1.0f;
-  if (input_unit_ == 8) {
+  if (input_unit_ == CONV_INPUT_UNIT_SIZE) {
     coef = 0.5f;
   }
   auto ret =
@@ -245,5 +245,4 @@ void ConvolutionWinogradCPUKernel::PackWeight() {
   MS_ASSERT(origin_weight != nullptr);
   WinogradFilterTransform(reinterpret_cast<float *>(origin_weight), matrix_g_, matrix_gt_, oc_block_);
 }
-
 }  // namespace mindspore::kernel
