@@ -58,7 +58,8 @@ class GPUSession : public SessionBasic {
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                      const std::vector<tensor::TensorPtr> &inputs_const) const override;
   void UpdateOutputTensors(const VectorRef *outputs,
-                           const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) override;
+                           const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                           std::map<DeviceAddressPtr, DeviceAddressPtr> *new_to_old_device_address) override;
 
  private:
   void SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;

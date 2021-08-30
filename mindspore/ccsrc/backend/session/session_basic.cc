@@ -1677,12 +1677,14 @@ void SessionBasic::CreateOutputTensors(const GraphId &graph_id, const std::vecto
 }
 
 void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
-                                       const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
+                                       const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                                       std::map<DeviceAddressPtr, DeviceAddressPtr> *) {
   MS_EXCEPTION_IF_NULL(outputs);
   for (const auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       const auto &vector_ref = utils::cast<VectorRef>(item);
-      UpdateOutputTensors(&vector_ref, tensor_to_node);
+      std::map<DeviceAddressPtr, DeviceAddressPtr> new_to_old_device_address;
+      UpdateOutputTensors(&vector_ref, tensor_to_node, &new_to_old_device_address);
     } else if (utils::isa<tensor::TensorPtr>(item)) {
       const auto &tensor = utils::cast<tensor::TensorPtr>(item);
       MS_EXCEPTION_IF_NULL(tensor);

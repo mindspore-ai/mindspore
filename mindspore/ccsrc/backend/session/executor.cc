@@ -134,7 +134,8 @@ void RunGraphTask::Run() {
   try {
     session_->LoadInputs(graph_id_, input_tensors_);
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
-    session_->UpdateOutputTensors(&outputs_, tensor_to_node_);
+    std::map<DeviceAddressPtr, DeviceAddressPtr> new_to_old_device_address;
+    session_->UpdateOutputTensors(&outputs_, tensor_to_node_, &new_to_old_device_address);
   } catch (const std::exception &e) {
     ExecutorManager::Instance().OnEvent(ExecutorEvent::kException);
     MsException::Instance().SetException();
