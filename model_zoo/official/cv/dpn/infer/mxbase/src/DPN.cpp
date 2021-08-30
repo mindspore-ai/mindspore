@@ -240,7 +240,7 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths) {
     ret = Inference(inputs, outputs);
     auto endTime = std::chrono::high_resolution_clock::now();
     // save time
-    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();  
+    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
     inferCostTimeMilliSec += costMs;
     if (ret != APP_ERR_OK) {
         LogError << "Inference failed, ret=" << ret << ".";

@@ -16,13 +16,12 @@
 
 #ifndef MXBASE_DPN_H
 #define MXBASE_DPN_H
-#include <opencv2/opencv.hpp>
 #include <memory>
 #include <string>
 #include <vector>
+#include <opencv2/opencv.hpp>
 #include "MxBase/DvppWrapper/DvppWrapper.h"
 #include "MxBase/ModelInfer/ModelInferenceProcessor.h"
-// #include "ClassPostProcessors/DPN92PostProcess.h"
 #include "ClassPostProcessors/Resnet50PostProcess.h"
 #include "MxBase/Tensor/TensorContext/TensorContext.h"
 
@@ -52,7 +51,7 @@ class DPN {
   double GetInferCostMilliSec() const {return inferCostTimeMilliSec;}
 
  private:
-  APP_ERROR SaveResult(const std::vector<std::string> &batchImgPaths, 
+  APP_ERROR SaveResult(const std::vector<std::string> &batchImgPaths,
                                 const std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos);
 
  private:
