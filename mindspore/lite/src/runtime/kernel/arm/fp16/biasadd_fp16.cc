@@ -60,10 +60,11 @@ int BiasAddCPUFp16Kernel::Run() {
   }
   auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
-  MS_ASSERT(in != nullptr);
-  MS_ASSERT(out != nullptr);
+  CHECK_NULL_RETURN(in);
+  CHECK_NULL_RETURN(out);
   size_t data_size = in_tensors_.at(0)->ElementsNum();
-  MS_ASSERT(ms_context_->allocator != nullptr);
+  CHECK_NULL_RETURN(ms_context_->allocator);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(data_size, sizeof(float16_t), RET_ERROR);
   auto tile_in = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(data_size * sizeof(float16_t)));
   auto tile_bias = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(data_size * sizeof(float16_t)));
   if (tile_in == nullptr || tile_bias == nullptr) {
@@ -89,6 +90,7 @@ int BiasAddCPUFp16Kernel::GetBiasData() {
   bias_data_type_ = bias_tensor_->data_type();
   if (bias_data_type_ == kNumberTypeFloat || bias_data_type_ == kNumberTypeFloat32) {
     if (bias_data_ == nullptr) {
+      MS_CHECK_INT_MUL_NOT_OVERFLOW(bias_tensor_->ElementsNum(), sizeof(float16_t), RET_ERROR);
       bias_data_ = reinterpret_cast<float16_t *>(malloc(bias_tensor_->ElementsNum() * sizeof(float16_t)));
       if (bias_data_ == nullptr) {
         MS_LOG(ERROR) << "bias_data_ is nullptr";
@@ -117,7 +119,7 @@ int BiasAddCPUFp16Kernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   bias_tensor_ = in_tensors_.at(1);
-  MS_ASSERT(bias_tensor_ != nullptr);
+  CHECK_NULL_RETURN(bias_tensor_);
   if (!InferShapeDone()) {
     return RET_OK;
   }

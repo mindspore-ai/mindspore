@@ -35,6 +35,7 @@ int SpaceToDepthCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
   if (param->block_size_ <= 0) {
     MS_LOG(ERROR) << "Input block_size should > 0!";
     return RET_PARAM_INVALID;
@@ -62,6 +63,7 @@ int SpaceToDepthCPUKernel::ReSize() {
 }
 
 int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_h_stride_, RET_ERROR);
   int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - task_id * thread_h_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
@@ -70,9 +72,9 @@ int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
   auto in_shape = in_tensors_.at(0)->shape();
   auto out_shape = out_tensors_.at(0)->shape();
   SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
-  MS_ASSERT(param);
-  MS_ASSERT(input_ptr_);
-  MS_ASSERT(output_ptr_);
+  CHECK_NULL_RETURN(param);
+  CHECK_NULL_RETURN(input_ptr_);
+  CHECK_NULL_RETURN(output_ptr_);
   auto ret = SpaceToDepthForNHWC(input_ptr_, output_ptr_, in_shape.data(), out_shape.data(), in_shape.size(),
                                  param->block_size_, thread_offset, thread_offset + num_unit_thread, sizeof(float));
   if (ret != RET_OK) {
@@ -84,6 +86,7 @@ int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
 
 int SpaceToDepthRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<SpaceToDepthCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(g_kernel);
   auto ret = g_kernel->SpaceToDepth(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SpaceToDepthRun error task_id[" << task_id << "] error_code[" << ret << "]";

@@ -31,6 +31,7 @@ int SpaceToDepthInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   }
   SetDataTypeFormat(outputs[0], input);
   SpaceToDepthParameter *param = (SpaceToDepthParameter *)parameter;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }

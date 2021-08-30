@@ -66,6 +66,7 @@ void Fp16ScaleAxis(const float16_t *in_data, float16_t *out_data, const float16_
 
 void DoScaleFp16(const float16_t *in_data, float16_t *out_data, const float16_t *scale, const float16_t *offset,
                  int task_id, const ScaleParameter *scale_param) {
+  NNACL_CHECK_ZERO_RETURN(scale_param->op_parameter_.thread_num_);
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
   int outer_end = MSMIN(outer_start + outer_step, scale_param->outer_size_);
@@ -137,6 +138,7 @@ void Fp16ScaleAxisRelu(const float16_t *in_data, float16_t *out_data, const floa
 
 void Fp16DoScaleRelu(const float16_t *in_data, float16_t *out_data, const float16_t *scale, const float16_t *offset,
                      int task_id, const ScaleParameter *scale_param) {
+  NNACL_CHECK_ZERO_RETURN(scale_param->op_parameter_.thread_num_);
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
   int outer_end = MSMIN(outer_start + outer_step, scale_param->outer_size_);
@@ -210,6 +212,7 @@ void Fp16ScaleAxisRelu6(const float16_t *in_data, float16_t *out_data, const flo
 
 void DoScaleRelu6Fp16(const float16_t *in_data, float16_t *out_data, const float16_t *scale, const float16_t *offset,
                       int task_id, const ScaleParameter *scale_param) {
+  NNACL_CHECK_ZERO_RETURN(scale_param->op_parameter_.thread_num_);
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
   int outer_end = MSMIN(outer_start + outer_step, scale_param->outer_size_);

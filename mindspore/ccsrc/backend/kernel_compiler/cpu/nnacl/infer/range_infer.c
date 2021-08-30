@@ -75,6 +75,7 @@ int RangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     }
   } else {
     RangeParameter *param = (RangeParameter *)parameter;
+    NNACL_CHECK_NULL_RETURN_ERR(param);
     if (param->delta_ == 0) {
       return NNACL_PARAM_INVALID;
     }

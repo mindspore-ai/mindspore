@@ -23,8 +23,8 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateArithmeticSelfV0(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto *arithmetic_self_param = reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
   if (arithmetic_self_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticSelfParameter failed.";

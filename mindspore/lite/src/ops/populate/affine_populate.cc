@@ -31,8 +31,8 @@ static void ReleaseParam(AffineParameter *affine, MatMulParameter *matmul) {
 }
 
 OpParameter *PopulateAffineParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Affine();
   if (value == nullptr) {
     MS_LOG(ERROR) << "cast affine_primitive to value failed";

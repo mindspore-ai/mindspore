@@ -98,6 +98,7 @@ int GluCPUKernel::ReSize() {
 
 int GluCPUKernel::Split(int task_id) {
   input_ptr_ = in_tensors_.front()->data_c();
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_n_stride_, RET_ERROR);
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
@@ -117,8 +118,9 @@ int GluCPUKernel::Sigmoid(int task_id) {
   auto input_addr = reinterpret_cast<float *>(split_ptr_.at(1));
   auto output_addr = reinterpret_cast<float *>(sigmoid_ptr_);
   auto length = in_tensors_.at(0)->ElementsNum() / kGluBranchNum;
-
+  MS_CHECK_TRUE_RET(op_parameter_->thread_num_ != 0, RET_ERROR);
   int stride = UP_DIV(length, op_parameter_->thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, RET_ERROR);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -131,8 +133,9 @@ int GluCPUKernel::Mul(int task_id) {
   auto input_addr1 = reinterpret_cast<float *>(sigmoid_ptr_);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   auto length = in_tensors_.at(0)->ElementsNum() / kGluBranchNum;
-
+  MS_CHECK_TRUE_RET(op_parameter_->thread_num_ != 0, RET_ERROR);
   int stride = UP_DIV(length, op_parameter_->thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, RET_ERROR);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;

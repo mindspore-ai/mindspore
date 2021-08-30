@@ -42,7 +42,7 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   auto output_ptr = reinterpret_cast<float *>(out_tensor->MutableData());
 
   auto in_shape = input_tensor->shape();
-  MS_ASSERT(in_shape.size() == 4);
+  MS_CHECK_TRUE_RET(in_shape.size() == 4, RET_ERROR);
 
   int batch = in_shape.at(0);
   int height = in_shape.at(1);
@@ -50,7 +50,9 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   int channel = in_shape.at(3);
 
   int outer_size = batch * width * height;
+  MS_CHECK_TRUE_RET(thread_count_ != 0, RET_ERROR);
   int stride = UP_DIV(outer_size, thread_count_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, RET_ERROR);
   int count = MSMIN(stride, outer_size - stride * task_id);
 
   input_ptr += stride * task_id * channel;

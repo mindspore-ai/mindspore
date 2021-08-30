@@ -19,12 +19,10 @@
 
 int GluInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -35,6 +33,7 @@ int GluInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   }
   SetShapeTensor(output, input);
   GluParameter *param = (GluParameter *)parameter;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   int axis = param->axis_ > 0 ? param->axis_ : (int)input->shape_size_ + param->axis_;
   output->shape_[axis] /= 2;
   return NNACL_OK;
