@@ -20,7 +20,6 @@
 #include <iostream>
 #include <opencv2/dnn.hpp>
 
-
 using namespace MxBase;
 using namespace cv::dnn;
 namespace {
@@ -105,21 +104,18 @@ APP_ERROR DPN::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat)
 APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase)
 {
     uint32_t dataSize=1;
-    
-    for (size_t i = 0; i < modelDesc_.inputTensors.size(); ++i) {
+    for (size_t i=0; i<modelDesc_.inputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
         for (size_t j = 0; j < modelDesc_.inputTensors[i].tensorDims.size(); ++j) {
             shape.push_back((uint32_t)modelDesc_.inputTensors[i].tensorDims[j]);
         }
-        for(uint32_t i = 0; i < shape.size(); ++i){
+        for(uint32_t i=0; i<shape.size(); ++i){
             dataSize *= shape[i];
-        }
-        std::cout<< std::endl;
-               
+        } 
     }
 
     // mat NCHW to NHWC
-    size_t N=32, H=224, W=224, C=3;
+    size_t N=32,H=224,W=224,C=3;
     unsigned char *mat_data = new unsigned char[dataSize];
     uint32_t idx=0;
     for(size_t n=0; n<N; n++){
@@ -190,7 +186,8 @@ APP_ERROR DPN::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::SaveResult(const std::vector<std::string> &batchImgPaths, const std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos)
+APP_ERROR DPN::SaveResult(const std::vector<std::string> &batchImgPaths, 
+                            const std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos)
 {
     uint32_t batchIndex = 0;
     for(auto &imgPath: batchImgPaths){

@@ -61,5 +61,4 @@ class DPN {
         double inferCostTimeMilliSec = 0.0;
 };
 
-
 #endif

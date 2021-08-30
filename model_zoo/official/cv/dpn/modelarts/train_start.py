@@ -160,7 +160,6 @@ def filter_weight_by_list(origin_dict, param_filter):
                 break
 
 def dpn_train(config_args, ma_config):
-    # create dataset
     ma_config["training_data"] = config_args.data_path + "/train"
     ma_config["image_size"] = [config_args.image_size_height, config_args.image_size_width]
     train_dataset = classification_dataset(ma_config["training_data"], 
@@ -269,13 +268,12 @@ def dpn_train(config_args, ma_config):
     return 0
 
 def dpn_export(config_args, ma_config):
-    # define net
     backbone = config_args.backbone
     num_classes = config_args.num_classes
     net = dpns[backbone](num_classes=num_classes)
 
     # load checkpoint
-    prob_ckpt_list = os.path.join(ma_config["checkpoint_path"] , "dpn*.ckpt")
+    prob_ckpt_list = os.path.join(ma_config["checkpoint_path"], "dpn*.ckpt")
     ckpt_list = glob.glob(prob_ckpt_list)
     if not ckpt_list:
         print('Freezing model failed!')
@@ -299,18 +297,17 @@ def dpn_export(config_args, ma_config):
 
 
 def main():
-    # parser arguments
     config_args = _parse_args()
     # create local path
     if not os.path.exists(config_args.data_path):
-            os.makedirs(config_args.data_path, exist_ok=True)
+        os.makedirs(config_args.data_path, exist_ok=True)
     if not os.path.exists(config_args.output_path):
-            os.makedirs(config_args.output_path, exist_ok=True)
+        os.makedirs(config_args.output_path, exist_ok=True)
     ma_config = {}
     # init context
     ma_config["checkpoint_path"] = os.path.join(config_args.output_path, config_args.checkpoint_dir)
     if not os.path.exists(ma_config["checkpoint_path"]):
-            os.makedirs(ma_config["checkpoint_path"], exist_ok=True)
+        os.makedirs(ma_config["checkpoint_path"], exist_ok=True)
     ma_config["device_id"] = get_device_id()
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=config_args.device_target, save_graphs=False, device_id=ma_config["device_id"])
