@@ -63,12 +63,15 @@ int ReduceFp16CPUKernel::Init() {
 }
 
 int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
+  CHECK_NULL_RETURN(fp16_src_data_);
+  CHECK_NULL_RETURN(fp16_dst_data_);
   return reducer_(outer_size_, inner_size_, axis_size_, fp16_src_data_, fp16_dst_data_, task_id,
                   op_parameter_->thread_num_);
 }
 
 static int ReduceFp16Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto reduce = reinterpret_cast<ReduceFp16CPUKernel *>(cdata);
+  CHECK_NULL_RETURN(reduce);
   auto error_code = reduce->CallReduceUnit(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce Run error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -85,9 +88,7 @@ int ReduceFp16CPUKernel::Run() {
   }
 
   auto in_tensor = in_tensors_.at(0);
-  MS_ASSERT(in_tensor != nullptr);
   fp16_src_data_ = reinterpret_cast<float16_t *>(in_tensor->data_c());
-  MS_ASSERT(fp16_src_data_ != nullptr);
   for (size_t i = 0; i < data_buffers_.size(); ++i) {
     fp16_dst_data_ = data_buffers_.at(i);
     outer_size_ = outer_sizes_.at(i);

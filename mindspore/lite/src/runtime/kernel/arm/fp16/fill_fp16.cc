@@ -28,6 +28,8 @@ using mindspore::schema::PrimitiveType_Fill;
 
 namespace mindspore::kernel {
 int FillFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -35,11 +37,15 @@ int FillFp16CPUKernel::Init() {
 }
 
 int FillFp16CPUKernel::ReSize() {
-  data_size_ = out_tensors_.front()->ElementsNum();
+  auto out_tensor = out_tensors_.front();
+  CHECK_NULL_RETURN(out_tensor);
+  data_size_ = out_tensor->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
-  if (thread_sz_count_ != 0) {
-    thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
+  if (thread_sz_count_ == 0) {
+    MS_LOG(ERROR) << "Error: Div Zero";
+    return RET_ERROR;
   }
+  thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
 }
 
@@ -60,6 +66,7 @@ int FillFp16CPUKernel::DoFill(int task_id) {
 
 int FillRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<FillFp16CPUKernel *>(cdata);
+  CHECK_NULL_RETURN(g_kernel);
   auto ret = g_kernel->DoFill(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -70,10 +77,14 @@ int FillRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int FillFp16CPUKernel::Run() {
   auto fill_input = in_tensors_.front();
+  CHECK_NULL_RETURN(fill_input);
   auto output = out_tensors_.front();
+  CHECK_NULL_RETURN(output);
   auto fill_data = reinterpret_cast<float16_t *>(fill_input->MutableData());
+  CHECK_NULL_RETURN(fill_data);
   fp16_src_data_ = fill_data[0];
   fp16_out_ptr_ = reinterpret_cast<float16_t *>(output->MutableData());
+  CHECK_NULL_RETURN(fp16_out_ptr_);
   auto ret = ParallelLaunch(this->ms_context_, FillRunFp16, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error error_code[" << ret << "]";

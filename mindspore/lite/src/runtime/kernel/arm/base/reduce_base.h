@@ -33,19 +33,18 @@ class ReduceBaseCPUKernel : public InnerKernel {
   int Init() override;
   int ReSize() override;
 
- private:
+ protected:
   int CheckInputsOutputs();
   int CheckParameters();
 
- protected:
+  void CalculateTmpBufferSize();
+  void CalculateInnerOuterSize();
+
   int axes_[MAX_SHAPE_SIZE] = {0};
   int num_axes_{0};
   int mode_{0};
   bool reduce_to_end_{false};
 
- protected:
-  void CalculateTmpBufferSize();
-  void CalculateInnerOuterSize();
   std::vector<size_t> buffer_sizes_;
   std::vector<int> outer_sizes_;
   std::vector<int> inner_sizes_;

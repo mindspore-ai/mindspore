@@ -36,6 +36,8 @@ using mindspore::schema::ReduceMode_ReduceSumSquare;
 using mindspore::kernel::KERNEL_ARCH;
 
 namespace mindspore::kernel {
+ReduceInt8CPUKernel::~ReduceInt8CPUKernel() { FreeMultipliers(); }
+
 void ReduceInt8CPUKernel::OneAxis() {
   auto axis_info = axes_[0];
   if (axis_info == 0) {
@@ -83,7 +85,6 @@ void ReduceInt8CPUKernel::ThreeAxes() {
   } else if (axis_sum == 5) {
     pattern_ = kernel::NWC;
   } else {
-    MS_ASSERT(axis_sum == 6);
     pattern_ = kernel::HWC;
   }
 }
@@ -127,7 +128,6 @@ int ReduceInt8CPUKernel::Init() {
       last_reducer_ = ReduceSumLastAxis;
       break;
     }
-
     case static_cast<int>(ReduceMode_ReduceMax): {
       reducer_ = ReduceMaxInt8;
       last_reducer_ = ReduceMaxLastAxis;
@@ -221,8 +221,14 @@ void ReduceInt8CPUKernel::ReduceMean4DCalQuantParam() {
 int ReduceInt8CPUKernel::CalculateQuantArgs() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
-  MS_ASSERT(input);
-  MS_ASSERT(output);
+  if (input == nullptr || input->quant_params().size() < 1) {
+    MS_LOG(ERROR) << "Reduce input tensor error.";
+    return RET_NULL_PTR;
+  }
+  if (output == nullptr || output->quant_params().size() < 1) {
+    MS_LOG(ERROR) << "Reduce output tensor error.";
+    return RET_NULL_PTR;
+  }
 
   quant_arg_.in_scale_ = input->quant_params().front().scale;
   quant_arg_.in_zp_ = input->quant_params().front().zeroPoint;
@@ -316,6 +322,21 @@ int ReduceInt8CPUKernel::CalculateQuantArgsReduceSumSquare() {
   return RET_OK;
 }
 
+void ReduceInt8CPUKernel::FreeMultipliers() {
+  for (auto qm : mean_multipliers_) {
+    delete qm;
+    qm = nullptr;
+  }
+  for (auto qm : prod_multipliers_) {
+    delete qm;
+    qm = nullptr;
+  }
+  for (auto qm : sum_square_multipliers_) {
+    delete qm;
+    qm = nullptr;
+  }
+}
+
 int ReduceInt8CPUKernel::MallocTmpBuffer() {
   data_buffers_.clear();
   MS_ASSERT(static_cast<int>(buffer_sizes_.size()) == num_axes_ - 1);
@@ -334,7 +355,6 @@ int ReduceInt8CPUKernel::MallocTmpBuffer() {
   if (begin_src_data_ == nullptr) {
     return RET_NULL_PTR;
   }
-
   return RET_OK;
 }
 
@@ -357,6 +377,7 @@ int ReduceInt8CPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
 int ReduceInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto reduce = reinterpret_cast<ReduceInt8CPUKernel *>(cdata);
+  CHECK_NULL_RETURN(reduce);
   auto error_code = reduce->CallReduceUnit(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce Run error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -489,7 +510,12 @@ int ReduceInt8CPUKernel::Run() {
   is_last_axis_ = false;
 
   auto input = in_tensors().at(0);
-  auto input_data = reinterpret_cast<int8_t *>(input->MutableData());
+  auto input_data = reinterpret_cast<int8_t *>(input->data_c());
+  if (input_data == nullptr) {
+    FreeTmpBuffer();
+    MS_LOG(ERROR) << "Input data of reduce int8 operator is null.";
+    return RET_ERROR;
+  }
   for (auto i = 0; i < input->ElementsNum(); i++) {
     begin_src_data_[i] = static_cast<int32_t>(input_data[i]);
   }
@@ -523,19 +549,28 @@ int ReduceInt8CPUKernel::Run() {
     return RET_ERROR;
   }
   FreeTmpBuffer();
+  if (!this->valid_shape_) {
+    FreeMultipliers();
+  }
   return RET_OK;
 }
 
 int ReduceInt8CPUKernel::CallReduceUnit(int task_id) {
-  int ret;
-  if (!is_last_axis_) {
-    ret = reducer_(outer_size_, inner_size_, axis_size_, src_data_, dst_data_, &quant_arg_, task_id,
-                   op_parameter_->thread_num_);
-  } else {
-    ret = last_reducer_(outer_size_, inner_size_, axis_size_, src_data_, last_dst_data_, &quant_arg_, task_id,
-                        op_parameter_->thread_num_);
+  if (src_data_ == nullptr) {
+    MS_LOG(ERROR) << "Input data of reduce int8 operator is null.";
+    return RET_NULL_PTR;
   }
-  return ret;
+  if (dst_data_ == nullptr) {
+    MS_LOG(ERROR) << "Output data of reduce int8 operator is null.";
+    return RET_NULL_PTR;
+  }
+  if (!is_last_axis_) {
+    return reducer_(outer_size_, inner_size_, axis_size_, src_data_, dst_data_, &quant_arg_, task_id,
+                    op_parameter_->thread_num_);
+  } else {
+    return last_reducer_(outer_size_, inner_size_, axis_size_, src_data_, last_dst_data_, &quant_arg_, task_id,
+                         op_parameter_->thread_num_);
+  }
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceInt8CPUKernel>)

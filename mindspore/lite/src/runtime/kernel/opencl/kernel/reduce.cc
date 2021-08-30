@@ -139,7 +139,9 @@ int ReduceOpenCLKernel::CheckSpecs() {
     return RET_PARAM_INVALID;
   }
   auto ret = SetAxes();
-  if (ret != RET_OK) return ret;
+  if (ret != RET_OK) {
+    return ret;
+  }
   hw_reduce_ = IsHWReduce(reduce_axes_);
   wc_reduce_ = IsWCReduce(reduce_axes_);
   c_reduce_ = IsCReduce(reduce_axes_);
@@ -199,6 +201,7 @@ int ReduceOpenCLKernel::Prepare() {
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
+
 int ReduceOpenCLKernel::SetConstArgs() {
   int h = inShape.H;
   int w = inShape.W;
@@ -218,6 +221,7 @@ int ReduceOpenCLKernel::SetConstArgs() {
   }
   return RET_OK;
 }
+
 void ReduceOpenCLKernel::SetGlobalLocal() {
   int h = inShape.H;
   int w = inShape.W;

@@ -27,14 +27,18 @@ int FillInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
+  if (!InferFlag(inputs, inputs_size)) {
+    return NNACL_INFER_INVALID;
+  }
+
   const TensorC *dst_shape_tensor = inputs[1];
   const int32_t *dst_shape = (int32_t *)(dst_shape_tensor->data_);
   int num_dims = 1;
   for (size_t i = 0; i < dst_shape_tensor->shape_size_; ++i) {
+    if (INT_MUL_OVERFLOW(num_dims, dst_shape_tensor->shape_[i])) {
+      return NNACL_ERRCODE_MUL_OVERFLOW;
+    }
     num_dims *= dst_shape_tensor->shape_[i];
-  }
-  if (!InferFlag(inputs, inputs_size)) {
-    return NNACL_INFER_INVALID;
   }
   if (num_dims != 0 && dst_shape == NULL) {
     return NNACL_INFER_INVALID;

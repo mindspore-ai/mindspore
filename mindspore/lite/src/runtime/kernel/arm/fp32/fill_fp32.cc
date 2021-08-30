@@ -23,12 +23,13 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Fill;
 
 namespace mindspore::kernel {
 int FillCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -37,7 +38,9 @@ int FillCPUKernel::Init() {
 }
 
 int FillCPUKernel::ReSize() {
-  data_size_ = out_tensors_.front()->ElementsNum();
+  auto output = out_tensors_.front();
+  CHECK_NULL_RETURN(output);
+  data_size_ = output->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
   if (thread_sz_count_ != 0) {
     thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
@@ -69,6 +72,7 @@ int FillCPUKernel::DoFill(int task_id) {
 
 int FillRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<FillCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(g_kernel);
   auto ret = g_kernel->DoFill(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -79,15 +83,21 @@ int FillRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int FillCPUKernel::Run() {
   auto fill_input = in_tensors_.front();
+  CHECK_NULL_RETURN(fill_input);
   auto output = out_tensors_.front();
+  CHECK_NULL_RETURN(output);
   if (fill_input->data_type() == kNumberTypeFloat32 || fill_input->data_type() == kNumberTypeFloat) {
-    auto fill_data = reinterpret_cast<float *>(fill_input->MutableData());
+    auto fill_data = reinterpret_cast<float *>(fill_input->data_c());
+    CHECK_NULL_RETURN(fill_data);
     src_data_ = fill_data[0];
     out_ptr_ = reinterpret_cast<float *>(output->MutableData());
+    CHECK_NULL_RETURN(out_ptr_);
   } else if (fill_input->data_type() == kNumberTypeInt32 || fill_input->data_type() == kNumberTypeInt) {
-    auto fill_data = reinterpret_cast<int *>(fill_input->MutableData());
+    auto fill_data = reinterpret_cast<int *>(fill_input->data_c());
+    CHECK_NULL_RETURN(fill_data);
     int32_src_data_ = fill_data[0];
     int32_out_ptr_ = reinterpret_cast<int *>(output->MutableData());
+    CHECK_NULL_RETURN(int32_out_ptr_);
   } else {
     MS_LOG(ERROR) << "unsupported fill data type " << fill_input->data_type();
     return RET_ERROR;

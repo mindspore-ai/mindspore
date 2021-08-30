@@ -50,6 +50,17 @@ int ReduceOnSelectedAxes(const TensorC *input, size_t num_axes, const int *actua
   return NNACL_OK;
 }
 
+bool IsReduceAllAxes(const TensorC *const *inputs, size_t inputs_size) {
+  if (inputs_size == 1) {
+    return true;
+  }
+  // When axes not given, reduce op will have two input tensor by the old version converter_lite tool.
+  if (inputs_size == 2 && inputs[1]->shape_size_ == 1 && inputs[1]->shape_[0] == 0) {
+    return true;
+  }
+  return false;
+}
+
 int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
   int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 1, 2, 1);
@@ -60,25 +71,27 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
-  ReduceParameter *param = (ReduceParameter *)parameter;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
+
+  ReduceParameter *param = (ReduceParameter *)parameter;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   if (input->shape_size_ > MAX_SHAPE_SIZE) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
   bool keep_dims = param->keep_dims_;
   int out_shape[MAX_SHAPE_SIZE] = {0};
   const size_t out_shape_size = 0;
-  if (inputs_size == 1 || (inputs_size == 2 && inputs[1]->shape_size_ == 1 && inputs[1]->shape_[0] == 0)) {
+  if (IsReduceAllAxes(inputs, inputs_size)) {
     return ReduceOnAllAxes(input, output, out_shape, out_shape_size, keep_dims);
   }
+
   // get axes from input tensor
   const TensorC *axes_input = inputs[1];
   int *axes = (int *)axes_input->data_;
-  if (axes == NULL) {
-    return NNACL_NULL_PTR;
-  }
+  NNACL_CHECK_NULL_RETURN_ERR(axes);
+
   int num_axes;
   if (axes_input->shape_size_ == 1) {
     num_axes = axes_input->shape_[0];
@@ -91,6 +104,9 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     return NNACL_INPUT_TENSOR_ERROR;
   }
   int rank = (int)(input->shape_size_);
+  if (rank > MAX_SHAPE_SIZE || rank < 0) {
+    return NNACL_ERR;
+  }
   int actual_axes[MAX_SHAPE_SIZE] = {0};
   size_t actual_axes_size = 0;
   ShapeSet(actual_axes, &actual_axes_size, axes, num_axes);
@@ -100,11 +116,11 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
       return NNACL_ERR;
     }
 
+    if (axes[0] < -1 * rank || axes[0] >= rank) {
+      return NNACL_PARAM_INVALID;
+    }
     int begin_axis;
     begin_axis = axes[0] < 0 ? axes[0] + rank : axes[0];
-    if (rank > MAX_SHAPE_SIZE || rank < 0) {
-      return NNACL_ERR;
-    }
     for (int i = begin_axis + 1; i < rank; ++i) {
       ShapePush(actual_axes, &actual_axes_size, i);
     }
