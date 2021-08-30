@@ -59,8 +59,11 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
 
  protected:
   void InitialKernelList();
+  int MallocTmpBuffer();
+  void FreeTmpBuffer();
+  int CalculateCoeffOutput();
+  void HandleASumAndSumSquare();
 
- private:
   ReduceParameter *reduce_param_;
   Reducer reducer_ = nullptr;
   BoolReducer bool_reducer_ = nullptr;
@@ -70,12 +73,6 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
 
   const void *src_data_ = nullptr;
   void *dst_data_ = nullptr;
-
- private:
-  int MallocTmpBuffer();
-  void FreeTmpBuffer();
-  int CalculateCoeffOutput();
-  void HandleASumAndSumSquare();
 };
 }  // namespace mindspore::kernel
 

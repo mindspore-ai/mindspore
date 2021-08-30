@@ -39,22 +39,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   ReduceInt8CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx), ctx_(ctx) {}
-  ~ReduceInt8CPUKernel() {
-    for (auto qm : mean_multipliers_) {
-      delete qm;
-      qm = nullptr;
-    }
-    for (auto qm : prod_multipliers_) {
-      delete qm;
-      qm = nullptr;
-    }
-    for (auto qm : sum_square_multipliers_) {
-      delete qm;
-      qm = nullptr;
-    }
-    src_data_ = nullptr;
-    dst_data_ = nullptr;
-  }
+  ~ReduceInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -74,16 +59,15 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   void ReduceMean4DCalQuantParam();
   int CalculateQuantArgs();
   int CalculateQuantArgsReduceSumSquare();
+  void FreeMultipliers();
   void GetQuantArgs(size_t i);
 
- private:
   ReduceParameter *param_ = nullptr;
   ReduceQuantArg quant_arg_;
   int8_t *nchw_in_data_ = nullptr;
   int32_t bias_ = 0;
   bool is_last_axis_ = true;
 
- private:
   const lite::InnerContext *ctx_;
   int32_t *begin_src_data_ = nullptr;
   int8_t *last_dst_data_ = nullptr;

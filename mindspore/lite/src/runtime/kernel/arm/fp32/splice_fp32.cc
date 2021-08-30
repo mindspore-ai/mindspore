@@ -37,21 +37,19 @@ int SpliceCPUKernel::ReSize() { return RET_OK; }
 
 int SpliceCPUKernel::Run() {
   lite::Tensor *input_tensor = in_tensors_.front();
+  CHECK_NULL_RETURN(input_tensor);
   lite::Tensor *output_tensor = out_tensors_.front();
-  if (input_tensor->data_c() == nullptr || output_tensor->data_c() == nullptr) {
-    MS_LOG(ERROR) << "splice kernel input or output data is nullptr";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(output_tensor);
   std::vector<int> src_shape = input_tensor->shape();
   std::vector<int> dst_shape = output_tensor->shape();
-  if (src_shape.size() != dst_shape.size() || src_shape.size() != kInputSize2 || dst_shape.size() != kInputSize2) {
+  if (src_shape.size() != dst_shape.size() || src_shape.size() != DIMENSION_3D || dst_shape.size() != DIMENSION_3D) {
     MS_LOG(ERROR) << "splice kernel src_shape size not equal to dst_shape size";
     return RET_ERROR;
   }
-  int src_row = src_shape.at(kWeightIndex);
-  int dst_row = dst_shape.at(kWeightIndex);
-  int src_col = src_shape.at(kBiasIndex);
-  int dst_col = dst_shape.at(kBiasIndex);
+  int src_row = src_shape.at(DIMENSION_1D);
+  int dst_row = dst_shape.at(DIMENSION_1D);
+  int src_col = src_shape.at(DIMENSION_2D);
+  int dst_col = dst_shape.at(DIMENSION_2D);
   if (src_col * parameter_->context_dim_ != dst_col) {
     MS_LOG(ERROR) << "splice kernel src_col not match dst_col";
     return RET_ERROR;
@@ -67,7 +65,9 @@ int SpliceCPUKernel::Run() {
     }
   }
   auto input_data = reinterpret_cast<float *>(input_tensor->data_c());
+  CHECK_NULL_RETURN(input_data);
   auto output_data = reinterpret_cast<float *>(output_tensor->data_c());
+  CHECK_NULL_RETURN(output_data);
   SpliceFp32(input_data, src_row, src_col, parameter_, output_data, dst_row, dst_col);
   return RET_OK;
 }

@@ -40,14 +40,13 @@ class ReduceFp16CPUKernel : public ReduceBaseCPUKernel {
   int CallReduceUnit(int task_id);
 
  private:
+  int MallocTmpBuffer();
+  void FreeTmpBuffer();
+
   Reducer reducer_ = nullptr;
   std::vector<float16_t *> data_buffers_;
   const float16_t *fp16_src_data_ = nullptr;
   float16_t *fp16_dst_data_ = nullptr;
-
- private:
-  int MallocTmpBuffer();
-  void FreeTmpBuffer();
 };
 }  // namespace mindspore::kernel
 

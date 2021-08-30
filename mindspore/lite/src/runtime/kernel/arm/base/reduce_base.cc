@@ -41,10 +41,11 @@ int ReduceBaseCPUKernel::CheckInputsOutputs() {
     MS_LOG(ERROR) << "Reduce outputs size should be " << kOutputNum << " but got " << out_tensors_.size();
     return RET_ERROR;
   }
-  auto input = in_tensors_.at(0);
-  if (input == nullptr) {
-    MS_LOG(ERROR) << "Reduce input is nullptr";
-    return RET_NULL_PTR;
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
+    if (in_tensors_.at(i) == nullptr) {
+      MS_LOG(ERROR) << "Reduce input is nullptr";
+      return RET_NULL_PTR;
+    }
   }
   auto output = out_tensors_.at(0);
   if (output == nullptr) {
@@ -86,23 +87,28 @@ int ReduceBaseCPUKernel::CheckParameters() {
     }
     num_axes_ = static_cast<int>(input_rank);
   }
-
   return RET_OK;
 }
 
 int ReduceBaseCPUKernel::Init() {
+  auto ret = CheckInputsOutputs();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
   auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
   if (reduce_param == nullptr) {
     return RET_NULL_PTR;
   }
   if (in_tensors_.size() > 1) {
-    auto axes_ptr = in_tensors_.at(1);
-    num_axes_ = axes_ptr->ElementsNum();
-    if (axes_ptr->ElementsNum() > MAX_SHAPE_SIZE) {
+    auto axes_tensor = in_tensors_.at(1);
+    num_axes_ = axes_tensor->ElementsNum();
+    if (axes_tensor->ElementsNum() > MAX_SHAPE_SIZE) {
       MS_LOG(ERROR) << "input axes invalid.";
       return RET_ERROR;
     }
-    memcpy(axes_, axes_ptr->data_c(), axes_ptr->Size());
+    CHECK_NULL_RETURN(axes_tensor->data_c());
+    memcpy(axes_, axes_tensor->data_c(), axes_tensor->Size());
   } else {
     num_axes_ = reduce_param->num_axes_;
     memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
@@ -110,12 +116,6 @@ int ReduceBaseCPUKernel::Init() {
 
   mode_ = reduce_param->mode_;
   reduce_to_end_ = reduce_param->reduce_to_end_;
-
-  auto ret = CheckInputsOutputs();
-  if (ret != RET_OK) {
-    return ret;
-  }
-
   return RET_OK;
 }
 
@@ -153,7 +153,6 @@ void ReduceBaseCPUKernel::CalculateTmpBufferSize() {
         size *= input_shape.at(j);
       }
     }
-    MS_ASSERT(ms_context_->allocator != nullptr);
     buffer_sizes_.emplace_back(size);
     input_shape.at(axis) = 1;
   }

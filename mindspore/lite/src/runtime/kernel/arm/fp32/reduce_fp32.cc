@@ -56,6 +56,8 @@ int ReduceCPUKernel::Init() {
 }
 
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
+  CHECK_NULL_RETURN(src_data_);
+  CHECK_NULL_RETURN(dst_data_);
   if (data_type_ == kDataTypeFloat) {
     if (!reducer_) {
       MS_LOG(ERROR) << "function reducer_ is null.";
@@ -83,6 +85,7 @@ int ReduceCPUKernel::CallReduceUnit(int task_id) {
 
 int ReduceImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto reduce = reinterpret_cast<ReduceCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(reduce);
   auto error_code = reduce->CallReduceUnit(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce Run error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -96,8 +99,11 @@ int ReduceCPUKernel::Run() {
     data_type_ = kDataTypeFloat;
   } else if (in_tensors().at(0)->data_type() == kNumberTypeBool) {
     data_type_ = kDataTypeBool;
-  } else {
+  } else if (in_tensors().at(0)->data_type() == kNumberTypeInt32 || in_tensors().at(0)->data_type() == kNumberTypeInt) {
     data_type_ = kDataTypeInt;
+  } else {
+    MS_LOG(ERROR) << "Reduce op does not support data type " << in_tensors().at(0)->data_type();
+    return RET_ERROR;
   }
   auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
@@ -118,6 +124,7 @@ int ReduceCPUKernel::Run() {
     axis_size_ = axis_sizes_.at(i);
     if (axis_size_ == 0) {
       MS_LOG(ERROR) << "axis_size_ is must not be zero!";
+      FreeTmpBuffer();
       return RET_ERROR;
     }
     auto error_code = ParallelLaunch(this->ms_context_, ReduceImpl, this, op_parameter_->thread_num_);
