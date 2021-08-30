@@ -142,7 +142,11 @@ class Any {
     }
     return buffer.str();
   }
+#ifdef _MSC_VER
+  void dump() const { std::cout << ToString() << std::endl; }
+#else
   __attribute__((used)) void dump() const { std::cout << ToString() << std::endl; }
+#endif
 
  private:
   struct Base;

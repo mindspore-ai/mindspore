@@ -112,7 +112,11 @@ class MS_CORE_API Primitive : public Named {
   void set_has_signature(bool has_signature) { has_signature_ = has_signature; }
   bool has_signature() const { return has_signature_; }
   bool is_base() const { return is_base_; }
-  virtual BaseRef RunHookFunction(const VectorRef &args) const { MS_LOG(EXCEPTION) << "call a empty function!"; }
+  virtual BaseRef RunHookFunction(const VectorRef &args) const {
+    MS_LOG(EXCEPTION) << "call a empty function!";
+    BaseRef result;
+    return result;
+  }
   virtual void CopyHookFunction(const PrimitivePtr &primitive) { MS_LOG(EXCEPTION) << "call a empty function!"; }
   void set_const_prim(bool is_const_prim) { is_const_prim_ = is_const_prim; }
   bool is_const_prim() const { return is_const_prim_; }

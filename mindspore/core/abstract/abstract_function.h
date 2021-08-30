@@ -51,13 +51,21 @@ class MS_CORE_API AbstractFuncUnion : public AbstractFunction {
 
   std::string ToString() const override;
 
-  AbstractFunctionPtr GetUnique() override { MS_LOG(EXCEPTION) << "Cannot get unique from AbstractFuncUnion"; }
+  AbstractFunctionPtr GetUnique() override {
+    MS_LOG(EXCEPTION) << "Cannot get unique from AbstractFuncUnion";
+    AbstractFunctionPtr result;
+    return result;
+  }
   bool IsSuperSet(const AbstractFunctionPtr &other);
   AbstractFunctionPtr Join(const AbstractFunctionPtr &other) final;
   void Visit(std::function<void(const AbstractFuncAtomPtr &)>) const final;
   bool operator==(const AbstractFunction &other) const override;
   std::size_t hash() const override;
-  AbstractFunctionPtr Copy() const override { MS_LOG(EXCEPTION) << "Cannot Copy from AbstractFuncUnion"; }
+  AbstractFunctionPtr Copy() const override {
+    MS_LOG(EXCEPTION) << "Cannot Copy from AbstractFuncUnion";
+    AbstractFunctionPtr result;
+    return result;
+  }
 
  private:
   AbstractFuncAtomPtrList func_list_;

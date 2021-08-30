@@ -27,6 +27,10 @@
 #include "utils/log_adapter.h"
 #include "runtime/device/executor/dynamic_kernel.h"
 
+#ifdef _MSC_VER
+#undef OPAQUE
+#endif
+
 namespace mindspore {
 enum KernelType : int {
   UNKNOWN_KERNEL_TYPE = 0,

@@ -15,7 +15,9 @@
  */
 
 #include "utils/misc.h"
-
+#ifndef _MSC_VER
+#include <cxxabi.h>
+#endif
 namespace mindspore {
 const int RET_SUCCESS = 0;
 const int RET_FAILED = 1;
@@ -23,8 +25,12 @@ const int RET_CONTINUE = 2;
 const int RET_BREAK = 3;
 
 std::string demangle(const char *name) {
+#ifdef _MSC_VER
+  return name;
+#else
   int status = -1;
   std::unique_ptr<char, void (*)(void *)> res{abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free};
   return (status == 0) ? res.get() : name;
+#endif
 }
 }  // namespace mindspore

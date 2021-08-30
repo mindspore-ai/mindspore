@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#ifndef _MSC_VER
 #include <sys/time.h>
+#endif
 #include <string>
 #include "utils/log_adapter.h"
 

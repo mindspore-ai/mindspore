@@ -16,8 +16,10 @@
 
 #include "utils/log_adapter.h"
 
+#ifndef _MSC_VER
 #include <unistd.h>
 #include <sys/time.h>
+#endif
 #include <map>
 #include <iomanip>
 #include <thread>
@@ -119,7 +121,12 @@ void LogWriter::OutputLog(const std::ostringstream &msg) const {
 #define google mindspore_private
   auto submodule_name = GetSubModuleName(submodule_);
   google::LogMessage("", 0, GetGlogLevel(log_level_)).stream()
+#ifdef _MSC_VER
+    << "[" << GetLogLevel(log_level_) << "] " << submodule_name << "("
+    << "," << std::hex
+#else
     << "[" << GetLogLevel(log_level_) << "] " << submodule_name << "(" << getpid() << "," << std::hex
+#endif
     << std::this_thread::get_id() << std::dec << "," << GetProcName() << "):" << GetTimeString() << " "
     << "[" << location_.file_ << ":" << location_.line_ << "] " << location_.func_ << "] " << msg.str() << std::endl;
 #undef google
@@ -415,7 +422,11 @@ void InitSubModulesLogLevel() {
 
 extern "C" {
 #if defined(_WIN32) || defined(_WIN64)
+#ifdef _MSC_VER
+void common_log_init(void) {
+#else
 __attribute__((constructor)) void common_log_init(void) {
+#endif
 #else
 void common_log_init(void) {
 #endif
@@ -472,7 +483,11 @@ void common_log_init(void) {
 
 // shared lib init hook
 #if defined(_WIN32) || defined(_WIN64)
+#ifdef _MSC_VER
+void mindspore_log_init(void) {
+#else
 __attribute__((constructor)) void mindspore_log_init(void) {
+#endif
 #else
 void mindspore_log_init(void) {
 #endif

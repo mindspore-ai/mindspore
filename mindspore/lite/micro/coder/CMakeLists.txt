@@ -26,12 +26,12 @@ include_directories(${MICRO_DIR})
 #include coder
 if(NOT MSVC)
     include(${TOP_DIR}/cmake/external_libs/cmsis.cmake)
-    include(${MICRO_DIR}/cmake/file_list.cmake)
     include(${MICRO_DIR}/cmake/package_wrapper.cmake)
     add_subdirectory(wrapper)
 endif()
 
 if(MSLITE_ENABLE_CONVERTER)
+    include(${MICRO_DIR}/cmake/file_list.cmake)
     add_executable(codegen main.cc ${FILE_SET})
     add_dependencies(codegen fbs_src)
     add_dependencies(codegen fbs_inner_src)

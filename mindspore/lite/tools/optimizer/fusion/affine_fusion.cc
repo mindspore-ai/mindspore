@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "tools/optimizer/fusion/affine_fusion.h"
 #include <memory>
 #include <vector>
+#include "schema/inner/model_generated.h"
 #include "ops/affine.h"
 #include "src/common/log_adapter.h"
-#include "schema/inner/model_generated.h"
 #include "ops/splice.h"
 #include "ops/mat_mul.h"
 #include "tools/optimizer/common/gllo_utils.h"
