@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nnacl/infer/infer_register.h"
+#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape) {
@@ -74,6 +75,8 @@ bool TensorListIsFullyDefined(const int *shape, size_t shape_size) {
 
 int CheckAugmentNull(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      const OpParameter *parameter) {
+  NNACL_CHECK_NULL_RETURN_ERR(inputs);
+  NNACL_CHECK_NULL_RETURN_ERR(outputs);
   for (size_t i = 0; i < inputs_size; i++) {
     if (inputs[i] == NULL) {
       return NNACL_NULL_PTR;

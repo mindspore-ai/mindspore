@@ -17,6 +17,7 @@
 #include <vector>
 #include "src/runtime/kernel/arm/fp32_grad/resize_grad.h"
 #include "nnacl/fp32_grad/resize_grad.h"
+#include "nnacl/errorcode.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -51,6 +52,12 @@ int ResizeGradCPUKernel::ReSize() {
 }
 
 int ResizeGradCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_NULL_RETURN(op_parameter_);
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -61,23 +68,27 @@ int ResizeGradCPUKernel::Execute(int task_id) {
   auto in_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto out_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto param = reinterpret_cast<ResizeGradParameter *>(op_parameter_);
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "ResizeGradCPUKernel op_parameter_ is nullptr";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(in_addr);
+  CHECK_NULL_RETURN(out_addr);
+  CHECK_NULL_RETURN(param);
   auto batch_size = in_tensors_.at(0)->Batch();
   auto channel = in_tensors_.at(0)->Channel();
-
+  int error_code = NNACL_OK;
   if (param->method == static_cast<int>(schema::ResizeMethod_NEAREST)) {
-    ResizeNearestNeighborGrad(in_addr, out_addr, batch_size, channel, in_tensors_.at(0)->format(), param);
+    error_code = ResizeNearestNeighborGrad(in_addr, out_addr, batch_size, channel, in_tensors_.at(0)->format(), param);
   } else {
-    ResizeBiLinearGrad(in_addr, out_addr, batch_size, channel, in_tensors_.at(0)->format(), param);
+    error_code = ResizeBiLinearGrad(in_addr, out_addr, batch_size, channel, in_tensors_.at(0)->format(), param);
+  }
+  if (error_code != NNACL_OK) {
+    MS_LOG(ERROR) << "Resize fp32 grad failed.";
+    return error_code;
   }
   return RET_OK;
 }
 
 int ResizeGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto resize_grad_kernel = reinterpret_cast<ResizeGradCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(resize_grad_kernel);
   auto error_code = resize_grad_kernel->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "resize grad error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -88,6 +99,7 @@ int ResizeGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int ResizeGradCPUKernel::Run() {
   auto out_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  CHECK_NULL_RETURN(out_addr);
   size_t elem_number = out_tensors_.at(0)->ElementsNum();
   std::fill(out_addr, out_addr + elem_number, 0.f);
   int error_code = ParallelLaunch(this->ms_context_, ResizeGradRun, this, 1);

@@ -17,13 +17,14 @@
 #include <math.h>
 #include "nnacl/infer/common_infer.h"
 
-void ResizeNearestNeighborFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_size, int channel, int format,
-                                   ResizeFp16GradParameter *param) {
+int ResizeNearestNeighborFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_size, int channel, int format,
+                                  ResizeFp16GradParameter *param) {
   bool align_corners = param->align_corners_;
   size_t in_hw_size = param->in_width_ * param->in_height_;
   size_t out_hw_size = param->out_width_ * param->out_height_;
 
   if (format == Format_NHWC) {
+    NNACL_CHECK_ZERO_RETURN_ERR(param->in_width_);
     for (int32_t b = 0; b < batch_size; ++b) {
       for (size_t i = 0; i < in_hw_size; ++i) {
         size_t in_y = i / param->in_width_;
@@ -62,14 +63,16 @@ void ResizeNearestNeighborFp16Grad(float16_t *in_addr, float16_t *out_addr, int 
       }
     }
   }
+  return NNACL_OK;
 }
 
-void ResizeBiLinearFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_size, int channel, int format,
-                            ResizeFp16GradParameter *param) {
+int ResizeBiLinearFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_size, int channel, int format,
+                           ResizeFp16GradParameter *param) {
   size_t in_hw_size = param->in_width_ * param->in_height_;
   size_t out_hw_size = param->out_width_ * param->out_height_;
 
   if (format == Format_NHWC) {
+    NNACL_CHECK_ZERO_RETURN_ERR(param->in_width_);
     for (int32_t b = 0; b < batch_size; ++b) {
       for (size_t i = 0; i < in_hw_size; ++i) {
         size_t h = i / param->in_width_;
@@ -139,4 +142,5 @@ void ResizeBiLinearFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_s
       }
     }
   }
+  return NNACL_OK;
 }

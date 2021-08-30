@@ -35,10 +35,10 @@ typedef struct ResizeFp16GradParameter {
   float16_t width_scale_;
 } ResizeFp16GradParameter;
 
-void ResizeNearestNeighborFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_size, int channel, int format,
-                                   ResizeFp16GradParameter *param);
-void ResizeBiLinearFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_size, int channel, int format,
-                            ResizeFp16GradParameter *param);
+int ResizeNearestNeighborFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_size, int channel, int format,
+                                  ResizeFp16GradParameter *param);
+int ResizeBiLinearFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_size, int channel, int format,
+                           ResizeFp16GradParameter *param);
 #ifdef __cplusplus
 }
 #endif

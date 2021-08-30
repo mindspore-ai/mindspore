@@ -20,6 +20,7 @@
 #include "nnacl/fp16_grad/convolution_grad_filter.h"
 #include "nnacl/fp16_grad/pack_fp16_ext.h"
 #include "nnacl/fp16_grad/gemm_fp16.h"
+#include "nnacl/errorcode.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -33,12 +34,13 @@ int ConvolutionGradFilterCPUKernelFp16::ReSize() {
   // dy is in input 0
   // x is in input 1
   // dw is output 0
-
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto *x_tensor = in_tensors_.at(1);
-  MS_ASSERT(x_tensor != nullptr);
+  CHECK_NULL_RETURN(x_tensor);
   auto *dy_tensor = in_tensors_.at(0);
-  MS_ASSERT(dy_tensor != nullptr);
-
+  CHECK_NULL_RETURN(dy_tensor);
+  CHECK_NULL_RETURN(op_parameter_);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   conv_param->output_batch_ = dy_tensor->shape().at(kNHWC_N);
   conv_param->input_batch_ = x_tensor->shape().at(kNHWC_N);
@@ -51,6 +53,7 @@ int ConvolutionGradFilterCPUKernelFp16::ReSize() {
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
+  NNACL_CHECK_ZERO_RETURN_ERR(conv_param->group_);
   do_img2col_ = (conv_param->kernel_h_ == 1) && (conv_param->kernel_w_ == 1) && (conv_param->pad_d_ == 0) &&
                     (conv_param->pad_u_ == 0) && (conv_param->pad_l_ == 0) && (conv_param->pad_r_ == 0) &&
                     (conv_param->dilation_h_ == 1) && (conv_param->dilation_w_ == 1) && (conv_param->stride_h_ == 1) &&
@@ -78,10 +81,11 @@ int ConvolutionGradFilterCPUKernelFp16::Init() { return ReSize(); }
 
 int ConvolutionGradFilterCPUKernelFp16::Execute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(conv_param);
   auto *input_dy = in_tensors_.at(0);
   auto *input_x = in_tensors_.at(1);
   auto *out_dw = out_tensors_.at(0);
-
+  CHECK_NULL_RETURN(out_dw);
   auto x_addr = reinterpret_cast<float16_t *>(input_x->data_c());
   auto dy_addr = reinterpret_cast<float16_t *>(input_dy->data_c());
   auto dw_addr = reinterpret_cast<float16_t *>(out_dw->data_c());
@@ -157,6 +161,8 @@ int ConvolutionGradFilterCPUKernelFp16::Execute(int task_id) {
       }
     }
   } else {
+    NNACL_CHECK_ZERO_RETURN_ERR(out_w * conv_param->stride_h_);
+    NNACL_CHECK_ZERO_RETURN_ERR(out_w * conv_param->stride_w_);
     float16_t *mat_c = dw_addr;
     const size_t in_plane_size = in_ch * in_h * in_w;
     for (int i = start; i < end; ++i) {
@@ -177,8 +183,8 @@ int ConvolutionGradFilterCPUKernelFp16::Execute(int task_id) {
 }
 
 int ConvolutionGradFilterFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
   auto convfilter_kernel = reinterpret_cast<ConvolutionGradFilterCPUKernelFp16 *>(cdata);
+  CHECK_NULL_RETURN(convfilter_kernel);
   auto error_code = convfilter_kernel->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionGradFilterRun error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -190,6 +196,8 @@ int ConvolutionGradFilterFp16Run(void *cdata, int task_id, float lhs_scale, floa
 int ConvolutionGradFilterCPUKernelFp16::Run() {
   auto *out_dw = out_tensors_.at(0);
   auto dw_addr = reinterpret_cast<float16_t *>(out_dw->data_c());
+  CHECK_NULL_RETURN(out_dw);
+  CHECK_NULL_RETURN(dw_addr);
   memset(dw_addr, 0, out_dw->Size());
   int error_code = ParallelLaunch(this->ms_context_, ConvolutionGradFilterFp16Run, this, ms_context_->thread_num_);
   if (error_code != RET_OK) {
