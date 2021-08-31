@@ -42,8 +42,19 @@ kernel::InnerKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                 const InnerContext *ctx, const kernel::KernelKey &desc) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  if (conv_param == nullptr) {
+    MS_LOG(ERROR) << "conv_param is null";
+    return nullptr;
+  }
   kernel::InnerKernel *kernel = nullptr;
-
+  if (inputs.at(kInputIndex) == nullptr) {
+    MS_LOG(ERROR) << "inputs.at(kInputIndex) is null";
+    return nullptr;
+  }
+  if (outputs.at(kOutputIndex) == nullptr) {
+    MS_LOG(ERROR) << "outputs.at(kOutputIndex) is null";
+    return nullptr;
+  }
   auto act_quant_size =
     MSMAX(inputs.at(kInputIndex)->quant_params().size(), outputs.at(kOutputIndex)->quant_params().size());
   if (act_quant_size == 1) {  // per tensor

@@ -154,6 +154,8 @@ void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
 int Convolution1x1Int8CPUKernel::InitBiasByzp(const void *src_weight, int input_channel, int output_channel,
                                               int round_oc) {
   /* bias = bias - v2 x zp1 + zp1 x zp2  */
+  CHECK_NULL_RETURN(conv_param_);
+  CHECK_NULL_RETURN(src_weight);
   int32_t *bias_data = reinterpret_cast<int32_t *>(bias_data_);
   auto *weight = static_cast<const int8_t *>(src_weight);
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
@@ -210,6 +212,7 @@ int Convolution1x1Int8CPUKernel::InitBiasByzp(const void *src_weight, int input_
 
 int Convolution1x1Int8CPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(filter_tensor);
   auto input_channel = filter_tensor->Channel();
   if (input_channel < 0) {
     MS_LOG(ERROR) << "get channel from filter_tensor failed.";
@@ -229,6 +232,7 @@ int Convolution1x1Int8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(packed_weight_, 0, size);
+  CHECK_NULL_RETURN(filter_tensor->MutableData());
   if (support_optimize_) {
     RowMajor2Row4x16MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
                               input_channel);
@@ -245,15 +249,16 @@ int Convolution1x1Int8CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, size * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
+    CHECK_NULL_RETURN(in_tensors_.at(kBiasIndex)->data_c());
     memcpy(bias_data_, in_tensors_.at(kBiasIndex)->data_c(), output_channel * sizeof(int32_t));
   }
-
-  InitBiasByzp(filter_tensor->data_c(), input_channel, output_channel, size);
+  InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel, size);
   return RET_OK;
 }
 
 int Convolution1x1Int8CPUKernel::InitWeightBiasArm32() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(filter_tensor);
   auto input_channel = filter_tensor->Channel();
   if (input_channel < 0) {
     MS_LOG(ERROR) << "get channel from filter_tensor failed.";
@@ -273,6 +278,7 @@ int Convolution1x1Int8CPUKernel::InitWeightBiasArm32() {
     return RET_ERROR;
   }
   memset(packed_weight_, 0, size);
+  CHECK_NULL_RETURN(filter_tensor->MutableData());
   RowMajor2Row2x16MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
                             input_channel);
 
@@ -287,12 +293,13 @@ int Convolution1x1Int8CPUKernel::InitWeightBiasArm32() {
   if (in_tensors_.size() == kInputSize2) {
     memcpy(bias_data_, in_tensors_.at(kBiasIndex)->data_c(), output_channel * sizeof(int32_t));
   }
-
   InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel, col2);
   return RET_OK;
 }
 
 int Convolution1x1Int8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
     MS_LOG(ERROR) << "Init matmul_param_ failed.";
@@ -478,7 +485,9 @@ int Convolution1x1Int8CPUKernel::RunArm64OptOc(int task_id) {
   int32_t *cur_right_shift = filter_peroc_ ? right_shift_ + cur_stride : conv_param_->conv_quant_arg_.right_shift_;
   int32_t *cur_multiplier = filter_peroc_ ? multiplier_ + cur_stride : conv_param_->conv_quant_arg_.quant_multiplier_;
   int32_t *cur_zp = filter_peroc_ ? filter_zp_ptr_ + cur_stride : filter_zp_ptr_;
-
+  CHECK_NULL_RETURN(cur_left_shift);
+  CHECK_NULL_RETURN(cur_right_shift);
+  CHECK_NULL_RETURN(cur_multiplier);
   Conv1x1Int8Opt(packed_input_, packed_weight_ + cur_stride * matmul_param_->deep_4_, output_ptr_ + cur_stride,
                  input_sum_, reinterpret_cast<int32_t *>(bias_data_) + cur_stride, matmul_param_->row_, cur_oc,
                  matmul_param_->deep_4_, cur_left_shift, cur_right_shift, cur_multiplier, conv_param_, matmul_func_,
@@ -505,7 +514,9 @@ int Convolution1x1Int8CPUKernel::RunArmOc(int task_id) {
   int32_t *cur_right_shift = filter_peroc_ ? right_shift_ + cur_stride : conv_param_->conv_quant_arg_.right_shift_;
   int32_t *cur_multiplier = filter_peroc_ ? multiplier_ + cur_stride : conv_param_->conv_quant_arg_.quant_multiplier_;
   int32_t *cur_zp = filter_peroc_ ? filter_zp_ptr_ + cur_stride : filter_zp_ptr_;
-
+  CHECK_NULL_RETURN(cur_left_shift);
+  CHECK_NULL_RETURN(cur_right_shift);
+  CHECK_NULL_RETURN(cur_multiplier);
   Conv1x1Int8(packed_input_, packed_weight_ + cur_stride * matmul_param_->deep_16_, output_ptr_ + cur_stride,
               input_sum_, reinterpret_cast<int32_t *>(bias_data_) + cur_stride, matmul_param_->row_, cur_oc,
               matmul_param_->deep_16_, cur_left_shift, cur_right_shift, cur_multiplier, conv_param_, cur_zp);
@@ -541,8 +552,10 @@ int Convolution1x1Int8CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  int8_t *src_in = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
-  int8_t *src_out = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+  auto src_in = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
+  CHECK_NULL_RETURN(src_in);
+  auto src_out = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+  CHECK_NULL_RETURN(src_out);
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     Pre1x1Trans(src_in + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,

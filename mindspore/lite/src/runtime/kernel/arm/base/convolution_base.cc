@@ -107,6 +107,9 @@ void ConvolutionBaseCPUKernel::FreeQuantParam() {
 int ConvolutionBaseCPUKernel::Init() {
   auto input = this->in_tensors_.front();
   auto output = this->out_tensors_.front();
+  CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(output);
+  CHECK_NULL_RETURN(conv_param_);
   conv_param_->input_batch_ = input->Batch();
   conv_param_->input_h_ = input->Height();
   conv_param_->input_w_ = input->Width();
@@ -121,6 +124,7 @@ int ConvolutionBaseCPUKernel::Init() {
 
 int ConvolutionBaseCPUKernel::InitConvWeightBias() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
   auto shape = weight_tensor->shape();
   if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
     MS_LOG(WARNING) << "The shape of weight tensor is not ready, the weight and bias would be inited in runtime.";
@@ -148,7 +152,7 @@ int ConvolutionBaseCPUKernel::InitConvWeightBias() {
 }
 
 int ConvolutionBaseCPUKernel::RepackWeight() {
-  origin_weight_ = origin_weight_ != nullptr ? origin_weight_ : in_tensors_.at(kWeightIndex)->data_c();
+  origin_weight_ = origin_weight_ != nullptr ? origin_weight_ : in_tensors_.at(kWeightIndex)->MutableData();
   if (packed_weight_ == nullptr && InitConvWeightBias() != RET_OK) {
     MS_LOG(ERROR) << "Malloc data for bias and weight failed.";
     return lite::RET_ERROR;
@@ -168,6 +172,7 @@ int ConvolutionBaseCPUKernel::RepackWeight() {
 int ConvolutionBaseCPUKernel::CheckResizeValid() {
   // ===============check in channel================= //
   auto filter_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(filter_tensor);
   auto filter_in_channel = filter_tensor->Channel();
   int resize_in_channel = in_tensors_.at(kInputIndex)->Channel();
   if (filter_in_channel != resize_in_channel) {
@@ -179,6 +184,7 @@ int ConvolutionBaseCPUKernel::CheckResizeValid() {
 
 int ConvolutionBaseCPUKernel::SetIfPerChannel() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(filter_tensor);
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
 
@@ -212,6 +218,7 @@ int ConvolutionBaseCPUKernel::SetIfPerChannel() {
 
 int ConvolutionBaseCPUKernel::MallocQuantParam() {
   conv_quant_arg_ = &conv_param_->conv_quant_arg_;
+  CHECK_NULL_RETURN(conv_quant_arg_);
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto output_tensor = out_tensors_.at(kOutputIndex);

@@ -52,12 +52,13 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Conv2D only supports 1 output Tensor but get " << outputs_num;
     return RET_ERROR;
   }
-
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
   int input_ndim = in_tensors_.at(kInputIndex)->shape().size();
   if (input_ndim != DIMENSION_4D) {
     MS_LOG(ERROR) << "Conv2D only supports 4D input Tensor but get " << input_ndim << "D.";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(out_tensors_.at(kInputIndex));
   int output_ndim = out_tensors_.at(kOutputIndex)->shape().size();
   if (output_ndim != DIMENSION_4D) {
     MS_LOG(ERROR) << "Conv2D only supports 4D output Tensor but get " << output_ndim << "D.";
@@ -65,6 +66,7 @@ int Conv2DOpenCLKernel::CheckSpecs() {
   }
 
   auto *filter_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(filter_tensor);
   int filter_ndim = filter_tensor->shape().size();
   if (filter_ndim != DIMENSION_4D) {
     MS_LOG(ERROR) << "Conv2D only supports 4D filter Tensor but get " << filter_ndim << "D.";
@@ -98,8 +100,11 @@ int Conv2DOpenCLKernel::CheckSpecs() {
 }
 
 int Conv2DOpenCLKernel::Prepare() {
-  InitAttrs();
-  auto ret = BuildKernel();
+  auto ret = InitAttrs();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  ret = BuildKernel();
   if (ret != RET_OK) {
     return ret;
   }
@@ -115,11 +120,15 @@ int Conv2DOpenCLKernel::Prepare() {
   return RET_OK;
 }
 
-void Conv2DOpenCLKernel::InitAttrs() {
+int Conv2DOpenCLKernel::InitAttrs() {
+  CHECK_NULL_RETURN(ocl_runtime_);
   use_fp16_ = ocl_runtime_->GetFp16Enable();
   sizeof_FLT_ = use_fp16_ ? sizeof(float16_t) : sizeof(float);
+  CHECK_NULL_RETURN(in_tensors_.front());
+  CHECK_NULL_RETURN(out_tensors_.front());
   auto input_shape = in_tensors_.front()->shape();
   auto output_shape = out_tensors_.front()->shape();
+  CHECK_LESS_RETURN(input_shape.size(), C4NUM);
   batch_size_ = input_shape[0];
   IH_ = input_shape[1];
   IW_ = input_shape[2];
@@ -136,10 +145,12 @@ void Conv2DOpenCLKernel::InitAttrs() {
   }
   CI_SLICES_ = UP_DIV(CI_, CI_TILE);
   CO_SLICES_ = UP_DIV(CO_, CO_TILE);
+  CHECK_NULL_RETURN(param_);
   KH_ = param_->kernel_h_;
   KW_ = param_->kernel_w_;
   // note: TILE_HW_ is only used when use_winograd_=true
   TILE_HW_ = UP_DIV(OW_, 4) * UP_DIV(OH_, 4);
+  return RET_OK;
 }
 
 int Conv2DOpenCLKernel::BuildKernel() {
@@ -333,7 +344,9 @@ int Conv2DOpenCLKernel::InitFilter() {
 
   // rearrange filter
   auto filter_tensor = in_tensors_.at(1);
+  CHECK_NULL_RETURN(filter_tensor);
   void *src_data = stored_filter_ == nullptr ? filter_tensor->data_c() : stored_filter_;
+  CHECK_NULL_RETURN(src_data);
   auto src_dtype = filter_tensor->data_type();
   auto dst_dtype = use_fp16_ ? kNumberTypeFloat16 : kNumberTypeFloat32;
   std::vector<char> tmp(size, 0);

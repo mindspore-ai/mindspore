@@ -874,6 +874,7 @@ void Conv3x3Int8(const int16_t *input_data, const int16_t *transed_weight, const
   int out_w_block = UP_DIV(conv_param->output_w_, OUPUT_UNIT);
   int out_h_block = UP_DIV(conv_param->output_h_, OUPUT_UNIT);
   int output_count = out_w_block * out_h_block;
+  NNACL_CHECK_ZERO_RETURN(TILE_NUM);
   int output_tile_count = UP_DIV(output_count, TILE_NUM);
   int oc4 = UP_DIV(conv_param->output_channel_, C4NUM);
   int tile_buffer_offset = TILE_NUM * 16 * ic8 * C8NUM;

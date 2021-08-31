@@ -39,7 +39,9 @@ int ConvolutionDepthwiseSWInt8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
   // o, h, w, i -> o/8, h, w, i, 8; o equals to group, i equals to 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
+  CHECK_NULL_RETURN(origin_weight);
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
   packed_weight_ = reinterpret_cast<int16_t *>(malloc(static_cast<size_t>(pack_weight_size) * sizeof(int16_t)));
@@ -47,6 +49,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(conv_param_);
   PackDepthwiseInt8Weight(origin_weight, packed_weight_, weight_tensor->Height() * weight_tensor->Width(),
                           weight_tensor->Batch(), &(conv_param_->conv_quant_arg_));
 
@@ -173,6 +176,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
   }
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(output_tensor);
   output_scale_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(channel) * sizeof(float)));
   MSLITE_CHECK_PTR(output_scale_);
 
@@ -248,6 +252,8 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
 }
 
 int ConvolutionDepthwiseSWInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   sliding_ = new (std::nothrow) SlidingWindowParam;
   if (sliding_ == nullptr) {
     MS_LOG(ERROR) << "new sliding window param.";
@@ -275,7 +281,10 @@ int ConvolutionDepthwiseSWInt8CPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseSWInt8CPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    return ret;
+  }
   InitSlidingParamConvDw(sliding_, conv_param_, C8NUM);
   return RET_OK;
 }
@@ -305,7 +314,9 @@ int ConvolutionDepthwiseSWInt8CPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   auto input_addr = reinterpret_cast<int8_t *>(input_tensor->MutableData());
+  CHECK_NULL_RETURN(input_addr);
   if (need_align_) {
     PackNHWCToNHWC8Int8(input_addr, packed_input_, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
@@ -314,6 +325,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::Run() {
   }
 
   auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
+  CHECK_NULL_RETURN(output_addr);
   if (!need_align_) {
     packed_output_ = output_addr;
   }

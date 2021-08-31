@@ -397,6 +397,7 @@ void ConvDw3x3Fp16(float16_t *output_data, float16_t *buffer, const float16_t *i
 
 void ConvDwFp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
                 const float16_t *bias_data, const ConvParameter *conv_param, int task_id) {
+  NNACL_CHECK_ZERO_RETURN(conv_param->stride_w_);
   int h_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
   int h_start = h_step * task_id;
   int h_end = MSMIN(h_start + h_step, conv_param->output_h_);
@@ -570,6 +571,8 @@ void DepthwiseCenterFp16(float16_t *dst, const float16_t *src, const float16_t *
 void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
                   const float16_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
                   int task_id) {
+  NNACL_CHECK_ZERO_RETURN(conv_param->dilation_h_);
+  NNACL_CHECK_ZERO_RETURN(conv_param->dilation_w_);
   bool relu = conv_param->act_type_ == ActType_Relu;
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
   const float16_t *src = input_data;

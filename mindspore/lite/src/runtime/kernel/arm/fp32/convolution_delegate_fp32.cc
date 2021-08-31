@@ -92,6 +92,7 @@ int ConvolutionDelegateCPUKernel::GetWeightData() {
 int ConvolutionDelegateCPUKernel::GetBiasData() {
   if (in_tensors_.size() == 3) {
     if (InferShapeDone()) {
+      CHECK_NULL_RETURN(in_tensors_.at(kBiasIndex));
       origin_bias_ = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->data_c());
       CHECK_NULL_RETURN(origin_bias_);
       return RET_OK;
@@ -121,7 +122,10 @@ int ConvolutionDelegateCPUKernel::Init() {
 
 int ConvolutionDelegateCPUKernel::ReSize() {
   // Update shape info of input and output
-  SetInputOutputShapeInfo();
+  auto ret = SetInputOutputShapeInfo();
+  if (ret != RET_OK) {
+    return ret;
+  }
   if (conv_kernel_ == nullptr) {
     // need to select actual execute kernel here
     conv_kernel_ = CpuConvFp32KernelSelect();
@@ -134,10 +138,13 @@ int ConvolutionDelegateCPUKernel::ReSize() {
   return conv_kernel_->ReSize();
 }
 
-void ConvolutionDelegateCPUKernel::SetInputOutputShapeInfo() {
+int ConvolutionDelegateCPUKernel::SetInputOutputShapeInfo() {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(conv_param);
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
+  CHECK_NULL_RETURN(output);
   conv_param->input_batch_ = input->Batch();
   conv_param->input_h_ = input->Height();
   conv_param->input_w_ = input->Width();
@@ -147,6 +154,7 @@ void ConvolutionDelegateCPUKernel::SetInputOutputShapeInfo() {
   conv_param->output_w_ = output->Width();
   conv_param->output_channel_ = output->Channel();
   conv_param->op_parameter_.thread_num_ = op_parameter_->thread_num_;
+  return RET_OK;
 }
 
 bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_param) {

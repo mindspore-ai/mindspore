@@ -23,6 +23,7 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, in
   int out_channel = conv_param->output_channel_;
   int tile_n = conv_param->tile_num_;
   int output_count = conv_param->output_h_ * conv_param->output_w_;
+  NNACL_CHECK_ZERO_RETURN(tile_n);
   int output_tile_count = UP_DIV(output_count, tile_n);
   int kernel_plane = conv_param->kernel_h_ * conv_param->kernel_w_;
   int unit_size;

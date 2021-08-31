@@ -64,6 +64,7 @@ int ConvolutionCPUKernel::Init() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(filter_tensor);
     size_t in_channel = filter_tensor->Channel();
     size_t out_channel = filter_tensor->Batch();
     size_t oc_block_num = UP_ROUND(out_channel, OC_BLOCK);

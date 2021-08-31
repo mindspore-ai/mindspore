@@ -105,6 +105,7 @@ int ConvolutionWinogradCPUKernel::Init() {
   conv_param_->output_unit_ = output_unit_;
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(filter_tensor);
     int in_channel = filter_tensor->Channel();
     int out_channel = filter_tensor->Batch();
     auto trans_matrix_data_size =
@@ -141,8 +142,10 @@ int ConvolutionWinogradCPUKernel::ReSize() {
 
 int ConvolutionWinogradCPUKernel::RunImpl(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->data_c());
   CHECK_NULL_RETURN(ori_input_data);
+  CHECK_NULL_RETURN(out_tensors_.front());
   auto output_data = reinterpret_cast<float *>(out_tensors_.front()->data_c());
   CHECK_NULL_RETURN(output_data);
   ConvWinogardFp32(ori_input_data, reinterpret_cast<float *>(packed_weight_),

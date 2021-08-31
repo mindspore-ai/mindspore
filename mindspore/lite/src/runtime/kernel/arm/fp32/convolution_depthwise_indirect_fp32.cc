@@ -38,6 +38,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Init() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_[kWeightIndex];
+    CHECK_NULL_RETURN(weight_tensor);
 #ifdef ENABLE_AVX
     int div_flag = C8NUM;
 #else
