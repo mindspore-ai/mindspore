@@ -163,7 +163,7 @@ def set_parameter():
             context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=config.save_graphs,
                                 save_graphs_path=rank_save_graphs_path)
         else:
-            context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
+            context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=config.save_graphs)
         set_graph_kernel_context(target, config.net_name)
     else:
         context.set_context(mode=context.PYNATIVE_MODE, device_target=target, save_graphs=False)
