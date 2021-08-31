@@ -3035,7 +3035,7 @@ void PynativeExecutor::ClearGrad(const py::object &cell, const py::args &args) {
 
 void PynativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear all res";
-  session::PynativeTaskManager::GetInstance().ClearAllResources();
+  session::PynativeTaskManager::GetInstance().Reset();
 
   // Maybe exit in runop step
   auto ms_context = MsContext::GetInstance();

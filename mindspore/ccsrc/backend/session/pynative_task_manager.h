@@ -105,10 +105,18 @@ class PynativeTaskManager {
     ~ExecuteGuard() { PynativeTaskManager::GetInstance().executing_ = false; }
   };
 
-  void RegisterExecuteFunc(const std::function<void()> &execute_all) { execute_all_ = execute_all; }
+  void Init(const std::function<void()> &execute_all) {
+    execute_all_ = execute_all;
+    inited_ = true;
+  }
   const std::vector<std::shared_ptr<SessionTask>> &GetAllBuildTasks() { return build_tasks_; }
   std::queue<std::shared_ptr<SessionTask>> &GetAllLaunchTasks() { return launch_tasks_; }
   void ClearAllBuildTasks() { build_tasks_.clear(); }
+  void Reset() {
+    ClearAllResources();
+    execute_all_ = nullptr;
+    inited_ = false;
+  }
   void ClearAllResources() {
     build_tasks_.clear();
     std::queue<std::shared_ptr<SessionTask>> empty;
@@ -129,6 +137,7 @@ class PynativeTaskManager {
   [[nodiscard]] bool QueueFull() const {
     return build_tasks_.size() > kMaxQueueSize || launch_tasks_.size() > kMaxQueueSize;
   }
+  [[nodiscard]] bool inited() const { return inited_; }
 
  private:
   std::vector<std::shared_ptr<SessionTask>> build_tasks_;
@@ -136,6 +145,7 @@ class PynativeTaskManager {
   std::function<void()> execute_all_{nullptr};
   inline static size_t kMaxQueueSize = 100;
   bool executing_{false};
+  bool inited_{false};
 };
 }  // namespace session
 }  // namespace mindspore

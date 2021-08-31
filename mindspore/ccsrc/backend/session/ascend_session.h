@@ -141,6 +141,10 @@ class AscendSession : public SessionBasic {
                               std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
                               VectorRef *outputs) const;
   std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) override;
+
+  void LaunchFunc(const KernelGraphPtr &graph, const std::vector<int64_t> &tensors_mask,
+                  const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node, bool is_dynamic_shape,
+                  const std::vector<tensor::TensorPtr> &input_tensors);
   // key is final_graph_id,value is child graph execute order of final graph
   std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
   // key is final_graph_id,value is the graph types of child graphs
@@ -151,11 +155,6 @@ class AscendSession : public SessionBasic {
   GraphId final_graph_id_;
   // record graph ids of bp graphs that has been built in PyNative mode
   std::set<GraphId> built_graph_id_;
-
-  std::once_flag registered_;
-  void LaunchFunc(const KernelGraphPtr &graph, const std::vector<int64_t> &tensors_mask,
-                  const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node, bool is_dynamic_shape,
-                  const std::vector<tensor::TensorPtr> &input_tensors);
 };
 MS_REG_SESSION(kAscendDevice, AscendSession);
 }  // namespace session
