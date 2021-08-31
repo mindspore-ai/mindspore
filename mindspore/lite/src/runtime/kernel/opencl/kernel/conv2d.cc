@@ -649,33 +649,18 @@ kernel::InnerKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inpu
   kernel::OpenCLKernel *kernel = nullptr;
   auto shape = outputs.front()->shape();
   bool infer_shape_done = std::find(shape.begin(), shape.end(), -1) == shape.end();
-  if (infer_shape_done && UseFcReplaceConv(inputs, outputs, conv_param)) {
-    auto *fc_param = CreateFcParam(conv_param, inputs);
-    kernel = new (std::nothrow)
-      FullConnectionOpenCLKernel(fc_param, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
-    if (kernel == nullptr) {
-      MS_LOG(ERROR) << "Create FullConnection kernel failed.";
-      free(fc_param);
-      free(conv_param);
-      return nullptr;
-    } else {
-      free(conv_param);
-      MS_LOG(INFO) << "use FullConnection to replace Convolution.";
-    }
-  } else {
-    if (infer_shape_done && UseWinograd4x4To6x6(conv_param, inputs, outputs)) {
-      MS_LOG(DEBUG) << "use Winograd algorithm.";
-      kernel = new (std::nothrow) WinogradOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs,
-                                                       static_cast<const lite::InnerContext *>(ctx));
-    } else {
-      kernel = new (std::nothrow) Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs,
+  if (infer_shape_done && UseWinograd4x4To6x6(conv_param, inputs, outputs)) {
+    MS_LOG(DEBUG) << "use Winograd algorithm.";
+    kernel = new (std::nothrow) WinogradOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs,
                                                      static_cast<const lite::InnerContext *>(ctx));
-    }
-    if (kernel == nullptr) {
-      MS_LOG(ERROR) << "Create Convolution kernel failed.";
-      free(conv_param);
-      return nullptr;
-    }
+  } else {
+    kernel = new (std::nothrow) Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs,
+                                                   static_cast<const lite::InnerContext *>(ctx));
+  }
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "Create Convolution kernel failed.";
+    free(conv_param);
+    return nullptr;
   }
   if (!infer_shape_done) {
     auto ret = reinterpret_cast<Conv2DOpenCLKernel *>(kernel)->StoreConstData();
