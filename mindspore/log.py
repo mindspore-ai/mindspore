@@ -49,6 +49,7 @@ _logger_def_level = '2'
 
 # Log level name and level mapping
 _name_to_level = {
+    'FATAL': 50,
     'ERROR': 40,
     'WARNING': 30,
     'INFO': 20,
@@ -57,6 +58,7 @@ _name_to_level = {
 
 # GLog level and level name
 _gloglevel_to_name = {
+    '4': 'FATAL',
     '3': 'ERROR',
     '2': 'WARNING',
     '1': 'INFO',
@@ -210,6 +212,11 @@ def error(msg, *args, **kwargs):
     _get_logger().error(msg, *args, **kwargs)
 
 
+def exception(msg, *args, **kwargs):
+    """Log a message with severity 'EXCEPTION' on the MindSpore logger."""
+    _get_logger().exception(msg, *args, **kwargs)
+
+
 def warning(msg, *args, **kwargs):
     """Log a message with severity 'WARNING' on the MindSpore logger."""
     _get_logger().warning(msg, *args, **kwargs)
@@ -220,7 +227,7 @@ def get_level():
     Get the logger level.
 
     Returns:
-        str, the Log level includes 3(ERROR), 2(WARNING), 1(INFO), 0(DEBUG).
+        str, the Log level includes 4(EXCEPTION), 3(ERROR), 2(WARNING), 1(INFO), 0(DEBUG).
 
     Examples:
         >>> import os
@@ -332,7 +339,8 @@ def _verify_level(level):
     # Check the value of input level
     if level_name not in _name_to_level:
         raise ValueError(f'Incorrect log level:{level}, Please check the configuration of GLOG_v or '
-                         f'GLOG_stderrthreshold, desired log level :{_gloglevel_to_name}')
+                         'GLOG_stderrthreshold, desired log level: 4-EXCEPTION, 3-ERROR, 2-WARNING, '
+                         '1-INFO, 0-DEBUG')
 
 
 def get_log_config():
