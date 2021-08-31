@@ -84,8 +84,7 @@ bool HttpServer::InitServer() {
   }
 
   struct sockaddr_in addr;
-  errno_t ret = memset_s(&addr, sizeof(addr), 0, sizeof(addr));
-  if (ret != EOK) {
+  if (memset_s(&addr, sizeof(addr), 0, sizeof(addr)) != EOK) {
     MS_LOG(EXCEPTION) << "Memset failed.";
   }
 
