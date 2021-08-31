@@ -2987,8 +2987,10 @@ class FFT3D(PrimitiveWithInfer):
         - **input_tensor** (Tensor, float32) - [fftx, ffty, fftz]
 
     Outputs:
-        - **output_real** (float32)
-        - **output_imag** (float32)
+        - **output_real** (float32) - the real part of the output tensor after
+          undergoing fast Fourier transform.
+        - **output_imag** (float32) - the imaginary part of the output tensor after
+          undergoing fast Fourier transform.
 
     Supported Platforms:
         ``GPU``
@@ -3021,7 +3023,8 @@ class IFFT3D(PrimitiveWithInfer):
         - **input_imag** (Tensor, float32) - [fftx, ffty, fftz]
 
     Outputs:
-        - **output_tensor** (float32)
+        - **output_tensor** (float32) - returns the tensor after undergoing
+          inverse Fourier transform.
 
     Supported Platforms:
         ``GPU``
