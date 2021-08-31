@@ -22,8 +22,8 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateTileParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto tile_prim = primitive->value_as_Tile();
   if (tile_prim == nullptr) {
     MS_LOG(ERROR) << "tile_prim is nullptr";
@@ -43,7 +43,7 @@ OpParameter *PopulateTileParameter(const void *prim) {
       free(tile_param);
       return nullptr;
     }
-    if (dims->size() > MAX_SHAPE_SIZE) {
+    if (dims->size() > MAX_TILE_DIM_SIZE) {
       MS_LOG(ERROR) << "tile's attr dims size is too big, which cannot be bigger than " << MAX_SHAPE_SIZE;
       free(tile_param);
       return nullptr;

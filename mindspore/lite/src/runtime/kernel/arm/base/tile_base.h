@@ -35,8 +35,7 @@ class TileCPUKernel : public InnerKernel {
 
  private:
   int RunSimpleTile();
-  void ComputeStrides(const int *shape, int *strides, int ndim) const;
-  void FillOneDimTileParam();
+  int FillOneDimTileParam();
   bool one_dim_tile_ = false;
   uint8_t *input_addr_ = nullptr;
   uint8_t *output_addr_ = nullptr;

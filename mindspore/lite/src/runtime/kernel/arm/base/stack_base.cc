@@ -20,6 +20,7 @@
 #include "nnacl/base/stack_base.h"
 #include "nnacl/stack_parameter.h"
 #include "include/errorcode.h"
+#include "nnacl/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -63,6 +64,7 @@ int StackBaseCPUKernel::ReSize() {
     copy_size_ = in_tensors_.front()->ElementsNum() * data_type_size_;
   } else {
     MS_ASSERT(input_nums > 1);
+    CHECK_LESS_RETURN(input0_shape.size(), static_cast<size_t>(axis_));
     copy_size_ = GetCopyNum(input0_shape, axis_, input0_shape.size()) * data_type_size_;
     outer_size_ = GetOuterSize(input0_shape, axis_);
   }
@@ -70,6 +72,8 @@ int StackBaseCPUKernel::ReSize() {
 }
 
 int StackBaseCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   data_type_size_ = sizeof(float);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -82,18 +86,24 @@ int StackBaseCPUKernel::Execute(int task_id) {
   if (output_data == nullptr) {
     return RET_NULL_PTR;
   }
+  MS_CHECK_TRUE_RET(num_threads_ != 0, RET_ERROR);
   auto step = UP_DIV(outer_size_, num_threads_);
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(task_id, step), RET_ERROR);
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
   auto input_num = in_tensors_.size();
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_num * start, copy_size_), RET_ERROR);
   auto output = reinterpret_cast<char *>(output_data) + input_num * start * copy_size_;
   Stack(all_inputs_, reinterpret_cast<void *>(output), input_num, copy_size_, start, end);
   return RET_OK;
 }
 
 static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto stack = reinterpret_cast<StackBaseCPUKernel *>(cdata);
-  stack->Execute(task_id);
+  if (stack->Execute(task_id) != RET_OK) {
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

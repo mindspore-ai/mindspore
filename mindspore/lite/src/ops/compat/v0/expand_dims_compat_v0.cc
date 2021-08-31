@@ -16,6 +16,7 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/compat/attr_transfer_common.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -25,8 +26,8 @@ int TransferExpandDimsAttr(Model::Node *node, std::vector<schema::Tensor *> *dst
     MS_LOG(ERROR) << "the parameter of this function is nullptr.";
     return RET_ERROR;
   }
-  MS_ASSERT(node->input_indices_.size() == 1);
-  MS_ASSERT(dst_tensors->size() == 0);
+  MS_CHECK_TRUE_RET(node->input_indices_.size() == 1, RET_ERROR);
+  MS_CHECK_TRUE_RET(dst_tensors->size() == 0, RET_ERROR);
 
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
   MS_ASSERT(prim != nullptr);

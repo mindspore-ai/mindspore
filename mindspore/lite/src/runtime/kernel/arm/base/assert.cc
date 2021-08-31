@@ -24,7 +24,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Assert;
 
 namespace mindspore::kernel {
-int AssertCPUKernel::Init() { return RET_OK; }
+int AssertCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int AssertCPUKernel::ReSize() { return RET_OK; }
 

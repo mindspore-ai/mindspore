@@ -39,7 +39,10 @@ ArgMinMaxInt8CPUKernel::~ArgMinMaxInt8CPUKernel() {
 }
 
 int ArgMinMaxInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
   param->data_type_ = kNumberTypeInt8;
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (in_quant_arg_ == nullptr) {
@@ -48,11 +51,13 @@ int ArgMinMaxInt8CPUKernel::Init() {
   }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
+  CHECK_LESS_RETURN(in_quant_args.size(), 1);
   in_quant_arg_->scale_ = in_quant_args.front().scale;
   in_quant_arg_->zp_ = in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
+  CHECK_LESS_RETURN(out_quant_args.size(), 1);
   out_quant_arg_->scale_ = out_quant_args.front().scale;
   out_quant_arg_->zp_ = out_quant_args.front().zeroPoint;
   out_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
@@ -69,7 +74,9 @@ int ArgMinMaxInt8CPUKernel::Init() {
 int ArgMinMaxInt8CPUKernel::ReSize() {
   auto in_shape = in_tensors_.at(0)->shape();
   auto dims_size = in_shape.size();
+  CHECK_LESS_RETURN(in_shape.size(), 1);
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
   int axis = param->axis_ < 0 ? param->axis_ + dims_size : param->axis_;
   param->axis_ = axis;
   param->dims_size_ = dims_size;
@@ -78,8 +85,10 @@ int ArgMinMaxInt8CPUKernel::ReSize() {
     return RET_ERROR;
   }
   param->topk_ = MSMIN(param->topk_, in_shape.at(axis));
+  CHECK_NULL_RETURN(in_shape.data());
   ComputeStrides(in_shape.data(), param->in_strides_, in_shape.size());
   auto out_shape = out_tensors_.at(0)->shape();
+  CHECK_NULL_RETURN(out_shape.data());
   ComputeStrides(out_shape.data(), param->out_strides_, out_shape.size());
   return RET_OK;
 }
@@ -89,14 +98,18 @@ int ArgMinMaxInt8CPUKernel::Run() {
 
   const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->MutableData());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
-
+  CHECK_NULL_RETURN(input_data);
+  CHECK_NULL_RETURN(output_data);
   auto in_shape = input->shape();
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(in_shape.data());
+  CHECK_NULL_RETURN(param);
   if (param->topk_ == 1) {
     Int8ArgMinMaxQuant(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
     return RET_OK;
   }
-
+  CHECK_NULL_RETURN(in_quant_arg_);
+  CHECK_NULL_RETURN(out_quant_arg_);
   switch (param->axis_) {
     case 0:
       Int8ArgMinMaxDim0(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);

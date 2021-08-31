@@ -21,6 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateFlattenParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   OpParameter *flatten_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (flatten_param == nullptr) {
     MS_LOG(ERROR) << "malloc FlattenParameter failed.";

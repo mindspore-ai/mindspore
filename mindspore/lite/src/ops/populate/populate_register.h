@@ -26,6 +26,7 @@
 #include "src/common/prim_util.h"
 #include "src/common/version_manager.h"
 #include "src/common/utils.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {

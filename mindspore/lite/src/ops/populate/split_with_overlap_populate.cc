@@ -20,8 +20,8 @@ using mindspore::schema::PrimitiveType_SplitWithOverlap;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSplitWithOverlapParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_SplitWithOverlap();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";

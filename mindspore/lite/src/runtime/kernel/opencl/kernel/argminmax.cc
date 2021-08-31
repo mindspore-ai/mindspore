@@ -50,7 +50,9 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<ArgMinMaxParameter *>(this->op_parameter_);
+  CHECK_NULL_RETURN(param);
   auto dims_size = in_tensors_[0]->shape().size();
+  CHECK_LESS_RETURN(dims_size, 1);
   auto axis = (param->axis_ + dims_size) % dims_size;
   if (axis < 0 || axis >= dims_size) {
     MS_LOG(ERROR) << "Invalid axis " << axis;
@@ -61,6 +63,7 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
 
 int ArgMinMaxOpenCLKernel::SetConstArgs() {
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
   cl_int4 in_shape{static_cast<int>(im_in_.N), static_cast<int>(im_in_.H), static_cast<int>(im_in_.W),
                    static_cast<int>(im_in_.C)};
   cl_int4 flags = {param->out_value_, param->get_max_, param->axis_, param->topk_};
@@ -96,7 +99,8 @@ int ArgMinMaxOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
+int ArgMinMaxOpenCLKernel::SetGlobalLocalPre() {
+  CHECK_NULL_RETURN(op_parameter_);
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   im_in_ = GpuTensorInfo(in_tensors_[0]);
   im_out_ = GpuTensorInfo(out_tensors_[0]);
@@ -125,6 +129,10 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
                     std::multiplies<int>()),
     std::accumulate(out_shape_align.begin() + out_axis, out_shape_align.end(), 1, std::multiplies<int>()),
   };
+  CHECK_LESS_RETURN(in_pitch, 1);
+  CHECK_LESS_RETURN(out_pitch, 1);
+  CHECK_LESS_RETURN(im_in_.H, 1);
+
   switch (param->axis_) {
     case 0:
       strides_.s[0] = UP_ROUND(strides_.s[0] / im_in_.H, in_pitch) * im_in_.H;
@@ -133,6 +141,7 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
       strides_.s[3] = strides_.s[2] * param->topk_;
       break;
     case 1:
+      CHECK_LESS_RETURN(param->topk_, 1);
       strides_.s[0] = UP_ROUND(strides_.s[0], in_pitch);
       strides_.s[1] = UP_ROUND(strides_.s[1] / im_in_.H, in_pitch) * im_in_.H;
       // org dim(4,3) org axis(1,0)
@@ -148,6 +157,10 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
       // org dim(4,3,2,1) org axis(3,2,1,0)
       break;
   }
+  return RET_OK;
+}
+
+void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
   local_size_ = {1, 1, 1};
   global_size_ = {static_cast<size_t>(strides_.s[0]), static_cast<size_t>(src_size_.s[1]), 1};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
@@ -155,6 +168,7 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
 
 int ArgMinMaxOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
+  CHECK_NULL_RETURN(allocator);
   int dtype_size = ocl_runtime_->GetFp16Enable() ? sizeof(int16_t) : sizeof(float);
   buff_ = allocator->Malloc(in_tensors_[0]->ElementsNum() * dtype_size, lite::opencl::MemType::BUF);
   if (buff_ == nullptr) {
@@ -170,6 +184,8 @@ int ArgMinMaxOpenCLKernel::InitWeights() {
 }
 
 int ArgMinMaxOpenCLKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   const std::string kernel_name = "argminmax";
   std::string source = argminmax_source;
   const std::string program_name = "argminmax";
@@ -184,6 +200,7 @@ int ArgMinMaxOpenCLKernel::Prepare() {
     return ret;
   }
   auto *param = reinterpret_cast<ArgMinMaxParameter *>(this->op_parameter_);
+  CHECK_NULL_RETURN(param);
   param->dims_size_ = in_tensors_[0]->shape().size();
   param->axis_ = (param->axis_ + param->dims_size_) % param->dims_size_;
   param->axis_ = GetBroadcastGpuAxis(param->dims_size_, param->axis_);
@@ -195,6 +212,10 @@ int ArgMinMaxOpenCLKernel::Prepare() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitWeights failed.";
     return ret;
+  }
+  if (SetGlobalLocalPre() != RET_OK) {
+    MS_LOG(ERROR) << "SetGlobalLocalPre failed.";
+    return RET_ERROR;
   }
   SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {

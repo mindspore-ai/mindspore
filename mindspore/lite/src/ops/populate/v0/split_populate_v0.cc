@@ -17,13 +17,14 @@
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/split_parameter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateSplitParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto split_prim = primitive->value_as_Split();
   if (split_prim == nullptr) {
     MS_LOG(ERROR) << "split_prim is nullptr";
@@ -40,6 +41,10 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   if (split_param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int)) ||
       split_param->num_split_ <= 0) {
     MS_LOG(ERROR) << "The value of split_param->num_split_ is out of range.";
+    free(split_param);
+    return nullptr;
+  }
+  if (INT_MUL_OVERFLOW(static_cast<size_t>(split_param->num_split_), sizeof(int))) {
     free(split_param);
     return nullptr;
   }

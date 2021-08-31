@@ -32,7 +32,7 @@ namespace mindspore::kernel {
 int SplitOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto src_data = in_tensors_[0]->data_c();
-  MS_ASSERT(src_data);
+  CHECK_NULL_RETURN(src_data);
   cl::Image2D *in_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
   if (in_image == nullptr) {
     MS_LOG(ERROR) << "RunAxis0 in_image can not be nullptr";
@@ -41,7 +41,7 @@ int SplitOpenCLKernel::RunAxis0() {
   auto src_area = cl::array<cl::size_type, 3U>{0, 0, 0};
   for (int i = 0; i < out_tensors_.size(); i++) {
     auto dst_data = out_tensors_[i]->data_c();
-    MS_ASSERT(dst_data);
+    CHECK_NULL_RETURN(dst_data);
     ImageSize img_size;
     if (allocator_->GetImageSize(dst_data, &img_size) != RET_OK) {
       MS_LOG(ERROR) << "GetImageSize failed.";
@@ -65,6 +65,7 @@ int SplitOpenCLKernel::RunAxis0() {
 
 int SplitOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<SplitParameter *>(this->op_parameter_);
+  CHECK_NULL_RETURN(param);
   if ((out_tensors_.size() != OUTPUT_TENSOR_SIZE_2 ||
        (out_tensors_.size() != OUTPUT_TENSOR_SIZE_3 && param->split_dim_ == 0)) &&
       in_tensors_.size() != INPUT_TENSOR_SIZE_1) {
@@ -103,8 +104,10 @@ int SplitOpenCLKernel::CheckSpecs() {
 
 int SplitOpenCLKernel::AlignSplitSizes(SplitParameter *param, const std::vector<int> &in_shape) {
   auto allocator = ocl_runtime_->GetAllocator();
+  CHECK_LESS_RETURN(in_shape.size(), param->split_dim_ + 1);
   int shape_dim = in_shape.at(param->split_dim_);
   if (num_split_ == 1) {
+    CHECK_LESS_RETURN(param->split_sizes_[0], 1);
     size_t num_split = UP_DIV(shape_dim, param->split_sizes_[0]);
     split_sizes_ = reinterpret_cast<int *>(allocator->Malloc(num_split * sizeof(int), lite::opencl::MemType::BUF));
     if (split_sizes_ == nullptr) {
@@ -131,6 +134,7 @@ int SplitOpenCLKernel::AlignSplitSizes(SplitParameter *param, const std::vector<
 
 int SplitOpenCLKernel::Prepare() {
   auto param = reinterpret_cast<SplitParameter *>(this->op_parameter_);
+  CHECK_NULL_RETURN(param);
   auto in_shape = in_tensors_.at(0)->shape();
   int increment_dim = C4NUM - in_shape.size();
   split_dim_ = param->split_dim_ == 0 ? param->split_dim_ : param->split_dim_ + increment_dim;

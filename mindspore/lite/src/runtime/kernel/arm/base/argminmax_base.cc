@@ -28,6 +28,8 @@ using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore::kernel {
 int ArgMinMaxCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   arg_param_->data_type_ = kNumberTypeFloat32;
   if (!InferShapeDone()) {
     return RET_OK;
@@ -46,8 +48,10 @@ int ArgMinMaxCPUKernel::ReSize() {
     return RET_ERROR;
   }
   arg_param_->topk_ = MSMIN(arg_param_->topk_, in_shape.at(axis));
+  CHECK_NULL_RETURN(in_shape.data());
   ComputeStrides(in_shape.data(), arg_param_->in_strides_, in_shape.size());
   auto out_shape = out_tensors_.at(0)->shape();
+  CHECK_NULL_RETURN(out_shape.data());
   ComputeStrides(out_shape.data(), arg_param_->out_strides_, out_shape.size());
   return RET_OK;
 }
@@ -61,6 +65,7 @@ int ArgMinMaxCPUKernel::Run() {
   if (input_data == nullptr || output_data == nullptr) {
     return RET_NULL_PTR;
   }
+  CHECK_NULL_RETURN(shape.data());
   void *output_value = nullptr;
   if (out_tensors_.size() == 2) {
     output_value = out_tensors_.at(1)->data_c();
@@ -71,6 +76,7 @@ int ArgMinMaxCPUKernel::Run() {
 
   MS_ASSERT(ms_context_->allocator != nullptr);
   if (arg_param_->topk_ > 1 || arg_param_->keep_dims_) {
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(static_cast<int>(sizeof(ArgElement)), shape[arg_param_->axis_]), RET_ERROR);
     arg_param_->arg_elements_ =
       reinterpret_cast<ArgElement *>(ms_context_->allocator->Malloc(sizeof(ArgElement) * shape[arg_param_->axis_]));
     if (arg_param_->arg_elements_ == nullptr) {

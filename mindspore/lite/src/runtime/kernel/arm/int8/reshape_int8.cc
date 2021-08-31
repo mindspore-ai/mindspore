@@ -30,6 +30,8 @@ using mindspore::schema::PrimitiveType_Reshape;
 
 namespace mindspore::kernel {
 int ReshapeInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
   reshape_param_->quant_para_.in_args_.scale_ = in_quant_args.front().scale;
@@ -62,23 +64,28 @@ int ReshapeInt8CPUKernel::Run() {
 }
 
 int ReshapeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto reshape = reinterpret_cast<ReshapeInt8CPUKernel *>(cdata);
-  reshape->DoExecute(task_id);
+  if (reshape->DoExecute(task_id) != RET_OK) {
+    return RET_ERROR;
+  }
   return lite::RET_OK;
 }
 
-void ReshapeInt8CPUKernel::DoExecute(int task_id) {
+int ReshapeInt8CPUKernel::DoExecute(int task_id) {
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(task_id, count_unit_), RET_ERROR);
   int64_t real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
   if (real_dst_count <= 0) {
-    return;
+    return lite::RET_OK;
   }
-  MS_ASSERT(input_data_);
-  MS_ASSERT(output_data_);
+  CHECK_NULL_RETURN(input_data_);
+  CHECK_NULL_RETURN(output_data_);
+
   int8_t *cur_input0_data = input_data_ + task_id * count_unit_;
   int8_t *cur_output_data = output_data_ + task_id * count_unit_;
 
   Int8Reshape(cur_input0_data, cur_output_data, real_dst_count, reshape_param_->quant_para_);
-  return;
+  return lite::RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Reshape, LiteKernelCreator<ReshapeInt8CPUKernel>)

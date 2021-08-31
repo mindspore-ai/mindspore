@@ -101,6 +101,7 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     if (input->shape_[dims[i]] != 0 && param->multiples_[i] > INT_MAX / input->shape_[dims[i]]) {
       return NNACL_ERR;
     }
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(input->shape_[dims[i]], (param->multiples_[i])), NNACL_ERR);
     out_shape[dims[i]] = input->shape_[dims[i]] * (param->multiples_[i]);
   }
   // change caffe param format to tflite
