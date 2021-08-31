@@ -326,13 +326,13 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
     if (kernel_with_index.first->isa<ValueNode>()) {
       auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
       MS_EXCEPTION_IF_NULL(tensor);
-      graph_input_format.emplace_back(kOpFormat_DEFAULT);
-      graph_input_type.emplace_back(tensor->data_type());
+      (void)graph_input_format.emplace_back(kOpFormat_DEFAULT);
+      (void)graph_input_type.emplace_back(tensor->data_type());
     } else {
       auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-      graph_input_format.emplace_back(std::move(input_format));
+      (void)graph_input_format.emplace_back(std::move(input_format));
       auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
-      graph_input_type.emplace_back(input_type);
+      (void)graph_input_type.emplace_back(input_type);
     }
     auto input_abs = GetOutputAbstract(kernel_with_index.first, kernel_with_index.second);
     fg->parameters()[i]->set_abstract(input_abs);
@@ -641,7 +641,7 @@ ShapeVector GetDeviceShape(const AnfNodePtr &node) {
   if (device_shape.empty()) {
     res_device_shape.push_back(1);
   } else {
-    std::transform(device_shape.begin(), device_shape.end(), std::back_inserter(res_device_shape), SizeToLong);
+    (void)std::transform(device_shape.begin(), device_shape.end(), std::back_inserter(res_device_shape), SizeToLong);
   }
   return res_device_shape;
 }
@@ -832,17 +832,17 @@ graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
     auto prim = AnfAlgo::GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(prim);
     graphkernel::NodePtrList inputs;
-    std::transform(cnode->inputs().begin() + 1, cnode->inputs().end(), std::back_inserter(inputs),
-                   [&node_map, &gb](const AnfNodePtr &no) {
-                     auto iter = node_map.find(no);
-                     if (iter != node_map.end()) {
-                       return iter->second;
-                     } else {
-                       auto tensor = GetValueNode<tensor::TensorPtr>(no);
-                       MS_EXCEPTION_IF_NULL(tensor);
-                       return gb.Value(tensor);
-                     }
-                   });
+    (void)std::transform(cnode->inputs().begin() + 1, cnode->inputs().end(), std::back_inserter(inputs),
+                         [&node_map, &gb](const AnfNodePtr &no) {
+                           auto iter = node_map.find(no);
+                           if (iter != node_map.end()) {
+                             return iter->second;
+                           } else {
+                             auto tensor = GetValueNode<tensor::TensorPtr>(no);
+                             MS_EXCEPTION_IF_NULL(tensor);
+                             return gb.Value(tensor);
+                           }
+                         });
     node_map[node] = gb.Op(AnfAlgo::GetCNodeName(node), ExtractBuildInfo(node), inputs, prim->attrs());
   }
   // set outputs
@@ -850,8 +850,8 @@ graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
   if (AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
     graphkernel::NodePtrList outputs;
     auto mt = output_node->cast<CNodePtr>();
-    std::transform(mt->inputs().begin() + 1, mt->inputs().end(), std::back_inserter(outputs),
-                   [&node_map](const AnfNodePtr &no) { return node_map[no]; });
+    (void)std::transform(mt->inputs().begin() + 1, mt->inputs().end(), std::back_inserter(outputs),
+                         [&node_map](const AnfNodePtr &no) { return node_map[no]; });
     gb.SetOutputs(std::move(outputs));
   } else {
     gb.SetOutputs({node_map[output_node]});
@@ -878,24 +878,24 @@ FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, Anf
     }
     auto op = std::static_pointer_cast<graphkernel::PrimOp>(op_node);
     AnfNodePtrList inputs = {NewValueNode(std::make_shared<Primitive>(op->op(), op->attrs()))};
-    std::transform(op->inputs().begin(), op->inputs().end(), std::back_inserter(inputs),
-                   [&node_map](const graphkernel::NodePtr &inp) -> AnfNodePtr {
-                     auto iter = node_map.find(inp);
-                     if (iter != node_map.end()) {
-                       return iter->second;
-                     } else {
-                       if (inp->NodeType() != graphkernel::NType::Value) {
-                         MS_LOG(EXCEPTION) << "Node " << inp->name() << "should be a Value node";
-                       }
-                       auto inp_value = inp->As<graphkernel::ConstTensorNode>()->data();
-                       auto value_node = NewValueNode(inp_value);
-                       value_node->set_abstract(inp_value->ToAbstract());
-                       value_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-                       auto build_info = BuildSelectKernelBuildInfo({}, {}, {inp->format}, {inp->type});
-                       AnfAlgo::SetSelectKernelBuildInfo(build_info, value_node.get());
-                       return value_node;
-                     }
-                   });
+    (void)std::transform(op->inputs().begin(), op->inputs().end(), std::back_inserter(inputs),
+                         [&node_map](const graphkernel::NodePtr &inp) -> AnfNodePtr {
+                           auto iter = node_map.find(inp);
+                           if (iter != node_map.end()) {
+                             return iter->second;
+                           } else {
+                             if (inp->NodeType() != graphkernel::NType::Value) {
+                               MS_LOG(EXCEPTION) << "Node " << inp->name() << "should be a Value node";
+                             }
+                             auto inp_value = inp->As<graphkernel::ConstTensorNode>()->data();
+                             auto value_node = NewValueNode(inp_value);
+                             value_node->set_abstract(inp_value->ToAbstract());
+                             value_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+                             auto build_info = BuildSelectKernelBuildInfo({}, {}, {inp->format}, {inp->type});
+                             AnfAlgo::SetSelectKernelBuildInfo(build_info, value_node.get());
+                             return value_node;
+                           }
+                         });
     auto cnode = CreateCNode(inputs, func_graph, {op->format, op->shape, TypeIdToType(op->type)}, true);
     MS_EXCEPTION_IF_NULL(cnode);
     node_map[op_node] = cnode;
@@ -905,18 +905,18 @@ FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, Anf
   } else if (lite_graph->GetOutputs().size() == 1) {
     func_graph->set_output(node_map[lite_graph->GetOutputs()[0]]);
     if (outputs != nullptr) {
-      outputs->emplace_back(func_graph->output());
+      (void)outputs->emplace_back(func_graph->output());
     }
   } else {
     AnfNodePtrList mt_inputs;
     AbstractBasePtrList out_abs_list;
-    std::transform(lite_graph->GetOutputs().begin(), lite_graph->GetOutputs().end(), std::back_inserter(mt_inputs),
-                   [&node_map, &out_abs_list](const graphkernel::NodePtr &out) {
-                     auto out_node = node_map[out];
-                     MS_EXCEPTION_IF_NULL(out_node);
-                     out_abs_list.emplace_back(out_node->abstract());
-                     return out_node;
-                   });
+    (void)std::transform(lite_graph->GetOutputs().begin(), lite_graph->GetOutputs().end(),
+                         std::back_inserter(mt_inputs), [&node_map, &out_abs_list](const graphkernel::NodePtr &out) {
+                           auto out_node = node_map[out];
+                           MS_EXCEPTION_IF_NULL(out_node);
+                           (void)out_abs_list.emplace_back(out_node->abstract());
+                           return out_node;
+                         });
     auto mt = func_graph->NewCNode(prim::kPrimMakeTuple, mt_inputs);
     mt->set_abstract(std::make_shared<abstract::AbstractTuple>(out_abs_list));
     mt->set_kernel_info(std::make_shared<device::KernelInfo>());
@@ -935,7 +935,7 @@ void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList
   std::set<AnfNodePtr> used_param;
   for (auto node : todos) {
     if (node->isa<Parameter>()) {
-      used_param.insert(node);
+      (void)used_param.insert(node);
     }
   }
   if (used_param.size() == ori_parameter.size()) {
@@ -961,7 +961,7 @@ std::vector<PrimitivePtr> GetValidOps(
   for (const auto &[op_target, op_level, op] : ops_with_level) {
     if (op_target == kAllTarget || op_target == target) {
       if (level >= op_level) {
-        valid_ops.emplace_back(op);
+        (void)valid_ops.emplace_back(op);
       }
     }
   }

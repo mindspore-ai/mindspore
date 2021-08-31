@@ -93,7 +93,6 @@ CNodePtr InsertCastForGraphKernel(const FuncGraphPtr &func_graph, const CNodePtr
     auto in_node = prev_node.first;
     auto in_index = prev_node.second;
     auto ori_shape = AnfAlgo::GetOutputDeviceShape(in_node, in_index);
-    auto ori_format = AnfAlgo::GetOutputFormat(in_node, in_index);
     auto ori_dtype = AnfAlgo::GetOutputDeviceDataType(in_node, in_index);
     const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
     if (cur_input->isa<ValueNode>()) {
@@ -108,7 +107,7 @@ CNodePtr InsertCastForGraphKernel(const FuncGraphPtr &func_graph, const CNodePtr
           valuePtr->value()->cast<tensor::TensorPtr>()->data_c(), TypeId::kNumberTypeFloat32);
         auto value_node = std::make_shared<ValueNode>(itensor);
         value_node->set_abstract(itensor->ToAbstract());
-        mng->Replace(cur_input, value_node);
+        (void)mng->Replace(cur_input, value_node);
       }
       auto cast = AddCastCNode(func_graph, cur_input, dev_fmt, ori_dtype, new_dtype, ori_shape, new_dtype);
       MS_EXCEPTION_IF_NULL(cast);
@@ -119,7 +118,7 @@ CNodePtr InsertCastForGraphKernel(const FuncGraphPtr &func_graph, const CNodePtr
         std::make_shared<abstract::AbstractTensor>(TypeIdToType(TypeId::kNumberTypeFloat16), abs_shape_ptr);
       cast->set_abstract(abstract);
       AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast);
-      mng->Replace(cur_input, cast);
+      (void)mng->Replace(cur_input, cast);
     }
   }
   CNodePtr new_node = nullptr;
@@ -144,7 +143,7 @@ bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) {
       if (IsPrimitiveCNode(cnode, prim::kPrimCast)) {
         if (AnfAlgo::GetOutputDeviceDataType(cnode->input(1), 0) == kNumberTypeFloat16) {
           auto in_node = cnode->input(1);
-          mng->Replace(node, in_node);
+          (void)mng->Replace(node, in_node);
           changed = true;
           continue;
         }
@@ -154,7 +153,7 @@ bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) {
         }
       }
       auto new_node = InsertCastForGraphKernel(func_graph, cnode);
-      mng->Replace(node, new_node);
+      (void)mng->Replace(node, new_node);
       changed = true;
     }
   }
@@ -195,13 +194,13 @@ bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) {
     if (is_output) {
       func_graph->set_output(cnode1);
     } else {
-      new_inputs.emplace_back(cnode1);
+      (void)new_inputs.emplace_back(cnode1);
     }
   };
 
   std::vector<AnfNodePtr> new_inputs;
   if (AnfAlgo::CheckPrimitiveType(old_output, prim::kPrimMakeTuple)) {
-    new_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    (void)new_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     auto all_out = AnfAlgo::GetAllOutput(old_output);
     for (const auto &out : all_out) {
       auto c_out = out->cast<CNodePtr>();

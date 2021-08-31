@@ -16,6 +16,7 @@
 from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedException as GKException
 from ._utils import Expander, ExpanderInfoValidator as VLD
 
+
 @VLD.check_all_formats_same
 class EqualCount(Expander):
     """EqualCount expander"""

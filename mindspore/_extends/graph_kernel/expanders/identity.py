@@ -15,8 +15,10 @@
 """generate json desc for Identity"""
 from ._utils import Expander
 
+
 class Identity(Expander):
     """Identity expander"""
+
     def _expand(self, graph_builder):
         input_x = self.inputs[0]
         result = graph_builder.emit('Reshape', [input_x], attrs={'shape': input_x.shape})

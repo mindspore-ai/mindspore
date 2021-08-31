@@ -75,8 +75,8 @@ class AkgKernelPool {
     bool locked_{false};
 
    private:
-    bool TryLock();
-    void Unlock();
+    bool TryLock() const;
+    void Unlock() const;
 
     int32_t fd_{-1};
   };
@@ -102,7 +102,7 @@ class AkgKernelPool {
 
  private:
   void *CreateSharedMem(const std::string &path);
-  std::string GetCurrentPath();
+  std::string GetCurrentPath() const;
 
   inline void InitKernelLists(void *addr) {
     kernel_lists_[kToDoIdx_] = reinterpret_cast<size_t *>(addr);
@@ -111,7 +111,7 @@ class AkgKernelPool {
   }
 
   int32_t AddKernels(const std::vector<JsonNodePair> &kernel_jsons);
-  int32_t Wait();
+  int32_t Wait() const;
 
   int32_t shm_id_{-1};
   bool is_creator_{false};

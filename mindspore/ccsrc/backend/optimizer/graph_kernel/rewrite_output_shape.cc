@@ -43,7 +43,7 @@ bool SaveOutputShape::Run(const FuncGraphPtr &func_graph) {
   SetNodeAttrSafely("graph_kernel", MakeValue(true), mt_node);
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
-  mng->Replace(output, mt_node);
+  (void)mng->Replace(output, mt_node);
   return true;
 }
 
@@ -103,7 +103,7 @@ bool RewriteOutputShape::Run(const FuncGraphPtr &func_graph) {
   if (prim->HasAttr("graph_kernel")) {
     auto mng = func_graph->manager();
     MS_EXCEPTION_IF_NULL(mng);
-    mng->Replace(output, output->input(1));
+    (void)mng->Replace(output, output->input(1));
   }
   return true;
 }
