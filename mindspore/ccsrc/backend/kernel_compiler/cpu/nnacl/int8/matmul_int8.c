@@ -525,7 +525,7 @@ void PackInput4x4AndInputSumPert(const int8_t *src_input, int8_t *packed_input, 
   return;
 }
 
-void RowMajor2Col16x4MajorInt8(int8_t *src, int row, int col, int8_t *dst) {
+void RowMajor2Col16x4MajorInt8(const int8_t *src, int row, int col, int8_t *dst) {
   int row_16 = UP_ROUND(row, C16NUM);
   int stride = sizeof(int8_t) * 16 * 4;
   for (int r = 0; r < row_16; ++r) {
@@ -542,7 +542,7 @@ void RowMajor2Col16x4MajorInt8(int8_t *src, int row, int col, int8_t *dst) {
 }
 
 // dst: weight_zp * input_row_sums
-void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order) {
+void CalcInputSums(const int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order) {
   for (int r = 0; r < row; ++r) {
     int sum = 0;
     for (int c = 0; c < col; ++c) {
@@ -558,7 +558,7 @@ void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst, Dat
 }
 
 // dst: bias + depth*input_zp*weight_zp - input_zp*weight_col_sums
-void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, const int *weight_zp_ptr, const int *bias,
+void CalcWeightBiasSums(const int8_t *weight, int row, int col, int input_zp, const int *weight_zp_ptr, const int *bias,
                         int *dst, DataOrder order, bool filter_per_channel) {
   for (int c = 0; c < col; ++c) {
     int sum = 0;

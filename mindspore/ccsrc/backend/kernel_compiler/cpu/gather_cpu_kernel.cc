@@ -58,25 +58,26 @@ bool GatherV2CPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
 template <typename T>
 void GatherV2CPUKernel<T>::ParallelRun(int8_t *input_addr, int8_t *output_addr, int thread_num) {
-  int outer_size = 1, inner_size = 1;
-  for (int64_t i = 0; i < axis_; ++i) {
+  size_t outer_size = 1, inner_size = 1;
+  auto axis = static_cast<size_t>(axis_);
+  for (size_t i = 0; i < axis; ++i) {
     outer_size *= input_shape_.at(i);
   }
-  for (size_t i = axis_ + 1; i < input_shape_.size(); ++i) {
+  for (size_t i = axis + 1; i < input_shape_.size(); ++i) {
     inner_size *= input_shape_.at(i);
   }
-  int indices_element_size = 1;
+  size_t indices_element_size = 1;
   for (size_t i = 0; i < indices_shape_.size(); i++) {
     indices_element_size *= indices_shape_.at(i);
   }
-  const int limit = input_shape_.at(axis_);
-  int stride = UP_DIV(outer_size, thread_num);
+  auto limit = input_shape_.at(axis);
+  size_t stride = UP_DIV(outer_size, thread_num);
   std::vector<common::Task> tasks;
   int thread_index = 0;
   while (thread_index < thread_num) {
     int count = MSMIN(stride, outer_size - stride * thread_index);
     if (count <= 0) break;
-    auto thread_stride = stride * thread_index;
+    auto thread_stride = static_cast<size_t>(stride * thread_index);
     int8_t *in = input_addr + thread_stride * limit * inner_size * sizeof(T);
     int8_t *out = output_addr + thread_stride * indices_element_size * inner_size * sizeof(T);
     auto block = [&, in, count, out]() {
