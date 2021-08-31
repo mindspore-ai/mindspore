@@ -29,11 +29,12 @@
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 STATUS FusionPass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_INPUT_PARAM_INVALID, "Input metagraph is nullptr");
   auto ret = DefinePattern();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DefinePattern Error " << ret;
@@ -73,6 +74,7 @@ STATUS FusionPass::MatchPatterns(schema::MetaGraphT *graph) {
   this->matchedPaths.clear();
   STATUS status;
   for (auto pattern : patterns) {
+    MS_CHECK_TRUE_MSG(pattern != nullptr, RET_NULL_PTR, "pattern is nullptr");
     status = MatchOnePattern(graph, pattern);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "MatchOnePatternInSubGraph failed: " << status;
@@ -85,6 +87,7 @@ STATUS FusionPass::MatchPatterns(schema::MetaGraphT *graph) {
     auto patternOps = iter->second;
     std::vector<std::unordered_map<std::string, std::shared_ptr<Path>>> mapedPaths;
     for (const auto &patternOp : patternOps) {
+      MS_ASSERT(patternOp != nullptr);
       std::queue<std::shared_ptr<PatternOp>> opQueue;
       std::unordered_map<std::string, std::shared_ptr<Path>> mapedPath;
       opQueue.push(patternOp);
@@ -128,7 +131,7 @@ STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pat
   for (auto index : graph->outputIndex) {
     auto subGraphOutputNodeIdxes = GetLinkedPreIdx(*graph, index);
     for (auto subGraphOutputNodeIdx : subGraphOutputNodeIdxes) {
-      MS_ASSERT((subGraph->nodes.size() > subGraphOutputNodeIdx));
+      MS_ASSERT(subGraph->nodes.size() > subGraphOutputNodeIdx);
       nodeQueue.push(subGraphOutputNodeIdx);
     }
   }
@@ -142,7 +145,7 @@ STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pat
     auto &node = graph->nodes.at(nodeIdx);
     sinkIdes.emplace_back(nodeIdx);
 
-    MS_ASSERT(node->primitive != nullptr);
+    MS_CHECK_TRUE_MSG(node->primitive != nullptr, RET_NULL_PTR, "primitive is nullptr");
     if (IsContain(outputOp->types, node->primitive->value.type)) {
       entries.emplace_back(nodeIdx);
     }
@@ -184,7 +187,9 @@ bool FusionPass::CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<Pat
   opQueue.push(patternOp);
   while (!opQueue.empty()) {
     auto curPatternOp = opQueue.front();
+    MS_ASSERT(curPatternOp != nullptr);
     opQueue.pop();
+    MS_CHECK_TRUE_MSG(curPatternOp->path != nullptr, false, "path in pattern op is nullptr");
     matchedNodeIdxes.push_back(curPatternOp->path->nodeIdx);
     if (curPatternOp->isHead) {
       inputNodes.emplace_back(curPatternOp);
@@ -204,6 +209,7 @@ bool FusionPass::CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<Pat
   }
   // all post node of input node should be in path except input node is placeHold
   for (const auto &inputNode : inputNodes) {
+    MS_ASSERT(inputNode != nullptr);
     if (inputNode->isPlaceHold) {
       continue;
     }
@@ -285,8 +291,10 @@ bool FusionPass::MatchTree(schema::MetaGraphT *graph, size_t nodeIdx, const std:
 
 bool FusionPass::CheckMatchParams(schema::MetaGraphT *graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
                                   std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes) {
+  MS_ASSERT(target != nullptr);
+  MS_ASSERT(nodeIdx < graph->nodes.size());
   auto &scope = graph->nodes.at(nodeIdx);
-  MS_ASSERT(scope != nullptr);
+  MS_CHECK_TRUE_MSG(scope != nullptr, false, "Node in graph is nullptr");
   // if target(except target is marked head) is nullptr, it means the preNode
   // has no left or right, but scope is not nullptr
   if (target == nullptr) {
@@ -296,6 +304,7 @@ bool FusionPass::CheckMatchParams(schema::MetaGraphT *graph, size_t nodeIdx, con
   if (IsContain(sinkIdes, nodeIdx) && !IsContain(pathSinkIdes, nodeIdx)) {
     return false;
   }
+  MS_CHECK_TRUE_MSG(scope->primitive != nullptr, false, "Primitive of scope is nullptr");
   // type not match
   if (!target->isPlaceHold && !IsContain(target->types, scope->primitive->value.type)) {
     return false;
@@ -306,9 +315,9 @@ bool FusionPass::CheckMatchParams(schema::MetaGraphT *graph, size_t nodeIdx, con
 STATUS FusionPass::Fuse(schema::MetaGraphT *graph) {
   STATUS ret;
   bool isChange = false;
-  for (auto iter = mapedMatchedPaths.begin(); iter != mapedMatchedPaths.end(); iter++) {
-    for (auto &matchedPath : iter->second) {
-      ret = DoFusion(graph, iter->first, matchedPath);
+  for (auto &mapedMatchedPath : mapedMatchedPaths) {
+    for (auto &matchedPath : mapedMatchedPath.second) {
+      ret = DoFusion(graph, mapedMatchedPath.first, matchedPath);
       if (ret != RET_OK && ret != RET_NO_CHANGE) {
         MS_LOG(ERROR) << "DoFusion Error " << ret;
         return ret;
@@ -324,13 +333,8 @@ STATUS FusionPass::Fuse(schema::MetaGraphT *graph) {
 
 FusionPass::~FusionPass() {
   for (auto pattern : patterns) {
-    if (pattern != nullptr) {
-      delete (pattern);
-    }
+    delete (pattern);
   }
 }
-
-void FusionPass::MergeNodeAttrFromPost(std::unique_ptr<schema::CNodeT> &dstOp, std::unique_ptr<schema::CNodeT> &postOp,
-                                       size_t dstOpOutIdx) {}
 }  // namespace lite
 }  // namespace mindspore

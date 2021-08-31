@@ -24,6 +24,7 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -36,12 +37,12 @@ struct Path {
 
 // Op description in pattern
 struct PatternOp {
-  std::string id;                            // id of op in pattern
-  std::vector<schema::PrimitiveType> types;  // type of matchable op
+  std::string id;                              // id of op in pattern
+  std::vector<schema::PrimitiveType> types{};  // type of matchable op
   // only support node with no more than two preNode now
   // avoid loop reference
-  std::shared_ptr<PatternOp> left;   // left input patternOp of this patternOp
-  std::shared_ptr<PatternOp> right;  // right input patternOp of this patternOp
+  std::shared_ptr<PatternOp> left{nullptr};   // left input patternOp of this patternOp
+  std::shared_ptr<PatternOp> right{nullptr};  // right input patternOp of this patternOp
   std::shared_ptr<Path> path = std::make_shared<Path>(-1, -1);
   bool pathSetted = false;
   bool isHead = false;
@@ -49,16 +50,20 @@ struct PatternOp {
   bool isPlaceHold = false;
 
   PatternOp() = default;
-  explicit PatternOp(const std::string &inId) : id(inId) {}
+  explicit PatternOp(std::string inId) : id(std::move(inId)) {}
   ~PatternOp() = default;
   void SetPath(size_t subGraphIdx, size_t nodeIdx) {
-    MS_ASSERT(this->path != nullptr);
-    this->path->subGraphIdx = subGraphIdx;
-    this->path->nodeIdx = nodeIdx;
+    if (this->path == nullptr) {
+      return;
+    }
+    this->path->subGraphIdx = static_cast<int32_t>(subGraphIdx);
+    this->path->nodeIdx = static_cast<int32_t>(nodeIdx);
     this->pathSetted = true;
   }
   void UnSetPath() {
-    MS_ASSERT(this->path != nullptr);
+    if (this->path == nullptr) {
+      return;
+    }
     this->path->subGraphIdx = -1;
     this->path->nodeIdx = -1;
     this->pathSetted = false;
@@ -68,10 +73,12 @@ struct PatternOp {
       return nullptr;
     }
     auto dst = std::make_shared<PatternOp>();
+    MS_CHECK_TRUE_RET(dst != nullptr, nullptr);
     dst->id = src->id;
     dst->types = src->types;
     if (src->path != nullptr) {
       dst->path = std::make_shared<Path>(src->path->subGraphIdx, src->path->nodeIdx);
+      MS_CHECK_TRUE_RET(dst->path != nullptr, nullptr);
     }
     dst->pathSetted = src->pathSetted;
     dst->isTail = src->isTail;
@@ -91,15 +98,11 @@ class FusionPattern {
 
   std::string GetName();
 
-  FusionPattern &SetName(const std::string &name);
-
   FusionPattern &AddPatternOp(const std::string &id, const std::initializer_list<schema::PrimitiveType> &types = {});
 
   FusionPattern &AddPatternOp(const std::string &id, const std::vector<schema::PrimitiveType> &types);
 
   FusionPattern &AddPatternOp(const std::shared_ptr<PatternOp> &patternOp);
-
-  FusionPattern &RemovePatternOp(const std::string &id);
 
   // set id of patternOp
   // set isTail and isHead for patternOps
@@ -108,8 +111,6 @@ class FusionPattern {
   bool Check();
   // get the id of the output Op of th pattern
   std::string GetOutput() const;
-
-  void Dump() const;
 
   // return nullptr if not find
   std::shared_ptr<PatternOp> GetPatternOp(const std::string &id) const;
@@ -120,15 +121,15 @@ class FusionPattern {
   FusionPattern &operator=(const FusionPattern &) = default;
 
  private:
-  std::string name;
+  std::string name{};
 
-  std::vector<std::shared_ptr<PatternOp>> ops;
+  std::vector<std::shared_ptr<PatternOp>> ops{};
 
   // same with ops, just for search
-  std::map<std::string, std::shared_ptr<PatternOp>> opMap;
+  std::map<std::string, std::shared_ptr<PatternOp>> opMap{};
 
   // output PatternOp id of pattern
-  std::string outputOpId;
+  std::string outputOpId{};
 
   bool hasError = false;
 };
