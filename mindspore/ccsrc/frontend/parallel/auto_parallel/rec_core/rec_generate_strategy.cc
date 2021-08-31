@@ -56,7 +56,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
     }
     // Set back to raw strategy for special node in predict/eval
     if (!is_training) {
-      if ((op->is_last_node()) || (op->type() == "_VirtualDataset")) {
+      if ((op->is_last_node()) || (op->type() == VIRTUAL_DATA_SET)) {
         SetBackToRawStrategy(op);
       }
     }
@@ -612,10 +612,54 @@ size_t FindIndexOfOperatorIncoming(const std::vector<std::vector<std::string>> &
   return incoming_op_index;
 }
 
+float CheckVirtualDatasetStrategy(const std::shared_ptr<Graph> &graph, const size_t iter_graph) {
+  // The values for str can only be 1.0, 0.5, 0.25, 0.125…
+  // We want to find out the first str that is smaller than 1
+  if (graph->nodes[iter_graph].tensor_parm.tensor_str.str_n < 0.9) {
+    return graph->nodes[iter_graph].tensor_parm.tensor_str.str_n;
+  }
+  if (graph->nodes[iter_graph].tensor_parm.tensor_str.str_c < 0.9) {
+    return graph->nodes[iter_graph].tensor_parm.tensor_str.str_c;
+  }
+  if (graph->nodes[iter_graph].tensor_parm.tensor_str.str_h < 0.9) {
+    return graph->nodes[iter_graph].tensor_parm.tensor_str.str_h;
+  }
+  if (graph->nodes[iter_graph].tensor_parm.tensor_str.str_w < 0.9) {
+    return graph->nodes[iter_graph].tensor_parm.tensor_str.str_w;
+  }
+  return 1.0;
+}
+
+Dimensions CopyVirtualDataset(const std::shared_ptr<Graph> &graph,
+                              const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                              const size_t iter_graph) {
+  Dimensions s;
+  for (auto input : ops[iter_ops]->inputs_tensor_info()) {
+    auto input_stra_dim = input.shape().size();
+    auto virtual_dataset_str = CheckVirtualDatasetStrategy(graph, iter_graph);
+    if (input_stra_dim == 0) {
+      continue;
+    } else {
+      s.push_back(1 / virtual_dataset_str);
+      for (size_t i = 1; i < input_stra_dim; i++) {
+        s.push_back(1);
+      }
+    }
+  }
+  return s;
+}
+
 Dimensions CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Graph> &graph,
                                               const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                              const size_t iter_ops, const size_t iter_graph) {
+                                              const size_t iter_ops, const size_t iter_graph,
+                                              const size_t incoming_op_index) {
   Dimensions s;
+
+  if (ops[incoming_op_index]->type() == VIRTUAL_DATA_SET) {
+    s = CopyVirtualDataset(graph, ops, iter_ops, iter_graph);
+    return s;
+  }
+
   for (auto input : ops[iter_ops]->inputs_tensor_info()) {
     auto input_stra_dim = input.shape().size();
     if (input_stra_dim == 0) {
@@ -1050,7 +1094,7 @@ void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> &gra
     if (incoming_op_index != SIZE_MAX) {
       auto iter_graph = index_list->at(incoming_op_index);
       if (iter_graph != SIZE_MAX) {
-        s = CopyIncomingOperatorOutputStrategy(graph, ops, iter_ops, iter_graph);
+        s = CopyIncomingOperatorOutputStrategy(graph, ops, iter_ops, iter_graph, incoming_op_index);
       } else {
         s = CopyIncomingOperatorInputStrategy(ops, iter_ops, incoming_op_index);
       }
