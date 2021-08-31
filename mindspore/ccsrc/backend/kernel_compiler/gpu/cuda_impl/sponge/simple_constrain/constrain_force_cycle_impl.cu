@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  Constrain_Force_Cycle. This is an experimental interface that is subject to change and/or deletion.
+ */
 
-#include "backend/kernel_compiler/gpu/cuda_impl/sponge/simple_constrain/constrain_force_cycle_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/common_sponge.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/sponge/simple_constrain/constrain_force_cycle_impl.cuh"
 
 __global__ void Constrain_Force_Cycle_Kernel(const int constrain_pair_numbers, const UNSIGNED_INT_VECTOR *uint_crd,
                                              const VECTOR *scaler, const CONSTRAIN_PAIR *constrain_pair,
@@ -64,10 +68,10 @@ void Constrain_Force_Cycle(int atom_numbers, int constrain_pair_numbers, const u
   CONSTRAIN_PAIR *constrain_pair = reinterpret_cast<CONSTRAIN_PAIR *>(constrain_pair_f);
 
   construct_constrain_pair<<<ceilf(static_cast<float>(constrain_pair_numbers) / 128), 128, 0, stream>>>(
-    constrain_pair_numbers, atom_i_serials, atom_j_serials, constant_rs, constrain_ks, constrain_pair);
+      constrain_pair_numbers, atom_i_serials, atom_j_serials, constant_rs, constrain_ks, constrain_pair);
 
   Constrain_Force_Cycle_Kernel<<<block_per_grid, thread_per_block, 0, stream>>>(
-    constrain_pair_numbers, uint_crd, scaler, constrain_pair, pair_dr, test_frc);
+      constrain_pair_numbers, uint_crd, scaler, constrain_pair, pair_dr, test_frc);
 
   return;
 }

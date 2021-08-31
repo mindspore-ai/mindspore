@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  PMEExcludedForce. This is an experimental interface that is subject to change and/or deletion.
+ */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_PME_PME_EXCLUDED_FORCE_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_PME_PME_EXCLUDED_FORCE_KERNEL_H_
 #include <cuda_runtime_api.h>
 #include <cufft.h>
 #include <vector>
-#include <string>
-#include <map>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "runtime/device/gpu/cuda_common.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/pme/pme_excluded_force_impl.cuh"
+
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>

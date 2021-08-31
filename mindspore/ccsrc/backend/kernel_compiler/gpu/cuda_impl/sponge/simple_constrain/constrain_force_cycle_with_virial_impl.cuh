@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  ConstrainForceCycleVirial. This is an experimental interface that is subject to change and/or deletion.
+ */
 
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_SIMPLE_CONSTRAIN_CONSTRAIN_FORCE_CYCLE_WITH_VIRIAL_IMPL_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_SIMPLE_CONSTRAIN_CONSTRAIN_FORCE_CYCLE_WITH_VIRIAL_IMPL_H_
@@ -25,4 +29,4 @@ void Constrain_Force_Cycle_With_Virial(int atom_numbers, int constrain_pair_numb
                                        const int *atom_i_serials, const int *atom_j_serials, const float *constant_rs,
                                        const float *constrain_ks, float *test_frc_f, float *d_atom_virial,
                                        cudaStream_t stream);
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_SIMPLE_CONSTRAIN_CONSTRAIN_FORCE_CYCLE_WITH_VIRIAL_IMPL_H_
+#endif
