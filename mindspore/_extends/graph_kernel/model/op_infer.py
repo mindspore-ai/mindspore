@@ -101,6 +101,7 @@ class OpInfer:
 
 class _Elemwise(OpInfer):
     """Common infer for elementwise operators"""
+
     @staticmethod
     def broadcast_shape(shapes):
         """deduce broadcast shape using same rules as numpy"""
@@ -120,25 +121,24 @@ class _Elemwise(OpInfer):
     @staticmethod
     def defaultformat_to_nz(default_shape):
         """default format shape to fractal_Nz format shape"""
-        if len(default_shape) not in (1, 2):
-            raise GKException("shape is too long!")
+        more_two_d_shape, two_d_shape = default_shape[:-2], default_shape[-2:]
         # (32) or (1, 32) -> (2, 1, 1, 16)
-        if len(default_shape) == 1 or (len(default_shape) == 2 and default_shape[0] == 1):
-            shape = [default_shape[-1] // 16, 1, 1, 16]
-            if default_shape[-1] % 16 != 0:
+        if len(two_d_shape) == 1 or (len(two_d_shape) == 2 and two_d_shape[0] == 1):
+            shape = [two_d_shape[-1] // 16, 1, 1, 16]
+            if two_d_shape[-1] % 16 != 0:
                 raise GKException("should be multiplies of 16")
             return shape
         # (32, 1) -> (1, 2, 16, 1)
-        if len(default_shape) == 2 and default_shape[1] == 1:
-            shape = [1, default_shape[0] // 16, 16, 1]
-            if default_shape[0] % 16 != 0:
+        if len(two_d_shape) == 2 and two_d_shape[1] == 1:
+            shape = [1, two_d_shape[0] // 16, 16, 1]
+            if two_d_shape[0] % 16 != 0:
                 raise GKException("should be multiples of 16")
             return shape
         # (32, 48) -> (3, 2, 16, 16)
-        shape = [default_shape[1] // 16, default_shape[0] // 16, 16, 16]
-        if default_shape[0] % 16 != 0 or default_shape[1] % 16 != 0:
+        shape = [two_d_shape[1] // 16, two_d_shape[0] // 16, 16, 16]
+        if two_d_shape[0] % 16 != 0 or two_d_shape[1] % 16 != 0:
             raise GKException("should be multiples of 16")
-        return shape
+        return more_two_d_shape + shape
 
     def _infer_shape(self):
         """returns the output shape with broadcast"""
