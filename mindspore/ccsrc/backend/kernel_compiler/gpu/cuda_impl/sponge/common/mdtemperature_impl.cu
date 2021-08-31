@@ -43,8 +43,6 @@ void MDTemperature(const int residue_numbers, const int *start, const int *end, 
   VECTOR *atom_vel = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(atom_vel_f));
   MDTemperatureKernel<<<ceilf(static_cast<float>(residue_numbers) / 32), 32, 0, stream>>>(residue_numbers, start, end,
                                                                                           atom_vel, atom_mass, ek);
-  cudaStreamSynchronize(stream);
-
   return;
 }
 void MDTemperature(const int residue_numbers, const int *start, const int *end, const float *atom_vel_f,

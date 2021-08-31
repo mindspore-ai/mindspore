@@ -26,6 +26,7 @@ MS_REG_GPU_KERNEL_TWO(MapCenterOfMass,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       MapCenterOfMassGpuKernel, float, int)
 }  // namespace kernel

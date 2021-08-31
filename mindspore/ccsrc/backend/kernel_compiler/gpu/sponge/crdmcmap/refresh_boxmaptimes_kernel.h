@@ -61,7 +61,7 @@ class RefreshBoxmaptimesGpuKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto crd = GetDeviceAddress<T>(inputs, 0);
-    auto old_crd = GetDeviceAddress<T>(inputs, 0);
+    auto old_crd = GetDeviceAddress<T>(inputs, 1);
     auto box_length_inverse = GetDeviceAddress<T>(inputs, 2);
     auto box_map_times = GetDeviceAddress<T1>(inputs, 3);
 

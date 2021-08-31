@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename T1>
+template <typename T, typename T1, typename T2>
 class BondEnergyCudaGpuKernel : public GpuKernel {
  public:
   BondEnergyCudaGpuKernel() : ele_uint_crd(1) {}
@@ -65,7 +65,7 @@ class BondEnergyCudaGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    auto uint_crd_f = GetDeviceAddress<const T1>(inputs, 0);
+    auto uint_crd_f = GetDeviceAddress<const T2>(inputs, 0);
     auto scaler_f = GetDeviceAddress<T>(inputs, 1);
     auto atom_a = GetDeviceAddress<const T1>(inputs, 2);
     auto atom_b = GetDeviceAddress<const T1>(inputs, 3);
@@ -81,7 +81,7 @@ class BondEnergyCudaGpuKernel : public GpuKernel {
 
  protected:
   void InitSizeLists() override {
-    input_size_list_.push_back(ele_uint_crd * sizeof(T1));
+    input_size_list_.push_back(ele_uint_crd * sizeof(T2));
     input_size_list_.push_back(ele_scaler * sizeof(T));
     input_size_list_.push_back(ele_atom_a * sizeof(T1));
     input_size_list_.push_back(ele_atom_b * sizeof(T1));

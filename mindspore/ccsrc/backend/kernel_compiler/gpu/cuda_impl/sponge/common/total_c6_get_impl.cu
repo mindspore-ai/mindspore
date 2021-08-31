@@ -20,7 +20,7 @@
 __global__ void Total_C6_Get(int atom_numbers, int *atom_lj_type, float *d_lj_b, float *d_factor) {
   int i, j;
   float temp_sum = 0;
-  d_factor = 0;
+  d_factor[0] = 0;
   int x, y;
   int itype, jtype, atom_pair_LJ_type;
   for (i = blockIdx.x * blockDim.x + threadIdx.x; i < atom_numbers; i += gridDim.x * blockDim.x) {
@@ -41,9 +41,7 @@ __global__ void Total_C6_Get(int atom_numbers, int *atom_lj_type, float *d_lj_b,
 }
 
 void total_c6_get(int atom_numbers, int *atom_lj_type, float *d_lj_b, float *d_factor, cudaStream_t stream) {
-  size_t thread_per_block = 128;
-  size_t block_per_grid = ceilf(static_cast<float>(atom_numbers) / 128);
-  Total_C6_Get<<<block_per_grid, thread_per_block, 0, stream>>>(atom_numbers, atom_lj_type, d_lj_b, d_factor);
+  Total_C6_Get<<<{4, 4}, {32, 32}, 0, stream>>>(atom_numbers, atom_lj_type, d_lj_b, d_factor);
   return;
 }
 

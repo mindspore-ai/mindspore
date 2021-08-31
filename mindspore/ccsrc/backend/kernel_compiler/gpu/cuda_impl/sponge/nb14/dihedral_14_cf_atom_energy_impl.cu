@@ -70,8 +70,6 @@ void Dihedral14CFAtomEnergy(const int dihedral_14_numbers, const int atom_number
   Dihedral14CFAtomEnergyKernel<<<block_per_grid, thread_per_block, 0, stream>>>(
     dihedral_14_numbers, uint_crd_with_LJ, boxlength, a_14, b_14, cf_scale_factor, ene);
 
-  cudaStreamSynchronize(stream);
-
   return;
 }
 
