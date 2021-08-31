@@ -17,11 +17,13 @@
 #include "tools/converter/parser/caffe/caffe_slice_parser.h"
 #include <memory>
 #include "ops/split.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeSliceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Split>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   const caffe::SliceParameter &slice_param = proto.slice_param();
   prim->set_output_num(2);

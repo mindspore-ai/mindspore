@@ -18,11 +18,14 @@
 #include <memory>
 #include "ops/quant_dtype_cast.h"
 #include "ops/cast.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto &tflite_subgraph = tflite_model->subgraphs.front();
   if (tflite_subgraph == nullptr) {
     MS_LOG(ERROR) << "tflite_subgraph is nullptr";
@@ -41,13 +44,17 @@ ops::PrimitiveC *TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::Ope
   if ((GetTfliteDataType(in_tensor->type) == kNumberTypeInt8 ||
        GetTfliteDataType(in_tensor->type) == kNumberTypeUInt8)) {
     auto prim = std::make_unique<ops::QuantDTypeCast>();
+    MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
     prim->set_src_t(GetTfliteDataType(in_tensor->type));
     prim->set_dst_t(GetTfliteDataType(out_tensor->type));
     return prim.release();
   } else {
     auto prim = std::make_unique<ops::Cast>();
+    MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
     auto dstT = GetTfliteDataType(out_tensor->type);
-    prim->AddAttr("to", MakeValue(static_cast<int32_t>(dstT)));
+    auto value_dst = MakeValue(static_cast<int32_t>(dstT));
+    MS_CHECK_TRUE_RET(value_dst != nullptr, nullptr);
+    prim->AddAttr("to", value_dst);
     return prim.release();
   }
 }

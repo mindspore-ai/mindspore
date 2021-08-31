@@ -17,12 +17,13 @@
 #include "tools/converter/parser/caffe/caffe_argmax_parser.h"
 #include <memory>
 #include "ops/fusion/arg_max_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::ArgMaxFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_keep_dims(true);
   prim->set_out_max_value(false);
   prim->set_top_k(1);

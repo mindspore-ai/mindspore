@@ -17,12 +17,13 @@
 #include "tools/converter/parser/caffe/caffe_activation_parser.h"
 #include <memory>
 #include "ops/fusion/activation.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeReluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU);
 
   if (proto.has_relu_param() && proto.relu_param().has_negative_slope()) {
@@ -38,7 +39,7 @@ ops::PrimitiveC *CaffeReluParser::Parse(const caffe::LayerParameter &proto, cons
 
 ops::PrimitiveC *CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU6);
 
   return prim.release();
@@ -46,7 +47,7 @@ ops::PrimitiveC *CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, con
 
 ops::PrimitiveC *CaffeSigmoidParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::SIGMOID);
 
   return prim.release();
@@ -54,7 +55,7 @@ ops::PrimitiveC *CaffeSigmoidParser::Parse(const caffe::LayerParameter &proto, c
 
 ops::PrimitiveC *CaffeTanhParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::TANH);
 
   return prim.release();

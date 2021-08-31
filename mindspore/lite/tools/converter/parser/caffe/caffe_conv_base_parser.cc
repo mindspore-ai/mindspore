@@ -16,6 +16,8 @@
 
 #include "tools/converter/parser/caffe/caffe_conv_base_parser.h"
 #include <algorithm>
+#include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -26,6 +28,7 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
    *  padLeft = padW;
    *  padRight = padW;
    */
+  MSLITE_CHECK_PTR(pad);
   if (convParam.has_pad_h() || convParam.has_pad_w()) {
     if (convParam.pad_size() != 0) {
       MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both.";
@@ -66,6 +69,7 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
 }
 
 STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *stride) {
+  MSLITE_CHECK_PTR(stride);
   if (convParam.has_stride_h() || convParam.has_stride_w()) {
     if (convParam.stride_size() != 0) {
       MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
@@ -94,6 +98,7 @@ STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &conv
 
 STATUS CaffeConvBaseParser::ParseDilations(const caffe::ConvolutionParameter &convParam,
                                            std::vector<int64_t> *dilation) {
+  MSLITE_CHECK_PTR(dilation);
   const int num_dilation_dims = convParam.dilation_size();
   int num_spatial_dims = std::max(num_dilation_dims, 2);
 
@@ -108,6 +113,7 @@ STATUS CaffeConvBaseParser::ParseDilations(const caffe::ConvolutionParameter &co
 }
 
 STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *kernel) {
+  MSLITE_CHECK_PTR(kernel);
   if (convParam.has_kernel_h() || convParam.has_kernel_w()) {
     if (convParam.kernel_size_size() != 0) {
       MS_LOG(ERROR) << "Either kernel_size or kernel_h/w should be specified; not both.";
@@ -148,10 +154,7 @@ int CaffeConvBaseParser::ParseGroup(const caffe::ConvolutionParameter &convParam
 }
 
 int CaffeConvBaseParser::ParseChannelOut(const caffe::ConvolutionParameter &convParam, int32_t *channelOut) {
-  if (channelOut == nullptr) {
-    MS_LOG(ERROR) << "channelOut is null";
-    return RET_NULL_PTR;
-  }
+  MSLITE_CHECK_PTR(channelOut);
   if (!convParam.has_num_output()) {
     MS_LOG(ERROR) << "Parse num_output for failed.";
     return RET_ERROR;
@@ -162,10 +165,7 @@ int CaffeConvBaseParser::ParseChannelOut(const caffe::ConvolutionParameter &conv
 
 STATUS CaffeConvBaseParser::ParseWeight(const caffe::LayerParameter &weight,
                                         std::vector<schema::TensorT *> *weightVec) {
-  if (weightVec == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
+  MSLITE_CHECK_PTR(weightVec);
 
   if (weight.blobs_size() == 0) {
     MS_LOG(ERROR) << "No filter data in layer " << weight.name().c_str();

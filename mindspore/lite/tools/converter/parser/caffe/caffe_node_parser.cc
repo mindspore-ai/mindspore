@@ -19,15 +19,14 @@
 #include "securec/include/securec.h"
 #include "ir/dtype/type_id.h"
 #include "src/common/utils.h"
+#include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
 schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
-  std::unique_ptr<schema::TensorT> weight = std::make_unique<schema::TensorT>();
-  if (weight == nullptr) {
-    MS_LOG(ERROR) << "new weight failed";
-    return nullptr;
-  }
+  auto weight = std::make_unique<schema::TensorT>();
+  MS_CHECK_TRUE_RET(weight != nullptr, nullptr);
 
   weight->format = schema::Format::Format_NCHW;
   std::vector<int32_t> shapeVec;
@@ -51,11 +50,8 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   }
 
   // get weight
-  std::unique_ptr<float[]> buf = std::make_unique<float[]>(count);
-  if (buf == nullptr) {
-    MS_LOG(ERROR) << "new weight buf failed";
-    return nullptr;
-  }
+  auto buf = std::make_unique<float[]>(count);
+  MS_CHECK_TRUE_RET(buf != nullptr, nullptr);
   if (proto.double_data_size() > 0) {
     // datatype double
     if (count != proto.double_data_size()) {
@@ -83,10 +79,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
 
     weight->data.resize(count * sizeof(float));
     const float *data_ptr = proto.data().data();
-    if (data_ptr == nullptr) {
-      MS_LOG(ERROR) << "data_ptr is nullptr";
-      return nullptr;
-    }
+    MS_CHECK_TRUE_RET(data_ptr != nullptr, nullptr);
     if (::memcpy_s(weight->data.data(), count * sizeof(float), (uint8_t *)data_ptr, count * sizeof(float)) != EOK) {
       MS_LOG(ERROR) << "memcpy failed";
       return nullptr;
@@ -98,10 +91,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
 }
 
 STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape) {
-  if (shape == nullptr) {
-    MS_LOG(ERROR) << "shape is null";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(shape);
 
   shape->clear();
   if (proto.has_num() || proto.has_channels() || proto.has_height() || proto.has_width()) {

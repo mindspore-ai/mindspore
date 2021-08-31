@@ -19,18 +19,17 @@
 #include <vector>
 #include <memory>
 #include "ops/unstack.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Unstack();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Unpack failed";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
+  auto prim = std::make_unique<ops::Unstack>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
-  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsUnpackOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get Unpack attr failed";
@@ -38,7 +37,7 @@ ops::PrimitiveC *TfliteUnstackParser::Parse(const std::unique_ptr<tflite::Operat
   }
   prim->set_axis(tflite_attr->axis);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteUnstackParser(tflite::BuiltinOperator_UNPACK, new TfliteUnstackParser());

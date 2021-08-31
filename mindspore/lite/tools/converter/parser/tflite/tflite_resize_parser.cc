@@ -20,19 +20,21 @@
 #include <string>
 #include <vector>
 #include "ops/resize.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Resize>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_format(mindspore::Format::NHWC);
   prim->set_preserve_aspect_ratio(false);
   prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
 
-  MS_ASSERT(tfliteOp != nullptr);
-  MS_ASSERT(tfliteModel != nullptr);
   auto &tflite_subgraph = tflite_model->subgraphs.front();
   if (tflite_subgraph == nullptr) {
     MS_LOG(ERROR) << "tflite_subgraph is nullptr";

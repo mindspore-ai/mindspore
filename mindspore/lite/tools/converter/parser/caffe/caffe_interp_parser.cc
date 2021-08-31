@@ -17,12 +17,14 @@
 #include "tools/converter/parser/caffe/caffe_interp_parser.h"
 #include <memory>
 #include "ops/resize.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Resize>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_method(mindspore::ResizeMethod::LINEAR);
   prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
 

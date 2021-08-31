@@ -27,6 +27,8 @@
 #include "ops/space_to_depth.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/quantizer/quant_cast.h"
+#include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::lite {
 namespace {
@@ -51,6 +53,7 @@ bool CheckResize(const CNodePtr &cnode) {
 
 lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
   // add primitive first
+  MSLITE_CHECK_PTR(cnode);
   std::vector<AnfNodePtr> new_inputs = {cnode->input(0)};
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   auto input_quant_params = primitive->GetAttr("quant_params");
@@ -62,6 +65,7 @@ lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
   auto old_quant_params = input_quant_params_holder->get_input_quant_params();
   auto new_input_quant_holder =
     std::make_shared<lite::QuantParamHolder>(perm.size(), input_quant_params_holder->get_output_quant_params().size());
+  MSLITE_CHECK_PTR(new_input_quant_holder);
   // add inputs as perm order
   size_t new_idx = 0;
   for (size_t idx : perm) {
@@ -85,8 +89,8 @@ lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
 }  // namespace
 
 STATUS TfliteInputsAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(param_node != nullptr);
+  MSLITE_CHECK_PTR(func_graph);
+  MSLITE_CHECK_PTR(param_node);
   if (param_node->abstract() == nullptr) {
     MS_LOG(ERROR) << "parameter node abstract is invalid.";
     return lite::RET_NULL_PTR;
@@ -105,7 +109,7 @@ STATUS TfliteInputsAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_gr
     return lite::RET_OK;
   }
   auto manager = Manage(func_graph, true);
-  MS_ASSERT(manager != nullptr);
+  MSLITE_CHECK_PTR(manager);
   if (param_node->has_default()) {
     auto default_value = param_node->default_param();
     if (default_value == nullptr) {
@@ -127,6 +131,8 @@ STATUS TfliteInputsAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_gr
 }
 
 STATUS TfliteInputsAdjust::AdjustSlice(const AnfNodePtr &node, const FuncGraphPtr &graph) {
+  MSLITE_CHECK_PTR(node);
+  MSLITE_CHECK_PTR(graph);
   auto cnode = node->cast<CNodePtr>();
   if (cnode->inputs().size() < opt::kInputSizeFour) {
     MS_LOG(ERROR) << "Slice should own 3 inputs";

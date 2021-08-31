@@ -17,11 +17,13 @@
 #include "tools/converter/parser/caffe/caffe_softmax_parser.h"
 #include <memory>
 #include "ops/softmax.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Softmax>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   if (proto.has_softmax_param() && proto.softmax_param().has_axis()) {
     if (proto.softmax_param().axis() == -1) {

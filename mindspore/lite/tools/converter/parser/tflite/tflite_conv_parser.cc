@@ -18,19 +18,21 @@
 #include <vector>
 #include <memory>
 #include "ops/fusion/conv2d_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Conv2DFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_pad({0, 0, 0, 0});
   prim->set_group(1);
   prim->set_format(mindspore::Format::NHWC);
 
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
   const auto &tflite_subgraph = tflite_model->subgraphs.front();
   if (tflite_subgraph == nullptr) {
     MS_LOG(ERROR) << "tflite_subgraph is nullptr";
@@ -75,17 +77,14 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
 
 ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Conv2DFusion>();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Conv2DFusion failed";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_pad({0, 0, 0, 0});
   prim->set_format(mindspore::Format::NHWC);
 
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
   const auto &tflite_subgraph = tflite_model->subgraphs.front();
   if (tflite_subgraph == nullptr) {
     MS_LOG(ERROR) << "tflite_subgraph is nullptr";
@@ -138,7 +137,9 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
   } else if (status == RET_OK) {
     prim->set_pad_list(params);
   }
-  prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+  auto value_ptr = MakeValue<bool>(true);
+  MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
+  prim->AddAttr(ops::kIsDepthWise, value_ptr);
 
   return prim.release();
 }

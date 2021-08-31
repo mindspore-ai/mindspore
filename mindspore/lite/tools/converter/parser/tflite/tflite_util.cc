@@ -21,6 +21,8 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
+#include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -95,10 +97,8 @@ size_t GetDataTypeSize(const TypeId &data_type) {
 
 STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore::PadMode pad_mode, int strideH,
                        int strideW, int windowH, int windowW, std::vector<int64_t> *params) {
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "the input tensor is null";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(tensor);
+
   if (tensor->shape.empty()) {
     MS_LOG(DEBUG) << "the tensor's shape is dynamic, which obtain only when running.";
     return RET_NO_CHANGE;

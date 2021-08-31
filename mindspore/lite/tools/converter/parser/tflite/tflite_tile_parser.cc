@@ -19,12 +19,16 @@
 #include <vector>
 #include <memory>
 #include "ops/fusion/tile_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteTileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::TileFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 

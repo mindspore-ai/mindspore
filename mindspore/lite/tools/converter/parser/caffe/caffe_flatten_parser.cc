@@ -17,12 +17,14 @@
 #include "tools/converter/parser/caffe/caffe_flatten_parser.h"
 #include <memory>
 #include "ops/flatten.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Flatten>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 

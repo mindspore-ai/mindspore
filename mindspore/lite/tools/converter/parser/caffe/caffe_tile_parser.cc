@@ -18,11 +18,13 @@
 #include <memory>
 #include <vector>
 #include "ops/fusion/tile_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeTileParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::TileFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   const caffe::TileParameter &tile_param = proto.tile_param();
   std::vector<int64_t> dims;
@@ -41,7 +43,9 @@ ops::PrimitiveC *CaffeTileParser::Parse(const caffe::LayerParameter &proto, cons
   } else {
     multiples.push_back(1);
   }
-  prim->AddAttr("multiples", MakeValue(multiples));
+  auto value_ptr = MakeValue(multiples);
+  MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
+  prim->AddAttr("multiples", value_ptr);
 
   return prim.release();
 }

@@ -19,34 +19,26 @@
 #include <vector>
 #include <map>
 #include "ops/fusion/arg_max_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::ArgMaxFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_keep_dims(false);
   prim->set_out_max_value(false);
   prim->set_top_k(1);
 
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
   const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(tflite_subgraph != nullptr, nullptr, "tflite_subgraph is nullptr");
   const auto &axis_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[1]);
-  if (axis_tensor == nullptr) {
-    MS_LOG(ERROR) << "axis_tensor is nullptr";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(axis_tensor != nullptr, nullptr, "axis_tensor is nullptr");
   const auto &buf_data = tflite_model->buffers.at(axis_tensor->buffer);
-  if (buf_data == nullptr) {
-    MS_LOG(ERROR) << "the buf data is null";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(buf_data != nullptr, nullptr, "the buf data is nullptr");
   auto data_ptr = buf_data->data.data();
   if (data_ptr == nullptr) {
     MS_LOG(ERROR) << "the data is null";

@@ -17,12 +17,14 @@
 #include "tools/converter/parser/caffe/caffe_elu_parser.h"
 #include <memory>
 #include "ops/elu.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeEluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Elu>();
 
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (proto.has_elu_param()) {
     const caffe::ELUParameter &eluParameter = proto.elu_param();
     if (eluParameter.has_alpha()) {

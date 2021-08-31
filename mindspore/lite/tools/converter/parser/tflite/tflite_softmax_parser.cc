@@ -18,12 +18,16 @@
 #include <vector>
 #include <memory>
 #include "ops/softmax.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Softmax>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_axis({-1});
 

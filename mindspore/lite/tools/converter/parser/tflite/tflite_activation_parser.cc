@@ -20,13 +20,16 @@
 #include "tools/converter/parser/tflite/tflite_util.h"
 #include "ops/fusion/prelu_fusion.h"
 #include "ops/fusion/activation.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU);
 
   return prim.release();
@@ -34,8 +37,10 @@ ops::PrimitiveC *TfliteReluParser::Parse(const std::unique_ptr<tflite::OperatorT
 
 ops::PrimitiveC *TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU6);
 
   return prim.release();
@@ -43,16 +48,14 @@ ops::PrimitiveC *TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::Operator
 
 ops::PrimitiveC *TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
 
-  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsLeakyReluOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get LeakyRelu attr failed";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(tflite_attr != nullptr, nullptr, "Get LeakyRelu attr failed.");
   prim->set_alpha(tflite_attr->alpha);
 
   return prim.release();
@@ -60,8 +63,10 @@ ops::PrimitiveC *TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::Oper
 
 ops::PrimitiveC *TflitePReLUParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::PReLUFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_channel_shared(true);
 
   return prim.release();
@@ -69,8 +74,10 @@ ops::PrimitiveC *TflitePReLUParser::Parse(const std::unique_ptr<tflite::Operator
 
 ops::PrimitiveC *TfliteTanhParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::TANH);
 
   return prim.release();
@@ -78,8 +85,10 @@ ops::PrimitiveC *TfliteTanhParser::Parse(const std::unique_ptr<tflite::OperatorT
 
 ops::PrimitiveC *TfliteHardSwishParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::HSWISH);
 
   return prim.release();
@@ -87,8 +96,10 @@ ops::PrimitiveC *TfliteHardSwishParser::Parse(const std::unique_ptr<tflite::Oper
 
 ops::PrimitiveC *TfliteLogisticParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::SIGMOID);
 
   return prim.release();
