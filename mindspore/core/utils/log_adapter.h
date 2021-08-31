@@ -149,8 +149,6 @@ enum SubModuleId : int {
 
 MS_EXPORT const std::string GetSubModuleName(SubModuleId module_id);
 
-const char *EnumStrForMsLogLevel(MsLogLevel level);
-
 MS_EXPORT std::string GetTimeString();
 
 MS_EXPORT extern int g_ms_submodule_log_levels[];
