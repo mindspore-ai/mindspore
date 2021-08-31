@@ -23,11 +23,11 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
-from .utils import FadeShape, ScaleType
+from .utils import FadeShape, GainType, ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
     check_deemph_biquad, check_equalizer_biquad, check_fade, check_highpass_biquad, check_lfilter, \
-    check_lowpass_biquad, check_masking, check_mu_law_decoding, check_time_stretch
+    check_lowpass_biquad, check_masking, check_mu_law_decoding, check_time_stretch, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -644,15 +644,12 @@ class TimeStretch(AudioTensorOperation):
         fixed_rate (float, optional): Rate to speed up or slow down the input in time (default=None).
 
     Examples:
-        >>> freq = 44100
-        >>> num_frame = 30
-        >>> def gen():
-        ...     np.random.seed(0)
-        ...     data =  np.random.random([freq, num_frame])
-        ...     yield (np.array(data, dtype=np.float32), )
-        >>> data1 = ds.GeneratorDataset(source=gen, column_names=["multi_dimensional_data"])
-        >>> transforms = [py_audio.TimeStretch()]
-        >>> data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([1, 30])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.TimeStretch()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
     @check_time_stretch
     def __init__(self, hop_length=None, n_freq=201, fixed_rate=None):
@@ -665,3 +662,38 @@ class TimeStretch(AudioTensorOperation):
 
     def parse(self):
         return cde.TimeStretchOperation(self.hop_length, self.n_freq, self.fixed_rate)
+
+
+DE_C_GAINTYPE_TYPE = {GainType.AMPLITUDE: cde.GainType.DE_GAINTYPE_AMPLITUDE,
+                      GainType.POWER: cde.GainType.DE_GAINTYPE_POWER,
+                      GainType.DB: cde.GainType.DE_GAINTYPE_DB}
+
+
+class Vol(AudioTensorOperation):
+    """
+    Apply amplification or attenuation to the whole waveform.
+
+    Args:
+        gain (float): Value of gain adjustment.
+            If gain_type = amplitude, gain stands for nonnegative amplitude ratio.
+            If gain_type = power, gain stands for power.
+            If gain_type = db, gain stands for decibels.
+        gain_type (ScaleType, optional): Type of gain, contains the following three enumeration values
+            GainType.AMPLITUDE, GainType.POWER and GainType.DB (default=GainType.AMPLITUDE).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([20, 30])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Vol(gain=10, gain_type=GainType.DB)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_vol
+    def __init__(self, gain, gain_type=GainType.AMPLITUDE):
+        self.gain = gain
+        self.gain_type = gain_type
+
+    def parse(self):
+        return cde.VolOperation(self.gain, DE_C_GAINTYPE_TYPE[self.gain_type])

@@ -37,6 +37,7 @@
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
+#include "minddata/dataset/audio/ir/kernels/vol_ir.h"
 
 namespace mindspore {
 namespace dataset {
@@ -359,6 +360,19 @@ TimeStretch::TimeStretch(float hop_length, int n_freq, float fixed_rate)
 
 std::shared_ptr<TensorOperation> TimeStretch::Parse() {
   return std::make_shared<TimeStretchOperation>(data_->hop_length_, data_->n_freq_, data_->fixed_rate_);
+}
+
+// Vol Transform Operation.
+struct Vol::Data {
+  Data(float gain, GainType gain_type) : gain_(gain), gain_type_(gain_type) {}
+  float gain_;
+  GainType gain_type_;
+};
+
+Vol::Vol(float gain, GainType gain_type) : data_(std::make_shared<Data>(gain, gain_type)) {}
+
+std::shared_ptr<TensorOperation> Vol::Parse() {
+  return std::make_shared<VolOperation>(data_->gain_, data_->gain_type_);
 }
 }  // namespace audio
 }  // namespace dataset

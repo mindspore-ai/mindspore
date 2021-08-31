@@ -272,11 +272,11 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
 }
 
 /// \brief Stretch STFT in time at a given rate, without changing the pitch.
-/// \param[in] input - Tensor of shape <..., freq, time>.
-/// \param[in] rate - Stretch factor.
-/// \param[in] phase_advance - Expected phase advance in each bin.
-/// \param[out] output - Tensor after stretch in time domain.
-/// \return Status return code.
+/// \param input: Tensor of shape <..., freq, time>.
+/// \param rate: Stretch factor.
+/// \param phase_advance: Expected phase advance in each bin.
+/// \param output: Tensor after stretch in time domain.
+/// \return Status code.
 Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
                    float n_freq);
 
@@ -325,6 +325,46 @@ Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 /// \param[in] fade_shape: Shape of fade.
 Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t fade_in_len,
             int32_t fade_out_len, FadeShape fade_shape);
+
+/// \brief Add a volume to an waveform.
+/// \param input/output: Tensor of shape <..., time>.
+/// \param gain: Gain value, varies according to the value of gain_type.
+/// \param gain_type: Type of gain, should be one of [GainType::kAmplitude, GainType::kDb, GainType::kPower].
+/// \return Status code.
+template <typename T>
+Status Vol(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T gain, GainType gain_type) {
+  const T lower_bound = -1;
+  const T upper_bound = 1;
+
+  // DB is a unit which converts a numeric value into decibel scale and for conversion, we have to use log10
+  // A(in dB) = 20log10(A in amplitude)
+  // When referring to measurements of power quantities, a ratio can be expressed as a level in decibels by evaluating
+  // ten times the base-10 logarithm of the ratio of the measured quantity to reference value
+  // A(in dB) = 10log10(A in power)
+  const int power_factor_div = 20;
+  const int power_factor_mul = 10;
+  const int base = 10;
+
+  if (gain_type == GainType::kDb) {
+    if (gain != 0) {
+      gain = std::pow(base, (gain / power_factor_div));
+    }
+  } else if (gain_type == GainType::kPower) {
+    gain = power_factor_mul * std::log10(gain);
+    gain = std::pow(base, (gain / power_factor_div));
+  }
+
+  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+    if (gain != 0 || gain_type == GainType::kAmplitude) {
+      *itr = (*itr) * gain;
+    }
+    *itr = std::min(std::max((*itr), lower_bound), upper_bound);
+  }
+
+  *output = input;
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

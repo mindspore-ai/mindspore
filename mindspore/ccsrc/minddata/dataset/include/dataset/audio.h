@@ -515,6 +515,29 @@ class TimeStretch final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Vol TensorTransform.
+/// \notes Add a volume to an waveform.
+class Vol final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] gain Gain value, varies according to the value of gain_type. If gain_type is GainType::kAmplitude,
+  ///    gain must be greater than or equal to zero. If gain_type is GainType::kPower, gain must be greater than zero.
+  ///    If gain_type is GainType::kDb, there is no limit for gain.
+  /// \param[in] gain_type Type of gain, should be one of [GainType::kAmplitude, GainType::kDb, GainType::kPower].
+  explicit Vol(float gain, GainType gain_type = GainType::kAmplitude);
+
+  /// \brief Destructor.
+  ~Vol() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore
