@@ -526,7 +526,7 @@ abstract::AbstractBasePtr NodeInferShape::ConvertLiteTensorToAbstract(lite::Tens
 // both of them is different in term of shape and type.
 abstract::AbstractBasePtr NodeInferShape::ConvertTensorListToAbstract(lite::Tensor *tensor) {
   MS_ASSERT(tensor != nullptr);
-  auto tensor_list = dynamic_cast<lite::TensorList *>(tensor);
+  auto tensor_list = reinterpret_cast<lite::TensorList *>(tensor);
   if (tensor_list == nullptr) {
     MS_LOG(ERROR) << "cast tensor_list failed";
     return nullptr;

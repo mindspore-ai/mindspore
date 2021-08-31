@@ -23,7 +23,9 @@
 #include "tools/common/storage.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "include/version.h"
+#ifdef SUPPORT_TRAIN
 #include "src/train/train_populate_parameter.h"
+#endif
 #include "include/registry/model_parser_registry.h"
 #include "src/common/dynamic_library_loader.h"
 #include "src/common/log_util.h"
@@ -43,7 +45,9 @@ void InitConverterParameters(const converter::Flags &flag, converter::ConverterP
 FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
   FuncGraphPtr func_graph = nullptr;
   if (flag.fmk == converter::FmkType::kFmkTypeMs) {
+#ifdef SUPPORT_TRAIN
     kernel::PopulateTrainParameters();
+#endif
     MindsporeImporter ms_import;
     func_graph = ms_import.ImportMindIR(flag);
     if (func_graph == nullptr) {

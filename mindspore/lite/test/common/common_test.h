@@ -38,14 +38,8 @@ class CommonTest : public testing::Test {
   template <typename T>
   void PrintData(const std::string &name, T *output_data, int size) {
     std::cout << "The " << name << " is as follows:" << std::endl;
-    if (typeid(output_data[0]) == typeid(uint8_t) || typeid(output_data[0]) == typeid(int8_t)) {
-      for (int i = 0; i < std::min(size, 100); i++) {
-        std::cout << static_cast<int>(output_data[i]) << " ";
-      }
-    } else {
-      for (int i = 0; i < std::min(size, 100); i++) {
-        std::cout << output_data[i] << " ";
-      }
+    for (int i = 0; i < std::min(size, 100); i++) {
+      std::cout << output_data[i] << " ";
     }
     std::cout << std::endl;
   }

@@ -20,7 +20,7 @@
 #include "include/errorcode.h"
 #include "include/api/format.h"
 #include "include/registry/register_kernel_interface.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 using mindspore::kernel::KernelInterface;
 using mindspore::lite::RET_ERROR;

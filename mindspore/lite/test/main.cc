@@ -16,14 +16,14 @@
 #include <iostream>
 #include "gtest/gtest.h"
 
-#ifndef USE_ANDROID_LOG
+#ifdef USE_GLOG
 namespace mindspore {
 extern void InitSubModulesLogLevel();
 }
 #endif
 
 GTEST_API_ int main(int argc, char **argv) {
-#ifndef USE_ANDROID_LOG
+#ifdef USE_GLOG
   mindspore::InitSubModulesLogLevel();
 #endif
   testing::InitGoogleTest(&argc, argv);

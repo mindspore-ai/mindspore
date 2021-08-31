@@ -6,7 +6,7 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         )
-include(${TOP_DIR}/cmake/external_libs/glog.cmake)
+
 include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 
 if(NOT WIN32)
@@ -15,7 +15,6 @@ endif()
 
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../flag/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter_flags.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/anf_transform.cc
@@ -152,6 +151,7 @@ set(LITE_SRC
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/common/string_util.cc
         ${SRC_DIR}/common/lite_utils.cc
+        ${SRC_DIR}/common/log.cc
         ${SRC_DIR}/common/prim_util.cc
         ${SRC_DIR}/common/tensor_util.cc
         ${SRC_DIR}/runtime/inner_allocator.cc
@@ -196,16 +196,21 @@ set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=m
 set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 
+add_library(converter_src_mid OBJECT ${CONVERTER_SRC})
+add_dependencies(converter_src_mid fbs_src fbs_inner_src)
+
+add_library(ccsrc_src_mid OBJECT ${CCSRC_SRC})
+add_dependencies(ccsrc_src_mid fbs_src fbs_inner_src)
+
 add_executable(converter_lite
         main.cc
-        ${CCSRC_SRC}
-        ${CONVERTER_SRC}
         ${LITE_SRC}
         )
-add_dependencies(converter_lite fbs_src)
-add_dependencies(converter_lite fbs_inner_src)
+add_dependencies(converter_lite fbs_src fbs_inner_src)
 
 target_link_libraries(converter_lite PRIVATE
+        ccsrc_src_mid
+        converter_src_mid
         mindrt_mid
         cpu_ops_mid
         nnacl_mid

@@ -230,6 +230,8 @@ if(PLATFORM_ARM64)
     if(MSLITE_ENABLE_TESTCASES)
         install(FILES ${TOP_DIR}/mindspore/lite/build/test/lite-test DESTINATION ${TEST_CASE_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/src/ DESTINATION ${TEST_CASE_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.so")
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/minddata/ DESTINATION ${TEST_CASE_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.so")
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TEST_CASE_DIR})

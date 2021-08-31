@@ -87,7 +87,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/config_file.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/log.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/lite_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
@@ -323,15 +323,16 @@ if(BUILD_MINDDATA STREQUAL "lite")
 endif()
 
 if(SUPPORT_TRAIN)
-  add_library(mindspore-lite-train SHARED ${TRAIN_SRC})
+  add_library(lite_train_src_mid OBJECT ${TRAIN_SRC})
+  add_dependencies(lite_train_src_mid fbs_src fbs_inner_src)
+
+  add_library(mindspore-lite-train SHARED $<TARGET_OBJECTS:lite_train_src_mid>)
   set_target_properties(mindspore-lite-train PROPERTIES OUTPUT_NAME "mindspore-lite-train")
-  add_dependencies(mindspore-lite-train fbs_src fbs_inner_src)
   set_target_properties(mindspore-lite-train PROPERTIES CLEAN_DIRECT_OUTPUT 1)
   target_link_libraries(mindspore-lite-train minddata-lite mindspore-lite)
 
-  add_library(mindspore-lite-train_static STATIC ${TRAIN_SRC})
+  add_library(mindspore-lite-train_static STATIC $<TARGET_OBJECTS:lite_train_src_mid>)
   set_target_properties(mindspore-lite-train_static PROPERTIES OUTPUT_NAME "mindspore-lite-train")
-  add_dependencies(mindspore-lite-train_static fbs_inner_src)
   set_target_properties(mindspore-lite-train_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
   target_link_libraries(mindspore-lite-train_static minddata-lite mindspore-lite)
 endif()

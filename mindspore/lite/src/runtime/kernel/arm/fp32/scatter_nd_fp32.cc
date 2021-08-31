@@ -135,7 +135,7 @@ int ScatterNDCPUKernel::ScatterND(int task_id) {
     return RET_OK;
   }
   int offset = task_id * thread_n_stride_;
-  MS_LOG(ERROR) << "offset " << offset << std::endl;
+  MS_LOG(ERROR) << "offset " << offset;
   auto ret = DoScatterND(output_ptr_, update_ptr_ + offset * unit_size_, output_unit_offsets_.data() + offset,
                          unit_size_, num_unit_thread);
   if (ret != RET_OK) {

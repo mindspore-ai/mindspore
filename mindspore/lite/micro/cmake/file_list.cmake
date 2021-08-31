@@ -35,10 +35,6 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/component/const_blocks/benchmark.cc
         )
 
-set(MINDSPORE_CORE
-        ${TOP_DIR}/mindspore/core/gvar/logging_level.cc
-        )
-
 set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/file_collector.cc
         ${MICRO_DIR}/coder/opcoders/op_coder.cc
@@ -150,7 +146,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/weight_decoder.cc
         ${LITE_DIR}/src/huffman_decode.cc
-        ${LITE_DIR}/src/common/log_adapter.cc
+        ${LITE_DIR}/src/common/log.cc
         ${LITE_DIR}/src/common/utils.cc
         ${LITE_DIR}/../core/utils/status.cc
         ### tools
@@ -164,4 +160,4 @@ set(REGISTRY_SRC
         )
 
 list(APPEND FILE_SET ${CODER_SRC} ${CODER_OPCODERS_SRC} ${CODER_GENERATOR_SRC}
-        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${MINDSPORE_CORE} ${REGISTRY_SRC})
+        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${REGISTRY_SRC})
