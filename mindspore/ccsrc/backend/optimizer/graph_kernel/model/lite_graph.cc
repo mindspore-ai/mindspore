@@ -102,12 +102,16 @@ NodePtr LiteGraph::GraphBuilder::Emit(const std::string &op, const NodePtrList &
                                       std::string node_name) {
   if (node_name.empty()) node_name = NewName();
   PrimOpPtr op_ptr = CreateOp(op, node_name);
-  op_ptr->Infer(inputs, attrs);
+  auto baseinfo = op_ptr->Infer(inputs, attrs);
+  op_ptr->SetInputs(inputs);
+  op_ptr->SetAttrs(attrs);
+  op_ptr->SetBaseInfo(baseinfo);
   return graph_->Add(op_ptr);
 }
 
 NodePtr LiteGraph::GraphBuilder::Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs,
                                     const DAttrs &attrs, std::string node_name) {
+  if (node_name.empty()) node_name = NewName();
   PrimOpPtr op_ptr = CreateOp(op, node_name);
   op_ptr->SetInputs(inputs);
   op_ptr->SetAttrs(attrs);

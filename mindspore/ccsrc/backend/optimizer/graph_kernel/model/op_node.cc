@@ -81,13 +81,14 @@ void PrimOp::CheckFormat(const NodePtrList &inputs, const DAttrs &attrs) {
     }
   }
 }
-void PrimOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
+
+NodeBase PrimOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
   Check(inputs, attrs);
-  this->shape = InferShape(inputs, attrs);
-  this->type = InferType(inputs, attrs);
-  this->format = InferFormat(inputs, attrs);
-  this->attrs_ = attrs;
-  SetInputs(inputs);
+  NodeBase nodebase;
+  nodebase.shape = InferShape(inputs, attrs);
+  nodebase.type = InferType(inputs, attrs);
+  nodebase.format = InferFormat(inputs, attrs);
+  return nodebase;
 }
 
 void PrimOp::Dump(std::ostringstream &os) const {
@@ -279,8 +280,8 @@ DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) 
   return it == inputs.end() ? kOpFormat_DEFAULT : (*it)->format;
 }
 
-void ElemwiseOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
-  PrimOp::Infer(inputs, attrs);
+NodeBase ElemwiseOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
+  auto nodebase = PrimOp::Infer(inputs, attrs);
   auto IsBroadcast = [this](const NodePtrList &inputs) -> bool {
     for (auto &ref : inputs) {
       if (ref->shape.size() != this->shape.size()) return true;
@@ -291,6 +292,7 @@ void ElemwiseOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
     return false;
   };
   compute_type_ = IsBroadcast(inputs) ? BROADCAST : ELEMWISE;
+  return nodebase;
 }
 
 TypeId CastOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {

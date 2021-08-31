@@ -63,7 +63,7 @@ def set_graph_kernel_context():
     if context.get_context("device_target") == "GPU":
         context.set_context(enable_graph_kernel=True)
         context.set_context(graph_kernel_flags="--enable_parallel_fusion "
-                                               "--disable_expand_ops=BatchNorm,BatchNormGrad "
+                                               "--enable_trans_op_optimize "
                                                "--disable_cluster_ops=ReduceMax,Reshape "
                                                "--enable_expand_ops=Conv2D")
 

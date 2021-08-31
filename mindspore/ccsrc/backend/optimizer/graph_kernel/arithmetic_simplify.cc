@@ -624,13 +624,13 @@ void ReorganizeEmptyGraph(const graphkernel::LiteGraphPtr &litegraph) {
   auto &outputs = litegraph->GetOutputs();
   for (size_t i = 0; i < outputs.size(); i++) {
     if (outputs[i]->NodeType() == graphkernel::NType::Value) {
-      graphkernel::PrimOpPtr op_ptr = std::make_shared<graphkernel::BroadcastToOp>("BroadcastTo", "");
+      graphkernel::LiteGraph::GraphBuilder gb;
       std::vector<int64_t> new_shape = {1};
-      op_ptr->Infer({outputs[i]}, {{"shape", MakeValue(new_shape)}});
+      auto op_ptr = gb.Emit("BroadcastTo", {outputs[i]}, {{"shape", MakeValue(new_shape)}});
       litegraph->output()->SetInput(i, op_ptr);
     } else if (outputs[i]->NodeType() == graphkernel::NType::Parameter) {
-      graphkernel::PrimOpPtr op_ptr = std::make_shared<graphkernel::ReshapeOp>("Reshape", "");
-      op_ptr->Infer({outputs[i]}, {{"shape", MakeValue(outputs[i]->shape)}});
+      graphkernel::LiteGraph::GraphBuilder gb;
+      auto op_ptr = gb.Emit("Reshape", {outputs[i]}, {{"shape", MakeValue(outputs[i]->shape)}});
       litegraph->output()->SetInput(i, op_ptr);
     }
   }

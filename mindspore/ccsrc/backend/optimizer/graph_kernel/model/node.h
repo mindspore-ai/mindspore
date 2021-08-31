@@ -59,7 +59,7 @@ struct NodeBase {
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 using NodePtrList = std::vector<NodePtr>;
-class Node : public NodeBase {
+class Node : public NodeBase, public std::enable_shared_from_this<Node> {
  public:
   Node(const NodeBase &baseinfo, const std::string &name) : NodeBase(baseinfo), name_(name) {}
   virtual ~Node() {
@@ -90,16 +90,13 @@ class Node : public NodeBase {
   void SetAttr(const std::string &key, const ValuePtr &value) { attrs_[key] = value; }
 
   template <typename T>
-  T *As() {
-    return static_cast<T *>(this);
-  }
-  template <typename T>
-  const T *As() const {
-    return static_cast<const T *>(this);
+  std::shared_ptr<T> As() {
+    return std::static_pointer_cast<T>(shared_from_this());
   }
 
   const std::string &name() const { return name_; }
   const DAttrs &attrs() const { return attrs_; }
+  const NodePtr &input(size_t i) const { return inputs_[i]; }
   const NodePtrList &inputs() const { return inputs_; }
   const std::unordered_map<Node *, std::set<size_t>> &users() const { return users_; }
 
@@ -145,7 +142,7 @@ class ParamNode : public Node {
 
 class OutputNode : public Node {
  public:
-  OutputNode() : Node({{1}, TypeId::kNumberTypeBegin, kOpFormat_DEFAULT}, "") {}
+  OutputNode() : Node({{1}, TypeId::kNumberTypeBegin, kOpFormat_DEFAULT}, "Output") {}
   void Dump(std::ostringstream &os) const override { ; }
   NType NodeType() override { return NType::Output; }
 };

@@ -76,9 +76,6 @@ void Node::SetInputs(const NodePtrList &inputs) {
 
 void Node::ReplaceWith(const NodePtr &other_node) {
   if (this->users_.empty()) return;
-  if (this->NodeType() != NType::Primitive) {
-    MS_LOG(EXCEPTION) << "Only Primitive node can be replaced, but the node type is " << NodeType();
-  }
   // copy the users before traversal
   auto users = this->users_;
   for (auto &user : users) {
