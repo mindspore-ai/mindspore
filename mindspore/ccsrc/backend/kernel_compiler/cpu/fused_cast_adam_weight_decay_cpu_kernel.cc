@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "backend/kernel_compiler/cpu/fused_cast_adam_weight_decay_cpu_kernel.h"
 #include <cmath>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#include "backend/kernel_compiler/cpu/fused_cast_adam_weight_decay_cpu_kernel.h"
 #include "nnacl/fp32/adam_fp32.h"
 #include "utils/ms_utils.h"
 

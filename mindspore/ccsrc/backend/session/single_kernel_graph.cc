@@ -34,7 +34,7 @@ std::shared_ptr<session::KernelGraph> SingleKernelGraph::ConstructKernelGraphBas
   inputs.push_back(std::make_shared<ValueNode>(op_prim));
   // construct real input
   if (input_dtypes.size() != input_shapes.size()) {
-    MS_LOG(EXCEPTION) << " input_dtypes size should equal to input_shapes size";
+    MS_LOG(EXCEPTION) << " input_dtypes size should equal to input_shapes size, the op name is: " << op_name;
   }
   auto input_num = input_dtypes.size();
   for (size_t i = 0; i < input_num; ++i) {
@@ -48,7 +48,7 @@ std::shared_ptr<session::KernelGraph> SingleKernelGraph::ConstructKernelGraphBas
   // get output dynamic shape info
   AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), cnode);
   if (output_dtypes.size() != output_shapes.size()) {
-    MS_LOG(EXCEPTION) << " output_dtypes size should equal to output_shapes size";
+    MS_LOG(EXCEPTION) << " output_dtypes size should equal to output_shapes size, the op name is: " << op_name;
   }
   AnfAlgo::SetOutputInferTypeAndShape(output_dtypes, output_shapes, cnode.get());
   // set execution order

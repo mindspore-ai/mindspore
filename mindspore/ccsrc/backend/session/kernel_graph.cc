@@ -861,14 +861,16 @@ bool KernelGraph::IsInRefOutputMap(const AnfWithOutIndex &pair) const { return r
 
 AnfWithOutIndex KernelGraph::GetRefCorrespondOutput(const AnfWithOutIndex &out_pair) const {
   if (!IsInRefOutputMap(out_pair)) {
-    MS_LOG(EXCEPTION) << "Out_pair is not in RefOutputMap";
+    MS_LOG(EXCEPTION) << "Out_pair is not in RefOutputMap, node is " << out_pair.first->DebugString() << ", index is "
+                      << out_pair.second;
   }
   return ref_out_in_map_.at(out_pair);
 }
 
 void KernelGraph::AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const AnfWithOutIndex &origin_pair) {
   if (IsInRefOutputMap(final_pair)) {
-    MS_LOG(EXCEPTION) << "Out_pair is already in RefOutputMap";
+    MS_LOG(EXCEPTION) << "Out_pair is already in RefOutputMap, node is " << final_pair.first->DebugString()
+                      << ", index is " << final_pair.second;
   }
   (void)ref_out_in_map_.insert(std::make_pair(final_pair, origin_pair));
 }
