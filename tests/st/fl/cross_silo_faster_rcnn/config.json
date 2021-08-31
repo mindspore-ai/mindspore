@@ -1,0 +1,7 @@
+{
+    "recovery": {
+        "storage_type": 1,
+        "storage_file_path": "recovery.json"
+    }
+}
+
