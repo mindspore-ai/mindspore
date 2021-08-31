@@ -713,8 +713,7 @@ void AscendKernelCompileManager::TbeInitialize() {
   build_manager_ = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manager_);
   nlohmann::json init_json;
-  nlohmann::json soc_info;
-  TbeUtils::GenSocInfo(&soc_info);
+  nlohmann::json soc_info = TbeUtils::GenSocInfo();
   if (!JsonAssemble(kInitialize, soc_info, &init_json)) {
     MS_LOG(EXCEPTION) << "Assemble json failed. job type: Initialize.";
   }

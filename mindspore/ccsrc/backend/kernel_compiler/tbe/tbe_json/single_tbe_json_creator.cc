@@ -37,9 +37,8 @@ bool SingleTbeJsonCreator::GenJson(const AnfNodePtr &anf_node, nlohmann::json *k
   MS_EXCEPTION_IF_NULL(kernel_json);
   auto op_name = AnfAlgo::GetCNodeName(anf_node);
   MS_LOG(DEBUG) << "Start, node [ " << op_name << " ].";
-  nlohmann::json soc_info_json;
+  nlohmann::json soc_info_json = kernel::tbe::TbeUtils::GenSocInfo();
   std::vector<nlohmann::json> op_list;
-  kernel::tbe::TbeUtils::GenSocInfo(&soc_info_json);
   if (!GenOpListJson(anf_node, &op_list)) {
     MS_LOG(ERROR) << "Anf Node [" << op_name << "] generate op_list json failed";
     return false;

@@ -500,10 +500,11 @@ def rl_tune_single_op(job: TbeJob):
     fuzz_build_info = get_fuzz_build_info(job.content)
     auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
     device_id = job.content["SocInfo"]["deviceId"]
+    options = get_options_info(job.content)
     try:
         build_single_op_from_c(op_module_name, op_func_name, op_type, "build", unknown_shape,
-                               (inputs, outputs, attrs), int64_mode, dynamic_compile_static, unknown_shape, op_pattern,
-                               auto_tiling_mode, device_id, json.dumps(fuzz_build_info))
+                               (inputs, outputs, attrs), int64_mode, dynamic_compile_static, unknown_shape, options,
+                               op_pattern, auto_tiling_mode, device_id, json.dumps(fuzz_build_info))
     # pylint: disable=broad-except
     except Exception:
         job.error(

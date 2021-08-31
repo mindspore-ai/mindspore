@@ -46,7 +46,7 @@ class TbeUtils {
 
   static void GenLicInfo(nlohmann::json *lic_info_json);
 
-  static void GenSocInfo(nlohmann::json *soc_info_json);
+  static nlohmann::json GenSocInfo();
 
   static std::string GetSocVersion();
 
