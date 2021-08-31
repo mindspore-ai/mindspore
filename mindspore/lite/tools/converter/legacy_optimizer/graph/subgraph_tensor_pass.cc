@@ -23,6 +23,7 @@
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -80,7 +81,7 @@ STATUS SubgraphTensorPass::SyncMainGraphInputAndOutput(schema::MetaGraphT *graph
 }
 
 STATUS SubgraphTensorPass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
 
   int ret = RemoveUselessTensors(graph);
   if (ret != RET_OK) {

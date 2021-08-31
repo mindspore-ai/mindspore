@@ -26,8 +26,6 @@
 
 namespace mindspore {
 namespace lite {
-enum DTypeTransNodeType { kInt8ToFP32, kFP32ToInt8, kUInt8ToInt8, kInt8ToUInt8 };
-
 class DTypeTransPass : public GraphPass {
  public:
   DTypeTransPass(TypeId model_input_data_type, TypeId model_output_data_type)

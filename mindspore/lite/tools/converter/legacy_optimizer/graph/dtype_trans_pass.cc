@@ -16,14 +16,12 @@
 
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
 #include <string>
-#include <set>
 #include <vector>
-#include <unordered_map>
 #include "tools/common/node_util.h"
 #include "tools/converter/converter_context.h"
-#include "src/common/common.h"
 #include "src/common/utils.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -31,7 +29,7 @@ namespace lite {
 #define kOutputNum 1
 
 STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
 
   auto status = DoModelInputDTypeTrans(graph);
   if (status != RET_OK) {

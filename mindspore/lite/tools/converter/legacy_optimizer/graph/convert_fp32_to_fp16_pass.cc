@@ -24,6 +24,7 @@
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 #include "base/float16.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -35,7 +36,7 @@ STATUS ConvertFP32ToFP16Pass::Run(schema::MetaGraphT *graph) {
   if (!need_convert_) {
     return RET_NO_CHANGE;
   }
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
   bool if_changed = false;
   for (auto &tensor : graph->allTensors) {
     if (tensor->dataType != kNumberTypeFloat32 || tensor->data.empty()) {
@@ -51,6 +52,8 @@ STATUS ConvertFP32ToFP16Pass::Run(schema::MetaGraphT *graph) {
     std::vector<uint8_t> new_data(origin_data.size() / kFp16ToFp32Multiply);
     auto fp32_data = reinterpret_cast<float *>(origin_data.data());
     auto fp16_data = reinterpret_cast<float16 *>(new_data.data());
+    CHECK_NULL_RETURN(fp32_data);
+    CHECK_NULL_RETURN(fp16_data);
     for (size_t i = 0; i < ele_num; i++) {
       fp16_data[i] = float16(fp32_data[i]);
     }

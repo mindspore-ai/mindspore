@@ -24,6 +24,8 @@
 #include "tools/common/graph_util.h"
 #include "tools/common/node_util.h"
 #include "src/common/quant_utils.h"
+#include "src/common/log_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 namespace {
@@ -67,6 +69,7 @@ STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor, int32_t index) 
     return RET_OK;
   }
   tensor->data.clear();
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD(wShapeSize, sizeof(int8_t), SIZE_MAX), RET_ERROR, "int mul overflow");
   tensor->data.resize(wShapeSize * sizeof(int8_t));
   if (memcpy_s(tensor->data.data(), wShapeSize * sizeof(int8_t), qDatas.data(), wShapeSize * sizeof(int8_t)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
@@ -94,8 +97,9 @@ STATUS ComputeDataToInt32(const std::unique_ptr<TensorT> &tensor) {
   }
   tensor->dataType = TypeId::kNumberTypeInt32;
   tensor->data.clear();
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD(bShapeSize, sizeof(int32_t), SIZE_MAX), RET_ERROR, "int mul overflow");
   tensor->data.resize(bShapeSize * sizeof(int32_t));
-  if (memcpy_s(tensor->data.data(), bShapeSize * sizeof(int32_t), qDatas.get(), bShapeSize * sizeof(int32_t)) != EOK) {
+  if (memcpy_s(tensor->data.data(), tensor->data.size(), qDatas.get(), bShapeSize * sizeof(int32_t)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
     return RET_ERROR;
   }
@@ -126,17 +130,20 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
   }
   int32_t dst_dtype = tensor->quantParams.front()->dstDtype == kNumberTypeInt32 ? kNumberTypeInt32 : kNumberTypeInt8;
   size_t elem_count = tensor->data.size() / sizeof(float);
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD(elem_count, sizeof(int32_t), SIZE_MAX), RET_ERROR, "int mul overflow");
   size_t data_size = dst_dtype == kNumberTypeInt32 ? elem_count * sizeof(int32_t) : elem_count * sizeof(int8_t);
   std::vector<int8_t> dst_data(data_size);
+  MS_CHECK_TRUE_MSG(channels != 0, RET_ERROR, "divide 0");
   size_t one_filter_size = elem_count / channels;
   for (int i = 0; i < channels; i++) {
+    MS_CHECK_TRUE_MSG(tensor->quantParams.at(i)->scale <= 0.0f, RET_ERROR, "divide 0");
     // do quantization
     for (uint32_t j = 0; j < one_filter_size; j++) {
       auto index = j + i * one_filter_size;
       if (!channel_at_first) {
         index = j * channels + i;
       }
-      MS_ASSERT(index < elem_count);
+      MS_CHECK_TRUE_MSG(index < elem_count, RET_ERROR, "out of range");
       float raw_data = raw_datas[index];
       if (tensor->quantParams.at(i)->dstDtype == kNumberTypeInt32) {
         auto quant_data = (int32_t)std::round(raw_datas[i] / tensor->quantParams.at(i)->scale);
@@ -160,7 +167,7 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
 }  // namespace
 
 STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
   int32_t index = 0;
   auto status = RET_OK;
   for (auto &tensor : graph->allTensors) {

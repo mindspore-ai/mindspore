@@ -15,19 +15,18 @@
  */
 
 #include <queue>
-#include <algorithm>
-#include <cassert>
 
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
 STATUS IsolatedNodeRemovePass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
   bool ifChanged = false;
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end();) {
     if ((*iter)->inputIndex.empty() && (*iter)->outputIndex.empty()) {

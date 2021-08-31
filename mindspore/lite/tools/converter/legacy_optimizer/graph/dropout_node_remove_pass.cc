@@ -20,22 +20,14 @@
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
-
+namespace {
 STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
   MS_ASSERT(graphT != nullptr);
-  if (graphT->nodes.size() <= nodeIdx) {
-    MS_LOG(ERROR) << "nodeIdx out of range: " << nodeIdx;
-    return RET_PARAM_INVALID;
-  }
-
   CNodeT *node = graphT->nodes.at(nodeIdx).get();
-  if (node == nullptr) {
-    MS_LOG(ERROR) << "node is nullptr";
-    return RET_ERROR;
-  }
   auto inputTensorIdxes = node->inputIndex;
   auto outputTensorIdxes = node->outputIndex;
   auto preNodeIdxes = GetInputNodeIdx(*graphT, nodeIdx);
@@ -50,14 +42,13 @@ STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
   if (outputTensorIdxes.size() == 2) {
     auto outDataTensorIdx = outputTensorIdxes.at(1);
     auto &gOutTensorIdx = graphT->outputIndex;
-    for (auto iter = gOutTensorIdx.begin(); iter != gOutTensorIdx.end(); iter++) {
-      if (*iter == outDataTensorIdx) {
-        MS_LOG(ERROR) << "Unsupported Dropout: " << node->name.c_str() << " with mask output.";
-        return RET_ERROR;
-      }
+    if (std::any_of(gOutTensorIdx.begin(), gOutTensorIdx.end(),
+                    [&outDataTensorIdx](const unsigned int &idx) { return (idx == outDataTensorIdx); })) {
+      MS_LOG(ERROR) << "Unsupported Dropout: " << node->name.c_str() << " with mask output.";
+      return RET_ERROR;
     }
     auto postNodeIdxes = GetOutputNodeIdx(*graphT, nodeIdx, 1);
-    if (postNodeIdxes.size() != 0) {
+    if (!postNodeIdxes.empty()) {
       MS_LOG(WARNING) << "Unsupported Dropout: " << node->name.c_str() << " with mask output.";
       return RET_OK;
     }
@@ -68,24 +59,19 @@ STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
     MS_ASSERT(graphT->allTensors.size() > inDataTensorIdx);
     MS_ASSERT(graphT->allTensors.at(inDataTensorIdx) != nullptr);
     auto &gOutTensorIdx = graphT->outputIndex;
-    for (auto iter = gOutTensorIdx.begin(); iter != gOutTensorIdx.end(); iter++) {
-      if (*iter == outDataTensorIdx) {
-        *iter = inDataTensorIdx;
-        break;
-      }
-    }
+    auto matchedTensor =
+      std::find_if(gOutTensorIdx.begin(), gOutTensorIdx.end(),
+                   [&outDataTensorIdx](const unsigned int &idx) { return (idx == outDataTensorIdx); });
+    *matchedTensor = inDataTensorIdx;
     // find poseNode
     auto postNodeIdxes = GetOutputNodeIdx(*graphT, nodeIdx, 0);
     for (auto postNodeIdx : postNodeIdxes) {
       MS_ASSERT(graphT->nodes.size() > postNodeIdx);
       auto &postNode = graphT->nodes.at(postNodeIdx);
       MS_ASSERT(postNode != nullptr);
-      for (auto iter = postNode->inputIndex.begin(); iter != postNode->inputIndex.end(); iter++) {
-        if (*iter == outDataTensorIdx) {
-          *iter = inDataTensorIdx;
-          break;
-        }
-      }
+      auto iter = std::find_if(postNode->inputIndex.begin(), postNode->inputIndex.end(),
+                               [&outDataTensorIdx](const unsigned int &idx) { return (idx == outDataTensorIdx); });
+      *iter = inDataTensorIdx;
     }
   }
 
@@ -101,24 +87,15 @@ STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
   node->outputIndex.clear();
   return RET_OK;
 }
+}  // namespace
 
 STATUS DropoutNodeRemovePass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
   bool ifChanged = false;
   for (size_t i = 0; i < graph->nodes.size(); i++) {
     auto &node = graph->nodes.at(i);
-    if (node->primitive == nullptr) {
+    if (node->primitive == nullptr || node->primitive->value.type == schema::PrimitiveType_Dropout) {
       MS_LOG(INFO) << "node->primitive is nullptr, node name: " << node->name;
-      ifChanged = true;
-      auto status = IsolateDropoutNode(graph, i);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "IsolateDropoutNode failed, subGraph: " << graph->name << ", node: " << node->name
-                      << ", error: " << status;
-        return status;
-      }
-      continue;
-    }
-    if (node->primitive->value.type == schema::PrimitiveType_Dropout) {
       ifChanged = true;
       auto status = IsolateDropoutNode(graph, i);
       if (status != RET_OK) {

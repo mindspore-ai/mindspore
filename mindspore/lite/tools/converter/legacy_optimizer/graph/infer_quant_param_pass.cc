@@ -20,6 +20,7 @@
 #include "src/common/utils.h"
 #include "tools/converter/quantizer/quant_helper/quant_node_helper.h"
 #include "tools/common/node_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
@@ -37,7 +38,7 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
     }
 
     auto quant_helper = QuantHelperRegister::GetInstance()->GetQuantHelper(node->primitive->value.type);
-
+    MS_CHECK_TRUE_MSG(quant_helper != nullptr, RET_ERROR, "Find QuantHelper return nullptr");
     quant_helper->NodeQuantPreprocess(graph, node.get());
   }
 
@@ -54,7 +55,7 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
     }
 
     auto quant_helper = QuantHelperRegister::GetInstance()->GetQuantHelper(node->primitive->value.type);
-
+    MS_CHECK_TRUE_MSG(quant_helper != nullptr, RET_ERROR, "Find QuantHelper return nullptr");
     quant_helper->NodeQuantPreprocess(graph, node.get());
   }
   return RET_OK;

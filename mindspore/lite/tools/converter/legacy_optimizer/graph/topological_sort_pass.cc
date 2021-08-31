@@ -22,6 +22,7 @@
 #include "tools/common/node_util.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {

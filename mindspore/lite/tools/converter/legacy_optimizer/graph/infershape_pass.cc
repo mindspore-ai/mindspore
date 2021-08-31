@@ -29,6 +29,8 @@
 #include "tools/common/node_util.h"
 #include "tools/converter/converter_flags.h"
 #include "src/common/string_util.h"
+#include "src/common/log_util.h"
+#include "nnacl/op_base.h"
 
 using mindspore::converter::kFmkTypeTf;
 namespace mindspore {
@@ -49,6 +51,9 @@ void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *ou
     return;
   }
   for (auto &tensor : *input_tensors) {
+    if (tensor == nullptr) {
+      continue;
+    }
     if (tensor->data_type() != kObjectTypeString && tensor->data_type() != kObjectTypeTensorType) {
       tensor->set_data(nullptr);
     }
@@ -59,6 +64,9 @@ void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *ou
     return;
   }
   for (auto &tensor : *output_tensors) {
+    if (tensor == nullptr) {
+      continue;
+    }
     if (tensor->data_type() != kObjectTypeString && tensor->data_type() != kObjectTypeTensorType) {
       tensor->set_data(nullptr);
     }
@@ -76,9 +84,10 @@ void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, st
   TypeId type = kTypeUnknown;
   std::vector<int> element_shape;
   if (!tensorT->data.empty()) {
+    auto data_len = tensorT->data.size();
     int *data = reinterpret_cast<int *>(tensorT->data.data());
     type = TypeId(data[kTypeIndex]);
-    if (tensorT->data.size() < kTensorDataSize ||
+    if (data_len < kTensorDataSize ||
         (data[kElementShapeIndex] != 0 && static_cast<int>((data[kElementShapeIndex] + kTensorListDatasize) *
                                                            sizeof(int)) != static_cast<int>(tensorT->data.size()))) {
       MS_LOG(ERROR) << "tensorlist data length illegal, tensorT name: " << tensorT->name;
@@ -90,6 +99,11 @@ void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, st
     }
     for (int j = 0; j < data[kElementShapeIndex]; ++j) {
       element_shape.push_back(data[j + kFirstElementShapeIndex]);
+    }
+    if (INT_ADD_OVERFLOW(data[kElementShapeIndex], kFirstElementShapeIndex)) {
+      MS_LOG(ERROR) << "int add overflow";
+      *convert_succ = false;
+      return;
     }
     tensor_shape = {data[data[kElementShapeIndex] + kFirstElementShapeIndex]};
   }
@@ -247,8 +261,8 @@ void PrintTensorShape(const std::vector<Tensor *> &input_tensors, const std::vec
 }
 #endif
 
-void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors, std::vector<InferTensor> *tensors,
-                 uint32_t i, uint32_t infer_node_index) {
+int SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors, std::vector<InferTensor> *tensors,
+                uint32_t i, uint32_t infer_node_index) {
   auto &node = graph->nodes.at(infer_node_index);
   auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
   output_tensor->format = static_cast<schema::Format>(output_tensors[i]->format());
@@ -259,6 +273,8 @@ void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
     if (!tensor_list->tensors().empty()) {
       tensor_shape_dims = static_cast<int>(tensor_list->tensors().front()->shape().size());
     }
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW((tensor_shape_dims + kTensorListDatasize), static_cast<int>(sizeof(int))),
+                       RET_ERROR, "int mul overflow");
     auto total_size = (tensor_shape_dims + kTensorListDatasize) * sizeof(int);
     output_tensor->data.resize(total_size, 0);
     auto output_tensor_data = reinterpret_cast<int *>(output_tensor->data.data());
@@ -279,9 +295,10 @@ void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
       static_cast<int>(tensor_list->tensors().size());
   } else if (output_tensors[i]->data_type() == kTypeUnknown) {
     tensors->at(node->outputIndex[i]).is_inferred_ = false;
-    return;
+    return RET_OK;
   }
   tensors->at(node->outputIndex[i]).is_inferred_ = true;
+  return RET_OK;
 }
 
 int PartialGraphIndex(const CNodeT *partial_node) {
@@ -351,12 +368,12 @@ void InferShapePass::InitInferTensor(MetaGraphT *graph) {
     auto &node = graph->nodes.at(i);
     auto node_input_indexes = node->inputIndex;
     //  init in_nodes index
-    for (size_t j = 0; j < node_input_indexes.size(); j++) {
-      tensors_[node_input_indexes[j]].next_nodes_.push_back(i);
+    for (unsigned int node_input_indexe : node_input_indexes) {
+      tensors_[node_input_indexe].next_nodes_.push_back(i);
     }
     auto node_output_indexes = node->outputIndex;
-    for (size_t j = 0; j < node_output_indexes.size(); j++) {
-      tensors_[node_output_indexes[j]].prev_nodes_.push_back(i);
+    for (unsigned int node_output_indexe : node_output_indexes) {
+      tensors_[node_output_indexe].prev_nodes_.push_back(i);
     }
   }
 
@@ -507,7 +524,7 @@ int InferShapePass::InferSubgraph(const int &subgraph_index, MetaGraphT *graph) 
 }
 
 STATUS InferShapePass::Run(MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
   InitInferTensor(graph);
 
   int ret = InferSubgraph(kMainGraphIndex, graph);

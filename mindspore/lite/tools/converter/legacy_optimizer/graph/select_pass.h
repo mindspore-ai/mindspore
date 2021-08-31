@@ -50,7 +50,6 @@ class SingleSelectPass {
   STATUS Init();
   size_t InitThisGraphIndex();
   STATUS ConvertSelectToSwitch();
-  std::unique_ptr<schema::TensorT> NewTensor(const std::unique_ptr<schema::TensorT> &in_tensor);
   void RemoveUselessNode(schema::CNodeT *partial_node);
 
   schema::MetaGraphT *graph_ = nullptr;
