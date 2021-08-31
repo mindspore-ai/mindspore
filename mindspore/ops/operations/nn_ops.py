@@ -1667,7 +1667,7 @@ class _Pool(PrimitiveWithInfer):
         for shape_value in out_shape:
             if shape_value <= 0:
                 raise ValueError(f"For '{self.name}' The kernel size is not valid, "
-                                 f"please check it if is larger than data's shape size.")
+                                 f"please check if it is larger than data's shape size.")
         return out_shape
 
     def infer_dtype(self, x_dtype):
