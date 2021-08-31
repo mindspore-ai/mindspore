@@ -282,6 +282,20 @@ int TensorRTSubGraph::Prepare() {
     int index = this->engine_->getBindingIndex(tensor.Name().c_str());
     tensor_bindings_[index] = device_ptr;
     trt_in_tensor_name_.push_back(tensor.Name());
+    nvinfer1::Dims input_dims = ConvertCudaDims(tensor.Shape());
+    for (int od = 0; od < input_dims.nbDims; od++) {
+      MS_LOG(INFO) << "in tensor " << tensor.Name() << " dims at " << od << " is " << input_dims.d[od];
+    }
+
+    if (!this->trt_context_->setBindingDimensions(index, input_dims)) {
+      MS_LOG(ERROR) << "invalid input dims of " << tensor.Name();
+      return RET_ERROR;
+    }
+  }
+
+  if (!this->trt_context_->allInputDimensionsSpecified()) {
+    MS_LOG(ERROR) << "input dims need to be specified.";
+    return RET_ERROR;
   }
 
   for (auto tensor : outputs_) {
@@ -338,6 +352,31 @@ int TensorRTSubGraph::ReSize() {
     }
     int index = this->engine_->getBindingIndex(trt_in_tensor_name_[i].c_str());
     tensor_bindings_[index] = device_ptr;
+    // Set actual input size
+    nvinfer1::Dims input_dims = ConvertCudaDims(inputs_[i].Shape());
+    for (int od = 0; od < input_dims.nbDims; od++) {
+      MS_LOG(INFO) << "in tensor " << trt_in_tensor_name_[i] << " dims at " << od << " is " << input_dims.d[od];
+    }
+
+    if (!this->trt_context_->setBindingDimensions(index, input_dims)) {
+      MS_LOG(ERROR) << "invalid input dims of " << inputs_[i].Name();
+      return RET_ERROR;
+    }
+  }
+  if (!this->trt_context_->allInputDimensionsSpecified()) {
+    MS_LOG(ERROR) << "input dims need to be specified.";
+    return RET_ERROR;
+  }
+
+  for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
+    int index = this->engine_->getBindingIndex(trt_out_tensor_name_[i].c_str());
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(trt_out_tensor_name_[i], outputs_[i].DataSize(),
+                                                                outputs_[i].DataType());
+    if (device_ptr == nullptr) {
+      MS_LOG(ERROR) << "realloc for outputs tensor device memory failed.";
+      return RET_ERROR;
+    }
+    tensor_bindings_[index] = device_ptr;
   }
   return RET_OK;
 }
@@ -349,17 +388,6 @@ int TensorRTSubGraph::Execute() {
     return RET_ERROR;
   }
   for (size_t i = 0; i < inputs_.size(); i++) {
-    int binding_index = this->engine_->getBindingIndex(trt_in_tensor_name_[i].c_str());
-    // Set actual input size
-    nvinfer1::Dims input_dims = ConvertCudaDims(inputs_[i].Shape());
-    for (int od = 0; od < input_dims.nbDims; od++) {
-      MS_LOG(INFO) << "in tensor " << trt_in_tensor_name_[i] << " dims at " << od << " is " << input_dims.d[od];
-    }
-
-    if (!this->trt_context_->setBindingDimensions(binding_index, input_dims)) {
-      MS_LOG(ERROR) << "invalid input dims of " << inputs_[i].Name();
-      return RET_ERROR;
-    }
     runtime_->GetAllocator()->MarkMemValid(trt_in_tensor_name_[i], false);
     int ret = runtime_->GetAllocator()->SyncMemInHostAndDevice(inputs_[i], trt_in_tensor_name_[i], true);
     if (ret != RET_OK) {
@@ -368,10 +396,6 @@ int TensorRTSubGraph::Execute() {
     }
   }
 
-  if (!this->trt_context_->allInputDimensionsSpecified()) {
-    MS_LOG(ERROR) << "input dims need to be specified.";
-    return RET_ERROR;
-  }
   auto ret = this->trt_context_->executeV2(tensor_bindings_);
   if (!ret) {
     MS_LOG(ERROR) << "TensorRT execute failed.";
@@ -396,14 +420,7 @@ int TensorRTSubGraph::Execute() {
       MS_LOG(ERROR) << "realloc for outputs tensor failed.";
       return RET_ERROR;
     }
-    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(trt_out_tensor_name_[i], outputs_[i].DataSize(),
-                                                                outputs_[i].DataType());
-    if (device_ptr == nullptr) {
-      MS_LOG(ERROR) << "realloc for outputs tensor device memory failed.";
-      return RET_ERROR;
-    }
     runtime_->GetAllocator()->MarkMemValid(trt_out_tensor_name_[i], true);
-    tensor_bindings_[index] = device_ptr;
     int sync_ret = runtime_->GetAllocator()->SyncMemInHostAndDevice(outputs_[i], trt_out_tensor_name_[i], false);
     if (sync_ret != RET_OK) {
       MS_LOG(ERROR) << "sync mem from device to host failed for " << trt_out_tensor_name_[i];
