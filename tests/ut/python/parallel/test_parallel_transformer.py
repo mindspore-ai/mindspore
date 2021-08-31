@@ -29,6 +29,7 @@ from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell, TrainOneStepCell
 from mindspore.nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
 from mindspore.train import Model
+from mindspore.parallel import set_algo_parameters
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
@@ -355,9 +356,11 @@ def test_vocabembedding_dp_false():
     model.train(1, dataset, dataset_sink_mode=False)
 
 
-def _test_sparse_attention_parallel():
+def test_sparse_attention_parallel_mp():
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(model_parallel=8)
-    net = FixedSparseAttention(batch_size=2,
+    net = FixedSparseAttention(batch_size=16,
                                seq_length=1024,
                                size_per_head=64,
                                num_heads=8,
@@ -366,14 +369,67 @@ def _test_sparse_attention_parallel():
     q = Tensor(np.ones((2, 1024, 512)), mstype.float16)
     k = Tensor(np.ones((2, 1024, 512)), mstype.float16)
     v = Tensor(np.ones((2, 1024, 512)), mstype.float16)
-    mask = Tensor(np.ones((2, 1024)), mstype.float32)
+    mask = Tensor(np.ones((2, 1024, 1024)), mstype.float32)
     dataset = Dataset(q, k, v, mask)
     model = Model(net)
     model.train(1, dataset, dataset_sink_mode=False)
 
+def test_sparse_attention_parallel_mix():
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(fully_use_devices=False)
+    sparse_attention_config = OpParallelConfig(data_parallel=2, model_parallel=4)
+    net = FixedSparseAttention(batch_size=16,
+                               seq_length=1024,
+                               size_per_head=64,
+                               num_heads=8,
+                               block_size=64,
+                               parallel_config=sparse_attention_config)
+    q = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    k = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    v = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    mask = Tensor(np.ones((2, 1024, 1024)), mstype.float32)
+    dataset = Dataset(q, k, v, mask)
+    model = Model(net)
+    model.train(1, dataset, dataset_sink_mode=False)
+
+def test_sparse_attention_parallel_mix1():
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(fully_use_devices=False)
+    sparse_attention_config = OpParallelConfig(data_parallel=4, model_parallel=2)
+    net = FixedSparseAttention(batch_size=16,
+                               seq_length=1024,
+                               size_per_head=64,
+                               num_heads=8,
+                               block_size=64,
+                               parallel_config=sparse_attention_config)
+    q = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    k = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    v = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    mask = Tensor(np.ones((2, 1024, 1024)), mstype.float32)
+    dataset = Dataset(q, k, v, mask)
+    model = Model(net)
+    model.train(1, dataset, dataset_sink_mode=False)
+
+def test_sparse_attention_parallel_dp():
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(fully_use_devices=False)
+    sparse_attention_config = OpParallelConfig(data_parallel=8, model_parallel=1)
+    net = FixedSparseAttention(batch_size=16,
+                               seq_length=1024,
+                               size_per_head=64,
+                               num_heads=8,
+                               block_size=64,
+                               parallel_config=sparse_attention_config)
+    q = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    k = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    v = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    mask = Tensor(np.ones((2, 1024, 1024)), mstype.float32)
+    dataset = Dataset(q, k, v, mask)
+    model = Model(net)
+    model.train(1, dataset, dataset_sink_mode=False)
 
 def test_parallel_cross_entroy_loss_semi_auto_parallel():
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
 
     class NetWithLoss(nn.Cell):
         def __init__(self, network, config_setting):
