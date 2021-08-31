@@ -953,7 +953,9 @@ void PipelineTransformer::ElimParameter() {
   auto parameters = root_->parameters();
   std::vector<AnfNodePtr> parameter_list;
   for (auto &parameter : parameters) {
-    if (!manager_->node_users()[parameter].empty()) {
+    auto param = parameter->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
+    if (!manager_->node_users()[parameter].empty() || !param->has_default()) {
       parameter_list.push_back(parameter);
     }
   }
