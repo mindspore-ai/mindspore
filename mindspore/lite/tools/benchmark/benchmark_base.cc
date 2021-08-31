@@ -132,13 +132,54 @@ int BenchmarkBase::LoadInput() {
 
 // calibData is FP32
 int BenchmarkBase::ReadCalibData() {
-  const char *calib_data_path = flags_->benchmark_data_file_.c_str();
+  auto new_file = flags_->benchmark_data_file_ + ".new";
+  const char *calib_data_path = new_file.c_str();
   // read calib data
   std::ifstream in_file(calib_data_path);
   if (!in_file.good()) {
     std::cerr << "file: " << calib_data_path << " is not exist" << std::endl;
     MS_LOG(ERROR) << "file: " << calib_data_path << " is not exist";
-    return RET_ERROR;
+
+    auto old_file = flags_->benchmark_data_file_;
+    const char *old_calib_data_path = old_file.c_str();
+    std::ifstream old_in_file(old_calib_data_path);
+
+    if (!old_in_file.good()) {
+      std::cerr << "file: " << old_calib_data_path << " is not exist" << std::endl;
+      MS_LOG(ERROR) << "file: " << old_calib_data_path << " is not exist";
+      return RET_ERROR;
+    }
+
+    if (!old_in_file.is_open()) {
+      std::cerr << "file: " << old_calib_data_path << " open failed" << std::endl;
+      MS_LOG(ERROR) << "file: " << old_calib_data_path << " open failed";
+      old_in_file.close();
+      return RET_ERROR;
+    }
+    MS_LOG(INFO) << "Start reading calibData file";
+    std::string line;
+    std::string tensor_name;
+
+    while (!old_in_file.eof()) {
+      getline(old_in_file, line);
+      std::stringstream string_line1(line);
+      size_t dim = 0;
+      string_line1 >> tensor_name >> dim;
+      std::vector<size_t> dims;
+      for (size_t i = 0; i < dim; i++) {
+        size_t tmp_dim;
+        string_line1 >> tmp_dim;
+        dims.push_back(tmp_dim);
+      }
+      auto ret = ReadTensorData(old_in_file, tensor_name, dims);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Read tensor data failed, tensor name: " << tensor_name;
+        return RET_ERROR;
+      }
+    }
+    old_in_file.close();
+    MS_LOG(INFO) << "Finish reading calibData file";
+    return RET_OK;
   }
 
   if (!in_file.is_open()) {

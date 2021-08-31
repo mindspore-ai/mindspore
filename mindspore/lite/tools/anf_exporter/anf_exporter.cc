@@ -550,7 +550,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
                                         bool train_flag) {
   this->train_flag_ = train_flag;
   // hardcode for nnie and train
-  this->reorder_input_ = !(train_flag) && !(ConverterContext::GetInstance()->GetGraphInputTensorNames().empty());
+  this->reorder_input_ = !(ConverterContext::GetInstance()->GetGraphInputTensorNames().empty());
   this->graph_inputs_map_.clear();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
   auto fmk = func_graph->get_attr("fmk");
