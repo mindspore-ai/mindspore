@@ -126,54 +126,83 @@ Pascal VOC数据集和语义边界数据集（Semantic Boundaries Dataset，SBD�
 运行以下训练脚本配置单卡训练参数：
 
 ```bash
-run_standalone_train.sh
+进入shell脚本修改 data_file和ckpt_pre_trained参数
+# example:
+data_file=/home/DataSet/VOC2012/vocaug_mindrecords/vocaug.mindrecord0
+ckpt_pre_trained=/home/model/deeplabv3/predtrained/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt
+
+bash run_standalone_train.sh
 ```
 
 - 按照以下训练步骤进行8卡训练：
 
 1. 使用VOCaug数据集训练s16，微调ResNet-101预训练模型。脚本如下：
 
-    ```bash
-    run_distribute_train_s16_r1.sh
-    ```
+```bash
+进入shell脚本修改 data_file和ckpt_pre_trained参数
+# example:
+data_file=/home/DataSet/VOC2012/vocaug_mindrecords/vocaug.mindrecord0
+ckpt_pre_trained=/home/model/deeplabv3/predtrained/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt
+
+bash run_distribute_train_s16_r1.sh
+```
 
 2. 使用VOCaug数据集训练s8，微调上一步的模型。脚本如下：
 
-    ```bash
-    run_distribute_train_s8_r1.sh
-    ```
+```bash
+进入shell脚本修改 data_file和ckpt_pre_trained参数
+# example:
+data_file=/home/DataSet/VOC2012/vocaug_mindrecords/vocaug.mindrecord0
+ckpt_pre_trained=/home/model/deeplabv3/predtrained/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt
+
+bash run_distribute_train_s8_r1.sh
+```
 
 3. 使用VOCtrain数据集训练s8，微调上一步的模型。脚本如下：
 
-    ```bash
-    run_distribute_train_s8_r2.sh
-    ```
+```bash
+进入shell脚本修改 data_file和ckpt_pre_trained参数
+注意：本次训练预训练权重采用上一步训练的权重文件，数据集也有所变化
+# example:
+data_file=/home/DataSet/VOC2012/voctrain_mindrecords/votrain.mindrecord0
+ckpt_pre_trained=/home/model/deeplabv3/ckpt/deeplabv3-800_330.ckpt
+
+bash run_distribute_train_s8_r2.sh
+```
 
 - 评估步骤如下：
 
-1. 使用voc val数据集评估s16。评估脚本如下：
+1. 进入对应的shell脚本修改参数
 
-    ```bash
-    run_eval_s16.sh
-    ```
+```default_config.yaml
+# example:
+data_root=/home/DataSet/VOC2012
+data_lst=/home/DataSet/VOC2012/voc_val_lst.txt
+```
 
-2. 使用voc val数据集评估s8。评估脚本如下：
+2. 使用voc val数据集评估s16。评估脚本如下：
 
-    ```bash
-    run_eval_s8.sh
-    ```
+```bash
+bash run_eval_s16.sh
+```
 
-3. 使用voc val数据集评估多尺度s8。评估脚本如下：
+3. 使用voc val数据集评估s8。评估脚本如下：
 
-    ```bash
-    run_eval_s8_multiscale.sh
-    ```
+```bash
+bash run_eval_s8.sh
+```
 
-4. 使用voc val数据集评估多尺度和翻转s8。评估脚本如下：
+4. 使用voc val数据集评估多尺度s8。评估脚本如下：
 
-    ```bash
-    run_eval_s8_multiscale_flip.sh
-    ```
+```bash
+bash run_eval_s8_multiscale.sh
+```
+
+5. 使用voc val数据集评估多尺度和翻转s8。评估脚本如下：
+
+```bash
+bash run_eval_s8_multiscale_flip.sh
+```
 
 - 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
 

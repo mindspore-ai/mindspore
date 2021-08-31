@@ -122,6 +122,11 @@ Based on original DeepLabV3 paper, we reproduce two training experiments on voca
 For single device training, please config parameters, training script is:
 
 ```shell
+Enter the shell script to modify the data_file and ckpt_pre_trained parameters
+# example:
+data_file=/home/DataSet/VOC2012/vocaug_mindrecords/vocaug.mindrecord0
+ckpt_pre_trained=/home/model/deeplabv3/predtrained/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt
+
 bash run_standalone_train.sh
 ```
 
@@ -129,47 +134,72 @@ bash run_standalone_train.sh
 
 1. Train s16 with vocaug dataset, finetuning from resnet101 pretrained model, script is:
 
-    ```shell
-    bash run_distribute_train_s16_r1.sh
-    ```
+```shell
+Enter the shell script to modify the data_file and ckpt_pre_trained parameters
+# example:
+data_file=/home/DataSet/VOC2012/vocaug_mindrecords/vocaug.mindrecord0
+ckpt_pre_trained=/home/model/deeplabv3/predtrained/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt
+
+bash run_distribute_train_s16_r1.sh
+```
 
 2. Train s8 with vocaug dataset, finetuning from model in previous step, training script is:
 
-    ```shell
-    bash run_distribute_train_s8_r1.sh
-    ```
+```shell
+Enter the shell script to modify the data_file and ckpt_pre_trained parameters
+# example:
+data_file=/home/DataSet/VOC2012/vocaug_mindrecords/vocaug.mindrecord0
+ckpt_pre_trained=/home/model/deeplabv3/predtrained/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt
+
+bash run_distribute_train_s8_r1.sh
+```
 
 3. Train s8 with voctrain dataset, finetuning from model in previous step, training script is:
 
-    ```shell
-    bash run_distribute_train_s8_r2.sh
-    ```
+```shell
+Enter the shell script to modify the data_file and ckpt_pre_trained parameters
+Note: This training pre-training weight uses the weight file of the previous training, and the data set has also changed
+# example:
+data_file=/home/DataSet/VOC2012/voctrain_mindrecords/votrain.mindrecord0
+ckpt_pre_trained=/home/model/deeplabv3/ckpt/deeplabv3-800_330.ckpt
+
+
+bash run_distribute_train_s8_r2.sh
+```
 
 - For evaluation, evaluating steps are as follows:
 
-1. Eval s16 with voc val dataset, eval script is:
+1. Enter the shell script to modify the data_file and ckpt_pre_trained parameters
 
-    ```shell
-    bash run_eval_s16.sh
-    ```
+```default_config.yaml
+# example:
+data_root=/home/DataSet/VOC2012
+data_lst=/home/DataSet/VOC2012/voc_val_lst.txt
+```
 
-2. Eval s8 with voc val dataset, eval script is:
+2. Eval s16 with voc val dataset, eval script is:
 
-    ```shell
-    bash run_eval_s8.sh
-    ```
+```shell
+bash run_eval_s16.sh
+```
 
-3. Eval s8 multiscale with voc val dataset, eval script is:
+3. Eval s8 with voc val dataset, eval script is:
 
-    ```shell
-    bash run_eval_s8_multiscale.sh
-    ```
+```shell
+bash run_eval_s8.sh
+```
 
-4. Eval s8 multiscale and flip with voc val dataset, eval script is:
+4. Eval s8 multiscale with voc val dataset, eval script is:
 
-    ```shell
-    bash run_eval_s8_multiscale_flip.sh
-    ```
+```shell
+bash run_eval_s8_multiscale.sh
+```
+
+5. Eval s8 multiscale and flip with voc val dataset, eval script is:
+
+```shell
+bash run_eval_s8_multiscale_flip.sh
+```
 
 - Train on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
 

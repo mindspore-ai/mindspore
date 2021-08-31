@@ -68,6 +68,21 @@ Dataset used:
 
 在通过官方网站安装MindSpore之后，你可以通过如下步骤开始训练以及评估：
 
+```backbone
+vgg16训练ImageNet数据集的ckpt文件做为FCN8s的backbone
+vgg16网络路径: model_zoo/official/cv/vgg16
+```
+
+```default_config.yaml
+data_file: /home/DataSet/voc2012/vocaug_mindrecords/vocaug.mindrecord0
+ckpt_vgg16: /home/DataSet/predtrained/vgg16_predtrained.ckpt
+data_root: /home/DataSet/voc2012/VOCdevkit/VOC2012
+data_lst: /home/DataSet/voc2012/VOCdevkit/VOC2012/ImageSets/Segmentation/val.txt
+ckpt_file: /home/FCN8s/ckpt/FCN8s_1-133_300.ckpt
+
+根据本地数据存放路径修改参数
+```
+
 - running on Ascend with default parameters
 
   ```python
@@ -206,10 +221,14 @@ Dataset used:
   python train.py --device_id device_id
   or
   bash scripts/run_standalone_train.sh [DEVICE_ID]
+  # example: bash scripts/run_standalone_train.sh 0
 
   #Ascend八卡并行训练
   bash scripts/run_train.sh [DEVICE_NUM] rank_table.json
+  # example: bash scripts/run_train.sh 8 /home/hccl_8p_01234567_10.155.170.71.json
   ```
+
+  分布式训练需要提前创建JSON格式的HCCL配置文件,请遵循[链接说明](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)
 
 - running on GPU with gpu default parameters
 
@@ -334,6 +353,8 @@ Dataset used:
 
   ```shell 评估
   bash scripts/run_eval.sh DATA_ROOT DATA_LST CKPT_PATH
+  # example: bash scripts/run_eval.sh /home/DataSet/voc2012/VOCdevkit/VOC2012 \
+  # /home/DataSet/voc2012/VOCdevkit/VOC2012/ImageSets/Segmentation/val.txt /home/FCN8s/ckpt/FCN8s_1-133_300.ckpt
   ```
 
   以上的python命令会在终端上运行，你可以在终端上查看此次评估的结果。测试集的精确度会以类似如下方式呈现：
