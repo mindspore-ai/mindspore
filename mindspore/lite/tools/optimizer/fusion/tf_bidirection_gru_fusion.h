@@ -32,7 +32,7 @@ constexpr size_t kWhileUniqInputsLength = 6;
 class TfBidirectionGruFusion : public PatternProcessPass {
  public:
   explicit TfBidirectionGruFusion(int num_fw_vars = kWhileUniqInputsLength, int num_bw_vars = kWhileUniqInputsLength,
-                                  const std::string &name = "tf_bidirection_gru_fusion", bool multi_graph = true);
+                                  const std::string &name = "TfBidirectionGruFusion", bool multi_graph = true);
   ~TfBidirectionGruFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
@@ -45,6 +45,8 @@ class TfBidirectionGruFusion : public PatternProcessPass {
                                      const std::string &base_name);
 
  private:
+  const VectorRef DefineFowardPattern() const;
+  const VectorRef DefinebackwardPattern() const;
   AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
 
   static tensor::TensorPtr GetDefaultTensorInfo(const AnfNodePtr &parameter_anf);

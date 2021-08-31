@@ -21,6 +21,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "mindspore/core/ops/transpose.h"
 #include "tools/optimizer/common/format_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 bool IsBNCNode(const BaseRef &n) {
@@ -33,56 +34,81 @@ bool IsBNCNode(const BaseRef &n) {
 }
 
 VectorRef TransposeFusion::DefineBNPattern() const {
-  auto transpose_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
   auto transpose_param = std::make_shared<CondVar>(IsParamNode);
-  VectorRef transpose_conv_ref = VectorRef({transpose_var, conv_var, transpose_param});
-  auto bn_var = std::make_shared<CondVar>(IsBNCNode);
+  MS_CHECK_TRUE_RET(transpose_param != nullptr, {});
+  VectorRef transpose_conv_ref = VectorRef({is_transpose, is_conv, transpose_param});
+  auto is_bn = std::make_shared<CondVar>(IsBNCNode);
+  MS_CHECK_TRUE_RET(is_bn != nullptr, {});
   auto bn_mean_var = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(bn_mean_var != nullptr, {});
   auto bn_variable_var = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(bn_variable_var != nullptr, {});
   auto bn_other_var = std::make_shared<SeqVar>();
-  VectorRef bn_ref = VectorRef({bn_var, transpose_conv_ref, bn_mean_var, bn_variable_var, bn_other_var});
+  MS_CHECK_TRUE_RET(bn_other_var != nullptr, {});
+  VectorRef bn_ref = VectorRef({is_bn, transpose_conv_ref, bn_mean_var, bn_variable_var, bn_other_var});
   return bn_ref;
 }
 
 VectorRef TransposeFusion::DefineActivationscalePattern() const {
-  auto transpose_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
   auto transpose_param = std::make_shared<CondVar>(IsParamNode);
-  VectorRef transpose_conv_ref = VectorRef({transpose_var, conv_var, transpose_param});
-  auto scale_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimScaleFusion>);
+  MS_CHECK_TRUE_RET(transpose_param != nullptr, {});
+  VectorRef transpose_conv_ref = VectorRef({is_transpose, is_conv, transpose_param});
+  auto is_scale = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimScaleFusion>);
+  MS_CHECK_TRUE_RET(is_scale != nullptr, {});
   auto scale_var_1 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(scale_var_1 != nullptr, {});
   auto scale_var_2 = std::make_shared<SeqVar>();
-  VectorRef sclae_ref = VectorRef({scale_var, transpose_conv_ref, scale_var_1, scale_var_2});
+  MS_CHECK_TRUE_RET(scale_var_2 != nullptr, {});
+  VectorRef sclae_ref = VectorRef({is_scale, transpose_conv_ref, scale_var_1, scale_var_2});
   return sclae_ref;
 }
 
 VectorRef TransposeFusion::DefineActivationPattern() const {
-  auto transpose_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
   auto transpose_param = std::make_shared<CondVar>(IsParamNode);
-  VectorRef transpose_conv_ref = VectorRef({transpose_var, conv_var, transpose_param});
-  auto act_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
-  VectorRef act_ref = VectorRef({act_var, transpose_conv_ref});
+  MS_CHECK_TRUE_RET(transpose_param != nullptr, {});
+  VectorRef transpose_conv_ref = VectorRef({is_transpose, is_conv, transpose_param});
+  auto is_activation = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
+  MS_CHECK_TRUE_RET(is_activation != nullptr, {});
+  VectorRef act_ref = VectorRef({is_activation, transpose_conv_ref});
   return act_ref;
 }
 
 VectorRef TransposeFusion::DefineBiasAddPattern() const {
-  auto transpose_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
   auto transpose_param = std::make_shared<CondVar>(IsParamNode);
-  VectorRef transpose_conv_ref = VectorRef({transpose_var, conv_var, transpose_param});
-  auto bias_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimBiasAdd>);
+  MS_CHECK_TRUE_RET(transpose_param != nullptr, {});
+  VectorRef transpose_conv_ref = VectorRef({is_transpose, is_conv, transpose_param});
+  auto is_bias_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimBiasAdd>);
+  MS_CHECK_TRUE_RET(is_bias_add != nullptr, {});
   auto bias_param = std::make_shared<CondVar>(IsParamNode);
-  VectorRef act_ref = VectorRef({bias_var, transpose_conv_ref, bias_param});
+  MS_CHECK_TRUE_RET(bias_param != nullptr, {});
+  VectorRef act_ref = VectorRef({is_bias_add, transpose_conv_ref, bias_param});
   return act_ref;
 }
 
 VectorRef TransposeFusion::DefineTransTransPattern() const {
-  auto transpose_var_1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  auto transpose_var_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  auto is_transpose1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose1 != nullptr, {});
+  auto is_transpose2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose2 != nullptr, {});
   auto transpose_param = std::make_shared<CondVar>(IsParamNode);
-  VectorRef trans_trans_ref = VectorRef({transpose_var_2, transpose_var_1, transpose_param});
+  MS_CHECK_TRUE_RET(transpose_param != nullptr, {});
+  VectorRef trans_trans_ref = VectorRef({is_transpose2, is_transpose1, transpose_param});
   return trans_trans_ref;
 }
 
@@ -100,11 +126,12 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
                           const std::string &cnode_name) {
   MS_ASSERT(func_graph != nullptr && input_node != nullptr);
   auto trans_prim = std::make_shared<ops::Transpose>();
-  MS_ASSERT(trans_prim != nullptr);
+  MS_CHECK_TRUE_RET(trans_prim != nullptr, nullptr);
   auto cnode = func_graph->NewCNode(trans_prim, {input_node, perm});
-  MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
   cnode->set_fullname_with_scope(cnode_name);
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(2, 1);
+  MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   auto trans_insert_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   trans_insert_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;
@@ -112,13 +139,9 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
 
 AnfNodePtr TransposeFusion::TransTransFusion(const mindspore::FuncGraphPtr &func_graph,
                                              const mindspore::AnfNodePtr &node) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return nullptr;
-  }
+  MS_ASSERT(func_graph != nullptr && node != nullptr);
   auto trans_cnode_2 = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(trans_cnode_2 != nullptr, nullptr);
   if (!CheckPrimitiveType(trans_cnode_2, prim::kPrimTranspose) ||
       !CheckPrimitiveType(trans_cnode_2->input(1), prim::kPrimTranspose)) {
     return nullptr;
@@ -146,12 +169,12 @@ AnfNodePtr TransposeFusion::TransTransFusion(const mindspore::FuncGraphPtr &func
 
 AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
                                     const mindspore::AnfNodePtr &node, const mindspore::EquivPtr &equiv) const {
-  if (pattern_name == "TransTransPatternName") {
-    return TransTransFusion(func_graph, node);
-  }
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
+  }
+  if (pattern_name == "TransTransPatternName") {
+    return TransTransFusion(func_graph, node);
   }
   if (node->cast<CNodePtr>() == nullptr) {
     return nullptr;
@@ -164,11 +187,16 @@ AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const minds
   const CNodePtr &transpose_cnode = transpose_node->cast<CNodePtr>();
   auto perm_node = transpose_cnode->input(kInputIndexTwo);
   auto trans_post_node = GenTransposeNode(func_graph, any_cnode, perm_node, any_cnode->fullname_with_scope() + "_post");
-  trans_post_node->set_abstract(any_cnode->abstract()->Clone());
-  any_cnode->set_abstract(transpose_cnode->input(1)->abstract()->Clone());
-  auto tr = func_graph->manager()->Transact();
-  tr.SetEdge(any_cnode, 1, transpose_cnode->input(1));
-  tr.Commit();
+  MS_CHECK_TRUE_RET(trans_post_node != nullptr, nullptr);
+  if (any_cnode->abstract() != nullptr) {
+    trans_post_node->set_abstract(any_cnode->abstract()->Clone());
+  }
+  if (transpose_cnode->input(1)->abstract() != nullptr) {
+    any_cnode->set_abstract(transpose_cnode->input(1)->abstract()->Clone());
+  }
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  manager->SetEdge(any_cnode, 1, transpose_cnode->input(1));
   return trans_post_node;
 }
 }  // namespace mindspore::opt

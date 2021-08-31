@@ -28,7 +28,7 @@
 namespace mindspore::opt {
 class TfliteRelPosMultiHeadAttentionFusion : public MultiHeadAttentionFusion {
  public:
-  explicit TfliteRelPosMultiHeadAttentionFusion(const std::string &name = "tflite_rel_pos_multi_head_attention_fusion",
+  explicit TfliteRelPosMultiHeadAttentionFusion(const std::string &name = "TfliteRelPosMultiHeadAttentionFusion",
                                                 bool multigraph = true);
   ~TfliteRelPosMultiHeadAttentionFusion() override = default;
   std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
@@ -49,15 +49,15 @@ class TfliteRelPosMultiHeadAttentionFusion : public MultiHeadAttentionFusion {
 
  private:
   const std::string kRPMHAttentionPatternName = "RPMHAttentionPattern";
-  VarPtr query_u_;
-  VarPtr query_v_;
-  VarPtr query_prim_;
-  VarPtr key_prim_;
-  VarPtr value_prim_;
-  VarPtr pos_prim_;
-  VarPtr output_prim_;
-  VarPtr input_p_;
-  VarPtr weight_p_;
+  VarPtr query_u_{nullptr};
+  VarPtr query_v_{nullptr};
+  VarPtr query_prim_{nullptr};
+  VarPtr key_prim_{nullptr};
+  VarPtr value_prim_{nullptr};
+  VarPtr pos_prim_{nullptr};
+  VarPtr output_prim_{nullptr};
+  VarPtr input_p_{nullptr};
+  VarPtr weight_p_{nullptr};
   std::vector<VarPtr> query_stack_params_;
   std::vector<VarPtr> key_stack_params_;
   std::vector<VarPtr> value_stack_params_;

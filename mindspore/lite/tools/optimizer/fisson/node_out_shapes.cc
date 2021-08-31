@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace opt {
 AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr) {
     return nullptr;
   }
   if (!utils::isa<CNodePtr>(node)) {

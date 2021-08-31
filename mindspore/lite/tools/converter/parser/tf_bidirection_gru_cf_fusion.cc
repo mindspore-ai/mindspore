@@ -186,10 +186,7 @@ const BaseRef TfBidirectionGruCfFusion::DefinePattern() const {
 
 const AnfNodePtr TfBidirectionGruCfFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &concat_node,
                                                    const EquivPtr &equiv) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(concat_node != nullptr);
-  MS_LOG(DEBUG) << "bidirection tf gru fusion pass";
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(concat_node) != lite::RET_OK) {
+  if (func_graph == nullptr || concat_node == nullptr || equiv == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }

@@ -28,7 +28,7 @@ namespace mindspore {
 namespace opt {
 class TfLstmCellFusion : public TfliteLstmCellFusion {
  public:
-  explicit TfLstmCellFusion(const std::string &name = "lstm_cell_fusion", bool multigraph = true);
+  explicit TfLstmCellFusion(const std::string &name = "TfLstmCellFusion", bool multigraph = true);
   ~TfLstmCellFusion() override = default;
 
  private:

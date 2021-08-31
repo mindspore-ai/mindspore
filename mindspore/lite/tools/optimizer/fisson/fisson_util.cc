@@ -237,7 +237,7 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
 
 void GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_num,
                                  std::vector<AnfNodePtr> *outputs) {
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr) {
     return;
   }
   auto cnode = node->cast<CNodePtr>();

@@ -22,10 +22,13 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr int kNumInPlaceHolder = 10;
+constexpr int kNumGetItem = 4;
 constexpr size_t kLstmInputsLength = 13;
 constexpr size_t kLstmInputsVarNum = 11;
 constexpr size_t kCondNodesNum = 12;
@@ -35,8 +38,73 @@ constexpr size_t kBodyCNodesNum = 30;
 constexpr auto kUnidirectionalGateNum = 4;
 constexpr auto kBidirectionalGateNum = 8;
 const auto &p1 = std::placeholders::_1;
-
 bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
+
+std::vector<VectorRef> GenerateBodyGraphHiddenPattern(const VarPtr &forget_bias_input,
+                                                      const std::vector<CondVarPtr> &placeholders) {
+  MS_CHECK_TRUE_RET(placeholders.size() >= kNumInPlaceHolder, {});
+  auto is_var_getitem = std::make_shared<Var>("GetItem");
+  MS_CHECK_TRUE_RET(is_var_getitem != nullptr, {});
+  auto is_param3 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param3 != nullptr, {});
+  VectorRef get_item = VectorRef({is_var_getitem, placeholders[7], placeholders[2], is_param3});
+  auto is_var1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var1 != nullptr, {});
+  VectorRef concat_input_h = VectorRef({is_var1, get_item, placeholders[5]});
+
+  auto is_var2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var2 != nullptr, {});
+  VectorRef matmul = VectorRef({is_var2, concat_input_h, placeholders[8]});
+  auto is_var3 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var3 != nullptr, {});
+  VectorRef bias = VectorRef({is_var3, matmul, placeholders[9]});
+  auto is_var4 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var4 != nullptr, {});
+  VectorRef split = VectorRef({is_var4, bias});
+
+  std::vector<VectorRef> get_items;
+  for (int i = 0; i < kNumGetItem; ++i) {
+    auto is_var_loop1 = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(is_var_loop1 != nullptr, {});
+    auto is_var_loop2 = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(is_var_loop2 != nullptr, {});
+    VectorRef get_item_loop = VectorRef({is_var_loop1, split, is_var_loop2});
+    get_items.push_back(get_item_loop);
+  }
+
+  auto is_var_sigmoid1 = std::make_shared<Var>("Sigmoid");
+  MS_CHECK_TRUE_RET(is_var_sigmoid1 != nullptr, {});
+  VectorRef input_gate = VectorRef({is_var_sigmoid1, get_items[0]});
+  auto is_var_tanh1 = std::make_shared<Var>("Tanh");
+  MS_CHECK_TRUE_RET(is_var_tanh1 != nullptr, {});
+  VectorRef input_to_cell = VectorRef({is_var_tanh1, get_items[1]});
+  auto is_var_add1 = std::make_shared<Var>("Add");
+  MS_CHECK_TRUE_RET(is_var_add1 != nullptr, {});
+  VectorRef forget_bias = VectorRef({is_var_add1, get_items[2], forget_bias_input});
+  auto is_var_sigmoid2 = std::make_shared<Var>("Sigmoid");
+  MS_CHECK_TRUE_RET(is_var_sigmoid2 != nullptr, {});
+  VectorRef forget_gate = VectorRef({is_var_sigmoid2, forget_bias});
+  auto is_var_sigmoid3 = std::make_shared<Var>("Sigmoid");
+  MS_CHECK_TRUE_RET(is_var_sigmoid3 != nullptr, {});
+  VectorRef output_gate = VectorRef({is_var_sigmoid3, get_items[3]});
+
+  auto is_var5 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var5 != nullptr, {});
+  VectorRef forgetted_cell = VectorRef({is_var5, forget_gate, placeholders[4]});
+  auto is_var6 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var6 != nullptr, {});
+  VectorRef inputted_cell = VectorRef({is_var6, input_gate, input_to_cell});
+  auto is_var_add2 = std::make_shared<Var>("Add");
+  MS_CHECK_TRUE_RET(is_var_add2 != nullptr, {});
+  VectorRef input_forget_cell = VectorRef({is_var_add2, forgetted_cell, inputted_cell});
+  auto is_var_tanh2 = std::make_shared<Var>("Tanh");
+  MS_CHECK_TRUE_RET(is_var_tanh2 != nullptr, {});
+  VectorRef to_new_hidden = VectorRef({is_var_tanh2, input_forget_cell});
+  auto is_var_mul = std::make_shared<Var>("Mul");
+  MS_CHECK_TRUE_RET(is_var_mul != nullptr, {});
+  VectorRef new_hidden = VectorRef({is_var_mul, output_gate, to_new_hidden});
+  return {input_forget_cell, new_hidden};
+}
 }  // namespace
 
 TfLstmCellFusion::TfLstmCellFusion(const std::string &name, bool multigraph)
@@ -51,56 +119,65 @@ TfLstmCellFusion::TfLstmCellFusion(const std::string &name, bool multigraph)
 
 AnfNodePtr TfLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
   std::vector<CondVarPtr> placeholders;
-  for (int i = 0; i < 10; ++i) {
-    placeholders.emplace_back(std::make_shared<CondVar>(IsParameterNode));
+  for (int i = 0; i < kNumInPlaceHolder; ++i) {
+    auto is_param_holder = std::make_shared<CondVar>(IsParameterNode);
+    MS_CHECK_TRUE_RET(is_param_holder != nullptr, nullptr);
+    placeholders.emplace_back(is_param_holder);
   }
-  VectorRef add2 = VectorRef({std::make_shared<Var>(), placeholders[2], std::make_shared<CondVar>(IsParameterNode)});
-  VectorRef add3 = VectorRef({std::make_shared<Var>(), placeholders[0], std::make_shared<CondVar>(IsParameterNode)});
+  auto is_var1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var1 != nullptr, {});
+  auto is_param1 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, nullptr);
+  VectorRef add2 = VectorRef({is_var1, placeholders[2], is_param1});
+  auto is_var2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var2 != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, nullptr);
+  VectorRef add3 = VectorRef({is_var2, placeholders[0], is_param2});
 
-  VectorRef get_item = VectorRef(
-    {std::make_shared<Var>("GetItem"), placeholders[7], placeholders[2], std::make_shared<CondVar>(IsParameterNode)});
-  VectorRef concat_input_h = VectorRef({std::make_shared<Var>(), get_item, placeholders[5]});
+  auto hidden_cells = GenerateBodyGraphHiddenPattern(forget_bias_, placeholders);
+  MS_CHECK_TRUE_RET(hidden_cells.size() == kInputSizeTwo, {});
 
-  VectorRef matmul = VectorRef({std::make_shared<Var>(), concat_input_h, placeholders[8]});
-  VectorRef bias = VectorRef({std::make_shared<Var>(), matmul, placeholders[9]});
-  VectorRef split = VectorRef({std::make_shared<Var>(), bias});
+  auto is_var_mul1 = std::make_shared<Var>("Mul");
+  MS_CHECK_TRUE_RET(is_var_mul1 != nullptr, {});
+  auto input_forget_cell = hidden_cells[0];
+  MS_CHECK_TRUE_RET(!input_forget_cell.empty(), {});
+  VectorRef new_to_cell = VectorRef({is_var_mul1, cell_zoneout_new_, input_forget_cell});
+  auto is_var_mul2 = std::make_shared<Var>("Mul");
+  MS_CHECK_TRUE_RET(is_var_mul2 != nullptr, {});
+  VectorRef old_to_cell = VectorRef({is_var_mul2, cell_zoneout_old_, placeholders[4]});
+  auto is_var_add1 = std::make_shared<Var>("Add");
+  MS_CHECK_TRUE_RET(is_var_add1 != nullptr, {});
+  VectorRef output_cell = VectorRef({is_var_add1, new_to_cell, old_to_cell});
 
-  VectorRef get_item1 = VectorRef({std::make_shared<Var>(), split, std::make_shared<Var>()});
-  VectorRef get_item2 = VectorRef({std::make_shared<Var>(), split, std::make_shared<Var>()});
-  VectorRef get_item3 = VectorRef({std::make_shared<Var>(), split, std::make_shared<Var>()});
-  VectorRef get_item4 = VectorRef({std::make_shared<Var>(), split, std::make_shared<Var>()});
+  auto new_hidden = hidden_cells[1];
+  MS_CHECK_TRUE_RET(!new_hidden.empty(), {});
+  auto is_var_mul3 = std::make_shared<Var>("Mul");
+  MS_CHECK_TRUE_RET(is_var_mul3 != nullptr, {});
+  VectorRef new_to_hidden = VectorRef({is_var_mul3, hidden_zoneout_new_, new_hidden});
+  auto is_var_mul4 = std::make_shared<Var>("Mul");
+  MS_CHECK_TRUE_RET(is_var_mul4 != nullptr, {});
+  VectorRef old_to_hidden = VectorRef({is_var_mul4, hidden_zoneout_old_, placeholders[5]});
+  auto is_var_add2 = std::make_shared<Var>("Add");
+  MS_CHECK_TRUE_RET(is_var_add2 != nullptr, {});
+  VectorRef output_hidden = VectorRef({is_var_add2, new_to_hidden, old_to_hidden});
 
-  VectorRef input_gate = VectorRef({std::make_shared<Var>("Sigmoid"), get_item1});
-  VectorRef input_to_cell = VectorRef({std::make_shared<Var>("Tanh"), get_item2});
-  VectorRef forget_bias = VectorRef({std::make_shared<Var>("Add"), get_item3, forget_bias_});
-  VectorRef forget_gate = VectorRef({std::make_shared<Var>("Sigmoid"), forget_bias});
-  VectorRef output_gate = VectorRef({std::make_shared<Var>("Sigmoid"), get_item4});
-
-  VectorRef forgetted_cell = VectorRef({std::make_shared<Var>(""), forget_gate, placeholders[4]});
-  VectorRef inputted_cell = VectorRef({std::make_shared<Var>(""), input_gate, input_to_cell});
-  VectorRef input_forget_cell = VectorRef({std::make_shared<Var>("Add"), forgetted_cell, inputted_cell});
-  VectorRef to_new_hidden = VectorRef({std::make_shared<Var>("Tanh"), input_forget_cell});
-  VectorRef new_hidden = VectorRef({std::make_shared<Var>("Mul"), output_gate, to_new_hidden});
-
-  VectorRef new_to_cell = VectorRef({std::make_shared<Var>("Mul"), cell_zoneout_new_, input_forget_cell});
-  VectorRef old_to_cell = VectorRef({std::make_shared<Var>("Mul"), cell_zoneout_old_, placeholders[4]});
-  VectorRef output_cell = VectorRef({std::make_shared<Var>("Add"), new_to_cell, old_to_cell});
-
-  VectorRef new_to_hidden = VectorRef({std::make_shared<Var>("Mul"), hidden_zoneout_new_, new_hidden});
-  VectorRef old_to_hidden = VectorRef({std::make_shared<Var>("Mul"), hidden_zoneout_old_, placeholders[5]});
-  VectorRef output_hidden = VectorRef({std::make_shared<Var>("Add"), new_to_hidden, old_to_hidden});
-
-  VectorRef set_item = VectorRef({std::make_shared<Var>(""), placeholders[3], placeholders[2], new_hidden});
+  auto is_var3 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var3 != nullptr, {});
+  VectorRef set_item = VectorRef({is_var3, placeholders[3], placeholders[2], new_hidden});
 
   auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMakeTuple));
+  MS_CHECK_TRUE_RET(is_make_tuple != nullptr, nullptr);
   std::vector<BaseRef> outputs = {is_make_tuple, add3, placeholders[1], add2, set_item, output_cell, output_hidden};
   outputs.insert(outputs.end(), placeholders.begin() + 6, placeholders.end());
   VectorRef make_tuple_node = VectorRef(outputs);
   auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReturn));
+  MS_CHECK_TRUE_RET(is_return != nullptr, nullptr);
   VectorRef return_node = VectorRef({is_return, make_tuple_node});
 
-  VarPtr fg = std::make_shared<Var>("RootG");
-  auto pattern = SexpToNode(return_node, fg, primitive_vars.get(), true);
+  VarPtr is_fg = std::make_shared<Var>("RootG");
+  MS_CHECK_TRUE_RET(is_fg != nullptr, nullptr);
+  auto pattern = SexpToNode(return_node, is_fg, primitive_vars.get(), true);
   return pattern;
 }
 
@@ -108,12 +185,12 @@ STATUS TfLstmCellFusion::SetWeightAbstractAndDefault(const ParameterPtr &weight,
                                                      const float *const data_ptr, const int hidden_size) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(data_ptr != nullptr);
-  if (shape.size() != 3) {
+  if (shape.size() != kInputSizeThree) {
     MS_LOG(ERROR) << "lstm weight shape must have 3 dims";
     return RET_ERROR;
   }
-  const auto param_num = shape[0] * shape[1] * shape[2];
-  auto tensor_data = new (std::nothrow) float[param_num * 4];
+  const auto param_num = shape[0] * shape[1] * shape[kInputIndexTwo];
+  auto tensor_data = new (std::nothrow) float[param_num * sizeof(float)];
   std::vector<int> data_diff{0, 3, 2, 1};
   if (tensor_data == nullptr) {
     MS_LOG(DEBUG) << "new data failed";
@@ -273,10 +350,12 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
   auto lstm_prim = std::make_shared<ops::LSTM>();
+  MS_CHECK_TRUE_RET(lstm_prim != nullptr, nullptr);
   lstm_prim->set_bidirectional(false);
   lstm_prim->set_zoneout_cell(zoneout_cell);
   lstm_prim->set_zoneout_hidden(zoneout_hidden);
   auto value_node = NewValueNode(lstm_prim);
+  MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
 
   auto &vars = while_input_vars_;
 
@@ -312,12 +391,18 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
   }
 
   auto i_weight = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(i_weight != nullptr, nullptr);
   i_weight->set_name(base_name + "_weight_i");
-  i_weight->set_abstract(weight->abstract()->Clone());
+  if (weight->abstract() != nullptr) {
+    i_weight->set_abstract(weight->abstract()->Clone());
+  }
 
   auto c_weight = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(c_weight != nullptr, nullptr);
   c_weight->set_name(base_name + "_weight_c");
-  c_weight->set_abstract(weight->abstract()->Clone());
+  if (weight->abstract() != nullptr) {
+    c_weight->set_abstract(weight->abstract()->Clone());
+  }
 
   if (SplitWeights(weight, i_weight, c_weight, hidden_shape.back()) != RET_OK) {
     MS_LOG(DEBUG) << "split weight to i_weight and c_weight failed";
@@ -325,8 +410,12 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
   }
 
   auto bias_node = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(bias_node != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(bias_node != nullptr, nullptr);
   bias_node->set_name(base_name + "_bias");
-  bias_node->set_abstract(bias->abstract()->Clone());
+  if (bias->abstract() != nullptr) {
+    bias_node->set_abstract(bias->abstract()->Clone());
+  }
 
   if (PopulateBiasNode(body_equiv, bias_node, bias, hidden_shape.back()) != RET_OK) {
     MS_LOG(DEBUG) << "reorder bias failed";
@@ -343,6 +432,7 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
   std::vector<AnfNodePtr> new_node_inputs = {value_node, input_tensor_node, i_weight, c_weight, bias_node, hidden,
                                              cell};
   auto new_node = func_graph->NewCNode(new_node_inputs);
+  MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
   new_node->set_fullname_with_scope(base_name);
   return new_node;
 }

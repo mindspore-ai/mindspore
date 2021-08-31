@@ -19,6 +19,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quant_param_holder.h"
 #include "mindspore/core/ops/transpose.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -55,38 +56,65 @@ TfliteRelPosMultiHeadAttentionFusion::TfliteRelPosMultiHeadAttentionFusion(const
 
 std::unordered_map<std::string, VectorRef> TfliteRelPosMultiHeadAttentionFusion::DefinePatterns() const {
   auto query = DefineProcessInputPattern(input_q_, weight_q_, bias_q_, query_stack_params_, query_prim_);
-  auto query_with_bias_u =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), query, query_u_});
-  query_with_bias_u = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)),
-                                 query_with_bias_u, std::make_shared<CondVar>(IsParamNode)});
+  auto is_add1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
+  MS_CHECK_TRUE_RET(is_add1 != nullptr, {});
+  auto query_with_bias_u = VectorRef({is_add1, query, query_u_});
+  auto is_transpose1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_transpose1 != nullptr, {});
+  auto is_param1 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
+  query_with_bias_u = VectorRef({is_transpose1, query_with_bias_u, is_param1});
   auto key = DefineProcessInputPattern(input_k_, weight_k_, bias_k_, key_stack_params_, key_prim_, true);
+  MS_CHECK_TRUE_RET(!key.empty(), {});
 
-  auto logits_with_u =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), query_with_bias_u, key});
+  auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul1 != nullptr, {});
+  auto logits_with_u = VectorRef({is_matmul1, query_with_bias_u, key});
 
-  auto query_with_bias_v =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), query, query_v_});
-  query_with_bias_v = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)),
-                                 query_with_bias_v, std::make_shared<CondVar>(IsParamNode)});
+  auto is_add2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
+  MS_CHECK_TRUE_RET(is_add2 != nullptr, {});
+  auto query_with_bias_v = VectorRef({is_add2, query, query_v_});
+  auto is_transpose2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_transpose2 != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
+  query_with_bias_v = VectorRef({is_transpose2, query_with_bias_v, is_param2});
 
   auto pos = DefineProcessInputPattern(input_p_, weight_p_, nullptr, pos_stack_params_, pos_prim_, true);
-  pos = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), pos,
-                   std::make_shared<CondVar>(IsParamNode)});
-  auto logits_with_v =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), query_with_bias_v, pos});
+  MS_CHECK_TRUE_RET(!pos.empty(), {});
+  auto is_transpose3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_transpose3 != nullptr, {});
+  auto is_param3 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param3 != nullptr, {});
+  pos = VectorRef({is_transpose3, pos, is_param3});
+  auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul2 != nullptr, {});
+  auto logits_with_v = VectorRef({is_matmul2, query_with_bias_v, pos});
   logits_with_v = DefineRelativeShiftPattern(logits_with_v);
+  MS_CHECK_TRUE_RET(!logits_with_v.empty(), {});
 
-  auto logits =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), logits_with_u, logits_with_v});
-  auto logits_div = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMulFusion)), logits,
-                               std::make_shared<CondVar>(IsParamNode)});
-  logits_div = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), logits_div, std::make_shared<SeqVar>()});
-  auto logits_softmax = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax)), logits_div});
+  auto is_add3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
+  MS_CHECK_TRUE_RET(is_add3 != nullptr, {});
+  auto logits = VectorRef({is_add3, logits_with_u, logits_with_v});
+  auto is_mul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMulFusion));
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  auto is_param4 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param4 != nullptr, {});
+  auto logits_div = VectorRef({is_mul, logits, is_param4});
+  auto is_add4 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
+  MS_CHECK_TRUE_RET(is_add4 != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  logits_div = VectorRef({is_add4, logits_div, is_seq_var});
+  auto is_softmax = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax));
+  MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
+  auto logits_softmax = VectorRef({is_softmax, logits_div});
   auto value = DefineProcessInputPattern(input_v_, weight_v_, bias_v_, value_stack_params_, value_prim_, true);
-  auto output =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), logits_softmax, value});
+  auto is_matmul3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
+  MS_CHECK_TRUE_RET(is_matmul3 != nullptr, {});
+  auto output = VectorRef({is_matmul3, logits_softmax, value});
   auto pattern = DefineProcessOutputPattern(output, weight_o_, bias_o_);
+  MS_CHECK_TRUE_RET(!pattern.empty(), {});
   std::unordered_map<std::string, VectorRef> patterns;
   patterns.insert(std::make_pair(kRPMHAttentionPatternName, pattern));
   return patterns;
@@ -95,6 +123,9 @@ std::unordered_map<std::string, VectorRef> TfliteRelPosMultiHeadAttentionFusion:
 AnfNodePtr TfliteRelPosMultiHeadAttentionFusion::Process(const std::string &pattern_name,
                                                          const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                          const EquivPtr &equiv) const {
+  if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
+    return nullptr;
+  }
   return CreateRelPosMultiHeadAttentionNode(func_graph, equiv, node->fullname_with_scope());
 }
 
@@ -125,6 +156,7 @@ STATUS GetIntParameterData(const ParameterPtr &param_ptr, int *result) {
 }
 
 std::shared_ptr<ops::Attention> TfliteRelPosMultiHeadAttentionFusion::BuildAttentionPrim(const EquivPtr &equiv) const {
+  MS_ASSERT(equiv != nullptr);
   auto attention_prim = std::make_shared<ops::Attention>();
   if (attention_prim == nullptr) {
     MS_LOG(ERROR) << "Build attention primitive failed.";
@@ -158,27 +190,27 @@ std::shared_ptr<ops::Attention> TfliteRelPosMultiHeadAttentionFusion::BuildAtten
 CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNode(const FuncGraphPtr &func_graph,
                                                                                   const EquivPtr &equiv,
                                                                                   const std::string &base_name) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(equiv != nullptr);
+  MS_ASSERT(func_graph != nullptr && equiv != nullptr);
   auto attention_prim = BuildAttentionPrim(equiv);
-  if (attention_prim == nullptr) {
-    MS_LOG(ERROR) << "Build attention primitive failed.";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(attention_prim != nullptr, nullptr);
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSize, kOutputSize);
+  MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   auto query_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[query_prim_]));
+  MS_CHECK_TRUE_RET(query_prim != nullptr, nullptr);
   auto query_quant_param_holder = query_prim->GetAttr("quant_params");
   if (query_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
       kWeightQueryIndex, query_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
   }
   auto key_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[key_prim_]));
+  MS_CHECK_TRUE_RET(key_prim != nullptr, nullptr);
   auto key_quant_param_holder = key_prim->GetAttr("quant_params");
   if (key_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
       kWeightKeyIndex, key_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
   }
   auto value_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[value_prim_]));
+  MS_CHECK_TRUE_RET(value_prim != nullptr, nullptr);
   auto value_quant_param_holder = value_prim->GetAttr("quant_params");
   if (value_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
@@ -186,6 +218,7 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
   }
 
   auto pos_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[pos_prim_]));
+  MS_CHECK_TRUE_RET(pos_prim != nullptr, nullptr);
   auto pos_quant_param_holder = pos_prim->GetAttr("quant_params");
   if (pos_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
@@ -193,6 +226,7 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
   }
 
   auto output_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[output_prim_]));
+  MS_CHECK_TRUE_RET(output_prim != nullptr, nullptr);
   auto output_quant_param_holder = output_prim->GetAttr("quant_params");
   if (output_quant_param_holder != nullptr) {
     quant_params_holder->set_input_quant_param(
@@ -201,6 +235,7 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
 
   attention_prim->AddAttr("quant_params", quant_params_holder);
   auto value_node = NewValueNode(attention_prim);
+  MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   auto input_q = utils::cast<AnfNodePtr>((*equiv)[input_q_]);
   auto input_k = utils::cast<AnfNodePtr>((*equiv)[input_k_]);
   auto input_v = utils::cast<AnfNodePtr>((*equiv)[input_v_]);
@@ -208,22 +243,28 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
 
   auto weight_q = utils::cast<AnfNodePtr>((*equiv)[weight_q_]);
   auto transpose_prim = std::make_shared<ops::Transpose>();
+  MS_CHECK_TRUE_RET(transpose_prim != nullptr, nullptr);
   auto transpose_perm = BuildIntVecParameterNode(func_graph, {1, 0}, "transpose" + base_name + "_perm");
+  MS_CHECK_TRUE_RET(transpose_perm != nullptr, nullptr);
   auto weight_q_transpose = func_graph->NewCNode(transpose_prim, {weight_q, transpose_perm});
+  MS_CHECK_TRUE_RET(weight_q_transpose != nullptr, nullptr);
   weight_q_transpose->set_fullname_with_scope("transpose_wq" + base_name);
 
   auto weight_k = utils::cast<AnfNodePtr>((*equiv)[weight_k_]);
   auto weight_k_transpose = func_graph->NewCNode(transpose_prim, {weight_k, transpose_perm});
+  MS_CHECK_TRUE_RET(weight_k_transpose != nullptr, nullptr);
   weight_k_transpose->set_fullname_with_scope("transpose_wk" + base_name);
 
   auto weight_v = utils::cast<AnfNodePtr>((*equiv)[weight_v_]);
   auto weight_v_transpose = func_graph->NewCNode(transpose_prim, {weight_v, transpose_perm});
+  MS_CHECK_TRUE_RET(weight_v_transpose != nullptr, nullptr);
   weight_v_transpose->set_fullname_with_scope("transpose_wv" + base_name);
 
   auto weight_p = utils::cast<AnfNodePtr>((*equiv)[weight_p_]);
 
   auto weight_o = utils::cast<AnfNodePtr>((*equiv)[weight_o_]);
   auto weight_o_transpose = func_graph->NewCNode(transpose_prim, {weight_o, transpose_perm});
+  MS_CHECK_TRUE_RET(weight_o_transpose != nullptr, nullptr);
   weight_o_transpose->set_fullname_with_scope("transpose_wo" + base_name);
 
   auto bias_q = utils::cast<AnfNodePtr>((*equiv)[bias_q_]);
@@ -251,43 +292,77 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
                                              bias_v,
                                              bias_o};
   auto new_node = func_graph->NewCNode(new_node_inputs);
+  MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
   new_node->set_fullname_with_scope(base_name);
   return new_node;
 }
+
 const VectorRef TfliteRelPosMultiHeadAttentionFusion::DefineRelativeShiftPattern(const BaseRef &input) const {
-  auto pad = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimPadFusion)), input,
-                        std::make_shared<CondVar>(IsParamNode)});
-  auto reshape1 = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), pad, std::make_shared<SeqVar>()});
-  auto stride_slice1 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice)), reshape1,
-                                  std::make_shared<SeqVar>()});
-  auto reshape2 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), stride_slice1,
-                             std::make_shared<SeqVar>()});
-  auto stride_slice2 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice)), reshape2,
-                                  std::make_shared<SeqVar>()});
+  auto is_pad = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimPadFusion));
+  MS_CHECK_TRUE_RET(is_pad != nullptr, {});
+  auto is_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param != nullptr, {});
+  auto pad = VectorRef({is_pad, input, is_param});
+  auto is_reshape1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape1 != nullptr, {});
+  auto is_seq_var1 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var1 != nullptr, {});
+  auto reshape1 = VectorRef({is_reshape1, pad, is_seq_var1});
+  auto is_strided_slice1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice));
+  MS_CHECK_TRUE_RET(is_strided_slice1 != nullptr, {});
+  auto is_seq_var2 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var2 != nullptr, {});
+  auto stride_slice1 = VectorRef({is_strided_slice1, reshape1, is_seq_var2});
+  auto is_reshape2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape2 != nullptr, {});
+  auto is_seq_var3 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var3 != nullptr, {});
+  auto reshape2 = VectorRef({is_reshape2, stride_slice1, is_seq_var3});
+  auto is_strided_slice2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice));
+  MS_CHECK_TRUE_RET(is_strided_slice2 != nullptr, {});
+  auto is_seq_var4 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var4 != nullptr, {});
+  auto stride_slice2 = VectorRef({is_strided_slice2, reshape2, is_seq_var4});
   return stride_slice2;
 }
 
 const VectorRef TfliteRelPosMultiHeadAttentionFusion::DefineProcessInputPattern(
   const BaseRef &input, const BaseRef &weight, const BaseRef &bias, const std::vector<VarPtr> &stack_params,
   const VarPtr &full_connect_prim, bool transpose) const {
-  auto reshape = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), input, std::make_shared<SeqVar>()});
+  MS_ASSERT(full_connect_prim != nullptr);
+  auto is_reshape1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape1 != nullptr, {});
+  auto is_seq_var1 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var1 != nullptr, {});
+  auto reshape = VectorRef({is_reshape1, input, is_seq_var1});
   auto result = VectorRef({full_connect_prim, reshape, weight});
 
   if (bias != nullptr) {
-    result = VectorRef(
-      {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), result, std::make_shared<SeqVar>()});
-    result = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), result, bias});
+    auto is_reshape2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+    MS_CHECK_TRUE_RET(is_reshape2 != nullptr, {});
+    auto is_seq_var2 = std::make_shared<SeqVar>();
+    MS_CHECK_TRUE_RET(is_seq_var2 != nullptr, {});
+    result = VectorRef({is_reshape2, result, is_seq_var2});
+    auto is_add = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
+    MS_CHECK_TRUE_RET(is_add != nullptr, {});
+    result = VectorRef({is_add, result, bias});
   }
 
-  MS_ASSERT(stack_params.size() == kStackParamSize);
-  auto stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStack)), std::make_shared<Var>(),
-                          std::make_shared<Var>(), stack_params.at(0), stack_params.at(1)});
-  result = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), result, stack});
+  MS_CHECK_TRUE_RET(stack_params.size() == kStackParamSize, {});
+  auto is_stack = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStack));
+  MS_CHECK_TRUE_RET(is_stack != nullptr, {});
+  auto is_var = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var != nullptr, {});
+  auto stack = VectorRef({is_stack, std::make_shared<Var>(), is_var, stack_params.at(0), stack_params.at(1)});
+  auto is_reshape3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape3 != nullptr, {});
+  result = VectorRef({is_reshape3, result, stack});
   if (transpose) {
-    result = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), result,
-                        std::make_shared<CondVar>(IsParamNode)});
+    auto is_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+    MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+    auto is_param = std::make_shared<CondVar>(IsParamNode);
+    MS_CHECK_TRUE_RET(is_param != nullptr, {});
+    result = VectorRef({is_transpose, result, is_param});
   }
   return result;
 }
@@ -295,14 +370,25 @@ const VectorRef TfliteRelPosMultiHeadAttentionFusion::DefineProcessInputPattern(
 const VectorRef TfliteRelPosMultiHeadAttentionFusion::DefineProcessOutputPattern(const BaseRef &input,
                                                                                  const BaseRef &weight,
                                                                                  const BaseRef &bias) const {
-  auto transpose = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), input, std::make_shared<SeqVar>()});
-  auto reshape = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), transpose, std::make_shared<SeqVar>()});
+  auto is_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_seq_var1 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var1 != nullptr, {});
+  auto transpose = VectorRef({is_transpose, input, is_seq_var1});
+  auto is_reshape1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape1 != nullptr, {});
+  auto is_seq_var2 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var2 != nullptr, {});
+  auto reshape = VectorRef({is_reshape1, transpose, is_seq_var2});
   auto result = VectorRef({output_prim_, reshape, weight});
-  result = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), result, std::make_shared<SeqVar>()});
-  result = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), result, bias});
+  auto is_reshape2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape2 != nullptr, {});
+  auto is_seq_var3 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var3 != nullptr, {});
+  result = VectorRef({is_reshape2, result, is_seq_var3});
+  auto is_add = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  result = VectorRef({is_add, result, bias});
   return result;
 }
 }  // namespace mindspore::opt

@@ -96,8 +96,7 @@ const BaseRef AddTensorArray::DefinePattern() const {
 
 const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                          const EquivPtr &equiv) const {
-  MS_ASSERT(equiv != nullptr);
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }

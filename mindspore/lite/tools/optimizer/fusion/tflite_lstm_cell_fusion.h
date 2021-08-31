@@ -27,7 +27,7 @@ namespace mindspore {
 namespace opt {
 class TfliteLstmCellFusion : public PatternProcessPass {
  public:
-  explicit TfliteLstmCellFusion(const std::string &name = "tflite_lstm_cell_fusion", bool multigraph = true,
+  explicit TfliteLstmCellFusion(const std::string &name = "TfliteLstmCellFusion", bool multigraph = true,
                                 int input_length = 0, int var_num = 0, int cond_nodes_num = 0, int cond_cnodes_num = 0,
                                 int body_nodes_num = 0, int body_cnodes_num = 0);
   ~TfliteLstmCellFusion() override = default;
