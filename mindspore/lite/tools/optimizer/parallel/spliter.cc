@@ -27,6 +27,7 @@ Spliter *Spliter::GetInstance() {
 
 void Spliter::VisitNodesInputs(const FuncGraphPtr &func_graph) {
   // for every node init it's inputs
+  MS_ASSERT(func_graph != nullptr);
   for (const auto &node : func_graph->GetOrderedCnodes()) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
@@ -56,7 +57,7 @@ void Spliter::VisitNodesOutputs(const FuncGraphPtr &func_graph) {
 }
 
 void Spliter::RecordGraphInfo(const FuncGraphPtr &func_graph) {
-  if (CheckIfFuncGraphIsNull(func_graph) != RET_OK) {
+  if (func_graph == nullptr) {
     return;
   }
   VisitNodesInputs(func_graph);
@@ -70,6 +71,7 @@ void Spliter::RecordGraphInfo(const FuncGraphPtr &func_graph) {
     }
     auto cnode = node->cast<CNodePtr>();
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(kAnfPrimitiveIndex));
+    MS_ASSERT(prim != nullptr);
     auto device_type =
       prim->GetAttr(ops::kDeviceType) != nullptr ? GetValue<int>(prim->GetAttr(ops::kDeviceType)) : kDeviceTypeNone;
     // has been searched
@@ -120,6 +122,9 @@ void Spliter::RecordGraphInfo(const FuncGraphPtr &func_graph) {
 }
 
 void Spliter::UpdateNodeOutputs(const std::string &input_node_name, const AnfNodePtr &candidate_output) {
+  if (candidate_output == nullptr) {
+    return;
+  }
   if (graph_node_outputs_.find(input_node_name) != graph_node_outputs_.end()) {
     std::vector<AnfNodePtr>::iterator it;
     it =

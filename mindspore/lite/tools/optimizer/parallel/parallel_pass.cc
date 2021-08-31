@@ -19,6 +19,7 @@
 #include "ir/tensor.h"
 #include "tools/optimizer/parallel/operator_info_register.h"
 #include "ops/fusion/conv2d_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -28,8 +29,10 @@ constexpr auto kAnfPrimitiveIndex = 0;
 }
 
 bool ParallelPass::IsParallelCareNode(const AnfNodePtr &node) {
+  MS_ASSERT(node != nullptr);
   auto c_node = node->cast<CNodePtr>();
   auto prim = GetValueNode<PrimitivePtr>(c_node->input(kAnfPrimitiveIndex));
+  MS_CHECK_TRUE_RET(prim != nullptr, false);
   // depth_wise can not be splited in conv_info, we deal with in depthwise_conv_info
   is_depth_wise_ = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
   type_name_.clear();
@@ -42,6 +45,7 @@ bool ParallelPass::IsParallelCareNode(const AnfNodePtr &node) {
 }
 
 bool ParallelPass::SetParallelOpName(const AnfNodePtr &node, std::string *parallel_name) {
+  MS_ASSERT(node != nullptr && parallel_name != nullptr);
   if (!utils::isa<CNode>(node)) {
     return false;
   }
@@ -66,14 +70,12 @@ bool ParallelPass::SetParallelOpName(const AnfNodePtr &node, std::string *parall
   return true;
 }
 
-OperatorInfoPtr ParallelPass::CreateParallelOperator(const AnfNodePtr &node, const std::string &scope_name,
+OperatorInfoPtr ParallelPass::CreateParallelOperator(const CNodePtr &cnode, const std::string &scope_name,
                                                      const std::string &parallel_op_name) {
+  MS_ASSERT(cnode != nullptr);
   // foreach kernel_list && data_type
-  auto cnode = node->cast<CNodePtr>();
-  auto node_prim = cnode->input(kParallelPrimitiveIndex);
-  auto prim = GetValueNode<PrimitivePtr>(node_prim);
   for (const auto &schmea_id : kParallelSchemaId) {
-    if (!CheckPrimitiveType(node, schmea_id.first)) {
+    if (!CheckPrimitiveType(cnode, schmea_id.first)) {
       continue;
     }
     auto split_key_pair = kParallelSchemaId.find(schmea_id.first);
@@ -91,7 +93,7 @@ OperatorInfoPtr ParallelPass::CreateParallelOperator(const AnfNodePtr &node, con
 }
 
 AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  if (CheckIfFuncGraphIsNull(func_graph) != RET_OK || CheckIfAnfNodeIsNull(node) != RET_OK) {
+  if (func_graph == nullptr || node == nullptr) {
     return node;
   }
   if (!utils::isa<CNode>(node)) {
@@ -105,6 +107,7 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   auto iter = manager->node_users().find(node);
   if (iter == manager->node_users().end()) {
     MS_LOG(ERROR) << "node : " << node->fullname_with_scope() << "has no output";
+    return nullptr;
   }
   auto output_info_list = iter->second;
   if (output_info_list.size() > kDefaultBatch) {
@@ -121,7 +124,7 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   }
 
   std::string cnode_name = cnode->fullname_with_scope();
-  OperatorInfoPtr parallel_operator = CreateParallelOperator(node, cnode_name, parallel_op_name);
+  OperatorInfoPtr parallel_operator = CreateParallelOperator(cnode, cnode_name, parallel_op_name);
   if (parallel_operator == nullptr) {
     MS_LOG(ERROR) << "Failure: Create " << parallel_op_name << " OperatorInstance failed";
     return node;

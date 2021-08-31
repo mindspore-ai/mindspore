@@ -30,6 +30,7 @@ class MultiConvSplit : public MultiNodeSplit {
 
   AnfNodePtr DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
 
+ protected:
   bool CheckSplitValid();
 
   virtual AnfNodePtr SplitMultiConv(const AnfNodePtr &node) = 0;

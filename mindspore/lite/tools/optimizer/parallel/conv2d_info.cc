@@ -28,6 +28,7 @@
 #include "tools/optimizer/parallel/operator_info_register.h"
 #include "tools/optimizer/parallel/spliter.h"
 #include "tools/optimizer/fisson/fisson_util.h"
+#include "nnacl/op_base.h"
 
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
@@ -39,6 +40,9 @@ constexpr auto kAnfConvBias = 3;
 int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   int split_count = 0;
   Strategys strategys = strategy.strategys;
+  MS_CHECK_GE(strategys.size(), kInputSizeTwo, RET_ERROR);
+  MS_CHECK_GE(strategys[0].size(), kInputSizeFour, RET_ERROR);
+  MS_CHECK_GE(strategys[1].size(), kInputSizeFour, RET_ERROR);
   // if split N
   if (is_any_not_none(strategys[0][kAxisN])) {
     split_count++;
@@ -105,13 +109,16 @@ int Conv2DInfo::CheckIfSplit() {
       return RET_ERROR;
     }
     auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(input_node_abstract);
-    MS_ERROR_IF_NULL(abstract_tensor);
+    MS_ASSERT(abstract_tensor != nullptr);
+    MS_CHECK_TRUE_RET(abstract_tensor->shape() != nullptr, RET_ERROR);
     input_shape = abstract_tensor->shape()->shape();
     abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(weight_node_abstract);
+    MS_ASSERT(abstract_tensor != nullptr);
+    MS_CHECK_TRUE_RET(abstract_tensor->shape() != nullptr, RET_ERROR);
     weight_shape = abstract_tensor->shape()->shape();
     int total_ratio = 0;
     total_ratio = std::accumulate(splits_.begin(), splits_.end(), total_ratio);
-    if (input_shape.empty() || weight_shape.empty()) {
+    if (input_shape.size() != kInputSizeFour || weight_shape.size() != kInputSizeFour) {
       return RET_ERROR;
     }
     auto shape_h = input_shape.at(1);
@@ -134,6 +141,7 @@ int Conv2DInfo::CheckIfSplit() {
 AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
                                             std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,
                                             const std::vector<int64_t> &splits) {
+  MS_ASSERT(orig_node != nullptr && split_outputs != nullptr);
   auto graph_node_input_shapes = Spliter::GetInstance()->graph_node_input_shapes();
   auto ori_node_name = orig_node->fullname_with_scope();
   auto input_shape_iter = graph_node_input_shapes.find(ori_node_name);
@@ -144,12 +152,15 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
   auto input_shape = input_shapes.front();
 
   auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
-
+  MS_ASSERT(conv_prim != nullptr);
   // prim of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
+  MS_CHECK_TRUE_RET(split_prim != nullptr, nullptr);
   std::vector<int64_t> new_splits = splits;
   if (split_mode_ == SplitH) {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
+    MS_CHECK_GE(conv_prim->get_kernel_size().size(), 1, nullptr);
+    MS_CHECK_GE(conv_prim->get_stride().size(), 1, nullptr);
     auto extend_bottom = conv_prim->get_kernel_size().at(kIndexH) - conv_prim->get_stride().at(kIndexH);
     auto bottom_vector = std::vector<int64_t>(split_num, extend_bottom);
     bottom_vector[split_num - 1] = 0;
@@ -181,15 +192,26 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
 }
 
 int Conv2DInfo::CheckConv2DPrimitiveType() {
-  if (CheckIfFuncGraphIsNull(func_graph_) != RET_OK) {
+  if (func_graph_ == nullptr) {
     return lite::RET_ERROR;
   }
-  if (CheckIfAnfNodeIsNull(cnode_) != RET_OK) {
+  if (cnode_ == nullptr) {
     return lite::RET_ERROR;
   }
   if (!CheckPrimitiveType(cnode_, prim::kPrimConv2D) && !CheckPrimitiveType(cnode_, prim::kPrimConv2DFusion)) {
     return RET_ERROR;
   }
+  auto prim = GetValueNode<PrimitivePtr>(cnode_->input(kAnfPrimitiveIndex));
+  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kPad) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kInChannel) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kOutChannel) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kDilation) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kFormat) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kGroup) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kKernelSize) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kStride) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kActivationType) != nullptr, RET_ERROR);
   return RET_OK;
 }
 
@@ -228,6 +250,7 @@ int Conv2DInfo::InferParallelCNodes() {
   name_ = orig_name;
   parallel_output_nodes_.clear();
   auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  MS_ASSERT(conv_prim != nullptr);
   return ConstructOutputCNodes(conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs);
 }
 
@@ -235,6 +258,7 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
                                       const std::vector<AnfNodePtr> &feature_split_outputs,
                                       const std::vector<AnfNodePtr> &kernel_split_outputs,
                                       const std::vector<AnfNodePtr> &bias_split_outputs) {
+  MS_ASSERT(conv_prim != nullptr);
   Strategys strategys = strategy_.strategys;
   size_t dev_num = strategy_.dev_num;
   int cin_strategy_sum = std::accumulate(strategys[0][kAxisCIn].begin(), strategys[0][kAxisCIn].end(), 0);
@@ -250,6 +274,7 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
     }
     // copy attr
     auto prim = std::make_shared<ops::Conv2DFusion>();
+    MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
     prim->set_pad(conv_prim->get_pad());
     prim->set_pad_mode(PAD);
     prim->set_in_channel(conv_prim->get_in_channel());

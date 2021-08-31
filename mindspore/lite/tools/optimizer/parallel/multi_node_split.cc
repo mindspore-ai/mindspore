@@ -16,6 +16,7 @@
 
 #include "tools/optimizer/parallel/multi_node_split.h"
 #include "tools/optimizer/parallel/multi_conv_info.h"
+#include "nnacl/op_base.h"
 namespace mindspore {
 namespace opt {
 
@@ -24,19 +25,21 @@ int MultiNodeSplitProxy::InitResource() {
   switch (split_mode_) {
     case SplitN:
       multi_node_split_ = std::make_shared<MultiConvSplitN>(strategy_, primitive_type_, fmk_type_, num_);
-      return RET_OK;
+      break;
     case SplitH:
       multi_node_split_ = std::make_shared<MultiConvSplitH>(strategy_, primitive_type_, fmk_type_, num_);
-      return RET_OK;
+      break;
     case SplitCIN:
       multi_node_split_ = std::make_shared<MultiConvSplitCIN>(strategy_, primitive_type_, fmk_type_, num_);
-      return RET_OK;
+      break;
     case SplitCOUT:
       multi_node_split_ = std::make_shared<MultiConvSplitCOUT>(strategy_, primitive_type_, fmk_type_, num_);
-      return RET_OK;
+      break;
     default:
       return RET_ERROR;
   }
+  MS_CHECK_TRUE_RET(multi_node_split_ != nullptr, RET_ERROR);
+  return RET_OK;
 }
 
 int MultiNodeSplitProxy::FreeResource() {
@@ -45,6 +48,8 @@ int MultiNodeSplitProxy::FreeResource() {
 }
 
 AnfNodePtr MultiNodeSplitProxy::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(node != nullptr, nullptr);
   int ret = InitResource();
   if (ret != RET_OK) {
     return node;

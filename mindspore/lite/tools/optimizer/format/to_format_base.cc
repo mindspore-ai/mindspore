@@ -21,11 +21,12 @@
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "nnacl/op_base.h"
 
 using mindspore::lite::NHWC_SHAPE;
 namespace mindspore {
 namespace opt {
-STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm,
+STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm,
                                  bool before, size_t index) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   AnfNodePtr trans_input = before ? cnode->input(index) : cnode;
@@ -184,6 +185,9 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
 bool ToFormatBase::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ParameterPtr &input,
                                                  const ShapeVector &shape) {
   MS_ASSERT(func_graph != nullptr && input != nullptr);
+  if (shape.size() != kInputSizeFour) {
+    return false;
+  }
   auto manager = func_graph->manager();
   MS_ASSERT(anager != nullptr);
   auto node_users = manager->node_users()[input];
@@ -219,7 +223,7 @@ STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "fetch shape failed." << input->fullname_with_scope();
       return lite::RET_ERROR;
     }
-    if (shape.size() != kInputSizeFour || !DecideWhetherHandleGraphInput(func_graph, input_param, shape)) {
+    if (!DecideWhetherHandleGraphInput(func_graph, input_param, shape)) {
       continue;
     }
     ShapeVector transfer_shape;
@@ -290,6 +294,7 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
   auto node_list = TopoSort(func_graph->get_return());
   int status;
   for (auto &node : node_list) {
+    MS_CHECK_TRUE_RET(node != nullptr, false);
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
@@ -388,7 +393,7 @@ STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<A
 }
 
 bool ToFormatBase::Run(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, false);
   if (format_ != mindspore::NHWC && format_ != mindspore::NCHW) {
     MS_LOG(ERROR) << "format transferring only support nc2nh or nh2nc.";
     return false;
@@ -410,13 +415,6 @@ bool ToFormatBase::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
   SetSensitiveOps();
-  auto node_list = TopoSort(func_graph->get_return());
-  for (auto &node : node_list) {
-    auto prim = GetValueNode<PrimitivePtr>(node);
-    if (prim == nullptr) {
-      continue;
-    }
-  }
   if (!BasicProcess(func_graph, true)) {
     MS_LOG(ERROR) << "transfer format failed.";
     return false;

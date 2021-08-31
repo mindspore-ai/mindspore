@@ -38,6 +38,7 @@ namespace {
 void SplitConstantData(char *in_data, char **out_data, int64_t num_split, int64_t split_dim_size, int64_t element_bytes,
                        int64_t outer_total_dim, int64_t inner_stride, const int64_t *start_indices,
                        const int64_t *end_indices) {
+  MS_ASSERT(in_data != nullptr && out_data != nullptr && start_indices != nullptr && end_indices != nullptr);
   int64_t input_stride = split_dim_size * inner_stride * element_bytes;
   for (int64_t slice_idx = 0; slice_idx < num_split; slice_idx++) {
     int out_stride = (end_indices[slice_idx] - start_indices[slice_idx]) * inner_stride * element_bytes;
@@ -51,6 +52,7 @@ void SplitConstantData(char *in_data, char **out_data, int64_t num_split, int64_
 
 void CreateSplitConstantTensors(const tensor::TensorPtr &constant_tensor, const std::vector<int64_t> &splits,
                                 int64_t split_dim, std::vector<tensor::TensorPtr> *split_constant_tensors) {
+  MS_ASSERT(constant_tensor != nullptr && split_constant_tensors != nullptr);
   auto constant_shape = constant_tensor->shape();
   auto weight_type_id = constant_tensor->data_type();
   int64_t total_block_count = 0;
@@ -58,6 +60,7 @@ void CreateSplitConstantTensors(const tensor::TensorPtr &constant_tensor, const 
   for (int64_t i = 0; i < split_num; i++) {
     total_block_count += splits.at(i);
   }
+  MS_ASSERT(split_dim < static_cast<int64_t>(constant_shape.size()));
   int64_t split_dim_size = constant_shape[split_dim];
   int64_t visited_block = 0;
   std::vector<ShapeVector> split_constant_shapes(split_num, ShapeVector(constant_shape));
@@ -111,6 +114,9 @@ int DepthwiseConv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   // so just get the ratio from strategy
   int split_count = 0;
   Strategys strategys = strategy.strategys;
+  MS_CHECK_GE(strategys.size(), kInputSizeTwo, RET_ERROR);
+  MS_CHECK_GE(strategys[0].size(), kInputSizeFour, RET_ERROR);
+  MS_CHECK_GE(strategys[1].size(), kInputSizeFour, RET_ERROR);
   if (is_any_not_none(strategys[0][kAxisN])) {
     split_count++;
     splits_ = strategys[0][kAxisN];
@@ -185,6 +191,8 @@ bool DepthwiseConv2DInfo::CheckSplitOutputs(const std::vector<AnfNodePtr> &featu
 void DepthwiseConv2DInfo::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
                                          int64_t *visited_in_channel, int64_t *visited_out_channel,
                                          int64_t *visited_group, int output_conv_index) {
+  MS_ASSERT(conv_prim != nullptr && visited_in_channel != nullptr);
+  MS_ASSERT(visited_out_channel != nullptr && visited_group != nullptr);
   int64_t dev_num = static_cast<int64_t>(splits_.size());
   int64_t total_ratio = std::accumulate(splits_.begin(), splits_.end(), 0);
   int64_t in_channel = conv_prim->get_in_channel();
@@ -210,6 +218,7 @@ void DepthwiseConv2DInfo::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion
     case SplitCOUT:
     case SplitCIN: {
       if (output_conv_index != dev_num - 1) {
+        NNACL_CHECK_ZERO_RETURN(total_ratio);
         auto curr_channel = in_channel * splits_.at(output_conv_index) / total_ratio;
         conv_prim->set_in_channel(curr_channel);
         (*visited_in_channel) += curr_channel;
@@ -218,6 +227,7 @@ void DepthwiseConv2DInfo::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion
       }
 
       if (output_conv_index != dev_num - 1) {
+        NNACL_CHECK_ZERO_RETURN(total_ratio);
         auto curr_channel = out_channel * splits_.at(output_conv_index) / total_ratio;
         conv_prim->set_out_channel(curr_channel);
         (*visited_out_channel) += curr_channel;
@@ -226,6 +236,7 @@ void DepthwiseConv2DInfo::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion
       }
 
       if (output_conv_index != dev_num - 1) {
+        NNACL_CHECK_ZERO_RETURN(total_ratio);
         auto curr_group = group * splits_.at(output_conv_index) / total_ratio;
         conv_prim->set_group(curr_group);
         (*visited_group) += curr_group;
@@ -244,6 +255,7 @@ void DepthwiseConv2DInfo::AdJustInputs(const std::shared_ptr<ops::Conv2DFusion> 
                                        const std::vector<AnfNodePtr> &feature_split_outputs,
                                        const std::vector<AnfNodePtr> &kernel_split_outputs,
                                        const std::vector<AnfNodePtr> &bias_split_outputs, int output_conv_index) {
+  MS_ASSERT(conv_prim != nullptr);
   std::vector<AnfNodePtr> tmp_outputs;
   std::string conv_cnode_name = cnode_->fullname_with_scope();
   bool has_bias = cnode_->size() > kBiasIndex + 1;
@@ -277,6 +289,7 @@ int DepthwiseConv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2D
                                                const std::vector<AnfNodePtr> &feature_split_outputs,
                                                const std::vector<AnfNodePtr> &kernel_split_outputs,
                                                const std::vector<AnfNodePtr> &bias_split_outputs) {
+  MS_ASSERT(conv_prim != nullptr);
   if (!CheckSplitOutputs(feature_split_outputs, kernel_split_outputs, bias_split_outputs)) {
     return RET_ERROR;
   }
@@ -297,7 +310,9 @@ int DepthwiseConv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2D
 AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, size_t input_index,
                                                      std::vector<AnfNodePtr> *split_outputs, size_t split_num,
                                                      const std::vector<int64_t> &splits) {
+  MS_ASSERT(orig_node != nullptr && split_outputs != nullptr);
   auto depth_wise_conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  MS_ASSERT(depth_wise_conv_prim != nullptr);
   auto ori_node_name = ori_node->fullname_with_scope();
   auto graph_node_input_shapes = Spliter::GetInstance()->graph_node_input_shapes();
   auto input_shape_iter = graph_node_input_shapes.find(ori_node_name);
@@ -306,6 +321,7 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
   }
   auto input_shapes = input_shape_iter->second;
   auto input_shape = input_shapes.front();
+  MS_CHECK_TRUE_RET(input_shape.size() > kInputSizeTwo, nullptr);
   int64_t input_h = input_shape.at(kAxisH);
   int64_t input_w = input_shape.at(kAxisW);
   auto pad_list = GetSplitPadList(depth_wise_conv_prim, input_h, input_w);
@@ -314,9 +330,13 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
 
   // prim of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
+  MS_CHECK_TRUE_RET(split_prim != nullptr, nullptr);
   std::vector<int64_t> new_splits = splits;
+  MS_CHECK_TRUE_RET(input_shape.size() > static_cast<size_t>(split_dim_), nullptr);
   if (split_mode_ == SplitH) {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
+    MS_CHECK_GE(depth_wise_conv_prim->get_kernel_size().size(), 1, nullptr);
+    MS_CHECK_GE(depth_wise_conv_prim->get_stride().size(), 1, nullptr);
     auto extend_bottom =
       depth_wise_conv_prim->get_kernel_size().at(kIndexH) - depth_wise_conv_prim->get_stride().at(kIndexH);
     auto bottom_vector = std::vector<int64_t>(split_num, extend_bottom);
@@ -350,8 +370,8 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
 }
 
 int DepthwiseConv2DInfo::CheckDepthWiseConv2DPrimitiveType() {
-  auto c_node = cnode_->cast<CNodePtr>();
-  auto prim = GetValueNode<PrimitivePtr>(c_node->input(kAnfPrimitiveIndex));
+  auto prim = GetValueNode<PrimitivePtr>(cnode_->input(kAnfPrimitiveIndex));
+  MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
   // depth_wise can not be splited in conv_info, we deal with in depthwise_conv_info
   bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
   if (!is_depth_wise) {
@@ -360,11 +380,17 @@ int DepthwiseConv2DInfo::CheckDepthWiseConv2DPrimitiveType() {
   if (!CheckPrimitiveType(cnode_, prim::kPrimConv2D) && !CheckPrimitiveType(cnode_, prim::kPrimConv2DFusion)) {
     return RET_ERROR;
   }
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kInChannel) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kOutChannel) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kGroup) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kKernelSize) != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kStride) != nullptr, RET_ERROR);
   return RET_OK;
 }
 
 int DepthwiseConv2DInfo::CreateConstantOutputsOfSplit(std::vector<AnfNodePtr> *split_outputs, int input_index) {
   // split depthwise_conv weight && bias offline
+  MS_ASSERT(split_outputs != nullptr);
   int64_t split_dim = kAxisCOut;
   if (input_index == kBiasIndex) {
     split_dim = 0;
@@ -382,6 +408,7 @@ int DepthwiseConv2DInfo::CreateConstantOutputsOfSplit(std::vector<AnfNodePtr> *s
     auto type_id_ptr = TypeIdToType(split_constant_tensor->data_type());
     parameter_node->set_abstract(
       std::make_shared<abstract::AbstractTensor>(type_id_ptr, split_constant_tensor->shape()));
+    MS_CHECK_TRUE_RET(parameter_node->abstract() != nullptr, RET_ERROR);
     parameter_node->set_default_param(split_constant_tensor);
     parameter_node->set_name(name_);
     split_outputs->push_back(parameter_node);
@@ -436,6 +463,7 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
   }
   name_ = input_op_name;
   auto depth_wise_conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  MS_ASSERT(depth_wise_conv_prim != nullptr);
   return ConstructOutputCNodes(depth_wise_conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs);
 }
 

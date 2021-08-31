@@ -45,7 +45,7 @@ class ParallelPass : public opt::NodePass {
   bool SetParallelOpName(const AnfNodePtr &node, std::string *parallel_name);
 
   // create a parallel operator from different scope_name
-  OperatorInfoPtr CreateParallelOperator(const AnfNodePtr &node, const std::string &scope_name,
+  OperatorInfoPtr CreateParallelOperator(const CNodePtr &cnode, const std::string &scope_name,
                                          const std::string &parallel_op_name);
 
  private:
