@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "schema/model_generated.h"
 #include "src/common/log_adapter.h"
+#include "src/common/log_util.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"

@@ -74,6 +74,8 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";
 #endif
       num++;
+    } else {
+      MS_LOG(INFO) << "pass " << pass->name() << "is null";
     }
   }
   return changed;

@@ -28,6 +28,7 @@ ops::PrimitiveC *TFLinSpaceParser::Parse(const tensorflow::NodeDef &tf_op,
                                          std::vector<std::string> *inputs, int *output_size) {
   MS_LOG(DEBUG) << "TF LinSpaceParser";
   auto prim = std::make_unique<ops::LinSpace>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); ++i) {
     auto status = AddOpInput(tf_op, i, inputs);

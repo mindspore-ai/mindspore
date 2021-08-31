@@ -34,7 +34,7 @@ ops::PrimitiveC *TFOneHotParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
   prim->set_axis(attr_value.i());
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); ++i) {
     if (AddOpInput(tf_op, i, inputs) != RET_OK) {

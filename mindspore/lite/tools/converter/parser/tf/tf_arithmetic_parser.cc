@@ -53,7 +53,7 @@ ops::PrimitiveC *TFAddParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::AddFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -67,7 +67,7 @@ ops::PrimitiveC *TFSubParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::SubFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -81,7 +81,7 @@ ops::PrimitiveC *TFMulParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::MulFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -95,7 +95,7 @@ ops::PrimitiveC *TFDivParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::DivFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -109,7 +109,7 @@ ops::PrimitiveC *TFMaximumParser::Parse(const tensorflow::NodeDef &tf_op,
                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                         std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Maximum>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -123,7 +123,7 @@ ops::PrimitiveC *TFMinimumParser::Parse(const tensorflow::NodeDef &tf_op,
                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                         std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Minimum>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -137,7 +137,7 @@ ops::PrimitiveC *TFGreaterParser::Parse(const tensorflow::NodeDef &tf_op,
                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                         std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Greater>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -151,7 +151,7 @@ ops::PrimitiveC *TFGreaterEqualParser::Parse(const tensorflow::NodeDef &tf_op,
                                              const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                              std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::GreaterEqual>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -165,7 +165,7 @@ ops::PrimitiveC *TFLessParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                      std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Less>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -179,7 +179,7 @@ ops::PrimitiveC *TFLessEqualParser::Parse(const tensorflow::NodeDef &tf_op,
                                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                           std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::LessEqual>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -193,7 +193,7 @@ ops::PrimitiveC *TFEqualParser::Parse(const tensorflow::NodeDef &tf_op,
                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                       std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Equal>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -207,7 +207,7 @@ ops::PrimitiveC *TFNotEqualParser::Parse(const tensorflow::NodeDef &tf_op,
                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                          std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::NotEqual>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -221,7 +221,7 @@ ops::PrimitiveC *TFSquaredDifferenceParser::Parse(const tensorflow::NodeDef &tf_
                                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                                   std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::SquaredDifference>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -235,7 +235,7 @@ ops::PrimitiveC *TFRsqrtParser::Parse(const tensorflow::NodeDef &tf_op,
                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                       std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Rsqrt>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
@@ -248,7 +248,7 @@ ops::PrimitiveC *TFRoundParser::Parse(const tensorflow::NodeDef &tf_op,
                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                       std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Round>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -262,7 +262,7 @@ ops::PrimitiveC *TFCeilParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                      std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Ceil>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -276,7 +276,7 @@ ops::PrimitiveC *TFExpParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::ExpFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -290,7 +290,7 @@ ops::PrimitiveC *TFFloorParser::Parse(const tensorflow::NodeDef &tf_op,
                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                       std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Floor>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -304,7 +304,7 @@ ops::PrimitiveC *TFFloorDivParser::Parse(const tensorflow::NodeDef &tf_op,
                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                          std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::FloorDiv>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -318,7 +318,7 @@ ops::PrimitiveC *TFFloorModParser::Parse(const tensorflow::NodeDef &tf_op,
                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                          std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::FloorMod>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
@@ -332,7 +332,7 @@ ops::PrimitiveC *TFLogParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Log>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -346,7 +346,7 @@ ops::PrimitiveC *TFSqrtParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                      std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Sqrt>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -360,7 +360,7 @@ ops::PrimitiveC *TFCosParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Cos>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -374,7 +374,7 @@ ops::PrimitiveC *TFSinParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Sin>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -388,7 +388,7 @@ ops::PrimitiveC *TFSquareParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Square>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -402,7 +402,7 @@ ops::PrimitiveC *TFPowParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::PowFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
@@ -416,7 +416,7 @@ ops::PrimitiveC *TFAbsParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Abs>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";

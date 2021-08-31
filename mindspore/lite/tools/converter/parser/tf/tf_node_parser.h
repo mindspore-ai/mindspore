@@ -25,6 +25,7 @@
 #include "proto/graph.pb.h"
 #include "ops/primitive_c.h"
 #include "mindspore/core/utils/check_convert_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {

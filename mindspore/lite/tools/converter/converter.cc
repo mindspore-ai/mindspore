@@ -26,8 +26,10 @@
 #include "src/train/train_populate_parameter.h"
 #include "include/registry/model_parser_registry.h"
 #include "src/common/dynamic_library_loader.h"
+#include "src/common/log_util.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/mindspore_importer.h"
+#include "nnacl/op_base.h"
 namespace mindspore {
 namespace lite {
 namespace {
@@ -79,6 +81,7 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
   if (!flag->pluginsPath.empty()) {
     for (auto &path : flag->pluginsPath) {
       auto dl_loader = std::make_shared<DynamicLibraryLoader>();
+      MS_CHECK_TRUE_RET(dl_loader != nullptr, nullptr);
       auto status = dl_loader->Open(path);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "open dynamic library failed. " << path;

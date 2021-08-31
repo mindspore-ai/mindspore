@@ -33,6 +33,7 @@ ops::PrimitiveC *TFRaggedRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     }
   }
   auto prim = std::make_unique<ops::RaggedRange>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim.release();
 }
 

@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <deque>
+#include "nnacl/op_base.h"
 #include "src/common/log_adapter.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -143,6 +144,7 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
   }
   if (config->parallel_split_config_.parallel_split_type_ == converter::SplitByUserRatio) {
     auto optimizer = std::make_shared<opt::GraphOptimizer>();
+    CHECK_NULL_RETURN(optimizer);
     auto graph_inputs = old_graph->get_inputs();
     opt::SplitMode split_mode = opt::NoSplit;
     for (const auto &graph_input : graph_inputs) {
@@ -170,6 +172,7 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
     }
     opt::Spliter::GetInstance()->RecordGraphInfo(old_graph);
     auto parallel_pm = std::make_shared<opt::PassManager>("anf parallel pass manager", true);
+    CHECK_NULL_RETURN(parallel_pm);
     // 2. preceding parallel pass
     parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
     parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
@@ -347,12 +350,14 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
   }
 
   auto reduce_act_pass = std::make_shared<opt::ReduceSameActPass>();
+  MS_CHECK_TRUE_RET(reduce_act_pass != nullptr, nullptr);
   if (!reduce_act_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Run reduce same act pass failed.";
     return nullptr;
   }
 
   auto split_one_pass = std::make_shared<opt::SplitOnePass>();
+  MS_CHECK_TRUE_RET(split_one_pass != nullptr, nullptr);
   if (!split_one_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Run split one pass failed.";
     return nullptr;

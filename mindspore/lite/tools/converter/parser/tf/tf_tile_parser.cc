@@ -27,7 +27,7 @@ ops::PrimitiveC *TFTileParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                      std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::TileFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   std::vector<int64_t> dims;
   const auto &tensor_proto = attr_value.tensor();

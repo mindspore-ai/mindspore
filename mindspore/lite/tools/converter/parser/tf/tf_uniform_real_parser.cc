@@ -33,6 +33,7 @@ ops::PrimitiveC *TFUniformRealParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   auto prim = std::make_unique<ops::UniformReal>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "seed", &attr_value)) {
     MS_LOG(ERROR) << "The seed attr should be specified";

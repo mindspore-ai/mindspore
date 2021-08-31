@@ -27,7 +27,7 @@ ops::PrimitiveC *TFTensorListStackParser::Parse(const tensorflow::NodeDef &tf_op
                                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::TensorListStack>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "element_dtype", &attr_value)) {
     MS_LOG(ERROR) << "The element_dtype attr should be specified";

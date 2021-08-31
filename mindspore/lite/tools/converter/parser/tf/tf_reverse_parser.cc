@@ -27,7 +27,7 @@ ops::PrimitiveC *TFReverseParser::Parse(const tensorflow::NodeDef &tf_op,
                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                         std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::ReverseV2>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   auto value = GetConstInputNode(tf_node_map, tf_op.input(1));
   if (value == nullptr) {

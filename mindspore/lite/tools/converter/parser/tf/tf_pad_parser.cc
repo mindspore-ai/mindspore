@@ -31,7 +31,7 @@ ops::PrimitiveC *TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::PadFusion>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (tf_op.op() == "Pad") {
     prim->set_padding_mode(mindspore::PaddingMode::CONSTANT);
     prim->set_constant_value(0.0f);

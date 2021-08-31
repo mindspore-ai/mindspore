@@ -16,6 +16,7 @@
 
 #include "tools/converter/optimizer.h"
 #include "src/common/log_adapter.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -56,6 +57,7 @@ STATUS Optimizer::Run(schema::MetaGraphT *graphDefT) {
       if (graph_node == nullptr) {
         return RET_ERROR;
       }
+      CHECK_NULL_RETURN(pass);
       status = pass->Run(graph_node);
       delete graph_node;
       if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
@@ -70,6 +72,7 @@ STATUS Optimizer::Run(schema::MetaGraphT *graphDefT) {
   }
 
   for (auto pass : this->graph_passes_) {
+    CHECK_NULL_RETURN(pass);
     status = pass->Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
       MS_LOG(ERROR) << "Run GraphPass failed";

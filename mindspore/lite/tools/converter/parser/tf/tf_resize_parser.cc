@@ -28,7 +28,7 @@ ops::PrimitiveC *TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Resize>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NHWC));
   prim->set_cubic_coeff(-0.75f);

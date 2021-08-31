@@ -27,7 +27,7 @@ ops::PrimitiveC *TFBatchMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
                                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                             std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::MatMul>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "adj_x", &attr_value)) {
     MS_LOG(ERROR) << "The begin_mask attr should be specified";
