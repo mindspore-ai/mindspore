@@ -185,6 +185,7 @@ int DeConvolutionFp16CPUKernel::Init() {
   CHECK_NULL_RETURN(conv_param_);
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
   CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
+  UpdateOriginWeightAndBias();
 
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);

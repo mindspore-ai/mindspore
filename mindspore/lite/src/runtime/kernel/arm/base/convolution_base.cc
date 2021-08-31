@@ -405,4 +405,13 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
                                     &conv_param_->conv_quant_arg_.out_act_max_[0]);
   return RET_OK;
 }
+
+void ConvolutionBaseCPUKernel::UpdateOriginWeightAndBias() {
+  if (in_tensors_.at(kWeightIndex)->data() != nullptr) {
+    origin_weight_ = in_tensors_.at(kWeightIndex)->data();
+  }
+  if (in_tensors_.size() == kInputSize2 && in_tensors_.at(kBiasIndex)->data() != nullptr) {
+    origin_bias_ = in_tensors_.at(kBiasIndex)->data();
+  }
+}
 }  // namespace mindspore::kernel

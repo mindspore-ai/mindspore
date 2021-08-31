@@ -69,6 +69,7 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
  protected:
   int InitConvWeightBias();
   int RepackWeight();
+  void UpdateOriginWeightAndBias();
 
   virtual int MallocWeightBiasData() { return RET_OK; }
   virtual void PackWeight() {}

@@ -64,6 +64,7 @@ int ConvolutionDepthwise3x3Fp16CPUKernel::MallocWeightBiasData() {
 }
 
 int ConvolutionDepthwise3x3Fp16CPUKernel::Init() {
+  UpdateOriginWeightAndBias();
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     int channel = weight_tensor->Batch();

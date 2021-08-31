@@ -74,6 +74,140 @@ kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &
 }
 }  // namespace
 
+namespace {
+// support_fp16: current device and package support float16
+int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16) {
+  MS_ASSERT(tensor != nullptr);
+  MS_ASSERT(tensor->IsConst());
+  MS_ASSERT(tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeFloat16);
+  MS_ASSERT(dst_data_type == kNumberTypeFloat32 || dst_data_type == kNumberTypeFloat16);
+  if (tensor->data_type() == dst_data_type) {
+    return RET_OK;
+  }
+  auto origin_own_data = tensor->own_data();
+  auto origin_dt = tensor->data_type();
+  auto origin_data = tensor->data_c();
+  MS_ASSERT(origin_data != nullptr);
+  tensor->set_data(nullptr);
+  tensor->set_data_type(dst_data_type);
+  auto ret = tensor->MallocData();
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "malloc data failed";
+    // reset tensor
+    tensor->set_data(origin_data);
+    tensor->set_data_type(origin_dt);
+    tensor->set_own_data(origin_own_data);
+    return ret;
+  }
+  auto new_tensor_data = tensor->data_c();
+  MS_ASSERT(new_tensor_data != nullptr);
+  if (dst_data_type == kNumberTypeFloat32) {
+    Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
+  } else {  // dst_data_type == kNumberTypeFloat16
+    Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
+  }
+  if (origin_data != nullptr && origin_own_data) {
+    if (tensor->allocator() == nullptr) {
+      free(origin_data);
+    } else {
+      tensor->allocator()->Free(origin_data);
+    }
+  }
+  return RET_OK;
+}
+
+// support_fp16: current device and package support float16
+int CastKernelWeight(kernel::SubGraphType belong_subgraph_type, kernel::LiteKernel *kernel, bool support_fp16) {
+  MS_ASSERT(kernel != nullptr);
+  MS_ASSERT(kernel->subgraph_type() == kernel::kNotSubGraph);
+  if (belong_subgraph_type != kernel::kCpuFP32SubGraph && belong_subgraph_type != kernel::kCpuFP16SubGraph) {
+    return RET_OK;
+  }
+  for (auto *tensor : kernel->in_tensors()) {
+    MS_ASSERT(tensor != nullptr);
+    // only cast const tensor
+    // tensorlist not support fp16 now
+    if (!tensor->IsConst() || tensor->data_type() == kObjectTypeTensorType) {
+      continue;
+    }
+    // only support fp32->fp16 or fp16->fp32
+    if (tensor->data_type() != kNumberTypeFloat32 && tensor->data_type() != kNumberTypeFloat16) {
+      continue;
+    }
+    if (tensor->data_type() == kNumberTypeFloat32 && belong_subgraph_type == kernel::kCpuFP16SubGraph) {
+      auto ret = CastConstTensorData(tensor, kNumberTypeFloat16, support_fp16);
+      if (ret != RET_OK) {
+        MS_LOG(DEBUG) << "Cast const tensor from fp32 to fp16 failed, tensor name : " << tensor->tensor_name();
+        return ret;
+      }
+    } else if (tensor->data_type() == kNumberTypeFloat16 && belong_subgraph_type == kernel::kCpuFP32SubGraph) {
+      auto ret = CastConstTensorData(tensor, kNumberTypeFloat32, support_fp16);
+      if (ret != RET_OK) {
+        MS_LOG(DEBUG) << "Cast const tensor from fp16 to fp32 failed, tensor name : " << tensor->tensor_name();
+        return ret;
+      }
+    } else {
+      MS_LOG(DEBUG) << "No need to cast";
+    }
+  }
+  return RET_OK;
+}
+
+int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
+  // packed kernels such as conv don't need to copy because weight will be packed in kernel
+  if (IsPackedOp(op_type)) {
+    return RET_OK;
+  }
+  for (auto *tensor : tensors) {
+    // only copy non-copied const tensor
+    if (!tensor->IsConst() || tensor->own_data()) {
+      continue;
+    }
+    if (tensor->data_type() == kObjectTypeTensorType) {
+      // tensorlist's data is nullptr since ConvertTensors
+      // we never set or malloc data of tensorlist but malloc tensors in tensorlist
+      MS_ASSERT(tensor->data_c() == nullptr);
+    } else {
+      auto copy_tensor = Tensor::CopyTensor(*tensor, true);
+      if (copy_tensor == nullptr) {
+        MS_LOG(ERROR) << "Copy tensor failed";
+        return RET_ERROR;
+      }
+      tensor->FreeData();
+      tensor->set_data(copy_tensor->data_c());
+      tensor->set_own_data(true);
+      copy_tensor->set_data(nullptr);
+      delete (copy_tensor);
+    }
+  }
+  return RET_OK;
+}
+}  // namespace
+
+// support_fp16: current device and package support float16
+int Scheduler::HandleBuildinCpuKernelWeight(kernel::SubGraphType belong_subgraph_type, kernel::LiteKernel *kernel) {
+  MS_ASSERT(kernel != nullptr);
+  MS_ASSERT(kernel->subgraph_type() == kernel::kNotSubGraph);
+  if (is_train_session_ || kernel->type() == schema::PrimitiveType_Custom ||
+      kernel->desc().provider != kernel::kBuiltin) {
+    return RET_OK;
+  }
+  auto ret = CastKernelWeight(belong_subgraph_type, kernel, context_->device_and_pkg_support_fp16());
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "CastKernelWeight failed: " << ret;
+    return RET_NOT_SUPPORT;
+  }
+  if (!(reinterpret_cast<LiteModel *>(src_model_)->keep_model_buf())) {
+    // we don't need to restore tensor for copy data
+    ret = CopyConstTensorData(kernel->in_tensors(), kernel->op_parameter()->type_);
+    if (ret != RET_OK) {
+      MS_LOG(DEBUG) << "CopyConstTensorsData failed: " << ret;
+      return RET_NOT_SUPPORT;
+    }
+  }
+  return RET_OK;
+}
+
 int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
   if (is_train_session_) {
     return RET_OK;
@@ -85,13 +219,18 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
       continue;
     }
 #endif
-    if (kernel->subgraph_type() == kernel::kNotSubGraph) {
+    auto subgraph_type = kernel->subgraph_type();
+    if (subgraph_type == kernel::kNotSubGraph) {
       MS_LOG(ERROR) << "construct subgraph failed.";
       return RET_ERROR;
     }
     auto subgraph_nodes = reinterpret_cast<kernel::SubGraphKernel *>(kernel)->nodes();
     for (auto node : subgraph_nodes) {
-      auto ret = node->Init();
+      auto ret = HandleBuildinCpuKernelWeight(subgraph_type, node);
+      if (ret != RET_OK) {
+        return ret;
+      }
+      ret = node->Init();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Kernel " << node->name() << " Init failed.";
         return ret;
@@ -590,8 +729,8 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index) {
 
 namespace {
 // support_fp16: current device and package support float16
-int CastConstTensorData(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_origin_tensors, TypeId dst_data_type,
-                        bool support_fp16) {
+int CastAndRestoreConstTensorData(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_origin_tensors,
+                                  TypeId dst_data_type, bool support_fp16) {
   MS_ASSERT(tensor != nullptr);
   MS_ASSERT(tensor->IsConst());
   MS_ASSERT(tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeFloat16);
@@ -646,49 +785,19 @@ int CastConstTensorsData(const std::vector<Tensor *> &tensors, std::map<Tensor *
       continue;
     }
     if (tensor->data_type() == kNumberTypeFloat32 && dst_data_type == kNumberTypeFloat16) {
-      auto ret = CastConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat16, support_fp16);
+      auto ret = CastAndRestoreConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat16, support_fp16);
       if (ret != RET_OK) {
         MS_LOG(DEBUG) << "Cast const tensor from fp32 to fp16 failed, tensor name : " << tensor->tensor_name();
         return ret;
       }
     } else if (tensor->data_type() == kNumberTypeFloat16 && dst_data_type == kNumberTypeFloat32) {
-      auto ret = CastConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat32, support_fp16);
+      auto ret = CastAndRestoreConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat32, support_fp16);
       if (ret != RET_OK) {
         MS_LOG(DEBUG) << "Cast const tensor from fp16 to fp32 failed, tensor name : " << tensor->tensor_name();
         return ret;
       }
     } else {
       MS_LOG(DEBUG) << "No need to cast from " << tensor->data_type() << " to " << dst_data_type;
-    }
-  }
-  return RET_OK;
-}
-
-int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
-  // packed kernels such as conv don't need to copy because weight will be packed in kernel
-  if (IsPackedOp(op_type)) {
-    return RET_OK;
-  }
-  for (auto *tensor : tensors) {
-    // only copy non-copied const tensor
-    if (!tensor->IsConst() || tensor->own_data()) {
-      continue;
-    }
-    if (tensor->data_type() == kObjectTypeTensorType) {
-      // tensorlist's data is nullptr since ConvertTensors
-      // we never set or malloc data of tensorlist but malloc tensors in tensorlist
-      MS_ASSERT(tensor->data_c() == nullptr);
-    } else {
-      auto copy_tensor = Tensor::CopyTensor(*tensor, true);
-      if (copy_tensor == nullptr) {
-        MS_LOG(ERROR) << "Copy tensor failed";
-        return RET_ERROR;
-      }
-      tensor->FreeData();
-      tensor->set_data(copy_tensor->data_c());
-      tensor->set_own_data(true);
-      copy_tensor->set_data(nullptr);
-      delete (copy_tensor);
     }
   }
   return RET_OK;
@@ -756,17 +865,11 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 #endif
   std::map<Tensor *, Tensor *> restored_origin_tensors;
 
-  ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type,
-                             context_->device_and_pkg_support_fp16());
-  if (ret != RET_OK) {
-    MS_LOG(DEBUG) << "CastConstTensorsData failed: " << ret;
-    return RET_NOT_SUPPORT;
-  }
-  if (!is_train_session_ && !(reinterpret_cast<LiteModel *>(src_model_)->keep_model_buf())) {
-    // we don't need to restore tensor for copy data
-    ret = CopyConstTensorData(in_tensors, op_type);
+  if (is_train_session_) {
+    ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type,
+                               context_->device_and_pkg_support_fp16());
     if (ret != RET_OK) {
-      MS_LOG(DEBUG) << "CopyConstTensorsData failed: " << ret;
+      MS_LOG(DEBUG) << "CastConstTensorsData failed: " << ret;
       return RET_NOT_SUPPORT;
     }
   }
@@ -777,11 +880,7 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     if (is_train_session_) {
       (*kernel)->Init();
       RestoreTensorData(&restored_origin_tensors);
-    } else {
-      FreeRestoreTensors(&restored_origin_tensors);
     }
-  } else {
-    RestoreTensorData(&restored_origin_tensors);
   }
   return ret;
 }

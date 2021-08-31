@@ -58,6 +58,7 @@ int ConvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
 int ConvolutionDepthwiseFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  UpdateOriginWeightAndBias();
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     int channel = weight_tensor->Batch();

@@ -95,6 +95,7 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
 int ConvolutionFP16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  UpdateOriginWeightAndBias();
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
     int in_channel = filter_tensor->Channel();
