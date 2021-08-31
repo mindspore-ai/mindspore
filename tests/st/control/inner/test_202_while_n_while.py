@@ -55,7 +55,7 @@ class BackwardNet(nn.Cell):
         return grads
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -67,15 +67,10 @@ def test_forward():
     forward_net = ForwardNet(max_cycles=3)
     graph_out = forward_net(x, y)
 
-    context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
-    forward_net = ForwardNet(max_cycles=3)
-    pynative_out = forward_net(x, y)
-    assert graph_out == pynative_out
+    assert graph_out == Tensor(np.array(18), mstype.int32)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -88,10 +83,4 @@ def test_backward():
     backward_net = BackwardNet(forward_net)
     graph_grads = backward_net(x, y)
 
-    context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
-    forward_net = ForwardNet(max_cycles=3)
-    backward_net = BackwardNet(forward_net)
-    pynative_grads = backward_net(x, y)
-    assert graph_grads == pynative_grads
+    assert graph_grads == Tensor(np.array(18), mstype.int32)

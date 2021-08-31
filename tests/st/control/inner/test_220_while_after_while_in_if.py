@@ -36,7 +36,7 @@ class ForwardNet(nn.Cell):
     def construct(self, x, y):
         out = self.zero
         i = self.i
-        if x > y:
+        if x < y:
             while i < self.max_cycles:
                 out = x * y + out
                 i = i + 1
@@ -44,7 +44,8 @@ class ForwardNet(nn.Cell):
         while out > 20:
             self.weight = out
             out = out - 20
-        return out, self.weight
+        out1 = self.weight + 1
+        return out, out1
 
 
 class BackwardNet(nn.Cell):
@@ -57,7 +58,8 @@ class BackwardNet(nn.Cell):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -69,12 +71,11 @@ def test_forward():
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
     graph_mode_out = forward_net(x, y)
-    # Pynative Mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    pynative_mode_out = forward_net(x, y)
-    assert graph_mode_out == pynative_mode_out
 
-@pytest.mark.level1
+    assert graph_mode_out == (Tensor(np.array(9), mstype.int32), Tensor(np.array(4), mstype.int32))
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -87,7 +88,5 @@ def test_backward():
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
     graph_mode_grads = backward_net(x, y)
-    # Pynative Mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    pynative_mode_grads = backward_net(x, y)
-    assert graph_mode_grads == pynative_mode_grads
+
+    assert graph_mode_grads == (Tensor(np.array(9), mstype.int32), Tensor(np.array(3), mstype.int32))

@@ -22,6 +22,8 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
+
+
 @pytest.mark.skip(reason="not supported for in while")
 def test_for_after_for_in_while_01():
     class ForAfterForInWhileNet(nn.Cell):
@@ -90,6 +92,7 @@ def test_for_after_for_in_while_01():
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
+
 
 @pytest.mark.skip(reason="not supported for in while")
 def test_for_after_for_in_while_02():

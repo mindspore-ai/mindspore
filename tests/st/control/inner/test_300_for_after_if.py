@@ -20,7 +20,9 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 
 grad_all = C.GradOperation(get_all=True)
-@pytest.mark.level1
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -61,14 +63,5 @@ def test_for_after_if():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    for_after_if_net = ForAfterIfNet()
-    net = GradNet(for_after_if_net)
-
-    forward_net = ForAfterIfNet()
-    pynative_forward_res = forward_net(x)
-    pynative_backward_res = net(x)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
+    assert graph_forward_res == Tensor(150, mstype.int32)
+    assert graph_backward_res == (Tensor(5, mstype.int32),)

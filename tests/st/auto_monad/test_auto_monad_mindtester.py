@@ -550,9 +550,8 @@ def test_side_effect_grad_two_addn_switch():
     out1 = net.grad_mindspore_impl(inputs, grad_ys)
     net = SideEffectTwoAddnSwitchNet()
     try:
-        context.set_context(mode=context.PYNATIVE_MODE)
-        out2 = net.grad_mindspore_impl(inputs, grad_ys)
-        allclose_nparray(out1[0][0].asnumpy(), out2[0][0].asnumpy(), 0.001, 0.001)
+        expect = 54.0
+        allclose_nparray(out1[0][0].asnumpy(), expect, 0.001, 0.001)
     finally:
         context.set_context(mode=context.GRAPH_MODE)
 
@@ -593,9 +592,8 @@ def test_side_effect_grad_if():
     out1 = net.grad_mindspore_impl(inputs, grad_ys)
     net = SideEffectGradIfNet()
     try:
-        context.set_context(mode=context.PYNATIVE_MODE)
-        out2 = net.grad_mindspore_impl(inputs, grad_ys)
-        allclose_nparray(out1.asnumpy(), out2.asnumpy(), 0.001, 0.001)
+        expect = 18.0
+        allclose_nparray(out1.asnumpy(), expect, 0.001, 0.001)
     finally:
         context.set_context(mode=context.GRAPH_MODE)
 
@@ -687,11 +685,11 @@ def test_side_effect_grad_control_flow_assign_depend_while_net():
     inputs2 = Tensor([6.0], ms.float32)
     inputs3 = Tensor([3.0], ms.float32)
     out1 = net.grad_mindspore_impl(inputs1, inputs2, inputs3, grad_ys)
+
     try:
-        context.set_context(mode=context.PYNATIVE_MODE)
-        net = SideEffectControlFlowAssignDependWhileNet()
-        out2 = net.grad_mindspore_impl(inputs1, inputs2, inputs3, grad_ys)
-        allclose_nparray(out1[0][0].asnumpy(), out2[0][0].asnumpy(), 0.001, 0.001)
-        allclose_nparray(out1[1][0].asnumpy(), out2[1][0].asnumpy(), 0.001, 0.001)
+        expect1 = 18.0
+        expect2 = 0
+        allclose_nparray(out1[0][0].asnumpy(), expect1, 0.001, 0.001)
+        allclose_nparray(out1[1][0].asnumpy(), expect2, 0.001, 0.001)
     finally:
         context.set_context(mode=context.GRAPH_MODE)

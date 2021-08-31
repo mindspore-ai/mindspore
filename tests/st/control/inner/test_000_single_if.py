@@ -57,7 +57,7 @@ class GradNet(nn.Cell):
         return grad_all(self.net)(*inputs)
 
 
-def control_flow_single_if(input_net, x, y):
+def control_flow_single_if(input_net, x, y, expect1, expect2):
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     net = input_net()
@@ -67,17 +67,9 @@ def control_flow_single_if(input_net, x, y):
     graph_forward_res = forward_net(x, y)
     graph_backward_res = grad_net(x, y)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    net = input_net()
-    grad_net = GradNet(net)
+    assert graph_forward_res == expect1
+    assert graph_backward_res == expect2
 
-    forward_net = input_net()
-    pynative_forward_res = forward_net(x, y)
-    pynative_backward_res = grad_net(x, y)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -87,7 +79,10 @@ def control_flow_single_if(input_net, x, y):
 def test_single_if():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
-    control_flow_single_if(SingleIfNet, x, y)
+    expect1 = Tensor(26, mstype.int32)
+    expect2 = (Tensor(2, mstype.int32), Tensor(2, mstype.int32))
+    control_flow_single_if(SingleIfNet1, x, y, expect1, expect2)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -97,4 +92,6 @@ def test_single_if():
 def test_single_if_01():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
-    control_flow_single_if(SingleIfNet1, x, y)
+    expect1 = Tensor(26, mstype.int32)
+    expect2 = (Tensor(2, mstype.int32), Tensor(2, mstype.int32))
+    control_flow_single_if(SingleIfNet1, x, y, expect1, expect2)

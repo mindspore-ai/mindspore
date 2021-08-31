@@ -23,6 +23,7 @@ from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -73,17 +74,9 @@ def test_if_after_for_01():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_after_for_net = IfAfterForNet()
-    net = GradNet(if_after_for_net)
+    assert graph_forward_res == Tensor([39], mstype.float32)
+    assert graph_backward_res == (Tensor([13], mstype.int32),)
 
-    forward_net = IfAfterForNet()
-    pynative_forward_res = forward_net(x)
-    pynative_backward_res = net(x)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -135,14 +128,5 @@ def test_if_after_for_02():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_after_for_net = IfAfterForNet()
-    net = GradNet(if_after_for_net)
-
-    forward_net = IfAfterForNet()
-    pynative_forward_res = forward_net(x)
-    pynative_backward_res = net(x)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
+    assert graph_forward_res == Tensor([195], mstype.int32)
+    assert graph_backward_res == (Tensor([0], mstype.int32),)

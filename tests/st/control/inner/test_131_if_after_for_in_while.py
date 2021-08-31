@@ -21,6 +21,7 @@ from mindspore.common.parameter import Parameter
 
 grad_all = C.GradOperation(get_all=True)
 
+
 @pytest.mark.skip(reason="not supported for in while")
 def test_if_after_for_in_while():
     class IfAfterForInWhileNet(nn.Cell):
