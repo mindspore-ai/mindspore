@@ -366,12 +366,9 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   InitStridedSliceTransferBuffer(&transfer_buffer);
 
   StridedSliceParameter *param = (StridedSliceParameter *)parameter;
-  param->num_axes_ = (int)(in_shape_size);
-  param->in_shape_length_ = (int)(in_shape_size);
-
   transfer_buffer.ndim_ = 0;
   if (inputs_size == kStridedSliceInputNum) {
-    transfer_buffer.ndim_ = (int)(param->num_axes_);
+    transfer_buffer.ndim_ = (int)(in_shape_size);
     if (transfer_buffer.ndim_ > MAX_SHAPE_SIZE) {
       return NNACL_ERR;
     }
@@ -407,6 +404,11 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   if (ret != NNACL_OK) {
     return ret;
   }
+
+  // update parameter with new input shape
+  param->num_axes_ = (int)(in_shape_size);
+  param->in_shape_length_ = (int)(in_shape_size);
+
   ApplyBeginMask(&transfer_buffer);
   ret = ApplyEndMask(&transfer_buffer, in_shape, MAX_SHAPE_SIZE);
   if (ret != NNACL_OK) {
