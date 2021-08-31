@@ -24,6 +24,7 @@
 #include "nnacl/fp32/conv_winograd_fp32.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 
+#define CONV_INPUT_UNIT_SIZE 8
 namespace mindspore::kernel {
 class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
  public:

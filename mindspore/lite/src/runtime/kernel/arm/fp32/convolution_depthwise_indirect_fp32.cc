@@ -217,5 +217,4 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocWeightBiasData() {
   memset(zero_ptr_, 0, batch_flag * div_flag * sizeof(float));
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

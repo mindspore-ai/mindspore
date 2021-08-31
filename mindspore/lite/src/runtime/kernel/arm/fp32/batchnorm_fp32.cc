@@ -72,21 +72,21 @@ void BatchnormCPUKernel::FillParam() {
 int BatchnormCPUKernel::InitConstTensor() {
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(1)->Size());
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(2)->Size());
-  mean_ = malloc(in_tensors_.at(1)->Size());
-  variance_ = malloc(in_tensors_.at(2)->Size());
+  mean_ = malloc(in_tensors_.at(SECOND_INPUT)->Size());
+  variance_ = malloc(in_tensors_.at(THIRD_INPUT)->Size());
   if (mean_ == nullptr || variance_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     FreeMeanAndVariance();
     return RET_ERROR;
   }
-  auto in_tensor_mean_data = in_tensors_.at(1)->MutableData();
-  auto in_tensor_var_data = in_tensors_.at(2)->MutableData();
+  auto in_tensor_mean_data = in_tensors_.at(SECOND_INPUT)->MutableData();
+  auto in_tensor_var_data = in_tensors_.at(THIRD_INPUT)->MutableData();
   if (in_tensor_mean_data == nullptr || in_tensor_var_data == nullptr) {
     FreeMeanAndVariance();
     return RET_ERROR;
   }
-  memcpy(mean_, in_tensor_mean_data, in_tensors_.at(1)->Size());
-  memcpy(variance_, in_tensor_var_data, in_tensors_.at(2)->Size());
+  memcpy(mean_, in_tensor_mean_data, in_tensors_.at(SECOND_INPUT)->Size());
+  memcpy(variance_, in_tensor_var_data, in_tensors_.at(THIRD_INPUT)->Size());
   return RET_OK;
 }
 

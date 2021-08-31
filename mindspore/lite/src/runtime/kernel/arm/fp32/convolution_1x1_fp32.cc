@@ -303,17 +303,17 @@ int Convolution1x1CPUKernel::MallocWeightBiasData() {
       MS_LOG(ERROR) << "Conv1x1 Malloc packed_weight_ error!";
       return RET_ERROR;
     }
-    memset(reinterpret_cast<char *>(packed_weight_), 0, size);
+    memset(packed_weight_, 0, size);
   }
 
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == kInputSize2) {
     size = UP_ROUND(output_channel, col_tile_) * sizeof(float);
     bias_data_ = malloc(size);
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
       return RET_ERROR;
     }
-    memset(reinterpret_cast<char *>(bias_data_), 0, size);
+    memset(bias_data_, 0, size);
   }
   return RET_OK;
 }

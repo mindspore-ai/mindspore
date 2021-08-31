@@ -198,5 +198,4 @@ int ConvolutionCPUKernel::MallocWeightBiasData() {
   memset(bias_data_, 0, oc_block_num * sizeof(float));
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

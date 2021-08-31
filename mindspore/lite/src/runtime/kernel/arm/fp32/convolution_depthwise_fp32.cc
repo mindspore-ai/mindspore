@@ -22,7 +22,6 @@ using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-
 int ConvolutionDepthwiseCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
