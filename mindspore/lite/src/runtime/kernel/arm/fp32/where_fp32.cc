@@ -31,8 +31,10 @@ namespace mindspore::kernel {
 constexpr uint32_t kSingleNum = 1;
 constexpr uint32_t kTripleNum = 3;
 int WhereCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_CHECK_TRUE_RET(in_tensors_.size() == kSingleNum || in_tensors_.size() == kTripleNum, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   where_param_->op_parameter_.thread_num_ = thread_count_;
   return RET_OK;
 }
@@ -89,10 +91,7 @@ int WhereCPUKernel::RunWithSingleInput() {
       true_num++;
       int dim = index;
       for (int j = 0; j < where_param_->rank_; j++) {
-        if (strides[j] == 0) {
-          MS_LOG(ERROR) << "strides[j] is 0!";
-          return RET_ERROR;
-        }
+        MS_CHECK_FALSE_MSG(strides[j] == 0, RET_ERROR, "div zero");
         result[result_index++] = dim / strides[j];
         dim %= strides[j];
       }
@@ -114,18 +113,21 @@ int WhereCPUKernel::RunWithSingleInput() {
 
 int WhereCPUKernel::RunWithTripleInputs() {
   auto condition = in_tensors_.at(0);
-  MS_ASSERT(condition);
+  CHECK_NULL_RETURN(condition);
   auto x = in_tensors_.at(1);
-  MS_ASSERT(x);
+  CHECK_NULL_RETURN(x);
   auto y = in_tensors_.at(2);
-  MS_ASSERT(y);
+  CHECK_NULL_RETURN(y);
   int condition_nums = condition->ElementsNum();
   int x_num = x->ElementsNum();
   int y_num = y->ElementsNum();
 
   condition_ = reinterpret_cast<bool *>(condition->data_c());
+  CHECK_NULL_RETURN(condition_);
   x_ = reinterpret_cast<float *>(x->data_c());
+  CHECK_NULL_RETURN(x_);
   y_ = reinterpret_cast<float *>(y->data_c());
+  CHECK_NULL_RETURN(y_);
   output_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   int num_max = condition_nums > x_num ? condition_nums : (x_num > y_num ? x_num : y_num);
   where_param_->condition_num_ = condition_nums;

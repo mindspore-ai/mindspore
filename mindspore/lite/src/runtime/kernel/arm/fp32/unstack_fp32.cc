@@ -25,8 +25,10 @@ using mindspore::schema::PrimitiveType_Unstack;
 
 namespace mindspore::kernel {
 int UnstackCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_CHECK_TRUE_RET(in_tensors_.size() == 1, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_tensors_.size() >= 1, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_.front());
+  CHECK_NULL_RETURN(out_tensors_.front());
   CHECK_NULL_RETURN(op_parameter_);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -36,7 +38,6 @@ int UnstackCPUKernel::Init() {
 
 int UnstackCPUKernel::ReSize() {
   auto input = in_tensors_.at(0);
-  MS_ASSERT(input != nullptr);
   size_t shape_size = input->shape().size();
 
   auto para = reinterpret_cast<UnstackParameter *>(op_parameter_);
@@ -60,10 +61,7 @@ int UnstackCPUKernel::ReSize() {
     free(output_addr_array_);
     output_addr_array_ = nullptr;
   }
-  if (SIZE_MUL_OVERFLOW(sizeof(void *), out_tensors_.size())) {
-    MS_LOG(ERROR) << "mul overflow";
-    return RET_ERROR;
-  }
+  MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(sizeof(void *), out_tensors_.size()), RET_ERROR, "mul overflow");
   output_addr_array_ = reinterpret_cast<void **>(malloc(sizeof(void *) * out_tensors_.size()));
   if (output_addr_array_ == nullptr) {
     MS_LOG(ERROR) << "Failed to malloc memory";

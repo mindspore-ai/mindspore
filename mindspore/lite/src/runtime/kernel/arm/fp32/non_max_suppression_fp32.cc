@@ -56,6 +56,7 @@ int NonMaxSuppressionCPUKernel::Init() {
                   << out_tensors_.size();
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(out_tensors_.front());
 
   param_ = reinterpret_cast<NMSParameter *>(op_parameter_);
   if (param_ == nullptr) {
@@ -191,9 +192,7 @@ int NonMaxSuppressionCPUKernel::Run_Selecte(bool simple_out, int box_num, int ba
 
 int NonMaxSuppressionCPUKernel::Run() {
   auto box_tensor = in_tensors_.at(kBoxTensorIndex);
-  if (box_tensor == nullptr) {
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(box_tensor);
   bool simple_out = false;
   auto box_dims = box_tensor->shape();  // batch, box_num, 4
   constexpr size_t kBoxTensorDims = 3;
@@ -207,9 +206,7 @@ int NonMaxSuppressionCPUKernel::Run() {
   }
 
   auto score_tensor = in_tensors_.at(kScoreTensorIndex);
-  if (score_tensor == nullptr) {
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(score_tensor);
   auto score_dims = score_tensor->shape();  // batch, class, box_num
   constexpr size_t kScoreTensorDims = 3;
   if (score_dims.size() != kScoreTensorDims) {

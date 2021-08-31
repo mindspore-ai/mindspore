@@ -30,8 +30,6 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore::kernel {
 int PoolingCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = PoolingBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PoolingBase Init failed.";
@@ -54,7 +52,9 @@ int PoolingCPUKernel::ReSize() {
 
 int PoolingCPUKernel::RunImpl(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
+  CHECK_NULL_RETURN(input_ptr);
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  CHECK_NULL_RETURN(output_ptr);
   float minf = -FLT_MAX;
   float maxf = FLT_MAX;
   if (pooling_param_->act_type_ == ActType_Relu) {

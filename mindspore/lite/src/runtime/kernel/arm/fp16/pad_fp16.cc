@@ -95,8 +95,8 @@ int PadFp16CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(0);
   input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
   output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
-  MS_ASSERT(input_ != nullptr);
-  MS_ASSERT(output_ != nullptr);
+  CHECK_NULL_RETURN(input_);
+  CHECK_NULL_RETURN(output_);
   int ret = 0;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
     if (in_tensors_.size() >= kPadCommonInputSize) {
