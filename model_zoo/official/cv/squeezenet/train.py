@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """train squeezenet."""
-import os
 from mindspore import context
 from mindspore import Tensor
 from mindspore.nn.optim.momentum import Momentum
@@ -27,6 +26,7 @@ from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.common import set_seed
 from model_utils.config import config
 from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id
 from src.lr_generator import get_lr
 from src.CrossEntropySmooth import CrossEntropySmooth
 
@@ -54,33 +54,37 @@ def train_net():
     # init context
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=target)
+    device_num = 1
     if config.run_distribute:
         if target == "Ascend":
-            device_id = int(os.getenv('DEVICE_ID'))
+            device_id = get_device_id()
+            device_num = config.device_num
             context.set_context(device_id=device_id,
                                 enable_auto_mixed_precision=True)
             context.set_auto_parallel_context(
-                device_num=config.device_num,
+                device_num=device_num,
                 parallel_mode=ParallelMode.DATA_PARALLEL,
                 gradients_mean=True)
             init()
         # GPU target
         else:
-            print("Squeezenet training on GPU performs badly now, and it is still in research..."
-                  "See model_zoo/research/cv/squeezenet to get up-to-date details.")
             init()
+            device_num = get_group_size()
             context.set_auto_parallel_context(
-                device_num=get_group_size(),
+                device_num=device_num,
                 parallel_mode=ParallelMode.DATA_PARALLEL,
                 gradients_mean=True)
         ckpt_save_dir = ckpt_save_dir + "/ckpt_" + str(
             get_rank()) + "/"
-
+    # obtain the actual batch_size
+    if not hasattr(config, "global_batch_size"):
+        raise AttributeError("'config' object has no attribute 'global_batch_size', please check the yaml file.")
+    batch_size = max(config.global_batch_size // device_num, 1)
     # create dataset
     dataset = create_dataset(dataset_path=config.data_path,
                              do_train=True,
                              repeat_num=1,
-                             batch_size=config.batch_size,
+                             batch_size=batch_size,
                              target=target)
     step_size = dataset.get_dataset_size()
 
@@ -132,10 +136,6 @@ def train_net():
                       amp_level="O2",
                       keep_batchnorm_fp32=False)
     else:
-        if target == "GPU":
-            # GPU target
-            print("Squeezenet training on GPU performs badly now, and it is still in research..."
-                  "See model_zoo/research/cv/squeezenet to get up-to-date details.")
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()),
                        lr,
                        config.momentum,
