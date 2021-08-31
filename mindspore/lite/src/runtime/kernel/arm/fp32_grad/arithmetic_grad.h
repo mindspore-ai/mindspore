@@ -34,7 +34,7 @@ namespace mindspore::kernel {
 class ArithmeticGradCPUKernel;
 
 class ArithmeticGradCPUKernel : public InnerKernel {
-  typedef void (ArithmeticGradCPUKernel::*ArithmeticGradOperation)(float *, int, float *, int, float *, int);
+  typedef int (ArithmeticGradCPUKernel::*ArithmeticGradOperation)(float *, int, float *, int, float *, int);
 
  public:
   explicit ArithmeticGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -78,16 +78,16 @@ class ArithmeticGradCPUKernel : public InnerKernel {
   int Execute(int task_id);
 
  private:
-  void ArithmeticGradAdd(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
-  void ArithmeticGradSub(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
-  void ArithmeticGradMul(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
-  void ArithmeticGradMul1L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
-  void ArithmeticGradMul2L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
-  void ArithmeticGradDiv(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
-  void ArithmeticGradDiv1L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
-  void ArithmeticGradDiv2L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
-  void ArithmeticGradMaximum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
-  void ArithmeticGradMinimum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradAdd(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradSub(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradMul(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradMul1L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradMul2L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradDiv(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradDiv1L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradDiv2L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradMaximum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  int ArithmeticGradMinimum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
   ArithmeticParameter *arithmeticParameter_;
   ArithmeticGradOperation arithmetic_grad_;
   float *tile_data0;

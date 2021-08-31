@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
 using mindspore::schema::PrimitiveType_Adam;
 
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateAdamParameter(const void *prim) {
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "Prim is nullptr.");
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
 

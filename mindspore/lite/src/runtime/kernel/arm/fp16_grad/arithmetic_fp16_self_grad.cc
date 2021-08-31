@@ -31,6 +31,10 @@ int ArithmeticSelfGradFp16CPUKernel::Init() {
     MS_LOG(ERROR) << "ActivationGrad should have 2 input tensors";
     return RET_ERROR;
   }
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   return RET_OK;
 }
 
@@ -41,13 +45,16 @@ int ArithmeticSelfGradFp16CPUKernel::DoActivation(int task_id) {
   auto input_addr = reinterpret_cast<float16_t *>(in_tensors_.at(1)->MutableData());
   auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
   int length = in_tensors_.at(0)->ElementsNum();
+  CHECK_NULL_RETURN(yt_addr);
+  CHECK_NULL_RETURN(input_addr);
+  CHECK_NULL_RETURN(output_addr);
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
   int start = stride * task_id;
 
   auto error_code = RET_OK;
-
+  CHECK_NULL_RETURN(param_act_grad_);
   if (param_act_grad_->type_ == schema::PrimitiveType_LogGrad) {
     error_code = Fp16LogGrad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else {
@@ -61,8 +68,8 @@ int ArithmeticSelfGradFp16CPUKernel::DoActivation(int task_id) {
 }
 
 int ArithmeticSelfGradFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
   auto activationGrad_kernel = reinterpret_cast<ArithmeticSelfGradFp16CPUKernel *>(cdata);
+  CHECK_NULL_RETURN(activationGrad_kernel);
   auto error_code = activationGrad_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ActivationGradRun error task_id[" << task_id << "] error_code[" << error_code << "]";

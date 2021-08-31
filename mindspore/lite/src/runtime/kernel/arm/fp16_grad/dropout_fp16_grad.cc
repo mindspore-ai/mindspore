@@ -31,6 +31,7 @@ using mindspore::schema::PrimitiveType_DropoutGrad;
 
 namespace mindspore::kernel {
 int DropoutGradCPUKernelFp16::Init() {
+  CHECK_NULL_RETURN(op_parameter_);
   auto param = reinterpret_cast<DropoutParameter *>(op_parameter_);
   if (param == nullptr) {
     MS_LOG(ERROR) << "Dropout op_parameter_ nullptr";
@@ -49,6 +50,12 @@ int DropoutGradCPUKernelFp16::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
+
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   return ReSize();
 }
 
@@ -58,6 +65,9 @@ int DropoutGradCPUKernelFp16::Execute(int task_id) {
   auto yt_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data_c());
   auto mask_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data_c());
+  CHECK_NULL_RETURN(yt_ptr);
+  CHECK_NULL_RETURN(mask_ptr);
+  CHECK_NULL_RETURN(output_ptr);
   auto length = in_tensors_.at(kInputIndex)->ElementsNum();
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
@@ -70,6 +80,7 @@ int DropoutGradCPUKernelFp16::Execute(int task_id) {
 
 int RunDropoutFp16Grad(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto dropout = reinterpret_cast<DropoutGradCPUKernelFp16 *>(cdata);
+  CHECK_NULL_RETURN(dropout);
   auto error_code = dropout->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Dropout Grad Run error task_id[" << task_id << "] error_code[" << error_code << "]";

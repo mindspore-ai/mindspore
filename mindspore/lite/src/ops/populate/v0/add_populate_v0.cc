@@ -23,6 +23,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateAddParameter(const void *prim) {
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "Prim is nullptr.");
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto add_prim = primitive->value_as_Add();

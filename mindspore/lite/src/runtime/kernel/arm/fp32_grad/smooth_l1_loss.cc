@@ -28,11 +28,13 @@ int SmoothL1LossCPUKernel::ReSize() { return RET_OK; }
 
 int SmoothL1LossCPUKernel::Execute(int task_id) {
   SmoothL1LossParameter *smooth_l1_loss_param = reinterpret_cast<SmoothL1LossParameter *>(op_parameter_);
-
+  CHECK_NULL_RETURN(smooth_l1_loss_param);
   auto predict = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto target = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-
+  CHECK_NULL_RETURN(predict);
+  CHECK_NULL_RETURN(target);
+  CHECK_NULL_RETURN(out);
   const size_t length = in_tensors_.at(0)->ElementsNum();
 
   size_t stride = UP_DIV(length, thread_count_);
@@ -62,6 +64,7 @@ int SmoothL1LossCPUKernel::Execute(int task_id) {
 
 int SmoothL1LossRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto smooth_l1_loss_kernel = reinterpret_cast<SmoothL1LossCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(smooth_l1_loss_kernel);
   auto error_code = smooth_l1_loss_kernel->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SmoothL1Loss error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -79,13 +82,22 @@ int SmoothL1LossCPUKernel::Run() {
   return RET_OK;
 }
 
-int SmoothL1LossCPUKernel::Init() { return RET_OK; }
+int SmoothL1LossCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
+
+  CHECK_NULL_RETURN(op_parameter_);
+  return RET_OK;
+}
 
 kernel::InnerKernel *CpuSmoothL1LossFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
                                                       OpParameter *opParameter, const lite::Context *ctx,
                                                       const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
+  MS_CHECK_TRUE_MSG(opParameter != nullptr, nullptr, "Op parameter is nullptr.");
   MS_ASSERT(desc.type == schema::PrimitiveType_SmoothL1Loss);
   auto *kernel = new (std::nothrow)
     SmoothL1LossCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

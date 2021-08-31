@@ -20,6 +20,7 @@
 #include "include/errorcode.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/fp32_grad/arithmetic_grad.h"
+#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -33,8 +34,8 @@ using mindspore::schema::PrimitiveType_SqrtGrad;
 namespace mindspore::kernel {
 namespace {
 int ArithmeticSelfGradRun(void *cdata, int thread_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
   auto kernel = reinterpret_cast<ArithmeticSelfGradCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   return kernel->DoArithmeticSelfGrad(thread_id);
 }
 }  // namespace
@@ -62,10 +63,18 @@ int ArithmeticSelfGradCPUKernel::Init() {
 }
 
 int ArithmeticSelfGradCPUKernel::DoArithmeticSelfGrad(int task_id) {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   auto dy = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto in_x = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto dx = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   int length = in_tensors_.at(0)->ElementsNum();
+  CHECK_NULL_RETURN(dy);
+  CHECK_NULL_RETURN(in_x);
+  CHECK_NULL_RETURN(dx);
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);

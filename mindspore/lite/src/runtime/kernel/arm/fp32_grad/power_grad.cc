@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/power_grad.h"
+#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -31,10 +32,13 @@ int PowerGradCPUKernel::Init() {
     MS_LOG(ERROR) << "Power Grad Filter should have 2 inputs";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
   if (out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "Power Grad Filter should have one output";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   return RET_OK;
 }
 
@@ -44,7 +48,9 @@ int PowerGradCPUKernel::Execute(int task_id) {
   auto dy_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto x_addr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto dx_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-
+  CHECK_NULL_RETURN(dy_addr);
+  CHECK_NULL_RETURN(x_addr);
+  CHECK_NULL_RETURN(dx_addr);
   int length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);
@@ -66,6 +72,7 @@ int PowerGradCPUKernel::Execute(int task_id) {
 
 int PowerGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto power_kernel = reinterpret_cast<PowerGradCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(power_kernel);
   auto error_code = power_kernel->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "power grad error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -86,7 +93,7 @@ int PowerGradCPUKernel::Run() {
 kernel::InnerKernel *CpuPowerGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                    const lite::Context *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
+  MS_CHECK_TRUE_MSG(opParameter != nullptr, nullptr, "Op parameter is nullptr.");
   MS_ASSERT(desc.type == schema::PrimitiveType_PowerGrad);
   auto *kernel =
     new (std::nothrow) PowerGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

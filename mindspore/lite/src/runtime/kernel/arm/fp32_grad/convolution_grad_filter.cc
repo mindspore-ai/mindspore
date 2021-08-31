@@ -20,6 +20,7 @@
 #include "nnacl/fp32_grad/convolution_grad_filter.h"
 #include "nnacl/fp32_grad/pack_ext.h"
 #include "nnacl/fp32_grad/gemm.h"
+#include "nnacl/errorcode.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;
@@ -34,12 +35,16 @@ int ConvolutionGradFilterCPUKernel::ReSize() {
   // x is in input 1
   // dw is output 0
 
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   auto *x_tensor = in_tensors_.at(1);
-  MS_ASSERT(x_tensor != nullptr);
+  CHECK_NULL_RETURN(x_tensor);
   auto *dy_tensor = in_tensors_.at(0);
-  MS_ASSERT(dy_tensor != nullptr);
-
+  CHECK_NULL_RETURN(dy_tensor);
+  CHECK_NULL_RETURN(op_parameter_);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(conv_param);
   conv_param->output_batch_ = dy_tensor->shape().at(kNHWC_N);
   conv_param->input_batch_ = x_tensor->shape().at(kNHWC_N);
   conv_param->input_h_ = x_tensor->shape().at(kNHWC_H);
@@ -51,6 +56,7 @@ int ConvolutionGradFilterCPUKernel::ReSize() {
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
+  NNACL_CHECK_ZERO_RETURN_ERR(conv_param->group_);
   do_img2col_ = (conv_param->kernel_h_ == 1) && (conv_param->kernel_w_ == 1) && (conv_param->pad_d_ == 0) &&
                     (conv_param->pad_u_ == 0) && (conv_param->pad_l_ == 0) && (conv_param->pad_r_ == 0) &&
                     (conv_param->dilation_h_ == 1) && (conv_param->dilation_w_ == 1) && (conv_param->stride_h_ == 1) &&
@@ -78,10 +84,11 @@ int ConvolutionGradFilterCPUKernel::Init() { return ReSize(); }
 
 int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(conv_param);
   auto *input_dy = in_tensors_.at(0);
   auto *input_x = in_tensors_.at(1);
   auto *out_dw = out_tensors_.at(0);
-
+  CHECK_NULL_RETURN(out_dw);
   auto x_addr = reinterpret_cast<float *>(input_x->MutableData());
   auto dy_addr = reinterpret_cast<float *>(input_dy->MutableData());
   auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
@@ -161,6 +168,8 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
       }
     }
   } else {
+    NNACL_CHECK_ZERO_RETURN_ERR(out_w * conv_param->stride_h_);
+    NNACL_CHECK_ZERO_RETURN_ERR(out_w * conv_param->stride_w_);
     mat_c = dw_addr;
     const size_t in_plane_size = in_ch * in_h * in_w;
     for (int i = start; i < end; ++i) {
@@ -181,8 +190,8 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
 }
 
 int ConvolutionGradFilterRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
   auto convfilter_kernel = reinterpret_cast<ConvolutionGradFilterCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(convfilter_kernel);
   auto error_code = convfilter_kernel->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionGradFilterRun error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -193,7 +202,9 @@ int ConvolutionGradFilterRun(void *cdata, int task_id, float lhs_scale, float rh
 
 int ConvolutionGradFilterCPUKernel::Run() {
   auto *out_dw = out_tensors_.at(0);
+  CHECK_NULL_RETURN(out_dw);
   auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
+  CHECK_NULL_RETURN(dw_addr);
   memset(dw_addr, 0, out_dw->Size());
   int error_code = ParallelLaunch(this->ms_context_, ConvolutionGradFilterRun, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
@@ -207,7 +218,7 @@ kernel::InnerKernel *CpuConvGradFilterFp32KernelCreator(const std::vector<lite::
                                                         const std::vector<lite::Tensor *> &outputs,
                                                         OpParameter *opParameter, const lite::Context *ctx,
                                                         const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
+  MS_CHECK_TRUE_MSG(opParameter != nullptr, nullptr, "Op parameter is nullptr.");
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DBackpropFilterFusion);
 
   auto *kernel = new (std::nothrow)

@@ -20,6 +20,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -61,6 +62,7 @@ static int DoAdam(float *m, float *v, const float *gradient, float *weight, floa
 }
 
 int AdamCPUKernel::Execute(int task_id) {
+  CHECK_LESS_RETURN(in_tensors_.size(), 10);
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
@@ -72,6 +74,10 @@ int AdamCPUKernel::Execute(int task_id) {
   auto eps = reinterpret_cast<float *>(in_tensors_.at(8)->MutableData())[0];
   auto gradient = reinterpret_cast<float *>(in_tensors_.at(9)->MutableData());
   int length = in_tensors_.at(0)->ElementsNum();
+  CHECK_NULL_RETURN(weight);
+  CHECK_NULL_RETURN(m);
+  CHECK_NULL_RETURN(v);
+  CHECK_NULL_RETURN(gradient);
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
@@ -83,8 +89,9 @@ int AdamCPUKernel::Execute(int task_id) {
 }
 
 int AdamRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto adam_kernel = reinterpret_cast<AdamCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(adam_kernel);
   auto error_code = RET_OK;
   if (adam_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
     error_code = adam_kernel->ExecuteVirtualBatch(task_id);
@@ -109,6 +116,7 @@ int AdamCPUKernel::Run() {
 }
 
 int AdamCPUKernel::Init() {
+  CHECK_NULL_RETURN(adam_param_);
   auto ret = OptimizerKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Failed to initialize Adam Kernel";
@@ -118,6 +126,7 @@ int AdamCPUKernel::Init() {
 }
 
 int AdamCPUKernel::OptimizerStep() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 9);
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
@@ -128,6 +137,9 @@ int AdamCPUKernel::OptimizerStep() {
   auto beta2 = reinterpret_cast<float *>(in_tensors_.at(7)->MutableData())[0];
   auto eps = reinterpret_cast<float *>(in_tensors_.at(8)->MutableData())[0];
   size_t length = in_tensors_.at(0)->ElementsNum();
+  CHECK_NULL_RETURN(weight);
+  CHECK_NULL_RETURN(m);
+  CHECK_NULL_RETURN(v);
 
   int ret = RET_OK;
   if (grad_sum_ != nullptr && valid_grad_sum_) {
@@ -144,6 +156,7 @@ int AdamCPUKernel::OptimizerStep() {
 kernel::InnerKernel *CpuAdamFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
+  MS_CHECK_TRUE_MSG(opParameter != nullptr, nullptr, "Op parameter is nullptr.");
   MS_ASSERT(desc.type == schema::PrimitiveType_Adam);
   auto *kernel =
     new (std::nothrow) AdamCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

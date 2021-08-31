@@ -71,6 +71,7 @@ int PowerFp16CPUKernel::GetExpData() {
 
 int PowerImplFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<PowerFp16CPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto ret = kernel->RunImpl(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerFp16Impl error: " << ret;
@@ -99,6 +100,9 @@ int PowerFp16CPUKernel::RunImpl(int task_id) {
   auto x_addr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
   auto size = in_tensors_.at(0)->ElementsNum();
+  CHECK_NULL_RETURN(x_addr);
+  CHECK_NULL_RETURN(output_addr);
+
   int stride = UP_DIV(size, thread_count_);
   int len = MSMIN(stride, size - stride * task_id);
   if (len <= 0) {
@@ -112,6 +116,7 @@ int PowerFp16CPUKernel::RunImpl(int task_id) {
   } else {
     cur_exp = exp_data_ + stride * task_id;
   }
+  CHECK_NULL_RETURN(cur_exp);
   auto error_code =
     PowerFp16(x_addr + stride * task_id, cur_exp, output_addr + stride * task_id, len, scale_, shift_, broadcast);
   if (error_code != RET_OK) {

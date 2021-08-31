@@ -96,7 +96,7 @@ kernel::InnerKernel *CpuSmoothL1LossGradFp32KernelCreator(const std::vector<lite
                                                           const std::vector<lite::Tensor *> &outputs,
                                                           OpParameter *opParameter, const lite::Context *ctx,
                                                           const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
+  MS_CHECK_TRUE_MSG(opParameter != nullptr, nullptr, "Op parameter is nullptr.");
   MS_ASSERT(desc.type == schema::PrimitiveType_SmoothL1LossGrad);
   auto *kernel = new (std::nothrow)
     SmoothL1LossGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

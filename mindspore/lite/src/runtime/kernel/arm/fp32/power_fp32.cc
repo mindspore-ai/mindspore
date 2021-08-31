@@ -34,7 +34,9 @@ int PowerCPUKernel::Init() {
 int PowerCPUKernel::ReSize() { return RET_OK; }
 
 int PowerImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<PowerCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto ret = kernel->RunImpl(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerImpl error: " << ret;
@@ -54,9 +56,9 @@ int PowerCPUKernel::Run() {
 
 int PowerCPUKernel::RunImpl(int task_id) {
   auto x_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  MS_ASSERT(x_addr);
+  CHECK_NULL_RETURN(x_addr);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  MS_ASSERT(output_addr);
+  CHECK_NULL_RETURN(output_addr);
   auto size = in_tensors_.at(0)->ElementsNum();
   int stride = UP_DIV(size, thread_count_);
   int len = MSMIN(stride, size - stride * task_id);
@@ -67,7 +69,7 @@ int PowerCPUKernel::RunImpl(int task_id) {
   bool broadcast = true;
   MS_ASSERT(in_tensors_.size() == 2);
   exp_addr = reinterpret_cast<float *>(in_tensors_[1]->data_c());
-  MS_ASSERT(exp_addr != nullptr);
+  CHECK_NULL_RETURN(exp_addr);
   broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
 
   float *cur_exp = nullptr;
@@ -76,6 +78,7 @@ int PowerCPUKernel::RunImpl(int task_id) {
   } else {
     cur_exp = exp_addr + stride * task_id;
   }
+  CHECK_NULL_RETURN(cur_exp);
   auto error_code =
     Power(x_addr + stride * task_id, cur_exp, output_addr + stride * task_id, len, scale_, shift_, broadcast);
   if (error_code != RET_OK) {
