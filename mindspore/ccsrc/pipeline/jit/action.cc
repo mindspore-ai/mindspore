@@ -655,7 +655,7 @@ bool EliminateForwardCNode(const ResourcePtr &res) {
   }
 
   // Run grad process for func_graph and replace forward nodes with its output tensors.
-  MS_LOG(DEBUG) << "Run eliminate forward nodes action.";
+  MS_LOG(INFO) << "Run eliminate forward nodes action.";
   MS_EXCEPTION_IF_NULL(res);
   auto ms_func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(ms_func_graph);
