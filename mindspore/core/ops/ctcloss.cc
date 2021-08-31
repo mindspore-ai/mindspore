@@ -29,7 +29,9 @@ namespace mindspore {
 namespace ops {
 namespace {
 void CheckCTCLossInputs(const std::vector<AbstractBasePtr> &input_args, const std::string &op_name) {
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 4, op_name);
+  const int64_t input_num = 4;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                           op_name);
   auto inputs = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
   auto labels_indices = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
   auto labels_values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
@@ -40,11 +42,18 @@ void CheckCTCLossInputs(const std::vector<AbstractBasePtr> &input_args, const st
   auto labels_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(labels_values->BuildShape())[kShape];
   auto sequence_length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(sequence_length->BuildShape())[kShape];
 
-  (void)CheckAndConvertUtils::CheckInteger("inputs rank", inputs_shape.size(), kEqual, 3, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("label_indices rank", labels_indices_shape.size(), kEqual, 2, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("label_indices second dim", labels_indices_shape[1], kEqual, 2, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("label_values rank", labels_values_shape.size(), kEqual, 1, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("sequence_length rank", sequence_length_shape.size(), kEqual, 1, op_name);
+  const int64_t input_size = 3;
+  const int64_t label_indice_size = 2;
+  const int64_t label_indice_last_dim = 2;
+  (void)CheckAndConvertUtils::CheckInteger("inputs rank", SizeToLong(inputs_shape.size()), kEqual, input_size, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("label_indices rank", SizeToLong(labels_indices_shape.size()), kEqual,
+                                           label_indice_size, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("label_indices second dim", labels_indices_shape[1], kEqual,
+                                           label_indice_last_dim, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("label_values rank", int64_t(labels_values_shape.size()), kEqual, 1,
+                                           op_name);
+  (void)CheckAndConvertUtils::CheckInteger("sequence_length rank", int64_t(sequence_length_shape.size()), kEqual, 1,
+                                           op_name);
 
   if (labels_indices_shape[0] != labels_values_shape[0]) {
     MS_EXCEPTION(ValueError) << "For CTCLoss first dim of label_indices and label_value must be same, but got "
@@ -82,11 +91,15 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
 
 TuplePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels_indices", input_args[1]->BuildType(), {kInt64}, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels_values", input_args[2]->BuildType(), {kInt32}, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("sequence_length", input_args[3]->BuildType(), {kInt32}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels_indices", input_args[kInputIndex1]->BuildType(), {kInt64},
+                                                   op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels_values", input_args[kInputIndex2]->BuildType(), {kInt32},
+                                                   op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("sequence_length", input_args[kInputIndex3]->BuildType(), {kInt32},
+                                                   op_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  auto type = CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[0]->BuildType(), valid_types, op_name);
+  auto type =
+    CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[kInputIndex0]->BuildType(), valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }
 }  // namespace

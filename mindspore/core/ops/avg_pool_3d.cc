@@ -38,12 +38,15 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, 
   // attr kernel size
   *kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   if (kernel_size->size() != kKernelDims) {
-    MS_LOG(EXCEPTION) << "kernel_size of AvgPool3D must be 3.";
+    MS_LOG(EXCEPTION) << "`kernel_size` of AvgPool3D must be 3.";
   }
   // attr strides
   *strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
   if (strides->size() != kStridesDims) {
-    MS_LOG(EXCEPTION) << "strides of AvgPool3D must be 3.";
+    MS_LOG(EXCEPTION) << "`strides` of AvgPool3D must be 3.";
+  }
+  if (std::any_of(strides->begin(), strides->end(), [](int64_t stride) { return stride <= 0; })) {
+    MS_EXCEPTION(ValueError) << "Invalid strides, strides must be all positive.";
   }
   // sttr pad_list
   *pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPadList));
@@ -135,6 +138,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto kernel_d = kernel_size[0];
   auto kernel_h = kernel_size[1];
   auto kernel_w = kernel_size[2];
+
   auto stride_d = strides[0];
   auto stride_h = strides[1];
   auto stride_w = strides[2];
@@ -148,7 +152,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
   std::vector<int64_t> out_shape =
     GetOutputShape(in_shape, kernel_d, kernel_h, kernel_w, stride_d, stride_h, stride_w, new_pad_list, ceil_mode);
-  if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
+  if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
     MS_LOG(EXCEPTION) << "output size is not valid.";
   }
   return std::make_shared<abstract::Shape>(out_shape);

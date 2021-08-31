@@ -53,7 +53,8 @@ void Conv2DTranspose::set_out_channel(int64_t out_channel) {
 }
 
 void Conv2DTranspose::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  (void)CheckAndConvertUtils::CheckInteger(kKernelSize, SizeToLong(kernel_size.size()), kEqual, 2, name());
+  const int64_t kernel_len = 2;
+  (void)CheckAndConvertUtils::CheckInteger(kKernelSize, SizeToLong(kernel_size.size()), kEqual, kernel_len, name());
   for (int64_t item : kernel_size) {
     (void)CheckAndConvertUtils::CheckInteger(kKernelSize, item, kGreaterEqual, 1, name());
   }
@@ -61,7 +62,8 @@ void Conv2DTranspose::set_kernel_size(const std::vector<int64_t> &kernel_size) {
 }
 
 void Conv2DTranspose::set_stride(const std::vector<int64_t> &stride) {
-  (void)CheckAndConvertUtils::CheckInteger(kStride, SizeToLong(stride.size()), kEqual, 2, name());
+  const int64_t stride_size = 2;
+  (void)CheckAndConvertUtils::CheckInteger(kStride, SizeToLong(stride.size()), kEqual, stride_size, name());
   for (int64_t item : stride) {
     (void)CheckAndConvertUtils::CheckInteger(kStride, item, kGreaterEqual, 1, name());
   }
@@ -69,7 +71,9 @@ void Conv2DTranspose::set_stride(const std::vector<int64_t> &stride) {
 }
 
 void Conv2DTranspose::set_dilation(const std::vector<int64_t> &dilation) {
-  (void)CheckAndConvertUtils::CheckInteger(kDilation, SizeToLong(dilation.size()), kGreaterEqual, 2, name());
+  const int64_t dilation_size = 2;
+  (void)CheckAndConvertUtils::CheckInteger(kDilation, SizeToLong(dilation.size()), kGreaterEqual, dilation_size,
+                                           name());
   (void)AddAttr(kDilation, MakeValue(dilation));
 }
 
@@ -87,7 +91,8 @@ void Conv2DTranspose::set_pad_mode(const PadMode &pad_mode) {
 }
 
 void Conv2DTranspose::set_pad(const std::vector<int64_t> &pad) {
-  (void)CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, 4, name());
+  const int64_t pad_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, pad_size, name());
   (void)AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 
@@ -105,7 +110,8 @@ void Conv2DTranspose::set_format(const Format &format) {
 }
 
 void Conv2DTranspose::set_pad_list(const std::vector<int64_t> &pad_list) {
-  (void)CheckAndConvertUtils::CheckInteger(kPadList, SizeToLong(pad_list.size()), kEqual, 4, name());
+  const int64_t pad_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger(kPadList, SizeToLong(pad_list.size()), kEqual, pad_size, name());
   (void)this->AddAttr(kPadList, MakeValue(pad_list));
 }
 

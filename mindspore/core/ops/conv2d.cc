@@ -109,8 +109,9 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shape = x_shape_map[kShape];
   auto w_shape = w_shape_map[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, 4, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, 4, primitive->name());
+  const int64_t shape_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, shape_size, prim_name);
   auto x_min_shape = x_shape_map[kMinShape];
   auto x_max_shape = x_shape_map[kMaxShape];
   auto w_min_shape = w_shape_map[kMinShape];
@@ -252,7 +253,8 @@ void Conv2D::set_pad_mode(const PadMode &pad_mode) {
 }
 
 void Conv2D::set_pad(const std::vector<int64_t> &pad) {
-  (void)CheckAndConvertUtils::CheckInteger("pad_size", pad.size(), kEqual, 4, name());
+  const int64_t pad_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, pad_size, name());
   (void)AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 
@@ -316,7 +318,8 @@ Format Conv2D::get_format() const {
 
 AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckInteger("Conv2d infer", SizeToLong(input_args.size()), kGreaterEqual, 2,
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("Conv2d infer", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            primitive->name());
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;

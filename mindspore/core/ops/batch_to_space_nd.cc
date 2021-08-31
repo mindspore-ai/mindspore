@@ -30,7 +30,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
+  const int64_t x_rank = 4;
+  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
   auto out_shape = x_shape;
   int64_t block_shape_prod = 1;
   size_t offset = 2;
@@ -62,7 +63,8 @@ TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
 }  // namespace
 
 void BatchToSpaceND::set_crops(std::vector<std::vector<int64_t>> crops) {
-  (void)CheckAndConvertUtils::CheckInteger(kCrops, SizeToLong(crops.size()), kEqual, 2, this->name());
+  const int64_t crop_size = 2;
+  (void)CheckAndConvertUtils::CheckInteger(kCrops, SizeToLong(crops.size()), kEqual, crop_size, this->name());
   size_t h = crops.size();
   size_t w = crops[0].size();
   std::vector<size_t> temp_w = {2, 2};
@@ -80,7 +82,9 @@ std::vector<std::vector<int64_t>> BatchToSpaceND::get_crops() const {
   return GetValue<std::vector<std::vector<int64_t>>>(value_ptr);
 }
 void BatchToSpaceND::set_block_shape(std::vector<int64_t> block_shape) {
-  (void)CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape.size()), kEqual, 2, this->name());
+  const int64_t block_size = 2;
+  (void)CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape.size()), kEqual, block_size,
+                                           this->name());
   for (size_t i = 0; i < block_shape.size(); i++) {
     (void)CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape[i], kGreaterEqual, 1, this->name());
   }

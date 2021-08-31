@@ -26,10 +26,11 @@ AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   // Outputs: x_backprob, gamma_backprob, beta_backprob
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 5, op_name);
-  auto x_backprob = input_args[0]->Broaden();
-  auto gamma_backprob = input_args[4]->Broaden();
-  auto beta_backprob = input_args[4]->Broaden();
+  const int64_t input_num = 5;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num, op_name);
+  auto x_backprob = input_args[kInputIndex0]->Broaden();
+  auto gamma_backprob = input_args[kInputIndex4]->Broaden();
+  auto beta_backprob = input_args[kInputIndex4]->Broaden();
   auto shapes = std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
     x_backprob->BuildShape(), gamma_backprob->BuildShape(), beta_backprob->BuildShape()});
   auto types = std::make_shared<Tuple>(
