@@ -60,16 +60,13 @@ class DistributedSampler:
     def __len__(self):
         return self.num_samples
 
-def resume_model(args, encoder, decoder, enc_ckpt_name, dec_ckpt_name):
-    """Restore the trained generator and discriminator"""
+def resume_generator(args, generator, gen_ckpt_name):
+    """Restore the trained generator"""
     print("Loading the trained models from step {}...".format(args.save_interval))
-    encoder_path = os.path.join('output', args.experiment_name, 'checkpoint/rank0', enc_ckpt_name)
-    decoder_path = os.path.join('output', args.experiment_name, 'checkpoint/rank0', dec_ckpt_name)
+    generator_path = os.path.join('output', args.experiment_name, 'checkpoint/rank0', gen_ckpt_name)
+    param_generator = load_checkpoint(generator_path, generator)
 
-    param_encoder = load_checkpoint(encoder_path, encoder)
-    param_decoder = load_checkpoint(decoder_path, decoder)
-
-    return param_encoder, param_decoder
+    return param_generator
 
 def resume_discriminator(args, discriminator, dis_ckpt_name):
     """Restore the trained discriminator"""
