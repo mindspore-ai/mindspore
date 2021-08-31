@@ -48,7 +48,7 @@ class ResizeBilinearCPUKernel : public CPUKernel {
   std::vector<size_t> shape_;
 };
 
-MS_REG_CPU_KERNEL(ResizeBilinear, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32),
+MS_REG_CPU_KERNEL(ResizeBilinear, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                   ResizeBilinearCPUKernel);
 
 MS_REG_CPU_KERNEL(ResizeBilinear, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

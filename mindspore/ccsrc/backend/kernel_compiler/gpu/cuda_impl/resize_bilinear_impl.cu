@@ -21,7 +21,7 @@
 template <typename T>
 __global__ void ResizeBilinear(const T *input, const int n, const int c, const int input_h, const int input_w,
   const int output_h, const int output_w, const int nchw, const int chw, const int hw, const float h_scale,
-  const float w_scale, float *output) {
+  const float w_scale, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += blockDim.x * gridDim.x) {
     const int posn = pos / chw;
     const int posc = pos / hw % c;
@@ -38,11 +38,12 @@ __global__ void ResizeBilinear(const T *input, const int n, const int c, const i
     const float h_alpha = posh_scaled - h_low;
     const float h_beta = 1.0f - h_alpha;
     const int input_start = input_h * input_w * (posn * c  + posc);
-    const float p1 = static_cast<float>(input[input_start + (h_low * input_w) + w_low]);
-    const float p2 = static_cast<float>(input[input_start + (h_low * input_w) + w_high]);
-    const float p3 = static_cast<float>(input[input_start + (h_high * input_w) + w_low]);
-    const float p4 = static_cast<float>(input[input_start + (h_high * input_w) + w_high]);
-    output[pos] = (p1 * h_beta * w_beta) + (p2 * h_beta * w_alpha) + (p3 * h_alpha * w_beta) + (p4 * h_alpha * w_alpha);
+    const T p1 = input[input_start + (h_low * input_w) + w_low];
+    const T p2 = input[input_start + (h_low * input_w) + w_high];
+    const T p3 = input[input_start + (h_high * input_w) + w_low];
+    const T p4 = input[input_start + (h_high * input_w) + w_high];
+    output[pos] = (p1 * static_cast<T>(h_beta * w_beta)) + (p2 * static_cast<T>(h_beta * w_alpha))
+                  + (p3 * static_cast<T>(h_alpha * w_beta)) + (p4 * static_cast<T>(h_alpha * w_alpha));
   }
   return;
 }
@@ -122,7 +123,7 @@ __global__ void ResizeBilinearGradPost(const int nchw, half *output, float *inte
 
 template <typename T>
 void CalResizeBilinear(const T *input, const int n, const int c, const int input_h, const int input_w,
-  const int output_h, const int output_w, const float h_scale, const float w_scale, float *output,
+  const int output_h, const int output_w, const float h_scale, const float w_scale, T *output,
   cudaStream_t cuda_stream) {
   const int nchw = n * c * output_h * output_w;
   const int chw = c * output_h * output_w;
@@ -160,5 +161,5 @@ template void CalResizeBilinear<float>(const float *input, const int n, const in
   const int input_w, const int output_h, const int output_w, const float h_scale, const float w_scale, float *output,
   cudaStream_t cuda_stream);
 template void CalResizeBilinear<half>(const half *input, const int n, const int c, const int input_h,
-  const int input_w, const int output_h, const int output_w, const float h_scale, const float w_scale, float *output,
+  const int input_w, const int output_h, const int output_w, const float h_scale, const float w_scale, half *output,
   cudaStream_t cuda_stream);

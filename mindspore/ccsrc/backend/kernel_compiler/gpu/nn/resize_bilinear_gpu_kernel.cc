@@ -20,7 +20,7 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(ResizeBilinear, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                       ResizeBilinearGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(ResizeBilinear, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32),
+MS_REG_GPU_KERNEL_ONE(ResizeBilinear, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       ResizeBilinearGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
