@@ -13,9 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
-import cv2
 import json
 import os
+
+import cv2
 
 
 def restore_coordinates(resized_json_det_file, img_dir, resized_to=(640, 640)):
