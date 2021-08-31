@@ -34,7 +34,7 @@ void BinaryCrossEntropyCpuKernel::LaunchToScalar(const int &input_size, const in
     }
   }
 
-  loss[0] += tmp_loss[0];
+  loss[0] = tmp_loss[0];
   if (reduction == 1) {
     loss[0] /= static_cast<T>(input_size);
   }
