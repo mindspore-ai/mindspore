@@ -21,6 +21,8 @@
 #include <unordered_set>
 #include "include/errorcode.h"
 #include "tools/converter/ops/ops_def.h"
+#include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::opt {
 
@@ -155,6 +157,7 @@ FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::s
     auto value_node = NewValueNode(return_prim_ptr);
     std::vector<AnfNodePtr> op_inputs{value_node, node};  // If subgraph only has one output tensor
     auto return_cnode = graph->NewCNode(op_inputs);
+    MS_CHECK_TRUE_RET(return_cnode != nullptr, nullptr);
     return_cnode->set_fullname_with_scope(name + "-return");
     return_cnode->set_func_graph(graph);
     graph->set_return(return_cnode);
@@ -240,6 +243,7 @@ STATUS FunctionalizeCond::Process() {
   }
   if_node->set_abstract(merge_node_->abstract()->Clone());
   auto manager = fg_->manager();
+  CHECK_NULL_RETURN(manager);
   auto node_users = manager->node_users()[merge_node_];
   for (auto &node_user : node_users) {
     manager->SetEdge(node_user.first, node_user.second, if_node);

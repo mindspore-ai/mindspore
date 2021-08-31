@@ -22,6 +22,7 @@
 #include "tools/converter/ops/ops_def.h"
 #include "tools/converter/ops/while.h"
 #include "tools/common/tensor_util.h"
+#include "src/common/log_util.h"
 
 namespace {
 mindspore::ValueNodePtr GetWhileAnfPrim() {
@@ -111,6 +112,7 @@ STATUS FunctionalizeWhile::NewWhileNode() {
   static int count = 0;
   std::vector<AnfNodePtr> while_op_inputs = {while_anf_primitive};
   while_node_ = fg_->NewCNode(while_op_inputs);
+  CHECK_NULL_RETURN(while_node_);
   while_node_->set_fullname_with_scope(loop_cond_node_->fullname_with_scope() + "-while-" + std::to_string(count++));
   return RET_OK;
 }
@@ -196,6 +198,7 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeOutput() {
 
 STATUS FunctionalizeWhile::UpdateExitNodeUser() {
   auto manager = fg_->manager();
+  CHECK_NULL_RETURN(manager);
   if (output_exit_nodes_.size() == 1) {
     if (!manager->Replace(output_exit_nodes_[0], while_node_)) {
       MS_LOG(ERROR) << "replace node failed.";
@@ -322,12 +325,14 @@ STATUS FunctionalizeWhile::IdentifyCondSubgraphInput() {
 
         // set parameter
         auto parameter = cond_sub_func_graph_->add_parameter();
+        CHECK_NULL_RETURN(parameter);
         parameter->set_abstract(cnode->abstract());
         // hardcode for subgraph input name
         parameter->set_name(cond_subgraph_name_ + "_input_" + std::to_string(pos) + "_parameter");
 
         // replace merge
         auto manager = fg_->manager();
+        CHECK_NULL_RETURN(manager);
         auto node_users = manager->node_users()[cnode];
         for (auto &node_user : node_users) {
           if (cond_sub_func_graph_->nodes().contains(node_user.first)) {
@@ -359,6 +364,7 @@ STATUS FunctionalizeWhile::IdentifyCondSubgraphOutput() {
   // cond subgraph output is LoopCond's input
   std::vector<AnfNodePtr> op_inputs{value_node, loop_cond_node_->input(1)};
   auto return_cnode = cond_sub_func_graph_->NewCNode(op_inputs);
+  CHECK_NULL_RETURN(return_cnode);
   return_cnode->set_fullname_with_scope(cond_subgraph_name_ + "-return");
   cond_sub_func_graph_->set_return(return_cnode);
 
@@ -449,12 +455,14 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphInput() {
 
         // set parameter
         auto parameter = body_sub_func_graph_->add_parameter();
+        CHECK_NULL_RETURN(parameter);
         parameter->set_abstract(cnode->abstract());
         // hardcode for subgraph input name
         parameter->set_name(body_subgraph_name_ + "_input_" + std::to_string(pos) + "_parameter");
 
         // replace switch
         auto manager = fg_->manager();
+        CHECK_NULL_RETURN(manager);
         auto node_users = manager->node_users()[cnode];
         for (auto &node_user : node_users) {
           if (body_sub_func_graph_->nodes().contains(node_user.first)) {
