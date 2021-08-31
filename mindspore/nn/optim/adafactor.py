@@ -26,6 +26,7 @@ from mindspore._checkparam import Rel
 from mindspore.nn.optim.optimizer import opt_init_args_register
 from .optimizer import Optimizer
 
+
 def _get_lr(step, RMS, learning_rate, relative_step, warmup_init, scale_parameter, eps):
     """update optimizer learning rete"""
     rel_step_sz = learning_rate
@@ -100,8 +101,8 @@ def _run_opt_with_one_number(eps, clip_threshold, decay_rate, beta1,
         exp_avg_sq_update = F.cast(exp_avg_sq, grad_dtype)
 
     if scale_lr:
-        RMS = _rms(p_data_fp32)
-        learning_rate_update = _get_lr(step, RMS, learning_rate, relative_step, warmup_init, scale_parameter, eps)
+        rms = _rms(p_data_fp32)
+        learning_rate_update = _get_lr(step, rms, learning_rate, relative_step, warmup_init, scale_parameter, eps)
         learning_rate_update = F.assign(learning_rate, F.cast(learning_rate_update, F.dtype(learning_rate)))
     else:
         learning_rate_update = learning_rate * 1.0
@@ -161,7 +162,8 @@ class AdaFactor(Optimizer):
     r"""
     Updates gradients by the Adaptive Learning Rates with Sublinear Memory Cost (Adafactor) algorithm.
 
-    The Adafactor algorithm is proposed in `Adafactor: Adafactor: Adaptive Learning Rates with Sublinear Memory Cost <https://arxiv.org/abs/1804.04235>`_.
+    The Adafactor algorithm is proposed in `Adafactor: Adafactor: Adaptive Learning Rates with Sublinear Memory
+    Cost <https://arxiv.org/abs/1804.04235>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
