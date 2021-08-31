@@ -23,6 +23,16 @@ namespace mindspore::lite {
 int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before,
                   const KernelCallBack &after) {
+  // init the max spin count.
+  MS_ASSERT(ctx_ != nullptr);
+  auto thread_pool = ctx_->thread_pool();
+  CHECK_NULL_RETURN(thread_pool);
+  auto status = thread_pool->SetMaxSpinCount(kDefaultSpinCount);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Set max spin count failed.";
+    return status;
+  }
+
   // clear ref_count
   for (auto *kernel : kernels) {
     for (auto *tensor : kernel->in_tensors()) {
@@ -49,6 +59,13 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
         kernel_queue.push(out_kernel);
       }
     }
+  }
+
+  // reset the max spin count.
+  status = thread_pool->SetMaxSpinCount(0);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Set max spin count failed.";
+    return status;
   }
   return RET_OK;
 }
