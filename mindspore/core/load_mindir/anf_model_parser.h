@@ -79,6 +79,7 @@ class MSANFModelParser {
   bool is_lite_ = false;
   bool inc_load_ = false;
   std::unordered_map<std::string, AnfNodePtr> anfnode_build_map_;
+  std::map<std::string, tensor::TensorPtr> load_tensor_map_;
 };
 }  // namespace mindspore
 
