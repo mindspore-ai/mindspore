@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  Totalc6get. This is an experimental interface that is subject to change and/or deletion.
+ */
 
 #include "backend/kernel_compiler/gpu/sponge/common/total_c6_get_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
-  totalc6get,
+  Totalc6get,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   TotalC6GetGpuKernel, float, int)
 }  // namespace kernel

@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  RestrainEnergy. This is an experimental interface that is subject to change and/or deletion.
+ */
 
 #include "backend/kernel_compiler/gpu/sponge/restrain/restrain_energy_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(restrainenergy,
+MS_REG_GPU_KERNEL_TWO(RestrainEnergy,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)

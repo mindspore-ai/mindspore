@@ -15,16 +15,15 @@
  */
 /**
  *Note:
- *  NeighborListUpdate. This is an experimental interface that is subject to change and/or deletion.
+ *  NeighborListRefresh. This is an experimental interface that is subject to change and/or deletion.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_NEIGHBOR_LIST_UPDATE_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_NEIGHBOR_LIST_UPDATE_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_NEIGHBOR_LIST_UPDATE_NEW_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_NEIGHBOR_LIST_UPDATE_NEW_KERNEL_H_
 
 #include <cuda_runtime_api.h>
+#include <cufft.h>
 #include <vector>
-#include <string>
-#include <map>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "runtime/device/gpu/cuda_common.h"
@@ -33,10 +32,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class NeighborListUpdateGpuKernel : public GpuKernel {
+class NeighborListUpdateNewGpuKernel : public GpuKernel {
  public:
-  NeighborListUpdateGpuKernel() : skin(2.0), cutoff(10.0), max_atom_in_grid_numbers(64), max_neighbor_numbers(800) {}
-  ~NeighborListUpdateGpuKernel() override = default;
+  NeighborListUpdateNewGpuKernel() : skin(2.0), cutoff(9.0), max_atom_in_grid_numbers(64), max_neighbor_numbers(800) {}
+  ~NeighborListUpdateNewGpuKernel() override = default;
   bool Init(const CNodePtr &kernel_node) override {
     grid_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "grid_numbers"));
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
@@ -50,6 +49,8 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
     cutoff_with_skin = static_cast<float>(GetAttr<float>(kernel_node, "cutoff_with_skin"));
     half_cutoff_with_skin = static_cast<float>(GetAttr<float>(kernel_node, "half_cutoff_with_skin"));
     cutoff_with_skin_square = static_cast<float>(GetAttr<float>(kernel_node, "cutoff_with_skin_square"));
+    forced_update = static_cast<int>(GetAttr<int64_t>(kernel_node, "forced_update"));
+    forced_check = static_cast<int>(GetAttr<int64_t>(kernel_node, "forced_check"));
     h_bucket.resize(grid_numbers);
     h_gpointer.resize(grid_numbers);
     InitSizeLists();
@@ -98,15 +99,17 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
                     reinterpret_cast<cudaStream_t>(stream_ptr));
     cudaMemcpyAsync(d_gpointer, h_gpointer.data(), sizeof(GRID_POINTER) * grid_numbers, cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr));
-    ConstructNeighborListHalf(atom_numbers, max_neighbor_numbers, nl_atom_numbers, nl_atom_serial, nl,
-                              reinterpret_cast<cudaStream_t>(stream_ptr));
-    NeighborListUpdate(grid_numbers, atom_numbers, d_refresh_count, refresh_interval, not_first_time, skin, nxy,
-                       cutoff_square, cutoff_with_skin_square, grid_n, box_length, atom_numbers_in_grid_bucket,
-                       grid_length_inverse, atom_in_grid_serial, d_bucket, crd, old_crd, crd_to_uint_crd_cof,
-                       half_crd_to_uint_crd_cof, uint_crd, uint_dr_to_dr_cof, d_gpointer, nl, excluded_list_start,
-                       excluded_list, excluded_numbers, half_skin_square, need_refresh_flag,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
-    CopyNeighborListHalf(atom_numbers, nl, nl_atom_numbers, reinterpret_cast<cudaStream_t>(stream_ptr));
+    ConstructNeighborList(atom_numbers, max_neighbor_numbers, nl_atom_numbers, nl_atom_serial, nl,
+                          reinterpret_cast<cudaStream_t>(stream_ptr));
+
+    NeighborListRefresh(grid_numbers, atom_numbers, d_refresh_count, refresh_interval, not_first_time, skin, nxy,
+                        cutoff_square, cutoff_with_skin_square, grid_n, box_length, atom_numbers_in_grid_bucket,
+                        grid_length_inverse, atom_in_grid_serial, d_bucket, crd, old_crd, crd_to_uint_crd_cof,
+                        half_crd_to_uint_crd_cof, uint_crd, uint_dr_to_dr_cof, d_gpointer, nl, excluded_list_start,
+                        excluded_list, excluded_numbers, half_skin_square, need_refresh_flag, forced_update,
+                        forced_check, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CopyNeighborList(atom_numbers, max_neighbor_numbers, nl, nl_atom_numbers, nl_atom_serial,
+                     reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -161,6 +164,8 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
   float cutoff_with_skin;
   float half_cutoff_with_skin;
   float cutoff_with_skin_square;
+  int forced_update;
+  int forced_check;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
