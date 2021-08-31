@@ -55,8 +55,8 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
   }
 
   const std::set<TypePtr> valid_num_segments_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("num_segments", input_args[2]->BuildType(), valid_num_segments_types,
-                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("num_segments", input_args[kInputIndex2]->BuildType(),
+                                                   valid_num_segments_types, prim_name);
   int64_t size_segment_ids_shp = SizeToLong(segment_ids_shape.size());
   int64_t size_x_shpe = SizeToLong(x_shape.size());
   for (int64_t i = size_segment_ids_shp; i < size_x_shpe; ++i) {

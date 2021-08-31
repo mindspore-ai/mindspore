@@ -83,7 +83,8 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 }
 AbstractBasePtr SelectInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 3, "ops [select]");
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, "ops [select]");
   auto type = SelectInferType(primitive, input_args);
   auto shape = SelectInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

@@ -34,9 +34,9 @@ abstract::ShapePtr BinaryCrossEntroyInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInRange("binary_cross_entropy_infer", input_args.size(), kIncludeBoth, {2, 3}, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   CheckAndConvertUtils::Check("x shape", x_shape, kEqual, "y shape", y_shape, prim_name);
   std::vector<int64_t> infer_shape;
   if (weight_shape.size() < 1) {
@@ -50,19 +50,20 @@ abstract::ShapePtr BinaryCrossEntroyInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr BinaryCrossEntroyInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckInteger("binary_cross_entropy_infer", SizeToLong(input_args.size()), kEqual, 3,
-                                           prim->name());
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("binary_cross_entropy_infer", SizeToLong(input_args.size()), kEqual,
+                                           input_num, prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x_shape", input_args[0]->BuildType());
-  (void)types.emplace("y_shape", input_args[1]->BuildType());
+  (void)types.emplace("x_shape", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("y_shape", input_args[kInputIndex1]->BuildType());
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  if (input_args[3]->BuildType() != nullptr) {
-    (void)types.emplace("x_shape", input_args[0]->BuildType());
-    (void)types.emplace("weight_shape", input_args[2]->BuildType());
+  if (input_args[kInputIndex3]->BuildType() != nullptr) {
+    (void)types.emplace("x_shape", input_args[kInputIndex0]->BuildType());
+    (void)types.emplace("weight_shape", input_args[kInputIndex2]->BuildType());
     infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   }
   return infer_type;

@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace ops {
-
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

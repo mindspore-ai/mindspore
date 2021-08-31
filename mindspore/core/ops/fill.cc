@@ -26,11 +26,12 @@ AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 3, prim_name);
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_dtype = input_args[0]->cast<abstract::AbstractTypePtr>();
+  auto input_dtype = input_args[kInputIndex0]->cast<abstract::AbstractTypePtr>();
   MS_EXCEPTION_IF_NULL(input_dtype);
   auto dtype_value = input_dtype->BuildValue();
   MS_EXCEPTION_IF_NULL(dtype_value);
@@ -39,10 +40,10 @@ AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto valid_types = common_valid_types;
   valid_types.insert(kBool);
   (void)CheckAndConvertUtils::CheckTypeValid("output datatype", dtype, valid_types, prim_name);
-  auto out_shape = GetValue<std::vector<int64_t>>(input_args[1]->BuildValue());
-  auto x_type = input_args[2]->BuildType();
+  auto out_shape = GetValue<std::vector<int64_t>>(input_args[kInputIndex1]->BuildValue());
+  auto x_type = input_args[kInputIndex2]->BuildType();
   auto x_type_id = x_type->type_id();
-  auto x_value = input_args[2]->BuildValue();
+  auto x_value = input_args[kInputIndex2]->BuildValue();
   auto abs = std::make_shared<abstract::AbstractTensor>(dtype, std::make_shared<abstract::Shape>(out_shape));
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(x_type_id, out_shape);
   MS_EXCEPTION_IF_NULL(tensor);
@@ -54,7 +55,7 @@ AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
     auto float_value = GetValue<float>(x_value);
     SetTensorData(tensor->data_c(), float_value, mem_size);
   } else {
-    MS_LOG(ERROR) << " Fill not supported to flod the constant type " << input_args[2]->ToString();
+    MS_LOG(ERROR) << " Fill not supported to flod the constant type " << input_args[kInputIndex2]->ToString();
   }
   abs->set_value(tensor);
   return abs;

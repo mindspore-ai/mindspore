@@ -162,8 +162,9 @@ AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("group_conv_2D_infer", SizeToLong(input_args.size()), kGreaterEqual, 2,
-                                           prim_name);
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("group_conv_2D_infer", SizeToLong(input_args.size()), kGreaterEqual,
+                                           input_num, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
 
   // Infer shape

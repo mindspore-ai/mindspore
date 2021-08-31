@@ -38,13 +38,14 @@ AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("smooth_l1_loss_grad_infer", SizeToLong(input_args.size()), kEqual, 3,
-                                           prim_name);
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("smooth_l1_loss_grad_infer", SizeToLong(input_args.size()), kEqual,
+                                           input_num, prim_name);
 
   // Infer shape
-  auto prediction = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto dloss = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto prediction = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto dloss = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   CheckAndConvertUtils::Check("prediction shape", prediction, kEqual, "target shape", target, prim_name, TypeError);
   CheckAndConvertUtils::Check("prediction shape", prediction, kEqual, "dloss", dloss, prim_name, TypeError);
 
@@ -52,9 +53,9 @@ AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const
   const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
                                          kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;
-  args.emplace("prediction", input_args[0]->BuildType());
-  args.emplace("target", input_args[1]->BuildType());
-  args.emplace("dloss", input_args[2]->BuildType());
+  args.emplace("prediction", input_args[kInputIndex0]->BuildType());
+  args.emplace("target", input_args[kInputIndex1]->BuildType());
+  args.emplace("dloss", input_args[kInputIndex2]->BuildType());
   auto dloss_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
   return std::make_shared<abstract::AbstractTensor>(dloss_type, prediction);

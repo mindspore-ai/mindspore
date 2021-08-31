@@ -61,13 +61,14 @@ AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   int64_t shape_size = 0;
-  if (input_args.size() == 3) {
-    MS_EXCEPTION_IF_NULL(input_args[0]->BuildValue());
-    MS_EXCEPTION_IF_NULL(input_args[1]->BuildValue());
-    MS_EXCEPTION_IF_NULL(input_args[2]->BuildValue());
-    auto start_tensor = input_args[0]->BuildValue()->cast<tensor::TensorPtr>();
-    auto limit_tensor = input_args[1]->BuildValue()->cast<tensor::TensorPtr>();
-    auto delta_tensor = input_args[2]->BuildValue()->cast<tensor::TensorPtr>();
+  const size_t max_input_num = 3;
+  if (input_args.size() == max_input_num) {
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]->BuildValue());
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]->BuildValue());
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]->BuildValue());
+    auto start_tensor = input_args[kInputIndex0]->BuildValue()->cast<tensor::TensorPtr>();
+    auto limit_tensor = input_args[kInputIndex1]->BuildValue()->cast<tensor::TensorPtr>();
+    auto delta_tensor = input_args[kInputIndex2]->BuildValue()->cast<tensor::TensorPtr>();
     auto dtype = start_tensor->data_type();
     switch (dtype) {
       case kNumberTypeInt:

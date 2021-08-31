@@ -27,9 +27,9 @@ abstract::ShapePtr BinaryCrossEntroyGradInferShape(const PrimitivePtr &primitive
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::Check("x shape", x_shape, kEqual, "y shape", y_shape, prim_name);
   if (weight_shape.size() < 1) {
     (void)CheckAndConvertUtils::Check("y shape", y_shape, kEqual, "weight shape", weight_shape, prim_name);
@@ -40,12 +40,12 @@ abstract::ShapePtr BinaryCrossEntroyGradInferShape(const PrimitivePtr &primitive
 TypePtr BinaryCrossEntroyGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x_shape", input_args[0]->BuildType());
-  (void)types.emplace("y_shape", input_args[1]->BuildType());
+  (void)types.emplace("x_shape", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("y_shape", input_args[kInputIndex1]->BuildType());
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  if (input_args[3]->BuildType() != nullptr) {
-    (void)types.emplace("x_shape", input_args[0]->BuildType());
-    (void)types.emplace("weight_shape", input_args[2]->BuildType());
+  if (input_args[kInputIndex3]->BuildType() != nullptr) {
+    (void)types.emplace("x_shape", input_args[kInputIndex0]->BuildType());
+    (void)types.emplace("weight_shape", input_args[kInputIndex2]->BuildType());
     infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   }
   return infer_type;

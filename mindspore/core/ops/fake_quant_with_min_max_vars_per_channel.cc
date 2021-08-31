@@ -44,17 +44,17 @@ AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(const abstract::AnalysisE
                                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("x rank", (int64_t)x_shape.size(), kGreaterThan, 1, op_name);
   CheckAndConvertUtils::Check("min shape", min_shape, kEqual, "max shape", max_shape, op_name);
   (void)CheckAndConvertUtils::CheckInteger("min shape", (int64_t)min_shape.size(), kEqual, 1, op_name);
   CheckAndConvertUtils::Check("min shape", min_shape[0], kEqual, "x shape", x_shape[x_shape.size() - 1], op_name);
 
-  auto x_type = input_args[0]->BuildType();
-  auto min_type = input_args[1]->BuildType();
-  auto max_type = input_args[2]->BuildType();
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto min_type = input_args[kInputIndex1]->BuildType();
+  auto max_type = input_args[kInputIndex2]->BuildType();
   std::vector<std::string> type_name = {"x", "min", "max"};
   std::vector<TypePtr> type = {x_type, min_type, max_type};
   for (size_t i = 0; i < 3; i++) {

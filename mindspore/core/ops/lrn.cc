@@ -78,8 +78,9 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  const int64_t x_size = 4;
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(in_shape.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(in_shape.size()), kEqual, x_size, prim_name);
 
   return std::make_shared<abstract::Shape>(in_shape);
 }

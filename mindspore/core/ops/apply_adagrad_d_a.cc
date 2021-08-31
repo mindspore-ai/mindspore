@@ -30,17 +30,20 @@ namespace ops {
 namespace {
 abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 8, primitive->name());
+  const int64_t input_num = 8;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                           primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   auto var_shape = input_args[0]->BuildShape();
-  auto gradient_accumulator_shape = input_args[1]->BuildShape();
-  auto gradient_squared_accumulator_shape = input_args[2]->BuildShape();
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
-  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
-  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->BuildShape())[kShape];
-  auto global_step_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[7]->BuildShape())[kShape];
+  auto gradient_accumulator_shape = input_args[kInputIndex1]->BuildShape();
+  auto gradient_squared_accumulator_shape = input_args[kInputIndex2]->BuildShape();
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+  auto global_step_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, 0, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, 0, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, 0, primitive->name());
@@ -53,18 +56,19 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
 TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 8, prim_name);
+  const int64_t input_num = 8;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_type = input_args[0]->BuildType();
-  auto gradient_accumulator_type = input_args[1]->BuildType();
-  auto gradient_squared_accumulator_type = input_args[2]->BuildType();
-  auto grad_type = input_args[3]->BuildType();
-  auto lr_type = input_args[4]->BuildType();
-  auto l1_type = input_args[5]->BuildType();
-  auto l2_type = input_args[6]->BuildType();
-  auto global_step_type = input_args[7]->BuildType();
+  auto var_type = input_args[kInputIndex0]->BuildType();
+  auto gradient_accumulator_type = input_args[kInputIndex1]->BuildType();
+  auto gradient_squared_accumulator_type = input_args[kInputIndex2]->BuildType();
+  auto grad_type = input_args[kInputIndex3]->BuildType();
+  auto lr_type = input_args[kInputIndex4]->BuildType();
+  auto l1_type = input_args[kInputIndex5]->BuildType();
+  auto l2_type = input_args[kInputIndex6]->BuildType();
+  auto global_step_type = input_args[kInputIndex7]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // gradient_accumulator、gradient_squared_accumulator、grad must have the same type as var
   std::map<std::string, TypePtr> args;

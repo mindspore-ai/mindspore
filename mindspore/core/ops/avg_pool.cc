@@ -83,7 +83,9 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, 4, op_name);
+  const int64_t x_size = 4;
+  const int64_t attr_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, x_size, op_name);
   if (format == NHWC) {
     in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
   }
@@ -94,8 +96,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto in_h = in_shape[2];
   auto in_w = in_shape[3];
   auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
-  (void)CheckAndConvertUtils::CheckInteger("kernel size", SizeToLong(kernel_size.size()), kEqual, 4, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("strides size", SizeToLong(strides.size()), kEqual, 4, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("kernel size", SizeToLong(kernel_size.size()), kEqual, attr_size, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("strides size", SizeToLong(strides.size()), kEqual, attr_size, op_name);
   if (std::any_of(strides.begin(), strides.end(), [](int64_t stride) { return stride <= 0; })) {
     MS_LOG(EXCEPTION) << "Strides is not valid, strides must be positive.";
   }

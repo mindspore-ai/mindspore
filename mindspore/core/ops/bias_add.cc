@@ -35,15 +35,20 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto bias = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(bias);
-  (void)CheckAndConvertUtils::CheckInteger("arg size", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("arg size", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
-  CheckAndConvertUtils::CheckInRange("bias_add_infer", input_shape.size(), kIncludeBoth, {2, 5}, prim_name);
+  const int64_t x_min_rank = 2;
+  const int64_t x_max_rank = 5;
+  CheckAndConvertUtils::CheckInRange("bias_add_infer", input_shape.size(), kIncludeBoth, {x_min_rank, x_max_rank},
+                                     prim_name);
   auto bias_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("bias rank", SizeToLong(bias_shape.size()), kEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(input_shape.size()), kGreaterEqual, 2, prim_name);
+  const int64_t x_size = 2;
+  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(input_shape.size()), kGreaterEqual, x_size, prim_name);
   auto data_format_ptr = primitive->GetAttr("format");
   int64_t data_format = Format::NCHW;
   if (data_format_ptr != nullptr) {
@@ -71,7 +76,9 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("biasadd_infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("biasadd_infer", SizeToLong(input_args.size()), kEqual, input_num,
+                                           prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

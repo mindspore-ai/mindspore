@@ -27,18 +27,19 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 3, op_name);
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, input_num, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto input_shape = input_shape_map[kShape];
-  auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto mask_shape = mask_shape_map[kShape];
-  auto value_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape());
+  auto value_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
   auto value_shape = value_shape_map[kShape];
   auto broadcast_shape = CalBroadCastShape(input_shape, mask_shape, op_name, "input", "mask");
-  if (input_args[2]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     if (value_shape.size() != 0) {
       MS_EXCEPTION(ValueError)
         << "For " + op_name +
@@ -55,15 +56,16 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
     MS_EXCEPTION_IF_NULL(item);
   }
   auto op_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 3, op_name);
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, input_num, op_name);
   CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
-  if (input_args[2]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     std::map<std::string, TypePtr> types;
-    types.emplace("input", input_args[0]->BuildType());
-    types.emplace("value", input_args[2]->BuildType());
+    types.emplace("input", input_args[kInputIndex0]->BuildType());
+    types.emplace("value", input_args[kInputIndex2]->BuildType());
     return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32, kInt8, kInt32}, op_name);
   } else {
-    CheckAndConvertUtils::CheckSubClass("value", input_args[2]->BuildType(), {kFloat}, op_name);
+    CheckAndConvertUtils::CheckSubClass("value", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
     return CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(),
                                                       {kFloat16, kFloat32, kInt8, kInt32}, op_name);
   }

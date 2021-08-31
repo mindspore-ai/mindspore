@@ -30,7 +30,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
+  const int64_t shape_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
   auto out_shape = x_shape;
   int64_t block_shape_prod = 1;
   const size_t offset = 2;
@@ -60,7 +61,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }  // namespace
 
 void SpaceToBatchND::set_paddings(std::vector<std::vector<int64_t>> paddings) {
-  (void)CheckAndConvertUtils::CheckInteger(kPaddings, SizeToLong(paddings.size()), kEqual, 2, this->name());
+  const int64_t pad_size = 2;
+  (void)CheckAndConvertUtils::CheckInteger(kPaddings, SizeToLong(paddings.size()), kEqual, pad_size, this->name());
   size_t h = paddings.size();
   size_t w = paddings[0].size();
   std::vector<size_t> temp_w = {2, 2};
@@ -78,7 +80,9 @@ std::vector<std::vector<int64_t>> SpaceToBatchND::get_paddings() const {
   return GetValue<std::vector<std::vector<int64_t>>>(value_ptr);
 }
 void SpaceToBatchND::set_block_shape(std::vector<int64_t> block_shape) {
-  (void)CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape.size()), kEqual, 2, this->name());
+  const int64_t block_size = 2;
+  (void)CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape.size()), kEqual, block_size,
+                                           this->name());
   for (size_t i = 0; i < block_shape.size(); i++) {
     (void)CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape[i]), kGreaterEqual, 1, this->name());
   }

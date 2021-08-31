@@ -28,18 +28,19 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 3, op_name);
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto start_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto start_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto start_shape = start_shape_map[kShape];
-  auto end_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto end_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto end_shape = end_shape_map[kShape];
-  auto weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape());
+  auto weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
   auto weight_shape = weight_shape_map[kShape];
   auto broadcast_shape = CalBroadCastShape(start_shape, end_shape, op_name, "start", "end");
-  if (input_args[2]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     CalBroadCastShape(start_shape, weight_shape, op_name, "start", "weight");
     CalBroadCastShape(end_shape, weight_shape, op_name, "end", "weight");
     broadcast_shape = CalBroadCastShape(broadcast_shape, weight_shape, op_name);
@@ -52,14 +53,15 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
     MS_EXCEPTION_IF_NULL(item);
   }
   auto op_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 3, op_name);
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   std::map<std::string, TypePtr> types;
   types.emplace("start", input_args[0]->BuildType());
   types.emplace("end", input_args[1]->BuildType());
-  if (input_args[2]->isa<abstract::AbstractTensor>()) {
-    types.emplace("weight", input_args[2]->BuildType());
+  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+    types.emplace("weight", input_args[kInputIndex2]->BuildType());
   } else {
-    CheckAndConvertUtils::CheckSubClass("weight", input_args[2]->BuildType(), {kFloat}, op_name);
+    CheckAndConvertUtils::CheckSubClass("weight", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
   }
   return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32}, op_name);
 }

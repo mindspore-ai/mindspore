@@ -32,16 +32,23 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   // infer shape
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("lstm_prim_infer", SizeToLong(input_args.size()), kEqual, 4, prim_name);
-  auto x_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto h_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto c_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  const int64_t input_num = 4;
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
+  auto x_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto h_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto c_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
 
   int64_t input_x_size = GetValue<int64_t>(primitive->GetAttr(kInput_size));
-  (void)CheckAndConvertUtils::CheckInteger("x_shape.size()", SizeToLong(x_input_shape.size()), kEqual, 3, prim_name);
+  const int64_t shape_size = 3;
+  (void)CheckAndConvertUtils::CheckInteger("x_shape.size()", SizeToLong(x_input_shape.size()), kEqual, shape_size,
+                                           prim_name);
   (void)CheckAndConvertUtils::CheckInteger("x_shape[2]", x_input_shape[2], kEqual, input_x_size, prim_name);
 
-  (void)CheckAndConvertUtils::CheckInteger("h_shape.size()", SizeToLong(h_input_shape.size()), kEqual, 3, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("h_shape.size()", SizeToLong(h_input_shape.size()), kEqual, shape_size,
+                                           prim_name);
   CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, "c_shape", c_input_shape, prim_name);
 
   int64_t num_layers = GetValue<int64_t>(primitive->GetAttr(kNumLayers));
@@ -81,15 +88,11 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   std::vector<int64_t> state_shape = {1, 1};
 
   // infer type
-  (void)CheckAndConvertUtils::CheckInteger("lstm_prim_infer", SizeToLong(input_args.size()), kEqual, 4, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto infer_type0 = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  auto infer_type1 = input_args[1]->BuildType()->cast<TensorTypePtr>()->element();
-  auto infer_type2 = input_args[2]->BuildType()->cast<TensorTypePtr>()->element();
-  auto infer_type3 = input_args[3]->BuildType()->cast<TensorTypePtr>()->element();
-  auto infer_type4 = input_args[4]->BuildType()->cast<TensorTypePtr>()->element();
+  auto infer_type0 = input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element();
+  auto infer_type1 = input_args[kInputIndex1]->BuildType()->cast<TensorTypePtr>()->element();
+  auto infer_type2 = input_args[kInputIndex2]->BuildType()->cast<TensorTypePtr>()->element();
+  auto infer_type3 = input_args[kInputIndex3]->BuildType()->cast<TensorTypePtr>()->element();
+  auto infer_type4 = input_args[kInputIndex4]->BuildType()->cast<TensorTypePtr>()->element();
   auto output0 = std::make_shared<abstract::AbstractTensor>(infer_type0, x_shape);
   auto output1 = std::make_shared<abstract::AbstractTensor>(infer_type1, y_shape);
   auto output2 = std::make_shared<abstract::AbstractTensor>(infer_type2, c_shape);

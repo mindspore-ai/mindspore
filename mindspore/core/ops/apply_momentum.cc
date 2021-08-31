@@ -61,7 +61,8 @@ AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const Pr
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("apply_momentum_infer", SizeToLong(input_args.size()), kEqual, 5, prim_name);
+  const int64_t input_num = 5;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
 
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -70,11 +71,11 @@ AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
 
   // Infer type
-  auto v_tensor_type = input_args[0]->BuildType();
-  auto a_tensor_type = input_args[1]->BuildType();
-  auto l_type = input_args[2]->BuildType();
-  auto g_type = input_args[3]->BuildType();
-  auto m_type = input_args[4]->BuildType();
+  auto v_tensor_type = input_args[kInputIndex0]->BuildType();
+  auto a_tensor_type = input_args[kInputIndex1]->BuildType();
+  auto l_type = input_args[kInputIndex2]->BuildType();
+  auto g_type = input_args[kInputIndex3]->BuildType();
+  auto m_type = input_args[kInputIndex4]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("v_type", v_tensor_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("a_type", a_tensor_type, valid_types, prim_name);

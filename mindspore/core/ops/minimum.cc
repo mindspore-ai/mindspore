@@ -35,14 +35,16 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim->name());
+  auto op_name = prim->name();
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, op_name);
 }
 }  // namespace
 

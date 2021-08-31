@@ -258,6 +258,26 @@ constexpr auto kNumOutput = "num_output";
 constexpr auto kUseGlobalStats = "use_global_stats";
 constexpr auto kFmkType = "fmk_type";
 
+enum Index : size_t {
+  kInputIndex0 = 0,
+  kInputIndex1,
+  kInputIndex2,
+  kInputIndex3,
+  kInputIndex4,
+  kInputIndex5,
+  kInputIndex6,
+  kInputIndex7,
+  kInputIndex8,
+  kInputIndex9,
+  kInputIndex10,
+  kInputIndex11,
+  kInputIndex12,
+  kInputIndex13,
+  kInputIndex14,
+  kInputIndex15,
+  kInputIndex16,
+};
+
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
 

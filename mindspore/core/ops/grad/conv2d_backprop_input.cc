@@ -67,7 +67,7 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_size_v = input_args[2]->BuildValue();
+  auto x_size_v = input_args[kInputIndex2]->BuildValue();
   auto ret_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("x_size", x_size_v, prim_name);
   auto dout_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
@@ -93,7 +93,9 @@ AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, co
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   // check
-  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, 3, prim_name);
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                           prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -149,7 +151,8 @@ void Conv2DBackpropInput::set_pad_mode(const PadMode &pad_mode) {
 }
 
 void Conv2DBackpropInput::set_pad(const std::vector<int64_t> &pad) {
-  (void)CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, 4, name());
+  const int64_t pad_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, pad_size, name());
   (void)AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 

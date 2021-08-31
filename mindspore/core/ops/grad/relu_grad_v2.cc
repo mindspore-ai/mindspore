@@ -27,13 +27,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+abstract::ShapePtr InferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
@@ -41,9 +35,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return shape_element;
 }
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("ReLUGradV2 infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type_map = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type_map);
@@ -55,7 +47,15 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }  // namespace
 AbstractBasePtr ReLUGradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
+                                           prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  return abstract::MakeAbstract(InferShape(input_args), InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ReLUGradV2, prim::kPrimReluGradV2, ReLUGradV2Infer, nullptr, true);
 }  // namespace ops

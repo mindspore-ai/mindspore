@@ -45,7 +45,6 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
   return CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types,
                                                     primitive->name());
 }
-
 }  // namespace
 
 AbstractBasePtr HShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
