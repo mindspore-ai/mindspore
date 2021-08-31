@@ -1365,9 +1365,9 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         param_dict[param.name] = split_param
 
     if param_not_in_strategy:
-        logger.warning("{} parameters in network are not in the sclice strategy.".format(param_not_in_strategy))
+        logger.warning("{} parameters in network are not in the slice strategy.".format(param_not_in_strategy))
     if param_not_in_ckpt:
-        logger.warning("{} parameters in sclice strategy but not in the checkpoint file.".format(param_not_in_ckpt))
+        logger.warning("{} parameters in slice strategy but not in the checkpoint file.".format(param_not_in_ckpt))
 
     load_param_into_net(network, param_dict)
 
