@@ -50,13 +50,13 @@ class Jvp(Cell):
 
     Inputs:
         - **inputs** (Tensors) - The inputs to `net`.
-        - **v** (tuple of Tensors or Tensor) - The vector for which the Jacobian vector product is computed.
+        - **v** (Tensors or Tuple of Tensors) - The vector for which the Jacobian vector product is computed.
           Must have the same size as the input of `network`.
 
     Outputs:
-        A tuple with:
-            net_output (Tuple(Tensor...)) - The output of `network(inputs)`.
-            jvp (Tuple(Tensor...)) - The result of the jacobian vector product.
+        A tuple with 2 Tensors or Tuple of Tensors:
+        - **net_output** (Tensors or Tuple of Tensors) - The output of `network(inputs)`.
+        - **jvp** (Tensors or Tuple of Tensors) - The result of the jacobian vector product.
 
     Examples:
         >>> from mindspore.nn.grad import Jvp
@@ -114,13 +114,13 @@ class Vjp(Cell):
 
     Inputs:
         - **inputs** (Tensors) - The inputs to `net`. Must be a tuple or a list.
-        - **v** (tuple of Tensors or Tensor) - The vector for which the vector Jacobian product is computed.
+        - **v** (Tensors or Tuple of Tensors) - The vector for which the vector Jacobian product is computed.
           Must have the same size as the output of `network`.
 
     Outputs:
-        A tuple with:
-            net_output (Tuple(Tensor...)) - The output of `network(inputs)`.
-            vjp (Tuple(Tensor...)) - The result of the dot product.
+        A tuple with 2 Tensors or Tuple of Tensors:
+        - **net_output** (Tensors or Tuple of Tensors) - The output of `network(inputs)`.
+        - **vjp** (Tensors or Tuple of Tensors) - The result of the dot product.
 
     Examples:
         >>> from mindspore.nn.grad import Vjp
