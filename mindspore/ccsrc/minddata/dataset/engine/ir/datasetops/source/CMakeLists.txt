@@ -7,6 +7,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         celeba_node.cc
         cifar100_node.cc
         cifar10_node.cc
+        cityscapes_node.cc
         clue_node.cc
         coco_node.cc
         csv_node.cc

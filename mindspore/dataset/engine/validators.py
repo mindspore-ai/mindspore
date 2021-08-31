@@ -1426,3 +1426,39 @@ def check_sb_dataset(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_cityscapes_dataset(method):
+    """A wrapper that wraps a parameter checker around the original CityScapesDataset."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle', 'decode']
+
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        task = param_dict.get('task')
+        check_valid_str(task, ["instance", "semantic", "polygon", "color"], "task")
+
+        quality_mode = param_dict.get('quality_mode')
+        check_valid_str(quality_mode, ["fine", "coarse"], "quality_mode")
+
+        usage = param_dict.get('usage')
+        if quality_mode == "fine":
+            valid_strings = ["train", "test", "val", "all"]
+        else:
+            valid_strings = ["train", "train_extra", "val", "all"]
+        check_valid_str(usage, valid_strings, "usage")
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        return method(self, *args, **kwargs)
+
+    return new_method

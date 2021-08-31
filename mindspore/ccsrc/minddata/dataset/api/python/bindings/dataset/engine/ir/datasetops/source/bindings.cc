@@ -28,6 +28,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/cityscapes_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
@@ -82,6 +83,18 @@ PYBIND_REGISTER(Cifar100Node, 2, ([](const py::module *m) {
                         std::make_shared<Cifar100Node>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(cifar100->ValidateParams());
                       return cifar100;
+                    }));
+                }));
+
+PYBIND_REGISTER(CityscapesNode, 2, ([](const py::module *m) {
+                  (void)py::class_<CityscapesNode, DatasetNode, std::shared_ptr<CityscapesNode>>(
+                    *m, "CityscapesNode", "to create a CityscapesNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, std::string quality_mode,
+                                     std::string task, bool decode, py::handle sampler) {
+                      auto cityscapes = std::make_shared<CityscapesNode>(dataset_dir, usage, quality_mode, task, decode,
+                                                                         toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(cityscapes->ValidateParams());
+                      return cityscapes;
                     }));
                 }));
 
