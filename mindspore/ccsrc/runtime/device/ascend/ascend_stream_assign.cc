@@ -41,6 +41,7 @@ namespace {
 constexpr uint32_t kDeviceNumOfServer = 8;
 constexpr uint32_t kDeviceNumThreshold = 1024;
 const char kDefaultGroup[] = "__default_group";
+constexpr auto kAttrStreamID = "stream_id";
 
 constexpr uint32_t kMaxStreamNum = 1024;
 constexpr uint32_t kHcomSecondaryStreamNum = 3;
@@ -202,6 +203,12 @@ StreamActiveKind GetStreamKind(uint32_t cur_stream_id, uint32_t pre_stream_id, u
 
   return kInvalid;
 }
+void SetNodeStreamIDAttr(const NotNull<KernelGraphPtr> &graph_ptr) {
+  auto exec_orders = graph_ptr->execution_order();
+  for (auto node : exec_orders) {
+    AnfAlgo::SetNodeAttr(kAttrStreamID, MakeValue<uint32_t>(AnfAlgo::GetStreamId(node)), node);
+  }
+}
 }  // namespace
 
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) {
@@ -237,7 +244,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     (void)mindspore::RDR::RecordStreamExecOrder(module, name, exec_order);
 #endif
     graph_ptr->PrintGraphExecuteOrder();
-
+    SetNodeStreamIDAttr(graph_ptr);
     FindStreamRelations(graph_ptr);
     PrintStreamRelations();
     GetStreamRelations();
