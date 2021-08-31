@@ -814,6 +814,40 @@ class GetNextCost : public OperatorCost {
 };
 using GetNextCostPtr = std::shared_ptr<GetNextCost>;
 
+class DSDMatmulCost : public OperatorCost {
+ public:
+  DSDMatmulCost() : OperatorCost() {}
+  ~DSDMatmulCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                     int64_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const override {
+    return 0.0;
+  }
+  double GetBackwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const override {
+    return 0.0;
+  }
+  double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  // Inputs vector is empty for generator ops.
+  double GetForwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                   int64_t) const override;
+  // Generator ops don't have backward steps.
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                    int64_t) const override {
+    return 0.0;
+  }
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+using DSDMatmulCostPtr = std::shared_ptr<DSDMatmulCost>;
+
 // For memory cost, taking account of output, not taking account of input
 class DropOutCost : public SqrtCost {
  public:

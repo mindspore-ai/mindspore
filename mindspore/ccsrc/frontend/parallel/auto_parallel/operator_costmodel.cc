@@ -1338,6 +1338,33 @@ void GetNextCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
+double DSDMatmulCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                                int64_t) const {
+  double result = 0.0;
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for layer norm cost";
+  }
+
+  for (size_t index = 0; index < inputs.size(); ++index) {
+    TensorInfo tensor_info = inputs[index];
+    Shape slice_shape = tensor_info.slice_shape();
+    result += ListProduct(slice_shape) * static_cast<double>(inputs_type_lengths_[index]);
+  }
+  return result;
+}
+
+void DSDMatmulCost::CalculateOutputInMemory() {
+  is_output_should_in_memory_ =
+    (std::find(is_parameter_involve_.begin(), is_parameter_involve_.end(), true) != is_parameter_involve_.end());
+}
+
+void DSDMatmulCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
+  bool keep_mem =
+    (std::find(is_parameter_.begin(), is_parameter_.end(), true) != is_parameter_.end()) ||
+    (std::find(is_parameter_involve_.begin(), is_parameter_involve_.end(), true) != is_parameter_involve_.end());
+  std::fill(is_inputs_should_in_memory_.begin(), is_inputs_should_in_memory_.end(), keep_mem);
+}
+
 void UniqueCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[0]; }
 
 void UniqueCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
