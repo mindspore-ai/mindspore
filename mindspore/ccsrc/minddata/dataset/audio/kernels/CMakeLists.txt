@@ -11,6 +11,7 @@ add_library(audio-kernels OBJECT
         bandreject_biquad_op.cc
         bass_biquad_op.cc
         complex_norm_op.cc
+        contrast_op.cc
         frequency_masking_op.cc
         lowpass_biquad_op.cc
         time_masking_op.cc

@@ -175,6 +175,19 @@ def check_biquad_cutoff_freq(cutoff_freq):
     check_float32(cutoff_freq, "cutoff_freq")
 
 
+def check_contrast(method):
+    """Wrapper method to check the parameters of Contrast."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [enhancement_amount], _ = parse_user_args(method, *args, **kwargs)
+        type_check(enhancement_amount, (float, int), "enhancement_amount")
+        check_value(enhancement_amount, [0, 100], "enhancement_amount")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_lowpass_biquad(method):
     """Wrapper method to check the parameters of LowpassBiquad."""
 

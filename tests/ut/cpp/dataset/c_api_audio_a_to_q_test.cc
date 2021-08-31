@@ -662,3 +662,69 @@ TEST_F(MindDataTestPipeline, TestComplexNormWrongArgs) {
   std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
   EXPECT_EQ(iter1, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestContrastBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestContrastBasic.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto ContrastOp = audio::Contrast();
+
+  ds = ds->Map({ContrastOp});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestContrastParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestContrastParamCheck.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat64, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  std::shared_ptr<Dataset> ds01;
+  std::shared_ptr<Dataset> ds02;
+  EXPECT_NE(ds, nullptr);
+
+  // Check enhancement_amount
+  MS_LOG(INFO) << "enhancement_amount is negative.";
+  auto contrast_op_01 = audio::Contrast(-10);
+  ds01 = ds->Map({contrast_op_01});
+  EXPECT_NE(ds01, nullptr);
+
+  std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
+  EXPECT_EQ(iter01, nullptr);
+
+  MS_LOG(INFO) << "enhancement_amount is out of range.";
+  auto contrast_op_02 = audio::Contrast(101);
+  ds02 = ds->Map({contrast_op_02});
+  EXPECT_NE(ds02, nullptr);
+
+  std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
+  EXPECT_EQ(iter02, nullptr);
+}

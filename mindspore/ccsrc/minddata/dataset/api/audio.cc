@@ -24,6 +24,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
+#include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
@@ -147,6 +148,18 @@ struct ComplexNorm::Data {
 ComplexNorm::ComplexNorm(float power) : data_(std::make_shared<Data>(power)) {}
 
 std::shared_ptr<TensorOperation> ComplexNorm::Parse() { return std::make_shared<ComplexNormOperation>(data_->power_); }
+
+// Contrast Transform Operation.
+struct Contrast::Data {
+  explicit Data(float enhancement_amount) : enhancement_amount_(enhancement_amount) {}
+  float enhancement_amount_;
+};
+
+Contrast::Contrast(float enhancement_amount) : data_(std::make_shared<Data>(enhancement_amount)) {}
+
+std::shared_ptr<TensorOperation> Contrast::Parse() {
+  return std::make_shared<ContrastOperation>(data_->enhancement_amount_);
+}
 
 // FrequencyMasking Transform Operation.
 struct FrequencyMasking::Data {
