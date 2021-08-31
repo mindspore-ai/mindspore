@@ -112,8 +112,15 @@ int BNGradCPUKernel::Execute(int task_id) {
   float *dbias = reinterpret_cast<float *>(output_bias->MutableData());
   CHECK_NULL_RETURN(dbias);
   float *dscale = reinterpret_cast<float *>(output_scale->MutableData());
-  CHECK_NULL_RETURN(dscale);
-  int total = spatial * batch;
+  int total = 0;
+  if (in_tensors().at(1)->shape().size() == 4) {
+    total = spatial * batch;
+  } else if (in_tensors().at(1)->shape().size() == 2) {
+    total = batch;
+  } else {
+    MS_LOG(ERROR) << "Unsupported tensor shape: " << in_tensors().at(1)->shape().size();
+    return RET_ERROR;
+  }
   int stride = UP_DIV(total, thread_num);
   int count = MSMIN(stride, total - stride * task_id);
   count = (count < 0) ? 0 : count;
