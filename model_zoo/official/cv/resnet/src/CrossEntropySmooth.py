@@ -16,7 +16,7 @@
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.nn.loss.loss import LossBase
+from mindspore.nn.loss import LossBase
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
