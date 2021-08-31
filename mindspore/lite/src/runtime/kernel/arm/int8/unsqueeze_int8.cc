@@ -28,9 +28,12 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::kernel {
 int Unsqueezeint8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto *input_tensor = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input_tensor);
   auto quant_params = input_tensor->quant_params();
-  MS_ASSERT(quant_params.size() == 1);
+  MS_CHECK_TRUE_RET(quant_params.size() == 1, RET_ERROR);
   param_->quant_arg.in_quant_args_.scale_ = quant_params.front().scale;
   param_->quant_arg.in_quant_args_.zp_ = quant_params.front().zeroPoint;
 
@@ -47,10 +50,7 @@ int Unsqueezeint8CPUKernel::Init() {
 int Unsqueezeint8CPUKernel::ReSize() {
   data_size_ = in_tensors_.at(0)->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
-  if (thread_sz_count_ == 0) {
-    MS_LOG(ERROR) << "div zero";
-    return RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(thread_sz_count_ != 0, RET_ERROR, "div zero, multi-thread division failed.");
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
 }
@@ -61,10 +61,10 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
     return RET_OK;
   }
 
-  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.front()->MutableData());
-  MS_ASSERT(input_ptr);
-  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.front()->MutableData());
-  MS_ASSERT(output_ptr);
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.front()->data_c());
+  CHECK_NULL_RETURN(input_ptr);
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.front()->data_c());
+  CHECK_NULL_RETURN(output_ptr);
   size_t data_size = out_tensors_.front()->Size();
 
   int ret = Int8Unsqueeze(input_ptr, output_ptr, param_, data_size, task_id);
@@ -76,6 +76,7 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
 }
 
 int UnsqueezeIn8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<Unsqueezeint8CPUKernel *>(cdata);
   auto ret = g_kernel->DoUnsqueeze(task_id);
   if (ret != RET_OK) {
@@ -86,8 +87,10 @@ int UnsqueezeIn8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 }
 
 int Unsqueezeint8CPUKernel::Run() {
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(in_ptr_);
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(out_ptr_);
   auto ret = ParallelLaunch(this->ms_context_, UnsqueezeIn8Run, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";

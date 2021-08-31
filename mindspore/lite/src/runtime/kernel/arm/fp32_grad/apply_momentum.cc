@@ -46,17 +46,19 @@ static int DoApplyMomentum(float *weight, float *accumulate, float learning_rate
 }
 
 int ApplyMomentumCPUKernel::Execute(int task_id) {
-  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   CHECK_NULL_RETURN(weight);
-  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
-  auto gradient = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
+  auto gradient = reinterpret_cast<float *>(in_tensors_.at(3)->data_c());
   CHECK_NULL_RETURN(gradient);
-  CHECK_NULL_RETURN(in_tensors_.at(4)->MutableData());
-  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+  CHECK_NULL_RETURN(in_tensors_.at(4)->data_c());
+  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->data_c())[0];
   int length = in_tensors_.at(0)->ElementsNum();
 
+  MS_CHECK_TRUE_RET(thread_count_ > 0, RET_ERROR);
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
   count = (count < 0) ? 0 : count;
@@ -95,7 +97,7 @@ int ApplyMomentumCPUKernel::Run() {
 
 int ApplyMomentumCPUKernel::Init() {
   CHECK_NULL_RETURN(apply_momentum_param_);
-  CHECK_LESS_RETURN(in_tensors_.size(), 5);
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
   CHECK_NULL_RETURN(in_tensors_.at(0));
   CHECK_NULL_RETURN(in_tensors_.at(1));
   CHECK_NULL_RETURN(in_tensors_.at(2));
@@ -110,13 +112,13 @@ int ApplyMomentumCPUKernel::Init() {
 }
 
 int ApplyMomentumCPUKernel::OptimizerStep() {
-  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   CHECK_NULL_RETURN(weight);
-  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
-  CHECK_NULL_RETURN(in_tensors_.at(4)->MutableData());
-  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+  CHECK_NULL_RETURN(in_tensors_.at(4)->data_c());
+  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->data_c())[0];
 
   size_t length = in_tensors_.at(0)->ElementsNum();
 

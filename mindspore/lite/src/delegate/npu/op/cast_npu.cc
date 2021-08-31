@@ -16,8 +16,6 @@
 
 #include "src/delegate/npu/op/cast_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
-#include "nnacl/op_base.h"
-#include "src/common/log_util.h"
 
 namespace mindspore {
 int CastNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,

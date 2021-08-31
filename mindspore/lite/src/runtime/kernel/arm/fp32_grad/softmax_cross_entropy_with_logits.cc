@@ -58,15 +58,15 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
 }
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
-  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   CHECK_NULL_RETURN(ins);
-  auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   CHECK_NULL_RETURN(labels);
-  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   CHECK_NULL_RETURN(out);
   float *grads = nullptr;
   if (IsTrain() && out_tensors_.size() > 1) {
-    grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
+    grads = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
   }
   size_t data_size = in_tensors_.at(0)->ElementsNum();
 
@@ -100,14 +100,15 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
 }
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_2D);
+  CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_2D);
   CHECK_NULL_RETURN(param_);
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));
   CHECK_NULL_RETURN(in_tensors_.at(1));
   CHECK_NULL_RETURN(out_tensors_.at(0));
   auto dims = in_tensors_.at(0)->shape();
   param_->n_dim_ = 2;
+  CHECK_LESS_RETURN(dims.size(), DIMENSION_2D);
   param_->number_of_classes_ = dims.at(1);
   param_->batch_size_ = dims.at(0);
   for (unsigned int i = 0; i < dims.size(); i++) param_->input_shape_[i] = dims.at(i);

@@ -57,14 +57,17 @@ int PriorBoxCPUKernel::Init() {
 int PriorBoxCPUKernel::ReSize() { return GeneratePriorBox(); }
 
 int PriorBoxCPUKernel::GeneratePriorBox() {
+  MS_CHECK_TRUE_RET(in_tensors_.at(0) != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(in_tensors_.at(1) != nullptr, RET_NULL_PTR);
+
   const int fmap_w = in_tensors_.at(0)->Width();
   const int fmap_h = in_tensors_.at(0)->Height();
-  MS_ASSERT(fmap_w);
-  MS_ASSERT(fmap_h);
 
   const int image_w = prior_box_param_->image_size_w > 0 ? prior_box_param_->image_size_w : in_tensors_.at(1)->Width();
   const int image_h = prior_box_param_->image_size_h > 0 ? prior_box_param_->image_size_h : in_tensors_.at(1)->Height();
 
+  MS_CHECK_TRUE_RET(fmap_w != 0, RET_ERROR);
+  MS_CHECK_TRUE_RET(fmap_h != 0, RET_ERROR);
   const float step_w =
     prior_box_param_->step_w > 0.0f ? prior_box_param_->step_w : static_cast<float>(image_w) / fmap_w;
   const float step_h =
@@ -75,12 +78,13 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
   MS_ASSERT(aspect_ratios != nullptr);
   for (auto i = 0; i < prior_box_param_->aspect_ratios_size; i++) {
     float ratio = aspect_ratios[i];
+    MS_CHECK_TRUE_RET(ratio != 0, RET_ERROR);
     bool exist = std::any_of(different_aspect_ratios.begin(), different_aspect_ratios.end(),
                              [&](float v) { return abs(ratio - v) < 1e-6; });
     if (!exist) {
       different_aspect_ratios.emplace_back(ratio);
       if (prior_box_param_->flip) {
-        MS_ASSERT(fabs(ratio) > 1e-5);
+        MS_CHECK_GT(fabs(ratio), 1e-5, RET_ERROR);
         different_aspect_ratios.emplace_back(1.0f / ratio);
       }
     }
@@ -90,6 +94,8 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
     float cy = i + prior_box_param_->offset;
     for (int j = 0; j < fmap_w; j++) {
       float cx = j + prior_box_param_->offset;
+      MS_CHECK_TRUE_RET(step_w != 0, RET_ERROR);
+      MS_CHECK_TRUE_RET(step_h != 0, RET_ERROR);
       for (auto k = 0; k < prior_box_param_->min_sizes_size; k++) {
         float min_size = prior_box_param_->min_sizes[k];
         output_.emplace_back((cx - min_size / step_w * 0.5f) / fmap_w);
@@ -99,6 +105,7 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
 
         if (prior_box_param_->max_sizes_size > 0) {
           float max_size = prior_box_param_->max_sizes[k];
+          MS_CHECK_GT(min_size * max_size, 0, RET_ERROR);
           float prime = sqrt(min_size * max_size);
           output_.emplace_back((cx - prime / step_w * 0.5f) / fmap_w);
           output_.emplace_back((cy - prime / step_h * 0.5f) / fmap_h);
@@ -110,6 +117,7 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
           if (abs(v - 1.0f) < 1e-6) {
             continue;
           }
+          MS_CHECK_GT(v, 0, RET_ERROR);
           float as_square_root = sqrt(v);
           float box_w = min_size * as_square_root;
           float box_h = min_size / as_square_root;
@@ -145,17 +153,11 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
 
 int PriorBoxCPUKernel::PriorBoxImpl(int task_id) {
   auto src = output_.data();
-  if (src == nullptr) {
-    return RET_NULL_PTR;
-  }
+  MS_CHECK_TRUE_RET(src != nullptr, RET_NULL_PTR);
   auto output = out_tensors_.at(0);
-  if (output == nullptr) {
-    return RET_NULL_PTR;
-  }
+  MS_CHECK_TRUE_RET(output != nullptr, RET_NULL_PTR);
   auto output_data = reinterpret_cast<float *>(output->data());
-  if (output_data == nullptr) {
-    return RET_NULL_PTR;
-  }
+  MS_CHECK_TRUE_RET(output_data != nullptr, RET_NULL_PTR);
   auto ret = PriorBox(src, output_data, output_.size(), task_id, thread_count_);
   return ret;
 }

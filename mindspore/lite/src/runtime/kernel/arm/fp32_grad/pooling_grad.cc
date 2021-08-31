@@ -27,32 +27,35 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_AvgPoolGrad;
 using mindspore::schema::PrimitiveType_MaxPoolGrad;
+constexpr int kNumInputDim_2 = 2;
+constexpr int kNumShapeDim_2 = 2;
 
 namespace mindspore::kernel {
 int PoolingGradCPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
   CHECK_NULL_RETURN(pool_param);
-  CHECK_LESS_RETURN(in_tensors_.size(), 3);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));
   CHECK_NULL_RETURN(in_tensors_.at(1));
   CHECK_NULL_RETURN(in_tensors_.at(2));
   CHECK_NULL_RETURN(out_tensors_.at(0));
   auto in_shape = in_tensors_.at(0)->shape();
   auto out_shape = in_tensors_.at(1)->shape();
+  MS_CHECK_TRUE_RET(in_shape.size() == COMM_SHAPE_SIZE, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_shape.size() == COMM_SHAPE_SIZE, RET_ERROR);
 
   if (pool_param->pool_mode_ == PoolMode_AvgPool) {
-    out_shape = in_tensors_.at(2)->shape();
+    out_shape = in_tensors_.at(kNumInputDim_2)->shape();
   }
-
   int input_h = in_shape.at(1);
-  int input_w = in_shape.at(2);
-
+  int input_w = in_shape.at(kNumShapeDim_2);
+  MS_CHECK_TRUE_RET(input_h > 0, RET_ERROR);
+  MS_CHECK_TRUE_RET(input_w > 0, RET_ERROR);
   if (pool_param->global_) {
     pool_param->window_w_ = input_w;
     pool_param->window_h_ = input_h;
   }
-
   pool_param->input_h_ = in_shape[kNHWC_H];
   pool_param->input_w_ = in_shape[kNHWC_W];
   pool_param->input_batch_ = in_shape[kNHWC_N];
@@ -69,10 +72,11 @@ int PoolingGradCPUKernel::Init() { return ReSize(); }
 
 int PoolingGradCPUKernel::Execute(int task_id) {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
-  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   CHECK_NULL_RETURN(input_ptr);
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   CHECK_NULL_RETURN(output_ptr);
+  MS_CHECK_TRUE_RET(thread_num_ > 0, RET_ERROR);
   int stride = UP_DIV(pool_param->output_batch_, thread_num_);
   int count = MSMIN(stride, pool_param->output_batch_ - stride * task_id);
   if (count > 0) {
@@ -81,11 +85,11 @@ int PoolingGradCPUKernel::Execute(int task_id) {
     std::fill(output_ptr + task_id * stride * in_batch_size, output_ptr + ((task_id * stride) + count) * in_batch_size,
               0.f);
     if (pool_param->pool_mode_ == PoolMode_MaxPool) {
-      auto dy_ptr = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+      auto dy_ptr = reinterpret_cast<float *>(in_tensors_.at(kNumInputDim_2)->data_c());
       MaxPoolingGrad(input_ptr + task_id * stride * in_batch_size, dy_ptr + task_id * stride * out_batch_size,
                      output_ptr + task_id * stride * in_batch_size, count, pool_param);
     } else {
-      input_ptr = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+      input_ptr = reinterpret_cast<float *>(in_tensors_.at(kNumInputDim_2)->data_c());
       AvgPoolingGrad(input_ptr + task_id * stride * out_batch_size, output_ptr + task_id * stride * in_batch_size,
                      count, pool_param);
     }

@@ -20,13 +20,10 @@ using mindspore::schema::PrimitiveType_PartialFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulatePartialParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_PartialFusion();
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(value != nullptr, nullptr, "value is nullptr");
 
   auto *param = reinterpret_cast<PartialParameter *>(malloc(sizeof(PartialParameter)));
   if (param == nullptr) {

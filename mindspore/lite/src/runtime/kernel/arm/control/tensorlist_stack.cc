@@ -29,30 +29,34 @@ using mindspore::schema::PrimitiveType_TensorListStack;
 
 namespace mindspore::kernel {
 int TensorListStackCPUKernel::CheckParam() {
+  MS_CHECK_TRUE_RET(input0_ != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(output0_ != nullptr, RET_NULL_PTR);
   if (num_element_ != -1 && input0_->ElementsNum() != num_element_) {
-    MS_LOG(ERROR) << "in_tensors_[0].ElementsNum():[" << input0_->ElementsNum() << "] must be equal "
+    MS_LOG(ERROR) << "in_tensors_.at(0).ElementsNum():[" << input0_->ElementsNum() << "] must be equal "
                   << "param.elements_num:[" << num_element_ << "]";
     return RET_ERROR;
   }
   num_element_ = input0_->ElementsNum();
   if (output0_->shape().size() < 1) {
-    MS_LOG(ERROR) << "out_tensors_[0].shape().size():" << output0_->shape().size()
+    MS_LOG(ERROR) << "out_tensors_.at(0).shape().size():" << output0_->shape().size()
                   << " must be greater than or equal to 1!";
     return RET_ERROR;
   }
   int dim0 = output0_->shape()[0];
   if (dim0 != num_element_) {
-    MS_LOG(ERROR) << "out_tensors_[0].shape()[0] must be:" << num_element_ << ", but now is:" << dim0;
+    MS_LOG(ERROR) << "out_tensors_.at(0).shape()[0] must be:" << num_element_ << ", but now is:" << dim0;
     return RET_ERROR;
   }
   return RET_OK;
 }
 
 int TensorListStackCPUKernel::Init() {
-  input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
-  MS_ASSERT(input0_ != nullptr);
-  output0_ = out_tensors_[0];
-  MS_ASSERT(output0_ != nullptr);
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_2D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_CHECK_TRUE_RET(in_tensors_.at(0) != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(out_tensors_.at(0) != nullptr, RET_NULL_PTR);
+  input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_.at(0));
+  output0_ = out_tensors_.at(0);
   return RET_OK;
 }
 
@@ -66,15 +70,16 @@ bool TensorListStackCPUKernel::IsFullyDefined(const std::vector<int> &shape) con
 }
 
 int TensorListStackCPUKernel::MergeElementShape() {
-  MS_ASSERT(in_tensors_[1]);
-  if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {
-    MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type() << " must be int";
+  MS_CHECK_TRUE_RET(input0_ != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(in_tensors_.at(1) != nullptr, RET_NULL_PTR);
+  if (in_tensors_.at(1)->data_type() != kNumberTypeInt && in_tensors_.at(1)->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "in_tensors_.at(1)->data_type():" << in_tensors_.at(1)->data_type() << " must be int";
     return RET_ERROR;
   }
-  auto ele_shape_data = reinterpret_cast<int *>(in_tensors_[1]->data_c());
-  MS_ASSERT(ele_shape_data != nullptr);
+  auto ele_shape_data = reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
+  MS_CHECK_TRUE_RET(ele_shape_data != nullptr, RET_NULL_PTR);
   output_shape_.clear();
-  for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
+  for (int i = 0; i < in_tensors_.at(1)->ElementsNum(); ++i) {
     output_shape_.push_back(ele_shape_data[i]);
   }
   auto status = MergeSubShape(input0_->element_shape());
@@ -90,7 +95,7 @@ int TensorListStackCPUKernel::MergeElementShape() {
   if (!IsFullyDefined(input0_->element_shape())) {
     for (int i = 0; i < input0_->ElementsNum(); ++i) {  // get tensorlist every tensor
       auto tensor_ele = input0_->GetTensor(i);
-      MS_ASSERT(tensor_ele != nullptr);
+      MS_CHECK_TRUE_RET(tensor_ele != nullptr, RET_NULL_PTR);
       if (tensor_ele->data_type() != kTypeUnknown) {
         status = MergeSubShape(tensor_ele->shape());
         if (status == RET_ERROR) {
@@ -108,7 +113,7 @@ int TensorListStackCPUKernel::MergeSubShape(const std::vector<int> &shape) {
   size_t dim0 = shape.size();
   size_t dim1 = output_shape_.size();
   // unknown shape use input element shape
-  if (dim1 != 0 && output_shape_[0] == -1) {
+  if (dim1 != 0 && output_shape_.at(0) == -1) {
     if (dim0 == 0) {
       output_shape_.clear();
       output_shape_.emplace_back(1);
@@ -135,7 +140,7 @@ int TensorListStackCPUKernel::MergeSubShape(const std::vector<int> &shape) {
 }
 
 int TensorListStackCPUKernel::Run() {
-  output0_ = out_tensors_[0];
+  output0_ = out_tensors_.at(0);
   if (CheckParam() != RET_OK) {
     MS_LOG(ERROR) << "CheckParam failed!";
     return RET_ERROR;
@@ -151,11 +156,12 @@ int TensorListStackCPUKernel::Run() {
   }
   size_t in_ele_num = num_element_ * TypeUnknownSize;
   if (in_ele_num != out_ele_num) {
-    MS_LOG(ERROR) << "out_tensors_[0]->ElementsNum():" << out_ele_num << "must be equal to in_ele_num:" << in_ele_num;
+    MS_LOG(ERROR) << "out_tensors_.at(0)->ElementsNum():" << out_ele_num
+                  << "must be equal to in_ele_num:" << in_ele_num;
     return RET_ERROR;
   }
   auto out_data = reinterpret_cast<char *>(output0_->data_c());
-  MS_ASSERT(out_data != nullptr);
+  MS_CHECK_TRUE_RET(out_data != nullptr, RET_NULL_PTR);
   dtype_ = input0_->tensors_data_type();
   auto unknown_type_offset = TypeUnknownSize * lite::DataTypeSize(dtype_);
 
@@ -168,7 +174,7 @@ int TensorListStackCPUKernel::Run() {
     if (in_ptr->data_type() != kTypeUnknown) {
       int data_size = in_ptr->ElementsNum() * lite::DataTypeSize(dtype_);
       auto in_data = in_ptr->data_c();
-      MS_ASSERT(in_data != nullptr);
+      MS_CHECK_TRUE_RET(in_data != nullptr, RET_NULL_PTR);
       memcpy(out_data, in_data, data_size);
       out_data += data_size;
     } else {

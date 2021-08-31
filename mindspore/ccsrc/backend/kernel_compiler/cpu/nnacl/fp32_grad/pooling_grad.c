@@ -30,7 +30,7 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, const 
   int in_h = pooling_param->input_h_;
   int output_w = pooling_param->output_w_;
   int output_h = pooling_param->output_h_;
-  NNACL_CHECK_ZERO_RETURN(win_h * win_w);
+
   const float kk = 1.0f / (float)(win_h * win_w);
 #if ENABLE_ARM
   const float32x4_t factor = vdupq_n_f32(kk);
@@ -113,7 +113,6 @@ void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_p
   int in_h = pooling_param->input_h_;
   int output_w = pooling_param->output_w_;
   int output_h = pooling_param->output_h_;
-
   for (int ib = 0; ib < output_batch; ib++) {
     float *out = output_ptr + ib * in_h * in_w * channel;
     const float *inPtr = input_ptr + ib * in_h * in_w * channel;

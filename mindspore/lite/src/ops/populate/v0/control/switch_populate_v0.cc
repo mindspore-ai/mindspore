@@ -21,6 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateSwitchParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   OpParameter *switch_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (switch_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc SwitchParameter failed.";
