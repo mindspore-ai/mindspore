@@ -27,6 +27,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -223,10 +224,10 @@ ValueNodePtr SlicePreposePass::CreateSliceValueNode(const FuncGraphPtr &graph, c
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(slice_cnode != nullptr);
   auto new_slice = std::make_shared<mindspore::ops::SliceFusion>();
-  MS_ASSERT(new_slice != nullptr);
+  MS_CHECK_TRUE_MSG(new_slice != nullptr, nullptr, "new_slice is nullptr");
   new_slice->set_axes(axes);
   ValueNodePtr value_node = NewValueNode(new_slice);
-  MS_ASSERT(value_node != nullptr);
+  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "NewValueNode Failed");
   return value_node;
 }
 
@@ -239,10 +240,10 @@ ValueNodePtr SlicePreposePass::CopySliceValueNode(const FuncGraphPtr &graph, con
     return nullptr;
   }
   auto new_slice_c = std::make_shared<mindspore::ops::SliceFusion>();
-  MS_ASSERT(new_slice_c != nullptr);
+  MS_CHECK_TRUE_MSG(new_slice_c != nullptr, nullptr, "new_slice_c is nullptr");
   new_slice_c->set_axes(slice_c->get_axes());
   ValueNodePtr value_node = NewValueNode(new_slice_c);
-  MS_ASSERT(value_node != nullptr);
+  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "NewValueNode Failed");
   return value_node;
 }
 
@@ -252,7 +253,7 @@ CNodePtr SlicePreposePass::InsertSlice(const FuncGraphPtr &graph, const std::vec
   MS_ASSERT(slice_cnode != nullptr);
   MS_ASSERT(preceed_cnode != nullptr);
   auto slice_cnode = graph->NewCNode(inputs);
-  MS_ASSERT(slice_node != nullptr);
+  MS_CHECK_TRUE_MSG(slice_cnode != nullptr, nullptr, "NewNode Failed");
   slice_cnode->set_fullname_with_scope(preceed_cnode->fullname_with_scope() + "_slice_" +
                                        std::to_string(node_name_index));
   node_name_index += 1;
@@ -376,7 +377,7 @@ CNodePtr SlicePreposePass::CreateReshapeCNode(const FuncGraphPtr &graph, const s
     return nullptr;
   }
   auto reshape_cnode = graph->NewCNode({value_node, preceed_cnode, shape_node});
-  MS_ASSERT(reshape_node != nullptr);
+  MS_CHECK_TRUE_MSG(reshape_cnode != nullptr, nullptr, "NewCNode Failed");
   reshape_cnode->set_abstract(abstract);
   reshape_cnode->set_fullname_with_scope(preceed_cnode->fullname_with_scope() + "_reshape_" +
                                          std::to_string(node_name_index));
@@ -575,8 +576,8 @@ bool SlicePreposePass::PreposeWithNormalReshape(const FuncGraphPtr &graph, const
     graph, new_begin, slice_cnode->input(SliceBeginIndex)->cast<ParameterPtr>()->fullname_with_scope());
   auto new_size_parameter = BuildIntVecParameterNode(
     graph, new_size, slice_cnode->input(SliceSizeIndex)->cast<ParameterPtr>()->fullname_with_scope());
-  MS_ASSERT(new_begin_parameter != nullptr);
-  MS_ASSERT(new_size_parameter != nullptr);
+  MS_CHECK_TRUE_MSG(new_begin_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
+  MS_CHECK_TRUE_MSG(new_size_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
   slice_cnode->set_input(SliceBeginIndex, new_begin_parameter);
   slice_cnode->set_input(SliceSizeIndex, new_size_parameter);
   auto status = SwapSliceWithPreceed(graph, slice_cnode, reshape_cnode, 1);
@@ -612,14 +613,14 @@ CNodePtr SlicePreposePass::CreateSlice1ForReshapePrepose(const FuncGraphPtr &gra
   }
   auto begin_parameter = BuildIntVecParameterNode(
     graph, new_begin1, slice_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
-  MS_ASSERT(begin_parameter != nullptr);
+  MS_CHECK_TRUE_MSG(begin_parameter != nullptr, nullptr, "BuildIntVecParameterNode Failed");
   node_name_index += 1;
   auto size_parameter = BuildIntVecParameterNode(
     graph, new_size1, slice_cnode->fullname_with_scope() + "_size_" + std::to_string(node_name_index));
-  MS_ASSERT(size_parameter != nullptr);
+  MS_CHECK_TRUE_MSG(size_parameter != nullptr, nullptr, "BuildIntVecParameterNode Failed");
   node_name_index += 1;
   auto new_slice1_cnode = graph->NewCNode({new_slice1, matmul_cnode, begin_parameter, size_parameter});
-  MS_ASSERT(new_slice1_cnode != nullptr);
+  MS_CHECK_TRUE_MSG(new_slice1_cnode != nullptr, nullptr, "NewNode Failed");
   new_slice1_cnode->set_abstract(slice_cnode->abstract()->Clone());
   new_slice1_cnode->set_fullname_with_scope(slice_cnode->fullname_with_scope() + "_slice_" +
                                             std::to_string(node_name_index));
@@ -657,14 +658,14 @@ CNodePtr SlicePreposePass::CreateSlice2ForReshapePrepose(const FuncGraphPtr &gra
   }
   auto begin_parameter = BuildIntVecParameterNode(
     graph, new_begin2, slice_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
-  MS_ASSERT(begin_parameter != nullptr);
+  MS_CHECK_TRUE_MSG(begin_parameter != nullptr, nullptr, "BuildIntVecParameterNode Failed");
   node_name_index += 1;
   auto size_parameter = BuildIntVecParameterNode(
     graph, new_size2, slice_cnode->fullname_with_scope() + "_size_" + std::to_string(node_name_index));
   node_name_index += 1;
-  MS_ASSERT(size_parameter != nullptr);
+  MS_CHECK_TRUE_MSG(size_parameter != nullptr, nullptr, "BuildIntVecParameterNode Failed");
   auto new_slice2_cnode = graph->NewCNode({new_slice2, new_reshape1_cnode, begin_parameter, size_parameter});
-  MS_ASSERT(new_slice2_cnode != nullptr);
+  MS_CHECK_TRUE_MSG(new_slice2_cnode != nullptr, nullptr, "NewNode Failed");
   new_slice2_cnode->set_abstract(slice_cnode->abstract()->Clone());
   new_slice2_cnode->set_fullname_with_scope(slice_cnode->fullname_with_scope() + "_slice_" +
                                             std::to_string(node_name_index));
@@ -927,9 +928,7 @@ bool SlicePreposePass::PreposeWithReshape(const FuncGraphPtr &graph, const CNode
  */
 bool SlicePreposePass::PreposeWithMatmul(const FuncGraphPtr &graph, const CNodePtr &slice_cnode,
                                          const CNodePtr &matmul_cnode) {
-  MS_ASSERT(graph != nullptr);
-  MS_ASSERT(slice_cnode != nullptr);
-  MS_ASSERT(matmul_cnode != nullptr);
+  MS_ASSERT(graph != nullptr && slice_cnode != nullptr && matmul_cnode != nullptr);
   auto matmul_shape = GetCNodeInputShape(slice_cnode, 1);
   const int dims = matmul_shape.size();
   if (dims == 0) {
@@ -937,23 +936,16 @@ bool SlicePreposePass::PreposeWithMatmul(const FuncGraphPtr &graph, const CNodeP
     return false;
   }
   auto slice_node = GetSlice(slice_cnode);
-  if (slice_node == nullptr) {
-    MS_LOG(ERROR) << "slice is nullptr";
-    return RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(slice_node != nullptr, RET_ERROR, "slice is nullptr");
   auto axes = slice_node->get_axes();
   auto begin = GetSliceBeginAndSize(slice_cnode, SliceBeginIndex);
   auto size = GetSliceBeginAndSize(slice_cnode, SliceSizeIndex);
   // matmul not support broadcast now, it makes things simpler
   auto manager = graph->manager();
   std::shared_ptr<FuncGraphTransaction> tr = std::make_shared<FuncGraphTransaction>(manager.get());
-  if (tr == nullptr) {
-    MS_LOG(ERROR) << "create FuncGraphTransaction failed";
-    return false;
-  }
+  MS_CHECK_TRUE_MSG(tr != nullptr, false, "create FuncGraphTransaction failed");
   auto node_users = manager->node_users()[slice_cnode];
   bool changed = false;
-
   bool prepose_to_left = false;   // if only the last axe is sliced, not need prepose to left
   bool prepose_to_right = false;  // if only the second last axe is sliced, not need prepose to right
   for (size_t i = 0; i < axes.size(); ++i) {
@@ -965,7 +957,6 @@ bool SlicePreposePass::PreposeWithMatmul(const FuncGraphPtr &graph, const CNodeP
       }
     }
   }
-
   if (prepose_to_left) {  //  left matrix
     auto left_axes = axes;
     auto left_begin = begin;
@@ -977,22 +968,19 @@ bool SlicePreposePass::PreposeWithMatmul(const FuncGraphPtr &graph, const CNodeP
       }
     }
     auto left_slice_vnode = CreateSliceValueNode(graph, left_axes);
-    MS_ASSERT(left_slice_vnode != nullptr);
+    MS_CHECK_TRUE_MSG(left_slice_vnode != nullptr, false, "CreateSliceValueNode failed");
     auto begin_parameter = BuildIntVecParameterNode(
       graph, left_begin, slice_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
-    MS_ASSERT(begin_parameter != nullptr);
     node_name_index += 1;
     auto size_parameter = BuildIntVecParameterNode(
       graph, left_size, slice_cnode->fullname_with_scope() + "_size_" + std::to_string(node_name_index));
-    MS_ASSERT(size_parameter != nullptr);
+    MS_CHECK_TRUE_MSG(begin_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
+    MS_CHECK_TRUE_MSG(size_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
     node_name_index += 1;
-    if (left_slice_vnode == nullptr) {
-      MS_LOG(ERROR) << "CreateSliceValueNode failed";
-      return false;
-    }
+
     const std::vector<AnfNodePtr> inputs = {left_slice_vnode, matmul_cnode->input(1), begin_parameter, size_parameter};
     auto new_slice_cnode = InsertSlice(graph, inputs, matmul_cnode, 1, tr);
-    MS_ASSERT(new_slice_cnode!= nullptr);
+    MS_CHECK_TRUE_MSG(new_slice_cnode != nullptr, false, "InsertSlice Failed");
     new_slice_cnode->set_abstract(slice_cnode->abstract()->Clone());
     ClearCNodeAbstractValue(new_slice_cnode);
     changed = true;
@@ -1009,17 +997,14 @@ bool SlicePreposePass::PreposeWithMatmul(const FuncGraphPtr &graph, const CNodeP
     }
     auto begin_parameter = BuildIntVecParameterNode(
       graph, right_begin, slice_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
-    MS_ASSERT(begin_parameter != nullptr);
     node_name_index += 1;
     auto size_parameter = BuildIntVecParameterNode(
       graph, right_size, slice_cnode->fullname_with_scope() + "_size_" + std::to_string(node_name_index));
-    MS_ASSERT(size_parameter != nullptr);
+    MS_CHECK_TRUE_MSG(begin_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
+    MS_CHECK_TRUE_MSG(size_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
     node_name_index += 1;
     auto right_slice_vnode = CreateSliceValueNode(graph, right_axes);
-    if (right_slice_vnode == nullptr) {
-      MS_LOG(ERROR) << "CreateSliceValueNode failed";
-      return false;
-    }
+    MS_CHECK_TRUE_MSG(right_slice_vnode != nullptr, false, "CreateSliceValueNode failed");
     const std::vector<AnfNodePtr> inputs = {right_slice_vnode, matmul_cnode->input(2), begin_parameter, size_parameter};
     auto new_slice_cnode = InsertSlice(graph, inputs, matmul_cnode, 2, tr);
     MS_ASSERT(new_slice_cnode != nullptr);
@@ -1114,15 +1099,16 @@ bool SlicePreposePass::PreposeWithFullConnection(const FuncGraphPtr &graph, cons
   }
   auto begin_parameter = BuildIntVecParameterNode(
     graph, new_begin, slice_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
-  MS_ASSERT(begin_parameter != nullptr);
   node_name_index += 1;
   auto size_parameter = BuildIntVecParameterNode(
     graph, new_size, slice_cnode->fullname_with_scope() + "_size_" + std::to_string(node_name_index));
-  MS_ASSERT(size_parameter != nullptr);
+  MS_CHECK_TRUE_MSG(begin_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
+  MS_CHECK_TRUE_MSG(size_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
   node_name_index += 1;
   const std::vector<AnfNodePtr> inputs = {new_slice_vnode, fc_cnode->input(1), begin_parameter, size_parameter};
   auto new_slice_cnode = InsertSlice(graph, inputs, fc_cnode, 1, tr);
-  MS_ASSERT(new_slice_cnode != nullptr);
+  MS_CHECK_TRUE_MSG(new_slice_cnode != nullptr, false, "InsertSlice Failed");
+
   fc_cnode->set_abstract(slice_cnode->abstract()->Clone());
   new_slice_cnode->set_abstract(slice_cnode->abstract()->Clone());
   ClearCNodeAbstractValue(new_slice_cnode);
@@ -1176,11 +1162,11 @@ bool SlicePreposePass::PreposeWithTranspose(const FuncGraphPtr &graph, const CNo
   }
   auto begin_parameter = BuildIntVecParameterNode(
     graph, slice_begin, slice_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
-  MS_ASSERT(begin_parameter != nullptr);
   node_name_index += 1;
   auto size_parameter = BuildIntVecParameterNode(
     graph, slice_size, slice_cnode->fullname_with_scope() + "_size_" + std::to_string(node_name_index));
-  MS_ASSERT(size-Parameter != nullptr);
+  MS_CHECK_TRUE_MSG(begin_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
+  MS_CHECK_TRUE_MSG(size_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
   node_name_index += 1;
   slice_cnode->set_input(SliceBeginIndex, begin_parameter);
   slice_cnode->set_input(SliceSizeIndex, size_parameter);
@@ -1239,7 +1225,8 @@ bool SlicePreposePass::PreposeWithArithmetic(const FuncGraphPtr &graph, const CN
                                                 slice_cnode->input(SliceBeginIndex),
                                                 slice_cnode->input(SliceSizeIndex)};
         auto new_slice_cnode = InsertSlice(graph, slice_inputs, arithmetic_cnode, i, tr);
-        MS_ASSERT(new_slice_cnode != nullptr);
+        MS_CHECK_TRUE_MSG(new_slice_cnode != nullptr, false, "InsertSlice Failed");
+
         new_slice_cnode->set_abstract(slice_cnode->abstract()->Clone());
         ClearCNodeAbstractValue(new_slice_cnode);
         changed = true;
@@ -1268,16 +1255,16 @@ bool SlicePreposePass::PreposeWithArithmetic(const FuncGraphPtr &graph, const CN
         }
         auto begin_parameter = BuildIntVecParameterNode(
           graph, new_begin, slice_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
-        MS_ASSERT(begin_parameter != nullptr);
         node_name_index += 1;
         auto size_parameter = BuildIntVecParameterNode(
           graph, new_size, slice_cnode->fullname_with_scope() + "_size_" + std::to_string(node_name_index));
-        MS_ASSERT(size_parameter != nullptr);
+        MS_CHECK_TRUE_MSG(begin_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
+        MS_CHECK_TRUE_MSG(size_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
         node_name_index += 1;
         std::vector<AnfNodePtr> slice_inputs = {new_slice_vnode, arithmetic_cnode->input(i), begin_parameter,
                                                 size_parameter};
         auto new_slice_cnode = InsertSlice(graph, slice_inputs, arithmetic_cnode, i, tr);
-        MS_ASSERT(new_slice-cnode != nullptr);
+        MS_CHECK_TRUE_MSG(new_slice_cnode != nullptr, false, "InsertSlice Failed");
         new_slice_cnode->set_abstract(slice_cnode->abstract()->Clone());
         ClearCNodeAbstractValue(new_slice_cnode);
         changed = true;
@@ -1365,11 +1352,11 @@ bool SlicePreposePass::MergeSequentialSlice(const FuncGraphPtr &graph, const CNo
   slice2_node->set_axes(axes_new);
   auto begin_parameter = BuildIntVecParameterNode(
     graph, begin_new, slice2_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
-  MS_ASSERT(begin_parameter != nullptr);
   node_name_index += 1;
   auto size_parameter = BuildIntVecParameterNode(
     graph, size_new, slice2_cnode->fullname_with_scope() + "_size_" + std::to_string(node_name_index));
-  MS_ASSERT(size_parameter != nullptr);
+  MS_CHECK_TRUE_MSG(begin_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
+  MS_CHECK_TRUE_MSG(size_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
   node_name_index += 1;
   slice2_cnode->set_input(SliceBeginIndex, begin_parameter);
   slice2_cnode->set_input(SliceSizeIndex, size_parameter);

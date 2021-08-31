@@ -44,6 +44,7 @@
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/fix_bit_weight_quantizer.h"
 #include "tools/converter/quantizer/fse_encoder.h"
+#include "nnacl/op_base.h"
 
 using mindspore::ops::PrimitiveC;
 
@@ -182,7 +183,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       tensor_input->quantParams.clear();
       for (auto input_quant_param : input_quant_params[i]) {
         auto input_quant_param_ptr = std::make_unique<schema::QuantParamT>(input_quant_param);
-        MS_ASSERT(input_quant_param_ptr != nullptr);
+        MS_CHECK_TRUE_MSG(input_quant_param_ptr != nullptr, RET_ERROR, "input_quant_param_ptr is nullptr");
         MS_LOG(DEBUG) << "[input][" << i << "]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
                       << " zp: " << input_quant_param_ptr->zeroPoint;
         tensor_input->quantParams.emplace_back(std::move(input_quant_param_ptr));
@@ -207,7 +208,6 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_WeightQuant) {
         std::unique_ptr<schema::QuantParamT> output_quant_param_ptr =
           std::make_unique<schema::QuantParamT>(channel_quant_param);
-        MS_ASSERT(output_quant_param_ptr != nullptr);
         MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
                       << " zp: " << output_quant_param_ptr->zeroPoint;
         output_tensor->quantParams.emplace_back(std::move(output_quant_param_ptr));
@@ -227,7 +227,7 @@ int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaG
     return RET_ERROR;
   }
   auto schema_tensor = std::make_unique<schema::TensorT>();
-  MS_ASSERT(schema_tensor != nullptr);
+  MS_CHECK_TRUE_MSG(schema_tensor != nullptr, RET_ERROR, "schema_tensor is nullptr");
   schema_tensor->format = static_cast<schema::Format>(data_info.format_);
   schema_tensor->name = param_node->name();
   schema_tensor->dims = data_info.shape_;
@@ -458,7 +458,7 @@ int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::uniqu
   auto subgraph_index = meta_graphT->subGraph.size() - 1;
   fg_subgraph_map_[func_graph] = subgraph_index;
   auto subgraph_name = func_graph->get_attr("graph_name");
-  MS_ASSERT(subgraph_name != nullptr);
+  MS_CHECK_TRUE_MSG(subgraph_name != nullptr, RET_ERROR, "subgraph_name is nullptr");
   meta_graphT->subGraph.back()->name =
     "subgraph_" + std::to_string(meta_graphT->subGraph.size() - 1) + "_" + GetValue<std::string>(subgraph_name);
 
@@ -560,9 +560,9 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
   this->reorder_input_ = !(train_flag) && !(ConverterContext::GetInstance()->GetGraphInputTensorNames().empty());
   this->graph_inputs_map_.clear();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
-  MS_ASSERT(meta_graphT != nullptr);
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, nullptr, "meta_graphT is nullptr");
   auto fmk = func_graph->get_attr("fmk");
-  MS_ASSERT(fmk != nullptr);
+  MS_CHECK_TRUE_MSG(fmk != nullptr, nullptr, "fmk is nullptr");
   meta_graphT->fmkType = GetValue<int>(fmk);
 
   graph_inputs_ = func_graph->get_inputs();
@@ -693,7 +693,7 @@ int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, cons
     return RET_ERROR;
   }
   auto schema_tensor = std::make_unique<schema::TensorT>();
-  MS_ASSERT(schema_tensor != nullptr);
+  MS_CHECK_TRUE_MSG(schema_tensor != nullptr, RET_ERROR, "schema_tensor is nullptr");
   schema_tensor->format = static_cast<schema::Format>(data_info.format_);
   schema_tensor->name = param_node->name();
   schema_tensor->dims = data_info.shape_;
@@ -725,7 +725,7 @@ int AnfExporter::ConvertInputValueNode(const CNodePtr &cnode, size_t index, cons
     return status;
   }
   auto schema_tensor = std::make_unique<schema::TensorT>();
-  MS_ASSERT(schema_tensor != nullptr);
+  MS_CHECK_TRUE_MSG(schema_tensor != nullptr, RET_ERROR, "schema is nullptr");
   schema_tensor->name = cnode->input(index)->fullname_with_scope();
   schema_tensor->format = static_cast<schema::Format>(data_info.format_);
   schema_tensor->dataType = data_info.data_type_;

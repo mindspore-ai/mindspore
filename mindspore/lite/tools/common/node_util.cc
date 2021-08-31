@@ -58,7 +58,7 @@ const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, fla
 
 STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::vector<int32_t> &src_dims,
                               mindspore::schema::Format dst_format, std::vector<int32_t> *dst_dims) {
-  MS_ASSERT(nullptr != dst_dims);
+  MS_ASSERT(dst_dims != nullptr);
   if ((src_dims.size() != DIM_DEFAULT_SIZE && src_dims.size() != 3) || src_format == dst_format) {
     MS_LOG(ERROR) << "Convert format , src size " << src_dims.size()
                   << " <3 or src format is equal to dst format,not need convert";

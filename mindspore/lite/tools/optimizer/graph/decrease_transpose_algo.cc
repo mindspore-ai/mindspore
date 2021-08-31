@@ -23,6 +23,7 @@
 #include "src/common/common.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -185,7 +186,7 @@ void ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode
     (void)TransFilterFormat(tensor, schema::Format_KCHW, schema::Format_KHWC);
   }
   auto param_node = func_graph->add_parameter();
-  MS_ASSERT(param_node != nullptr);
+  MS_CHECK_TRUE_MSG(param_node != nullptr, , "add_parameter failed");
   param_node->set_name(cnode->input(index)->fullname_with_scope());
   status = lite::InitParameterFromTensorInfo(param_node, tensor);
   if (status != RET_OK) {
@@ -254,7 +255,6 @@ STATUS DecreaseTransposeAlgo::GenNewInput(const FuncGraphPtr &func_graph, const 
   if (manager == nullptr) {
     manager = Manage(func_graph, true);
   }
-  MS_ASSERT(manager != nullptr);
   auto tr = manager->Transact();
   if (before) {
     tr.SetEdge(cnode, index, new_input);
@@ -274,7 +274,7 @@ STATUS DecreaseTransposeAlgo::InsertPreTransNode(const FuncGraphPtr &func_graph,
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "GetValueNode Failed");
   auto &specify_nhwc_op_map = GetNHWCOpMap();
   auto &specify_nchw_op_map = GetNCHWOpMap();
   if (specify_nhwc_op_map.find(prim->name()) == specify_nhwc_op_map.end() &&
@@ -400,7 +400,7 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
                                                    std::set<CNodePtr> *visit_transposes) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr && visit_transposes != nullptr);
   auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
+  MS_CHECK_TRUE_MSG(manager != nullptr, lite::RET_ERROR, "manager is nullptr");
   std::set<CNodePtr> middle_nodes{};
   std::set<CNodePtr> in_nodes{};
   std::set<CNodePtr> out_nodes{};
@@ -510,7 +510,7 @@ void DecreaseTransposeAlgo::ResetSubGraphInput() {
     MS_ASSERT(manager != nullptr);
     for (auto &sub_input : sub_inputs) {
       auto param_node = sub_graph->add_parameter();
-      MS_ASSERT(param_node != nullptr);
+      MS_CHECK_TRUE_MSG(param_node != nullptr, , "add parameter failed");
       param_node->set_abstract(sub_input->abstract()->Clone());
       param_node->set_name(sub_input->fullname_with_scope());
       manager->Replace(sub_input, param_node);
@@ -561,7 +561,7 @@ void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const Fun
   bool infer_done = true;
   for (size_t i = 1; i < return_node->size(); ++i) {
     auto abstract_base = GetCNodeInputAbstract(return_node, i);
-    MS_ASSERT(abstract_base != nullptr);
+    MS_CHECK_TRUE_MSG(abstract_base != nullptr, , "GetCNodeInputAbstract failed");
     abstract_list.emplace_back(abstract_base->Clone());
     auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
     MS_ASSERT(abstract_tensor != nullptr);
@@ -577,7 +577,7 @@ void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const Fun
         input_cnode = input_cnode->input(1)->cast<CNodePtr>();
       }
       auto input_prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-      MS_ASSERT(input_prim != nullptr);
+      MS_CHECK_TRUE_MSG(input_prim != nullptr, , "GetValueNode failed");
       if (input_prim->GetAttr(kInferDone) == nullptr || !GetValue<bool>(input_prim->GetAttr(kInferDone))) {
         infer_done = false;
       }
@@ -593,7 +593,7 @@ void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const Fun
     cnode->set_abstract(abstract_list.front());
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, , "GetValueNode Failed");
   prim->AddAttr(kInferDone, MakeValue<bool>(infer_done));
 }
 
@@ -603,7 +603,7 @@ void DecreaseTransposeAlgo::ModifyCNodeFormat(const CNodePtr &cnode, FormatTrans
     return;
   }
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, , "GetValueNode Failed");
   if (pre_trans_type == kNHWC2NCHW) {
     primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
   } else {
@@ -650,7 +650,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &fun
       continue;
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    MS_ASSERT(prim != nullptr);
+    MS_CHECK_TRUE_MSG(prim != nullptr, false, "GetValueNode Failed");
     if (!IsDynamicFormatOp(prim->name())) {
       continue;
     }
@@ -718,7 +718,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForMultiOp(const FuncGraphPtr &func
 bool DecreaseTransposeAlgo::RunDoFixFormat(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, false, "GetValueNode Failed");
   auto &nchw_op = GetNCHWOpMap();
   if (!utils::isa<CNodePtr>(cnode->input(1))) {
     return true;

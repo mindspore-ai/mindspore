@@ -27,6 +27,7 @@
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #include "tools/converter/ops/ops_def.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -166,7 +167,7 @@ STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {
   size_t nodeIdx = 0;
   for (size_t i = 0; i < graphT->nodes.size(); i++) {
     auto &inNode = graphT->nodes.at(i);
-    MS_ASSERT(inNode != nullptr);
+    MS_CHECK_TRUE_MSG(inNode != nullptr, RET_NULL_PTR, "inNode is nullptr");
     if (inNode->name == node->name) {
       nodeIdx = i;
       break;
@@ -194,7 +195,7 @@ STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {
   for (auto postNodeIdx : postNodeIdxes) {
     MS_ASSERT(graphT->nodes.size() > postNodeIdx);
     auto &postNode = graphT->nodes.at(postNodeIdx);
-    MS_ASSERT(postNode != nullptr);
+    MS_CHECK_TRUE_MSG(postNode != nullptr, RET_NULL_PTR, "postNode is nullptr");
     for (auto iter = postNode->inputIndex.begin(); iter != postNode->inputIndex.end(); iter++) {
       if (*iter == outDataTensorIdx) {
         *iter = inDataTensorIdx;
@@ -249,7 +250,7 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool remove
     for (auto postNodeIdx : postNodeIdxes) {
       MS_ASSERT(graphT->nodes.size() > postNodeIdx);
       auto &postNode = graphT->nodes.at(postNodeIdx);
-      MS_ASSERT(postNode != nullptr);
+      MS_CHECK_TRUE_MSG(postNode != nullptr, RET_NULL_PTR, "postNode is nullptr");
       for (auto iter = postNode->inputIndex.begin(); iter != postNode->inputIndex.end(); iter++) {
         if (*iter == outDataTensorIdx) {
           *iter = inDataTensorIdx;
@@ -280,7 +281,7 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, CNodeT *node, bool removeTe
   size_t nodeIdx = 0;
   for (size_t i = 0; i < graphT->nodes.size(); i++) {
     auto &inNode = graphT->nodes.at(i);
-    MS_ASSERT(inNode != nullptr);
+    MS_CHECK_TRUE_MSG(inNode != nullptr, RET_NULL_PTR, "inNode is nullptr");
     if (inNode->name == node->name) {
       isSubNode = true;
       nodeIdx = i;
@@ -391,7 +392,7 @@ STATUS AddTensor2Node(schema::MetaGraphT *graphT, uint32_t nodeIdx, std::unique_
   graphT->allTensors.emplace_back(std::move(tensor));
   uint32_t newTensorIdx = graphT->allTensors.size() - 1;
   auto node = graphT->nodes.at(nodeIdx).get();
-  MS_ASSERT(node != nullptr);
+  MS_CHECK_TRUE_MSG(node != nullptr, RET_NULL_PTR, "node is nullptr");
   if (place == kBefore) {
     node->inputIndex.emplace_back(newTensorIdx);
   } else {
@@ -408,7 +409,7 @@ STATUS ReplaceTensorOfNode(schema::MetaGraphT *graphT, uint32_t nodeIdx, uint32_
     return RET_PARAM_INVALID;
   }
   auto node = graphT->nodes.at(nodeIdx).get();
-  MS_ASSERT(node != nullptr);
+  MS_CHECK_TRUE_MSG(node != nullptr, RET_NULL_PTR, "node is nullptr");
   if (inTensorIdx >= graphT->allTensors.size()) {
     MS_LOG(ERROR) << "inTensorIdx out of range: " << nodeIdx;
     return RET_PARAM_INVALID;
@@ -639,7 +640,6 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       has_insert_for_graph_out = false;
     } else {
       auto &postNode = graphT->nodes.at(postNodeIdxes[is_output_index ? i - 1 : i]);
-      MS_ASSERT(postNode != nullptr);
       for (auto iter = postNode->inputIndex.begin(); iter != postNode->inputIndex.end(); iter++) {
         if (*iter == postTensorIdx) {
           *iter = toAddTensorIdx;

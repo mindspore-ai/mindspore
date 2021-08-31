@@ -17,6 +17,7 @@
 #include <memory>
 #include <algorithm>
 #include <vector>
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -78,7 +79,7 @@ bool Conv1DWeightExpandingPass::Run(const FuncGraphPtr &func_graph) {
     MS_ASSERT(weight_node != nullptr);
 
     auto prim = GetValueNode<PrimitivePtr>(conv_cnode->input(0));
-    MS_ASSERT(prim != nullptr);
+    MS_CHECK_TRUE_MSG(prim != nullptr, RET_FAILED, "GetValueNode failed");
     schema::Format schema_format = schema::Format::Format_KCHW;
     if (prim->GetAttr(ops::kFormat) != nullptr) {
       schema_format = static_cast<schema::Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat)));

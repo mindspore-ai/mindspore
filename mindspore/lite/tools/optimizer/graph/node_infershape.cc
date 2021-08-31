@@ -26,6 +26,7 @@
 #include "src/runtime/infer_manager.h"
 #include "src/tensorlist.h"
 #include "src/registry/kernel_interface_registry.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -153,7 +154,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   if (ret == lite::RET_OK || ret == lite::RET_INFER_INVALID) {
     auto set_status = SetCNodeAbstract(cnode, outputs, ret);
     auto cnode_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    MS_ASSERT(cnode_prim != nullptr);
+    MS_CHECK_TRUE_MSG(cnode_prim != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
     cnode_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(inputs[0]->format()));
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();

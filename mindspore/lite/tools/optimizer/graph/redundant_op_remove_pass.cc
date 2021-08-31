@@ -24,6 +24,7 @@
 #include "ops/depend.h"
 #include "ops/fusion/pad_fusion.h"
 #include "ops/op_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -100,8 +101,8 @@ int ProcessDependencyWithTwoNodes(const FuncGraphPtr &func_graph, const CNodePtr
   tr.Commit();
   auto depend_prim = std::make_shared<ops::Depend>();
   auto depend_node = func_graph->NewCNode(depend_prim, {post_node, pre_node});
-  MS_ASSERT(depend_prim != nullptr);
-  MS_ASSERT(depend_node != nullptr);
+  MS_CHECK_TRUE_MSG(depend_prim != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
+  MS_CHECK_TRUE_MSG(depend_node != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
   depend_node->set_fullname_with_scope(cnode->fullname_with_scope());
   manager->Replace(cnode, depend_node);
   return lite::RET_OK;
@@ -117,7 +118,7 @@ int ProcessInputHaveDependency(const FuncGraphPtr &func_graph, const CNodePtr &c
   }
   auto make_tuple_prim = NewValueNode(std::make_shared<lite::MakeTuple>());
   auto manager = func_graph->manager();
-  MS_ASSERT(make_tuple_prim != nullptr);
+  MS_CHECK_TRUE_MSG(make_tuple_prim != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
   MS_ASSERT(manager != nullptr);
   if (CheckPrimitiveType(cnode->input(0), prim::kPrimTranspose)) {
     manager->Replace(cnode->input(0)->cast<CNodePtr>()->input(0), make_tuple_prim);

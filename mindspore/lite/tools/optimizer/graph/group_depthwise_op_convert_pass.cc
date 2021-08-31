@@ -24,6 +24,7 @@
 #include "src/common/log_adapter.h"
 #include "tools/common/tensor_util.h"
 #include "securec/include/securec.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {

@@ -16,6 +16,7 @@
 
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/common/node_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -43,7 +44,7 @@ int GetCNodeCertainInputFormat(const CNodePtr cnode, int index, mindspore::Forma
   cnode->set_inputs(origin_inputs);
   MS_ASSERT(real_cnode != nullptr);
   auto primitive = GetValueNode<PrimitivePtr>(real_cnode->input(0));
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
   if (primitive->GetAttr(ops::kFormat) == nullptr) {
     MS_LOG(ERROR) << "cnode has no format attr. " << real_cnode->fullname_with_scope();
     return lite::RET_ERROR;
@@ -83,7 +84,7 @@ int ModifySubGraphInputCNodeFormat(const FuncGraphPtr &sub_graph, const Paramete
       return lite::RET_ERROR;
     }
     auto primitive = GetValueNode<PrimitivePtr>(post_cnode->input(0));
-    MS_ASSERT(primitive != nullptr);
+    MS_CHECK_TRUE_MSG(primitive != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
     primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(format));
   }
   return lite::RET_OK;
@@ -150,7 +151,7 @@ bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
     auto cur_op_can_infer = node_infer_shape_->JudgeOpSupportInfer(cnode);
     if (!cur_op_can_infer) {
       auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-      MS_ASSERT(prim != nullptr);
+      MS_CHECK_TRUE_MSG(prim != nullptr, false, "GetValueNode Failed");
       lite::NotSupportOp::GetInstance()->InsertOp(prim->name());
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NOT_SUPPORT);
       all_op_can_infer = false;
@@ -317,7 +318,7 @@ void InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphP
         input_cnode = input_cnode->input(1)->cast<CNodePtr>();
       }
       auto input_prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-      MS_ASSERT(input_prim != nullptr);
+      MS_CHECK_TRUE_MSG(input_prim != nullptr, , "GetValueNode Failed");
       if (input_prim->GetAttr(opt::kInferDone) == nullptr || !GetValue<bool>(input_prim->GetAttr(opt::kInferDone))) {
         infer_done = false;
       }
@@ -333,7 +334,7 @@ void InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphP
     cnode->set_abstract(abstract_list.front());
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, , "GetValueNode Failed");
   prim->AddAttr(opt::kInferDone, MakeValue<bool>(infer_done));
 }
 
@@ -345,7 +346,7 @@ void InferShapePass::ResetSubGraphInput() {
     MS_ASSERT(manager != nullptr);
     for (auto &sub_input : sub_inputs) {
       auto param_node = sub_graph->add_parameter();
-      MS_ASSERT(param_node != nullptr);
+      MS_CHECK_TRUE_MSG(param_node != nullptr, , "Add parameter Failed");
       param_node->set_abstract(sub_input->abstract()->Clone());
       param_node->set_name(sub_input->fullname_with_scope());
       manager->Replace(sub_input, param_node);
