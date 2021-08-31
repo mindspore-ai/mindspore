@@ -297,7 +297,12 @@ int MoveAttrMapConv2D(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<ops::Conv2DFusion>();
+  PrimitivePtr dst_prim{nullptr};
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2D)) {
+    dst_prim = std::make_shared<ops::Conv2DFusion>();
+  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DTranspose)) {
+    dst_prim = std::make_shared<ops::Conv2dTransposeFusion>();
+  }
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   auto status = AttrAdjust(dst_prim, ops::kStride, {2, 3});
@@ -317,12 +322,12 @@ int MoveAttrMapConv2D(const CNodePtr &cnode) {
   }
   int64_t group = 1;
   if (dst_prim->GetAttr(ops::kGroup) != nullptr) {
-    group = dst_prim->get_group();
+    group = GetValue<int64_t>(dst_prim->GetAttr(ops::kGroup));
   }
   if (group > 1) {
     dst_prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
   }
-  dst_prim->set_group(group);
+  dst_prim->AddAttr(ops::kGroup, MakeValue(group));
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
@@ -593,7 +598,7 @@ REGIST_PRIMITIVE_ADJUST(kNameBatchNorm, MoveAttrMapCommon<ops::FusedBatchNorm>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropFilter, MoveAttrMapCommon<ops::Conv2DBackpropFilterFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropInput, MoveAttrMapCommon<ops::Conv2DBackpropInputFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2D, MoveAttrMapConv2D)
-REGIST_PRIMITIVE_ADJUST(kNameConv2DTranspose, MoveAttrMapCommon<ops::Conv2dTransposeFusion>)
+REGIST_PRIMITIVE_ADJUST(kNameConv2DTranspose, MoveAttrMapConv2D)
 REGIST_PRIMITIVE_ADJUST(kNameDiv, MoveAttrMapCommon<ops::DivFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameElu, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameEluGrad, MoveAttrMapActivationGrad)

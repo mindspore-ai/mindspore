@@ -254,6 +254,37 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   return lite::RET_OK;
 }
 
+int MindirAdjust::UpdateConv2DTransposeInput(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
+    return RET_OK;
+  }
+  auto inputs = cnode->inputs();
+  if (inputs.size() != opt::kInputSizeFour) {
+    MS_LOG(ERROR) << "the input size of mindir conv2dtranspose should be 4, but now is " << inputs.size()
+                  << ", please check.";
+    return RET_ERROR;
+  }
+  inputs.pop_back();
+  cnode->set_inputs(inputs);
+  return RET_OK;
+}
+
+int MindirAdjust::ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> all_func_graphs) {
+  MS_CHECK_TRUE_MSG(fg != nullptr, RET_NULL_PTR, "fg is nullptr.");
+  auto manager = fg->manager();
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_NULL_PTR, "manager is nullptr.");
+  manager->Clear();
+  manager->AddFuncGraph(fg, true);
+  for (auto &item : all_func_graphs) {
+    if (item == fg) {
+      continue;
+    }
+    manager->AddFuncGraph(item);
+  }
+  return RET_OK;
+}
+
 bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
   if (this->fmk_type_ != converter::kFmkTypeMs) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
@@ -268,6 +299,9 @@ bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
     for (auto &node : node_list) {
       if (utils::isa<CNodePtr>(node)) {
         status = ComputeQuantParams(node);
+        if (status == RET_OK || status == RET_NO_CHANGE) {
+          status = UpdateConv2DTransposeInput(node->cast<CNodePtr>());
+        }
       } else if (utils::isa<ValueNodePtr>(node)) {
         status = ValueNodeInt64Convert(node);
       }
@@ -280,6 +314,10 @@ bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "Adjust mindir failed.";
       return false;
     }
+  }
+  if (ResetFuncGraph(func_graph, all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "ResetFuncGraph failed.";
+    return false;
   }
   return true;
 }

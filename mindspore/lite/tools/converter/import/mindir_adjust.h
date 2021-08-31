@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_MINDIR_ADJUST_PASS_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_MINDIR_ADJUST_PASS_H_
 
+#include <set>
 #include <string>
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -32,9 +33,11 @@ class MindirAdjust {
   void SetTrainFlag(bool train_flag) { train_flag_ = train_flag; }
   bool Run(const FuncGraphPtr &graph);
 
- protected:
+ private:
   int ValueNodeInt64Convert(AnfNodePtr anf_node);
   int ComputeQuantParams(AnfNodePtr anf_node);
+  int UpdateConv2DTransposeInput(const CNodePtr &cnode);
+  int ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> all_func_graphs);
 
   FmkType fmk_type_ = FmkType::kFmkTypeMs;
   bool train_flag_ = false;

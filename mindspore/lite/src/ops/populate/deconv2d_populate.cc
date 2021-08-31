@@ -43,6 +43,8 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
   auto pad_list = value->pad_list();
   auto dilation = value->dilation();
   auto output_paddings = value->output_paddings();
+  param->kernel_h_ = -1;
+  param->kernel_w_ = -1;
   if (kernel_size != nullptr) {
     if (kernel_size->size() < kMinShapeSizeTwo) {
       MS_LOG(ERROR) << "kernel size is invalid.";
@@ -51,19 +53,26 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
     }
     param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
     param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
-  } else {
-    param->kernel_h_ = -1;
-    param->kernel_w_ = -1;
   }
-  if (stride == nullptr || dilation == nullptr || output_paddings == nullptr) {
+  param->output_padding_h_ = 0;
+  param->output_padding_w_ = 0;
+  if (output_paddings != nullptr) {
+    if (output_paddings->size() < kMinShapeSizeTwo) {
+      MS_LOG(ERROR) << "output_paddings size is invalid.";
+      free(param);
+      return nullptr;
+    }
+    param->output_padding_h_ = static_cast<int>(*(output_paddings->begin()));
+    param->output_padding_w_ = static_cast<int>(*(output_paddings->begin() + 1));
+  }
+  if (stride == nullptr || dilation == nullptr) {
     MS_LOG(ERROR) << "nullptr";
     free(param);
     return nullptr;
   }
   if (stride->size() < kMinShapeSizeTwo || dilation->size() < kMinShapeSizeTwo) {
     MS_LOG(ERROR) << "Invalid shape size!kernel_size size: " << kernel_size->size()
-                  << ", stride size: " << stride->size() << ", dilation size: " << dilation->size()
-                  << ", output_paddings size:" << output_paddings->size();
+                  << ", stride size: " << stride->size() << ", dilation size: " << dilation->size();
     free(param);
     return nullptr;
   }
@@ -72,8 +81,6 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
   param->group_ = static_cast<int>(value->group());
   param->stride_h_ = static_cast<int>(*(stride->begin()));
   param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
-  param->output_padding_h_ = static_cast<int>(*(output_paddings->begin()));
-  param->output_padding_w_ = static_cast<int>(*(output_paddings->begin() + 1));
   switch (value->pad_mode()) {
     case schema::PadMode_SAME:
       param->pad_mode_ = Pad_same;
