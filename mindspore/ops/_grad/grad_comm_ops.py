@@ -22,8 +22,8 @@ from mindspore.parallel._utils import _get_enable_parallel_optimizer
 from .. import operations as P
 from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
-                                   _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
+from ..operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce, NeighborExchange, AlltoAll,
+                                   Broadcast, _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
                                    ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, AllSwap,
                                    _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator, _MicroStepAllGather)
 from .grad_base import bprop_getters
@@ -357,10 +357,27 @@ def get_bprop_host_reduce_scatter(self):
     return bprop
 
 
-@bprop_getters.register(_AlltoAll)
+@bprop_getters.register(NeighborExchange)
+def get_bprop_neighborexchange(self):
+    """Generate bprop for NeighborExchange."""
+    group = self.group
+    send_rank_ids = self.recv_rank_ids
+    recv_rank_ids = self.send_rank_ids
+    recv_shapes = self.send_shapes
+    send_shapes = self.recv_shapes
+    recv_type = self.recv_type
+    neighborexchange_grad = NeighborExchange(send_rank_ids, recv_rank_ids, recv_shapes, send_shapes, recv_type, group)
+
+    def bprop(x, out, dout):
+        return (neighborexchange_grad(dout),)
+
+    return bprop
+
+
+@bprop_getters.register(AlltoAll)
 def get_bprop_all_to_all(self):
     """Generate bprop for AlltoAll."""
-    all_to_all_grad = _AlltoAll(self.split_count, self.concat_dim, self.split_dim, self.group)
+    all_to_all_grad = AlltoAll(self.split_count, self.concat_dim, self.split_dim, self.group)
     if self.instance_name:
         instance_name = "grad" + self.instance_name
         all_to_all_grad.set_prim_instance_name(instance_name)

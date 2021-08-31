@@ -14,8 +14,7 @@
 # ============================================================================
 import mindspore as ms
 from mindspore import context
-from mindspore.ops.operations._inner_ops import NeighborExchange
-from mindspore.ops.operations.comm_ops import _AlltoAll
+from mindspore.ops.operations.comm_ops import AlltoAll, NeighborExchange
 from mindspore.communication.management import GlobalComm, init
 
 context.set_context(device_target="Ascend")
@@ -44,9 +43,9 @@ def test_neighbor_exchange(tag):
     return fns[tag]
 
 def test_all_to_all(tag):
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=2, global_rank=0)
     fns = FnDict()
-    altoall = _AlltoAll(split_count=8, split_dim=2, concat_dim=3)
+    altoall = AlltoAll(split_count=2, split_dim=2, concat_dim=3)
     @fns
     def before(x):
         return altoall(x)
