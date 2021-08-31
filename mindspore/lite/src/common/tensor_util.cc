@@ -40,6 +40,9 @@ int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector
 }
 
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
+  if (tensors_in == nullptr) {
+    return;
+  }
   for (auto &i : *tensors_in) {
     if (i == nullptr) {
       continue;
@@ -61,6 +64,7 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
 }
 
 int Tensor2TensorC(const Tensor *src, TensorC *dst) {
+  MS_CHECK_TRUE_RET(src != nullptr && dst != nullptr, RET_ERROR);
   dst->is_ready_ = src->IsReady();
   dst->format_ = src->format();
   dst->data_ = src->data_c();
@@ -76,12 +80,12 @@ int Tensor2TensorC(const Tensor *src, TensorC *dst) {
   return RET_OK;
 }
 
-void TensorC2Tensor(const TensorC *src, Tensor *dst) {
-  MS_ASSERT(src != nullptr);
-  MS_ASSERT(dst != nullptr);
+int TensorC2Tensor(const TensorC *src, Tensor *dst) {
+  MS_CHECK_TRUE_RET(src != nullptr && dst != nullptr, RET_ERROR);
   dst->set_format(static_cast<mindspore::Format>(src->format_));
   dst->set_data_type(static_cast<TypeId>(src->data_type_));  // get data during the runtime period
   dst->set_shape(std::vector<int>(src->shape_, src->shape_ + src->shape_size_));
+  return RET_OK;
 }
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
@@ -95,8 +99,7 @@ void FreeTensorListC(TensorListC *tensorlist_c) {
 }
 
 int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
-  MS_ASSERT(src != nullptr);
-  MS_ASSERT(dst != nullptr);
+  MS_CHECK_TRUE_RET(src != nullptr && dst != nullptr, RET_ERROR);
   dst->is_ready_ = src->IsReady();
   dst->data_type_ = static_cast<TypeIdC>(src->data_type());
   dst->format_ = src->format();
@@ -131,6 +134,7 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
 }
 
 int TensorListC2TensorList(const TensorListC *src, TensorList *dst) {
+  MS_CHECK_TRUE_RET(src != nullptr && dst != nullptr, RET_ERROR);
   dst->set_data_type(static_cast<TypeId>(src->data_type_));
   dst->set_format(static_cast<mindspore::Format>(src->format_));
   dst->set_shape(std::vector<int>(1, src->element_num_));
@@ -138,12 +142,11 @@ int TensorListC2TensorList(const TensorListC *src, TensorList *dst) {
 
   // Set Tensors
   for (size_t i = 0; i < src->element_num_; i++) {
-    if (dst->GetTensor(i) == nullptr) {
-      MS_LOG(ERROR) << "Tensor i is null ptr";
-      return RET_NULL_PTR;
+    auto ret = TensorC2Tensor(&src->tensors_[i], dst->GetTensor(i));
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "TensorC2Tensor failed";
+      return ret;
     }
-
-    TensorC2Tensor(&src->tensors_[i], dst->GetTensor(i));
   }
 
   dst->set_element_shape(std::vector<int>(src->element_shape_, src->element_shape_ + src->element_shape_size_));
@@ -153,7 +156,7 @@ int TensorListC2TensorList(const TensorListC *src, TensorList *dst) {
 
 int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, int outputs_size,
                                   std::vector<TensorC *> *out_tensor_c) {
-  MS_ASSERT(out_tensor_c != nullptr);
+  MS_CHECK_TRUE_RET(out_tensor_c != nullptr, RET_ERROR);
   int ret = RET_OK;
   for (int i = 0; i < outputs_size; i++) {
     out_tensor_c->push_back(nullptr);
@@ -164,8 +167,7 @@ int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, int
 
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *out_tensor_c) {
-  MS_ASSERT(out_tensor_c != nullptr);
-  MS_ASSERT(parameter != nullptr);
+  MS_CHECK_TRUE_RET(out_tensor_c != nullptr && parameter != nullptr, RET_ERROR);
   if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListSetItem) {
@@ -189,7 +191,7 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
 
 int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *in_tensor_c) {
-  MS_ASSERT(in_tensor_c != nullptr);
+  MS_CHECK_TRUE_RET(in_tensor_c != nullptr, RET_ERROR);
   int ret = RET_OK;
   for (auto input : inputs) {
     if (input->data_type() == kObjectTypeTensorType) {

@@ -25,7 +25,11 @@
 namespace mindspore {
 AccuracyMetrics::AccuracyMetrics(int accuracy_metrics, const std::vector<int> &input_indexes,
                                  const std::vector<int> &output_indexes) {
-  metrics_impl_ = new MetricsImpl(new lite::AccuracyMetrics(accuracy_metrics, input_indexes, output_indexes));
+  metrics_impl_ = new (std::nothrow)
+    MetricsImpl(new (std::nothrow) lite::AccuracyMetrics(accuracy_metrics, input_indexes, output_indexes));
+  if (metrics_impl_ == nullptr) {
+    MS_LOG(ERROR) << "Metrics implement new failed";
+  }
 }
 
 AccuracyMetrics::~AccuracyMetrics() {

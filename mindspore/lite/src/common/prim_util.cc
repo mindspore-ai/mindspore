@@ -15,9 +15,10 @@
  */
 
 #include "src/common/prim_util.h"
-#include "src/common/version_manager.h"
-#include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 #include "schema/model_generated.h"
+#include "src/common/log_adapter.h"
+#include "src/common/version_manager.h"
 #ifdef ENABLE_V0
 #include "schema/model_v0_generated.h"
 #endif
@@ -55,7 +56,7 @@ const char *PrimitiveCurVersionTypeName(int type) {
 int GenPrimVersionKey(int primitive_type, int schema_version) { return primitive_type * 1000 + schema_version; }
 
 bool IsPartialNode(const void *primitive, int schema_version) {
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primtive cannot be nullptr");
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_PartialFusion;
   }
@@ -69,7 +70,7 @@ bool IsPartialNode(const void *primitive, int schema_version) {
 }
 
 bool IsCallNode(const void *primitive, int schema_version) {
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primtive cannot be nullptr");
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Call;
   }
@@ -77,6 +78,7 @@ bool IsCallNode(const void *primitive, int schema_version) {
 }
 
 bool IsSwitchNode(const void *primitive, int schema_version) {
+  MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primtive cannot be nullptr");
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Switch;
   }
@@ -84,6 +86,7 @@ bool IsSwitchNode(const void *primitive, int schema_version) {
 }
 
 bool IsCustomNode(const void *primitive, int schema_version) {
+  MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primtive cannot be nullptr");
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Custom;
   }
@@ -91,7 +94,7 @@ bool IsCustomNode(const void *primitive, int schema_version) {
 }
 
 int GetPartialGraphIndex(const void *primitive, int schema_version) {
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, -1, "primtive cannot be nullptr");
   int index = -1;
   if (schema_version == SCHEMA_CUR) {
     auto partial_fusion = reinterpret_cast<const schema::Primitive *>(primitive)->value_as_PartialFusion();

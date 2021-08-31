@@ -24,7 +24,10 @@
 
 namespace mindspore {
 CkptSaver::CkptSaver(int save_every_n, const std::string &filename_prefix) {
-  callback_impl_ = new CallbackImpl(new lite::CkptSaver(save_every_n, filename_prefix));
+  callback_impl_ = new (std::nothrow) CallbackImpl(new (std::nothrow) lite::CkptSaver(save_every_n, filename_prefix));
+  if (callback_impl_ == nullptr) {
+    MS_LOG(ERROR) << "Callback implement new failed";
+  }
 }
 
 CkptSaver::~CkptSaver() {

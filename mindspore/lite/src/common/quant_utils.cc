@@ -20,8 +20,8 @@
 
 namespace mindspore {
 namespace lite {
-void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
-                         bool channel_at_first, float *desired_max, float *desired_min) {
+STATUS GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
+                           bool channel_at_first, float *desired_max, float *desired_min) {
   float min = FLT_MAX;
   float max = -FLT_MAX;
   // find min and max
@@ -32,12 +32,14 @@ void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_coun
     }
     if (index >= elem_count) {
       MS_LOG(ERROR) << "over flow!";
+      return RET_ERROR;
     }
     min = std::min(min, raw_datas[index]);
     max = std::max(max, raw_datas[index]);
   }
   *desired_max = max;
   *desired_min = min;
+  return RET_OK;
 }
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,

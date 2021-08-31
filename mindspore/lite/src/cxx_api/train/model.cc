@@ -46,7 +46,7 @@ Status Model::Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vecto
     MS_LOG(ERROR) << "Error during preparation of metrics";
     return status;
   }
-  loop->Init(metrics);
+  (void)loop->Init(metrics);
 
   // Convert Callbacks to be used by loop
   std::vector<session::TrainLoopCallBack *> cbs;
@@ -86,7 +86,7 @@ Status Model::Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCa
     MS_LOG(ERROR) << "Error during preparation of metrics";
     return status;
   }
-  loop->Init(metrics);
+  (void)loop->Init(metrics);
 
   // Convert Callbacks to be used by loop
   std::vector<session::TrainLoopCallBack *> cbs;

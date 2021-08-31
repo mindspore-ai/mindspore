@@ -20,6 +20,7 @@
 #include "include/ms_tensor.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 TensorList::TensorList(std::vector<int> shape, std::vector<int> element_shape, Category category)
@@ -171,6 +172,7 @@ int TensorList::FreeTensorListData() {
 }
 
 int TensorList::SetTensor(int index, const Tensor *src_tensor) {
+  MS_CHECK_TRUE_MSG(src_tensor != nullptr, RET_ERROR, "src tensor cannot null");
   // your can use this fun to modify tensor[index] value
   if (src_tensor->data_type() != this->tensors_data_type_) {
     MS_LOG(ERROR) << "src_tensor->data_type()：" << src_tensor->data_type()
@@ -233,6 +235,7 @@ bool TensorList::IsCompatibleShape(const std::vector<int> &shape) {
 }
 
 bool TensorList::IsCompatibleShape(const Tensor *src) {
+  MS_CHECK_TRUE_MSG(src != nullptr, RET_ERROR, "src tensor cannot null");
   // shape is store in Tensor.
   if (static_cast<size_t>(src->ElementsNum()) != this->element_shape_.size()) {
     return false;

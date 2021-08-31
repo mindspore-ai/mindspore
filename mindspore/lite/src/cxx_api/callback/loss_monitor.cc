@@ -24,7 +24,10 @@
 
 namespace mindspore {
 LossMonitor::LossMonitor(int print_every_n_steps) {
-  callback_impl_ = new CallbackImpl(new lite::LossMonitor(print_every_n_steps));
+  callback_impl_ = new (std::nothrow) CallbackImpl(new (std::nothrow) lite::LossMonitor(print_every_n_steps));
+  if (callback_impl_ == nullptr) {
+    MS_LOG(ERROR) << "Callback implement new failed";
+  }
 }
 
 LossMonitor::~LossMonitor() {
