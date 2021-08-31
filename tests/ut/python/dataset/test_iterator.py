@@ -99,15 +99,15 @@ def test_iterator_weak_ref():
     assert sum(itr() is not None for itr in ITERATORS_LIST) == 3
 
     del itr1
-    assert len(ITERATORS_LIST) == 3
+    assert len(ITERATORS_LIST) == 2
     assert sum(itr() is not None for itr in ITERATORS_LIST) == 2
 
     del itr2
-    assert len(ITERATORS_LIST) == 3
+    assert len(ITERATORS_LIST) == 1
     assert sum(itr() is not None for itr in ITERATORS_LIST) == 1
 
     del itr3
-    assert len(ITERATORS_LIST) == 3
+    assert ITERATORS_LIST == []
     assert sum(itr() is not None for itr in ITERATORS_LIST) == 0
 
     itr1 = data.create_tuple_iterator(num_epochs=1)
@@ -120,8 +120,7 @@ def test_iterator_weak_ref():
     assert "object has no attribute '_runtime_context'" in str(info.value)
 
     del itr1
-    assert len(ITERATORS_LIST) == 6
-    assert sum(itr() is not None for itr in ITERATORS_LIST) == 2
+    assert ITERATORS_LIST == []
 
     _cleanup()
 
