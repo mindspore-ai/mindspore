@@ -84,45 +84,57 @@ void DebugServices::RemoveWatchpoint(unsigned int id) {
 
 std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> &tensor,
                                               void *const previous_tensor_ptr, uint32_t num_elements,
-                                              int tensor_dtype) {
+                                              uint32_t prev_num_elements, int tensor_dtype) {
   switch (tensor_dtype) {
     case DbgDataType::DT_UINT8: {
-      return std::make_unique<TensorSummary<uint8_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<uint8_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                      prev_num_elements);
     }
     case DbgDataType::DT_INT8: {
-      return std::make_unique<TensorSummary<int8_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<int8_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                     prev_num_elements);
     }
     case DbgDataType::DT_UINT16: {
-      return std::make_unique<TensorSummary<uint16_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<uint16_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                       prev_num_elements);
     }
     case DbgDataType::DT_INT16: {
-      return std::make_unique<TensorSummary<int16_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<int16_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                      prev_num_elements);
     }
     case DbgDataType::DT_UINT32: {
-      return std::make_unique<TensorSummary<uint32_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<uint32_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                       prev_num_elements);
     }
     case DbgDataType::DT_INT32:
     case DbgDataType::DT_BASE_INT: {
-      return std::make_unique<TensorSummary<int32_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<int32_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                      prev_num_elements);
     }
     case DbgDataType::DT_UINT64: {
-      return std::make_unique<TensorSummary<uint64_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<uint64_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                       prev_num_elements);
     }
     case DbgDataType::DT_INT64: {
-      return std::make_unique<TensorSummary<int64_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<int64_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                      prev_num_elements);
     }
     case DbgDataType::DT_FLOAT16: {
-      return std::make_unique<TensorSummary<float16>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<float16>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                      prev_num_elements);
     }
     case DbgDataType::DT_FLOAT32:
     case DbgDataType::DT_BASE_FLOAT: {
-      return std::make_unique<TensorSummary<float>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<float>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                    prev_num_elements);
     }
     case DbgDataType::DT_FLOAT64: {
-      return std::make_unique<TensorSummary<double>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<double>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                     prev_num_elements);
     }
     case DbgDataType::DT_BOOL: {
-      return std::make_unique<TensorSummary<bool>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
+      return std::make_unique<TensorSummary<bool>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                   prev_num_elements);
     }
     default:
       MS_LOG(INFO) << "Unsupported tensor type";
@@ -139,7 +151,7 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
   }
   std::unique_ptr<ITensorSummary> base_summary_ptr;
   void *previous_tensor_ptr = nullptr;
-  base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, tensor->GetNumElements(), tensor->GetType());
+  base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, tensor->GetNumElements(), 0, tensor->GetType());
   if (base_summary_ptr == nullptr) {
     MS_LOG(WARNING) << "base_summary_ptr is nullptr, returning empty tensor statistics.";
     TensorStat empty_tensor_stat_data;
@@ -156,7 +168,8 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
   return tensor_stat_data;
 }
 #ifdef OFFLINE_DBG_MODE
-void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed) {
+void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
+                                   uint32_t *prev_num_elements) {
   void *previous_tensor_ptr = nullptr;
   std::shared_ptr<TensorData> tensor_prev;
   if (previous_iter_tensor_needed && tensor->GetIteration() >= 1) {
@@ -179,6 +192,7 @@ void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bo
       tensor_prev.reset();
     } else {
       previous_tensor_ptr = tensor_prev->GetDataPtr();
+      *prev_num_elements = tensor_prev->GetNumElements();
     }
   }
   return previous_tensor_ptr;
@@ -283,16 +297,21 @@ void DebugServices::CheckWatchpointsForTensor(
       continue;
     }
     uint32_t num_elements = tensor->GetNumElements();
+    uint32_t prev_num_elements = 0;
+    void *previous_tensor_ptr = nullptr;
 #ifdef OFFLINE_DBG_MODE
-    void *previous_tensor_ptr = GetPrevTensor(tensor, previous_iter_tensor_needed);
+    previous_tensor_ptr = GetPrevTensor(tensor, previous_iter_tensor_needed, &prev_num_elements);
 #else
-    void *previous_tensor_ptr =
-      tensor_loader_->GetPrevTensor(tensor_name) ? tensor_loader_->GetPrevTensor(tensor_name)->GetDataPtr() : nullptr;
+    std::shared_ptr<TensorData> prev_tensor_data = tensor_loader_->GetPrevTensor(tensor_name);
+    if (prev_tensor_data) {
+      previous_tensor_ptr = prev_tensor_data->GetDataPtr();
+      prev_num_elements = prev_tensor_data->GetNumElements();
+    }
 #endif
 
     std::unique_ptr<ITensorSummary> base_summary_ptr;
     if (!(watchpoints_to_check.size() == 1 && watchpoints_to_check[0].condition.type == IS_OVERFLOW)) {
-      base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, num_elements, tensor_dtype);
+      base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, num_elements, prev_num_elements, tensor_dtype);
       if (base_summary_ptr != nullptr) {
         base_summary_ptr->SummarizeTensor(watchpoints_to_check);
       }
