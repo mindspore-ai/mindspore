@@ -25,13 +25,13 @@ namespace mindspore {
 namespace opt {
 class MulAddFusion : public PatternProcessPass {
  public:
-  explicit MulAddFusion(bool multigraph = true, const std::string &name = "conv_activation_fusion")
+  explicit MulAddFusion(bool multigraph = true, const std::string &name = "MulAddFusion")
       : PatternProcessPass(name, multigraph) {}
   ~MulAddFusion() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   bool CheckMulNode(const FuncGraphPtr &func_graph) const;
   bool CheckAddNode() const;
   bool GetMulInputShape() const;

@@ -25,7 +25,7 @@ namespace mindspore {
 namespace opt {
 class MatMulAddFusion : public Pass {
  public:
-  MatMulAddFusion() : Pass("matmul_add_fusion") {}
+  MatMulAddFusion() : Pass("MatMulAddFusion") {}
   ~MatMulAddFusion() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };

@@ -15,6 +15,7 @@
  */
 
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -27,11 +28,21 @@ constexpr float MUL1_y = 0.5;
 
 // gelu(x) = 1/2 * x * [1 + erf(x / sqrt(2))]
 const BaseRef OnnxGeLUFusion::DefinePattern() const {
-  VectorRef div_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimDivFusion>), input_, div_y_});
-  VectorRef erf_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimErf>), div_ref});
-  VectorRef add_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>), erf_ref, add_y_});
-  VectorRef mul1_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>), input_, mul1_y_});
-  VectorRef mul2_ref({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>), mul1_ref, add_ref});
+  auto is_div = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimDivFusion>);
+  MS_CHECK_TRUE_RET(is_div != nullptr, {});
+  VectorRef div_ref({is_div, input_, div_y_});
+  auto is_erf = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimErf>);
+  MS_CHECK_TRUE_RET(is_erf != nullptr, {});
+  VectorRef erf_ref({is_erf, div_ref});
+  auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  VectorRef add_ref({is_add, erf_ref, add_y_});
+  auto is_mul1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul1 != nullptr, {});
+  VectorRef mul1_ref({is_mul1, input_, mul1_y_});
+  auto is_mul2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul2 != nullptr, {});
+  VectorRef mul2_ref({is_mul2, mul1_ref, add_ref});
   return mul2_ref;
 }
 

@@ -25,9 +25,11 @@ namespace mindspore {
 namespace opt {
 class AffineFusion : public PatternProcessPass {
  public:
-  explicit AffineFusion(bool multigraph = true, const std::string &name = "affine_fusion")
+  explicit AffineFusion(bool multigraph = true, const std::string &name = "AffineFusion")
       : PatternProcessPass(name, multigraph) {}
   ~AffineFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

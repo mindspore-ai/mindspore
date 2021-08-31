@@ -18,31 +18,38 @@
 #include <memory>
 #include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 const BaseRef SqueezeFusion::DefinePattern() const {
-  auto squeeze_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSqueeze>);
-  auto bn_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimFusedBatchNorm>);
-  auto bn_mean_var = std::make_shared<CondVar>(IsParamNode);
-  auto bn_variable_var = std::make_shared<CondVar>(IsParamNode);
-  auto bn_other_var = std::make_shared<SeqVar>();
-  VectorRef bn_ref = VectorRef({bn_var, squeeze_var, bn_mean_var, bn_variable_var, bn_other_var});
-  auto act_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
-  VectorRef act_ref = VectorRef({act_var, bn_ref});
-  auto unsqueeze_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimUnsqueeze>);
-  return VectorRef({unsqueeze_var, act_ref});
+  auto is_squeeze = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSqueeze>);
+  MS_CHECK_TRUE_RET(is_squeeze != nullptr, {});
+  auto is_bn = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimFusedBatchNorm>);
+  MS_CHECK_TRUE_RET(is_bn != nullptr, {});
+  auto is_param1 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  VectorRef bn_ref = VectorRef({is_bn, is_squeeze, is_param1, is_param2, is_seq_var});
+  auto is_activation = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
+  MS_CHECK_TRUE_RET(is_activation != nullptr, {});
+  VectorRef act_ref = VectorRef({is_activation, bn_ref});
+  auto is_unsqueeze = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimUnsqueeze>);
+  MS_CHECK_TRUE_RET(is_unsqueeze != nullptr, {});
+  return VectorRef({is_unsqueeze, act_ref});
 }
 
 const AnfNodePtr SqueezeFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &unsqueeze_node,
                                         const EquivPtr &) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(unsqueeze_node) != lite::RET_OK) {
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+  if (func_graph == nullptr || unsqueeze_node == nullptr) {
     return nullptr;
   }
 
-  auto act_node = unsqueeze_node->cast<CNodePtr>()->input(1);
+  auto unsqueeze_cnode = unsqueeze_node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(unsqueeze_cnode != nullptr, nullptr);
+  auto act_node = unsqueeze_cnode->input(1);
   if (act_node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }
@@ -55,15 +62,13 @@ const AnfNodePtr SqueezeFusion::Process(const FuncGraphPtr &func_graph, const An
     return nullptr;
   }
   auto pre_node = squeeze_node->cast<CNodePtr>()->input(1);
-  if (pre_node->cast<CNodePtr>() == nullptr) {
-    return nullptr;
-  }
 
-  if (GetCNodePrimitive(unsqueeze_node)->GetAttr("axis") == GetCNodePrimitive(unsqueeze_node)->GetAttr("axis")) {
+  if (GetCNodePrimitive(unsqueeze_node)->GetAttr(ops::kAxis) ==
+      GetCNodePrimitive(unsqueeze_node)->GetAttr(ops::kAxis)) {
     auto manager = func_graph->manager();
     MS_ASSERT(manager != nullptr);
-    manager->Replace(unsqueeze_node, act_node);
-    manager->Replace(squeeze_node, pre_node);
+    (void)manager->Replace(unsqueeze_node, act_node);
+    (void)manager->Replace(squeeze_node, pre_node);
     return pre_node;
   }
   return nullptr;

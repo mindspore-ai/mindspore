@@ -26,7 +26,7 @@ namespace mindspore {
 namespace opt {
 class TfGeLUFusion : public GeLUFusion {
  public:
-  explicit TfGeLUFusion(const std::string &name = "tf_gelu_fusion", bool multigraph = true)
+  explicit TfGeLUFusion(const std::string &name = "TfGeLUFusion", bool multigraph = true)
       : GeLUFusion(name, multigraph) {
     power_ = std::make_shared<Var>();
     power_y_ = std::make_shared<Var>();

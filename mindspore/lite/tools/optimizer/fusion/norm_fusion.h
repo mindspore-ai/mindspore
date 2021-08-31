@@ -31,7 +31,7 @@ namespace opt {
 /// fuse layer_norm or instance_norm into one operator
 class NormFusion : public PatternProcessPass {
  public:
-  explicit NormFusion(const std::string &name = "norm_fusion", bool multigraph = true)
+  explicit NormFusion(const std::string &name = "NormFusion", bool multigraph = true)
       : PatternProcessPass(name, multigraph) {
     input_ = std::make_shared<Var>();
     mean1_ = std::make_shared<Var>();
@@ -69,7 +69,7 @@ class NormFusion : public PatternProcessPass {
 /// fuse tf layer_norm or instance_norm into one operator
 class TfNormFusion : public NormFusion {
  public:
-  explicit TfNormFusion(const std::string &name = "tf_norm_fusion", bool multigraph = true)
+  explicit TfNormFusion(const std::string &name = "TfNormFusion", bool multigraph = true)
       : NormFusion(name, multigraph) {}
 
   ~TfNormFusion() override = default;
@@ -79,7 +79,7 @@ class TfNormFusion : public NormFusion {
 /// fuse onnx layer_norm into one operator
 class OnnxLayerNormFusion : public NormFusion {
  public:
-  explicit OnnxLayerNormFusion(const std::string &name = "onnx_layer_norm_fusion", bool multigraph = true)
+  explicit OnnxLayerNormFusion(const std::string &name = "OnnxLayerNormFusion", bool multigraph = true)
       : NormFusion(name, multigraph) {}
 
   ~OnnxLayerNormFusion() override = default;

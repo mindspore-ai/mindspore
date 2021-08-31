@@ -17,13 +17,10 @@
 #include <functional>
 #include <memory>
 #include <vector>
-#include "ops/fusion/add_fusion.h"
-#include "ops/fusion/conv2d_fusion.h"
-#include "tools/common/tensor_util.h"
-#include "utils/utils.h"
 #include "tools/anf_exporter/fetch_content.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -46,7 +43,7 @@ bool IsAddNode(const BaseRef &n) {
 
 bool FuseBias(const lite::DataInfo &add_bias, const lite::DataInfo &conv_bias, std::vector<float> *fusion_bias,
               int out_channel) {
-  MS_ASSERT(conv_bias != nullptr);
+  MS_ASSERT(fusion_bias != nullptr);
   if ((add_bias.data_type_ != TypeId::kNumberTypeFloat32 && add_bias.data_type_ != TypeId::kNumberTypeFloat) ||
       add_bias.data_.empty()) {
     return false;
@@ -78,14 +75,17 @@ bool FuseBias(const lite::DataInfo &add_bias, const lite::DataInfo &conv_bias, s
 }
 }  // namespace
 const BaseRef ConvBiasaddFusion::DefinePattern() const {
-  auto conv_var = std::make_shared<CondVar>(IsConvExtendNode);
-  auto add_var = std::make_shared<CondVar>(IsAddNode);
-  auto weight_var = std::make_shared<CondVar>(IsParamOrValueNodeWithData);
-  return VectorRef({add_var, conv_var, weight_var});
+  auto is_conv = std::make_shared<CondVar>(IsConvExtendNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
+  auto is_add = std::make_shared<CondVar>(IsAddNode);
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  auto is_const = std::make_shared<CondVar>(IsParamOrValueNodeWithData);
+  MS_CHECK_TRUE_RET(is_const != nullptr, {});
+  return VectorRef({is_add, is_conv, is_const});
 }
 
 bool ConvBiasaddFusion::CheckCanFusion(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
-  MS_ASSERT(node != nullptr);
+  MS_ASSERT(func_graph != nullptr && node != nullptr);
   if (!utils::isa<CNode>(node)) {
     return false;
   }
@@ -94,7 +94,7 @@ bool ConvBiasaddFusion::CheckCanFusion(const FuncGraphPtr &func_graph, const Anf
     return false;
   }
   auto prim_add = GetValueNode<PrimitivePtr>(add_cnode->input(0));
-  MS_ASSERT(rim_add != nullptr);
+  MS_ASSERT(prim_add != nullptr);
   auto add_act_ptr = prim_add->GetAttr(ops::kActivationType);
   auto add_act = add_act_ptr == nullptr ? mindspore::NO_ACTIVATION
                                         : static_cast<mindspore::ActivationType>(GetValue<int64_t>(add_act_ptr));
@@ -188,19 +188,19 @@ int ConvBiasaddFusion::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr
   conv_new_bias->set_name(conv_cnode->fullname_with_scope() + "_bias");
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
-  auto tr = manager->Transact();
   if (conv_cnode->size() > kInputSizeThree) {
-    tr.SetEdge(conv_cnode, kInputIndexThree, conv_new_bias);
+    manager->SetEdge(conv_cnode, kInputIndexThree, conv_new_bias);
   } else {
-    tr.AddEdge(conv_cnode, conv_new_bias);
+    manager->AddEdge(conv_cnode, conv_new_bias);
   }
-  tr.Commit();
   return lite::RET_OK;
 }
 
 const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                             const EquivPtr &) const {
-  MS_ASSERT(func_graph != nullptr && node != nullptr);
+  if (func_graph == nullptr || node == nullptr) {
+    return nullptr;
+  }
   if (!CheckCanFusion(func_graph, node)) {
     return nullptr;
   }

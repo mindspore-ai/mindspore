@@ -94,12 +94,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     fusion_pm->AddPass(std::make_shared<opt::TransposeFusion>());
     fusion_pm->AddPass(std::make_shared<opt::ReshapeReshapeFusion>());
     fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
-    auto conv_bn_pass = std::make_shared<opt::ConvBatchNormFusion>();
-    conv_bn_pass->SetFmkType(config->fmk);
-    fusion_pm->AddPass(conv_bn_pass);
-    auto conv_scale_pass = std::make_shared<opt::ConvScaleFusion>();
-    conv_scale_pass->SetFmkType(config->fmk);
-    fusion_pm->AddPass(conv_scale_pass);
+    fusion_pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>(config->fmk));
+    fusion_pm->AddPass(std::make_shared<opt::ConvScaleFusion>(config->fmk));
     fusion_pm->AddPass(std::make_shared<opt::TfNormFusion>());
     fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion>());
     fusion_pm->AddPass(std::make_shared<opt::BatchMatMulFusion>());

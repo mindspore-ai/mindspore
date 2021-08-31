@@ -19,22 +19,20 @@
 #include "ops/fusion/activation.h"
 #include "ops/op_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
-namespace {
-constexpr size_t kActivationInputsLength = 2;
-}
 const BaseRef ConvActivationFusion::DefinePattern() const {
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
-  auto act_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
-  return VectorRef({act_var, conv_var});
+  auto is_conv = std::make_shared<CondVar>(IsConvNode);
+  MS_CHECK_TRUE_RET(is_conv != nullptr, {});
+  auto is_activation = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
+  MS_CHECK_TRUE_RET(is_activation != nullptr, {});
+  return VectorRef({is_activation, is_conv});
 }
 
 const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                const EquivPtr &) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
@@ -51,9 +49,6 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
   }
 
   AnfNodePtr pre_node = act_node->input(1);
-  if (CheckIfAnfNodeIsNull(pre_node) != lite::RET_OK) {
-    return nullptr;
-  }
   if (pre_node != nullptr && pre_node->isa<CNode>()) {
     if (IsMultiOutputTensors(func_graph, pre_node)) {
       return nullptr;

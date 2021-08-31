@@ -18,6 +18,7 @@
 #include "ops/op_utils.h"
 #include "ops/reshape.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -25,21 +26,30 @@ const auto &p1 = std::placeholders::_1;
 }  // namespace
 
 const BaseRef ReshapeReshapeFusion::DefinePattern() const {
-  auto reshape1 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), reshape_input_,
-                             std::make_shared<CondVar>(IsParamNode)});
-  return VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape)), reshape1, reshape_shape_});
+  MS_CHECK_TRUE_RET(reshape_input_ != nullptr, {});
+  MS_CHECK_TRUE_RET(reshape_shape_ != nullptr, {});
+  auto is_reshape1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape1 != nullptr, {});
+  auto is_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param != nullptr, {});
+  auto reshape1 = VectorRef({is_reshape1, reshape_input_, is_param});
+  auto is_reshape2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
+  MS_CHECK_TRUE_RET(is_reshape2 != nullptr, {});
+  return VectorRef({is_reshape2, reshape1, reshape_shape_});
 }
 
 const AnfNodePtr ReshapeReshapeFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                const EquivPtr &equiv) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(node != nullptr);
+  if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
+    return nullptr;
+  }
   auto reshape_prim = std::make_shared<ops::Reshape>();
   if (reshape_prim == nullptr) {
     MS_LOG(ERROR) << "Build reshape primitive failed.";
     return nullptr;
   }
   auto value_node = NewValueNode(reshape_prim);
+  MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   auto input = utils::cast<AnfNodePtr>((*equiv)[reshape_input_]);
   auto shape = utils::cast<AnfNodePtr>((*equiv)[reshape_shape_]);
   if (input == nullptr || shape == nullptr) {

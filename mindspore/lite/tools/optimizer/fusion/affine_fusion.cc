@@ -22,39 +22,26 @@
 #include "ops/splice.h"
 #include "ops/mat_mul.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
-constexpr auto kRowAxis = 1;
 constexpr auto kInputWithBiasNum = 4;
 constexpr auto kInputBias = 3;
-
-static bool IsSpliceNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSplice);
-  }
-  return false;
-}
-
-static bool IsMatMulNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    auto anf_node = utils::cast<AnfNodePtr>(n);
-    return CheckPrimitiveType(anf_node, prim::kPrimMatMul);
-  }
-  return false;
-}
-
 const BaseRef AffineFusion::DefinePattern() const {
-  auto matmul_var = std::make_shared<CondVar>(IsMatMulNode);
-  auto splice_var = std::make_shared<CondVar>(IsSpliceNode);
-  auto matmul_weight_var = std::make_shared<CondVar>(IsParamNode);
-  auto matmul_bias_var = std::make_shared<SeqVar>();
-  return VectorRef({matmul_var, splice_var, matmul_weight_var, matmul_bias_var});
+  auto is_matmul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMul>);
+  MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
+  auto is_splice = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSplice>);
+  MS_CHECK_TRUE_RET(is_splice != nullptr, {});
+  auto is_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  return VectorRef({is_matmul, is_splice, is_param, is_seq_var});
 }
 
 const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                        const EquivPtr &equiv) const {
-  MS_ASSERT(equiv != nullptr);
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
@@ -80,7 +67,7 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   auto splice_node = pre_node->cast<CNodePtr>();
-  if (CheckIfAnfNodeIsNull(pre_node) != lite::RET_OK) {
+  if (pre_node == nullptr) {
     MS_LOG(ERROR) << "the splice_node is null.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
@@ -96,6 +83,7 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
    */
   // new primitive
   auto affine_prim = std::make_shared<ops::Affine>();
+  MS_CHECK_TRUE_RET(affine_prim != nullptr, nullptr);
   // copy splice attr to affine
   affine_prim->set_context(splice_prim->get_context());
   affine_prim->set_output_dim(splice_prim->get_output_dim());
@@ -107,12 +95,15 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     affine_prim->set_transpose_b(matmul_prim->get_transpose_b());
   }
   // construct affine node
-  std::vector<AnfNodePtr> affine_inputs = {NewValueNode(affine_prim), splice_node->input(1), matmul_node->input(2)};
+  std::vector<AnfNodePtr> affine_inputs = {NewValueNode(affine_prim), splice_node->input(1),
+                                           matmul_node->input(kInputIndexTwo)};
   if (matmul_node->inputs().size() == kInputWithBiasNum) {
     affine_inputs.push_back(matmul_node->input(kInputBias));
   }
   auto affine_node = func_graph->NewCNode(affine_inputs);
+  MS_CHECK_TRUE_RET(affine_node != nullptr, nullptr);
   affine_node->set_fullname_with_scope(matmul_node->fullname_with_scope());
+  MS_CHECK_TRUE_RET(matmul_node->abstract() != nullptr, nullptr);
   affine_node->set_abstract(matmul_node->abstract()->Clone());
 
   MS_LOG(INFO) << "splice + matmul fused to affine node: " << affine_node->fullname_with_scope() << "success.";

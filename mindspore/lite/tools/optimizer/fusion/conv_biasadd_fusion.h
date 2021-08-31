@@ -24,8 +24,10 @@ namespace mindspore {
 namespace opt {
 class ConvBiasaddFusion : public PatternProcessPass {
  public:
-  explicit ConvBiasaddFusion(bool multigraph = true) : PatternProcessPass("conv_biasadd_fusion", multigraph) {}
+  explicit ConvBiasaddFusion(bool multigraph = true) : PatternProcessPass("ConvBiasaddFusion", multigraph) {}
   ~ConvBiasaddFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 

@@ -20,6 +20,7 @@
 #include "tools/common/tensor_util.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -28,7 +29,6 @@ constexpr size_t kConvWithBiasLen = 4;
 constexpr size_t kConvWeightIndex = 2;
 constexpr size_t kConvBiasIndex = 3;
 constexpr size_t kNHWC_DIMS = 4;
-constexpr size_t kNHWC_NDim = 0;
 constexpr size_t kNHWC_HDim = 1;
 constexpr size_t kNHWC_WDim = 2;
 constexpr size_t kNHWC_CDim = 3;
@@ -56,28 +56,33 @@ bool IsCommonConvNode(const BaseRef &n) {
 STATUS GenNewConvBias(const ParameterPtr &down_bias_node, const ParameterPtr &down_weight_node,
                       const ParameterPtr &up_bias_node, const ParameterPtr &new_bias_node) {
   if (down_weight_node == nullptr || up_bias_node == nullptr || new_bias_node == nullptr) {
-    MS_LOG(ERROR) << "Input  down_weight_node or up_bias_node or new_bias_node is nullptr";
+    MS_LOG(ERROR) << "Input down_weight_node or up_bias_node or new_bias_node is nullptr";
     return RET_FAILED;
   }
   float *down_bias_data = nullptr;
   if (down_bias_node != nullptr) {
     auto down_bias_param = std::dynamic_pointer_cast<tensor::Tensor>(down_bias_node->default_param());
+    MS_ASSERT(down_bias_param != nullptr);
     auto down_bias_shape = down_bias_param->shape();
     if (down_bias_shape.size() != 1) {
       MS_LOG(ERROR) << "cur conv_conv fusion only support scalar bias shape";
       return RET_FAILED;
     }
+    MS_ASSERT(down_bias_param->data_c() != nullptr);
     down_bias_data = static_cast<float *>(down_bias_param->data_c());
   }
   auto up_bias_param = std::dynamic_pointer_cast<tensor::Tensor>(up_bias_node->default_param());
+  MS_ASSERT(up_bias_param != nullptr);
   auto up_bias_shape = up_bias_param->shape();
   if (up_bias_shape.size() != 1) {
     MS_LOG(ERROR) << "cur conv_conv fusion only support scalar bias shape";
     return RET_FAILED;
   }
   auto down_weight_param = std::dynamic_pointer_cast<tensor::Tensor>(down_weight_node->default_param());
+  MS_ASSERT(down_weight_param != nullptr && down_weight_param->data_c() != nullptr);
   auto down_weight_data = static_cast<float *>(down_weight_param->data_c());
   auto down_weight_shape = down_weight_param->shape();
+  MS_ASSERT(up_bias_param->data_c() != nullptr);
   auto up_bias_data = static_cast<float *>(up_bias_param->data_c());
   int new_bias_size = down_weight_shape[0];
   auto tensor_info = lite::CreateTensorInfo(nullptr, 0, {new_bias_size}, up_bias_param->data_type());
@@ -85,6 +90,7 @@ STATUS GenNewConvBias(const ParameterPtr &down_bias_node, const ParameterPtr &do
     MS_LOG(ERROR) << "create tensor info failed.";
     return RET_ERROR;
   }
+  MS_ASSERT(tensor_info->data_c() != nullptr);
   auto new_bias_data = static_cast<float *>(tensor_info->data_c());
   if (memset_s(new_bias_data, new_bias_size * sizeof(float), 0, new_bias_size * sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memset_s failed";
@@ -110,10 +116,14 @@ STATUS GenNewConvBias(const ParameterPtr &down_bias_node, const ParameterPtr &do
 // up weight shape[cout0,h,w,cin0] down weight shape[cout1,1,1,cout0],new weight shape [cout1,h,w,cin0]
 STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr &up_weight_node,
                         const ParameterPtr &new_weight_node) {
+  MS_ASSERT(down_weight_node != nullptr && up_weight_node != nullptr && new_weight_node != nullptr);
   auto down_weight_param = std::dynamic_pointer_cast<tensor::Tensor>(down_weight_node->default_param());
+  MS_ASSERT(down_weight_param != nullptr);
   auto down_weight_shape = down_weight_param->shape();
   auto up_weight_param = std::dynamic_pointer_cast<tensor::Tensor>(up_weight_node->default_param());
+  MS_ASSERT(up_weight_param != nullptr);
   auto up_weight_shape = up_weight_param->shape();
+  MS_ASSERT(up_weight_param->data_c() != nullptr && down_weight_param->data_c() != nullptr);
   auto up_weight_data = static_cast<float *>(up_weight_param->data_c());
   auto down_weight_data = static_cast<float *>(down_weight_param->data_c());
   int cout0 = up_weight_shape[0];
@@ -127,6 +137,7 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
     MS_LOG(ERROR) << "create tensor info failed.";
     return RET_ERROR;
   }
+  MS_ASSERT(tensor_info->data_c() != nullptr);
   auto new_weight_data = static_cast<float *>(tensor_info->data_c());
   for (int i = 0; i < cout1; i++) {
     auto down_weight_base = i * cout0;
@@ -156,15 +167,18 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
 
 void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &up_conv_cnode,
                                const CNodePtr &down_conv_cnode) {
+  MS_ASSERT(func_graph != nullptr && up_conv_cnode != nullptr && down_conv_cnode != nullptr);
   auto down_weight_parameter = down_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
   auto up_weight_parameter = up_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
   auto new_weight_paramter = func_graph->add_parameter();
+  MS_ASSERT(new_weight_paramter != nullptr);
   if (GenNewConvWeight(down_weight_parameter, up_weight_parameter, new_weight_paramter) != RET_OK) {
     MS_LOG(ERROR) << "GenNewConvWeight failed.";
     return;
   }
 
   auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
   down_conv_cnode->set_input(kConvWeightIndex, new_weight_paramter);
 
   // whether up conv node has bias
@@ -193,6 +207,7 @@ void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &u
 }
 
 bool IsPrimitiveProper(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_cnode) {
+  MS_ASSERT(up_conv_cnode != nullptr && down_conv_cnode != nullptr);
   auto down_conv_primitive = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(down_conv_cnode->input(0));
   MS_ASSERT(down_conv_primitive != nullptr);
   auto up_conv_primitive = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(up_conv_cnode->input(0));
@@ -207,20 +222,25 @@ bool IsPrimitiveProper(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_
 }  // namespace
 
 const BaseRef ConvConvFusion::DefinePattern() const {
-  auto up_conv_var = std::make_shared<CondVar>(IsCommonConvNode);
-  auto down_conv_var = std::make_shared<CondVar>(IsCommonConvNode);
-  auto down_weight_var = std::make_shared<CondVar>(IsParamNode);
-  auto down_bias_var = std::make_shared<SeqVar>();
-  return VectorRef({down_conv_var, up_conv_var, down_weight_var, down_bias_var});
+  auto is_conv_down = std::make_shared<CondVar>(IsCommonConvNode);
+  MS_CHECK_TRUE_RET(is_conv_down != nullptr, {});
+  auto is_conv_up = std::make_shared<CondVar>(IsCommonConvNode);
+  MS_CHECK_TRUE_RET(is_conv_up != nullptr, {});
+  auto is_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_param != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  return VectorRef({is_conv_down, is_conv_up, is_param, is_seq_var});
 }
 
 // conv->conv1x1 fusion conv (w1x+b)w2+c = (w1*w2)*x+(w2*b+c)
 const AnfNodePtr ConvConvFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                          const EquivPtr &) const {
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (func_graph == nullptr || node == nullptr) {
     return nullptr;
   }
   auto down_conv_cnode = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(down_conv_cnode != nullptr, nullptr);
   if (down_conv_cnode->inputs().size() != kConvWithBiasLen && down_conv_cnode->inputs().size() != kConvNoBiasLen) {
     MS_LOG(WARNING) << "conv node inputs error ,name:" << down_conv_cnode->fullname_with_scope();
     return nullptr;
@@ -236,6 +256,7 @@ const AnfNodePtr ConvConvFusion::Process(const FuncGraphPtr &func_graph, const A
   }
 
   auto up_conv_cnode = down_conv_cnode->input(1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(up_conv_cnode != nullptr, nullptr);
   auto up_weight_parameter = up_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
   auto up_weight_value = std::dynamic_pointer_cast<tensor::Tensor>(up_weight_parameter->default_param());
   auto up_weight_shape = up_weight_value->shape();

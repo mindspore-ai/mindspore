@@ -20,9 +20,11 @@
 namespace mindspore::opt {
 class ConvTupleGetItemFusion : public PatternProcessPass {
  public:
-  explicit ConvTupleGetItemFusion(const std::string &name = "conv_tuplegetitem_fusion", bool multigraph = true)
+  explicit ConvTupleGetItemFusion(const std::string &name = "ConvTupleGetItemFusion", bool multigraph = true)
       : PatternProcessPass(name, multigraph) {}
   ~ConvTupleGetItemFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

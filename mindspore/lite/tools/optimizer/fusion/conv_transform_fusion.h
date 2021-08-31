@@ -25,19 +25,22 @@ using mindspore::converter::FmkType;
 namespace mindspore::opt {
 class ConvTransformFusion : public PatternProcessPass {
  public:
-  explicit ConvTransformFusion(bool multigraph = true, const std::string &name = "conv_transform_fusion")
+  explicit ConvTransformFusion(bool multigraph = true, const std::string &name = "ConvTransformFusion")
       : PatternProcessPass(name, multigraph) {}
   ~ConvTransformFusion() override = default;
+
+ protected:
+  virtual void InitTransParam(const CNodePtr &, int, float *, float *) const = 0;
+
+ private:
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   void GenTransParam(const CNodePtr &, int, float *, float *) const;
-  virtual void InitTransParam(const CNodePtr &, int, float *, float *) const = 0;
   void GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
   void CalNewWeightTensor(const CNodePtr &, const tensor::TensorPtr &, int, const float *) const;
   static void CalNewBiasTensor(float *, int, bool, const float *, const float *);
-  void SetFmkType(FmkType type) { this->fmk_type_ = type; }
   bool IsVariableWeightConv(const CNodePtr &conv_node) const;
 
- private:
+ protected:
   FmkType fmk_type_ = converter::kFmkTypeTf;
 };
 }  // namespace mindspore::opt
