@@ -29,16 +29,16 @@ import mindspore.common.dtype as mstype
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell
+from mindspore.parallel.nn import TransformerOpParallelConfig, CrossEntropyLoss
 from src.adam import AdamWeightDecayOp
 from src.dataset import create_dataset
-from src.pangu_alpha import PanguAlpha, PanguAlphaWithLoss, CrossEntropyLoss
+from src.pangu_alpha import PanGUAlphaWithLoss, PanguAlphaModel
 from src.pangu_alpha_wrapcell import PanguAlphaTrainOneStepWithLossScaleCell, PanguAlphaTrainPipelineWithLossScaleCell
-from src.pangu_alpha_config import PANGUALPHAConfig, set_parse
+from src.pangu_alpha_config import set_parse, PanguAlphaConfig
 from src.utils import LearningRate, get_args, FP32StateAdamWeightDecay
 from src.utils import download_data
 from src.callbacks import EvalCallBack, LossCallBack
 from src.metrics import PPLMetric
-
 
 project_root = os.path.abspath(
     os.path.dirname(os.path.realpath(__file__)) + os.path.sep + "..")
@@ -69,7 +69,8 @@ def run_train(args_opt):
     The main training process.
     """
     # Set execution mode
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, variable_memory_max_size="31GB")
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+    context.set_context(variable_memory_max_size="31GB")
     # Set parallel context
     if args_opt.distribute == "true":
         D.init()
@@ -100,27 +101,37 @@ def run_train(args_opt):
     model_parallel_num = args_opt.op_level_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
     batch_size = args_opt.per_batch_size * data_parallel_num
-    config = PANGUALPHAConfig(
-        data_parallel_num=data_parallel_num, model_parallel_num=model_parallel_num,
-        batch_size=batch_size, seq_length=args_opt.seq_length,
-        vocab_size=args_opt.vocab_size, embedding_size=args_opt.embedding_size,
-        num_layers=args_opt.num_layers, num_heads=args_opt.num_heads,
-        expand_ratio=4, dropout_rate=0.1, compute_dtype=mstype.float16,
-        stage_num=args_opt.stage_num, micro_size=args_opt.micro_size,
-        eod_reset=bool(args_opt.eod_reset), load_ckpt_path=args_opt.load_ckpt_path,
-        param_init_type=mstype.float32 if args_opt.param_init_type == 'fp32' else mstype.float16,
-        word_emb_dp=bool(args_opt.word_emb_dp), enable_offload=bool(args_opt.opt_offload))
+    parallel_config = TransformerOpParallelConfig(data_parallel=data_parallel_num,
+                                                  model_parallel=model_parallel_num,
+                                                  pipeline_stage=args_opt.stage_num,
+                                                  micro_batch_num=args_opt.micro_size,
+                                                  optimizer_shard=bool(args_opt.optimizer_shard),
+                                                  recompute=True)
+    config = PanguAlphaConfig(batch_size=batch_size, num_heads=args_opt.num_heads,
+                              hidden_size=args_opt.embedding_size, seq_length=args_opt.seq_length,
+                              vocab_size=args_opt.vocab_size, num_layers=args_opt.num_layers,
+                              ffn_hidden_size=args_opt.embedding_size * 4,
+                              eod_token=bool(args_opt.eod_reset),
+                              load_ckpt_path=args_opt.load_ckpt_path,
+                              param_init_type=mstype.float32 if args_opt.param_init_type == 'fp32' else mstype.float16,
+                              enable_offload=bool(args_opt.opt_offload),
+                              parallel_config=parallel_config)
     print("===config is: ", config, flush=True)
+
     # Define network
-    pangu_alpha = PanguAlpha(config)
-    loss = CrossEntropyLoss(config)
-    pangu_alpha_with_loss_net = PanguAlphaWithLoss(config, pangu_alpha, loss)
+    pangu_alpha = PanguAlphaModel(config=config)
+    loss = CrossEntropyLoss(config.parallel_config.dp_mp_config)
+    pangu_alpha_with_loss_net = PanGUAlphaWithLoss(config, pangu_alpha, loss)
     pangu_alpha_with_loss = _VirtualDatasetCell(pangu_alpha_with_loss_net)
+
     print("=====args_opt is: ", args_opt, flush=True)
     # Warm-up and cosine decay learning rate
-    lr = LearningRate(learning_rate=args_opt.start_lr, end_learning_rate=args_opt.end_lr,
-                      warmup_steps=args_opt.warmup_step, decay_steps=200000)
-    params = pangu_alpha.trainable_params()
+    lr = LearningRate(learning_rate=args_opt.start_lr,
+                      end_learning_rate=args_opt.end_lr,
+                      warmup_steps=args_opt.warmup_step,
+                      decay_steps=200000)
+
+    params = pangu_alpha_with_loss.trainable_params()
     group_params = set_weight_decay(params)
     if args_opt.optimizer == "lamb":
         optimizer = nn.Lamb(group_params, learning_rate=lr)
@@ -165,6 +176,7 @@ def run_train(args_opt):
     print("Dataset size: {}, actual_epoch_num: {}".format(ds.get_dataset_size(), actual_epoch_num), flush=True)
     model.train(actual_epoch_num, ds, callbacks=callback, sink_size=args_opt.sink_size, dataset_sink_mode=True)
 
+
 def run_train_pipeline(args_opt):
     r"""
     The main training process in pipeline.
@@ -203,27 +215,26 @@ def run_train_pipeline(args_opt):
         raise ValueError("The dp must large than 1 when applying optimizer shard.")
     per_batch_size = args_opt.per_batch_size
     batch_size = per_batch_size * data_parallel_num * args_opt.micro_size
-    config = PANGUALPHAConfig(
-        data_parallel_num=data_parallel_num,
-        model_parallel_num=model_parallel_num,
-        batch_size=batch_size,
-        seq_length=args_opt.seq_length,
-        vocab_size=args_opt.vocab_size,
-        embedding_size=args_opt.embedding_size,
-        num_layers=args_opt.num_layers,
-        num_heads=args_opt.num_heads,
-        expand_ratio=4,
-        post_layernorm_residual=False,
-        dropout_rate=0.1,
-        compute_dtype=mstype.float16,
-        use_past=False,
-        stage_num=args_opt.stage_num,
-        micro_size=args_opt.micro_size,
-        word_emb_dp=bool(args_opt.word_emb_dp), enable_offload=bool(args_opt.opt_offload))
+
+    parallel_config = TransformerOpParallelConfig(data_parallel=data_parallel_num,
+                                                  model_parallel=model_parallel_num,
+                                                  pipeline_stage=args_opt.stage_num,
+                                                  micro_batch_num=args_opt.micro_size,
+                                                  optimizer_shard=bool(args_opt.optimizer_shard),
+                                                  recompute=True)
+    config = PanguAlphaConfig(batch_size=batch_size // parallel_config.micro_batch_num,
+                              num_heads=args_opt.num_heads, hidden_size=args_opt.embedding_size,
+                              seq_length=args_opt.seq_length, vocab_size=args_opt.vocab_size,
+                              num_layers=args_opt.num_layers, ffn_hidden_size=args_opt.embedding_size * 4,
+                              eod_token=bool(args_opt.eod_reset), load_ckpt_path=args_opt.load_ckpt_path,
+                              param_init_type=mstype.float32 if args_opt.param_init_type == 'fp32' else mstype.float16,
+                              enable_offload=bool(args_opt.opt_offload), parallel_config=parallel_config)
+
     print("===config is: ", config, flush=True)
-    pangu_alpha = PanguAlpha(config)
-    loss = CrossEntropyLoss(config)
-    pangu_alpha_with_loss_net = PipelineCell(PanguAlphaWithLoss(config, pangu_alpha, loss), config.micro_size)
+    pangu_alpha = PanguAlphaModel(config=config)
+    loss = CrossEntropyLoss(config.parallel_config.dp_mp_config)
+    pangu_alpha_with_loss_net = PipelineCell(PanGUAlphaWithLoss(config, pangu_alpha, loss),
+                                             config.parallel_config.micro_batch_num)
     pangu_alpha_with_loss = _VirtualDatasetCell(pangu_alpha_with_loss_net)
     print("=====args_opt is: ", args_opt, flush=True)
     lr = LearningRate(learning_rate=args_opt.start_lr, end_learning_rate=args_opt.end_lr,
@@ -238,7 +249,8 @@ def run_train_pipeline(args_opt):
     else:
         optimizer = nn.AdamWeightDecay(group_params, learning_rate=lr, beta1=0.9, beta2=0.95, eps=1e-8)
 
-    ds = create_dataset(config.batch_size, data_path=cache_url, device_num=stage_device_num,
+    ds = create_dataset(config.batch_size * parallel_config.micro_batch_num, data_path=cache_url,
+                        device_num=stage_device_num,
                         rank=rank_id % stage_device_num, eod_reset=True, data_start_index=0,
                         full_batch=context.get_auto_parallel_context("full_batch"),
                         column_name=args_opt.data_column_name)
@@ -246,19 +258,20 @@ def run_train_pipeline(args_opt):
     step_per_epoch = ds.get_dataset_size()
     callback_size = args_opt.sink_size
     actual_epoch_num = int(epoch_num * step_per_epoch / callback_size)
-    callback = [TimeMonitor(callback_size), LossCallBack(callback_size, rank_id, micro_size=config.micro_size)]
+    callback = [TimeMonitor(callback_size), LossCallBack(callback_size, rank_id,
+                                                         micro_size=parallel_config.micro_batch_num)]
     loss_scale_value = math.pow(2, 32)
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value, scale_factor=2, scale_window=1000)
     pangu_alpha_with_grads = PanguAlphaTrainPipelineWithLossScaleCell(
         pangu_alpha_with_loss, optimizer=optimizer, config=config, scale_update_cell=update_cell)
     if args_opt.train_and_eval_mode:
-        ds_eval = create_dataset(config.batch_size // config.micro_size, data_path=eval_cache_url,
+        ds_eval = create_dataset(config.batch_size * parallel_config.micro_batch_num, data_path=eval_cache_url,
                                  device_num=stage_device_num, rank=rank_id % stage_device_num, eod_reset=True,
                                  data_start_index=0, full_batch=bool(args_opt.full_batch),
                                  column_name=args_opt.data_column_name,
                                  num_samples=args_opt.eval_steps * config.batch_size)
         ppl_metric = PPLMetric(config.seq_length)
-        pangu_alpha_with_loss_eval_net = _VirtualDatasetCell(PanguAlphaWithLoss(config, pangu_alpha, loss))
+        pangu_alpha_with_loss_eval_net = _VirtualDatasetCell(PanGUAlphaWithLoss(config, pangu_alpha, loss))
         model = Model(pangu_alpha_with_grads, eval_network=pangu_alpha_with_loss_eval_net, metrics={"ppl": ppl_metric})
         model.build(ds, ds_eval, sink_size=callback_size)
         eval_callback = EvalCallBack(model, ds_eval, ppl_metric)

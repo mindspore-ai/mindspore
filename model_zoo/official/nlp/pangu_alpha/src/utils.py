@@ -139,12 +139,12 @@ class GlobalNorm(nn.Cell):
         super(GlobalNorm, self).__init__()
         self.norm = nn.Norm()
         self.hyper_map = C.HyperMap()
-        self.is_pipeline = (config.stage_num > 1)
+        self.is_pipeline = context.get_auto_parallel_context("pipeline_stages") > 1
         if self.is_pipeline:
             if context.get_auto_parallel_context("enable_parallel_optimizer"):
-                group_size = get_group_size() // config.stage_num
+                group_size = get_group_size() // config.parallel_config.pipeline_stage
             else:
-                group_size = config.mp
+                group_size = config.parallel_config.model_parallel
             group_list, group_name = _get_model_parallel_group(group_size)
             create_group(group_name, group_list)
             self.allreduce = P.AllReduce(group=group_name)
@@ -160,9 +160,10 @@ class GlobalNorm(nn.Cell):
             elif "embedding_table" not in x.name:
                 self.allreduce_group_size = self.allreduce_group_size + (group_size * 1.0,)
             else:
-                if not config.word_emb_dp and "position_embedding.embedding_table" not in x.name \
+                if not config.parallel_config.vocab_emb_dp and "position_embedding.embedding_table" not in x.name \
                         and "top_query_embedding_table" not in x.name:
-                    self.allreduce_group_size = self.allreduce_group_size + (config.dp * 1.0,)
+                    self.allreduce_group_size = self.allreduce_group_size +\
+                                                (config.parallel_config.data_parallel * 1.0,)
                 else:
                     self.allreduce_group_size = self.allreduce_group_size + (group_size * 1.0,)
 

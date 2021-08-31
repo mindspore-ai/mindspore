@@ -17,57 +17,47 @@ network config setting
 """
 import mindspore.common.dtype as mstype
 
+class PanguAlphaConfig:
+    """
+    PanGUConfig config class which defines the model size
+    """
 
-class PANGUALPHAConfig:
-    """
-    PANGUALPHA config class which defines the model size
-    """
     def __init__(self,
-                 data_parallel_num,
-                 model_parallel_num,
                  batch_size=32,
                  seq_length=1024,
-                 vocab_size=50257,
-                 embedding_size=768,
+                 vocab_size=40000,
+                 hidden_size=768,
+                 ffn_hidden_size=768,
                  num_layers=12,
                  num_heads=12,
-                 expand_ratio=4,
+                 load_ckpt_path=None,
+                 param_init_type=mstype.float32,
                  post_layernorm_residual=False,
                  dropout_rate=0.1,
-                 compute_dtype=mstype.float16,
+                 eod_token=6,
                  use_past=False,
-                 word_emb_dp=True,
-                 stage_num=16,
+                 hidden_act='gelu',
                  eod_reset=True,
-                 micro_size=32,
-                 load_ckpt_path=None,
-                 use_top_query_attention=True,
-                 param_init_type=mstype.float32,
-                 enable_offload=False):
+                 enable_offload=False,
+                 parallel_config=None):
         self.batch_size = batch_size
         self.seq_length = seq_length
         self.vocab_size = vocab_size
-        self.embedding_size = embedding_size
+        self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.num_heads = num_heads
-        # The expand ratio of feature size in FFN
-        self.expand_ratio = expand_ratio
+        self.eod_token = eod_token
         # Use post-layernorm or pre-layernrom, default:pre-layernorm
         self.post_layernorm_residual = post_layernorm_residual
-        self.dropout_rate = dropout_rate
-        self.compute_dtype = compute_dtype
-        # Whether use incremental inference
-        self.use_past = use_past
-        self.dp = data_parallel_num
-        self.mp = model_parallel_num
-        self.stage_num = stage_num
-        self.micro_size = micro_size
-        self.word_emb_dp = word_emb_dp
-        self.eod_reset = eod_reset
-        # Used for loading embedding tables
         self.load_ckpt_path = load_ckpt_path
-        self.use_top_query_attention = use_top_query_attention
         self.param_init_type = param_init_type
+        self.dropout_rate = dropout_rate
+        self.compute_dtype = mstype.float16
+        self.parallel_config = parallel_config
+        self.ffn_hidden_size = ffn_hidden_size
+        self.hidden_act = hidden_act
+        self.use_past = use_past
+        self.eod_reset = eod_reset
         self.enable_offload = enable_offload
 
     def __str__(self):
@@ -77,6 +67,7 @@ class PANGUALPHAConfig:
             info += var_info
         info += '=' * 10
         return info
+
 
 def set_parse(args_opt):
     r"""

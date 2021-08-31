@@ -70,6 +70,7 @@ reciprocal = P.Reciprocal()
 def tensor_grad_scale(scale, grad):
     return grad * reciprocal(scale)
 
+
 @grad_scale.register("Tensor", "Tensor", "Tensor")
 def tensor_grad_scale_pipeline(scale, grad, accu_grad):
     accu_grad = F.depend(accu_grad, grad)
@@ -78,6 +79,7 @@ def tensor_grad_scale_pipeline(scale, grad, accu_grad):
     zeros = F.tensor_mul(accu_grad, 0.0)
     new_grad = F.depend(new_grad, F.assign(accu_grad, zeros))
     return new_grad
+
 
 @shard_grad_scale.register("Tensor", "Tensor", "Tensor")
 def tensor_shard_grad_scale_pipeline(scale, grad, accu_grad):
@@ -151,6 +153,7 @@ class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
             self.optimizer(grads)
         return loss, cond, scaling_sens
 
+
 class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
     """
     Encapsulation class of PanguAlpha network training.
@@ -200,7 +203,7 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
                                         name="loss_scale")
         self.clip = ClipByGlobalNorm(self.weights, self.config)
-        self.micro_size = config.micro_size
+        self.micro_size = config.parallel_config.micro_batch_num
         self.opt_shard = _get_enable_parallel_optimizer()
 
     @C.add_flags(has_effect=True)
