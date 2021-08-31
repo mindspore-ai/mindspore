@@ -55,6 +55,7 @@ class KernelAdjust {
     return instance;
   }
 
+  void InsertOverflowCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   bool StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);
@@ -65,6 +66,14 @@ class KernelAdjust {
   KernelAdjust() = default;
   ~KernelAdjust() = default;
 
+  CNodePtr CreateNPUGetFloatStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                   const CNodePtr &npu_cnode);
+  CNodePtr CreateNPUClearStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                const CNodePtr &npu_cnode);
+  CNodePtr CreateNPUAllocStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  CNodePtr CreateAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &npu_get_cnode,
+                           const AnfNodePtr &specify_para);
+  CNodePtr CreateAssign(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const AnfNodePtr &specify_para);
   void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
   CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);

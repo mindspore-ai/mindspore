@@ -471,6 +471,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   AssignStream(NOT_NULL(root_graph));
   // insert profiling point
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(root_graph.get()));
+  device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(root_graph));
   // build kernel
   BuildKernel(root_graph);
   if (debugger_ && debugger_->partial_memory()) {
@@ -542,6 +543,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   AssignStream(NOT_NULL(graph));
 
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
+  device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(graph));
   // build kernel if node is cnode
   BuildKernel(graph);
   auto ms_context = MsContext::GetInstance();

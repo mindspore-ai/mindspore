@@ -310,6 +310,10 @@ constexpr auto kLayerNormGradOpName = "LayerNormGrad";
 constexpr auto kMinimumGradOpName = "MinimumGrad";
 constexpr auto kMaximumGradOpName = "MaximumGrad";
 constexpr auto kFusedDbnDwOpName = "FusedDbnDw";
+constexpr auto kNPUAllocFloatStatusOpName = "NPUAllocFloatStatus";
+constexpr auto kNPUGetFloatStatusOpName = "NPUGetFloatStatus";
+constexpr auto kNPUClearFloatStatusOpName = "NPUClearFloatStatus";
+constexpr auto kAssignOpName = "Assign";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
