@@ -92,10 +92,22 @@ bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodeP
   return false;
 }
 
-bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
+bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &node, const uint32_t graph_id) {
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
   auto node_users = manager->node_users()[node];
+  // filter nodes not in current graph
+  for (auto iter = node_users.begin(); iter != node_users.end(); iter++) {
+    auto func_graph = iter->first->func_graph();
+    auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+    if (kernel_graph == nullptr) {
+      MS_LOG(EXCEPTION) << "func graph cast kernel graph failed, related node is: " << iter->first->DebugString();
+    }
+    if (kernel_graph->graph_id() != graph_id) {
+      iter = node_users.erase(iter);
+    }
+  }
+
   size_t idx = 0;
   if (std::any_of(node_users.begin(), node_users.end(), [&](const std::pair<AnfNodePtr, int64_t> &kernel) {
         return RecursiveCheck(manager, kernel, &idx);
@@ -113,7 +125,7 @@ void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &m
     if (input_node->isa<Parameter>()) {
       auto node_ptr = input_node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(node_ptr);
-      if (!IsUsedByRealKernel(manager, input_node)) {
+      if (!IsUsedByRealKernel(manager, input_node, graph->graph_id())) {
         node_ptr->SetNotUsedByRealKernelInGraph(graph->graph_id());
       }
       auto shape = node_ptr->Shape();
