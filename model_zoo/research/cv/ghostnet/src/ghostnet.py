@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ class MyHSigmoid(nn.Cell):
         self.relu6 = nn.ReLU6()
 
     def construct(self, x):
+        """ construct """
         return self.relu6(x + 3.) * 0.16666667
 
 
@@ -74,6 +75,7 @@ class Activation(nn.Cell):
             raise NotImplementedError
 
     def construct(self, x):
+        """ construct """
         return self.act(x)
 
 
@@ -95,6 +97,7 @@ class GlobalAvgPooling(nn.Cell):
         self.mean = P.ReduceMean(keep_dims=keep_dims)
 
     def construct(self, x):
+        """ construct """
         x = self.mean(x, (2, 3))
         return x
 
@@ -127,6 +130,7 @@ class SE(nn.Cell):
         self.mul = P.Mul()
 
     def construct(self, x):
+        """ construct of SE module """
         out = self.pool(x)
         out = self.conv_reduce(out)
         out = self.act1(out)
@@ -173,6 +177,7 @@ class ConvUnit(nn.Cell):
         self.act = Activation(act_type) if use_act else None
 
     def construct(self, x):
+        """ construct of conv unit """
         out = self.conv(x)
         out = self.bn(out)
         if self.use_act:
@@ -209,12 +214,14 @@ class GhostModule(nn.Cell):
         new_channels = init_channels * (ratio - 1)
 
         self.primary_conv = ConvUnit(num_in, init_channels, kernel_size=kernel_size, stride=stride, padding=padding,
-                                     num_groups=1, use_act=use_act, act_type='relu')
-        self.cheap_operation = ConvUnit(init_channels, new_channels, kernel_size=dw_size, stride=1, padding=dw_size//2,
-                                        num_groups=init_channels, use_act=use_act, act_type='relu')
+                                     num_groups=1, use_act=use_act, act_type=act_type)
+        self.cheap_operation = ConvUnit(init_channels, new_channels, kernel_size=dw_size, stride=1,
+                                        padding=dw_size // 2, num_groups=init_channels,
+                                        use_act=use_act, act_type=act_type)
         self.concat = P.Concat(axis=1)
 
     def construct(self, x):
+        """ ghost module construct """
         x1 = self.primary_conv(x)
         x2 = self.cheap_operation(x1)
         return self.concat((x1, x2))
@@ -269,10 +276,10 @@ class GhostBottleneck(nn.Cell):
                 ConvUnit(num_in, num_out, kernel_size=1, stride=1,
                          padding=0, num_groups=1, use_act=False),
             ])
-        self.add = P.Add()
+        self.add = P.TensorAdd()
 
     def construct(self, x):
-        r"""construct of ghostnet"""
+        """ construct of ghostnet """
         shortcut = x
         out = self.ghost1(x)
         if self.use_dw:
@@ -318,7 +325,7 @@ class GhostNet(nn.Cell):
         >>> GhostNet(num_classes=1000)
     """
 
-    def __init__(self, model_cfgs, num_classes=1000, multiplier=1., final_drop=0., round_nearest=8):
+    def __init__(self, model_cfgs, num_classes=1000, multiplier=1., final_drop=0.):
         super(GhostNet, self).__init__()
         self.cfgs = model_cfgs['cfg']
         self.inplanes = 16
@@ -365,7 +372,7 @@ class GhostNet(nn.Cell):
         self._initialize_weights()
 
     def construct(self, x):
-        r"""construct of GhostNet"""
+        """ construct of GhostNet """
         x = self.conv_stem(x)
         x = self.bn1(x)
         x = self.act1(x)
@@ -403,21 +410,21 @@ class GhostNet(nn.Cell):
         for _, m in self.cells_and_names():
             if isinstance(m, (nn.Conv2d)):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.set_parameter_data(Tensor(np.random.normal(0, np.sqrt(2. / n),
-                                                                    m.weight.data.shape).astype("float32")))
+                m.weight.set_data(Tensor(np.random.normal(0, np.sqrt(2. / n),
+                                                          m.weight.data.shape).astype("float32")))
                 if m.bias is not None:
-                    m.bias.set_parameter_data(
+                    m.bias.set_data(
                         Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
             elif isinstance(m, nn.BatchNorm2d):
-                m.gamma.set_parameter_data(
+                m.gamma.set_data(
                     Tensor(np.ones(m.gamma.data.shape, dtype="float32")))
-                m.beta.set_parameter_data(
+                m.beta.set_data(
                     Tensor(np.zeros(m.beta.data.shape, dtype="float32")))
             elif isinstance(m, nn.Dense):
-                m.weight.set_parameter_data(Tensor(np.random.normal(
+                m.weight.set_data(Tensor(np.random.normal(
                     0, 0.01, m.weight.data.shape).astype("float32")))
                 if m.bias is not None:
-                    m.bias.set_parameter_data(
+                    m.bias.set_data(
                         Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
 
 

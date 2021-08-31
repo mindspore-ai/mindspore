@@ -1,4 +1,5 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+#!/bin/bash
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""hub config."""
-from src.ghostnet import ghostnet_1x, ghostnet_nose_1x
-from src.ghostnet600 import ghostnet_600m
 
-
-def create_network(name, *args, **kwargs):
-    if name == 'ghostnet':
-        return ghostnet_1x(*args, **kwargs)
-    if name == 'ghostnet_nose':
-        return ghostnet_nose_1x(*args, **kwargs)
-    if name == 'ghostnet-600':
-        return ghostnet_600m(*args, **kwargs)
-    raise NotImplementedError(f"{name} is not implemented in the repo")
+if [ ! -d out ]; then
+  mkdir out
+fi
+cd out || exit
+cmake .. \
+    -DMINDSPORE_PATH="`pip show mindspore-ascend | grep Location | awk '{print $2"/mindspore"}' | xargs realpath`"
+make
