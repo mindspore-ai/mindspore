@@ -13,10 +13,9 @@
 # limitations under the License.
 # ============================================================================
 
+import cv2
 import json
 import os
-
-import cv2
 
 
 def restore_coordinates(resized_json_det_file, img_dir, resized_to=(640, 640)):
@@ -58,13 +57,18 @@ def restore_coordinates(resized_json_det_file, img_dir, resized_to=(640, 640)):
 
 
 if __name__ == "__main__":
+    result_json = "./origin_pb_det_resized_result/resized_origin_coco_det_result.json"
+    restore_json_path = "./restored_json_det/coordinates_restored_det.json"
+    real_label_dir = "./cocoapi/cocoapi-master/val2017"
+    resize_height = 608
+    resize_width = 608
     old_json_det_dit_list = restore_coordinates(
-        "/data/sam/AscendModelZoo/faster_rcnn/origin_pb_det_resized_result/resized_origin_coco_det_result.json",
-        "/data/sam/cocoapi/cocoapi-master/val2017",
-        resized_to=(608, 608),
+        result_json,
+        real_label_dir,
+        resized_to=(resize_height, resize_width),
     )
     restored_json = (
-        "/data/sam/AscendModelZoo/faster_rcnn/restored_json_det/coordinates_restored_det.json"
+        restore_json_path
     )
     with open(restored_json, "w") as f:
         f.write(json.dumps(old_json_det_dit_list))
