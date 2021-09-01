@@ -21,19 +21,14 @@
 
 namespace mindspore {
 namespace lite {
-int EraseBlankSpace(std::string *input_string) {
+int EraseBlankSpaceAndLineBreak(std::string *input_string) {
   if (input_string == nullptr) {
     MS_LOG(ERROR) << "input_string is nullptr";
     return false;
   }
-  if (!input_string->empty()) {
-    std::string::size_type pos = 0;
-    pos = input_string->find(' ', pos);
-    while (pos != std::string::npos) {
-      input_string->erase(pos, 1);
-      pos = input_string->find(' ', pos);
-    }
-  }
+  input_string->erase(std::remove(input_string->begin(), input_string->end(), ' '), input_string->end());
+  input_string->erase(std::remove(input_string->begin(), input_string->end(), '\r'), input_string->end());
+  input_string->erase(std::remove(input_string->begin(), input_string->end(), '\n'), input_string->end());
   return true;
 }
 

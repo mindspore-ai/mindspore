@@ -67,7 +67,7 @@ int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::strin
     }
     num_of_line++;
 
-    if (!EraseBlankSpace(&raw_line)) {
+    if (!EraseBlankSpaceAndLineBreak(&raw_line)) {
       MS_LOG(ERROR) << "Erase Blank Space failed.";
       return RET_ERROR;
     }
