@@ -25,6 +25,8 @@
 #include "tools/common/tensor_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
+#include "src/common/log_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -43,15 +45,16 @@ constexpr uint32_t kQuadrupleNum = 4;
 }  // namespace
 
 STATUS BatchNormConvertScalePass::Run(MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
 
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
+    MS_ASSERT(node != nullptr);
     auto type = node->primitive->value.type;
     if (type != schema::PrimitiveType_FusedBatchNorm && type != schema::PrimitiveType_BatchNorm) {
       continue;
     }
-
+    MS_CHECK_GT(node->inputIndex.size(), 0, RET_ERROR);
     auto input_index = node->inputIndex.at(0);
     if (graph->allTensors.at(input_index)->dims.empty()) {
       MS_LOG(WARNING) << "The shape of input tensor is uncertain.";
@@ -75,11 +78,9 @@ STATUS BatchNormConvertScalePass::ConvertBNToScale(MetaGraphT *graph, const std:
   MS_ASSERT(bnNode != nullptr);
   bnNode->primitive->value.type = schema::PrimitiveType_ScaleFusion;
   auto scaleParam = std::make_unique<ScaleFusionT>();
-  if (scaleParam == nullptr) {
-    MS_LOG(ERROR) << "new scaleParam failed";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(scaleParam);
   //  after fusion bn must NHWC
+  MS_CHECK_GT(bnNode->inputIndex.size(), 0, RET_ERROR);
   auto input0 = bnNode->inputIndex.at(0);
   if (graph->allTensors.at(input0)->dims.size() == kQuadrupleNum) {
     scaleParam->axis = -1;
@@ -102,18 +103,15 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   MS_ASSERT(bnNode != nullptr);
   GetTransParam(graph, bnNode);
   newScaleWeightTensor = std::make_unique<TensorT>();
-  if (newScaleWeightTensor == nullptr) {
-    MS_LOG(ERROR) << "new weightTensor failed";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(newScaleWeightTensor);
   newScaleWeightTensor->dataType = bnMeanTensor->dataType;
   newScaleWeightTensor->format = bnMeanTensor->format;
   newScaleWeightTensor->refCount = NodeType_ValueNode;
   newScaleWeightTensor->dims = bnMeanTensor->dims;
   auto weightShapeSize = GetShapeSize(*bnMeanTensor);
   newScaleWeightTensor->data.resize(weightShapeSize * sizeof(float));
-  auto ret = memcpy_s(newScaleWeightTensor->data.data(), weightShapeSize * sizeof(float), transScale,
-                      weightShapeSize * sizeof(float));
+  auto ret =
+    memcpy_s(newScaleWeightTensor->data.data(), weightShapeSize * sizeof(float), transScale, bnChannel * sizeof(float));
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy error: " << ret;
     delete[] transScale;
@@ -124,10 +122,7 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   }
 
   newScaleBiasTensor = std::make_unique<TensorT>();
-  if (newScaleBiasTensor == nullptr) {
-    MS_LOG(ERROR) << "new weightTensor failed";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(newScaleBiasTensor);
   newScaleBiasTensor->dataType = bnMeanTensor->dataType;
   newScaleBiasTensor->format = bnMeanTensor->format;
 
@@ -135,8 +130,8 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   newScaleBiasTensor->dims = bnMeanTensor->dims;
   weightShapeSize = GetShapeSize(*bnMeanTensor);
   newScaleBiasTensor->data.resize(weightShapeSize * sizeof(float));
-  ret = memcpy_s(newScaleBiasTensor->data.data(), weightShapeSize * sizeof(float), transBias,
-                 weightShapeSize * sizeof(float));
+  ret =
+    memcpy_s(newScaleBiasTensor->data.data(), weightShapeSize * sizeof(float), transBias, bnChannel * sizeof(float));
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy error: " << ret;
     delete[] transScale;
@@ -167,7 +162,9 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::un
   auto *biasTensor = bnWeightTensors.biasTensor;
 
   auto *meanData = reinterpret_cast<float *>(meanTensor->data.data());
+  CHECK_NULL_RETURN(meanData);
   auto *varianceData = reinterpret_cast<float *>(varianceTensor->data.data());
+  CHECK_NULL_RETURN(varianceData);
 
   eps = EPS_DEFAULT_FLOAT;
   status = GetBnEpsilon(bnNode);
@@ -176,17 +173,11 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::un
     return status;
   }
   this->transScale = new (std::nothrow) float[bnChannel];
-  if (this->transScale == nullptr) {
-    MS_LOG(ERROR) << "new transScale failed";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(this->transScale);
   this->transBias = new (std::nothrow) float[bnChannel];
-  if (this->transBias == nullptr) {
-    MS_LOG(ERROR) << "new transBias failed";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(this->transBias);
   // cal transScale, tf : scale/sqrt(variance + eps); caffe : 1/sqrt(variance + eps)
-  if (memcpy_s(transScale, bnChannel * sizeof(float), varianceData, bnChannel * sizeof(float)) != EOK) {
+  if (memcpy_s(transScale, bnChannel * sizeof(float), varianceData, varianceTensor->data.size()) != EOK) {
     MS_LOG(ERROR) << "memcpy_s transScale error";
     delete[] transScale;
     delete[] transBias;
@@ -202,11 +193,13 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::un
       MS_LOG(ERROR) << "divisor 'tmp' cannot be 0";
       return RET_ERROR;
     }
+    MS_CHECK_TRUE_MSG(tmp != 0, RET_ERROR, "divide zero");
     transScale[i] = 1 / tmp;
   }
 
   if (scaleTensor != nullptr) {
     auto *scaleData = reinterpret_cast<float *>(scaleTensor->data.data());
+    CHECK_NULL_RETURN(scaleData);
     // scale/sqrt(variance + eps)
     for (uint32_t i = 0; i < bnChannel; i++) {
       transScale[i] *= scaleData[i];
@@ -221,6 +214,7 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::un
 
   if (biasTensor != nullptr) {
     auto *biasData = reinterpret_cast<float *>(biasTensor->data.data());
+    CHECK_NULL_RETURN(biasData);
     // -scale*mean/sqrt(variance + eps) + bias
     for (uint32_t i = 0; i < bnChannel; i++) {
       transBias[i] += biasData[i];
@@ -237,7 +231,6 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(bnNode != nullptr);
   MS_ASSERT(bnWeightTensors != nullptr);
-  MS_ASSERT(graph->allTensors.size() > bnNode->inputIndex.at(1));
   auto bnWeightTensorIdxes = bnNode->inputIndex;
   bnWeightTensorIdxes.erase(bnWeightTensorIdxes.begin());
   if (fmkType == converter::kFmkTypeCaffe) {
@@ -249,22 +242,15 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
     bnWeightTensors->meanTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_MEAN_INDEX]).get();
     bnWeightTensors->varianceTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_VARIANCE_INDEX]).get();
   }
-
-  if (bnWeightTensors->meanTensor == nullptr) {
-    MS_LOG(ERROR) << "BatchNorm's mean tensor is nullptr";
-    return RET_ERROR;
-  }
-  if (bnWeightTensors->varianceTensor == nullptr) {
-    MS_LOG(ERROR) << "BatchNorm's variance tensor is nullptr";
-    return RET_ERROR;
-  }
   if (fmkType == converter::kFmkTypeCaffe) {
     auto scaleTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_SCALE_INDEX]).get();
     // calibrate mean and variance
     float scale_factor_data = (reinterpret_cast<float *>(scaleTensor->data.data()))[0];
     float scale_factor = scale_factor_data == 0 ? 0 : 1 / scale_factor_data;
     auto mean_data = reinterpret_cast<float *>(bnWeightTensors->meanTensor->data.data());
+    CHECK_NULL_RETURN(mean_data);
     auto variance_data = reinterpret_cast<float *>(bnWeightTensors->varianceTensor->data.data());
+    CHECK_NULL_RETURN(variance_data);
     for (size_t i = 0; i < GetShapeSize(*bnWeightTensors->meanTensor); i++) {
       mean_data[i] *= scale_factor;
     }
@@ -272,6 +258,8 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
       variance_data[i] *= scale_factor;
     }
   }
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD(bnWeightTensors->meanTensor->data.size(), sizeof(uint8_t), SIZE_MAX),
+                     RET_ERROR, "Int mul overflow");
   bnChannel = bnWeightTensors->meanTensor->data.size() * sizeof(uint8_t) / sizeof(float);
   if (bnChannel <= 0) {
     MS_LOG(ERROR) << "BatchNorm's channel less or equal 0";

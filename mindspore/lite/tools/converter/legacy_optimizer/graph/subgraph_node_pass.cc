@@ -24,6 +24,7 @@
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -32,8 +33,8 @@ STATUS SubgraphNodePass::GetSubgraphAllTensorIndices(const std::unique_ptr<SubGr
   for (auto &node_idx : subgraph->nodeIndices) {
     if (node_idx >= graph->nodes.size()) {
       MS_LOG(ERROR) << "node_idx: " << node_idx << " bigger than graph->nodes.size(): " << graph->nodes.size();
-      for (auto &subgraph : graph->subGraph) {
-        MS_LOG(ERROR) << subgraph->name << " : " << subgraph->nodeIndices;
+      for (auto &cur_subgraph : graph->subGraph) {
+        MS_LOG(ERROR) << cur_subgraph->name << " : " << cur_subgraph->nodeIndices;
       }
       return RET_ERROR;
     }
@@ -89,7 +90,7 @@ void SubgraphNodePass::IncreaseSubgraphNodeIndices(const size_t &node_idx, schem
 }
 
 STATUS SubgraphNodePass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
   std::vector<schema::CNodeT *> new_nodes{};
   std::transform(graph->nodes.begin(), graph->nodes.end(), std::back_inserter(new_nodes),
                  [](std::unique_ptr<CNodeT> &node) { return node.get(); });

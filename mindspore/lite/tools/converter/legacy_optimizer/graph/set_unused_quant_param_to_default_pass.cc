@@ -16,10 +16,11 @@
 #include "tools/converter/legacy_optimizer/graph/set_unused_quant_param_to_default_pass.h"
 #include "tools/converter/converter_context.h"
 #include "tools/common/tensor_util.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::lite {
 STATUS SetUnusedQuantParamToDefaultPass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
   for (auto &tensor : graph->allTensors) {
     for (auto &quant_param : tensor->quantParams) {
       quant_param->min = 0;

@@ -22,10 +22,12 @@
 #include "include/errorcode.h"
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
+#include "src/common/log_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 STATUS SelectPass::Run(mindspore::schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+  CHECK_NULL_RETURN(graph);
   for (size_t i = 0; i < graph->nodes.size(); i++) {
     auto &node = graph->nodes.at(i);
     auto type = node->primitive->value.type;
@@ -89,16 +91,6 @@ STATUS SelectPass::RemoveSelectNodes() {
   return RET_OK;
 }
 
-std::unique_ptr<schema::TensorT> SingleSelectPass::NewTensor(const std::unique_ptr<schema::TensorT> &in_tensor) {
-  auto out_tensor = std::make_unique<schema::TensorT>();
-  out_tensor->nodeType = in_tensor->nodeType;
-  out_tensor->dims = in_tensor->dims;
-  out_tensor->dataType = in_tensor->dataType;
-  out_tensor->data = in_tensor->data;
-  out_tensor->format = in_tensor->format;
-  return out_tensor;
-}
-
 void SingleSelectPass::RemoveUselessNode(schema::CNodeT *partial_node) {
   partial_node->inputIndex.clear();
   partial_node->outputIndex.clear();
@@ -145,85 +137,98 @@ STATUS SingleSelectPass::Init() {
   return RET_OK;
 }
 
+namespace {
+std::unique_ptr<schema::TensorT> NewTensor(const std::unique_ptr<schema::TensorT> &in_tensor) {
+  auto out_tensor = std::make_unique<schema::TensorT>();
+  MS_CHECK_TRUE_MSG(out_tensor != nullptr, nullptr, "create TensorT failed");
+  out_tensor->nodeType = in_tensor->nodeType;
+  out_tensor->dims = in_tensor->dims;
+  out_tensor->dataType = in_tensor->dataType;
+  out_tensor->data = in_tensor->data;
+  out_tensor->format = in_tensor->format;
+  return out_tensor;
+}
+
+std::unique_ptr<CNodeT> CreateSwitchCNode(const schema::CNodeT &select_node, int part_id, schema::MetaGraphT *graph,
+                                          std::vector<int> *switch_output_indexes) {
+  std::string node_name_suffix;
+  if (part_id == 0) {
+    node_name_suffix = "-Switch-1";
+  } else {
+    node_name_suffix = "-Switch-2";
+  }
+  switch_output_indexes->clear();
+  auto switch_node = std::make_unique<CNodeT>();
+  MS_CHECK_TRUE_MSG(switch_node != nullptr, nullptr, "Create CNodeT failed");
+  switch_node->name = select_node.name + node_name_suffix;
+  switch_node->primitive = std::make_unique<PrimitiveT>();
+  MS_CHECK_TRUE_MSG(switch_node->primitive != nullptr, nullptr, "Create PrimitiveT failed");
+  switch_node->primitive->value.type = PrimitiveType_Switch;
+  switch_node->primitive->value.value = new (std::nothrow) SwitchT();
+  MS_CHECK_TRUE_MSG(switch_node->primitive->value.value != nullptr, nullptr, "Create SwitchT failed");
+  switch_node->inputIndex = {select_node.inputIndex.front()};
+  decltype(select_node.inputIndex.begin()) first_iter, last_iter;
+  if (part_id == 0) {
+    first_iter = select_node.inputIndex.begin() + 1;
+    last_iter = select_node.inputIndex.begin() + 1 + (select_node.inputIndex.size() - 1) / 2;
+  } else {
+    first_iter = select_node.inputIndex.begin() + 1 + (select_node.inputIndex.size() - 1) / 2;
+    last_iter = select_node.inputIndex.end();
+  }
+  std::vector<int> part_input_index(first_iter, last_iter);
+  switch_node->inputIndex.insert(switch_node->inputIndex.end(), part_input_index.begin(), part_input_index.end());
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD((part_input_index.size()), static_cast<size_t>(2), SIZE_MAX), nullptr,
+                     "int mul overflow");
+  std::vector<std::unique_ptr<TensorT>> switch_output_tensors1(part_input_index.size() * 2);
+  switch_output_indexes->resize(part_input_index.size() * 2);
+  size_t i = 0;
+  for (const auto &input_index : part_input_index) {
+    auto &switch_in_tensor = graph->allTensors.at(input_index);
+    auto tensor1 = NewTensor(switch_in_tensor);
+    MS_CHECK_TRUE_MSG(tensor1 != nullptr, nullptr, "NewTensor return nullptr");
+    auto tensor2 = NewTensor(switch_in_tensor);
+    MS_CHECK_TRUE_MSG(tensor2 != nullptr, nullptr, "NewTensor return nullptr");
+    switch_output_tensors1[i] = std::move(tensor1);
+    switch_output_tensors1[part_input_index.size() + i] = std::move(tensor2);
+    (*switch_output_indexes)[i] = graph->allTensors.size() - 1 + i;
+    (*switch_output_indexes)[part_input_index.size() + i] = graph->allTensors.size() - 1 + i + part_input_index.size();
+    i++;
+  }
+  for (auto &tensor : switch_output_tensors1) {
+    graph->allTensors.emplace_back(std::move(tensor));
+  }
+  switch_node->outputIndex.insert(switch_node->outputIndex.begin(), switch_output_indexes->begin(),
+                                  switch_output_indexes->end());
+  return switch_node;
+}
+}  // namespace
+
 STATUS SingleSelectPass::ConvertSelectToSwitch() {
   MS_ASSERT(select_node_->inputIndex.size() >= 3);
   MS_ASSERT(select_node_->inputIndex.size() % 2 != 0);
   MS_ASSERT(select_node_->outputIndex.size() * 2 + 1 == select_node_->inputIndex.size());
-  auto bool_index = select_node_->inputIndex.front();
 
+  std::vector<int> switch_output_indexes1, switch_output_indexes2;
   // insert switch node1
-  auto switch_node1 = std::make_unique<CNodeT>();
-  switch_node1->name = select_node_->name + "-Switch-1";
-  switch_node1->primitive = std::make_unique<PrimitiveT>();
-  switch_node1->primitive->value.type = PrimitiveType_Switch;
-  switch_node1->primitive->value.value = new (std::nothrow) SwitchT();
-  switch_node1->inputIndex = {bool_index};
-  std::vector<int> part_one_input_index(
-    select_node_->inputIndex.begin() + 1,
-    select_node_->inputIndex.begin() + 1 + (select_node_->inputIndex.size() - 1) / 2);
-  switch_node1->inputIndex.insert(switch_node1->inputIndex.end(), part_one_input_index.begin(),
-                                  part_one_input_index.end());
-  std::vector<std::unique_ptr<TensorT>> switch_output_tensors1(part_one_input_index.size() * 2);
-  std::vector<int> switch_output_indexes1(part_one_input_index.size() * 2);
-  size_t i = 0;
-  for (const auto &input_index : part_one_input_index) {
-    auto &switch_in_tensor = graph_->allTensors.at(input_index);
-    auto tensor1 = NewTensor(switch_in_tensor);
-    auto tensor2 = NewTensor(switch_in_tensor);
-    switch_output_tensors1[i] = std::move(tensor1);
-    switch_output_tensors1[part_one_input_index.size() + i] = std::move(tensor2);
-    switch_output_indexes1[i] = graph_->allTensors.size() - 1 + i;
-    switch_output_indexes1[part_one_input_index.size() + i] =
-      graph_->allTensors.size() - 1 + i + part_one_input_index.size();
-    i++;
-  }
-  for (auto &tensor : switch_output_tensors1) {
-    graph_->allTensors.emplace_back(std::move(tensor));
-  }
-  switch_node1->outputIndex.insert(switch_node1->outputIndex.begin(), switch_output_indexes1.begin(),
-                                   switch_output_indexes1.end());
-
+  auto switch_node1 = CreateSwitchCNode(*select_node_, 0, graph_, &switch_output_indexes1);
+  CHECK_NULL_RETURN(switch_node1);
   // insert switch node2
-  auto switch_node2 = std::make_unique<CNodeT>();
-  switch_node2->name = select_node_->name + "-Switch-2";
-  switch_node2->primitive = std::make_unique<PrimitiveT>();
-  switch_node2->primitive->value.type = PrimitiveType_Switch;
-  switch_node2->primitive->value.value = new (std::nothrow) SwitchT();
-  switch_node2->inputIndex = {bool_index};
-
-  std::vector<int> part_two_input_index(
-    select_node_->inputIndex.begin() + 1 + (select_node_->inputIndex.size() - 1) / 2, select_node_->inputIndex.end());
-  switch_node2->inputIndex.insert(switch_node2->inputIndex.end(), part_two_input_index.begin(),
-                                  part_two_input_index.end());
-  std::vector<std::unique_ptr<TensorT>> switch_output_tensors2(part_two_input_index.size() * 2);
-  std::vector<int> switch_output_indexes2(part_two_input_index.size() * 2);
-  i = 0;
-  for (const auto &input_index : part_two_input_index) {
-    auto &switch_in_tensor = graph_->allTensors.at(input_index);
-    auto tensor1 = NewTensor(switch_in_tensor);
-    auto tensor2 = NewTensor(switch_in_tensor);
-    switch_output_tensors2[i] = std::move(tensor1);
-    switch_output_tensors2[part_two_input_index.size() + i] = std::move(tensor2);
-    switch_output_indexes2[i] = graph_->allTensors.size() - 1 + i;
-    switch_output_indexes2[part_two_input_index.size() + i] =
-      graph_->allTensors.size() - 1 + i + part_two_input_index.size();
-    i++;
-  }
-  for (auto &tensor : switch_output_tensors2) {
-    graph_->allTensors.emplace_back(std::move(tensor));
-  }
-  switch_node2->outputIndex.insert(switch_node2->outputIndex.begin(), switch_output_indexes2.begin(),
-                                   switch_output_indexes2.end());
-
+  auto switch_node2 = CreateSwitchCNode(*select_node_, 1, graph_, &switch_output_indexes2);
+  CHECK_NULL_RETURN(switch_node2);
   // insert merge
   auto merge_node = std::make_unique<CNodeT>();
+  CHECK_NULL_RETURN(merge_node);
   merge_node->name = select_node_->name + "-merge";
   merge_node->primitive = std::make_unique<PrimitiveT>();
+  CHECK_NULL_RETURN(merge_node->primitive);
   merge_node->primitive->value.type = PrimitiveType_Merge;
   merge_node->primitive->value.value = new (std::nothrow) MergeT();
+  CHECK_NULL_RETURN(merge_node->primitive->value.value);
 
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD((select_node_->outputIndex.size()), static_cast<size_t>(2), SIZE_MAX),
+                     RET_ERROR, "int mul overflow");
   std::vector<int> merge_input_indexes(select_node_->outputIndex.size() * 2);
-  for (i = 0; i < select_node_->outputIndex.size(); i++) {
+  for (size_t i = 0; i < select_node_->outputIndex.size(); i++) {
     merge_input_indexes[i] = switch_output_indexes1[i];
     merge_input_indexes[i + select_node_->outputIndex.size()] =
       switch_output_indexes2[i + select_node_->outputIndex.size()];
