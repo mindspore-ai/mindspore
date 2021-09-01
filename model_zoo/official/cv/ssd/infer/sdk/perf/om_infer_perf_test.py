@@ -21,6 +21,7 @@ from datetime import datetime
 from threading import Lock
 from absl import app
 from absl import flags
+
 import cv2
 
 import MxpiDataType_pb2 as MxpiDataType
