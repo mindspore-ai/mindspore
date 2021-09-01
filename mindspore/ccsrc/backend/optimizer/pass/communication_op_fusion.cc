@@ -37,7 +37,7 @@ constexpr size_t kAlignSize = 2 << 9;
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &communication_op_info, size_t start_index,
                                                    size_t end_index) {
   if (end_index >= communication_op_info.communication_op_nodes.size()) {
-    MS_LOG(EXCEPTION) << "end index out of vector size";
+    MS_LOG(EXCEPTION) << "end index out of communication_op_nodes size";
   }
   std::vector<std::string> inputs_device_format;
   std::vector<std::string> outputs_device_format;
@@ -313,7 +313,7 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   std::vector<AnfNodePtr> fusion_inputs = {NewValueNode(prim)};
   // get all inputs of current segment
   if (end_index >= communication_op_info.communication_op_nodes.size()) {
-    MS_LOG(EXCEPTION) << "end index out of vector size";
+    MS_LOG(EXCEPTION) << "end index out of communication_op_nodes size";
   }
   for (size_t idx = start_index; idx <= end_index; ++idx) {
     auto cnode = communication_op_info.communication_op_nodes[idx];

@@ -99,9 +99,9 @@ class AscendKernelRuntime : public KernelRuntime {
   static void DumpTaskExceptionInfo(const session::KernelGraph *graph);
   static void TaskFailCallback(rtExceptionInfo *task_fail_info);
   void ReportProfilingData();
-  static bool DeleteDumpDir(std::string path);
+  static bool DeleteDumpDir(const std::string &path);
   static int DeleteDumpFile(std::string path);
-  static std::string GetRealPath(std::string path);
+  static std::string GetRealPath(const std::string &path);
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
