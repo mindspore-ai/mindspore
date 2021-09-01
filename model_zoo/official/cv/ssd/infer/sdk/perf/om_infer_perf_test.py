@@ -25,6 +25,7 @@ from absl import flags
 import cv2
 
 import MxpiDataType_pb2 as MxpiDataType
+
 from StreamManagerApi import InProtobufVector
 from StreamManagerApi import MxDataInput
 from StreamManagerApi import MxProtobufIn
