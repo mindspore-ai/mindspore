@@ -38,7 +38,7 @@
 #include "pipeline/jit/resource.h"
 #include "frontend/optimizer/ad/kpynative.h"
 #include "frontend/operator/composite/composite.h"
-#include "pipeline/pynative/pynative_abs_cache.h"
+#include "pipeline/pynative/pynative_cache.h"
 
 namespace mindspore::pynative {
 namespace py = pybind11;
@@ -189,23 +189,23 @@ class GradExecutor {
   bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   std::string GetCellId(const py::object &obj, const py::args &args);
-  void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info, const py::object &ret);
+  void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info, const ValuePtr &op_out);
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
-  void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
-  void DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &op_out);
   // Construct grad graph for ms_function
   bool eliminate_forward() const { return eliminate_forward_; }
   void set_eliminate_forward(bool eliminate_forward) { eliminate_forward_ = eliminate_forward; }
   void GradMsFunction(const py::object &out, const py::args &args);
   void GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
                            const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph);
-  void UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const py::object &added_out);
+  void UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const ValuePtr &new_forward_value);
   void MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
-                                const py::object &actual_out, const py::args &args, const std::string &graph_phase);
+                                const py::object &actual_out, const py::args &args, const ValuePtr &actual_out_v);
   void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args, ValuePtrList *input_values,
                               CNodePtr *ms_function_cnode);
+  void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const CNodePtr &cnode);
+  void DoOpGrad(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const ValuePtr &op_out);
   // Update forward tensors info
-  void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
+  void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const ValuePtr &op_out);
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   py::object CheckGraph(const py::object &cell, const py::args &args);
   void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args);
@@ -219,7 +219,7 @@ class GradExecutor {
   // Higher derivative
   bool IsNestedGrad() const;
   void SwitchTopcell();
-  void MakeNestedCnode(const py::object &cell, const std::string &cell_id, const py::args &forward_args,
+  void MakeNestedCnode(const py::object &cell, const std::string &cell_id, const py::tuple &forward_args,
                        const pipeline::ResourcePtr &resource, const py::object &out);
   void PushCellStack(const std::string &cell_id);
   void PopCellStack();
@@ -238,8 +238,7 @@ class GradExecutor {
   void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
   void EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
   void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
-  std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args,
-                            py::args *forward_args = nullptr);
+  std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args);
   void GradNetInner(py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
                     const py::object &weights, const py::args &args);
   FuncGraphPtr GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
@@ -314,7 +313,7 @@ class ForwardExecutor {
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   std::unordered_map<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
   void ClearRes();
-  AnfNodePtr ConstructForwardGraph(const OpExecInfoPtr &op_exec_info);
+  CNodePtr ConstructForwardGraph(const OpExecInfoPtr &op_exec_info);
 
  private:
   GradExecutorPtr grad() const;
@@ -329,21 +328,23 @@ class ForwardExecutor {
   void GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
                            bool *prim_cache_hit);
   void GetOpOutput(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
-                   const AnfNodePtr &CNode, bool prim_cache_hit, py::object *ret);
+                   const CNodePtr &cnode, bool prim_cache_hit, py::object *ret);
   // Mix precision and Implicit transform
   void SetCastForInputs(const OpExecInfoPtr &op_exec_info);
-  void SetParameterMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
+  void SetTensorMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
   void SetImplicitCast(const OpExecInfoPtr &op_exec_info);
   py::object DoParamMixPrecisionCast(bool *is_cast, const py::object &obj, const std::string &op_name, size_t index);
   py::object DoParamMixPrecisionCastTuple(bool *is_cast, const py::tuple &tuple, const std::string &op_name,
                                           size_t index);
+  py::object DoAutoCastTuple(const py::tuple &tuple, const TypeId &type_id, const std::string &op_name, size_t index);
   py::object DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name, size_t index);
-  void DoSignatrueCast(const PrimitivePyPtr &prim, const std::map<SignatureEnumDType, TypeId> &dst_type,
+  void DoSignatrueCast(const PrimitivePyPtr &prim, const std::unordered_map<SignatureEnumDType, TypeId> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, const OpExecInfoPtr &op_exec_info);
 
  private:
   GradExecutorWeakPtr grad_executor_;
   PrimAbsCache prim_abs_list_;
+  ImplicitCastCache implicit_cast_map_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
 };
 

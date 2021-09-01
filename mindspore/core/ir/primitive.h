@@ -124,7 +124,7 @@ class MS_CORE_API Primitive : public Named {
     const_input_indexes_ = const_input_indexes;
   }
   const std::vector<size_t> &get_const_input_indexes() { return const_input_indexes_; }
-  std::string id() const { return id_; }
+  uint64_t id() const { return id_; }
 
  protected:
   std::unordered_map<std::string, ValuePtr> attrs_;
@@ -138,7 +138,7 @@ class MS_CORE_API Primitive : public Named {
   bool record_evaluate_add_attr_;
   bool is_const_prim_;
   std::vector<size_t> const_input_indexes_;
-  std::string id_{""};
+  uint64_t id_{0};
 };
 
 inline std::ostream &operator<<(std::ostream &os, const PrimitivePtr &p) {

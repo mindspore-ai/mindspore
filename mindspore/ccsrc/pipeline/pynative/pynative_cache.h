@@ -17,8 +17,9 @@
 #define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_ABS_CACHE_H
 #include <string>
 #include <utility>
+#include <vector>
+#include <memory>
 #include <unordered_map>
-
 #include "ir/anf.h"
 
 namespace mindspore::pynative {
@@ -66,5 +67,22 @@ struct PrimAbsInfo {
 using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, PrimAbsInfo,
                                            abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 using PrimAbsCache = std::unordered_map<AbsCacheKey, AbstractListMap, AbsCacheKeyHasher, AbsCacheKeyEqual>;
+
+// Used for id
+struct PyObjectHasher {
+  size_t operator()(const py::handle &key) const { return py::hash(key); }
+};
+
+struct PyObjectEqual {
+  bool operator()(const py::handle &p1, const py::handle &p2) const { return p1 == p2; }
+};
+using PyObjectIdCache = std::unordered_map<py::handle, std::string, PyObjectHasher, PyObjectEqual>;
+
+struct PrimSignature {
+  bool has_dtype_sig;
+  std::vector<SignatureEnumDType> dtypes;
+  std::unordered_map<SignatureEnumDType, std::vector<size_t>> type_indexes;
+};
+using ImplicitCastCache = std::unordered_map<std::string, PrimSignature>;
 }  // namespace mindspore::pynative
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_ABS_CACHE_H
