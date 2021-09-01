@@ -134,7 +134,7 @@ class DebugServices {
         bool w_type = std::get<1>(check_node);
         auto found = w_name.find_last_of('/');
         if (found != std::string::npos && w_name.substr(found + 1) == tensor_name) return w_name;
-        if ((w_type && (tensor_name.find(w_name) == location || w_name == "*")) || (!w_type && node_name == w_name)) {
+        if ((w_type && (node_name == w_name || w_name == "*")) || (!w_type && node_name == w_name)) {
           return w_name;
         }
       }
