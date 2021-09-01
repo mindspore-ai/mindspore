@@ -69,7 +69,6 @@ int main(int argc, char* argv[]) {
     if (ret != APP_ERR_OK) {
         return ret;
     }
-    auto startTime = std::chrono::high_resolution_clock::now();
     int inferImgsCount = 0;
     LogInfo << "Number of total images load from input data path: " << imgFilePaths.size();
     for (uint32_t i = 0; i <= imgFilePaths.size() - BATCH_SIZE; i += BATCH_SIZE) {
@@ -83,11 +82,8 @@ int main(int argc, char* argv[]) {
         inferImgsCount += BATCH_SIZE;
     }
 
-    auto endTime = std::chrono::high_resolution_clock::now();
     dpn->DeInit();
-    double costMilliSecs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
-    // double fps = 1000.0 * imgFilePaths.size() / dpn->GetInferCostMilliSec();
     double fps = 1000.0 * inferImgsCount / dpn->GetInferCostMilliSec();
-    LogInfo << "[Process Delay] cost: " << costMilliSecs << " ms\tfps: " << fps << " imgs/sec";
+    LogInfo << "[Process Delay] cost: " << dpn->GetInferCostMilliSec() << " ms\tfps: " << fps << " imgs/sec";
     return APP_ERR_OK;
 }

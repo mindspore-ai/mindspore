@@ -1,7 +1,7 @@
 # coding=utf-8
 
 """
-Copyright 2020 Huawei Technologies Co., Ltd
+Copyright 2021 Huawei Technologies Co., Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ if __name__ == '__main__':
 
     # Construct the input of the stream
     data_input = MxDataInput()
-
     dir_name = sys.argv[1]
     res_dir_name = sys.argv[2]
     file_list = os.listdir(dir_name)
@@ -55,7 +54,6 @@ if __name__ == '__main__':
         file_path = os.path.join(dir_name, file_name)
         if not (file_name.lower().endswith(".jpg") or file_name.lower().endswith(".jpeg")):
             continue
-
         with open(file_path, 'rb') as f:
             data_input.data = f.read()
         stream_name = b'im_dpn'

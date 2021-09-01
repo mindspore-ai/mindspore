@@ -45,12 +45,6 @@ APP_ERROR DPN::Init(const InitParam &initParam) {
         LogError << "Set context failed, ret=" << ret << ".";
         return ret;
     }
-    dvppWrapper_ = std::make_shared<MxBase::DvppWrapper>();
-    ret = dvppWrapper_->Init();
-    if (ret != APP_ERR_OK) {
-        LogError << "DvppWrapper init failed, ret=" << ret << ".";
-        return ret;
-    }
     model_ = std::make_shared<MxBase::ModelInferenceProcessor>();
     ret = model_->Init(initParam.modelPath, modelDesc_);
     if (ret != APP_ERR_OK) {
@@ -81,7 +75,6 @@ APP_ERROR DPN::Init(const InitParam &initParam) {
 }
 
 APP_ERROR DPN::DeInit() {
-    dvppWrapper_->DeInit();
     model_->DeInit();
     post_->DeInit();
     MxBase::DeviceManager::GetInstance()->DestroyDevices();

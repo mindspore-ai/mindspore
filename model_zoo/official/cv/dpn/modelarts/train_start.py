@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -332,7 +332,7 @@ def main():
     dpn_train(config_args, ma_config)
     print('DPN training success!')
     # export
-    if config_args.export_dir is not None:
+    if config_args.export_dir:
         dpn_export(config_args, ma_config)
 
     # data sync
