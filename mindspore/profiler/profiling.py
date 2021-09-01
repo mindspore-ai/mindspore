@@ -20,7 +20,7 @@ import json
 from enum import Enum
 
 from mindspore import log as logger, context
-from mindspore.communication.management import GlobalComm, release, get_rank
+from mindspore.communication.management import GlobalComm, release, get_rank, get_group_size
 import mindspore._c_expression as c_expression
 from mindspore.dataset.core.config import _stop_dataset_profiler
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
@@ -243,6 +243,9 @@ class Profiler:
 
     def _ascend_analyse(self):
         """Collect and analyse ascend performance data"""
+        self._rank_size = 1
+        if GlobalComm.INITED:
+            self._rank_size = get_group_size()
         release()
 
         job_id = self._get_profiling_job_id()
@@ -446,7 +449,7 @@ class Profiler:
             optime_parser (OPComputeTimeParserParser): The parser instance for AI Core
                 operator execution time calculation.
         """
-        timeline_analyser = AscendTimelineGenerator(self._output_path, self._rank_id)
+        timeline_analyser = AscendTimelineGenerator(self._output_path, self._rank_id, self._rank_size)
         # Get framework info
         integrator = Integrator(self._output_path, self._rank_id)
         aicore_detail_data = integrator.get_aicore_detail_data()
