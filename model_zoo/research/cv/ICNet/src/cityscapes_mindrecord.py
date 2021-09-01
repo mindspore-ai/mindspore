@@ -15,6 +15,7 @@
 """Prepare Cityscapes dataset"""
 import os
 import random
+import argparse
 import numpy as np
 from PIL import Image
 from PIL import ImageOps
@@ -27,6 +28,7 @@ import mindspore.dataset.transforms.py_transforms as tc
 
 def _get_city_pairs(folder, split='train'):
     """Return two path arrays of data set img and mask"""
+
     def get_path_pairs(image_folder, masks_folder):
         image_paths = []
         masks_paths = []
@@ -50,7 +52,7 @@ def _get_city_pairs(folder, split='train'):
         img_folder = os.path.join(folder, 'leftImg8bit/' + split)
         # "./Cityscapes/gtFine/train" or "./Cityscapes/gtFine/val"
         mask_folder = os.path.join(folder, 'gtFine/' + split)
-
+        # The order of img_paths and mask_paths is one-to-one correspondence
         img_paths, mask_paths = get_path_pairs(img_folder, mask_folder)
         return img_paths, mask_paths
 
@@ -145,11 +147,10 @@ def _img_mask_transform(img, mask):
     return (img, mask)
 
 
-def data_to_mindrecord_img(prefix='cityscapes.mindrecord', file_num=1,
-                           root='/data/cityscapes/', split='train'):
+def data_to_mindrecord_img(prefix='cityscapes-2975.mindrecord', file_num=1,
+                           root='./', split='train', mindrecord_dir="./"):
     """to mindrecord"""
-    mindrecord_dir = '/data/Mindrecord_cityscapes/'
-    mindrecord_path = os.path.join(mindrecord_dir, prefix + "2975-2")
+    mindrecord_path = os.path.join(mindrecord_dir, prefix)
 
     writter = FileWriter(mindrecord_path, file_num)
 
@@ -202,4 +203,10 @@ def create_icnet_dataset(mindrecord_file, batch_size=16, device_num=1, rank_id=0
 
 
 if __name__ == '__main__':
-    data_to_mindrecord_img()
+    parser = argparse.ArgumentParser(description="dataset_to_mindrecord")
+    parser.add_argument("--dataset_path", type=str, default="/data/cityscapes/", help="dataset path")
+    parser.add_argument("--mindrecord_path", type=str, default="/data/cityscapes_mindrecord/",
+                        help="mindrecord_path")
+
+    args_opt = parser.parse_args()
+    data_to_mindrecord_img(root=args_opt.dataset_path, mindrecord_dir=args_opt.mindrecord_path)
