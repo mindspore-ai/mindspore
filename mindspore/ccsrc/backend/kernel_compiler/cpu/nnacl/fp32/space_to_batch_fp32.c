@@ -34,11 +34,10 @@ int DoSpaceToBatch(const float *input, float *output, const int *in_shape, const
   const int block_shape_width = blocks[1];
   const int padding_top = paddings[0];
   const int padding_left = paddings[2];
-  if (input_batch_size == 0 || block_shape_width == 0) {
-    return NNACL_ERR;
-  }
-  size_t copy_size = depth * sizeof(float);
 
+  NNACL_CHECK_ZERO_RETURN_ERR(input_batch_size);
+  NNACL_CHECK_ZERO_RETURN_ERR(block_shape_width);
+  size_t copy_size = depth * sizeof(float);
   for (int out_b = task_id; out_b < output_batch_size; out_b += thread) {
     int input_batch = out_b % input_batch_size;
     int shift_w = (out_b / input_batch_size) % block_shape_width;

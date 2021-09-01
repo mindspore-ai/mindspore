@@ -30,6 +30,9 @@ void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int *bloc
   ComputeStrides(out_shape, out_strides, 4);
   size_t copy_size = copy_num * sizeof(int8_t);
   size_t out_offset = 0;
+
+  NNACL_CHECK_ZERO_RETURN(in_shape[0]);
+  NNACL_CHECK_ZERO_RETURN(block_w);
   for (int n = 0; n < out_dim0; ++n) {
     int in_n = n % in_shape[0];
     int32_t stride_w = (n / in_shape[0]) % block_w;
@@ -57,6 +60,9 @@ void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, SpaceToB
   int out_w = param->output_shape_[2];
   int pad_t = param->paddings_[0];
   int pad_l = param->m_ == 2 ? param->paddings_[2] : 0;
+
+  NNACL_CHECK_ZERO_RETURN(in_b);
+  NNACL_CHECK_ZERO_RETURN(block_shape_w);
   for (int i = 0; i < param->output_shape_[0]; ++i) {
     int in_batch = i % in_b;
     int offset_w = (i / in_b) % block_shape_w;
