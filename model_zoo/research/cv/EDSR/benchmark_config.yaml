@@ -1,0 +1,69 @@
+# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
+enable_modelarts: False
+# Url for modelarts
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+# Path for local
+data_path: "/cache/data"
+output_path: "/cache/train"
+device_target: "Ascend"
+
+# ==============================================================================
+ckpt_save_dir: "./ckpt/"
+
+self_ensemble: True
+save_sr: True
+
+# dataset options
+dataset_name: "benchmark"
+scale: 4
+need_unzip_in_modelarts: False
+
+# net options
+pre_trained: ""
+rgb_range: 255
+rgb_mean: [0.4488, 0.4371, 0.4040]
+rgb_std: [1.0, 1.0, 1.0]
+n_colors: 3
+n_feats: 256
+kernel_size: 3
+n_resblocks: 32
+res_scale: 0.1
+
+---
+# helper
+
+enable_modelarts: "set True if run in modelarts, default: False"
+# Url for modelarts
+data_url: "modelarts data path"
+train_url: "modelarts code path"
+checkpoint_url: "modelarts checkpoint save path"
+# Path for local
+data_path: "local data path, data will be download from 'data_url', default: /cache/data"
+output_path: "local output path, checkpoint will be upload to 'checkpoint_url', default: /cache/train"
+device_target: "choice from ['Ascend'], default: Ascend"
+
+# ==============================================================================
+# train options
+ckpt_save_dir: "the relative path to save checkpoint, root path is 'output_path', defalue: ./ckpt/"
+
+self_ensemble: "set True if wanna do self-ensemble while evaluating, defalue: True"
+save_sr: "set True if wanna save sr and hr image while evaluating, defalue: True"
+
+# dataset options
+dataset_name: "dataset name, defalue: DIV2K"
+scale: "scale for super resolution reconstruction, choice from [2,3,4], defalue: 4"
+need_unzip_in_modelarts: "set True if wanna unzip data after download data from s3, defalue: False"
+need_unzip_files: "list of zip files to unzip, only work while 'need_unzip_in_modelarts'=True"
+
+# net options
+pre_trained: "load pre-trained model, x2/x3/x4 models can be loaded for each other, choice from [[S3_ABS_PATH], [RELATIVE_PATH below 'output_path'], [LOCAL_ABS_PATH], ''], defalue: ''"
+rgb_range: "pix value range, defalue: 255"
+rgb_mean: "rgb mean, defalue: [0.4488, 0.4371, 0.4040]"
+rgb_std: "rgb standard deviation, defalue: [1.0, 1.0, 1.0]"
+n_colors: "the number of RGB image channels, defalue: 3"
+n_feats: "the number of output features for each Conv2d, defalue: 256"
+kernel_size: "kernel size for Conv2d, defalue: 3"
+n_resblocks: "the number of resblocks, defalue: 32"
+res_scale: "zoom scale of res branch, defalue: 0.1"
