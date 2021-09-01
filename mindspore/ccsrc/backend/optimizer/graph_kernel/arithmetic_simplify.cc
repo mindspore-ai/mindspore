@@ -65,8 +65,10 @@ using ConstMap = std::unordered_map<std::string, graphkernel::NodePtr>;
  lhs_root_ is Pow ;lhs_root_ is Exp */
 class PatternTree {
  public:
-  explicit PatternTree(const std::string &pattern_str) : pattern_str_(pattern_str) { BuildTree(pattern_str); }
-  ~PatternTree() = default;
+  // pattern_str->ex."Pow(Exp(A),B)=Exp(Mul(A,B))"
+  explicit PatternTree(const std::string &pattern_str) { BuildTree(pattern_str); }
+  virtual ~PatternTree() = default;
+
   PatternNodePtr lhs_root() { return lhs_root_; }
   PatternNodePtr rhs_root() { return rhs_root_; }
   std::string GetRootOp() const { return lhs_root_ == nullptr ? "" : lhs_root_->op(); }
@@ -101,7 +103,6 @@ class PatternTree {
  private:
   PatternNodePtr lhs_root_ = nullptr;  // left side's root
   PatternNodePtr rhs_root_ = nullptr;  // right side's root
-  std::string pattern_str_;            // ex."Pow(Exp(A),B)=Exp(Mul(A,B))"
 };
 
 std::string CutStr(const string &s, size_t start_pos = 0, size_t len = std::string::npos) {
@@ -392,20 +393,16 @@ class ExtraReduce1PatternTree : public PatternTree {
       auto second_axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
       std::set<int64_t> st(first_axis.begin(), first_axis.end());
       std::unordered_map<int64_t, int64_t> mp;
-      int shift = 0;
+      size_t shift = 0;
       for (size_t n = 0; n < first_reduce->inputs()[0]->shape.size(); n++) {
         if (st.find(n) != st.end()) {
           shift++;
         } else {
-          mp[n - shift] = n;
+          mp[SizeToLong(n - shift)] = n;
         }
       }
-      for (auto &i : first_axis) {
-        axis_set.insert(i);
-      }
-      for (auto &i : second_axis) {
-        axis_set.insert(mp[i]);
-      }
+      std::for_each(first_axis.begin(), first_axis.end(), [&axis_set](auto &i) { axis_set.insert(i); });
+      std::for_each(second_axis.begin(), second_axis.end(), [&axis_set, &mp](auto &i) { axis_set.insert(mp[i]); });
     }
     std::copy(axis_set.begin(), axis_set.end(), std::back_inserter(axis));
     attrs_map[this->rhs_root()] = {{"keep_dims", MakeValue(keep_dims)}, {"axis", MakeValue(axis)}};
@@ -594,7 +591,7 @@ bool ArithmeticSimplify::DoArithmeticTrans(const graphkernel::LiteGraphPtr &lite
       }
     }
     if (!can_simplify) {
-      iter++;
+      ++iter;
     }
   }
   return changed;
@@ -614,7 +611,7 @@ bool ArithmeticSimplify::DoConstantFold(const graphkernel::LiteGraphPtr &litegra
       iter = ops_list.begin();
       changed = true;
     } else {
-      iter++;
+      ++iter;
     }
   }
   return changed;

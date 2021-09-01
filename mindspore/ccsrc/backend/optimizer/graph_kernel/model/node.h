@@ -123,6 +123,8 @@ class ConstTensorNode : public Node {
  public:
   explicit ConstTensorNode(const tensor::TensorPtr &data, const std::string &name = "")
       : Node({data->shape(), data->data_type(), kOpFormat_DEFAULT}, name), data_(data) {}
+  ~ConstTensorNode() = default;
+
   NType NodeType() override { return NType::Value; }
   void Dump(std::ostringstream &os) const override { os << ToString(); }
   void DumpTensor(std::ostringstream &os) const override { os << ToString(); }
@@ -136,6 +138,8 @@ class ConstTensorNode : public Node {
 class ParamNode : public Node {
  public:
   ParamNode(const std::string &name, const NodeBase &baseinfo) : Node(baseinfo, name) {}
+  ~ParamNode() = default;
+
   void Dump(std::ostringstream &os) const override { DumpTensor(os); }
   NType NodeType() override { return NType::Parameter; }
 };
@@ -143,6 +147,8 @@ class ParamNode : public Node {
 class OutputNode : public Node {
  public:
   OutputNode() : Node({{1}, TypeId::kNumberTypeBegin, kOpFormat_DEFAULT}, "Output") {}
+  ~OutputNode() = default;
+
   void Dump(std::ostringstream &os) const override { ; }
   NType NodeType() override { return NType::Output; }
 };
