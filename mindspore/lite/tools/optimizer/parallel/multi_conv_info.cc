@@ -148,13 +148,19 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
   std::string conv_cnode_name = node->fullname_with_scope();
   // Create Split node and get outputs of Split
   std::vector<AnfNodePtr> split_outputs;
-  CreateOutputsOfSplitWithOverlap(func_graph_, conv_nodes_[conv_nodes_.size() - 1], &split_outputs, &split_info_,
-                                  conv_cnode_name);
+  if (!CreateOutputsOfSplitWithOverlap(func_graph_, conv_nodes_[conv_nodes_.size() - 1], &split_outputs, &split_info_,
+                                       conv_cnode_name)) {
+    MS_LOG(ERROR) << "CreateOutputsOfSplitWithOverlap failed";
+    return nullptr;
+  }
   // Create Conv node
   int res_conv_numbers = static_cast<int>(conv_nodes_.size() - 1);
   for (int32_t i = res_conv_numbers; i >= 0; i--) {
     std::vector<AnfNodePtr> outputs_node;
-    SplitSingleConv(conv_nodes_[i], split_outputs, {}, {}, &outputs_node);
+    if (!SplitSingleConv(conv_nodes_[i], split_outputs, {}, {}, &outputs_node)) {
+      MS_LOG(ERROR) << "SplitSingleConv failed";
+      return nullptr;
+    }
     split_outputs.clear();
     std::copy(outputs_node.begin(), outputs_node.end(), std::back_inserter(split_outputs));
     outputs_node.clear();
@@ -165,7 +171,7 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
   return concat_node;
 }
 
-void MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vector<AnfNodePtr> &inputs_node,
+bool MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vector<AnfNodePtr> &inputs_node,
                                      const std::vector<AnfNodePtr> &weight_nodes,
                                      const std::vector<AnfNodePtr> &bias_nodes, std::vector<AnfNodePtr> *outputs_node) {
   MS_ASSERT(ori_node != nullptr && outputs_node != nullptr);
@@ -180,7 +186,7 @@ void MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vect
     auto graph_node_input_shapes = Spliter::GetInstance()->graph_node_input_shapes();
     auto input_shape_iter = graph_node_input_shapes.find(ori_node_name);
     if (input_shape_iter == graph_node_input_shapes.end()) {
-      return;
+      return true;
     }
     auto input_shapes = input_shape_iter->second;
     auto input_shape = input_shapes.front();
@@ -191,8 +197,11 @@ void MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vect
     conv_inputs.push_back(NewValueNode(conv_prim));
     AdJustInputs(ori_node, inputs_node, weight_nodes, bias_nodes, output_conv_index, &conv_inputs);
     // create new conv node
-    CreateNewConvNode(ori_node, conv_inputs, output_conv_index, outputs_node);
+    if (!CreateNewConvNode(ori_node, conv_inputs, output_conv_index, outputs_node)) {
+      return false;
+    }
   }
+  return true;
 }
 
 void MultiConvSplit::AdJustInputs(const AnfNodePtr &ori_conv_node, const std::vector<AnfNodePtr> &new_inputs_node,
@@ -209,7 +218,7 @@ void MultiConvSplit::AdJustInputs(const AnfNodePtr &ori_conv_node, const std::ve
   }
 }
 
-void MultiConvSplit::CreateNewConvNode(const AnfNodePtr &ori_conv_node, const std::vector<AnfNodePtr> &conv_inputs,
+bool MultiConvSplit::CreateNewConvNode(const AnfNodePtr &ori_conv_node, const std::vector<AnfNodePtr> &conv_inputs,
                                        int output_conv_index, std::vector<AnfNodePtr> *outputs_node) {
   MS_ASSERT(ori_conv_node != nullptr && outputs_node != nullptr);
   std::string ori_cnode_name = ori_conv_node->fullname_with_scope();
@@ -222,9 +231,13 @@ void MultiConvSplit::CreateNewConvNode(const AnfNodePtr &ori_conv_node, const st
                       MakeValue(static_cast<int>(split_info_.dev_types[output_conv_index])));
   std::vector<AnfNodePtr> tmp_outputs;
   // conv2d only has one output, set to output_nodes
-  GetMultipleOutputsOfAnfNode(func_graph_, conv_cnode, 1, &tmp_outputs);
+  if (!GetMultipleOutputsOfAnfNode(func_graph_, conv_cnode, 1, &tmp_outputs)) {
+    MS_LOG(ERROR) << "GetMultipleOutputsOfAnfNode failed";
+    return false;
+  }
   outputs_node->push_back(tmp_outputs[0]->cast<CNodePtr>()->input(1));
   tmp_outputs.clear();
+  return true;
 }
 
 AnfNodePtr MultiConvSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {

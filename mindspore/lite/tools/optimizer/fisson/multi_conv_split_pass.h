@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_MULTI_CONV_SPLIT_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_MULTI_CONV_SPLIT_H_
 
+#include <utility>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -32,14 +33,17 @@ namespace opt {
 
 class MultiConvSplitPass : public PatternProcessPass {
  public:
-  explicit MultiConvSplitPass(const std::unordered_map<std::string, SplitStrategy> &strategys, int32_t fmk_type = -1,
+  explicit MultiConvSplitPass(std::unordered_map<std::string, SplitStrategy> strategys, int32_t fmk_type = -1,
                               int32_t num = 3, bool multigraph = true)
-      : PatternProcessPass("multi_conv_split", multigraph), strategys_(strategys), fmk_type_(fmk_type), num_(num) {}
+      : PatternProcessPass("multi_conv_split", multigraph),
+        strategys_(std::move(strategys)),
+        fmk_type_(fmk_type),
+        num_(num) {}
   ~MultiConvSplitPass() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   std::string IsMultiParallelConvNode(const AnfNodePtr &node) const;
 
  private:

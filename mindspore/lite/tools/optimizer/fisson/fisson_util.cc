@@ -20,19 +20,28 @@
 #include "src/common/utils.h"
 #include "ops/split_with_overlap.h"
 #include "tools/common/node_util.h"
-#include "tools/common/tensor_util.h"
 #include "ops/concat.h"
 #include "tools/optimizer/parallel/spliter.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore {
 namespace opt {
 std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t input_h,
                                      int64_t input_w) {
+  if (ori_conv_prim == nullptr) {
+    MS_LOG(DEBUG) << "input Conv2DFusion is nullptr";
+    return {};
+  }
   if (ori_conv_prim->get_pad_mode() != SAME) {
     return ori_conv_prim->get_pad_list();
+  }
+  if (ori_conv_prim->get_stride().size() < kIndexW || ori_conv_prim->get_kernel_size().size() < kIndexW ||
+      ori_conv_prim->get_dilation().size() < kIndexW) {
+    MS_LOG(ERROR) << "Index out of range";
+    return {};
   }
   int64_t output_h = static_cast<int64_t>(
     std::ceil(static_cast<float>(input_h) / static_cast<float>(ori_conv_prim->get_stride().at(kIndexH))));
@@ -47,6 +56,8 @@ std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &o
   int64_t pad_w_all = (output_w - 1) * ori_conv_prim->get_stride().at(kIndexW) +
                       (ori_conv_prim->get_kernel_size().at(kIndexW) - 1) * ori_conv_prim->get_dilation().at(kIndexW) +
                       1 - input_w;
+  // only check pad_up and pad_down is positive
+  // if compute overflowed, we will get abnormal it in infer_shape
   if (pad_h_all >= 0) {
     pad_up = pad_h_all / 2;
     pad_down = pad_h_all - pad_up;
@@ -66,6 +77,7 @@ namespace {
 bool CalSplitOutputShape(int64_t splited_axis_value, const SplitInfo *split_info,
                          std::vector<int64_t> *split_axis_out_shape,
                          std::vector<int64_t> *split_axis_reduce_out_shape) {
+  MS_ASSERT(split_info != nullptr && split_axis_out_shape != nullptr && split_axis_reduce_out_shape != nullptr);
   // ori ratio
   int64_t split_num = split_info->out_num;
   int64_t split_len = 0;
@@ -77,7 +89,13 @@ bool CalSplitOutputShape(int64_t splited_axis_value, const SplitInfo *split_info
   }
   // out-shape after splited
   int64_t tmp_value = 0;
+  MS_CHECK_TRUE_MSG(split_num > 0, false, "out_num of split_info should greater than zero");
+  MS_CHECK_TRUE_MSG(split_len > 0, false, "split_len should greater than zero");
   for (int64_t i = 0; i < split_num - 1; i++) {
+    if (INT_MUL_OVERFLOW_THRESHOLD(split_info->size_splits[i], splited_axis_value, INT64_MAX)) {
+      MS_LOG(ERROR) << "int mul overflow";
+      return false;
+    }
     int64_t tmp = UP_DIV(split_info->size_splits[i] * splited_axis_value, split_len);
     tmp_value += tmp;
     split_axis_out_shape->push_back(tmp);
@@ -88,12 +106,18 @@ bool CalSplitOutputShape(int64_t splited_axis_value, const SplitInfo *split_info
   return true;
 }
 
-void CalSplitInShape(const std::vector<std::vector<ShapeVector>> &node_in_out_shapes, const SplitInfo *split_info,
+bool CalSplitInShape(const std::vector<std::vector<ShapeVector>> &node_in_out_shapes, const SplitInfo *split_info,
                      const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t index_node,
                      std::vector<std::vector<int64_t>> *split_axis_inputs_shape,
                      std::vector<std::vector<int64_t>> *split_axis_reduce_inputs_shape) {
+  MS_ASSERT(split_info != nullptr && split_axis_inputs_shape != nullptr && split_axis_reduce_inputs_shape != nullptr);
+  MS_ASSERT(node_in_out_shapes.size() > index_node);
   auto in_out_shape = node_in_out_shapes.at(index_node);
   auto in_shape = in_out_shape.front();
+  if (in_shape.size() < kAxisW) {
+    MS_LOG(DEBUG) << "out of in_shape range";
+    return false;
+  }
   int64_t input_h = in_shape.at(kAxisH);
   int64_t input_w = in_shape.at(kAxisW);
   auto new_pad_list = GetSplitPadList(ori_conv_prim, input_h, input_w);
@@ -134,6 +158,7 @@ void CalSplitInShape(const std::vector<std::vector<ShapeVector>> &node_in_out_sh
   }
   split_axis_inputs_shape->push_back(split_axis_shape);
   split_axis_reduce_inputs_shape->push_back(split_axis_reduce_shape);
+  return true;
 }
 }  // namespace
 
@@ -142,7 +167,9 @@ bool IsConv2D(const AnfNodePtr &node) {
 }
 
 std::shared_ptr<ops::Conv2DFusion> CopyConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim) {
+  MS_CHECK_TRUE_MSG(ori_conv_prim != nullptr, nullptr, "input Conv2DFusion is nullptr");
   auto new_prim = std::make_shared<ops::Conv2DFusion>();
+  MS_CHECK_TRUE_MSG(new_prim != nullptr, nullptr, "create Conv2DFusion return nullptr");
   new_prim->set_pad(ori_conv_prim->get_pad());
   new_prim->set_in_channel(ori_conv_prim->get_in_channel());
   new_prim->set_out_channel(ori_conv_prim->get_out_channel());
@@ -167,6 +194,8 @@ std::shared_ptr<ops::Conv2DFusion> CopyConvPrim(const std::shared_ptr<ops::Conv2
 }
 
 bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &conv_nodes, SplitInfo *split_info) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "input FuncGraphPtr is nullptr");
+  MS_CHECK_TRUE_MSG(split_info != nullptr, false, "input SplitInfo is nullptr");
   if (split_info->axis != CuttingStragedy::CUT_H) {
     return false;
   }
@@ -190,7 +219,13 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
     node_in_out_shapes.push_back({input_shapes.front(), output_shapes.front()});
     index_node++;
   }
-
+  if (node_in_out_shapes.empty() || node_in_out_shapes.size() < (node_size - 1) || node_in_out_shapes[0].size() <= 1 ||
+      node_in_out_shapes[0][1].size() <= static_cast<size_t>(splited_axis) ||
+      node_in_out_shapes[node_size - 1].empty() ||
+      node_in_out_shapes[node_size - 1][0].size() <= static_cast<size_t>(splited_axis)) {
+    MS_LOG(ERROR) << "out of node_in_out_shapes range";
+    return false;
+  }
   int64_t splited_axis_value = node_in_out_shapes[0][1][splited_axis];
   int64_t final_split_axis_value = node_in_out_shapes[node_size - 1][0][splited_axis];
   split_info->ori_split_axis_value = final_split_axis_value;
@@ -208,8 +243,11 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
   while (index_node < node_size) {
     auto conv_cnode = conv_nodes[index_node]->cast<CNodePtr>();
     auto ori_conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(conv_cnode->input(kAnfPrimitiveIndex));
-    CalSplitInShape(node_in_out_shapes, split_info, ori_conv_prim, index_node, &split_axis_inputs_shape,
-                    &split_axis_reduce_inputs_shape);
+    if (!CalSplitInShape(node_in_out_shapes, split_info, ori_conv_prim, index_node, &split_axis_inputs_shape,
+                         &split_axis_reduce_inputs_shape)) {
+      MS_LOG(ERROR) << "CalSplitInShape failed";
+      return false;
+    }
     index_node++;
   }
 
@@ -235,39 +273,38 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
   return true;
 }
 
-void GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_num,
+bool GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_num,
                                  std::vector<AnfNodePtr> *outputs) {
-  if (func_graph == nullptr || node == nullptr) {
-    return;
-  }
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "input FuncGraphPtr is nullptr");
+  MS_CHECK_TRUE_MSG(node != nullptr, false, "input AnfNodePtr is nullptr");
+  MS_CHECK_TRUE_MSG(outputs != nullptr, false, "input std::vector<AnfNodePtr> is nullptr");
   auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return;
-  }
+  MS_CHECK_TRUE_MSG(cnode != nullptr, false, "create CNode return nullptr");
   for (size_t i = 0; i < output_num; i++) {
     auto index = NewValueNode(SizeToInt(i));
-    if (index == nullptr) {
-      MS_LOG(ERROR) << "new a valueNode failed.";
-      return;
-    }
+    MS_CHECK_TRUE_MSG(index != nullptr, false, "create ValueNode return nullptr");
     size_t temp = SizeToInt(i);
     auto imm = std::make_shared<Int32Imm>(temp);
+    MS_CHECK_TRUE_MSG(imm != nullptr, false, "create Int32Imm return nullptr");
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
+    MS_CHECK_TRUE_MSG(abstract_scalar != nullptr, false, "create AbstractScalar return nullptr");
     index->set_abstract(abstract_scalar);
-    auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, index});
-    if (tuple_getitem == nullptr) {
-      return;
-    }
+    auto tuple_getitem_primitive = NewValueNode(prim::kPrimTupleGetItem);
+    MS_CHECK_TRUE_MSG(tuple_getitem_primitive != nullptr, false, "create PrimTupleGetItem return nullptr");
+    auto tuple_getitem = func_graph->NewCNode({tuple_getitem_primitive, node, index});
+    MS_CHECK_TRUE_MSG(tuple_getitem != nullptr, false, "create CNode return nullptr");
     tuple_getitem->set_fullname_with_scope(cnode->fullname_with_scope() + "_TupleGetItem_" + std::to_string(i + 1));
     outputs->push_back(tuple_getitem);
   }
+  return true;
 }
 
 AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_cnode,
                                  const std::vector<AnfNodePtr> &conv_outputs, SplitInfo *split_info,
                                  const std::string &node_name) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(conv_cnode);
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "input FuncGraphPtr is nullptr");
+  MS_CHECK_TRUE_MSG(conv_cnode != nullptr, nullptr, "input AnfNodePtr is nullptr");
+  MS_CHECK_TRUE_MSG(split_info != nullptr, nullptr, "input SplitInfo is nullptr");
 
   int32_t nodes_num = conv_outputs.size();
   if (nodes_num != static_cast<int32_t>(split_info->out_num)) {
@@ -276,31 +313,40 @@ AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePt
   }
 
   auto concat_prim = std::make_shared<ops::Concat>();
+  MS_CHECK_TRUE_MSG(concat_prim != nullptr, nullptr, "create ops::Concat return nullptr");
   concat_prim->set_axis(split_info->axis);
 
   // the inputs of concate are from the outputs of conv
-  std::vector<AnfNodePtr> concate_inputs = {NewValueNode(concat_prim)};
+  auto concate_primitive = NewValueNode(concat_prim);
+  MS_CHECK_TRUE_MSG(concate_primitive != nullptr, nullptr, "create concate_primitive return nullptr");
+  std::vector<AnfNodePtr> concate_inputs = {concate_primitive};
   for (int32_t i = 0; i < nodes_num; i++) {
     concate_inputs.push_back(conv_outputs[i]);
   }
 
   auto concate_cnode = func_graph->NewCNode(concate_inputs);
-  MS_EXCEPTION_IF_NULL(concate_cnode);
+  MS_CHECK_TRUE_MSG(concate_cnode != nullptr, nullptr, "create concate_cnode return nullptr");
 
   concate_cnode->set_fullname_with_scope(node_name + "_Concat");
   concate_cnode->set_scope(conv_cnode->scope());
   std::vector<AnfNodePtr> outputs;
-  GetMultipleOutputsOfAnfNode(func_graph, concate_cnode, 1, &outputs);
+  if (!GetMultipleOutputsOfAnfNode(func_graph, concate_cnode, 1, &outputs)) {
+    MS_LOG(ERROR) << "GetMultipleOutputsOfAnfNode failed";
+    return nullptr;
+  }
   return concate_cnode;
 }
 
-void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_node,
+bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_node,
                                      std::vector<AnfNodePtr> *split_outputs, SplitInfo *split_info,
                                      const std::string &node_name) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(conv_node);
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "input FuncGraphPtr is nullptr");
+  MS_CHECK_TRUE_MSG(conv_node != nullptr, false, "input conv_node is nullptr");
+  MS_CHECK_TRUE_MSG(split_outputs != nullptr, false, "input split_outputs is nullptr");
+  MS_CHECK_TRUE_MSG(split_info != nullptr, false, "input split_info is nullptr");
   // attr of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
+  MS_CHECK_TRUE_MSG(split_prim != nullptr, false, "create ops::SplitWithOverlap return nullptr");
   split_prim->set_split_dim(split_info->axis);
   split_prim->set_number_split(split_info->out_num);
   split_prim->set_ratio(split_info->size_splits);
@@ -309,17 +355,22 @@ void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
   auto conv_cnode = conv_node->cast<CNodePtr>();
 
   // the inputs of split is from the inputs of conv
-  std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
+  auto split_primitive = NewValueNode(split_prim);
+  MS_CHECK_TRUE_MSG(split_primitive != nullptr, false, "create split_primitive return nullptr");
+  std::vector<AnfNodePtr> split_inputs = {split_primitive};
 
   // this conv only has one input, which has been ensured before
   split_inputs.push_back(conv_cnode->input(1));
 
   auto split_cnode = func_graph->NewCNode(split_inputs);
-  MS_EXCEPTION_IF_NULL(split_cnode);
+  MS_CHECK_TRUE_MSG(split_cnode != nullptr, false, "create split_cnode return nullptr");
 
   split_cnode->set_fullname_with_scope(node_name + "_Split");
   // create outputs op split
-  GetMultipleOutputsOfAnfNode(func_graph, split_cnode, split_info->out_num, split_outputs);
+  if (!GetMultipleOutputsOfAnfNode(func_graph, split_cnode, split_info->out_num, split_outputs)) {
+    MS_LOG(ERROR) << "GetMultipleOutputsOfAnfNode failed";
+    return false;
+  }
 
   AbstractBasePtrList ptr_list;
   for (int64_t i = 0; i < split_info->out_num; i++) {
@@ -329,16 +380,16 @@ void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
     auto type_ptr = TypeIdToType(type_id);
     std::vector<int64_t> shape_vector;
     auto value_node = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+    MS_CHECK_TRUE_MSG(value_node != nullptr, false, "create abstract::AbstractTensor return nullptr");
     ptr_list.push_back(value_node);
   }
   split_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(ptr_list));
+  return true;
 }
 
-void UpdateRatioWithPadStride(int64_t *ratio, size_t split_size, int split_dim_size, int pad, int stride) {
-  if (stride == 0) {
-    return;
-  }
-
+bool UpdateRatioWithPadStride(int64_t *ratio, size_t ratio_len, size_t split_size, int split_dim_size, int pad,
+                              int stride) {
+  MS_CHECK_TRUE_MSG(ratio != nullptr, false, "input ratio is nullptr");
   int total_block_count = 0;
   for (size_t i = 0; i < split_size; i++) {
     total_block_count += ratio[i];
@@ -352,10 +403,14 @@ void UpdateRatioWithPadStride(int64_t *ratio, size_t split_size, int split_dim_s
     new_ratio[i + 1] = cur_border;
   }
 
+  if (ratio_len < split_size) {
+    MS_LOG(ERROR) << "out of ratio range";
+    return false;
+  }
   for (size_t i = 0; i < split_size; i++) {
     ratio[i] = new_ratio[i];
   }
-  return;
+  return true;
 }
 }  // namespace opt
 }  // namespace mindspore
