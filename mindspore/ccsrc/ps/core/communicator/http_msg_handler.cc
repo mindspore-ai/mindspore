@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-HttpMsgHandler::HttpMsgHandler(std::shared_ptr<HttpMessageHandler> http_msg)
+HttpMsgHandler::HttpMsgHandler(const std::shared_ptr<HttpMessageHandler> &http_msg)
     : http_msg_(http_msg), data_(nullptr), len_(0) {
   if (http_msg != nullptr) {
     len_ = http_msg_->GetPostMsg(&data_);
@@ -36,7 +36,7 @@ size_t HttpMsgHandler::len() const { return len_; }
 
 bool HttpMsgHandler::SendResponse(const void *data, const size_t &len) {
   MS_ERROR_IF_NULL_W_RET_VAL(data, false);
-  http_msg_->QuickResponse(200, reinterpret_cast<unsigned char *>(const_cast<void *>(data)), len);
+  http_msg_->QuickResponse(kHttpSuccess, reinterpret_cast<unsigned char *>(const_cast<void *>(data)), len);
   return true;
 }
 }  // namespace core

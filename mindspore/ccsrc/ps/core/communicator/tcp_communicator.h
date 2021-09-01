@@ -86,9 +86,8 @@ class TcpCommunicator : public CommunicatorBase {
     MS_ERROR_IF_NULL_W_RET_VAL(msg, false);
     size_t dest_size = msg_str.size();
     size_t src_size = msg_str.size();
-    auto ret = memcpy_s(msg.get(), dest_size, msg_str.c_str(), src_size);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, error no " << ret;
+    if (memcpy_s(msg.get(), dest_size, msg_str.c_str(), src_size) != EOK) {
+      MS_LOG(EXCEPTION) << "Memcpy_s error";
     }
 
     if (output != nullptr) {

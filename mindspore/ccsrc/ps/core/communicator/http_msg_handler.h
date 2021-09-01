@@ -24,9 +24,10 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+constexpr int kHttpSuccess = 200;
 class HttpMsgHandler : public MessageHandler {
  public:
-  explicit HttpMsgHandler(std::shared_ptr<HttpMessageHandler> http_msg);
+  explicit HttpMsgHandler(const std::shared_ptr<HttpMessageHandler> &http_msg);
   ~HttpMsgHandler() override = default;
 
   void *data() const override;

@@ -191,18 +191,18 @@ std::string CommUtil::ClusterStateToString(const ClusterState &state) {
   }
 }
 
-std::string CommUtil::ParseConfig(const Configuration &config, const std::string &key) {
+std::string CommUtil::ParseConfig(const Configuration &config, const std::string &data) {
   if (!config.IsInitialized()) {
     MS_LOG(INFO) << "The config is not initialized.";
     return "";
   }
 
-  if (!const_cast<Configuration &>(config).Exists(key)) {
-    MS_LOG(INFO) << "The key:" << key << " is not exist.";
+  if (!const_cast<Configuration &>(config).Exists(data)) {
+    MS_LOG(INFO) << "The data:" << data << " is not exist.";
     return "";
   }
 
-  std::string path = config.GetString(key, "");
+  std::string path = config.GetString(data, "");
   return path;
 }
 

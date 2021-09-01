@@ -90,14 +90,14 @@ class AbstractNode : public Node {
   void RegisterCustomEventCallback(const uint32_t &event, const EventCallback &event_cb);
 
   bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
-            const uint32_t &timeout = kCommTimeoutInSeconds);
+            const uint32_t &timeout = kTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
-            const std::vector<size_t> &lens, int command, const uint32_t &timeout = kCommTimeoutInSeconds);
+            const std::vector<size_t> &lens, int command, const uint32_t &timeout = kTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len, int command,
-            VectorPtr *output, const uint32_t &timeout = kCommTimeoutInSeconds);
+            VectorPtr *output, const uint32_t &timeout = kTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
             const std::vector<size_t> &data_lens, int command, std::vector<VectorPtr> *output,
-            const uint32_t &timeout = kCommTimeoutInSeconds);
+            const uint32_t &timeout = kTimeoutInSeconds);
 
   uint64_t CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,

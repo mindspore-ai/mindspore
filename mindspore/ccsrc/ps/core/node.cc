@@ -163,9 +163,8 @@ void Node::ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const P
     if (size > 0) {
       size_t dest_size = size;
       size_t src_size = size;
-      auto ret = memcpy_s(received_data.get()->data(), dest_size, data, src_size);
-      if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+      if (memcpy_s(received_data.get()->data(), dest_size, data, src_size) != EOK) {
+        MS_LOG(EXCEPTION) << "The memcpy_s error";
       }
     }
     if (it != workder_receive_messages_.end()) {

@@ -642,7 +642,7 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
     return;
   }
   SendMetadataMessage send_meta_message;
-  send_meta_message.ParseFromArray(data, SizeToInt(size));
+  CHECK_RETURN_TYPE(send_meta_message.ParseFromArray(data, SizeToInt(size)));
   worker_num_ = send_meta_message.worker_num();
   server_num_ = send_meta_message.server_num();
   if (send_meta_message.rank_id() < 0) {
@@ -725,7 +725,7 @@ void AbstractNode::ProcessEvent(const std::shared_ptr<TcpConnection> &conn, cons
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   EventRespMessage event_resp_message;
-  event_resp_message.ParseFromArray(data, SizeToInt(size));
+  CHECK_RETURN_TYPE(event_resp_message.ParseFromArray(data, SizeToInt(size)));
   uint32_t event = event_resp_message.event();
   if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
     MS_LOG(WARNING) << "Server response message failed.";
@@ -740,7 +740,7 @@ void AbstractNode::ProcessScaleOut(const std::shared_ptr<TcpConnection> &conn, c
   MS_EXCEPTION_IF_NULL(data);
 
   ScaleOutMessage scale_out_message;
-  scale_out_message.ParseFromArray(data, SizeToInt(size));
+  CHECK_RETURN_TYPE(scale_out_message.ParseFromArray(data, SizeToInt(size)));
   int32_t worker_num = scale_out_message.worker_num();
   int32_t server_num = scale_out_message.server_num();
   MS_LOG(WARNING) << "The scale out worker num:" << worker_num << ", the server num:" << server_num;
@@ -760,7 +760,7 @@ void AbstractNode::ProcessScaleIn(const std::shared_ptr<TcpConnection> &conn, co
   MS_EXCEPTION_IF_NULL(data);
 
   ScaleInMessage scale_in_message;
-  scale_in_message.ParseFromArray(data, SizeToInt(size));
+  CHECK_RETURN_TYPE(scale_in_message.ParseFromArray(data, SizeToInt(size)));
   int32_t worker_num = scale_in_message.worker_num();
   int32_t server_num = scale_in_message.server_num();
   MS_LOG(WARNING) << "The scale in worker num:" << worker_num << ", the server num:" << server_num;
@@ -946,9 +946,8 @@ void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, c
   if (size > 0) {
     size_t dest_size = size;
     size_t src_size = size;
-    auto ret = memcpy_s(res.get(), dest_size, data, src_size);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+    if (memcpy_s(res.get(), dest_size, data, src_size) != EOK) {
+      MS_LOG(EXCEPTION) << "The memcpy_s error";
     }
   }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)

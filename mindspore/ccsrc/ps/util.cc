@@ -166,7 +166,7 @@ void Util::DoFusion(const FuncGraphPtr &func_graph, const std::string &cnode_nam
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> fused_node_inputs = {};
   fused_node_inputs.push_back(NewValueNode(prim));
-  (void)std::for_each(single_nodes.begin(), single_nodes.end(), [&](AnfNodePtr node) {
+  (void)std::for_each(single_nodes.begin(), single_nodes.end(), [&](const AnfNodePtr &node) {
     fused_node_inputs.push_back(AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0));
   });
 

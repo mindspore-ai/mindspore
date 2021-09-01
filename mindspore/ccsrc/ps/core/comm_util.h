@@ -112,7 +112,7 @@ class CommUtil {
   static std::string ClusterStateToString(const ClusterState &state);
 
   // Parse the configuration file according to the key.
-  static std::string ParseConfig(const Configuration &config, const std::string &key);
+  static std::string ParseConfig(const Configuration &config, const std::string &data);
 
   // verify valid of certificate time
   static bool VerifyCertTime(const X509 *cert, int64_t time = 0);
