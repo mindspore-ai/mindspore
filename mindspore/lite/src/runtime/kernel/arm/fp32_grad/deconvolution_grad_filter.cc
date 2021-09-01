@@ -32,7 +32,7 @@ int DeConvolutionGradFilterCPUKernel::Init() {
   // dy is in input 0
   // x is in input 1
   // dw is output 0
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_2D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(in_tensors_[1]);

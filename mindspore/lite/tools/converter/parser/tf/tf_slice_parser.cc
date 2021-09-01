@@ -31,36 +31,34 @@ ops::PrimitiveC *TFSliceParser::Parse(const tensorflow::NodeDef &tf_op,
   // begin
   tensorflow::AttrValue attr_value;
   auto begin_node = GetConstInputNode(tf_node_map, tf_op.input(1));
-  if (begin_node == nullptr) {
-    MS_LOG(ERROR) << "Find StridedSlice input begin failed";
-    return nullptr;
-  }
-  if (!TensorFlowUtils::FindAttrValue(*begin_node, "value", &attr_value)) {
-    MS_LOG(ERROR) << "The value attr should be specified";
-    return nullptr;
-  }
-  auto tensor_proto = attr_value.tensor();
-
-  std::vector<int32_t> begin;
-  if (tensor_proto.int_val_size() > 0) {
-    for (int i = 0; i < tensor_proto.int_val_size(); ++i) {
-      begin.push_back(tensor_proto.int_val(i));
+  if (begin_node != nullptr) {
+    if (!TensorFlowUtils::FindAttrValue(*begin_node, "value", &attr_value)) {
+      MS_LOG(ERROR) << "The value attr should be specified";
+      return nullptr;
     }
-  } else {
-    auto data_num = tensor_proto.tensor_content().size() / sizeof(int32_t);
-    auto data = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
-    for (size_t i = 0; i < data_num; ++i) {
-      begin.push_back(data[i]);
-    }
-  }
+    auto tensor_proto = attr_value.tensor();
 
-  // axes
-  std::vector<int64_t> axes;
-  axes.clear();
-  for (size_t i = 0; i < begin.size(); ++i) {
-    axes.push_back(i);
+    std::vector<int32_t> begin;
+    if (tensor_proto.int_val_size() > 0) {
+      for (int i = 0; i < tensor_proto.int_val_size(); ++i) {
+        begin.push_back(tensor_proto.int_val(i));
+      }
+    } else {
+      auto data_num = tensor_proto.tensor_content().size() / sizeof(int32_t);
+      auto data = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
+      for (size_t i = 0; i < data_num; ++i) {
+        begin.push_back(data[i]);
+      }
+    }
+
+    // axes
+    std::vector<int64_t> axes;
+    axes.clear();
+    for (size_t i = 0; i < begin.size(); ++i) {
+      axes.push_back(i);
+    }
+    prim->set_axes(axes);
   }
-  prim->set_axes(axes);
 
   *output_size = 1;
   for (int i = 0; i < 3; i++) {
