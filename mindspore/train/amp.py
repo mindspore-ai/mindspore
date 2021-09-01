@@ -17,13 +17,13 @@ from .. import nn
 from .._checkparam import Validator as validator
 from .._checkparam import Rel
 from ..common import dtype as mstype
-from ..nn import acc
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell, _TrainPipelineAccuStepCell
 from ..nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
 from ..ops import functional as F
 from ..parallel._utils import _get_parallel_mode, _get_pipeline_stages
 from .loss_scale_manager import DynamicLossScaleManager, LossScaleManager
 from ..context import ParallelMode
+from .. import boost
 from .. import context
 
 
@@ -111,7 +111,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
     return network
 
 
-def build_train_network(network, optimizer, loss_fn=None, level='O0', acc_level='O0', **kwargs):
+def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs):
     """
     Build the mixed precision training cell automatically.
 
@@ -147,9 +147,9 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', acc_level=
             (with property `drop_overflow_update=False` ), or a `ValueError` exception will be raised.
     """
     validator.check_value_type('network', network, nn.Cell)
-    validator.check_value_type('optimizer', optimizer, (nn.Optimizer, acc.FreezeOpt))
+    validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt))
     validator.check('level', level, "", ['O0', 'O2', 'O3', "auto"], Rel.IN)
-    validator.check('acc_level', acc_level, "", ['O0', 'O1', 'O2'], Rel.IN)
+    validator.check('boost_level', boost_level, "", ['O0', 'O1', 'O2'], Rel.IN)
 
     if level == "auto":
         device_target = context.get_context('device_target')
@@ -175,9 +175,9 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', acc_level=
     if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
         network = _VirtualDatasetCell(network)
 
-    enable_acc = False
-    if acc_level in ["O1", "O2"]:
-        enable_acc = True
+    enable_boost = False
+    if boost_level in ["O1", "O2"]:
+        enable_boost = True
 
     loss_scale = 1.0
     if config["loss_scale_manager"] is not None:
@@ -193,17 +193,17 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', acc_level=
             if _get_pipeline_stages() > 1:
                 network = _TrainPipelineWithLossScaleCell(network, optimizer,
                                                           scale_sense=update_cell).set_train()
-            elif enable_acc:
-                network = acc.AccTrainOneStepWithLossScaleCell(network, optimizer,
-                                                               scale_sense=update_cell).set_train()
+            elif enable_boost:
+                network = boost.BoostTrainOneStepWithLossScaleCell(network, optimizer,
+                                                                   scale_sense=update_cell).set_train()
             else:
                 network = nn.TrainOneStepWithLossScaleCell(network, optimizer,
                                                            scale_sense=update_cell).set_train()
             return network
     if _get_pipeline_stages() > 1:
         network = _TrainPipelineAccuStepCell(network, optimizer).set_train()
-    elif enable_acc:
-        network = acc.AccTrainOneStepCell(network, optimizer, loss_scale).set_train()
+    elif enable_boost:
+        network = boost.BoostTrainOneStepCell(network, optimizer, loss_scale).set_train()
     else:
         network = nn.TrainOneStepCell(network, optimizer, loss_scale).set_train()
     return network

@@ -26,10 +26,34 @@ __all__ = ["OptimizerProcess", "ParameterProcess"]
 
 class OptimizerProcess:
     """
-    Process optimizer for ACC.
+    Process optimizer for Boost. Currently, this class supports adding GC(grad centralization) tags
+    and creating new optimizers.
 
     Args:
        opt (Cell): Optimizer used.
+
+    Examples:
+        >>> from mindspore import Tensor, Parameter, nn
+        >>> from mindspore.ops import operations as P
+        >>> from mindspore.boost import OptimizerProcess
+        >>>
+        >>> class Net(nn.Cell):
+        ...     def __init__(self, in_features, out_features):
+        ...         super(Net, self).__init__()
+        ...         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        ...                                 name='weight')
+        ...         self.matmul = ops.MatMul()
+        ...
+        ...     def construct(self, x):
+        ...         output = self.matmul(x, self.weight)
+        ...         return output
+        ...
+        >>> size, in_features, out_features = 16, 16, 10
+        >>> network = Net(in_features, out_features)
+        >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> optimizer_process = OptimizerProcess(optimizer)
+        >>> optimizer_process.add_grad_centralization(network)
+        >>> optimizer = optimizer_process.generate_new_optimizer()
     """
     def __init__(self, opt):
         if isinstance(opt, LARS):
@@ -113,7 +137,34 @@ class OptimizerProcess:
 
 class ParameterProcess:
     """
-    Process parameter for ACC.
+    Process parameter for Boost. Currently, this class supports creating group parameters
+    and automatically setting gradient segmentation point.
+
+    Examples:
+        >>> from mindspore import Tensor, Parameter, nn
+        >>> from mindspore.ops import operations as P
+        >>> from mindspore.boost import OptimizerProcess
+        >>>
+        >>> class Net(nn.Cell):
+        ...     def __init__(self, in_features, out_features):
+        ...         super(Net, self).__init__()
+        ...         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        ...                                 name='weight')
+        ...         self.weight2 = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        ...                                 name='weight2')
+        ...         self.matmul = ops.MatMul()
+        ...         self.matmul2 = ops.MatMul()
+        ...
+        ...     def construct(self, x):
+        ...         output = self.matmul(x, self.weight)
+        ...         output2 = self.matmul2(x, self.weight2)
+        ...         return output + output2
+        ...
+        >>> size, in_features, out_features = 16, 16, 10
+        >>> network = Net(in_features, out_features)
+        >>> new_parameter = net.trainable_params()[:1]
+        >>> parameter_process = ParameterProcess()
+        >>> group_params = parameter_process.generate_group_params(new_parameter, net.trainable_params())
     """
     def __init__(self):
         self._parameter_indices = 1

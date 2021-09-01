@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""acc"""
+"""boost"""
 from .less_batch_normalization import LessBN
 from .grad_freeze import GradientFreeze
 from .base import OptimizerProcess, ParameterProcess
 
 
-__all__ = ["AutoAcc"]
+__all__ = ["AutoBoost"]
 
 
-_acc_config_level = {
+_boost_config_level = {
     "O0": {
         "less_bn": False,
         "grad_freeze": False,
@@ -36,19 +36,19 @@ _acc_config_level = {
         "adasum": True}}
 
 
-class AutoAcc:
+class AutoBoost:
     """
     Provide auto accelerating for network.
 
     Args:
-       level (Str): acc config level.
+       level (Str): boost config level.
     """
     def __init__(self, level, kwargs):
-        if level not in _acc_config_level.keys():
+        if level not in _boost_config_level.keys():
             level = 'O0'
         self.level = level
-        acc_config = _acc_config_level[level]
-        self._acc_config = acc_config
+        boost_config = _boost_config_level[level]
+        self._boost_config = boost_config
         self._fn_flag = True
         self._gc_flag = True
         self._param_groups = 10
@@ -62,13 +62,13 @@ class AutoAcc:
     def _get_configuration(self, kwargs):
         """Get configuration."""
         for key, val in kwargs.items():
-            if key not in self._acc_config_func_map.keys():
+            if key not in self._boost_config_func_map.keys():
                 continue
-            self._acc_config_func_map[key](self, val)
+            self._boost_config_func_map[key](self, val)
 
     def network_auto_process_train(self, network, optimizer):
         """Network train."""
-        if self._acc_config["less_bn"]:
+        if self._boost_config["less_bn"]:
             network = LessBN(network, fn_flag=self._fn_flag)
             optimizer_process = OptimizerProcess(optimizer)
             group_params = self._param_processer.assign_parameter_group(network.trainable_params(),
@@ -79,18 +79,18 @@ class AutoAcc:
                 optimizer_process.add_grad_centralization(network)
             optimizer = optimizer_process.generate_new_optimizer()
 
-        if self._acc_config["grad_freeze"]:
+        if self._boost_config["grad_freeze"]:
             freeze_processer = GradientFreeze(self._param_groups, self._freeze_type,
                                               self._freeze_p, self._total_steps)
             network, optimizer = freeze_processer.freeze_generate(network, optimizer)
 
-        if self._acc_config["adasum"]:
+        if self._boost_config["adasum"]:
             setattr(optimizer, "adasum", True)
         return network, optimizer
 
     def network_auto_process_eval(self, network):
         """Network eval."""
-        if self._acc_config["less_bn"]:
+        if self._boost_config["less_bn"]:
             network = LessBN(network)
 
         return network
@@ -120,7 +120,7 @@ class AutoAcc:
             gradient_groups = list(gradient_groups)
         self._gradient_groups = gradient_groups
 
-    _acc_config_func_map = {
+    _boost_config_func_map = {
         "fn_flag": set_fn_flag,
         "gc_flag": set_gc_flag,
         "param_groups": set_param_groups,

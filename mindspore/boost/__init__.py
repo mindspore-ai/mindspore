@@ -13,22 +13,22 @@
 # limitations under the License.
 # ============================================================================
 """
-Accelerating.
+MindBoost(Beta Feature)
 
 Provide auto accelerating for network, such as Less BN, Gradient Freeze.
 """
-from .acc import *
+from .boost import *
 from .base import *
-from .acc_cell_wrapper import *
+from .boost_cell_wrapper import *
 from .less_batch_normalization import *
 from .grad_freeze import *
 from .grad_accumulation import *
 from .adasum import *
 
 
-__all__ = ['AutoAcc',
+__all__ = ['AutoBoost',
            'OptimizerProcess', 'ParameterProcess',
-           'AccTrainOneStepCell', 'AccTrainOneStepWithLossScaleCell',
+           'BoostTrainOneStepCell', 'BoostTrainOneStepWithLossScaleCell',
            'LessBN',
            'GradientFreeze', 'FreezeOpt', 'freeze_cell',
            'GradientAccumulation',

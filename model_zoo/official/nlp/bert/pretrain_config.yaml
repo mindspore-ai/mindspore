@@ -35,7 +35,7 @@ schema_dir: ''
 # ==============================================================================
 # pretrain related
 batch_size: 32
-# Available: [base, nezha, large, large_acc]
+# Available: [base, nezha, large, large_boost]
 bert_network: 'base'
 loss_scale_value: 65536
 scale_factor: 2
@@ -138,8 +138,8 @@ large_net_cfg:
     dtype: mstype.float32
     compute_type: mstype.float16
 # Accelerated large network which is only supported in Ascend yet.
-large_acc_batch_size: 24
-large_acc_net_cfg:
+large_boost_batch_size: 24
+large_boost_net_cfg:
     seq_length: 512
     vocab_size: 30522
     hidden_size: 1024

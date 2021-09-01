@@ -18,7 +18,7 @@ num_classes: 1000
 image_height: 224
 image_width: 224
 num_workers: 8
-acc_mode: "O0"
+boost_mode: "O0"
 batch_size: 150
 epoch_size: 200
 warmup_epochs: 0
