@@ -615,6 +615,8 @@ void ConvDwInt8Center(int8_t *dst, const int8_t *src, const int16_t *weight, con
 void ConvDwInt8SW(int8_t *output_data, const int8_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
                   int8_t *input_zp, int32_t *output_zp, const ConvParameter *conv_param,
                   const SlidingWindowParam *sliding, int task_id) {
+  NNACL_CHECK_ZERO_RETURN(conv_param->dilation_h_);
+  NNACL_CHECK_ZERO_RETURN(conv_param->dilation_w_);
   const int8_t *src = input_data;
   int8_t *dst = output_data;
   for (int b = 0; b < conv_param->output_batch_; b++) {

@@ -120,6 +120,7 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   auto input_ptr = reinterpret_cast<float *>(input_tensor->data_c());
   MS_ASSERT(input_ptr != nullptr);
   if (need_align_) {
@@ -130,6 +131,7 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
   }
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(output_tensor);
   auto output_ptr = reinterpret_cast<float *>(output_tensor->data_c());
   MS_ASSERT(output_ptr != nullptr);
   if (!need_align_) {

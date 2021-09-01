@@ -300,8 +300,9 @@ kernel::InnerKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *
 #ifdef ENABLE_AVX
     if ((conv_param->stride_h_ > 1 || conv_param->stride_w_ > 1) &&
         (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1) &&
-        (conv_param->kernel_w_ / conv_param->stride_w_ > 2 || conv_param->kernel_h_ / conv_param->stride_h_ > 2 ||
-         conv_param->output_channel_ == 1)) {
+        (conv_param->kernel_w_ / conv_param->stride_w_ >= 2 || conv_param->kernel_h_ / conv_param->stride_h_ >= 2 ||
+         conv_param->output_channel_ == 1) &&
+        conv_param->input_w_ * conv_param->input_h_ >= 2000) {
       // output_channel_ = 1 is not appropriate in gemm deconv in x86
       kernel = new (std::nothrow) kernel::DeConvolutionWinogradCPUKernel(op_parameter, inputs, outputs,
                                                                          static_cast<const lite::InnerContext *>(ctx));

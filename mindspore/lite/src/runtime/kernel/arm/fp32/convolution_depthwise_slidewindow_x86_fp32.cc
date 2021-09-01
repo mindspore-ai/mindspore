@@ -31,6 +31,7 @@ ConvolutionDepthwiseSWCPUKernelX86::~ConvolutionDepthwiseSWCPUKernelX86() {
 }
 
 int ConvolutionDepthwiseSWCPUKernelX86::InitPackedInputOutput() {
+  CHECK_NULL_RETURN(conv_param_);
   if (conv_param_->input_channel_ % oc_tile_ != 0) {
     input_need_align_ = true;
     int ic_algin = UP_DIV(conv_param_->input_channel_, oc_tile_);
@@ -119,8 +120,9 @@ int ConvolutionDepthwiseSWCPUKernelX86::Run() {
     return RET_ERROR;
   }
   auto input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   auto input_ptr = reinterpret_cast<float *>(input_tensor->data_c());
-  MS_ASSERT(input_ptr != nullptr);
+  CHECK_NULL_RETURN(input_ptr);
 
   if (input_need_align_) {
     PackNHWCToNHWCXFp32(input_ptr, packed_input_, conv_param_->input_batch_,
@@ -130,8 +132,9 @@ int ConvolutionDepthwiseSWCPUKernelX86::Run() {
   }
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(output_tensor);
   auto output_ptr = reinterpret_cast<float *>(output_tensor->data_c());
-  MS_ASSERT(output_ptr != nullptr);
+  CHECK_NULL_RETURN(output_ptr);
 
   if (!output_need_align_) {
     packed_output_ = output_ptr;

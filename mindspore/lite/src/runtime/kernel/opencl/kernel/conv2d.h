@@ -76,7 +76,7 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   bool use_winograd_{false};
 
  protected:
-  void InitAttrs();
+  int InitAttrs();
   virtual int BuildKernel();
   virtual int InitFilter();
   int InitBias();

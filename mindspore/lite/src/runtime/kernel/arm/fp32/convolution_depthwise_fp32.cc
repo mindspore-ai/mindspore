@@ -27,6 +27,7 @@ int ConvolutionDepthwiseCPUKernel::Init() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(weight_tensor);
     int pack_weight_size = weight_tensor->Batch() * weight_tensor->Height() * weight_tensor->Width();
     if (pack_weight_size >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(float))) {
       MS_LOG(ERROR) << "pack_weight_size is invalid, pack_weight_size: " << pack_weight_size;
@@ -83,10 +84,10 @@ int ConvolutionDepthwiseCPUKernel::Run() {
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<float *>(input_tensor->data_c());
-  MS_ASSERT(input_ptr_ != nullptr);
+  MS_CHECK_FALSE(input_ptr_ == nullptr, RET_ERROR);
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
-  MS_ASSERT(output_ptr_ != nullptr);
+  MS_CHECK_FALSE(output_ptr_ == nullptr, RET_ERROR);
 
   auto ret = ParallelLaunch(this->ms_context_, ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {

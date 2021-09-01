@@ -149,6 +149,7 @@ int Convolution1x1FP16CPUKernel::Init() {
 #endif
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(weight_tensor);
     auto input_channel = weight_tensor->Channel();
     auto output_channel = weight_tensor->Batch();
     size_t size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);

@@ -98,6 +98,7 @@ int ConvolutionFP16CPUKernel::Init() {
   UpdateOriginWeightAndBias();
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(filter_tensor);
     int in_channel = filter_tensor->Channel();
     int out_channel = filter_tensor->Batch();
     int oc8 = UP_ROUND(out_channel, col_tile_);
@@ -119,11 +120,13 @@ int ConvolutionFP16CPUKernel::Init() {
   return RET_OK;
 }
 
-void ConvolutionFP16CPUKernel::AdjustNumberOfThread() {
+int ConvolutionFP16CPUKernel::AdjustNumberOfThread() {
   auto out_tensor = out_tensors_.front();
+  CHECK_NULL_RETURN(out_tensor);
   int out_plane = out_tensor->Height() * out_tensor->Width();
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(out_plane, row_tile_));
   conv_param_->thread_num_ = thread_count_;
+  return RET_OK;
 }
 
 int ConvolutionFP16CPUKernel::ReSize() {

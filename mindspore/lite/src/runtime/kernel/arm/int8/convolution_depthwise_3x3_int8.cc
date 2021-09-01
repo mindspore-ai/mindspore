@@ -39,9 +39,12 @@ ConvolutionDepthwise3x3Int8CPUKernel::~ConvolutionDepthwise3x3Int8CPUKernel() {
 }
 
 int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
+  CHECK_NULL_RETURN(conv_param_);
   // init weight, int8 -> int16
   auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
+  CHECK_NULL_RETURN(origin_weight);
   int channel = weight_tensor->Batch();
   if (channel < 0) {
     MS_LOG(ERROR) << "get bach from weight_tensor failed.";
@@ -95,13 +98,17 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, static_cast<size_t>(channel) * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
+    CHECK_NULL_RETURN(bias_tensor);
     auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->MutableData());
+    CHECK_NULL_RETURN(ori_bias);
     memcpy(bias_data_, ori_bias, static_cast<size_t>(bias_tensor->ElementsNum()) * sizeof(int32_t));
   }
   return RET_OK;
 }
 
 int ConvolutionDepthwise3x3Int8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   sliding_ = new (std::nothrow) SlidingWindowParam;
   if (sliding_ == nullptr) {
     MS_LOG(ERROR) << "new sliding window param.";
@@ -170,10 +177,14 @@ int ConvolutionDepthwise3x3Int8CPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   input_ptr_ = reinterpret_cast<int8_t *>(input_tensor->MutableData());
+  CHECK_NULL_RETURN(input_ptr_);
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(output_tensor);
   output_ptr_ = reinterpret_cast<int8_t *>(output_tensor->MutableData());
+  CHECK_NULL_RETURN(output_ptr_);
 
   if (sliding_->top_ > 0 || sliding_->bottom_ < conv_param_->output_h_ || sliding_->left_ > 0 ||
       sliding_->right_ < conv_param_->output_w_) {

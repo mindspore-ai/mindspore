@@ -38,6 +38,7 @@ int ConvolutionSWCPUKernel::Init() {
   }
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(filter_tensor);
     auto input_channel = filter_tensor->Channel();
     auto output_channel = filter_tensor->Batch();
     int kernel_h = filter_tensor->Height();
@@ -107,7 +108,9 @@ int ConvolutionSWImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 int ConvolutionSWCPUKernel::InitTmpBuffer() {
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
   auto input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
+  CHECK_NULL_RETURN(input_data);
   if (ic_res_ != 0 && conv_param_->kernel_h_ == 1 && conv_param_->kernel_w_ == 1) {
     // 1x1 conv input is align to in_tile
     int in_channel = conv_param_->input_channel_;

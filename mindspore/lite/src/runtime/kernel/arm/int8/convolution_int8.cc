@@ -48,6 +48,7 @@ void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
 
 int ConvolutionInt8CPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(filter_tensor);
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
   int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
@@ -73,6 +74,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
 
   // init weight
   auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->data_c());
+  CHECK_NULL_RETURN(origin_weight);
   packed_weight_ = reinterpret_cast<int8_t *>(malloc(pack_weight_size));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_weight_ failed.";
@@ -98,6 +100,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, bias_size);
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->data_c());
+    CHECK_NULL_RETURN(ori_bias);
     memcpy(bias_data_, ori_bias, static_cast<size_t>(output_channel) * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -163,6 +166,8 @@ int ConvolutionInt8CPUKernel::InitTmpBuffer() {
 }
 
 int ConvolutionInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CheckSupportOptimize();
   auto ret = SetQuantParam();
   if (ret != RET_OK) {

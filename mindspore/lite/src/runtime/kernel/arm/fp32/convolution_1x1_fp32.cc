@@ -60,7 +60,6 @@ void Convolution1x1CPUKernel::InitConv1x1MatmulParam() {
   matmul_param_->row_align_ = UP_ROUND(matmul_param_->row_, row_tile_);
   matmul_param_->col_align_ = UP_ROUND(matmul_param_->col_, col_tile_);
   matmul_param_->act_type_ = conv_param_->act_type_;
-  return;
 }
 
 int Convolution1x1CPUKernel::InitConv1x1Param() {
@@ -119,6 +118,7 @@ int Convolution1x1CPUKernel::Init() {
   }
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(filter_tensor);
     auto input_channel = filter_tensor->Channel();
     auto output_channel = filter_tensor->Batch();
     int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
@@ -148,6 +148,7 @@ int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
   if (cur_oc <= 0) {
     return RET_OK;
   }
+  CHECK_NULL_RETURN(out_tensors()[0]);
   auto bias = (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id;
   if (out_tensors()[0]->format() != NC4HW4) {
     MatMulOpt(pack_input_, reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
@@ -219,10 +220,12 @@ int Convolution1x1RunHw(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int Convolution1x1CPUKernel::Run() {
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   auto src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
   auto src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
-  MS_ASSERT(src_in != nullptr);
-  MS_ASSERT(src_out != nullptr);
+  CHECK_NULL_RETURN(src_in);
+  CHECK_NULL_RETURN(src_out);
   int pack_input_size = multi_thread_by_hw_ ? (thread_count_ * row_tile_ * matmul_param_->deep_)
                                             : (matmul_param_->row_align_ * matmul_param_->deep_);
   pack_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(pack_input_size * sizeof(float)));

@@ -67,6 +67,7 @@ int ConvolutionDepthwise3x3Fp16CPUKernel::Init() {
   UpdateOriginWeightAndBias();
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(weight_tensor);
     int channel = weight_tensor->Batch();
     int c8 = UP_ROUND(channel, C8NUM);
     int pack_weight_size = c8 * C12NUM;
@@ -84,7 +85,11 @@ int ConvolutionDepthwise3x3Fp16CPUKernel::Init() {
 }
 
 int ConvolutionDepthwise3x3Fp16CPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Init() failed!";
+    return ret;
+  }
   conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);
   return RET_OK;
 }
@@ -127,11 +132,13 @@ int ConvolutionDepthwise3x3Fp16CPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   input_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-
+  CHECK_NULL_RETURN(input_ptr_);
   auto output_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(output_tensor);
   output_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
-
+  CHECK_NULL_RETURN(output_ptr_);
   auto ret = ParallelLaunch(this->ms_context_, ConvDw3x3Fp16Run, this, conv_param_->thread_num_);
   ctx_->allocator->Free(buffer_);
   if (ret != RET_OK) {

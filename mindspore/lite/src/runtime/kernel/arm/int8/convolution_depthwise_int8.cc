@@ -33,7 +33,9 @@ ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
 int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
   auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
+  CHECK_NULL_RETURN(origin_weight);
   int channel = weight_tensor->Batch();
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
   if (pack_weight_size < 0) {
@@ -84,7 +86,9 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, channel * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
+    CHECK_NULL_RETURN(bias_tensor);
     auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->MutableData());
+    CHECK_NULL_RETURN(ori_bias);
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(int32_t));
   }
 
@@ -92,6 +96,8 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionDepthwiseInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set quant param failed.";
@@ -148,10 +154,14 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   input_ptr_ = reinterpret_cast<int8_t *>(input_tensor->MutableData());
+  CHECK_NULL_RETURN(input_ptr_);
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(output_tensor);
   output_ptr_ = reinterpret_cast<int8_t *>(output_tensor->MutableData());
+  CHECK_NULL_RETURN(output_ptr_);
 
   ret = ParallelLaunch(this->ms_context_, ConvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {

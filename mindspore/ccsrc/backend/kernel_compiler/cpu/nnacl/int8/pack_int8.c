@@ -753,7 +753,9 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_
   int in_w = conv_param->input_w_;
   int out_w = conv_param->output_w_;
   int kernel_plane = kernel_h * kernel_w;
-
+  NNACL_CHECK_ZERO_RETURN(out_w);
+  NNACL_CHECK_ZERO_RETURN(dilation_h);
+  NNACL_CHECK_ZERO_RETURN(dilation_w);
   for (int i = 0; i < real_cal_num; i++) {
     int block_start = block_index + i;
     int input_h = block_start / out_w * stride_h - pad_h;

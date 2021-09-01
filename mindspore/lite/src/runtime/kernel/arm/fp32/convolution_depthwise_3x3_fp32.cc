@@ -29,6 +29,7 @@ int ConvolutionDepthwise3x3CPUKernel::Init() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(weight_tensor);
     int channel = weight_tensor->Batch();
     int c4 = UP_ROUND(channel, C4NUM);
     int pack_weight_size = c4 * C12NUM;
@@ -98,10 +99,10 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<float *>(input_tensor->data_c());
-  MS_ASSERT(input_ptr_ != nullptr);
+  CHECK_NULL_RETURN(input_ptr_);
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
-  MS_ASSERT(output_ptr_ != nullptr);
+  CHECK_NULL_RETURN(output_ptr_);
   auto ret = ParallelLaunch(this->ms_context_, ConvDw3x3Run, this, conv_param_->thread_num_);
   ctx_->allocator->Free(buffer_);
   if (ret != RET_OK) {

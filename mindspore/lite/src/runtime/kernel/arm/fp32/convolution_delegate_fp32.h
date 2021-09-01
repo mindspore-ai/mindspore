@@ -65,7 +65,7 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
   int GetWeightData();
   int GetBiasData();
 
-  void SetInputOutputShapeInfo();
+  int SetInputOutputShapeInfo();
   kernel::InnerKernel *CpuConvFp32KernelSelect();
   bool CheckAvxUseSWConv(const ConvParameter *conv_param);
   // If inferShape process can't complete in Init part, initialization of weight and bis will be implemented in runtime

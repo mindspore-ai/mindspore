@@ -28,6 +28,8 @@ void ConvFp16(const float16_t *input_data, float16_t *packed_input, const float1
 #else
   const int tile_n = 12;
 #endif
+  NNACL_CHECK_ZERO_RETURN(conv_param->thread_num_);
+  NNACL_CHECK_ZERO_RETURN(tile_n);
   int output_hw = conv_param->output_h_ * conv_param->output_w_;
   int block_per_thread = UP_DIV(UP_DIV(output_hw, tile_n), conv_param->thread_num_);
   int start_block = block_per_thread * task_id;
@@ -68,6 +70,8 @@ void ConvOutNc8hw8Fp16(const float16_t *input_data, float16_t *packed_input, con
 #else
   const int tile_n = 12;
 #endif
+  NNACL_CHECK_ZERO_RETURN(conv_param->op_parameter_.thread_num_);
+  NNACL_CHECK_ZERO_RETURN(tile_n);
   int output_hw = conv_param->output_h_ * conv_param->output_w_;
   int input_block = UP_DIV(output_hw, tile_n);
   int block_per_thread = UP_DIV(input_block, conv_param->thread_num_);
@@ -113,6 +117,8 @@ void Conv1x1OutNc8hw8MultiThreadByInputFp16(const float16_t *input, float16_t *p
 #else
   const int tile_n = 12;
 #endif
+  NNACL_CHECK_ZERO_RETURN(tile_n);
+  NNACL_CHECK_ZERO_RETURN(param->op_parameter_.thread_num_);
   int input_block = UP_DIV(param->row_, tile_n);
   int weight_block = UP_DIV(param->col_, C8NUM);
 
@@ -153,6 +159,8 @@ void Conv1x1OutNc8hw8MultiThreadByWeightFp16(const float16_t *input, float16_t *
 #else
   const int tile_n = 12;
 #endif
+  NNACL_CHECK_ZERO_RETURN(tile_n);
+  NNACL_CHECK_ZERO_RETURN(param->op_parameter_.thread_num_);
   int input_block = UP_DIV(param->row_, tile_n);
   int weight_block = UP_DIV(param->col_, C8NUM);
 
@@ -185,12 +193,15 @@ void ConvWinogardFp16(const float16_t *input_data, const float16_t *trans_weight
 #else
   const int tile_num = 12;
 #endif
+  NNACL_CHECK_ZERO_RETURN(conv_param->output_unit_);
+  NNACL_CHECK_ZERO_RETURN(conv_param->thread_num_);
   int in_channel = conv_param->input_channel_;
   int out_w_block = UP_DIV(conv_param->output_w_, conv_param->output_unit_);
   int out_h_block = UP_DIV(conv_param->output_h_, conv_param->output_unit_);
   int output_count = out_w_block * out_h_block;
   int per_thread_num = UP_DIV(output_count, conv_param->thread_num_);
   int real_tile = per_thread_num < tile_num ? per_thread_num : tile_num;
+  NNACL_CHECK_ZERO_RETURN(real_tile);
   int output_tile_count = UP_DIV(output_count, real_tile);
   int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
   int input_unit_square = conv_param->input_unit_ * conv_param->input_unit_;

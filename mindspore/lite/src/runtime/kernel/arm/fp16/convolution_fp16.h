@@ -36,7 +36,7 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
   int RunImpl(int task_id);
   int InitTmpBuffer();
-  void AdjustNumberOfThread();
+  int AdjustNumberOfThread();
 
  private:
   void PackWeight() override;

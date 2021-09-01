@@ -70,6 +70,7 @@ int ConvolutionDelegateFP16CPUKernel::Init() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(weight_tensor);
     origin_weight_ = weight_tensor->data_c() != nullptr ? CopyData(weight_tensor) : nullptr;
     need_free_ = need_free_ | WEIGHT_NEED_FREE;
     if (in_tensors_.size() == 3) {
@@ -100,6 +101,8 @@ static void SetInputOutputShapeInfo(ConvParameter *conv_param, const lite::Tenso
 }
 
 int ConvolutionDelegateFP16CPUKernel::ReSize() {
+  CHECK_NULL_RETURN(in_tensors_.front());
+  CHECK_NULL_RETURN(out_tensors_.front());
   // Update shape info of input and output
   kernel::SetInputOutputShapeInfo(reinterpret_cast<ConvParameter *>(op_parameter_), in_tensors_.front(),
                                   out_tensors_.front(), static_cast<const lite::InnerContext *>(this->ms_context_));
