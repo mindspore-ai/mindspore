@@ -89,6 +89,14 @@ class GeLUInfo : public ActivationOther {
   ~GeLUInfo() override = default;
 };
 
+class FastGeLUInfo : public ActivationOther {
+ public:
+  FastGeLUInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<FastGeLUCost>()) {}
+  ~FastGeLUInfo() override = default;
+};
+
 class TanhInfo : public ActivationOther {
  public:
   TanhInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
