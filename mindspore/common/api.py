@@ -321,7 +321,6 @@ def _get_auto_split_param_names(parameter_layout_dict):
 def _build_broadcast_graph(broadcast_params_dict, broadcast_phase):
     """Build broadcast graph."""
     from mindspore.nn.wrap.cell_wrapper import _BroadCastCell
-
     if not broadcast_params_dict:
         broadcast_params_dict = {}
     broadcast_params = []

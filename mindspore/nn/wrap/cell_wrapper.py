@@ -652,9 +652,16 @@ class _BroadCastCell(Cell):
 
     def __init__(self, params):
         super(_BroadCastCell, self).__init__()
+        from mindspore.communication.management import get_group_size, create_group
+        from mindspore import context
         self.map_ = C.Map()
         self.params = tuple(params)
-        self.broadcast = P.Broadcast(0)
+        if context.get_context("device_target") == "Ascend":
+            rank_list = [id for id in range(0, get_group_size())]
+            create_group("BroadcastWorldGroup", rank_list)
+            self.broadcast = P.Broadcast(0, group="BroadcastWorldGroup")
+        else:
+            self.broadcast = P.Broadcast(0)
 
     def construct(self):
         datatypes = self.map_(F.partial(_get_datatype), self.params)

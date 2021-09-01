@@ -120,7 +120,7 @@ def test_raise_error_funcs():
     assert has_raise_error(create_group1, [0]) is False
     assert has_raise_error(create_group2, [0, 0, 1]) is True
     assert has_raise_error(create_group3, [0, 1]) is True
-    assert has_raise_error(create_group4, [0, 1]) is False
+    assert has_raise_error(create_group4, [0, 1]) is True
     assert has_raise_error(get_world_rank_from_group_rank0, None) is True
     assert has_raise_error(get_world_rank_from_group_rank1, None) is True
     assert has_raise_error(get_world_rank_from_group_rank2, None) is True
