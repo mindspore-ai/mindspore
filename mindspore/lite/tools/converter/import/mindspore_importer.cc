@@ -27,13 +27,16 @@
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/unify_format.h"
 #include "tools/converter/parser/lstm_adjust_pass.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
 }  // namespace
 STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const converter::Flags &flag) {
+  MS_ASSERT(func_graph != nullptr);
   auto primitive_adjust_pass = std::make_shared<PrimitiveAdjust>();
+  MS_CHECK_TRUE_MSG(primitive_adjust_pass != nullptr, RET_NULL_PTR, "primitive_adjust_pass is nullptr.");
   primitive_adjust_pass->SetFmkType(flag.fmk);
   if (!primitive_adjust_pass->Run(func_graph)) {
     MS_LOG(ERROR) << "primitive adjust failed.";
@@ -41,6 +44,7 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const
     return RET_ERROR;
   }
   auto mindir_adjust_pass = std::make_shared<MindirAdjust>();
+  MS_CHECK_TRUE_MSG(mindir_adjust_pass != nullptr, RET_NULL_PTR, "mindir_adjust_pass is nullptr.");
   mindir_adjust_pass->SetFmkType(flag.fmk);
   mindir_adjust_pass->SetTrainFlag(flag.trainModel);
   if (!mindir_adjust_pass->Run(func_graph)) {
@@ -49,6 +53,7 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const
     return RET_ERROR;
   }
   auto mindir_control_flow_adjust = std::make_shared<MindIRControlFlowAdjust>();
+  MS_CHECK_TRUE_MSG(mindir_control_flow_adjust != nullptr, RET_NULL_PTR, "mindir_control_flow_adjust is nullptr.");
   mindir_control_flow_adjust->SetFmkType(flag.fmk);
   if (!mindir_control_flow_adjust->Run(func_graph)) {
     MS_LOG(ERROR) << "MindIR control flow adjust failed.";
@@ -134,12 +139,14 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     return nullptr;
   }
   auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, flag.trainModel);
+  MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
   if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
 
   auto lstm_adjust_pass = std::make_shared<opt::LstmAdjustPass>();
+  MS_CHECK_TRUE_MSG(lstm_adjust_pass != nullptr, nullptr, "lstm_adjust_pass is nullptr.");
   if (!lstm_adjust_pass->Run(func_graph)) {
     MS_LOG(ERROR) << "Run mindir lstm adjust failed.";
     return nullptr;

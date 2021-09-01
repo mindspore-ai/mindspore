@@ -25,6 +25,7 @@
 #include "tools/common/node_util.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -33,6 +34,7 @@ constexpr const int kSwitchFalsePartialIndex = 3;
 constexpr const int kPartialFgVnodeIndex = 1;
 
 FuncGraphPtr MindIRControlFlowAdjust::GetPartialFg(const CNodePtr &partial_node) {
+  MS_CHECK_TRUE_MSG(partial_node != nullptr, nullptr, "partial_node is nullptr.");
   auto fg_vnode = partial_node->input(kPartialFgVnodeIndex)->cast<ValueNodePtr>();
   if (fg_vnode == nullptr) {
     MS_LOG(ERROR) << "fg is not right.";
@@ -49,11 +51,13 @@ FuncGraphPtr MindIRControlFlowAdjust::GetPartialFg(const CNodePtr &partial_node)
 }
 
 bool MindIRControlFlowAdjust::HasCallAfter(const FuncGraphPtr &partial_fg) {
+  MS_CHECK_TRUE_MSG(partial_fg != nullptr, false, "partial_fg is nullptr.");
   auto output_node = partial_fg->output();
   return IsCall(output_node);
 }
 
 std::vector<AnfNodePtr> MindIRControlFlowAdjust::GetFgOutput(const FuncGraphPtr &fg) {
+  MS_CHECK_TRUE_MSG(fg != nullptr, {}, "fg is nullptr.");
   std::vector<AnfNodePtr> ret{};
   auto output_node = fg->output();
   if (output_node == nullptr) {
@@ -77,6 +81,9 @@ std::vector<AnfNodePtr> MindIRControlFlowAdjust::GetFgOutput(const FuncGraphPtr 
 }
 
 int MindIRControlFlowAdjust::ModifyFgToCallAfterFg(const FuncGraphPtr &fg, const FuncGraphPtr &after_fg) {
+  MS_CHECK_TRUE_MSG(fg != nullptr, RET_NULL_PTR, "fg is nullptr.");
+  MS_CHECK_TRUE_MSG(after_fg != nullptr, RET_NULL_PTR, "after_fg is nullptr.");
+
   // create after partial node
   ValueNodePtr after_partial_anf_primitive = GetPartialFusionPrim();
   if (after_partial_anf_primitive == nullptr) {
@@ -84,12 +91,14 @@ int MindIRControlFlowAdjust::ModifyFgToCallAfterFg(const FuncGraphPtr &fg, const
     return RET_FAILED;
   }
   auto after_value_node = NewValueNode(after_fg);
+  MS_CHECK_TRUE_MSG(after_value_node != nullptr, RET_NULL_PTR, "Failed to create value node.");
   std::vector<AnfNodePtr> after_partial_cnode_inputs{after_partial_anf_primitive, after_value_node};
 
   if (!opt::CheckPrimitiveType(fg->output(), prim::kPrimMakeTuple)) {
     after_partial_cnode_inputs.push_back(fg->output());
   } else {
     auto then_fg_output = fg->output()->cast<CNodePtr>();
+    MS_ASSERT(then_fg_output != nullptr);
     for (size_t i = 1; i < then_fg_output->inputs().size(); ++i) {
       after_partial_cnode_inputs.push_back(then_fg_output->input(i));
     }
@@ -98,12 +107,14 @@ int MindIRControlFlowAdjust::ModifyFgToCallAfterFg(const FuncGraphPtr &fg, const
 
   // insert partial node
   auto after_partial_cnode = fg->NewCNode(after_partial_cnode_inputs);
+  MS_CHECK_TRUE_MSG(after_partial_cnode != nullptr, RET_NULL_PTR, "Failed to create C node.");
   auto after_fg_name = after_fg->get_attr("graph_name")->ToString();
   after_partial_cnode->set_fullname_with_scope("partial_" + after_fg_name);
 
   // insert call node
   std::vector<AnfNodePtr> call_node_inputs{after_partial_cnode};
   auto call_node = fg->NewCNode(call_node_inputs);
+  MS_CHECK_TRUE_MSG(call_node != nullptr, RET_NULL_PTR, "Failed to create C node.");
   call_node->set_fullname_with_scope("call_" + after_partial_cnode->fullname_with_scope());
   fg->set_output(call_node);
 
@@ -113,9 +124,12 @@ int MindIRControlFlowAdjust::ModifyFgToCallAfterFg(const FuncGraphPtr &fg, const
 FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
                                                         const std::vector<AnfNodePtr> &one_of_inline_fg_output,
                                                         const string &switch_node_name) {
+  MS_CHECK_TRUE_MSG(fg != nullptr, nullptr, "fg is nullptr.");
   // create after partial node to call
   auto after_fg = std::make_shared<FuncGraph>();
+  MS_CHECK_TRUE_MSG(after_fg != nullptr, nullptr, "after_fg is nullptr.");
   auto manager = fg->manager();
+  MS_CHECK_TRUE_MSG(manager != nullptr, nullptr, "manager is nullptr.");
   manager->AddFuncGraph(after_fg);
   after_fg->set_attr("graph_name", MakeValue(switch_node_name + "_after_fg"));
   after_fg->set_manager(fg->manager());
@@ -123,6 +137,7 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
   int i = 0;
   for (auto &iter : one_of_inline_fg_output) {
     auto new_parameter = after_fg->add_parameter();
+    MS_CHECK_TRUE_MSG(new_parameter != nullptr, nullptr, "new_parameter is nullptr.");
     new_parameter->set_name(switch_node_name + ":" + std::to_string(i++));
     new_parameter->set_abstract(iter->abstract());
   }
@@ -135,18 +150,21 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
       return nullptr;
     }
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
+    MS_CHECK_TRUE_MSG(make_tuple_prim != nullptr, nullptr, "Failed to create value node.");
     make_tuple_inputs.insert(make_tuple_inputs.begin(), make_tuple_prim);
     auto make_tuple_cnode = after_fg->NewCNode(make_tuple_inputs);
+    MS_CHECK_TRUE_MSG(make_tuple_cnode != nullptr, nullptr, "Failed to create C node.");
     make_tuple_cnode->set_fullname_with_scope("return tuple");
-
     auto return_prim_ptr = std::make_shared<lite::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
       return nullptr;
     }
     auto value_node = NewValueNode(return_prim_ptr);
+    MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "Failed to create value node.");
     std::vector<AnfNodePtr> op_inputs = {value_node, make_tuple_cnode};
     auto cnode = after_fg->NewCNode(op_inputs);
+    MS_CHECK_TRUE_MSG(cnode != nullptr, nullptr, "Failed to create C node.");
     cnode->set_fullname_with_scope("Return");
     after_fg->set_return(cnode);
   } else {
@@ -156,8 +174,10 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
       return nullptr;
     }
     auto value_node = NewValueNode(return_prim_ptr);
+    MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "Failed to create value node.");
     std::vector<AnfNodePtr> op_inputs{value_node, after_fg->get_inputs().front()};
     auto return_cnode = after_fg->NewCNode(op_inputs);
+    MS_CHECK_TRUE_MSG(return_cnode != nullptr, nullptr, "Failed to create C node.");
     return_cnode->set_fullname_with_scope("Return");
     after_fg->set_return(return_cnode);
   }
@@ -165,6 +185,7 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
 }
 
 CNodePtr MindIRControlFlowAdjust::GetMainFgSwitchNode(const FuncGraphPtr &fg) {
+  MS_CHECK_TRUE_MSG(fg != nullptr, nullptr, "fg is nullptr.");
   auto node_list = TopoSort(fg->get_return());
   for (auto &node : node_list) {
     if (IsSwitch(node)) {
@@ -233,6 +254,7 @@ int MindIRControlFlowAdjust::InsertPartialFusionForRawCall(const std::set<FuncGr
         continue;
       }
       auto call_cnode = node->cast<CNodePtr>();
+      MS_ASSERT(call_node != nullptr);
       auto call_cnode_inputs = call_cnode->inputs();
       auto cnode_first_input = call_cnode->input(0);
       if (!utils::isa<ValueNodePtr>(cnode_first_input)) {
@@ -245,8 +267,8 @@ int MindIRControlFlowAdjust::InsertPartialFusionForRawCall(const std::set<FuncGr
       std::vector<AnfNodePtr> partial_cnode_inputs = {lite::GetPartialFusionPrim()};
       std::copy(call_cnode_inputs.begin(), call_cnode_inputs.end(), std::back_inserter(partial_cnode_inputs));
       auto partial_cnode = graph->NewCNode(partial_cnode_inputs);
+      MS_CHECK_TRUE_MSG(partial_cnode != nullptr, RET_NULL_PTR, "Failed to create C node.");
       partial_cnode->set_fullname_with_scope("partial_" + call_cnode->fullname_with_scope());
-
       call_cnode->set_inputs({partial_cnode});
     }
   }
@@ -258,7 +280,7 @@ bool MindIRControlFlowAdjust::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(INFO) << "The framework type of model should be MindIR.";
     return lite::RET_OK;
   }
-  MS_ASSERT(graph != nullptr);
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(func_graph, &all_func_graphs);
   if (all_func_graphs.size() == 1) {
