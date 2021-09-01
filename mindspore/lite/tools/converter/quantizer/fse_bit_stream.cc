@@ -52,6 +52,7 @@ void BitStream::Empty() {
 }
 
 int64_t BitStream::Pop(uint8_t bit_count) {
+  MS_ASSERT(curr_bit_count_ <= 64);
   int64_t right = curr_chunk_ >> (64 - curr_bit_count_);
   int64_t res = right & ((1 << bit_count) - 1);
   curr_bit_count_ -= bit_count;

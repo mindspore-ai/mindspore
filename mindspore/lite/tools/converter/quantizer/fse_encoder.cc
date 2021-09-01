@@ -30,6 +30,11 @@ int fse_count_bits(int32_t x) { return __builtin_clz(x) ^ 31; }
 int FSEEncoder::FSECreateStatesForEncoding(uint16_t *frequency, int frequency_count, int table_log,
                                            uint32_t *delta_bit_count, int16_t *delta_state, uint16_t *coding_table,
                                            uint16_t *symbol_table) {
+  MS_ASSERT(frequency != nullptr);
+  MS_ASSERT(delta_bit_count != nullptr);
+  MS_ASSERT(delta_state != nullptr);
+  MS_ASSERT(symbol_table != nullptr);
+  MS_ASSERT(coding_table != nullptr);
   int tablesize = 1 << table_log;
   int tablemask = tablesize - 1;
   int step = ((tablesize >> 1) + (tablesize >> 3) + 3);
@@ -75,6 +80,8 @@ int FSEEncoder::FSECreateStatesForEncoding(uint16_t *frequency, int frequency_co
 }
 
 int ConvertTensor2Quant(schema::TensorT *tensor_input, FSEQuant *quants) {
+  MS_ASSERT(tensor_input != nullptr);
+  MS_ASSERT(quants != nullptr);
   std::vector<int16_t> dequants;
   for (size_t i = 0; i < tensor_input->data.size() / sizeof(int16_t); ++i) {
     auto data = static_cast<int16_t>(reinterpret_cast<int16_t *>(tensor_input->data.data())[i]);
@@ -125,6 +132,7 @@ int ConvertTensor2Quant(schema::TensorT *tensor_input, FSEQuant *quants) {
 }
 
 int FSEEncoder::Compress(schema::TensorT *tensor_input) {
+  MS_ASSERT(tensor_input != nullptr);
   int table_log = 0;
   FSEQuant fse_quant;
   ConvertTensor2Quant(tensor_input, &fse_quant);
@@ -157,6 +165,10 @@ int FSEEncoder::Compress(schema::TensorT *tensor_input) {
 uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(BitStream *bs, uint16_t sym, uint16_t state,
                                                 const uint32_t *delta_bit_count, const int16_t *delta_state,
                                                 uint16_t *coding_table) {
+  MS_ASSERT(bs != nullptr);
+  MS_ASSERT(delta_bit_count != nullptr);
+  MS_ASSERT(delta_state != nullptr);
+  MS_ASSERT(coding_table != nullptr);
   // It is to determine the number of bits to flush.
   // This is basically one of 2 values, n or n+1, depending on state crossing a threshold.
   uint8_t bits_out = (state + delta_bit_count[sym]) >> 16;
@@ -166,6 +178,7 @@ uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(BitStream *bs, uint16_t sym, uin
 }
 
 int GetMaxIndex(const uint16_t *arr, int arr_count) {
+  MS_ASSERT(arr != nullptr);
   float max = -INFINITY;
   int index = -1;
   for (int i = 0; i < arr_count; i++) {
@@ -178,6 +191,7 @@ int GetMaxIndex(const uint16_t *arr, int arr_count) {
 }
 
 void FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
+  MS_ASSERT(q != nullptr);
   // The higher the number, the more accurate we'll be to the shannon entropy,
   // but also the larger the table, so `+3` is a good compromise.
   *table_log = std::min(MAX_TABLE_LOG, fse_count_bits((uint32_t)q->size) + 3);
@@ -220,6 +234,9 @@ void FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
 // - look for Symbol position of same Id : you get your next state
 int FSEEncoder::FSEEncode(BitStream *bs, const uint16_t *data, int data_count, uint16_t *frequency, int frequency_count,
                           int table_log) {
+  MS_ASSERT(bs != nullptr);
+  MS_ASSERT(data != nullptr);
+  MS_ASSERT(frequency != nullptr);
   int table_size = 1 << table_log;
   // symbolTT.deltaNbBits stores a value which, when added with state,
   // makes the result of >> 16 produces either n or n+1, as required.
@@ -252,6 +269,8 @@ int FSEEncoder::FSEEncode(BitStream *bs, const uint16_t *data, int data_count, u
 
 int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, const FSEQuant &fse_quant,
                                  int table_log) {
+  MS_ASSERT(tensor_input != nullptr);
+  MS_ASSERT(bs != nullptr);
   auto max_size = tensor_input->data.size() * 2;
   auto *out8 = static_cast<uint8_t *>(malloc(max_size));
   if (out8 == nullptr) {

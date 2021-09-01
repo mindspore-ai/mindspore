@@ -63,6 +63,10 @@ WeightQuantizer::~WeightQuantizer() {
 
 STATUS WeightQuantizer::SetAbstract(const tensor::TensorPtr &tensor_info, const ParameterPtr &param_node,
                                     const PrimitivePtr &primitive) {
+  MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_NULL_PTR, "tensor_info is nullptr.");
+  MS_CHECK_TRUE_MSG(param_node != nullptr, RET_NULL_PTR, "param_node is nullptr.");
+  MS_CHECK_TRUE_MSG(primitive != nullptr, RET_NULL_PTR, "primitive is nullptr.");
+
   // set dtype
   tensor_info->set_data_type(type_id_);
   auto abstract_base = param_node->abstract();
@@ -75,6 +79,7 @@ STATUS WeightQuantizer::SetAbstract(const tensor::TensorPtr &tensor_info, const 
     return RET_ERROR;
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  MS_ASSERT(abstract_tensor != nullptr);
   abstract_tensor->element()->set_type(TypeIdToType(type_id_));
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   quant_param_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
@@ -134,6 +139,7 @@ STATUS WeightQuantizer::DoConvQuantize(const CNodePtr &cnode) {
 }
 
 STATUS WeightQuantizer::DoMulQuantize(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
   for (size_t i = 1; i < cnode->size(); i++) {
     auto inputNode = cnode->input(i);
     if (inputNode->isa<Parameter>()) {
@@ -182,11 +188,11 @@ STATUS WeightQuantizer::DoMulQuantize(const CNodePtr &cnode) {
 }
 
 STATUS WeightQuantizer::DoLstmQuantize(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
+  MS_CHECK_FALSE(cnode == nullptr, RET_NULL_PTR);
   auto op_name = cnode->fullname_with_scope();
 
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_FALSE(primitive == nullptr, RET_NULL_PTR);
 
   if (cnode->inputs().size() < 4) {
     MS_LOG(ERROR) << op_name << " inputs is " << cnode->inputs().size();
@@ -215,9 +221,9 @@ STATUS WeightQuantizer::DoLstmQuantize(const CNodePtr &cnode) {
 }
 
 STATUS WeightQuantizer::DoGatherQuantize(const CNodePtr &cnode) {
+  MS_CHECK_FALSE(cnode == nullptr, RET_NULL_PTR);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(primitive != nullptr);
-
+  MS_CHECK_FALSE(primitive == nullptr, RET_NULL_PTR);
   auto first_input = cnode->input(1);
   ParameterPtr param_node;
   tensor::TensorPtr tensor_info;
@@ -259,8 +265,9 @@ STATUS WeightQuantizer::DoGatherQuantize(const CNodePtr &cnode) {
 }
 
 STATUS WeightQuantizer::DoOptimizerQuantize(const CNodePtr &cnode) {
+  MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
 
   std::vector<int> weight_indices = {2};
   if (opt::CheckPrimitiveType(cnode, prim::kPrimAdam)) {
@@ -306,6 +313,7 @@ STATUS WeightQuantizer::DoOptimizerQuantize(const CNodePtr &cnode) {
 }
 
 STATUS WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
+  MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
@@ -336,6 +344,8 @@ STATUS WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
 
 STATUS WeightQuantizer::ProcessLstmWeightByIndex(const CNodePtr &cnode, const PrimitivePtr &primitive,
                                                  const int &index) {
+  MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
   auto op_name = cnode->fullname_with_scope();
   auto weight_i = cnode->input(index);
   ParameterPtr param_node;
@@ -524,6 +534,7 @@ STATUS WeightQuantizer::RunFp32Graph(const FuncGraphPtr &func_graph) {
 }
 
 STATUS WeightQuantizer::DoMixedQuantize(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   auto cnodes = func_graph->GetOrderedCnodes();
   int status = RET_OK;
   for (auto &cnode : cnodes) {
@@ -578,6 +589,9 @@ STATUS WeightQuantizer::GetParamNodeAndValue(const std::shared_ptr<AnfNode> &inp
 }
 STATUS WeightQuantizer::TryQuant(const int &bit_num_t, const ParameterPtr &param_node,
                                  const tensor::TensorPtr &tensor_info, const PrimitivePtr &primitive) {
+  MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(tensor_info != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(param_node != nullptr, RET_NULL_PTR);
   int status;
   type_id_ = TypeId::kNumberTypeInt8;
   int quant_max_t = (1 << (unsigned int)(bit_num_t - 1)) - 1;
@@ -608,6 +622,7 @@ STATUS WeightQuantizer::TryQuant(const int &bit_num_t, const ParameterPtr &param
 }
 
 STATUS WeightQuantizer::EvaluateQuant(const FuncGraphPtr &func_graph, size_t image_cnt, float *mean_error) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   if (mean_error == nullptr) {
     MS_LOG(ERROR) << "mean_error is nullptr.";
     return RET_ERROR;
@@ -667,6 +682,7 @@ STATUS WeightQuantizer::EvaluateQuant(const FuncGraphPtr &func_graph, size_t ima
 }
 
 STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   auto cnodes = func_graph->GetOrderedCnodes();
   size_t image_cnt = images_.at(0).size();
   int status = RET_OK;
@@ -691,6 +707,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
       auto *raw_data = static_cast<float *>(tensor_info->data_c());
       auto elem_count = tensor_info->DataSize();
       auto val = std::make_unique<float>(elem_count);
+      MS_CHECK_TRUE_RET(val != nullptr, RET_NULL_PTR);
       std::unique_ptr<float[]> origin_data(val.release());
       auto ret = memcpy_s(origin_data.get(), sizeof(float) * elem_count, raw_data, tensor_info->Size());
       if (ret != EOK) {
@@ -737,6 +754,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
 }
 
 STATUS WeightQuantizer::DoMixedQuant(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   auto status = RunFp32Graph(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "RunFp32Graph failed.";
@@ -768,7 +786,7 @@ STATUS WeightQuantizer::DoMixedQuant(const FuncGraphPtr &func_graph) {
 }
 
 STATUS WeightQuantizer::DoFixedQuant(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   weight_quantized_tensors_.clear();
 
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
@@ -818,7 +836,7 @@ STATUS WeightQuantizer::DoFixedQuant(const FuncGraphPtr &func_graph) {
 }
 
 STATUS WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
     if (primitive == nullptr) {
@@ -835,7 +853,7 @@ STATUS WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_g
 }
 
 STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   if (config_param_.mixed) {
     bit_num_ = kMaxBit;
     quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;

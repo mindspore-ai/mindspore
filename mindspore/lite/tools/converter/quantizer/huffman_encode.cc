@@ -22,6 +22,8 @@ namespace mindspore {
 namespace lite {
 STATUS HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, void *quant_datas,
                                       const size_t &bit_num) {
+  MS_ASSERT(weight != nullptr);
+  MS_ASSERT(primitive != nullptr);
   if (quant_datas == nullptr) {
     MS_LOG(ERROR) << "quant data is nullptr";
     return RET_ERROR;
@@ -67,13 +69,10 @@ STATUS HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const Pri
 
 STATUS HuffmanEncode::GetHuffmanPriorityQueue(const int8_t *data, const size_t data_size, HuffmanPriorityQueue *pq) {
   MS_ASSERT(data != nullptr);
-
   std::map<int8_t, size_t> freq_map;
-
   for (size_t i = 0; i < data_size; i++) {
     freq_map[data[i]]++;
   }
-
   for (auto &kv : freq_map) {
     if (kv.second <= 0) {
       continue;
@@ -90,7 +89,6 @@ STATUS HuffmanEncode::GetHuffmanPriorityQueue(const int8_t *data, const size_t d
     node->left = nullptr;
     node->right = nullptr;
     node->parent = nullptr;
-
     pq->push(node);
   }
 
@@ -109,11 +107,11 @@ STATUS HuffmanEncode::GetHuffmanPriorityQueue(const int8_t *data, const size_t d
   node->parent = nullptr;
 
   pq->push(node);
-
   return RET_OK;
 }
 
 void HuffmanEncode::GenerateHuffmanTable(const HuffmanNodePtr node, bool is_left_node) {
+  MS_ASSERT(node != nullptr);
   if (is_left_node) {
     node->code = node->parent->code + "0";
   } else {
@@ -133,20 +131,17 @@ void HuffmanEncode::GenerateHuffmanTable(const HuffmanNodePtr node, bool is_left
 }
 
 STATUS HuffmanEncode::BuildHuffmanTree(HuffmanPriorityQueue *pq) {
+  MS_ASSERT(pq != nullptr);
   HuffmanNodePtr root = nullptr;
-
   while (!pq->empty()) {
     HuffmanNodePtr first = pq->top();
     pq->pop();
-
     if (pq->empty()) {
       root = first;
       break;
     }
-
     HuffmanNodePtr second = pq->top();
     pq->pop();
-
     auto new_node = new (std::nothrow) HuffmanNode();
     if (new_node == nullptr) {
       MS_LOG(ERROR) << "new HuffmanNode failed.";
@@ -158,7 +153,6 @@ STATUS HuffmanEncode::BuildHuffmanTree(HuffmanPriorityQueue *pq) {
     new_node->right = second;
     first->parent = new_node;
     second->parent = new_node;
-
     pq->push(new_node);
   }
 
@@ -176,6 +170,7 @@ STATUS HuffmanEncode::BuildHuffmanTree(HuffmanPriorityQueue *pq) {
 }
 
 STATUS HuffmanEncode::DoHuffmanCompress(const int8_t *input_datas, const size_t data_size) {
+  MS_ASSERT(input_datas != nullptr);
   unsigned char out_c;
   string code_str;
   std::map<int, string>::iterator iter;

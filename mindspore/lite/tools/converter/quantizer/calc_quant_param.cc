@@ -40,6 +40,7 @@ STATUS QuantParamCalcer::ComputeConstQuantParam(const schema::TensorT &tensor, Q
     return RET_ERROR;
   }
   const auto *constData = reinterpret_cast<const float *>(tensor.data.data());
+  MS_ASSERT(constData != nullptr);
   size_t constTensorShapeSize = GetShapeSize(tensor);
   float min = 0.0f;
   float max = 0.0f;
@@ -107,6 +108,7 @@ int QuantParamCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
 }
 
 int CommonCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
+  MS_ASSERT(subGraph != nullptr);
   auto status = QuantParamCalcer::Calc(subGraph, node);
   if (status != RET_OK) {
     MS_LOG(DEBUG) << "Call QuantParamCalcer::Calc failed: " << status;
@@ -124,12 +126,14 @@ int CommonCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
 }
 
 int ConvCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
+  MS_ASSERT(subGraph != nullptr);
   auto status = CommonCalcer::Calc(subGraph, node);
   if (status != RET_OK) {
     MS_LOG(DEBUG) << "Call CommonCalcer::Calc failed: " << status;
     return status;
   }
   if (node.inputIndex.size() == kBiasSize) {
+    MS_CHECK_TRUE_MSG(subGraph->allTensors.size() > node.inputIndex.at(kBiasSize - 1), RET_ERROR, "invalid access.");
     auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(kBiasSize - 1));
     for (auto &quantParam : biasTensor->quantParams) {
       quantParam->dstDtype = TypeId::kNumberTypeInt32;
@@ -139,12 +143,14 @@ int ConvCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
 }
 
 int BiasAddCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
+  MS_ASSERT(subGraph != nullptr);
   auto status = CommonCalcer::Calc(subGraph, node);
   if (status != RET_OK) {
     MS_LOG(DEBUG) << "Call CommonCalcer::Calc failed: " << status;
     return status;
   }
   if (node.inputIndex.size() == kBiasAddSize) {
+    MS_CHECK_TRUE_MSG(subGraph->allTensors.size() > node.inputIndex.at(kBiasSize - 1), RET_ERROR, "invalid access.");
     auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(kBiasAddSize - 1));
     for (auto &quantParam : biasTensor->quantParams) {
       quantParam->dstDtype = TypeId::kNumberTypeInt32;
@@ -154,25 +160,26 @@ int BiasAddCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
 }
 
 int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
+  MS_ASSERT(graph != nullptr);
   auto status = QuantParamCalcer::Calc(graph, node);
   if (status != RET_OK) {
     MS_LOG(DEBUG) << "Call QuantParamCalcer::Calc failed: " << status;
     return status;
   }
   if (inputParamDone != node.inputIndex.size()) {
-    MS_ASSERT(graph->allTensors.size() > node.outputIndex.at(0));
+    MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.outputIndex.at(0), RET_ERROR, "invalid access.");
     auto &outTensor = graph->allTensors.at(node.outputIndex.at(0));
     MS_ASSERT(outTensor != nullptr);
     auto outputQuantParam = GetTensorQuantParam(outTensor);
-    MS_ASSERT(outputQuantParam != nullptr);
+    MS_CHECK_TRUE_MSG(outputQuantParam != nullptr, RET_ERROR, "outputQuantParam is nullptr.");
     if (outputQuantParam == nullptr || !outputQuantParam->inited) {
       MS_LOG(DEBUG) << "Can not determine inputTensor quantParam from outputTensor for node " << node.name;
       return RET_ERROR;
     }
     for (unsigned int i : node.inputIndex) {
-      MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(i));
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > i, RET_ERROR, "invalid access.");
       auto &inTensor = graph->allTensors.at(i);
-      MS_ASSERT(inTensor != nullptr);
+      MS_CHECK_TRUE_MSG(inTensor != nullptr, RET_ERROR, "inTensor is nullptr.");
       auto inQuantParam = GetTensorQuantParam(inTensor);
       if (inQuantParam == nullptr || inQuantParam->inited) {
         continue;
@@ -181,18 +188,18 @@ int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
     }
   }
   if (outputParamDone != node.outputIndex.size()) {
-    MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
+    MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.inputIndex.at(0), RET_ERROR, "invalid access.");
     auto &inTensor = graph->allTensors.at(node.inputIndex.at(0));
-    MS_ASSERT(inTensor != nullptr);
+    MS_CHECK_TRUE_MSG(inTensor != nullptr, RET_ERROR, "inTensor is nullptr.");
     auto inQuantParam = GetTensorQuantParam(inTensor);
     if (inQuantParam == nullptr || !inQuantParam->inited) {
       MS_LOG(DEBUG) << "Can not determine outputTensor quantParam from inputTensor for node %s" << node.name;
       return RET_ERROR;
     }
     for (unsigned int i : node.outputIndex) {
-      MS_ASSERT(graph->allTensors.size() > node.outputIndex.at(i));
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > i, RET_ERROR, "invalid access.");
       auto &outTensor = graph->allTensors.at(i);
-      MS_ASSERT(outTensor != nullptr);
+      MS_CHECK_TRUE_MSG(outTensor != nullptr, RET_ERROR, "outTensor is nullptr.");
       auto outQuantParam = GetTensorQuantParam(outTensor);
       if (outQuantParam == nullptr) {
         outTensor->quantParams.emplace_back(std::move(inQuantParam));
@@ -213,18 +220,17 @@ class CalcConcat : public QuantParamCalcer {
   ~CalcConcat() override = default;
 
   int Calc(MetaGraphT *graph, const CNodeT &node) override {
+    MS_ASSERT(graph != nullptr);
     MS_ASSERT(node.outputIndex.size() == 1);
     auto status = QuantParamCalcer::Calc(graph, node);
     if (status != RET_OK) {
       MS_LOG(DEBUG) << "Call QuantParamCalcer::Calc failed: " << status;
       return status;
     }
-
     if (inputParamDone != node.inputIndex.size()) {
       MS_LOG(DEBUG) << "Can not determine concat inputTensor quantParam, node " << node.name;
       return RET_ERROR;
     }
-
     if (outputParamDone != 1) {
       MS_ASSERT(outputParamDone == 0);
       float minMin = FLT_MAX;
@@ -232,9 +238,9 @@ class CalcConcat : public QuantParamCalcer {
       bool narrowRange = false;
       int numBits = -1;
       for (size_t i = 0; i < node.inputIndex.size(); i++) {
-        MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(i));
+        MS_CHECK_TRUE_MSG(graph->allTensors.size() > i, RET_ERROR, "invalid access.");
         auto &inTensor = graph->allTensors.at(i);
-        MS_ASSERT(inTensor != nullptr);
+        MS_CHECK_TRUE_MSG(inTensor != nullptr, RET_ERROR, "inTensor is nullptr.");
         auto inQuantParam = GetTensorQuantParam(inTensor);
         if (inQuantParam == nullptr || !inQuantParam->inited) {
           return RET_ERROR;
@@ -254,11 +260,11 @@ class CalcConcat : public QuantParamCalcer {
         }
       }
 
-      MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.outputIndex.front(), RET_ERROR, "Invalid access.");
       auto &outTensor = graph->allTensors.at(node.outputIndex.front());
-      MS_ASSERT(outTensor != nullptr);
+      MS_CHECK_TRUE_MSG(outTensor != nullptr, RET_ERROR, "outTensor is nullptr.");
       auto outQuantParam = std::make_unique<QuantParamT>();
-
+      MS_CHECK_TRUE_MSG(outQuantParam != nullptr, RET_ERROR, "outQuantParam is nullptr.");
       status = quant::CalQuantizationParams(outQuantParam.get(), minMin, maxMax, narrowRange, numBits);
       if (status != RET_OK) {
         MS_LOG(DEBUG) << "in aware quantization run CalQuantizationParams failed!";
@@ -292,17 +298,17 @@ class CalcAdd : public QuantParamCalcer {
     }
     if (outputParamDone != 1) {
       MS_ASSERT(outputParamDone == 0);
-      MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.outputIndex.front(), RET_ERROR, "Invalid access.");
       auto &outTensor = graph->allTensors.at(node.outputIndex.front());
-      MS_ASSERT(outTensor != nullptr);
+      MS_CHECK_TRUE_MSG(outTensor != nullptr, RET_ERROR, "outTensor is nullptr.");
       auto outQuantParam = std::make_unique<QuantParamT>();
 
-      MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.inputIndex.at(0), RET_ERROR, "Invalid access.");
       auto &tensor0 = graph->allTensors.at(node.inputIndex.at(0));
-      MS_ASSERT(tensor0 != nullptr);
-      MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(1));
+      MS_CHECK_TRUE_MSG(tensor0 != nullptr, RET_ERROR, "tensor0 is nullptr.");
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.inputIndex.at(1), RET_ERROR, "Invalid access.");
       auto &tensor1 = graph->allTensors.at(node.inputIndex.at(1));
-      MS_ASSERT(tensor1 != nullptr);
+      MS_CHECK_TRUE_MSG(tensor1 != nullptr, RET_ERROR, "tensor1 is nullptr.");
       auto biasTensor = &tensor0;
       auto paramTensor = &tensor1;
       if (!tensor0->data.empty() && (tensor0->dims.empty() || tensor0->dims.size() == 1)) {
@@ -316,7 +322,7 @@ class CalcAdd : public QuantParamCalcer {
         return RET_ERROR;
       }
       auto quantParam = GetTensorQuantParam(*paramTensor);
-      MS_ASSERT(quantParam != nullptr);
+      MS_CHECK_TRUE_MSG(quantParam != nullptr, RET_ERROR, "quantParam is nullptr.");
       MS_ASSERT(quantParam->inited);
       auto min = quantParam->min;
       auto max = quantParam->max;
@@ -370,15 +376,15 @@ class CalcRealDiv : public QuantParamCalcer {
     }
     if (outputParamDone != 1) {
       MS_ASSERT(outputParamDone == 0);
-      MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.outputIndex.front(), RET_ERROR, "Invalid access.");
       auto &outTensor = graph->allTensors.at(node.outputIndex.front());
-      MS_ASSERT(outTensor != nullptr);
+      MS_CHECK_TRUE_MSG(outTensor != nullptr, RET_ERROR, "outTensor is nullptr.");
       auto outQuantParam = std::make_unique<QuantParamT>();
-
-      MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
-      MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(1));
+      MS_CHECK_TRUE_MSG(outQuantParam != nullptr, RET_ERROR, "outQuantParam is nullptr.");
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.inputIndex.at(0), RET_ERROR, "Invalid access.");
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.inputIndex.at(1), RET_ERROR, "Invalid access.");
       auto &tensor1 = graph->allTensors.at(node.inputIndex.at(1));
-      MS_ASSERT(tensor1 != nullptr);
+      MS_CHECK_TRUE_MSG(tensor1 != nullptr, RET_ERROR, "tensor1 is nullptr.");
       if (!tensor1->data.empty() && (tensor1->dims.empty() || tensor1->dims.size() == 1)) {
         auto quantParam = GetTensorQuantParam(tensor1);
         auto min = quantParam->min;
@@ -449,7 +455,7 @@ class CalcToSet : public QuantParamCalcer {
       quantParam->min = min;
       quantParam->max = max;
       quantParam->inited = true;
-      MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
+      MS_CHECK_TRUE_MSG(graph->allTensors.size() > node.outputIndex.front(), RET_ERROR, "Invalid access.");
       auto &outTensor = graph->allTensors.at(node.outputIndex.front());
       MS_ASSERT(outTensor != nullptr);
       outTensor->quantParams.emplace_back(std::move(quantParam));
@@ -502,27 +508,71 @@ QuantParamCalcRegister::QuantParamCalcRegister() {
     hasError = true;
   }
   if (!hasError) {
-    _registerMap[schema::PrimitiveType_Concat] = std::make_shared<CalcConcat>();
-    _registerMap[schema::PrimitiveType_Activation] = std::make_shared<CalcActivation>();
-    _registerMap[schema::PrimitiveType_AddFusion] = std::make_shared<CalcAdd>();
+    auto concatPtr = std::make_shared<CalcConcat>();
+    if (concatPtr == nullptr) {
+      MS_LOG(DEBUG) << "new concatPtr failed";
+    }
+    _registerMap[schema::PrimitiveType_Concat] = concatPtr;
+    auto activationPtr = std::make_shared<CalcActivation>();
+    if (activationPtr == nullptr) {
+      MS_LOG(DEBUG) << "new activationPtr failed";
+    }
+    _registerMap[schema::PrimitiveType_Activation] = activationPtr;
+    auto addPtr = std::make_shared<CalcAdd>();
+    if (addPtr == nullptr) {
+      MS_LOG(DEBUG) << "new addPtr failed";
+    }
+    _registerMap[schema::PrimitiveType_AddFusion] = addPtr;
     _registerMap[schema::PrimitiveType_MulFusion] = commonCalcer;
-    _registerMap[schema::PrimitiveType_ScaleFusion] = std::make_shared<ConvCalcer>();
-    _registerMap[schema::PrimitiveType_Conv2DFusion] = std::make_shared<ConvCalcer>();
-    _registerMap[schema::PrimitiveType_Conv2dTransposeFusion] = std::make_shared<ConvCalcer>();
+    auto convPtr = std::make_shared<ConvCalcer>();
+    if (convPtr == nullptr) {
+      MS_LOG(DEBUG) << "new convPtr failed";
+    }
+    _registerMap[schema::PrimitiveType_ScaleFusion] = convPtr;
+    auto convPtr2 = std::make_shared<ConvCalcer>();
+    if (convPtr2 == nullptr) {
+      MS_LOG(DEBUG) << "new convPtr2 failed";
+    }
+    _registerMap[schema::PrimitiveType_Conv2DFusion] = convPtr2;
+    auto convPtr3 = std::make_shared<ConvCalcer>();
+    if (convPtr3 == nullptr) {
+      MS_LOG(DEBUG) << "new convPtr3 failed";
+    }
+    _registerMap[schema::PrimitiveType_Conv2dTransposeFusion] = convPtr3;
     _registerMap[schema::PrimitiveType_AvgPoolFusion] = linearCalcer;
     _registerMap[schema::PrimitiveType_MaxPoolFusion] = linearCalcer;
     _registerMap[schema::PrimitiveType_Resize] = linearCalcer;
     _registerMap[schema::PrimitiveType_Reshape] = linearCalcer;
     _registerMap[schema::PrimitiveType_StridedSlice] = linearCalcer;
     _registerMap[schema::PrimitiveType_Shape] = linearCalcer;
-    _registerMap[schema::PrimitiveType_Softmax] = std::make_shared<CalcToSet>(0, 1);
+    auto ToSetPtr = std::make_shared<CalcToSet>(0, 1);
+    if (ToSetPtr == nullptr) {
+      MS_LOG(DEBUG) << "new ToSetPtr failed";
+    }
+    _registerMap[schema::PrimitiveType_Softmax] = ToSetPtr;
     _registerMap[schema::PrimitiveType_Squeeze] = linearCalcer;
-    _registerMap[schema::PrimitiveType_RealDiv] = std::make_shared<CalcRealDiv>();
+    auto realDivPtr = std::make_shared<CalcRealDiv>();
+    if (realDivPtr == nullptr) {
+      MS_LOG(DEBUG) << "new realDivPtr failed";
+    }
+    _registerMap[schema::PrimitiveType_RealDiv] = realDivPtr;
     _registerMap[schema::PrimitiveType_ReduceFusion] = commonCalcer;
-    _registerMap[schema::PrimitiveType_BiasAdd] = std::make_shared<BiasAddCalcer>();
+    auto biadAddPtr = std::make_shared<BiasAddCalcer>();
+    if (biadAddPtr == nullptr) {
+      MS_LOG(DEBUG) << "new biadAddPtr failed";
+    }
+    _registerMap[schema::PrimitiveType_BiasAdd] = biadAddPtr;
     _registerMap[schema::PrimitiveType_Transpose] = linearCalcer;
-    _registerMap[schema::PrimitiveType_MatMul] = std::make_shared<ConvCalcer>();
-    _registerMap[schema::PrimitiveType_FullConnection] = std::make_shared<ConvCalcer>();
+    auto convPtr4 = std::make_shared<ConvCalcer>();
+    if (convPtr4 == nullptr) {
+      MS_LOG(DEBUG) << "new convPtr4 failed";
+    }
+    _registerMap[schema::PrimitiveType_MatMul] = convPtr4;
+    auto convPtr5 = std::make_shared<ConvCalcer>();
+    if (convPtr5 == nullptr) {
+      MS_LOG(DEBUG) << "new convPtr5 failed";
+    }
+    _registerMap[schema::PrimitiveType_FullConnection] = convPtr5;
     // detection_postprocess op's quant param will not infer only fetch from preNode or postNode
     // because we will not insert quantTransNode after this node in tflite_graph_8bit model if input data is float.
     // if quantTransNode is inserted after detection_postprocess node, there will be some errors

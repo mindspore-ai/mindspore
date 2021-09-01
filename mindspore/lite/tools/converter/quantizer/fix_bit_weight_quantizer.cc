@@ -23,6 +23,8 @@ namespace mindspore::lite::quant {
 // the `preferred` dim should point to the output channels dimension.
 float FixBitWeightQuantizer::MeasureQuantizationError(float *weights, const int *shape, int dims, int preferred_dim,
                                                       float scale) {
+  MS_ASSERT(weights != nullptr);
+  MS_ASSERT(shape != nullptr);
   int numel = 1;
   for (int i = 0; i < dims; i++) {
     numel *= shape[i];
@@ -81,6 +83,7 @@ float FixBitWeightQuantizer::MeasureQuantizationError(float *weights, const int 
 }
 
 MinMax FixBitWeightQuantizer::GetMinMax(const float *arr, int arrc) {
+  MS_ASSERT(arr != nullptr);
   MinMax min_max = {INFINITY, -INFINITY};
   for (int i = 0; i < arrc; i++)
     if (arr[i] > min_max.max)
@@ -93,6 +96,8 @@ MinMax FixBitWeightQuantizer::GetMinMax(const float *arr, int arrc) {
 BinarySearchResult FixBitWeightQuantizer::BinarySearchForQuantizationScale(float *weights, int *shape, int dims,
                                                                            int preferred_dim, int max_iters,
                                                                            float target_err, float rel_tol) {
+  MS_ASSERT(weights != nullptr);
+  MS_ASSERT(shape != nullptr);
   int element_num = 1;
   for (int i = 0; i < dims; i++) {
     element_num *= shape[i];
@@ -134,6 +139,7 @@ BinarySearchResult FixBitWeightQuantizer::BinarySearchForQuantizationScale(float
 int FixBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
                                           std::vector<schema::QuantParamT> *quant_params,
                                           std::vector<int16_t> *quant_datas) {
+  MS_ASSERT(weights != nullptr);
   int weight_count = 1;
   int dims = shape.size();
   int input_shape[4] = {0, 0, 0, 0};
@@ -162,6 +168,7 @@ int FixBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t> s
 
 int FixBitWeightQuantizer::QuantizeByScale(const float *weights, int weightsc, float scale,
                                            schema::QuantParamT *quant_params, std::vector<int16_t> *quant_datas) {
+  MS_ASSERT(weights != nullptr);
   for (int i = 0; i < weightsc; i++) {
     auto q = static_cast<int>(floorf(weights[i] / scale + 0.5));
     quant_datas->at(i) = q;

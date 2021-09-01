@@ -24,8 +24,10 @@
 namespace mindspore::lite::quant {
 ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector<schema::QuantParamT> &quant_params) {
   auto prim_c = std::make_shared<ops::QuantDTypeCast>();
+  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
   prim_c->Init(src_type, dst_type);
   auto quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
+  MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
   quant_params_holder->set_quant_type(schema::QuantType_QUANT_ALL);
   for (auto &quant_param : quant_params) {
     std::vector<schema::QuantParamT> quant_params_in = {quant_param};
@@ -46,7 +48,8 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto primitive_quant_param_holder = GetCNodeQuantHolder(primitive_c);
-    MS_ASSERT(primitive_quant_param_holder != nullptr);
+    MS_CHECK_TRUE_MSG(primitive_quant_param_holder != nullptr, RET_NULL_PTR,
+                      "primitive_quant_param_holder is nullptr.");
     auto curnode_quant_type = primitive_quant_param_holder->quant_type();
     if (primitive_c->name() == ops::kNameGather) {
       continue;
@@ -73,7 +76,8 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
           continue;
         }
         auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive_c);
-        MS_ASSERT(input_primitive_quant_holder != nullptr);
+        MS_CHECK_TRUE_MSG(input_primitive_quant_holder != nullptr, RET_NULL_PTR,
+                          "input_primitive_quant_holder is nullptr.");
         input_cnode_quant_type = input_primitive_quant_holder->quant_type();
       }
 
@@ -102,6 +106,7 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
         }
         std::vector<AnfNodePtr> op_inputs = {value_node, input_node};
         auto quant_cast_cnode = graph->NewCNode(op_inputs);
+        MS_CHECK_TRUE_MSG(quant_cast_cnode != nullptr, RET_NULL_PTR, "quant_cast_cnode is nullptr.");
         quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast_" + std::to_string(i));
         cnode->set_input(i, quant_cast_cnode);
         MS_LOG(DEBUG) << "Add quant cast. "
