@@ -57,15 +57,22 @@ cv::InterpolationFlags ConvertResizeMethod(const std::string &method) {
 }
 
 int GetMatData(const cv::Mat &mat, void **data, size_t *size) {
-  std::vector<char> array;
+  if (data == nullptr || size == nullptr) {
+    MS_LOG(ERROR) << "data or size is nullptr.";
+    return RET_NULL_PTR;
+  }
+  cv::Mat mat_local = mat;
+  // if the input Mat's memory is not continuous, copy it to one block of memory
+  if (!mat.isContinuous()) {
+    mat_local = mat.clone();
+  }
   (*size) = 0;
   for (int i = 0; i < mat.rows; ++i) {
-    array.insert(array.end(), mat.ptr(i), mat.ptr(i) + mat.cols * mat.elemSize());
     (*size) += mat.cols * mat.elemSize();
   }
 
   (*data) = new char[*size];
-  if (memcpy_s(*data, *size, array.data(), array.size()) != EOK) {
+  if (memcpy_s(*data, *size, mat_local.data, mat.rows * mat.cols * mat.channels() * sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";
     return RET_ERROR;
   }

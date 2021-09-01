@@ -32,6 +32,7 @@ int ReadImage(const std::string &image_path, cv::Mat *image) {
     MS_LOG(ERROR) << "missing file, improper permissions, unsupported or invalid format.";
     return RET_ERROR;
   }
+  image->convertTo(*image, CV_32FC3);
   return RET_OK;
 }
 
@@ -45,6 +46,9 @@ int ConvertImageFormat(cv::Mat *image, cv::ColorConversionCodes to_format) {
     return RET_ERROR;
   }
   cv::cvtColor(*image, *image, to_format);
+  if (to_format == cv::COLOR_BGR2GRAY) {
+    image->convertTo(*image, CV_32FC1);
+  }
   return RET_OK;
 }
 
@@ -55,8 +59,8 @@ int Normalize(cv::Mat *image, const std::vector<double> &mean, const std::vector
   }
   if (static_cast<int>(mean.size()) != image->channels() ||
       static_cast<int>(standard_deviation.size()) != image->channels()) {
-    MS_LOG(ERROR) << "mean size:" << mean.size() << " != image->dims:" << image->dims
-                  << " or scale size:" << standard_deviation.size() << " !=image->dims:" << image->dims;
+    MS_LOG(ERROR) << "mean size:" << mean.size() << " != image->channels:" << image->channels()
+                  << " or scale size:" << standard_deviation.size() << " !=image->dims:" << image->channels();
     return RET_ERROR;
   }
   std::vector<cv::Mat> channels(image->channels());
@@ -157,6 +161,12 @@ int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::str
     MS_LOG(ERROR) << "data or size is nullptr.";
     return RET_NULL_PTR;
   }
+
+  if (data_pre_process_param.calibrate_path_vector.find(input_name) ==
+      data_pre_process_param.calibrate_path_vector.end()) {
+    MS_LOG(ERROR) << "Cant find input:" << input_name;
+    return RET_INPUT_PARAM_INVALID;
+  }
   auto data_path = data_pre_process_param.calibrate_path_vector.at(input_name).at(image_index);
   if (data_pre_process_param.input_type == IMAGE) {
     cv::Mat mat;
@@ -204,18 +214,20 @@ int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat 
       return ret;
     }
   }
-  if (image_preprocess_param.center_crop_height != -1 && image_preprocess_param.center_crop_width != -1) {
-    ret = CenterCrop(image, image_preprocess_param.center_crop_width, image_preprocess_param.center_crop_height);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "image center crop failed.";
-      return ret;
-    }
-  }
+
   if (image_preprocess_param.resize_method != cv::INTER_MAX) {
     ret = Resize(image, image_preprocess_param.resize_width, image_preprocess_param.resize_height,
                  image_preprocess_param.resize_method);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "image reize failed.";
+      return ret;
+    }
+  }
+
+  if (image_preprocess_param.center_crop_height != -1 && image_preprocess_param.center_crop_width != -1) {
+    ret = CenterCrop(image, image_preprocess_param.center_crop_width, image_preprocess_param.center_crop_height);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "image center crop failed.";
       return ret;
     }
   }
