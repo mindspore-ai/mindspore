@@ -32,7 +32,15 @@ ResizePreserveAROperation::~ResizePreserveAROperation() = default;
 
 std::string ResizePreserveAROperation::Name() const { return kResizePreserveAROperation; }
 
-Status ResizePreserveAROperation::ValidateParams() { return Status::OK(); }
+Status ResizePreserveAROperation::ValidateParams() {
+  if (img_orientation_ < 1 || img_orientation_ > 8) {
+    std::string err_msg =
+      "ResizePreserveAR: img_orientation must be in range of [1, 8], got: " + std::to_string(img_orientation_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
 
 std::shared_ptr<TensorOp> ResizePreserveAROperation::Build() {
   return std::make_shared<ResizePreserveAROp>(height_, width_, img_orientation_);

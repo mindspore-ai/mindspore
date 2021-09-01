@@ -45,6 +45,10 @@ class Affine final : public TensorTransform {
   /// \param[in] scale The scaling factor for the image (default = 0.0).
   /// \param[in] shear A float vector of size 2, representing the shear degrees (default = {0.0, 0.0}).
   /// \param[in] interpolation An enum for the mode of interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation (Only supports this mode in Lite).
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
   /// \param[in] fill_value A vector representing the value to fill the area outside the transformation
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
@@ -196,11 +200,10 @@ class RandomAffine final : public TensorTransform {
   ///    If the size is 2, (min_shear_x, max_shear_x, 0, 0),
   ///    if the size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y).
   /// \param[in] interpolation An enum for the mode of interpolation.
-  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation (Only supports this mode in Lite).
   ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
   ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
-  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   /// \param[in] fill_value A vector representing the value to fill the area outside the transform
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G and B channels respectively.
@@ -231,7 +234,7 @@ class Resize final : public TensorTransform {
   ///     If the size is a single value, the image will be resized to this value with
   ///     the same image aspect ratio. If the size has 2 values, it should be (height, width).
   /// \param[in] interpolation An enum for the mode of interpolation.
-  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation (Only supports this mode in Lite).
   ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
   ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
@@ -259,7 +262,15 @@ class ResizePreserveAR final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] height The height of image output value after resizing.
   /// \param[in] width The width of image output value after resizing.
-  /// \param[in] img_orientation Angle method of image rotation.
+  /// \param[in] img_orientation optional rotation angle.
+  ///     - img_orientation = 1, Rotate 0 degree.
+  ///     - img_orientation = 2, Rotate 0 degree and apply horizontal flip.
+  ///     - img_orientation = 3, Rotate 180 degree.
+  ///     - img_orientation = 4, Rotate 180 degree and apply horizontal flip.
+  ///     - img_orientation = 5, Rotate 90 degree and apply horizontal flip.
+  ///     - img_orientation = 6, Rotate 90 degree.
+  ///     - img_orientation = 7, Rotate 270 degree and apply horizontal flip.
+  ///     - img_orientation = 8, Rotate 270 degree.
   ResizePreserveAR(int32_t height, int32_t width, int32_t img_orientation = 0);
 
   /// \brief Destructor.
@@ -312,16 +323,25 @@ class RGB2GRAY final : public TensorTransform {
 class Rotate final : public TensorTransform {
  public:
   /// \brief Constructor.
-  Rotate();
+  /// \note This api is only used in Lite, the interpolation mode is bilinear.
+  /// \param[in] angle_id The fix rotation angle.
+  ///     - FixRotationAngle::k0Degree = 1, Rotate 0 degree.
+  ///     - FixRotationAngle::k0DegreeAndMirror = 2, Rotate 0 degree and apply horizontal flip.
+  ///     - FixRotationAngle::k180Degree = 3, Rotate 180 degree.
+  ///     - FixRotationAngle::k180DegreeAndMirror = 4, Rotate 180 degree and apply horizontal flip.
+  ///     - FixRotationAngle::k90DegreeAndMirror = 5, Rotate 90 degree and apply horizontal flip.
+  ///     - FixRotationAngle::k90Degree = 6, Rotate 90 degree.
+  ///     - FixRotationAngle::k270DegreeAndMirror = 7, Rotate 270 degree and apply horizontal flip.
+  ///     - FixRotationAngle::k270Degree = 8, Rotate 270 degree.
+  explicit Rotate(FixRotationAngle angle_id = FixRotationAngle::k0Degree);
 
   /// \brief Constructor.
   /// \param[in] degrees A float value, representing the rotation degrees.
   /// \param[in] resample An enum for the mode of interpolation.
-  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
   ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
   ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
-  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   /// \param[in] expand A boolean representing whether the image is expanded after rotation.
   /// \param[in] center A float vector of size 2 or empty, representing the x and y center of rotation
   ///     or the center of the image.
