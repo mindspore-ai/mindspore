@@ -15,10 +15,9 @@
 
 import json
 import os
-import threading
 import time
 from datetime import datetime
-from threading import Lock
+from threading import Lock, Thread
 
 import MxpiDataType_pb2 as MxpiDataType
 import cv2
@@ -312,7 +311,7 @@ def display_infer_progress(img_num, index, report_file, start_secs):
         f"average inference speed at: {real_speed} ms/image\n"
     )
     print(perf_detail)
-    threading.Thread(
+    Thread(
         target=write_speed_detail, args=(perf_detail, report_file)
     ).start()
 
@@ -368,7 +367,7 @@ def infer_imgs_in_dir_with_open_cv():
         name, ext = os.path.splitext(os.path.basename(img_file_name))
         img_id = int(name) if FLAGS.coco else name
 
-        t = threading.Thread(
+        t = Thread(
             target=handle_infer_result,
             args=(all_infer_dict_list, img_id, infer_result, ext),
         )
@@ -470,11 +469,11 @@ def get_all_images_result(uuid_img_id_zip, stream_manager_api):
                 f"average inference speed at: {real_speed} ms/image\n"
             )
             print(perf_detail)
-            threading.Thread(
+            Thread(
                 target=write_speed_detail, args=(perf_detail, report_file)
             ).start()
 
-        threading.Thread(
+        Thread(
             target=parse_infer_result,
             args=(all_infer_dict_list, img_id, infer_result),
         ).start()
