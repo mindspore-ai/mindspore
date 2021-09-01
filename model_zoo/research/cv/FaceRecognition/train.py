@@ -278,9 +278,9 @@ def run_train():
                    weight_decay=config.weight_decay)
     scale_manager = DynamicLossScaleManager(init_loss_scale=config.dynamic_init_loss_scale, scale_factor=2,
                                             scale_window=2000)
-    if config.device_target == "Ascend":
+    if config.device_target in ("Ascend", "GPU"):
         model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=scale_manager)
-    elif config.device_target in ("CPU", "GPU"):
+    elif config.device_target == "CPU":
         model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=None)
 
     save_checkpoint_steps = config.ckpt_steps
