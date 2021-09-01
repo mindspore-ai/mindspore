@@ -788,9 +788,8 @@ bool IsWeightBoundary(const AnfNodePtr &node) {
 }
 
 std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
-  if (AnfAlgo::GetInputTensorNum(cnode) != AnfAlgo::GetOutputTensorNum(cnode) &&
-      AnfAlgo::GetInputTensorNum(cnode) != 1) {
-    MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString() << "] is not single input or single output ";
+  if (AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
+    MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString() << "] is not single input or single output.";
   }
   std::vector<int64_t> axis;
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);

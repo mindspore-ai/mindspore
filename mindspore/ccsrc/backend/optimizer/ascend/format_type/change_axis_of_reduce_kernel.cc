@@ -41,10 +41,9 @@ void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce
   if (reduce_axis.empty()) {
     MS_LOG(EXCEPTION) << "The node " << cnode->DebugString() << "'s reduce axis got a empty vector";
   }
-  if (AnfAlgo::GetInputTensorNum(cnode) != AnfAlgo::GetOutputTensorNum(cnode) &&
-      AnfAlgo::GetInputTensorNum(cnode) != 1) {
+  if (AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
     MS_LOG(EXCEPTION) << "the kind of reduce node [" << cnode->DebugString()
-                      << "] is not single input or single output ";
+                      << "] is not single input or single output.";
   }
   for (auto elem : reduce_axis) {
     if (elem > kAxisDim) {
