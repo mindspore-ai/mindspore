@@ -188,6 +188,7 @@ APP_ERROR SSDMobileNetV1Fpn::Process(const std::string &imgPath) {
         LogError << "Resize failed, ret=" << ret << ".";
         return ret;
     }
+
     std::vector<MxBase::TensorBase> inputs = {};
     std::vector<MxBase::TensorBase> outputs = {};
     inputs.push_back(resizeImage);
