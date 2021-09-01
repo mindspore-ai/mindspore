@@ -237,12 +237,8 @@ void GetFusionScopeInputNodeList(const session::KernelGraph &kernel_graph,
         auto real_input = AnfAlgo::VisitKernel(cnode->input(idx), 0);
         if (std::find(fusion_info.anf_nodes.begin(), fusion_info.anf_nodes.end(), real_input.first) ==
             fusion_info.anf_nodes.end()) {
-          if (auto in = cnode->input(idx); std::find((*buffer_fusion_infos)[fusion_id].inputs_list.begin(),
-                                                     (*buffer_fusion_infos)[fusion_id].inputs_list.end(),
-                                                     in) == (*buffer_fusion_infos)[fusion_id].inputs_list.end()) {
-            if (!HasAbstractMonad(in)) {
-              (*buffer_fusion_infos)[fusion_id].inputs_list.push_back(in);
-            }
+          if (!HasAbstractMonad(cnode->input(idx))) {
+            (*buffer_fusion_infos)[fusion_id].inputs_list.push_back(cnode->input(idx));
           }
         }
       }
