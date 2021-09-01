@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,99 +12,83 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-create train or eval dataset.
-"""
+"""Data operations, will be used in train.py and eval.py"""
 import os
+from src.config import config
 import mindspore.common.dtype as mstype
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as C
-import mindspore.dataset.transforms.vision.py_transforms as P
+import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.c_transforms as C2
-from mindspore.dataset.transforms.vision import Inter
+import mindspore.dataset.vision.c_transforms as C
+from mindspore.communication.management import get_rank, get_group_size
 
 
-def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch_size=100, model='ghsotnet'):
+def create_dataset(dataset_path, do_train, target="Ascend"):
     """
     create a train or eval dataset
 
     Args:
         dataset_path(string): the path of dataset.
         do_train(bool): whether dataset is used for train or eval.
-        repeat_num(int): the repeat times of dataset. Default: 1
-        batch_size(int): the batch size of dataset. Default: 32
+        rank (int): The shard ID within num_shards (default=None).
+        group_size (int): Number of shards that the dataset should be divided into (default=None).
+        repeat_num(int): the repeat times of dataset. Default: 1.
 
     Returns:
         dataset
     """
-    if platform == "Ascend":
-        rank_size = int(os.getenv("RANK_SIZE"))
-        rank_id = int(os.getenv("RANK_ID"))
-        if rank_size == 1:
-            data_set = ds.MindDataset(
-                dataset_path, num_parallel_workers=8, shuffle=True)
-        else:
-            data_set = ds.MindDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                      num_shards=rank_size, shard_id=rank_id)
-    elif platform == "GPU":
-        if do_train:
-            from mindspore.communication.management import get_rank, get_group_size
-            data_set = ds.MindDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                      num_shards=get_group_size(), shard_id=get_rank())
-        else:
-            data_set = ds.MindDataset(
-                dataset_path, num_parallel_workers=8, shuffle=True)
+    if not do_train:
+        dataset_path = os.path.join(dataset_path, 'val')
     else:
-        raise ValueError("Unsupported platform.")
+        dataset_path = os.path.join(dataset_path, 'train')
+    if target == "Ascend":
+        device_num, rank_id = _get_rank_info()
 
-    resize_height = config.image_height
-    buffer_size = 1000
+    if device_num == 1:
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+    else:
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                   num_shards=device_num, shard_id=rank_id)
 
+    mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
+    std = [0.229 * 255, 0.224 * 255, 0.225 * 255]
     # define map operations
-    resize_crop_op = C.RandomCropDecodeResize(
-        resize_height, scale=(0.08, 1.0), ratio=(0.75, 1.333))
-    horizontal_flip_op = C.RandomHorizontalFlip(prob=0.5)
-
-    color_op = C.RandomColorAdjust(
-        brightness=0.4, contrast=0.4, saturation=0.4)
-    rescale_op = C.Rescale(1 / 255.0, 0)
-    normalize_op = C.Normalize(
-        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    change_swap_op = C.HWC2CHW()
-
-    # define python operations
-    decode_p = P.Decode()
-    if model == 'ghostnet-600':
-        s = 274
-        c = 240
-    else:
-        s = 256
-        c = 224
-    resize_p = P.Resize(s, interpolation=Inter.BICUBIC)
-    center_crop_p = P.CenterCrop(c)
-    totensor = P.ToTensor()
-    normalize_p = P.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-    composeop = P.ComposeOp(
-        [decode_p, resize_p, center_crop_p, totensor, normalize_p])
     if do_train:
-        trans = [resize_crop_op, horizontal_flip_op, color_op,
-                 rescale_op, normalize_op, change_swap_op]
+        trans = [
+            C.RandomCropDecodeResize(224),
+            C.RandomHorizontalFlip(prob=0.5),
+            C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4)
+        ]
     else:
-        trans = composeop()
+        trans = [
+            C.Decode(),
+            C.Resize(256),
+            C.CenterCrop(224),
+        ]
+    trans += [
+        C.Normalize(mean=mean, std=std),
+        C.HWC2CHW(),
+    ]
+
     type_cast_op = C2.TypeCast(mstype.int32)
-
-    data_set = data_set.map(input_columns="image", operations=trans,
-                            num_parallel_workers=8)
-    data_set = data_set.map(input_columns="label_list",
-                            operations=type_cast_op, num_parallel_workers=8)
-
-    # apply shuffle operations
-    data_set = data_set.shuffle(buffer_size=buffer_size)
+    ds = ds.map(input_columns="image", operations=trans, num_parallel_workers=8)
+    ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=8)
 
     # apply batch operations
-    data_set = data_set.batch(batch_size, drop_remainder=True)
+    ds = ds.batch(config.batch_size, drop_remainder=True)
+    return ds
 
-    # apply dataset repeat operation
-    data_set = data_set.repeat(repeat_num)
 
-    return data_set
+def _get_rank_info():
+    """
+    get rank size and rank id
+    """
+    rank_size = int(os.environ.get("RANK_SIZE", 1))
+
+    if rank_size > 1:
+        rank_size = get_group_size()
+        rank_id = get_rank()
+    else:
+        rank_size = 1
+        rank_id = 0
+
+    return rank_size, rank_id

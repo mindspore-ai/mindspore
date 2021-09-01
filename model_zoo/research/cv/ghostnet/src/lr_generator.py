@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 import math
 import numpy as np
 
-
-def get_lr(global_step, lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch):
+def get_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch):
     """
     generate learning rate array
 
@@ -47,9 +46,6 @@ def get_lr(global_step, lr_init, lr_end, lr_max, warmup_epochs, total_epochs, st
         if lr < 0.0:
             lr = 0.0
         lr_each_step.append(lr)
-
-    current_step = global_step
     lr_each_step = np.array(lr_each_step).astype(np.float32)
-    learning_rate = lr_each_step[current_step:]
 
-    return learning_rate
+    return lr_each_step

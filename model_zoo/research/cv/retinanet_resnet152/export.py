@@ -12,43 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-"""Export file"""
-
+"""export for retinanet"""
 import argparse
 import numpy as np
-
-from mindspore import dtype as mstype
+import mindspore.common.dtype as mstype
 from mindspore import context, Tensor
-from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
-
-from src.retinahead import retinahead
-from src.backbone import resnet152
+from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from src.retinahead import  retinahead, retinanetInferWithDecoder
 from src.config import config
+from src.box_utils import default_boxes
+from src.backbone import resnet152
 
-parser = argparse.ArgumentParser(description="retinanet_resnet152 export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="retinanet_resnet152", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="MINDIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='retinanet evaluation')
+    parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
+    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend"),
+                        help="run platform, only support Ascend.")
+    parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
+    parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+    parser.add_argument("--file_name", type=str, default="retinanet", help="output file name.")
+    args_opt = parser.parse_args()
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.run_platform, device_id=args_opt.device_id)
 
-if __name__ == "__main__":
-    network = retinahead(backbone=resnet152(80), config=config, is_training=False)
-
-    param_dict = load_checkpoint(args.ckpt_file)
-    load_param_into_net(network, param_dict)
-
-    network.set_train(False)
-
-    shape = [args.batch_size, 3] + [640, 640]
+    backbone = resnet152(config.num_classes)
+    net = retinahead(backbone, config)
+    net = retinanetInferWithDecoder(net, Tensor(default_boxes), config)
+    param_dict = load_checkpoint(config.checkpoint_path)
+    net.init_parameters_data()
+    load_param_into_net(net, param_dict)
+    net.set_train(False)
+    shape = [args_opt.batch_size, 3] + config.img_shape
     input_data = Tensor(np.zeros(shape), mstype.float32)
-
-    export(network, input_data, file_name=args.file_name, file_format=args.file_format)
+    export(net, input_data, file_name=args_opt.file_name, file_format=args_opt.file_format)
