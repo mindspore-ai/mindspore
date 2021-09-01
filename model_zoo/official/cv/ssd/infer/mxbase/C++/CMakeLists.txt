@@ -4,7 +4,8 @@ project(ssd_ms)
 set(TARGET_ssd ssd_mobilenet_v1_fpn)
 
 add_definitions(-DENABLE_DVPP_INTERFACE)
-add_compile_options(-std=c++11 -fPIE -fstack-protector-all -fPIC -Wall -Dgoogle=mindxsdk_private -D_GLIBCXX_USE_CXX11_ABI=0)
+add_compile_options(-std=c++11 -fPIE -fstack-protector-all -fPIC -Wall -Dgoogle=mindxsdk_private
+-D_GLIBCXX_USE_CXX11_ABI=0)
 add_link_options(-Wl,-z,relro,-z,now,-z,noexecstack -s -pie)
 
 # Check environment variable

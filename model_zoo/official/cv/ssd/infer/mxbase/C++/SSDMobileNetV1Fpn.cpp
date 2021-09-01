@@ -203,7 +203,6 @@ APP_ERROR SSDMobileNetV1Fpn::Process(const std::string &imgPath) {
     std::vector<std::vector<MxBase::ObjectInfo>> objectInfos = {};
     std::map<std::string, std::shared_ptr<void>> configParamMap = {};
 
-    std::vector<std::vector<MxBase::ClassInfo>> BatchClsInfos = {};
     ret = PostProcess(outputs, objectInfos, resizedImageInfos, configParamMap);
     if (ret != APP_ERR_OK) {
         LogError << "PostProcess failed, ret=" << ret << ".";
