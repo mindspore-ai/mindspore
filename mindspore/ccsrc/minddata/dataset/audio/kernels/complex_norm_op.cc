@@ -36,8 +36,6 @@ Status ComplexNormOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
   outputs.clear();
   auto input_size = inputs[0].AsVector();
   input_size.pop_back();
-  input_size.pop_back();
-  input_size.emplace_back(2);
   TensorShape out = TensorShape(input_size);
   outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();

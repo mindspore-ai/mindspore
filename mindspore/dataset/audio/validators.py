@@ -235,6 +235,7 @@ def check_complex_norm(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [power], _ = parse_user_args(method, *args, **kwargs)
+        type_check(power, (int, float), "power")
         check_non_negative_float32(power, "power")
         return method(self, *args, **kwargs)
 
