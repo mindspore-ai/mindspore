@@ -95,7 +95,8 @@ if(ENABLE_CACHE)
         ${SECUREC_LIBRARY}
         pthread
         -Wl,--no-as-needed
-        mindspore::grpc++)
+        mindspore::grpc++
+        -Wl,--as-needed)
   endif()
 
   if(USE_GLOG)
@@ -108,7 +109,7 @@ if(ENABLE_CACHE)
 
   add_executable(cache_admin cache_admin.cc cache_admin_arg.cc)
   target_link_libraries(cache_admin _c_dataengine _c_mindrecord mindspore::protobuf ${PYTHON_LIBRARIES} pthread)
-  target_link_libraries(cache_admin mindspore mindspore_core mindspore_shared_lib)
+  target_link_libraries(cache_admin mindspore -Wl,--as-needed mindspore_core mindspore_shared_lib)
 
   if(USE_GLOG)
     target_link_libraries(cache_admin mindspore::glog)

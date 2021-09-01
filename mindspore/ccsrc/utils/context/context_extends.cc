@@ -223,9 +223,9 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
 
   // Enable auto mixed precision according to the context options
   if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_AUTO_MIXED_PRECISION)) {
-    (*ge_options)["ge.exec.precision_mode"] = "allow_mix_precision";
-  } else {
     (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
+  } else {
+    (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
   }
   // Disable the global variable acc, only enable it while adding training graph in pipeline
   (*ge_options)["ge.exec.variable_acc"] = "0";

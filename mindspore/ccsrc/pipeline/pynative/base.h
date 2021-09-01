@@ -60,6 +60,9 @@ struct OpExecInfo {
   AbstractBasePtr abstract;
 
   py::list op_inputs;
+#ifdef ENABLE_GE
+  py::dict op_attrs;
+#endif
   std::vector<int64_t> inputs_mask;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
