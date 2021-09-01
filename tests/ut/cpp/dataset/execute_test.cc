@@ -705,3 +705,31 @@ TEST_F(MindDataTestExecute, TestComplexNormEager) {
   Status s01 = Transform01(input_02, &input_02);
   EXPECT_TRUE(s01.IsOk());
 }
+
+TEST_F(MindDataTestExecute, TestContrastWithEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestContrastWithEager.";
+  // Original waveform
+  std::vector<float> labels = {4.11, 5.37, 5.85, 5.4, 4.27, 1.861, -1.1291, -4.76, 1.495};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({3, 3}), &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> contrast_01 = std::make_shared<audio::Contrast>();
+  mindspore::dataset::Execute Transform01({contrast_01});
+  // Filtered waveform by contrast
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_TRUE(s01.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestContrastWithWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestContrastWithWrongArg.";
+  std::vector<double> labels = {-1.007, -5.06, 7.934, 6.683, 1.312, 1.84, 2.246, 2.597};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 4}), &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  // Check enhancement_amount
+  MS_LOG(INFO) << "enhancement_amount is negative.";
+  std::shared_ptr<TensorTransform> contrast_op = std::make_shared<audio::Contrast>(-10);
+  mindspore::dataset::Execute Transform01({contrast_op});
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_FALSE(s01.IsOk());
+}

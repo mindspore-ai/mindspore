@@ -127,6 +127,29 @@ Status Biquad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   return LFilter(input, output, a_coeffs, b_coeffs, true);
 }
 
+/// \brief Apply contrast effect.
+/// \param input/output: Tensor of shape <..., time>.
+/// \param enhancement_amount: controls the amount of the enhancement.
+/// \return Status code.
+template <typename T>
+Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T enhancement_amount) {
+  const float enhancement_zoom = 750.0;
+  T enhancement_amount_value = enhancement_amount / enhancement_zoom;
+  TensorShape output_shape{input->shape()};
+  std::shared_ptr<Tensor> out;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(output_shape, input->type(), &out));
+  auto itr_out = out->begin<T>();
+  for (auto itr_in = input->begin<T>(); itr_in != input->end<T>(); itr_in++) {
+    T temp1, temp2 = 0;
+    temp1 = static_cast<T>(*itr_in) * (PI / 2);
+    temp2 = enhancement_amount_value * std::sin(temp1 * 4);
+    *itr_out = std::sin(temp1 + temp2);
+    itr_out++;
+  }
+  *output = out;
+  return Status::OK();
+}
+
 /// \brief Perform an IIR filter by evaluating difference equation.
 /// \param input/output: Tensor of shape <..., time>
 /// \param a_coeffs: denominator coefficients of difference equation of dimension of (n_order + 1).

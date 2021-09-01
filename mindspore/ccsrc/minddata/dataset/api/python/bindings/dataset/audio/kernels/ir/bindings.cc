@@ -27,6 +27,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
+#include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
@@ -129,6 +130,17 @@ PYBIND_REGISTER(
         return complex_norm;
       }));
   }));
+
+PYBIND_REGISTER(ContrastOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<audio::ContrastOperation, TensorOperation, std::shared_ptr<audio::ContrastOperation>>(
+                      *m, "ContrastOperation")
+                      .def(py::init([](float enhancement_amount) {
+                        auto contrast = std::make_shared<audio::ContrastOperation>(enhancement_amount);
+                        THROW_IF_ERROR(contrast->ValidateParams());
+                        return contrast;
+                      }));
+                }));
 
 PYBIND_REGISTER(
   FrequencyMaskingOperation, 1, ([](const py::module *m) {

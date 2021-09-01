@@ -210,6 +210,26 @@ class ComplexNorm final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply contrast effect.
+class Contrast final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] enhancement_amount Controls the amount of the enhancement (Default: 75.0).
+  explicit Contrast(float enhancement_amount = 75.0);
+
+  /// \brief Destructor.
+  ~Contrast() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief FrequencyMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the frequency domain.
 class FrequencyMasking final : public TensorTransform {

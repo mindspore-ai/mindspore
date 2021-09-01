@@ -25,8 +25,8 @@ import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_lowpass_biquad, check_masking, \
-    check_time_stretch
+    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_contrast, check_lowpass_biquad, \
+    check_masking, check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -266,6 +266,32 @@ class ComplexNorm(AudioTensorOperation):
 
     def parse(self):
         return cde.ComplexNormOperation(self.power)
+
+
+class Contrast(AudioTensorOperation):
+    """
+    Apply contrast effect. Similar to SoX implementation.
+    Comparable with compression, this effect modifies an audio signal to make it sound louder.
+
+    Args:
+        enhancement_amount (float): Controls the amount of the enhancement. Allowed range is [0, 100] (default=75.0).
+            Note that enhancement_amount equal to 0 still gives a significant contrast enhancement.
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Contrast()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_contrast
+    def __init__(self, enhancement_amount=75.0):
+        self.enhancement_amount = enhancement_amount
+
+    def parse(self):
+        return cde.ContrastOperation(self.enhancement_amount)
 
 
 class FrequencyMasking(AudioTensorOperation):
