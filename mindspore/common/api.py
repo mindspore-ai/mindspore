@@ -211,7 +211,8 @@ class _MindsporeFunctionExecutor:
         if context.get_context("mode") == context.PYNATIVE_MODE:
             _pynative_executor.set_graph_phase(phase)
             _pynative_executor.grad_ms_function(output, *new_inputs)
-            output = output[0]
+            if phase.find("export") == -1:
+                output = output[0]
 
         return output
 
