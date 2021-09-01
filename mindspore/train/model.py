@@ -258,7 +258,15 @@ class Model:
             self._eval_indexes = eval_indexes
         else:
             if self._loss_fn is None:
-                raise ValueError("loss_fn can not be None.")
+                raise ValueError(f"If `metrics` is set, `eval_network` must not be None. Do not set `metrics` if you"
+                                 f" don't want an evaluation.\n"
+                                 f"If evaluation is required, you need to specify `eval_network`, which will be used in"
+                                 f" the framework to evaluate the model.\n"
+                                 f"For the simple scenarios with one data, one label and one logits, `eval_network` is"
+                                 f" optional, and then you can set `eval_network` or `loss_fn`. For the latter case,"
+                                 f" framework will automatically build an evaluation network with `network` and"
+                                 f" `loss_fn`.")
+
             self._eval_network = nn.WithEvalCell(self._network, self._loss_fn, self._amp_level in ["O2", "O3", "auto"])
             self._eval_indexes = [0, 1, 2]
 
