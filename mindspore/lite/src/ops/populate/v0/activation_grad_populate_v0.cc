@@ -23,7 +23,7 @@ namespace lite {
 namespace {
 OpParameter *PopulateActivationGradParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   auto activation_grad_prim = primitive->value_as_ActivationGrad();
   if (activation_grad_prim == nullptr) {
     MS_LOG(ERROR) << "activation_grad_prim is nullptr";

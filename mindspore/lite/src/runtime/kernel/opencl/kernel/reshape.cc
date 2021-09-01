@@ -50,8 +50,6 @@ int ReshapeOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Reshape output size should in 0-4, actual: " << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
-  CHECK_LESS_RETURN(in_tensors_[0]->shape().size(), 1);
-  CHECK_LESS_RETURN(out_tensors_[0]->shape().size(), 1);
   return RET_OK;
 }
 
