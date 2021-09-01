@@ -251,5 +251,5 @@ def test_sparse_attention():
     q = Tensor(np.ones((2, 1024, 512)), dtype.float16)
     k = Tensor(np.ones((2, 1024, 512)), dtype.float16)
     v = Tensor(np.ones((2, 1024, 512)), dtype.float16)
-    mask = Tensor(np.ones((2, 1024)), dtype.float32)
+    mask = Tensor(np.ones((2, 1024, 1024)), dtype.float32)
     _cell_graph_executor.compile(model, q, k, v, mask)
