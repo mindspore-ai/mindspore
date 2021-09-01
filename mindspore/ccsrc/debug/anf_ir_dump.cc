@@ -64,12 +64,25 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &nd) {
     return;
   }
 
+  ValuePtr tensor_value = nullptr;
+  auto abstract = nd->abstract();
+  if (abstract != nullptr && abstract->isa<abstract::AbstractTensor>()) {
+    tensor_value = abstract->BuildValue();
+  }
   abstract::ShapePtr shape = dyn_cast<abstract::Shape>(nd->Shape());
   TypePtr type = dyn_cast<Type>(nd->Type());
   if ((shape != nullptr) && (type != nullptr)) {
-    buffer << "<" << type << "x" << shape->ToString() << ">";
+    buffer << "<" << type << ", " << shape->ToString();
+    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+      buffer << ", value=...";
+    }
+    buffer << ">";
   } else if (type != nullptr) {
-    buffer << "<" << type << ">";
+    buffer << "<" << type;
+    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+      buffer << ", value=...";
+    }
+    buffer << ">";
   } else {
     buffer << "<null>";
   }

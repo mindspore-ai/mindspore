@@ -57,13 +57,24 @@ std::string GetKernelNodeName(const AnfNodePtr &anf_node) {
 // ============================================= MindSpore IR Exporter =============================================
 
 std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
+  ValuePtr tensor_value = nullptr;
+  auto abstract = nd->abstract();
+  if (abstract != nullptr && abstract->isa<abstract::AbstractTensor>()) {
+    tensor_value = abstract->BuildValue();
+  }
   abstract::ShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(nd->Shape());
   TypePtr type = dyn_cast<Type>(nd->Type());
   std::ostringstream oss;
   if ((shape != nullptr) && (type != nullptr)) {
     oss << type->DumpText() << shape->DumpText();
+    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+      oss << "(...)";
+    }
   } else if (type != nullptr) {
     oss << type->DumpText();
+    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+      oss << "(...)";
+    }
   } else {
     oss << "Undefined";
   }

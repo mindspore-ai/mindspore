@@ -297,8 +297,8 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     const AnfNodePtr &node = inputs[i];
     args_conf_list.push_back(MakeConfig(node, conf->context(), conf->func_graph()));
   }
-  std::vector<EvaluatorPtr> evaluators;
 
+  std::vector<EvaluatorPtr> evaluators;
   auto build_evaluator = [this, &evaluators, &cnode](const AbstractFuncAtomPtr &poss) {
     auto evaluator = this->GetEvaluatorFor(poss);
     evaluator->set_bound_node(cnode);
