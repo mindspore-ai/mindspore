@@ -36,7 +36,7 @@ class LossScaleManager:
 
 class FixedLossScaleManager(LossScaleManager):
     """
-    Fixed loss-scale manager.
+    Loss scale with a fixed value, inherits from LossScaleManager.
 
     Args:
         loss_scale (float): Loss scale. Note that if `drop_overflow_update` is set to False, the value of `loss_scale`
@@ -107,7 +107,7 @@ class FixedLossScaleManager(LossScaleManager):
 
 class DynamicLossScaleManager(LossScaleManager):
     """
-    Dynamic loss-scale manager.
+    Loss scale that dynamically adjusts itself, inherits from LossScaleManager.
 
     Args:
         init_loss_scale (float): Initialize loss scale. Default: 2**24.
