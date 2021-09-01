@@ -113,6 +113,7 @@ std::map<std::string, uint32_t> AscendKernelRuntime::overflow_tasks_;
 AscendKernelRuntime::~AscendKernelRuntime() {
   graph_model_map_.clear();
   current_graph_ = nullptr;
+  rt_context_ = nullptr;
 }
 
 void AscendKernelRuntime::SetContext() {
@@ -405,7 +406,9 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   vector<std::shared_ptr<TaskInfo>> task_info_list;
   auto anf_node_list = graph->execution_order();
   auto task_generator = TaskGenerator();
-  task_generator.GenTasks(anf_node_list, &task_info_list, graph->graph_id());
+  if (!task_generator.GenTasks(anf_node_list, &task_info_list, graph->graph_id())) {
+    return false;
+  }
   // Store the task_info_list
   auto insert_ret = task_map_.insert(std::make_pair(graph->graph_id(), task_info_list));
   if (!insert_ret.second) {
@@ -741,7 +744,7 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
 
 void AscendKernelRuntime::CreateContext() {
   if (rt_context_ == nullptr) {
-    auto ret = rtCtxCreate(&rt_context_, 0, device_id_);
+    auto ret = rtCtxCreate(&rt_context_, 0, UintToInt(device_id_));
     if (ret != RT_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "Call rtCtxCreate, ret[" << static_cast<int>(ret) << "]";
     }
@@ -756,7 +759,7 @@ bool AscendKernelRuntime::InitDevice() {
     MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
   }
 
-  ret = rtSetDevice(device_id_);
+  ret = rtSetDevice(UintToInt(device_id_));
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
@@ -811,7 +814,7 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
     communication_stream_ = nullptr;
   }
 
-  ret = rtDeviceReset(device_id);
+  ret = rtDeviceReset(UintToInt(device_id));
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtDeviceReset, ret[" << ret << "]";
   }
@@ -924,12 +927,14 @@ uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {
   return ascend_mem_manager->GetDeviceMemSize();
 }
 
-bool AscendKernelRuntime::DeleteDumpDir(std::string path) {
+bool AscendKernelRuntime::DeleteDumpDir(const std::string &path) {
   string real_path = GetRealPath(path);
   if (DeleteDumpFile(real_path) == -1) {
     return false;
   }
-  rmdir(real_path.c_str());
+  if (rmdir(real_path.c_str()) == -1) {
+    MS_LOG(WARNING) << "Delete dir " << real_path << " failed!";
+  }
   return true;
 }
 
@@ -959,12 +964,14 @@ int AscendKernelRuntime::DeleteDumpFile(std::string path) {
         rmdir(filepath.c_str());
       }
     }
-    closedir(dir);
+    if (closedir(dir) == -1) {
+      MS_LOG(WARNING) << "Dump dir " << path << " close failed!";
+    }
   }
   return result;
 }
 
-std::string AscendKernelRuntime::GetRealPath(std::string path) {
+std::string AscendKernelRuntime::GetRealPath(const std::string &path) {
   char real_path_mem[kPathMax] = {0};
   char *real_path_ret = realpath(path.c_str(), real_path_mem);
   if (real_path_ret == nullptr) {

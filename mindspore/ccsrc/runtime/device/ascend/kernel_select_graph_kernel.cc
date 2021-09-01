@@ -137,7 +137,7 @@ std::vector<size_t> GetReducedFracNZShape(const std::vector<size_t> &ori_shape, 
   std::vector<size_t> result;
   std::set<size_t> positive_idx;
   for (const auto &a : axis) {
-    positive_idx.insert(a >= 0 ? a : ori_shape.size() + a);
+    positive_idx.insert(a >= 0 ? LongToSize(a) : ori_shape.size() + LongToSize(a));
   }
   for (size_t i = 0; i < ori_shape.size(); ++i) {
     if (positive_idx.count(i) == 0) {
@@ -263,9 +263,9 @@ void UpdateInputsKernelInfo(const CNodePtr &kernel_node, const std::vector<AnfNo
         }
       }
       if (can_convert) {
-        graph_input_format->push_back(default_format);
+        graph_input_format->emplace_back(default_format);
       } else {
-        graph_input_format->push_back(kOpFormat_DEFAULT);
+        graph_input_format->emplace_back(kOpFormat_DEFAULT);
       }
       graph_input_type->push_back(AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, i));
       continue;
@@ -302,8 +302,7 @@ void UpdateInputsKernelInfo(const CNodePtr &kernel_node, const std::vector<AnfNo
   }
 }
 
-void UpdateEquivFormat(const std::vector<std::pair<AnfNodePtr, size_t>> &output_index,
-                       const std::vector<AnfNodePtr> &node_list, const FuncGraphPtr &func_graph,
+void UpdateEquivFormat(const std::vector<AnfNodePtr> &node_list, const FuncGraphPtr &func_graph,
                        const FuncGraphManagerPtr &mng) {
   MS_EXCEPTION_IF_NULL(mng);
   for (size_t i = 0; i < node_list.size(); ++i) {
@@ -324,7 +323,6 @@ void UpdateEquivFormat(const std::vector<std::pair<AnfNodePtr, size_t>> &output_
     if (out_format == kOpFormat_DEFAULT || !AnfAlgo::HasNodeAttr(kAttrOutputDefault, cnode)) {
       continue;
     }
-    auto infer_shape = AnfAlgo::GetOutputInferShape(cnode, 0);
     // Insert EquivFormat node, then select kernel info again
     std::vector<AnfNodePtr> trans_inputs;
     trans_inputs.push_back(NewValueNode(prim::kPrimEquivFormat));
@@ -510,8 +508,7 @@ void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func
   if (mng == nullptr) {
     mng = Manage(func_graph, true);
   }
-  auto output_index = kernel::GetOutputIndex(node_list, input_list, output_list);
-  UpdateEquivFormat(output_index, node_list, func_graph, mng);
+  UpdateEquivFormat(node_list, func_graph, mng);
   node_list.clear();
   input_list.clear();
   output_list.clear();
@@ -526,7 +523,7 @@ void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func
   // set fix_precision for kernel when the me prim has fix_precision attr
   UpdateKernelInfo(node_list);
 
-  output_index = kernel::GetOutputIndex(node_list, input_list, output_list);
+  auto output_index = kernel::GetOutputIndex(node_list, input_list, output_list);
   SetGraphKernelInfo(kernel_node, output_index, graph_input_format, graph_input_type);
 }
 }  // namespace ascend
