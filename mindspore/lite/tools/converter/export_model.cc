@@ -28,6 +28,8 @@
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/graph/control_flow_pass.h"
+#include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -72,8 +74,10 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
       } else {
         mirror_monad = std::make_shared<IOMonad>();
       }
+      MS_CHECK_TRUE_RET(mirror_monad != nullptr, nullptr);
       auto monad_abs = mirror_monad->ToAbstract();
       auto mirror_value_node = NewValueNode(mirror_monad);
+      MS_CHECK_TRUE_RET(mirror_value_node != nullptr, nullptr);
       mirror_value_node->set_abstract(monad_abs);
       return mirror_value_node;
     }
@@ -96,6 +100,7 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
   }
   ShapeVector shape_vec(data_info.shape_.begin(), data_info.shape_.end());
   auto tensor_info = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_info.data_type_), shape_vec);
+  MS_CHECK_TRUE_RET(tensor_info != nullptr, nullptr);
   if (!data_info.data_.empty()) {
     auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
     if (memcpy_s(tensor_data, tensor_info->data().nbytes(), data_info.data_.data(), data_info.data_.size()) != EOK) {
@@ -104,6 +109,7 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
     }
   }
   auto mirror_parameter = mirror_graph->add_parameter();
+  MS_CHECK_TRUE_RET(mirror_parameter != nullptr, nullptr);
   if (node->abstract() != nullptr) {
     mirror_parameter->set_abstract(node->abstract()->Clone());
   }
@@ -122,6 +128,7 @@ PrimitivePtr ClonePrimitive(const CNodePtr &cnode) {
     prim = op_primc_fns[origin_prim->name()]();
   } else {
     prim = std::make_shared<PrimitiveC>(origin_prim->name());
+    MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
     prim->set_instance_name(origin_prim->name());
   }
   prim->SetAttrs(origin_prim->attrs());
@@ -131,6 +138,7 @@ PrimitivePtr ClonePrimitive(const CNodePtr &cnode) {
 FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *flags) {
   MS_ASSERT(graph != nullptr);
   auto mirror_graph = std::make_shared<FuncGraph>();
+  MS_CHECK_TRUE_RET(mirror_graph != nullptr, nullptr);
   mirror_graph->set_attrs(graph->attrs());
   NodesMap origin_nodes;
   NodesMap mirror_nodes;
@@ -145,6 +153,7 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
     std::vector<AnfNodePtr> node_inputs;
     for (size_t i = 1; i < cnode->size(); ++i) {
       auto origin_input = cnode->input(i);
+      MS_CHECK_TRUE_RET(origin_input != nullptr, nullptr);
       AnfNodePtr mirror_input = nullptr;
       auto value = origin_nodes[origin_input->fullname_with_scope()];
       auto iter = std::find(value.begin(), value.end(), origin_input);
@@ -169,6 +178,7 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
       node_inputs.push_back(mirror_input);
     }
     auto mirror_cnode = mirror_graph->NewCNode(mirrro_prim, node_inputs);
+    MS_CHECK_TRUE_RET(mirror_cnode != nullptr, nullptr);
     mirror_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
     if (cnode->abstract() != nullptr) {
       mirror_cnode->set_abstract(cnode->abstract()->Clone());
@@ -197,7 +207,9 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     return RET_ERROR;
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
+  CHECK_NULL_RETURN(graph_pm);
   if (flags->fmk == converter::kFmkTypeTflite || flags->fmk == converter::kFmkTypeTf ||
       flags->fmk == converter::kFmkTypeOnnx) {
     graph_pm->AddPass(std::make_shared<opt::ControlFlowPass>());
@@ -213,6 +225,7 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     return RET_ERROR;
   }
   auto metagraph_transform = std::make_unique<GraphDefTransform>();
+  CHECK_NULL_RETURN(metagraph_transform);
   metagraph_transform->SetGraphDef(meta_graph);
   auto status = metagraph_transform->Transform(*flags);
   if (status != RET_OK) {
