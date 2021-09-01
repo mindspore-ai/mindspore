@@ -26,11 +26,12 @@ namespace mindspore {
 namespace opt {
 class TransposeFusion : public MultiplePatternProcessPass {
  public:
-  explicit TransposeFusion(const std::string &name = "transpose_fusion", bool multigraph = true)
+  explicit TransposeFusion(const std::string &name = "TransposeFusion", bool multigraph = true)
       : MultiplePatternProcessPass(name, multigraph) {}
 
   ~TransposeFusion() override = default;
 
+ private:
   std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
   VectorRef DefineBNPattern() const;
   VectorRef DefineActivationPattern() const;

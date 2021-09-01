@@ -131,10 +131,10 @@ void ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
 const AnfNodePtr EliminateConcatSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                const EquivPtr &) const {
   MS_LOG(DEBUG) << "Enter EliminateConcatSplit pass process";
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK) {
+  if (func_graph == nullptr) {
     return nullptr;
   }
-  if (CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (node == nullptr) {
     return nullptr;
   }
   auto split_cnode = node->cast<CNodePtr>();

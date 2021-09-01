@@ -26,6 +26,7 @@
 #include "tools/common/tensor_util.h"
 #include "utils/utils.h"
 #include "securec/include/securec.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,6 +37,57 @@ constexpr size_t kBodyNodesNum = 69;
 constexpr size_t kBodyCNodesNum = 25;
 constexpr auto kGateNum = 2;
 const auto &p1 = std::placeholders::_1;
+VectorRef GenerateBodyGraphHiddenPattern(const BaseRef &sigmoid1, const BaseRef &get_item,
+                                         const std::vector<CondVarPtr> &placeholders) {
+  MS_CHECK_TRUE_RET(placeholders.size() >= kCondCNodesNum, {});
+  auto is_var_split = std::make_shared<Var>("Split");
+  MS_CHECK_TRUE_RET(is_var_split != nullptr, {});
+  VectorRef split = VectorRef({is_var_split, sigmoid1});
+  auto is_var_tuple_getitem1 = std::make_shared<Var>("TupleGetItem");
+  MS_CHECK_TRUE_RET(is_var_tuple_getitem1 != nullptr, {});
+  auto is_var4 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var4 != nullptr, {});
+  VectorRef get_item1 = VectorRef({is_var_tuple_getitem1, split, is_var4});
+  auto is_var_tuple_getitem2 = std::make_shared<Var>("TupleGetItem");
+  MS_CHECK_TRUE_RET(is_var_tuple_getitem2 != nullptr, {});
+  auto is_var5 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var5 != nullptr, {});
+  VectorRef get_item2 = VectorRef({is_var_tuple_getitem2, split, is_var5});
+
+  auto is_var_mul1 = std::make_shared<Var>("Mul");
+  MS_CHECK_TRUE_RET(is_var_mul1 != nullptr, {});
+  VectorRef pre_reset = VectorRef({is_var_mul1, get_item1, placeholders[4]});
+  auto is_var_concat = std::make_shared<Var>("Concat");
+  MS_CHECK_TRUE_RET(is_var_concat != nullptr, {});
+  VectorRef concat2 = VectorRef({is_var_concat, get_item, pre_reset});
+  auto is_var_matmul2 = std::make_shared<Var>("Matmul");
+  MS_CHECK_TRUE_RET(is_var_matmul2 != nullptr, {});
+  VectorRef matmul2 = VectorRef({is_var_matmul2, concat2, placeholders[10]});
+  auto is_var_biasadd2 = std::make_shared<Var>("BiasAdd");
+  MS_CHECK_TRUE_RET(is_var_biasadd2 != nullptr, {});
+  VectorRef biasadd2 = VectorRef({is_var_biasadd2, matmul2, placeholders[11]});
+  auto is_var_tanh = std::make_shared<Var>("Tanh");
+  MS_CHECK_TRUE_RET(is_var_tanh != nullptr, {});
+  VectorRef tanh = VectorRef({is_var_tanh, biasadd2});
+
+  auto is_var_mul2 = std::make_shared<Var>("Mul");
+  MS_CHECK_TRUE_RET(is_var_mul2 != nullptr, {});
+  VectorRef update_hidden = VectorRef({is_var_mul2, get_item2, placeholders[4]});
+  auto is_var_sub = std::make_shared<Var>("Sub");
+  MS_CHECK_TRUE_RET(is_var_sub != nullptr, {});
+  auto is_param = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param != nullptr, {});
+  VectorRef minus_update = VectorRef({is_var_sub, is_param, get_item2});
+  auto is_var_mul3 = std::make_shared<Var>("Mul");
+  MS_CHECK_TRUE_RET(is_var_mul3 != nullptr, {});
+  VectorRef updated = VectorRef({is_var_mul3, minus_update, tanh});
+
+  auto is_var_add = std::make_shared<Var>("Add");
+  MS_CHECK_TRUE_RET(is_var_add != nullptr, {});
+  VectorRef new_hidden = VectorRef({is_var_add, update_hidden, updated});
+
+  return new_hidden;
+}
 }  // namespace
 
 TfBidirectionGruFusion::TfBidirectionGruFusion(int num_fw_vars, int num_bw_vars, const std::string &name,
@@ -61,141 +113,251 @@ TfBidirectionGruFusion::TfBidirectionGruFusion(int num_fw_vars, int num_bw_vars,
   bw_init_state_ = std::make_shared<Var>();
 }
 
+const VectorRef TfBidirectionGruFusion::DefineFowardPattern() const {
+  auto is_reduce = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReduceFusion));
+  MS_CHECK_TRUE_RET(is_reduce != nullptr, {});
+  auto is_param1 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
+  auto fw_reduce = VectorRef({is_reduce, input_length_, is_param1});
+  auto is_maximum = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMaximum));
+  MS_CHECK_TRUE_RET(is_maximum != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
+  auto fw_max = VectorRef({is_maximum, is_param2, fw_reduce});
+
+  auto is_shape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimShape));
+  MS_CHECK_TRUE_RET(is_shape != nullptr, {});
+  auto fw_shape = VectorRef({is_shape, transpose_input_});
+  auto is_strided_slice = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice));
+  MS_CHECK_TRUE_RET(is_strided_slice != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  auto fw_stride = VectorRef({is_strided_slice, fw_shape, is_seq_var});
+  auto is_minimum = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMinimum));
+  MS_CHECK_TRUE_RET(is_minimum != nullptr, {});
+  auto fw_min = VectorRef({is_minimum, fw_stride, fw_max});
+  auto is_tensor_list_reserve = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListReserve));
+  MS_CHECK_TRUE_RET(is_tensor_list_reserve != nullptr, {});
+  auto is_param3 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param3 != nullptr, {});
+  auto fw_reserve = VectorRef({is_tensor_list_reserve, is_param3, fw_stride});
+  auto is_tensor_list_from_tensor = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListFromTensor));
+  MS_CHECK_TRUE_RET(is_tensor_list_from_tensor != nullptr, {});
+  auto is_param4 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param4 != nullptr, {});
+  auto fw_from_tensor = VectorRef({is_tensor_list_from_tensor, transpose_input_, is_param4});
+  auto is_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimWhile));
+  MS_CHECK_TRUE_RET(is_while != nullptr, {});
+  auto is_param5 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param5 != nullptr, {});
+  auto is_param6 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param6 != nullptr, {});
+  auto fw_while = VectorRef({is_while, fw_vars_[0], fw_vars_[1], is_param5, fw_stride, is_param6, fw_reserve,
+                             fw_init_state_, fw_min, fw_from_tensor, input_length_});
+  fw_while.insert(fw_while.end(), fw_vars_.begin() + 2, fw_vars_.end());
+  auto is_var1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var1 != nullptr, {});
+  fw_while.emplace_back(is_var1);
+  auto is_tuple_getitem = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTupleGetItem));
+  MS_CHECK_TRUE_RET(is_tuple_getitem != nullptr, {});
+  auto is_var2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var2 != nullptr, {});
+  auto fw_get_item = VectorRef({is_tuple_getitem, fw_while, is_var2});
+  auto is_tensor_list_stack = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListStack));
+  MS_CHECK_TRUE_RET(is_tensor_list_stack != nullptr, {});
+  auto is_param7 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param7 != nullptr, {});
+  auto fw_stack = VectorRef({is_tensor_list_stack, fw_get_item, is_param7});
+  auto is_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_var3 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var3 != nullptr, {});
+  auto fw_out_trans = VectorRef({is_transpose, fw_stack, is_var3});
+  return fw_out_trans;
+}
+
+const VectorRef TfBidirectionGruFusion::DefinebackwardPattern() const {
+  auto is_reverse_sequence = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReverseSequence));
+  MS_CHECK_TRUE_RET(is_reverse_sequence != nullptr, {});
+  auto bw_reverse_seq = VectorRef({is_reverse_sequence, input_, input_length_});
+  auto is_reduce = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReduceFusion));
+  MS_CHECK_TRUE_RET(is_reduce != nullptr, {});
+  auto is_param1 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
+  auto bw_max1 = VectorRef({is_reduce, input_length_, is_param1});
+  auto is_maximum = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMaximum));
+  MS_CHECK_TRUE_RET(is_maximum != nullptr, {});
+  auto is_param2 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, {});
+  auto bw_max2 = VectorRef({is_maximum, is_param2, bw_max1});
+  auto is_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_var1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var1 != nullptr, {});
+  auto bw_trans = VectorRef({is_transpose, bw_reverse_seq, is_var1});
+  auto is_shape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimShape));
+  MS_CHECK_TRUE_RET(is_shape != nullptr, {});
+  auto bw_shape = VectorRef({is_shape, bw_trans});
+  auto is_strided_slice = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice));
+  MS_CHECK_TRUE_RET(is_strided_slice != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  auto bw_stride = VectorRef({is_strided_slice, bw_shape, is_seq_var});
+  auto is_minimum = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMinimum));
+  MS_CHECK_TRUE_RET(is_minimum != nullptr, {});
+  auto bw_min = VectorRef({is_minimum, bw_stride, bw_max2});
+  auto is_tensor_list_reserve = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListReserve));
+  MS_CHECK_TRUE_RET(is_tensor_list_reserve != nullptr, {});
+  auto is_param3 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param3 != nullptr, {});
+  auto bw_reserve = VectorRef({is_tensor_list_reserve, is_param3, bw_stride});
+  auto is_tensor_list_from_tensor = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListFromTensor));
+  MS_CHECK_TRUE_RET(is_tensor_list_from_tensor != nullptr, {});
+  auto is_param4 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param4 != nullptr, {});
+  auto bw_from_tensor = VectorRef({is_tensor_list_from_tensor, bw_trans, is_param4});
+  auto is_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimWhile));
+  MS_CHECK_TRUE_RET(is_while != nullptr, {});
+  auto is_param5 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param5 != nullptr, {});
+  auto is_param6 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param6 != nullptr, {});
+  auto bw_while = VectorRef({is_while, bw_vars_[0], bw_vars_[1], is_param5, bw_stride, is_param6, bw_reserve,
+                             bw_init_state_, bw_min, bw_from_tensor, input_length_});
+  bw_while.insert(bw_while.end(), bw_vars_.begin() + 2, bw_vars_.end());
+  auto is_var2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var2 != nullptr, {});
+  bw_while.emplace_back(is_var2);
+  auto is_tuple_getitem = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTupleGetItem));
+  MS_CHECK_TRUE_RET(is_tuple_getitem != nullptr, {});
+  auto is_var3 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var3 != nullptr, {});
+  auto bw_get_item = VectorRef({is_tuple_getitem, bw_while, is_var3});
+  auto is_tensor_list_stack = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListStack));
+  MS_CHECK_TRUE_RET(is_tensor_list_stack != nullptr, {});
+  auto is_param7 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param7 != nullptr, {});
+  auto bw_stack = VectorRef({is_tensor_list_stack, bw_get_item, is_param7});
+  auto is_var4 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var4 != nullptr, {});
+  auto bw_out_trans = VectorRef({is_transpose, bw_stack, is_var4});
+  auto bw_reverse1 = VectorRef({is_reverse_sequence, bw_out_trans, input_length_});
+  return bw_reverse1;
+}
+
 const BaseRef TfBidirectionGruFusion::DefinePattern() const {
   // forward
-  auto fw_reduce = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReduceFusion)),
-                              input_length_, std::make_shared<CondVar>(IsParameterNode)});
-  auto fw_max = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMaximum)),
-                           std::make_shared<CondVar>(IsParameterNode), fw_reduce});
-
-  auto fw_shape = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimShape)), transpose_input_});
-  auto fw_stride = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice)), fw_shape,
-                              std::make_shared<SeqVar>()});
-  auto fw_min = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMinimum)), fw_stride, fw_max});
-
-  auto fw_reserve = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListReserve)),
-                               std::make_shared<CondVar>(IsParameterNode), fw_stride});
-  auto fw_from_tensor = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListFromTensor)),
-                                   transpose_input_, std::make_shared<CondVar>(IsParameterNode)});
-  auto is_fw_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimWhile));
-  auto fw_while = VectorRef({is_fw_while, fw_vars_[0], fw_vars_[1], std::make_shared<CondVar>(IsParameterNode),
-                             fw_stride, std::make_shared<CondVar>(IsParameterNode), fw_reserve, fw_init_state_, fw_min,
-                             fw_from_tensor, input_length_});
-  fw_while.insert(fw_while.end(), fw_vars_.begin() + 2, fw_vars_.end());
-  fw_while.emplace_back(std::make_shared<Var>());
-  auto fw_get_item = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTupleGetItem)), fw_while, std::make_shared<Var>()});
-  auto fw_stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListStack)),
-                             fw_get_item, std::make_shared<CondVar>(IsParameterNode)});
-  auto fw_out_trans = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), fw_stack, std::make_shared<Var>()});
+  BaseRef b = nullptr;
+  auto fw_out_trans = DefineFowardPattern();
+  MS_CHECK_TRUE_RET(!fw_out_trans.empty(), {});
 
   // backward
-  auto bw_reverse_seq =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReverseSequence)), input_, input_length_});
-  auto bw_max1 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReduceFusion)), input_length_,
-                            std::make_shared<CondVar>(IsParameterNode)});
-  auto bw_max2 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMaximum)),
-                            std::make_shared<CondVar>(IsParameterNode), bw_max1});
-  auto bw_trans = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), bw_reverse_seq,
-                             std::make_shared<Var>()});
-  auto bw_shape = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimShape)), bw_trans});
-  auto bw_stride = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice)), bw_shape,
-                              std::make_shared<SeqVar>()});
-  auto bw_min = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMinimum)), bw_stride, bw_max2});
-  auto bw_reserve = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListReserve)),
-                               std::make_shared<CondVar>(IsParameterNode), bw_stride});
-  auto bw_from_tensor = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListFromTensor)),
-                                   bw_trans, std::make_shared<CondVar>(IsParameterNode)});
-  auto is_bw_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimWhile));
-  auto bw_while = VectorRef({is_bw_while, bw_vars_[0], bw_vars_[1], std::make_shared<CondVar>(IsParameterNode),
-                             bw_stride, std::make_shared<CondVar>(IsParameterNode), bw_reserve, bw_init_state_, bw_min,
-                             bw_from_tensor, input_length_});
-  bw_while.insert(bw_while.end(), bw_vars_.begin() + 2, bw_vars_.end());
-  bw_while.emplace_back(std::make_shared<Var>());
-  auto bw_get_item = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTupleGetItem)), bw_while, std::make_shared<Var>()});
-  auto bw_stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListStack)),
-                             bw_get_item, std::make_shared<CondVar>(IsParameterNode)});
-  auto bw_out_trans = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), bw_stack, std::make_shared<Var>()});
-  auto bw_reverse1 = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReverseSequence)), bw_out_trans, input_length_});
+  auto bw_reverse1 = DefinebackwardPattern();
+  MS_CHECK_TRUE_RET(!bw_reverse1.empty(), {});
 
-  auto concat =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimConcat)), fw_out_trans, bw_reverse1});
+  auto is_concat = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimConcat));
+  MS_CHECK_TRUE_RET(is_concat != nullptr, {});
+  auto concat = VectorRef({is_concat, fw_out_trans, bw_reverse1});
   return concat;
 }
 
 AnfNodePtr TfBidirectionGruFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
-  auto is_parameter1 = std::make_shared<CondVar>(IsParameterNode);
-  auto is_parameter2 = std::make_shared<CondVar>(IsParameterNode);
-  auto is_parameter3 = std::make_shared<CondVar>(IsParameterNode);
-  auto is_parameter4 = std::make_shared<CondVar>(IsParameterNode);
+  MS_ASSERT(primitive_vars != nullptr);
   auto is_less1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
+  MS_CHECK_TRUE_RET(is_less1 != nullptr, nullptr);
+  auto is_param1 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, nullptr);
+  auto is_param2 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, nullptr);
+  VectorRef less1_ref = VectorRef({is_less1, is_param1, is_param2});
   auto is_less2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
+  MS_CHECK_TRUE_RET(is_less2 != nullptr, nullptr);
+  auto is_param3 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param3 != nullptr, nullptr);
+  auto is_param4 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param4 != nullptr, nullptr);
+  VectorRef less2_ref = VectorRef({is_less2, is_param3, is_param4});
   auto is_logical_and = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLogicalAnd));
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReturn));
-  VectorRef less1_ref = VectorRef({is_less1, is_parameter1, is_parameter2});
-  VectorRef less2_ref = VectorRef({is_less2, is_parameter3, is_parameter4});
+  MS_CHECK_TRUE_RET(is_logical_and != nullptr, nullptr);
   VectorRef logicaland_ref = VectorRef({is_logical_and, less1_ref, less2_ref});
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReturn));
+  MS_CHECK_TRUE_RET(is_return != nullptr, nullptr);
   VectorRef return_ref = VectorRef({is_return, logicaland_ref});
-  VarPtr fg = std::make_shared<Var>("RootG");
-  auto pattern = SexpToNode(return_ref, fg, primitive_vars.get(), true);
+  VarPtr is_fg = std::make_shared<Var>("RootG");
+  auto pattern = SexpToNode(return_ref, is_fg, primitive_vars.get(), true);
   return pattern;
 }
 
 AnfNodePtr TfBidirectionGruFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
+  MS_ASSERT(primitive_vars != nullptr);
   std::vector<CondVarPtr> placeholders;
   for (int i = 0; i < 13; ++i) {
-    placeholders.emplace_back(std::make_shared<CondVar>(IsParameterNode));
+    auto is_param_placeholder = std::make_shared<CondVar>(IsParameterNode);
+    MS_CHECK_TRUE_RET(is_param_placeholder != nullptr, nullptr);
+    placeholders.emplace_back(is_param_placeholder);
   }
-  VectorRef add = VectorRef({std::make_shared<Var>(), placeholders[2], std::make_shared<CondVar>(IsParameterNode)});
-  VectorRef add1 = VectorRef({std::make_shared<Var>(), placeholders[0], std::make_shared<CondVar>(IsParameterNode)});
+  auto is_var1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var1 != nullptr, nullptr);
+  auto is_param1 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param1 != nullptr, nullptr);
+  VectorRef add = VectorRef({is_var1, placeholders[2], is_param1});
+  auto is_var2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var2 != nullptr, nullptr);
+  auto is_param2 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param2 != nullptr, nullptr);
+  VectorRef add1 = VectorRef({is_var2, placeholders[0], is_param2});
 
-  VectorRef get_item = VectorRef(
-    {std::make_shared<Var>("GetItem"), placeholders[6], placeholders[2], std::make_shared<CondVar>(IsParameterNode)});
-  VectorRef concat_input_h = VectorRef({std::make_shared<Var>(), get_item, placeholders[4]});
+  auto is_getitem = std::make_shared<Var>("GetItem");
+  MS_CHECK_TRUE_RET(is_getitem != nullptr, nullptr);
+  auto is_param3 = std::make_shared<CondVar>(IsParameterNode);
+  MS_CHECK_TRUE_RET(is_param3 != nullptr, nullptr);
+  VectorRef get_item = VectorRef({is_getitem, placeholders[6], placeholders[2], is_param3});
+  auto is_var3 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var3 != nullptr, nullptr);
+  VectorRef concat_input_h = VectorRef({is_var3, get_item, placeholders[4]});
 
-  VectorRef matmul1 = VectorRef({std::make_shared<Var>("Matmul"), concat_input_h, placeholders[8]});
-  VectorRef biasadd1 = VectorRef({std::make_shared<Var>("BiasAdd"), matmul1, placeholders[9]});
-  VectorRef sigmoid1 = VectorRef({std::make_shared<Var>("Sigmoid"), biasadd1});
+  auto is_var_matmul1 = std::make_shared<Var>("Matmul");
+  MS_CHECK_TRUE_RET(is_var_matmul1 != nullptr, nullptr);
+  VectorRef matmul1 = VectorRef({is_var_matmul1, concat_input_h, placeholders[8]});
+  auto is_var_biasadd1 = std::make_shared<Var>("BiasAdd");
+  MS_CHECK_TRUE_RET(is_var_biasadd1 != nullptr, nullptr);
+  VectorRef biasadd1 = VectorRef({is_var_biasadd1, matmul1, placeholders[9]});
+  auto is_var_sigmoid = std::make_shared<Var>("Sigmoid");
+  MS_CHECK_TRUE_RET(is_var_sigmoid != nullptr, nullptr);
+  VectorRef sigmoid1 = VectorRef({is_var_sigmoid, biasadd1});
 
-  VectorRef split = VectorRef({std::make_shared<Var>("Split"), sigmoid1});
-  VectorRef get_item1 = VectorRef({std::make_shared<Var>("TupleGetItem"), split, std::make_shared<Var>()});
-  VectorRef get_item2 = VectorRef({std::make_shared<Var>("TupleGetItem"), split, std::make_shared<Var>()});
+  auto new_hidden = GenerateBodyGraphHiddenPattern(sigmoid1, get_item, placeholders);
+  MS_CHECK_TRUE_RET(!new_hidden.empty(), nullptr);
 
-  VectorRef pre_reset = VectorRef({std::make_shared<Var>("Mul"), get_item1, placeholders[4]});
-  VectorRef concat2 = VectorRef({std::make_shared<Var>("Concat"), get_item, pre_reset});
-  VectorRef matmul2 = VectorRef({std::make_shared<Var>("Matmul"), concat2, placeholders[10]});
-  VectorRef biasadd2 = VectorRef({std::make_shared<Var>("BiasAdd"), matmul2, placeholders[11]});
-  VectorRef tanh = VectorRef({std::make_shared<Var>("Tanh"), biasadd2});
+  auto is_var_ge = std::make_shared<Var>("GreaterEqual");
+  MS_CHECK_TRUE_RET(is_var_ge != nullptr, nullptr);
+  VectorRef greater_equal = VectorRef({is_var_ge, placeholders[2], placeholders[7]});
 
-  VectorRef update_hidden = VectorRef({std::make_shared<Var>("Mul"), get_item2, placeholders[4]});
-  VectorRef minus_update =
-    VectorRef({std::make_shared<Var>("Sub"), std::make_shared<CondVar>(IsParameterNode), get_item2});
-  VectorRef updated = VectorRef({std::make_shared<Var>("Mul"), minus_update, tanh});
+  auto is_var_switch1 = std::make_shared<Var>("Switch");
+  MS_CHECK_TRUE_RET(is_var_switch1 != nullptr, {});
+  VectorRef select_output = VectorRef({is_var_switch1, greater_equal, placeholders[12], new_hidden});
+  auto is_var_setitem = std::make_shared<Var>("SetItem");
+  MS_CHECK_TRUE_RET(is_var_setitem != nullptr, {});
+  VectorRef output = VectorRef({is_var_setitem, placeholders[3], placeholders[2], select_output});
 
-  VectorRef new_hidden = VectorRef({std::make_shared<Var>("Add"), update_hidden, updated});
-
-  VectorRef greater_equal = VectorRef({std::make_shared<Var>("GreaterEqual"), placeholders[2], placeholders[7]});
-
-  VectorRef select_output = VectorRef({std::make_shared<Var>("Switch"), greater_equal, placeholders[12], new_hidden});
-  VectorRef output = VectorRef({std::make_shared<Var>("SetItem"), placeholders[3], placeholders[2], select_output});
-
-  VectorRef select_hidden = VectorRef({std::make_shared<Var>("Switch"), greater_equal, placeholders[4], new_hidden});
+  auto is_var_switch2 = std::make_shared<Var>("Switch");
+  MS_CHECK_TRUE_RET(is_var_switch2 != nullptr, {});
+  VectorRef select_hidden = VectorRef({is_var_switch2, greater_equal, placeholders[4], new_hidden});
 
   auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMakeTuple));
+  MS_CHECK_TRUE_RET(is_make_tuple != nullptr, nullptr);
   std::vector<BaseRef> outputs = {is_make_tuple,  add1,          placeholders[1], add,
                                   output,         select_hidden, placeholders[5], placeholders[6],
                                   placeholders[7]};
   outputs.insert(outputs.end(), placeholders.begin() + 8, placeholders.end());
   VectorRef make_tuple_node = VectorRef(outputs);
   auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReturn));
+  MS_CHECK_TRUE_RET(is_return != nullptr, nullptr);
   VectorRef return_node = VectorRef({is_return, make_tuple_node});
 
-  VarPtr fg = std::make_shared<Var>("RootG");
-  auto pattern = SexpToNode(return_node, fg, primitive_vars.get(), true);
+  VarPtr is_fg = std::make_shared<Var>("RootG");
+  MS_CHECK_TRUE_RET(is_fg != nullptr, nullptr);
+  auto pattern = SexpToNode(return_node, is_fg, primitive_vars.get(), true);
   return pattern;
 }
 
@@ -217,8 +379,8 @@ tensor::TensorPtr TfBidirectionGruFusion::GetDefaultTensorInfo(const AnfNodePtr 
 STATUS TfBidirectionGruFusion::GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf,
                                                      const AnfNodePtr &bw_cand_kernel_anf, int *input_size,
                                                      int *hidden_size) {
-  MS_ASSERT(fw_cand_kernel != nullptr);
-  MS_ASSERT(bw_cand_kernel != nullptr);
+  MS_ASSERT(fw_cand_kernel_anf != nullptr);
+  MS_ASSERT(bw_cand_kernel_anf != nullptr);
   MS_ASSERT(input_size != nullptr);
   MS_ASSERT(hidden_size != nullptr);
   auto fw_cand_kernel_value = GetDefaultTensorInfo(fw_cand_kernel_anf);
@@ -255,6 +417,7 @@ ParameterPtr TfBidirectionGruFusion::AddDefaultParameter(const FuncGraphPtr &fun
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(tensor_data != nullptr);
   auto parameter = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(parameter != nullptr, nullptr);
   parameter->set_name(name);
   std::vector<int64_t> shape_vector(shape.begin(), shape.end());
   auto abstract = lite::CreateTensorAbstract(shape_vector, type);
@@ -351,7 +514,7 @@ STATUS TfBidirectionGruFusion::ConvertWeightData(const AnfNodePtr &gate_weight, 
 
 STATUS TfBidirectionGruFusion::ConvertBiasData(const AnfNodePtr &gate_bias, const AnfNodePtr &cand_bias,
                                                const int hidden_size, float *tensor_data) {
-  MS_ASSERT(bias != nullptr);
+  MS_ASSERT(gate_bias != nullptr && cand_bias != nullptr);
   MS_ASSERT(tensor_data != nullptr);
   std::vector<int64_t> gate_shape{hidden_size * kGateNum};
   std::vector<int64_t> cand_shape{hidden_size};
@@ -388,11 +551,16 @@ CNodePtr TfBidirectionGruFusion::GetStackedHiddenState(const FuncGraphPtr &func_
   MS_ASSERT(fw_init_state != nullptr);
   MS_ASSERT(bw_init_state != nullptr);
   auto stack_prim = std::make_shared<ops::Stack>();
+  MS_CHECK_TRUE_RET(stack_prim != nullptr, nullptr);
   stack_prim->set_axis(0);
   auto value_node = NewValueNode(stack_prim);
+  MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> new_node_inputs = {value_node, fw_init_state, bw_init_state};
   auto new_node = func_graph->NewCNode(new_node_inputs);
-  new_node->set_abstract(fw_init_state->abstract()->Clone());
+  MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
+  if (fw_init_state->abstract() != nullptr) {
+    new_node->set_abstract(fw_init_state->abstract()->Clone());
+  }
   new_node->set_fullname_with_scope("stack_hidden_" + base_name);
   return new_node;
 }
@@ -404,8 +572,10 @@ CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &fu
   MS_ASSERT(input != nullptr);
   MS_ASSERT(equiv != nullptr);
   auto gru_prim = std::make_shared<ops::GRU>();
+  MS_CHECK_TRUE_RET(gru_prim != nullptr, nullptr);
   gru_prim->set_bidirectional(true);
   auto value_node = NewValueNode(gru_prim);
+  MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
 
   auto fw_gate_kernel = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[var_offset]]);
   MS_ASSERT(fw_gate_kernel != nullptr);
@@ -488,6 +658,7 @@ CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &fu
   std::vector<AnfNodePtr> new_node_inputs = {value_node, input,          gate_weight, recu_weight,
                                              bias,       stacked_hidden, input_length};
   auto new_node = func_graph->NewCNode(new_node_inputs);
+  MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
   auto prim = GetValueNode<PrimitivePtr>(new_node->input(0));
   prim->AddAttr(ops::kFormat, MakeValue<int64_t>(Format::NHWC));
   new_node->set_fullname_with_scope(base_name);
@@ -499,11 +670,14 @@ CNodePtr TfBidirectionGruFusion::GetPostProcessNode(const FuncGraphPtr &func_gra
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(gru_output != nullptr);
   auto split_prim = std::make_shared<ops::Split>();
+  MS_CHECK_TRUE_RET(split_prim != nullptr, nullptr);
   split_prim->set_output_num(2);
   split_prim->set_axis(1);
   auto split_value_node = NewValueNode(split_prim);
+  MS_CHECK_TRUE_RET(split_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> new_node_inputs = {split_value_node, gru_output};
   auto split_new_node = func_graph->NewCNode(new_node_inputs);
+  MS_CHECK_TRUE_RET(split_new_node != nullptr, nullptr);
   split_new_node->set_fullname_with_scope("split_" + base_name);
   if (TfliteLstmCellFusion::SetAbstractTuple(split_new_node, 2) != RET_OK) {
     return nullptr;
@@ -519,36 +693,48 @@ CNodePtr TfBidirectionGruFusion::GetPostProcessNode(const FuncGraphPtr &func_gra
   }
 
   auto concat_prim = std::make_shared<ops::Concat>();
+  MS_CHECK_TRUE_RET(concat_prim != nullptr, nullptr);
   concat_prim->set_axis(3);
   auto concat_value_node = NewValueNode(concat_prim);
+  MS_CHECK_TRUE_RET(concat_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> concat_new_node_inputs = {concat_value_node, split_out1, split_out2};
   auto concat_new_node = func_graph->NewCNode(concat_new_node_inputs);
+  MS_CHECK_TRUE_RET(concat_new_node != nullptr, nullptr);
   concat_new_node->set_fullname_with_scope("concat_" + base_name);
-  concat_new_node->set_abstract(gru_output->abstract()->Clone());
+  if (gru_output->abstract() != nullptr) {
+    concat_new_node->set_abstract(gru_output->abstract()->Clone());
+  }
 
   auto squeeze_prim = std::make_shared<ops::Squeeze>();
+  MS_CHECK_TRUE_RET(squeeze_prim != nullptr, nullptr);
   squeeze_prim->set_axis(std::vector<int64_t>{1});
   auto squeeze_value_node = NewValueNode(squeeze_prim);
+  MS_CHECK_TRUE_RET(squeeze_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> squeeze_new_node_inputs = {squeeze_value_node, concat_new_node};
   auto squeeze_new_node = func_graph->NewCNode(squeeze_new_node_inputs);
+  MS_CHECK_TRUE_RET(squeeze_new_node != nullptr, nullptr);
   squeeze_new_node->set_fullname_with_scope("squeeze_" + base_name);
-  squeeze_new_node->set_abstract(gru_output->abstract()->Clone());
+  if (gru_output->abstract() != nullptr) {
+    squeeze_new_node->set_abstract(gru_output->abstract()->Clone());
+  }
 
   auto transpose_prim = std::make_shared<ops::Transpose>();
+  MS_CHECK_TRUE_RET(transpose_prim != nullptr, nullptr);
   auto transpose_perm = BuildIntVecParameterNode(func_graph, {1, 0, 2}, "transpose_" + base_name + "_perm");
+  MS_CHECK_TRUE_RET(transpose_perm != nullptr, nullptr);
   auto transpose_new_node = func_graph->NewCNode(transpose_prim, {squeeze_new_node, transpose_perm});
+  MS_CHECK_TRUE_RET(transpose_new_node != nullptr, nullptr);
   transpose_new_node->set_fullname_with_scope("transpose_" + base_name);
-  transpose_new_node->set_abstract(gru_output->abstract()->Clone());
+  if (gru_output->abstract() != nullptr) {
+    transpose_new_node->set_abstract(gru_output->abstract()->Clone());
+  }
 
   return transpose_new_node;
 }
 
 const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &concat_node,
                                                  const EquivPtr &equiv) const {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(concat_node != nullptr);
-  MS_LOG(DEBUG) << "bidirection tf gru fusion pass";
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(concat_node) != lite::RET_OK) {
+  if (func_graph == nullptr || concat_node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
@@ -559,8 +745,10 @@ const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
 
-  PrimitiveVarMapPtr fw_cond_primitive_vars = std::make_shared<PrimitiveVarMap>();
+  auto fw_cond_primitive_vars = std::make_shared<PrimitiveVarMap>();
+  MS_CHECK_TRUE_RET(fw_cond_primitive_vars != nullptr, nullptr);
   auto fw_cond_graph_pattern = GetCondGraphPattern(fw_cond_primitive_vars);
+  MS_CHECK_TRUE_RET(fw_cond_graph_pattern != nullptr, nullptr);
   auto fw_cond = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[0]]);
   MS_ASSERT(fw_cond != nullptr);
   auto fw_cond_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, fw_cond_graph_pattern, fw_cond_primitive_vars,
@@ -569,8 +757,10 @@ const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
 
-  PrimitiveVarMapPtr bw_cond_primitive_vars = std::make_shared<PrimitiveVarMap>();
+  auto bw_cond_primitive_vars = std::make_shared<PrimitiveVarMap>();
+  MS_CHECK_TRUE_RET(bw_cond_primitive_vars != nullptr, nullptr);
   auto bw_cond_graph_pattern = GetCondGraphPattern(bw_cond_primitive_vars);
+  MS_CHECK_TRUE_RET(bw_cond_graph_pattern != nullptr, nullptr);
   auto bw_cond = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[0]]);
   MS_ASSERT(bw_cond != nullptr);
   auto bw_cond_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, bw_cond_graph_pattern, bw_cond_primitive_vars,
@@ -579,8 +769,10 @@ const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
 
-  PrimitiveVarMapPtr fw_primitive_vars_body = std::make_shared<PrimitiveVarMap>();
+  auto fw_primitive_vars_body = std::make_shared<PrimitiveVarMap>();
+  MS_CHECK_TRUE_RET(fw_primitive_vars_body != nullptr, nullptr);
   auto fw_body_graph_pattern = GetBodyGraphPattern(fw_primitive_vars_body);
+  MS_CHECK_TRUE_RET(fw_body_graph_pattern != nullptr, nullptr);
   auto fw_body = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[1]]);
   MS_ASSERT(fw_body != nullptr);
   auto fw_body_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, fw_body_graph_pattern, fw_primitive_vars_body,
@@ -589,8 +781,10 @@ const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
 
-  PrimitiveVarMapPtr bw_primitive_vars_body = std::make_shared<PrimitiveVarMap>();
+  auto bw_primitive_vars_body = std::make_shared<PrimitiveVarMap>();
+  MS_CHECK_TRUE_RET(bw_primitive_vars_body != nullptr, nullptr);
   auto bw_body_graph_pattern = GetBodyGraphPattern(bw_primitive_vars_body);
+  MS_CHECK_TRUE_RET(bw_body_graph_pattern != nullptr, nullptr);
   auto bw_body = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[1]]);
   MS_ASSERT(bw_body != nullptr);
   auto bw_body_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, bw_body_graph_pattern, bw_primitive_vars_body,

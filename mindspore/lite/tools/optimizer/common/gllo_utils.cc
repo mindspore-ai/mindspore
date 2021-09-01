@@ -481,24 +481,6 @@ bool IsGraphKernel(const AnfNodePtr &node) {
   return func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
 }
 
-int CheckIfFuncGraphIsNull(const FuncGraphPtr &graph) {
-  if (graph == nullptr) {
-    MS_LOG(ERROR) << "The graph is null.";
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return lite::RET_NULL_PTR;
-  }
-  return lite::RET_OK;
-}
-
-int CheckIfAnfNodeIsNull(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    MS_LOG(ERROR) << "The AnfNode is null.";
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return lite::RET_NULL_PTR;
-  }
-  return lite::RET_OK;
-}
-
 ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num, TypeId type_id) {
   if (bias_data == nullptr || func_graph == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr.";

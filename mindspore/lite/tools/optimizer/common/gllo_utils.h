@@ -62,10 +62,6 @@ bool IsGraphKernel(const AnfNodePtr &node);
 
 bool CheckInputs(const CNodePtr &cnode);
 
-int CheckIfFuncGraphIsNull(const FuncGraphPtr &graph);
-
-int CheckIfAnfNodeIsNull(const AnfNodePtr &node);
-
 ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num, TypeId type_id);
 
 bool IsParamNode(const BaseRef &n);

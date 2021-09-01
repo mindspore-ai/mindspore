@@ -22,7 +22,7 @@ namespace mindspore::lite {
 
 STATUS QuantDtypeCastQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *graph, const schema::CNodeT &node) {
   MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
-  MS_CHECK_TRUE_MSG(node.inputIndex.empty(), RET_ERROR, "inputIndex is empty.");
+  MS_CHECK_TRUE_MSG(!node.inputIndex.empty(), RET_ERROR, "inputIndex is empty.");
   MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
   auto &input_tensor = graph->allTensors.at(node.inputIndex.at(0));
   if (!input_tensor->quantParams.empty() && input_tensor->quantParams.front()->inited) {
