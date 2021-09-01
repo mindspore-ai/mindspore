@@ -25,8 +25,8 @@ from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_num, get_rank_id
 
 
-def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
-                    enable_cache=False, cache_session_id=None):
+def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, train_image_size=224, eval_image_size=224,
+                    target="Ascend", distribute=False, enable_cache=False, cache_session_id=None):
     """
     create a train or evaluate cifar10 dataset for resnet50
     Args:
@@ -67,7 +67,7 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         ]
 
     trans += [
-        C.Resize((224, 224)),
+        C.Resize((train_image_size, train_image_size)),
         C.Rescale(1.0 / 255.0, 0.0),
         C.Normalize([0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]),
         C.HWC2CHW()
@@ -95,8 +95,8 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     return data_set
 
 
-def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
-                    enable_cache=False, cache_session_id=None):
+def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, train_image_size=224, eval_image_size=224,
+                    target="Ascend", distribute=False, enable_cache=False, cache_session_id=None):
     """
     create a train or eval imagenet2012 dataset for resnet50
 
@@ -130,14 +130,13 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True,
                                          num_shards=device_num, shard_id=rank_id)
 
-    image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
     std = [0.229 * 255, 0.224 * 255, 0.225 * 255]
 
     # define map operations
     if do_train:
         trans = [
-            C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
+            C.RandomCropDecodeResize(train_image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
             C.RandomHorizontalFlip(prob=0.5),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
@@ -146,7 +145,7 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         trans = [
             C.Decode(),
             C.Resize(256),
-            C.CenterCrop(image_size),
+            C.CenterCrop(eval_image_size),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
         ]
@@ -174,8 +173,9 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     return data_set
 
-def create_dataset_pynative(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
-                            enable_cache=False, cache_session_id=None):
+def create_dataset_pynative(dataset_path, do_train, repeat_num=1, batch_size=32, train_image_size=224,
+                            eval_image_size=224, target="Ascend", distribute=False, enable_cache=False,
+                            cache_session_id=None):
     """
     create a train or eval imagenet2012 dataset for resnet50 benchmark
 
@@ -209,14 +209,14 @@ def create_dataset_pynative(dataset_path, do_train, repeat_num=1, batch_size=32,
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=2, shuffle=True,
                                          num_shards=device_num, shard_id=rank_id)
 
-    image_size = 224
+
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
     std = [0.229 * 255, 0.224 * 255, 0.225 * 255]
 
     # define map operations
     if do_train:
         trans = [
-            C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
+            C.RandomCropDecodeResize(train_image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
             C.RandomHorizontalFlip(prob=0.5),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
@@ -225,7 +225,7 @@ def create_dataset_pynative(dataset_path, do_train, repeat_num=1, batch_size=32,
         trans = [
             C.Decode(),
             C.Resize(256),
-            C.CenterCrop(image_size),
+            C.CenterCrop(eval_image_size),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
         ]
@@ -253,8 +253,8 @@ def create_dataset_pynative(dataset_path, do_train, repeat_num=1, batch_size=32,
 
     return data_set
 
-def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
-                    enable_cache=False, cache_session_id=None):
+def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, train_image_size=224, eval_image_size=224,
+                    target="Ascend", distribute=False, enable_cache=False, cache_session_id=None):
     """
     create a train or eval imagenet2012 dataset for resnet101
     Args:
@@ -285,14 +285,14 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     else:
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
                                          num_shards=device_num, shard_id=rank_id)
-    image_size = 224
+
     mean = [0.475 * 255, 0.451 * 255, 0.392 * 255]
     std = [0.275 * 255, 0.267 * 255, 0.278 * 255]
 
     # define map operations
     if do_train:
         trans = [
-            C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
+            C.RandomCropDecodeResize(train_image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
             C.RandomHorizontalFlip(rank_id / (rank_id + 1)),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
@@ -301,7 +301,7 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         trans = [
             C.Decode(),
             C.Resize(256),
-            C.CenterCrop(image_size),
+            C.CenterCrop(eval_image_size),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
         ]
@@ -329,8 +329,8 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     return data_set
 
 
-def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
-                    enable_cache=False, cache_session_id=None):
+def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, train_image_size=224, eval_image_size=224,
+                    target="Ascend", distribute=False, enable_cache=False, cache_session_id=None):
     """
     create a train or eval imagenet2012 dataset for se-resnet50
 
@@ -362,14 +362,14 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     else:
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True,
                                          num_shards=device_num, shard_id=rank_id)
-    image_size = 224
+
     mean = [123.68, 116.78, 103.94]
     std = [1.0, 1.0, 1.0]
 
     # define map operations
     if do_train:
         trans = [
-            C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
+            C.RandomCropDecodeResize(train_image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
             C.RandomHorizontalFlip(prob=0.5),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
@@ -378,7 +378,7 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         trans = [
             C.Decode(),
             C.Resize(292),
-            C.CenterCrop(256),
+            C.CenterCrop(eval_image_size),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
         ]

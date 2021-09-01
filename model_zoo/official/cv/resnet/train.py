@@ -199,7 +199,9 @@ def run_eval(target, model, ckpt_save_dir, cb):
         if config.eval_dataset_path is None or (not os.path.isdir(config.eval_dataset_path)):
             raise ValueError("{} is not a existing path.".format(config.eval_dataset_path))
         eval_dataset = create_dataset(dataset_path=config.eval_dataset_path, do_train=False,
-                                      batch_size=config.batch_size, target=target, enable_cache=config.enable_cache,
+                                      batch_size=config.batch_size, train_image_size=config.train_image_size,
+                                      eval_image_size=config.eval_image_size,
+                                      target=target, enable_cache=config.enable_cache,
                                       cache_session_id=config.cache_session_id)
         eval_param_dict = {"model": model, "dataset": eval_dataset, "metrics_name": "acc"}
         eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=config.eval_interval,
@@ -226,7 +228,8 @@ def train_net():
     target = config.device_target
     set_parameter()
     dataset = create_dataset(dataset_path=config.data_path, do_train=True, repeat_num=1,
-                             batch_size=config.batch_size, target=target,
+                             batch_size=config.batch_size, train_image_size=config.train_image_size,
+                             eval_image_size=config.eval_image_size, target=target,
                              distribute=config.run_distribute)
     step_size = dataset.get_dataset_size()
     net = resnet(class_num=config.class_num)

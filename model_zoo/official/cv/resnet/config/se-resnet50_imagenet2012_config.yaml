@@ -19,6 +19,7 @@ checkpoint_file_path: ""
 optimizer: "Momentum"
 infer_label: ""
 class_num: 1001
+train_image_size: 224
 batch_size: 32
 loss_scale: 1024
 momentum: 0.9
@@ -44,6 +45,7 @@ dataset: "imagenet2012"
 device_num: 1
 pre_trained: ""
 run_eval: False
+eval_image_size: 256
 eval_dataset_path: ""
 parameter_server: False
 filter_weight: False
