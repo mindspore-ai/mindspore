@@ -19,10 +19,9 @@ import threading
 import time
 from datetime import datetime
 from threading import Lock
-import cv2
-
 from absl import app
 from absl import flags
+import cv2
 
 import MxpiDataType_pb2 as MxpiDataType
 from StreamManagerApi import InProtobufVector

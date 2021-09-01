@@ -150,7 +150,7 @@ def parse_img_infer_result(file_name, infer_result):
         img_fname_without_suffix = os.path.basename(file_name).split(".")[0]
         try:
             image_id = int(img_fname_without_suffix)
-        except (ValueError, Exception):
+        except ValueError:
             print("exception getting image id.")
             image_id = img_fname_without_suffix
         det_obj_list.append(
