@@ -65,7 +65,7 @@ def main():
     if args.run_distribute:
         device_num = int(os.getenv('DEVICE_NUM'))
         rank_id = int(os.getenv("RANK_ID"))
-        context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+        context.set_context(mode=context.GRAPH_MODE,
                             device_target=args.device_target, device_id=device_id)
         init()
         context.reset_auto_parallel_context()
@@ -73,7 +73,7 @@ def main():
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
     else:
-        context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+        context.set_context(mode=context.GRAPH_MODE,
                             device_target=args.device_target, device_id=device_id)
 
     # define save checkpoint flag

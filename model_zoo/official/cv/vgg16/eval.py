@@ -136,7 +136,7 @@ def run_eval():
 
     _enable_graph_kernel = config.device_target == "GPU"
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=_enable_graph_kernel,
-                        enable_auto_mixed_precision=True, device_target=config.device_target, save_graphs=False)
+                        device_target=config.device_target, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit() and config.device_target == "Ascend":
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 

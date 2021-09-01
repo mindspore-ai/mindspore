@@ -132,8 +132,7 @@ def set_graph_kernel_context(device_target):
 def test():
     """test"""
     set_parameters()
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                        device_target=config.device_target, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
     set_graph_kernel_context(config.device_target)

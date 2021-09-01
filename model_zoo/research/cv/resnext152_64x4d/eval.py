@@ -181,7 +181,7 @@ def get_result(args, model, top1_correct, top5_correct, img_tot):
 def test(cloud_args=None):
     """test"""
     args = parse_args(cloud_args)
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+    context.set_context(mode=context.GRAPH_MODE,
                         device_target=args.platform, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))

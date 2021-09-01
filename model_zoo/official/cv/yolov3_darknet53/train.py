@@ -69,7 +69,7 @@ def set_graph_kernel_context():
 
 def network_init(args):
     devid = int(os.getenv('DEVICE_ID', '0'))
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+    context.set_context(mode=context.GRAPH_MODE,
                         device_target=args.device_target, save_graphs=False, device_id=devid)
     set_graph_kernel_context()
 

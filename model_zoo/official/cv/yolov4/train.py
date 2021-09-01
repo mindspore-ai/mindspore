@@ -58,7 +58,7 @@ def set_default():
     config.ann_val_file = os.path.join(config.data_dir, 'annotations/instances_val2017.json')
 
     device_id = int(os.getenv('DEVICE_ID', '0'))
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+    context.set_context(mode=context.GRAPH_MODE,
                         device_target=config.device_target, save_graphs=False, device_id=device_id)
 
     if config.need_profiler:

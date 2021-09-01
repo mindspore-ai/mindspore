@@ -93,7 +93,7 @@ def train(mixdata_path):
         load_path = config.train_data_dir + '/midas/ckpt/midas_resnext_101_WSL.ckpt'
         device_id = config.device_id
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id,
-                            enable_auto_mixed_precision=True, max_call_depth=10000)
+                            max_call_depth=10000)
     # load data
     f = open(mixdata_path)
     data_config = json.load(f)

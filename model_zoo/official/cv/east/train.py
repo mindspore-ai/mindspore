@@ -189,7 +189,6 @@ if args.is_distributed:
 
 context.set_context(
     mode=context.GRAPH_MODE,
-    enable_auto_mixed_precision=True,
     device_target=args.device_target,
     save_graphs=False,
     device_id=args.rank)

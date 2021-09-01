@@ -96,7 +96,7 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train():
     '''Train.'''
-    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, enable_auto_mixed_precision=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
     config.rank_save_ckpt_flag = 1
 
     # init distributed

@@ -109,7 +109,7 @@ def train():
     device_num = 1
     num_workers = 8
     if config.device_target == "Ascend":
-        context.set_context(enable_auto_mixed_precision=False)
+
         context.set_context(device_id=get_device_id())
         if config.distribute == "true":
             D.init()

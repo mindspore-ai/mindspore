@@ -56,8 +56,7 @@ if args.isModelArts:
 
 if __name__ == '__main__':
     target = args.device_target
-    context.set_context(mode=context.GRAPH_MODE, device_target=target,
-                        enable_auto_mixed_precision=True, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
 
     if args.distribute:
         if target == "Ascend":

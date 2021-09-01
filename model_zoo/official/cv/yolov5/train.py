@@ -108,6 +108,7 @@ args.lr_epochs = list(map(int, args.lr_epochs.split(',')))
 
 if args.is_modelArts:
     args.data_root = os.path.join(args.data_dir, 'train2017')
+
     args.annFile = os.path.join(args.data_dir, 'annotations')
     outputs_dir = os.path.join('/cache', args.ckpt_path)
 else:
@@ -117,12 +118,13 @@ else:
     outputs_dir = args.ckpt_path
 
 deviced = int(os.getenv('DEVICE_ID', '0'))
-context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True, device_target=args.device_target,
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target,
                     save_graphs=False, device_id=deviced)
 # init distributed
 if args.is_distributed:
     if args.device_target == "Ascend":
         init()
+
     else:
         init("nccl")
     args.rank = get_rank()

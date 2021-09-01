@@ -56,8 +56,7 @@ if args_opt.device_target == "Ascend":
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         save_graphs=False,
-                        device_id=device_id,
-                        enable_auto_mixed_precision=True)
+                        device_id=device_id)
 else:
     raise ValueError("Unsupported device target.")
 

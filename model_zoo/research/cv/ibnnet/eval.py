@@ -59,7 +59,7 @@ if __name__ == "__main__":
     step = 60
     target = args.device_target
     context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
-    context.set_context(device_id=args.device_id, enable_auto_mixed_precision=True)
+    context.set_context(device_id=args.device_id)
 
     lr = lr_generator(cfg.lr, train_epoch, steps_per_epoch=step)
     net = resnet50_ibn_a(num_classes=cfg.class_num)

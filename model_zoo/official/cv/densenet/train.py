@@ -130,7 +130,7 @@ def train():
     config.lr_epochs = list(map(int, config.lr_epochs.split(',')))
     config.image_size = list(map(int, config.image_size.split(',')))
 
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+    context.set_context(mode=context.GRAPH_MODE,
                         device_target=config.device_target, save_graphs=False)
 
     if config.device_target == 'Ascend':

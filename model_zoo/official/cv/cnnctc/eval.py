@@ -29,7 +29,7 @@ from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 context.set_context(mode=context.GRAPH_MODE, save_graphs=False,
-                    save_graphs_path=".", enable_auto_mixed_precision=False)
+                    save_graphs_path=".")
 
 
 def test_dataset_creator():

@@ -80,7 +80,7 @@ if __name__ == '__main__':
     if args_opt.run_distribute:
         if target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))
-            context.set_context(device_id=device_id, enable_auto_mixed_precision=True)
+            context.set_context(device_id=device_id)
             # init parallel training parameters
             context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
