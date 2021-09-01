@@ -26,6 +26,8 @@ class EliminateConcatSplit : public PatternProcessPass {
  public:
   explicit EliminateConcatSplit(bool multigraph = true) : PatternProcessPass("eliminate_concat_split", multigraph) {}
   ~EliminateConcatSplit() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

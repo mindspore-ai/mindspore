@@ -165,8 +165,11 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
     auto bottom_vector = std::vector<int64_t>(split_num, extend_bottom);
     bottom_vector[split_num - 1] = 0;
     split_prim->set_extend_bottom(bottom_vector);
-    UpdateRatioWithPadStride(new_splits.data(), split_num, input_shape[split_dim], conv_prim->get_pad_list().at(kPadUp),
-                             conv_prim->get_stride().at(kIndexH));
+    if (!UpdateRatioWithPadStride(new_splits.data(), new_splits.size(), split_num, input_shape[split_dim],
+                                  conv_prim->get_pad_list().at(kPadUp), conv_prim->get_stride().at(kIndexH))) {
+      MS_LOG(ERROR) << "UpdateRatioWithPadStride failed";
+      return nullptr;
+    }
   } else {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
     split_prim->set_extend_bottom(std::vector<int64_t>(split_num, 0));

@@ -15,22 +15,21 @@
  */
 
 #include "tools/optimizer/fisson/iter_node_outputs.h"
-#include "tools/optimizer/fisson/fisson_util.h"
 #include "tools/optimizer/parallel/spliter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
 AnfNodePtr IterNodeOutputs::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  if (func_graph == nullptr || node == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "input func_graph is nullptr");
+  MS_CHECK_TRUE_MSG(node != nullptr, nullptr, "input node is nullptr");
   if (!utils::isa<CNodePtr>(node)) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
   auto inputs = cnode->inputs();
 
-  for (auto input_node : inputs) {
+  for (const auto &input_node : inputs) {
     if (!utils::isa<CNodePtr>(input_node)) {
       continue;
     }

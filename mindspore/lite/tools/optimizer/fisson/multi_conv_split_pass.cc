@@ -22,30 +22,33 @@
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/parallel/split_strategy.h"
+#include "nnacl/op_base.h"
 
 using mindspore::converter::FmkType;
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore {
 namespace opt {
-
 std::string MultiConvSplitPass::IsMultiParallelConvNode(const AnfNodePtr &node) const {
-  std::string parallel_name;
   for (const auto &parallel_prim : kParallelOpNames) {
     if (CheckPrimitiveType(node, parallel_prim.first.first)) {
       return parallel_prim.second;
     }
   }
-  return parallel_name;
+  return {};
 }
 
 const BaseRef MultiConvSplitPass::DefinePattern() const {
   auto conv1_var = std::make_shared<CondVar>(IsParallelSplitConvNode);
+  MS_CHECK_TRUE_MSG(conv1_var != nullptr, nullptr, "create CondVar return nullptr");
   auto conv1_other_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_MSG(conv1_other_var != nullptr, nullptr, "create SeqVar return nullptr");
   VectorRef res = VectorRef({conv1_var, conv1_other_var});
   int32_t idx = 1;
   while (idx < num_) {
     auto tmp_var = std::make_shared<CondVar>(IsParallelSplitConvNode);
+    MS_CHECK_TRUE_MSG(tmp_var != nullptr, nullptr, "create CondVar return nullptr");
     auto tmp_other_var = std::make_shared<SeqVar>();
+    MS_CHECK_TRUE_MSG(tmp_other_var != nullptr, nullptr, "create SeqVar return nullptr");
     res = VectorRef({tmp_var, res, tmp_other_var});
     idx++;
   }
@@ -54,8 +57,9 @@ const BaseRef MultiConvSplitPass::DefinePattern() const {
 
 const AnfNodePtr MultiConvSplitPass::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                              const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(node);
+  MS_ASSERT(func_graph != nullptr && node != nullptr);
   auto cnode = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_MSG(cnode != nullptr, nullptr, "input node is not a cnode");
   auto device_type_attr = cnode->GetAttr(mindspore::ops::kDeviceType);
   auto device_type = (device_type_attr != nullptr) ? GetValue<int32_t>(device_type_attr) : kDeviceTypeNone;
   if (device_type != kDeviceTypeNone) {
@@ -67,7 +71,7 @@ const AnfNodePtr MultiConvSplitPass::Process(const FuncGraphPtr &func_graph, con
   }
   // if current node has more than two outputs node, we do not split it.
   auto manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
+  MS_CHECK_TRUE_MSG(manager != nullptr, nullptr, "manager of func_graph is nullptr");
   auto node_users_iter = manager->node_users().find(node);
   if (node_users_iter == manager->node_users().end()) {
     return node;
@@ -77,8 +81,13 @@ const AnfNodePtr MultiConvSplitPass::Process(const FuncGraphPtr &func_graph, con
     return node;
   }
 
-  std::shared_ptr<MultiNodeSplitProxy> multi_node_split_proxy =
+  if (strategys_.find(parallel_name) == strategys_.end()) {
+    MS_LOG(ERROR) << "Find " << parallel_name << " strategy failed";
+    return nullptr;
+  }
+  auto multi_node_split_proxy =
     std::make_shared<MultiNodeSplitProxy>(strategys_.at(parallel_name), primitive_type_, fmk_type_, num_);
+  MS_CHECK_TRUE_MSG(multi_node_split_proxy != nullptr, nullptr, "create MultiNodeSplitProxy return nullptr");
   return multi_node_split_proxy->DoSplit(func_graph, node);
 }
 
