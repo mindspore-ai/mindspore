@@ -109,6 +109,33 @@ The benchmark datasets can be downloaded as follows:
 
 [DIV2K](https://cv.snu.ac.kr/research/EDSR/DIV2K.tar).
 
+After downloaded the correspond dataset to the target place, You can configure and use the dataset separately for train and test.
+
+Dataset configuration parameters in esr_ea/esr_ea.yml:
+
+```yaml
+nas:
+    dataset:
+        type: DIV2K
+        train:
+            root_HR: /cache/datasets/DIV2K/div2k_train/hr # Directory where the HR image is located
+            root_LR: /cache/datasets/DIV2K/div2k_train/lr # Directory where the LR image is located
+            upscale: 2                                    # Up scale
+            crop: 64                                      # crop size of lr image
+            hflip: true                                   # flip image horizontally
+            vflip: true                                   # flip image vertically
+            rot90: true                                   # flip image diagonally
+            shuffle: true                                 # shuffle
+            batch_size: 16                                # batch size
+            fixed_size: true
+        test:
+            root_HR: /cache/datasets/DIV2K/div2k_valid/hr
+            root_LR: /cache/datasets/DIV2K/div2k_valid/lr
+            upscale: 2
+            fixed_size: true
+            crop: 64
+```
+
 ## Requirements
 
 ### Hardware (Ascend)
@@ -135,12 +162,12 @@ esr_ea
 ├── image
 │   ├── esr_arch.png # the illustration of esr_ea network
 │   └── esr_block.png #
-├── readme.md # Readme
+├── README.md # Readme
 ├── scripts
-│   ├── run_distributed.sh # pre-training script for all tasks
+│   ├── run_standalone.sh # shell script for standalone train on ascend
+│   ├── run_distributed.sh # shell script for distributed train on ascend
 └── src
-    ├── esr_ea.yml # options/hyper-parameters of esr_ea
-    └── esr_ea_distributed.yml # options/hyper-parameters of esr_ea
+    └── esr_ea.yml # options/hyper-parameters of esr_ea
 
 ```
 
@@ -152,14 +179,29 @@ esr_ea
 
 ### For training
 
+- Standalone Ascend Training:
+
 ```bash
-python3 train.py
+sh scripts/run_standalone.sh
 ```
+
+- Distributed Ascend Training:
+
+```bash
+sh scripts/run_distributed.sh  [RANK_TABLE_FILE]
+```
+
+  For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+
+  Please follow the instructions in the link below:
+
+  <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
+`$RANK_TABLE_FILE` is needed when you are running a distribute task on ascend.
 
 > Or one can run following script for all tasks.
 
 ```bash
-sh scripts/run_distributed.sh  [RANK_TABLE_FILE]
+python3 train.py
 ```
 
 ## Evaluation

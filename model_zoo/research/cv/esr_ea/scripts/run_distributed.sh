@@ -33,5 +33,5 @@ fi
 RANK_TABLE_FILE=$(realpath $1)
 export RANK_TABLE_FILE
 
-python3 -m vega.tools.run_pipeline ../src/esr_ea_distributed.yml -b m -d NPU \
+python3 -m vega.tools.run_pipeline ../src/esr_ea.yml -b m -d NPU \
 > train.log 2>&1 &

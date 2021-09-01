@@ -3,7 +3,8 @@
 - [Contents](#contents)
     - [Algorithm Introduction](#algorithm-introduction)
     - [Algorithm Principle](#algorithm-principle)
-    - [Search Space and Search Policy](#search-space-and-search-policy)
+        - [Search Space and Search Policy](#search-space-and-search-policy)
+        - [Configuring](#configuring)
     - [Dataset](#dataset)
     - [Requirements](#requirements)
         - [Hardware (Ascend)](#hardware-ascend)
@@ -44,7 +45,7 @@ CCRN-NAS is a network architecture dedicated to lightweight networks. The CCRN-N
 
 Pipeline provides a sample for CCRN-NAS architecture search. It searches for the combination of the three modules to optimize the network architecture.
 
-## Search Space and Search Policy
+### Search Space and Search Policy
 
 The search space of the modified SRResNet includes the number of blocks and channels. We provide two search methods: random search (RS) and brute force (BF). In the two search methods, users need to define the range of the block number and the channel number for each convolution layer. RS generates model randomly from these range until the number of models reaches max_count. On the other size, BF will train all selected models.
 
@@ -56,11 +57,84 @@ The search space of CCRN-NAS is a combination of three types of blocks:
   – Change the kernel size of a random residual block from 2 to 3 or from 3 to 2.
   – A residual block is added to the random number of layers, and the kernel size is randomly generated in 2 and 3.
 
+### Configuring
+
+For details, see the configuration file sr_ea/sr_ea.yml in the sample code.
+
+```yaml
+pipeline: [random, mutate]
+
+random:
+    pipe_step:
+        type: SearchPipeStep
+
+    search_space:                              # Set the network structure search parameters.
+        type: SearchSpace
+        modules: ['custom']
+        custom:
+            type: MtMSR
+            in_channel: 3                      # number of input channels
+            out_channel: 3                     # number of output channels
+            upscale: 2                         # Up scale
+            rgb_mean: [0.4040, 0.4371, 0.4488] # mean of rgb value
+            candidates: [res2, res3]
+            block_range: [10, 80]              # the range of block number
+            cib_range: [3, 4]                  # the range of CIB number
+
+    search_algorithm:
+        type: SRRandom
+        codec: SRCodec
+        policy:
+            mum_sample: 1000
+
+mutate:
+    search_space:
+        ref: random.search_space
+
+    search_algorithm:
+        type: SRMutate
+        codec: SRCodec
+        policy:
+            mum_sample: 1000                   # Set the number of samples
+            num_mutate: 3                      # Set Genetic Algebra for Genetic Algorithm
+```
+
 ## Dataset
 
 The benchmark datasets can be downloaded as follows:
 
 [DIV2K](https://cv.snu.ac.kr/research/EDSR/DIV2K.tar).
+
+After downloaded the correspond dataset to the target place, You can configure and use the dataset separately for train and test.
+
+Dataset configuration parameters in sr_ea/sr_ea.yml:
+
+```yaml
+random:
+    dataset:
+        type: DIV2K
+        common:
+            value_div: 255.0
+        train:
+            root_HR: /cache/datasets/DIV2K/div2k_train/hr # Directory where the HR image is located
+            root_LR: /cache/datasets/DIV2K/div2k_train/lr # Directory where the LR image is located
+            upscale: 2                                    # Up scale
+            crop: 64                                      # crop size of lr image
+            hflip: true                                   # flip image horizontally
+            vflip: true                                   # flip image vertically
+            rot90: true                                   # flip image diagonally
+            shuffle: true                                 # shuffle
+            num_workers: 2                                # Number of read threads
+            batch_size: 16                                # batch size
+            pin_memory: false                             # Pin memory
+        test:
+            root_HR: /cache/datasets/DIV2K/div2k_valid/hr
+            root_LR: /cache/datasets/DIV2K/div2k_valid/lr
+            upscale: 2
+            crop: 64
+            pin_memory: false
+
+```
 
 ## Requirements
 
@@ -87,12 +161,12 @@ sr_ea
 ├── train.py # pre-training entry
 ├── image
 │   └── sr_ea_SRResNet.png # the illustration of sr_ea network
-├── readme.md # Readme
+├── README.md # Readme
 ├── scripts
-│   ├── run_distributed.sh # pre-training script for all tasks
+│   ├── run_standalone.sh # shell script for standalone train on ascend
+│   ├── run_distributed.sh # shell script for distributed train on ascend
 └── src
-    ├── sr_ea.yml # options/hyper-parameters of sr_ea
-    └── sr_ea_distributed.yml # options/hyper-parameters of sr_ea
+    └── sr_ea.yml # options/hyper-parameters of sr_ea
 
 ```
 
@@ -104,14 +178,29 @@ sr_ea
 
 ### For training
 
+- Standalone Ascend Training:
+
 ```bash
-python3 train.py
+sh scripts/run_standalone.sh
 ```
+
+- Distributed Ascend Training:
+
+```bash
+sh scripts/run_distributed.sh  [RANK_TABLE_FILE]
+```
+
+  For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+
+  Please follow the instructions in the link below:
+
+  <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
+`$RANK_TABLE_FILE` is needed when you are running a distribute task on ascend.
 
 > Or one can run following script for all tasks.
 
 ```bash
-sh scripts/run_distributed.sh [RANK_TABLE_FILE]
+python3 train.py
 ```
 
 ## Evaluation
