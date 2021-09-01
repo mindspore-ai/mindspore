@@ -19,18 +19,18 @@ import threading
 import time
 from datetime import datetime
 from threading import Lock
-from absl import app
-from absl import flags
-
-import cv2
 
 import MxpiDataType_pb2 as MxpiDataType
+import cv2
 
 from StreamManagerApi import InProtobufVector
 from StreamManagerApi import MxDataInput
 from StreamManagerApi import MxProtobufIn
 from StreamManagerApi import StreamManagerApi
 from StreamManagerApi import StringVector
+
+from absl import app
+from absl import flags
 
 BOXED_IMG_DIR = None
 TXT_DIR = None
