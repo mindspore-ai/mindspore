@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 
@@ -35,48 +36,18 @@ def test_set_recompute_true():
     net.pool.recompute()
     assert net.pool.get_scope() == recompute_prefix
 
-
-def test_set_recompute_false():
+def test_set_recompute_true_with_mp_comm_recompute():
     net = Net()
-    net.pool.recompute(mode=False)
-    assert net.pool.get_scope() is None
+    net.pool.recompute(mp_comm_recompute=True)
+    assert net.pool.get_scope() == recompute_prefix
 
+def test_set_recompute_true_with_mp_comm_recompute_false():
+    net = Net()
+    net.pool.recompute(mp_comm_recompute=False)
+    assert net.pool.get_scope() == recompute_prefix
 
 def test_set_recompute_true_twice():
     net = Net()
     net.pool.recompute()
-    net.pool.recompute()
-    assert net.pool.get_scope() == recompute_prefix
-
-
-def test_set_recompute_false_twice():
-    net = Net()
-    net.pool.recompute(mode=False)
-    net.pool.recompute(mode=False)
-    assert net.pool.get_scope() is None
-
-
-def test_reset_recompute1():
-    net = Net()
-    net.pool.recompute(mode=True)
-    net.pool.recompute(mode=False)
-    assert net.pool.get_scope() == ""
-
-
-def test_reset_recompute2():
-    net = Net()
-    net.pool.recompute(mode=False)
-    net.pool.recompute(mode=True)
-    assert net.pool.get_scope() == recompute_prefix
-
-
-def test_set_scope_and_set_recompute_repeatedly():
-    net = Net()
-    net.pool.recompute(mode=True)
-    assert net.pool.get_scope() == recompute_prefix
-    net.pool.recompute(mode=False)
-    assert net.pool.get_scope() == ""
-    net.pool.recompute(mode=True)
-    assert net.pool.get_scope() == recompute_prefix
-    net.pool.recompute(mode=False)
-    assert net.pool.get_scope() == ""
+    with pytest.raises(RuntimeError):
+        net.pool.recompute()
