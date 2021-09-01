@@ -81,20 +81,20 @@ APP_ERROR DPN::DeInit() {
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::ReadImage(const std::string &imgPath, cv::Mat &imageMat) {
-    imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
+APP_ERROR DPN::ReadImage(const std::string &imgPath, cv::Mat *imageMat) {
+    *imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat) {
+APP_ERROR DPN::ResizeImage(const cv::Mat &srcImageMat, cv::Mat *dstImageMat) {
     static constexpr uint32_t resizeHeight = 224;
     static constexpr uint32_t resizeWidth = 224;
 
-    cv::resize(srcImageMat, dstImageMat, cv::Size(resizeWidth, resizeHeight));
+    cv::resize(srcImageMat, *dstImageMat, cv::Size(resizeWidth, resizeHeight));
     return APP_ERR_OK;
 }
 
-APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase) {
+APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase *tensorBase) {
     uint32_t dataSize = 1;
     for (size_t i = 0; i < modelDesc_.inputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
@@ -131,12 +131,12 @@ APP_ERROR DPN::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &te
         return ret;
     }
     std::vector<uint32_t> shape = {32, 224, 224, 3};
-    tensorBase = TensorBase(memoryDataDst, false, shape, TENSOR_DTYPE_UINT8);
+    *tensorBase = TensorBase(memoryDataDst, false, shape, TENSOR_DTYPE_UINT8);
     return APP_ERR_OK;
 }
 
 APP_ERROR DPN::Inference(const std::vector<MxBase::TensorBase> &inputs,
-                                      std::vector<MxBase::TensorBase> &outputs) {
+                                      std::vector<MxBase::TensorBase> *outputs) {
     auto dtypes = model_->GetOutputDataType();
     for (size_t i = 0; i < modelDesc_.outputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
@@ -149,12 +149,12 @@ APP_ERROR DPN::Inference(const std::vector<MxBase::TensorBase> &inputs,
             LogError << "TensorBaseMalloc failed, ret=" << ret << ".";
             return ret;
         }
-        outputs.push_back(tensor);
+        outputs->push_back(tensor);
     }
     DynamicInfo dynamicInfo = {};
     dynamicInfo.dynamicType = DynamicType::STATIC_BATCH;
     auto startTime = std::chrono::high_resolution_clock::now();
-    APP_ERROR ret = model_->ModelInference(inputs, outputs, dynamicInfo);
+    APP_ERROR ret = model_->ModelInference(inputs, *outputs, dynamicInfo);
     auto endTime = std::chrono::high_resolution_clock::now();
     // save time
     double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
@@ -167,8 +167,8 @@ APP_ERROR DPN::Inference(const std::vector<MxBase::TensorBase> &inputs,
 }
 
 APP_ERROR DPN::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
-                                        std::vector<std::vector<MxBase::ClassInfo>> &clsInfos) {
-    APP_ERROR ret = post_->Process(inputs, clsInfos);
+                                        std::vector<std::vector<MxBase::ClassInfo>> *clsInfos) {
+    APP_ERROR ret = post_->Process(inputs, *clsInfos);
     if (ret != APP_ERR_OK) {
         LogError << "Process failed, ret=" << ret << ".";
         return ret;
@@ -209,25 +209,25 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths) {
     std::vector<cv::Mat> batchImgMat;
     for (auto &imgPath : batchImgPaths) {
         cv::Mat imageMat;
-        ret = ReadImage(imgPath, imageMat);
+        ret = ReadImage(imgPath, &imageMat);
         if (ret != APP_ERR_OK) {
             LogError << "ReadImage failed, ret=" << ret << ".";
             return ret;
         }
-        ResizeImage(imageMat, imageMat);
+        ResizeImage(imageMat, &imageMat);
         batchImgMat.push_back(imageMat);
     }
     cv::Mat inputBlob = cv::dnn::blobFromImages(batchImgMat, 1.0f, cv::Size(), cv::Scalar(), false, false);
     inputBlob.convertTo(inputBlob, CV_8U);
     TensorBase tensorBase;
-    ret = CVMatToTensorBase(inputBlob, tensorBase);
+    ret = CVMatToTensorBase(inputBlob, &tensorBase);
     if (ret != APP_ERR_OK) {
         LogError << "CVMatToTensorBase failed, ret=" << ret << ".";
         return ret;
     }
     inputs.push_back(tensorBase);
     auto startTime = std::chrono::high_resolution_clock::now();
-    ret = Inference(inputs, outputs);
+    ret = Inference(inputs, &outputs);
     auto endTime = std::chrono::high_resolution_clock::now();
     // save time
     double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
@@ -237,7 +237,7 @@ APP_ERROR DPN::Process(const std::vector<std::string> &batchImgPaths) {
         return ret;
     }
     std::vector<std::vector<MxBase::ClassInfo>> BatchClsInfos = {};
-    ret = PostProcess(outputs, BatchClsInfos);
+    ret = PostProcess(outputs, &BatchClsInfos);
     if (ret != APP_ERR_OK) {
         LogError << "PostProcess failed, ret=" << ret << ".";
         return ret;

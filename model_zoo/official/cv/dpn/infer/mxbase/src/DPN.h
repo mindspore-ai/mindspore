@@ -39,12 +39,12 @@ class DPN {
  public:
   APP_ERROR Init(const InitParam &initParam);
   APP_ERROR DeInit();
-  APP_ERROR ReadImage(const std::string &imgPath, cv::Mat &imageMat);
-  APP_ERROR ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat);
-  APP_ERROR CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase);
-  APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs, std::vector<MxBase::TensorBase> &outputs);
+  APP_ERROR ReadImage(const std::string &imgPath, cv::Mat *imageMat);
+  APP_ERROR ResizeImage(const cv::Mat &srcImageMat, cv::Mat *dstImageMat);
+  APP_ERROR CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase *tensorBase);
+  APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs, std::vector<MxBase::TensorBase> *outputs);
   APP_ERROR PostProcess(const std::vector<MxBase::TensorBase> &inputs,
-                          std::vector<std::vector<MxBase::ClassInfo>> &clsInfos);
+                          std::vector<std::vector<MxBase::ClassInfo>> *clsInfos);
   APP_ERROR Process(const std::vector<std::string> &batchImgPaths);
   // get infer time
   double GetInferCostMilliSec() const {return inferCostTimeMilliSec;}

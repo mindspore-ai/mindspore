@@ -23,7 +23,7 @@ namespace {
     const uint32_t BATCH_SIZE = 32;
 }  // namespace
 
-APP_ERROR ScanImages(const std::string &path, std::vector<std::string> &imgFiles) {
+APP_ERROR ScanImages(const std::string &path, std::vector<std::string> *imgFiles) {
     DIR *dirPtr = opendir(path.c_str());
     if (dirPtr == nullptr) {
         LogError << "opendir failed. dir:" << path;
@@ -36,7 +36,7 @@ APP_ERROR ScanImages(const std::string &path, std::vector<std::string> &imgFiles
             continue;
         }
 
-        imgFiles.emplace_back(path + "/" + fileName);
+        imgFiles->push_back(path + "/" + fileName);
     }
     closedir(dirPtr);
     return APP_ERR_OK;
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
     std::string imgPath = argv[1];
     std::vector<std::string> imgFilePaths;
-    ret = ScanImages(imgPath, imgFilePaths);
+    ret = ScanImages(imgPath, &imgFilePaths);
     if (ret != APP_ERR_OK) {
         return ret;
     }
