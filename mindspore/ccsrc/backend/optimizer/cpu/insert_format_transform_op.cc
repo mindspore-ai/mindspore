@@ -95,7 +95,7 @@ void ProcessForTupleItem(const FuncGraphPtr &graph, const AnfNodePtr &node, int 
     auto used_node = used_node_list->at(i).first;
     auto used_node_index = used_node_list->at(i).second - 1;
     if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
-      MS_LOG(EXCEPTION) << "The used node of tuple item can't be tuple item.";
+      MS_LOG(EXCEPTION) << "The used node of tuple item " << used_node->DebugString() << " can't be tuple item.";
     }
 
     // node->used_node, if output format of node equals input format of used_node,

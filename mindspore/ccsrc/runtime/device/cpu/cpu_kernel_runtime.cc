@@ -189,7 +189,8 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
   MS_EXCEPTION_IF_NULL(tensor_to_node);
   size_t output_size = AnfAlgo::GetOutputTensorNum(node);
   if (index >= output_size) {
-    MS_LOG(EXCEPTION) << "Invalid input index " << index;
+    MS_LOG(EXCEPTION) << "For node " << node->DebugString() << ", index " << index << " exceed output size "
+                      << output_size;
   }
   auto address = AnfAlgo::GetMutableOutputAddr(node, index);
   MS_EXCEPTION_IF_NULL(address);
@@ -204,6 +205,9 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
     tensor = kernel_graph->GetInternalOutputTensor(node, index);
     if (tensor == nullptr) {
       size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
+      if (type_size == 0) {
+        MS_LOG(EXCEPTION) << "Invalid type_size " << type_size;
+      }
       size_t tensor_size = std::accumulate(temp_shape.begin(), temp_shape.end(), type_size, std::multiplies<size_t>());
       if (tensor_size < address->size_) {
         temp_shape.clear();
@@ -276,7 +280,7 @@ void CPUKernelRuntime::CreateOutputTensors(session::KernelGraph *kernel_graph,
   MS_EXCEPTION_IF_NULL(tensor_to_node);
   auto &input_nodes = kernel_graph->inputs();
   if (input_nodes.size() != inputs.size()) {
-    MS_LOG(EXCEPTION) << "Input size not equal to input node size!";
+    MS_LOG(EXCEPTION) << "Input size " << inputs.size() << " is not equal to input node size " << input_nodes.size();
   }
 
   size_t input_idx = 0;
@@ -300,7 +304,7 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
                                                  const std::vector<tensor::TensorPtr> &inputs) {
   auto &input_nodes = kernel_graph.inputs();
   if (input_nodes.size() != inputs.size()) {
-    MS_LOG(EXCEPTION) << "Input size not equal to input node size!";
+    MS_LOG(EXCEPTION) << "Input size" << inputs.size() << " is not equal to input node size " << input_nodes.size();
   }
   for (size_t input_idx = 0; input_idx < input_nodes.size(); ++input_idx) {
     auto &item = input_nodes[input_idx];
@@ -344,7 +348,9 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
       AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(item, 0)}, {shape_tmp}, item.get());
     }
     address->ref_count_ = INIT_NODE_REF;
-    tensor->set_device_address(address);
+    if (AnfAlgo::IsParameterWeight(input_param)) {
+      tensor->set_device_address(address);
+    }
   }
 }
 

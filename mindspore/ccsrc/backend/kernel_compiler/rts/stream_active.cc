@@ -35,7 +35,7 @@ bool StreamActiveKernel::Init(const AnfNodePtr &anf_node) {
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (!AnfAlgo::HasNodeAttr(kAttrActiveStreamList, anf_node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "StreamActiveKernel has no attr kAttrActiveStreamList";
+    MS_LOG(EXCEPTION) << "StreamActiveKernel " << anf_node->DebugString() << "has no attr kAttrActiveStreamList";
   }
   active_streams_index_ = GetValue<std::vector<uint32_t>>(primitive->GetAttr(kAttrActiveStreamList));
   return true;

@@ -52,7 +52,7 @@ bool MemCpyAsyncKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     return true;
   }
   if (outputs[0]->size < inputs[0]->size) {
-    MS_LOG(EXCEPTION) << "rtMemcpyAsync destMax < src size";
+    MS_LOG(EXCEPTION) << "rtMemcpyAsync destMax " << outputs[0]->size << " is less than src size " << inputs[0]->size;
   }
   // input x -> memcpy_async -> AllReduce
   if (outputs[0]->size > inputs[0]->size) {
@@ -78,7 +78,7 @@ void MemCpyAsyncKernel::GetInputOutputDataType(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t input_size = AnfAlgo::GetInputTensorNum(anf_node);
   if (input_size != 1) {
-    MS_LOG(EXCEPTION) << "MemCpyAsync input size is not 1";
+    MS_LOG(EXCEPTION) << "MemCpyAsync input size is not 1, got " << input_size;
   }
   input_type_id_ = AnfAlgo::GetPrevNodeOutputDeviceDataType(anf_node, 0);
 }
@@ -87,7 +87,7 @@ void MemCpyAsyncKernel::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t input_size = AnfAlgo::GetInputTensorNum(anf_node);
   if (input_size != 1) {
-    MS_LOG(EXCEPTION) << "MemCpyAsync input size is not 1";
+    MS_LOG(EXCEPTION) << "MemCpyAsync input size is not 1, got " << input_size;
   }
   size_t type_size = abstract::TypeIdSize(input_type_id_);
   std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, 0);
@@ -134,15 +134,16 @@ device::DynamicKernelPtr MemCpyAsyncKernel::GenDynamicKernel(const CNodePtr &cno
   device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
 
   if (kernel_inputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "MemCpyAsync op inputs is not one";
+    MS_LOG(EXCEPTION) << "MemCpyAsync op inputs is not one, got " << kernel_inputs.size();
   }
 
   if (kernel_outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "MemCpyAsync op output is not one";
+    MS_LOG(EXCEPTION) << "MemCpyAsync op output is not one, got " << kernel_outputs.size();
   }
 
   if (kernel_outputs[0]->size < kernel_inputs[0]->size) {
-    MS_LOG(EXCEPTION) << "Check rtMemcpyAsync destMax < src size";
+    MS_LOG(EXCEPTION) << "rtMemcpyAsync destMax " << kernel_outputs[0]->size << " is less than src size "
+                      << kernel_inputs[0]->size;
   }
   // input x -> memcpy_async -> AllReduce
   if (kernel_outputs[0]->size > kernel_inputs[0]->size) {

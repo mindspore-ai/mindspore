@@ -85,7 +85,7 @@ void TensorCopySlices::GetInputOutputInfo(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t input_size = AnfAlgo::GetInputTensorNum(anf_node);
   if (input_size != 2) {
-    MS_LOG(EXCEPTION) << "TensorCopySlices input size is not 2";
+    MS_LOG(EXCEPTION) << "TensorCopySlices input size is not 2, got " << input_size;
   }
   input_type_id_ = AnfAlgo::GetPrevNodeOutputDeviceDataType(anf_node, 0);
   update_type_id_ = AnfAlgo::GetPrevNodeOutputDeviceDataType(anf_node, 0);
@@ -138,7 +138,8 @@ std::vector<TaskInfoPtr> TensorCopySlices::GenTask(const std::vector<AddressPtr>
     MS_LOG(EXCEPTION) << "outputs size is not 1.";
   }
   if (outputs[0]->size != inputs[0]->size) {
-    MS_LOG(EXCEPTION) << "TensorCopySlices input size and output size not equal.";
+    MS_LOG(EXCEPTION) << "TensorCopySlices input size " << inputs[0]->size << " is not equal to output size "
+                      << outputs[0]->size;
   }
 
   stream_id_ = stream_id;
