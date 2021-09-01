@@ -20,6 +20,7 @@ import numpy as np
 
 class DistributedSampler:
     """Distributed sampler."""
+
     def __init__(self, dataset_size, num_replicas=None, rank=None, shuffle=True):
         if num_replicas is None:
             print("***********Setting world_size to 1 since it is not passed in ******************")
@@ -39,7 +40,8 @@ class DistributedSampler:
         # deterministically shuffle based on epoch
         if self.shuffle:
             indices = np.random.RandomState(seed=self.epoch).permutation(self.dataset_size)
-            # np.array type. number from 0 to len(dataset_size)-1, used as index of dataset
+            # np.array type. number from 0 to len(dataset_size)-1, used as
+            # index of dataset
             indices = indices.tolist()
             self.epoch += 1
             # change to list type

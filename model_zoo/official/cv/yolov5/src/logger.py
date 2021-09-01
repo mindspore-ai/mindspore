@@ -27,6 +27,7 @@ class LOGGER(logging.Logger):
          logger_name: String. Logger name.
          rank: Integer. Rank id.
     """
+
     def __init__(self, logger_name, rank=0):
         super(LOGGER, self).__init__(logger_name)
         self.rank = rank
@@ -65,11 +66,11 @@ class LOGGER(logging.Logger):
         if self.isEnabledFor(logging.INFO) and self.rank == 0:
             line_width = 2
             important_msg = '\n'
-            important_msg += ('*'*70 + '\n')*line_width
-            important_msg += ('*'*line_width + '\n')*2
-            important_msg += '*'*line_width + ' '*8 + msg + '\n'
-            important_msg += ('*'*line_width + '\n')*2
-            important_msg += ('*'*70 + '\n')*line_width
+            important_msg += ('*' * 70 + '\n') * line_width
+            important_msg += ('*' * line_width + '\n') * 2
+            important_msg += '*' * line_width + ' ' * 8 + msg + '\n'
+            important_msg += ('*' * line_width + '\n') * 2
+            important_msg += ('*' * 70 + '\n') * line_width
             self.info(important_msg, *args, **kwargs)
 
 

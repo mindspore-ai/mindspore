@@ -63,6 +63,7 @@ do
     python train.py \
         --data_dir=$DATASET_PATH \
         --is_distributed=1 \
+        --yolov5_version='yolov5s' \
         --lr=0.02 \
         --T_max=300 \
         --max_epoch=300 \

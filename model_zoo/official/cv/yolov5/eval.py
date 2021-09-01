@@ -31,7 +31,7 @@ from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore as ms
 
-from src.yolo import YOLOV5s
+from src.yolo import YOLOV5
 from src.logger import get_logger
 from src.yolo_dataset import create_yolo_dataset
 from src.config import ConfigYOLOV5
@@ -43,11 +43,13 @@ parser.add_argument('--device_target', type=str, default='Ascend',
                     help='device where the code will be implemented. (Default: Ascend)')
 
 # dataset related
-parser.add_argument('--data_dir', type=str, default='', help='train data dir')
+parser.add_argument('--data_dir', type=str, default='/data/coco', help='train data dir')
 parser.add_argument('--per_batch_size', default=1, type=int, help='batch size for per gpu')
 
 # network related
 parser.add_argument('--pretrained', default='', type=str, help='model_path, local pretrained model to load')
+parser.add_argument('--yolov5_version', default='yolov5s', type=str,
+                    help='The version of YOLOv5, options: yolov5s, yolov5m, yolov5l, yolov5x')
 
 # logging related
 parser.add_argument('--log_path', type=str, default='outputs/', help='checkpoint save location')
@@ -59,11 +61,37 @@ parser.add_argument('--testing_shape', type=str, default='', help='shape for tes
 parser.add_argument('--ignore_threshold', type=float, default=0.001, help='threshold to throw low quality boxes')
 parser.add_argument('--multi_label', type=ast.literal_eval, default=True, help='whether to use multi label')
 parser.add_argument('--multi_label_thresh', type=float, default=0.1, help='threshhold to throw low quality boxes')
+parser.add_argument('--is_modelArts', type=int, default=0,
+                    help='Trainning in modelArts or not, 1 for yes, 0 for no. Default: 0')
 
 args, _ = parser.parse_known_args()
+args.rank = 0
 
-args.data_root = os.path.join(args.data_dir, 'val2017')
-args.ann_file = os.path.join(args.data_dir, 'annotations/instances_val2017.json')
+if args.is_modelArts:
+    args.data_root = os.path.join(args.data_dir, 'val2017')
+    args.ann_file = os.path.join(args.data_dir, 'annotations')
+    import moxing as mox
+
+    local_data_url = os.path.join('/cache/data', str(args.rank))
+    local_annFile = os.path.join('/cache/data', str(args.rank))
+    local_pretrained = os.path.join('/cache/data', str(args.rank))
+
+    temp_str = args.pretrained.split('/')[-1]
+    args.pretrained = args.pretrained[0:args.pretrained.rfind('/')]
+
+    mox.file.copy_parallel(args.data_root, local_data_url)
+    args.data_root = local_data_url
+
+    mox.file.copy_parallel(args.ann_file, local_annFile)
+    args.ann_file = os.path.join(local_data_url, 'instances_val2017.json')
+
+    mox.file.copy_parallel(args.pretrained, local_pretrained)
+    args.pretrained = os.path.join(local_data_url, temp_str)
+else:
+    args.data_root = os.path.join(args.data_dir, 'val2017')
+    args.ann_file = os.path.join(
+        args.data_dir,
+        'annotations/instances_val2017.json')
 
 
 class Redirct:
@@ -103,7 +131,7 @@ class DetectionEngine:
         self.nms_thresh = args_detection.nms_thresh
         self.multi_label = args_detection.multi_label
         self.multi_label_thresh = args_detection.multi_label_thresh
-        # self.coco_catids = self._coco.getCatIds()
+        self.coco_catids = self._coco.getCatIds()
         self.coco_catIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27,
                             28, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53,
                             54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 70, 72, 73, 74, 75, 76, 77, 78, 79, 80,
@@ -111,18 +139,15 @@ class DetectionEngine:
 
     def do_nms_for_results(self):
         """Get result boxes."""
-        # np.save('/opt/disk1/hjc/yolov5_positive_policy/result.npy', self.results)
         for img_id in self.results:
             for clsi in self.results[img_id]:
                 dets = self.results[img_id][clsi]
                 dets = np.array(dets)
                 keep_index = self._diou_nms(dets, thresh=self.nms_thresh)
 
-                keep_box = [{'image_id': int(img_id),
-                             'category_id': int(clsi),
+                keep_box = [{'image_id': int(img_id), 'category_id': int(clsi),
                              'bbox': list(dets[i][:4].astype(float)),
-                             'score': dets[i][4].astype(float)}
-                            for i in keep_index]
+                             'score': dets[i][4].astype(float)} for i in keep_index]
                 self.det_boxes.extend(keep_box)
 
     def _nms(self, predicts, threshold):
@@ -149,7 +174,8 @@ class DetectionEngine:
             intersect_w = np.maximum(0.0, min_x2 - max_x1 + 1)
             intersect_h = np.maximum(0.0, min_y2 - max_y1 + 1)
             intersect_area = intersect_w * intersect_h
-            ovr = intersect_area / (areas[i] + areas[order[1:]] - intersect_area)
+            ovr = intersect_area / \
+                (areas[i] + areas[order[1:]] - intersect_area)
 
             indexes = np.where(ovr <= threshold)[0]
             order = order[indexes + 1]
@@ -289,8 +315,8 @@ class DetectionEngine:
                         flag[i, c] = True
                     confidence = cls_emb[flag] * conf
 
-                    for x_lefti, y_lefti, wi, hi, confi, clsi in zip(x_top_left, y_top_left, w, h, confidence,
-                                                                     cls_argmax):
+                    for x_lefti, y_lefti, wi, hi, confi, clsi in zip(x_top_left, y_top_left,
+                                                                     w, h, confidence, cls_argmax):
                         if confi < self.ignore_threshold:
                             continue
                         if img_id not in self.results:
@@ -317,9 +343,8 @@ if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=device_id)
 
     # logger
-    args.outputs_dir = os.path.join(args.log_path,
-                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
-    rank_id = int(os.environ.get('RANK_ID')) if os.environ.get('RANK_ID') else 0
+    args.outputs_dir = os.path.join(args.log_path, datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    rank_id = int(os.getenv('DEVICE_ID', '0'))
     args.logger = get_logger(args.outputs_dir, rank_id)
 
     context.reset_auto_parallel_context()
@@ -327,7 +352,8 @@ if __name__ == "__main__":
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=1)
 
     args.logger.info('Creating Network....')
-    network = YOLOV5s(is_training=False)
+    dict_version = {'yolov5s': 0, 'yolov5m': 1, 'yolov5l': 2, 'yolov5x': 3}
+    network = YOLOV5(is_training=False, version=dict_version[args.yolov5_version])
 
     args.logger.info(args.pretrained)
     if os.path.isfile(args.pretrained):
@@ -355,8 +381,7 @@ if __name__ == "__main__":
         config.test_img_shape = convert_testing_shape(args.testing_shape)
 
     ds, data_size = create_yolo_dataset(data_root, ann_file, is_training=False, batch_size=args.per_batch_size,
-                                        max_epoch=1, device_num=1, rank=rank_id, shuffle=False,
-                                        config=config)
+                                        max_epoch=1, device_num=1, rank=rank_id, shuffle=False, config=config)
 
     args.logger.info('testing shape : {}'.format(config.test_img_shape))
     args.logger.info('total {} images to eval'.format(data_size))

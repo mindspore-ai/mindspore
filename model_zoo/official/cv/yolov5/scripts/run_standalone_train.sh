@@ -58,6 +58,7 @@ env > env.log
 python train.py \
     --data_dir=$DATASET_PATH \
     --is_distributed=0 \
+    --yolov5_version='yolov5s' \
     --lr=0.01 \
     --T_max=320 \
     --max_epoch=320 \
