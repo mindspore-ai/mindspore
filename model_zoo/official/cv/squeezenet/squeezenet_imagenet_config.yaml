@@ -21,7 +21,7 @@ checkpoint_file_path: "suqeezenet_imagenet-200_5004.ckpt"
 net_name: "suqeezenet"
 dataset : "imagenet"
 class_num: 1000
-global_batch_size: 256
+batch_size: 32
 loss_scale: 1024
 momentum: 0.9
 weight_decay: 0.00007
@@ -57,7 +57,7 @@ load_path: 'The location of checkpoint for obs'
 device_target: 'Target device type, available: [Ascend, GPU, CPU]'
 enable_profiling: 'Whether enable profiling while training, default: False'
 num_classes: 'Class for dataset'
-global_batch_size: "The total batch_size for training and evaluation"
+batch_size: "Batch_size for training, evaluation and export"
 epoch_size: "Total training epochs."
 keep_checkpoint_max: "keep the last keep_checkpoint_max checkpoint"
 checkpoint_path: "The location of the checkpoint file."

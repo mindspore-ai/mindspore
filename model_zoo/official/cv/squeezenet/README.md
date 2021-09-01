@@ -198,7 +198,7 @@ Parameters for both training and evaluation can be set in *.yaml
 
   ```py
   "class_num": 10,                  # dataset class num
-  "global_batch_size": 32,          # the total batch_size for training and evaluation
+  "batch_size": 32,                 # Batch_size for training, evaluation and export. If running distributed on gpu, divide this value by device_num.
   "loss_scale": 1024,               # loss scale
   "momentum": 0.9,                  # momentum
   "weight_decay": 1e-4,             # weight decay
@@ -219,7 +219,7 @@ Parameters for both training and evaluation can be set in *.yaml
 
   ```py
   "class_num": 1000,                # dataset class num
-  "global_batch_size": 256,         # the total batch_size for training and evaluation
+  "batch_size": 32,                 # Batch_size for training, evaluation and export
   "loss_scale": 1024,               # loss scale
   "momentum": 0.9,                  # momentum
   "weight_decay": 7e-5,             # weight decay
@@ -242,7 +242,7 @@ Parameters for both training and evaluation can be set in *.yaml
 
   ```py
   "class_num": 10,                  # dataset class num
-  "global_batch_size": 32,          # the total batch_size for training and evaluation
+  "batch_size": 32,                 # Batch_size for training, evaluation and export. If running distributed on gpu, divide this value by device_num.
   "loss_scale": 1024,               # loss scale
   "momentum": 0.9,                  # momentum
   "weight_decay": 1e-4,             # weight decay
@@ -263,7 +263,7 @@ Parameters for both training and evaluation can be set in *.yaml
 
   ```py
   "class_num": 1000,                # dataset class num
-  "global_batch_size": 256,         # The total batch_size for training and evaluation
+  "batch_size": 32,                 # Batch_size for training, evaluation and export
   "loss_scale": 1024,               # loss scale
   "momentum": 0.9,                  # momentum
   "weight_decay": 7e-5,             # weight decay
