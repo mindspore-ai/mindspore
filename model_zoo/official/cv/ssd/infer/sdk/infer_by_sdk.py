@@ -162,5 +162,7 @@ def parse_img_infer_result(file_name, infer_result):
             )
         )
     return det_obj_list
+
+
 if __name__ == "__main__":
     infer()

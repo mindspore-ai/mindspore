@@ -17,18 +17,19 @@ import json
 import os
 import threading
 import time
+import cv2
+
+from absl import app
+from absl import flags
 from datetime import datetime
 from threading import Lock
 
 import MxpiDataType_pb2 as MxpiDataType
-import cv2
 from StreamManagerApi import InProtobufVector
 from StreamManagerApi import MxDataInput
 from StreamManagerApi import MxProtobufIn
 from StreamManagerApi import StreamManagerApi
 from StreamManagerApi import StringVector
-from absl import app
-from absl import flags
 
 BOXED_IMG_DIR = None
 TXT_DIR = None
@@ -321,9 +322,7 @@ def write_speed_detail(perf_detail, report_file):
     report_file.flush()
 
 
-def handle_infer_result(
-    all_infer_dict_list, img_id, infer_result, img_ext="jpg"
-):
+def handle_infer_result(all_infer_dict_list, img_id, infer_result, img_ext="jpg"):
     if infer_result.errorCode != 0:
         print(
             "GetResultWithUniqueId error. errorCode=%d, errorMsg=%s"
@@ -490,11 +489,6 @@ def get_all_images_result(uuid_img_id_zip, stream_manager_api):
     report_file.close()
 
     return all_infer_dict_list
-
-
-def write_speed_detail(perf_detail, report_file):
-    report_file.write(perf_detail)
-    report_file.flush()
 
 
 def parse_infer_result(all_infer_dict_list, img_id, infer_result):
