@@ -110,6 +110,7 @@ void DeConvWeightTransInt8(const int8_t *src, int8_t *dst, int input_channel, in
 void DeConvPackWeightSum(const int8_t *weight, int32_t *weight_sum, int32_t input_zp, int32_t filter_zp, int deep,
                          int col4, bool suppport_opt) {
   int deep16 = UP_ROUND(deep, C16NUM);
+  int32_t zp_sum = filter_zp * input_zp * deep;
   for (int c = 0; c < col4; c++) {
     int c4div = c / C4NUM, c4mod = c % C4NUM;
     int32_t value = 0;
@@ -118,7 +119,7 @@ void DeConvPackWeightSum(const int8_t *weight, int32_t *weight_sum, int32_t inpu
       int src_index = c4div * deep16 * C4NUM + r16div * C4NUM * C16NUM + c4mod * C16NUM + r16mod;
       value += weight[src_index];
     }
-    weight_sum[c] = filter_zp * input_zp * deep - value * input_zp;
+    weight_sum[c] = zp_sum - value * input_zp;
   }
   return;
 }
