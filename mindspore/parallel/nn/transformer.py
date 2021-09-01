@@ -680,21 +680,6 @@ class MultiHeadAttention(Cell):
 
     def construct(self, query_tensor, key_tensor, value_tensor, attention_mask, key_past=None,
                   value_past=None, batch_valid_length=None):
-        """
-        multi head attention
-
-        Inputs:
-            from_tensor: output of previous layer
-            attention_mask: the attention mask matrix with shape (batch_size,
-            seq_length, seq_length)
-            key_past: previous saved key state
-            value_past: previous saved value state
-            batch_valid_length: the valid input seq_length without padding
-
-        Returns:
-            output: Tensor, the output logits of this layer
-            layer_present: Tensor, the feature map of current layer
-        """
         self._check_inputs(query_tensor, key_tensor, value_tensor, attention_mask, key_past,
                            value_past, batch_valid_length)
         query_tensor_original_shape = F.shape(query_tensor)

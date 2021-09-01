@@ -145,10 +145,10 @@ def _check_config(config):
 
     # dp * pp * pipeline_stage <= device_num
     if config.data_parallel * config.model_parallel * pipeline_stage > device_num:
-        raise ValueError("The product of the data parallel {config.data_parallel},"
-                         "model parallel {config.model_parallel}"
-                         "pipeline stages {pipeline_stage}"
-                         "should be less than device_num {device_num}")
+        raise ValueError(f"The product of the data parallel {config.data_parallel}, "
+                         f"model parallel {config.model_parallel} "
+                         f"pipeline stages {pipeline_stage} "
+                         f"should be less than device_num {device_num}.")
 
     # the config optimizer_shard is same with context.optimizer_shard
     if hasattr(config, "optimizer_shard") and optimizer_shard and optimizer_shard != config.optimizer_shard:
@@ -160,5 +160,5 @@ def _check_config(config):
     if hasattr(config, 'pipeline_stage') and hasattr(config, 'micro_batch_num')\
             and config.pipeline_stage < config.micro_batch_num:
         raise ValueError(
-            f"The pipeline stage {config.pipeline_stage} should be greater than the micro_batch_num"
+            f"The pipeline stage {config.pipeline_stage} should be greater than the micro_batch_num "
             f"{config.micro_batch_num}.")
