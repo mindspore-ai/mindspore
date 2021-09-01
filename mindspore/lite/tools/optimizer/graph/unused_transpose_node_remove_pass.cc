@@ -41,6 +41,7 @@ std::vector<int> GetTransposePerm(const CNodePtr &node) {
     return perm;
   }
   auto perm_param = perm_node->cast<ParameterPtr>();
+  MS_ASSERT(perm_param != nullptr);
   if (!perm_param->has_default() || perm_param->default_param() == nullptr) {
     return perm;
   }
@@ -84,6 +85,7 @@ bool RemoveUnusedTransposeOpPass::Run(const FuncGraphPtr &func_graph) {
       }
     } else if (CheckPrimitiveType(node, prim::kPrimConv2DFusion)) {
       auto conv_node = node->cast<CNodePtr>();
+      MS_ASSERT(conv_node != nullptr);
       if (!CheckPrimitiveType(conv_node->input(kTransposeInput), prim::kPrimTranspose)) {
         continue;
       }

@@ -23,6 +23,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "utils/check_convert_utils.h"
 #include "tools/optimizer/common/format_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -89,7 +90,7 @@ STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, Sh
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
   auto typePtr = abstract_tensor->element()->GetTypeTrack();
-  MS_ASSERT(typePtr != nullptr);
+  MS_CHECK_TRUE_MSG(typePtr != nullptr, RET_ERROR, "typePtr is nullptr");
   *data_type = typePtr->type_id();
   if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
     MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << param_node->name();
@@ -117,7 +118,7 @@ int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
     data_info->shape_ = {1};
   }
   auto value = value_node->value();
-  MS_ASSERT(value != nullptr);
+  MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
   auto data = value->cast<tensor::TensorPtr>();
   data_info->data_.resize(data->Size());
   if (data_info->format_ != mindspore::NHWC && data_info->format_ != mindspore::NCHW) {
@@ -140,7 +141,7 @@ int FetchFromInt32OrInt64ImmValue(const ValueNodePtr &value_node, const Primitiv
   data_info->shape_ = {1};
   data_info->data_.resize(sizeof(int32_t));
   auto value = value_node->value();
-  MS_ASSERT(value != nullptr);
+  MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
   int real_data = opt::CastToInt(value).front();
   if (memcpy_s(data_info->data_.data(), sizeof(int32_t), &real_data, sizeof(int32_t)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
@@ -155,7 +156,7 @@ int FetchFromBoolImmValue(const ValueNodePtr &value_node, const PrimitivePtr &pr
   data_info->shape_ = {1};
   data_info->data_.resize(sizeof(bool));
   auto value = value_node->value();
-  MS_ASSERT(value != nullptr);
+  MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
   auto data = value->cast<mindspore::BoolImmPtr>();
   auto data_value = data->value();
   if (memcpy_s(data_info->data_.data(), sizeof(bool), &data_value, sizeof(bool)) != EOK) {
@@ -185,10 +186,10 @@ int FetchFromNumberValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
 int FetchFromSequenceValue(const ValueNodePtr &value_node, const PrimitivePtr &primitive, DataInfo *data_info) {
   MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
   auto value = value_node->value();
-  MS_ASSERT(value != nullptr);
+  MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
   std::vector<int32_t> shape;
   auto value_seq = value->cast<ValueSequeuePtr>();
-  MS_ASSERT(value_seq != nullptr);
+  MS_CHECK_TRUE_MSG(value_seq != nullptr, RET_ERROR, "value_seq is nullptr");
   if (!value_seq->value().empty()) {
     if (value_seq->value().front()->type()->number_type() == kNumberTypeInt32 ||
         value_seq->value().front()->type()->number_type() == kNumberTypeInt) {
@@ -217,7 +218,7 @@ int FetchFromSequenceValue(const ValueNodePtr &value_node, const PrimitivePtr &p
 int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info) {
   MS_ASSERT(param_node != nullptr && data_info != nullptr);
   ShapeVector shape_vector;
-  TypeId data_type;
+  TypeId data_type = kTypeUnknown;
   auto status = GetDataTypeAndShape(param_node, &data_type, &shape_vector);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "get data type and shape from param node failed.";
@@ -294,7 +295,7 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
   auto value = value_node->value();
   int ret = RET_OK;
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "prim is nullptr");
   if (value->isa<tensor::Tensor>()) {
     ret = FetchFromTensorValue(value_node, prim, fmk_type, train_flag, data_info);
     if (index == kNumWeightIndex && prim->GetAttr(ops::kFormat) != nullptr) {
@@ -364,7 +365,7 @@ int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType f
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
   auto type_ptr = abstract_tensor->element()->GetTypeTrack();
-  MS_ASSERT(typePtr != nullptr);
+  MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
   if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
     MS_LOG(ERROR) << "Shape of Abstract should be ShapePtr.";
     return RET_ERROR;

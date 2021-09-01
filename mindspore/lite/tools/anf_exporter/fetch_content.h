@@ -33,7 +33,7 @@ struct DataInfo {
   int node_type_;
   std::vector<int> shape_;
   std::vector<uint8_t> data_;
-  DataInfo() : enable_huffman_code_(false), format_(0), data_type_(0) {}
+  DataInfo() : enable_huffman_code_(false), format_(0), data_type_(0), node_type_{0} {}
 };
 
 int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info);

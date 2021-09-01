@@ -58,7 +58,7 @@ const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, fla
 
 STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::vector<int32_t> &src_dims,
                               mindspore::schema::Format dst_format, std::vector<int32_t> *dst_dims) {
-  MS_ASSERT(nullptr != dst_dims);
+  MS_ASSERT(dst_dims != nullptr);
   if ((src_dims.size() != DIM_DEFAULT_SIZE && src_dims.size() != 3) || src_format == dst_format) {
     MS_LOG(ERROR) << "Convert format , src size " << src_dims.size()
                   << " <3 or src format is equal to dst format,not need convert";
@@ -257,6 +257,7 @@ STATUS NodeInferShpae(const schema::CNodeT &node, const std::vector<Tensor *> &i
   auto ret = KernelInferShape(inputs, *outputs, parameter);
   fbb.Clear();
   free(parameter);
+  parameter = nullptr;
   return ret;
 }
 
@@ -326,6 +327,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
 }
 
 size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_flag) {
+  MS_ASSERT(anf_node != nullptr);
   auto cnode = anf_node->cast<CNodePtr>();
   if (train_flag &&
       (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) || opt::CheckPrimitiveType(cnode, prim::kPrimAdam))) {

@@ -75,15 +75,28 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
   // for single output graph, create tuple for graph output
   // make_tuple node
   auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
+  if (make_tuple_prim_ptr == nullptr) {
+    MS_LOG(ERROR) << "make_tuple_prim_ptr is nullptr";
+    return lite::RET_NULL_PTR;
+  }
   auto make_tuple_cnode =
     func_graph->NewCNode({NewValueNode(make_tuple_prim_ptr), output_node, tensor_array_write_node});
+  if (make_tuple_cnode == nullptr) {
+    MS_LOG(ERROR) << "NewCNode failed";
+    return lite::RET_NULL_PTR;
+  }
   make_tuple_cnode->set_fullname_with_scope("return tuple");
 
   // return node
   auto return_prim_ptr = std::make_shared<lite::Return>();
+  if (return_prim_ptr == nullptr) {
+    MS_LOG(ERROR) << "return_prim_ptr is nullptr";
+    return lite::RET_NULL_PTR;
+  }
   auto new_return_node = func_graph->NewCNode({NewValueNode(return_prim_ptr), make_tuple_cnode});
   new_return_node->set_fullname_with_scope(return_cnode->fullname_with_scope());
   func_graph->set_return(new_return_node);
+  MS_ASSERT(new_return_node != nullptr);
 
   return lite::RET_OK;
 }
@@ -143,6 +156,10 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
 
   // tensor_array
   auto tensor_array = std::make_shared<ops::TensorArray>();
+  if (tensor_array == nullptr) {
+    MS_LOG(ERROR) << "tensor_array is nullptr";
+    return nullptr;
+  }
   std::vector<int> element_shape;
   std::for_each(tensor_info->shape().begin(), tensor_info->shape().end(),
                 [&element_shape](int64_t v) { element_shape.push_back(static_cast<int>(v)); });
@@ -157,18 +174,27 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
 
   // {"handle", "index", "flow_in"} -> {"tensor"}
   auto tensor_array_read = std::make_shared<ops::TensorArrayRead>();
+  if (tensor_array_read == nullptr) {
+    MS_LOG(ERROR) << "tensor_array_read is nullptr";
+    return nullptr;
+  }
   auto tensor_array_read_node = func_graph->NewCNode({
     NewValueNode(tensor_array_read),
     tensor_array_node,
     NewValueNode(kDefaultIndex),
     NewValueNode(kFlowInPlaceHolder),
   });
+  MS_ASSERT(tensor_array_read_node != nullptr);
   tensor_array_read_node->set_abstract(abstract->Clone());
   tensor_array_read_node->set_fullname_with_scope(cnode->fullname_with_scope() + "_tensor_array_read");
   cnode->add_input(tensor_array_read_node);
 
   // {"handle", "index", "value", "flow_in"} -> {"flow_out"}
   auto tensor_array_write = std::make_shared<ops::TensorArrayWrite>();
+  if (tensor_array_write == nullptr) {
+    MS_LOG(ERROR) << "tensor_array_write is nullptr";
+    return nullptr;
+  }
   auto tensor_array_write_node = func_graph->NewCNode({
     NewValueNode(tensor_array_write),
     tensor_array_node,
@@ -176,6 +202,10 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
     cnode,
     NewValueNode(kFlowInPlaceHolder),
   });
+  if (tensor_array_write_node == nullptr) {
+    MS_LOG(ERROR) << "rensor_array_write_node is nullptr";
+    return nullptr;
+  }
   tensor_array_write_node->set_abstract(abstract->Clone());
   tensor_array_write_node->set_fullname_with_scope(cnode->fullname_with_scope() + "_tensor_array_write");
 

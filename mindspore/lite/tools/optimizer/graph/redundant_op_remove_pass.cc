@@ -24,16 +24,19 @@
 #include "ops/depend.h"
 #include "ops/fusion/pad_fusion.h"
 #include "ops/op_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
 int ProcessInputIsMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto first_input = cnode->input(1);
+  MS_ASSERT(first_input != nullptr);
   if (CheckPrimitiveType(first_input, prim::kPrimTranspose)) {
     first_input = cnode->input(1)->cast<CNodePtr>()->input(1);
   }
   auto second_input = cnode->input(kInputIndexTwo);
+  MS_ASSERT(seconde_input != nullptr);
   if (CheckPrimitiveType(second_input, prim::kPrimTranspose)) {
     second_input = cnode->input(kInputIndexTwo)->cast<CNodePtr>()->input(1);
   }
@@ -72,6 +75,8 @@ int ProcessDependencyWithTwoNodes(const FuncGraphPtr &func_graph, const CNodePtr
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   AnfNodePtr pre_node = cnode->input(1);
   AnfNodePtr post_node = cnode->input(kInputIndexTwo);
+  MS_ASSERT(pre_node != nullptr);
+  MS_ASSERT(post_node != nullptr);
   if (!pre_node_is_first) {
     pre_node = cnode->input(kInputIndexTwo);
     post_node = cnode->input(1);
@@ -96,6 +101,8 @@ int ProcessDependencyWithTwoNodes(const FuncGraphPtr &func_graph, const CNodePtr
   tr.Commit();
   auto depend_prim = std::make_shared<ops::Depend>();
   auto depend_node = func_graph->NewCNode(depend_prim, {post_node, pre_node});
+  MS_CHECK_TRUE_MSG(depend_prim != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
+  MS_CHECK_TRUE_MSG(depend_node != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
   depend_node->set_fullname_with_scope(cnode->fullname_with_scope());
   manager->Replace(cnode, depend_node);
   return lite::RET_OK;
@@ -111,6 +118,7 @@ int ProcessInputHaveDependency(const FuncGraphPtr &func_graph, const CNodePtr &c
   }
   auto make_tuple_prim = NewValueNode(std::make_shared<lite::MakeTuple>());
   auto manager = func_graph->manager();
+  MS_CHECK_TRUE_MSG(make_tuple_prim != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
   MS_ASSERT(manager != nullptr);
   if (CheckPrimitiveType(cnode->input(0), prim::kPrimTranspose)) {
     manager->Replace(cnode->input(0)->cast<CNodePtr>()->input(0), make_tuple_prim);
@@ -127,6 +135,7 @@ int RemoveRedundantOpPass::ReplaceOp(const AnfNodePtr &anf_node, const FuncGraph
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
+  MS_ASSERT(cnode != nullptr);
   if (CheckPrimitiveType(anf_node, kPrimIdentity)) {
     if (cnode->size() != kInputSizeTwo) {
       MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
@@ -163,6 +172,7 @@ int RemoveRedundantOpPass::ReplaceUpdateStateOp(const FuncGraphPtr &func_graph, 
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
+  MS_ASSERT(cnode != nullptr);
   if (ProcessInputIsMonad(func_graph, cnode) == lite::RET_OK) {
     return lite::RET_OK;
   }
@@ -179,6 +189,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
+  MS_ASSERT(cnode != nullptr);
   if (cnode->inputs().size() != kInputSizeThree) {
     MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << cnode->inputs().size();
     return RET_ERROR;
@@ -214,6 +225,7 @@ int RemoveRedundantOpPass::RemoveDropoutOp(const AnfNodePtr &anf_node, const Fun
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
+  MS_ASSERT(cnode != nullptr);
   if (cnode->size() > kInputSizeTwo) {
     MS_LOG(ERROR) << "dropout input invalid.";
     return lite::RET_ERROR;
@@ -251,6 +263,7 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
+  MS_ASSERT(cnode != nullptr);
   auto primitive = GetValueNode<mindspore::PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr:" << cnode->fullname_with_scope();
@@ -287,6 +300,7 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
     }
   } else {
     auto pad_prim = utils::cast<std::shared_ptr<mindspore::ops::PadFusion>>(primitive);
+    MS_ASSERT(pad_prim != nullptr);
     if (pad_prim->GetAttr(ops::kPadding) != nullptr) {
       auto pad_data = pad_prim->get_paddings();
       for (size_t i = 0; i < pad_data.size(); i++) {
@@ -310,6 +324,7 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
 
 int RemoveRedundantOpPass::RemoveInvalidTransposeOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
   auto cnode = anf_node->cast<CNodePtr>();
+  MS_ASSERT(cnode != nullptr);
   if (cnode->size() != kInputSizeThree) {
     MS_LOG(DEBUG) << "The node inputs size is bigger than 2";
     return lite::RET_NO_CHANGE;
@@ -319,6 +334,7 @@ int RemoveRedundantOpPass::RemoveInvalidTransposeOp(const AnfNodePtr &anf_node, 
     return RET_OK;
   }
   auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(index_node->default_param());
+  MS_ASSERT(tensor_info != nullptr);
   if (tensor_info->Size() != 0) {
     return RET_OK;
   }

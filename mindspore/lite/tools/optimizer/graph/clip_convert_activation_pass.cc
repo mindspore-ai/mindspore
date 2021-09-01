@@ -23,6 +23,7 @@
 #include "src/tensor.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 namespace {
@@ -41,6 +42,7 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto clip_cnode = node->cast<CNodePtr>();
+    MS_ASSERT(clip_cnode != nullptr);
     MS_ASSERT(clip_cnode->size() >= kClipMinIndex);
     auto clip_c = GetValueNode<ops::PrimClipPtr>(clip_cnode->input(0));
     MS_ASSERT(clip_c != nullptr);
@@ -78,14 +80,17 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     auto manager = graph->manager();
 
     auto primitive_c = std::make_shared<mindspore::ops::Activation>();
+    MS_CHECK_TRUE_MSG(primitive_c != nullptr, false, "primitive_c is nullptr");
     primitive_c->Init(0, min, max, mindspore::RELU6);
     if (min != 0 || max != 6) {
       primitive_c->set_activation_type(mindspore::HARD_TANH);
     }
     auto value_node = NewValueNode(primitive_c);
+    MS_CHECK_TRUE_MSG(value_node != nullptr, false, "value_node is nullptr");
     std::vector<AnfNodePtr> op_inputs = {value_node};
     op_inputs.push_back(clip_cnode->input(1));
     auto new_cnode = graph->NewCNode(op_inputs);
+    MS_CHECK_TRUE_MSG(new_cnode != nullptr, false, "new_cnode is nullptr");
     new_cnode->set_fullname_with_scope(node->fullname_with_scope());
     new_cnode->set_abstract(clip_cnode->abstract()->Clone());
     manager->Replace(node, new_cnode);

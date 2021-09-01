@@ -26,6 +26,7 @@
 #include "tools/common/graph_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/fusion/partial_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 SubGraph::SubGraph(FuncGraphPtr belong_anf, std::string graph_name, const std::set<CNodePtr> &head_nodes)
@@ -137,7 +138,7 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
   }
   while (!q.empty()) {
     auto cur_node = q.front();
-    MS_ASSERT(cur_node != nullptr);
+    MS_CHECK_TRUE_MSG(cur_node != nullptr, , "cur_node is nullptr");
     q.pop();
     this->nodes_.insert(cur_node);
     // check output-cnode of cur-node only depend on cur-node
@@ -156,7 +157,7 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
       if (opt::CheckPrimitiveType(post_cnode, prim::kPrimReturn)) {
         continue;
       }
-      MS_ASSERT(post_cnode != nullptr);
+      MS_CHECK_TRUE_MSG(post_cnode != nullptr, , "post_cnode is nullptr");
       bool non_depend = true;
       // check all inputs of output-cnode
       for (const auto &input : post_cnode->inputs()) {
@@ -301,7 +302,7 @@ SubGraphPtr SubGraph::FindBeforeSubGraphInBelongAnf() const {
   }
   while (!q.empty()) {
     auto cur_cnode = q.front();
-    MS_ASSERT(cur_cnode != nullptr);
+    MS_CHECK_TRUE_MSG(cur_cnode != nullptr, nullptr, "cur_cnode is nullptr");
     q.pop();
     before_nodes.insert(cur_cnode);
     for (const auto &in_cnode : lite::GetInputCNode(cur_cnode)) {
@@ -336,7 +337,7 @@ SubGraphPtr SubGraph::FindAfterSubGraphInBelongAnf() const {
   auto before_out_nodes = before_subgraph->GetOutCNodes();
   while (!q.empty()) {
     auto cur_cnode = q.front();
-    MS_ASSERT(cur_cnode != nullptr);
+    MS_CHECK_TRUE_MSG(cur_cnode != nullptr, nullptr, "cur_cnode is nullptr");
     q.pop();
     after_nodes.insert(cur_cnode);
     for (const auto &in_cnode : lite::GetInputCNode(cur_cnode)) {
@@ -400,7 +401,6 @@ int SubGraph::CreatePartialInBelongAnf() {
   auto return_node = belong_anf_->get_return();
   MS_ASSERT(return_node != nullptr && return_node->inputs().size() == 2);
   auto ori_output = return_node->inputs().at(1);
-  MS_ASSERT(ori_output != nullptr);
   manager->Replace(ori_output, call_cnode);
   return RET_OK;
 }

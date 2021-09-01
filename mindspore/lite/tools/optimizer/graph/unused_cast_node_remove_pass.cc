@@ -38,6 +38,7 @@ bool RemoveUnusedCastOpPass::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cast_cnode = node->cast<CNodePtr>();
+    MS_ASSERT(cast_node != nullptr);
     auto abstract_base = cast_cnode->input(1)->abstract();
     if (abstract_base == nullptr) {
       MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << cast_cnode->input(1)->fullname_with_scope();

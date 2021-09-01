@@ -19,6 +19,7 @@
 #include <vector>
 #include "tools/optimizer/common/format_utils.h"
 #include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -52,7 +53,8 @@ STATUS SpecifyGraphInputFormat::HandleGraphInput(const FuncGraphPtr &graph) {
     auto input_node = input->cast<ParameterPtr>();
     MS_ASSERT(input_node != nullptr);
     auto abstract = input_node->abstract();
-    MS_ASSERT(abstract != nullptr);
+    MS_CHECK_TRUE_MSG(abstract != nullptr, lite::RET_NULL_PTR, "abstract is nullptr");
+
     ShapeVector shape;
     if (FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
       MS_LOG(ERROR) << "fetch shape failed." << input->fullname_with_scope();
@@ -78,7 +80,7 @@ STATUS SpecifyGraphInputFormat::HandleGraphInput(const FuncGraphPtr &graph) {
       return lite::RET_ERROR;
     }
     auto trans_prim = GetValueNode<PrimitivePtr>(trans_cnode->input(0));
-    MS_ASSERT(trans_prim != nullptr);
+    MS_CHECK_TRUE_MSG(trans_prim != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
     if (format_ == mindspore::NCHW) {
       trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
     } else {

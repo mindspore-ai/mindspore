@@ -111,7 +111,7 @@ public class LiteSession {
     /**
      * Attempt to bind or unbind threads in the thread pool to or from the specified cpu core.
      *
-     * @param Define whether to bind or unbind threads.
+     * @param isBind Define whether to bind or unbind threads.
      */
     public void bindThread(boolean isBind) {
         this.bindThread(this.sessionPtr, isBind);

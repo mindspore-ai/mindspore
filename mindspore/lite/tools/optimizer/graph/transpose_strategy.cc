@@ -27,6 +27,7 @@
 #include "ops/fusion/slice_fusion.h"
 #include "ops/op_utils.h"
 #include "tools/anf_exporter/fetch_content.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -129,7 +130,7 @@ STATUS ChangeCommonOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode, For
     return lite::RET_ERROR;
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
   if (prim->GetAttr(ops::kAxis) == nullptr) {
     return lite::RET_NOT_SUPPORT;
   }
@@ -237,7 +238,7 @@ STATUS ChangeOpPad(const FuncGraphPtr &func_graph, const CNodePtr &cnode, Format
     BuildIntVec2DParameterNode(func_graph, padding_list, cnode->input(kInputIndexTwo)->fullname_with_scope());
   func_graph->manager()->Replace(cnode->input(kInputIndexTwo), param_node);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
   if (prim->GetAttr(ops::kPaddings) != nullptr) {
     std::vector<std::vector<int64_t>> padding_attr;
     (void)std::transform(padding_list.begin(), padding_list.end(), std::back_inserter(padding_attr),
@@ -387,7 +388,7 @@ bool TransposeStrategy::CanFusionIfInsert(const FuncGraphPtr &func_graph, const 
   bool can_insert = trans_count > total_node_count / kHalfDivisor;
   if (CheckPrimitiveType(cnode, prim::kPrimActivation)) {
     auto prim_act = GetValueNode<std::shared_ptr<ops::Activation>>(cnode->input(0));
-    MS_ASSERT(prim_act != nullptr);
+    MS_CHECK_TRUE_MSG(prim_act != nullptr, false, "GetValueNode Failed");
     if (prim_act->get_activation_type() == mindspore::ActivationType::LEAKY_RELU) {
       can_insert = trans_count >= total_node_count / kHalfDivisor;
     }
@@ -405,7 +406,7 @@ bool TransposeStrategy::CanFusionIfInsert(const FuncGraphPtr &func_graph, const 
 bool TransposeStrategy::CanChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, false, "GetValueNode Failed");
   if (!IsDynamicFormatOp(prim->name())) {
     return false;
   }
@@ -437,7 +438,7 @@ STATUS TransposeStrategy::ChangeOpAxis(const FuncGraphPtr &func_graph, const CNo
                                        FormatTransNodeType trans_type) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
   if (IsDynamicFormatOpWithAxis(prim->name()) && !JudgeIs4DInput(&node_infer_shape_, cnode)) {
     return lite::RET_NOT_SUPPORT;
   }
