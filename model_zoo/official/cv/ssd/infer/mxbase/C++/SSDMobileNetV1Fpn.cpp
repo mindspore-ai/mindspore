@@ -23,6 +23,8 @@ namespace {
     const uint32_t YUV_BYTE_NU = 3;
     const uint32_t YUV_BYTE_DE = 2;
     const uint32_t VPC_H_ALIGN = 2;
+    const uint32_t resizeHeight = 640;
+    const uint32_t resizeWidth = 640;
 }
 
 APP_ERROR SSDMobileNetV1Fpn::Init(const InitParam &initParam) {
@@ -107,8 +109,6 @@ APP_ERROR SSDMobileNetV1Fpn::Resize(const MxBase::TensorBase &inputTensor, MxBas
     input.widthStride = shape[1];
     input.dataSize = inputTensor.GetByteSize();
     input.data = (uint8_t *) inputTensor.GetBuffer();
-    const uint32_t resizeHeight = 640;
-    const uint32_t resizeWidth = 640;
     MxBase::ResizeConfig resize = {};
     resize.height = resizeHeight;
     resize.width = resizeWidth;
