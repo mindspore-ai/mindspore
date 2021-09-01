@@ -145,6 +145,9 @@ class AscendSession : public SessionBasic {
   void LaunchFunc(const KernelGraphPtr &graph, const std::vector<int64_t> &tensors_mask,
                   const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node, bool is_dynamic_shape,
                   const std::vector<tensor::TensorPtr> &input_tensors);
+  KernelGraphPtr CreateKernelGraph(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+                                   std::vector<tensor::TensorPtr> *input_tensors,
+                                   const std::vector<int64_t> &tensors_mask, bool cache_miss);
   // key is final_graph_id,value is child graph execute order of final graph
   std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
   // key is final_graph_id,value is the graph types of child graphs
