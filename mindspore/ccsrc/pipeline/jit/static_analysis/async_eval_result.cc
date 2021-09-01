@@ -53,7 +53,12 @@ void AnalysisSchedule::HandleException(const std::exception &ex) {
 
 void AnalysisSchedule::Wait() {
   py::gil_scoped_release infer_gil_release;
-  EnterWaiting();
+  try {
+    EnterWaiting();
+  } catch (const std::exception &ex) {
+    MS_LOG(DEBUG) << ex.what();
+    HandleException(ex);
+  }
   {
     std::unique_lock<std::mutex> lock(lock_);
     condition_var_.wait(lock, [this] { return threadNum_ <= 0; });
@@ -77,6 +82,8 @@ void AnalysisSchedule::SetNextRunnableImpl() {
     return item->HasResult();
   });
   if (it == asyncAbstractList_.end()) {
+    // Add activate thread count.
+    activeThreadCount_++;
     // Enter endless loop if there is not ready result.
     MS_LOG(EXCEPTION) << "Enter endless loop. There isn't any branch that can been evaluated. Please check the code.";
   }
