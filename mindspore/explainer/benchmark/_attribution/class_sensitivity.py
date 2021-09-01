@@ -19,9 +19,10 @@ import numpy as np
 from mindspore.explainer.explanation import RISE
 from .metric import LabelAgnosticMetric
 from ... import _operators as ops
-from ..._utils import calc_correlation
+from ..._utils import calc_correlation, deprecated_error
 
 
+@deprecated_error
 class ClassSensitivity(LabelAgnosticMetric):
     """
     Class sensitivity metric used to evaluate attribution-based explanations.

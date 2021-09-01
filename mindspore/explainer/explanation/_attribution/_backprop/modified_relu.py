@@ -17,6 +17,7 @@
 import mindspore.nn as nn
 import mindspore.ops.operations as op
 from mindspore.explainer._utils import (
+    deprecated_error,
     unify_inputs,
     unify_targets,
 )
@@ -79,6 +80,7 @@ class ModifiedReLU(Gradient):
         return relu(inputs)
 
 
+@deprecated_error
 class Deconvolution(ModifiedReLU):
     """
     Deconvolution explanation.
@@ -134,6 +136,7 @@ class Deconvolution(ModifiedReLU):
         super(Deconvolution, self).__init__(network, use_relu_backprop=True)
 
 
+@deprecated_error
 class GuidedBackprop(ModifiedReLU):
     """
     Guided-Backpropagation explanation.
