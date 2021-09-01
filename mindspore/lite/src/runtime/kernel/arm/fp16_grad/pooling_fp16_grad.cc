@@ -34,6 +34,8 @@ constexpr int kNumInputDim_2 = 2;
 constexpr int kNumShapeDim_2 = 2;
 }  // namespace
 int PoolingGradCPUKernelFp16::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
   CHECK_NULL_RETURN(pool_param);
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
@@ -45,11 +47,16 @@ int PoolingGradCPUKernelFp16::ReSize() {
 
   auto in_shape = in_tensors_.at(0)->shape();
   auto out_shape = in_tensors_.at(1)->shape();
+  MS_CHECK_TRUE_RET(in_shape.size() == COMM_SHAPE_SIZE, RET_ERROR);
+  MS_CHECK_TRUE_RET(out_shape.size() == COMM_SHAPE_SIZE, RET_ERROR);
+
   if (pool_param->pool_mode_ == PoolMode_AvgPool) {
     out_shape = in_tensors_.at(kNumInputDim_2)->shape();
   }
   int input_h = in_shape.at(1);
   int input_w = in_shape.at(kNumShapeDim_2);
+  MS_CHECK_TRUE_RET(input_h > 0, RET_ERROR);
+  MS_CHECK_TRUE_RET(input_w > 0, RET_ERROR);
   if (pool_param->global_) {
     pool_param->window_w_ = input_w;
     pool_param->window_h_ = input_h;
@@ -73,6 +80,7 @@ int PoolingGradCPUKernelFp16::Execute(int task_id) {
   CHECK_NULL_RETURN(input_ptr);
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
   CHECK_NULL_RETURN(output_ptr);
+  MS_CHECK_TRUE_RET(thread_num_ > 0, RET_ERROR);
   int stride = UP_DIV(pool_param->output_batch_, thread_num_);
   int count = MSMIN(stride, pool_param->output_batch_ - stride * task_id);
   if (count > 0) {

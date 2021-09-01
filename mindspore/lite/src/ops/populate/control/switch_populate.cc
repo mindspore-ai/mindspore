@@ -19,8 +19,8 @@ using mindspore::schema::PrimitiveType_Switch;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSwitchParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
 
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {

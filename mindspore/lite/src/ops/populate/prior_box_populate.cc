@@ -20,13 +20,10 @@ using mindspore::schema::PrimitiveType_PriorBox;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulatePriorBoxParameter(const void *prim) {
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_PriorBox();
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(value != nullptr, nullptr, "value is nullptr");
 
   auto *param = reinterpret_cast<PriorBoxParameter *>(malloc(sizeof(PriorBoxParameter)));
   if (param == nullptr) {

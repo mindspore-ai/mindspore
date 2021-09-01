@@ -32,16 +32,19 @@ int DeConvolutionGradFilterCPUKernel::Init() {
   // dy is in input 0
   // x is in input 1
   // dw is output 0
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_2D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_[0]);
-  CHECK_NULL_RETURN(in_tensors_[1]);
-  CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(0));
   auto *x_tensor = in_tensors_.at(1);
   auto *dy_tensor = in_tensors_.at(0);
 
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   CHECK_NULL_RETURN(conv_param);
+  MS_CHECK_TRUE_RET(dy_tensor->shape().size() == COMM_SHAPE_SIZE, RET_ERROR);
+  MS_CHECK_TRUE_RET(x_tensor->shape().size() == COMM_SHAPE_SIZE, RET_ERROR);
+  MS_CHECK_GT(conv_param->group_, 0, RET_ERROR);
   conv_param->output_batch_ = dy_tensor->shape().at(kNHWC_N);
   conv_param->input_batch_ = x_tensor->shape().at(kNHWC_N);
   conv_param->input_h_ = x_tensor->shape().at(kNHWC_H);
@@ -73,11 +76,11 @@ int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto *input_x = in_tensors_.at(1);
   auto *out_dw = out_tensors_.at(0);
 
-  auto x_addr = reinterpret_cast<float *>(input_x->MutableData());
+  auto x_addr = reinterpret_cast<float *>(input_x->data_c());
   CHECK_NULL_RETURN(x_addr);
-  auto dy_addr = reinterpret_cast<float *>(input_dy->MutableData());
+  auto dy_addr = reinterpret_cast<float *>(input_dy->data_c());
   CHECK_NULL_RETURN(dy_addr);
-  auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
+  auto dw_addr = reinterpret_cast<float *>(out_dw->data_c());
   CHECK_NULL_RETURN(dw_addr);
 
   int i, j;
@@ -92,6 +95,7 @@ int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
 
+  MS_CHECK_GT(groups, 0, RET_ERROR);
   const int m = in_ch / groups;
   const int n = k_h * k_w * out_ch / groups;
 

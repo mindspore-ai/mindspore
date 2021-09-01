@@ -20,6 +20,7 @@
 namespace mindspore {
 int UnsqueezeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_LESS_RETURN(in_tensors.size(), 1);
   if (in_tensors[0].Shape().size() > 3) {
     MS_LOG(WARNING) << "The dimension of output not support bigger than 4.";
     return RET_NOT_SUPPORT;
@@ -58,6 +59,8 @@ int UnsqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<m
 int UnsqueezeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                  const std::vector<mindspore::MSTensor> &out_tensors,
                                  const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_NULL_RETURN(unsqueeze_);
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   unsqueeze_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }

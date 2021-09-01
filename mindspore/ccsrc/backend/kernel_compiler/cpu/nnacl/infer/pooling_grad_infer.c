@@ -46,6 +46,8 @@ int PoolingGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     return NNACL_PARAM_INVALID;
   }
   if (param->pad_mode_ == Pad_same) {
+    NNACL_CHECK_ZERO_RETURN_ERR(param->stride_w_);
+    NNACL_CHECK_ZERO_RETURN_ERR(param->stride_h_);
     int output_w = ceil((float)(input_w) / (float)(param->stride_w_));
     int output_h = ceil((float)(input_h) / (float)(param->stride_h_));
     int pad_h_all = ((output_h - 1) * param->stride_h_ + (window_h - 1) + 1 - input_h);
