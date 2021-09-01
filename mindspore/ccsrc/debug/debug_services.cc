@@ -251,6 +251,29 @@ void DebugServices::AddAnalyzedTensorToCache(const bool recheck, const unsigned 
   }
 }
 
+void DebugServices::SetCheckWatchpointsResult(
+  const int chunk_id, partitioned_names *chunk_names, partitioned_names *chunk_slots,
+  partitioned_numbers *chunk_conditions, partitioned_id *chunk_watchpoint_id, partitioned_parameters *chunk_parameters,
+  partitioned_error_code *chunk_error_codes, partitioned_numbers *chunk_exec_orders, partitioned_id *chunk_device_id,
+  partitioned_id *chunk_root_graph_id, std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id,
+  const int exec_order, const std::string &qualified_tensor_name, const std::string &tensor_slot,
+  const watchpoint_t &wp, const unsigned int device_id_val, const unsigned int root_graph_id_val,
+  const std::vector<parameter_t> &parameter_list, const int32_t error_code) {
+  (*chunk_exec_orders)[chunk_id].push_back(exec_order);
+  (*chunk_names)[chunk_id].push_back(qualified_tensor_name);
+  (*chunk_slots)[chunk_id].push_back(tensor_slot);
+  (*chunk_conditions)[chunk_id].push_back(wp.condition.type);
+  (*chunk_watchpoint_id)[chunk_id].push_back(wp.id);
+  if (device_id != nullptr) {
+    (*chunk_device_id)[chunk_id].push_back(device_id_val);
+  }
+  if (root_graph_id != nullptr) {
+    (*chunk_root_graph_id)[chunk_id].push_back(root_graph_id_val);
+  }
+  (*chunk_parameters)[chunk_id].push_back(parameter_list);
+  (*chunk_error_codes)[chunk_id].push_back(error_code);
+}
+
 void DebugServices::CheckWatchpointsForTensor(
   partitioned_names *chunk_names, partitioned_names *chunk_slots, partitioned_numbers *chunk_conditions,
   partitioned_id *const chunk_watchpoint_id, partitioned_parameters *chunk_parameters,
@@ -262,29 +285,9 @@ void DebugServices::CheckWatchpointsForTensor(
   std::vector<unsigned int> *root_graph_id) {
   for (int i = begin; i < end; i++) {
     auto &tensor = (*tensor_list)[i];
-#ifdef OFFLINE_DBG_MODE
-    // read data in offline mode
-    std::vector<std::shared_ptr<TensorData>> result_list;
-    ReadDumpedTensor(std::vector<std::string>{tensor->GetName()}, std::vector<size_t>{tensor->GetSlot()},
-                     std::vector<unsigned int>{tensor->GetDeviceId()},
-                     std::vector<unsigned int>{tensor->GetIteration()},
-                     std::vector<unsigned int>{tensor->GetRootGraphId()}, std::vector<bool>{tensor->GetIsOutput()},
-                     async_file_pool, &result_list);
-    tensor = result_list[0];
-    if (!tensor->GetByteSize()) {
-      tensor.reset();
-      continue;
-    }
-#endif
     const auto tensor_name = tensor->GetName();
     const auto tensor_name_no_slot = tensor_name.substr(0, tensor_name.find_first_of(':'));
     const auto tensor_slot = std::to_string(tensor->GetSlot());
-    // no elements to analyze
-    if (tensor->GetByteSize() == 0) {
-      continue;
-    }
-    (*chunk_tensor_byte_size)[chunk_id] += tensor->GetByteSize();
-    int tensor_dtype = tensor->GetType();
     std::vector<watchpoint_t> watchpoints_to_check;
     std::string qualified_tensor_name;
     bool previous_iter_tensor_needed = false;
@@ -296,6 +299,38 @@ void DebugServices::CheckWatchpointsForTensor(
     if (watchpoints_to_check.empty()) {
       continue;
     }
+#ifdef OFFLINE_DBG_MODE
+    // read data in offline mode
+    bool no_mem_to_read = false;
+    std::vector<std::shared_ptr<TensorData>> result_list;
+    ReadDumpedTensor(std::vector<std::string>{tensor->GetName()}, std::vector<size_t>{tensor->GetSlot()},
+                     std::vector<unsigned int>{tensor->GetDeviceId()},
+                     std::vector<unsigned int>{tensor->GetIteration()},
+                     std::vector<unsigned int>{tensor->GetRootGraphId()}, std::vector<bool>{tensor->GetIsOutput()},
+                     async_file_pool, &result_list, &no_mem_to_read);
+    tensor = result_list[0];
+    if (!tensor->GetByteSize()) {
+      if (no_mem_to_read) {
+        // bit 3 denotes failed to load tensor because tensor is oversized and no enough memory to fit in
+        int32_t oversize_error_code = 8;
+        for (auto &wp : watchpoints_to_check) {
+          SetCheckWatchpointsResult(chunk_id, chunk_names, chunk_slots, chunk_conditions, chunk_watchpoint_id,
+                                    chunk_parameters, chunk_error_codes, chunk_exec_orders, chunk_device_id,
+                                    chunk_root_graph_id, device_id, root_graph_id, tensor->GetExecutionOrder(),
+                                    qualified_tensor_name, tensor_slot, wp, tensor->GetDeviceId(),
+                                    tensor->GetRootGraphId(), std::vector<parameter_t>(), oversize_error_code);
+        }
+      }
+      tensor.reset();
+      continue;
+    }
+#endif
+    // no elements to analyze
+    if (tensor->GetByteSize() == 0) {
+      continue;
+    }
+    (*chunk_tensor_byte_size)[chunk_id] += tensor->GetByteSize();
+    int tensor_dtype = tensor->GetType();
     uint32_t num_elements = tensor->GetNumElements();
     uint32_t prev_num_elements = 0;
     void *previous_tensor_ptr = nullptr;
@@ -331,23 +366,23 @@ void DebugServices::CheckWatchpointsForTensor(
       }
       AddAnalyzedTensorToCache(recheck, wp.id, tensor_name);
       if (is_hit || error_code) {
-        (*chunk_exec_orders)[chunk_id].push_back(tensor->GetExecutionOrder());
-        (*chunk_names)[chunk_id].push_back(qualified_tensor_name);
-        (*chunk_slots)[chunk_id].push_back(tensor_slot);
-        (*chunk_conditions)[chunk_id].push_back(wp.condition.type);
-        (*chunk_watchpoint_id)[chunk_id].push_back(wp.id);
-        if (device_id != nullptr) {
-          (*chunk_device_id)[chunk_id].push_back(tensor->GetDeviceId());
-        }
-        if (root_graph_id != nullptr) {
-          (*chunk_root_graph_id)[chunk_id].push_back(tensor->GetRootGraphId());
-        }
-        (*chunk_parameters)[chunk_id].push_back(parameter_list);
-        (*chunk_error_codes)[chunk_id].push_back(error_code);
+        SetCheckWatchpointsResult(chunk_id, chunk_names, chunk_slots, chunk_conditions, chunk_watchpoint_id,
+                                  chunk_parameters, chunk_error_codes, chunk_exec_orders, chunk_device_id,
+                                  chunk_root_graph_id, device_id, root_graph_id, tensor->GetExecutionOrder(),
+                                  qualified_tensor_name, tensor_slot, wp, tensor->GetDeviceId(),
+                                  tensor->GetRootGraphId(), parameter_list, error_code);
       }
     }
 
 #ifdef OFFLINE_DBG_MODE
+    // set the tensor into not-in-use status in tensor_loader.
+    std::string key_name_in_cache = tensor_name + ":" + std::to_string(tensor->GetDeviceId()) + ":" +
+                                    std::to_string(tensor->GetRootGraphId()) + ":" +
+                                    std::to_string(tensor->GetIsOutput()) + ":" + std::to_string(tensor->GetSlot());
+    ReleaseInUsedStatus(key_name_in_cache);
+    if (previous_tensor_ptr != nullptr) {
+      ReleaseInUsedStatus(key_name_in_cache + ":prev");
+    }
     // in offline mode remove the need for the data
     tensor.reset();
 #endif
@@ -447,8 +482,9 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
 }
 
 #ifdef OFFLINE_DBG_MODE
-void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string *tensor_type, std::size_t *size,
-                                      std::vector<int64_t> *shape, std::vector<char> **data_buffer) {
+void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name,
+                                      std::string *tensor_type, std::size_t *size, std::vector<int64_t> *shape,
+                                      std::vector<char> **data_buffer, bool *no_mem_to_read) {
   std::ifstream infile;
   std::string file_path = file_name;
   MS_LOG(INFO) << "Reading in file: " << file_path;
@@ -471,6 +507,7 @@ void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string 
   const int type_offset = 10;
   uint16_t header_len = *reinterpret_cast<uint16_t *>(buffer->data() + header_len_offset);
   std::string header(buffer->data() + header_offset, header_len);
+  buffer.reset();
   std::size_t type_i = header.find("descr") + type_offset;
   if (header.length() < type_i + substr_len) {
     MS_LOG(ERROR) << "Cannot get tensor_type, header length is " << header.length();
@@ -489,12 +526,22 @@ void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string 
   std::size_t word_size = std::stoul(std::string(1, (*tensor_type)[1]));
   std::size_t data_len = std::accumulate(shape->begin(), shape->end(), 1, std::multiplies<uint64_t>());
   std::size_t data_size = data_len * word_size;
-  infile.seekg(header_len + type_offset);
-  *data_buffer = new std::vector<char>(data_size);
-  if (data_buffer == nullptr || !infile.read((*data_buffer)->data(), data_size)) {
-    MS_LOG(ERROR) << "Unable to get tensor data from npy";
+  // Check memory available before loading tensor into host.
+  bool has_enough_memory = true;
+  if (tensor_loader_->EnableMemoryControl()) {
+    has_enough_memory = tensor_loader_->CheckMemoryAvailable(tensor_name, data_size);
   }
-  *size = data_size;
+  if (!has_enough_memory) {
+    MS_LOG(ERROR) << "No enough space available for loading " << tensor_name << " into host memory.";
+    *no_mem_to_read = true;
+  } else {
+    infile.seekg(header_len + type_offset);
+    *data_buffer = new std::vector<char>(data_size);
+    if (data_buffer == nullptr || !infile.read((*data_buffer)->data(), data_size)) {
+      MS_LOG(ERROR) << "Unable to get tensor data from npy";
+    }
+    *size = data_size;
+  }
 }
 
 void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<std::string>> &dir_to_files_map,
@@ -795,7 +842,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
                                      std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                                      std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
                                      const std::vector<std::string> &async_file_pool,
-                                     std::vector<std::shared_ptr<TensorData>> *result_list) {
+                                     std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read) {
   for (unsigned int i = 0; i < backend_name.size(); i++) {
     // form prefix of the tensor file to read from graph pb node name
     std::string dump_style_kernel_name = backend_name[i];
@@ -816,10 +863,11 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     // search files in dir for the one that meets the filename prefix and read the file into memory
     if (is_sync_mode_) {
       ReadDumpedTensorSync(prefix_dump_file_name, specific_dump_dir, backend_name[i], slot[i], device_id[i],
-                           iteration[i], root_graph_id[i], is_output[i], result_list);
+                           iteration[i], root_graph_id[i], is_output[i], result_list, no_mem_to_read);
     } else {
       ReadDumpedTensorAsync(specific_dump_dir, prefix_dump_to_check, slot_string_to_check, backend_name[i], slot[i],
-                            device_id[i], iteration[i], root_graph_id[i], is_output[i], async_file_pool, result_list);
+                            device_id[i], iteration[i], root_graph_id[i], is_output[i], async_file_pool, result_list,
+                            no_mem_to_read);
     }
   }
 }
@@ -827,7 +875,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
 void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
                                          const std::string &backend_name, size_t slot, unsigned int device_id,
                                          unsigned int iteration, unsigned int root_graph_id, const bool &is_output,
-                                         std::vector<std::shared_ptr<TensorData>> *result_list) {
+                                         std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read) {
   std::vector<char> *buffer = nullptr;
   std::string type_name = "";
   std::vector<int64_t> shape;
@@ -861,7 +909,10 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
   if (found_file) {
     shape.clear();
     std::string result_path = GetNewestFilePath(matched_paths);
-    ReadTensorFromNpy(result_path, &type_name, &data_size, &shape, &buffer);
+    std::string key_name_in_cache = backend_name + ":" + std::to_string(device_id) + ":" +
+                                    std::to_string(root_graph_id) + ":" + std::to_string(is_output) + ":" +
+                                    std::to_string(slot);
+    ReadTensorFromNpy(key_name_in_cache, result_path, &type_name, &data_size, &shape, &buffer, no_mem_to_read);
     AddToTensorData(backend_name, slot, iteration, device_id, root_graph_id, is_output, data_size, type_name, shape,
                     buffer, result_list);
   } else {
@@ -877,7 +928,7 @@ void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, 
                                           size_t slot, unsigned int device_id, unsigned int iteration,
                                           unsigned int root_graph_id, const bool &is_output,
                                           const std::vector<std::string> &async_file_pool,
-                                          std::vector<std::shared_ptr<TensorData>> *result_list) {
+                                          std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read) {
   std::vector<char> *buffer = nullptr;
   std::string type_name = "";
   std::vector<int64_t> shape;
@@ -896,7 +947,10 @@ void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, 
   if (found) {
     shape.clear();
     std::string result_path = GetNewestFilePath(matched_paths);
-    ReadTensorFromNpy(result_path, &type_name, &data_size, &shape, &buffer);
+    std::string key_name_in_cache = backend_name + ":" + std::to_string(device_id) + ":" +
+                                    std::to_string(root_graph_id) + ":" + std::to_string(is_output) + ":" +
+                                    std::to_string(slot);
+    ReadTensorFromNpy(key_name_in_cache, result_path, &type_name, &data_size, &shape, &buffer, no_mem_to_read);
     AddToTensorData(backend_name, slot, iteration, device_id, root_graph_id, is_output, data_size, type_name, shape,
                     buffer, result_list);
   } else {
@@ -1109,15 +1163,9 @@ void DebugServices::EmptyTensor() { tensor_loader_->EmptyTensor(); }
 
 std::vector<std::shared_ptr<TensorData>> DebugServices::GetTensor() const { return tensor_loader_->GetTensor(); }
 
-std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensorMap(const std::string &node_name) const {
-  return tensor_loader_->GetNodeTensorMap(node_name);
-}
-
 uint32_t DebugServices::GetTensorLoaderIterNum() const { return tensor_loader_->GetIterNum(); }
 
 void DebugServices::SetTensorLoaderIterNum(uint32_t iter_num) { tensor_loader_->set_iter_num(iter_num); }
-
-void DebugServices::EmptyPrevTensor() { tensor_loader_->EmptyPrevTensor(); }
 
 void DebugServices::EmptyCurrentTensor() { tensor_loader_->EmptyCurrentTensor(); }
 
@@ -1390,6 +1438,12 @@ void DebugServices::MoveTensorCurrentToPrev(const std::string &tensor_name) {
   tensor_loader_->MoveTensorCurrentToPrev(tensor_name);
 }
 
+void DebugServices::ReleaseInUsedStatus(const std::string &tensor_name) {
+  if (tensor_loader_->EnableMemoryControl()) {
+    tensor_loader_->ReleaseInUsedStatus(tensor_name);
+  }
+}
+
 void DebugServices::SetNetName(std::string net_name) { this->net_name_ = net_name; }
 
 std::string DebugServices::GetNetName() { return net_name_; }
@@ -1401,6 +1455,8 @@ std::string DebugServices::GetDumpDir() { return dump_dir_; }
 void DebugServices::SetSyncMode(bool is_sync_mode) { this->is_sync_mode_ = is_sync_mode; }
 
 bool DebugServices::GetSyncMode() { return is_sync_mode_; }
+
+void DebugServices::SetMemLimit(uint64_t max_mem_size) { tensor_loader_->SetMemTotal(max_mem_size); }
 
 #ifdef ONLINE_DBG_MODE
 }  // namespace mindspore

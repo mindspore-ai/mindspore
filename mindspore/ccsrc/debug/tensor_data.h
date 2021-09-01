@@ -179,7 +179,19 @@ class TensorData {
 #endif
   }
 
+#ifdef OFFLINE_DBG_MODE
+  ~TensorData() { DeleteDataPtr(); }
+#else
   ~TensorData() {}
+#endif
+
+  void DeleteDataPtr() {
+    if (this->data_ptr_ != NULL) {
+      delete this->data_ptr_;
+      this->data_ptr_ = NULL;
+      this->size_ = 0;
+    }
+  }
 
   std::string GetName() const { return this->name_; }
 

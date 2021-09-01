@@ -266,6 +266,16 @@ class DebugServices {
                              const std::string &tensor_name_no_slot, bool *previous_iter_tensor_needed,
                              std::string *qualified_tensor_name, std::vector<watchpoint_t> *watchpoints_to_check);
 
+  void SetCheckWatchpointsResult(const int chunk_id, partitioned_names *chunk_names, partitioned_names *chunk_slots,
+                                 partitioned_numbers *chunk_conditions, partitioned_id *chunk_watchpoint_id,
+                                 partitioned_parameters *chunk_parameters, partitioned_error_code *chunk_error_codes,
+                                 partitioned_numbers *chunk_exec_orders, partitioned_id *chunk_device_id,
+                                 partitioned_id *chunk_root_graph_id, std::vector<unsigned int> *device_id,
+                                 std::vector<unsigned int> *root_graph_id, const int exec_order,
+                                 const std::string &qualified_tensor_name, const std::string &tensor_slot,
+                                 const watchpoint_t &wp, const unsigned int device_id_val,
+                                 const unsigned int root_graph_id_val, const std::vector<parameter_t> &parameter_list,
+                                 const int32_t error_code);
 #ifdef OFFLINE_DBG_MODE
   void AddToTensorData(const std::string &backend_name, const std::size_t slot, const unsigned int iteration,
                        const unsigned int device_id, const unsigned int root_graph_id, const bool is_output,
@@ -279,18 +289,18 @@ class DebugServices {
                         std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                         std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
                         const std::vector<std::string> &async_file_pool,
-                        std::vector<std::shared_ptr<TensorData>> *result_list);
+                        std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read = nullptr);
 
   void ReadDumpedTensorSync(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
                             const std::string &backend_name, size_t slot, unsigned int device_id,
                             unsigned int iteration, unsigned int root_graph_id, const bool &is_output,
-                            std::vector<std::shared_ptr<TensorData>> *result_list);
+                            std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read);
 
   void ReadDumpedTensorAsync(const std::string &specific_dump_dir, const std::string &prefix_dump_to_check,
                              const std::string &slot_string_to_check, const std::string &backend_name, size_t slot,
                              unsigned int device_id, unsigned int iteration, unsigned int root_graph_id,
                              const bool &is_output, const std::vector<std::string> &async_file_pool,
-                             std::vector<std::shared_ptr<TensorData>> *result_list);
+                             std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read);
 
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,
                                                                    std::vector<std::string> *async_file_pool);
@@ -298,8 +308,9 @@ class DebugServices {
   void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
                       uint32_t *prev_num_elements);
 
-  void ReadTensorFromNpy(const std::string &file_name, std::string *tensor_type, std::size_t *size,
-                         std::vector<int64_t> *shape, std::vector<char> **data_buffer);
+  void ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name, std::string *tensor_type,
+                         std::size_t *size, std::vector<int64_t> *shape, std::vector<char> **data_buffer,
+                         bool *no_mem_to_read);
 
   void ConvertToHostFormat(const std::map<std::string, std::vector<std::string>> &dir_to_files_map,
                            std::vector<std::string> *result_list);
@@ -337,13 +348,9 @@ class DebugServices {
 
   void AddAnalyzedTensorToCache(const bool recheck, const unsigned int id, const std::string &tensor_name);
 
-  std::vector<std::shared_ptr<TensorData>> GetNodeTensorMap(const std::string &node_name) const;
-
   uint32_t GetTensorLoaderIterNum() const;
 
   void SetTensorLoaderIterNum(uint32_t iter_num);
-
-  void EmptyPrevTensor();
 
   void EmptyCurrentTensor();
 
@@ -377,6 +384,8 @@ class DebugServices {
 
   void MoveTensorCurrentToPrev(const std::string &tensor_name);
 
+  void ReleaseInUsedStatus(const std::string &tensor_name);
+
   void SetNetName(std::string net_name);
 
   std::string GetNetName();
@@ -388,6 +397,8 @@ class DebugServices {
   void SetSyncMode(bool is_sync_mode);
 
   bool GetSyncMode();
+
+  void SetMemLimit(uint64_t max_mem_size);
 
  private:
   std::mutex lock_;

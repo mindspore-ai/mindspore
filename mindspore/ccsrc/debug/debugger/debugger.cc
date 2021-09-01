@@ -1148,8 +1148,6 @@ void Debugger::EmptyTensor() { debug_services_.get()->EmptyTensor(); }
 
 void Debugger::SetTensorLoaderIterNum(uint32_t iter_num) { debug_services_.get()->SetTensorLoaderIterNum(iter_num); }
 
-void Debugger::EmptyPrevTensor() { debug_services_.get()->EmptyPrevTensor(); }
-
 uint32_t Debugger::GetTensorLoaderIterNum() const { return debug_services_.get()->GetTensorLoaderIterNum(); }
 
 bool Debugger::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
