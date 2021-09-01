@@ -517,8 +517,9 @@ class _TrainPipelineAccuStepCell(TrainOneStepCell):
             succ = self.optimizer(grads)
         else:
             succ = self.optimizer(accu_grads)
+        loss = ops.depend(loss, succ)
         clear = self.hyper_map(_pipeline_clear_grad, accu_grads, grads)
-        loss = ops.depend(loss, succ, clear)
+        loss = ops.depend(loss, clear)
         return loss
 
 

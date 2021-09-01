@@ -41,7 +41,6 @@ extern const char ATTR_MIN_SHAPE[];
 extern const char ATTR_MAX_SHAPE[];
 extern const char ATTR_MIN_VALUE[];
 extern const char ATTR_MAX_VALUE[];
-extern const char ATTR_NO_BROADEN[];
 extern const char ATTR_NO_ELIMINATE[];
 }  // namespace mindspore
 

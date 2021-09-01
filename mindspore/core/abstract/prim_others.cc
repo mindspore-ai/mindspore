@@ -169,13 +169,18 @@ AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const Primitive
 
 AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << primitive->name() << " input args size should be at least 1, but got 0";
-  }
-  if (primitive->GetAttr(ATTR_NO_BROADEN) != nullptr) {
+  CheckArgsSize(primitive->name(), args_spec_list, 2);
+
+  // If the dependent has a value, just return depended node.
+  // If depended node is not Any, the dependent maybe eliminated.
+  auto dependant_abstract = args_spec_list[1];
+  auto dependant_value = dependant_abstract->BuildValue();
+  MS_EXCEPTION_IF_NULL(dependant_value);
+  if (dependant_value != kAnyValue) {
     return args_spec_list[0];
   }
-  auto depends = args_spec_list[0]->Broaden();
+
+  auto depends = args_spec_list[0]->Broaden();  // Avoid eliminating the dependent node.
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
     // For scalar, need to set value to kAnyValue, because broaden scalar will not change the value.
     if (depends->isa<AbstractScalar>()) {
