@@ -84,5 +84,5 @@ extern "C" {
 std::shared_ptr<MxBase::SsdMobilenetFpn_MindsporePost> GetObjectInstance();
 }
 #endif
-}
-#endif // MXVISION_SSDMOBILENETFPN_MINDSPOREPOST_H
+}  // namespace MxBase
+#endif  // MXVISION_SSDMOBILENETFPN_MINDSPOREPOST_H

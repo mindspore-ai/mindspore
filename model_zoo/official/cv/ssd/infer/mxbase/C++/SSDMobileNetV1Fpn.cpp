@@ -91,7 +91,7 @@ APP_ERROR SSDMobileNetV1Fpn::ReadImage(const std::string &imgPath, MxBase::Tenso
         LogError << "DvppWrapper DvppJpegDecode failed, ret=" << ret << ".";
         return ret;
     }
-    MxBase::MemoryData memoryData((output.data, output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
+    MxBase::MemoryData memoryData(output.data, output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
                                   deviceId_);
     if (output.heightStride % VPC_H_ALIGN != 0) {
         LogError << "Output data height(" << output.heightStride << ") can't be divided by " << VPC_H_ALIGN << ".";
@@ -121,7 +121,7 @@ APP_ERROR SSDMobileNetV1Fpn::Resize(const MxBase::TensorBase &inputTensor, MxBas
         LogError << "VpcResize failed, ret=" << ret << ".";
         return ret;
     }
-    MxBase::MemoryData memoryData((void *) output.data, output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
+    MxBase::MemoryData memoryData(output.data, output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
                                   deviceId_);
     if (output.heightStride % VPC_H_ALIGN != 0) {
         LogError << "Output data height(" << output.heightStride << ") can't be divided by " << VPC_H_ALIGN << ".";
