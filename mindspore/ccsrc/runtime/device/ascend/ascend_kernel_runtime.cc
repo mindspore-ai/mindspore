@@ -717,6 +717,9 @@ bool AscendKernelRuntime::LaunchKernel(const AnfNodePtr &kernel) {
 
 void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernels,
                                              std::vector<size_t> *last_stream_nodes) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   std::map<void *, size_t> last_kernel;
   for (size_t i = 0; i < kernels.size(); ++i) {
     auto &node = kernels[i];
@@ -744,7 +747,7 @@ void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernel
         ascend_kernel_mod->SetStream(stream_id_map_[id]);
         last_kernel[stream_id_map_[id]] = i;
       }
-    } else if (AnfAlgo::IsIndependentNode(node)) {
+    } else if (AnfAlgo::IsIndependentNode(node) && mode != kPynativeMode) {
       AnfAlgo::SetStreamId(1, node.get());
       ascend_kernel_mod->SetStream(independent_stream_);
       last_kernel[independent_stream_] = i;
