@@ -314,24 +314,6 @@ void AscendKernelRuntime::PreInit() {
 }
 #endif
 
-uint32_t AscendKernelRuntime::GetRankId() {
-  uint32_t rank_id;
-  auto ret = hccl::HcclAdapter::GetInstance().HcclGetRankId(&rank_id);
-  if (ret != HCCL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "HcclGetRankId failed, ret:" << ret;
-  }
-  return rank_id;
-}
-
-uint32_t AscendKernelRuntime::GetRankSize() {
-  uint32_t rank_size;
-  auto ret = hccl::HcclAdapter::GetInstance().HcclGetRankSize(&rank_size);
-  if (ret != HCCL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "HcclGetRankSize failed, ret:" << ret;
-  }
-  return rank_size;
-}
-
 bool AscendKernelRuntime::Init() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
