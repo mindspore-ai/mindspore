@@ -319,9 +319,14 @@ def create_group(group, rank_ids):
 
     Note:
         GPU version of MindSpore doesn't support this method.
+
         The size of rank_ids should be larger than 1.
+
         Rank_ids should not have duplicate data.
+
         This method should be used after init().
+
+        Only support global single communication group in PyNative mode.
 
     Args:
         group (str): The name of the communication group to be created.
