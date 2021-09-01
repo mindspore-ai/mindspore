@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+#include<map>
+#include<memory>
+#include<string>
+#include<vector>
 #include "SSDMobileNetV1Fpn.h"
 #include "MxBase/DeviceManager/DeviceManager.h"
 #include "MxBase/Log/Log.h"
 
-using namespace MxBase;
-namespace {
+namespace MxBase {
     const uint32_t YUV_BYTE_NU = 3;
     const uint32_t YUV_BYTE_DE = 2;
     const uint32_t VPC_H_ALIGN = 2;
@@ -88,7 +91,7 @@ APP_ERROR SSDMobileNetV1Fpn::ReadImage(const std::string &imgPath, MxBase::Tenso
         LogError << "DvppWrapper DvppJpegDecode failed, ret=" << ret << ".";
         return ret;
     }
-    MxBase::MemoryData memoryData((void *) output.data, output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
+    MxBase::MemoryData memoryData((output.data, output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
                                   deviceId_);
     if (output.heightStride % VPC_H_ALIGN != 0) {
         LogError << "Output data height(" << output.heightStride << ") can't be divided by " << VPC_H_ALIGN << ".";
@@ -103,12 +106,12 @@ APP_ERROR SSDMobileNetV1Fpn::ReadImage(const std::string &imgPath, MxBase::Tenso
 APP_ERROR SSDMobileNetV1Fpn::Resize(const MxBase::TensorBase &inputTensor, MxBase::TensorBase &outputTensor) {
     auto shape = inputTensor.GetShape();
     MxBase::DvppDataInfo input = {};
-    input.height = (uint32_t) shape[0] * YUV_BYTE_DE / YUV_BYTE_NU;
+    input.height = shape[0] * YUV_BYTE_DE / YUV_BYTE_NU;
     input.width = shape[1];
-    input.heightStride = (uint32_t) shape[0] * YUV_BYTE_DE / YUV_BYTE_NU;
+    input.heightStride = shape[0] * YUV_BYTE_DE / YUV_BYTE_NU;
     input.widthStride = shape[1];
     input.dataSize = inputTensor.GetByteSize();
-    input.data = (uint8_t *) inputTensor.GetBuffer();
+    input.data = inputTensor.GetBuffer();
     MxBase::ResizeConfig resize = {};
     resize.height = resizeHeight;
     resize.width = resizeWidth;

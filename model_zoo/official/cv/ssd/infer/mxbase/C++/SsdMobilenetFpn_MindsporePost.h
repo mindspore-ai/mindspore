@@ -20,13 +20,15 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <string>
+#include <memory>
 #include "MxBase/ErrorCode/ErrorCode.h"
 #include "MxBase/CV/Core/DataType.h"
 #include "MxBase/PostProcessBases/ObjectPostProcessBase.h"
 
 namespace MxBase {
 class SsdMobilenetFpn_MindsporePost : public ObjectPostProcessBase {
-public:
+ public:
     SsdMobilenetFpn_MindsporePost() = default;
 
     ~SsdMobilenetFpn_MindsporePost() = default;
@@ -49,16 +51,17 @@ public:
 
     bool IsValidTensors(const std::vector<TensorBase> &tensors) const override;
 
-    uint64_t GetCurrentVersion() override
-    {
+    uint64_t GetCurrentVersion() override {
         return CURRENT_VERSION;
     }
-private:
+
+ private:
     void ObjectDetectionOutput(const std::vector<TensorBase> &tensors,
                                std::vector<std::vector<ObjectInfo>> &objectInfos,
                                const std::vector<ResizedImageInfo> &resizedImageInfos);
     void NonMaxSuppression(std::vector<MxBase::DetectBox>& detBoxes,
-                           TensorBase &bboxTensor, TensorBase &confidenceTensor, int stride, const ResizedImageInfo &imgInfo,
+                           TensorBase &bboxTensor, TensorBase &confidenceTensor, int stride,
+                           const ResizedImageInfo &imgInfo,
                            uint32_t batchNum, uint32_t batchSize);
     void NmsSort(std::vector<DetectBox>& detBoxes, float iouThresh, IOUMethod method);
     void FilterByIou(std::vector<DetectBox> dets, std::vector<DetectBox>& sortBoxes, float iouThresh, IOUMethod method);
@@ -82,4 +85,4 @@ std::shared_ptr<MxBase::SsdMobilenetFpn_MindsporePost> GetObjectInstance();
 }
 #endif
 }
-#endif //MXVISION_SSDMOBILENETFPN_MINDSPOREPOST_H
+#endif // MXVISION_SSDMOBILENETFPN_MINDSPOREPOST_H
