@@ -19,6 +19,7 @@ __all__ = [
     'abs_max',
     'calc_auc',
     'calc_correlation',
+    'deprecated_error',
     'format_tensor_to_ndarray',
     'generate_one_hot',
     'rank_pixels',
@@ -41,6 +42,18 @@ import mindspore.ops.operations as op
 _Array = np.ndarray
 _Module = nn.Cell
 _Tensor = ms.Tensor
+
+
+class DeprecatedError(RuntimeError):
+    def __init__(self):
+        super().__init__("'mindspore.explainer' is deprecated from version 1.5 and "
+                         "will be removed in a future version, use MindSpore XAI "
+                         "https://gitee.com/mindspore/xai instead.")
+
+
+def deprecated_error(func_or_cls):
+    del func_or_cls
+    raise DeprecatedError()
 
 
 def abs_max(gradients):

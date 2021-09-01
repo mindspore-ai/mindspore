@@ -17,12 +17,13 @@ from copy import deepcopy
 
 from mindspore.train._utils import check_value_type
 from mindspore.explainer._operators import Tensor
-from mindspore.explainer._utils import abs_max, unify_inputs, unify_targets
+from mindspore.explainer._utils import abs_max, deprecated_error, unify_inputs, unify_targets
 
 from .. import Attribution
 from .backprop_utils import get_bp_weights, GradNet
 
 
+@deprecated_error
 class Gradient(Attribution):
     r"""
     Provides Gradient explanation method.

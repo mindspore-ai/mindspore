@@ -22,7 +22,7 @@ import mindspore as ms
 from mindspore import log, nn
 from mindspore.train._utils import check_value_type
 from .metric import LabelSensitiveMetric
-from ..._utils import calc_auc, format_tensor_to_ndarray
+from ..._utils import calc_auc, deprecated_error, format_tensor_to_ndarray
 from ...explanation._attribution import Attribution as _Attribution
 from ...explanation._attribution._perturbation.replacement import Constant, GaussianBlur
 from ...explanation._attribution._perturbation.ablation import AblationWithSaliency
@@ -337,6 +337,7 @@ class InsertionAUC(_FaithfulnessHelper):
         return np.array([auc], np.float)
 
 
+@deprecated_error
 class Faithfulness(LabelSensitiveMetric):
     """
     Provides evaluation on faithfulness on XAI explanations.

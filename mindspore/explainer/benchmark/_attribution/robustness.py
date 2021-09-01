@@ -22,8 +22,10 @@ from mindspore.train._utils import check_value_type
 from mindspore import log
 from .metric import LabelSensitiveMetric
 from ...explanation._attribution._perturbation.replacement import RandomPerturb
+from ..._utils import deprecated_error
 
 
+@deprecated_error
 class Robustness(LabelSensitiveMetric):
     """
     Robustness perturbs the inputs by adding random noise and choose the maximum sensitivity as evaluation score from

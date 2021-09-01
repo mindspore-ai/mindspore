@@ -25,6 +25,7 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import Squeeze
 from mindspore.train._utils import check_value_type
+from mindspore.explainer._utils import deprecated_error
 
 
 AUTO_LAYER_MAX = 3                       # maximum number of layer by auto settings
@@ -40,6 +41,7 @@ MASK_GAUSSIAN_RE = r'^gaussian:(\d+)$'   # gaussian mask string pattern
 AUTO_IMAGE_SHORT_SIDE_MIN = AUTO_WIN_SIZE_MIN * AUTO_WIN_SIZE_DIV
 
 
+@deprecated_error
 def is_valid_str_mask(mask):
     """Check if it is a valid string mask."""
     check_value_type('mask', mask, str)
@@ -47,6 +49,7 @@ def is_valid_str_mask(mask):
     return match and int(match.group(1)) > 0
 
 
+@deprecated_error
 def compile_mask(mask, image):
     """Compile mask to a ready to use object."""
     if mask is None:
@@ -67,6 +70,7 @@ def compile_mask(mask, image):
     return mask
 
 
+@deprecated_error
 def auto_str_mask(image):
     """Generate auto string mask for the image."""
     check_value_type('image', image, np.ndarray)
@@ -78,6 +82,7 @@ def auto_str_mask(image):
     return f'gaussian:{radius}'
 
 
+@deprecated_error
 def compile_str_mask(mask, image):
     """Concert string mask to numpy.ndarray."""
     check_value_type('mask', mask, str)
@@ -93,6 +98,7 @@ def compile_str_mask(mask, image):
     raise ValueError(f"Invalid string mask: '{mask}'.")
 
 
+@deprecated_error
 class EditStep:
     """
     Edit step that describes a box region, also represents an edit tree.
@@ -382,6 +388,7 @@ class OriginalOutputError(RuntimeError):
     """Error for network output of the original image is not strictly larger than the threshold."""
 
 
+@deprecated_error
 class Searcher:
     """
     Edit step searcher.

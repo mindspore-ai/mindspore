@@ -18,7 +18,7 @@ import numpy as np
 from mindspore.train._utils import check_value_type
 from .metric import LabelSensitiveMetric
 from ..._operators import maximum, reshape, Tensor
-from ..._utils import format_tensor_to_ndarray
+from ..._utils import deprecated_error, format_tensor_to_ndarray
 
 
 def _get_max_position(saliency):
@@ -37,6 +37,7 @@ def _mask_out_saliency(saliency, threshold):
     return mask_out
 
 
+@deprecated_error
 class Localization(LabelSensitiveMetric):
     r"""
     Provides evaluation on the localization capability of XAI methods.

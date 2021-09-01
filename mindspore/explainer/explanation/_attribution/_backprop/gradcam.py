@@ -16,7 +16,7 @@
 """GradCAM."""
 
 from mindspore.ops import operations as op
-from mindspore.explainer._utils import ForwardProbe, retrieve_layer, unify_inputs, unify_targets
+from mindspore.explainer._utils import deprecated_error, ForwardProbe, retrieve_layer, unify_inputs, unify_targets
 
 from .backprop_utils import get_bp_weights, GradNet
 from .intermediate_layer import IntermediateLayerAttribution
@@ -38,6 +38,7 @@ def _gradcam_aggregation(attributions):
     return attributions
 
 
+@deprecated_error
 class GradCAM(IntermediateLayerAttribution):
     r"""
     Provides GradCAM explanation method.

@@ -23,7 +23,7 @@ import mindspore.nn as nn
 from .ablation import Ablation
 from .perturbation import PerturbationAttribution
 from .replacement import Constant
-from ...._utils import abs_max
+from ...._utils import abs_max, deprecated_error
 
 
 def _generate_patches(array, window_size: Tuple, strides: Tuple):
@@ -40,6 +40,7 @@ def _generate_patches(array, window_size: Tuple, strides: Tuple):
     return patches
 
 
+@deprecated_error
 class Occlusion(PerturbationAttribution):
     """
     Occlusion uses a sliding window to replace the pixels with a reference value (e.g. constant value), and computes

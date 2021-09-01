@@ -22,9 +22,10 @@ from mindspore.train._utils import check_value_type
 
 from .perturbation import PerturbationAttribution
 from .... import _operators as op
-from ...._utils import resize
+from ...._utils import resize, deprecated_error
 
 
+@deprecated_error
 class RISE(PerturbationAttribution):
     r"""
     RISE: Randomized Input Sampling for Explanation of Black-box Model.

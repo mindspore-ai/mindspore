@@ -41,6 +41,7 @@ from mindspore.explainer.benchmark._attribution.metric import LabelAgnosticMetri
 from mindspore.explainer.explanation import RISE
 from mindspore.explainer.explanation._attribution.attribution import Attribution
 from mindspore.explainer.explanation._counterfactual import hierarchical_occlusion as hoc
+from mindspore.explainer._utils import deprecated_error
 
 
 _EXPAND_DIMS = ExpandDims()
@@ -229,6 +230,7 @@ class _Verifier:
                 benchmarker_classes.append(benchmarker.__class__)
 
 
+@deprecated_error
 class ImageClassificationRunner(_Verifier):
     """
     A high-level API for users to generate and store results of the explanation methods and the evaluation methods.
