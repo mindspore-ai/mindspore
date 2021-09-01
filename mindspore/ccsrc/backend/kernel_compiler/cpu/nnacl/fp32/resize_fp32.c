@@ -164,16 +164,24 @@ int InterpRow(const float *src_line, float *linear_output, int new_width, const 
   int w;
   for (w = 0; w < new_width; w++) {
     int c = 0;
-#ifdef ENABLE_NEON
-    float32x4_t left_w = vdupq_n_f32(x_left_weights[w]);
-    float32x4_t right_w = vdupq_n_f32(1.0f - x_left_weights[w]);
-
-    for (; c <= in_c - 4; c += 4) {
-      float32x4_t left = vld1q_f32(src_line + x_lefts[w] * in_c + c);
-      float32x4_t right = vld1q_f32(src_line + x_rights[w] * in_c + c);
-
-      float32x4_t interp_value = left * left_w + right * right_w;
-      vst1q_f32(linear_output + w * in_c + c, interp_value);
+#if defined(ENABLE_AVX)
+    MS_FLOAT32X8 left_w_8 = MS_MOV256_F32(x_left_weights[w]);
+    MS_FLOAT32X8 right_w_8 = MS_MOV256_F32(1.0f - x_left_weights[w]);
+    for (; c <= in_c - C8NUM; c += C8NUM) {
+      MS_FLOAT32X8 left = MS_LD256_F32(src_line + x_lefts[w] * in_c + c);
+      MS_FLOAT32X8 right = MS_LD256_F32(src_line + x_rights[w] * in_c + c);
+      MS_FLOAT32X8 interp_value = left * left_w_8 + right * right_w_8;
+      MS_ST256_F32(linear_output + w * in_c + c, interp_value);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    MS_FLOAT32X4 left_w = MS_MOVQ_F32(x_left_weights[w]);
+    MS_FLOAT32X4 right_w = MS_MOVQ_F32(1.0f - x_left_weights[w]);
+    for (; c <= in_c - C4NUM; c += C4NUM) {
+      MS_FLOAT32X4 left = MS_LDQ_F32(src_line + x_lefts[w] * in_c + c);
+      MS_FLOAT32X4 right = MS_LDQ_F32(src_line + x_rights[w] * in_c + c);
+      MS_FLOAT32X4 interp_value = left * left_w + right * right_w;
+      MS_STQ_F32(linear_output + w * in_c + c, interp_value);
     }
 #endif
     int left_w_offset = x_lefts[w] * in_c;
@@ -192,15 +200,24 @@ int InterpCol(const float *bottom_line, const float *top_line, float *output, in
   int w;
   for (w = 0; w < new_width; w++) {
     int c = 0;
-#ifdef ENABLE_NEON
-    float32x4_t bottom_w = vdupq_n_f32(y_bottom_weight);
-    float32x4_t top_w = vdupq_n_f32(1.0f - y_bottom_weight);
-
-    for (; c <= in_c - 4; c += 4) {
-      float32x4_t bottom = vld1q_f32(bottom_line + w * in_c + c);
-      float32x4_t top = vld1q_f32(top_line + w * in_c + c);
-      float32x4_t interp_value = bottom * bottom_w + top * top_w;
-      vst1q_f32(output + w * in_c + c, interp_value);
+#if defined(ENABLE_AVX)
+    MS_FLOAT32X8 bottom_w_8 = MS_MOV256_F32(y_bottom_weight);
+    MS_FLOAT32X8 top_w_8 = MS_MOV256_F32(1.0f - y_bottom_weight);
+    for (; c <= in_c - C8NUM; c += C8NUM) {
+      MS_FLOAT32X8 bottom = MS_LD256_F32(bottom_line + w * in_c + c);
+      MS_FLOAT32X8 top = MS_LD256_F32(top_line + w * in_c + c);
+      MS_FLOAT32X8 interp_value = bottom * bottom_w_8 + top * top_w_8;
+      MS_ST256_F32(output + w * in_c + c, interp_value);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    MS_FLOAT32X4 bottom_w = MS_MOVQ_F32(y_bottom_weight);
+    MS_FLOAT32X4 top_w = MS_MOVQ_F32(1.0f - y_bottom_weight);
+    for (; c <= in_c - C4NUM; c += C4NUM) {
+      MS_FLOAT32X4 bottom = MS_LDQ_F32(bottom_line + w * in_c + c);
+      MS_FLOAT32X4 top = MS_LDQ_F32(top_line + w * in_c + c);
+      MS_FLOAT32X4 interp_value = bottom * bottom_w + top * top_w;
+      MS_STQ_F32(output + w * in_c + c, interp_value);
     }
 #endif
     for (; c < in_c; c++) {
@@ -299,21 +316,40 @@ void BicubicInterpRow(const float *src, float *dst, const float *weights, const 
     const float *src2_w = src + lefts[4 * w + 2] * channel;
     const float *src3_w = src + lefts[4 * w + 3] * channel;
     int c = 0;
-#ifdef ENABLE_NEON
-    float32x4_t weight0_vec = vdupq_n_f32(weight[0]);
-    float32x4_t weight1_vec = vdupq_n_f32(weight[1]);
-    float32x4_t weight2_vec = vdupq_n_f32(weight[2]);
-    float32x4_t weight3_vec = vdupq_n_f32(weight[3]);
-
-    for (; c <= channel - 4; c += 4) {
-      float32x4_t src0_vec = vld1q_f32(src0_w + c);
-      float32x4_t src1_vec = vld1q_f32(src1_w + c);
-      float32x4_t src2_vec = vld1q_f32(src2_w + c);
-      float32x4_t src3_vec = vld1q_f32(src3_w + c);
-
-      float32x4_t interp_value =
-        src0_vec * weight0_vec + src1_vec * weight1_vec + src2_vec * weight2_vec + src3_vec * weight3_vec;
-      vst1q_f32(dst_w + c, interp_value);
+#if defined(ENABLE_AVX)
+    MS_FLOAT32X8 weight0_vec_8 = MS_MOV256_F32(weight[0]);
+    MS_FLOAT32X8 weight1_vec_8 = MS_MOV256_F32(weight[1]);
+    MS_FLOAT32X8 weight2_vec_8 = MS_MOV256_F32(weight[2]);
+    MS_FLOAT32X8 weight3_vec_8 = MS_MOV256_F32(weight[3]);
+    for (; c <= channel - C8NUM; c += C8NUM) {
+      MS_FLOAT32X8 src0_vec = MS_LD256_F32(src0_w + c);
+      MS_FLOAT32X8 src1_vec = MS_LD256_F32(src1_w + c);
+      MS_FLOAT32X8 src2_vec = MS_LD256_F32(src2_w + c);
+      MS_FLOAT32X8 src3_vec = MS_LD256_F32(src3_w + c);
+      MS_FLOAT32X8 dst0 = MS_MUL256_F32(src0_vec, weight0_vec_8);
+      MS_FLOAT32X8 dst1 = MS_MUL256_F32(src1_vec, weight1_vec_8);
+      MS_FLOAT32X8 dst2 = MS_MUL256_F32(src2_vec, weight2_vec_8);
+      MS_FLOAT32X8 dst3 = MS_MUL256_F32(src3_vec, weight3_vec_8);
+      MS_FLOAT32X8 interp_value = MS_ADD256_F32(dst3, MS_ADD256_F32(dst2, MS_ADD256_F32(dst1, dst0)));
+      MS_ST256_F32(dst_w + c, interp_value);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    MS_FLOAT32X4 weight0_vec = MS_MOVQ_F32(weight[0]);
+    MS_FLOAT32X4 weight1_vec = MS_MOVQ_F32(weight[1]);
+    MS_FLOAT32X4 weight2_vec = MS_MOVQ_F32(weight[2]);
+    MS_FLOAT32X4 weight3_vec = MS_MOVQ_F32(weight[3]);
+    for (; c <= channel - C4NUM; c += C4NUM) {
+      MS_FLOAT32X4 src0_vec = MS_LDQ_F32(src0_w + c);
+      MS_FLOAT32X4 src1_vec = MS_LDQ_F32(src1_w + c);
+      MS_FLOAT32X4 src2_vec = MS_LDQ_F32(src2_w + c);
+      MS_FLOAT32X4 src3_vec = MS_LDQ_F32(src3_w + c);
+      MS_FLOAT32X4 dst0 = MS_MULQ_F32(src0_vec, weight0_vec);
+      MS_FLOAT32X4 dst1 = MS_MULQ_F32(src1_vec, weight1_vec);
+      MS_FLOAT32X4 dst2 = MS_MULQ_F32(src2_vec, weight2_vec);
+      MS_FLOAT32X4 dst3 = MS_MULQ_F32(src3_vec, weight3_vec);
+      MS_FLOAT32X4 interp_value = MS_ADDQ_F32(dst3, MS_ADDQ_F32(dst2, MS_ADDQ_F32(dst1, dst0)));
+      MS_STQ_F32(dst_w + c, interp_value);
     }
 #endif
     for (; c < channel; c++) {
@@ -334,20 +370,40 @@ void BicubicInterpCol(const float *src, float *dst, const float *weights, int wi
     const float *src2_w = src2 + w * channel;
     const float *src3_w = src3 + w * channel;
     int c = 0;
-#ifdef ENABLE_NEON
-    float32x4_t weight0_vec = vdupq_n_f32(weights[0]);
-    float32x4_t weight1_vec = vdupq_n_f32(weights[1]);
-    float32x4_t weight2_vec = vdupq_n_f32(weights[2]);
-    float32x4_t weight3_vec = vdupq_n_f32(weights[3]);
-
-    for (; c <= channel - 4; c += 4) {
-      float32x4_t src0_vec = vld1q_f32(src0_w + c);
-      float32x4_t src1_vec = vld1q_f32(src1_w + c);
-      float32x4_t src2_vec = vld1q_f32(src2_w + c);
-      float32x4_t src3_vec = vld1q_f32(src3_w + c);
-      float32x4_t interp_value =
-        src0_vec * weight0_vec + src1_vec * weight1_vec + src2_vec * weight2_vec + src3_vec * weight3_vec;
-      vst1q_f32(dst_w + c, interp_value);
+#ifdef ENABLE_AVX
+    MS_FLOAT32X8 weight0_vec_8 = MS_MOV256_F32(weights[0]);
+    MS_FLOAT32X8 weight1_vec_8 = MS_MOV256_F32(weights[1]);
+    MS_FLOAT32X8 weight2_vec_8 = MS_MOV256_F32(weights[2]);
+    MS_FLOAT32X8 weight3_vec_8 = MS_MOV256_F32(weights[3]);
+    for (; c <= channel - C8NUM; c += C8NUM) {
+      MS_FLOAT32X8 src0_vec = MS_LD256_F32(src0_w + c);
+      MS_FLOAT32X8 src1_vec = MS_LD256_F32(src1_w + c);
+      MS_FLOAT32X8 src2_vec = MS_LD256_F32(src2_w + c);
+      MS_FLOAT32X8 src3_vec = MS_LD256_F32(src3_w + c);
+      MS_FLOAT32X8 dst1 = MS_MUL256_F32(src0_vec, weight0_vec_8);
+      MS_FLOAT32X8 dst2 = MS_MUL256_F32(src1_vec, weight1_vec_8);
+      MS_FLOAT32X8 dst3 = MS_MUL256_F32(src2_vec, weight2_vec_8);
+      MS_FLOAT32X8 dst4 = MS_MUL256_F32(src3_vec, weight3_vec_8);
+      MS_FLOAT32X8 interp_value = MS_ADD256_F32(dst4, MS_ADD256_F32(dst3, MS_ADD256_F32(dst1, dst2)));
+      MS_ST256_F32(dst_w + c, interp_value);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    MS_FLOAT32X4 weight0_vec = MS_MOVQ_F32(weights[0]);
+    MS_FLOAT32X4 weight1_vec = MS_MOVQ_F32(weights[1]);
+    MS_FLOAT32X4 weight2_vec = MS_MOVQ_F32(weights[2]);
+    MS_FLOAT32X4 weight3_vec = MS_MOVQ_F32(weights[3]);
+    for (; c <= channel - C4NUM; c += C4NUM) {
+      MS_FLOAT32X4 src0_vec = MS_LDQ_F32(src0_w + c);
+      MS_FLOAT32X4 src1_vec = MS_LDQ_F32(src1_w + c);
+      MS_FLOAT32X4 src2_vec = MS_LDQ_F32(src2_w + c);
+      MS_FLOAT32X4 src3_vec = MS_LDQ_F32(src3_w + c);
+      MS_FLOAT32X4 dst1 = MS_MULQ_F32(src0_vec, weight0_vec);
+      MS_FLOAT32X4 dst2 = MS_MULQ_F32(src1_vec, weight1_vec);
+      MS_FLOAT32X4 dst3 = MS_MULQ_F32(src2_vec, weight2_vec);
+      MS_FLOAT32X4 dst4 = MS_MULQ_F32(src3_vec, weight3_vec);
+      MS_FLOAT32X4 interp_value = MS_ADDQ_F32(dst4, MS_ADDQ_F32(dst3, MS_ADDQ_F32(dst1, dst2)));
+      MS_STQ_F32(dst_w + c, interp_value);
     }
 #endif
     for (; c < channel; c++) {

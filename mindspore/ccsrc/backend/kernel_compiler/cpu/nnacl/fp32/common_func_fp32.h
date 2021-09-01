@@ -69,12 +69,6 @@ void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t 
 #endif
 
 #ifdef ENABLE_ARM64
-void BiasAdd(const float *bias, float *data, size_t oc4, size_t plan_size);
-void BiasAddRelu6(const float *bias, float *data, size_t oc4, size_t plan_size);
-void BiasAddRelu(const float *bias, float *data, size_t oc4, size_t plan_size);
-void Relu6(float *data, size_t element4);
-void Relu(float *data, size_t element4);
-
 void DeconvDwFp32Border(float *dst, const float *src, const float *weight, size_t height, size_t width,
                         size_t in_kh_step, size_t in_kw_step, size_t kernel_w);
 

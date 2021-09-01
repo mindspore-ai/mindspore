@@ -75,6 +75,7 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
           },
           {
             "conv_depthwise_fp32.c",
+            "activation_fp32.c",
           },
           {});
   nnacl::NNaclFp32Serializer code;
