@@ -18,7 +18,11 @@
 #include <vector>
 #include <cmath>
 #include <cfloat>
+#include <algorithm>
+#include <string>
+#include <iostream>
 #include "src/lite_kernel.h"
+#include "include/ms_tensor.h"
 #include "include/errorcode.h"
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -31,6 +35,7 @@ static __attribute__((always_inline)) inline bool MS_ISNAN(float var) {
 
 namespace mindspore::kernel {
 
+enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH, ACCUMULATE_GRADS };
 class OptimizerKernel : public InnerKernel {
  public:
   OptimizerKernel() = default;
@@ -39,7 +44,6 @@ class OptimizerKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx), lr_idx_(lr_idx), grad_idx_(grad_idx) {}
   ~OptimizerKernel() = default;
 
-  enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH };
   WeightUpdateMode get_optimizer_mode() { return weight_update_mod_; }
 
   int Init() override {
@@ -55,13 +59,69 @@ class OptimizerKernel : public InnerKernel {
 
   float GetLearningRate() { return lr_; }
 
+  virtual std::vector<int> GetOptimizerParamsIdxs() const {
+    std::vector<int> indices;
+    return indices;
+  }
+
+  std::vector<tensor::MSTensor *> GetOptimizerParams() const {
+    std::vector<tensor::MSTensor *> params;
+    auto indices = GetOptimizerParamsIdxs();
+    indices.push_back(lr_idx_);
+    for (size_t ix = 0; ix < indices.size(); ix++) {
+      auto param = lite::Tensor::CopyTensor(*in_tensors_.at(indices[ix]));
+      param->set_tensor_name(in_tensors_.at(indices[ix])->tensor_name());
+      param->set_data(static_cast<void *>(in_tensors_.at(indices[ix])->data()));
+      param->set_own_data(false);
+      if (param->data() == nullptr) {
+        MS_LOG(ERROR) << "Tensor: " << param->tensor_name() << "has no data";
+        return params;
+      }
+      params.push_back(param);
+    }
+    return params;
+  }
+
+  bool SetOptimizerParams(tensor::MSTensor *param) {
+    if (param == nullptr) {
+      return false;
+    }
+    bool found = false;
+    auto indices = GetOptimizerParamsIdxs();
+    indices.push_back(lr_idx_);
+    for (size_t ix = 0; ix < indices.size(); ix++) {
+      if (param->tensor_name() == in_tensors_.at(indices[ix])->tensor_name()) {
+        auto value = static_cast<float *>(param->MutableData())[0];
+        static_cast<float *>(in_tensors_.at(indices[ix])->MutableData())[0] = value;
+        if (lr_idx_ == indices[ix]) {
+          lr_ = value;
+        }
+        found = true;
+        break;
+      }
+    }
+    return found;
+  }
+
+  lite::Tensor *GetGradients() {
+    lite::Tensor *grad_sum_tensor = nullptr;
+    if (grad_sum_ != nullptr) {
+      auto shape = in_tensors_.at(grad_idx_)->shape();
+      grad_sum_tensor = new lite::Tensor(kNumberTypeFloat, shape);
+      grad_sum_tensor->set_tensor_name(in_tensors_.at(grad_idx_)->tensor_name());
+      grad_sum_tensor->set_data(static_cast<void *>(grad_sum_));
+      grad_sum_tensor->set_own_data(false);
+    }
+    return grad_sum_tensor;
+  }
+
   int RestoreDefaultLearningRate() {
     SetLearningRate(default_lr_);
     return RET_OK;
   }
 
   int SetOptimizerMode(WeightUpdateMode mod) {
-    if (mod == WeightUpdateMode::VIRTUAL_BATCH) {
+    if (mod == WeightUpdateMode::VIRTUAL_BATCH || mod == WeightUpdateMode::ACCUMULATE_GRADS) {
       if (grad_sum_ != nullptr) {
         ms_context_->allocator->Free(grad_sum_);
         grad_sum_ = nullptr;
@@ -75,7 +135,7 @@ class OptimizerKernel : public InnerKernel {
       }
       valid_grad_sum_ = false;
       std::fill(grad_sum_, grad_sum_ + elem_num, 0);
-      weight_update_mod_ = WeightUpdateMode::VIRTUAL_BATCH;
+      weight_update_mod_ = mod;
     } else {
       if (grad_sum_ != nullptr) {
         OptimizerStep();
@@ -139,6 +199,10 @@ class OptimizerKernel : public InnerKernel {
         }
       }
     }
+    return RET_OK;
+  }
+  int set_grad_sum_valid() {
+    valid_grad_sum_ = true;
     return RET_OK;
   }
 

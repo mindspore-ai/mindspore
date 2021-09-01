@@ -92,6 +92,28 @@ class MS_API Model {
   /// \return The input tensor with the given name, if the name is not found, an invalid tensor is returned.
   inline MSTensor GetInputByTensorName(const std::string &tensor_name);
 
+  /// \brief Obtains all gradient tensors of the model.
+  ///
+  /// \return The vector that includes all gradient tensors.
+  std::vector<MSTensor> GetGradients() const;
+
+  /// \brief update gradient tensors of the model.
+  ///
+  /// \param[in] inputs A vector new gradients.
+  /// \return Status of operation
+  Status ApplyGradients(const std::vector<MSTensor> &gradients);
+
+  /// \brief Obtains optimizer params tensors of the model.
+  ///
+  /// \return The vector that includes all params tensors.
+  std::vector<MSTensor> GetOptimizerParams() const;
+
+  /// \brief update the optimizer parameters
+  ///
+  /// \param[in] inputs A vector new optimizer params.
+  /// \return Status of operation
+  Status SetOptimizerParams(const std::vector<MSTensor> &params);
+
   Status InitMetrics(std::vector<Metrics *> metrics);
   std::vector<Metrics *> GetMetrics();
 

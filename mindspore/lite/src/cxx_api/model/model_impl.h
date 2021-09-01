@@ -72,6 +72,10 @@ class ModelImpl {
   Status LoadConfig(const std::string &config_path);
   std::vector<MSTensor> GetInputs();
   std::vector<MSTensor> GetOutputs();
+  std::vector<MSTensor> GetGradients() const;
+  Status ApplyGradients(const std::vector<MSTensor> &gradients);
+  std::vector<MSTensor> GetOptimizerParams() const;
+  Status SetOptimizerParams(const std::vector<MSTensor> &params);
   MSTensor GetInputByTensorName(const std::string &name);
   std::vector<std::string> GetOutputTensorNames();
   MSTensor GetOutputByTensorName(const std::string &name);

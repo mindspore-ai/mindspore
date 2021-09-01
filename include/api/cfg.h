@@ -45,6 +45,7 @@ class TrainCfg {
   OptimizationLevel optimization_level_ = kO0;
   std::string loss_name_;             /**< Set part of the name that identify a loss kernel */
   MixPrecisionCfg mix_precision_cfg_; /**< Mix precision configuration */
+  bool accumulate_gradients_ = false;
 };
 
 }  // namespace mindspore

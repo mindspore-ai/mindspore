@@ -349,6 +349,82 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
   return res;
 }
 
+std::vector<MSTensor> ModelImpl::GetGradients() const {
+  std::vector<MSTensor> empty;
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return empty;
+  }
+  auto params = session_->GetGradients();
+  if (params.empty()) {
+    MS_LOG(ERROR) << "No optimizer parameters avelibale.";
+    return empty;
+  }
+  std::vector<MSTensor> res = LiteTensorsToMSTensors(params);
+  return res;
+}
+
+Status ModelImpl::ApplyGradients(const std::vector<MSTensor> &gradients) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return kLiteNullptr;
+  }
+  if (gradients.empty()) {
+    MS_LOG(ERROR) << "gradients is null.";
+    return kLiteInputParamInvalid;
+  }
+  std::vector<tensor::MSTensor *> inner_gradients;
+  inner_gradients.resize(gradients.size());
+  for (size_t i = 0; i < gradients.size(); i++) {
+    auto gradient = gradients[i];
+    if (gradient.impl_ == nullptr || gradient.impl_->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "gradient tensor " << gradient.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_gradients[i] = gradient.impl_->lite_tensor();
+  }
+  auto ret = session_->ApplyGradients(inner_gradients);
+  return static_cast<StatusCode>(ret);
+}
+
+std::vector<MSTensor> ModelImpl::GetOptimizerParams() const {
+  std::vector<MSTensor> empty;
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return empty;
+  }
+  auto params = session_->GetOptimizerParams();
+  if (params.empty()) {
+    MS_LOG(ERROR) << "No optimizer parameters avelibale.";
+    return empty;
+  }
+  std::vector<MSTensor> res = LiteTensorsToMSTensors(params);
+  return res;
+}
+
+Status ModelImpl::SetOptimizerParams(const std::vector<MSTensor> &params) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return kLiteNullptr;
+  }
+  if (params.empty()) {
+    MS_LOG(ERROR) << "params is null.";
+    return kLiteInputParamInvalid;
+  }
+  std::vector<tensor::MSTensor *> inner_params;
+  inner_params.resize(params.size());
+  for (size_t i = 0; i < params.size(); i++) {
+    auto param = params[i];
+    if (param.impl_ == nullptr || param.impl_->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "Param tensor " << param.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_params[i] = param.impl_->lite_tensor();
+  }
+  auto ret = session_->SetOptimizerParams(inner_params);
+  return static_cast<StatusCode>(ret);
+}
+
 MSTensor ModelImpl::GetInputByTensorName(const std::string &name) {
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Session is null.";

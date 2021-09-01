@@ -202,6 +202,34 @@ class MS_API LiteSession {
   /// \param[in] features new featuremap
   /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
   virtual int UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features) { return mindspore::lite::RET_ERROR; }
+
+  /// \brief Get model gradient
+  ///
+  /// \return a vector of gradient tensors (MindSpore Lite MSTensor).
+  virtual std::vector<tensor::MSTensor *> GetGradients() const {
+    std::vector<tensor::MSTensor *> gradients;
+    return gradients;
+  }
+
+  /// \brief update model gradient
+  ///
+  /// \param[in] new gradients
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int ApplyGradients(const std::vector<tensor::MSTensor *> &gradients) { return mindspore::lite::RET_ERROR; }
+
+  /// \brief Get model optimizer params
+  ///
+  /// \return a vector of optimizer parameters (MindSpore Lite MSTensor).
+  virtual std::vector<tensor::MSTensor *> GetOptimizerParams() const {
+    std::vector<tensor::MSTensor *> params;
+    return params;
+  }
+
+  /// \brief set model optimizer params
+  ///
+  /// \param[in] new optimizer params
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int SetOptimizerParams(const std::vector<tensor::MSTensor *> &params) { return mindspore::lite::RET_ERROR; }
 };
 }  // namespace session
 }  // namespace mindspore
