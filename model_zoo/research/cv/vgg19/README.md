@@ -432,7 +432,7 @@ train_parallel1/log:epcoh: 2 step: 97, loss is 1.7133579
 ...
 ```
 
-> About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorials/en/master/distributed_training.html).
+> About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorials/zh-CN/master/distributed_training.html).
 > **Attention** This will bind the processor cores according to the `device_num` and total processor numbers. If you don't expect to run pretraining with binding processor cores, remove the operations about `taskset` in `scripts/run_distribute_train.sh`
 
 ##### Run vgg19 on GPU
