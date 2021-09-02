@@ -32,6 +32,7 @@ int CumsumLaunch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
     return RET_NULL_PTR;
   }
   auto kernel = reinterpret_cast<CumSumCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto input_tensor = kernel->in_tensors().at(0);
   int ret;
   if (input_tensor->data_type() == kNumberTypeFloat32) {
@@ -47,6 +48,9 @@ int CumsumLaunch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }  // namespace
 
 int CumSumCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(param_);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -54,20 +58,19 @@ int CumSumCPUKernel::Init() {
 }
 
 int CumSumCPUKernel::ReSize() {
-  MS_ASSERT(in_tensors_.size() == kInputSize1);
   auto input_tensor = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input_tensor);
   auto axis_tensor = in_tensors_.at(1);
+  CHECK_NULL_RETURN(axis_tensor);
   int *axis_data = reinterpret_cast<int *>(axis_tensor->data_c());
-  if (axis_data == nullptr) {
-    MS_LOG(ERROR) << "Cumsum axis nullptr";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(axis_data);
+
   param_->axis_ = *axis_data;
   if (param_->axis_ < 0) {
-    param_->axis_ += in_tensors_.at(0)->shape().size();
+    param_->axis_ += input_tensor->shape().size();
   }
-  if (static_cast<int>(in_tensors_.at(0)->shape().size()) <= param_->axis_) {
-    MS_LOG(ERROR) << "axis " << param_->axis_ << " larger than in tensor rank " << in_tensors_.at(0)->shape().size();
+  if (param_->axis_ < 0 || param_->axis_ >= static_cast<int>(input_tensor->shape().size())) {
+    MS_LOG(ERROR) << "axis " << param_->axis_ << " error.";
     return RET_ERROR;
   }
   out_dim_ = 1;
@@ -79,25 +82,17 @@ int CumSumCPUKernel::ReSize() {
   for (int i = param_->axis_ + 1; i < static_cast<int>(input_tensor->shape().size()); ++i) {
     in_dim_ *= input_tensor->shape().at(i);
   }
+  MS_CHECK_FALSE(op_parameter_->thread_num_ == 0, RET_ERROR);
   unit_ = UP_DIV(out_dim_, op_parameter_->thread_num_);
   return RET_OK;
 }
 
 int CumSumCPUKernel::DoCumsum(int task_id) {
-  auto input_tensor = in_tensors_.at(0);
-  MS_ASSERT(input_tensor != nullptr);
-  float *input_data = reinterpret_cast<float *>(input_tensor->data_c());
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "input data nullptr";
-    return RET_ERROR;
-  }
-  auto output_tensor = out_tensors_.at(0);
-  MS_ASSERT(output_tensor != nullptr);
-  float *output_data = reinterpret_cast<float *>(output_tensor->data_c());
-  if (output_data == nullptr) {
-    MS_LOG(ERROR) << "output data nullptr";
-    return RET_ERROR;
-  }
+  float *input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(input_data);
+  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(output_data);
+
   float *input = input_data + task_id * unit_ * axis_dim_ * in_dim_;
   int out_dim = MSMIN(out_dim_ - unit_ * task_id, unit_);
   float *output = output_data + task_id * unit_ * axis_dim_ * in_dim_;
@@ -110,20 +105,11 @@ int CumSumCPUKernel::DoCumsum(int task_id) {
 }
 
 int CumSumCPUKernel::DoCumsumInt(int task_id) {
-  auto input_tensor = in_tensors_.at(0);
-  MS_ASSERT(input_tensor != nullptr);
-  int *input_data = reinterpret_cast<int *>(input_tensor->data_c());
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "input data nullptr";
-    return RET_ERROR;
-  }
-  auto output_tensor = out_tensors_.at(0);
-  MS_ASSERT(output_tensor != nullptr);
-  int *output_data = reinterpret_cast<int *>(output_tensor->data_c());
-  if (output_data == nullptr) {
-    MS_LOG(ERROR) << "output data nullptr";
-    return RET_ERROR;
-  }
+  int *input_data = reinterpret_cast<int *>(in_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(input_data);
+  int *output_data = reinterpret_cast<int *>(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(output_data);
+
   int *input = input_data + task_id * unit_ * axis_dim_ * in_dim_;
   int out_dim = MSMIN(out_dim_ - unit_ * task_id, unit_);
   int *output = output_data + task_id * unit_ * axis_dim_ * in_dim_;

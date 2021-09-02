@@ -61,9 +61,25 @@ ops::PrimitiveC *CaffeTanhParser::Parse(const caffe::LayerParameter &proto, cons
   return prim.release();
 }
 
+ops::PrimitiveC *CaffeEluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_unique<ops::Activation>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  prim->set_activation_type(mindspore::ActivationType::ELU);
+
+  if (proto.has_elu_param()) {
+    const caffe::ELUParameter &eluParameter = proto.elu_param();
+    if (eluParameter.has_alpha()) {
+      prim->set_alpha(eluParameter.alpha());
+    }
+  }
+
+  return prim.release();
+}
+
 CaffeNodeRegistrar g_caffeReluParser("ReLU", new CaffeReluParser());
 CaffeNodeRegistrar g_caffeRelu6Parser("ReLU6", new CaffeRelu6Parser());
 CaffeNodeRegistrar g_caffeSigmoidParser("Sigmoid", new CaffeSigmoidParser());
 CaffeNodeRegistrar g_caffeTanhParser("TanH", new CaffeTanhParser());
+CaffeNodeRegistrar g_caffeEluParser("Elu", new CaffeEluParser());
 }  // namespace lite
 }  // namespace mindspore

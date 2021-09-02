@@ -30,12 +30,13 @@ namespace mindspore::kernel {
 int FillOpenCLKernel::RunFill() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto param = reinterpret_cast<FillParameter *>(this->op_parameter_);
+  CHECK_NULL_RETURN(param);
   default_ = param->num_dims_;
   ImageSize img_size;
   cl_int4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
   auto src_data = out_tensors_[0]->data_c();
-  MS_ASSERT(src_data);
+  CHECK_NULL_RETURN(src_data);
   if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
     MS_LOG(ERROR) << "GetImageSize failed.";
     return RET_ERROR;
@@ -53,12 +54,13 @@ int FillOpenCLKernel::RunFill() {
 
 int FillOpenCLKernel::RunShape() {
   auto allocator_ = ocl_runtime_->GetAllocator();
+  CHECK_NULL_RETURN(allocator_);
   auto src_data = out_tensors_[0]->data_c();
-  MS_ASSERT(src_data);
+  CHECK_NULL_RETURN(src_data);
   cl_int4 fill_value = {default_, default_, default_, default_};
   auto tensor_shape = in_tensors_[0]->shape();
   void *tensor_shape_data = tensor_shape.data();
-  MS_ASSERT(tensor_shape_data);
+  CHECK_NULL_RETURN(tensor_shape_data);
   for (int i = 0; i < tensor_shape.size(); ++i) {
     fill_value.s[i] = reinterpret_cast<int *>(tensor_shape_data)[i];
   }
@@ -84,12 +86,16 @@ int FillOpenCLKernel::CheckSpecs() {
   }
   auto param = this->op_parameter_;
 
-  if (out_tensors_[0]->shape().size() > OUTPUT_TENSOR_SIZE_4) {
-    MS_LOG(ERROR) << " only support dim <= 4";
+  auto input = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
+  if (input->shape().size() > DIMENSION_1D && param->type_ == PrimitiveType_Fill) {
+    MS_LOG(ERROR) << " fill only support dim = 1";
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().size() > DIMENSION_1D && param->type_ == PrimitiveType_Fill) {
-    MS_LOG(ERROR) << " fill only support dim = 1";
+  auto output = out_tensors_.at(0);
+  CHECK_NULL_RETURN(output);
+  if (output->shape().size() > OUTPUT_TENSOR_SIZE_4) {
+    MS_LOG(ERROR) << " only support dim <= 4";
     return RET_ERROR;
   }
   return RET_OK;

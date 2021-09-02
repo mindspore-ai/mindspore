@@ -42,6 +42,7 @@ int HSwish(const float *src, int length, float *dst);
 int HardTanh(const float *src, int length, float *dst, float min_val, float max_val);
 int Gelu(const float *src, int length, float *dst, bool approximate);
 int Softplus(const float *src, int length, float *dst);
+int Elu(const float *src, int length, float *dst, float alpha);
 
 float TanhOpt(float src);
 #ifdef __cplusplus

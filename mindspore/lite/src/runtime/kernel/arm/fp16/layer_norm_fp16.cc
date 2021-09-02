@@ -28,6 +28,9 @@ using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
 int LayerNormFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(param_);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -35,7 +38,9 @@ int LayerNormFp16CPUKernel::Init() {
 }
 
 int LayerNormFp16CPUKernel::ReSize() {
-  auto shape = in_tensors_.front()->shape();
+  auto input = in_tensors_.front();
+  CHECK_NULL_RETURN(input);
+  auto shape = input->shape();
   param_->begin_norm_axis_ =
     param_->begin_norm_axis_ > 0 ? param_->begin_norm_axis_ : param_->begin_norm_axis_ + shape.size();
   param_->begin_params_axis_ =
@@ -62,7 +67,7 @@ int LayerNormFp16CPUKernel::ReSize() {
 }
 
 int LayerNormFp16CPUKernel::DoLayerNormFp16(int thread_id) {
-  int ret = LayerNormFp16(src_data_, gamma_data_, beta_data_, dst_data_, mean_data_, var_data_, param_, thread_id);
+  auto ret = LayerNormFp16(src_data_, gamma_data_, beta_data_, dst_data_, mean_data_, var_data_, param_, thread_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoLayerNorm error error_code[" << ret << "]";
     return ret;
@@ -72,6 +77,7 @@ int LayerNormFp16CPUKernel::DoLayerNormFp16(int thread_id) {
 
 int LayerNormFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<LayerNormFp16CPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto ret = kernel->DoLayerNormFp16(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LayerNormFp16Run error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -81,25 +87,25 @@ int LayerNormFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 }
 
 int LayerNormFp16CPUKernel::Run() {
-  int ret = RET_OK;
   src_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  gamma_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(GAMMA_INDEX)->data_c());
-  beta_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(BETA_INDEX)->data_c());
+  CHECK_NULL_RETURN(src_data_);
+  gamma_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c());
+  CHECK_NULL_RETURN(gamma_data_);
+  beta_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data_c());
+  CHECK_NULL_RETURN(beta_data_);
   dst_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
-  if (out_tensors_.size() == kInputSize2) {
-    mean_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(MEAN_INDEX)->data_c());
-    var_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(VARIANCE_INDEX)->data_c());
-  } else {
-    mean_data_ =
-      reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float16_t)));
-    var_data_ =
-      reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float16_t)));
+  CHECK_NULL_RETURN(dst_data_);
+
+  if (out_tensors_.size() == 3) {
+    mean_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(1)->data_c());
+    CHECK_NULL_RETURN(mean_data_);
+    var_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(2)->data_c());
+    CHECK_NULL_RETURN(var_data_);
+  } else if (out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "LayerNorm should have 1 or 3 output tensors";
+    return RET_ERROR;
   }
-  ret = ParallelLaunch(this->ms_context_, LayerNormFp16Run, this, op_parameter_->thread_num_);
-  if (out_tensors_.size() != kInputSize2) {
-    ms_context_->allocator->Free(mean_data_);
-    ms_context_->allocator->Free(var_data_);
-  }
+  auto ret = ParallelLaunch(this->ms_context_, LayerNormFp16Run, this, op_parameter_->thread_num_);
   return ret;
 }
 

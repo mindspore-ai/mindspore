@@ -46,14 +46,6 @@
     }                                                            \
   } while (0)
 
-#define MS_CHECK_PTR_IF_NULL(ptr)                                \
-  do {                                                           \
-    if ((ptr) == nullptr) {                                      \
-      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
-      return;                                                    \
-    }                                                            \
-  } while (0)
-
 #define MS_CHECK_RET_CODE(code, msg)     \
   do {                                   \
     if ((code) != RET_OK) {              \

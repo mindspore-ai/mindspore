@@ -27,6 +27,7 @@ namespace mindspore::kernel {
 int EmbeddingLookupCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(param_);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -43,14 +44,17 @@ int EmbeddingLookupCPUKernel::ReSize() {
 
   param_->layer_num_ = 0;
   for (size_t i = 0; i < in_tensors_.size() - 1; ++i) {
+    CHECK_NULL_RETURN(in_tensors_.at(i));
     param_->layer_num_ += in_tensors_[i]->shape()[0];
   }
   return RET_OK;
 }
 
 int EmbeddingLookupCPUKernel::DoExcute(int task_id) {
-  auto ids_addr = reinterpret_cast<int *>(in_tensors_.back()->MutableData());
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
+  auto ids_addr = reinterpret_cast<int *>(in_tensors_.back()->data_c());
+  CHECK_NULL_RETURN(ids_addr);
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.front()->data_c());
+  CHECK_NULL_RETURN(output_addr);
   int error_code = EmbeddingLookup(input_addr_, ids_addr, output_addr, param_, task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "embedding lookup error error_code[" << error_code << "]";
@@ -61,6 +65,7 @@ int EmbeddingLookupCPUKernel::DoExcute(int task_id) {
 
 int EmbeddingLookupRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<EmbeddingLookupCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto ret = kernel->DoExcute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "EmbeddingLookupRun error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -70,7 +75,6 @@ int EmbeddingLookupRun(void *cdata, int task_id, float lhs_scale, float rhs_scal
 }
 
 int EmbeddingLookupCPUKernel::Run() {
-  MS_ASSERT(ms_context_->allocator != nullptr);
   input_addr_ =
     reinterpret_cast<float *>(ms_context_->allocator->Malloc(sizeof(float) * param_->layer_size_ * param_->layer_num_));
   param_->is_regulated_ = reinterpret_cast<bool *>(ms_context_->allocator->Malloc(sizeof(bool) * param_->layer_num_));
@@ -84,7 +88,12 @@ int EmbeddingLookupCPUKernel::Run() {
   }
   int dest_loc = 0;
   for (size_t i = 0; i < in_tensors_.size() - 1; i++) {
-    auto input_t = reinterpret_cast<float *>(in_tensors_.at(i)->MutableData());
+    auto input_t = reinterpret_cast<float *>(in_tensors_.at(i)->data_c());
+    if (input_t == nullptr) {
+      MS_LOG(ERROR) << "Get input tensor data failed.";
+      FreeRunBuff();
+      return RET_ERROR;
+    }
     memcpy(input_addr_ + dest_loc, input_t, sizeof(float) * in_tensors_.at(i)->ElementsNum());
     dest_loc += in_tensors_.at(i)->ElementsNum();
   }
@@ -98,8 +107,8 @@ int EmbeddingLookupCPUKernel::Run() {
 
 void EmbeddingLookupCPUKernel::FreeRunBuff() {
   ms_context_->allocator->Free(input_addr_);
-  ms_context_->allocator->Free(param_->is_regulated_);
   input_addr_ = nullptr;
+  ms_context_->allocator->Free(param_->is_regulated_);
   param_->is_regulated_ = nullptr;
 }
 

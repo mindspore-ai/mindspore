@@ -29,6 +29,13 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LogSoftmax;
 
 namespace mindspore::kernel {
+LogSoftmaxCPUKernel::~LogSoftmaxCPUKernel() {
+  if (tmp_data_ != nullptr) {
+    free(tmp_data_);
+    tmp_data_ = nullptr;
+  }
+}
+
 int LogSoftmaxCPUKernel::Init() {
   auto ret = SoftmaxBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -73,19 +80,23 @@ int LogSoftmaxCPUKernel::ReSize() {
 }
 
 int LogSoftmaxCPUKernel::DoLogSoftmaxLastAxis(int task_id) {
+  MS_CHECK_FALSE(op_parameter_->thread_num_ == 0, RET_ERROR);
   int unit = UP_DIV(out_plane_size_, op_parameter_->thread_num_);
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, out_plane_size_);
   int channel = softmax_param_->input_shape_[softmax_param_->axis_];
   int offset = begin * channel;
-  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
+  CHECK_NULL_RETURN(input_ptr);
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
+  CHECK_NULL_RETURN(output_ptr);
   LogSoftmaxLastAxis(input_ptr + offset, output_ptr + offset, tmp_data_ + offset, end - begin, channel);
   return RET_OK;
 }
 
 int LogSoftmaxLastAxisRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<LogSoftmaxCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto ret = kernel->DoLogSoftmaxLastAxis(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoLogSoftmaxLastAxis error task_id: " << task_id << ", ret: " << ret;
@@ -102,11 +113,10 @@ int LogSoftmaxCPUKernel::Run() {
     }
   } else {
     auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
-    MS_ASSERT(input_ptr);
+    CHECK_NULL_RETURN(input_ptr);
     auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
-    MS_ASSERT(output_ptr);
-    MS_ASSERT(tmp_data_);
-    MS_ASSERT(softmax_param_);
+    CHECK_NULL_RETURN(output_ptr);
+    CHECK_NULL_RETURN(tmp_data_);
     LogSoftmax(input_ptr, output_ptr, tmp_data_, softmax_param_);
   }
   return ret;

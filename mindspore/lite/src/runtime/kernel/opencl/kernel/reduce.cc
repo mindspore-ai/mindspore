@@ -94,6 +94,7 @@ int ReduceOpenCLKernel::SetAxes() {
     return RET_ERROR;
   }
   // copy axes from tensor to private var
+  CHECK_NULL_RETURN(axes_tensor->data_c());
   for (int i = 0; i < std::min(num_axes, MAX_SHAPE_SIZE); ++i) {
     axes_[i] = reinterpret_cast<int *>(axes_tensor->data_c())[i];
   }
@@ -128,12 +129,15 @@ int ReduceOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape()[0] > DIMENSION_1D) {
+  auto input = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
+  if (input->shape()[0] > DIMENSION_1D) {
     MS_LOG(ERROR) << "reduce op only support n = 1";
     return RET_PARAM_INVALID;
   }
   inShape = GpuTensorInfo(in_tensors_[0]);
   auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(reduce_param);
   if (GetReduceTypeStr(reduce_param->mode_).empty()) {
     MS_LOG(ERROR) << "not supported reduce type:" << reduce_param->mode_;
     return RET_PARAM_INVALID;

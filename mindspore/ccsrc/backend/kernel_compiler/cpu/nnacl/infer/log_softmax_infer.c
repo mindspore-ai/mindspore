@@ -26,9 +26,8 @@ int LogSoftmaxInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
+  SetDataTypeFormat(output, input);
 
-  output->data_type_ = input->data_type_;
-  output->format_ = input->format_;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
@@ -36,6 +35,11 @@ int LogSoftmaxInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
     return NNACL_ERR;
   }
   SetShapeTensor(output, input);
+  SoftmaxParameter *param = (SoftmaxParameter *)parameter;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
+  if (param->axis_ < (-1 * (int)(input->shape_size_)) || param->axis_ >= (int)(input->shape_size_)) {
+    return NNACL_PARAM_INVALID;
+  }
   return NNACL_OK;
 }
 

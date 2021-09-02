@@ -31,6 +31,13 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LogSoftmax;
 
 namespace mindspore::kernel {
+LogSoftmaxFp16CPUKernel::~LogSoftmaxFp16CPUKernel() {
+  if (tmp_data_ != nullptr) {
+    free(tmp_data_);
+    tmp_data_ = nullptr;
+  }
+}
+
 int LogSoftmaxFp16CPUKernel::Init() {
   auto ret = SoftmaxBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -73,19 +80,23 @@ int LogSoftmaxFp16CPUKernel::ReSize() {
 }
 
 int LogSoftmaxFp16CPUKernel::DoLogSoftmaxLastAxis(int task_id) {
+  MS_CHECK_FALSE(op_parameter_->thread_num_ == 0, RET_ERROR);
   int unit = UP_DIV(out_plane_size_, op_parameter_->thread_num_);
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, out_plane_size_);
   int channel = softmax_param_->input_shape_[softmax_param_->axis_];
   int offset = begin * channel;
-  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->MutableData());
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->MutableData());
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data_c());
+  CHECK_NULL_RETURN(input_ptr);
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data_c());
+  CHECK_NULL_RETURN(output_ptr);
   LogSoftmaxLastAxisFp16(input_ptr + offset, output_ptr + offset, tmp_data_ + offset, end - begin, channel);
   return RET_OK;
 }
 
 int LogSoftmaxLastAxisFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<LogSoftmaxFp16CPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto ret = kernel->DoLogSoftmaxLastAxis(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoLogSoftmaxLastAxisFp16 error task_id: " << task_id << ", ret: " << ret;
@@ -101,15 +112,11 @@ int LogSoftmaxFp16CPUKernel::Run() {
     }
     return ret;
   } else {
-    auto input_tensor = in_tensors_.at(0);
-    MS_ASSERT(input_tensor);
-    auto output_tensor = out_tensors_.at(0);
-    MS_ASSERT(output_tensor);
-    input_fp16_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-    MS_ASSERT(input_fp16_);
-    output_fp16_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
-    MS_ASSERT(output_fp16_);
-    MS_ASSERT(tmp_data_);
+    input_fp16_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+    CHECK_NULL_RETURN(input_fp16_);
+    output_fp16_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+    CHECK_NULL_RETURN(output_fp16_);
+    CHECK_NULL_RETURN(tmp_data_);
     LogSoftmaxFp16(input_fp16_, output_fp16_, tmp_data_, softmax_param_);
   }
   return RET_OK;
