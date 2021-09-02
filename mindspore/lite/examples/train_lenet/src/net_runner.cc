@@ -15,26 +15,27 @@
  */
 
 #include "src/net_runner.h"
-#include <math.h>
 #include <getopt.h>
-#include <stdio.h>
 #include <malloc.h>
-#include <cstring>
+#include <math.h>
+#include <stdio.h>
 #include <chrono>
-#include <iostream>
+#include <cstring>
 #include <fstream>
+#include <iostream>
 #include <utility>
 #include "include/context.h"
-#include "include/train/loss_monitor.h"
-#include "include/train/ckpt_saver.h"
-#include "include/train/lr_scheduler.h"
-#include "include/train/accuracy_metrics.h"
-#include "include/train/train_session.h"
-#include "include/train/classification_train_accuracy_monitor.h"
-#include "src/utils.h"
 #include "include/dataset/datasets.h"
-#include "include/dataset/vision_lite.h"
 #include "include/dataset/transforms.h"
+#include "include/dataset/vision_lite.h"
+#include "include/train/accuracy_metrics.h"
+#include "include/train/ckpt_saver.h"
+#include "include/train/classification_train_accuracy_monitor.h"
+#include "include/train/loss_monitor.h"
+#include "include/train/lr_scheduler.h"
+#include "include/train/train_cfg.h"
+#include "include/train/train_session.h"
+#include "src/utils.h"
 
 using mindspore::dataset::Dataset;
 using mindspore::dataset::Mnist;
@@ -149,7 +150,9 @@ void NetRunner::InitAndFigureInputs() {
   context.device_list_[0].device_type_ = mindspore::lite::DT_CPU;
   context.thread_num_ = 2;
 
-  session_ = mindspore::session::TrainSession::CreateTrainSession(ms_file_, &context, true);
+  mindspore::lite::TrainCfg train_cfg;
+  train_cfg.mix_precision_cfg_.is_raw_mix_precision_ = is_raw_mix_precision_;
+  session_ = mindspore::session::TrainSession::CreateTrainSession(ms_file_, &context, true, &train_cfg);
   MS_ASSERT(session_ != nullptr);
 
   session_->SetupVirtualBatch(virtual_batch_);
@@ -276,6 +279,9 @@ bool NetRunner::ReadArgs(int argc, char *argv[]) {
         break;
       case 'b':
         virtual_batch_ = atoi(optarg);
+        break;
+      case 'r':
+        is_raw_mix_precision_ = atoi(optarg);
         break;
       case 'h':
       default:

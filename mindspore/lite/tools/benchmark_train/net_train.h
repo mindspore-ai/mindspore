@@ -75,6 +75,8 @@ class MS_API NetTrainFlags : public virtual FlagParser {
     AddFlag(&NetTrainFlags::virtual_batch_, "virtualBatch", "use virtual batch", false);
     AddFlag(&NetTrainFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
+    AddFlag(&NetTrainFlags::is_raw_mix_precision_, "isRawMixPrecision",
+            "If model is mix precision export from MindSpore,please set true", false);
   }
 
   ~NetTrainFlags() override = default;
@@ -107,6 +109,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   std::vector<std::vector<int>> resize_dims_;
   std::string loss_name_ = "";
   std::string inference_file_ = "";
+  bool is_raw_mix_precision_ = false;
 };
 
 class MS_API NetTrain {

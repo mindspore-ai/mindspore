@@ -2,7 +2,7 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q] [-o] [-b virtual_batch] [-m mindir] [-e epochs_to_train]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q] [-o] [-M] [-b virtual_batch] [-m mindir] [-e epochs_to_train]\n"
 }
 
 checkopts()
@@ -15,7 +15,8 @@ checkopts()
   FP16_FLAG=""
   VIRTUAL_BATCH=-1
   EPOCHS="-e 5"
-  while getopts 'D:b:d:e:m:oqr:t:' opt
+  MIX_FLAG=""
+  while getopts 'D:b:d:e:m:oqr:t:M:' opt
   do
     case "${opt}" in
       b)
@@ -41,6 +42,11 @@ checkopts()
         ;;
       r)
         TARBALL=$OPTARG
+        ;;
+      M)
+        MIX_FLAG="-m"
+        FP16_FLAG="-o"
+        echo $OPTARG
         ;;
       t)
         if [ "$OPTARG" == "arm64" ] || [ "$OPTARG" == "x86" ]; then
@@ -98,7 +104,7 @@ fi
 
 cd model/ || exit 1
 rm -f *.ms
-EXPORT=${EXPORT} QUANTIZE=${QUANTIZE} ./prepare_model.sh $BATCH $DOCKER || exit 1
+EXPORT=${EXPORT} QUANTIZE=${QUANTIZE} ./prepare_model.sh $BATCH $DOCKER $MIX_FLAG || exit 1
 cd ../
 
 # Copy the .ms model to the package folder
@@ -140,16 +146,28 @@ mv bin ${PACKAGE}/ || exit 1
 if [ "${TARGET}" == "arm64" ]; then
   cp ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ${PACKAGE}/lib/ || exit 1
 
-  echo "=======Pushing to device======="
-  adb push ${PACKAGE} /data/local/tmp/
+    echo "=======Pushing to device======="
+    adb push ${PACKAGE} /data/local/tmp/
+  if [ "${MIX_FLAG}" == "" ];then
 
-  echo "========Training on Device====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH}"
+    # origin model is fp32 model
+    echo "========Training on Device origin model is fp32====="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH}"
 
-  echo
-  echo "===Evaluating trained Model====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG}"
-  echo
+    echo
+    echo "===Evaluating trained Model origin model is fp32====="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG}"
+    echo
+  else
+    echo "========Training on Device origin model is fp16 ====="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH} ${MIX_FLAG}"
+
+    echo
+    echo "===Evaluating trained Model origin model is fp16====="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG} ${MIX_FLAG}"
+    echo
+  fi
+
 else
   cd ${PACKAGE} || exit 1
   echo "======Training Locally========="

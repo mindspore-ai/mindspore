@@ -16,7 +16,7 @@
 
 import sys
 import numpy as np
-from mindspore import context, Tensor
+from mindspore import context, Tensor, FixedLossScaleManager
 import mindspore.common.dtype as mstype
 from mindspore.train.serialization import export
 from lenet import LeNet5
@@ -32,5 +32,8 @@ x = Tensor(np.ones((BATCH_SIZE, 1, 32, 32)), mstype.float32)
 label = Tensor(np.zeros([BATCH_SIZE]).astype(np.int32))
 net = train_wrap(n)
 export(net, x, label, file_name="lenet_tod", file_format='MINDIR')
-
+loss_scale = 128.0
+loss_scale_manager = FixedLossScaleManager(loss_scale, False)
+mix_precision_net = train_wrap(n, None, None, None, loss_scale_manager)
+export(mix_precision_net, x, label, file_name="mix_lenet_tod", file_format='MINDIR')
 print("finished exporting")

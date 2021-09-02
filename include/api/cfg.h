@@ -36,6 +36,7 @@ class MixPrecisionCfg {
   bool dynamic_loss_scale_ = false; /**< Enable\disable dynamic loss scale during mix precision training */
   float loss_scale_;                /**< Initial loss scale factor  */
   uint32_t num_of_not_nan_iter_th_; /**< a threshold for modifying loss scale when dynamic loss scale is enabled */
+  bool is_raw_mix_precision_ = false; /**< Is mix precision model export from mindspore  */
 };
 
 class TrainCfg {
