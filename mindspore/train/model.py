@@ -733,16 +733,16 @@ class Model:
         cb_params.eval_network = self._eval_network
         cb_params.dataset_sink_mode = True
         list_callback.begin(run_context)
+        list_callback.epoch_begin(run_context)
         for inputs in dataset_helper:
             cb_params.cur_step_num += 1
             list_callback.step_begin(run_context)
-
             outputs = self._eval_network(*inputs)
-
             cb_params.net_outputs = outputs
             list_callback.step_end(run_context)
             self._update_metrics(outputs)
 
+        list_callback.epoch_end(run_context)
         metrics = self._get_metrics()
         cb_params.metrics = metrics
         list_callback.end(run_context)
@@ -767,6 +767,7 @@ class Model:
         dataset_helper, _ = self._exec_preprocess(is_train=False,
                                                   dataset=valid_dataset,
                                                   dataset_sink_mode=False)
+        list_callback.epoch_begin(run_context)
         for next_element in dataset_helper:
             cb_params.cur_step_num += 1
             list_callback.step_begin(run_context)
@@ -776,8 +777,8 @@ class Model:
             list_callback.step_end(run_context)
             self._update_metrics(outputs)
 
+        list_callback.epoch_end(run_context)
         valid_dataset.reset()
-
         metrics = self._get_metrics()
         cb_params.metrics = metrics
         list_callback.end(run_context)
