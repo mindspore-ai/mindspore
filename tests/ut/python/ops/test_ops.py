@@ -2180,6 +2180,10 @@ test_case_nn_ops = [
         'desc_const': [0],
         'desc_inputs': [[3, 2]],
         'desc_bprop': [[3, 2]]}),
+    ('Cummin', {
+        'block': inner.Cummin(axis=0),
+        'desc_inputs': [[1, 3, 3, 3]],
+        'skip': ['backward']}),
     ('ApplyFtrl', {
         'block': ApplyFtrlNet(),
         'desc_inputs': [[3, 3]],

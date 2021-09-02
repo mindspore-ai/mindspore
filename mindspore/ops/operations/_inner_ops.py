@@ -1429,3 +1429,49 @@ class DynamicBroadcastTo(Primitive):
     def __init__(self):
         """Initialize DynamicBroadcastTo"""
         self.init_prim_io_names(inputs=['x', 'shape'], outputs=['y'])
+
+
+class Cummin(Primitive):
+    r"""
+    Computation of the cumulative minimum of elements of 'input' in the dimension dim,
+    and the index location of each maximum value found in the dimension 'dim'.
+
+    It returns the cumulative minimum of elements and the index.
+
+    ..math::
+
+        y{i} = min(x{1}, x{2}, ... , x{i})
+
+    Args:
+        - **axis** (int) - The dimension to do the operation, The axis is in the range from -len(`input_x`.shape)
+          to len(`input_x`.shape) - 1. When it's in the range from 0 to len(`input_x`.shape) - 1, it means starting
+          from the first dimension and counting forwards, When it's less than 0, it means we're counting backwards
+          from the last dimension. for example, -1 means the last dimension.
+    Inputs:
+        - **input_x** (Tensor) - The input tensor, rank of `input_x` > 0.
+
+    Outputs:
+        - **output** (Tensor) - The output tensor of the cumulative minimum of elements.
+        - **indices** (Tensor) - The result tensor of the index of each minimum value been found.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If 'axis' is not a int.
+        ValueError:If 'axis' is out the range from -len(`input_x`.shape) to len(`input_x`.shape) - 1
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
+        >>> output = ops.cummin(a, axis=0)
+        >>> print(output[0])
+        [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
+        >>> print(output[1])
+        [0 1 1 1 4 4]
+    """
+
+    @prim_attr_register
+    def __init__(self, axis):
+        """Initialize Cummin"""
+        validator.check_value_type('axis', axis, [int], self.name)

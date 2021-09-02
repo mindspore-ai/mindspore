@@ -19,11 +19,10 @@ import numpy as np
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
 from .. import operations as P
-
-# count_nonzero
 
 
 @constexpr
@@ -103,8 +102,6 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     nonzero_num = cast(reduce_sum(nonzero_val, axis), dtype)
 
     return nonzero_num
-
-# tensor dot
 
 
 @constexpr
@@ -207,7 +204,7 @@ def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
     for i in range(len(axes[0])):  # sizes already validated
         if x1_shape[axes[0][i]] != x2_shape[axes[1][i]]:
             invalid_a = True
-        if x1_shape[axes[0][i]] != x2_shape[axes[1][len(axes[0])-1-i]]:
+        if x1_shape[axes[0][i]] != x2_shape[axes[1][len(axes[0]) - 1 - i]]:
             invalid_b = True
     if invalid_a and invalid_b:
         raise ValueError(f"{msg_prefix} 'i' should exist such that 'x1_shape[axes[0][i]]' is equal to "
@@ -836,3 +833,71 @@ def matmul(x1, x2, dtype=None):
     if dtype is not None:
         res = res.astype(dtype)
     return F.reshape(res, shape_out)
+
+
+@constexpr
+def _create_cummin_perm(axis, x_shape):
+    """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
+    len_axis = len(x_shape)
+    if not isinstance(axis, int):
+        raise TypeError(f"The date type of 'axis' should be Int, but got {axis}.")
+    if axis < -len_axis or axis > len_axis:
+        raise ValueError(f"The value of axis should be in [{-len_axis}, {len_axis}], but got {axis}.")
+    prem = [i for i in range(len_axis)]
+    if axis < 0:
+        axis = axis + len_axis
+    prem[0], prem[axis] = axis, 0
+    prem = tuple(prem)
+    return prem
+
+
+def cummin(x, axis):
+    r"""
+    Computation of the cumulative minimum of elements of 'x' in the dimension axis,
+    and the index location of each maximum value found in the dimension 'axis'.
+
+    It returns the cumulative minimum of elements and the index.
+
+    ..math::
+
+        y{i} = min(x{1}, x{2}, ... , x{i})
+
+    Args:
+        x (Tensor): The input tensor, rank of `input_x` > 0.
+        axis (Int): The dimension to do the operation, The axis is in the range from -len(`input_x`.shape)
+          to len(`input_x`.shape) - 1. When it's in the range from 0 to len(`input_x`.shape) - 1, it means starting
+          from the first dimension and counting forwards, When it's less than 0, it means we're counting backwards
+          from the last dimension. for example, -1 means the last dimension.
+
+    Outputs:
+        - **output** (Tensor) - The output tensor of the cumulative minimum of elements.
+        - **indices** (Tensor) - The result tensor of the index of each minimum value been found.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If 'axis' is not a int.
+        ValueError:If 'axis' is out the range of [-len(`input_x`.shape) to len(`input_x`.shape) - 1]
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
+        >>> output = ops.cummin(a, axis=0)
+        >>> print(output[0])
+        [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
+        >>> print(output[1])
+        [0 1 1 1 4 4]
+    """
+    cummin_op = inner.Cummin(axis=0)
+    if axis == 0:
+        out1, out2 = cummin_op(x)
+    else:
+        transpose = P.Transpose()
+        x_shape = P.Shape()(x)
+        prem = _create_cummin_perm(axis, x_shape)
+        x = transpose(x, prem)
+        out1, out2 = cummin_op(x)
+        out1 = transpose(out1, prem)
+        out2 = transpose(out2, prem)
+    return [out1, out2]
