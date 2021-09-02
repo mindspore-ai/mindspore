@@ -16,6 +16,7 @@
 
 #include "tools/converter/import/mindspore_importer.h"
 #include <memory>
+#include <map>
 #include <set>
 #include <vector>
 #include <regex>
@@ -100,6 +101,94 @@ size_t MindsporeImporter::Hex2ByteArray(const std::string &hex_str, unsigned cha
   return byte_len;
 }
 
+STATUS MindsporeImporter::ProcessDependCnode(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimDepend)) {
+    output_tensor_name_.push_back(cnode->fullname_with_scope());
+    return RET_NO_CHANGE;
+  }
+  auto depend_input = cnode->input(1);
+  if (utils::isa<CNodePtr>(depend_input)) {
+    auto depend_input_cnode = utils::cast<CNodePtr>(depend_input);
+    auto status = ProcessDependCnode(depend_input_cnode);
+    if (status == RET_NO_CHANGE) {
+      return RET_OK;
+    }
+  } else if (utils::isa<ParameterPtr>(depend_input) || utils::isa<ValueNode>(depend_input)) {
+    output_tensor_name_.push_back(depend_input->fullname_with_scope());
+  }
+  return RET_OK;
+}
+
+STATUS MindsporeImporter::GetFuncGraphOutputName(const CNodePtr &return_node) {
+  MS_ASSERT(return_node != nullptr);
+  for (size_t i = 0; i < return_node->inputs().size(); i++) {
+    auto output_node = return_node->input(i);
+    if (output_node == nullptr) {
+      MS_LOG(ERROR) << "output_node is nullptr.";
+      return RET_ERROR;
+    } else if (output_node->isa<mindspore::CNode>()) {
+      if (opt::CheckPrimitiveType(output_node, prim::kPrimUpdateState) ||
+          opt::CheckPrimitiveType(output_node, prim::kPrimLoad)) {
+        continue;
+      }
+      auto output_cnode = utils::cast<CNodePtr>(output_node);
+      if (opt::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
+        for (size_t j = 0; j < output_cnode->inputs().size(); j++) {
+          auto tuple_input = output_cnode->input(j);
+          if (!utils::isa<CNodePtr>(tuple_input)) {
+            continue;
+          }
+          auto tuple_input_cnode = utils::cast<CNodePtr>(tuple_input);
+          if (opt::CheckPrimitiveType(output_node, prim::kPrimUpdateState) ||
+              opt::CheckPrimitiveType(output_node, prim::kPrimLoad)) {
+            continue;
+          }
+          auto status = ProcessDependCnode(tuple_input_cnode);
+          if (status != RET_OK && status != RET_NO_CHANGE) {
+            MS_LOG(ERROR) << "ProcessDependCnode failed.";
+          }
+        }
+      } else if (opt::CheckPrimitiveType(output_node, prim::kPrimDepend)) {
+        auto status = ProcessDependCnode(output_cnode);
+        if (status != RET_OK && status != RET_NO_CHANGE) {
+          MS_LOG(ERROR) << "ProcessDependCnode failed.";
+        }
+      } else {
+        output_tensor_name_.push_back(output_cnode->fullname_with_scope());
+      }
+    }
+  }
+  return RET_OK;
+}
+
+STATUS MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
+  std::map<AnfNodePtr, bool> graph_input_map;
+  for (auto &input : func_graph->get_inputs()) {
+    graph_input_map[input] = false;
+  }
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNode>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    for (size_t i = 0; i < cnode->inputs().size(); i++) {
+      for (auto &input : func_graph->get_inputs()) {
+        if (input == cnode->input(i) && graph_input_map.count(input) == 1) {
+          graph_input_map[input] = true;
+        }
+      }
+    }
+  }
+  for (auto &item : graph_input_map) {
+    if (item.second == false) {
+      func_graph->DropNode(item.first);
+    }
+  }
+  return RET_OK;
+}
+
 FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   FuncGraphPtr func_graph;
   if (flag.dec_key.size() != 0) {
@@ -125,14 +214,28 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   }
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
   func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeMs)));
+  auto status = RemoveUnusedGraphInput(func_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "RemoveUnusedGraphInput failed.";
+    return nullptr;
+  }
   for (auto input : func_graph->get_inputs()) {
     ConverterContext::GetInstance()->AddGraphInputTensorNames(input->fullname_with_scope());
   }
+  status = GetFuncGraphOutputName(func_graph->get_return());
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "GetFuncGraphOutputName failed.";
+    return nullptr;
+  }
+  if (output_tensor_name_.empty()) {
+    MS_LOG(ERROR) << "Can not find output name.";
+    return nullptr;
+  }
+  ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_tensor_name_);
 #ifdef ENABLE_LITE_ACL
   MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend310.";
   return func_graph;
 #endif
-  STATUS status;
   if ((status = Mindir2AnfAdjust(func_graph, flag)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);

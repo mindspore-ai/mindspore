@@ -19,6 +19,7 @@
 
 #include <set>
 #include <string>
+#include <vector>
 #include "tools/converter/converter_flags.h"
 #include "load_mindir/load_model.h"
 
@@ -30,8 +31,12 @@ class MindsporeImporter {
   FuncGraphPtr ImportMindIR(const converter::Flags &flag);
 
  private:
+  STATUS RemoveUnusedGraphInput(const FuncGraphPtr &func_graph);
+  STATUS ProcessDependCnode(const CNodePtr &cnode);
+  STATUS GetFuncGraphOutputName(const CNodePtr &cnode);
   STATUS Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const converter::Flags &flag);
   size_t Hex2ByteArray(const std::string &hex_str, unsigned char *byte_array, size_t max_len);
+  std::vector<std::string> output_tensor_name_;
 };
 
 }  // namespace mindspore::lite
