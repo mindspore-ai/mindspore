@@ -1671,8 +1671,6 @@ class MaxPool(_Pool):
             represent height and width of movement respectively. Default: 1.
         pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
-        data_format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input. The total number of padding will be calculated in horizontal and vertical
@@ -1681,6 +1679,9 @@ class MaxPool(_Pool):
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
+
+        data_format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
