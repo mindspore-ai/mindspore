@@ -64,14 +64,8 @@ def test_while_grad():
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), pynative_output[1].asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), pynative_output[2].asnumpy(), 0.0001, 0.0001)
+
+    assert  graph_output == 0
 
 
 @pytest.mark.level0
@@ -210,11 +204,9 @@ def test_while_endless_case():
     context.set_context(mode=context.GRAPH_MODE)
     net = MyWhileNet()
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    net = MyWhileNet()
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+    expect = np.array([[[4, 6], [8, 10]],
+                       [[4, 6], [8, 10]]]).astype(np.float32)
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -284,18 +276,16 @@ def test_while_with_param_forward_with_const_branch():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(4), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = while_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = while_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+
+    expect = np.array([[[0, 4], [8, 12]],
+                       [[16, 20], [24, 28]]]).astype(np.float32)
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -339,15 +329,16 @@ def test_while_opt_endless():
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+
+    expect1 = 0
+    expect2 = 0
+    expect3 = np.array([[[16, 16], [16, 16]],
+                        [[16, 16], [16, 16]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect1, 0.0001, 0.0001)
+    assert np.allclose(graph_output[1].asnumpy(), expect2, 0.0001, 0.0001)
+    assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.skip(reason="not supported yet")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -371,18 +362,16 @@ def test_no_while_call():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(4), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = while_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = while_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+
+    expect = np.array([[[0, 1], [2, 3]],
+                       [[4, 5], [6, 7]]]).astype(np.float32)
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -419,21 +408,18 @@ def test_while_with_param_grad_with_const_branch():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(4), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+
+    expect = np.array([[[4, 4], [4, 4]],
+                       [[4, 4], [4, 4]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.skip(reason="not supported yet")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -471,18 +457,16 @@ def test_for_while_with_param_grad_with_const_branch():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(4), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+
+    expect = np.array([[[8, 8], [8, 8]],
+                       [[8, 8], [8, 8]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -519,18 +503,15 @@ def test_for_while_with_param_grad_basic():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(4), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+    expect = np.array([[[8, 8], [8, 8]],
+                       [[8, 8], [8, 8]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -567,18 +548,15 @@ def test_for_while_with_param_grad_normal():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(4), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+    expect = np.array([[[8, 8], [8, 8]],
+                       [[8, 8], [8, 8]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -612,18 +590,15 @@ def test_while_with_param_basic_grad():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(3), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+    expect = np.array([[[4, 4], [4, 4]],
+                       [[4, 4], [4, 4]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -657,18 +632,15 @@ def test_while_with_param_basic_grad_mul():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(3), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+    expect = np.array([[[1, 4], [13, 28]],
+                       [[49, 76], [109, 148]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -703,19 +675,19 @@ def test_while_with_param_basic_grad_two():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(3), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), pynative_output[1].asnumpy(), 0.0001, 0.0001)
+
+    expect1 = np.array([[[4, 4], [4, 4]],
+                        [[4, 4], [4, 4]]]).astype(np.float32)
+    expect2 = np.array([[[3, 3], [3, 3]],
+                        [[3, 3], [3, 3]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect1, 0.0001, 0.0001)
+    assert np.allclose(graph_output[1].asnumpy(), expect2, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -751,20 +723,21 @@ def test_while_with_param_basic_grad_three():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(3), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), pynative_output[1].asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), pynative_output[2].asnumpy(), 0.0001, 0.0001)
+    expect1 = np.array([[[4, 4], [4, 4]],
+                        [[4, 4], [4, 4]]]).astype(np.float32)
+    expect2 = np.array([[[3, 3], [3, 3]],
+                        [[3, 3], [3, 3]]]).astype(np.float32)
+    expect3 = np.array([[[3, 3], [3, 3]],
+                        [[3, 3], [3, 3]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect1, 0.0001, 0.0001)
+    assert np.allclose(graph_output[1].asnumpy(), expect2, 0.0001, 0.0001)
+    assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -802,20 +775,15 @@ def test_while_if_with_param_grad():
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(3), dtype=ms.int32)
     x = Tensor(np.ones([2, 2, 2]).astype(np.float32), dtype=ms.float32)
-    # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+    expect = np.array([[[5, 5], [5, 5]],
+                       [[5, 5], [5, 5]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.skip(reason="not supported yet")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -825,8 +793,8 @@ def test_while_with_param_grad_not_enter_while():
         def __init__(self):
             super().__init__()
             self.max = P.ReduceMax()
-            self.param = Parameter(Tensor(np.arange(2 * 2 * 2).reshape((2, 2, 2)), ms.float32), name="weight")
-            self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
+            self.param = Parameter(Tensor(2, ms.float32), name="weight")
+            self.zero = Tensor(0, ms.float32)
 
         def construct(self, idx, end, x):
             out = self.zero
@@ -846,18 +814,14 @@ def test_while_with_param_grad_not_enter_while():
 
     idx = Tensor(np.array(3), dtype=ms.int32)
     end = Tensor(np.array(0), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(2, dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+
+    assert np.allclose(graph_output[0].asnumpy(), 1, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -892,12 +856,9 @@ def test_with_param_if_by_if_forward():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+    expect = np.array([[[3, 4], [5, 6]],
+                       [[7, 8], [9, 10]]]).astype(np.float32)
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -930,20 +891,19 @@ def test_with_param_if_by_if_grad_inputs():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(0), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = GradNet(if_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), pynative_output[1].asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), pynative_output[2].asnumpy(), 0.0001, 0.0001)
+    expect1 = Tensor(np.array(0), dtype=ms.int32)
+    expect2 = Tensor(np.array(0), dtype=ms.int32)
+    expect3 = np.array([[[3, 3], [3, 3]],
+                        [[3, 3], [3, 3]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect1.asnumpy(), 0.0001, 0.0001)
+    assert np.allclose(graph_output[1].asnumpy(), expect2.asnumpy(), 0.0001, 0.0001)
+    assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -977,18 +937,16 @@ def test_with_param_if_by_if_grad_parameter():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(2), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = GradNet(if_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+
+    expect = np.array([[[2, 2], [2, 2]],
+                       [[2, 2], [2, 2]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -1020,18 +978,16 @@ def test_with_param_if_by_if_grad_param_excute_null():
 
     idx = Tensor(np.array(4), dtype=ms.int32)
     end = Tensor(np.array(0), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = GradNet(if_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+
+    expect = np.array([[[0, 0], [0, 0]],
+                       [[0, 0], [0, 0]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -1065,18 +1021,16 @@ def test_if_by_if_return_inside_grad():
 
     idx = Tensor(np.array(1), dtype=ms.int32)
     end = Tensor(np.array(0), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = GradNet(if_net)
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output[0].asnumpy(), pynative_output[0].asnumpy(), 0.0001, 0.0001)
+
+    expect = np.array([[[3, 3], [3, 3]],
+                       [[3, 3], [3, 3]]]).astype(np.float32)
+    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -1117,12 +1071,8 @@ def test_if_by_if_forward():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+    expect = 19.11111
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -1190,12 +1140,8 @@ def test_if_by_if_forward_control_tuple_switch():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+    expect = 4.444444
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -1261,12 +1207,8 @@ def test_if_by_if_forward_control_inside_net():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+    expect = 4.444444
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -1307,12 +1249,8 @@ def test_if_by_if_forward_use_namespace():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+    expect = 4.444444
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -1357,12 +1295,9 @@ def test_if_by_if_forward_use_global_op():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+
+    expect = 4.444444
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -1394,12 +1329,9 @@ def test_for_with_if_by_if_forward():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+
+    expect = 18.0
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -1433,12 +1365,9 @@ def test_for_with_if_by_if_forward_namespace():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+
+    expect = 18.0
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -1483,12 +1412,9 @@ def test_if_by_if_forward_const_branch_inner():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+
+    expect = 240.0
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -1533,12 +1459,9 @@ def test_if_by_if_forward_all_const_branch():
     if_net = MyIfByIfNet()
     net = if_net
     graph_output = net(idx, end, x)
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = MyIfByIfNet()
-    net = if_net
-    pynative_output = net(idx, end, x)
-    assert np.allclose(graph_output.asnumpy(), pynative_output.asnumpy(), 0.0001, 0.0001)
+
+    expect = 240.0
+    assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
 @pytest.mark.level1

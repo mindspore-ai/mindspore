@@ -119,7 +119,7 @@ class GradNet(nn.Cell):
         return grad_all(self.net)(*inputs)
 
 
-def control_flow_if_after_if_in_for(input_net, x):
+def control_flow_if_after_if_in_for(input_net, x, expect1, expect2):
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     net = input_net()
@@ -129,17 +129,9 @@ def control_flow_if_after_if_in_for(input_net, x):
     graph_forward_res = forward_net(x)
     graph_backward_res = grad_net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    net = input_net()
-    grad_net = GradNet(net)
+    assert graph_forward_res == expect1
+    assert graph_backward_res == expect2
 
-    forward_net = input_net()
-    pynative_forward_res = forward_net(x)
-    pynative_backward_res = grad_net(x)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
 
 @pytest.mark.skip(reason="ME EvalCNode error")
 @pytest.mark.level1
@@ -149,7 +141,10 @@ def control_flow_if_after_if_in_for(input_net, x):
 @pytest.mark.env_onecard
 def test_if_after_if_in_for():
     x = Tensor(2, mstype.int32)
-    control_flow_if_after_if_in_for(IfAfterIfInForNet, x)
+    expect1 = Tensor(14, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32),)
+    control_flow_if_after_if_in_for(IfAfterIfInForNet, x, expect1, expect2)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -158,7 +153,10 @@ def test_if_after_if_in_for():
 @pytest.mark.env_onecard
 def test_if_after_if_in_for_01():
     x = Tensor(2, mstype.int32)
-    control_flow_if_after_if_in_for(IfAfterIfInForNet1, x)
+    expect1 = Tensor(14, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32),)
+    control_flow_if_after_if_in_for(IfAfterIfInForNet1, x, expect1, expect2)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -167,7 +165,10 @@ def test_if_after_if_in_for_01():
 @pytest.mark.env_onecard
 def test_if_after_if_in_for_02():
     x = Tensor(2, mstype.int32)
-    control_flow_if_after_if_in_for(IfAfterIfInForNet2, x)
+    expect1 = Tensor(14, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32),)
+    control_flow_if_after_if_in_for(IfAfterIfInForNet2, x, expect1, expect2)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -176,4 +177,6 @@ def test_if_after_if_in_for_02():
 @pytest.mark.env_onecard
 def test_if_after_if_in_for_03():
     x = Tensor(2, mstype.int32)
-    control_flow_if_after_if_in_for(IfAfterIfInForNet3, x)
+    expect1 = Tensor(11, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32),)
+    control_flow_if_after_if_in_for(IfAfterIfInForNet3, x, expect1, expect2)

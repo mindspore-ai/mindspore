@@ -127,6 +127,7 @@ class IfInIfNet4(nn.Cell):
         out += self.param_b
         return out
 
+
 class GradNet(nn.Cell):
     def __init__(self, net):
         super(GradNet, self).__init__()
@@ -136,7 +137,7 @@ class GradNet(nn.Cell):
         return grad_all(self.net)(*inputs)
 
 
-def control_flow_if_in_if(input_net, x):
+def control_flow_if_in_if(input_net, x, expect1, expect2):
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     net = input_net()
@@ -146,60 +147,66 @@ def control_flow_if_in_if(input_net, x):
     graph_forward_res = forward_net(x)
     graph_backward_res = grad_net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    net = input_net()
-    grad_net = GradNet(net)
+    assert graph_forward_res == expect1
+    assert graph_backward_res == expect2
 
-    forward_net = input_net()
-    pynative_forward_res = forward_net(x)
-    pynative_backward_res = grad_net(x)
 
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
-
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_in_if():
     x = Tensor(2, mstype.int32)
-    control_flow_if_in_if(IfInIfNet, x)
+    expect1 = Tensor(17, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32),)
+    control_flow_if_in_if(IfInIfNet, x, expect1, expect2)
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_in_if_01():
     x = Tensor(2, mstype.int32)
-    control_flow_if_in_if(IfInIfNet1, x)
+    expect1 = Tensor(22, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32),)
+    control_flow_if_in_if(IfInIfNet1, x, expect1, expect2)
+
 
 @pytest.mark.skip(reason="Ascend compile error in multigraph sink.")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_in_if_02():
     x = Tensor(2, mstype.int32)
-    control_flow_if_in_if(IfInIfNet2, x)
+    expect1 = 0
+    expect2 = 0
+    control_flow_if_in_if(IfInIfNet2, x, expect1, expect2)
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_in_if_03():
     x = Tensor(2, mstype.int32)
-    control_flow_if_in_if(IfInIfNet3, x)
+    expect1 = Tensor(7, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32),)
+    control_flow_if_in_if(IfInIfNet3, x, expect1, expect2)
+
 
 @pytest.mark.skip(reason="Result not correct in ascend vm")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_in_if_04():
     x = Tensor(2, mstype.int32)
-    control_flow_if_in_if(IfInIfNet4, x)
+    expect1 = 0
+    expect2 = 0
+    control_flow_if_in_if(IfInIfNet4, x, expect1, expect2)

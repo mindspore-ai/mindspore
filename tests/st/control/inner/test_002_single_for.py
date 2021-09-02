@@ -65,17 +65,8 @@ def test_single_for_01():
     net = GradNet(for_net)
     graph_backward_res = net(x, y, z)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    for_net_foward = SingleForNet()
-    pynative_forward_res = for_net_foward(x, y, z)
-
-    for_net = SingleForNet()
-    net = GradNet(for_net)
-    pynative_backward_res = net(x, y, z)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
+    assert graph_forward_res == Tensor([125], mstype.int32)
+    assert graph_backward_res == (Tensor([15], mstype.int32), Tensor([40], mstype.int32), Tensor([5], mstype.int32))
 
 
 @pytest.mark.level1
@@ -118,17 +109,8 @@ def test_single_for_02():
     graph_forward_res = for_net_forward(x, y, z)
     graph_backward_res = net(x, y, z)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    for_net = SingleForNet()
-    net = GradNet(for_net)
-
-    for_net_forward = SingleForNet()
-    pynative_forward_res = for_net_forward(x, y, z)
-    pynative_backward_res = net(x, y, z)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
+    assert graph_forward_res == Tensor([195], mstype.int32)
+    assert graph_backward_res == (Tensor([25], mstype.int32), Tensor([64], mstype.int32), Tensor([5], mstype.int32))
 
 
 @pytest.mark.level1
@@ -144,10 +126,8 @@ def test_single_for_03():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            param_a = np.full((1,), 5, dtype=np.float32)
-            self.param_a = Parameter(Tensor(param_a), name='a')
-            param_b = np.full((1,), 2, dtype=np.float32)
-            self.param_b = Parameter(Tensor(param_b), name='b')
+            self.param_a = Parameter(Tensor([5], dtype=mstype.int32), name='a')
+            self.param_b = Parameter(Tensor([2], dtype=mstype.int32), name='b')
 
         def func(self, x):
             x = self.mul(x, 2)
@@ -182,17 +162,8 @@ def test_single_for_03():
     graph_forward_res = for_net_forward(x, y)
     graph_backward_res = net(x, y)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    single_for_net = SingleForNet()
-    net = GradNet(single_for_net)
-
-    for_net_forward = SingleForNet()
-    pynative_forward_res = for_net_forward(x, y)
-    pynative_backward_res = net(x, y)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
+    assert graph_forward_res == (Tensor([133], mstype.int32), Tensor([7], mstype.int32))
+    assert graph_backward_res == (Tensor([64], mstype.int32), Tensor([1], mstype.int32))
 
 
 @pytest.mark.level1
@@ -208,10 +179,8 @@ def test_single_for_04():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            param_a = np.full((1,), 5, dtype=np.float32)
-            self.param_a = Parameter(Tensor(param_a), name='a')
-            param_b = np.full((1,), 2, dtype=np.float32)
-            self.param_b = Parameter(Tensor(param_b), name='b')
+            self.param_a = Parameter(Tensor([5], dtype=mstype.int32), name='a')
+            self.param_b = Parameter(Tensor([2], dtype=mstype.int32), name='b')
 
         def construct(self, x):
             self.assign(self.param_a, x + self.param_a)
@@ -238,17 +207,8 @@ def test_single_for_04():
     graph_forward_res = for_net_forward(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    single_for_net = SingleForNet()
-    net = GradNet(single_for_net)
-
-    for_net_forward = SingleForNet()
-    pynative_forward_res = for_net_forward(x)
-    pynative_backward_res = net(x)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
+    assert graph_forward_res == Tensor([-5], mstype.int32)
+    assert graph_backward_res == (Tensor([0], mstype.int32),)
 
 
 @pytest.mark.level1
@@ -292,14 +252,5 @@ def test_single_for_05():
     graph_forward_res = for_net_forward(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    single_for_net = SingleForNet()
-    net = GradNet(single_for_net)
-
-    for_net_forward = SingleForNet()
-    pynative_forward_res = for_net_forward(x)
-    pynative_backward_res = net(x)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
+    assert graph_forward_res == Tensor([6], mstype.int32)
+    assert graph_backward_res == (Tensor([1], mstype.int32),)

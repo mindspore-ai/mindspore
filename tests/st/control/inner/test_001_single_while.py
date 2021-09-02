@@ -19,7 +19,7 @@ from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore import context
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
 
 
 class ForwardNet(nn.Cell):
@@ -42,7 +42,8 @@ class BackwardNet(nn.Cell):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -55,7 +56,8 @@ def test_forward():
     output = forward_net(c1, c2)
     assert expect == output
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

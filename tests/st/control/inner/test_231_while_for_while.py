@@ -55,6 +55,7 @@ class BackwardNet(nn.Cell):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
+
 @pytest.mark.skip(reason="not supported for in while")
 def test_forward():
     x = Tensor(np.array(1), mstype.int32)
@@ -62,6 +63,7 @@ def test_forward():
     forward_net = ForwardNet(max_cycles=3)
     out = forward_net(x, y)
     print("forward out:", out)
+
 
 @pytest.mark.skip(reason="not supported for in while")
 def test_backward():

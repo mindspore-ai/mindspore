@@ -23,7 +23,8 @@ from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -66,19 +67,11 @@ def test_for_in_if_01():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    for_in_if_net = ForInIfNet()
-    net = GradNet(for_in_if_net)
+    assert graph_forward_res == Tensor([640], mstype.int32)
+    assert graph_backward_res == (Tensor([64], mstype.int32),)
 
-    forward_net = ForInIfNet()
-    pynative_forward_res = forward_net(x)
-    pynative_backward_res = net(x)
 
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
-
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -125,19 +118,11 @@ def test_for_in_if_02():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    for_in_if_net = ForInIfNet()
-    net = GradNet(for_in_if_net)
+    assert graph_forward_res == Tensor([10], mstype.float32)
+    assert graph_backward_res == (Tensor([1], mstype.float32),)
 
-    forward_net = ForInIfNet()
-    pynative_forward_res = forward_net(x)
-    pynative_backward_res = net(x)
 
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
-
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -185,17 +170,9 @@ def test_for_in_if_03():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    for_in_if_net = ForInIfNet()
-    net = GradNet(for_in_if_net)
+    assert graph_forward_res == (Tensor([29], mstype.float32), Tensor([14], mstype.float32))
+    assert graph_backward_res == (Tensor([3], mstype.float32),)
 
-    forward_net = ForInIfNet()
-    pynative_forward_res = forward_net(x)
-    pynative_backward_res = net(x)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
 
 @pytest.mark.skip(reason="Ascend control multi sink result error")
 @pytest.mark.level1
@@ -243,16 +220,9 @@ def test_for_in_if_04():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    forward_net = ForInIfNet()
-    pynative_forward_res = forward_net(x)
-    for_in_if_net = ForInIfNet()
-    net = GradNet(for_in_if_net)
-    expect_backward_res = net(x)
+    assert graph_forward_res == Tensor([45], mstype.int32)
+    assert graph_backward_res == Tensor([9], mstype.int32)
 
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == expect_backward_res
 
 @pytest.mark.skip(reason="Ascend control multi sink result error")
 @pytest.mark.level1
@@ -302,14 +272,5 @@ def test_for_in_if_05():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    for_in_if_net = ForInIfNet()
-
-    pynative_forward_res = for_in_if_net(x)
-    for_in_if_net = ForInIfNet()
-    net = GradNet(for_in_if_net)
-    expect_backward_res = net(x)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == expect_backward_res
+    assert graph_forward_res == Tensor([-91], mstype.int32)
+    assert graph_backward_res == Tensor([13], mstype.int32)
