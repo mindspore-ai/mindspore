@@ -460,12 +460,6 @@ float CompareOutputData(const std::unordered_map<std::string, mindspore::tensor:
 
 STATUS WeightQuantizer::RunFp32Graph(const FuncGraphPtr &func_graph) {
   auto image_cnt = images_.at(0).size();
-  if (!config_param_.input_shapes.empty()) {
-    if (config_param_.input_shapes.size() != image_cnt) {
-      MS_LOG(ERROR) << "input_shapes size: " << config_param_.input_shapes.size() << " image_cnt: " << image_cnt;
-      return RET_ERROR;
-    }
-  }
   // 0.1 Create Fp32 Session
   flags.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   auto fp32_sm = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
@@ -480,23 +474,6 @@ STATUS WeightQuantizer::RunFp32Graph(const FuncGraphPtr &func_graph) {
   fp32_output_tensors_.resize(image_cnt);
   // 0.3 save fp32 output
   for (size_t i = 0; i < image_cnt; i++) {
-    if (!config_param_.input_shapes.empty()) {
-      std::vector<std::vector<int>> shapes;
-      auto status = ConvertInputShapeMapToVector(&config_param_, fp32_session->GetInputs(), &shapes);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "Convert input shape map to vector failed.";
-        delete fp32_sm.session;
-        delete fp32_sm.model;
-        return RET_ERROR;
-      }
-      status = fp32_session->Resize(fp32_inputs, shapes);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "session Resize fail";
-        delete fp32_sm.session;
-        delete fp32_sm.model;
-        return RET_ERROR;
-      }
-    }
     for (size_t input_index = 0; input_index < fp32_inputs.size(); input_index++) {
       auto status = preprocess::PreProcess(flags.dataPreProcessParam, fp32_inputs[input_index]->tensor_name(), i,
                                            fp32_inputs[input_index]);
@@ -553,16 +530,6 @@ STATUS WeightQuantizer::DoMixedQuantize(const FuncGraphPtr &func_graph) {
     }
   }
   return status;
-}
-STATUS WeightQuantizer::CheckImageCnt() {
-  auto image_cnt = images_.at(0).size();
-  if (!config_param_.input_shapes.empty()) {
-    if (config_param_.input_shapes.size() != image_cnt) {
-      MS_LOG(ERROR) << "input_shapes size: " << config_param_.input_shapes.size() << " image_cnt: " << image_cnt;
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
 }
 
 STATUS WeightQuantizer::GetParamNodeAndValue(const std::shared_ptr<AnfNode> &input_node, const std::string &op_name,
@@ -640,22 +607,6 @@ STATUS WeightQuantizer::EvaluateQuant(const FuncGraphPtr &func_graph, size_t ima
   auto quant_inputs = quant_session->GetInputs();
 
   for (size_t i = 0; i < image_cnt; i++) {
-    if (!config_param_.input_shapes.empty()) {
-      std::vector<std::vector<int>> shapes;
-      status = ConvertInputShapeMapToVector(&config_param_, quant_session->GetInputs(), &shapes);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "Convert input shape map to vector failed.";
-        delete quant_sm.model;
-        return RET_ERROR;
-      }
-      status = quant_session->Resize(quant_inputs, shapes);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "session Resize fail";
-        delete quant_sm.model;
-        return RET_ERROR;
-      }
-    }
-
     // set multi-input data
     for (size_t input_index = 0; input_index < quant_inputs.size(); input_index++) {
       status = preprocess::PreProcess(flags.dataPreProcessParam, quant_inputs[input_index]->tensor_name(), i,
@@ -764,12 +715,6 @@ STATUS WeightQuantizer::DoMixedQuant(const FuncGraphPtr &func_graph) {
   status = DoMixedQuantize(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "DoMixedQuantize failed.";
-    return RET_ERROR;
-  }
-
-  status = CheckImageCnt();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "CheckImageCnt failed.";
     return RET_ERROR;
   }
 
