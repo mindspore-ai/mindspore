@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  RestrainForceWithAtomEnergyVirial. This is an experimental interface that is subject to change and/or deletion.
+ */
 
 #include "backend/kernel_compiler/gpu/sponge/restrain/restrain_force_atom_energy_virial_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(restrainforcewithatomenergyandvirial,
+MS_REG_GPU_KERNEL_TWO(RestrainForceWithAtomEnergyVirial,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)

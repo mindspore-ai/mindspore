@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  CalculateNowrapCrd. This is an experimental interface that is subject to change and/or deletion.
+ */
 
 #include "backend/kernel_compiler/gpu/sponge/crdmcmap/cal_no_wrap_crd_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(calculatenowrapcrd,
+MS_REG_GPU_KERNEL_TWO(CalculateNowrapCrd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)

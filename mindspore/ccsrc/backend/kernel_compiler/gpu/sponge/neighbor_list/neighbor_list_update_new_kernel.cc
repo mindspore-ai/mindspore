@@ -15,14 +15,14 @@
  */
 /**
  *Note:
- *  NeighborListUpdate. This is an experimental interface that is subject to change and/or deletion.
+ *  NeighborListRefresh. This is an experimental interface that is subject to change and/or deletion.
  */
 
-#include "backend/kernel_compiler/gpu/sponge/neighbor_list/neighbor_list_update_kernel.h"
+#include "backend/kernel_compiler/gpu/sponge/neighbor_list/neighbor_list_update_new_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(NeighborListUpdate,
+MS_REG_GPU_KERNEL_TWO(NeighborListRefresh,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
@@ -44,6 +44,6 @@ MS_REG_GPU_KERNEL_TWO(NeighborListUpdate,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      NeighborListUpdateGpuKernel, int, float)
+                      NeighborListUpdateNewGpuKernel, int, float)
 }  // namespace kernel
 }  // namespace mindspore
