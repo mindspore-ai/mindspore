@@ -136,7 +136,7 @@ function Run_Benchmark() {
       model_info=`echo ${line_info}|awk -F ' ' '{print $1}'`
       spec_acc_limit=`echo ${line_info}|awk -F ' ' '{print $2}'`
       model_name=`echo ${model_info}|awk -F ';' '{print $1}'`
-      input_config=`echo ${model_info} | awk -F ';' '{print $2}'`
+      input_num=`echo ${model_info} | awk -F ';' '{print $2}'`
       input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
       spec_threads=`echo ${model_info} | awk -F ';' '{print $4}'`
       extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
@@ -173,24 +173,13 @@ function Run_Benchmark() {
       input_files=""
       output_file=""
       data_path=$3"/input_output/"
-      if [[ ${input_config} == "" || ${input_config} == 1 ]]; then
+      if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
         input_files=${data_path}'input/'${model_name}'.ms.bin'
       else
-        input_num=`echo ${input_config} | awk -F ':' '{print $1}'`
-        input_seq=`echo ${input_config} | awk -F ':' '{print $2}'`
-        if [[ ${input_seq} == "" ]]; then
-          for i in $(seq 1 $input_num)
-          do
-            input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$i','
-          done
-        else
-          for i in $(seq 1 $input_num)
-          do
-            cur_input_num=${input_seq%%,*}
-            input_seq=${input_seq#*,}
-            input_files=${input_files}${data_path}'input/oldinput_'${model_name}'.ms.bin_'$cur_input_num','
-          done
-        fi
+        for i in $(seq 1 $input_num)
+        do
+          input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$i','
+        done
       fi
       output_file=${data_path}'output/'${model_name}'.ms.out'
       # adjust threads

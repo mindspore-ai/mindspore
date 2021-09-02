@@ -30,6 +30,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "tools/converter/quant_param_holder.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace opt {
@@ -589,6 +590,31 @@ bool IsParamNode(const BaseRef &n) {
     return false;
   }
   return tensor->data_c() != nullptr;
+}
+
+STATUS GetTensorInfoFromAbstract(tensor::TensorPtr *tensor_info, const CNodePtr &cnode, size_t index) {
+  CHECK_NULL_RETURN(tensor_info);
+  CHECK_NULL_RETURN(cnode);
+  AbstractBasePtr abstract = GetCNodeInputAbstract(cnode, index);
+  if (abstract == nullptr) {
+    MS_LOG(WARNING) << "Abstract of CNode: " << cnode->fullname_with_scope() << " is nullptr, infershape is delayed.";
+    return RET_ERROR;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
+    MS_LOG(DEBUG) << "Abstract of parameter should be abstract tensor";
+    return RET_ERROR;
+  }
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
+  if (!utils::isa<tensor::TensorPtr>(abstract_tensor->GetValueTrack())) {  // input node not complete infershape
+    MS_LOG(DEBUG) << "Value of abstract is not tensor::Tensor, indicate that infershape has failed";
+    return RET_ERROR;
+  }
+  *tensor_info = utils::cast<tensor::TensorPtr>(abstract_tensor->GetValueTrack());
+  if (*tensor_info == nullptr) {
+    MS_LOG(ERROR) << "tensor::Tensor of abstract is nullptr";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 bool IsParamOrValueNodeWithData(const BaseRef &n) {
