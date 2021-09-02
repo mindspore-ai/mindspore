@@ -28,6 +28,7 @@
 #include "abstract/utils.h"
 #include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/parse/resolve.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
 #include "ir/param_info.h"
@@ -106,80 +107,125 @@ py::object ScalarPtrToPyData(const ScalarPtr &value) {
   }
 }
 
-py::object ValuePtrToPyData(const ValuePtr &value) {
-  if (value == nullptr) {
-    MS_LOG(EXCEPTION) << "value is null";
-  }
-  py::object ret;
-  if (value->isa<Scalar>()) {
-    ret = ScalarPtrToPyData(value->cast<ScalarPtr>());
-  } else if (value->isa<StringImm>()) {
-    MS_LOG(DEBUG) << "String";
-    py::str v = value->cast<StringImmPtr>()->value();
-    ret = v;
-  } else if (value->isa<tensor::Tensor>()) {
-    MS_LOG(DEBUG) << "tensor";
-    auto tensor_ptr = value->cast<tensor::TensorPtr>();
-    ret = TensorToPyData(tensor_ptr);
-  } else if (value->isa<tensor::MetaTensor>()) {
-    MS_LOG(DEBUG) << "MetaTensor";
-    py::tuple v(1);
-    v[0] = value->cast<tensor::MetaTensorPtr>();
-    ret = v[0];
-  } else if (value->isa<RefKey>()) {
-    MS_LOG(DEBUG) << "RefKey";
-    py::tuple v(1);
-    v[0] = value->cast<RefKeyPtr>();
-    ret = v[0];
-  } else if (value->isa<ValueSequeue>()) {
-    MS_LOG(DEBUG) << "tuple or list";
-    auto value_sequeue = value->cast<ValueSequeuePtr>()->value();
-    py::tuple ret_sequeue(value_sequeue.size());
+using ConverterFunction = std::function<py::object(const ValuePtr &value)>;
+using ValueNameToConverterVector = std::vector<std::pair<const char *, ConverterFunction>>;
 
-    for (size_t i = 0; i < value_sequeue.size(); i++) {
-      ret_sequeue[i] = ValuePtrToPyData(value_sequeue[i]);
-    }
-    if (value->isa<ValueTuple>()) {
-      ret = ret_sequeue;
-    } else {
-      ret = ret_sequeue.cast<py::list>();
-    }
-  } else if (value->isa<ValueDictionary>()) {
-    MS_LOG(DEBUG) << "dict";
-    auto value_list = value->cast<ValueDictionaryPtr>()->value();
-    py::dict ret_dict;
-    for (const auto &v : value_list) {
-      ret_dict[py::str(v.first)] = ValuePtrToPyData(v.second);
-    }
-    ret = ret_dict;
-  } else if (value->isa<Ellipsis>()) {
-    ret = py::ellipsis();
-  } else if (value->isa<ValueSlice>()) {
-    auto slice = value->cast<ValueSlicePtr>();
-    auto start = ValuePtrToPyData(slice->start());
-    auto end = ValuePtrToPyData(slice->stop());
-    auto step = ValuePtrToPyData(slice->step());
-    ret = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_CLASS_SLICE, start, end,
-                                          step);
-  } else if (value->isa<Type>()) {
-    py::tuple v(1);
-    v[0] = value->cast<TypePtr>();
-    ret = v[0];
-  } else if (value->isa<AnyValue>() || value->isa<None>() || value->isa<Monad>() || value->isa<FuncGraph>()) {
-    // FuncGraph is not used in the backend, return None
-    ret = py::none();
-  } else if (value->isa<KeywordArg>()) {
-    auto abs_keyword_arg = value->ToAbstract()->cast<abstract::AbstractKeywordArgPtr>();
-    auto key = abs_keyword_arg->get_key();
-    auto val = abs_keyword_arg->get_arg()->BuildValue();
-    auto py_value = ValuePtrToPyData(val);
-    auto kwargs = py::kwargs();
-    kwargs[key.c_str()] = py_value;
-    ret = kwargs;
-  } else {
-    MS_LOG(EXCEPTION) << "Unsupported convert value: " << value->ToString() << " to a PyData.";
+// (Value Type Name) -> (Converter Function)
+// The converter function is used to convert Value object to Python data object.
+static ValueNameToConverterVector value_name_to_converter = {
+  // Scalar
+  {typeid(Scalar).name(),
+   [](const ValuePtr &value) -> py::object { return ScalarPtrToPyData(value->cast<ScalarPtr>()); }},
+  // Tensor
+  {typeid(tensor::Tensor).name(),
+   [](const ValuePtr &value) -> py::object {
+     auto tensor_ptr = value->cast<tensor::TensorPtr>();
+     return TensorToPyData(tensor_ptr);
+   }},
+  // MetaTenser
+  {typeid(tensor::MetaTensor).name(),
+   [](const ValuePtr &value) -> py::object {
+     py::tuple tuple_container(1);
+     tuple_container[0] = value->cast<tensor::MetaTensorPtr>();
+     return tuple_container[0];
+   }},
+  // RefKey
+  {typeid(RefKey).name(),
+   [](const ValuePtr &value) -> py::object {
+     py::tuple tuple_container(1);
+     tuple_container[0] = value->cast<RefKeyPtr>();
+     return tuple_container[0];
+   }},
+  // Type
+  {typeid(Type).name(),
+   [](const ValuePtr &value) -> py::object {
+     py::tuple tuple_container(1);
+     tuple_container[0] = value->cast<TypePtr>();
+     return tuple_container[0];
+   }},
+  // StringImm
+  {typeid(StringImm).name(),
+   [](const ValuePtr &value) -> py::object {
+     py::str res = value->cast<StringImmPtr>()->value();
+     return res;
+   }},
+  // ValueSequeue
+  {typeid(ValueSequeue).name(),
+   [](const ValuePtr &value) -> py::object {
+     auto value_sequeue = value->cast<ValueSequeuePtr>()->value();
+     py::tuple res_sequeue(value_sequeue.size());
+     for (size_t i = 0; i < value_sequeue.size(); i++) {
+       res_sequeue[i] = ValueToPyData(value_sequeue[i]);
+     }
+     if (value->isa<ValueTuple>()) {
+       return res_sequeue;
+     }
+     return res_sequeue.cast<py::list>();
+   }},
+  // ValueDictionary
+  {typeid(ValueDictionary).name(),
+   [](const ValuePtr &value) -> py::object {
+     auto value_list = value->cast<ValueDictionaryPtr>()->value();
+     py::dict res_dict;
+     for (const auto &value : value_list) {
+       res_dict[py::str(value.first)] = ValueToPyData(value.second);
+     }
+     return res_dict;
+   }},
+  // ValueSlice
+  {typeid(ValueSlice).name(),
+   [](const ValuePtr &value) -> py::object {
+     auto slice = value->cast<ValueSlicePtr>();
+     auto start = ValueToPyData(slice->start());
+     auto end = ValueToPyData(slice->stop());
+     auto step = ValueToPyData(slice->step());
+     return parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_CLASS_SLICE, start, end,
+                                            step);
+   }},
+  // KeywordArg
+  {typeid(KeywordArg).name(),
+   [](const ValuePtr &value) -> py::object {
+     auto abs_keyword_arg = value->ToAbstract()->cast<abstract::AbstractKeywordArgPtr>();
+     auto key = abs_keyword_arg->get_key();
+     auto val = abs_keyword_arg->get_arg()->BuildValue();
+     auto py_value = ValueToPyData(val);
+     auto kwargs = py::kwargs();
+     kwargs[key.c_str()] = py_value;
+     return kwargs;
+   }},
+  // parse::NameSpace
+  {typeid(parse::NameSpace).name(),
+   [](const ValuePtr &value) -> py::object {
+     auto ns = value->cast<parse::NameSpacePtr>();
+     return ns->module_obj();
+   }},
+  // parse::ClassType
+  {typeid(parse::ClassType).name(),
+   [](const ValuePtr &value) -> py::object {
+     auto class_type = value->cast<parse::ClassTypePtr>();
+     return class_type->obj();
+   }},
+  // None
+  {typeid(None).name(), [](const ValuePtr &value) -> py::object { return py::none(); }},
+  // AnyValue
+  {typeid(AnyValue).name(), [](const ValuePtr &value) -> py::object { return py::none(); }},
+  // FuncGraph
+  {typeid(FuncGraph).name(), [](const ValuePtr &value) -> py::object { return py::none(); }},
+  // Monad
+  {typeid(Monad).name(), [](const ValuePtr &value) -> py::object { return py::none(); }},
+  // Ellipsis
+  {typeid(Ellipsis).name(), [](const ValuePtr &value) -> py::object { return py::ellipsis(); }}};
+
+py::object ValueToPyData(const ValuePtr &value) {
+  if (value == nullptr) {
+    MS_LOG(EXCEPTION) << "The `value` should not be null";
   }
-  return ret;
+  for (auto &iter : value_name_to_converter) {
+    if (value->IsFromTypeId(Base::GetTypeId(iter.first))) {
+      return iter.second(value);
+    }
+  }
+  MS_LOG(EXCEPTION) << "Unsupported to convert " << value->ToString() << "[" << value->type_name() << "] to a PyData";
 }
 
 py::object AnyToPyData(const Any &value) {
@@ -190,7 +236,7 @@ py::object AnyToPyData(const Any &value) {
   } else if (value.is<ValuePtr>()) {
     MS_LOG(DEBUG) << "ValuePtr";
     ValuePtr v = value.cast<ValuePtr>();
-    ret = ValuePtrToPyData(v);
+    ret = ValueToPyData(v);
   } else if (value.is<tensor::TensorPtr>()) {
     MS_LOG(DEBUG) << "tensor";
     auto tensor_ptr = value.cast<tensor::TensorPtr>();
@@ -233,7 +279,7 @@ py::object BaseRefToPyData(const BaseRef &value) {
   } else if (utils::isa<ValuePtr>(value)) {
     MS_LOG(DEBUG) << "ValuePtr";
     ValuePtr v = utils::cast<ValuePtr>(value);
-    ret = ValuePtrToPyData(v);
+    ret = ValueToPyData(v);
   } else if (utils::isa<tensor::TensorPtr>(value)) {
     MS_LOG(DEBUG) << "tensor";
     auto tensor_ptr = utils::cast<tensor::TensorPtr>(value);
@@ -459,7 +505,7 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
   if (output->isa<ValueNode>()) {
     MS_LOG(INFO) << "Graph's output is a constant. No need to execute.";
     ValuePtr value = GetValueNode(output);
-    *ret_val = ValuePtrToPyData(value);
+    *ret_val = ValueToPyData(value);
     return true;
   }
 

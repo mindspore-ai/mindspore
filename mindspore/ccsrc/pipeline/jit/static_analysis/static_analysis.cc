@@ -286,7 +286,8 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
 
   AbstractFunctionPtr func = dyn_cast<AbstractFunction>(possible_func);
   if (func == nullptr) {
-    MS_LOG(ERROR) << "Can not cast to a AbstractFunction: " << possible_func->ToString() << ".";
+    MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << possible_func->ToString() << ".";
+    MS_LOG(ERROR) << "It's called at: " << cnode->DebugString();
     MS_EXCEPTION(ValueError) << "This may be not defined, and it can't be a operator. Please check code.";
   }
 

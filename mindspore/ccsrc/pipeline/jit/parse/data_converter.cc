@@ -215,11 +215,13 @@ ValuePtr ConvertDict(const py::object &obj, bool use_signature) {
   return std::make_shared<ValueDictionary>(key_values);
 }
 
-ValuePtr ConvertNameSpace(const py::object &obj) {
+ValuePtr ConvertModuleNameSpace(const py::object &obj) {
   MS_LOG(DEBUG) << "Converting python module";
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object module_namespace = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MODULE_NAMESPACE, obj);
-  auto converted = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_MODULE, py::cast<py::module>(module_namespace));
+  auto converted =
+    std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_MODULE, py::cast<py::module>(module_namespace), obj);
+  MS_LOG(DEBUG) << "name_space: " << converted->ToString();
   return converted;
 }
 
@@ -355,7 +357,9 @@ ValuePtr ConvertOtherObj(const py::object &obj) {
     // When the obj is Cell, default parse the 'construct'
     py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
     py::object namespace_var = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
-    return std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
+    auto res = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
+    MS_LOG(DEBUG) << "name_space: " << res->ToString();
+    return res;
   }
   MS_LOG(ERROR) << "Resolve type is invalid " << ((std::string)py::str(obj));
   return nullptr;
@@ -456,7 +460,7 @@ std::vector<DataConverterPtr> GetDataConverters() {
     std::make_shared<ByTypeDataConverter<py::bool_>>(PyCast<BoolImm, bool>),
     std::make_shared<ByTypeDataConverter<py::str>>(PyCast<StringImm, string>),
     std::make_shared<ByTypeDataConverter<py::ellipsis>>(kEllipsis),
-    std::make_shared<ByTypeDataConverter<py::module>>(ConvertNameSpace),
+    std::make_shared<ByTypeDataConverter<py::module>>(ConvertModuleNameSpace),
     std::make_shared<ByAttrDataConverter>(PYTHON_DATACLASS_FIELDS, ConvertDataClass),
     std::make_shared<ByTypeDataConverter<Type>>(ObjCast<TypePtr>),
     std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
@@ -466,8 +470,10 @@ std::vector<DataConverterPtr> GetDataConverters() {
     std::make_shared<ByTypeDataConverter<EnvInstance>>(ObjCast<std::shared_ptr<EnvInstance>>),
     std::make_shared<ByAttrDataConverter>(PYTHON_CLASS_MEMBER_NAMESPACE,
                                           [](const py::object &obj) -> ValuePtr {
-                                            return std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER,
-                                                                               obj);
+                                            auto res =
+                                              std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
+                                            MS_LOG(DEBUG) << "name_space: " << res->ToString();
+                                            return res;
                                           }),
     std::make_shared<ByTypeDataConverter<py::int_>>(ConvertIntegerWithType),
     std::make_shared<ByTypeDataConverter<py::float_>>(ConvertFloatWithType),
@@ -598,8 +604,16 @@ bool IsCellInstance(const py::object &obj) {
 py::object CreatePythonObject(const py::object &type, const py::tuple &args_kwargs) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   // `args_kwargs` maybe a tuple(*args), tuple(**kwargs), or tuple(*args, **kwargs).
-  return args_kwargs.empty() ? python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type)
-                             : python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type, args_kwargs);
+  return args_kwargs.empty() ? python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_INSTANCE, type)
+                             : python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_INSTANCE, type, args_kwargs);
+}
+
+// Call the python script string.
+py::object CallPythonScript(const py::object &script, const py::tuple &args_kwargs) {
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+  // `args_kwargs` is a tuple(dict(global), dict(local)).
+  return args_kwargs.empty() ? python_adapter::CallPyModFn(mod, PYTHON_MOD_EVAL_PY_SCRIPT, script)
+                             : python_adapter::CallPyModFn(mod, PYTHON_MOD_EVAL_PY_SCRIPT, script, args_kwargs);
 }
 
 // Generate an appropriate name and set to graph debuginfo,

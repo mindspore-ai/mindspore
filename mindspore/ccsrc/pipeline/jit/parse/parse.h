@@ -34,7 +34,6 @@
 
 namespace mindspore {
 namespace parse {
-
 // Parse status define
 enum ParseStatusCode : int64_t {
   PARSE_SUCCESS = 0,
@@ -58,7 +57,7 @@ enum ParseStatusCode : int64_t {
 const int64_t MAX_FOR_LOOP_COUNT = std::numeric_limits<int64_t>::max();
 
 class AstNodeType;
-class ParseAst;
+class ParseFunctionAst;
 
 // Save loop info for 'continue' and 'break' statements.
 struct Loop {
@@ -90,13 +89,14 @@ class LoopContext {
 // Parser to parse python function
 class Parser {
  public:
-  explicit Parser(const std::shared_ptr<ParseAst> &ast);
+  explicit Parser(const std::shared_ptr<ParseFunctionAst> &ast);
 
   ~Parser() {}
   FuncGraphPtr ParseFuncGraph();
   FuncGraphPtr func_graph() const { return func_graph_; }
   ParseStatusCode errcode() const { return errcode_; }
-  std::shared_ptr<ParseAst> ast() const { return ast_; }
+  std::shared_ptr<ParseFunctionAst> ast() const { return ast_; }
+  const std::string &support_fallback() const { return support_fallback_; }
   // Get location info from the ast node
   LocationPtr GetLocation(const py::object &node) const;
   static void InitParserEnvironment(const py::object &obj);
@@ -177,6 +177,8 @@ class Parser {
   // Process a unaryop
   AnfNodePtr ParseUnaryOp(const FunctionBlockPtr &block, const py::object &node);
   // Process a dict ast node expression
+  AnfNodePtr ParseDictByKeysAndValues(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &key_nodes,
+                                      const std::vector<AnfNodePtr> &value_nodes);
   AnfNodePtr ParseDict(const FunctionBlockPtr &block, const py::object &node);
   // Process ListComp expression
   AnfNodePtr ParseListComp(const FunctionBlockPtr &block, const py::object &node);
@@ -184,6 +186,10 @@ class Parser {
                                      const py::object &generator_node);
   AnfNodePtr ParseListCompIfs(const FunctionBlockPtr &list_body_block, const ParameterPtr &list_param,
                               const py::object &node, const py::object &generator_node);
+
+  // Check if the node need interpreting.
+  AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
+                             const py::object &value_object);
 
   // Generate argument nodes for ast  function node
   void GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py::object &function_node);
@@ -260,7 +266,7 @@ class Parser {
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
   // Python function id, used to indicate whether two CNodes come from the same Python function
-  const std::shared_ptr<ParseAst> &ast_;
+  const std::shared_ptr<ParseFunctionAst> &ast_;
   FuncGraphPtr func_graph_;
   // Error code setwhen parsing ast tree
   ParseStatusCode errcode_;
@@ -278,6 +284,7 @@ class Parser {
   // Save current loops to support 'continue', 'break' statement.
   std::stack<Loop> loops_;
   string max_for_loop_count_str_;
+  string support_fallback_;
 };
 
 // AST node type define code to ast
@@ -303,15 +310,18 @@ class AstNodeType {
 using AstNodeTypePtr = std::shared_ptr<AstNodeType>;
 
 // A helper class to parse python function
-class ParseAst {
+class ParseFunctionAst {
  public:
-  explicit ParseAst(const py::object &obj) : obj_(obj), target_type_(PARSE_TARGET_UNKNOW), function_line_offset_(-1) {}
+  explicit ParseFunctionAst(const py::object &obj)
+      : obj_(obj), target_type_(PARSE_TARGET_UNKNOW), function_line_offset_(-1) {}
 
-  ~ParseAst() = default;
+  ~ParseFunctionAst() = default;
 
   bool InitParseAstInfo(const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
 
   py::object GetAstNode();
+
+  py::str GetAstNodeText(const py::object &node);
 
   py::list GetArgs(const py::object &func_node);
 
@@ -360,6 +370,7 @@ class ParseAst {
   // Function or class method.
   py::function function_;
 
+  py::object ast_tokens_;
   py::object ast_tree_;
   py::object parser_;
   py::module module_;

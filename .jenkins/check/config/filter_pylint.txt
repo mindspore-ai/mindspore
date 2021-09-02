@@ -27,6 +27,7 @@
 "mindspore/mindspore/nn/cell.py"                                                                        "assignment-from-none"
 "mindspore/mindspore/_extends/parse/resources.py"                                                       "bad-whitespace"
 "mindspore/mindspore/_extends/parse/parser.py"                                                          "broad-except"
+"mindspore/mindspore/_extends/parse/parser.py"                                                          "eval-used"
 "mindspore/mindspore/nn/cell.py"                                                                        "protected-access"
 "mindspore/mindspore/nn/optim/ftrl.py"                                                                  "unused-import"
 "mindspore/mindspore/train/amp.py"                                                                      "protected-access"

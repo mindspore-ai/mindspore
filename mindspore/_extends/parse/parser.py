@@ -16,6 +16,7 @@
 # ============================================================================
 """The module of parser python object, called by c++."""
 
+import os
 import ast
 import hashlib
 import inspect
@@ -25,7 +26,7 @@ from textwrap import dedent
 
 import asttokens
 
-from mindspore import Tensor as MsTensor
+from mindspore import Tensor
 from mindspore import context
 from mindspore import log as logger
 from mindspore import nn
@@ -132,6 +133,9 @@ def get_bprop_method_of_class(obj, parse_method=None):
             method = getattr(obj, method_name)
     return method
 
+# The fallback feature is enabled in default.
+# Not support change the flag during the process is alive.
+support_fallback_ = os.getenv('ENV_SUPPORT_FALLBACK')
 
 def resolve_symbol(namespace, symbol):
     """
@@ -159,10 +163,13 @@ def resolve_symbol(namespace, symbol):
         if getattr(resolve_, "__hash__") is None:
             return resolve_
 
-        # Raise NotImplementedError when parsing the numpy methods, but not the numpy constant.
-        if namespace.name == "numpy" and isinstance(resolve_, (types.FunctionType, types.MethodType, types.ModuleType)):
-            raise NotImplementedError(
-                f"MindSpore does not support to use the numpy methods in the function construct with the graph mode.")
+        # Raise a proper error if not using Fallback feature.
+        if support_fallback_ != '1':
+            # Raise NotImplementedError when parsing the numpy methods, but not the numpy constant.
+            if namespace.name == "numpy" and \
+                isinstance(resolve_, (types.FunctionType, types.MethodType, types.ModuleType)):
+                raise NotImplementedError("Mindspore does not support to use the numpy methods " \
+                                          "within the construct() or @ms_function decorated function in graph mode.")
 
         # If need trope the obj
         if resolve_ in convert_object_map:
@@ -177,9 +184,11 @@ def resolve_symbol(namespace, symbol):
         logger.debug("resolve exception occurred, value = %r", e)
         logger.debug("resolve type is invalid, namespace = %s, symbol = %s",
                      namespace.__str__(), symbol)
+
     if isinstance(resolve_, _MindsporeFunctionExecutor):
         logger.debug("resolve class _MindsporeFunctionExecutor, resolve fn instead.")
         resolve_ = resolve_.fn
+    logger.debug(f'found: {symbol} in {namespace.__str__()}, resolve: {resolve_} / {type(resolve_)}')
     return resolve_
 
 
@@ -292,22 +301,24 @@ def _convert_tuple_to_args_kwargs(params):
             args += (param,)
     return (args, kwargs)
 
+def is_supported_create_instance_type(cls_type):
+    return issubclass(cls_type, (nn.Cell, ops.Primitive))
 
-def create_obj_instance(cls_type, params=None):
+def create_instance(cls_type, params=None):
     """Create python instance."""
     if not isinstance(cls_type, type):
-        logger.warning(f"create_obj_instance(), cls_type is not a type, cls_type: {cls_type}")
+        logger.warning(f"create_instance(), cls_type is not a type, cls_type: {cls_type}")
         return None
 
     # Check the type, now only support nn.Cell and Primitive.
     obj = None
-    if issubclass(cls_type, (nn.Cell, ops.Primitive)):
+    if is_supported_create_instance_type(cls_type):
         # Check arguments, only support *args or **kwargs.
         if params is None:
             obj = cls_type()
         elif isinstance(params, tuple):
             args, kwargs = _convert_tuple_to_args_kwargs(params)
-            logger.debug(f"create_obj_instance(), args: {args}, kwargs: {kwargs}")
+            logger.debug(f"create_instance(), args: {args}, kwargs: {kwargs}")
             if args and kwargs:
                 obj = cls_type(*args, **kwargs)
             elif args:
@@ -358,7 +369,7 @@ def get_dataclass_methods(cls):
 
 def convert_to_ms_tensor(data):
     """Convert C++ tensor to mindspore tensor."""
-    return MsTensor(data)
+    return Tensor(data)
 
 
 def get_object_description(obj, fname, fline):
@@ -414,7 +425,6 @@ def get_operation_namespace_symbol(var: str):
     ops_info = (trope_ns, var)
     logger.debug("get operation ops info = %r", ops_info)
     return ops_info
-
 
 def get_ast_type(node):
     """Get the ast type."""
@@ -483,6 +493,21 @@ def get_args(node):
         args.append(node.args.kwarg)
     return args
 
+def eval_script(exp_str, params):
+    """Evaluate a python expression."""
+    if not isinstance(params, tuple):
+        raise ValueError(f"eval_script(), params is not a tuple, params: {params}")
+    if len(params) != 2:
+        raise ValueError(f"eval_script(), params tuple length is wrong, params: {params}")
+
+    logger.debug(f'exp_str: {exp_str}, params: {params}')
+    global_params = params[0]
+    local_params = params[1]
+    obj = eval(exp_str, global_params, local_params)
+    if obj is None:
+        raise ValueError(f"When call 'eval', the result is none. exp_str: '{exp_str}'")
+    return obj
+
 
 class Parser:
     """
@@ -501,7 +526,10 @@ class Parser:
         self.line_offset = 0
         self.filename: str = inspect.getfile(self.fn)
 
-        # Used to resolve the function's globals Namespace.
+        # Used to resolve mindspore builtin ops namespace.
+        self.ms_common_ns = CellNamespace('mindspore.common')
+        self.ms_ops_ns = CellNamespace('mindspore.ops')
+        # Used to resolve the function's globals namespace.
         self.global_namespace = CellNamespace(fn.__module__)
         self.function_module = fn.__module__
         # Used to resolve the function's nonlocals.
@@ -512,44 +540,93 @@ class Parser:
     def parse(self):
         """Parse the function or method."""
         logger.debug("fn = %r", self.fn)
-        tree = None
         if isinstance(self.fn, (types.FunctionType, types.MethodType)):
             lines, self.line_offset = inspect.getsourcelines(self.fn)
             original_src = ''.join(lines)
             hexstr = hashlib.sha256(original_src.encode()).hexdigest()
-            tree = Parser.ast_cache.get(hexstr)
-            if not tree:
+            ast_tokens = Parser.ast_cache.get(hexstr)
+            if not ast_tokens:
                 src = dedent(original_src)
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
                 logger.debug("get source = %s", src)
                 try:
-                    tree = asttokens.ASTTokens(src, parse=True).tree
+                    ast_tokens = asttokens.ASTTokens(src, parse=True)
                 except IndentationError as idt_err:
                     idt_err.filename = self.filename
                     idt_err.lineno = self.line_offset
                     idt_err.msg = f"There are incorrect indentations in definition or comment of function: " \
                                   f"'{self.fn.__qualname__}'."
                     raise idt_err
-                Parser.ast_cache[hexstr] = tree
-        else:
-            logger.error("Fn type is invalid")
-        return tree
+                Parser.ast_cache[hexstr] = ast_tokens
+            return ast_tokens, ast_tokens.tree
+
+        logger.error("Fn type is invalid")
+        return None, None
 
     def get_namespace_symbol(self, var: str):
-
         """Get symbol type and namespace and symbol."""
         if var in self.closure_namespace:
-            logger.debug("in closure_namespace")
+            logger.debug(f"found {var} in closure_namespace {self.closure_namespace.__str__()}")
             return self.closure_namespace, var
         if var in self.global_namespace:
-            logger.debug("in global_namespace")
+            logger.debug(f"found {var} in global_namespace {self.global_namespace.__str__()}")
             value = self.global_namespace[var]
             if isinstance(value, type(abs)) and self.global_namespace[var] not in convert_object_map:
                 error_info = f"The builtin function '{var}' is not supported in graph mode."
                 return None, var, error_info
             return self.global_namespace, var
         error_info = f"The name '{var}' is not defined."
+        return None, var, error_info
+
+    def is_unsupported_builtin_type(self, value_type):
+        """To check if not supported builtin type"""
+        logger.debug(f'value_type: {value_type}, {type([])}, {type(())}')
+        return value_type == type([]) or value_type == type(())
+
+    def is_supported_namespace_module(self, value):
+        """To check if the module is allowed to support."""
+        if not hasattr(value, '__name__'):
+            return True
+
+        name = value.__name__
+        if name == 'mindspore':
+            logger.debug(f'...found {name} in mindspore root namespace')
+            return True
+
+        if not isinstance(value, types.ModuleType):
+            return False
+        rightmost_name = name.split('.')[-1]
+        # if rightmost_name in self.ms_common_ns:
+        #     logger.error(f'...found {module_name} in common namespace: {self.ms_common_ns.__str__()}')
+        #     return True
+        if rightmost_name in self.ms_ops_ns:
+            logger.debug(f'...found {name}({rightmost_name}) in ops namespace: {self.ms_ops_ns.__str__()}')
+            return True
+        if rightmost_name in trope_ns:
+            logger.debug(f'...found {name}({rightmost_name}) in trope namespace: {self.trope_ns.__str__()}')
+            return True
+        return False
+
+    def get_builtin_namespace_symbol(self, var: str):
+        """Get mindspore builtin namespace and symbol."""
+        if var in self.closure_namespace:
+            logger.debug(f"found {var} in closure_namespace {self.closure_namespace.__str__()}")
+            return self.closure_namespace, var
+        if var in self.global_namespace:
+            logger.debug(f"found {var} in global_namespace {self.global_namespace.__str__()}")
+            value = self.global_namespace[var]
+            value_str = value.__name__ if hasattr(value, '__name__') else str(value)
+            logger.debug(f"value: {type(value)}, : {value_str}, hasattr(__name__): {hasattr(value, '__name__')}")
+            # To check if allowed to support.
+            if self.is_unsupported_builtin_type(value):
+                return self.global_namespace, var, value
+            if not self.is_supported_namespace_module(value):  # Check if support including instance of types.ModuleType
+                return self.global_namespace, var, value
+            return self.global_namespace, var
+
+        error_info = f"The symbol '{var}' is not supported in graph mode."
+        logger.debug(error_info)
         return None, var, error_info
 
     def analyze_super(self, class_type_node, subclass_instance):

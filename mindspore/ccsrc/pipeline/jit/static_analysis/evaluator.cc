@@ -402,15 +402,15 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
 
 EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                            const AnfNodeConfigPtr &out_conf) {
+  if (args_conf_list.empty()) {
+    MS_LOG(EXCEPTION) << "Size should greater than 0";
+  }
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
-  if (args_conf_list.empty()) {
-    MS_LOG(EXCEPTION) << "Size should greater than 0";
-  }
   EvalResultPtr res = EvalPrim(engine, args_spec_list, args_conf_list[0], out_conf);
   // No need to cache.
   return res;

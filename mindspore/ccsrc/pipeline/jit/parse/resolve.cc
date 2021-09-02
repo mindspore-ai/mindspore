@@ -43,9 +43,22 @@ abstract::AbstractBasePtr ClassObject::ToAbstract() {
   return std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_spec_list);
 }
 
+static inline bool IsSupportedCreateInstanceType(const py::object &obj) {
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+  auto res = python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_SUPPORTED_CREATE_INSTANCE_TYPE, obj);
+  if (!py::isinstance<py::bool_>(res)) {
+    MS_LOG(ERROR) << "Expect a bool type, but got " << py::str(res);
+    return false;
+  }
+  return res.cast<bool>();
+}
+
 abstract::AbstractBasePtr ClassType::ToAbstract() {
   auto abs_scalar =
     std::make_shared<abstract::AbstractScalar>(shared_from_base<ClassType>(), std::make_shared<TypeType>());
+  if (!IsSupportedCreateInstanceType(obj())) {
+    return abs_scalar;
+  }
   AbstractBasePtrList args_spec_list = {abs_scalar};
 
   auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCreateInstance);
@@ -333,6 +346,7 @@ AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpa
   auto new_namespace = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_obj);
   std::string attr_as_string = GetValueNode<StringImmPtr>(attr)->value();
   auto new_symbol = std::make_shared<Symbol>(attr_as_string);
+  MS_LOG(DEBUG) << "name_space: " << new_namespace->ToString() << ", symbol: " << new_symbol->ToString();
 
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimResolve), NewValueNode(new_namespace), NewValueNode(new_symbol)};
   AnfNodePtr resolved_node = node->func_graph()->NewCNode(inputs);

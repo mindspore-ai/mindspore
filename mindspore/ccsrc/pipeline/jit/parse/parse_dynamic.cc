@@ -33,7 +33,7 @@ static const std::set<std::string> unchanged_named_primitive = {parse::NAMED_PRI
                                                                 parse::NAMED_PRIMITIVE_NAMECONSTANT,
                                                                 parse::NAMED_PRIMITIVE_NUM, parse::NAMED_PRIMITIVE_STR};
 
-std::string DynamicParser::ParseNodeName(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
+std::string DynamicParser::ParseNodeName(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
                                          parse::AstMainType type) {
   MS_EXCEPTION_IF_NULL(ast);
   if (py::isinstance<py::none>(node)) {
@@ -53,7 +53,7 @@ std::string DynamicParser::ParseNodeName(const std::shared_ptr<parse::ParseAst> 
   return node_name;
 }
 
-void DynamicParser::ParseInputArgs(const std::shared_ptr<parse::ParseAst> &ast, const py::object &fn_node) {
+void DynamicParser::ParseInputArgs(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &fn_node) {
   MS_EXCEPTION_IF_NULL(ast);
   py::list args = ast->GetArgs(fn_node);
   for (size_t i = 1; i < args.size(); i++) {
@@ -63,7 +63,7 @@ void DynamicParser::ParseInputArgs(const std::shared_ptr<parse::ParseAst> &ast, 
   }
 }
 
-bool DynamicParser::ParseIfWhileExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node) {
+bool DynamicParser::ParseIfWhileExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node) {
   MS_LOG(DEBUG) << "Parse if/while expr";
   py::object test_node = parse::python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_TEST);
   const auto &node_name = ParseNodeName(ast, test_node, parse::AST_MAIN_TYPE_EXPR);
@@ -112,7 +112,7 @@ bool DynamicParser::ParseIfWhileExprNode(const std::shared_ptr<parse::ParseAst> 
   return false;
 }
 
-bool DynamicParser::ParseAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node) {
+bool DynamicParser::ParseAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node) {
   MS_LOG(DEBUG) << "Parse assign expr";
   py::object value_node = parse::python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_VALUE);
   const auto &node_name = ParseNodeName(ast, value_node, parse::AST_MAIN_TYPE_EXPR);
@@ -140,7 +140,7 @@ bool DynamicParser::ParseAssignExprNode(const std::shared_ptr<parse::ParseAst> &
   return false;
 }
 
-bool DynamicParser::ParseAugAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
+bool DynamicParser::ParseAugAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
                                            const std::vector<std::string> &compare_prim) {
   MS_LOG(DEBUG) << "Parse augassign expr";
   bool ret = false;
@@ -168,7 +168,7 @@ bool DynamicParser::ParseAugAssignExprNode(const std::shared_ptr<parse::ParseAst
   return ret;
 }
 
-bool DynamicParser::ParseForExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node) {
+bool DynamicParser::ParseForExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node) {
   MS_LOG(DEBUG) << "Parse for expr";
   py::object body_node = parse::python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_BODY);
   if (py::isinstance<py::none>(body_node)) {
@@ -188,7 +188,7 @@ bool DynamicParser::ParseForExprNode(const std::shared_ptr<parse::ParseAst> &ast
   return false;
 }
 
-bool DynamicParser::ParseBodyContext(const std::shared_ptr<parse::ParseAst> &ast, const py::object &fn_node,
+bool DynamicParser::ParseBodyContext(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &fn_node,
                                      const std::vector<std::string> &compare_prim) {
   MS_EXCEPTION_IF_NULL(ast);
   py::object func_obj = parse::python_adapter::GetPyObjAttr(fn_node, parse::NAMED_PRIMITIVE_BODY);
@@ -236,7 +236,7 @@ bool DynamicParser::IsDynamicCell(const py::object &cell) {
     return false;
   }
   // Using ast parse to check whether the construct of cell will be changed
-  auto ast = std::make_shared<parse::ParseAst>(cell);
+  auto ast = std::make_shared<parse::ParseFunctionAst>(cell);
   bool success = ast->InitParseAstInfo(parse::PYTHON_MOD_GET_PARSE_METHOD);
   if (!success) {
     MS_LOG(ERROR) << "Parse code to ast tree failed";

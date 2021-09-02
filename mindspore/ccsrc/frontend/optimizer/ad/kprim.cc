@@ -268,7 +268,7 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceB
     }
   }
   if (!fn || py::isinstance<py::none>(fn)) {
-    MS_LOG(DEBUG) << "Fail to find bprop function for " << prim->name() << ".";
+    MS_LOG(ERROR) << "Fail to find bprop function for " << prim->name() << ". fn: " << py::str(fn);
     return nullptr;
   }
   func_graph = parse::ParsePythonCode(fn);

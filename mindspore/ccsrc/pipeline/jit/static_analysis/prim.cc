@@ -298,7 +298,7 @@ py::object BuildValue(const ValuePtr &value_ptr) {
   if (value_ptr == nullptr) {
     return py::none();
   } else {
-    return ValuePtrToPyData(value_ptr);
+    return ValueToPyData(value_ptr);
   }
 }
 
@@ -786,23 +786,6 @@ EvaluatorPtr InitUniformPrimEvaluator(const PrimitivePtr &primitive, PrimitiveIm
   return uniform_primitive_evaluator;
 }
 
-const int64_t kResolveCaseUserDefineClass = 1;
-const int64_t kResolveCaseBuiltInType = 2;
-const int64_t kResolveCaseFunction = 3;
-int64_t GetResolveCase(const TypePtr &data_type) {
-  MS_EXCEPTION_IF_NULL(data_type);
-  if (data_type->type_id() == kObjectTypeClass) {
-    return kResolveCaseUserDefineClass;
-  }
-
-  // try method map, if not in method map, the data_type should be External type.
-  if (pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
-    return kResolveCaseBuiltInType;
-  }
-
-  return kResolveCaseFunction;
-}
-
 FuncGraphPtr PyObjToGraph(const AnalysisEnginePtr &engine, const ValuePtr &method) {
   MS_EXCEPTION_IF_NULL(engine);
   MS_EXCEPTION_IF_NULL(method);
@@ -883,18 +866,18 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
     MS_LOG(EXCEPTION) << "Data is not NameSpace : " << data_v->ToString();
   }
 
-  auto item_v = args_spec_list[1]->BuildValue();
-  MS_EXCEPTION_IF_NULL(item_v);
-  if (item_v->isa<StringImm>()) {
-    item_v = std::make_shared<parse::Symbol>(item_v->cast<StringImmPtr>()->value());
+  auto item_value = args_spec_list[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(item_value);
+  if (item_value->isa<StringImm>()) {
+    item_value = std::make_shared<parse::Symbol>(item_value->cast<StringImmPtr>()->value());
   }
 
-  if (!item_v->isa<parse::Symbol>()) {
-    MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_v->ToString();
+  if (!item_value->isa<parse::Symbol>()) {
+    MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 
   // item_name to func addr from obj_map
-  parse::SymbolPtr symbol = item_v->cast<parse::SymbolPtr>();
+  parse::SymbolPtr symbol = item_value->cast<parse::SymbolPtr>();
   parse::NameSpacePtr name_space = data_v->cast<parse::NameSpacePtr>();
   MS_EXCEPTION_IF_NULL(out_conf);
   auto out_node = out_conf->node();
@@ -915,19 +898,20 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
 }
 
 EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &engine,
-                                                    const AbstractBasePtrList &args_spec_list, const ValuePtr &item_v,
-                                                    const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
+                                                    const AbstractBasePtrList &args_spec_list,
+                                                    const ValuePtr &item_value, const ConfigPtr &data_conf,
+                                                    const AnfNodeConfigPtr &out_conf) {
   if (args_spec_list.empty()) {
     MS_LOG(EXCEPTION) << "args_spec_list is empty";
   }
   AbstractClassPtr cls = CheckArg<AbstractClass>("__FUNC__", args_spec_list, 0);
 
-  // If item_v is an attribute, get abstract value from AbstractClass
-  MS_EXCEPTION_IF_NULL(item_v);
-  if (!item_v->isa<StringImm>()) {
+  // If item_value is an attribute, get abstract value from AbstractClass
+  MS_EXCEPTION_IF_NULL(item_value);
+  if (!item_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << "Attribute type error";
   }
-  std::string item_name = item_v->cast<StringImmPtr>()->value();
+  std::string item_name = item_value->cast<StringImmPtr>()->value();
   MS_LOG(DEBUG) << "Resolve name: " << cls->tag().name();
   MS_LOG(DEBUG) << "Resolve item: " << item_name;
   MS_EXCEPTION_IF_NULL(cls);
@@ -941,25 +925,25 @@ EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &eng
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     MS_EXCEPTION_IF_NULL(args_spec_list[0]->BuildType());
     MS_EXCEPTION(AttributeError) << "Unknown field, data type: " << args_spec_list[0]->BuildType()->ToString()
-                                 << ", item value: " << item_v->ToString();
+                                 << ", item value: " << item_value->ToString();
   }
 
   // Infer class method
-  ValuePtr converted_v = PyObjToGraph(engine, method);
-  return StaticGetterInferred(converted_v, data_conf, out_conf);
+  ValuePtr converted_value = PyObjToGraph(engine, method);
+  return StaticGetterInferred(converted_value, data_conf, out_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_v,
+EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
                                                           const TypePtr &data_type, const ConfigPtr &data_conf,
                                                           const AnfNodeConfigPtr &out_conf) {
-  MS_EXCEPTION_IF_NULL(item_v);
+  MS_EXCEPTION_IF_NULL(item_value);
   MS_EXCEPTION_IF_NULL(data_type);
   // The method maybe a Primitive or Composite
-  if (!item_v->isa<StringImm>()) {
+  if (!item_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << "Error item is not string";
   }
 
-  std::string item_name = item_v->cast<StringImmPtr>()->value();
+  std::string item_name = item_value->cast<StringImmPtr>()->value();
   REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD;
   Any require = pipeline::Resource::GetMethodPtr(data_type->type_id(), item_name);
   if (require.empty()) {
@@ -971,20 +955,38 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
     require_type = REQUIRE_TYPE::ATTR;
   }
 
-  ValuePtr converted_v = nullptr;
+  ValuePtr converted_value = nullptr;
   if (require.is<std::string>()) {
     // composite registered in standard_method_map go to this branch
-    converted_v = prim::GetPythonOps(require.cast<std::string>());
-    MS_EXCEPTION_IF_NULL(converted_v);
-    if (!converted_v->isa<Primitive>()) {
-      AddToManager(engine, converted_v->cast<FuncGraphPtr>());
+    converted_value = prim::GetPythonOps(require.cast<std::string>());
+    MS_EXCEPTION_IF_NULL(converted_value);
+    if (!converted_value->isa<Primitive>()) {
+      AddToManager(engine, converted_value->cast<FuncGraphPtr>());
     }
   } else if (require.is<PrimitivePtr>()) {
-    converted_v = require.cast<PrimitivePtr>();
+    converted_value = require.cast<PrimitivePtr>();
   } else {
     MS_LOG(EXCEPTION) << "Expect to get string or PrimitivePtr from attr or method map, but got " << require.ToString();
   }
-  return StaticGetterInferred(converted_v, data_conf, out_conf, require_type);
+  return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
+}
+
+enum ResolveType : int64_t {
+  kResolveTypeUserDefineClass = 1,
+  kResolveTypeBuiltInType,
+  kResolveTypeFunction,
+};
+
+int64_t GetResolveType(const TypePtr &data_type) {
+  MS_EXCEPTION_IF_NULL(data_type);
+  if (data_type->type_id() == kObjectTypeClass) {
+    return kResolveTypeUserDefineClass;
+  }
+  // Try to search method map, if not found, the data_type should be External type.
+  if (pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
+    return kResolveTypeBuiltInType;
+  }
+  return kResolveTypeFunction;
 }
 
 EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
@@ -1006,10 +1008,10 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 
-  int64_t case_v = GetResolveCase(data_type);
-  if (case_v == kResolveCaseUserDefineClass) {
+  int64_t resolve_type = GetResolveType(data_type);
+  if (resolve_type == kResolveTypeUserDefineClass) {
     return GetEvaluatedValueForClassAttrOrMethod(engine, args_spec_list, item_value, data_conf, out_conf);
-  } else if (case_v == kResolveCaseBuiltInType) {
+  } else if (resolve_type == kResolveTypeBuiltInType) {
     return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, item_value, data_type, data_conf, out_conf);
   } else {
     return GetEvaluatedValueForNameSpaceString(engine, args_spec_list, out_conf);
@@ -1234,12 +1236,12 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     return infer_result;
   }
 
-  pybind11::tuple GetParameters(const AbstractBasePtrList &args_spec_list) const {
+  py::tuple GetParameters(const AbstractBasePtrList &args_spec_list) const {
     // Exclude class type by minus 1;
     std::size_t params_size = args_spec_list.size() - 1;
     auto params = py::tuple(params_size);
     if (params_size > params.size()) {
-      MS_LOG(EXCEPTION) << "Unexpected params_size:" << params_size << ",params.size():" << params.size();
+      MS_LOG(EXCEPTION) << "Unexpected params_size: " << params_size << ", params.size():" << params.size();
     }
     if (params_size > 0) {
       for (size_t i = 0; i < params_size; i++) {
@@ -1248,10 +1250,84 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
         MS_EXCEPTION_IF_NULL(arg);
         // Because the Tensor's AbstractTensor can't get value from GetValueTrack.
         ValuePtr param_value = arg->BuildValue();
-        py::object param = ValuePtrToPyData(param_value);
+        py::object param = ValueToPyData(param_value);
         params[i] = param;
       }
     }
+    return params;
+  }
+};
+
+class PyInterpretEvaluator : public TransitionPrimEvaluator {
+ public:
+  PyInterpretEvaluator() : TransitionPrimEvaluator("PyInterpretEvaluator") {}
+  ~PyInterpretEvaluator() override = default;
+  MS_DECLARE_PARENT(PyInterpretEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    if (args_spec_list.empty()) {
+      MS_LOG(ERROR) << "'args_spec_list' should not be empty";
+    }
+
+    // Get the type parameter.
+    MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+    ValuePtr value_track = args_spec_list[0]->GetValueTrack();
+    MS_EXCEPTION_IF_NULL(value_track);
+
+    std::shared_ptr<parse::Script> script_obj = dyn_cast<parse::Script>(value_track);
+    if (script_obj == nullptr) {
+      MS_LOG(EXCEPTION) << "Cast value failed, not PyObjectWrapper:" << value_track->ToString() << ".";
+    }
+
+    // Make global and local parameters.
+    py::tuple params = MakeParameters(args_spec_list);
+
+    // Call python script string.
+    MS_LOG(DEBUG) << "Call script: " << script_obj->script() << ", params: " << py::str(params);
+    auto obj = parse::data_converter::CallPythonScript(py::str(script_obj->script()), params);
+    if (py::isinstance<py::none>(obj)) {
+      MS_LOG(EXCEPTION) << "Failed to call python script: `" << script_obj->script() << "`";
+    }
+
+    ValuePtr converted_val = nullptr;
+    bool converted = parse::ConvertData(obj, &converted_val, true);
+    if (!converted) {
+      MS_LOG(EXCEPTION) << "Convert the python object failed";
+    }
+    MS_EXCEPTION_IF_NULL(converted_val);
+
+    AbstractBasePtr res = ToAbstract(converted_val, AnalysisContext::DummyContext(), out_conf);
+    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_spec_list, infer_result);
+    return infer_result;
+  }
+
+  py::tuple MakeParameters(const AbstractBasePtrList &args_spec_list) const {
+    constexpr int params_size = 3;
+    if (params_size != args_spec_list.size()) {
+      MS_LOG(EXCEPTION) << "Unexpected params_size: " << params_size
+                        << ", not equal to arguments.size:" << args_spec_list.size();
+    }
+    // The first argument is script string, ignore it.
+    auto params = py::tuple(params_size - 1);
+
+    // Make the global parameters.
+    auto global_dict = dyn_cast<AbstractDictionary>(args_spec_list[1]);  // Global parameters dict.
+    MS_EXCEPTION_IF_NULL(global_dict);
+    MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString() << ", [" << global_dict->type_name() << "]";
+    ValuePtr global_dict_value = global_dict->BuildValue();
+    py::object global_params_dict = ValueToPyData(global_dict_value);
+    MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << py::str(global_params_dict);
+    params[0] = global_params_dict;
+
+    // Make the local parameters.
+    auto local_dict = dyn_cast<AbstractDictionary>(args_spec_list[2]);  // Local parameters dict.
+    MS_EXCEPTION_IF_NULL(local_dict);
+    MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString() << ", [" << local_dict->type_name() << "]";
+    ValuePtr local_dict_value = local_dict->BuildValue();
+    py::object local_params_dict = ValueToPyData(local_dict_value);
+    MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << py::str(local_params_dict);
+    params[1] = local_params_dict;
     return params;
   }
 };
@@ -1399,6 +1475,7 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimResolve] = std::make_shared<ResolveEvaluator>();
   constructor[prim::kPrimCreateInstance] = std::make_shared<CreateInstanceEvaluator>();
   constructor[prim::kPrimPartial] = std::make_shared<PartialEvaluator>();
+  constructor[prim::kPrimPyInterpret] = std::make_shared<PyInterpretEvaluator>();
 }
 }  // namespace
 

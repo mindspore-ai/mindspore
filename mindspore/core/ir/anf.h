@@ -107,7 +107,9 @@ class MS_CORE_API AnfNode : public Base {
         hash_(std::hash<const AnfNode *>()),
         kernel_info_(nullptr),
         stage_(-1),
-        need_grad_(false) {
+        need_grad_(false),
+        interpret_(false),
+        interpreted_node_(nullptr) {
     scope_ = ScopeManager::GetInstance().GetCurrentScope();
   }
 
@@ -204,6 +206,12 @@ class MS_CORE_API AnfNode : public Base {
   bool grad() { return need_grad_; }
   void set_grad(const bool &need_grad) { need_grad_ = need_grad; }
 
+  bool interpret() { return interpret_; }
+  void set_interpret(const bool interpret) { interpret_ = interpret; }
+
+  AnfNodePtr interpreted_node() { return interpreted_node_; }
+  void set_interpreted_node(const AnfNodePtr &node) { interpreted_node_ = node; }
+
  protected:
   // Hold a weak ref to Graph as Graph also hold ref to AnfNode.
   // Otherwise, func_graph_ and AnfNode will make a reference cycle.
@@ -220,6 +228,8 @@ class MS_CORE_API AnfNode : public Base {
   UserData user_data_;
   int64_t stage_;
   bool need_grad_;
+  bool interpret_;
+  AnfNodePtr interpreted_node_;
 };
 
 // CNode represents the complex node with a set of arguments.

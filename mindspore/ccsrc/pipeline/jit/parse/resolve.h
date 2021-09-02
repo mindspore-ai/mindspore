@@ -36,15 +36,16 @@ using ResourceBasePtr = std::shared_ptr<ResourceBase>;
 
 namespace mindspore {
 namespace parse {
-
 // NameSpace class for resolving python code.
 class NameSpace : public Named {
  public:
-  NameSpace(const std::string &module, const py::object &obj) : Named(module), module_(module), obj_(obj) {}
+  NameSpace(const std::string &module, const py::object &obj, const py::object &module_obj = py::object())
+      : Named(module), module_(module), obj_(obj), module_obj_(module_obj) {}
   ~NameSpace() override = default;
   MS_DECLARE_PARENT(NameSpace, Named);
 
   py::object obj() { return obj_; }
+  py::object module_obj() { return module_obj_; }
   std::string module() { return module_; }
   abstract::AbstractBasePtr ToAbstract() override {
     return std::make_shared<abstract::AbstractScalar>(shared_from_base<NameSpace>(), std::make_shared<External>());
@@ -55,6 +56,8 @@ class NameSpace : public Named {
   std::string module_;
   // namespace object
   py::object obj_;
+  // module object
+  py::object module_obj_;
 };
 using NameSpacePtr = std::shared_ptr<NameSpace>;
 
@@ -62,7 +65,7 @@ using NameSpacePtr = std::shared_ptr<NameSpace>;
 class Symbol : public Named {
  public:
   explicit Symbol(const std::string &symbol) : Named(symbol), symbol_(symbol) {}
-  explicit Symbol(const std::string &symbol, const std::string &name) : Named(name), symbol_(symbol) {}
+  Symbol(const std::string &symbol, const std::string &name) : Named(name), symbol_(symbol) {}
 
   ~Symbol() override = default;
   MS_DECLARE_PARENT(Symbol, Named);
@@ -76,6 +79,25 @@ class Symbol : public Named {
   std::string symbol_;
 };
 using SymbolPtr = std::shared_ptr<Symbol>;
+
+class Script : public Named {
+ public:
+  explicit Script(const std::string &script) : Named(script), script_(script) {}
+  Script(const std::string &script, const std::string &name) : Named(name), script_(script) {}
+
+  ~Script() override = default;
+  MS_DECLARE_PARENT(Script, Named);
+
+  std::string script() { return script_; }
+  abstract::AbstractBasePtr ToAbstract() override {
+    return std::make_shared<abstract::AbstractScript>(shared_from_base<Script>());
+  }
+  std::string ToString() const override { return "`" + name() + "`"; }
+
+ private:
+  std::string script_;
+};
+using ScriptPtr = std::shared_ptr<Script>;
 
 // PyObjectWrapper class wrappers resolved python object for further processing.
 class PyObjectWrapper : public Named {

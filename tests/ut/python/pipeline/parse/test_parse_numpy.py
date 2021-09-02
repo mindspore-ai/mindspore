@@ -47,7 +47,8 @@ def test_use_numpy_method():
     net = Net()
     with pytest.raises(NotImplementedError) as err:
         net()
-    assert "MindSpore does not support to use the numpy methods in the function construct with the graph mode." \
+    assert "Mindspore does not support to use the numpy methods " \
+           "within the construct() or @ms_function decorated function in graph mode." \
            in str(err.value)
 
 
@@ -63,5 +64,6 @@ def test_use_numpy_module():
     net = Net()
     with pytest.raises(NotImplementedError) as err:
         net()
-    assert "MindSpore does not support to use the numpy methods in the function construct with the graph mode." \
+    assert "Mindspore does not support to use the numpy methods " \
+           "within the construct() or @ms_function decorated function in graph mode." \
            in str(err.value)

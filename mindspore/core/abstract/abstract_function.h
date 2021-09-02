@@ -192,7 +192,7 @@ class MS_CORE_API PartialAbstractClosure : public AbstractFuncAtom {
   MS_DECLARE_PARENT(PartialAbstractClosure, AbstractFuncAtom)
 
   AbstractFunctionPtr fn() { return fn_; }
-  AbstractBasePtrList args() { return args_spec_list_; }
+  AbstractBasePtrList &args() { return args_spec_list_; }
   ValuePtr RealBuildValue() const override { return fn_->BuildValue(); }
   AnfNodePtr node() { return node_.lock(); }
   void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
@@ -286,6 +286,34 @@ class MS_CORE_API TypedPrimitiveAbstractClosure : public AbstractFuncAtom {
   AbstractBasePtrList args_spec_list_;
   AbstractBasePtr output_;
 };
+
+class PyInterpretAbstractClosure : public AbstractFuncAtom {
+ public:
+  PyInterpretAbstractClosure(const AbstractFuncAtomPtr &fn, const AbstractBasePtrList &args_spec_list,
+                             const AnfNodePtr &node = nullptr)
+      : fn_(fn), args_spec_list_(args_spec_list), node_(AnfNodePtr(node)) {}
+  ~PyInterpretAbstractClosure() override = default;
+  MS_DECLARE_PARENT(PyInterpretAbstractClosure, AbstractFuncAtom)
+
+  AbstractFunctionPtr fn() { return fn_; }
+  AbstractBasePtrList args() { return args_spec_list_; }
+  ValuePtr RealBuildValue() const override { return fn_->BuildValue(); }
+  AnfNodePtr node() { return node_.lock(); }
+  void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
+  AbstractFunctionPtr Copy() const override {
+    return std::make_shared<PyInterpretAbstractClosure>(fn_, args_spec_list_, node_.lock());
+  }
+  bool operator==(const AbstractFunction &other) const override;
+  std::size_t hash() const override;
+
+  std::string ToString() const override;
+
+ private:
+  AbstractFuncAtomPtr fn_;
+  AbstractBasePtrList args_spec_list_;
+  AnfNodeWeakPtr node_;
+};
+using PyInterpretAbstractClosurePtr = std::shared_ptr<PyInterpretAbstractClosure>;
 
 // Represents a function that can't be called.
 class MS_CORE_API DummyAbstractClosure : public AbstractFuncAtom {
