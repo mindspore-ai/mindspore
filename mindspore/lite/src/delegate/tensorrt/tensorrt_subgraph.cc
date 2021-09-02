@@ -187,6 +187,7 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
 
   // only support NHWC HW dim resize
   if (input_hw_index_ != -1) {
+    MS_LOG(INFO) << "input tensor format: " << in_tensor.format();
     input_hw_index_ = in_tensor.format() == Format::NHWC ? 1 : /* NCHW*/ 2;
     input_dims.d[input_hw_index_] = -1;
     input_dims.d[input_hw_index_ + 1] = -1;
@@ -208,19 +209,20 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
           MS_LOG(ERROR) << "SetTensorRTNetworkInput failed for " << in_tensor.Name();
           return RET_ERROR;
         }
-        cur_op->AddInnerInTensors(trt_tensor);
+        cur_op->AddInnerInTensors(ITensorHelper{trt_tensor, in_tensor.format()});
         continue;
       }
 
-      auto trt_tensor = FindTensorRTInputs(cur_op, in_tensor);
-      // weight tensor
-      if (trt_tensor == nullptr) {
+      ITensorHelper trt_tensor = FindTensorRTInputs(cur_op, in_tensor);
+      if (trt_tensor.trt_tensor_ == nullptr) {
+        // weight tensor
         if (trt_specific_weight_nodes_.find(cur_op->type()) == trt_specific_weight_nodes_.end()) {
           if (in_tensor == nullptr) {
             MS_LOG(ERROR) << "Weight Tensor is nullptr.";
             return RET_ERROR;
           }
-          trt_tensor = lite::ConvertConstantTensor(this->network_, in_tensor);
+          trt_tensor.trt_tensor_ = lite::ConvertConstantTensor(this->network_, in_tensor);
+          trt_tensor.format_ = Format::NHWC;
           MS_LOG(INFO) << "auto convert constant tensor for: " << cur_op->GetOpName();
           cur_op->AddInnerInTensors(trt_tensor);
         }
@@ -236,16 +238,44 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
     }
   }
 
+  ret = MarkOutputs();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "MarkOutputs failed in TensorRT network";
+    return ret;
+  }
+
+  ret = BuildEngine();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Create engine failed in TensorRT network";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int TensorRTSubGraph::MarkOutputs() {
   // Mark NetWork Output Tensor.
   for (auto out_tensor : outputs_) {
     for (auto out_op : this->out_ops_) {
       for (size_t index = 0; index < out_op->outputs().size(); index++) {
         if (out_op->outputs()[index] == out_tensor) {
-          out_op->GetInnerOutTensor()[index]->setName(out_tensor.Name().c_str());
+          nvinfer1::ITensor *out_trt_tensor = out_op->GetInnerOutTensor()[index].trt_tensor_;
+          if (out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions().nbDims == 4 &&
+              out_op->GetInnerOutTensor()[index].format_ == Format::NCHW) {
+            // transpose subgraph output from nchw to nhwc
+            nvinfer1::IShuffleLayer *transpose_layer_out =
+              NCHW2NHWC(network_, *out_op->GetInnerOutTensor()[index].trt_tensor_);
+            if (transpose_layer_out == nullptr) {
+              MS_LOG(ERROR) << "op action convert failed";
+              return RET_ERROR;
+            }
+            transpose_layer_out->setName((out_tensor.Name() + "_transpose2NHWC").c_str());
+          }
+
+          out_trt_tensor->setName(out_tensor.Name().c_str());
           MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
-          this->network_->markOutput(*out_op->GetInnerOutTensor()[index]);
-          for (int n = 0; n < out_op->GetInnerOutTensor()[index]->getDimensions().nbDims; n++) {
-            if (out_op->GetInnerOutTensor()[index]->getDimensions().d[n] == -1) {
+          this->network_->markOutput(*out_trt_tensor);
+          for (int n = 0; n < out_trt_tensor->getDimensions().nbDims; n++) {
+            if (out_trt_tensor->getDimensions().d[n] == -1) {
               output_batchsize_index_ = n;
               break;
             }
@@ -253,12 +283,6 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
         }
       }
     }
-  }
-
-  ret = BuildEngine();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Create engine failed in TensorRT network";
-    return ret;
   }
   return RET_OK;
 }
@@ -292,7 +316,7 @@ int TensorRTSubGraph::Prepare() {
     trt_in_tensor_name_.push_back(tensor.Name());
     nvinfer1::Dims input_dims = ConvertCudaDims(tensor.Shape());
     for (int od = 0; od < input_dims.nbDims; od++) {
-      MS_LOG(INFO) << "in tensor " << tensor.Name() << " dims at " << od << " is " << input_dims.d[od];
+      MS_LOG(DEBUG) << "in tensor " << tensor.Name() << " dims at " << od << " is " << input_dims.d[od];
     }
 
     if (!this->trt_context_->setBindingDimensions(index, input_dims)) {
@@ -363,7 +387,7 @@ int TensorRTSubGraph::ReSize() {
     // Set actual input size
     nvinfer1::Dims input_dims = ConvertCudaDims(inputs_[i].Shape());
     for (int od = 0; od < input_dims.nbDims; od++) {
-      MS_LOG(INFO) << "in tensor " << trt_in_tensor_name_[i] << " dims at " << od << " is " << input_dims.d[od];
+      MS_LOG(DEBUG) << "in tensor " << trt_in_tensor_name_[i] << " dims at " << od << " is " << input_dims.d[od];
     }
 
     if (!this->trt_context_->setBindingDimensions(index, input_dims)) {
@@ -420,7 +444,7 @@ int TensorRTSubGraph::Execute() {
       new_shape[output_batchsize_index_] = runtime_->GetBatchSize();
     }
     for (int od = 0; od < out_dims.nbDims; od++) {
-      MS_LOG(INFO) << "out tensor " << trt_out_tensor_name_[i] << " dims at " << od << " is " << new_shape[od];
+      MS_LOG(DEBUG) << "out tensor " << trt_out_tensor_name_[i] << " dims at " << od << " is " << new_shape[od];
     }
     outputs_[i].SetShape(new_shape);
 
@@ -438,7 +462,7 @@ int TensorRTSubGraph::Execute() {
   return RET_OK;
 }
 
-nvinfer1::ITensor *TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor) {
+ITensorHelper TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor) {
   for (auto input_op : cur_op->in_ops()) {
     for (size_t i = 0; i < input_op->outputs().size(); i++) {
       auto out_tensor = input_op->outputs().at(i);
@@ -447,6 +471,6 @@ nvinfer1::ITensor *TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, cons
       }
     }
   }
-  return nullptr;
+  return ITensorHelper{};
 }
 }  // namespace mindspore::lite

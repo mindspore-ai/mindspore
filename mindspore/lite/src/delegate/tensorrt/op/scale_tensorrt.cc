@@ -17,6 +17,7 @@
 #include <numeric>
 #include <functional>
 #include "src/delegate/tensorrt/op/scale_tensorrt.h"
+#include "src/delegate/tensorrt/op/activation_tensorrt.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
@@ -53,14 +54,26 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   schema::ActivationType activation_type = scale_op->activation_type();
-  nvinfer1::ITensor *scale_in_tensor = tensorrt_in_tensors_[0];
-  // unsqueeze input Itensor to 4 dims
+  nvinfer1::ITensor *scale_in_tensor = tensorrt_in_tensors_[0].trt_tensor_;
+  Format out_format = in_tensors_[0].format();
   if (in_tensors_[0].Shape().size() < INPUT_SIZE4) {
+    // unsqueeze input Itensor to 4 dims
     scale_in_tensor = AddUnsqueezeOp(network);
     if (scale_in_tensor == nullptr) {
       MS_LOG(ERROR) << "AddUnsqueezeOp failed";
       return RET_ERROR;
     }
+  } else if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == 4 &&
+             tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+    // transpose: NCHW->NHWC
+    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    if (transpose_layer_in == nullptr) {
+      MS_LOG(ERROR) << "op action convert failed";
+      return RET_ERROR;
+    }
+    transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
+    scale_in_tensor = transpose_layer_in->getOutput(0);
+    out_format = Format::NHWC;
   }
   // mode of scale
   size_t axis = scale_op->axis();
@@ -100,18 +113,27 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   cal_layer->setName(op_name_.c_str());
-  nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
-  if (op_out_tensor == nullptr) {
-    MS_LOG(ERROR) << "addScaleNd output tensor is invalid for: " << op_name_;
-    return RET_ERROR;
-  }
 
   // add activation
+  nvinfer1::ITensor *activation_tensor = cal_layer->getOutput(0);
   if (activation_type != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    MS_LOG(WARNING) << "need activation for: " << op_name_;
+    auto activation_layer = ActivationTensorRT::AddActivation(network, activation_type, 0, cal_layer->getOutput(0));
+    if (activation_layer == nullptr) {
+      MS_LOG(ERROR) << "addActivation for scale failed";
+      return RET_ERROR;
+    }
+    activation_layer->setName((op_name_ + "_activation").c_str());
+    activation_tensor = activation_layer->getOutput(0);
   }
+
+  // squeeze to origin dim
+  nvinfer1::ITensor *op_out_tensor = activation_tensor;
+  if (activation_tensor->getDimensions().nbDims > static_cast<int>(out_tensors_[0].Shape().size())) {
+    op_out_tensor = AddSqueezeOp(activation_tensor, network);
+  }
+
   op_out_tensor->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(op_out_tensor);
+  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, out_format});
   return RET_OK;
 }
 
@@ -136,7 +158,7 @@ nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(size_t axis) {
 }
 
 nvinfer1::ITensor *ScaleTensorRT::AddUnsqueezeOp(nvinfer1::INetworkDefinition *network) {
-  nvinfer1::IShuffleLayer *unsqueeze_layer = network->addShuffle(*this->tensorrt_in_tensors_[0]);
+  nvinfer1::IShuffleLayer *unsqueeze_layer = network->addShuffle(*this->tensorrt_in_tensors_[0].trt_tensor_);
   if (unsqueeze_layer == nullptr) {
     MS_LOG(ERROR) << "addShuffle failed for: " << op_name_;
     return nullptr;
@@ -149,5 +171,18 @@ nvinfer1::ITensor *ScaleTensorRT::AddUnsqueezeOp(nvinfer1::INetworkDefinition *n
   nvinfer1::Dims unsqueeze_dims = lite::ConvertCudaDims(unsqueeze_shape);
   unsqueeze_layer->setReshapeDimensions(unsqueeze_dims);
   return unsqueeze_layer->getOutput(0);
+}
+
+nvinfer1::ITensor *ScaleTensorRT::AddSqueezeOp(nvinfer1::ITensor *in_tensor, nvinfer1::INetworkDefinition *network) {
+  nvinfer1::IShuffleLayer *squeeze_layer = network->addShuffle(*in_tensor);
+  if (squeeze_layer == nullptr) {
+    MS_LOG(ERROR) << "addShuffle failed for: " << op_name_;
+    return nullptr;
+  }
+  squeeze_layer->setName((op_name_ + "_squeeze").c_str());
+  nvinfer1::Dims squeeze_dims = lite::ConvertCudaDims(out_tensors_[0].Shape());
+  MS_LOG(INFO) << "squeeze_dims cnt for scale: " << squeeze_dims.nbDims;
+  squeeze_layer->setReshapeDimensions(squeeze_dims);
+  return squeeze_layer->getOutput(0);
 }
 }  // namespace mindspore::lite

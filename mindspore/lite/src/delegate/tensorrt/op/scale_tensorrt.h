@@ -38,6 +38,8 @@ class ScaleTensorRT : public TensorRTOp {
  private:
   nvinfer1::ITensor *AddUnsqueezeOp(nvinfer1::INetworkDefinition *network);
 
+  nvinfer1::ITensor *AddSqueezeOp(nvinfer1::ITensor *in_tensor, nvinfer1::INetworkDefinition *network);
+
   nvinfer1::ScaleMode GetScaleMode(size_t axis);
 };
 }  // namespace mindspore::lite

@@ -254,4 +254,37 @@ void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_) {
   }
   MS_LOG(INFO) << "cuda is running on device: " << device;
 }
+Format GetOutputFormat(Format input_format, nvinfer1::Permutation perm) {
+  if (input_format == Format::NHWC) {
+    if (perm.order[0] == 0 && perm.order[1] == 3 && perm.order[2] == 2 && perm.order[3] == 1) {
+      return Format::NCHW;
+    }
+  } else if (input_format == Format::NCHW) {
+    if (perm.order[0] == 0 && perm.order[1] == 2 && perm.order[2] == 3 && perm.order[3] == 1) {
+      return Format::NHWC;
+    }
+  }
+  MS_LOG(WARNING) << "transpose out format needs to check for " << input_format;
+  return input_format;
+}
+int ConvertAxisFromNHWC2NCHW(int nhwc_axis) {
+  // N0H1W2C3->N0C1H2W3
+  if (nhwc_axis > kNHWC_C) {
+    return nhwc_axis;
+  }
+  switch (nhwc_axis) {
+    case kNHWC_N:
+      return kNCHW_N;
+    case kNHWC_H:
+      return kNCHW_H;
+    case kNHWC_W:
+      return kNCHW_W;
+    case kNHWC_C:
+      return kNCHW_C;
+    default:
+      MS_LOG(ERROR) << "invalid input axis for nhwc: " << nhwc_axis;
+  }
+  return nhwc_axis;
+}
+
 }  // namespace mindspore::lite

@@ -80,26 +80,38 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "network or input tensor size is invalid";
     return RET_ERROR;
   }
-  first_in_tensor_index_ = strcmp(tensorrt_in_tensors_[0]->getName(), in_tensors_[0].Name().c_str()) == 0 ? 0 : 1;
-  // add elementwise
+  first_in_tensor_index_ =
+    strcmp(tensorrt_in_tensors_[0].trt_tensor_->getName(), in_tensors_[0].Name().c_str()) == 0 ? 0 : 1;
+
   if (this->tensorrt_in_tensors_.size() != INPUT_SIZE2) {
-    // create ITensor from MS constant tensor of index 1 - first_in_tensor_index_
-    nvinfer1::ITensor *constant_input = nullptr;
-    if (this->in_tensors_[1 - first_in_tensor_index_].Shape().size() == 0) {
-      constant_input = lite::ConvertScalarToITensor(network, this->in_tensors_[first_in_tensor_index_].Shape().size(),
-                                                    in_tensors_[1 - first_in_tensor_index_].Data().get());
-    } else {
-      constant_input = lite::ConvertConstantTensor(network, in_tensors_[1 - first_in_tensor_index_]);
+    int ret = AddConstTensor(network);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "AddConstTensor failed for " << op_name_;
+      return ret;
     }
-    if (constant_input == nullptr) {
-      MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << op_name_;
-      return RET_ERROR;
-    }
-    this->AddInnerInTensors(constant_input);
   }
 
-  nvinfer1::IElementWiseLayer *cal_layer = network->addElementWise(
-    *tensorrt_in_tensors_[first_in_tensor_index_], *tensorrt_in_tensors_[1 - first_in_tensor_index_], element_wise_op_);
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      tensorrt_in_tensors_[0].format_ != tensorrt_in_tensors_[1].format_) {
+    // when inputs format are different, change to NHWC
+    int transpose_input_tensor = tensorrt_in_tensors_[0].format_ == Format::NCHW ? 0 : 1;
+    nvinfer1::IShuffleLayer *transpose_layer =
+      NCHW2NHWC(network, *tensorrt_in_tensors_[transpose_input_tensor].trt_tensor_);
+    if (transpose_layer == nullptr) {
+      MS_LOG(ERROR) << "op action convert failed";
+      return RET_ERROR;
+    }
+    transpose_layer->setName((op_name_ + "_input_transpose2NHWC").c_str());
+    tensorrt_in_tensors_[transpose_input_tensor].trt_tensor_ = transpose_layer->getOutput(0);
+    tensorrt_in_tensors_[transpose_input_tensor].format_ = Format::NHWC;
+  } else if (tensorrt_in_tensors_[0].format_ != tensorrt_in_tensors_[1].format_) {
+    MS_LOG(ERROR) << "elementwise op inputs are in different format: " << op_name_;
+    return RET_ERROR;
+  }
+
+  nvinfer1::IElementWiseLayer *cal_layer =
+    network->addElementWise(*tensorrt_in_tensors_[first_in_tensor_index_].trt_tensor_,
+                            *tensorrt_in_tensors_[1 - first_in_tensor_index_].trt_tensor_, element_wise_op_);
 
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addElementWise failed for TensorRT.";
@@ -129,9 +141,8 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       MS_LOG(WARNING) << "deal with scale and shift for pow op";
     }
   }
-
   op_out_tensor->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(op_out_tensor);
+  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, tensorrt_in_tensors_[1].format_});
   return RET_OK;
 }
 
@@ -184,4 +195,26 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
   }
   return activation_out_tensor;
 }
+int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
+  // create ITensor from MS constant tensor of index 1 - first_in_tensor_index_
+  nvinfer1::ITensor *constant_input = nullptr;
+  if (this->in_tensors_[1 - first_in_tensor_index_].Shape().size() == 0) {
+    constant_input = lite::ConvertScalarToITensor(network, this->in_tensors_[first_in_tensor_index_].Shape().size(),
+                                                  in_tensors_[1 - first_in_tensor_index_].Data().get());
+    if (constant_input == nullptr) {
+      MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << op_name_;
+      return RET_ERROR;
+    }
+    this->AddInnerInTensors(ITensorHelper{constant_input, tensorrt_in_tensors_[0].format_});
+  } else {
+    constant_input = lite::ConvertConstantTensor(network, in_tensors_[1 - first_in_tensor_index_]);
+    if (constant_input == nullptr) {
+      MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << op_name_;
+      return RET_ERROR;
+    }
+    this->AddInnerInTensors(ITensorHelper{constant_input, Format::NHWC});
+  }
+  return RET_OK;
+}
+
 }  // namespace mindspore::lite

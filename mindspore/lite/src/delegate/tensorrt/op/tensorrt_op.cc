@@ -19,13 +19,13 @@
 namespace mindspore::lite {
 const schema::Primitive *TensorRTOp::GetPrimitive() { return this->op_primitive_; }
 
-void TensorRTOp::AddInnerInTensors(nvinfer1::ITensor *tensor) { this->tensorrt_in_tensors_.push_back(tensor); }
+void TensorRTOp::AddInnerInTensors(ITensorHelper tensor) { this->tensorrt_in_tensors_.push_back(tensor); }
 
-void TensorRTOp::AddInnerOutTensors(nvinfer1::ITensor *tensor) { this->tensorrt_out_tensors_.push_back(tensor); }
+void TensorRTOp::AddInnerOutTensors(ITensorHelper tensor) { this->tensorrt_out_tensors_.push_back(tensor); }
 
-std::vector<nvinfer1::ITensor *> &TensorRTOp::GetInnerOutTensor() { return this->tensorrt_out_tensors_; }
+std::vector<ITensorHelper> &TensorRTOp::GetInnerOutTensor() { return this->tensorrt_out_tensors_; }
 
-std::vector<nvinfer1::ITensor *> &TensorRTOp::GetInnerInTensors() { return this->tensorrt_in_tensors_; }
+std::vector<ITensorHelper> &TensorRTOp::GetInnerInTensors() { return this->tensorrt_in_tensors_; }
 
 std::string TensorRTOp::GetOpName() { return this->op_name_; }
 

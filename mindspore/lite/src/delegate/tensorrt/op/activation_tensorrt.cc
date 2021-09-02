@@ -15,7 +15,6 @@
  */
 
 #include "src/delegate/tensorrt/op/activation_tensorrt.h"
-#include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
 int ActivationTensorRT::IsSupport(const schema::Primitive *primitive,
@@ -58,8 +57,8 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   float alpha = activation_op->alpha();
 
-  nvinfer1::IActivationLayer *activation_layer =
-    ActivationTensorRT::AddActivation(network, activation_op->activation_type(), alpha, tensorrt_in_tensors_[0]);
+  nvinfer1::IActivationLayer *activation_layer = ActivationTensorRT::AddActivation(
+    network, activation_op->activation_type(), alpha, tensorrt_in_tensors_[0].trt_tensor_);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return RET_ERROR;
@@ -67,7 +66,7 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   activation_layer->setName(op_name_.c_str());
   activation_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(activation_layer->getOutput(0));
+  this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), tensorrt_in_tensors_[0].format_});
 
   return RET_OK;
 }

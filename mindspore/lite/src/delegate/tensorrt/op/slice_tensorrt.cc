@@ -53,7 +53,22 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::Dims size_dims = lite::ConvertCudaDims(out_tensors_[0].Shape());
   nvinfer1::Dims stride_dims = lite::ConvertCudaDims(stride.Data().get(), stride.ElementNum());
 
-  nvinfer1::ISliceLayer *slice_layer = network->addSlice(*tensorrt_in_tensors_[0], start_dims, size_dims, stride_dims);
+  nvinfer1::ITensor *slice_input = tensorrt_in_tensors_[0].trt_tensor_;
+  Format out_format = tensorrt_in_tensors_[0].format_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == 4 &&
+      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+    // transpose: NCHW->NHWC
+    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    if (transpose_layer_in == nullptr) {
+      MS_LOG(ERROR) << "op action convert failed";
+      return RET_ERROR;
+    }
+    transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
+    slice_input = transpose_layer_in->getOutput(0);
+    out_format = Format::NHWC;
+  }
+
+  nvinfer1::ISliceLayer *slice_layer = network->addSlice(*slice_input, start_dims, size_dims, stride_dims);
   if (slice_layer == nullptr) {
     MS_LOG(ERROR) << "add Slice op failed for TensorRT: " << op_name_;
     return RET_ERROR;
@@ -65,7 +80,7 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   out_tensor->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(out_tensor);
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format});
   return RET_OK;
 }
 }  // namespace mindspore::lite

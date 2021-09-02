@@ -59,15 +59,30 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "add a new tensor failed for TensorRT GatherTensorRTOp.";
     return RET_ERROR;
   }
-  nvinfer1::IGatherLayer *gather_layer =
-    network->addGather(*tensorrt_in_tensors_[0], *add_tensor /* indices */, axis_ /* axis */);
+
+  nvinfer1::ITensor *gather_input = tensorrt_in_tensors_[0].trt_tensor_;
+  Format out_format = tensorrt_in_tensors_[0].format_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+    // transpose: NCHW->NHWC
+    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    if (transpose_layer_in == nullptr) {
+      MS_LOG(ERROR) << "op action convert failed";
+      return RET_ERROR;
+    }
+    transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
+    gather_input = transpose_layer_in->getOutput(0);
+    out_format = Format::NHWC;
+  }
+
+  nvinfer1::IGatherLayer *gather_layer = network->addGather(*gather_input, *add_tensor /* indices */, axis_ /* axis */);
   if (gather_layer == nullptr) {
     MS_LOG(ERROR) << "addGather failed for TensorRT.";
     return RET_ERROR;
   }
   gather_layer->setName(op_name_.c_str());
   gather_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(gather_layer->getOutput(0));
+  this->AddInnerOutTensors(ITensorHelper{gather_layer->getOutput(0), out_format});
   return RET_OK;
 }
 }  // namespace mindspore::lite

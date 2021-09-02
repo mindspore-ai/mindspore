@@ -34,6 +34,10 @@ int PoolTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
+  if (in_tensors[0].format() != Format::NHWC && in_tensors[0].format() != Format::NCHW) {
+    MS_LOG(ERROR) << "Unsupported input tensor format of " << in_tensors[0].format();
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -47,13 +51,18 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "invalid input tensor size: " << tensorrt_in_tensors_.size();
     return RET_ERROR;
   }
-  // transpose: NHWC->NCHW
-  nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0]);
-  if (transpose_layer_in == nullptr) {
-    MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
-    return RET_ERROR;
+  nvinfer1::ITensor *pool_input = tensorrt_in_tensors_[0].trt_tensor_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+    // transpose: NHWC->NCHW
+    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    if (transpose_layer_in == nullptr) {
+      MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
+      return RET_ERROR;
+    }
+    transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
+    pool_input = transpose_layer_in->getOutput(0);
   }
-  transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
 
   // pooling layer
   nvinfer1::PoolingType pooling_type = nvinfer1::PoolingType::kAVERAGE;
@@ -64,8 +73,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   std::vector<int64_t> kernel_size_val = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
   nvinfer1::Dims windowSize = lite::ConvertCudaDims(kernel_size_val);
-  nvinfer1::IPoolingLayer *pooling_layer =
-    network->addPoolingNd(*transpose_layer_in->getOutput(0), pooling_type, windowSize);
+  nvinfer1::IPoolingLayer *pooling_layer = network->addPoolingNd(*pool_input, pooling_type, windowSize);
   if (pooling_layer == nullptr) {
     MS_LOG(ERROR) << "addPoolingNd failed for TensorRT.";
     return RET_ERROR;
@@ -86,15 +94,8 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
-  // transpose: NCHW->NHWC
-  nvinfer1::IShuffleLayer *transpose_layer_out = NCHW2NHWC(network, *activation_layer->getOutput(0));
-  if (transpose_layer_out == nullptr) {
-    MS_LOG(ERROR) << "op action convert failed";
-    return RET_ERROR;
-  }
-  transpose_layer_out->setName((op_name_ + "_transpose2NHWC").c_str());
-  transpose_layer_out->getOutput(0)->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(transpose_layer_out->getOutput(0));
+  activation_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW});
   return RET_OK;
 }
 

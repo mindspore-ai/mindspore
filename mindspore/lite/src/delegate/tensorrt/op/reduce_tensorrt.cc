@@ -28,7 +28,7 @@ int ReduceTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
     MS_LOG(ERROR) << "convert failed";
     return RET_ERROR;
   }
-  if (in_tensors.size() != 2) {
+  if (in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
   }
   if (out_tensors.size() != 1) {
@@ -55,23 +55,17 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   bool keep_dims = reduce_op->keep_dims();
-  // axis
-  uint32_t reduceAxes = 0;
-  mindspore::MSTensor axis_tensor = this->in_tensors_[1];
-  if (axis_tensor.Data() == nullptr) {
-    MS_LOG(ERROR) << "invalid axis_tensor";
-    return RET_ERROR;
+  nvinfer1::ITensor *reduce_input = tensorrt_in_tensors_[0].trt_tensor_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+    out_format_ = Format::NHWC;
+  } else {
+    out_format_ = tensorrt_in_tensors_[0].format_;
   }
-  if (axis_tensor.DataType() != DataType::kNumberTypeInt32) {
-    MS_LOG(WARNING) << "not int data type";
-  }
-  int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
-  for (int i = 0; i < axis_tensor.ElementNum(); i++) {
-    reduceAxes |= (16 - (1u << *axis_data));
-    axis_data++;
-  }
-  MS_LOG(INFO) << "reduceAxes: " << reduceAxes;
-  nvinfer1::IReduceLayer *layer = network->addReduce(*tensorrt_in_tensors_[0], reduce_op_, reduceAxes, keep_dims);
+
+  uint32_t reduceAxis = GetAxis();
+
+  nvinfer1::IReduceLayer *layer = network->addReduce(*reduce_input, reduce_op_, reduceAxis, keep_dims);
   if (layer == nullptr) {
     MS_LOG(ERROR) << "addReduce failed for TensorRT.";
     return RET_ERROR;
@@ -84,7 +78,29 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   out_tensor->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(out_tensor);
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_});
   return RET_OK;
+}
+uint32_t ReduceTensorRT::GetAxis() {
+  // axis
+  uint32_t reduceAxis = 0;
+  mindspore::MSTensor axis_tensor = this->in_tensors_[1];
+  if (axis_tensor.Data() == nullptr) {
+    MS_LOG(ERROR) << "invalid axis_tensor";
+    return reduceAxis;
+  }
+  if (axis_tensor.DataType() != DataType::kNumberTypeInt32) {
+    MS_LOG(WARNING) << "not int data type";
+  }
+  int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
+  bool need_transpose_axis =
+    (out_format_ == Format::NCHW) && (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D);
+  for (int i = 0; i < axis_tensor.ElementNum(); i++) {
+    int format_axis_data = need_transpose_axis ? ConvertAxisFromNHWC2NCHW(*axis_data) : *axis_data;
+    reduceAxis |= (16 - (1u << format_axis_data));
+    axis_data++;
+  }
+  MS_LOG(INFO) << "reduceAxis: " << reduceAxis;
+  return reduceAxis;
 }
 }  // namespace mindspore::lite

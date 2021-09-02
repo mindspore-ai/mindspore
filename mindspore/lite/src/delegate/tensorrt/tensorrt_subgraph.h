@@ -67,7 +67,9 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   nvinfer1::ITensor *SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor);
 
-  static nvinfer1::ITensor *FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
+  ITensorHelper FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
+
+  int MarkOutputs();
 
   std::vector<TensorRTOp *> all_ops_{};
   // subgraph input nodes.

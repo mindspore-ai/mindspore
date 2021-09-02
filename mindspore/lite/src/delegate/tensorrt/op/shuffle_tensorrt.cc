@@ -72,57 +72,55 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "network is invalid";
     return RET_ERROR;
   }
-  nvinfer1::IShuffleLayer *shuffle_layer = network->addShuffle(*tensorrt_in_tensors_[0]);
+
+  nvinfer1::ITensor *shuffler_input = tensorrt_in_tensors_[0].trt_tensor_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == 4 &&
+      tensorrt_in_tensors_[0].format_ == Format::NCHW && !tensorrt_in_tensors_[0].trt_tensor_->isNetworkInput()) {
+    // network input tensor format can be NCHW
+    nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    if (transpose_layer == nullptr) {
+      MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
+    }
+    transpose_layer->setName((op_name_ + "_transpose_in").c_str());
+    shuffler_input = transpose_layer->getOutput(0);
+  }
+
+  nvinfer1::IShuffleLayer *shuffle_layer = network->addShuffle(*shuffler_input);
   if (shuffle_layer == nullptr) {
     MS_LOG(ERROR) << "add Shuffle op failed for TensorRT.";
     return RET_ERROR;
   }
   shuffle_layer->setName(op_name_.c_str());
 
+  int ret = RET_OK;
   switch (type_) {
     case schema::PrimitiveType_Unsqueeze: {
-      int ret = AddUnsqueezeOp(shuffle_layer);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "AddUnSqueezeOp failed.";
-        return ret;
-      }
+      ret = AddUnsqueezeOp(shuffle_layer);
       break;
     }
     case schema::PrimitiveType_Squeeze: {
-      int ret = AddSqueezeOp(shuffle_layer);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "AddSqueezeOp failed.";
-        return ret;
-      }
+      ret = AddSqueezeOp(shuffle_layer);
       break;
     }
     case schema::PrimitiveType_Transpose: {
-      int ret = AddTransposeOp(shuffle_layer);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "AddTransposeOpss failed.";
-        return ret;
-      }
+      ret = AddTransposeOp(shuffle_layer);
       break;
     }
     case schema::PrimitiveType_Reshape: {
-      int ret = AddReshapeOp(shuffle_layer);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "AddReshapeOp failed.";
-        return ret;
-      }
+      ret = AddReshapeOp(shuffle_layer);
       break;
     }
     case schema::PrimitiveType_Flatten: {
-      int ret = AddFlattenOp(shuffle_layer);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "AddFlattenOp failed.";
-        return ret;
-      }
+      ret = AddFlattenOp(shuffle_layer);
       break;
     }
     default:
-      MS_LOG(ERROR) << "Unsupported op type.";
+      MS_LOG(ERROR) << "Unsupported op type for " << op_name_;
       return RET_ERROR;
+  }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "AddOp failed for " << op_name_;
+    return ret;
   }
 
   nvinfer1::ITensor *out_tensor = shuffle_layer->getOutput(0);
@@ -131,7 +129,7 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   out_tensor->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(out_tensor);
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, Format::NHWC});
   return RET_OK;
 }
 
@@ -177,7 +175,7 @@ int ShuffleTensorRT::AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     MS_LOG(WARNING) << "AddUnsqueezeOp size of in tensort needs check: " << in_tensors_.size();
   }
   // axis
-  auto unsqueeze_shape = tensorrt_in_tensors_[0]->getDimensions();
+  auto unsqueeze_shape = tensorrt_in_tensors_[0].trt_tensor_->getDimensions();
   std::vector<int64_t> new_shape(unsqueeze_shape.d, unsqueeze_shape.d + unsqueeze_shape.nbDims);
   auto axis = unsqueeze_op->axis();
 
@@ -229,7 +227,7 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
       MS_LOG(ERROR) << "invalid shape tensor for reshape " << op_name_;
       return RET_ERROR;
     }
-    shuffle_layer->setInput(1, *tensorrt_in_tensors_[1]);
+    shuffle_layer->setInput(1, *tensorrt_in_tensors_[1].trt_tensor_);
   }
   return RET_OK;
 }

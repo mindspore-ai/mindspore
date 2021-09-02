@@ -49,6 +49,10 @@ int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported padding mode: " << pad_primitive << ", for op: " << op_name_;
     return RET_ERROR;
   }
+  if (in_tensors[0].format() != Format::NHWC && in_tensors[0].format() != Format::NCHW) {
+    MS_LOG(ERROR) << "Unsupported input tensor format of " << in_tensors[0].format();
+    return RET_ERROR;
+  }
   constant_value_ = pad_primitive->constant_value();
   return RET_OK;
 }
@@ -56,18 +60,24 @@ int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   mindspore::MSTensor &pad_tensor = in_tensors_[1];
   int element_cnt = std::accumulate(pad_tensor.Shape().begin(), pad_tensor.Shape().end(), 1, std::multiplies<int>());
-  if (element_cnt != tensorrt_in_tensors_[0]->getDimensions().nbDims * 2) {
+  if (element_cnt != tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims * 2) {
     MS_LOG(ERROR) << "pad tensor cnt is invalid. cnt: " << element_cnt
-                  << ", input tensor dims cnt: " << tensorrt_in_tensors_[0]->getDimensions().nbDims;
+                  << ", input tensor dims cnt: " << tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims;
     return RET_ERROR;
   }
-  // transpose: NHWC->NCHW
-  nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0]);
-  if (transpose_layer_in == nullptr) {
-    MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
-    return RET_ERROR;
+
+  nvinfer1::ITensor *pad_input = tensorrt_in_tensors_[0].trt_tensor_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+    // transpose: NHWC->NCHW
+    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    if (transpose_layer_in == nullptr) {
+      MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
+      return RET_ERROR;
+    }
+    transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
+    pad_input = transpose_layer_in->getOutput(0);
   }
-  transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
 
   // trt 6 only support 2D padding
   const int *padding_data = reinterpret_cast<const int *>(in_tensors_[1].Data().get());
@@ -84,7 +94,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(INFO) << "prePadding: " << *(padding_data + 2) << ", " << *(padding_data + 4);
     MS_LOG(INFO) << "postPadding: " << *(padding_data + 3) << ", " << *(padding_data + 5);
 
-    padding_layer = network->addPadding(*transpose_layer_in->getOutput(0), prePadding, postPadding);
+    padding_layer = network->addPadding(*pad_input, prePadding, postPadding);
   } else {
     MS_LOG(ERROR) << "need check for pad_tensor dims: " << op_name_
                   << ", pad_tensor ElementNum: " << pad_tensor.ElementNum();
@@ -95,17 +105,8 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   padding_layer->setName(op_name_.c_str());
-
-  // transpose: NCHW->NHWC
-  nvinfer1::IShuffleLayer *transpose_layer_out = NCHW2NHWC(network, *padding_layer->getOutput(0));
-  if (transpose_layer_out == nullptr) {
-    MS_LOG(ERROR) << "op action convert failed";
-    return RET_ERROR;
-  }
-  transpose_layer_out->setName((op_name_ + "_transpose2NHWC").c_str());
-  transpose_layer_out->getOutput(0)->setName(out_tensors_[0].Name().c_str());
-
-  this->AddInnerOutTensors(transpose_layer_out->getOutput(0));
+  padding_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  this->AddInnerOutTensors(ITensorHelper{padding_layer->getOutput(0), Format::NCHW});
   return RET_OK;
 }
 }  // namespace mindspore::lite
