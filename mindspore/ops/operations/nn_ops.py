@@ -3491,7 +3491,7 @@ class ResizeBilinear(PrimitiveWithInfer):
 
     Outputs:
         Tensor, resized image. 4-D with shape :math:`(batch, channels, new\_height, new\_width)`,
-        with data type of float32.
+        with the same data type as input `x`.
 
     Raises:
         TypeError: If `size` is neither a tuple nor list.
@@ -3539,7 +3539,7 @@ class ResizeBilinear(PrimitiveWithInfer):
     def infer_dtype(self, input_dtype):
         validator.check_tensor_dtype_valid('input_dtype', input_dtype, [mstype.float16, mstype.float32],
                                            self.name)
-        return mstype.tensor_type(mstype.float32)
+        return input_dtype
 
 
 class OneHot(Primitive):

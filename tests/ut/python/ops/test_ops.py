@@ -2180,7 +2180,7 @@ test_case_nn_ops = [
     ('ResizeBilinear', {
         'block': P.ResizeBilinear((5, 5)),
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)],
-        'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float32)]}),
+        'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)]}),
     ('ResizeBilinearGrad', {
         'block': G.ResizeBilinearGrad(),
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32), Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32)],

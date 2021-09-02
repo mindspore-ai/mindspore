@@ -19,7 +19,7 @@
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
 void CalResizeBilinear(const T *input, const int n_, const int c_, const int input_h_, const int input_w_,
-  const int output_h_, const int output_w_, const float h_scale, const float w_scale, float *output,
+  const int output_h_, const int output_w_, const float h_scale, const float w_scale, T *output,
   cudaStream_t cuda_stream);
 void CalResizeBilinearGrad(const float *input, const int n_, const int c_, const int input_h_, const int input_w_,
   const int output_h_, const int output_w_, const float h_scale, const float w_scale, half *output, float *interim,

@@ -39,7 +39,7 @@ bool ResizeBilinearCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
                                      const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16, float>(inputs, outputs);
+    LaunchKernel<float16, float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float, float>(inputs, outputs);
   }
@@ -64,7 +64,7 @@ void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   if (out_height == in_height && out_width == in_width) {
     for (size_t i = 0; i < bhwc_size; ++i) {
-      output_addr[i] = static_cast<float>(input_addr[i]);
+      output_addr[i] = static_cast<T2>(input_addr[i]);
     }
   }
 

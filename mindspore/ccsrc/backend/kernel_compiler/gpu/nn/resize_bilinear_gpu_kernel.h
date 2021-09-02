@@ -37,7 +37,7 @@ class ResizeBilinearGpuKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
-    float *output = GetDeviceAddress<float>(outputs, 0);
+    T *output = GetDeviceAddress<T>(outputs, 0);
     float h_scale = Scaling(input_h_, output_h_, align_corners_);
     float w_scale = Scaling(input_w_, output_w_, align_corners_);
     CalResizeBilinear(input, n_, c_, input_h_, input_w_, output_h_, output_w_, h_scale, w_scale, output,
@@ -72,7 +72,7 @@ class ResizeBilinearGpuKernel : public GpuKernel {
     for (auto x : input_shape) {
       input_size_ *= x;
     }
-    output_size_ = sizeof(float);
+    output_size_ = sizeof(T);
     for (auto x : output_shape) {
       output_size_ *= x;
     }
