@@ -34,6 +34,9 @@ std::vector<bool> StringToBitVector(const std::string &str) {
 
 STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   MS_LOG(DEBUG) << "un-index weight";
+  MS_CHECK_TRUE_MSG(src_tensor.quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
+  MS_CHECK_TRUE_MSG((*src_tensor.quantParams()).size() > 0, RET_ERROR, "quant params size need bigger than 0");
+  MS_CHECK_TRUE_MSG(src_tensor.quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
   auto bit_num = src_tensor.quantParams()->Get(0)->numBits();
 
   std::string str(reinterpret_cast<const char *>(src_tensor.data()->data()), src_tensor.data()->size());
@@ -96,6 +99,9 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) 
 
 STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   MS_LOG(DEBUG) << "un-sparse weight";
+  MS_CHECK_TRUE_MSG(src_tensor.quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
+  MS_CHECK_TRUE_MSG((*src_tensor.quantParams()).size() > 0, RET_ERROR, "quant params size need bigger than 0");
+  MS_CHECK_TRUE_MSG(src_tensor.quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
   size_t bit_num = src_tensor.quantParams()->Get(0)->numBits();
 
   std::string str(reinterpret_cast<const char *>(src_tensor.data()->data()), src_tensor.data()->size());
@@ -321,6 +327,7 @@ int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tens
   }
   int index = 0;
   for (auto &tensor : in_tensors) {
+    MS_CHECK_TRUE_RET(tensor != nullptr, RET_ERROR);
     auto channel_first = IsChannelFirst(index++, op_parameter);
     auto ret = WeightDecoder::DequantTensor(tensor, channel_first, dst_data_type);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {

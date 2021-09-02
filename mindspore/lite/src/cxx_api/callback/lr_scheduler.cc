@@ -29,6 +29,10 @@ int StepLRLambda(float *lr, int epoch, void *lr_cb_data) {
     return DONT_UPDATE_LR;
   }
   struct StepLRLambda *step_lr_data = (static_cast<struct StepLRLambda *>(lr_cb_data));
+  if (step_lr_data->step_size <= 0) {
+    MS_LOG(ERROR) << "lr data step size need bigger than 0.";
+    return DONT_UPDATE_LR;
+  }
   if (((epoch + 1) % step_lr_data->step_size) == 0) {
     *lr = *lr * step_lr_data->gamma;
     return UPDATE_LR;
@@ -37,7 +41,10 @@ int StepLRLambda(float *lr, int epoch, void *lr_cb_data) {
 }
 
 LRScheduler::LRScheduler(LR_Lambda lambda_func, void *lr_cb_data, int step) {
-  callback_impl_ = new CallbackImpl(new lite::LRScheduler(lambda_func, lr_cb_data, step));
+  callback_impl_ = new (std::nothrow) CallbackImpl(new (std::nothrow) lite::LRScheduler(lambda_func, lr_cb_data, step));
+  if (callback_impl_ == nullptr) {
+    MS_LOG(ERROR) << "callback implement new failed";
+  }
 }
 
 LRScheduler::~LRScheduler() {

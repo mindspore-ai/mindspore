@@ -15,9 +15,9 @@
  */
 
 #include "src/common/context_util.h"
-#include <set>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include "src/common/log_adapter.h"
 
@@ -26,6 +26,7 @@ namespace lite {
 namespace {
 template <class T>
 void PassBasicProperties(std::shared_ptr<T> device_info, const lite::DeviceContext &device_context) {
+  MS_ASSERT(device_info != nullptr);
   device_info->SetProvider(device_context.provider_);
   device_info->SetProviderDevice(device_context.provider_device_);
   device_info->SetAllocator(device_context.allocator_);
@@ -37,6 +38,7 @@ std::shared_ptr<mindspore::CPUDeviceInfo> CPUDeviceInfoFromCPUDeviceContext(cons
     return nullptr;
   }
   auto cpu_info = std::make_shared<mindspore::CPUDeviceInfo>();
+  MS_CHECK_TRUE_RET(cpu_info != nullptr, nullptr);
   cpu_info->SetEnableFP16(cpu_context.device_info_.cpu_device_info_.enable_float16_);
   PassBasicProperties(cpu_info, cpu_context);
   return cpu_info;
@@ -48,6 +50,7 @@ std::shared_ptr<mindspore::GPUDeviceInfo> GPUDeviceInfoFromGPUDeviceContext(cons
     return nullptr;
   }
   auto gpu_info = std::make_shared<mindspore::GPUDeviceInfo>();
+  MS_CHECK_TRUE_RET(gpu_info != nullptr, nullptr);
   gpu_info->SetEnableFP16(gpu_context.device_info_.gpu_device_info_.enable_float16_);
   gpu_info->SetDeviceID(gpu_context.device_info_.gpu_device_info_.gpu_device_id_);
   PassBasicProperties(gpu_info, gpu_context);
@@ -61,6 +64,7 @@ std::shared_ptr<mindspore::KirinNPUDeviceInfo> NPUDeviceInfoFromNPUDeviceContext
     return nullptr;
   }
   auto npu_info = std::make_shared<mindspore::KirinNPUDeviceInfo>();
+  MS_CHECK_TRUE_RET(npu_info != nullptr, nullptr);
   npu_info->SetFrequency(npu_context.device_info_.npu_device_info_.frequency_);
   PassBasicProperties(npu_info, npu_context);
   return npu_info;

@@ -137,6 +137,10 @@ Status Serialization::ExportModel(const Model &model, ModelType model_type, cons
     MS_LOG(ERROR) << "Unsupported Export Format " << model_type;
     return kLiteParamInvalid;
   }
+  if (model.impl_->session_ == nullptr) {
+    MS_LOG(ERROR) << "Model session is nullptr.";
+    return kLiteError;
+  }
   auto ret = model.impl_->session_->Export(model_file, export_inference_only ? lite::MT_INFERENCE : lite::MT_TRAIN,
                                            A2L_ConvertQT(quantization_type), lite::FT_FLATBUFFERS, output_tensor_name);
 

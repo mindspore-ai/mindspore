@@ -22,6 +22,7 @@
 #include "include/api/context.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 constexpr static int kMaxNumOfDevices = 3;
@@ -91,7 +92,8 @@ Status A2L_ConvertContext(Context *a_context, lite::InnerContext *l_context) {
   l_context->device_list_.clear();
 
   Status error_code;
-  for (auto device : device_list) {
+  for (auto &device : device_list) {
+    MS_CHECK_TRUE_RET(device != nullptr, kLiteNullptr);
     if (device->GetDeviceType() == kCPU) {
       error_code = AddCpuDevice(a_context, l_context, device.get());
     } else if (device->GetDeviceType() == kGPU) {

@@ -40,7 +40,7 @@ class Graph::GraphData {
 
  private:
   std::shared_ptr<lite::Model> lite_model_ = nullptr;
-  std::string file_name_;
+  std::string file_name_ = "";
 };
 }  // namespace mindspore
 

@@ -55,8 +55,8 @@ inline int QuantMin(int bits, TypeId type) {
   return 0;
 }
 
-void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
-                         bool channel_at_first, float *desired_max, float *desired_min);
+STATUS GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
+                           bool channel_at_first, float *desired_max, float *desired_min);
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
                              int quant_min, int num_bits);
@@ -163,9 +163,14 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
   for (int i = 0; i < channels; i++) {
     float min = FLT_MAX;
     float max = -FLT_MAX;
-    GetMaxMinPerchannel(channels, one_filter_size, i, elem_count, raw_datas, channel_at_first, &max, &min);
+    STATUS status =
+      GetMaxMinPerchannel(channels, one_filter_size, i, elem_count, raw_datas, channel_at_first, &max, &min);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "GetMaxMinPerchannel failed" << status;
+      return status;
+    }
     schema::QuantParamT quant_param;
-    STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
+    status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
       return status;

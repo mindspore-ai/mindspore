@@ -58,7 +58,7 @@ Status ModelImpl::PrepareMetrics(Model *model, std::vector<session::Metrics *> *
       out_ms->push_back(internal_m);
     } else {
       // For custom metric we use the metric adapter to mediate between MSLite level to API level
-      auto adapter_m = new MetricsAdapter(m);
+      auto adapter_m = new (std::nothrow) MetricsAdapter(m);
       if (adapter_m == nullptr) {  // Error during allocation
         MS_LOG(ERROR) << "Error during allocation";
         clearVectorOfPointers(adapter_ms);
@@ -90,7 +90,7 @@ Status ModelImpl::ConvertCallbacks(Model *model, std::vector<TrainCallBack *> *i
       o_cbs->push_back(internal_cb);
     } else {
       // For custom callbacks we use the callback adapter to mediate between MSLite level to API level
-      auto adapter_cb = new TrainLoopCallBackAdapter(model, cb);
+      auto adapter_cb = new (std::nothrow) TrainLoopCallBackAdapter(model, cb);
       if (adapter_cb == nullptr) {  // Error during allocation
         MS_LOG(ERROR) << "Error during allocation";
         clearVectorOfPointers(adapter_cbs);

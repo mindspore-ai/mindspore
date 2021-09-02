@@ -73,7 +73,9 @@ STATUS UnSparseTensorData(const std::vector<int> &unique_values, const std::vect
   auto nz_cnt = indices.size();
   MS_ASSERT(nz_cnt == coors.size());
   auto channel_cnt = quant_params->size();
+  MS_CHECK_GT(channel_cnt, 0, RET_ERROR);
   auto elem_perchannel = elem_cnt / channel_cnt;
+  MS_CHECK_GT(elem_perchannel, 0, RET_ERROR);
   for (size_t i = 0; i < nz_cnt; i++) {
     auto index = indices[i];
     if (index >= unique_values.size()) {
@@ -160,7 +162,7 @@ class WeightDecoder {
           return nullptr;
         }
       }
-
+      MS_CHECK_GT(channels, 0, nullptr);
       size_t per_channel_size = input_tensor->ElementsNum() / channels;
       for (size_t i = 0; i < channels; i++) {
         auto param = quant_param.at(i);

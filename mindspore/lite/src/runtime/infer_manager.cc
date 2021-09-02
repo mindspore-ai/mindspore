@@ -125,10 +125,18 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
         std::vector<int>(tensor_list_c->element_shape_,
                          tensor_list_c->element_shape_ + tensor_list_c->element_shape_size_));
       tensor_list->MallocTensorListData(static_cast<TypeId>(tensor_list_c->data_type_), tensor_shape);
-      TensorListC2TensorList(tensor_list_c, tensor_list);
+      auto tensor_ret = TensorListC2TensorList(tensor_list_c, tensor_list);
+      if (tensor_ret != RET_OK) {
+        MS_LOG(ERROR) << "TensorCList2TensorList failed";
+        return tensor_ret;
+      }
     } else {
 #endif
-      TensorC2Tensor(out_tensors.at(i), outputs.at(i));
+      auto tensor_ret = TensorC2Tensor(out_tensors.at(i), outputs.at(i));
+      if (tensor_ret != RET_OK) {
+        MS_LOG(ERROR) << "TensorC2Tensor failed";
+        return tensor_ret;
+      }
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
 #endif

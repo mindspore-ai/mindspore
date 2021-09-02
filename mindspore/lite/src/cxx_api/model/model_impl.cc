@@ -47,7 +47,8 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
                         const std::shared_ptr<Context> &ms_context) {
   context_ = ms_context;
 
-  lite::InnerContext *lite_context = new lite::InnerContext();
+  auto *lite_context = new (std::nothrow) lite::InnerContext();
+  MS_CHECK_TRUE_MSG(lite_context != nullptr, kLiteNullptr, "inner context failed");
   auto status = A2L_ConvertContext(ms_context.get(), lite_context);
   if (status != kSuccess) {
     return status;
@@ -72,7 +73,8 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
-  lite::InnerContext *lite_context = new lite::InnerContext();
+  auto *lite_context = new (std::nothrow) lite::InnerContext();
+  MS_CHECK_TRUE_MSG(lite_context != nullptr, kLiteNullptr, "inner context failed");
   auto status = A2L_ConvertContext(ms_context.get(), lite_context);
   if (status != kSuccess) {
     return status;
@@ -107,7 +109,8 @@ Status ModelImpl::Build() {
     return kLiteNullptr;
   }
 
-  lite::InnerContext *lite_context = new lite::InnerContext();
+  auto *lite_context = new (std::nothrow) lite::InnerContext();
+  MS_CHECK_TRUE_MSG(lite_context != nullptr, kLiteNullptr, "inner context failed");
   auto status = A2L_ConvertContext(context_.get(), lite_context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Failed to convert Context to Lite Context";
