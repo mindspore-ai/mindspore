@@ -2105,7 +2105,8 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   // set input[0]
   PrimitivePtr op_prim = op_run_info.primitive;
   MS_EXCEPTION_IF_NULL(op_prim);
-  inputs.push_back(std::make_shared<ValueNode>(op_prim));
+  // Decoupling of frontend PrimitivePy and backend Primitive
+  inputs.push_back(std::make_shared<ValueNode>(std::make_shared<Primitive>(*op_prim)));
   // set input parameter
   if (input_tensors.size() != tensors_mask.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "

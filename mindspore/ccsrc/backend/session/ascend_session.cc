@@ -753,6 +753,27 @@ void StoreCNodePrimitive(const KernelGraphPtr &graph) {
   }
 }
 
+KernelGraphPtr AscendSession::CreateKernelGraph(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+                                                std::vector<tensor::TensorPtr> *input_tensors,
+                                                const std::vector<int64_t> &tensors_mask, bool cache_miss) {
+  auto &task_manager = PynativeTaskManager::GetInstance();
+  KernelGraphPtr graph = nullptr;
+  if (cache_miss) {
+    graph = PreBuildOp(*op_run_info, *input_tensors, tensors_mask);
+    MS_EXCEPTION_IF_NULL(graph);
+    InitRuntimeResource();
+    run_op_graphs_[graph_info] = graph;
+  } else {
+    if (!task_manager.QueueEmpty()) {
+      graph = PreBuildOp(*op_run_info, *input_tensors, tensors_mask);
+      InitRuntimeResource();
+    } else {
+      graph = run_op_graphs_[graph_info];
+    }
+  }
+  return graph;
+}
+
 void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                               std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                               const std::vector<int64_t> &tensors_mask) {
@@ -767,19 +788,9 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
 
-  bool cache_miss = false;
-  auto iter = run_op_graphs_.find(graph_info);
-  if (iter == run_op_graphs_.end()) {
-    auto graph = PreBuildOp(*op_run_info, *input_tensors, tensors_mask);
-    MS_EXCEPTION_IF_NULL(graph);
-    InitRuntimeResource();
-    run_op_graphs_[graph_info] = graph;
-    cache_miss = true;
-  }
-
+  bool cache_miss = run_op_graphs_.find(graph_info) == run_op_graphs_.end();
+  auto graph = CreateKernelGraph(graph_info, op_run_info, input_tensors, tensors_mask, cache_miss);
   EraseValueNodeTensor(tensors_mask, input_tensors);
-
-  auto &graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(graph);
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
   PrepareForOutputTensor(graph, *input_tensors, &tensor_to_node, outputs);
@@ -793,7 +804,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
                                                          *input_tensors, tensor_to_node);
     task_manager.PushLaunchTask(std::make_shared<LaunchTask>(run_op_context));
 
-    if (cache_miss) {
+    if (cache_miss || !task_manager.QueueEmpty()) {
       // Copy Primitive. The attributes of Primitive will be modified.
       StoreCNodePrimitive(graph);
       task_manager.PushBuildTask(std::make_shared<BuildTask>(run_op_context));
