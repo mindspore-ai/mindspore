@@ -1566,18 +1566,21 @@ void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, con
       new_params.push_back(param);
       continue;
     }
-    if (graph_info->params.count(param->name())) {
+    auto param_info = param->param_info();
+    MS_EXCEPTION_IF_NULL(param_info);
+    auto param_name = param_info->name();
+    if (graph_info->params.count(param_name)) {
       // Share same weight parameter in different ms_function call.
-      auto same_param = graph_info->params.at(param->name());
+      auto same_param = graph_info->params.at(param_name);
       manage->Replace(anf_node, same_param);
       param = same_param;
     }
     new_params.push_back(param);
     input_nodes.emplace_back(param);
     (*input_values).emplace_back(param->default_param());
-    SetParamNodeMapInGraphInfoMap(df_builder, param->name(), param);
+    SetParamNodeMapInGraphInfoMap(df_builder, param_name, param);
     MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
-                  << param->default_param()->ToString() << ". Its name is: " << param->name();
+                  << param->default_param()->ToString() << ". Its name is: " << param_name;
   }
   ms_func_graph->set_parameters(new_params);
   manage->Clear();
