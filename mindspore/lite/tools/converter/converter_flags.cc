@@ -72,9 +72,10 @@ Flags::Flags() {
           "AES-GCM | AES-CBC",
           "AES-GCM");
   AddFlag(&Flags::inTensorShape, "inputShape",
-          "Set shape for model inputs for further optimizing model. Output model will lose dynamic shape feature of "
-          "set this option. Model input shapes is same with origin model by default."
-          "e.g. inTensor1:1,32,32,32;inTensor2:1,1,32,32,4",
+          "Set the dimension of the model input, the order of input dimensions is consistent with the original model. "
+          "For some models, the model structure can be further optimized, but the transformed model may lose the "
+          "characteristics of dynamic shape. "
+          "e.g. \"inTensor1:1,32,32,32;inTensor2:1,1,32,32,4\"",
           "");
   AddFlag(&Flags::graphInputFormatStr, "inputFormat",
           "Assign the format of model inputs. Valid only for 4-dimensional input. NHWC | NCHW", "NHWC");

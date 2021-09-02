@@ -44,7 +44,6 @@ struct FullQuantParam {
   int thread_num = 1;
   bool mixed = false;
   float mean_error_threshold = 0.04;
-  std::map<std::string, std::vector<int>> input_shapes;
 };
 }  // namespace mindspore::lite::quant
 

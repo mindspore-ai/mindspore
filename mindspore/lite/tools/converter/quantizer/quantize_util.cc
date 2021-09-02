@@ -772,20 +772,4 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
   }
   return ret;
 }
-
-int ConvertInputShapeMapToVector(FullQuantParam *config_param_, const std::vector<tensor::MSTensor *> &inputs,
-                                 std::vector<std::vector<int>> *shapes) {
-  if (shapes == nullptr || config_param_ == nullptr) {
-    MS_LOG(ERROR) << "shapes  or config_param is nullptr.";
-    return RET_ERROR;
-  }
-  for (auto input : inputs) {
-    auto tensor_name = input->tensor_name();
-    if (config_param_->input_shapes.find(tensor_name) == config_param_->input_shapes.end()) {
-      shapes->push_back(config_param_->input_shapes[tensor_name]);
-    }
-  }
-  return RET_OK;
-}
-
 }  // namespace mindspore::lite::quant
