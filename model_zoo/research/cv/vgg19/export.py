@@ -18,16 +18,17 @@ import numpy as np
 
 from mindspore import Tensor, context
 import mindspore.common.dtype as mstype
-from mindspore.train.serialization import load_checkpoint, export
+from mindspore.train.serialization import export
 
 from src.vgg import vgg19
 
 parser = argparse.ArgumentParser(description='VGG19 export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument('--dataset', type=str, choices=["cifar10", "imagenet2012"], default="cifar10", help='ckpt file')
-parser.add_argument('--ckpt_file', type=str, required=True, help='vgg19 ckpt file.')
+parser.add_argument('--ckpt_file', type=str, required=True,\
+default="mindspore/model_zoo/research/cv/vgg19/0-90_5004.ckpt", help='vgg19 ckpt file.')
 parser.add_argument('--file_name', type=str, default='vgg19', help='vgg19 output file name.')
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='MINDIR', help='file format')
 parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
                     help="device target")
 args = parser.parse_args()
@@ -55,11 +56,9 @@ if __name__ == '__main__':
         net = vgg19(num_classes=args.num_classes, args=args)
     else:
         net = vgg19(args.num_classes, args, phase="test")
-        net.add_flags_recursive(fp19=True)
 
     load_checkpoint(args.ckpt_file, net=net)
     net.set_train(False)
 
     input_data = Tensor(np.zeros([cfg.batch_size, 3, args.image_size[0], args.image_size[1]]), mstype.float32)
-
     export(net, input_data, file_name=args.file_name, file_format=args.file_format)
