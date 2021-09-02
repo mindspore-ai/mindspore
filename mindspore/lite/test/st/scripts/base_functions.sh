@@ -159,6 +159,7 @@ function Run_Benchmark() {
       if [[ ${cfg_file_name} =~ "weightquant" ]]; then
         infix="_${cfg_file##*_}"
         infix=${infix%.*}
+        benchmark_mode="calib"
       elif [[ ${cfg_file_name} =~ "_train" ]]; then
         infix="_train"
       elif [[ ${cfg_file_name} =~ "_posttraining" ]]; then
