@@ -13,7 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
-"""Operators for sponge."""
+"""
+Note:
+  SPONGE operators. This is an experimental interface that is subject to change and/or deletion.
+"""
 
 import math
 
@@ -2756,9 +2759,7 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
         atom_numbers(int32): the number of atoms n.
         dt(float32): time step for finite difference.
         half_dt(float32): half of time step for finite difference.
-        exp_gamma(float32): parameter in Liu's dynamic, equals
-        exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
-        dynamics.
+        exp_gamma(float32): parameter in Liu's dynamic.
 
     Inputs:
         - **inverse_mass** (Tensor) - The inverse value of
@@ -3061,7 +3062,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
         grid_numbers(int32): the total number of grids divided.
         not_first_time(int32): whether to construct the neighbor
           list first time or not.
-        Nxy(int32): the total number of grids divided in xy plane.
+        nxy(int32): the total number of grids divided in xy plane.
         excluded_atom_numbers(int32): the total atom numbers in the excluded list.
         cutoff(float32): the cutoff distance for short-range force calculation.
         skin(float32): the overflow value of cutoff to maintain a neighbor list.
@@ -3107,7 +3108,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, grid_numbers, atom_numbers, not_first_time, Nxy, excluded_atom_numbers,
+    def __init__(self, grid_numbers, atom_numbers, not_first_time, nxy, excluded_atom_numbers,
                  cutoff_square, half_skin_square, cutoff_with_skin, half_cutoff_with_skin, cutoff_with_skin_square,
                  refresh_interval=20, cutoff=10.0, skin=2.0, max_atom_in_grid_numbers=64, max_neighbor_numbers=800):
         self.grid_numbers = grid_numbers
@@ -3117,7 +3118,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
         self.cutoff = cutoff
         self.skin = skin
         self.max_atom_in_grid_numbers = max_atom_in_grid_numbers
-        self.Nxy = Nxy
+        self.nxy = nxy
         self.excluded_atom_numbers = excluded_atom_numbers
         self.cutoff_square = cutoff_square
         self.half_skin_square = half_skin_square
@@ -3138,7 +3139,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
         self.add_prim_attr('cutoff', self.cutoff)
         self.add_prim_attr('skin', self.skin)
         self.add_prim_attr('max_atom_in_grid_numbers', self.max_atom_in_grid_numbers)
-        self.add_prim_attr('Nxy', self.Nxy)
+        self.add_prim_attr('nxy', self.nxy)
         self.add_prim_attr('excluded_atom_numbers', self.excluded_atom_numbers)
         self.add_prim_attr('cutoff_square', self.cutoff_square)
         self.add_prim_attr('half_skin_square', self.half_skin_square)
