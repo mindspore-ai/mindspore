@@ -45,10 +45,12 @@ bool CipherReconStruct::CombineMask(
       }
     }
     MS_LOG(INFO) << "fl_id_src : " << fl_id;
-    mpz_t prime;
-    mpz_init(prime);
+    BIGNUM *prime = BN_new();
+    if (prime == nullptr) {
+      return false;
+    }
     auto publicparam_ = CipherInit::GetInstance().GetPublicParams();
-    mpz_import(prime, PRIME_MAX_LEN, 1, 1, 0, 0, publicparam_->prime);
+    (void)BN_bin2bn(publicparam_->prime, PRIME_MAX_LEN, prime);
     if (iter->second.size() >= cipher_init_->secrets_minnums_) {  // combine private key seed.
       MS_LOG(INFO) << "start assign secrets shares to public shares ";
       for (int i = 0; i < static_cast<int>(cipher_init_->secrets_minnums_); ++i) {
@@ -65,10 +67,9 @@ bool CipherReconStruct::CombineMask(
       MS_LOG(INFO) << "end assign secrets shares to public shares ";
 
       size_t length;
-      char secret[SECRET_MAX_LEN] = {0};
+      uint8_t secret[SECRET_MAX_LEN] = {0};
       SecretSharing combine(prime);
-      if (combine.Combine(static_cast<int>(cipher_init_->secrets_minnums_), *shares_tmp, secret, &length) < 0)
-        retcode = false;
+      if (combine.Combine(cipher_init_->secrets_minnums_, *shares_tmp, secret, &length) < 0) retcode = false;
       length = SECRET_MAX_LEN;
       MS_LOG(INFO) << "combine secrets shares Success.";
 
@@ -303,7 +304,7 @@ void CipherReconStruct::BuildReconstructSecretsRsp(const std::shared_ptr<fl::ser
 bool CipherReconStruct::GetSuvNoise(
   const std::vector<std::string> &clients_share_list,
   const std::map<std::string, std::vector<std::vector<unsigned char>>> &record_public_keys, const string &fl_id,
-  std::vector<float> *noise, char *secret, int length) {
+  std::vector<float> *noise, uint8_t *secret, int length) {
   for (auto p_key = clients_share_list.begin(); p_key != clients_share_list.end(); ++p_key) {
     if (*p_key != fl_id) {
       PrivateKey *privKey1 = KeyAgreement::FromPrivateBytes((unsigned char *)secret, length);

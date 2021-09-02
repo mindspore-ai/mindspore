@@ -284,13 +284,19 @@ void Server::InitCipher() {
   float dp_norm_clip = ps::PSContext::instance()->dp_norm_clip();
   std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
 
-  mpz_t prim;
-  mpz_init(prim);
-  mindspore::armour::GetRandomPrime(prim);
-  mindspore::armour::PrintBigInteger(prim, 16);
+  BIGNUM *prim = BN_new();
+  if (prim == nullptr) {
+    MS_LOG(EXCEPTION) << "new bn failed";
+  }
 
-  size_t len_cipher_prime;
-  mpz_export((unsigned char *)cipher_prime, &len_cipher_prime, sizeof(unsigned char), 1, 0, 0, prim);
+  mindspore::armour::GetPrime(prim);
+
+  MS_LOG(INFO) << "prime" << BN_bn2hex(prim);
+  (void)BN_bn2bin(prim, reinterpret_cast<uint8_t *>(cipher_prime));
+  if (prim != nullptr) {
+    BN_clear_free(prim);
+  }
+
   mindspore::armour::CipherPublicPara param;
   param.g = cipher_g;
   param.t = cipher_t;
