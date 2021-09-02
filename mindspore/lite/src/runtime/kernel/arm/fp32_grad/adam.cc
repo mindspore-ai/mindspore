@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
@@ -17,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp32_grad/adam.h"
 #include <cmath>
+#include <string>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -93,7 +93,9 @@ int AdamRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto adam_kernel = reinterpret_cast<AdamCPUKernel *>(cdata);
   CHECK_NULL_RETURN(adam_kernel);
   auto error_code = RET_OK;
-  if (adam_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
+  if (adam_kernel->get_optimizer_mode() == WeightUpdateMode::VIRTUAL_BATCH) {
+    error_code = adam_kernel->ExecuteVirtualBatch(task_id);
+  } else if (adam_kernel->get_optimizer_mode() == WeightUpdateMode::ACCUMULATE_GRADS) {
     error_code = adam_kernel->ExecuteVirtualBatch(task_id);
   } else {
     error_code = adam_kernel->Execute(task_id);
@@ -123,6 +125,11 @@ int AdamCPUKernel::Init() {
     return RET_ERROR;
   }
   return RET_OK;
+}
+
+std::vector<int> AdamCPUKernel::GetOptimizerParamsIdxs() const {
+  std::vector<int> indices = {6, 7, 3, 4, 8};
+  return indices;
 }
 
 int AdamCPUKernel::OptimizerStep() {

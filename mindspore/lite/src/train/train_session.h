@@ -62,6 +62,10 @@ class TrainSession : virtual public lite::LiteSession {
   bool IsEval() override { return !train_mode_; }
   int SetLearningRate(float learning_rate) override;
   float GetLearningRate() override;
+  std::vector<tensor::MSTensor *> GetGradients() const override;
+  std::vector<tensor::MSTensor *> GetOptimizerParams() const override;
+  int SetOptimizerParams(const std::vector<tensor::MSTensor *> &params) override;
+  int ApplyGradients(const std::vector<tensor::MSTensor *> &gradients) override;
   int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) override;
 
   void BindThread(bool if_bind) override { return lite::LiteSession::BindThread(if_bind); }

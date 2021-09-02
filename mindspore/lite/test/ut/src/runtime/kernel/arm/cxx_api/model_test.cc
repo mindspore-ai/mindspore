@@ -117,4 +117,47 @@ TEST_F(TestCxxApiLiteModel, test_metrics_SUCCESS) {
   ASSERT_EQ(metrics.size(), 1);
 }
 
+TEST_F(TestCxxApiLiteModel, test_getparams_SUCCESS) {
+  Model model;
+  Graph graph;
+  auto context = std::make_shared<Context>();
+  auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
+  context->MutableDeviceInfo().push_back(cpu_context);
+  auto train_cfg = std::make_shared<TrainCfg>();
+  train_cfg->accumulate_gradients_ = true;
+
+  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+  auto params = model.GetOptimizerParams();
+  ASSERT_EQ(params.size(), 2);
+  float pi = 3.141592647;
+  for (size_t ix = 0; ix < params.size(); ix++) {
+    static_cast<float *>(params[ix].MutableData())[0] = static_cast<float>(ix) + pi;
+  }
+  ASSERT_TRUE(model.SetOptimizerParams(params) == kSuccess);
+  auto params1 = model.GetOptimizerParams();
+  for (size_t ix = 0; ix < params1.size(); ix++) {
+    ASSERT_EQ(static_cast<float *>(params1[ix].MutableData())[0], static_cast<float>(ix) + pi);
+  }
+}
+
+TEST_F(TestCxxApiLiteModel, test_getgrads_SUCCESS) {
+  Model model;
+  Graph graph;
+  auto context = std::make_shared<Context>();
+  auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
+  context->MutableDeviceInfo().push_back(cpu_context);
+  auto train_cfg = std::make_shared<TrainCfg>();
+  train_cfg->accumulate_gradients_ = true;
+
+  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+  auto graients = model.GetGradients();
+  ASSERT_EQ(graients.size(), 2);
+  float pi = 3.141592647;
+  for (size_t ix = 0; ix < graients.size(); ix++) {
+    static_cast<float *>(graients[ix].MutableData())[0] = static_cast<float>(ix) + pi;
+  }
+  ASSERT_TRUE(model.ApplyGradients(graients) == kSuccess);
+}
 }  // namespace mindspore

@@ -202,6 +202,41 @@ Status Model::SetTrainMode(bool train) {
 
 bool Model::GetTrainMode() const { return ((impl_ != nullptr) && (impl_->session_) && (impl_->session_->IsTrain())); }
 
+std::vector<MSTensor> Model::GetGradients() const {
+  std::vector<MSTensor> empty;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return empty;
+  }
+  return impl_->GetGradients();
+}
+
+Status Model::ApplyGradients(const std::vector<MSTensor> &gradients) {
+  if ((impl_ == nullptr) || (impl_->session_ == nullptr)) {
+    MS_LOG(ERROR) << "Model is null.";
+    return kLiteUninitializedObj;
+  }
+  return impl_->ApplyGradients(gradients);
+}
+
+std::vector<MSTensor> Model::GetOptimizerParams() const {
+  std::vector<MSTensor> empty;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return empty;
+  }
+  auto res = impl_->GetOptimizerParams();
+  return res;
+}
+
+Status Model::SetOptimizerParams(const std::vector<MSTensor> &params) {
+  if ((impl_ == nullptr) || (impl_->session_ == nullptr)) {
+    MS_LOG(ERROR) << "Model is null.";
+    return kLiteUninitializedObj;
+  }
+  return impl_->SetOptimizerParams(params);
+}
+
 Status Model::InitMetrics(std::vector<Metrics *> metrics) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";

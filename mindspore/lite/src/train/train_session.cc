@@ -634,6 +634,10 @@ void TrainSession::CompileOptimizedKernels() {
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
       std::copy(kernel->in_tensors().begin(), kernel->in_tensors().end(), std::back_inserter(out_tensor));
+      if (cfg_.accumulate_gradients_) {
+        auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
+        optimizer->SetOptimizerMode(kernel::WeightUpdateMode::ACCUMULATE_GRADS);
+      }
     }
   }
 
@@ -677,21 +681,136 @@ float TrainSession::GetLearningRate() {
   return 0.0;
 }
 
+std::vector<tensor::MSTensor *> TrainSession::GetOptimizerParams() const {
+  std::vector<tensor::MSTensor *> params;
+  for (auto kernel : this->train_kernels_) {
+    if (IsOptimizer(kernel)) {
+      auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
+      auto kernelParams = optimizer->GetOptimizerParams();
+      for (size_t ix = 0; ix < kernelParams.size(); ix++) {
+        auto kernelParam = kernelParams[ix];
+        auto name = kernelParam->tensor_name();
+        bool found = false;
+        for (size_t iy = 0; iy < params.size(); iy++) {
+          if (params[iy]->tensor_name() == name) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          params.push_back(kernelParam);
+        }
+      }
+    }
+  }
+  return params;
+}
+
+int TrainSession::SetOptimizerParams(const std::vector<tensor::MSTensor *> &params) {
+  for (size_t ix = 0; ix < params.size(); ix++) {
+    auto param = params[ix];
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "Param tensor " << param->tensor_name() << " is null.";
+      return RET_ERROR;
+    }
+    bool found = false;
+    for (auto kernel : this->train_kernels_) {
+      if (IsOptimizer(kernel)) {
+        auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
+        found = optimizer->SetOptimizerParams(param);
+        if (found) break;
+      }
+    }
+    if (!found) {
+      MS_LOG(ERROR) << "Tensor name " << param->tensor_name() << " is not a valid name.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+std::vector<tensor::MSTensor *> TrainSession::GetGradients() const {
+  std::vector<tensor::MSTensor *> params;
+  for (auto kernel : this->train_kernels_) {
+    if (IsOptimizer(kernel)) {
+      auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
+      auto kernelGradint = optimizer->GetGradients();
+      if (kernelGradint != nullptr) {
+        params.push_back(kernelGradint);
+      }
+    }
+  }
+  return params;
+}
+
+int TrainSession::ApplyGradients(const std::vector<tensor::MSTensor *> &gradients) {
+  auto current_gradients = GetGradients();
+  if (current_gradients.size() != gradients.size()) {
+    MS_LOG(ERROR) << "gradients vector has wrong size " << gradients.size() << " instead of "
+                  << current_gradients.size();
+    return RET_ERROR;
+  }
+  for (size_t ix = 0; ix < gradients.size(); ix++) {
+    auto gradient = gradients[ix];
+    if (gradient == nullptr) {
+      MS_LOG(ERROR) << "gradient tensor " << gradient->tensor_name() << " is null.";
+      return RET_ERROR;
+    }
+    bool found = false;
+    for (size_t iy = 0; iy < current_gradients.size(); iy++) {
+      auto current_gradient = current_gradients[iy];
+      if (current_gradient->tensor_name() == gradient->tensor_name()) {
+        found = true;
+        if (current_gradient->Size() == gradient->Size()) {
+          std::copy(static_cast<char *>(gradient->data()), static_cast<char *>(gradient->data()) + gradient->Size(),
+                    static_cast<char *>(current_gradient->MutableData()));
+        } else {
+          MS_LOG(ERROR) << "gradient tensor " << gradient->tensor_name() << " has wrong size " << gradient->Size()
+                        << " instead of " << current_gradient->Size();
+          return RET_ERROR;
+        }
+        break;
+      }
+    }
+    if (!found) {
+      MS_LOG(ERROR) << "gradient tensor " << gradient->tensor_name() << " not found";
+      return RET_ERROR;
+    }
+  }
+  for (auto kernel : this->train_kernels_) {
+    if (IsOptimizer(kernel)) {
+      auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
+      optimizer->set_grad_sum_valid();
+      auto ret = optimizer->OptimizerStep();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "failed to optimize model weights";
+        return ret;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 int TrainSession::AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum) {
-  auto mod = (virtual_batch_multiplier <= 1) ? kernel::OptimizerKernel::WeightUpdateMode::NORMAL
-                                             : kernel::OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH;
+  auto mod =
+    (virtual_batch_multiplier <= 1) ? kernel::WeightUpdateMode::NORMAL : kernel::WeightUpdateMode::VIRTUAL_BATCH;
   virtual_batch_multiplier_ = (virtual_batch_multiplier <= 1) ? 0 : virtual_batch_multiplier;
   virtual_batch_idx_ = 0;
 
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
       auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
+      if (optimizer->get_optimizer_mode() != kernel::WeightUpdateMode::NORMAL &&
+          optimizer->get_optimizer_mode() != kernel::WeightUpdateMode::VIRTUAL_BATCH) {
+        MS_LOG(ERROR) << kernel->name() << " failed to set optimizer mode, conflict with accumulate grads";
+        return RET_ERROR;
+      }
       auto ret = optimizer->SetOptimizerMode(mod);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << kernel->name() << " failed to set optimizer mode";
         return RET_ERROR;
       }
-      if (mod == kernel::OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
+      if (mod == kernel::WeightUpdateMode::VIRTUAL_BATCH) {
         lr = (lr < 0.0f) ? (optimizer->GetLearningRate() / static_cast<float>(virtual_batch_multiplier_)) : lr;
         ret = optimizer->SetLearningRate(lr);
       } else {
@@ -706,7 +825,7 @@ int TrainSession::AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr,
     if (IsBN(kernel) && kernel->IsTrainable()) {
       auto batchnorm = static_cast<kernel::BatchnormCPUKernel *>(kernel->kernel());
       auto ret = RET_OK;
-      if (mod == kernel::OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
+      if (mod == kernel::WeightUpdateMode::VIRTUAL_BATCH) {
         momentum = (momentum < 0.0f) ? (batchnorm->get_momentum() / virtual_batch_multiplier_) : momentum;
         ret = batchnorm->set_momentum(momentum);
       } else {

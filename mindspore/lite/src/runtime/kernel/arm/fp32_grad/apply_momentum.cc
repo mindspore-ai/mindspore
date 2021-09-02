@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
@@ -16,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/apply_momentum.h"
+#include <string>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -74,7 +74,9 @@ int ApplyMomentumRun(void *cdata, int task_id, float lhs_scale, float rhs_scale)
   CHECK_NULL_RETURN(cdata);
   auto applyMomentum_kernel = reinterpret_cast<ApplyMomentumCPUKernel *>(cdata);
   auto error_code = RET_OK;
-  if (applyMomentum_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
+  if (applyMomentum_kernel->get_optimizer_mode() == WeightUpdateMode::VIRTUAL_BATCH) {
+    error_code = applyMomentum_kernel->ExecuteVirtualBatch(task_id);
+  } else if (applyMomentum_kernel->get_optimizer_mode() == WeightUpdateMode::ACCUMULATE_GRADS) {
     error_code = applyMomentum_kernel->ExecuteVirtualBatch(task_id);
   } else {
     error_code = applyMomentum_kernel->Execute(task_id);
@@ -109,6 +111,11 @@ int ApplyMomentumCPUKernel::Init() {
     return RET_ERROR;
   }
   return RET_OK;
+}
+
+std::vector<int> ApplyMomentumCPUKernel::GetOptimizerParamsIdxs() const {
+  std::vector<int> indices = {4};
+  return indices;
 }
 
 int ApplyMomentumCPUKernel::OptimizerStep() {

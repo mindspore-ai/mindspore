@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
@@ -16,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/sgd.h"
+#include <string>
 #include <algorithm>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -122,7 +122,9 @@ int SgdRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sgd_kernel = reinterpret_cast<SgdCPUKernel *>(cdata);
   CHECK_NULL_RETURN(sgd_kernel);
   auto error_code = RET_OK;
-  if (sgd_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
+  if (sgd_kernel->get_optimizer_mode() == WeightUpdateMode::VIRTUAL_BATCH) {
+    error_code = sgd_kernel->ExecuteVirtualBatch(task_id);
+  } else if (sgd_kernel->get_optimizer_mode() == WeightUpdateMode::ACCUMULATE_GRADS) {
     error_code = sgd_kernel->ExecuteVirtualBatch(task_id);
   } else {
     error_code = sgd_kernel->Execute(task_id);
@@ -138,7 +140,7 @@ int SgdRunInit(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sgd_kernel = reinterpret_cast<SgdCPUKernel *>(cdata);
   CHECK_NULL_RETURN(sgd_kernel);
   auto error_code = RET_OK;
-  if (sgd_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
+  if (sgd_kernel->get_optimizer_mode() == WeightUpdateMode::VIRTUAL_BATCH) {
     error_code = sgd_kernel->ExecuteVirtualBatch(task_id);
   } else {
     error_code = sgd_kernel->ExecuteInit(task_id);
@@ -190,6 +192,11 @@ int SgdCPUKernel::Init() {
     return RET_ERROR;
   }
   return RET_OK;
+}
+
+std::vector<int> SgdCPUKernel::GetOptimizerParamsIdxs() const {
+  std::vector<int> indices = {4};
+  return indices;
 }
 
 int SgdCPUKernel::OptimizerStep() {

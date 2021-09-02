@@ -55,14 +55,17 @@ class TrainCfg {
   TrainCfg(const TrainCfg &rhs) {
     this->loss_name_ = rhs.loss_name_;
     this->mix_precision_cfg_ = rhs.mix_precision_cfg_;
+    this->accumulate_gradients_ = rhs.accumulate_gradients_;
   }
   TrainCfg &operator=(const TrainCfg &rhs) {
     this->loss_name_ = rhs.loss_name_;
     this->mix_precision_cfg_ = rhs.mix_precision_cfg_;
+    this->accumulate_gradients_ = rhs.accumulate_gradients_;
     return *this;
   }
   std::string loss_name_;             /**< Set part of the name that identify a loss kernel */
   MixPrecisionCfg mix_precision_cfg_; /**< Mix precision configuration */
+  bool accumulate_gradients_ = false; /**< If true gardents are accmulated and can be read by GetGradients */
 };
 
 }  // namespace lite
