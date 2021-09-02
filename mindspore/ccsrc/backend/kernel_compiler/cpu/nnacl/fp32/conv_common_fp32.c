@@ -161,7 +161,7 @@ void ConvFp32OutNC4HW4(const float *input_data, float *packed_input, const float
 #ifdef ENABLE_AVX
 void SWBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
               int right, const ConvParameter *conv_param, const SlidingWindowParam *sw_param, const SWConvKernel kernel,
-              int act_type, int ow_bock, int oc_block) {
+              int act_type, int ow_bock, int oc_block, size_t write_mode) {
   for (int oh = top; oh < bottom; oh++) {  // now h is only loop one time
     int ih = oh * conv_param->stride_h_ - conv_param->pad_u_;
     int start_kh = MSMAX(0, UP_DIV(-ih, conv_param->dilation_h_));
@@ -179,7 +179,7 @@ void SWBorder(float *dst, const float *src, const float *weight, const float *bi
       kernel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw, act_type, ow_bock,
              oc_block, sw_param->block_channel_, sw_param->ic_align_, sw_param->in_kw_step_, sw_param->in_kh_step_,
              sw_param->in_sw_step_,
-             (conv_param->kernel_w_ - end_kw + start_kw) * C8NUM * oc_block * sw_param->ic_align_);
+             (conv_param->kernel_w_ - end_kw + start_kw) * C8NUM * oc_block * sw_param->ic_align_, write_mode);
       dst_kernel += ow_bock * sw_param->block_channel_;
     }  // width loop
     dst += sw_param->out_h_step_;
@@ -232,6 +232,11 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
   int in_h_start = top * stride_h - pad_u;
   int in_w_start = left * stride_w - pad_l;
   int center_step = in_h_start * in_h_step + in_w_start * ic_algin;
+  int write_mode = conv_param->out_format_;
+  int kernel_out_step = oc_algin;
+  if (write_mode == 13) {
+    kernel_out_step = out_h * out_w;
+  }
   const int ow_block_num[4] = {12, 6, 4, 3};
   const SWConvKernel kernel[4][2] = {{SWConv1x8Kernel, SWConv12x8Kernel},
                                      {SWConv1x16Kernel, SWConv6x16Kernel},
@@ -254,11 +259,11 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
         const SWConvKernel kernel_border = kernel[oc_block - 1][0];
         if (oh < top || oh >= bottom) {  // oh in up or down border
           SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, 0, out_w, conv_param, sw_param, kernel_border, act_type,
-                   1, oc_block);
+                   1, oc_block, write_mode);
         } else {  // oh in center
           // ow in right
           SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, 0, left, conv_param, sw_param, kernel_border, act_type,
-                   1, oc_block);
+                   1, oc_block, write_mode);
           // ow in center
           const float *src_w = src_h + (oh - top) * in_sh_step;
           int ow_block = ow_block_num[oc_block - 1];         // 12 6 4 3
@@ -269,12 +274,12 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
             }
             kernel[oc_block - 1][ow_block / ow_block_num[oc_block - 1]](
               dst_w + ow * block_channel, src_w, weight, bias, kernel_h, kernel_w, act_type, ow_block, oc_block,
-              oc_algin, ic_algin, in_kw_step, in_kh_step, in_sw_step, 0);
+              kernel_out_step, ic_algin, in_kw_step, in_kh_step, in_sw_step, 0, write_mode);
             src_w += ow_block * in_sw_step;
           }
           // ow in left
           SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, right, out_w, conv_param, sw_param, kernel_border,
-                   act_type, 1, oc_block);
+                   act_type, 1, oc_block, write_mode);
         }
       }
     }  // output h loop
@@ -284,12 +289,14 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
 }
 
 void SWConv3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                      size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_sw_step *= sizeof(float);
   in_kw_step *= sizeof(float);
-  oc_algin *= sizeof(float);
+  float *dst_4 = dst + out_step * C3NUM;
+  out_step *= sizeof(float);
   kw_remainder *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
@@ -403,6 +410,9 @@ void SWConv3x32Kernel(float *dst, const float *src, const float *weight, const f
     "vminps %%ymm14, %%ymm11, %%ymm11\n"
 
     "0:\n"
+    "cmpq $13, %3\n"
+    "je 1f\n"
+    // write to nhwc
     "vmovups %%ymm0, (%2)\n"  // dst_0
     "vmovups %%ymm1, 0x20(%2)\n"
     "vmovups %%ymm2, 0x40(%2)\n"
@@ -415,19 +425,37 @@ void SWConv3x32Kernel(float *dst, const float *src, const float *weight, const f
     "vmovups %%ymm9, 0x20(%2, %1, 2)\n"
     "vmovups %%ymm10, 0x40(%2, %1, 2)\n"
     "vmovups %%ymm11, 0x60(%2, %1, 2)\n"
+    "jmp 2f\n"
+    "1:\n"
+    // write to nc8hw8
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm4, 0x20(%2)\n"
+    "vmovups %%ymm8, 0x40(%2)\n"
+    "vmovups %%ymm1, (%2, %1, 1)\n"
+    "vmovups %%ymm5, 0x20(%2, %1, 1)\n"
+    "vmovups %%ymm9, 0x40(%2, %1, 1)\n"
+    "vmovups %%ymm2, (%2, %1, 2)\n"
+    "vmovups %%ymm6, 0x20(%2, %1, 2)\n"
+    "vmovups %%ymm10, 0x40(%2, %1, 2)\n"
+    "vmovups %%ymm3, (%4)\n"
+    "vmovups %%ymm7, 0x20(%4)\n"
+    "vmovups %%ymm11, 0x40(%4)\n"
+    "2:\n"
     :
-    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "a"(act_flag), "r"(out_step), "r"(dst), "r"(write_mode), "r"(dst_4)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
       "%ymm11", "%ymm12", "%ymm14");
 }
 
 void SWConv1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                      size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_kw_step *= sizeof(float);
-  oc_algin *= sizeof(float);
+  out_step *= sizeof(float);
   kw_remainder *= sizeof(float);
+  float *dst_4 = dst + out_step * C3NUM;
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -494,25 +522,37 @@ void SWConv1x32Kernel(float *dst, const float *src, const float *weight, const f
     "vminps %%ymm14, %%ymm3, %%ymm3\n"
 
     "0:\n"
+    "cmpq $13, %3\n"
+    "je 1f\n"
+    // write to nhwc
     "vmovups %%ymm0, (%2)\n"  // dst_0
     "vmovups %%ymm1, 0x20(%2)\n"
     "vmovups %%ymm2, 0x40(%2)\n"
     "vmovups %%ymm3, 0x60(%2)\n"
+    "jmp 2f\n"
+    "1:\n"
+    // write to nc8hw8
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, (%2, %1, 1)\n"
+    "vmovups %%ymm2, (%2, %1, 2)\n"
+    "vmovups %%ymm3, (%4)\n"
+    "2:\n"
     :
-    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "a"(act_flag), "r"(out_step), "r"(dst), "r"(write_mode), "r"(dst_4)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm12", "%ymm14");
 }
 
 void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                      size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_kw_step *= sizeof(float);
   in_sw_step *= sizeof(float);
   kw_remainder *= sizeof(float);
   size_t src_3_step = 3 * in_sw_step;
-  float *dst_3 = dst + 3 * oc_algin;
-  oc_algin *= sizeof(float);
+  float *dst_3 = dst + 3 * out_step;
+  out_step *= sizeof(float);
   asm volatile(
     "cmpq $0, %0\n"
     "je 0f\n"
@@ -640,6 +680,9 @@ void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const f
     "vminps %%ymm14, %%ymm11, %%ymm11\n"
 
     "0:\n"
+    "cmpq $13, %4\n"
+    "je 1f\n"
+    // write to nhwc
     "vmovups %%ymm0, (%2)\n"  // dst_0
     "vmovups %%ymm1, 0x20(%2)\n"
     "vmovups %%ymm2, 0x40(%2)\n"
@@ -652,19 +695,36 @@ void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const f
     "vmovups %%ymm9, (%3)\n"  // dst+3
     "vmovups %%ymm10, 0x20(%3)\n"
     "vmovups %%ymm11, 0x40(%3)\n"
+    "jmp 2f\n"
+    "1:\n"
+    // write to nc8hw8
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm3, 0x20(%2)\n"
+    "vmovups %%ymm6, 0x40(%2)\n"
+    "vmovups %%ymm9, 0x60(%2)\n"
+    "vmovups %%ymm1, (%2, %1, 1)\n"
+    "vmovups %%ymm4, 0x20(%2, %1, 1)\n"
+    "vmovups %%ymm7, 0x40(%2, %1, 1)\n"
+    "vmovups %%ymm10, 0x60(%2, %1, 1)\n"
+    "vmovups %%ymm2, (%2, %1, 2)\n"
+    "vmovups %%ymm5, 0x20(%2, %1, 2)\n"
+    "vmovups %%ymm8, 0x60(%2, %1, 2)\n"
+    "vmovups %%ymm11, 0x60(%2, %1, 2)\n"
+    "2:\n"
     :
-    : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3)
+    : "a"(act_flag), "r"(out_step), "r"(dst), "r"(dst_3), "r"(write_mode)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
       "%ymm11", "%ymm12", "%ymm14");
 }
 
 void SWConv1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                      size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_kw_step *= sizeof(float);
   kw_remainder *= sizeof(float);
-  oc_algin *= sizeof(float);
+  out_step *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -726,24 +786,35 @@ void SWConv1x24Kernel(float *dst, const float *src, const float *weight, const f
     "vminps %%ymm14, %%ymm2, %%ymm2\n"
 
     "0:\n"
+    "cmpq $13, %3\n"
+    "je 1f\n"
+    // write to nhwc
     "vmovups %%ymm0, (%2)\n"  // dst_0
     "vmovups %%ymm1, 0x20(%2)\n"
     "vmovups %%ymm2, 0x40(%2)\n"
+    "jmp 2f\n"
+    "1:\n"
+    // write to nc4hw4
+    "vmovups %%ymm0, (%2)\n"
+    "vmovups %%ymm1, (%2, %1, 1)\n"
+    "vmovups %%ymm2, (%2, %1, 2)\n"
+    "2:\n"
     :
-    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "a"(act_flag), "r"(out_step), "r"(dst), "r"(write_mode)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm12", "%ymm14");
 }
 
 void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                      size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_kw_step *= sizeof(float);
   in_sw_step *= sizeof(float);
   kw_remainder *= sizeof(float);
   size_t src_3_step = 3 * in_sw_step;
-  float *dst_3 = dst + 3 * oc_algin;
-  oc_algin *= sizeof(float);
+  float *dst_3 = dst + 3 * out_step;
+  out_step *= sizeof(float);
   asm volatile(
     "cmpq $0, %0\n"
     "je 0f\n"
@@ -874,6 +945,9 @@ void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const f
     "vminps %%ymm14, %%ymm11, %%ymm11\n"
 
     "0:\n"
+    "cmpq $13, %4\n"
+    "je 1f\n"
+    // write to nhwc
     "vmovups %%ymm0, (%2)\n"  // dst_0
     "vmovups %%ymm1, 0x20(%2)\n"
     "vmovups %%ymm2, (%2, %1, 1)\n"
@@ -886,19 +960,36 @@ void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const f
     "vmovups %%ymm9, 0x20(%3, %1, 1)\n"
     "vmovups %%ymm10, (%3, %1, 2)\n"
     "vmovups %%ymm11, 0x20(%3, %1, 2)\n"
+    "jmp 2f\n"
+    "1:\n"
+    // write to nc8hw8
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm2, 0x20(%2)\n"
+    "vmovups %%ymm4, 0x40(%2)\n"
+    "vmovups %%ymm6, 0x60(%2)\n"  // dst+3
+    "vmovups %%ymm8, 0x80(%2)\n"
+    "vmovups %%ymm10, 0xA0(%2)\n"
+    "vmovups %%ymm1, (%2, %1, 1)\n"
+    "vmovups %%ymm3, 0x20(%2, %1, 1)\n"
+    "vmovups %%ymm5, 0x40(%2, %1, 1)\n"
+    "vmovups %%ymm7, 0x60(%2, %1, 1)\n"
+    "vmovups %%ymm9, 0x80(%2, %1, 1)\n"
+    "vmovups %%ymm11, 0xA0(%2, %1, 1)\n"
+    "2:\n"
     :
-    : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3)
+    : "a"(act_flag), "r"(out_step), "r"(dst), "r"(dst_3), "r"(write_mode)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
       "%ymm11", "%ymm12", "%ymm14");
 }
 
 void SWConv1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                      size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_kw_step *= sizeof(float);
   kw_remainder *= sizeof(float);
-  oc_algin *= sizeof(float);
+  out_step *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -955,25 +1046,35 @@ void SWConv1x16Kernel(float *dst, const float *src, const float *weight, const f
     "vminps %%ymm14, %%ymm1, %%ymm1\n"
 
     "0:\n"
+    "cmpq $13, %3\n"
+    "je 1f\n"
+    // write to nhwc
     "vmovups %%ymm0, (%2)\n"  // dst_0
     "vmovups %%ymm1, 0x20(%2)\n"
+    "jmp 2f\n"
+    "1:\n"
+    // write nc8hw8
+    "vmovups %%ymm0, (%2)\n"
+    "vmovups %%ymm1, (%2, %1, 1)\n"
+    "2:\n"
     :
-    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "a"(act_flag), "r"(out_step), "r"(dst), "r"(write_mode)
     : "%ecx", "%ymm0", "%ymm1", "%ymm12", "%ymm14");
 }
 
 void SWConv12x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                      size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_sw_step *= sizeof(float);
   in_kw_step *= sizeof(float);
   kw_remainder *= sizeof(float);
   size_t src_3_step = 3 * in_sw_step;
-  float *dst_3 = dst + 3 * oc_algin;
-  float *dst_5 = dst + 5 * oc_algin;
-  float *dst_9 = dst + 9 * oc_algin;
-  oc_algin *= sizeof(float);
+  float *dst_3 = dst + 3 * out_step;
+  float *dst_5 = dst + 5 * out_step;
+  float *dst_9 = dst + 9 * out_step;
+  out_step *= sizeof(float);
   asm volatile(
     "cmpq $0, %0\n"
     "je 0f\n"
@@ -1105,6 +1206,9 @@ void SWConv12x8Kernel(float *dst, const float *src, const float *weight, const f
     "vminps %%ymm14, %%ymm11, %%ymm11\n"
 
     "Write:\n"
+    "cmpq $13, %6\n"
+    "je WriteNC8HW8\n"
+    // write nhwc
     "vmovups %%ymm0, (%2)\n"  // dst_0
     "vmovups %%ymm1, (%2, %1)\n"
     "vmovups %%ymm2, (%2, %1, 2)\n"
@@ -1117,21 +1221,37 @@ void SWConv12x8Kernel(float *dst, const float *src, const float *weight, const f
     "vmovups %%ymm9, (%5)\n"  // dst_9
     "vmovups %%ymm10, (%5, %1, 1)\n"
     "vmovups %%ymm11, (%5, %1, 2)\n"
+    "jmp End\n"
+    "WriteNC8HW8:\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm2, 0x40(%2)\n"
+    "vmovups %%ymm3, 0x60(%2)\n"  // dst_3
+    "vmovups %%ymm4, 0x80(%2)\n"
+    "vmovups %%ymm5, 0xA0(%2)\n"  // dst_5
+    "vmovups %%ymm6, 0xC0(%2)\n"
+    "vmovups %%ymm7, 0xE0(%2)\n"
+    "vmovups %%ymm8, 0x100(%2)\n"
+    "vmovups %%ymm9, 0x120(%2)\n"  // dst_9
+    "vmovups %%ymm10, 0x140(%2)\n"
+    "vmovups %%ymm11, 0x160(%2)\n"
+    "End:\n"
     :
-    : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3), "r"(dst_5), "r"(dst_9)
+    : "a"(act_flag), "r"(out_step), "r"(dst), "r"(dst_3), "r"(dst_5), "r"(dst_9), "r"(write_mode)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
       "%ymm11", "%ymm12", "%ymm14");
 }
 
 void SWConv4x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                     size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_sw_step *= sizeof(float);
   in_kw_step *= sizeof(float);
   size_t src_step = 3 * in_sw_step;
-  float *dst_3 = dst + 3 * oc_algin;
-  oc_algin *= sizeof(float);
+  float *dst_3 = dst + 3 * out_step;
+  out_step *= sizeof(float);
   asm volatile(
     "cmpq $0, %0\n"
     "je 0f\n"
@@ -1215,17 +1335,18 @@ void SWConv4x8Kernel(float *dst, const float *src, const float *weight, const fl
     "vmovups %%ymm2, (%2, %1, 2)\n"
     "vmovups %%ymm3, (%3)\n"  // dst_3
     :
-    : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3)
+    : "a"(act_flag), "r"(out_step), "r"(dst), "r"(dst_3)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm12", "%ymm14");
 }
 
 void SWConv1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                     size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_kw_step *= sizeof(float);
   kw_remainder *= sizeof(float);
-  oc_algin *= sizeof(float);
+  out_step *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -1277,16 +1398,18 @@ void SWConv1x8Kernel(float *dst, const float *src, const float *weight, const fl
     "vminps %%ymm14, %%ymm0, %%ymm0\n"
 
     "0:\n"
+    // write to nhec and nc8hw8 is identical!
     "vmovups %%ymm0, (%2)\n"  // dst_0
     :
-    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "a"(act_flag), "r"(out_step), "r"(dst)
     : "%ecx", "%ymm0", "%ymm12", "%ymm14");
 }
 
 #ifdef ENABLE_DEBUG
 void SWConvWxKKernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t out_step,
+                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
+                     size_t write_mode) {
   __m256 dst_data[12];
   const float *src_kh[12];
   const float *src_kw[12];
@@ -1339,7 +1462,13 @@ void SWConvWxKKernel(float *dst, const float *src, const float *weight, const fl
       if (0x2 & act_flag) {  // relu
         dst_data[i * oc_block + j] = _mm256_max_ps(dst_data[i * oc_block + j], _mm256_set1_ps(0.0f));
       }
-      _mm256_storeu_ps(dst + i * oc_algin + j * C8NUM, dst_data[i * oc_block + j]);
+      if (write_mode == 13) {
+        // write nc8hw8
+        _mm256_storeu_ps(dst + j * out_step + i * C8NUM, dst_data[i * oc_block + j]);
+      } else {
+        // write nhwc
+        _mm256_storeu_ps(dst + i * out_step + j * C8NUM, dst_data[i * oc_block + j]);
+      }
     }
   }
 }

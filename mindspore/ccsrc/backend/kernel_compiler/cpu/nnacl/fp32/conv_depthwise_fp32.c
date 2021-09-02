@@ -18,6 +18,7 @@
 #include "nnacl/fp32/common_func_fp32.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/fp32/activation_fp32.h"
 
 #if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, int num_pixels,
@@ -80,10 +81,10 @@ int ConvDw(float *output_data, const float *input_data, const float *weight_data
         }
       }
       if (relu) {
-        ReluFp32(dst_data, dst_data, conv_param->output_w_ * conv_param->output_channel_);
+        Fp32Relu(dst_data, conv_param->output_w_ * conv_param->output_channel_, dst_data);
       }
       if (relu6) {
-        Relu6Fp32(dst_data, dst_data, conv_param->output_w_ * conv_param->output_channel_);
+        Fp32Relu6(dst_data, conv_param->output_w_ * conv_param->output_channel_, dst_data);
       }
     }
   }
@@ -779,10 +780,10 @@ void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, c
       }
     }
     if (relu) {
-      ReluFp32(output, output, channels);
+      Fp32Relu(output, channels, output);
     }
     if (relu6) {
-      Relu6Fp32(output, output, channels);
+      Fp32Relu6(output, channels, output);
     }
     output += channels;
     input = input + input_stride;
