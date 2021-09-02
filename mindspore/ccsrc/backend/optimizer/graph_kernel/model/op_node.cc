@@ -357,7 +357,7 @@ DShape ReduceOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   if (keepdims) {
     DShape new_shape = inputs[0]->shape;
     for (auto x : axis) {
-      new_shape[x] = 1;
+      new_shape[LongToSize(x)] = 1;
     }
     return new_shape;
   }
@@ -448,7 +448,7 @@ DShape TransposeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
     MS_LOG(EXCEPTION) << "perm.size() != old_shape.size(). " << perm.size() << " vs " << old_shape.size();
   }
   std::transform(perm.begin(), perm.end(), std::back_inserter(new_shape),
-                 [&old_shape](int64_t p) { return old_shape[p]; });
+                 [&old_shape](int64_t p) { return old_shape[LongToSize(p)]; });
   return new_shape;
 }
 
