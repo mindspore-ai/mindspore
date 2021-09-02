@@ -35,11 +35,9 @@ constexpr int kNumShapeDim_2 = 2;
 }  // namespace
 int PoolingGradCPUKernelFp16::ReSize() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
   CHECK_NULL_RETURN(pool_param);
-  CHECK_LESS_RETURN(in_tensors_.size(), 3);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));
   CHECK_NULL_RETURN(in_tensors_.at(1));
   CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_2));

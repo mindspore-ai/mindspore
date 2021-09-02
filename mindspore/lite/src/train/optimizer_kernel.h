@@ -34,8 +34,8 @@ static __attribute__((always_inline)) inline bool MS_ISNAN(float var) {
 }
 
 namespace mindspore::kernel {
-
 enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH, ACCUMULATE_GRADS };
+
 class OptimizerKernel : public InnerKernel {
  public:
   OptimizerKernel() = default;
@@ -107,7 +107,11 @@ class OptimizerKernel : public InnerKernel {
     lite::Tensor *grad_sum_tensor = nullptr;
     if (grad_sum_ != nullptr) {
       auto shape = in_tensors_.at(grad_idx_)->shape();
-      grad_sum_tensor = new lite::Tensor(kNumberTypeFloat, shape);
+      grad_sum_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat, shape);
+      if (grad_sum_tensor == nullptr) {
+        MS_LOG(ERROR) << "failed to allocate grad sum tensor";
+        return nullptr;
+      }
       grad_sum_tensor->set_tensor_name(in_tensors_.at(grad_idx_)->tensor_name());
       grad_sum_tensor->set_data(static_cast<void *>(grad_sum_));
       grad_sum_tensor->set_own_data(false);
