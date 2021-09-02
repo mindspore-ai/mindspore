@@ -27,10 +27,10 @@ using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::kernel {
 int PowerFp16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   exp_tensor_ = in_tensors_[1];
-  MS_ASSERT(exp_tensor_ != nullptr);
+  MSLITE_CHECK_PTR(exp_tensor_);
   if (exp_tensor_->IsConst()) {
     auto ret = GetExpData();
     if (ret != RET_OK) {
@@ -98,7 +98,9 @@ int PowerFp16CPUKernel::Run() {
 
 int PowerFp16CPUKernel::RunImpl(int task_id) {
   auto x_addr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  MSLITE_CHECK_PTR(x_addr);
   auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  MSLITE_CHECK_PTR(output_addr);
   auto size = in_tensors_.at(0)->ElementsNum();
   CHECK_NULL_RETURN(x_addr);
   CHECK_NULL_RETURN(output_addr);

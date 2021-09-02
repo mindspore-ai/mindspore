@@ -53,9 +53,10 @@ int TransposeCPUKernel::ReSize() {
     MS_ASSERT(in_tensors_.size() == 2);
     auto perm_tensor = in_tensors_.at(1);
     perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+    MSLITE_CHECK_PTR(perm_data);
   }
-  if (param_->num_axes_ > MAX_TRANSPOSE_DIM_SIZE) {
-    MS_LOG(ERROR) << "num_axes_ is large than MAX_TRANSPOSE_DIM_SIZE.";
+  if (param_->num_axes_ > MAX_TRANSPOSE_DIM_SIZE || param_->num_axes_ < 0) {
+    MS_LOG(ERROR) << "num_axes_ " << param_->num_axes_ << "is invalid.";
     return RET_ERROR;
   }
   for (int i = 0; i < param_->num_axes_; ++i) {
@@ -68,6 +69,8 @@ int TransposeCPUKernel::ReSize() {
   param_->strides_[param_->num_axes_ - 1] = 1;
   param_->out_strides_[param_->num_axes_ - 1] = 1;
   param_->data_num_ = inTensor->ElementsNum();
+  MS_CHECK_LE(static_cast<size_t>(param_->num_axes_), in_shape.size(), RET_ERROR);
+  MS_CHECK_LE(static_cast<size_t>(param_->num_axes_), out_shape.size(), RET_ERROR);
   for (int i = param_->num_axes_ - 2; i >= 0; i--) {
     param_->strides_[i] = in_shape.at(i + 1) * param_->strides_[i + 1];
     param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];

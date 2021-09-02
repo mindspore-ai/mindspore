@@ -43,7 +43,7 @@ int GatherFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto input_tensor = in_tensors_.at(0);
-  MS_ASSERT(input_tensor != nullptr);
+  CHECK_NULL_RETURN(input_tensor);
   if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data_c() != nullptr) {
     const_input_ = true;
     input_data_ =
@@ -54,7 +54,7 @@ int GatherFp16CPUKernel::Init() {
     }
     Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
   }
-  MS_ASSERT(in_tensors_.at(kSecondInput)->data_c() != nullptr);
+  CHECK_NULL_RETURN(in_tensors_.at(kSecondInput)->data_c());
   (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_ =
     *(reinterpret_cast<int *>(in_tensors_.at(kSecondInput)->data_c()));
   if (!InferShapeDone()) {
@@ -73,6 +73,7 @@ int GatherFp16CPUKernel::DoGather(int task_id) {
   int in_rank = in_shape.size();
   int indices_element_size = indices_tensor->ElementsNum();
   auto axis = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
+  MS_CHECK_LT(axis, in_shape.size(), RET_ERROR);
   const int limit = in_shape.at(axis);
   int outer_size = 1, inner_size = 1;
   for (int i = 0; i < axis; ++i) {
@@ -97,8 +98,8 @@ int GatherFp16CPUKernel::DoGather(int task_id) {
     return RET_ERROR;
   }
   int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data_c());
-  MS_ASSERT(int8_in != nullptr);
-  MS_ASSERT(int8_out != nullptr);
+  CHECK_NULL_RETURN(int8_in);
+  CHECK_NULL_RETURN(int8_out);
   int data_size = lite::DataTypeSize(kNumberTypeFloat16);
   int8_in += thread_stride * limit * inner_size * data_size;
   int8_out += thread_stride * indices_element_size * inner_size * data_size;
@@ -137,7 +138,7 @@ int GatherFp16CPUKernel::Run() {
   }
   if (!const_input_) {
     auto input_tensor = in_tensors_.at(0);
-    MS_ASSERT(input_tensor->data_c() != nullptr);
+    CHECK_NULL_RETURN(input_tensor->data_c());
     if (input_tensor->data_type() == kNumberTypeFloat32) {
       input_data_ =
         reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
@@ -158,10 +159,15 @@ int GatherFp16CPUKernel::Run() {
 }
 
 int GatherFp16CPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, const lite::Tensor *indices_tensor) {
-  MS_ASSERT(indices_tensor->data_c() != nullptr);
+  CHECK_NULL_RETURN(indices_tensor->data_c());
   if (!isIndicesInt32) {
     if (indices_num >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
       MS_LOG(ERROR) << "Input indices_num is invalid, indices_num: " << indices_num;
+      return RET_ERROR;
+    }
+    if (indices_tensor->data_type() != kNumberTypeInt64 && indices_tensor->data_type() != kNumberTypeFloat16) {
+      MS_LOG(ERROR) << "The data type of indices tensor is wrong";
+      indices_data_ = nullptr;
       return RET_ERROR;
     }
     indices_data_ = reinterpret_cast<int32_t *>(ms_context_->allocator->Malloc(sizeof(int32_t) * indices_num));
@@ -173,15 +179,10 @@ int GatherFp16CPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num,
       for (int i = 0; i < indices_num; i++) {
         indices_data_[i] = reinterpret_cast<int64_t *>(indices_tensor->data_c())[i];
       }
-    } else if (indices_tensor->data_type() == kNumberTypeFloat16) {
+    } else {
       for (int i = 0; i < indices_num; i++) {
         indices_data_[i] = reinterpret_cast<float16_t *>(indices_tensor->data_c())[i];
       }
-    } else {
-      MS_LOG(ERROR) << "The data type of indices tensor is wrong";
-      ms_context_->allocator->Free(indices_data_);
-      indices_data_ = nullptr;
-      return RET_ERROR;
     }
   } else {
     indices_data_ = reinterpret_cast<int32_t *>(indices_tensor->data_c());

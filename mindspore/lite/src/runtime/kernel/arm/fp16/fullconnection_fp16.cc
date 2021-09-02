@@ -23,26 +23,32 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
-void FullconnectionFP16CPUKernel::InitAShape() {
+int FullconnectionFP16CPUKernel::InitAShape() {
   auto a_shape = in_tensors_.at(0)->shape();
+  CHECK_LESS_RETURN(a_shape.size(), C2NUM);
   params_->row_ = a_shape[0];
   params_->deep_ = a_shape[1];
+  return RET_OK;
 }
 
-void FullconnectionFP16CPUKernel::InitBShape() {
+int FullconnectionFP16CPUKernel::InitBShape() {
   auto b_shape = in_tensors_.at(1)->shape();
+  CHECK_LESS_RETURN(b_shape.size(), C2NUM);
   params_->col_ = b_shape[0];
   params_->deep_ = b_shape[1];
+  return RET_OK;
 }
 
 int FullconnectionFP16CPUKernel::ReSize() {
-  InitAShape();
-  InitBShape();
+  auto ret = InitAShape();
+  MS_CHECK_TRUE_RET(ret == RET_OK, RET_ERROR);
+  ret = InitBShape();
+  MS_CHECK_TRUE_RET(ret == RET_OK, RET_ERROR);
   return MatmulBaseFP16CPUKernel::ReSize();
 }
 
 int FullconnectionFP16CPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
   row_tile_ = C16NUM;

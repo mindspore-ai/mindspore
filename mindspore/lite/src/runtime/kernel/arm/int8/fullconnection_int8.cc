@@ -24,6 +24,8 @@ using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
 int FullconnectionInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   param_->batch = 1;
   param_->a_transpose_ = false;
   param_->b_transpose_ = true;
@@ -49,6 +51,7 @@ int FullconnectionInt8CPUKernel::ReSize() {
   }
   param_->row_ = row;
   param_->col_ = out_tensors_.at(0)->shape().back();
+  CHECK_LESS_RETURN(in_tensors_.at(1)->shape().size(), C2NUM);
   param_->deep_ = (in_tensors_.at(1)->shape()).at(1);
 
   auto ret = MatmulBaseInt8CPUKernel::ReSize();

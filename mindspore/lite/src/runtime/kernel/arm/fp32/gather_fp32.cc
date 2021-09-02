@@ -26,10 +26,14 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kSecondInput = 2;
+}
 int GatherCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  axis_ = *(reinterpret_cast<int *>(in_tensors_.at(2)->data_c()));
+  CHECK_NULL_RETURN(in_tensors_.at(kSecondInput)->data_c());
+  axis_ = *(reinterpret_cast<int *>(in_tensors_.at(kSecondInput)->data_c()));
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -46,6 +50,7 @@ int GatherCPUKernel::DoGather(int task_id) {
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
   int indices_element_size = indices_tensor->ElementsNum();
+  MS_CHECK_LT(axis_, in_rank, RET_ERROR);
   const int limit = in_shape.at(axis_);
 
   int outer_size = 1, inner_size = 1;
@@ -63,7 +68,9 @@ int GatherCPUKernel::DoGather(int task_id) {
   auto thread_stride = stride * task_id;
 
   int8_t *int8_in = reinterpret_cast<int8_t *>(input_tensor->data_c());
+  CHECK_NULL_RETURN(int8_in);
   int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data_c());
+  CHECK_NULL_RETURN(int8_out);
 
   int data_size = static_cast<int>(lite::DataTypeSize(input_tensor->data_type()));
   int8_in += thread_stride * limit * inner_size * data_size;

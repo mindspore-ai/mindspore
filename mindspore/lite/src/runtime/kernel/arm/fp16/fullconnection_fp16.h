@@ -34,8 +34,8 @@ class FullconnectionFP16CPUKernel : public MatmulBaseFP16CPUKernel {
   int Run() override;
 
  private:
-  void InitAShape();
-  void InitBShape();
+  int InitAShape();
+  int InitBShape();
 };
 }  // namespace mindspore::kernel
 

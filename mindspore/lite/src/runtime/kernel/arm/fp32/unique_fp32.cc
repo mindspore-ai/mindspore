@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_Unique;
 namespace mindspore::kernel {
 int UniqueCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 2);
   return RET_OK;
 }
 
