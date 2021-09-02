@@ -258,6 +258,7 @@ void Debugger::Reset() {
   std::lock_guard<std::mutex> a_lock(access_lock_);
   // reset components
   if (heartbeat_thread_ && heartbeat_thread_->joinable()) {
+    SetEnableHeartbeat(false);
     heartbeat_thread_->join();
     MS_LOG(INFO) << "Join Heartbeat thread.";
   }
