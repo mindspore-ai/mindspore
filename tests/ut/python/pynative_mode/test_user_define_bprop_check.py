@@ -177,7 +177,7 @@ def test_user_define_bprop_check_parameter():
     grad_net = GradNet(net)
     with pytest.raises(RuntimeError) as ex:
         ret = grad_net(x, sens)
-    assert "When user defines the net bprop, there are 1 parameters that is not supported in the net." in str(ex.value)
+    assert "When user defines the net bprop, the 'Parameter' data type is not supported in the net." in str(ex.value)
 
 
 def test_user_define_bprop_check_number():
