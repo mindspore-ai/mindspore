@@ -1,0 +1,68 @@
+general:
+    backend: mindspore
+
+pipeline: [eval]
+
+eval:
+    pipe_step:
+        type: TrainPipeStep
+        models_folder: ~
+    dataset:
+        type: Cityscapes
+        common:
+            data_path: /cache/datasets/VOC2012
+        train:
+            list_file: train.txt
+            batch_size: 24
+            shuffle: true
+            Rescale:
+                size: 512
+            RandomMirror: true
+            RandomColor:
+                color_factor: [0.95, 1.05]
+                contrast_factor: [0.95, 1.05]
+                brightness_factor: [0.95, 1.05]
+            RandomGaussianBlur:
+                kernel_size: 3
+            RandomRotation:
+                rotation_factor: [-10, 10]
+                border_value: [0.485, 0.456, 0.406]
+                fill_label: 255
+            Normalization:
+                mean: [0.485, 0.456, 0.406]
+                std: [0.229, 0.224, 0.225]
+        val:
+            list_file: val.txt
+            Rescale:
+                size: 512
+            Normalization:
+                mean: [0.485, 0.456, 0.406]
+                std: [0.229, 0.224, 0.225]
+    trainer:
+        with_train: False
+        type: Trainer
+        callbacks: AdelaideEATrainerCallback
+        model_statistics: True
+        cuda: true
+        distributed: False
+        execute_mode: PYNATIVE_MODE   # for mindspore
+        seed: 0
+        epochs: 100
+        optimizer:
+            type: Adam
+            params:
+                lr: !!float 5e-5
+        lr_scheduler:
+            type: StepLR
+            params:
+                step_size: 5
+                gamma: 0.5
+        loss:
+            type: CrossEntropyLoss
+            params:
+                ignore_index: 255
+
+        metric:
+            type: IoUMetric
+            params:
+                num_class: 21
