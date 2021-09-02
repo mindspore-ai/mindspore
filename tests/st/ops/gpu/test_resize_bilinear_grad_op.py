@@ -36,7 +36,7 @@ class ResizeBilinearGradNet(nn.Cell):
 @pytest.mark.env_onecard
 def test_resize_bilinear_grad_align_corners():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    dy = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
+    dy = np.array([[[[1, 2], [3, 4]]]]).astype(np.float16)
 
     x = np.array([[[[1.1, 2.2, 3.2, 2.5],
                     [3.3, 4.4, 5.7, 8.1],
@@ -49,6 +49,7 @@ def test_resize_bilinear_grad_align_corners():
     net = ResizeBilinearGradNet(align_corners=True)
     output = net(Tensor(dy), Tensor(x))
     assert np.all(output.asnumpy() == expect)
+    dy = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
 
     x = np.array([[[[1.1, 2.2, 3.2, 2.5],
                     [3.3, 4.4, 5.7, 8.1],
@@ -71,7 +72,7 @@ def test_resize_bilinear_grad():
     dy = np.array([[[[1, 1, 0, 0],
                      [1, 1, 0, 0],
                      [0, 0, 1, 1],
-                     [0, 0, 1, 1]]]]).astype(np.float32)
+                     [0, 0, 1, 1]]]]).astype(np.float16)
 
     x = np.array([[[[1.1, 2.2], [3.3, 4.4]]]]).astype(np.float16)
     expect = np.array([[[[2.25, 0.75],
@@ -80,6 +81,10 @@ def test_resize_bilinear_grad():
     output = net(Tensor(dy), Tensor(x))
     assert np.all(output.asnumpy() == expect)
 
+    dy = np.array([[[[1, 1, 0, 0],
+                     [1, 1, 0, 0],
+                     [0, 0, 1, 1],
+                     [0, 0, 1, 1]]]]).astype(np.float32)
     x = np.array([[[[1.1, 2.2], [3.3, 4.4]]]]).astype(np.float32)
     expect = np.array([[[[2.25, 0.75],
                          [0.75, 4.25]]]]).astype(np.float32)

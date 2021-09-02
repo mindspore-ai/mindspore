@@ -36,7 +36,7 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    float *dy = GetDeviceAddress<float>(inputs, 0);
+    T *dy = GetDeviceAddress<T>(inputs, 0);
     float *interim = GetDeviceAddress<float>(workspace, 0);
     T *dx = GetDeviceAddress<T>(outputs, 0);
     float h_scale = Scaling(dx_h_, dy_h_, align_corners_);
@@ -81,7 +81,7 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
     dy_w_ = SizeToInt(dy_shape[3]);
     dx_h_ = SizeToInt(dx_shape[2]);
     dx_w_ = SizeToInt(dx_shape[3]);
-    dy_size_ = sizeof(float);
+    dy_size_ = sizeof(T);
     for (auto x : dy_shape) {
       dy_size_ *= x;
     }
@@ -89,7 +89,7 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
     for (auto x : dx_shape) {
       dx_size_ *= x;
     }
-    workspace_size_ = (dx_size_ / sizeof(T)) * sizeof(float);
+    workspace_size_ = (dx_size_ / sizeof(T)) * sizeof(T);
     align_corners_ = GetAttr<bool>(kernel_node, "align_corners");
     InitSizeLists();
     return true;
