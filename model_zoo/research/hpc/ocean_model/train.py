@@ -17,6 +17,7 @@
 import argparse
 import numpy as np
 import mindspore.context as context
+from mindspore import Tensor
 from src.read_var import read_nc
 from src.GOMO import GOMO_init, GOMO, read_init
 
@@ -62,6 +63,7 @@ if __name__ == "__main__":
 
     # time step of GOMO Model
     for step in range(1, args_gomo.step+1):
+        vfluxb = Tensor(vfluxb.asnumpy())
         elf, etf, ua, uab, va, vab, el, elb, d, u, v, w, kq, km, kh, q2, q2l, tb, t, sb, s, rho, wubot, wvbot, ub, vb, \
         egb, etb, dt, dhb, utb, vtb, vfluxb, et, steps, vamax, q2b, q2lb = Model(
             etf, ua, uab, va, vab, el, elb, d, u, v, w, kq, km, kh, q2, q2l, tb, t, sb, s, rho,
