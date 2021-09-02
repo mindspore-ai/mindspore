@@ -162,6 +162,39 @@ bool TensorRTSubGraph::SupportFP16() {
   return false;
 }
 
+nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor) {
+  auto cuda_dtype = ConvertDataType(in_tensor.DataType());
+  if (static_cast<int>(cuda_dtype) == -1) {
+    MS_LOG(ERROR) << "Unsupported input data type " << static_cast<int>(in_tensor.DataType());
+    return nullptr;
+  }
+  nvinfer1::Dims input_dims = ConvertCudaDims(in_tensor.Shape());
+  if (runtime_->GetBatchSize() == 0) {
+    runtime_->SetBatchSize(input_dims.d[0]);
+    MS_LOG(INFO) << "batch size init as " << runtime_->GetBatchSize();
+    input_dims.d[0] = -1;  // dynamic batch size with wildcard N, default batchsize is first dims
+    input_batchsize_index_ = 0;
+  } else {
+    for (int n = 0; n < input_dims.nbDims; n++) {
+      if (input_dims.d[n] == runtime_->GetBatchSize()) {
+        // first dims equals to batchsize
+        input_dims.d[n] = -1;
+        input_batchsize_index_ = n;
+        break;
+      }
+    }
+  }
+
+  // only support NHWC HW dim resize
+  if (input_hw_index_ != -1) {
+    input_hw_index_ = in_tensor.format() == Format::NHWC ? 1 : /* NCHW*/ 2;
+    input_dims.d[input_hw_index_] = -1;
+    input_dims.d[input_hw_index_ + 1] = -1;
+  }
+
+  return this->network_->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
+}
+
 int TensorRTSubGraph::BuildTensorRTGraph() {
   MS_ASSERT(!all_ops_.empty());
   // Connect NetWork.
@@ -170,36 +203,11 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
     for (auto in_tensor : cur_op->inputs()) {
       // Data From CPU
       if (IsSubGraphInputTensor(this->inputs(), in_tensor)) {
-        auto cuda_dtype = ConvertDataType(in_tensor.DataType());
-        if (static_cast<int>(cuda_dtype) == -1) {
-          MS_LOG(ERROR) << "Unsupported input data type " << static_cast<int>(in_tensor.DataType());
+        nvinfer1::ITensor *trt_tensor = SetTensorRTNetworkInput(in_tensor);
+        if (trt_tensor == nullptr) {
+          MS_LOG(ERROR) << "SetTensorRTNetworkInput failed for " << in_tensor.Name();
           return RET_ERROR;
         }
-        nvinfer1::Dims input_dims = ConvertCudaDims(in_tensor.Shape());
-        if (runtime_->GetBatchSize() == 0) {
-          runtime_->SetBatchSize(input_dims.d[0]);
-          MS_LOG(INFO) << "batch size init as " << runtime_->GetBatchSize();
-          input_dims.d[0] = -1;  // dynamic batch size with wildcard N, default batchsize is first dims
-          input_batchsize_index_ = 0;
-        } else {
-          for (int n = 0; n < input_dims.nbDims; n++) {
-            if (input_dims.d[n] == runtime_->GetBatchSize()) {
-              // first dims equals to batchsize
-              input_dims.d[n] = -1;
-              input_batchsize_index_ = n;
-              break;
-            }
-          }
-        }
-
-        // only support NHWC HW dim resize
-        if (input_hw_index_ != -1) {
-          input_dims.d[1] = -1;
-          input_dims.d[2] = -1;
-          input_hw_index_ = 1;
-        }
-
-        auto trt_tensor = this->network_->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
         cur_op->AddInnerInTensors(trt_tensor);
         continue;
       }
