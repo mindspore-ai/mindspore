@@ -61,13 +61,19 @@ AbstractBasePtr AbsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
 }
 
 ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  if (input_args.empty()) {
+    return nullptr;
+  }
+
   auto x = input_args[0]->BuildValue();
   if (x == nullptr) {
     return nullptr;
   }
   auto x_tensor = x->cast<tensor::TensorPtr>();
 
-  MS_EXCEPTION_IF_NULL(x_tensor);
+  if (x_tensor == nullptr) {
+    return nullptr;
+  }
 
   auto data_size = x_tensor->DataSize();
   auto dtype = x_tensor->data_type();
