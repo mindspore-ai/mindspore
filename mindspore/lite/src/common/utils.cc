@@ -28,12 +28,13 @@ namespace mindspore {
 namespace lite {
 uint64_t GetTimeUs() {
 #ifdef SUPPORT_MSVC
-  FILETIME ft;
-  LARGE_INTEGER li;
-  GetSystemTimeAsFileTime(&ft);
-  li.LowPart = ft.dwLowDateTime;
-  li.HighPart = ft.dwHighDateTime;
-  return li.QuadPart * 100;
+  const int sec_to_us = 1000000;
+  LARGE_INTEGER cur_time, frequency;
+  QueryPerformanceCounter(&cur_time);
+  QueryPerformanceFrequency(&frequency);
+  uint64_t sec = cur_time.QuadPart / frequency.QuadPart;
+  uint64_t usec = (cur_time.QuadPart % frequency.QuadPart) * sec_to_us / frequency.QuadPart;
+  return sec * sec_to_us + usec;
 #else
   struct timespec ts = {0, 0};
   if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
