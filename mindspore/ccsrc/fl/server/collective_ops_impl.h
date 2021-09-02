@@ -29,6 +29,9 @@
 namespace mindspore {
 namespace fl {
 namespace server {
+// The timeout for server collective communication in case of network jitter.
+constexpr uint32_t kCollectiveCommTimeout = 30;
+
 // CollectiveOpsImpl is the collective communication API of the server.
 // For now, it implements two AllReduce algorithms: RingAllReduce and BroadcastAllReduce. Elastic AllReduce is also
 // supported for the elastic scaling feature of the server.

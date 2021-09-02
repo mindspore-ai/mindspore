@@ -46,6 +46,9 @@ constexpr uint32_t kWorkerRetryDurationForSafeMode = 500;
 // The rank of the leader server.
 constexpr uint32_t kLeaderServerRank = 0;
 
+// The timeout for worker sending message to server in case of network jitter.
+constexpr uint32_t kWorkerTimeout = 30;
+
 enum class IterationState {
   // This iteration is still in process.
   kRunning,

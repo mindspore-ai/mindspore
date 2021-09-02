@@ -96,6 +96,9 @@ class IterationMetrics {
   // The metrics file object.
   std::fstream metrics_file_;
 
+  // The metrics file path.
+  std::string metrics_file_path_;
+
   // Json object of metrics data.
   nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, float> js_;
 

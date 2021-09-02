@@ -15,6 +15,7 @@
 
 # The script runs the process of server's disaster recovery. It will kill the server process and launch it again.
 
+import os
 import ast
 import argparse
 import subprocess
@@ -28,6 +29,7 @@ parser.add_argument("--scheduler_ip", type=str, default="127.0.0.1")
 parser.add_argument("--scheduler_port", type=int, default=8113)
 #The fl server port of the server which needs to be killed.
 parser.add_argument("--disaster_recovery_server_port", type=int, default=10976)
+parser.add_argument("--node_id", type=str, default="")
 parser.add_argument("--start_fl_job_threshold", type=int, default=1)
 parser.add_argument("--start_fl_job_time_window", type=int, default=3000)
 parser.add_argument("--update_model_ratio", type=float, default=1.0)
@@ -49,6 +51,7 @@ parser.add_argument("--dp_eps", type=float, default=50.0)
 parser.add_argument("--dp_delta", type=float, default=0.01)  # usually equals 1/start_fl_job_threshold
 parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
+parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--client_password", type=str, default="")
 parser.add_argument("--server_password", type=str, default="")
 parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
@@ -62,6 +65,7 @@ server_num = args.server_num
 scheduler_ip = args.scheduler_ip
 scheduler_port = args.scheduler_port
 disaster_recovery_server_port = args.disaster_recovery_server_port
+node_id = args.node_id
 start_fl_job_threshold = args.start_fl_job_threshold
 start_fl_job_time_window = args.start_fl_job_time_window
 update_model_ratio = args.update_model_ratio
@@ -72,6 +76,7 @@ client_epoch_num = args.client_epoch_num
 client_batch_size = args.client_batch_size
 client_learning_rate = args.client_learning_rate
 local_server_num = args.local_server_num
+config_file_path = args.config_file_path
 root_first_ca_path = args.root_first_ca_path
 root_second_ca_path = args.root_second_ca_path
 pki_verify = args.pki_verify
@@ -94,11 +99,12 @@ offline_cmd = "ps_demo_id=`ps -ef | grep " + str(disaster_recovery_server_port) 
 offline_cmd += " && for id in $ps_demo_id; do kill -9 $id && echo \"Killed server process: $id\"; done"
 subprocess.call(['bash', '-c', offline_cmd])
 
-#Step 2: Wait 35 seconds for recovery.
-wait_cmd = "echo \"Start to sleep for 35 seconds\" && sleep 35"
+#Step 2: Wait 3 seconds for recovery.
+wait_cmd = "echo \"Start to sleep for 3 seconds\" && sleep 3"
 subprocess.call(['bash', '-c', wait_cmd])
 
 #Step 3: Launch the server again with the same fl server port.
+os.environ['MS_NODE_ID'] = str(node_id)
 cmd_server = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && "
 cmd_server += "rm -rf ${execute_path}/disaster_recovery_server_" + str(disaster_recovery_server_port) + "/ &&"
 cmd_server += "mkdir ${execute_path}/disaster_recovery_server_" + str(disaster_recovery_server_port) + "/ &&"
@@ -126,6 +132,7 @@ cmd_server += " --dp_eps=" + str(dp_eps)
 cmd_server += " --dp_delta=" + str(dp_delta)
 cmd_server += " --dp_norm_clip=" + str(dp_norm_clip)
 cmd_server += " --encrypt_type=" + str(encrypt_type)
+cmd_server += " --config_file_path=" + str(config_file_path)
 cmd_server += " --root_first_ca_path=" + str(root_first_ca_path)
 cmd_server += " --root_second_ca_path=" + str(root_second_ca_path)
 cmd_server += " --pki_verify=" + str(pki_verify)

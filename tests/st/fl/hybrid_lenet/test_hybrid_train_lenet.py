@@ -20,9 +20,10 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.common import dtype as mstype
 from mindspore.nn import WithLossCell
 from src.cell_wrapper import TrainOneStepCellWithServerCommunicator
-from src.model import LeNet5
+from src.model import LeNet5, PushMetrics
 # from src.adam import AdamWeightDecayOp
 
 parser = argparse.ArgumentParser(description="test_hybrid_train_lenet")
@@ -131,6 +132,7 @@ if __name__ == "__main__":
     epoch = 50000
     np.random.seed(0)
     network = LeNet5(62)
+    push_metrics = PushMetrics()
     if context.get_fl_context("ms_role") == "MS_WORKER":
         # Please do not freeze layers if you want to both get and overwrite these layers to servers, which is meaningless.
         network.conv1.weight.requires_grad = False
@@ -153,9 +155,12 @@ if __name__ == "__main__":
     train_network.set_train()
     losses = []
 
-    for _ in range(epoch):
+    for i in range(epoch):
         data = Tensor(np.random.rand(32, 3, 32, 32).astype(np.float32))
         label = Tensor(np.random.randint(0, 61, (32)).astype(np.int32))
         loss = train_network(data, label).asnumpy()
+        if context.get_fl_context("ms_role") == "MS_WORKER":
+            if (i + 1) % worker_step_num_per_iteration == 0:
+                push_metrics(Tensor(loss, mstype.float32), Tensor(loss, mstype.float32))
         losses.append(loss)
     print(losses)

@@ -15,6 +15,7 @@
 
 # The script runs the process of server's disaster recovery. It will kill the server process and launch it again.
 
+import os
 import ast
 import argparse
 import subprocess
@@ -28,6 +29,7 @@ parser.add_argument("--scheduler_ip", type=str, default="127.0.0.1")
 parser.add_argument("--scheduler_port", type=int, default=8113)
 #The fl server port of the server which needs to be killed.
 parser.add_argument("--disaster_recovery_server_port", type=int, default=10976)
+parser.add_argument("--node_id", type=str, default="")
 parser.add_argument("--start_fl_job_threshold", type=int, default=1)
 parser.add_argument("--start_fl_job_time_window", type=int, default=3000)
 parser.add_argument("--update_model_ratio", type=float, default=1.0)
@@ -61,6 +63,7 @@ server_num = args.server_num
 scheduler_ip = args.scheduler_ip
 scheduler_port = args.scheduler_port
 disaster_recovery_server_port = args.disaster_recovery_server_port
+node_id = args.node_id
 start_fl_job_threshold = args.start_fl_job_threshold
 start_fl_job_time_window = args.start_fl_job_time_window
 update_model_ratio = args.update_model_ratio
@@ -91,11 +94,12 @@ offline_cmd = "ps_demo_id=`ps -ef | grep " + str(disaster_recovery_server_port) 
 offline_cmd += " && for id in $ps_demo_id; do kill -9 $id && echo \"Killed server process: $id\"; done"
 subprocess.call(['bash', '-c', offline_cmd])
 
-#Step 2: Wait 35 seconds for recovery.
-wait_cmd = "echo \"Start to sleep for 35 seconds\" && sleep 35"
+#Step 2: Wait 3 seconds for recovery.
+wait_cmd = "echo \"Start to sleep for 3 seconds\" && sleep 3"
 subprocess.call(['bash', '-c', wait_cmd])
 
 #Step 3: Launch the server again with the same fl server port.
+os.environ['MS_NODE_ID'] = str(node_id)
 cmd_server = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && "
 cmd_server += "rm -rf ${execute_path}/disaster_recovery_server_" + str(disaster_recovery_server_port) + "/ &&"
 cmd_server += "mkdir ${execute_path}/disaster_recovery_server_" + str(disaster_recovery_server_port) + "/ &&"

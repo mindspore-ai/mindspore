@@ -115,8 +115,8 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
 
   if (output != nullptr) {
     while (true) {
-      if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command),
-                              output)) {
+      if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command), output,
+                              kWorkerTimeout)) {
         MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
         return false;
       }
@@ -134,7 +134,8 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
       }
     }
   } else {
-    if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command))) {
+    if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command),
+                            kWorkerTimeout)) {
       MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
       return false;
     }
