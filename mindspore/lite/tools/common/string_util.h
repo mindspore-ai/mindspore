@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace lite {
-int EraseBlankSpace(std::string *input_string);
+int EraseBlankSpaceAndLineBreak(std::string *input_string);
 
 int EraseQuotes(std::string *input_string);
 

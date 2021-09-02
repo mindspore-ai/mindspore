@@ -55,7 +55,7 @@ int OneHotOpenCLKernel::Prepare() {
   }
   std::vector<std::string> build_options_ext;
   if (ocl_runtime_->GetFp16Enable()) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=write_imagei "};
+    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imagei "};
   } else {
     build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagei "};
   }
