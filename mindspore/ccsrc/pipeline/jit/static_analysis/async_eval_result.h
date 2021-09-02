@@ -63,18 +63,22 @@ class AnalysisSchedule {
     MS_LOG(DEBUG) << "The active thread count: " << activeThreadCount_;
     if (activeThreadCount_ == 0) {
       SetNextRunnableImpl();
+    } else if (activeThreadCount_ < 0) {
+      MS_LOG(ERROR) << "There is something wrong. active thread count: " << activeThreadCount_;
     }
   }
 
   void EnterWaiting() {
     std::lock_guard<std::mutex> lock(lock_);
     --activeThreadCount_;
+    MS_LOG(DEBUG) << this << " The active thread count: " << activeThreadCount_;
     Check();
   }
 
   void LeaveWaiting() {
     std::lock_guard<std::mutex> lock(lock_);
     ++activeThreadCount_;
+    MS_LOG(DEBUG) << this << " The active thread count: " << activeThreadCount_;
   }
 
   void Add2Schedule(const AsyncAbstractPtr &asyncAbastract) {
@@ -85,12 +89,18 @@ class AnalysisSchedule {
     std::lock_guard<std::mutex> lock(lock_);
     ++threadNum_;
     ++activeThreadCount_;
+    MS_LOG(DEBUG) << "The active thread count: " << activeThreadCount_;
   }
   void DecreaseThreadCount() {
-    std::lock_guard<std::mutex> lock(lock_);
-    --threadNum_;
-    --activeThreadCount_;
+    {
+      std::lock_guard<std::mutex> threadNumLock(lock_);
+      --threadNum_;
+    }
     condition_var_.notify_one();
+
+    std::lock_guard<std::mutex> activeLock(lock_);
+    --activeThreadCount_;
+    MS_LOG(DEBUG) << "The active thread count: " << activeThreadCount_;
     Check();
   }
 
@@ -207,24 +217,27 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
   // Wait
   AbstractBasePtr GetResult() {
     StaticAnalysisException::Instance().CheckException();
-    std::unique_lock<std::mutex> lock(lock_);
     while (true) {
       ++count_;
       // The active thread count should be dropped if it can't run. It will be added when it can run.
+      MS_LOG(DEBUG) << this << " continue runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
       bool hasEnterWaiting = false;
       if (!runnable_) {
         AnalysisSchedule::GetInstance().EnterWaiting();
         hasEnterWaiting = true;
       }
       MS_LOG(DEBUG) << this << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
-      condition_var_.wait(lock, [this] { return runnable_; });
+      {
+        std::unique_lock<std::mutex> lock(lock_);
+        condition_var_.wait(lock, [this] { return runnable_; });
+      }
       if (hasEnterWaiting) {
         AnalysisSchedule::GetInstance().LeaveWaiting();
       }
       MS_LOG(DEBUG) << this << " continue runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
 
       StaticAnalysisException::Instance().CheckException();
-      runnable_ = false;
+      SetUnrunnable();
       if (result_ != nullptr) {
         MS_LOG(DEBUG) << this << " Return  result: " << (result_ ? result_.get() : 0);
         return result_;
@@ -240,9 +253,17 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
 
   void SetRunnable() {
     MS_LOG(DEBUG) << this << " Runnable.";
-    runnable_ = true;
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      runnable_ = true;
+    }
     condition_var_.notify_one();
   }
+  void SetUnrunnable() {
+    std::lock_guard<std::mutex> lock(lock_);
+    runnable_ = false;
+  }
+
   int count() const { return count_; }
 
   bool HasResult() { return result_ != nullptr; }
