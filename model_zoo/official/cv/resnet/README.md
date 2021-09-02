@@ -56,7 +56,7 @@
 
 ResNet (residual neural network) was proposed by Kaiming He and other four Chinese of Microsoft Research Institute. Through the use of ResNet unit, it successfully trained 152 layers of neural network, and won the championship in ilsvrc2015. The error rate on top 5 was 3.57%, and the parameter quantity was lower than vggnet, so the effect was very outstanding. Traditional convolution network or full connection network will have more or less information loss. At the same time, it will lead to the disappearance or explosion of gradient, which leads to the failure of deep network training. ResNet solves this problem to a certain extent. By passing the input information to the output, the integrity of the information is protected. The whole network only needs to learn the part of the difference between input and output, which simplifies the learning objectives and difficulties.The structure of ResNet can accelerate the training of neural network very quickly, and the accuracy of the model is also greatly improved. At the same time, ResNet is very popular, even can be directly used in the concept net network.
 
-These are examples of training ResNet18/ResNet50/ResNet101/SE-ResNet50 with CIFAR-10/ImageNet2012 dataset in MindSpore.ResNet50 and ResNet101 can reference [paper 1](https://arxiv.org/pdf/1512.03385.pdf) below, and SE-ResNet50 is a variant of ResNet50 which reference  [paper 2](https://arxiv.org/abs/1709.01507) and [paper 3](https://arxiv.org/abs/1812.01187) below, Training SE-ResNet50 for just 24 epochs using 8 Ascend 910, we can reach top-1 accuracy of 75.9%.(Training ResNet101 with dataset CIFAR-10 and SE-ResNet50 with CIFAR-10 is not supported yet.)
+These are examples of training ResNet18/ResNet50/ResNet101/ResNet152/SE-ResNet50 with CIFAR-10/ImageNet2012 dataset in MindSpore.ResNet50 and ResNet101 can reference [paper 1](https://arxiv.org/pdf/1512.03385.pdf) below, and SE-ResNet50 is a variant of ResNet50 which reference  [paper 2](https://arxiv.org/abs/1709.01507) and [paper 3](https://arxiv.org/abs/1812.01187) below, Training SE-ResNet50 for just 24 epochs using 8 Ascend 910, we can reach top-1 accuracy of 75.9%.(Training ResNet101 with dataset CIFAR-10 and SE-ResNet50 with CIFAR-10 is not supported yet.)
 
 ## Paper
 
@@ -214,6 +214,7 @@ If you want to run in modelarts, please check the official documentation of [mod
     ├── resnet50_imagenet2012_config.yaml
     ├── resnet50_imagenet2012_GPU_Thor_config.yaml
     ├── resnet101_imagenet2012_config.yaml
+    ├── resnet152_imagenet2012_config.yaml
     └── se-resnet50_imagenet2012_config.yaml
   ├── scripts
     ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
@@ -332,6 +333,27 @@ Parameters for both training and evaluation can be set in config file.
 "use_label_smooth": True,         # label_smooth
 "label_smooth_factor": 0.1,       # label_smooth_factor
 "lr": 0.1                         # base learning rate
+```
+
+- Config for ResNet152, ImageNet2012 dataset
+
+```bash
+"class_num": 1001,                # dataset class number
+"batch_size": 32,                 # batch size of input tensor
+"loss_scale": 1024,               # loss scale
+"momentum": 0.9,                  # momentum optimizer
+"weight_decay": 1e-4,             # weight decay
+"epoch_size": 140,                # epoch size for training
+"save_checkpoint": True,          # whether save checkpoint or not
+"save_checkpoint_path":"./",      # the save path of the checkpoint relative to the execution path
+"save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
+"keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
+"warmup_epochs": 0,               # number of warmup epoch
+"lr_decay_mode": "steps"          # decay mode for generating learning rate
+"use_label_smooth": True,         # label_smooth
+"label_smooth_factor": 0.1,       # label_smooth_factor
+"lr": 0.1,                        # base learning rate
+"lr_end": 0.0001,                 # end learning rate
 ```
 
 - Config for SE-ResNet50, ImageNet2012 dataset
@@ -516,6 +538,18 @@ epoch: 5 step: 5004, loss is 3.1718972
 ...
 ```
 
+- Training ResNet152 with ImageNet2012 dataset
+
+```bash
+# 分布式训练结果（8P）
+epoch: 1 step: 5004, loss is 4.184874
+epoch: 2 step: 5004, loss is 4.013571
+epoch: 3 step: 5004, loss is 3.695777
+epoch: 4 step: 5004, loss is 3.3244863
+epoch: 5 step: 5004, loss is 3.4899402
+...
+```
+
 - Training SE-ResNet50 with ImageNet2012 dataset
 
 ```bash
@@ -604,6 +638,12 @@ result: {'top_1_accuracy': 0.736758814102564} ckpt=train_parallel0/resnet-90_625
 result: {'top_5_accuracy': 0.9429417413572343, 'top_1_accuracy': 0.7853513124199744} ckpt=train_parallel0/resnet-120_5004.ckpt
 ```
 
+- Evaluating ResNet152 with ImageNet2012 dataset
+
+```bash
+result: {'top_5_accuracy': 0.9438420294494239, 'top_1_accuracy': 0.78817221518} ckpt= resnet152-140_5004.ckpt
+```
+
 - Evaluating SE-ResNet50 with ImageNet2012 dataset
 
 ```bash
@@ -655,10 +695,10 @@ Current batch_Size can only be set to 1. The precision calculation process needs
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET]  [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET]  [DATA_PATH] [CONFIG_PATH] [DEVICE_ID]
 ```
 
-- `NET_TYPE` can choose from [resnet18, se-resnet50, resnet34, resnet50, resnet101].
+- `NET_TYPE` can choose from [resnet18, se-resnet50, resnet34, resnet50, resnet101, resnet152].
 - `DATASET` can choose from [cifar10, imagenet].
 - `DEVICE_ID` is optional, default value is 0.
 
@@ -693,13 +733,19 @@ Total data: 10000, top1 accuracy: 0.9310, top5 accuracy: 0.9980.
 - Evaluating ResNet50 with ImageNet2012 dataset
 
 ```bash
-Total data: 50000, top1 accuracy: 0.0.7696, top5 accuracy: 0.93432.
+Total data: 50000, top1 accuracy: 0.7696, top5 accuracy: 0.93432.
 ```
 
 - Evaluating ResNet101 with ImageNet2012 dataset
 
 ```bash
 Total data: 50000, top1 accuracy: 0.7871, top5 accuracy: 0.94354.
+```
+
+- Evaluating ResNet152 with ImageNet2012 dataset
+
+```bash
+Total data: 50000, top1 accuracy: 0.78625, top5 accuracy: 0.94358.
 ```
 
 - Evaluating SE-ResNet50 with ImageNet2012 dataset
@@ -834,6 +880,26 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | Checkpoint for Fine tuning | 343M (.ckpt file)                                         |343M (.ckpt file)     |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
 
+#### ResNet152 on ImageNet2012
+
+| Parameters | Ascend 910  |
+|---|---|
+| Model Version  | ResNet152  |
+| Resource  |  Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 |
+| uploaded Date  | 02/10/2021 (month/day/year) |
+| MindSpore Version  | 1.0.1 |
+| Dataset  |  ImageNet2012 |
+| Training Parameters   | epoch=140, steps per epoch=5004, batch_size = 32  |
+| Optimizer  | Momentum  |
+| Loss Function    |Softmax Cross Entropy |
+| outputs  | probability |
+| Loss | 1.7375104  |
+| Speed|47.47ms/step（8pcs） |
+| Total time   |  577 mins |
+| Parameters(M)   | 60.19 |
+| Checkpoint for Fine tuning | 462M（.ckpt file）  |
+| Scripts  | [Link](https://gitee.com/panpanrui/mindspore/tree/master/model_zoo/official/cv/resnet152)  |
+
 #### SE-ResNet50 on ImageNet2012
 
 | Parameters                 | Ascend 910
@@ -939,6 +1005,20 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | outputs             | probability                 | probability                 |
 | Accuracy            | 78.53%                      | 78.64%                      |
 | Model for inference | 171M (.air file)         |  |
+
+#### ResNet152 on ImageNet2012
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | ResNet152                   |
+| Resource            | Ascend 910; OS Euler2.8     |
+| Uploaded Date       | 09/01/2021 (month/day/year) |
+| MindSpore Version   | 1.4.0                       |
+| Dataset             | ImageNet2012                |
+| batch_size          | 32                          |
+| outputs             | probability                 |
+| Accuracy            | 78.60%                      |
+| Model for inference | 236M (.air file)            |
 
 #### SE-ResNet50 on ImageNet2012
 

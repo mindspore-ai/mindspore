@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 4 || $# -gt 5 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET] [DATA_PATH] [DEVICE_ID]
-    NET_TYPE can choose from [resnet18, resnet34, se-resnet50, resnet50, resnet101]
+if [[ $# -lt 5 || $# -gt 6 ]]; then
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET] [DATA_PATH] [CONFIG_PATH] [DEVICE_ID]
+    NET_TYPE can choose from [resnet18, resnet34, se-resnet50, resnet50, resnet101, resnet152]
     DATASET can choose from [cifar10, imagenet]
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
@@ -30,7 +30,7 @@ get_real_path(){
     fi
 }
 model=$(get_real_path $1)
-if [ $2 == 'resnet18' ] || [ $2 == 'resnet34' ] || [ $2 == 'se-resnet50' ] || [ $2 == 'resnet50' ] || [ $2 == 'resnet101' ]; then
+if [ $2 == 'resnet18' ] || [ $2 == 'resnet34' ] || [ $2 == 'se-resnet50' ] || [ $2 == 'resnet50' ] || [ $2 == 'resnet152' ] || [ $2 == 'resnet101' ]; then
   network=$2
 else
   echo "NET_TYPE can choose from [resnet18, se-resnet50]"
@@ -45,10 +45,11 @@ else
 fi
 
 data_path=$(get_real_path $4)
+config_path=$(get_real_path $5)
 
 device_id=0
-if [ $# == 5 ]; then
-    device_id=$5
+if [ $# == 6 ]; then
+    device_id=$6
 fi
 
 echo "mindir name: "$model
@@ -86,10 +87,7 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    BASE_PATH=$(dirname "$(dirname "$(readlink -f $0)")")
-    CONFIG_FILE="${BASE_PATH}/config/$1"
-
-    python3.7 ../preprocess.py --data_path=$data_path --output_path=./preprocess_Result --config_path=$CONFIG_FILE &> preprocess.log
+    python3.7 ../preprocess.py --data_path=$data_path --output_path=./preprocess_Result --config_path=$config_path &> preprocess.log
 }
 
 function infer()
@@ -109,10 +107,10 @@ function infer()
 function cal_acc()
 {
     if [ "x${dataset}" == "xcifar10" ] || [ "x${dataset}" == "xCifar10" ]; then
-        python ../postprocess.py --dataset=$dataset --label_path=./preprocess_Result/label --result_path=result_Files &> acc.log
+        python ../postprocess.py --dataset=$dataset --label_path=./preprocess_Result/label --result_path=result_Files --config_path=$config_path &> acc.log
     else
         python3.7 ../create_imagenet2012_label.py  --img_path=$data_path
-        python3.7 ../postprocess.py --dataset=$dataset --result_path=./result_Files --label_path=./imagenet_label.json  &> acc.log
+        python3.7 ../postprocess.py --dataset=$dataset --result_path=./result_Files --label_path=./imagenet_label.json --config_path=$config_path &> acc.log
     fi
     if [ $? -ne 0 ]; then
         echo "calculate accuracy failed"

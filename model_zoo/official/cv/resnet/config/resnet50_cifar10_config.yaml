@@ -19,7 +19,6 @@ checkpoint_file_path: ""
 optimizer: "Momentum"
 infer_label: ""
 class_num: 10
-train_image_size: 224
 batch_size: 32
 loss_scale: 1024
 momentum: 0.9
@@ -42,7 +41,6 @@ dataset: "cifar10"
 device_num: 1
 pre_trained: ""
 run_eval: False
-eval_image_size: 224
 eval_dataset_path: ""
 parameter_server: False
 filter_weight: False
@@ -58,15 +56,21 @@ dense_init: "TruncatedNormal"
 all_reduce_fusion_config:
     - 2
     - 115
+train_image_size: 224
+eval_image_size: 224
 
 # Export options
 device_id: 0
 width: 224
 height: 224
 file_name: "resnet50"
-file_format: "AIR"
+file_format: "MINDIR"
 ckpt_file: ""
 network_dataset: "resnet50_cifar10"
+
+# postprocess resnet inference
+result_path: ''
+label_path: ''
 
 ---
 # Help description for each configuration

@@ -19,26 +19,27 @@ checkpoint_file_path: ""
 optimizer: "Momentum"
 infer_label: ""
 class_num: 1001
-batch_size: 256
+batch_size: 32
 loss_scale: 1024
 momentum: 0.9
 weight_decay: 0.0001
-epoch_size: 90
+epoch_size: 140
 pretrain_epoch_size: 0
 save_checkpoint: True
 save_checkpoint_epochs: 5
 keep_checkpoint_max: 10
+save_checkpoint_path: "./"
 warmup_epochs: 0
-lr_decay_mode: "linear"
+lr_decay_mode: "step"
 use_label_smooth: True
 label_smooth_factor: 0.1
-lr_init: 0
-lr_max: 0.8
-lr_end: 0.0
+lr_init: 0.0
+lr_max: 0.1
+lr_end: 0.0001
 lars_epsilon: 0.0
 lars_coefficient: 0.001
 
-net_name: "resnet18"
+net_name: "resnet152"
 dataset: "imagenet2012"
 device_num: 1
 pre_trained: ""
@@ -55,6 +56,9 @@ mode_name: "GRAPH"
 acc_mode: "O0"
 conv_init: "XavierUniform"
 dense_init: "TruncatedNormal"
+all_reduce_fusion_config:
+    - 180
+    - 313
 train_image_size: 224
 eval_image_size: 224
 
@@ -62,14 +66,15 @@ eval_image_size: 224
 device_id: 0
 width: 224
 height: 224
-file_name: "resnet18"
+file_name: "resnet152"
 file_format: "MINDIR"
 ckpt_file: ""
-network_dataset: "resnet18_imagenet2012"
+network_dataset: "resnet152_imagenet2012"
 
 # postprocess resnet inference
 result_path: ''
 label_path: ''
+
 
 ---
 # Help description for each configuration
@@ -86,3 +91,5 @@ batch_size: "Batch size for training and evaluation"
 epoch_size: "Total training epochs."
 checkpoint_path: "The location of the checkpoint file."
 checkpoint_file_path: "The location of the checkpoint file."
+result_path: "result files path."
+label_path: "image file path."

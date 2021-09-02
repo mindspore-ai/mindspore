@@ -52,7 +52,7 @@
 
 残差神经网络（ResNet）由微软研究院何凯明等五位华人提出，通过ResNet单元，成功训练152层神经网络，赢得了ILSVRC2015冠军。ResNet前五项的误差率为3.57%，参数量低于VGGNet，因此效果非常显著。传统的卷积网络或全连接网络或多或少存在信息丢失的问题，还会造成梯度消失或爆炸，导致深度网络训练失败，ResNet则在一定程度上解决了这个问题。通过将输入信息传递给输出，确保信息完整性。整个网络只需要学习输入和输出的差异部分，简化了学习目标和难度。ResNet的结构大幅提高了神经网络训练的速度，并且大大提高了模型的准确率。正因如此，ResNet十分受欢迎，甚至可以直接用于ConceptNet网络。
 
-如下为MindSpore使用CIFAR-10/ImageNet2012数据集对ResNet18/ResNet50/ResNet101/SE-ResNet50进行训练的示例。ResNet50和ResNet101可参考[论文1](https://arxiv.org/pdf/1512.03385.pdf)，SE-ResNet50是ResNet50的一个变体，可参考[论文2](https://arxiv.org/abs/1709.01507)和[论文3](https://arxiv.org/abs/1812.01187)。使用8卡Ascend 910训练SE-ResNet50，仅需24个周期，TOP1准确率就达到了75.9%（暂不支持用CIFAR-10数据集训练ResNet101以及用用CIFAR-10数据集训练SE-ResNet50）。
+如下为MindSpore使用CIFAR-10/ImageNet2012数据集对ResNet18/ResNet50/ResNet101/ResNet152/SE-ResNet50进行训练的示例。ResNet50和ResNet101可参考[论文1](https://arxiv.org/pdf/1512.03385.pdf)，SE-ResNet50是ResNet50的一个变体，可参考[论文2](https://arxiv.org/abs/1709.01507)和[论文3](https://arxiv.org/abs/1812.01187)。使用8卡Ascend 910训练SE-ResNet50，仅需24个周期，TOP1准确率就达到了75.9%（暂不支持用CIFAR-10数据集训练ResNet101以及用用CIFAR-10数据集训练SE-ResNet50）。
 
 ## 论文
 
@@ -200,6 +200,7 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
     ├── resnet50_imagenet2012_config.yaml
     ├── resnet50_imagenet2012_GPU_Thor_config.yaml
     ├── resnet101_imagenet2012_config.yaml
+    ├── resnet152_imagenet2012_config.yaml
     ├── se-resnet50_imagenet2012_config.yaml
   ├── scripts
     ├── run_distribute_train.sh            # 启动Ascend分布式训练（8卡）
@@ -312,6 +313,27 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
 "use_label_smooth":True,         # 标签平滑
 "label_smooth_factor":0.1,       # 标签平滑因子
 "lr":0.1                         # 基础学习率
+```
+
+- 配置ResNet152和ImageNet2012数据集。
+
+```text
+"class_num":1001,                # 数据集类数
+"batch_size":32,                 # 输入张量的批次大小
+"loss_scale":1024,               # 损失等级
+"momentum":0.9,                  # 动量优化器
+"weight_decay":1e-4,             # 权重衰减
+"epoch_size":140,                # 训练周期大小
+"save_checkpoint":True,          # 是否保存检查点
+"save_checkpoint_epochs":5,      # 两个检查点之间的周期间隔；默认情况下，最后一个检查点将在最后一个周期完成后保存
+"keep_checkpoint_max":10,        # 只保存最后一个keep_checkpoint_max检查点
+"save_checkpoint_path":"./",     # 检查点相对于执行路径的保存路径
+"warmup_epochs":0,               # 热身周期数  
+"lr_decay_mode":"steps",         # 用于生成学习率的衰减模式
+"use_label_smooth":True,         # 标签平滑
+"label_smooth_factor":0.1,       # 标签平滑因子
+"lr":0.1,                        # 基础学习率
+"lr_end":0.0001,                 # 最终学习率
 ```
 
 - 配置SE-ResNet50和ImageNet2012数据集。
@@ -490,6 +512,18 @@ epoch:70 step:5004, loss is 1.8717369
 ...
 ```
 
+- 使用ImageNet2012数据集训练ResNet152
+
+```text
+# 分布式训练结果（8P）
+epoch: 1 step: 5004, loss is 4.184874
+epoch: 2 step: 5004, loss is 4.013571
+epoch: 3 step: 5004, loss is 3.695777
+epoch: 4 step: 5004, loss is 3.3244863
+epoch: 5 step: 5004, loss is 3.4899402
+...
+```
+
 - 使用ImageNet2012数据集训练SE-ResNet50
 
 ```text
@@ -544,31 +578,37 @@ result: {'acc': 0.7053685897435897} ckpt=train_parallel0/resnet-90_5004.ckpt
 
 - 使用CIFAR-10数据集评估ResNet50
 
-```text
+```bash
 result:{'acc':0.91446314102564111} ckpt=~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
 ```
 
 - 使用ImageNet2012数据集评估ResNet50
 
-```text
+```bash
 result:{'acc':0.7671054737516005} ckpt=train_parallel0/resnet-90_5004.ckpt
 ```
 
 - 使用ImageNet2012数据集评估ResNet34
 
-```text
+```bash
 result: {'top_1_accuracy': 0.736758814102564} ckpt=train_parallel0/resnet-90_625 .ckpt
 ```
 
 - 使用ImageNet2012数据集评估ResNet101
 
-```text
+```bash
 result:{'top_5_accuracy':0.9429417413572343, 'top_1_accuracy':0.7853513124199744} ckpt=train_parallel0/resnet-120_5004.ckpt
+```
+
+- 使用ImageNet2012数据集评估ResNet152
+
+```bash
+result: {'top_5_accuracy': 0.9438420294494239, 'top_1_accuracy': 0.78817221518} ckpt= resnet152-140_5004.ckpt
 ```
 
 - 使用ImageNet2012数据集评估SE-ResNet50
 
-```text
+```bash
 result:{'top_5_accuracy':0.9342589628681178, 'top_1_accuracy':0.768065781049936} ckpt=train_parallel0/resnet-24_5004.ckpt
 
 ```
@@ -615,10 +655,10 @@ ModelArts导出mindir
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET] [DATA_PATH] [CONFIG_PATH] [DEVICE_ID]
 ```
 
-- `NET_TYPE` 选择范围：[resnet18, resnet34, se-resnet50, resnet50, resnet101]。
+- `NET_TYPE` 选择范围：[resnet18, resnet34, se-resnet50, resnet50, resnet101, resnet152]。
 - `DATASET` 选择范围：[cifar10, imagenet]。
 - `DEVICE_ID` 可选，默认值为0。
 
@@ -640,31 +680,37 @@ Total data: 50000, top1 accuracy: 0.70668, top5 accuracy: 0.89698.
 
 - 使用CIFAR-10数据集评估ResNet50
 
-```text
+```bash
 Total data: 10000, top1 accuracy: 0.9310, top5 accuracy: 0.9980.
 ```
 
 - 使用ImageNet2012数据集评估ResNet50
 
-```text
+```bash
 Total data: 50000, top1 accuracy: 0.7696, top5 accuracy: 0.93432.
 ```
 
 - 使用ImageNet2012数据集评估ResNet34
 
-```text
+```bash
 Total data: 50000, top1 accuracy: 0.7367.
 ```
 
 - 使用ImageNet2012数据集评估ResNet101
 
-```text
+```bash
 Total data: 50000, top1 accuracy: 0.7871, top5 accuracy: 0.94354.
+```
+
+- 使用ImageNet2012数据集评估ResNet152
+
+```bash
+Total data: 50000, top1 accuracy: 0.78625, top5 accuracy: 0.94358.
 ```
 
 - 使用ImageNet2012数据集评估SE-ResNet50
 
-```text
+```bash
 Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 ```
 
@@ -793,6 +839,26 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | 参数(M)             | 44.6                                                        | 44.6 |
 | 微调检查点| 343M（.ckpt文件）                                         | 343M（.ckpt文件）     |
 |脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
+
+#### ImageNet2012上的ResNet152
+
+| 参数 | Ascend 910  |
+|---|---|
+| 模型版本  | ResNet152  |
+| 资源  |   Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 |
+| 上传日期  |2021-02-10 ;  |
+| MindSpore版本  | 1.0.1 |
+| 数据集  |  ImageNet2012 |
+| 训练参数  | epoch=140, steps per epoch=5004, batch_size = 32  |
+| 优化器  | Momentum  |
+| 损失函数  |Softmax交叉熵  |
+| 输出  | 概率 |
+|  损失 | 1.7375104  |
+|速度|47.47毫秒/步（8卡） |
+|总时长   |  577分钟 |
+|参数(M)   | 60.19 |
+|  微调检查点 | 462M（.ckpt文件）  |
+| 脚本  | [链接](https://gitee.com/panpanrui/mindspore/tree/master/model_zoo/official/cv/resnet152)  |
 
 #### ImageNet2012上的SE-ResNet50
 

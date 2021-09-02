@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""train resnet."""
+"""eval resnet."""
 import os
 from mindspore import context
 from mindspore.common import set_seed
@@ -25,13 +25,15 @@ from src.model_utils.moxing_adapter import moxing_wrapper
 
 set_seed(1)
 
-if config.net_name in ("resnet18", "resnet34", "resnet50"):
+if config.net_name in ("resnet18", "resnet34", "resnet50", "resnet152"):
     if config.net_name == "resnet18":
         from src.resnet import resnet18 as resnet
-    if config.net_name == "resnet34":
+    elif config.net_name == "resnet34":
         from src.resnet import resnet34 as resnet
-    if config.net_name == "resnet50":
+    elif config.net_name == "resnet50":
         from src.resnet import resnet50 as resnet
+    else:
+        from src.resnet import resnet152 as resnet
     if config.dataset == "cifar10":
         from src.dataset import create_dataset1 as create_dataset
     else:

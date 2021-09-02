@@ -18,27 +18,31 @@ checkpoint_file_path: ''
 # Training options
 optimizer: "Momentum"
 infer_label: ""
-train_image_size: 224
 batch_size: 256
 epoch_size: 2
 print_per_steps: 20
 eval: False
-eval_image_size: 224
 save_ckpt: False
 mode_name: "GRAPH"
 dtype: "fp16"
 acc_mode: "O0"
 conv_init: "XavierUniform"
 dense_init: "TruncatedNormal"
+train_image_size: 224
+eval_image_size: 224
 
 # Export options
 device_id: 0
 width: 224
 height: 224
 file_name: "resnet"
-file_format: "AIR"
+file_format: "MINDIR"
 ckpt_file: ""
 network_dataset: "resnet50_imagenet2012"
+
+# postprocess resnet inference
+result_path: ''
+label_path: ''
 
 ---
 # Help description for each configuration
