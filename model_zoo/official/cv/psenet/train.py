@@ -25,8 +25,8 @@ from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 from src.dataset import train_dataset_creator
-from src.ETSNET.etsnet import ETSNet
-from src.ETSNET.dice_loss import DiceLoss
+from src.PSENET.psenet import PSENet
+from src.PSENET.dice_loss import DiceLoss
 from src.network_define import WithLossCell, TrainOneStepCell, LossCallBack
 from src.lr_schedule import dynamic_lr
 from src.model_utils.config import config
@@ -95,7 +95,7 @@ def train():
     print('Create dataset done!')
 
     config.INFERENCE = False
-    net = ETSNet(config)
+    net = PSENet(config)
     net = net.set_train()
 
     if config.pre_trained:

@@ -20,7 +20,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 from src.model_utils.config import config
-from src.ETSNET.etsnet import ETSNet
+from src.PSENET.psenet import PSENet
 from src.model_utils.moxing_adapter import moxing_wrapper
 
 
@@ -37,7 +37,7 @@ if config.device_target == "Ascend":
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def model_export():
-    net = ETSNet(config)
+    net = PSENet(config)
     param_dict = load_checkpoint(config.ckpt)
     load_param_into_net(net, param_dict)
 

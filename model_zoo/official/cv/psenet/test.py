@@ -25,7 +25,7 @@ from mindspore import Tensor, context
 import mindspore.common.dtype as mstype
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.dataset import test_dataset_creator
-from src.ETSNET.etsnet import ETSNet
+from src.PSENET.psenet import PSENet
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
 
@@ -108,7 +108,7 @@ def test():
     ds = test_dataset_creator()
 
     config.INFERENCE = True
-    net = ETSNet(config)
+    net = PSENet(config)
     print(config.ckpt)
     param_dict = load_checkpoint(config.ckpt)
     load_param_into_net(net, param_dict)

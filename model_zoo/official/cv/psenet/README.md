@@ -176,7 +176,7 @@ bash scripts/run_eval_ascend.sh
 ## [Script and Sample Code](#contents)
 
 ```path
-└── PSENet  
+└── psenet  
  ├── export.py                           // export mindir file
  ├── postprocess.py                   // 310 Inference post-processing script
  ├── __init__.py
@@ -196,10 +196,10 @@ bash scripts/run_eval_ascend.sh
    ├──device_adapter.py     // Device Config
    ├──local_adapter.py      // local device config
   ├── dataset.py                      // creating dataset
-  ├── ETSNET  
+  ├── PSENET
    ├── base.py                     // convolution and BN operator
    ├── dice_loss.py                // calculate PSENet loss value
-   ├── etsnet.py                   // Subnet in PSENet
+   ├── psenet.py                   // Subnet in PSENet
    ├── fpn.py                      // Subnet in PSENet
    ├── __init__.py  
    ├── pse                         // Subnet in PSENet
@@ -434,7 +434,7 @@ dataset = dataset.create_dataset(cfg.data_path, 1, False)
 
 # Define model
 config.INFERENCE = False
-net = ETSNet(config)
+net = PSENet(config)
 net = net.set_train()
 param_dict = load_checkpoint(args.pre_trained)
 load_param_into_net(net, param_dict)
