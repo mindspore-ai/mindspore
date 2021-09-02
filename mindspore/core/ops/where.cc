@@ -29,16 +29,18 @@ AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
     MS_EXCEPTION_IF_NULL(input);
   }
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 3, op_name);
-  auto input0_type_ = input_args[0]->BuildType()->cast<TensorTypePtr>();
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                           op_name);
+  auto input0_type_ = input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(input0_type_);
   auto input0_type = input0_type_->element();
-  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto num = input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
-  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto num1 = input_args[1]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
-  auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  auto num2 = input_args[2]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
+  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto num = input_args[kInputIndex0]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
+  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto num1 = input_args[kInputIndex1]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
+  auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto num2 = input_args[kInputIndex2]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
   auto nummax = num > num1 ? num : (num1 > num2 ? num1 : num2);
   size_t axisout = 0;
   size_t temp = 0;

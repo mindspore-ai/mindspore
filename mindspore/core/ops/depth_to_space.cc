@@ -59,7 +59,8 @@ AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
   if (format == NHWC) {
     x_shape = {x_shape[0], x_shape[3], x_shape[1], x_shape[2]};
   }
-  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
+  const int64_t x_rank = 4;
+  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
   int64_t block_size = GetValue<int64_t>(primitive->GetAttr(kBlockSize));
   (void)CheckAndConvertUtils::CheckInteger("x_shape[1] % (block_size*block_size)",
                                            x_shape[1] % (block_size * block_size), kEqual, 0, prim_name);

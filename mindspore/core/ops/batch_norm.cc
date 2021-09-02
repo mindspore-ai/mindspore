@@ -73,17 +73,18 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   // Infer shape
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("batch_norm_infer", SizeToLong(input_args.size()), kEqual, 5, prim_name);
+  const int64_t input_num = 5;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
 
   auto input_x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
   if (format == NHWC) {
     input_x = {input_x[0], input_x[3], input_x[1], input_x[2]};
   }
-  auto scale = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto bias = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  auto mean = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
-  auto variance = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
+  auto scale = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto bias = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto mean = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto variance = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
 
   std::vector<int64_t> input_shape_norm;
   if (format == NCHW) {
@@ -106,19 +107,19 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   }
 
   // Infer type
-  auto scale_type = input_args[1]->BuildType()->cast<TensorTypePtr>()->element();
-  auto bias_type = input_args[2]->BuildType()->cast<TensorTypePtr>()->element();
+  auto scale_type = input_args[kInputIndex1]->BuildType()->cast<TensorTypePtr>()->element();
+  auto bias_type = input_args[kInputIndex2]->BuildType()->cast<TensorTypePtr>()->element();
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto input_x_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, prim_name);
   std::map<std::string, TypePtr> args;
-  args.emplace("scale", input_args[1]->BuildType());
-  args.emplace("bias", input_args[2]->BuildType());
+  args.emplace("scale", input_args[kInputIndex1]->BuildType());
+  args.emplace("bias", input_args[kInputIndex2]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   std::map<std::string, TypePtr> args_moving;
-  args_moving.emplace("scale", input_args[2]->BuildType());
-  args_moving.emplace("bias", input_args[3]->BuildType());
+  args_moving.emplace("scale", input_args[kInputIndex2]->BuildType());
+  args_moving.emplace("bias", input_args[kInputIndex3]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args_moving, valid_types, prim_name);
 
   auto output0 = std::make_shared<abstract::AbstractTensor>(input_x_type, input_x);

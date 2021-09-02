@@ -58,10 +58,10 @@ AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   CheckAndConvertUtils::Check("BatchNorm y_backprop_shape", y_backprop_shape, kEqual, "BatchNorm x_shape", x_shape);
 
-  auto dx = input_args[1]->Broaden();
-  auto dscale = input_args[2]->Broaden();
-  auto reserve_1 = input_args[3]->Broaden();
-  auto reserve_2 = input_args[4]->Broaden();
+  auto dx = input_args[kInputIndex1]->Broaden();
+  auto dscale = input_args[kInputIndex2]->Broaden();
+  auto reserve_1 = input_args[kInputIndex3]->Broaden();
+  auto reserve_2 = input_args[kInputIndex4]->Broaden();
 
   AbstractBasePtrList rets = {dx, dscale, dscale, reserve_1, reserve_2};
   return std::make_shared<abstract::AbstractTuple>(rets);

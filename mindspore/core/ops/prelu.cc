@@ -26,9 +26,10 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto w = input_args[1]->BuildShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x)[kShape];
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w)[kShape];
-
-  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kGreaterEqual, 2, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("weight rank", SizeToLong(w_shape.size()), kEqual, 1, prim_name);
+  const int64_t x_rank = 2;
+  const int64_t w_rank = 1;
+  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kGreaterEqual, x_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("weight rank", SizeToLong(w_shape.size()), kEqual, w_rank, prim_name);
   if (w_shape[0] != x_shape[1] && w_shape[0] != 1) {
     MS_LOG(EXCEPTION) << "For " << prim_name << ", channel of input_x and weight must be matched, "
                       << "while channel of input_x is " << x_shape[1] << ", weight_shape[0] is " << w_shape[0];

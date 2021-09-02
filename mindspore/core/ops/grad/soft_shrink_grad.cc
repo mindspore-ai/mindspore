@@ -32,7 +32,8 @@ namespace {
 abstract::ShapePtr SoftShrinkGradInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, primitive->name());
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, primitive->name());
   auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto prim_name = primitive->name();
@@ -56,7 +57,7 @@ TypePtr SoftShrinkGradInferType(const PrimitivePtr &prim, const std::vector<Abst
 AbstractBasePtr SoftShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(SoftShrinkGradInferType(primitive, input_args),
-                                                    SoftShrinkGradInferShape(primitive, input_args)->shape());
+                                                    SoftShrinkGradInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(SoftShrinkGrad, prim::kPrimSoftShrinkGrad, SoftShrinkGradInfer, nullptr, true);
 }  // namespace ops

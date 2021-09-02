@@ -24,9 +24,9 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const std::vector<AbstractBasePtr> &input_args) {
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto update_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto update_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("indices_shape[0] and update_shape[0]", indices_shape[0], kEqual,
                                            update_shape[0], "ScatterNdUpdate");
   return std::make_shared<abstract::Shape>(in_shape);
@@ -39,9 +39,9 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   const std::set<TypePtr> input_x_valid_types = {kTensorType};
   const std::set<TypePtr> indices_valid_types = {kInt32, kInt64};
   const std::set<TypePtr> update_valid_types = {kTensorType};
-  auto input_x_type = input_args[0]->BuildType();
-  auto indices_type = input_args[1]->BuildType();
-  auto update_type = input_args[2]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->BuildType();
+  auto indices_type = input_args[kInputIndex1]->BuildType();
+  auto update_type = input_args[kInputIndex2]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type, input_x_valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTypeValid("update type", update_type, update_valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_type, indices_valid_types, prim->name());
