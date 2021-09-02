@@ -52,18 +52,22 @@ function Run_cropper() {
         else
             run_result='cropper_lib: '${line}' failed'; echo ${run_result} >> "${run_cropper_result}"; return 1
         fi
-        
+
        "${ANDROID_NDK}"/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ -Wl,--whole-archive ./libmindspore-lite-${model_name}.a \
-       --target=aarch64-none-linux-android21 \
+       -Wl,--no-whole-archive --target=aarch64-none-linux-android21 \
        --gcc-toolchain="${ANDROID_NDK}"/toolchains/llvm/prebuilt/linux-x86_64 \
-       --sysroot="${ANDROID_NDK}"/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC -fPIC -fPIE -D_FORTIFY_SOURCE=2 \
-       -O2 -Wall  -fstack-protector-all -Wno-attributes -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual \
-       -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes \
-       -fno-addrsig -Wa,--noexecstack -Wformat -Werror=format-security   -O0 -std=c++17 -DARM64=1 -O2 -DNDEBUG  -s \
-       -Wl,--exclude-libs,libgcc.a -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,--warn-shared-textrel \
-       -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments -Wl,-z,noexecstack -Wl,--no-whole-archive -llog -latomic -lm \
+       --sysroot="${ANDROID_NDK}"/toolchains/llvm/prebuilt/linux-x86_64/sysroot \
+       -fPIC -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -Wno-attributes -Wno-deprecated-declarations -Wno-missing-braces \
+       -Wno-overloaded-virtual -std=c++17 -fPIC -fPIE -fstack-protector-strong -DANDROID -fdata-sections \
+       -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -fno-addrsig \
+       -Wa,--noexecstack -Wformat -Werror=format-security -fomit-frame-pointer -fstrict-aliasing \
+       -ffunction-sections -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-unused-private-field \
+       -O2 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s \
+       -Wl,--exclude-libs,libgcc.a -Wl,--exclude-libs,libatomic.a -static-libstdc++ -Wl,--build-id \
+       -Wl,--warn-shared-textrel -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments \
+       -Wl,-z,noexecstack \
        -L "${cropper_test_path}" -lhiai -lhiai_ir -lhiai_ir_build \
-       -shared -o libmindspore-lite.so -Wl,-soname,libmindspore-lite.so
+       -shared -Wl,-soname,libmindspore-lite.so -o libmindspore-lite.so -llog -ldl -latomic -lm
         
         if [ $? = 0 ]; then
             run_result='link_lib_to_so: '${line}' pass'; echo ${run_result} >> "${run_cropper_result}"
