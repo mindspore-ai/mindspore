@@ -29,11 +29,11 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   // check
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  int64_t x_rank = x_shape.size();
-  CheckAndConvertUtils::Check("x_rank", x_rank, kEqual, "index_rank", index_shape.size(), prim_name);
-  auto value_ptr = input_args[1]->BuildValue();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  int64_t x_rank = SizeToLong(x_shape.size());
+  CheckAndConvertUtils::Check("x_rank", x_rank, kEqual, "index_rank", SizeToLong(index_shape.size()), prim_name);
+  auto value_ptr = input_args[kInputIndex1]->BuildValue();
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto dim_v = GetValue<int64_t>(value_ptr);
   CheckAndConvertUtils::Check("dim value", dim_v, kGreaterEqual, "negative index_rank", -x_rank, prim_name);
@@ -66,8 +66,9 @@ AbstractBasePtr GatherDInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto prim_name = primitive->name();
   // check
   std::set<TypePtr> valid_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[2]->BuildType(), valid_types, prim_name);
-  (void)CheckAndConvertUtils::CheckSubClass("dim_type", input_args[1]->BuildType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[kInputIndex2]->BuildType(), valid_types,
+                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckSubClass("dim_type", input_args[kInputIndex1]->BuildType(), valid_types, prim_name);
   return abstract::MakeAbstract(GatherDInferShape(primitive, input_args), GatherDInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(GatherD, prim::kPrimGatherD, GatherDInfer, nullptr, true);

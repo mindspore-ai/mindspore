@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+#include "ops/gather.h"
+
 #include <set>
 #include <memory>
 #include <algorithm>
-#include "ops/gather.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -33,28 +35,30 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
   // check
   std::set<TypePtr> valid_params_types = {kTensorType};
-  (void)CheckAndConvertUtils::CheckSubClass("params_type", input_args[0]->BuildType(), valid_params_types, op_name);
+  (void)CheckAndConvertUtils::CheckSubClass("params_type", input_args[kInputIndex0]->BuildType(), valid_params_types,
+                                            op_name);
   std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[1]->BuildType(), int_types, op_name);
-  (void)CheckAndConvertUtils::CheckTypeValid("axis_type", input_args[2]->BuildType(), int_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[kInputIndex1]->BuildType(), int_types,
+                                                   op_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("axis_type", input_args[kInputIndex2]->BuildType(), int_types, op_name);
 
   bool ind_dyn = (!indices->shape()->min_shape().empty() && !indices->shape()->max_shape().empty());
   bool param_dyn = (!params->shape()->min_shape().empty() && !params->shape()->max_shape().empty());
   int64_t axis_val = 0;
   // 3rd input is a Tensor when Gather is a dynamic shape operator
-  if (input_args[2]->isa<abstract::AbstractTensor>()) {
-    auto axis = input_args[2]->cast<abstract::AbstractTensorPtr>();
+  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+    auto axis = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(axis);
     auto axis_value_ptr = axis->BuildValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
     auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(axis_tensor);
     axis_val = *static_cast<int64_t *>(axis_tensor->data_c());
-  } else if (input_args[2]->isa<abstract::AbstractScalar>()) {
-    auto axis = input_args[2]->cast<abstract::AbstractScalarPtr>();
+  } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
+    auto axis = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
     axis_val = GetValue<int64_t>(axis->BuildValue());
   } else {
-    MS_LOG(EXCEPTION) << "Invalid abstract type:" << input_args[2]->type_name();
+    MS_LOG(EXCEPTION) << "Invalid abstract type:" << input_args[kInputIndex2]->type_name();
   }
   auto params_shp = params->shape()->shape();
   auto indices_shp = indices->shape()->shape();

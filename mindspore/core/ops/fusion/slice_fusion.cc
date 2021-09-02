@@ -36,9 +36,9 @@ AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_shape_len = x_shape.size();
-  auto begin_v = input_args[1]->BuildValue();
-  auto size_v = input_args[2]->BuildValue();
-  auto x_type = input_args[0]->BuildType();
+  auto begin_v = input_args[kInputIndex1]->BuildValue();
+  auto size_v = input_args[kInputIndex2]->BuildValue();
+  auto x_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
   MS_EXCEPTION_IF_NULL(begin_v);
   MS_EXCEPTION_IF_NULL(size_v);

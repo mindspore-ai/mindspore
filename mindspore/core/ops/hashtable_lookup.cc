@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include <vector>
-
 #include "ops/hashtable_lookup.h"
+
+#include <vector>
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -32,7 +33,7 @@ AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const 
   (void)CheckAndConvertUtils::CheckInteger("logits size", SizeToLong(input.size()), kGreaterEqual, 1, op_name);
   hits_shape.push_back(input[0]);
 
-  auto value_type = input_args[2]->BuildType();
+  auto value_type = input_args[kInputIndex2]->BuildType();
   MS_EXCEPTION_IF_NULL(value_type);
   auto tensor_type = value_type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);

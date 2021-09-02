@@ -62,8 +62,8 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  MS_EXCEPTION_IF_NULL(input_args[1]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto input0 = input_args[0];
   auto input1 = input_args[1];
   auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input0->BuildShape())[kShape];
@@ -93,7 +93,7 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
     new_k = input1_shape[1];
   }
   if (has_bias) {
-    auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+    auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
     if (input2_shape[0] != input1_shape[0]) {
       MS_EXCEPTION(ValueError) << "Bias size is invalid";
     }

@@ -24,13 +24,13 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const std::vector<AbstractBasePtr> &input_args) {
-  auto shape_value = input_args[2]->BuildValue();
+  auto shape_value = input_args[kInputIndex2]->BuildValue();
   auto shape_value_element = GetValue<std::vector<int64_t>>(shape_value);
   for (const auto &shape : shape_value_element) {
     (void)CheckAndConvertUtils::CheckInteger("shape value", shape, kGreaterThan, 0, "ScatterNd");
   }
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto update_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto update_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("indices_shape[0] and update_shape[0]", indices_shape[0], kEqual,
                                            update_shape[0], "ScatterNd");
   return std::make_shared<abstract::Shape>(shape_value_element);

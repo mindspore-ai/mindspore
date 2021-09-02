@@ -37,7 +37,8 @@ AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const 
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 3, prim_name);
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -47,7 +48,8 @@ AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const 
   MS_EXCEPTION_IF_NULL(indices);
   const std::set<TypePtr> int_valid_types = {kInt8, kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices->BuildType(), int_valid_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("offset", input_args[2]->BuildType(), int_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("offset", input_args[kInputIndex2]->BuildType(), int_valid_types,
+                                                   prim_name);
   MS_EXCEPTION_IF_NULL(params->shape());
   auto params_shp = params->shape()->shape();
   MS_EXCEPTION_IF_NULL(indices->shape());

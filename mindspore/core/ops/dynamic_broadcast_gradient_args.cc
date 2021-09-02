@@ -55,7 +55,8 @@ size_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &pr
 abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   auto x_shape = CheckInputsAndGetShape(input_args[0], prim_name);
   auto y_shape = CheckInputsAndGetShape(input_args[1], prim_name);
 

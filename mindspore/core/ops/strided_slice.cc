@@ -173,18 +173,18 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto strided_slice_prim = primitive->cast<PrimStridedSlicePtr>();
   MS_EXCEPTION_IF_NULL(strided_slice_prim);
-  auto tuple_begin_v = input_args[1]->cast<abstract::AbstractTuplePtr>();
+  auto tuple_begin_v = input_args[kInputIndex1]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(tuple_begin_v);
   auto temp_begin_v = tuple_begin_v->BuildValue();
   MS_EXCEPTION_IF_NULL(temp_begin_v);
   auto begin_v = GetValue<std::vector<int64_t>>(temp_begin_v);
 
-  auto tuple_end_v = input_args[2]->cast<abstract::AbstractTuplePtr>();
+  auto tuple_end_v = input_args[kInputIndex2]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(tuple_end_v);
   auto temp_end_v = tuple_end_v->BuildValue();
   MS_EXCEPTION_IF_NULL(temp_end_v);
   auto end_v = GetValue<std::vector<int64_t>>(temp_end_v);
-  auto strides_v = CheckAndGetValidStrides(input_args[3]);
+  auto strides_v = CheckAndGetValidStrides(input_args[kInputIndex3]);
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];

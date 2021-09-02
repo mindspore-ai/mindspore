@@ -117,14 +117,14 @@ AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("detection_post_process_infer", SizeToLong(input_args.size()), kEqual, 3,
-                                           prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  MS_EXCEPTION_IF_NULL(input_args[1]);
-  MS_EXCEPTION_IF_NULL(input_args[2]);
-  auto boxes = input_args[0];
-  auto scores = input_args[1];
-  auto anchors = input_args[2];
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
+  auto boxes = input_args[kInputIndex0];
+  auto scores = input_args[kInputIndex1];
+  auto anchors = input_args[kInputIndex2];
   auto boxes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(boxes->BuildShape())[kShape];
   auto scores_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(scores->BuildShape())[kShape];
   auto anchors_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(anchors->BuildShape())[kShape];
