@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_NNACL_X86_64_AVX_COMMON_UTILS_H_
 #define MINDSPORE_NNACL_X86_64_AVX_COMMON_UTILS_H_
 
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
 #include <immintrin.h>
 #else
 #include <x86intrin.h>

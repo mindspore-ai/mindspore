@@ -24,7 +24,7 @@
 #endif
 
 #if defined(ENABLE_SSE) || defined(ENABLE_AVX)
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
 #include <immintrin.h>
 #define MS_F32X4_GETI(src, i) src.m128_f32[i]
 #else
@@ -224,13 +224,25 @@ static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
   MS_ST256_F32(output_ptr + 7 * num, dst##8);
 
 static inline MS_FLOAT32X8 MS_TANHX8_F32(MS_FLOAT32X8 src) {
-  static const float data[] = {378.0f, 17325.0f, 135135.0f, 28.0f, 3150.0f, 62370.0f};
+  static const MS_FLOAT32X8 data0 = {378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f};
+  static const MS_FLOAT32X8 data1 = {17325.0f, 17325.0f, 17325.0f, 17325.0f, 17325.0f, 17325.0f, 17325.0f, 17325.0f};
+  static const MS_FLOAT32X8 data2 = {135135.0f, 135135.0f, 135135.0f, 135135.0f,
+                                     135135.0f, 135135.0f, 135135.0f, 135135.0f};
+  static const MS_FLOAT32X8 data3 = {28.0f, 28.0f, 28.0f, 28.0f, 28.0f, 28.0f, 28.0f, 28.0f};
+  static const MS_FLOAT32X8 data4 = {3150.0f, 3150.0f, 3150.0f, 3150.0f, 3150.0f, 3150.0f, 3150.0f, 3150.0f};
+  static const MS_FLOAT32X8 data5 = {62370.0f, 62370.0f, 62370.0f, 62370.0f, 62370.0f, 62370.0f, 62370.0f, 62370.0f};
   static const MS_FLOAT32X8 neg = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
   static const MS_FLOAT32X8 pos = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-  MS_FLOAT32X8 square = src * src;
-  MS_FLOAT32X8 a = (((square + data[0]) * square + data[1]) * square + data[2]) * src;
-  MS_FLOAT32X8 b = ((data[3] * square + data[4]) * square + data[5]) * square + data[2];
-  return MS_MIN256_F32(MS_MAX256_F32(a / b, neg), pos);
+  MS_FLOAT32X8 square = MS_MUL256_F32(src, src);
+  MS_FLOAT32X8 a = MS_MUL256_F32(
+    MS_ADD256_F32(MS_MUL256_F32(MS_ADD256_F32(MS_MUL256_F32(MS_ADD256_F32(square, data0), square), data1), square),
+                  data2),
+    src);
+  MS_FLOAT32X8 b = MS_ADD256_F32(
+    MS_MUL256_F32(MS_ADD256_F32(MS_MUL256_F32(MS_ADD256_F32(MS_MUL256_F32(data3, square), data4), square), data5),
+                  square),
+    data2);
+  return MS_MIN256_F32(MS_MAX256_F32(MS_DIV256_F32(a, b), neg), pos);
 }
 #endif
 

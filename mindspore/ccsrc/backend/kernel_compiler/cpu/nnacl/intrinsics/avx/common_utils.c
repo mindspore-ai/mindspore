@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/intrinsics/avx/common_utils.h"
-#ifdef WIN32
-#ifdef ENABLE_AVX
 #include <stdint.h>
-#endif
-#endif
 
 __m128i _mm_adds_epi32(__m128i a, __m128i b) {
   __m128i int_min = _mm_set1_epi32(0x80000000);

@@ -31,7 +31,7 @@ asm_function ConvDwFp32Row
     pushq %rdi
     addq $48, %rsp
 
-#ifdef WIN32
+#ifdef _WIN32
     movq %rcx, %rdi // output_ptr
     movq %rdx, %rsi // input_ptr
     movq %r8, %rdx // weight_ptr

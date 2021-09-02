@@ -104,7 +104,7 @@ int Sigmoid(const float *src, int length, float *dst) {
   int i = 0;
 #if defined(ENABLE_AVX)
   for (; i <= length - 8; i += 8) {
-    simd_exp_avx(-(MS_LD256_F32(src + i)), dst + i);
+    simd_exp_avx(MS_SUB256_F32(MS_MOV256_F32(0.0f), (MS_LD256_F32(src + i))), dst + i);
     MS_ST256_F32(dst + i,
                  MS_DIV256_F32(MS_MOV256_F32(1.0f), MS_ADD256_F32(MS_MOV256_F32(1.0f), MS_LD256_F32(dst + i))));
   }
@@ -232,25 +232,32 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
   if (approximate) {
     // dst = 0.5 * x * (1 + tanh((2 / pi) ^ 0.5 * (x + 0.044715x^3)))
 #if defined(ENABLE_AVX)
+    MS_FLOAT32X8 para1 = MS_MOV256_F32(0.79788456080287f);
+    MS_FLOAT32X8 para2 = MS_MOV256_F32(0.035677408136f);
+    MS_FLOAT32X8 para3 = MS_MOV256_F32(1.0f);
+    MS_FLOAT32X8 para4 = MS_MOV256_F32(0.5f);
     int C8 = DOWN_ROUND(length, C8NUM);
     for (; i < C8; i += C8NUM) {
       MS_FLOAT32X8 in = MS_LD256_F32(src + i);
-      const MS_FLOAT32X8 res = 0.5 * in * (1.0 + MS_TANHX8_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
+      const MS_FLOAT32X8 res = MS_MUL256_F32(
+        MS_MUL256_F32(para4, in),
+        MS_ADD256_F32(
+          para3, MS_TANHX8_F32(MS_MUL256_F32(MS_ADD256_F32(para1, MS_MUL256_F32(MS_MUL256_F32(para2, in), in)), in))));
       MS_ST256_F32(dst + i, res);
     }
 #endif
 #if defined(ENABLE_SSE) || defined(ENABLE_ARM)
-    MS_FLOAT32X4 para1 = MS_MOVQ_F32(0.79788456080287f);
-    MS_FLOAT32X4 para2 = MS_MOVQ_F32(0.035677408136f);
-    MS_FLOAT32X4 para3 = MS_MOVQ_F32(1.0f);
-    MS_FLOAT32X4 para4 = MS_MOVQ_F32(0.5f);
+    MS_FLOAT32X4 para5 = MS_MOVQ_F32(0.79788456080287f);
+    MS_FLOAT32X4 para6 = MS_MOVQ_F32(0.035677408136f);
+    MS_FLOAT32X4 para7 = MS_MOVQ_F32(1.0f);
+    MS_FLOAT32X4 para8 = MS_MOVQ_F32(0.5f);
     int C4 = DOWN_ROUND(length, C4NUM);
     for (; i < C4; i += C4NUM) {
       MS_FLOAT32X4 in = MS_LDQ_F32(src + i);
       MS_FLOAT32X4 res = MS_MULQ_F32(
-        MS_MULQ_F32(para4, in),
-        MS_ADDQ_F32(para3,
-                    MS_TANHX4_F32(MS_MULQ_F32(MS_ADDQ_F32(para1, MS_MULQ_F32(MS_MULQ_F32(para2, in), in)), in))));
+        MS_MULQ_F32(para8, in),
+        MS_ADDQ_F32(para7,
+                    MS_TANHX4_F32(MS_MULQ_F32(MS_ADDQ_F32(para5, MS_MULQ_F32(MS_MULQ_F32(para6, in), in)), in))));
       MS_STQ_F32(dst + i, res);
     }
 #endif

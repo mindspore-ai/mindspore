@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 #ifdef ENABLE_AVX
+#ifdef _MSC_VER
+#include <immintrin.h>
+#else
 #include <x86intrin.h>
+#endif
 #include "nnacl/fp32/common_func_fp32.h"
 
 static inline __m256 padd(__m256 v0, __m256 v1, __m256 v2, __m256 v3) {

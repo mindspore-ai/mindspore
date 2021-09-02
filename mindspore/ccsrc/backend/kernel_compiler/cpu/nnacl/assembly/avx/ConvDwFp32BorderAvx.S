@@ -24,7 +24,7 @@ asm_function ConvDwFp32Border
     addq $96, %rsp
 
     movq %rdi, %rdx
-#ifdef WIN32
+#ifdef _WIN32
     movq %rcx, %rdx
 #endif
     movq 8(%rdx), %r12  // src
