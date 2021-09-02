@@ -88,7 +88,7 @@ class Evaluator:
             self.metric.update(output, mask)
             list_time.append(step_time)
 
-        pixAcc, mIoU = self.metric.get()
+        mIoU, pixAcc = self.metric.get()
 
         average_time = sum(list_time) / len(list_time)
 
