@@ -65,6 +65,8 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   bool SupportFP16();
 
+  nvinfer1::ITensor *SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor);
+
   static nvinfer1::ITensor *FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
   std::vector<TensorRTOp *> all_ops_{};
