@@ -207,7 +207,7 @@ class COCOHP(ds.Dataset):
             c = np.array([new_width // 2, new_height // 2], dtype=np.float32)
             s = np.array([inp_width, inp_height], dtype=np.float32)
         else:
-            inp_height, inp_width = self.data_opt.input_res[0], self.data_opt.input_res[1]
+            inp_height, inp_width = self.data_opt.input_res_test[0], self.data_opt.input_res_test[1]
             c = np.array([new_width / 2., new_height / 2.], dtype=np.float32)
             s = max(height, width) * 1.0
 
@@ -265,7 +265,7 @@ class COCOHP(ds.Dataset):
         width = img.shape[1]
         c = np.array([img.shape[1] / 2., img.shape[0] / 2.], dtype=np.float32)
         s = max(height, width) * 1.0
-        input_h, input_w = self.data_opt.input_res[0], self.data_opt.input_res[1]
+        input_h, input_w = self.data_opt.input_res_train[0], self.data_opt.input_res_train[1]
         rot = 0
 
         flipped = False

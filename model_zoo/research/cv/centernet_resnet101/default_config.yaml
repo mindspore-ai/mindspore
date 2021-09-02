@@ -34,7 +34,7 @@ data_sink_steps: -1
 save_checkpoint_path: ""
 load_checkpoint_path: ""
 save_checkpoint_steps: 458
-save_checkpoint_num: 3
+save_checkpoint_num: 1
 
 # val related
 data_dir: ""
@@ -47,11 +47,20 @@ export_load_ckpt: ''
 export_format: ''
 export_name: ''
 
+# 310 infer
+val_data_dir: ''
+predict_dir: ''
+result_path: ''
+label_path: ''
+meta_path: ''
+save_path: ''
+
 dataset_config:
     num_classes: 80
     max_objs: 128
-    input_res: [512, 512]
+    input_res_train: [512, 512]
     output_res: [128, 128]
+    input_res_test: [680, 680]
     rand_crop: True
     shift: 0.1
     scale: 0.4
@@ -216,7 +225,7 @@ eval_config:
                  0.50, 0.5, 0]
 
 export_config:
-    input_res: dataset_config.input_res
+    input_res: dataset_config.input_res_test
     ckpt_file: "./ckpt_file.ckpt"
     export_format: "MINDIR"
     export_name: "CenterNet_ObjectDetection"
