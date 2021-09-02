@@ -487,18 +487,18 @@ class AdamWeightDecay(Optimizer):
         lr = self.get_lr()
         if self.is_group:
             if self.is_group_lr:
-                optim_result = self.hyper_map_reverse(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
-                                                      lr, self.weight_decay, self.parameters, self.moments1,
-                                                      self.moments2, gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
+                                              lr, self.weight_decay, self.parameters, self.moments1,
+                                              self.moments2, gradients, self.decay_flags, self.optim_filter)
             else:
-                optim_result = self.hyper_map_reverse(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
-                                                      self.weight_decay, self.parameters, self.moments1, self.moments2,
-                                                      gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
+                                              self.weight_decay, self.parameters, self.moments1, self.moments2,
+                                              gradients, self.decay_flags, self.optim_filter)
         else:
-            optim_result = self.hyper_map_reverse(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
-                                                            self.weight_decay),
-                                                  self.parameters, self.moments1, self.moments2,
-                                                  gradients, self.decay_flags, self.optim_filter)
+            optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
+                                                    self.weight_decay),
+                                          self.parameters, self.moments1, self.moments2,
+                                          gradients, self.decay_flags, self.optim_filter)
         if self.use_parallel:
             self.broadcast_params(optim_result)
         return optim_result
