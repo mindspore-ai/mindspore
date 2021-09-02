@@ -61,13 +61,26 @@ def delete_profiling_files():
 
 def confirm_cpuutil(num_pipeline_ops):
     """
-    Confirm CPU utilization JSON file when <num_pipeline_ops> are in the pipeline
+    Confirm CPU utilization JSON file with <num_pipeline_ops> in the pipeline
     """
     with open(CPU_UTIL_FILE) as file1:
         data = json.load(file1)
         op_info = data["op_info"]
         # Confirm <num_pipeline_ops>+1 ops in CPU util file (including op_id=-1 for monitor thread)
         assert len(op_info) == num_pipeline_ops + 1
+
+
+def confirm_ops_in_pipeline(num_ops, op_list):
+    """
+    Confirm pipeline JSON file with <num_ops> are in the pipeline and the given list of ops
+    """
+    with open(PIPELINE_FILE) as file1:
+        data = json.load(file1)
+        op_info = data["op_info"]
+        # Confirm ops in pipeline file
+        assert len(op_info) == num_ops
+        for i in range(num_ops):
+            assert op_info[i]["op_type"] in op_list
 
 
 def test_profiling_simple_pipeline():
@@ -397,26 +410,6 @@ def test_profiling_cifar10_pipeline():
         delete_profiling_files()
 
 
-def confirm_3ops_in_pipeline():
-    with open(PIPELINE_FILE) as file1:
-        data = json.load(file1)
-        op_info = data["op_info"]
-        # Confirm 3 ops in pipeline file
-        assert len(op_info) == 3
-        for i in range(3):
-            assert op_info[i]["op_type"] in ("GeneratorOp", "BatchOp", "EpochCtrlOp")
-
-
-def confirm_2ops_in_pipeline():
-    with open(PIPELINE_FILE) as file1:
-        data = json.load(file1)
-        op_info = data["op_info"]
-        # Confirm 2 ops in pipeline file
-        assert len(op_info) == 2
-        for i in range(2):
-            assert op_info[i]["op_type"] in ("GeneratorOp", "BatchOp")
-
-
 def test_profiling_seq_pipelines_epochctrl3():
     """
     Test with these 2 sequential pipelines:
@@ -438,7 +431,8 @@ def test_profiling_seq_pipelines_epochctrl3():
             num_iter += 1
         assert num_iter == 2
 
-        confirm_3ops_in_pipeline()
+        # Confirm pipeline file and CPU util file each have 3 ops
+        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"])
         confirm_cpuutil(3)
 
         # Test B - Call create_dict_iterator with num_epochs=1
@@ -449,10 +443,8 @@ def test_profiling_seq_pipelines_epochctrl3():
             num_iter += 1
         assert num_iter == 2
 
-        # confirm_2ops_in_pipeline()
-        # MD BUG: Confirm pipeline file is not changed and wrongly still has 3 ops
-        confirm_3ops_in_pipeline()
-        # Confirm CPU util file has correct number of ops
+        # Confirm pipeline file and CPU util file each have 2 ops
+        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"])
         confirm_cpuutil(2)
 
     except Exception as error:
@@ -483,7 +475,8 @@ def test_profiling_seq_pipelines_epochctrl2():
             num_iter += 1
         assert num_iter == 4
 
-        confirm_2ops_in_pipeline()
+        # Confirm pipeline file and CPU util file each have 2 ops
+        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"])
         confirm_cpuutil(2)
 
         # Test B - Call create_dict_iterator with num_epochs>1
@@ -494,10 +487,8 @@ def test_profiling_seq_pipelines_epochctrl2():
             num_iter += 1
         assert num_iter == 4
 
-        # confirm_3ops_in_pipeline()
-        # MD BUG: Confirm pipeline file is not changed and wrongly still has 2 ops
-        confirm_2ops_in_pipeline()
-        # Confirm CPU util file has correct number of ops
+        # Confirm pipeline file and CPU util file each have 3 ops
+        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"])
         confirm_cpuutil(3)
 
     except Exception as error:
@@ -527,7 +518,8 @@ def test_profiling_seq_pipelines_repeat():
             num_iter += 1
         assert num_iter == 4
 
-        confirm_2ops_in_pipeline()
+        # Confirm pipeline file and CPU util file each have 2 ops
+        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"])
         confirm_cpuutil(2)
 
         # Test B - Add repeat op to pipeline.  Call create_dict_iterator with 3 ops in pipeline
@@ -537,10 +529,8 @@ def test_profiling_seq_pipelines_repeat():
             num_iter += 1
         assert num_iter == 20
 
-        # confirm_3ops_in_pipeline()
-        # MD BUG: Confirm pipeline file is not changed and wrongly still has 2 ops
-        confirm_2ops_in_pipeline()
-        # Confirm CPU util file has correct number of ops
+        # Confirm pipeline file and CPU util file each have 3 ops
+        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "RepeatOp"])
         confirm_cpuutil(3)
 
     except Exception as error:
