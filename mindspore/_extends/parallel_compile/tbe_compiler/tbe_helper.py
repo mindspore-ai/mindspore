@@ -224,9 +224,10 @@ def get_module_name(compute_op_info):
     :param compute_op_info:
     :return:
     """
+    dynamic_compile_static = compute_op_info["dynamic_compile_static"]
     unknown_shape = compute_op_info["unknown_shape"]
     op_module_name = compute_op_info["module_name"]
-    if unknown_shape:
+    if dynamic_compile_static or unknown_shape:
         op_module_name = op_module_name.split(".")[0] + ".dynamic." + op_module_name.split(".")[-1]
     return op_module_name
 

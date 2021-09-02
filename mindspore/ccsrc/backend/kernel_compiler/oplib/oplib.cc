@@ -41,6 +41,7 @@ constexpr auto kNeedCheckSupported = "need_check_supported";
 constexpr auto kBroadcast = "broadcast";
 constexpr auto kReduce = "reduce";
 constexpr auto kDynamicShape = "dynamic_shape";
+constexpr auto kDynamicCompileStatic = "dynamic_compile_static";
 constexpr auto kDtypeFormat = "dtype_format";
 constexpr auto kAttr = "attr";
 constexpr auto kIputs = "inputs";
@@ -119,6 +120,10 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
 
   if (obj.find(kDynamicShape) != obj.end()) {
     op_info->set_dynamic_shape(obj.at(kDynamicShape));
+  }
+
+  if (obj.find(kDynamicCompileStatic) != obj.end()) {
+    op_info->set_dynamic_compile_static_(obj.at(kDynamicCompileStatic));
   }
 
   if (obj.find(kIsDynamicFormat) != obj.end()) {
