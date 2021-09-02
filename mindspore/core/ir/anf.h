@@ -117,7 +117,7 @@ class AnfNode : public Base {
   virtual void accept(AnfIrVisitor *) {}
   FuncGraphPtr func_graph() const { return func_graph_.lock(); }
 
-  void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
+  virtual void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
 
   ScopePtr scope() { return scope_; }
   void set_scope(const ScopePtr &scope) { scope_ = scope; }
@@ -474,6 +474,10 @@ class ValueNode : public ANode {
   explicit ValueNode(const ValuePtr &value) : value_(value) {}
   ~ValueNode() override = default;
   MS_DECLARE_PARENT(ValueNode, ANode);
+
+  void set_func_graph(const FuncGraphPtr &func_graph) override {
+    MS_EXCEPTION(ValueError) << "ValueNode should not set its func_graph.";
+  }
 
   void accept(AnfIrVisitor *v) override;
   void set_value(const ValuePtr &value) { value_ = value; }
