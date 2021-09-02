@@ -195,6 +195,8 @@ class TensorData {
 
   std::string GetName() const { return this->name_; }
 
+  std::string GetTimeStamp() const { return this->time_stamp_; }
+
   size_t GetSlot() const { return this->slot_; }
 
   int GetExecutionOrder() const { return this->execution_order_; }
@@ -202,6 +204,8 @@ class TensorData {
   void SetExecutionOrder(int execution_order) { this->execution_order_ = execution_order; }
 
   void SetName(const std::string &name) { this->name_ = name; }
+
+  void SetTimeStamp(const std::string &time_stamp) { this->time_stamp_ = time_stamp; }
 
 #ifdef ONLINE_DBG_MODE
   void SetTensor(mindspore::tensor::TensorPtr out_tensor) { this->tensor_ptr_ = out_tensor; }
@@ -432,6 +436,8 @@ class TensorData {
   unsigned int root_graph_id_;
   bool is_output_;
   int execution_order_;
+  std::string time_stamp_;
+
 #ifdef ONLINE_DBG_MODE
   mindspore::tensor::TensorPtr tensor_ptr_;
 #endif

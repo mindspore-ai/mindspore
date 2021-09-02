@@ -46,60 +46,20 @@ def test_sync_read_tensors_base_stat():
     info4 = d.TensorInfo(node_name="invalid_name_for_test",
                          slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
 
-    tensor_info_1 = [info1]
-    tensor_info_2 = [info2]
-    tensor_info_3 = [info3]
-    tensor_info_4 = [info4]
     tensor_info = [info1, info2, info3, info4]
-    value_path = build_dump_structure([name1], [value_tensor], "Add", tensor_info_1)
-    inf_path = build_dump_structure([name2], [inf_tensor], "Inf", tensor_info_2)
-    nan_path = build_dump_structure([name3], [nan_tensor], "Nan", tensor_info_3)
-    inv_path = build_dump_structure([name4], [invalid_tensor], "Inv", tensor_info_4)
+    test_path = build_dump_structure([name1, name2, name3, name4],
+                                     [value_tensor, inf_tensor, nan_tensor, invalid_tensor],
+                                     "Test", tensor_info)
 
     debugger_backend = d.DbgServices(
-        dump_file_path=value_path, verbose=True)
+        dump_file_path=test_path, verbose=True)
 
     _ = debugger_backend.initialize(
-        net_name="Add", is_sync_mode=True)
+        net_name="Test", is_sync_mode=True)
 
-    debugger_backend_2 = d.DbgServices(
-        dump_file_path=inf_path, verbose=True)
-
-    _ = debugger_backend_2.initialize(
-        net_name="Inf", is_sync_mode=True)
-
-    debugger_backend_3 = d.DbgServices(
-        dump_file_path=nan_path, verbose=True)
-
-    _ = debugger_backend_3.initialize(
-        net_name="Nan", is_sync_mode=True)
-
-    debugger_backend_4 = d.DbgServices(
-        dump_file_path=inv_path, verbose=True)
-
-    _ = debugger_backend_4.initialize(
-        net_name="Inv", is_sync_mode=True)
-
-    tensor_base_data_list = debugger_backend.read_tensor_base(tensor_info_1)
-    tensor_base_data_list_2 = debugger_backend_2.read_tensor_base(tensor_info_2)
-    tensor_base_data_list.extend(tensor_base_data_list_2)
-    tensor_base_data_list_3 = debugger_backend_3.read_tensor_base(tensor_info_3)
-    tensor_base_data_list.extend(tensor_base_data_list_3)
-    tensor_base_data_list_4 = debugger_backend_4.read_tensor_base(tensor_info_4)
-    tensor_base_data_list.extend(tensor_base_data_list_4)
-
-    tensor_stat_data_list = debugger_backend.read_tensor_stats(tensor_info_1)
-    tensor_stat_data_list_2 = debugger_backend_2.read_tensor_stats(tensor_info_2)
-    tensor_stat_data_list.extend(tensor_stat_data_list_2)
-    tensor_stat_data_list_3 = debugger_backend_3.read_tensor_stats(tensor_info_3)
-    tensor_stat_data_list.extend(tensor_stat_data_list_3)
-    tensor_stat_data_list_4 = debugger_backend_4.read_tensor_stats(tensor_info_4)
-    tensor_stat_data_list.extend(tensor_stat_data_list_4)
-
-    shutil.rmtree(value_path)
-    shutil.rmtree(inf_path)
-    shutil.rmtree(nan_path)
-    shutil.rmtree(inv_path)
+    tensor_base_data_list = debugger_backend.read_tensor_base(tensor_info)
+    tensor_stat_data_list = debugger_backend.read_tensor_stats(tensor_info)
+    shutil.rmtree(test_path)
     print_read_tensors(tensor_info, tensor_base_data_list, tensor_stat_data_list)
     if not GENERATE_GOLDEN:
         assert compare_actual_with_expected(test_name)
