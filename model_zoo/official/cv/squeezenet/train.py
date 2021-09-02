@@ -76,15 +76,12 @@ def train_net():
                 gradients_mean=True)
         ckpt_save_dir = ckpt_save_dir + "/ckpt_" + str(
             get_rank()) + "/"
-    # obtain the actual batch_size
-    if not hasattr(config, "global_batch_size"):
-        raise AttributeError("'config' object has no attribute 'global_batch_size', please check the yaml file.")
-    batch_size = max(config.global_batch_size // device_num, 1)
+
     # create dataset
     dataset = create_dataset(dataset_path=config.data_path,
                              do_train=True,
                              repeat_num=1,
-                             batch_size=batch_size,
+                             batch_size=config.batch_size,
                              target=target)
     step_size = dataset.get_dataset_size()
 

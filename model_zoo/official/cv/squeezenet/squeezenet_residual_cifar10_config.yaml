@@ -21,7 +21,7 @@ checkpoint_file_path: "suqeezenet_residual_cifar10-150_195.ckpt"
 net_name: "suqeezenet_residual"
 dataset : "cifar10"
 class_num: 10
-global_batch_size: 32
+batch_size: 32
 loss_scale: 1024
 momentum: 0.9
 weight_decay: 0.0001
@@ -55,7 +55,7 @@ load_path: "The location of checkpoint for obs"
 device_target: "Target device type, available: [Ascend, GPU, CPU]"
 enable_profiling: "Whether enable profiling while training, default: False"
 num_classes: "Class for dataset"
-global_batch_size: "The total batch_size for training and evaluation."
+batch_size: "Batch_size for training, evaluation and export. If running distributed on gpu, divide this value by device_num."
 epoch_size: "Total training epochs."
 keep_checkpoint_max: "keep the last keep_checkpoint_max checkpoint"
 checkpoint_path: "The location of the checkpoint file."
