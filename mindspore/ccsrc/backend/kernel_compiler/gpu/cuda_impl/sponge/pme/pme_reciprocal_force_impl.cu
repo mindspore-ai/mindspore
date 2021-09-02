@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  PMEReciprocalForce. This is an experimental interface that is subject to change and/or deletion.
+ */
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/pme/pme_reciprocal_force_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/pme/pme_common.cuh"
-
-__global__ void PME_BCFQ(cufftComplex *PME_FQ, float *PME_BC, int PME_Nfft) {
-  int index = blockDim.x * blockIdx.x + threadIdx.x;
-  if (index < PME_Nfft) {
-    float tempf = PME_BC[index];
-    cufftComplex tempc = PME_FQ[index];
-    PME_FQ[index].x = tempc.x * tempf;
-    PME_FQ[index].y = tempc.y * tempf;
-  }
-}
 
 __global__ void PME_Final(int *PME_atom_near, const float *charge, const float *PME_Q, VECTOR *force,
                           const VECTOR *PME_frxyz, const UNSIGNED_INT_VECTOR *PME_kxyz,
@@ -92,9 +86,11 @@ void PMEReciprocalForce(int fftx, int ffty, int fftz, int atom_numbers, float be
   // initial end
   Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(
     3 * atom_numbers, reinterpret_cast<float *>(frc), 0.);
+
   PME_Atom_Near<<<atom_numbers / 32 + 1, 32, 0, stream>>>(
     uint_crd, PME_atom_near, PME_Nin, periodic_factor_inverse * fftx, periodic_factor_inverse * ffty,
     periodic_factor_inverse * fftz, atom_numbers, fftx, ffty, fftz, PME_kxyz, PME_uxyz, PME_frxyz);
+
   Reset_List<<<PME_Nall / 1024 + 1, 1024, 0, stream>>>(PME_Nall, PME_Q, 0);
 
   PME_Q_Spread<<<atom_numbers / thread_PME.x + 1, thread_PME, 0, stream>>>(PME_atom_near, charge, PME_frxyz, PME_Q,

@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/**
+ *Note:
+ *  RefreshUintCrd. This is an experimental interface that is subject to change and/or deletion.
+ */
 #include "backend/kernel_compiler/gpu/sponge/simple_constrain/refresh_uint_crd_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(refreshuintcrd,
+MS_REG_GPU_KERNEL_TWO(RefreshUintCrd,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)

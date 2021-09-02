@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  PMEReciprocalForce. This is an experimental interface that is subject to change and/or deletion.
+ */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_PME_PME_RECIPROCAL_FORCE_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_PME_PME_RECIPROCAL_FORCE_KERNEL_H_
 #include <cuda_runtime_api.h>
@@ -144,9 +148,8 @@ class PMEReciprocalForceGpuKernel : public GpuKernel {
 
  protected:
   void InitSizeLists() override {
-    input_size_list_.push_back(sizeof(VECTOR));
     input_size_list_.push_back(atom_numbers * sizeof(UNSIGNED_INT_VECTOR));
-    input_size_list_.push_back(atom_numbers * sizeof(VECTOR));
+    input_size_list_.push_back(atom_numbers * sizeof(float));
 
     workspace_size_list_.push_back(atom_numbers * sizeof(UNSIGNED_INT_VECTOR));
     workspace_size_list_.push_back(atom_numbers * sizeof(VECTOR));

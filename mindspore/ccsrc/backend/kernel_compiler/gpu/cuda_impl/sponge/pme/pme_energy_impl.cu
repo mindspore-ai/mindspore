@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  PMEEnergy. This is an experimental interface that is subject to change and/or deletion.
+ */
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/pme/pme_energy_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/pme/pme_common.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/common_sponge.cuh"
-
-__global__ void PME_Energy_Product(const int element_number, const float *list1, const float *list2, float *sum) {
-  if (threadIdx.x == 0) {
-    sum[0] = 0.;
-  }
-  __syncthreads();
-  float lin = 0.0;
-  for (int i = threadIdx.x; i < element_number; i = i + blockDim.x) {
-    lin = lin + list1[i] * list2[i];
-  }
-  atomicAdd(sum, lin);
-}
 
 __global__ void PME_Energy_Reciprocal(const int element_number, const cufftComplex *FQ, const float *BC, float *sum) {
   if (threadIdx.x == 0) {
@@ -41,56 +33,6 @@ __global__ void PME_Energy_Reciprocal(const int element_number, const cufftCompl
     lin = lin + (FQ_i.x * FQ_i.x + FQ_i.y * FQ_i.y) * BC[i];
   }
   atomicAdd(sum, lin);
-}
-
-__global__ void PME_Excluded_Energy_Correction(const int atom_numbers, const UNSIGNED_INT_VECTOR *uint_crd,
-                                               const VECTOR *sacler, const float *charge, const float pme_beta,
-                                               const float sqrt_pi, const int *excluded_list_start,
-                                               const int *excluded_list, const int *excluded_atom_numbers, float *ene) {
-  int atom_i = blockDim.x * blockIdx.x + threadIdx.x;
-  if (atom_i < atom_numbers) {
-    int excluded_number = excluded_atom_numbers[atom_i];
-    if (excluded_number > 0) {
-      int list_start = excluded_list_start[atom_i];
-      // int atom_min = excluded_list[list_start];
-      int list_end = list_start + excluded_number;
-      int atom_j;
-      int int_x;
-      int int_y;
-      int int_z;
-
-      float charge_i = charge[atom_i];
-      float charge_j;
-      float dr_abs;
-      float beta_dr;
-
-      UNSIGNED_INT_VECTOR r1 = uint_crd[atom_i], r2;
-      VECTOR dr;
-      float dr2;
-
-      float ene_lin = 0.;
-
-      for (int i = list_start; i < list_end; i = i + 1) {
-        atom_j = excluded_list[i];
-        r2 = uint_crd[atom_j];
-        charge_j = charge[atom_j];
-
-        int_x = r2.uint_x - r1.uint_x;
-        int_y = r2.uint_y - r1.uint_y;
-        int_z = r2.uint_z - r1.uint_z;
-        dr.x = sacler[0].x * int_x;
-        dr.y = sacler[0].y * int_y;
-        dr.z = sacler[0].z * int_z;
-        dr2 = dr.x * dr.x + dr.y * dr.y + dr.z * dr.z;
-
-        dr_abs = sqrtf(dr2);
-        beta_dr = pme_beta * dr_abs;
-
-        ene_lin -= charge_i * charge_j * erff(beta_dr) / dr_abs;
-      }
-      atomicAdd(ene, ene_lin);
-    }
-  }
 }
 
 void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *PME_BC, int *pme_uxyz,

@@ -15,16 +15,16 @@
  */
 /**
  *Note:
- *  ConstrainForceCycleWithVirial. This is an experimental interface that is subject to change and/or deletion.
+ *  LJForceWithVirialEnergy. This is an experimental interface that is subject to change and/or deletion.
  */
-
-#include "backend/kernel_compiler/gpu/sponge/simple_constrain/constrain_force_cycle_with_virial_kernel.h"
+#include "backend/kernel_compiler/gpu/sponge/lj/lj_direct_cf_force_with_lj_virial_direct_cf_energy_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_THREE(ConstrainForceCycleWithVirial,
+MS_REG_GPU_KERNEL_THREE(LJForceWithVirialEnergy,
                         KernelAttr()
                           .AddInputAttr(kNumberTypeUInt32)
+                          .AddInputAttr(kNumberTypeInt32)
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeInt32)
@@ -32,8 +32,8 @@ MS_REG_GPU_KERNEL_THREE(ConstrainForceCycleWithVirial,
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32)
+                          .AddOutputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
-                        ConstrainForceCycleWithVirialGpuKernel, float, int, unsigned int)
-
+                        LJForceWithVirialEnergyGpuKernel, float, int, unsigned int)
 }  // namespace kernel
 }  // namespace mindspore

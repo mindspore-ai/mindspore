@@ -15,21 +15,22 @@
  */
 /**
  *Note:
- *  RefreshCrdVel. This is an experimental interface that is subject to change and/or deletion.
+ *  PMEExcludedForceUpdate. This is an experimental interface that is subject to change and/or deletion.
  */
-
-#include "backend/kernel_compiler/gpu/sponge/simple_constrain/refresh_crd_vel_kernel.h"
+#include "backend/kernel_compiler/gpu/sponge/pme/pme_excluded_force_update_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(RefreshCrdVel,
+MS_REG_GPU_KERNEL_TWO(PMEExcludedForceUpdate,
                       KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      RefreshCrdVelGpuKernel, float, unsigned int)
-
+                      PMEExcludedForceUpdateGpuKernel, float, int)
 }  // namespace kernel
 }  // namespace mindspore

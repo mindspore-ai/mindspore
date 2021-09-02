@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  Constrain_Force_Cycle. This is an experimental interface that is subject to change and/or deletion.
+ */
 
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_SIMPLE_CONSTRAIN_CONSTRAIN_FORCE_CYCLE_IMPL_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_SIMPLE_CONSTRAIN_CONSTRAIN_FORCE_CYCLE_IMPL_H_
@@ -24,4 +28,5 @@ void Constrain_Force_Cycle(int atom_numbers, int constrain_pair_numbers, const u
                            const float *scaler_f, float *constrain_pair_f, const float *pair_dr_f,
                            const int *atom_i_serials, const int *atom_j_serials, const float *constant_rs,
                            const float *constrain_ks, float *test_frc_f, cudaStream_t stream);
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_SIMPLE_CONSTRAIN_CONSTRAIN_FORCE_CYCLE_WITH_VIRIAL_IMPL_H_
+
+#endif

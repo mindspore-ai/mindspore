@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *Note:
+ *  MDIterationLeapFrog. This is an experimental interface that is subject to change and/or deletion.
+ */
+
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_NVTIT_MD_ITERATION_LEAP_FROG_IMPL_H
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_NVTIT_MD_ITERATION_LEAP_FROG_IMPL_H
 
 #include <curand_kernel.h>
 #include "runtime/device/gpu/cuda_common.h"
 
-void MDIterationLeapFrog(const int float4_numbers, const int atom_numbers, const float half_dt, const float dt,
-                         const float exp_gamma, const int is_max_velocity, const float max_velocity,
-                         const float *d_mass_inverse, const float *d_sqrt_mass, float *vel_f, float *crd_f,
-                         float *frc_f, float *acc_f, cudaStream_t stream);
+void MDIterationLeapFrog(const int atom_numbers, float *vel, float *crd, float *frc, float *acc,
+                         const float *inverse_mass, const float dt, cudaStream_t stream);
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_NVTIT_MD_ITERATION_LEAP_FROG_IMPL_H
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_MD_ITERATION_LEAP_FROG_LIUJIAN_GPU_IMPL_H_
