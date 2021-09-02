@@ -275,6 +275,21 @@ int MindIRControlFlowAdjust::InsertPartialFusionForRawCall(const std::set<FuncGr
   return RET_OK;
 }
 
+int MindIRControlFlowAdjust::ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> all_func_graphs) {
+  MS_CHECK_TRUE_MSG(fg != nullptr, RET_NULL_PTR, "fg is nullptr.");
+  auto manager = fg->manager();
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_NULL_PTR, "manager is nullptr.");
+  manager->Clear();
+  manager->AddFuncGraph(fg, true);
+  for (auto &item : all_func_graphs) {
+    if (item == fg) {
+      continue;
+    }
+    manager->AddFuncGraph(item);
+  }
+  return RET_OK;
+}
+
 bool MindIRControlFlowAdjust::Run(const FuncGraphPtr &func_graph) {
   if (this->fmk_type_ != FmkType::kFmkTypeMs) {
     MS_LOG(INFO) << "The framework type of model should be MindIR.";
@@ -297,6 +312,12 @@ bool MindIRControlFlowAdjust::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "AddAfterFgForInlinedFg failed.";
     return false;
   }
+  ret = ResetFuncGraph(func_graph, all_func_graphs);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ResetFuncGraph failed.";
+    return false;
+  }
+
   if (status_ != RET_OK) {
     return false;
   }
