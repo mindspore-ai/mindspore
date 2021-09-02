@@ -127,16 +127,26 @@ class DebugServices {
     std::vector<parameter_t> parameter_list;
     size_t location = 0;
 
-    std::string FindQualifiedTensorName(const std::string &tensor_name) const {
+    std::string FindQualifiedTensorName(const std::string &tensor_name, unsigned const int &tensor_device_id,
+                                        unsigned const int &tensor_root_graph_id) const {
       std::string node_name = tensor_name.substr(0, tensor_name.find_first_of(':'));
+      int indx = 0;
       for (auto check_node : check_node_list) {
         std::string w_name = std::get<0>(check_node);
         bool w_type = std::get<1>(check_node);
         auto found = w_name.find_last_of('/');
-        if (found != std::string::npos && w_name.substr(found + 1) == tensor_name) return w_name;
-        if ((w_type && (node_name == w_name || w_name == "*")) || (!w_type && node_name == w_name)) {
-          return w_name;
+        bool check_tensor_name = found != std::string::npos && w_name.substr(found + 1) == tensor_name;
+        bool check_node_name = (w_type && (node_name == w_name || w_name == "*")) || (!w_type && node_name == w_name);
+        if (check_tensor_name || check_node_name) {
+          auto device_vec = std::get<1>(check_node_device_list[indx]);
+          auto root_graph_vec = std::get<1>(check_node_graph_list[indx]);
+          auto iter1 = std::find(device_vec.begin(), device_vec.end(), tensor_device_id);
+          auto iter2 = std::find(root_graph_vec.begin(), root_graph_vec.end(), tensor_root_graph_id);
+          if (iter1 != device_vec.end() && iter2 != root_graph_vec.end()) {
+            return w_name;
+          }
         }
+        indx++;
       }
       return {};
     }
@@ -216,8 +226,8 @@ class DebugServices {
                         const bool step_end, const bool recheck, std::vector<unsigned int> *device_id = nullptr,
                         std::vector<unsigned int> *root_graph_id = nullptr);
 
-  void AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, bool recheck, const std::string &tensor_name,
-                             const std::string &tensor_name_no_slot, bool *previous_iter_tensor_needed,
+  void AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, bool recheck,
+                             const std::shared_ptr<TensorData> &tensor, bool *previous_iter_tensor_needed,
                              std::string *qualified_tensor_name, std::vector<watchpoint_t> *watchpoints_to_check);
 
 #ifdef OFFLINE_DBG_MODE
