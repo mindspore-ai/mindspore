@@ -15,11 +15,8 @@
  */
 
 #include "nnacl/int8/add_int8.h"
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 #ifdef ENABLE_AVX
-#include <x86intrin.h>
 #include "nnacl/intrinsics/avx/common_utils.h"
 #endif
 #include "nnacl/int8/fixed_point.h"
@@ -319,8 +316,8 @@ void AddInt8_AVX2(const int8_t *input0, const int8_t *input1, int8_t *output, in
   const __m128i out_multiplier = _mm_set1_epi32(params->out_multiplier_);
   int index = 0;
   for (; index <= size - 16; index += 16) {
-    const __m128i in0_src = _mm_loadu_si128((__m128i_u *)(input0 + index));
-    const __m128i in1_src = _mm_loadu_si128((__m128i_u *)(input1 + index));
+    const __m128i in0_src = _mm_loadu_si128((__m128i *)(input0 + index));
+    const __m128i in1_src = _mm_loadu_si128((__m128i *)(input1 + index));
 
     const __m256i in0_s16 = _mm256_cvtepi8_epi16(in0_src);
     const __m128i in0_s16_low = _mm256_extractf128_si256(in0_s16, 0);
@@ -398,7 +395,7 @@ void AddInt8_AVX2(const int8_t *input0, const int8_t *input1, int8_t *output, in
     __m128i out = _mm_packs_epi16(out_s16_1, out_s16_2);
     __m128i int8_out = _mm_max_epi8(min_vec, _mm_min_epi8(max_vec, out));
 
-    _mm_storeu_si128((__m128i_u *)(output + index), int8_out);
+    _mm_storeu_si128((__m128i *)(output + index), int8_out);
   }
   for (; index < size; index++) {
     const int32_t in0_left = (input0[index] + params->in0_args_.zp_) * in0_left_shift;
@@ -452,7 +449,7 @@ void AddOptInt8_AVX2(const int8_t *ptr_in, const int8_t element_in, int8_t *outp
 
   int index = 0;
   for (; index <= size - 16; index += 16) {
-    const __m128i in0_src = _mm_loadu_si128((__m128i_u *)(ptr_in + index));
+    const __m128i in0_src = _mm_loadu_si128((__m128i *)(ptr_in + index));
     const __m256i in0_s16 = _mm256_cvtepi8_epi16(in0_src);
     const __m128i in0_s16_low = _mm256_extractf128_si256(in0_s16, 0);
     const __m128i in0_s16_high = _mm256_extractf128_si256(in0_s16, 1);
@@ -516,7 +513,7 @@ void AddOptInt8_AVX2(const int8_t *ptr_in, const int8_t element_in, int8_t *outp
     __m128i out = _mm_packs_epi16(out_s16_1, out_s16_2);
     __m128i int8_out = _mm_max_epi8(min_vec, _mm_min_epi8(max_vec, out));
 
-    _mm_storeu_si128((__m128i_u *)(output + index), int8_out);
+    _mm_storeu_si128((__m128i *)(output + index), int8_out);
   }
   for (; index < size; index++) {
     const int32_t in0_left = (ptr_in[index] + ptr_args->zp_) * in0_left_shift;

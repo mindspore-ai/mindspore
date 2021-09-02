@@ -15,19 +15,23 @@
  */
 
 #ifdef ENABLE_AVX
-
+#ifdef _MSC_VER
+#include <immintrin.h>
+#else
 #include <x86intrin.h>
+#endif
 #include "nnacl/fp32/conv_depthwise_fp32.h"
+
+#define INPUT_SIZE 25
 
 void ConvDwFp32Avx5x5(float *output, float **input, const float *weights, const float *bias, size_t channels,
                       size_t output_width, size_t input_stride, size_t relu, size_t relu6) {
   input_stride /= sizeof(float *);
   size_t c8 = UP_DIV(channels, C8NUM) * C8NUM;
   size_t c8_mod = channels % C8NUM;
-  const int kernel = 25;
+  float *in[INPUT_SIZE];
   for (int i = 0; i < output_width; ++i) {
-    float *in[kernel];
-    for (int k = 0; k < kernel; k++) {
+    for (int k = 0; k < INPUT_SIZE; k++) {
       in[k] = input[k];
     }
     input += input_stride;
@@ -37,7 +41,7 @@ void ConvDwFp32Avx5x5(float *output, float **input, const float *weights, const 
     for (; c >= C8NUM; c -= C8NUM) {
       __m256 out1 = _mm256_loadu_ps(bias1);
       bias1 += 8;
-      for (int k = 0; k < kernel; k += 5) {
+      for (int k = 0; k < INPUT_SIZE; k += 5) {
         __m256 in1 = _mm256_loadu_ps(in[k]);
         __m256 w1 = _mm256_loadu_ps(w);
         __m256 in2 = _mm256_loadu_ps(in[k + 1]);

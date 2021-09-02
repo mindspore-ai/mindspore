@@ -41,7 +41,7 @@ asm_function ConvDwFp32Avx3x3
     pushq %rdi  // -96
     addq $96, %rsp
 
-#ifdef WIN32
+#ifdef _WIN32
     movq %rcx, %rdi
     movq %rdx, %rsi
     movq %r8, %rdx

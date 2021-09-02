@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_NNACL_ADD_INT8_H_
 #define MINDSPORE_NNACL_ADD_INT8_H_
 
-#ifdef ENABLE_AVX
-#include <x86intrin.h>
-#endif
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/arithmetic.h"

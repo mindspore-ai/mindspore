@@ -15,7 +15,11 @@
  */
 #ifdef ENABLE_AVX
 #include "nnacl/fp32/conv_1x1_x86_fp32.h"
+#ifdef _MSC_VER
+#include <immintrin.h>
+#else
 #include <x86intrin.h>
+#endif
 
 // sliding window to compate 1x1 conv in x86
 void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,

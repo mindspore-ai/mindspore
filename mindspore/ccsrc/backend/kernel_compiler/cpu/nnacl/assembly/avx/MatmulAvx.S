@@ -47,7 +47,7 @@ asm_function MatmulFloatAvxOpt
     pushq %rsi  // -104  rsi
     pushq %rdi  // -112  rdi
     addq $112, %rsp
-#ifdef WIN32
+#ifdef _WIN32
     movq %rcx, %rdi
     movq %rdx, %rsi
     movq %r8, %rdx

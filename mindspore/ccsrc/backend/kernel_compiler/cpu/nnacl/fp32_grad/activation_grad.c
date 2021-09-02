@@ -116,7 +116,7 @@ int SoftplusGrad(const float *src0, const float *src1, int length, float *dst) {
   int i = 0;
 #if defined(ENABLE_AVX)
   for (; i <= length - C8NUM; i += C8NUM) {
-    simd_exp_avx(-(MS_LD256_F32(src1 + i)), dst + i);
+    simd_exp_avx(MS_SUB256_F32(MS_MOV256_F32(0.0f), (MS_LD256_F32(src1 + i))), dst + i);
     MS_ST256_F32(dst + i,
                  MS_DIV256_F32(MS_LD256_F32(src0 + i), MS_ADD256_F32(MS_MOV256_F32(1.0f), MS_LD256_F32(dst + i))));
   }

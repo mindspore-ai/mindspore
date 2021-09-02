@@ -17,7 +17,11 @@
 #include "nnacl/fp32/conv_common_fp32.h"
 #include <string.h>
 #ifdef ENABLE_AVX
+#ifdef _MSC_VER
+#include <immintrin.h>
+#else
 #include <x86intrin.h>
+#endif
 #endif
 #include "nnacl/fp32/matmul_fp32.h"
 

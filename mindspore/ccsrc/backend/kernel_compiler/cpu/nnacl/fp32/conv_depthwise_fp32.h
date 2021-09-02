@@ -105,7 +105,7 @@ void DepthwiseSWAvxFp32(float *output_data, const float *input_data, const float
 
 void DepthwiseBorderAvxFp32(float *dst, const float *src, const float *weight, const float *bias, int top, int left,
                             int right, const ConvParameter *conv_param, const SlidingWindowParam *sw_param,
-                            DepthwiseSWKernel kernel, int act_type, int ow_bock, int oc_block);
+                            const DepthwiseSWKernel kernel, int act_type, int ow_bock, int oc_block);
 
 void ConvDwFp32Avx3x3(float *output, float **input, const float *weights, const float *bias, size_t channels,
                       size_t output_width, size_t input_stride, size_t relu, size_t relu6);

@@ -47,7 +47,6 @@
 #include "nnacl/infer/string/custom_normalize_infer.h"
 #include "nnacl/infer/string/custom_predict_infer.h"
 #include "nnacl/infer/deconv2d_infer.h"
-#include "nnacl/infer/dedepthwise_conv2d_infer.h"
 #include "nnacl/infer/depth_to_space_infer.h"
 #include "nnacl/infer/depthwise_conv2d_infer.h"
 #include "nnacl/infer/detection_post_process_infer.h"
