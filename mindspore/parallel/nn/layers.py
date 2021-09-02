@@ -350,8 +350,14 @@ class FixedSparseAttention(nn.Cell):
                  parallel_config=default_dpmp_config):
         super(FixedSparseAttention, self).__init__()
         if not isinstance(parallel_config, OpParallelConfig):
-            raise ValueError(
+            raise TypeError(
                 f"The parallel_config should be a OpParallelConfig type, but found {type(parallel_config)}")
+        Validator.check_positive_int(batch_size, "batch_size")
+        Validator.check_positive_int(num_heads, "num_heads")
+        Validator.check_positive_int(size_per_head, "size_per_head")
+        Validator.check_positive_int(block_size, "block_size")
+        Validator.check_positive_int(seq_length, "seq_length")
+        Validator.check_positive_int(num_different_global_patterns, "num_different_global_patterns")
         dp, mp = parallel_config.data_parallel, parallel_config.model_parallel
         self.seq_length = seq_length
         self.batch_size = batch_size
