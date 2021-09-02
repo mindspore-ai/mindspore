@@ -3,12 +3,15 @@
         "storage_type": 1,
         "storage_file_path": "recovery.json"
     },
-    "server_cert_path": "server.crt",
-    "server_password": "server_password",
-    "crl_path": "server.crl",
-    "client_cert_path": "client.crt",
-    "client_password": "client_password",
+    "server_cert_path": "server.p12",
+    "crl_path": "",
+    "client_cert_path": "client.p12",
     "ca_cert_path": "ca.crt",
-    "Key_encrypt_decrypt_algorithm": "",
-    "node_id": 1
+    "cipher_list": "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK",
+    "cert_expire_warning_time_in_day": 90,
+    "connection_num": 10000,
+    "metrics": {
+        "storage_type": 1,
+        "storage_file_path": "metrics.json"
+    }
 }
