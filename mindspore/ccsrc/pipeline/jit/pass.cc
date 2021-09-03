@@ -191,8 +191,15 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
     {"ad_final_opt", bg_final_opt},
     {"zeros_like", fill_zeros_like},
   });
+
   if (pynative::PynativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
     map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
+    opt::OptPassConfig env_eliminate = opt::OptPassConfig({
+      irpass.incorporate_call_,
+      irpass.incorporate_call_switch_,
+      irpass.incorporate_getitem_set_,
+    });
+    map.emplace_back(std::make_pair("env_eliminate", env_eliminate));
   }
 
   auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", res, map);
