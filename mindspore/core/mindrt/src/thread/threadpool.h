@@ -64,6 +64,8 @@ class Worker {
   bool available();
   // assigns task first before running
   bool RunLocalKernelTask();
+  // set max spin count before running
+  void SetMaxSpinCount(int max_spin_count) { max_spin_count_ = max_spin_count; }
 
   void set_frequency(int frequency) { frequency_ = frequency; }
   int frequency() const { return frequency_; }
@@ -100,6 +102,7 @@ class Worker {
   float rhs_scale_{kMaxScale};
   int frequency_{kDefaultFrequency};
   int spin_count_{0};
+  int max_spin_count_{kDefaultSpinCount};
 };
 
 class ThreadPool {
@@ -118,6 +121,7 @@ class ThreadPool {
   void SetActorThreadNum(size_t actor_thread_num) { actor_thread_num_ = actor_thread_num; }
   void SetKernelThreadNum(size_t kernel_thread_num) { kernel_thread_num_ = kernel_thread_num; }
   size_t GetKernelThreadNum() const { return kernel_thread_num_; }
+  int SetMaxSpinCount(int max_spin_count);
 
  protected:
   ThreadPool() = default;

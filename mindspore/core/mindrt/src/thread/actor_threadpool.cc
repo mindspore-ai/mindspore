@@ -41,7 +41,7 @@ void ActorWorker::RunWithSpin() {
     } else {
       YieldAndDeactive();
     }
-    if (spin_count_ >= kDefaultSpinCount) {
+    if (spin_count_ >= max_spin_count_) {
       WaitUntilActive();
       spin_count_ = 0;
     }
