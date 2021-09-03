@@ -57,16 +57,42 @@ After installing MindSpore via the official website, you can start training and 
 
   ```python
   # run training example
-  # need set config_path in config.py file and set data_path in yaml file
-  python train.py > train.log 2>&1 &
+   # need set config_path in config.py file and set data_path in yaml file
+  python train.py --config_path [CONFIG_PATH] \
+                  --device_target [TARGET] \
+                  --data_path [DATA_PATH]> train.log 2>&1 &
   OR
-  sh scripts/run_train.sh dataset
+  sh scripts/run_train.sh [DATASET]
 
   # run evaluation example
   # need set config_path in config.py file and set data_path, checkpoint_file_path in yaml file
-  python eval.py > eval.log 2>&1 &
+  python eval.py --config_path [CONFIG_PATH] \
+                 --device_target [TARGET] \
+                 --checkpoint_file_path [CKPT_FILE] \
+                 --data_path [DATA_PATH] > eval.log 2>&1 &
   OR
-  sh scripts/run_eval.sh checkpoint_file_path dataset
+  sh scripts/run_eval.sh [CKPT_FILE] [DATASET]
+  ```
+
+- running on GPU
+
+  ```python
+  # run training example
+  # need set config_path in config.py file and set data_path in yaml file
+  python train.py --config_path [CONFIG_PATH] \
+                  --device_target GPU \
+                  --data_path [DATA_PATH]> train.log 2>&1 &
+  OR
+  sh scripts/run_train_gpu.sh [DATASET] [DATA_PATH]
+
+  # run evaluation example
+  # need set config_path in config.py file and set data_path, checkpoint_file_path in yaml file
+  python eval.py --config_path [CONFIG_PATH] \
+                 --device_target GPU \
+                 --checkpoint_file_path [CKPT_FILE] \
+                 --data_path [DATA_PATH] > eval.log 2>&1 &
+  OR
+  sh scripts/run_eval.sh [CKPT_FILE] [DATASET] [DATA_PATH]
   ```
 
 If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
@@ -114,6 +140,8 @@ If you want to run in modelarts, please check the official documentation of [mod
         │   ├── run_eval.sh               // shell script for evaluation on Ascend
         │   ├── run_train_cpu.sh          // shell script for training on CPU
         │   ├── run_eval_cpu.sh           // shell script for evaluation on CPU
+        │   ├── run_train_gpu.sh          // shell script for training on GPU
+        │   ├── run_eval_gpu.sh           // shell script for evaluation on GPU
         ├── src
         │   ├── dataset.py                // Processing dataset
         │   ├── textcnn.py                // textcnn architecture
@@ -160,10 +188,25 @@ For more configuration details, please refer the script `*.yaml`.
 - running on Ascend/CPU
 
   ```python
-  # need set config_path in config.py file and set data_path in yaml file
-  python train.py > train.log 2>&1 &
+  # `CONFIG_PATH` `DATA_PATH` `DATASET` `DEVICE_TARGET` parameters need to be passed externally or modified yaml file
+  # `DATASET` must choose from ['MR', 'SUBJ', 'SST2']"
+  python train.py --config_path [CONFIG_PATH] \
+                  --device_target [DEVICE_TARGET] \
+                  --data_path [DATA_PATH]> train.log 2>&1 &
   OR
-  bash scripts/run_train.sh dataset
+  bash scripts/run_train.sh [DATASET]
+  ```
+
+- running on GPU
+
+  ```python
+  # `CONFIG_PATH` `DATA_PATH` `DATASET` parameters need to be passed externally or modified yaml file
+  # `DATASET` must choose from ['MR', 'SUBJ', 'SST2']"
+  python train.py --config_path [CONFIG_PATH] \
+                  --device_target GPU \
+                  --data_path [DATA_PATH]> train.log 2>&1 &
+  OR
+  bash scripts/run_train.sh [DATASET] [DATA_PATH]
   ```
 
   The python command above will run in the background, you can view the results through the file `train.log`.
@@ -186,10 +229,27 @@ For more configuration details, please refer the script `*.yaml`.
   Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "username/textcnn/ckpt/train_textcnn.ckpt".
 
   ```python
-  # need set config_path and set data_path in yaml file, checkpoint_file_path in yaml file
-  python eval.py > eval.log 2>&1 &
+  # `CONFIG_PATH` `DEVICE_TARGET` `CKPT_FILE` `DATA_PATH` `DATASET` parameters need to be passed externally or modified yaml file
+  # `DATASET` must choose from ['MR', 'SUBJ', 'SST2']"
+  python eval.py --config_path [CONFIG_PATH] \
+                 --device_target [DEVICE_TARGET] \
+                 --checkpoint_file_path [CKPT_FILE] \
+                 --data_path [DATA_PATH] > eval.log 2>&1 &
   OR
-  bash scripts/run_eval.sh checkpoint_file_path dataset
+  bash scripts/run_eval.sh [CKPT_FILE] [DATASET]
+  ```
+
+- evaluation on movie review dataset when running on GPU
+
+  ```python
+  # `CONFIG_PATH` `CKPT_FILE` `DATA_PATH` `DATASET` parameters need to be passed externally or modified yaml file
+  # `DATASET` must choose from ['MR', 'SUBJ', 'SST2']"
+  python eval.py --config_path [CONFIG_PATH] \
+                 --device_target GPU \
+                 --checkpoint_file_path [CKPT_FILE] \
+                 --data_path [DATA_PATH] > eval.log 2>&1 &
+  OR
+  bash scripts/run_eval_gpu.sh [CKPT_FILE] [DATASET] [DATA_PATH]
   ```
 
   The above python command will run in the background. You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:
