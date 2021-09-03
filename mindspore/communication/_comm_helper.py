@@ -15,6 +15,7 @@
 """comm_helper"""
 
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
+from mindspore import log as logger
 from ._hccl_management import load_lib as hccl_load_lib
 
 _HCCL_AVAILABLE = False
@@ -102,6 +103,11 @@ class GlobalComm:
     INITED = False
     CHECK_ENVS = True
 
+class _ExistingGroup:
+    """
+    The communication groups which exist in the progress.
+    """
+    ITEMS = {}
 
 def is_hccl_available():
     """
@@ -375,6 +381,13 @@ def _create_group_helper(group, rank_ids, backend):
         TypeError: If rank_ids is not a list.
         ValueError: If rank_ids size is not larger than 1 or rank_ids has duplicate data or backend is invalid.
     """
+    if group in _ExistingGroup.ITEMS.keys():
+        if rank_ids != _ExistingGroup.ITEMS[group]:
+            raise ValueError("The group {} has been created, the rank_list is {}, "
+                             "but current rank_list for the group is {}".
+                             format(group, _ExistingGroup.ITEMS[group], rank_ids))
+        logger.warning("%r group has existed.", group)
+        return
     if backend == Backend.HCCL:
         if not isinstance(rank_ids, list):
             raise TypeError("Rank_ids {} should be list".format(rank_ids))
@@ -390,6 +403,7 @@ def _create_group_helper(group, rank_ids, backend):
         raise RuntimeError("Nccl doesn't support create_group now.")
     else:
         raise ValueError("Invalid backend: '{}'".format(backend))
+    _ExistingGroup.ITEMS[group] = rank_ids
 
 
 @check_parameter_available
