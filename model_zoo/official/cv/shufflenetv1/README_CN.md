@@ -62,8 +62,11 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
   ├─README_CN.md                              # ShuffleNetV1相关描述
   ├─scripts
     ├─run_standalone_train.sh                 # Ascend环境下的单卡训练脚本
+    ├─run_standalone_train_gpu.sh             # GPU环境下的单卡训练脚本
     ├─run_distribute_train.sh                 # Ascend环境下的八卡并行训练脚本
+    ├─run_distribute_train_gpu.sh             # GPU环境下的八卡并行训练脚本
     ├─run_eval.sh                             # Ascend环境下的评估脚本
+    ├─run_eval_gpu.sh                             # GPU环境下的评估脚本
     ├─run_infer_310.sh                        # Ascend 310 推理shell脚本
   ├─src
     ├─dataset.py                              # 数据预处理
@@ -76,6 +79,7 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
       ├──local_adapter.py                     # 设备相关信息
       ├──moxing_adapter.py                    # 装饰器(主要用于ModelArts数据拷贝)
   ├─default_config.yaml                       # 参数文件
+  ├─gpu_default_config.yaml                   # GPU参数文件
   ├─train.py                                  # 网络训练脚本
   ├─export.py                                 # 模型格式转换脚本
   ├─eval.py                                   # 网络评估脚本
@@ -107,6 +111,8 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
 'momentum': 0.9                     # Momentum中的动量参数
 ```
 
+如需获取更多信息，Ascend请查看`default_config.yaml`, GPU请查看`gpu_default_config.yaml`.
+
 ## 训练过程
 
 ### 启动
@@ -115,12 +121,35 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
 
 ```shell
 # 训练示例
+- running on Ascend with default parameters
+
   python:
       Ascend单卡训练示例：python train.py --train_dataset_path [DATA_DIR]
 
   shell:
+<<<<<<< HEAD
       Ascend八卡并行训练: sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATA_DIR]
       Ascend单卡训练示例: sh scripts/run_standalone_train.sh [DEVICE_ID] [DATA_DIR]
+
+- running on GPU with gpu default parameters
+
+  python:
+      GPU单卡训练示例：python train.py --config_path [CONFIG_PATH] --device_target [DEVICE_TARGET]
+      GPU八卡训练示例：
+          export RANK_SIZE=8
+          mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
+          python train.py --config_path [CONFIG_PATH] \
+                          --train_dataset_path [TRAIN_DATA_DIR] \
+                          --is_distributed=True \
+                          --device_target=GPU > log.txt 2>&1 &
+
+  shell:
+      GPU单卡训练示例: sh scripts/run_standalone_train_gpu.sh [DEVICE_ID] [DATA_DIR]
+      GPU八卡并行训练: sh scripts/run_distribute_train_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
+=======
+      Ascend八卡并行训练: bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATA_DIR]
+      Ascend单卡训练示例: bash scripts/run_standalone_train.sh [DEVICE_ID] [DATA_DIR]
+>>>>>>> fe806b7430... update bash
 ```
 
   分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -148,15 +177,20 @@ epoch time: 99864.092, per step time: 79.827, avg loss: 3.442
 您可以使用python或shell脚本进行评估。
 
 ```shell
-# 评估示例
+# Ascend评估示例
   python:
       python eval.py --eval_dataset_path [DATA_DIR] --ckpt_path [PATH_CHECKPOINT]
 
   shell:
-      sh scripts/run_eval.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
-```
+      bash scripts/run_eval.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
 
-> 训练过程中可以生成ckpt文件。
+# GPU评估示例
+  python:
+      python eval.py --config_path [CONFIG_PATH] --eval_dataset_path [DATA_DIR] --ckpt_path [PATH_CHECKPOINT]
+
+  shell:
+      sh scripts/run_eval_gpu.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
+```
 
 ### 结果
 
@@ -272,21 +306,21 @@ Densenet121网络使用ImageNet推理得到的结果如下:
 
 ## 训练性能
 
-| 参数                        | Ascend                                |
-| -------------------------- | ------------------------------------- |
-| 模型名称                    | ShuffleNetV1                           |
-| 运行环境                    | Ascend 910；系统 Euler2.8                            |
-| 上传时间                    | 2020-12-3                             |
-| MindSpore 版本             | 1.0.0                                 |
-| 数据集                      | imagenet                              |
-| 训练参数                    | src/config.py                         |
-| 优化器                      | Momentum                              |
-| 损失函数                    | SoftmaxCrossEntropyWithLogits         |
-| 最终损失                    | 2.05                                  |
-| 精确度 (8p)                 | Top1[73.9%], Top5[91.4%]               |
-| 训练总时间 (8p)             | 7.0h                                    |
-| 评估总时间                  | 99s                                    |
-| 参数量 (M)                 | 44M                                   |
+| 参数                        | Ascend                                | GPU                                |
+| -------------------------- | ------------------------------------- | -------------------------- |
+| 模型名称                    | ShuffleNetV1                           | ShuffleNetV1                           |
+| 运行环境                    | Ascend 910；系统 Euler2.8               | Tesla V100；系统 Euler2.8                            |
+| 上传时间                    | 2020-12-3                             | 2021-07-15                            |
+| MindSpore 版本             | 1.0.0                                 | 1.3.0                                 |
+| 数据集                      | imagenet                              | imagenet                              |
+| 训练参数                    | default_config.yaml                    | gpu_default_config.yaml                |
+| 优化器                      | Momentum                              | Momentum                              |
+| 损失函数                    | SoftmaxCrossEntropyWithLogits         | SoftmaxCrossEntropyWithLogits         |
+| 最终损失                    | 2.05                                  | 2.04                                  |
+| 精确度 (8p)                 | Top1[73.9%], Top5[91.4%]               | Top1[73.8%], Top5[91.4%]               |
+| 训练总时间 (8p)             | 7.0h                                    | 20.0h                                    |
+| 评估总时间                  | 99s                                    | 58s                                    |
+| 参数量 (M)                 | 44M                                   | 51.3M                                   |
 | 脚本                       | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/shufflenetv1) |
 
 # 随机情况的描述
