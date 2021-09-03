@@ -158,12 +158,10 @@ PatternNodePtr PatternTree::BuildTree(const std::string &pattern_str) {
       }
       cur_node->AddInput(BuildTree(op_inputs));
       return cur_node;
-
     } else {
       return std::make_shared<PatternNode>(pattern_str);
     }
   }
-
   return nullptr;
 }
 
@@ -276,7 +274,6 @@ bool DfsMatchGraph(const graphkernel::NodePtr &tmp_node, const PatternNodePtr &t
           return false;
         }
       }
-
     } else {
       for (size_t i = 0; i < tmp_pattern_inputs.size(); i++) {
         if (!DfsMatchGraph(tmp_node_inputs[i], tmp_pattern_inputs[i], para_to_ref, const_to_ref, res)) {
@@ -387,7 +384,6 @@ class ExtraReduce1PatternTree : public PatternTree {
       for (auto &i : GetValue<std::vector<int64_t>>(first_reduce->attrs().find("axis")->second)) {
         axis_set.insert(i);
       }
-
     } else {
       auto first_axis = GetValue<std::vector<int64_t>>(first_reduce->attrs().find("axis")->second);
       auto second_axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
@@ -538,7 +534,6 @@ std::unordered_map<std::string, std::vector<PatternTreePtr>> GetExpressions() {
   std::unordered_set<std::string> enable_ids{flags.enable_simplify_exprs_only.begin(),
                                              flags.enable_simplify_exprs_only.end()};
   std::unordered_set<std::string> disable_ids{flags.disable_simplify_exprs.begin(), flags.disable_simplify_exprs.end()};
-
   for (auto &e : expressions) {
     if (!enable_ids.empty()) {
       if (enable_ids.count(std::to_string(e.id)) == 0) continue;
@@ -640,33 +635,29 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   expressions_map_ = GetExpressions();
   for (auto node : func_graph->GetOrderedCnodes()) {
     if (AnfAlgo::IsGraphKernel(node)) {
-      try {
-        auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-        graphkernel::LiteGraphPtr lg = AnfGraph2LiteGraph(sub_graph);
-        bool find_pattern = true;
-        bool change_anf_graph = false;
-        while (find_pattern) {
-          find_pattern = false;
-          find_pattern = DoArithmeticTrans(lg) || find_pattern;
-          find_pattern = DoConstantFold(lg) || find_pattern;
-          change_anf_graph = change_anf_graph || find_pattern;
-        }
-        if (!change_anf_graph) continue;
-        ReorganizeEmptyGraph(lg);
-        AnfNodePtrList outputs;
-        auto new_funcgraph = LiteGraph2AnfGraph(lg, &outputs);
-        new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
-        auto cnode = node->cast<CNodePtr>();
-        AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
-        EliminateRedundantParameters(new_funcgraph, &inputs);
-        auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs, outputs);
-        SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
-        mng->Replace(node, new_node);
-        mng->AddFuncGraph(new_funcgraph);
-        do_simplify = true;
-      } catch (const graphkernel::GKException &e) {
-        MS_LOG(WARNING) << e.what() << ", so we undo airthmetic simplify for this graph";
+      auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+      graphkernel::LiteGraphPtr lg = AnfGraph2LiteGraph(sub_graph);
+      bool find_pattern = true;
+      bool change_anf_graph = false;
+      while (find_pattern) {
+        find_pattern = false;
+        find_pattern = DoArithmeticTrans(lg) || find_pattern;
+        find_pattern = DoConstantFold(lg) || find_pattern;
+        change_anf_graph = change_anf_graph || find_pattern;
       }
+      if (!change_anf_graph) continue;
+      ReorganizeEmptyGraph(lg);
+      AnfNodePtrList outputs;
+      auto new_funcgraph = LiteGraph2AnfGraph(lg, &outputs);
+      new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+      auto cnode = node->cast<CNodePtr>();
+      AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
+      EliminateRedundantParameters(new_funcgraph, &inputs);
+      auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs, outputs);
+      SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
+      mng->Replace(node, new_node);
+      mng->AddFuncGraph(new_funcgraph);
+      do_simplify = true;
     }
   }
   return do_simplify;

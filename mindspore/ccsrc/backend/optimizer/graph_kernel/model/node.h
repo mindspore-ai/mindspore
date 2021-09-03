@@ -152,15 +152,6 @@ class OutputNode : public Node {
   void Dump(std::ostringstream &os) const override { ; }
   NType NodeType() override { return NType::Output; }
 };
-
-class GKException : public std::exception {
- public:
-  explicit GKException(const std::string &message) : msg_(message) {}
-  const char *what() const noexcept override { return msg_.c_str(); }
-
- protected:
-  std::string msg_;
-};
 }  // namespace graphkernel
 }  // namespace opt
 }  // namespace mindspore
