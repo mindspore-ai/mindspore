@@ -632,11 +632,12 @@ std::string AscendKernelRuntime::GetDumpPath() {
 
   auto ms_om_path = common::GetEnv("MS_OM_PATH");
   std::string path;
+  const auto kSuffix = "/node_dump";
   if (ms_om_path.empty()) {
-    MS_LOG(WARNING) << "MS_OM_PATH is null, so dump to process local path, as ./rank_id/...";
-    path = "./rank_" + std::to_string(rank_id);
+    MS_LOG(WARNING) << "MS_OM_PATH is null, so dump to process local path, as ./rank_id/node_dump/...";
+    path = "./rank_" + std::to_string(rank_id) + kSuffix;
   } else {
-    path = ms_om_path + "/rank_" + std::to_string(rank_id);
+    path = ms_om_path + "/rank_" + std::to_string(rank_id) + kSuffix;
   }
   return path;
 }
