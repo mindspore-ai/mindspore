@@ -24,7 +24,7 @@ namespace opt {
 class ToNCHWFormat : public ToFormatBase {
  public:
   explicit ToNCHWFormat(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false)
-      : ToFormatBase(fmk_type, train_flag, "to_nchw_format") {
+      : ToFormatBase(fmk_type, train_flag, "ToNCHWFormat") {
     format_ = mindspore::NCHW;
   }
   ~ToNCHWFormat() = default;

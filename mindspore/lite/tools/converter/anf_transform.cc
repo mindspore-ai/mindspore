@@ -73,7 +73,6 @@
 #include "include/registry/pass_registry.h"
 #include "tools/optimizer/fisson/multi_conv_split_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
-#include "tools/optimizer/format/delete_redundant_transpose.h"
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include "tools/converter/acl/acl_pass.h"
@@ -343,7 +342,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
   if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
     MS_LOG(WARNING) << "Run infershape opt pass failed.";
   } else {
-    if (!RunOptimizerPass(old_graph, {"DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
+    if (!RunOptimizerPass(old_graph, {"DecreaseTransposeAlgo"})) {
       MS_LOG(ERROR) << "Run transpose opt pass failed.";
       return nullptr;
     }
@@ -371,18 +370,22 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     }
   }
 
-  if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
-    MS_LOG(WARNING) << "Run infershape opt pass failed.";
-  } else {
-    if (!RunOptimizerPass(old_graph, {"DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
-      MS_LOG(ERROR) << "Run transpose opt pass failed.";
-      return nullptr;
-    }
-  }
-
   if (!RunExternalPass(old_graph, registry::POSITION_END)) {
     MS_LOG(ERROR) << "Run external pass failed, place is END";
     return nullptr;
+  }
+
+  if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
+    MS_LOG(WARNING) << "Run infershape opt pass failed.";
+    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat"})) {
+      MS_LOG(ERROR) << "specify the input format of exported model failed.";
+      return nullptr;
+    }
+  } else {
+    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "DecreaseTransposeAlgo"})) {
+      MS_LOG(ERROR) << "Run transpose opt pass failed.";
+      return nullptr;
+    }
   }
 
   status = RunGraphPass(old_graph, config);
@@ -403,10 +406,6 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
-  if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat"})) {
-    MS_LOG(ERROR) << "Run transpose opt pass failed.";
-    return nullptr;
-  }
   return old_graph;
 }
 
