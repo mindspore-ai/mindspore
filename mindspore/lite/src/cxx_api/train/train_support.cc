@@ -87,6 +87,7 @@ std::shared_ptr<session::LiteSession> CreateTrainSession(std::shared_ptr<Graph::
 class TrainSupport {
  public:
   TrainSupport() { CreateTrainSessionCallbackHolder(CreateTrainSession); }
+  ~TrainSupport() {}
 };
 
 TrainSupport support_train_api;
