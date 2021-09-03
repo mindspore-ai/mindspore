@@ -300,6 +300,8 @@ class FeedForward(Cell):
                  parallel_config=default_dpmp_config):
         super(FeedForward, self).__init__()
         _check_config(parallel_config)
+        Validator.check_positive_int(hidden_size, "hidden_size")
+        Validator.check_positive_int(ffn_hidden_size, "ffn_hidden_size")
         if not isinstance(hidden_act, str):
             raise ValueError(f"The hidden_act should be a str type, but found {type(hidden_act)}")
         if not isinstance(parallel_config, OpParallelConfig):
@@ -580,6 +582,10 @@ class MultiHeadAttention(Cell):
         self.tgt_seq_length = tgt_seq_length
         self.hidden_size = hidden_size
         self.batch_size = batch_size
+        Validator.check_positive_int(num_heads, "num_heads")
+        Validator.check_positive_int(batch_size, "batch_size")
+        Validator.check_positive_int(src_seq_length, "src_seq_length")
+        Validator.check_positive_int(tgt_seq_length, "tgt_seq_length")
         Validator.check_positive_int(num_heads, "num_heads")
         if hidden_dropout_rate < 0 or hidden_dropout_rate >= 1:
             raise ValueError("hidden_dropout_rate probability should be a number in range [0, 1.0), "

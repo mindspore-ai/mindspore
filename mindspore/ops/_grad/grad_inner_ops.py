@@ -116,10 +116,6 @@ def get_bprop(self):
         d_lc, d_gc = d_out
         dq, dk = inner.MatmulDDSGrad()(q, k, lc, gc, d_lc, d_gc)
         dk = P.Transpose()(dk, (1, 0, 3, 2))
-        # local_mask = 0
-        # d_local_mask = local_mask
-        # global_mask = 0
-        # d_global_mask = global_mask
-        all_d = (dq, dk, None, None)
+        all_d = (dq, dk, zeros_like(local_mask), zeros_like(global_mask))
         return all_d
     return bprop

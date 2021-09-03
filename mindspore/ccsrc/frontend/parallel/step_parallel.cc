@@ -3172,6 +3172,11 @@ bool IsInsertVirtualOutput(const FuncGraphPtr &root) {
   int32_t per_stage_device_num = comm_info.device_num / split_stage_num;
   int32_t current_stage = comm_info.global_rank / per_stage_device_num;
   MS_LOG(INFO) << "The current stage is: " << current_stage;
+  if (!root->has_flag(TRAINING) && !ParallelContext::GetInstance()->dataset_strategy().empty()) {
+    MS_LOG(WARNING) << "In eval/predict net, the output parallel strategy would not follow "
+                       "the input parallel strategy when using context.set_auto_parallel_context(dataset_strategy)"
+                       " to configure the input strategy.";
+  }
   return (!root->has_flag(TRAINING) && ParallelContext::GetInstance()->dataset_strategy().empty() &&
           current_stage == split_stage_num - 1);
 }
