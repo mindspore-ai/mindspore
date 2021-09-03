@@ -49,7 +49,7 @@ __global__ void ResizeBilinear(const T *input, const int n, const int c, const i
 }
 
 // fp16 path
-__global__ void ResizeBilinearGrad(const float *input, const int n, const int c, const int input_h, const int input_w,
+__global__ void ResizeBilinearGrad(const half *input, const int n, const int c, const int input_h, const int input_w,
   const int output_h, const int output_w, const int nchw, const int chw, const int hw, const float h_scale,
   const float w_scale, half *output, float *interim) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += blockDim.x * gridDim.x) {
@@ -67,11 +67,11 @@ __global__ void ResizeBilinearGrad(const float *input, const int n, const int c,
     const float w_beta = 1.0f - w_alpha;
     const float h_alpha = posh_scaled - h_low;
     const float h_beta = 1.0f - h_alpha;
-    const float grad = input[pos];
-    const float dp1 = h_beta * w_beta * grad;
-    const float dp2 = h_beta * w_alpha * grad;
-    const float dp3 = h_alpha * w_beta * grad;
-    const float dp4 = h_alpha * w_alpha * grad;
+    const half grad = input[pos];
+    const half dp1 = static_cast<half>(h_beta * w_beta) * grad;
+    const half dp2 = static_cast<half>(h_beta * w_alpha) * grad;
+    const half dp3 = static_cast<half>(h_alpha * w_beta) * grad;
+    const half dp4 = static_cast<half>(h_alpha * w_alpha) * grad;
     const int output_start = output_h * output_w * (posn * c  + posc);
     atomicAdd(&interim[output_start + (h_low * output_w) + w_low], dp1);
     atomicAdd(&interim[output_start + (h_low * output_w) + w_high], dp2);
@@ -133,7 +133,7 @@ void CalResizeBilinear(const T *input, const int n, const int c, const int input
   return;
 }
 
-void CalResizeBilinearGrad(const float *input, const int n, const int c, const int input_h, const int input_w,
+void CalResizeBilinearGrad(const half *input, const int n, const int c, const int input_h, const int input_w,
   const int output_h, const int output_w, const float h_scale, const float w_scale, half *output, float *interim,
   cudaStream_t cuda_stream) {
   const int hw = input_h * input_w;
