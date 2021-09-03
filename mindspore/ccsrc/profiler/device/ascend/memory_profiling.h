@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace profiler {
+namespace ascend {
 class NodeMemory {
  public:
   NodeMemory() : node_name_(""), node_id_(0) {}
@@ -121,6 +122,7 @@ class MemoryProfiling {
   std::map<uint32_t, std::shared_ptr<GraphMemory>> graph_memory_;
   uint64_t device_mem_size_;
 };
+}  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
 #endif

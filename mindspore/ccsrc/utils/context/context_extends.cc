@@ -31,6 +31,8 @@
 #ifdef ENABLE_GE
 #include "transform/graph_ir/df_graph_manager.h"
 #endif
+#include "profiler/device/profiling.h"
+
 namespace py = pybind11;
 
 namespace mindspore {
@@ -162,9 +164,14 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
   (*ge_options)["ge.exec.dumpMode"] = "output";
   MS_LOG(INFO) << "The enable dump state is " << std::to_string(ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_DUMP))
                << " and save dump path is " << ms_context_ptr->get_param<std::string>(MS_CTX_SAVE_DUMP_PATH) << ".";
-  (*ge_options)["ge.exec.profilingMode"] = std::to_string(ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_PROFILING));
-  if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_PROFILING)) {
-    (*ge_options)["ge.exec.profilingOptions"] = ms_context_ptr->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
+
+  auto profiler_manager = profiler::ProfilerManager::GetInstance();
+  if (profiler_manager == nullptr) {
+    MS_LOG(EXCEPTION) << "Profiler manager is nullptr";
+  }
+  (*ge_options)["ge.exec.profilingMode"] = std::to_string(profiler_manager->GetProfilingEnableFlag());
+  if (profiler_manager->GetProfilingEnableFlag()) {
+    (*ge_options)["ge.exec.profilingOptions"] = profiler_manager->GetProfilingOptions();
   }
 
   (*ge_options)["rank_table_file"] = "";

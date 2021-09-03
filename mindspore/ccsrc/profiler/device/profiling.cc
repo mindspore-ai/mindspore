@@ -25,6 +25,9 @@
 #if ENABLE_GPU
 #include "profiler/device/gpu/gpu_profiling.h"
 #endif
+#if ENABLE_D
+#include "profiler/device/ascend/ascend_profiling.h"
+#endif
 
 namespace mindspore {
 namespace profiler {
@@ -92,9 +95,14 @@ std::shared_ptr<ProfilerManager> &ProfilerManager::GetInstance() {
   return profiler_manager_inst_;
 }
 
-bool ProfilerManager::GetEnableRecorderActorFlag() {
+bool ProfilerManager::GetProfilingEnableFlag() {
 #if ENABLE_GPU
   return profiler::gpu::GPUProfiler::GetInstance()->GetEnableFlag();
+#endif
+#if ENABLE_D
+  auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(ascend_instance);
+  return ascend_instance->GetProfilingEnableFlag();
 #endif
   return false;
 }
@@ -106,6 +114,15 @@ void ProfilerManager::RecordOneStepStartEndInfo() {
     gpu_profiler_inst->RecordOneStepStartEndInfo();
   }
 #endif
+}
+
+std::string ProfilerManager::GetProfilingOptions() const {
+#if ENABLE_D
+  auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(ascend_instance);
+  return ascend_instance->GetProfilingOptions();
+#endif
+  return "";
 }
 }  // namespace profiler
 }  // namespace mindspore

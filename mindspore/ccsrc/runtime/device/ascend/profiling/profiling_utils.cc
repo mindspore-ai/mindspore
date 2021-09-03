@@ -27,6 +27,7 @@
 #include "runtime/device/ascend/profiling/reporter/point_reporter.h"
 #include "nlohmann/json.hpp"
 #include "base/core_ops.h"
+#include "profiler/device/profiling.h"
 
 namespace mindspore {
 namespace device {
@@ -43,9 +44,9 @@ constexpr uint64_t kProfilingIterEndLogId = 4;
 constexpr auto kDouble = 2;
 
 nlohmann::json GetContextProfilingOption() {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  const string prof_options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
+  auto profiler_manager = profiler::ProfilerManager::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_manager);
+  const string prof_options_str = profiler_manager->GetProfilingOptions();
   nlohmann::json j;
   try {
     j = nlohmann::json::parse(prof_options_str);

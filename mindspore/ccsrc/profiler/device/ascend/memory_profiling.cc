@@ -14,26 +14,28 @@
  * limitations under the License.
  */
 
-#include "profiler/device/common/memory_profiling.h"
+#include "profiler/device/ascend/memory_profiling.h"
 #include <fstream>
 #include <memory>
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "nlohmann/json.hpp"
+#include "profiler/device/ascend/ascend_profiling.h"
 
 namespace mindspore {
 namespace profiler {
+namespace ascend {
 constexpr char kOutputPath[] = "output";
 
 bool MemoryProfiling::IsMemoryProfilingEnable() const {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (!context->get_param<bool>(MS_CTX_ENABLE_PROFILING)) {
+  auto ascend_profiler = AscendProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(ascend_profiler);
+  if (!ascend_profiler->GetProfilingEnableFlag()) {
     return false;
   }
 
-  const std::string prof_options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
+  const std::string prof_options_str = ascend_profiler->GetProfilingOptions();
   nlohmann::json options = nlohmann::json::parse(prof_options_str);
   if (options["profile_memory"] == "off") {
     return false;
@@ -97,9 +99,9 @@ void MemoryProfiling::MemoryToPB() {
 }
 
 std::string MemoryProfiling::GetOutputPath() const {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  const std::string options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
+  auto ascend_profiler = AscendProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(ascend_profiler);
+  const std::string options_str = ascend_profiler->GetProfilingOptions();
   nlohmann::json options_json;
   try {
     options_json = nlohmann::json::parse(options_str);
@@ -152,5 +154,6 @@ void MemoryProfiling::SaveMemoryProfiling() {
   MS_LOG(INFO) << "Start save memory profiling data to " << file << " end";
   return;
 }
+}  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
