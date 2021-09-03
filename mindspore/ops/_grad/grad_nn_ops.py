@@ -318,6 +318,17 @@ def get_bprop_avg_pool_grad(self):
     return bprop
 
 
+@bprop_getters.register(P.AdaptiveAvgPool2D)
+def get_bprop_adaptive_avg_pool2d_grad(self):
+    """Grad definition for `AdaptiveAvgPool2D` operation."""
+    adaptive_avgpool_grad = G.AdaptiveAvgPool2DGrad()
+
+    def bprop(x, out, dout):
+        dx = adaptive_avgpool_grad(x, dout)
+        return (dx,)
+
+    return bprop
+
 @bprop_getters.register(P.AvgPool3D)
 def get_bprop_avg_pool_3d_grad(self):
     """Grad definition for `AvgPool3D` operation."""

@@ -21,6 +21,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, ops
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 from mindspore.common.api import ms_function
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -34,6 +35,16 @@ class Net(nn.Cell):
     @ms_function
     def construct(self, x):
         return self.adaptive_avg_pool2d(x)
+
+
+class GradNet(nn.Cell):
+    def __init__(self):
+        super(GradNet, self).__init__()
+        self.adaptive_avg_pool2d_grad = G.AdaptiveAvgPool2DGrad()
+
+    @ms_function
+    def construct(self, x, dy):
+        return self.adaptive_avg_pool2d_grad(x, dy)
 
 
 @pytest.mark.level0
@@ -85,20 +96,80 @@ def test_net_value():
     assert output.asnumpy().shape == expect_shape
     assert (output.asnumpy() == expect_output).all
 
+    expect_dx = np.array([[[0.75, 1.75, 1.0],
+                           [2.25, 5.0, 2.75],
+                           [1.5, 3.25, 1.75]],
+                          [[0.75, 1.75, 1.0],
+                           [2.25, 5.0, 2.75],
+                           [1.5, 3.25, 1.75]],
+                          [[0.75, 1.75, 1.0],
+                           [2.25, 5.0, 2.75],
+                           [1.5, 3.25, 1.75]]])
+    grad_net = GradNet()
+    dx = grad_net(Tensor(x), output)
+    assert dx.asnumpy().shape == x.shape
+    assert (dx.asnumpy() == expect_dx).all
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_net_pynative():
+def test_net_graph_mode():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
                   [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
                   [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]])
     adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((2, 2))
-    output = adaptive_avg_pool_2d(Tensor(x))
+    output = adaptive_avg_pool_2d(Tensor(x, mindspore.float16))
     expect_shape = (3, 2, 2)
     expect_output = np.array([[[3.0, 4.0], [6.0, 7.0]],
                               [[3.0, 4.0], [6.0, 7.0]],
                               [[3.0, 4.0], [6.0, 7.0]]])
     assert output.asnumpy().shape == expect_shape
     assert (output.asnumpy() == expect_output).all
+
+    expect_dx = np.array([[[0.75, 1.75, 1.0],
+                           [2.25, 5.0, 2.75],
+                           [1.5, 3.25, 1.75]],
+                          [[0.75, 1.75, 1.0],
+                           [2.25, 5.0, 2.75],
+                           [1.5, 3.25, 1.75]],
+                          [[0.75, 1.75, 1.0],
+                           [2.25, 5.0, 2.75],
+                           [1.5, 3.25, 1.75]]])
+    grad_net = GradNet()
+    dx = grad_net(Tensor(x, mindspore.float16), output)
+    assert dx.asnumpy().shape == x.shape
+    assert (dx.asnumpy() == expect_dx).all
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_net_graph_mode_fp64():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+                  [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+                  [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]])
+    adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((2, 2))
+    output = adaptive_avg_pool_2d(Tensor(x, mindspore.float64))
+    expect_shape = (3, 2, 2)
+    expect_output = np.array([[[3.0, 4.0], [6.0, 7.0]],
+                              [[3.0, 4.0], [6.0, 7.0]],
+                              [[3.0, 4.0], [6.0, 7.0]]])
+    assert output.asnumpy().shape == expect_shape
+    assert (output.asnumpy() == expect_output).all
+
+    expect_dx = np.array([[[0.75, 1.75, 1.0],
+                           [2.25, 5.0, 2.75],
+                           [1.5, 3.25, 1.75]],
+                          [[0.75, 1.75, 1.0],
+                           [2.25, 5.0, 2.75],
+                           [1.5, 3.25, 1.75]],
+                          [[0.75, 1.75, 1.0],
+                           [2.25, 5.0, 2.75],
+                           [1.5, 3.25, 1.75]]])
+    grad_net = GradNet()
+    dx = grad_net(Tensor(x, mindspore.float64), output)
+    assert dx.asnumpy().shape == x.shape
+    assert (dx.asnumpy() == expect_dx).all
