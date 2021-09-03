@@ -134,9 +134,7 @@ void WinogradOutputNHWCTransformFp16(const float16_t *gemm_out, float16_t *tmp_o
   int output_channel = conv_param->output_channel_;
   int oc8 = UP_DIV(output_channel, C8NUM);
   int input_unit = conv_param->input_unit_;
-  if (output_unit_num == 0) {
-    return;
-  }
+  NNACL_CHECK_ZERO_RETURN(output_unit_num);
   for (int i = 0; i < cal_num; i++) {
     int dst_x_s = out_tile_index % output_unit_num;
     int dst_y_s = out_tile_index / output_unit_num;
@@ -166,7 +164,7 @@ void WinogradOutputNHWCTransformFp16(const float16_t *gemm_out, float16_t *tmp_o
   }
 }
 
-void WinogradOutputNC4HW4TransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
+void WinogradOutputNC8HW8TransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
                                        int cal_num, int out_tile_index, int output_unit_num,
                                        const ConvParameter *conv_param, OutputTransFp16Func func) {
   int output_unit = conv_param->output_unit_;
@@ -176,9 +174,7 @@ void WinogradOutputNC4HW4TransformFp16(const float16_t *gemm_out, float16_t *tmp
   int output_channel = conv_param->output_channel_;
   int oc8 = UP_DIV(output_channel, C8NUM);
   int input_unit = conv_param->input_unit_;
-  if (output_unit_num == 0) {
-    return;
-  }
+  NNACL_CHECK_ZERO_RETURN(output_unit_num);
   for (int i = 0; i < cal_num; i++) {
     int dst_x_s = out_tile_index % output_unit_num;
     int dst_y_s = out_tile_index / output_unit_num;

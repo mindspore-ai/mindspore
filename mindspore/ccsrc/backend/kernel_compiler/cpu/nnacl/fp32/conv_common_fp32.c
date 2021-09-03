@@ -171,7 +171,7 @@ void SWBorder(float *dst, const float *src, const float *weight, const float *bi
     int start_kh = MSMAX(0, UP_DIV(-ih, conv_param->dilation_h_));
     int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih, conv_param->dilation_h_));
     const float *src_h = src + ih * sw_param->in_h_step_;
-    float *dst_kernel = dst + left * sw_param->block_channel_;
+    float *dst_kernel = dst + left * sw_param->out_w_step_;
     for (int ow = left; ow < right; ow += ow_bock) {
       int iw = ow * conv_param->stride_w_ - conv_param->pad_l_;
       int start_kw = MSMAX(0, UP_DIV(-iw, conv_param->dilation_w_));
@@ -181,10 +181,10 @@ void SWBorder(float *dst, const float *src, const float *weight, const float *bi
       const float *weight_kernel =
         weight + (start_kh * conv_param->kernel_w_ + start_kw) * sw_param->ic_align_ * C8NUM * oc_block;
       kernel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw, act_type, ow_bock,
-             oc_block, sw_param->block_channel_, sw_param->ic_align_, sw_param->in_kw_step_, sw_param->in_kh_step_,
+             oc_block, sw_param->out_block_step_, sw_param->ic_align_, sw_param->in_kw_step_, sw_param->in_kh_step_,
              sw_param->in_sw_step_,
              (conv_param->kernel_w_ - end_kw + start_kw) * C8NUM * oc_block * sw_param->ic_align_, write_mode);
-      dst_kernel += ow_bock * sw_param->block_channel_;
+      dst_kernel += ow_bock * sw_param->out_w_step_;
     }  // width loop
     dst += sw_param->out_h_step_;
   }  // height loop
@@ -210,13 +210,15 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
   }
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
-  int oc_algin = sw_param->block_channel_;
   int ic_algin = sw_param->ic_align_;
   int in_sw_step = sw_param->in_sw_step_;
   int in_kw_step = sw_param->in_kw_step_;
   int in_kh_step = sw_param->in_kh_step_;
   int in_sh_step = sw_param->in_sh_step_;
   int out_h_step = sw_param->out_h_step_;
+  int out_c_step = sw_param->out_c_step_;
+  int out_w_step = sw_param->out_w_step_;
+  int out_block_step = sw_param->out_block_step_;
   int kernel_step = sw_param->kernel_step_;
   int in_step = sw_param->in_step_;
   int out_step = sw_param->out_step_;
@@ -225,7 +227,6 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
   int left = sw_param->left_;
   int right = sw_param->right_;
   int bottom = sw_param->bottom_;
-  int block_channel = sw_param->block_channel_;
   int stride_h = conv_param->stride_h_;
   int stride_w = conv_param->stride_w_;
   int out_w = conv_param->output_w_;
@@ -237,10 +238,6 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
   int in_w_start = left * stride_w - pad_l;
   int center_step = in_h_start * in_h_step + in_w_start * ic_algin;
   int write_mode = conv_param->out_format_;
-  int kernel_out_step = oc_algin;
-  if (write_mode == 13) {
-    kernel_out_step = out_h * out_w;
-  }
   const int ow_block_num[4] = {12, 6, 4, 3};
   const SWConvKernel kernel[4][2] = {{SWConv1x8Kernel, SWConv12x8Kernel},
                                      {SWConv1x16Kernel, SWConv6x16Kernel},
@@ -259,14 +256,15 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
         if (bias != NULL) {
           bias = bias_data + oc * oc_tile_;
         }
-        float *dst_w = dst_oh + oc * oc_tile_;
+        // nhwc dst_w = dst_oh + oc * oc_tile_;  nc8hw8 dst_w = dst_oh * oc * ow * oh * oc_tile_;
+        float *dst_oc = dst_oh + oc * out_c_step;
         const SWConvKernel kernel_border = kernel[oc_block - 1][0];
         if (oh < top || oh >= bottom) {  // oh in up or down border
-          SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, 0, out_w, conv_param, sw_param, kernel_border, act_type,
-                   1, oc_block, write_mode);
+          SWBorder(dst_oc, input_data, weight, bias, oh, oh + 1, 0, out_w, conv_param, sw_param, kernel_border,
+                   act_type, 1, oc_block, write_mode);
         } else {  // oh in center
           // ow in right
-          SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, 0, left, conv_param, sw_param, kernel_border, act_type,
+          SWBorder(dst_oc, input_data, weight, bias, oh, oh + 1, 0, left, conv_param, sw_param, kernel_border, act_type,
                    1, oc_block, write_mode);
           // ow in center
           const float *src_w = src_h + (oh - top) * in_sh_step;
@@ -277,12 +275,12 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
               ow_block = 1;
             }
             kernel[oc_block - 1][ow_block / ow_block_num[oc_block - 1]](
-              dst_w + ow * block_channel, src_w, weight, bias, kernel_h, kernel_w, act_type, ow_block, oc_block,
-              kernel_out_step, ic_algin, in_kw_step, in_kh_step, in_sw_step, 0, write_mode);
+              dst_oc + ow * out_w_step, src_w, weight, bias, kernel_h, kernel_w, act_type, ow_block, oc_block,
+              out_block_step, ic_algin, in_kw_step, in_kh_step, in_sw_step, 0, write_mode);
             src_w += ow_block * in_sw_step;
           }
           // ow in left
-          SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, right, out_w, conv_param, sw_param, kernel_border,
+          SWBorder(dst_oc, input_data, weight, bias, oh, oh + 1, right, out_w, conv_param, sw_param, kernel_border,
                    act_type, 1, oc_block, write_mode);
         }
       }
@@ -457,9 +455,9 @@ void SWConv1x32Kernel(float *dst, const float *src, const float *weight, const f
                       size_t write_mode) {
   in_kh_step *= sizeof(float);
   in_kw_step *= sizeof(float);
-  out_step *= sizeof(float);
   kw_remainder *= sizeof(float);
   float *dst_4 = dst + out_step * C3NUM;
+  out_step *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -712,7 +710,7 @@ void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const f
     "vmovups %%ymm10, 0x60(%2, %1, 1)\n"
     "vmovups %%ymm2, (%2, %1, 2)\n"
     "vmovups %%ymm5, 0x20(%2, %1, 2)\n"
-    "vmovups %%ymm8, 0x60(%2, %1, 2)\n"
+    "vmovups %%ymm8, 0x40(%2, %1, 2)\n"
     "vmovups %%ymm11, 0x60(%2, %1, 2)\n"
     "2:\n"
     :

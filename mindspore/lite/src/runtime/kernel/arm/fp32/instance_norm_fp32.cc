@@ -47,7 +47,11 @@ int InstanceNormCPUKernel::ReSize() {
 int InstanceNormCPUKernel::DoInstanceNorm(int task_id) {
   int ret = 0;
   if (in_tensors_[0]->format() == NC4HW4) {
+#ifdef ENABLE_AVX
+    ret = InstanceNormNC8HW8(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+#else
     ret = InstanceNormNC4HW4(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+#endif
   } else {
     ret = InstanceNorm(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
   }
