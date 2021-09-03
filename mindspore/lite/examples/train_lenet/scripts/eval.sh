@@ -15,4 +15,10 @@
 # ============================================================================
 
 # an simple tutorial as follows, more parameters can be setting
-LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/lenet_tod_trained.ms -e 0 -d dataset $1
+is_mix_model=$(echo "$@" | grep "m")
+if [[ "$is_mix_model" != "" ]]
+then
+ LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/mix_lenet_tod_trained.ms -e 0 -d dataset $1
+else
+ LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/lenet_tod_trained.ms -e 0 -d dataset $1
+fi

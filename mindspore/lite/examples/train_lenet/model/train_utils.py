@@ -16,9 +16,9 @@
 
 import mindspore.nn as nn
 from mindspore.common.parameter import ParameterTuple
+from mindspore import amp
 
-
-def train_wrap(net, loss_fn=None, optimizer=None, weights=None):
+def train_wrap(net, loss_fn=None, optimizer=None, weights=None, loss_scale_manager=None):
     """
     train_wrap
     """
@@ -31,5 +31,8 @@ def train_wrap(net, loss_fn=None, optimizer=None, weights=None):
     if optimizer is None:
         optimizer = nn.Adam(weights, learning_rate=0.003, beta1=0.9, beta2=0.999, eps=1e-5, use_locking=False,
                             use_nesterov=False, weight_decay=4e-5, loss_scale=1.0)
-    train_net = nn.TrainOneStepCell(loss_net, optimizer)
+    if loss_scale_manager is None:
+        train_net = nn.TrainOneStepCell(loss_net, optimizer)
+    else:
+        train_net = amp.build_train_network(net, optimizer, loss_fn, level="O2", loss_scale_manager=loss_scale_manager)
     return train_net
