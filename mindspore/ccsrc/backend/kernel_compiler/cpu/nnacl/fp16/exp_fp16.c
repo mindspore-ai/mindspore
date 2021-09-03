@@ -23,9 +23,7 @@ static inline void simd_exp_fp16(float16x8_t input, float16_t *dst) {
   static float16x8_t maxv = {88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
   static float16x8_t minv = {-88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f};
   input = vmaxq_f16(minv, vminq_f16(input, maxv));
-  float32x4_t input_low = vcvt_f32_f16(vget_low_f16(input));
-  float32x4_t input_high = vcvt_f32_f16(vget_high_f16(input));
-  vst1q_f16(dst, vcombine_f16(vcvt_f16_f32(VexpFp32(input_low)), vcvt_f16_f32(VexpFp32(input_high))));
+  vst1q_f16(dst, VexpFp16(input));
 }
 #endif
 

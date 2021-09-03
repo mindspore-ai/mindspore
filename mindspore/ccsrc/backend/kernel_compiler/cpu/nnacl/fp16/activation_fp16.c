@@ -16,6 +16,7 @@
 #include "nnacl/fp16/activation_fp16.h"
 #include <float.h>
 #include "nnacl/fp32/exp_fp32.h"
+#include "nnacl/fp16/exp_fp16.h"
 #include "nnacl/errorcode.h"
 
 int ReluFp16(const float16_t *src, float16_t *dst, int ele_num) {
@@ -246,6 +247,25 @@ int GeluFp16(const float16_t *src, int length, float16_t *dst, bool approximate)
     for (; i < length; i++) {
       dst[i] = 0.5f * src[i] * (1.0f + erff(src[i] / 1.4142135623730951f));
     }
+  }
+  return NNACL_OK;
+}
+
+int EluFp16(const float16_t *src, int length, float16_t *dst, float16_t alpha) {
+  int i = 0;
+#ifdef ENABLE_NEON
+  float16x8_t one = MS_MOVQ_F16(1.0f);
+  for (; i <= length - 8; i += 8) {
+    float16x8_t src_tmp = MS_LDQ_F16(src + i);
+    float16x8_t exp_tmp = VexpFp16(src_tmp);  // exp(x)
+    exp_tmp = MS_SUBQ_F16(exp_tmp, one);      // exp(x) - 1
+    float16x8_t elu_tmp = MS_MULQ_N_F16(exp_tmp, alpha);
+    uint16x8_t mask = MS_CMPGTQ_F16(src_tmp, MS_MOVQ_F16(0.0f));
+    MS_STQ_F16(dst + i, vbslq_f16(elu_tmp, src_tmp, mask));
+  }
+#endif
+  for (; i < length; ++i) {
+    dst[i] = src[i] > 0 ? src[i] : (expm1(src[i]) * alpha);
   }
   return NNACL_OK;
 }

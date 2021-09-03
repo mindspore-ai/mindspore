@@ -41,7 +41,8 @@ int ActivationFp16CPUKernel::Init() {
       type_ != schema::ActivationType_LEAKY_RELU && type_ != schema::ActivationType_SIGMOID &&
       type_ != schema::ActivationType_TANH && type_ != schema::ActivationType_HSWISH &&
       type_ != schema::ActivationType_SWISH && type_ != schema::ActivationType_HARD_TANH &&
-      type_ != schema::ActivationType_GELU && type_ != schema::ActivationType_HSIGMOID) {
+      type_ != schema::ActivationType_GELU && type_ != schema::ActivationType_HSIGMOID &&
+      type_ != schema::ActivationType_ELU) {
     MS_LOG(ERROR) << "Activation fp16 not support type: " << type_;
     return RET_ERROR;
   }
@@ -84,6 +85,8 @@ int ActivationFp16CPUKernel::DoActivation(int task_id) {
       HardTanhFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id, min_val_, max_val_);
   } else if (type_ == schema::ActivationType_GELU) {
     error_code = GeluFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id, true);
+  } else if (type_ == schema::ActivationType_ELU) {
+    error_code = EluFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id, alpha_);
   } else {
     MS_LOG(ERROR) << "Activation fp16 not support type: " << type_;
     return RET_ERROR;

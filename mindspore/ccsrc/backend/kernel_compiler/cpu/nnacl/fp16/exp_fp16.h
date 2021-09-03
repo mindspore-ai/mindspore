@@ -27,6 +27,14 @@ extern "C" {
 void ExpFp16(const float16_t *src, float16_t *dst, int num);
 int ExpFusionFp16(const float16_t *src, float16_t *dst, const ExpParameter *param, int task_id);
 
+#ifdef ENABLE_NEON
+static inline float16x8_t VexpFp16(float16x8_t input) {
+  float32x4_t input_low = MS_CVT_F32_F16(vget_low_f16(input));
+  float32x4_t input_high = MS_CVT_F32_F16(vget_high_f16(input));
+  return vcombine_f16(MS_CVT_F16_F32(VexpFp32(input_low)), MS_CVT_F16_F32(VexpFp32(input_high)));
+}
+#endif
+
 static inline void single_exp_fp16(float16_t src, float16_t *dst) {
   static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};
   src = MSMAX(-88.0f, MSMIN(88.0f, src));
