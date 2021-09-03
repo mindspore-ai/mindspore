@@ -170,7 +170,7 @@ int InterpRow(const float *src_line, float *linear_output, int new_width, const 
     for (; c <= in_c - C8NUM; c += C8NUM) {
       MS_FLOAT32X8 left = MS_LD256_F32(src_line + x_lefts[w] * in_c + c);
       MS_FLOAT32X8 right = MS_LD256_F32(src_line + x_rights[w] * in_c + c);
-      MS_FLOAT32X8 interp_value = left * left_w_8 + right * right_w_8;
+      MS_FLOAT32X8 interp_value = MS_ADD256_F32(MS_MUL256_F32(left, left_w_8), MS_MUL256_F32(right, right_w_8));
       MS_ST256_F32(linear_output + w * in_c + c, interp_value);
     }
 #endif
@@ -180,7 +180,7 @@ int InterpRow(const float *src_line, float *linear_output, int new_width, const 
     for (; c <= in_c - C4NUM; c += C4NUM) {
       MS_FLOAT32X4 left = MS_LDQ_F32(src_line + x_lefts[w] * in_c + c);
       MS_FLOAT32X4 right = MS_LDQ_F32(src_line + x_rights[w] * in_c + c);
-      MS_FLOAT32X4 interp_value = left * left_w + right * right_w;
+      MS_FLOAT32X4 interp_value = MS_ADDQ_F32(MS_MULQ_F32(left, left_w), MS_MULQ_F32(right, right_w));
       MS_STQ_F32(linear_output + w * in_c + c, interp_value);
     }
 #endif
@@ -206,7 +206,7 @@ int InterpCol(const float *bottom_line, const float *top_line, float *output, in
     for (; c <= in_c - C8NUM; c += C8NUM) {
       MS_FLOAT32X8 bottom = MS_LD256_F32(bottom_line + w * in_c + c);
       MS_FLOAT32X8 top = MS_LD256_F32(top_line + w * in_c + c);
-      MS_FLOAT32X8 interp_value = bottom * bottom_w_8 + top * top_w_8;
+      MS_FLOAT32X8 interp_value = MS_ADD256_F32(MS_MUL256_F32(bottom, bottom_w_8), MS_MUL256_F32(top, top_w_8));
       MS_ST256_F32(output + w * in_c + c, interp_value);
     }
 #endif
@@ -216,7 +216,7 @@ int InterpCol(const float *bottom_line, const float *top_line, float *output, in
     for (; c <= in_c - C4NUM; c += C4NUM) {
       MS_FLOAT32X4 bottom = MS_LDQ_F32(bottom_line + w * in_c + c);
       MS_FLOAT32X4 top = MS_LDQ_F32(top_line + w * in_c + c);
-      MS_FLOAT32X4 interp_value = bottom * bottom_w + top * top_w;
+      MS_FLOAT32X4 interp_value = MS_ADDQ_F32(MS_MULQ_F32(bottom, bottom_w), MS_MULQ_F32(top, top_w));
       MS_STQ_F32(output + w * in_c + c, interp_value);
     }
 #endif
