@@ -841,9 +841,11 @@ void DepComputer::Recompute(const FuncGraphPtr &fg) {
   }
 }
 
-FuncGraphSetPtr FuncGraphParentsTotalComputer::SeekParents(const FuncGraphPtr &fg, size_t seen_num) {
-  if (fg->seen_ == seen_num) {
-    return std::make_shared<FuncGraphSet>();
+FuncGraphSetPtr FuncGraphParentsTotalComputer::SeekParents(
+  const FuncGraphPtr &fg, std::unordered_map<FuncGraphPtr, FuncGraphSetPtr> *seen_fgs) {
+  auto iter = seen_fgs->find(fg);
+  if (iter != seen_fgs->end()) {
+    return iter->second;
   }
   FuncGraphSetPtr parents = std::make_shared<FuncGraphSet>();
 
@@ -856,17 +858,25 @@ FuncGraphSetPtr FuncGraphParentsTotalComputer::SeekParents(const FuncGraphPtr &f
   // Search the fv in fg's child func graph.
   auto &fgs = fg->func_graphs_used();
   for (auto &item : fgs) {
-    fg->seen_ = seen_num;
     auto gt = item.first;
-    parents->update(SeekParents(gt, seen_num));
+    if (gt->seen_ == 1) {
+      continue;
+    }
+    gt->seen_ = 1;
+    parents->update(SeekParents(gt, seen_fgs));
+    gt->seen_ = 0;
   }
   (void)parents->erase(fg);
+  (*seen_fgs)[fg] = parents;
   return parents;
 }
 
 void FuncGraphParentsTotalComputer::RealRecompute(FuncGraphPtr fg) {
   MS_EXCEPTION_IF_NULL(fg);
-  func_graph_parents_total_analysis_[fg].update(SeekParents(fg, NewFgSeenGeneration()));
+  std::unordered_map<FuncGraphPtr, FuncGraphSetPtr> seen_fgs;
+  fg->seen_ = 1;
+  func_graph_parents_total_analysis_[fg].update(SeekParents(fg, &seen_fgs));
+  fg->seen_ = 0;
 }
 
 bool set_len_compare(const FuncGraphSetPair &lhs, const FuncGraphSetPair &rhs) {
