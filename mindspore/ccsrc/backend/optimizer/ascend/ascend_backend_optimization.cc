@@ -129,6 +129,7 @@
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "backend/optimizer/ascend/enhancer/add_attr_for_3d_graph.h"
 #include "backend/optimizer/ascend/enhancer/split_n_optimizer.h"
+#include "backend/optimizer/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
 #include "utils/ms_context.h"
 #include "utils/config_manager.h"
@@ -389,6 +390,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<SendFusion>());
   other_pm->AddPass(std::make_shared<RecvFusion>());
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
+  other_pm->AddPass(std::make_shared<AdjustDependForParallelOptimizerRecomputeAllGather>());
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
   other_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());
   other_pm->AddPass(std::make_shared<InsertDependForAllGather>());

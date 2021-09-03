@@ -83,6 +83,11 @@ class ParamInfo {
   bool parallel_optimizer() const { return parallel_optimizer_; }
   void set_parallel_optimizer(bool parallel_optimizer) { parallel_optimizer_ = parallel_optimizer; }
 
+  bool parallel_optimizer_comm_recompute() const { return parallel_optimizer_comm_recompute_; }
+  void set_parallel_optimizer_comm_recompute(bool parallel_optimizer_comm_recompute) {
+    parallel_optimizer_comm_recompute_ = parallel_optimizer_comm_recompute;
+  }
+
   bool cache_enable() const { return cache_enable_; }
   void set_cache_enable(bool cache_enable) { cache_enable_ = cache_enable; }
 
@@ -106,6 +111,7 @@ class ParamInfo {
   int32_t cloned_index_{0};
   int32_t fusion_type_{1};
   bool parallel_optimizer_{true};
+  bool parallel_optimizer_comm_recompute_{false};
   bool cache_enable_{false};
   std::vector<int64_t> cache_shape_;
   ParameterPtr parameter_{nullptr};

@@ -360,6 +360,13 @@ void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node
   int32_t fusion_type = param_info->comm_fusion();
   attrs[FUSION] = MakeValue<int64_t>(fusion_type);
   prim->SetAttrs(attrs);
+  bool parallel_optimizer_comm_recompute = param_info->parallel_optimizer_comm_recompute();
+  std::string instance_name = prim->instance_name();
+  if (instance_name == PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE && parallel_optimizer_comm_recompute &&
+      prim->name() == ALL_GATHER) {
+    prim->set_attr(RECOMPUTE, MakeValue(true));
+    prim->set_instance_name(PARALLEL_OPTIMIZER_ALLGATHER);
+  }
   MS_LOG(INFO) << "Set comm fusion:" << param->param_info()->name() << "'s fusion type is " << fusion_type;
 }
 

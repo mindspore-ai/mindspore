@@ -385,7 +385,9 @@ void InsertRedistribution(const RedistributionOpListPtr &redistribution_oplist_p
       auto prim_out_attr = prim_out->attrs();
       auto prim_in_attr = prim_in->attrs();
       if (prim_out_attr.find(RECOMPUTE_COMM_OP) != prim_out_attr.end() &&
+          !GetValue<bool>(prim_out_attr[RECOMPUTE_COMM_OP]) &&
           prim_in_attr.find(RECOMPUTE_COMM_OP) != prim_in_attr.end() &&
+          !GetValue<bool>(prim_in_attr[RECOMPUTE_COMM_OP]) &&
           COMMUNICATION_OPS.find(op_name) != COMMUNICATION_OPS.end()) {
         MS_LOG(INFO) << "The redistribution node would not be recomputed.";
         instance_name = instance_name + "_" + NOT_RECOMPUTE;
@@ -848,7 +850,9 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(replace_node->input(0));
     PrimitivePtr origin_prim = GetValueNode<PrimitivePtr>(node->input(0));
     SetUserAttrs(origin_prim->attrs(), prim);
-    if (origin_prim->attrs().find(RECOMPUTE_COMM_OP) != origin_prim->attrs().end() &&
+    auto origin_prim_attrs = origin_prim->attrs();
+    if (origin_prim_attrs.find(RECOMPUTE_COMM_OP) != origin_prim_attrs.end() &&
+        !GetValue<bool>(origin_prim_attrs[RECOMPUTE_COMM_OP]) &&
         COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end()) {
       MS_LOG(INFO) << "The redistribution node in reshape would not be recomputed.";
       prim->set_attr("recompute", MakeValue(false));
@@ -1623,10 +1627,11 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
   }
   CNodePtr cast_node = InsertAllGatherAfterCast(cnode);
   if (!is_shared_param && cast_node) {
-    allgather = ReplaceNode(op, cast_node, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name, root);
+    allgather = ReplaceNode(op, cast_node, graph, PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE, param_name, root);
     MS_LOG(INFO) << "Parallel optimizer is applied before Cast for " << param_name;
   } else {
-    InsertNode(op, cnode, IntToSize(res.second), node, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name, root);
+    InsertNode(op, cnode, IntToSize(res.second), node, graph, PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE, param_name,
+               root);
     allgather = cnode->input(IntToSize(res.second))->cast<CNodePtr>();
     MS_LOG(INFO) << "Parallel optimizer is applied before " << GetPrimName(cnode) << " for " << param_name;
   }

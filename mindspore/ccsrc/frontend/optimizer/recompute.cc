@@ -31,7 +31,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
-
+const int64_t fusion_id_increasement_size = 2000;
 bool CanNotRecomputed(const CNodePtr &node) {
   static std::unordered_set<PrimitivePtr> not_recomputed_op_list{prim::kPrimDropoutGenMask, prim::kPrimLoad,
                                                                  prim::kPrimTupleGetItem};
@@ -350,6 +350,22 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
   bool has_recomputed_inputs = false;
   for (size_t i = 0; i < origin_node->size(); ++i) {
     auto input = origin_node->input(i);
+    if (i == 0 && IsPrimitive(input, prim::kPrimAllGather)) {
+      auto prim = GetValueNode<PrimitivePtr>(input);
+      auto instance_name = prim->instance_name();
+      bool is_from_parallel_optimizer = instance_name.find("parallel_optimizer") != std::string::npos;
+      int64_t fusion_id = prim->HasAttr(kAttrFusion) ? GetValue<int64_t>(prim->GetAttr(kAttrFusion)) : 0;
+      if (is_from_parallel_optimizer && fusion_id > 0) {
+        auto new_prim = std::make_shared<Primitive>(prim::kPrimAllGather->name());
+        new_prim->SetAttrs(prim->attrs());
+        new_prim->set_attr(kAttrFusion, MakeValue(fusion_id + fusion_id_increasement_size));
+        new_prim->set_prim_type(prim->prim_type());
+        new_prim->set_instance_name(instance_name);
+        auto value_node = NewValueNode(new_prim);
+        (void)new_inputs.emplace_back(value_node);
+        continue;
+      }
+    }
     MS_EXCEPTION_IF_NULL(input);
     if (!input->isa<CNode>()) {
       (void)new_inputs.emplace_back(input);

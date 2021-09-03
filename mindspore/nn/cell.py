@@ -1323,6 +1323,13 @@ class Cell(Cell_):
         for cell in self.cells():
             cell._mp_comm_recompute(mp_comm_recompute)
 
+    def _parallel_optimizer_comm_recompute(self, parallel_optimizer_comm_recompute=False):
+        """
+        Set the parallel optimizer communication in cell recomputed.
+        """
+        for param in self.trainable_params():
+            param.parallel_optimizer_comm_recompute = parallel_optimizer_comm_recompute
+
     def _recompute(self, mode=True, output_recompute=False):
         """
         Set the cell recomputed.
@@ -1357,8 +1364,11 @@ class Cell(Cell_):
               primitive is subject to the recompute api of the primitive.
             - The interface can be configured only once.
               Therefore, when the parent cell is configured, the child cell should not be configured.
-            - When the memory remains after applying the recompute, configuring 'mp_comm_recompute=True'
+            - When the memory remains after applying the recompute, configuring 'mp_comm_recompute=False'
               to improve performance if necessary.
+            - When the memory still not enough after applying the recompute, configuring
+              'parallel_optimizer_comm_recompute=True' to save more memory if necessary.
+              Cells in the same fusion group should has the same parallel_optimizer_comm_recompute configures.
 
         Args:
             mp_comm_recompute (bool): Specifies whether the model parallel communication operators
@@ -1371,12 +1381,14 @@ class Cell(Cell_):
         if 'mp_comm_recompute' in kwargs.keys():
             self._mp_comm_recompute(kwargs['mp_comm_recompute'])
         if 'parallel_optimizer_comm_recompute' in kwargs.keys():
-            raise ValueError("Currently, the communication operator allgathers introduced by optimizer shard "
-                             "are not support recomputation")
+            if kwargs['parallel_optimizer_comm_recompute'] and context.get_auto_parallel_context("pipeline_stages") > 1:
+                raise ValueError("Currently, the communication operator allgathers introduced by optimizer shard "
+                                 "are not support recomputation in pipeline parallel.")
+            self._parallel_optimizer_comm_recompute(kwargs['parallel_optimizer_comm_recompute'])
+
         for key, _ in kwargs.items():
             if key not in ('mp_comm_recompute', 'parallel_optimizer_comm_recompute'):
                 raise ValueError("Recompute keyword %s is not recognized!" % key)
-
 
     def infer_param_pipeline_stage(self):
         """

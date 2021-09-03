@@ -284,13 +284,19 @@ class MiniStepAllGatherPass : public AnfVisitor {
     auto attrs = prim->attrs();
     std::string group = attrs[parallel::GROUP]->ToString();
     auto fusion = attrs[parallel::FUSION];
+    bool contain_recompute = prim->HasAttr(parallel::RECOMPUTE);
+    bool recompute = contain_recompute && GetValue<bool>(attrs[parallel::RECOMPUTE]);
     parallel::Operator op = parallel::CreateAllGatherOp(group);
-    std::vector<AnfNodePtr> node_input = parallel::CreateInput(op, inputs[1], parallel::PARALLEL_OPTIMIZER_ALLGATHER);
+    std::vector<AnfNodePtr> node_input =
+      parallel::CreateInput(op, inputs[1], parallel::PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE);
     auto prim_anf_node = node_input[0]->cast<ValueNodePtr>();
     prim = GetValueNode<PrimitivePtr>(prim_anf_node);
     MS_EXCEPTION_IF_NULL(prim);
     attrs = prim->attrs();
     attrs[parallel::FUSION] = fusion;
+    if (contain_recompute) {
+      attrs[parallel::RECOMPUTE] = MakeValue(recompute);
+    }
     prim->SetAttrs(attrs);
     auto func_graph = inputs[1]->func_graph();
     CNodePtr new_node = func_graph->NewCNode(node_input);
@@ -317,13 +323,19 @@ class MicroStepAllGatherPass : public AnfVisitor {
     auto attrs = prim->attrs();
     std::string group = attrs[parallel::GROUP]->ToString();
     auto fusion = attrs[parallel::FUSION];
+    bool contain_recompute = prim->HasAttr(parallel::RECOMPUTE);
+    bool recompute = contain_recompute && GetValue<bool>(attrs[parallel::RECOMPUTE]);
     parallel::Operator op = parallel::CreateAllGatherOp(group);
-    std::vector<AnfNodePtr> node_input = parallel::CreateInput(op, inputs[1], parallel::PARALLEL_OPTIMIZER_ALLGATHER);
+    std::vector<AnfNodePtr> node_input =
+      parallel::CreateInput(op, inputs[1], parallel::PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE);
     auto prim_anf_node = node_input[0]->cast<ValueNodePtr>();
     prim = GetValueNode<PrimitivePtr>(prim_anf_node);
     MS_EXCEPTION_IF_NULL(prim);
     attrs = prim->attrs();
     attrs[parallel::FUSION] = fusion;
+    if (contain_recompute) {
+      attrs[parallel::RECOMPUTE] = MakeValue(recompute);
+    }
     prim->SetAttrs(attrs);
     auto func_graph = inputs[1]->func_graph();
     CNodePtr new_node = func_graph->NewCNode(node_input);
