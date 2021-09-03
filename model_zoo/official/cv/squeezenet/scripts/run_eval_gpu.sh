@@ -56,7 +56,7 @@ then
 exit 1
 fi 
 
-expr $3 + 0 &>/dev/null
+expr $3 + 6 &>/dev/null
 if [ $? != 0 ]; then
   echo "DEVICE_ID=$3 is not an integer!"
 exit 1
