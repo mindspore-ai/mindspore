@@ -412,6 +412,7 @@ class TBERegOp(RegOp):
         self.partial_flag_ = False
         self.reshape_type_ = ''
         self.dynamic_shape_ = False
+        self.dynamic_compile_static_ = False
         self.need_check_supported_ = False
         self.is_dynamic_format_ = False
         self.op_pattern_ = ""
@@ -492,6 +493,17 @@ class TBERegOp(RegOp):
         """
         self._is_bool(dynamic_shape)
         self.dynamic_shape_ = dynamic_shape
+        return self
+
+    def dynamic_compile_static(self, dynamic_compile_static=False):
+        """
+        Whether the operator supports dynamic compile static.
+
+        Args:
+            dynamic_compile_static (bool): Value of dynamic compile static. Default: false.
+        """
+        self._is_bool(dynamic_compile_static)
+        self.dynamic_compile_static_ = dynamic_compile_static
         return self
 
     def need_check_supported(self, need_check_supported=False):

@@ -102,6 +102,7 @@ class OpInfo {
     kernel_name_ = opinfo.kernel_name();
     partial_flag_ = opinfo.partial_flag_;
     dynamic_shape_ = opinfo.dynamic_shape_;
+    dynamic_compile_static_ = opinfo.dynamic_compile_static_;
     op_pattern_ = opinfo.op_pattern();
     processor_ = opinfo.processor_;
     need_check_supported_ = opinfo.need_check_supported();
@@ -125,6 +126,7 @@ class OpInfo {
   std::string kernel_name() const { return kernel_name_; }
   OpPattern op_pattern() const { return op_pattern_; }
   bool dynamic_shape() const { return dynamic_shape_; }
+  bool dynamic_compile_static() const { return dynamic_compile_static_; }
   std::string processor() const { return processor_; }
   bool need_check_supported() const { return need_check_supported_; }
   bool is_dynamic_format() const { return is_dynamic_format_; }
@@ -134,6 +136,7 @@ class OpInfo {
   const std::unordered_map<size_t, size_t> &ref_infos() const { return ref_infos_; }
 
   void set_dynamic_shape(bool dynamic_shape) { dynamic_shape_ = dynamic_shape; }
+  void set_dynamic_compile_static_(bool dynamic_compile_static) { dynamic_compile_static_ = dynamic_compile_static; }
   void set_op_name(const std::string &op_name) { op_name_ = op_name; }
   void set_imply_type(const OpImplyType imply_type) { imply_type_ = imply_type; }
   void set_impl_path(const std::string &impl_path) { impl_path_ = impl_path; }
@@ -158,7 +161,8 @@ class OpInfo {
   bool equals_to(const std::shared_ptr<OpInfo> &other_info) const {
     return this->op_name_ == other_info->op_name_ && this->imply_type_ == other_info->imply_type_ &&
            this->processor_ == other_info->processor_ && this->op_pattern_ == other_info->op_pattern_ &&
-           this->dynamic_shape_ == other_info->dynamic_shape_;
+           this->dynamic_shape_ == other_info->dynamic_shape_ &&
+           this->dynamic_compile_static_ == other_info->dynamic_compile_static_;
   }
 
  private:
@@ -172,6 +176,7 @@ class OpInfo {
   std::string kernel_name_;
   bool partial_flag_ = false;
   bool dynamic_shape_ = false;
+  bool dynamic_compile_static_ = false;
   bool need_check_supported_ = false;
   bool is_dynamic_format_ = false;
   OpPattern op_pattern_ = kCommonPattern;

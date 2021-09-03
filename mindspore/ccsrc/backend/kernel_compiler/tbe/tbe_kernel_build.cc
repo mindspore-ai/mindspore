@@ -1053,7 +1053,7 @@ void TbeKernelBuild::GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode
   // replace special op type for buffer fusion op
   auto type = GetRealOpType(origin_type);
   (*compute_op_str)[kJtype] = type;
-  (*compute_op_str)[kJDynamicCompileStatic] = false;
+  (*compute_op_str)[kJDynamicCompileStatic] = op_info_ptr->dynamic_compile_static();
   auto func_name = op_info_ptr->kernel_name();
   (*compute_op_str)[kJFuncName] = func_name;
   (*compute_op_str)[kJInt64Mode] = false;
