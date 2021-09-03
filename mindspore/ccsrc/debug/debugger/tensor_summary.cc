@@ -91,10 +91,12 @@ double VarianceAndMeanCalculator::GetVariance() const {
 double VarianceAndMeanCalculator::GetStandardDeviation() { return sqrt(GetVariance()); }
 
 template <typename T>
-TensorSummary<T>::TensorSummary(void *current_tensor_ptr, void *const previous_tensor_ptr, uint32_t num_elements)
+TensorSummary<T>::TensorSummary(void *current_tensor_ptr, void *const previous_tensor_ptr, uint32_t num_elements,
+                                uint32_t prev_num_elements)
     : current_tensor_ptr(reinterpret_cast<T *>(current_tensor_ptr)),
       prev_tensor_ptr(reinterpret_cast<T *>(previous_tensor_ptr)),
       num_elements(num_elements),
+      prev_num_elements_(prev_num_elements),
       min(std::numeric_limits<double>::max()),
       max(std::numeric_limits<double>::lowest()),
       inf_count(0),
@@ -108,8 +110,14 @@ void TensorSummary<T>::SummarizeTensor(const std::vector<DebugServices::watchpoi
   InitCalculators(wps);
   for (size_t i = 0; i < num_elements; ++i) {
     auto current_value = static_cast<double>(current_tensor_ptr[i]);
-    double previous_value =
-      prev_tensor_ptr ? static_cast<double>(prev_tensor_ptr[i]) : std::numeric_limits<double>::quiet_NaN();
+    double previous_value = std::numeric_limits<double>::quiet_NaN();
+    if (prev_tensor_ptr) {
+      if (num_elements == prev_num_elements_) {
+        previous_value = static_cast<double>(prev_tensor_ptr[i]);
+      } else {
+        MS_LOG(DEBUG) << "Current and previous tensor are not the same size.";
+      }
+    }
     inf_count += std::isinf(current_value);
     nan_count += std::isnan(current_value);
     zero_count += (current_value == 0);

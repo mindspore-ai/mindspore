@@ -236,7 +236,8 @@ class DebugServices {
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,
                                                                    std::vector<std::string> *async_file_pool);
 
-  void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed);
+  void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
+                      uint32_t *prev_num_elements);
 
   void ReadTensorFromNpy(const std::string &file_name, std::string *tensor_type, std::size_t *size,
                          std::vector<int64_t> *shape, std::vector<char> **data_buffer);
