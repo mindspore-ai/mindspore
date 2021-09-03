@@ -47,6 +47,7 @@ class HcclAdapter {
   bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, bool is_graph_mode);
   bool InitHccl();
   bool FinalizeHccl();
+  const bool Inited() const { return init_flag_; }
 
   HcclResult HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const;
   HcclResult HcclDestroyGroup(const std::string &group) const;
