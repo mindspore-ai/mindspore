@@ -48,6 +48,36 @@ def _generate_steps_lr(lr_init, lr_max, total_steps, warmup_steps):
     return lr_each_step
 
 
+def _generate_step_lr(lr_init, lr_max, total_steps, warmup_steps):
+    """
+    Applies three steps decay to generate learning rate array.
+
+    Args:
+       lr_init(float): init learning rate.
+       lr_max(float): max learning rate.
+       total_steps(int): all steps in training.
+       warmup_steps(int): all steps in warmup epochs.
+
+    Returns:
+       np.array, learning rate array.
+    """
+    decay_epoch_index = [0.2 * total_steps, 0.5 * total_steps, 0.7 * total_steps, 0.9 * total_steps]
+    lr_each_step = []
+    for i in range(total_steps):
+        if i < decay_epoch_index[0]:
+            lr = lr_max
+        elif i < decay_epoch_index[1]:
+            lr = lr_max * 0.1
+        elif i < decay_epoch_index[2]:
+            lr = lr_max * 0.01
+        elif i < decay_epoch_index[3]:
+            lr = lr_max * 0.001
+        else:
+            lr = 0.00005
+        lr_each_step.append(lr)
+    return lr_each_step
+
+
 def _generate_poly_lr(lr_init, lr_end, lr_max, total_steps, warmup_steps):
     """
     Applies polynomial decay to generate learning rate array.
@@ -155,6 +185,9 @@ def get_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch
 
     if lr_decay_mode == 'steps':
         lr_each_step = _generate_steps_lr(lr_init, lr_max, total_steps, warmup_steps)
+    elif lr_decay_mode == 'step':
+        warmup_steps = warmup_epochs
+        lr_each_step = _generate_step_lr(lr_init, lr_max, total_steps, warmup_steps)
     elif lr_decay_mode == 'poly':
         lr_each_step = _generate_poly_lr(lr_init, lr_end, lr_max, total_steps, warmup_steps)
     elif lr_decay_mode == 'cosine':

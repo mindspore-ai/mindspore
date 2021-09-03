@@ -40,15 +40,18 @@ from src.model_utils.moxing_adapter import moxing_wrapper
 from src.model_utils.device_adapter import get_rank_id, get_device_num
 from src.resnet import conv_variance_scaling_initializer
 
+
 set_seed(1)
 
-if config.net_name in ("resnet18", "resnet34", "resnet50"):
+if config.net_name in ("resnet18", "resnet34", "resnet50", "resnet152"):
     if config.net_name == "resnet18":
         from src.resnet import resnet18 as resnet
-    if config.net_name == "resnet34":
+    elif config.net_name == "resnet34":
         from src.resnet import resnet34 as resnet
-    if config.net_name == "resnet50":
+    elif config.net_name == "resnet50":
         from src.resnet import resnet50 as resnet
+    else:
+        from src.resnet import resnet152 as resnet
     if config.dataset == "cifar10":
         from src.dataset import create_dataset1 as create_dataset
     else:
@@ -109,7 +112,7 @@ def set_parameter():
             if config.net_name == "resnet50" or config.net_name == "se-resnet50":
                 if config.acc_mode not in ["O1", "O2"]:
                     context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
-            elif config.net_name == "resnet101":
+            elif config.net_name in ["resnet101", "resnet152"]:
                 context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
             init()
         # GPU target
@@ -159,7 +162,7 @@ def init_lr(step_size):
         from src.lr_generator import get_thor_lr
         lr = get_thor_lr(0, config.lr_init, config.lr_decay, config.lr_end_epoch, step_size, decay_epochs=39)
     else:
-        if config.net_name in ("resnet18", "resnet34", "resnet50", "se-resnet50"):
+        if config.net_name in ("resnet18", "resnet34", "resnet50", "resnet152", "se-resnet50"):
             lr = get_lr(lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
                         warmup_epochs=config.warmup_epochs, total_epochs=config.epoch_size, steps_per_epoch=step_size,
                         lr_decay_mode=config.lr_decay_mode)
@@ -249,7 +252,7 @@ def train_net():
     metrics = {"acc"}
     if config.run_distribute:
         metrics = {'acc': DistAccuracy(batch_size=config.batch_size, device_num=config.device_num)}
-    if (config.net_name not in ("resnet18", "resnet34", "resnet50", "resnet101", "se-resnet50")) or \
+    if (config.net_name not in ("resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "se-resnet50")) or \
         config.parameter_server or target == "CPU":
         ## fp32 training
         model = Model(net, loss_fn=loss, optimizer=opt, metrics=metrics, eval_network=dist_eval_network)

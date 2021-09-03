@@ -24,7 +24,7 @@ from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
-if config.device_target == "Ascend":
+if config.device_target != "GPU":
     context.set_context(device_id=config.device_id)
 
 def modelarts_pre_process():
@@ -34,18 +34,16 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_export():
     """run export."""
-    if config.network_dataset == 'resnet18_cifar10':
-        from src.resnet import resnet18 as resnet
-    elif config.network_dataset == 'resnet18_imagenet2012':
+    if config.network_dataset in ['resnet18_cifar10', 'resnet18_imagenet2012']:
         from src.resnet import resnet18 as resnet
     elif config.network_dataset == 'resnet34_imagenet2012':
         from src.resnet import resnet34 as resnet
-    elif config.network_dataset == 'resnet50_cifar10':
-        from src.resnet import resnet50 as resnet
-    elif config.network_dataset == 'resnet50_imagenet2012':
+    elif config.network_dataset in ['resnet50_cifar10', 'resnet50_imagenet2012']:
         from src.resnet import resnet50 as resnet
     elif config.network_dataset == 'resnet101_imagenet2012':
         from src.resnet import resnet101 as resnet
+    elif config.network_dataset == 'resnet152_imagenet2012':
+        from src.resnet import resnet152 as resnet
     elif config.network_dataset == 'se-resnet50_imagenet2012':
         from src.resnet import se_resnet50 as resnet
     else:
@@ -60,6 +58,7 @@ def run_export():
 
     input_arr = Tensor(np.zeros([config.batch_size, 3, config.height, config.width], np.float32))
     export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
+
 
 if __name__ == '__main__':
     run_export()

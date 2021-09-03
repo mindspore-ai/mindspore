@@ -19,7 +19,6 @@ checkpoint_file_path: ""
 optimizer: "Momentum"
 infer_label: ""
 class_num: 1001
-train_image_size: 224
 batch_size: 32
 loss_scale: 1024
 momentum: 0.9
@@ -45,7 +44,6 @@ dataset: "imagenet2012"
 device_num: 1
 pre_trained: ""
 run_eval: False
-eval_image_size: 256
 eval_dataset_path: ""
 parameter_server: False
 filter_weight: False
@@ -61,15 +59,21 @@ dense_init: "TruncatedNormal"
 all_reduce_fusion_config:
     - 1
     - 100
+train_image_size: 224
+eval_image_size: 256
 
 # Export options
 device_id: 0
 width: 256
 height: 256
 file_name: "se-resnet50"
-file_format: "AIR"
+file_format: "MINDIR"
 ckpt_file: ""
 network_dataset: "se-resnet50_imagenet2012"
+
+# postprocess resnet inference
+result_path: ''
+label_path: ''
 
 ---
 # Help description for each configuration
