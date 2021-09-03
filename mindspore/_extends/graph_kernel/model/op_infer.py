@@ -127,13 +127,13 @@ class _Elemwise(OpInfer):
             shape = [two_d_shape[-1] // 16, 1, 1, 16]
             if two_d_shape[-1] % 16 != 0:
                 raise GKException("should be multiplies of 16")
-            return shape
+            return more_two_d_shape + shape
         # (32, 1) -> (1, 2, 16, 1)
         if len(two_d_shape) == 2 and two_d_shape[1] == 1:
             shape = [1, two_d_shape[0] // 16, 16, 1]
             if two_d_shape[0] % 16 != 0:
                 raise GKException("should be multiples of 16")
-            return shape
+            return more_two_d_shape + shape
         # (32, 48) -> (3, 2, 16, 16)
         shape = [two_d_shape[1] // 16, two_d_shape[0] // 16, 16, 16]
         if two_d_shape[0] % 16 != 0 or two_d_shape[1] % 16 != 0:
