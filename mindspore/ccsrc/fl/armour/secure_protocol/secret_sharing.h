@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_SECRET_SHARING_H
 #define MINDSPORE_SECRET_SHARING_H
 #ifndef _WIN32
-#include <gmp.h>
-#include "openssl/rand.h"
+#include "openssl/bn.h"
 #endif
 #include <string>
 #include <vector>
 #include "utils/log_adapter.h"
+#include "fl/server/common.h"
 
 namespace mindspore {
 namespace armour {
@@ -37,36 +37,35 @@ struct Share {
 };
 
 #ifndef _WIN32
-void secure_zero(void *s, size_t);
-int GetRandInteger(mpz_t x, mpz_t prim);
-int GetRandomPrime(mpz_t prim);
-void PrintBigInteger(mpz_t x);
-void PrintBigInteger(mpz_t x, int hex);
+void secure_zero(uint8_t *s, size_t);
+int GetPrime(BIGNUM *prim);
 
 class SecretSharing {
  public:
-  explicit SecretSharing(mpz_t prim);
+  explicit SecretSharing(BIGNUM *prim);
   ~SecretSharing();
   // split the input secret into multiple shares
   int Split(int n, const int k, const char *secret, size_t length, const std::vector<Share *> &shares);
   // reconstruct the secret from multiple shares
-  int Combine(int k, const std::vector<Share *> &shares, char *secret, size_t *length);
+  int Combine(size_t k, const std::vector<Share *> &shares, uint8_t *secret, size_t *length);
+  int CheckShares(Share *share_i, BIGNUM *x_i, BIGNUM *y_i, BIGNUM *denses_i, BIGNUM *nums_i);
+  int CheckSum(BIGNUM *sum);
+  int LagrangeCal(BIGNUM *nums_j, BIGNUM *x_m, BIGNUM *x_j, BIGNUM *denses_j, BIGNUM *tmp, BN_CTX *ctx);
+  int InputCheck(size_t k, const std::vector<Share *> &shares, uint8_t *secret, size_t *length);
+  void ReleaseNum(BIGNUM *bigNum);
 
  private:
-  mpz_t prim_;
+  BIGNUM *bn_prim_;
   size_t degree_;
-  // calculate shares from a polynomial
-  int CalculateShares(const mpz_t coeff[], int k, int n, const std::vector<Share *> &shares);
-  // inversion in finite field
-  void field_invert(mpz_t z, const mpz_t x);
   // addition in finite field
-  void field_add(mpz_t z, const mpz_t x, const mpz_t y);
+  bool field_add(BIGNUM *z, const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx);
   // multiplication in finite field
-  void field_mult(mpz_t z, const mpz_t x, const mpz_t y);
-  // evaluate polynomial at x
-  void GetPolyVal(int k, mpz_t y, const mpz_t x, const mpz_t coeff[]);
-  // convert secret sharing from Share type to mpz_t type
-  void GetShare(mpz_t x, mpz_t share, Share *s_share);
+  bool field_mult(BIGNUM *z, const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx);
+  // subtraction in finite field
+  bool field_sub(BIGNUM *z, const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx);
+  // convert secret sharing from Share type to BIGNUM type
+  bool GetShare(BIGNUM *x, BIGNUM *share, Share *s_share);
+  void FreeBNVector(std::vector<BIGNUM *> bns);
 };
 #endif
 

@@ -61,7 +61,7 @@ class CipherReconStruct {
   // get suv noise by computing shares result.
   bool GetSuvNoise(const std::vector<std::string> &clients_share_list,
                    const std::map<std::string, std::vector<std::vector<unsigned char>>> &record_public_keys,
-                   const string &fl_id, std::vector<float> *noise, char *secret, int length);
+                   const string &fl_id, std::vector<float> *noise, uint8_t *secret, int length);
   // malloc shares.
   bool MallocShares(std::vector<Share *> *shares_tmp, int shares_size);
   // delete shares.

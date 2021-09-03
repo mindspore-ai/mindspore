@@ -23,9 +23,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#ifndef _WIN32
-#include <gmp.h>
-#endif
 #include "proto/ps.pb.h"
 #include "utils/log_adapter.h"
 #include "fl/armour/secure_protocol/secret_sharing.h"
