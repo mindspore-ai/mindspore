@@ -62,7 +62,7 @@ class Jvp(Cell):
         >>> from mindspore.nn.grad import Jvp
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y):
-        ...     return x**3 + y
+        ...         return x**3 + y
         >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
@@ -126,7 +126,7 @@ class Vjp(Cell):
         >>> from mindspore.nn.grad import Vjp
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y):
-        ...     return x**3 + y
+        ...         return x**3 + y
         >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
