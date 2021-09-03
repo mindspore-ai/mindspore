@@ -122,7 +122,7 @@ const AnfNodePtr BatchNorm2BNInfer::Process(const FuncGraphPtr &graph, const Anf
     return nullptr;
   }
   auto bn_infer = CreateBNInfer(graph, batchnorm, node);
-  TransferDepend(batchnorm, graph, bn_infer);
+  TransferDependOrUpdateState(batchnorm, graph, bn_infer);
   return bn_infer;
 }
 }  // namespace opt
