@@ -54,13 +54,12 @@ def calculate_gain(nonlinearity, param=None):
         res = math.sqrt(2.0)
     elif nonlinearity == 'leaky_relu':
         if param is None:
-            negative_slope = 0.01
+            neg_slope = 0.01
         elif not isinstance(param, bool) and isinstance(param, int) or isinstance(param, float):
-            # True/False are instances of int, hence check above
-            negative_slope = param
+            neg_slope = param
         else:
-            raise ValueError("negative_slope {} not a valid number".format(param))
-        res = math.sqrt(2.0 / (1 + negative_slope ** 2))
+            raise ValueError("neg_slope {} not a valid number".format(param))
+        res = math.sqrt(2.0 / (1 + neg_slope ** 2))
     else:
         raise ValueError("Unsupported nonlinearity {}".format(nonlinearity))
     return res
@@ -89,7 +88,7 @@ def _calculate_correct_fan(tensor, mode):
     mode = mode.lower()
     valid_modes = ['fan_in', 'fan_out']
     if mode not in valid_modes:
-        raise ValueError("Mode {} not supported, please use one of {}".format(mode, valid_modes))
+        raise ValueError("Unsupported mode {}, please use one of {}".format(mode, valid_modes))
     fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)
     return fan_in if mode == 'fan_in' else fan_out
 
