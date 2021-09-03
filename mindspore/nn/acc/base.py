@@ -17,7 +17,8 @@ import copy
 from mindspore.nn.cell import Cell
 from mindspore.nn.optim import LARS
 from mindspore import log as logger
-from mindspore.common import Parameter
+from mindspore.common import Parameter, Tensor
+from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
