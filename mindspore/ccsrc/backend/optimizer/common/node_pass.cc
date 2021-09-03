@@ -36,6 +36,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
   while (!todo.empty()) {
     AnfNodePtr node = todo.front().first;
     auto fg = todo.front().second;
+    manager->AddFuncGraph(fg);
     todo.pop_front();
     if (seen_node.count(node) > 0 || !manager->all_nodes().contains(node)) {
       continue;
@@ -47,7 +48,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     if (new_node != nullptr && new_node != node) {
       (void)manager->Replace(node, new_node);
       // if replaced node is end_goto, refresh relative params in kernel graph
-      auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
+      auto kernel_graph = fg->cast<std::shared_ptr<session::KernelGraph>>();
       if (kernel_graph != nullptr && node->isa<CNode>()) {
         auto cnode = node->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
