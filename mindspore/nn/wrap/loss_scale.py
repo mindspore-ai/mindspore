@@ -175,8 +175,7 @@ class FixedLossScaleUpdateCell(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, Parameter, nn
-        >>> from mindspore.ops as ops
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, in_features, out_features):
@@ -248,8 +247,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, Parameter, nn
-        >>> from mindspore.ops as ops
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> from mindspore import dtype as mstype
         >>>
         >>> class Net(nn.Cell):

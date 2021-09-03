@@ -143,7 +143,7 @@ class Primitive(Primitive_):
         Args:
             stage (int): The stage id for the current operation.
         Examples:
-            >>> from mindspore.ops as ops
+            >>> from mindspore import ops
             >>> add = ops.Add()
             >>> print(add.set_stage(0))
             Prim[Add]<stage=0>
@@ -162,7 +162,7 @@ class Primitive(Primitive_):
         Args:
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
         Examples:
-            >>> from mindspore.ops as ops
+            >>> from mindspore import ops
             >>> add = ops.Add()
             >>> print(add.shard(((1, 1), (1, 1))))
             Prim[Add]<strategy=((1, 1), (1, 1))>
