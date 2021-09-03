@@ -25,6 +25,26 @@ namespace mindspore {
 namespace abstract {
 AnalysisSchedule AnalysisSchedule::instance_;
 
+void AnalysisSchedule::Schedule() {
+  const auto checkPeriod = std::chrono::seconds(3);
+  std::unique_lock<std::mutex> lock(activate_thread_lock_);
+  while (notExit_) {
+    // Check Error
+    if (StaticAnalysisException::Instance().HasException()) {
+      // Reset
+      active_thread_count_.store(1);
+    } else if (active_thread_count_.load() < 0) {
+      MS_LOG(ERROR) << "There is something wrong. active thread count: " << active_thread_count_;
+    }
+
+    auto ok = activate_thread_cv_.wait_for(lock, checkPeriod, [this] { return active_thread_count_.load() == 0; });
+    if (ok && (!SetNextReady())) {
+      // If schedule list is empty, wait.
+      (void)activate_thread_cv_.wait_for(lock, checkPeriod, [this] { return active_thread_count_.load() != 0; });
+    }
+  }
+}
+
 void AnalysisSchedule::HandleException(const std::exception &ex) {
   // Just record the first exception information.
   if (!StaticAnalysisException::Instance().HasException()) {
@@ -34,9 +54,10 @@ void AnalysisSchedule::HandleException(const std::exception &ex) {
     if (dynamic_cast<const py::error_already_set *>(&ex) != nullptr) {
       try {
         MS_LOG(DEBUG) << "Python exception happened, check the information as below.";
-        trace::GetTraceStackInfo(exceptionStream_);
-        if (!exceptionStream_.str().empty()) {
-          MS_LOG(ERROR) << "Exception happened, check the information as below.\n" << exceptionStream_.str();
+        std::ostringstream exceptionStream;
+        trace::GetTraceStackInfo(exceptionStream);
+        if (!exceptionStream.str().empty()) {
+          MS_LOG(ERROR) << "Exception happened, check the information as below.\n" << exceptionStream.str();
         }
       } catch (const std::exception &e) {
         // Ignored.
@@ -44,24 +65,22 @@ void AnalysisSchedule::HandleException(const std::exception &ex) {
     }
   }
   // Free all the locks. Let all the threads continue to run.
-  std::lock_guard<std::mutex> lock(lock_);
-  for (auto &item : asyncAbstractList_) {
-    item->SetRunnable();
+  std::lock_guard<std::mutex> lock(activate_thread_lock_);
+  for (auto &item : scheduleList_) {
+    item->SetException();
   }
-  asyncAbstractList_.clear();
+  scheduleList_.clear();
 }
 
 void AnalysisSchedule::Wait() {
-  py::gil_scoped_release infer_gil_release;
-  try {
-    EnterWaiting();
-  } catch (const std::exception &ex) {
-    MS_LOG(DEBUG) << ex.what();
-    HandleException(ex);
-  }
+  EnterWaiting();
   {
-    std::unique_lock<std::mutex> lock(lock_);
-    condition_var_.wait(lock, [this] { return threadNum_ <= 0; });
+    py::gil_scoped_release infer_gil_release;
+    std::unique_lock<std::mutex> lock(infer_thread_lock_);
+    infer_thread_cv_.wait(lock, [this] { return infer_thread_count_.load() <= 0; });
+  }
+  if (infer_thread_count_.load() < 0) {
+    MS_LOG(ERROR) << "There is something wrong. thread count: " << infer_thread_count_;
   }
   LeaveWaiting();
   if (IS_OUTPUT_ON(DEBUG)) {
@@ -71,30 +90,42 @@ void AnalysisSchedule::Wait() {
   StaticAnalysisException::Instance().CheckException();
 }
 
-void AnalysisSchedule::SetNextRunnableImpl() {
-  if (asyncAbstractList_.empty()) {
-    MS_LOG(DEBUG) << "The Health List is empty. ";
-    return;
+bool AnalysisSchedule::SetNextReady() {
+  if (scheduleList_.empty()) {
+    MS_LOG(DEBUG) << "The schedule list is empty. ";
+    return false;
   }
   // Check if enter endless loop
-  auto it = std::find_if(asyncAbstractList_.begin(), asyncAbstractList_.end(), [](const auto &item) {
+  auto it = std::find_if(scheduleList_.begin(), scheduleList_.end(), [](const auto &item) {
     MS_EXCEPTION_IF_NULL(item);
     return item->HasResult();
   });
-  if (it == asyncAbstractList_.end()) {
-    // Add activate thread count.
-    activeThreadCount_++;
+  if (it == scheduleList_.end()) {
     // Enter endless loop if there is not ready result.
-    MS_LOG(EXCEPTION) << "Enter endless loop. There isn't any branch that can been evaluated. Please check the code.";
+    active_thread_count_.fetch_add(1);
+    // Let the first thread to trigger endless loop exception.
+    MS_LOG(DEBUG) << "Enter endless loop if there is not ready result.Set the async to trigger exception:"
+                  << scheduleList_.front().get() << " The active thread count: " << active_thread_count_;
+    scheduleList_.front()->SetEndLessLoopException();
+    scheduleList_.pop_front();
+    return true;
   }
-  // Push back the not ready async.
-  (void)asyncAbstractList_.insert(asyncAbstractList_.end(), asyncAbstractList_.begin(), it);
-  (void)asyncAbstractList_.erase(asyncAbstractList_.begin(), it);
 
-  MS_LOG(DEBUG) << asyncAbstractList_.front().get() << " The active thread count is " << activeThreadCount_
-                << " Called times: " << asyncAbstractList_.front()->count();
-  asyncAbstractList_.front()->SetRunnable();
-  asyncAbstractList_.pop_front();
+  // Push back the not ready async.
+  MS_LOG(DEBUG) << " The active thread count: " << active_thread_count_
+                << " Before assign, schedule list size: " << scheduleList_.size();
+  (void)scheduleList_.insert(scheduleList_.end(), scheduleList_.begin(), it);
+  (void)scheduleList_.erase(scheduleList_.begin(), it);
+
+  active_thread_count_.fetch_add(1);
+  MS_LOG(DEBUG) << scheduleList_.front().get() << " The active thread count: " << active_thread_count_
+                << " Called times: " << scheduleList_.front()->count();
+  scheduleList_.front()->SetReady();
+  scheduleList_.pop_front();
+  MS_LOG(DEBUG) << " The active thread count: " << active_thread_count_
+                << " Success to SetNext, schedule list size: " << scheduleList_.size();
+
+  return true;
 }
 // The thread id format is XXXX.YYYY.ZZZZ
 thread_local std::string localThreadID;
