@@ -227,6 +227,19 @@ uint32_t GetRank() {
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   if (parallel_context->parallel_mode() != parallel::STAND_ALONE) {
+#ifndef NO_DLIB
+    // Check HCCL inited.
+    if (!hccl::HcclAdapter::GetInstance().Inited()) {
+      MS_LOG(DEBUG) << "HCCL not inited, return rank_id = 0";
+      return rank_id;
+    }
+#elif defined(ENABLE_GPU)
+    // Check NCCL inited.
+    if (!CollectiveInitializer::instance().collective_inited()) {
+      MS_LOG(DEBUG) << "NCLL not inited, return rank_id = 0";
+      return rank_id;
+    }
+#endif
     if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
       MS_LOG(EXCEPTION) << "Get rank id failed.";
     }
