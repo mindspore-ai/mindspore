@@ -69,6 +69,8 @@ _set_ps_context_func_map = {
     "client_learning_rate": ps_context().set_client_learning_rate,
     "worker_step_num_per_iteration": ps_context().set_worker_step_num_per_iteration,
     "enable_ps_ssl": ps_context().set_enable_ssl,
+    "client_password": ps_context().set_client_password,
+    "server_password": ps_context().set_server_password,
     "scheduler_manage_port": ps_context().set_scheduler_manage_port,
     "config_file_path": ps_context().set_config_file_path,
     "dp_eps": ps_context().set_dp_eps,
@@ -102,6 +104,8 @@ _get_ps_context_func_map = {
     "client_learning_rate": ps_context().client_learning_rate,
     "worker_step_num_per_iteration": ps_context().worker_step_num_per_iteration,
     "enable_ps_ssl": ps_context().enable_ssl,
+    "client_password": ps_context().client_password,
+    "server_password": ps_context().server_password,
     "scheduler_manage_port": ps_context().scheduler_manage_port,
     "config_file_path": ps_context().config_file_path
 }
