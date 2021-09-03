@@ -37,7 +37,9 @@
 #include "profiler/device/gpu/gpu_profiling_utils.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
+#ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
+#endif
 #include "utils/comm_manager.h"
 #include "debug/debugger/debugger.h"
 #include "backend/optimizer/pass/optimize_updatestate.h"
