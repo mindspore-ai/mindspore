@@ -72,15 +72,9 @@ void CPUMemoryManager::ResetDynamicMemory() {
   dynamic_mem_.clear();
 }
 
-CPUMemoryManager::~CPUMemoryManager() {
-  try {
-    MemFree();
-  } catch (std::exception &e) {
-    MS_LOG(EXCEPTION) << "MemFree exception in ~CPUMemoryManager(), " << e.what();
-  }
-}
+CPUMemoryManager::~CPUMemoryManager() { MemFree(); }
 
-void CPUMemoryManager::MemFree() {
+void CPUMemoryManager::MemFree() noexcept {
   if (mem_ptr_ != nullptr) {
     mem_ptr_ = nullptr;
     mem_size_ = 0;

@@ -282,11 +282,11 @@ bool CreateNodeDefBytes(const std::shared_ptr<AnfNode> &anf_node,
 uint64_t SetExtInfoShapeType(char *ext_info_buf, uint64_t ext_info_offset, UnknowShapeOpType type) {
   // deal1: unknown shape type
   auto *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
-  info->infoType = FWK_ADPT_EXT_SHAPE_TYPE;
+  info->infoType = static_cast<int32_t>(FWK_ADPT_EXT_SHAPE_TYPE);
   info->infoLen = sizeof(int32_t);
   ext_info_offset += kExtInfoHeadSize;
   auto *shape_type = reinterpret_cast<int32_t *>(ext_info_buf + ext_info_offset);
-  *shape_type = type;
+  *shape_type = static_cast<int32_t>(type);
   ext_info_offset += info->infoLen;
   return ext_info_offset;
 }
@@ -295,8 +295,8 @@ uint64_t SetExtInfoInputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
                                   const std::shared_ptr<AnfNode> &anf_node, size_t input_num) {
   // deal2:input ShapeAndType
   auto *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
-  info->infoType = FWK_ADPT_EXT_INPUT_SHAPE;
-  info->infoLen = input_num * sizeof(ShapeAndType);
+  info->infoType = static_cast<int32_t>(FWK_ADPT_EXT_INPUT_SHAPE);
+  info->infoLen = SizeToInt(input_num * sizeof(ShapeAndType));
   ext_info_offset += kExtInfoHeadSize;
 
   auto *inputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
@@ -335,8 +335,8 @@ uint64_t SetExtInfoOutputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
                                    const std::shared_ptr<AnfNode> &anf_node, size_t output_num) {
   // deal3:output ShapeAndType
   auto *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
-  info->infoType = FWK_ADPT_EXT_OUTPUT_SHAPE;
-  info->infoLen = output_num * sizeof(ShapeAndType);
+  info->infoType = static_cast<int32_t>(FWK_ADPT_EXT_OUTPUT_SHAPE);
+  info->infoLen = SizeToInt(output_num * sizeof(ShapeAndType));
   ext_info_offset += kExtInfoHeadSize;
 
   auto *outputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
@@ -418,9 +418,7 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
     MS_LOG(EXCEPTION) << "Create nodeDefBytes failed!";
   }
 
-  if (!CreateExtInfo(anf_node, kernel_mod_ptr)) {
-    MS_LOG(EXCEPTION) << "Create nodeDefBytes failed!";
-  }
+  CreateExtInfo(anf_node, kernel_mod_ptr);
 
   if (!SetIOSize(anf_node, kernel_mod_ptr)) {
     MS_LOG(EXCEPTION) << "Set input output size list failed.";

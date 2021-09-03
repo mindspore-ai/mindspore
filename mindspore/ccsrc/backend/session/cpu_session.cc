@@ -163,7 +163,8 @@ void CPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto &input_nodes = kernel_graph->inputs();
   if (input_nodes.size() != inputs_const.size()) {
-    MS_LOG(EXCEPTION) << "Input size not equal to input node size!";
+    MS_LOG(EXCEPTION) << "Input size " << inputs_const.size() << " is not equal to input node size "
+                      << input_nodes.size();
   }
   for (size_t input_idx = 0; input_idx < input_nodes.size(); ++input_idx) {
     auto &input_node = input_nodes[input_idx];
@@ -201,7 +202,7 @@ void CPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_grap
 }
 
 void CPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
-                                  const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {
+                                  const std::vector<tensor::TensorPtr> &, VectorRef *const) {
   Summary(kernel_graph.get());
 }
 

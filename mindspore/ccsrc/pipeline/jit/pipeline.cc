@@ -1262,7 +1262,7 @@ void InitHccl() {
   if (!task_sink && mode == kGraphMode) {
     MS_LOG(INFO) << "mpi collective init.";
     if (!HcclCollectiveGroup::instance().InitCollective()) {
-      MS_LOG(EXCEPTION) << "HcclCollectiveGroup init failed.";
+      MS_LOG(EXCEPTION) << "Mpi init failed, please check if mpirun is used correctly.";
     }
     device_id = IntToUint(HcclCollectiveGroup::instance().GetDeviceId());
     ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);

@@ -50,7 +50,7 @@ def _check_task_sink_envs():
     return True if task_sink environment variables have been exported, False otherwise.
     """
     import os
-    task_sink = os.getenv("SINGLE_OP_MODE")
+    task_sink = os.getenv("GRAPH_OP_RUN")
     if task_sink:
         try:
             if int(task_sink) == 1:

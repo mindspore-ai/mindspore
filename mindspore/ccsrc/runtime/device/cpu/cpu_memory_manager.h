@@ -58,7 +58,7 @@ class CPUMemoryManager : public MemoryManager {
 
  private:
   uint8_t *MemMalloc(size_t size);
-  void MemFree();
+  void MemFree() noexcept;
   CPUSimpleMemPlan mem_plan_;
 
   size_t mem_size_{0};

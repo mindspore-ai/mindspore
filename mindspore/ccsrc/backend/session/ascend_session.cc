@@ -225,14 +225,13 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   *next_val = 0;
   next_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
   // set loop_count to zero
-  MS_EXCEPTION_IF_NULL(inputs);
   inputs->push_back(next_loop_tensor);
 
   auto epoch_tensor = (*inputs_params)[kLoopSinkEpochIndex];
   MS_EXCEPTION_IF_NULL(epoch_tensor);
   auto *epoch_val = static_cast<int32_t *>(epoch_tensor->data_c());
   MS_EXCEPTION_IF_NULL(epoch_val);
-  *epoch_val = graph->current_epoch();
+  *epoch_val = SizeToInt(graph->current_epoch());
   epoch_tensor->set_sync_status(kNeedSyncHostToDevice);
   inputs->push_back(epoch_tensor);
   MS_LOG(DEBUG) << "Load epoch_val:" << *epoch_val;
@@ -611,7 +610,7 @@ void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_g
 }
 
 void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
-                                     const std::vector<tensor::TensorPtr> &inputs, VectorRef *const) {
+                                     const std::vector<tensor::TensorPtr> &, VectorRef *const) {
   // summary
   Summary(kernel_graph.get());
   // load tensor from device for debugger
@@ -1517,7 +1516,7 @@ void AscendSession::SyncInitialTenosrToDevice() {
     auto backend_parameter = graph_inputs[input_idx];
     // sync data from host to device
     MS_EXCEPTION_IF_NULL(front_tensor);
-    size_t tensor_size = front_tensor->data().nbytes();
+    size_t tensor_size = LongToSize(front_tensor->data().nbytes());
     auto addr = AnfAlgo::GetOutputAddr(backend_parameter, 0);
     MS_EXCEPTION_IF_NULL(addr);
     if (!addr->SyncHostToDevice(trans::GetRuntimePaddingShape(backend_parameter, 0), tensor_size,
@@ -1560,7 +1559,7 @@ void AscendSession::SelectKernel(NotNull<KernelGraphPtr> root_graph) {
   size_t reduce_precision_count = 0;
 
   std::set<KernelGraphPtr> memo;
-  (void)RecurseSelectKernelInfo(root_graph, NOT_NULL(&memo), &raise_precision_count, &reduce_precision_count);
+  RecurseSelectKernelInfo(root_graph, NOT_NULL(&memo), &raise_precision_count, &reduce_precision_count);
   memo.clear();
 
   auto ms_context = MsContext::GetInstance();

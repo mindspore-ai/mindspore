@@ -214,7 +214,7 @@ std::shared_ptr<kernel::KernelBuildInfo> ChooseMatchedKernelInfo(
     UpdateCurMatchCounts(*kernel_info_ptr, kernel_node, &cur_kernel_info_match_counts);
     // Currently the selection policy is the match format count first, and then is datatype counts.
     if (PriorityChooseItem(cur_kernel_info_match_counts, &most_match_counts)) {
-      selected_index = SizeToInt(info_index);
+      selected_index = info_index;
     }
   }
   return kernel_info_list[selected_index];
