@@ -14,6 +14,7 @@
 # ============================================================================
 
 import mindspore.nn as nn
+from mindspore.ops import operations as P
 from mindspore.common.initializer import TruncatedNormal
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -69,4 +70,13 @@ class LeNet5(nn.Cell):
         x = self.fc2(x)
         x = self.relu(x)
         x = self.fc3(x)
+        return x
+
+class PushMetrics(nn.Cell):
+    def __init__(self):
+        super(PushMetrics, self).__init__()
+        self.push_metrics = P.PushMetrics()
+
+    def construct(self, loss, acc):
+        x = self.push_metrics(loss, acc)
         return x

@@ -54,21 +54,20 @@ bool IterationMetrics::Initialize() {
     }
 
     // Parse storage file path.
-    std::string metrics_file_path = JsonGetKeyWithException<std::string>(value_json, ps::kStoreFilePath);
-    auto realpath = Common::GetRealPath(metrics_file_path);
+    metrics_file_path_ = JsonGetKeyWithException<std::string>(value_json, ps::kStoreFilePath);
+    auto realpath = Common::GetRealPath(metrics_file_path_);
     if (!realpath.has_value()) {
-      MS_LOG(EXCEPTION) << "Get real path for " << metrics_file_path << " failed.";
+      MS_LOG(EXCEPTION) << "Get real path for " << metrics_file_path_ << " failed.";
       return false;
     }
 
-    metrics_file_.open(metrics_file_path, std::ios::ate | std::ios::out);
+    metrics_file_.open(metrics_file_path_, std::ios::ate | std::ios::out);
   }
   return true;
 }
 
 bool IterationMetrics::Summarize() {
   if (!metrics_file_.is_open()) {
-    metrics_file_.clear();
     MS_LOG(ERROR) << "The metrics file is not opened.";
     return false;
   }
@@ -87,7 +86,14 @@ bool IterationMetrics::Summarize() {
   return true;
 }
 
-bool IterationMetrics::Clear() { return true; }
+bool IterationMetrics::Clear() {
+  if (metrics_file_.is_open()) {
+    MS_LOG(INFO) << "Clear the old metrics file " << metrics_file_path_;
+    metrics_file_.close();
+    metrics_file_.open(metrics_file_path_, std::ios::ate | std::ios::out);
+  }
+  return true;
+}
 
 void IterationMetrics::set_fl_name(const std::string &fl_name) { fl_name_ = fl_name; }
 

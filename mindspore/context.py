@@ -872,6 +872,9 @@ def set_fl_context(**kwargs):
             Default: 'NOT_ENCRYPT'.
         config_file_path (string): Configuration file path used by recovery. Default: ''.
         scheduler_manage_port (int): scheduler manage port used to scale out/in. Default: 11202.
+        enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: true.
+        client_password (str): Password to decrypt the secret key stored in the client certificate.
+        server_password (str): Password to decrypt the secret key stored in the server certificate.
 
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.

@@ -778,6 +778,32 @@ class PushWeight(PrimitiveWithInfer):
         return mstype.float32
 
 
+class PushMetrics(PrimitiveWithInfer):
+    """
+    Push metrics like loss and accuracy for federated learning worker.
+
+    Inputs:
+        - **loss** (Tensor) - The loss.
+        - **accuracy** (Tensor) - The accuracy.
+
+    Outputs:
+        None.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize PushMetrics"""
+        self.add_prim_attr("primitive_target", "CPU")
+        self.add_prim_attr("side_effect_mem", True)
+        self.init_prim_io_names(inputs=["loss", "accuracy"], outputs=["result"])
+
+    def infer_shape(self, loss, accuracy):
+        return [1]
+
+    def infer_dtype(self, loss, accuracy):
+        return mstype.float32
+
+
 class StartFLJob(PrimitiveWithInfer):
     """
     StartFLJob for federated learning worker.

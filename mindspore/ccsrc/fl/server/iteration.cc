@@ -274,7 +274,7 @@ bool Iteration::DisableServerInstance(std::string *result) {
   instance_state_ = InstanceState::kDisable;
   if (!ForciblyMoveToNextIteration()) {
     *result = "Disabling instance failed. Can't drop current iteration and move to the next.";
-    MS_LOG(ERROR) << result;
+    MS_LOG(ERROR) << *result;
     return false;
   }
   *result = "Disabling FL-Server succeeded.";
@@ -310,6 +310,9 @@ bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string
   iteration_num_ = 1;
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   ModelStore::GetInstance().Reset();
+  if (metrics_ != nullptr) {
+    metrics_->Clear();
+  }
 
   // Update the hyper-parameters on server and reinitialize rounds.
   if (!UpdateHyperParams(new_instance_json)) {
@@ -516,13 +519,6 @@ bool Iteration::BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const st
 void Iteration::HandleMoveToNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_ERROR_IF_NULL_WO_RET_VAL(message);
   MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
-  MoveToNextIterResponse proceed_to_next_iter_rsp;
-  proceed_to_next_iter_rsp.set_result("success");
-  if (!communicator_->SendResponse(proceed_to_next_iter_rsp.SerializeAsString().data(),
-                                   proceed_to_next_iter_rsp.SerializeAsString().size(), message)) {
-    MS_LOG(ERROR) << "Sending response failed.";
-    return;
-  }
 
   MoveToNextIterRequest proceed_to_next_iter_req;
   (void)proceed_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
@@ -536,6 +532,14 @@ void Iteration::HandleMoveToNextIterRequest(const std::shared_ptr<ps::core::Mess
   // Synchronize the iteration number with leader server.
   iteration_num_ = last_iter_num;
   Next(is_last_iter_valid, reason);
+
+  MoveToNextIterResponse proceed_to_next_iter_rsp;
+  proceed_to_next_iter_rsp.set_result("success");
+  if (!communicator_->SendResponse(proceed_to_next_iter_rsp.SerializeAsString().data(),
+                                   proceed_to_next_iter_rsp.SerializeAsString().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
 }
 
 void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
@@ -548,7 +552,9 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
     MS_LOG(INFO) << "Iteration " << iteration_num_ << " is successfully finished.";
   } else {
     // Store last iteration's model because this iteration is considered as invalid.
-    const auto &model = ModelStore::GetInstance().GetModelByIterNum(iteration_num_ - 1);
+    const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
+    size_t latest_iter_num = iter_to_model.rbegin()->first;
+    const auto &model = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
     ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
     MS_LOG(WARNING) << "Iteration " << iteration_num_ << " is invalid. Reason: " << reason;
   }
@@ -642,7 +648,7 @@ bool Iteration::SummarizeIteration() {
 
   metrics_->set_fl_name(ps::PSContext::instance()->fl_name());
   metrics_->set_fl_iteration_num(ps::PSContext::instance()->fl_iteration_num());
-  metrics_->set_cur_iteration_num(iteration_num_ - 1);
+  metrics_->set_cur_iteration_num(iteration_num_);
   metrics_->set_instance_state(instance_state_.load());
   metrics_->set_loss(loss_);
   metrics_->set_accuracy(accuracy_);

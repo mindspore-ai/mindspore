@@ -41,6 +41,9 @@ server_num = args.server_num
 
 str_fl_id = 'fl_lenet_' + str(pid)
 
+server_not_available_rsp = ["The cluster is in safemode.",
+                            "The server's training job is disabled or finished."]
+
 def generate_port():
     if not use_elb:
         return http_port
@@ -156,7 +159,7 @@ def start_fl_job():
     print("Start fl job url is ", url)
 
     x = session.post(url, data=build_start_fl_job())
-    if x.text == "The cluster is in safemode.":
+    if x.text in server_not_available_rsp:
         start_fl_job_result['reason'] = "Restart iteration."
         start_fl_job_result['next_ts'] = datetime_to_timestamp(datetime.datetime.now()) + 500
         print("Start fl job when safemode.")
@@ -185,7 +188,7 @@ def update_model(iteration):
     print("Update model url:", url, ", iteration:", iteration)
     update_model_buf, update_model_np_data = build_update_model(iteration)
     x = session.post(url, data=update_model_buf)
-    if x.text == "The cluster is in safemode.":
+    if x.text in server_not_available_rsp:
         update_model_result['reason'] = "Restart iteration."
         update_model_result['next_ts'] = datetime_to_timestamp(datetime.datetime.now()) + 500
         print("Update model when safemode.")
@@ -214,7 +217,7 @@ def get_model(iteration, update_model_data):
 
     while True:
         x = session.post(url, data=build_get_model(iteration))
-        if x.text == "The cluster is in safemode.":
+        if x.text in server_not_available_rsp:
             print("Get model when safemode.")
             time.sleep(0.5)
             continue
@@ -270,9 +273,6 @@ while True:
         if duration >= 0:
             time.sleep(duration / 1000)
         continue
-
-    if current_iteration == 1:
-        time.sleep(2)
 
     print("")
     sys.stdout.flush()
