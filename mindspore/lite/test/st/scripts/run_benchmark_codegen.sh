@@ -125,35 +125,36 @@ function Run_arm_codegen() {
             make -j4
         } >> $4
 
-        rm -rf $1/codegen_test
-        mkdir $1/codegen_test && cd $1/codegen_test || exit 1
-        cp -a $1/benchmark/benchmark $1/codegen_test/benchmark || exit 1
-        cp -a $1/${model_name}/src/net.bin $1/codegen_test/net.bin || exit 1
+        benchmark_dir="$1/codegen_test_$7"
+        rm -rf "$benchmark_dir"
+        mkdir "$benchmark_dir" && cd "$benchmark_dir" || exit 1
+        cp -a "$1/benchmark/benchmark" "$benchmark_dir/benchmark" || exit 1
+        cp -a "$1/$model_name/src/net.bin" "$benchmark_dir/net.bin" || exit 1
 
         {
-            echo 'ls ${build_path}/codegen_test'
-            ls $1/codegen_test
+            echo "ls $benchmark_dir:"
+            ls "$benchmark_dir"
         } >> $4
 
         # adb push all needed files to the phone
-        adb -s $6 push $1/codegen_test /data/local/tmp/ > adb_push_log.txt
+        adb -s $6 push "$benchmark_dir" /data/local/tmp/ > adb_push_log.txt
 
         {
-            echo 'cd  /data/local/tmp/codegen_test'
+            echo "cd  /data/local/tmp/codegen_test_$7"
             echo 'chmod 777 benchmark'
             echo 'chmod 777 net.bin'
             echo 'ls'
             echo './benchmark /data/local/tmp/input_output/input/'${model_name}'.ms.bin ./net.bin 1 /data/local/tmp/input_output/output/'${model_name}'.ms.out'
-            echo 'cd .. && rm -rf codegen_test'
+            echo "cd .. && rm -rf codegen_test_$7"
         } >> $4
 
         {
-            echo 'cd  /data/local/tmp/codegen_test'
+            echo "cd  /data/local/tmp/codegen_test_$7"
             echo 'chmod 777 benchmark'
             echo 'chmod 777 net.bin'
             echo 'ls'
             echo './benchmark /data/local/tmp/input_output/input/'${model_name}'.ms.bin ./net.bin 1 /data/local/tmp/input_output/output/'${model_name}'.ms.out'
-            echo 'cd .. && rm -rf codegen_test'
+            echo "cd .. && rm -rf codegen_test_$7"
         } > adb_run_cmd.txt
 
         adb -s $6 shell < adb_run_cmd.txt >> $4
@@ -269,26 +270,26 @@ fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" || $backend == "codegen_and_train" ]]; then
     # Run on x86-codegen-parallel
     echo "start Run x86 codegen parallel ..."
-    Run_x86_codegen ${build_path_parallel} ${ms_models_path} ${models_codegen_parallel_config} ${run_x86_codegen_parallel_log_file} ${run_benchmark_result_file}
-    Run_x86_codegen_parallel_status=$?
-    #Run_x86_codegen_parallel_PID=$!
-    #sleep 1
+    Run_x86_codegen ${build_path_parallel} ${ms_models_path} ${models_codegen_parallel_config} ${run_x86_codegen_parallel_log_file} ${run_benchmark_result_file} &
+#    Run_x86_codegen_parallel_status=$?
+    Run_x86_codegen_parallel_PID=$!
+    sleep 1
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" || $backend == "codegen_and_train" ]]; then
     # Run on codegen
     echo "start Run arm64 codegen ..."
-    Run_arm_codegen ${build_path_arm64} ${ms_models_path} ${models_codegen_config} ${run_arm64_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm64"
-    Run_arm64_codegen_status=$?
-#    Run_arm64_codegen_PID=$!
-#    sleep 1
+    Run_arm_codegen ${build_path_arm64} ${ms_models_path} ${models_codegen_config} ${run_arm64_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm64" &
+#    Run_arm64_codegen_status=$?
+    Run_arm64_codegen_PID=$!
+    sleep 1
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" || $backend == "codegen_and_train" ]]; then
     # Run on arm32 codegen
     echo "start Run arm32 codegen ..."
-    Run_arm_codegen ${build_path_arm32} ${ms_models_path} ${models_codegen_config} ${run_arm32_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm32"
-    Run_arm32_codegen_status=$?
-#    Run_arm32_codegen_PID=$!
-#    sleep 1
+    Run_arm_codegen ${build_path_arm32} ${ms_models_path} ${models_codegen_config} ${run_arm32_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm32" &
+#    Run_arm32_codegen_status=$?
+    Run_arm32_codegen_PID=$!
+    sleep 1
 fi
 
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "codegen_and_train" ]]; then
@@ -301,8 +302,8 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" ||
     fi
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" || $backend == "codegen_and_train" ]]; then
-#    wait ${Run_x86_codegen_parallel_PID}
-#    Run_x86_codegen_parallel_status=$?
+    wait ${Run_x86_codegen_parallel_PID}
+    Run_x86_codegen_parallel_status=$?
     if [[ ${Run_x86_codegen_parallel_status} != 0 ]];then
         echo "Run_x86 codegen parallel failed"
         cat ${run_x86_codegen_log_file}
@@ -310,8 +311,8 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" ||
     fi
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" || $backend == "codegen_and_train" ]]; then
-#    wait ${Run_arm64_codegen_PID}
-#    Run_arm64_codegen_status=$?
+    wait ${Run_arm64_codegen_PID}
+    Run_arm64_codegen_status=$?
     if [[ ${Run_arm64_codegen_status} != 0 ]];then
         echo "Run_arm64_codegen failed"
         cat ${run_arm64_fp32_codegen_log_file}
@@ -319,8 +320,8 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" 
     fi
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" || $backend == "codegen_and_train" ]]; then
-#    wait ${Run_arm32_codegen_PID}
-#    Run_arm32_codegen_status=$?
+    wait ${Run_arm32_codegen_PID}
+    Run_arm32_codegen_status=$?
     if [[ ${Run_arm32_codegen_status} != 0 ]];then
         echo "Run_arm32_codegen failed"
         cat ${run_arm32_fp32_codegen_log_file}
