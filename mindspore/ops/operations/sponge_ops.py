@@ -2984,6 +2984,9 @@ class FFT3D(PrimitiveWithInfer):
     """
     Forward FFT with Three-Dimensional Input.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
     Inputs:
         - **input_tensor** (Tensor, float32) - [fftx, ffty, fftz]
 
@@ -3018,6 +3021,9 @@ class FFT3D(PrimitiveWithInfer):
 class IFFT3D(PrimitiveWithInfer):
     """
     Inverse FFT with Three-Dimensional Input.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Inputs:
         - **input_real** (Tensor, float32) - [fftx, ffty, fftz]
