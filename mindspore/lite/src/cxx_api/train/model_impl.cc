@@ -47,6 +47,10 @@ Status ModelImpl::PrepareMetrics(Model *model, std::vector<session::Metrics *> *
   }
   auto model_metrics = GetMetrics();
   for (auto m : model_metrics) {
+    if (m == nullptr) {
+      MS_LOG(ERROR) << "Null input metrics";
+      return kLiteUninitializedObj;
+    }
     if (m->metrics_impl_) {
       // For off-the-shelf metrics it is guaranteed that we have also an MSLite implementation
       auto internal_m = m->metrics_impl_->GetInternalMetrics();
@@ -79,6 +83,9 @@ Status ModelImpl::ConvertCallbacks(Model *model, std::vector<TrainCallBack *> *i
     return kLiteUninitializedObj;
   }
   for (auto cb : *i_cbs) {
+    if (cb == nullptr) {
+      return kLiteUninitializedObj;
+    }
     if (cb->callback_impl_) {
       // For off-the-shelf callback it is guaranteed that we have also an MSLite implementation
       auto internal_cb = cb->callback_impl_->GetInternalCallback();

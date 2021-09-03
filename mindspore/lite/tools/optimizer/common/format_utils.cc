@@ -25,6 +25,7 @@
 #include "ops/batch_norm.h"
 #include "ops/batch_to_space.h"
 #include "ops/bias_add.h"
+#include "ops/cast.h"
 #include "ops/concat.h"
 #include "ops/crop.h"
 #include "ops/depth_to_space.h"
@@ -102,12 +103,12 @@ static const std::unordered_map<std::string, std::vector<size_t>> NCHWOpMap = {{
 
 // a certain op whose input's format is not fixed, bool value determines whether the op has axis attribute or not.
 static const std::unordered_map<std::string, bool> DynamicFormatOpList = {
-  {ops::kNameAddN, false},          {ops::kNameCrop, true},         {ops::kNameSplit, true},
-  {ops::kNameConcat, true},         {ops::kNameEltwise, false},     {ops::kNameMaximum, false},
-  {ops::kNameAddFusion, false},     {ops::kNameDivFusion, false},   {ops::kNameMulFusion, false},
-  {ops::kNamePadFusion, false},     {ops::kNamePowFusion, false},   {ops::kNameActivation, false},
-  {ops::kNameSliceFusion, true},    {ops::kNameStridedSlice, true}, {ops::kNameActivationGrad, false},
-  {ops::kNameQuantDTypeCast, false}};
+  {ops::kNameAddN, false},           {ops::kNameCrop, true},         {ops::kNameSplit, true},
+  {ops::kNameConcat, true},          {ops::kNameEltwise, false},     {ops::kNameMaximum, false},
+  {ops::kNameAddFusion, false},      {ops::kNameDivFusion, false},   {ops::kNameMulFusion, false},
+  {ops::kNamePadFusion, false},      {ops::kNamePowFusion, false},   {ops::kNameActivation, false},
+  {ops::kNameSliceFusion, true},     {ops::kNameStridedSlice, true}, {ops::kNameActivationGrad, false},
+  {ops::kNameQuantDTypeCast, false}, {ops::kNameCast, false}};
 
 const std::unordered_map<std::string, std::vector<size_t>> &GetNHWCOpMap() { return NHWCOpMap; }
 const std::unordered_map<std::string, std::vector<size_t>> &GetNCHWOpMap() { return NCHWOpMap; }

@@ -28,8 +28,8 @@
 
 namespace mindspore {
 Status Model::Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> i_cbs) {
-  if ((impl_ == nullptr) || (impl_->session_ == nullptr)) {
-    MS_LOG(ERROR) << "Model implement is null.";
+  if ((impl_ == nullptr) || (impl_->session_ == nullptr) || ds == nullptr) {
+    MS_LOG(ERROR) << "Model implement or dataset is null.";
     return kLiteUninitializedObj;
   }
   auto loop = std::unique_ptr<session::TrainLoop>(session::TrainLoop::CreateTrainLoop((impl_->session_).get()));
@@ -67,8 +67,8 @@ Status Model::Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vecto
 }
 
 Status Model::Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> i_cbs) {
-  if ((impl_ == nullptr) || (impl_->session_ == nullptr)) {
-    MS_LOG(ERROR) << "Model implement is null.";
+  if ((impl_ == nullptr) || (impl_->session_ == nullptr) || ds == nullptr) {
+    MS_LOG(ERROR) << "Model implement or dataset is null.";
     return kLiteUninitializedObj;
   }
 

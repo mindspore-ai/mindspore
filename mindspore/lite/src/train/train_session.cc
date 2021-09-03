@@ -63,6 +63,10 @@ int TrainSession::Init(InnerContext *context, const TrainCfg *train_cfg) {
     }
     cfg_ = *train_cfg;
   }
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "context cannot be nullptr";
+    return RET_NULL_PTR;
+  }
   allocator_ = context->allocator;
   return lite::LiteSession::Init(context);
 }

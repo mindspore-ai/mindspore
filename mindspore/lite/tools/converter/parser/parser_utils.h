@@ -30,7 +30,7 @@ void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all
 int CommonAnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 int GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
 int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
-AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode);
+AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index);
 int UnifyConvWeightFormat(const FuncGraphPtr &graph, const CNodePtr &cnode, schema::Format src_format,
                           schema::Format dst_format, std::set<AnfNodePtr> *has_visited);
 int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,

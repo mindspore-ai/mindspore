@@ -139,6 +139,18 @@ TEST_F(TestCxxApiLiteModel, test_getparams_SUCCESS) {
   for (size_t ix = 0; ix < params1.size(); ix++) {
     ASSERT_EQ(static_cast<float *>(params1[ix].MutableData())[0], static_cast<float>(ix) + pi);
   }
+  if (!params.empty()) {
+    auto &param = params.at(0);
+    param.SetShape({20, 20});
+    param.SetDataType(DataType::kNumberTypeInt8);
+  }
+  ASSERT_TRUE(model.SetOptimizerParams(params) != kSuccess);
+
+  if (!params.empty()) {
+    auto &param = params.at(0);
+    param.SetTensorName("failed_name");
+  }
+  ASSERT_TRUE(model.SetOptimizerParams(params) != kSuccess);
 }
 
 TEST_F(TestCxxApiLiteModel, test_getgrads_SUCCESS) {
@@ -159,5 +171,62 @@ TEST_F(TestCxxApiLiteModel, test_getgrads_SUCCESS) {
     static_cast<float *>(graients[ix].MutableData())[0] = static_cast<float>(ix) + pi;
   }
   ASSERT_TRUE(model.ApplyGradients(graients) == kSuccess);
+  if (!graients.empty()) {
+    auto &param = graients.at(0);
+    param.SetShape({20, 20});
+  }
+
+  ASSERT_TRUE(model.ApplyGradients(graients) != kSuccess);
+  if (!graients.empty()) {
+    auto &param = graients.at(0);
+    param.SetTensorName("failed_name");
+  }
+  ASSERT_TRUE(model.ApplyGradients(graients) != kSuccess);
+}
+
+TEST_F(TestCxxApiLiteModel, test_fp32_SUCCESS) {
+  Model model;
+  Graph graph;
+  auto context = std::make_shared<Context>();
+  auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
+  cpu_context->SetEnableFP16(true);
+  context->MutableDeviceInfo().push_back(cpu_context);
+  auto train_cfg = std::make_shared<TrainCfg>();
+  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
+
+  ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+
+  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = false;
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+
+  cpu_context->SetEnableFP16(false);
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+
+  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+}
+
+TEST_F(TestCxxApiLiteModel, test_fp16_SUCCESS) {
+  Model model;
+  Graph graph;
+  auto context = std::make_shared<Context>();
+  auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
+  cpu_context->SetEnableFP16(true);
+  context->MutableDeviceInfo().push_back(cpu_context);
+  auto train_cfg = std::make_shared<TrainCfg>();
+  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
+
+  ASSERT_TRUE(Serialization::Load("./nets/mix_lenet_tod.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+
+  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = false;
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+
+  cpu_context->SetEnableFP16(false);
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+
+  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
 }
 }  // namespace mindspore

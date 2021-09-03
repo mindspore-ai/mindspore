@@ -91,6 +91,10 @@ class OptimizerKernel : public InnerKernel {
     indices.push_back(lr_idx_);
     for (size_t ix = 0; ix < indices.size(); ix++) {
       if (param->tensor_name() == in_tensors_.at(indices[ix])->tensor_name()) {
+        if (param->Size() != in_tensors_.at(indices[ix])->Size()) {
+          MS_LOG(ERROR) << "Tensor: " << param->tensor_name() << "set size not same";
+          return false;
+        }
         auto value = static_cast<float *>(param->MutableData())[0];
         static_cast<float *>(in_tensors_.at(indices[ix])->MutableData())[0] = value;
         if (lr_idx_ == indices[ix]) {

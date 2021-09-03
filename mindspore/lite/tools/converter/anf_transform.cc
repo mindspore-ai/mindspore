@@ -115,7 +115,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     fusion_pm->AddPass(std::make_shared<opt::AffineFusion>());
     fusion_pm->AddPass(std::make_shared<opt::AffineActivationFusion>());
   }
-  if (config->fmk == converter::kFmkTypeMs) {
+  if (config->fmk == converter::kFmkTypeMs && !config->trainModel) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();
     if (remove_unused_cast_pass == nullptr) {
       MS_LOG(ERROR) << "RemoveUnusedCastOpPass should be specified";
