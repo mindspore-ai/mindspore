@@ -1,4 +1,6 @@
 # build mindspore_shared_lib
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 if(NOT(BUILD_LITE))
     set(LOAD_MINDIR_SRC
             ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/load_model.cc

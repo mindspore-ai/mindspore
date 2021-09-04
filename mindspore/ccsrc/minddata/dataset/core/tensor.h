@@ -159,7 +159,7 @@ class Tensor {
   template <typename T>
   static Status CreateFromVector(const std::vector<T> &items, const TensorShape &shape, TensorPtr *out) {
     CHECK_FAIL_RETURN_UNEXPECTED(
-      items.size() == shape.NumOfElements(),
+      static_cast<dsize_t>(items.size()) == shape.NumOfElements(),
       "Number of elements in the vector does not match the number of elements of the shape required");
     DataType type = DataType::FromCType<T>();
     // if items is empty, items_ptr would be nullptr. CreateFromMemory will handle this case.
@@ -419,7 +419,7 @@ class Tensor {
       return {};
     }
     std::vector<dsize_t> indices(index_vector.size(), 0);
-    for (int i = 0; i < index_vector.size(); i++) {
+    for (size_t i = 0; i < index_vector.size(); i++) {
       indices[i] = HandleNeg(index_vector[i], length[i]);
     }
     return indices;
@@ -786,7 +786,7 @@ inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::strin
                                                     TensorPtr *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   CHECK_FAIL_RETURN_UNEXPECTED(
-    items.size() == shape.NumOfElements(),
+    static_cast<dsize_t>(items.size()) == shape.NumOfElements(),
     "Number of elements in the vector does not match the number of elements of the shape required");
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
   *out = std::allocate_shared<Tensor>(*alloc, TensorShape({static_cast<dsize_t>(items.size())}),

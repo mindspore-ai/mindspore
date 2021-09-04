@@ -71,6 +71,7 @@
 
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/execute.h"
 #include "minddata/dataset/include/dataset/iterator.h"
 #include "minddata/dataset/include/dataset/samplers.h"
 #include "minddata/dataset/include/dataset/transforms.h"
@@ -175,6 +176,14 @@ class Serdes {
   /// \param[out] vector of tensor operation pointer
   /// \return Status The status code returned
   static Status ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shared_ptr<TensorOperation>> *result);
+
+  /// \brief helper function to load tensor operations from dataset JSON and construct Execute object.
+  /// \param[in] dataset_json JSON string of dataset.
+  /// \param[in] process_column Select all map operations which process this column.
+  /// \param[out] data_graph Execute object contains tensor operations of map.
+  /// \return Status The status code returned.
+  static Status ParseMindIRPreprocess(const std::string &dataset_json, const std::string &process_column,
+                                      std::vector<std::shared_ptr<mindspore::dataset::Execute>> *data_graph);
 
  protected:
   /// \brief Helper function to save JSON to a file

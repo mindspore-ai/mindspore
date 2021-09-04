@@ -19,6 +19,10 @@
 #include "cxx_api/graph/graph_data.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/load_mindir/load_model.h"
+#if !defined(_WIN32) && !defined(_WIN64)
+#include "minddata/dataset/engine/serdes.h"
+#include "minddata/dataset/include/dataset/execute.h"
+#endif
 #include "utils/crypto.h"
 
 namespace mindspore {
@@ -187,7 +191,24 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     }
-    *graph = Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
+    auto graph_data = std::make_shared<Graph::GraphData>(anf_graph, kMindIR);
+#if !defined(_WIN32) && !defined(_WIN64)
+    std::string preprocessor = LoadPreprocess(file_path);
+    if (!preprocessor.empty()) {
+      std::vector<std::shared_ptr<dataset::Execute>> data_graph;
+      status = dataset::Serdes::ParseMindIRPreprocess(preprocessor, "image", &data_graph);
+      if (status != kSuccess) {
+        MS_LOG(ERROR) << status.GetErrDescription();
+        return status;
+      }
+      if (!data_graph.empty()) {
+        graph_data->SetPreprocess(data_graph);
+      } else {
+        MS_LOG(WARNING) << "Load preprocess failed, no data preprocess operations found in MindIR.";
+      }
+    }
+#endif
+    *graph = Graph(graph_data);
     return kSuccess;
   } else if (model_type == kOM) {
     Buffer data = ReadFile(file_path);
@@ -256,7 +277,24 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
         MS_LOG(ERROR) << err_msg.str();
         return Status(kMEInvalidInput, err_msg.str());
       }
-      results.emplace_back(std::make_shared<Graph::GraphData>(anf_graphs[i], kMindIR));
+      auto graph_data = std::make_shared<Graph::GraphData>(anf_graphs[i], kMindIR);
+#if !defined(_WIN32) && !defined(_WIN64)
+      std::string preprocessor = LoadPreprocess(files_path[i]);
+      if (!preprocessor.empty()) {
+        std::vector<std::shared_ptr<dataset::Execute>> data_graph;
+        auto status = dataset::Serdes::ParseMindIRPreprocess(preprocessor, "image", &data_graph);
+        if (status != kSuccess) {
+          MS_LOG(ERROR) << status.GetErrDescription();
+          return status;
+        }
+        if (!data_graph.empty()) {
+          graph_data->SetPreprocess(data_graph);
+        } else {
+          MS_LOG(WARNING) << "Load preprocess failed, no data preprocess operations found in MindIR.";
+        }
+      }
+#endif
+      results.emplace_back(graph_data);
     }
 
     *graphs = std::move(results);

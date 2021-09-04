@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <fstream>
+#include <stack>
 #include "minddata/dataset/engine/serdes.h"
 
 #include "debug/common.h"
@@ -305,6 +307,55 @@ Serdes::InitializeFuncPtr() {
   ops_ptr[transforms::kTypeCastOperation] = &(transforms::TypeCastOperation::from_json);
   ops_ptr[text::kToNumberOperation] = &(text::ToNumberOperation::from_json);
   return ops_ptr;
+}
+
+Status Serdes::ParseMindIRPreprocess(const std::string &dataset_json, const std::string &process_column,
+                                     std::vector<std::shared_ptr<mindspore::dataset::Execute>> *data_graph) {
+  CHECK_FAIL_RETURN_UNEXPECTED(!dataset_json.empty(), "Invalid data, no json data in dataset_json.");
+
+  nlohmann::json dataset_js;
+  try {
+    dataset_js = nlohmann::json::parse(dataset_json);
+  } catch (const std::exception &err) {
+    MS_LOG(ERROR) << "Invalid json content, failed to parse JSON data.";
+    RETURN_STATUS_UNEXPECTED("Invalid json content, failed to parse JSON data.");
+  }
+
+  // Note1: We have to consider if pipeline has multibranch, how to deal with this situation?
+  // op1 - map - |
+  // op2 - map   - concat - map - ...
+  std::stack<nlohmann::json> reverse_traversal;
+  nlohmann::json dataset_nodes = dataset_js;
+  while (dataset_nodes != nullptr) {
+    reverse_traversal.push(dataset_nodes);
+    if (dataset_nodes["children"].size() > 1) {
+      MS_LOG(WARNING) << "Need to support dataset_node with more than one child.";
+    }
+    dataset_nodes = dataset_nodes["children"][0];
+  }
+
+  // Note2: We have to consider if the "image" column does not named with "image", how to select its map ops?
+  // In MindRecord, TFRecord, GeneratorDataset or RenameDataset, it seems that the column names are not fixed.
+  while (!reverse_traversal.empty()) {
+    nlohmann::json node = reverse_traversal.top();
+    reverse_traversal.pop();
+    if (node["op_type"] == "Map") {
+      std::vector<std::shared_ptr<TensorOperation>> tensor_ops;
+      RETURN_IF_NOT_OK(ConstructTensorOps(node["operations"], &tensor_ops));
+      if (node["input_columns"][0] == process_column) {
+        std::vector<std::string> op_names;
+        std::transform(tensor_ops.begin(), tensor_ops.end(), std::back_inserter(op_names),
+                       [](const auto &op) { return op->Name(); });
+        MS_LOG(INFO) << "Find valid preprocess operations: " << op_names;
+        data_graph->push_back(std::make_shared<Execute>(tensor_ops));
+      }
+    }
+  }
+
+  if (!data_graph->size()) {
+    MS_LOG(WARNING) << "Can not find any valid preprocess operation.";
+  }
+  return Status::OK();
 }
 
 }  // namespace dataset

@@ -20,12 +20,14 @@ import math
 import shutil
 import time
 import copy
+import json
 import threading
 from threading import Thread, Lock
 from collections import defaultdict
 
 import numpy as np
 
+import mindspore
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import log as logger
@@ -715,6 +717,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
             - enc_key (byte): Byte type key used for encryption. Tha valid length is 16, 24, or 32.
             - enc_mode (str): Specifies the encryption mode, take effect when enc_key is set.
               Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
+            - dataset (str): Specifies the preprocess methods of network.
 
     Examples:
         >>> import numpy as np
@@ -737,9 +740,10 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         enc_mode = 'AES-GCM'
         if 'enc_mode' in kwargs.keys():
             enc_mode = Validator.check_isinstance('enc_mode', kwargs['enc_mode'], str)
-        _export(net, file_name, file_format, *inputs, enc_key=enc_key, enc_mode=enc_mode)
+        dataset = kwargs['dataset'] if 'dataset' in kwargs.keys() else None
+        _export(net, file_name, file_format, *inputs, enc_key=enc_key, enc_mode=enc_mode, dataset=dataset)
     else:
-        _export(net, file_name, file_format, *inputs)
+        _export(net, file_name, file_format, *inputs, **kwargs)
 
 
 def _export(net, file_name, file_format, *inputs, **kwargs):
@@ -748,6 +752,8 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
+    if 'dataset' in kwargs.keys() and kwargs['dataset'] is not None:
+        check_input_data(kwargs['dataset'], data_class=mindspore.dataset.Dataset)
 
     if file_format == 'GEIR':
         logger.warning(f"Format 'GEIR' is deprecated, it would be removed in future release, use 'AIR' instead.")
@@ -807,6 +813,10 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
 
     net_dict = net.parameters_dict()
     model.ParseFromString(mindir_stream)
+
+    if 'dataset' in kwargs.keys() and kwargs['dataset'] is not None:
+        dataset = kwargs['dataset']
+        model.preprocessor = json.dumps(dataset.to_json(), indent=2)
 
     save_together = _save_together(net_dict, model)
     is_encrypt = lambda: 'enc_key' in kwargs.keys() and 'enc_mode' in kwargs.keys()

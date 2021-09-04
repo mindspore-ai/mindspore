@@ -101,13 +101,13 @@ Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, C alloc, 
       return Status(StatusCode::kMDOutOfMemory);
     }
     if (!std::is_arithmetic<T>::value) {
-      for (auto i = 0; i < n; i++) {
+      for (size_t i = 0; i < n; i++) {
         std::allocator_traits<C>::construct(alloc, &(data[i]), std::forward<Args>(args)...);
       }
     }
     auto deleter = [](T *p, C f_alloc, size_t f_n) {
       if (!std::is_arithmetic<T>::value && std::is_destructible<T>::value) {
-        for (auto i = 0; i < f_n; ++i) {
+        for (size_t i = 0; i < f_n; ++i) {
           std::allocator_traits<C>::destroy(f_alloc, &p[i]);
         }
       }

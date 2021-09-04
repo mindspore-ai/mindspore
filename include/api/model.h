@@ -75,6 +75,17 @@ class MS_API Model {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
+  /// \brief Inference model, only for cv model inference.
+  ///
+  /// \param[in] inputs A string represents the file path of input image.
+  /// \param[out] outputs Which is a pointer to a vector. The model outputs are filled in the container in sequence.
+  /// \param[in] before CallBack before predict.
+  /// \param[in] after CallBack after predict.
+  ///
+  /// \return Status.
+  inline Status Predict(const std::string &input, std::vector<MSTensor> *outputs,
+                        const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
   /// \brief Load config file.
   ///
   /// \param[in] config_path config file path.
@@ -190,6 +201,8 @@ class MS_API Model {
   std::vector<std::vector<char>> GetOutputTensorNamesChar();
   MSTensor GetOutputByTensorName(const std::vector<char> &tensor_name);
   std::vector<MSTensor> GetOutputsByNodeName(const std::vector<char> &node_name);
+  Status Predict(const std::vector<char> &input, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
+                 const MSKernelCallBack &after);
 
   std::shared_ptr<ModelImpl> impl_;
 };
@@ -206,6 +219,11 @@ MSTensor Model::GetOutputByTensorName(const std::string &tensor_name) {
 
 std::vector<MSTensor> Model::GetOutputsByNodeName(const std::string &node_name) {
   return GetOutputsByNodeName(StringToChar(node_name));
+}
+
+Status Model::Predict(const std::string &input, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
+                      const MSKernelCallBack &after) {
+  return Predict(StringToChar(input), outputs, before, after);
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

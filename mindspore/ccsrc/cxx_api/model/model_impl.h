@@ -39,6 +39,8 @@ class ModelImpl {
 
   virtual Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
 
+  virtual Status Predict(const std::string &input, std::vector<MSTensor> *outputs);
+
   virtual std::vector<MSTensor> GetInputs() = 0;
   virtual std::vector<MSTensor> GetOutputs() = 0;
 
