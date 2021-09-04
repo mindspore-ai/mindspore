@@ -87,11 +87,11 @@ void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
     MS_LOG(ERROR) << "weights_names_fbs is nullptr.";
     return;
   }
-  for (size_t i = 0; i < weights_names_fbs->size(); i++) {
+  for (uint32_t i = 0; i < weights_names_fbs->size(); i++) {
     weight_names.push_back(weights_names_fbs->Get(i)->str());
   }
   if (!executor_->IsWeightAggrDone(weight_names) || !executor_->unmasked()) {
-    ++retry_count_;
+    (void)++retry_count_;
     std::string reason = "The aggregation for the weights is not done yet.";
     BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps);
     if (retry_count_.load() % kPrintPullWeightForEveryRetryTime == 1) {
@@ -134,7 +134,7 @@ void PullWeightKernel::BuildPullWeightRsp(const std::shared_ptr<FBBuilder> &fbb,
   auto fbs_feature_maps_vector = fbb->CreateVector(fbs_feature_maps);
 
   schema::ResponsePullWeightBuilder rsp_pull_weight_builder(*(fbb.get()));
-  rsp_pull_weight_builder.add_retcode(retcode);
+  rsp_pull_weight_builder.add_retcode(static_cast<int>(retcode));
   rsp_pull_weight_builder.add_reason(fbs_reason);
   rsp_pull_weight_builder.add_iteration(SizeToInt(iteration));
   rsp_pull_weight_builder.add_feature_map(fbs_feature_maps_vector);

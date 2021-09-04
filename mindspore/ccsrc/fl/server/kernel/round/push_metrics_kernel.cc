@@ -22,9 +22,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-void PushMetricsKernel::InitKernel(size_t threshold_count) {
-  local_rank_ = DistributedCountService::GetInstance().local_rank();
-}
+void PushMetricsKernel::InitKernel(size_t) { local_rank_ = DistributedCountService::GetInstance().local_rank(); }
 
 bool PushMetricsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                const std::vector<AddressPtr> &outputs) {
@@ -100,7 +98,7 @@ ResultCode PushMetricsKernel::PushMetrics(const std::shared_ptr<FBBuilder> &fbb,
 void PushMetricsKernel::BuildPushMetricsRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode) {
   MS_ERROR_IF_NULL_WO_RET_VAL(fbb);
   schema::ResponsePushMetricsBuilder rsp_push_metrics_builder(*(fbb.get()));
-  rsp_push_metrics_builder.add_retcode(retcode);
+  rsp_push_metrics_builder.add_retcode(static_cast<int>(retcode));
   auto rsp_push_metrics = rsp_push_metrics_builder.Finish();
   fbb->Finish(rsp_push_metrics);
 }

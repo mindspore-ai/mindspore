@@ -214,7 +214,7 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseFeatureMap(
   std::map<std::string, UploadData> feature_map;
   auto fbs_feature_map = update_model_req->feature_map();
   MS_ERROR_IF_NULL_W_RET_VAL(fbs_feature_map, feature_map);
-  for (size_t i = 0; i < fbs_feature_map->size(); i++) {
+  for (uint32_t i = 0; i < fbs_feature_map->size(); i++) {
     std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
     float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());
     size_t weight_size = fbs_feature_map->Get(i)->data()->size() * sizeof(float);

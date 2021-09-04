@@ -67,7 +67,7 @@ bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::ve
     return true;
   }
 
-  ++retry_count_;
+  (void)++retry_count_;
   if (retry_count_.load() % kPrintGetModelForEveryRetryTime == 1) {
     MS_LOG(INFO) << "Launching GetModelKernel retry count is " << retry_count_.load();
   }

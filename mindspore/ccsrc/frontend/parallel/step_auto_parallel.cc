@@ -48,14 +48,14 @@
 #include "ir/anf.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
 #endif
 
 namespace mindspore {
 namespace parallel {
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
     return false;
   }
