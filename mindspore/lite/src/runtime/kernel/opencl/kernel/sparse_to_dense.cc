@@ -136,12 +136,10 @@ int SparseToDenseOpenCLKernel::CheckSpecs() {
 }
 
 int SparseToDenseOpenCLKernel::SetConstArgs() {
-  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
   GpuTensorInfo img_info(out_tensors_[0]);
   size_t dtype = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
   stride_w = img_info.RowPitch() / dtype;
   cl_int2 input_shape = {n_ * h_, w_ * UP_DIV(c_, C4NUM)};
-  auto out_shape_temp = out_tensors_[0]->shape();
   cl_int4 out_shape = {out_n_, out_h_, out_w_, UP_DIV(out_c_, C4NUM)};
   int arg_cn = 3;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape) != CL_SUCCESS) {

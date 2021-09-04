@@ -79,7 +79,7 @@ int PReluCPUKernel::ReSize() {
   for (size_t i = 0; i < n_dim - 1; ++i) {
     input_plane *= in_shape.at(i);
   }
-
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_plane, channel_num), RET_ERROR);
   prelu_param_->input_num_ = input_plane * channel_num;
   prelu_param_->tile_block_ = input_plane;
   prelu_param_->channel_num_ = channel_num;
@@ -87,7 +87,6 @@ int PReluCPUKernel::ReSize() {
 }
 
 int PReluCPUKernel::Run() {
-  MS_ASSERT(in_tensors_.size() >= 2);
   auto input_tensor = in_tensors_[0];
   input_data_ = reinterpret_cast<float *>(input_tensor->data_c());
   output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());

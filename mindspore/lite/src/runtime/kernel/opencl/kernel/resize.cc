@@ -56,8 +56,6 @@ int ResizeOpenCLKernel::Prepare() {
   CHECK_NULL_RETURN(resize_param);
   alignCorner = resize_param->coordinate_transform_mode_ == 1;
   preserveAspectRatio = resize_param->preserve_aspect_ratio_;
-  auto in_shape = in_tensors_[0]->shape();
-  auto out_shape = out_tensors_[0]->shape();
   std::string kernel_name = "resize";
   if (resize_param->method_ == schema::ResizeMethod_LINEAR) {
     kernel_name += "_bilinear";
