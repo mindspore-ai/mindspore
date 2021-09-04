@@ -19,7 +19,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import Add
 from mindspore import Tensor
 
-__all__ = ['MobileNetV2', 'MobileNetV2Backbone', 'MobileNetV2Head', 'mobilenet_v2']
+__all__ = ['MobileNetV2Backbone', 'MobileNetV2Head', 'mobilenet_v2']
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -245,9 +245,10 @@ class MobileNetV2Head(nn.Cell):
     def __init__(self, input_channel=1280, num_classes=1000, has_dropout=False, activation="None"):
         super(MobileNetV2Head, self).__init__()
         # mobilenet head
-        head = ([GlobalAvgPooling(), nn.Dense(input_channel, num_classes, has_bias=True)] if not has_dropout else
-                [GlobalAvgPooling(), nn.Dropout(0.2), nn.Dense(input_channel, num_classes, has_bias=True)])
+        head = ([GlobalAvgPooling()] if not has_dropout else
+                [GlobalAvgPooling(), nn.Dropout(0.2)])
         self.head = nn.SequentialCell(head)
+        self.dense = nn.Dense(input_channel, num_classes, has_bias=True)
         self.need_activation = True
         if activation == "Sigmoid":
             self.activation = P.Sigmoid()
@@ -259,6 +260,7 @@ class MobileNetV2Head(nn.Cell):
 
     def construct(self, x):
         x = self.head(x)
+        x = self.dense(x)
         if self.need_activation:
             x = self.activation(x)
         return x
@@ -283,41 +285,6 @@ class MobileNetV2Head(nn.Cell):
                 if m.bias is not None:
                     m.bias.set_data(
                         Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
-    @property
-    def get_head(self):
-        return self.head
-
-
-class MobileNetV2(nn.Cell):
-    """
-    MobileNetV2 architecture.
-
-    Args:
-        class_num (int): number of classes.
-        width_mult (int): Channels multiplier for round to 8/16 and others. Default is 1.
-        has_dropout (bool): Is dropout used. Default is false
-        inverted_residual_setting (list): Inverted residual settings. Default is None
-        round_nearest (list): Channel round to . Default is 8
-    Returns:
-        Tensor, output tensor.
-
-    Examples:
-        >>> MobileNetV2(backbone, head)
-    """
-
-    def __init__(self, num_classes=1000, width_mult=1., has_dropout=False, inverted_residual_setting=None, \
-        round_nearest=8, input_channel=32, last_channel=1280):
-        super(MobileNetV2, self).__init__()
-        self.backbone = MobileNetV2Backbone(width_mult=width_mult, \
-            inverted_residual_setting=inverted_residual_setting, \
-            round_nearest=round_nearest, input_channel=input_channel, last_channel=last_channel).get_features
-        self.head = MobileNetV2Head(input_channel=self.backbone.out_channels, num_classes=num_classes, \
-            has_dropout=has_dropout).get_head
-
-    def construct(self, x):
-        x = self.backbone(x)
-        x = self.head(x)
-        return x
 
 
 class MobileNetV2Combine(nn.Cell):

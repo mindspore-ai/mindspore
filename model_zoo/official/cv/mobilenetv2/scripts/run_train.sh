@@ -16,50 +16,50 @@
 
 run_ascend()
 {
-    if [ $# = 5 ] ; then
+    if [ $# = 6 ] ; then
         PRETRAINED_CKPT=""
         FREEZE_LAYER="none"
         FILTER_HEAD="False"
-    elif [ $# = 7 ] ; then
-        PRETRAINED_CKPT=$6
-        FREEZE_LAYER=$7
-        FILTER_HEAD="False"
     elif [ $# = 8 ] ; then
-        PRETRAINED_CKPT=$6
-        FREEZE_LAYER=$7
-        FILTER_HEAD=$8
+        PRETRAINED_CKPT=$7
+        FREEZE_LAYER=$8
+        FILTER_HEAD="False"
+    elif [ $# = 9 ] ; then
+        PRETRAINED_CKPT=$7
+        FREEZE_LAYER=$8
+        FILTER_HEAD=$9
     else
         echo "Usage:
-              Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH](optional) [FREEZE_LAYER](optional) [FILTER_HEAD](optional)
-              Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH]"
+              Ascend: sh run_train.sh Ascend [CONFIG_FILE] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH](optional) [FREEZE_LAYER](optional) [FILTER_HEAD](optional)
+              Ascend: sh run_train.sh Ascend [CONFIG_FILE] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH]"
         exit 1
     fi;
 
-    if [ $2 -lt 1 ] || [ $2 -gt 8 ]
+    if [ $3 -lt 1 ] || [ $3 -gt 8 ]
     then
-        echo "error: DEVICE_NUM=$2 is not in (1-8)"
+        echo "error: DEVICE_NUM=$3 is not in (1-8)"
     exit 1
     fi
 
-    if [ ! -d $5 ] && [ ! -f $5 ]
+    if [ ! -d $6 ] && [ ! -f $6 ]
     then
-        echo "error: DATASET_PATH=$5 is not a directory or file"
+        echo "error: DATASET_PATH=$6 is not a directory or file"
     exit 1
     fi
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
-    CONFIG_FILE="${BASEPATH}/../default_config.yaml"
+    CONFIG_FILE="${BASEPATH}/../$2"
 
-    VISIABLE_DEVICES=$3
+    VISIABLE_DEVICES=$4
     IFS="," read -r -a CANDIDATE_DEVICE <<< "$VISIABLE_DEVICES"
-    if [ ${#CANDIDATE_DEVICE[@]} -ne $2 ]
+    if [ ${#CANDIDATE_DEVICE[@]} -ne $3 ]
     then
-        echo "error: DEVICE_NUM=$2 is not equal to the length of VISIABLE_DEVICES=$3"
+        echo "error: DEVICE_NUM=$3 is not equal to the length of VISIABLE_DEVICES=$4"
     exit 1
     fi
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-    export RANK_TABLE_FILE=$4
-    export RANK_SIZE=$2
+    export RANK_TABLE_FILE=$5
+    export RANK_SIZE=$3
     if [ -d "../train" ];
     then
         rm -rf ../train
@@ -87,7 +87,7 @@ run_ascend()
         taskset -c $cmdopt python train.py \
             --config_path=$CONFIG_FILE \
             --platform=$1 \
-            --dataset_path=$5 \
+            --dataset_path=$6 \
             --pretrain_ckpt=$PRETRAINED_CKPT \
             --freeze_layer=$FREEZE_LAYER \
             --filter_head=$FILTER_HEAD \

@@ -7,36 +7,39 @@ data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
 checkpoint_path: './checkpoint/'
-device_target: CPU
+device_target: Ascend
 enable_profiling: False
 
 # ==============================================================================
 modelarts_dataset_unzip_name: 'ImageNet_Original'
 need_modelarts_dataset_unzip: True
 
-num_classes: 26
+num_classes: 1000
 image_height: 224
 image_width: 224
-num_workers: 8
-acc_mode: "O0"
-batch_size: 150
-epoch_size: 15
-warmup_epochs: 0
-lr_init: .0
-lr_end: 0.03
-lr_max: 0.03
+num_workers: 32
+acc_mode: "O1"
+batch_size: 256
+epoch_size: 200
+warmup_epochs: 4
+lr_init: 0.00
+lr_end: 0.00
+lr_max: 0.4
 momentum: 0.9
-weight_decay: 0.00004 # 4e-5
+weight_decay: 0.00004
 label_smooth: 0.1
 loss_scale: 1024
-save_checkpoint: True
+save_checkpoint: False
 save_checkpoint_epochs: 1
-keep_checkpoint_max: 20
+keep_checkpoint_max: 200
 save_checkpoint_path: "./"
-platform: 'CPU'
+platform: 'Ascend'
+device_id: 0
+rank_id: 0
+rank_size: 1
 run_distribute: False
 activation: "Softmax"
-
+        
 # Image classification trian. train_parse_args():return train_args
 dataset_path: "/cache/data"
 pretrain_ckpt: "./mobilenetv2-200_625.ckpt"
@@ -74,7 +77,7 @@ output_path: 'Training output path for local'
 ann_file: 'Ann file, default is val.json.'
 
 pretrain_ckpt: 'Pretrained checkpoint path for fine tune or incremental learning'
-platform: 'Target device type'
+platform: 'Target device type' 
 freeze_layer: 'freeze the weights of network from start to which layers'
 filter_head: 'Filter head weight parameters when load checkpoint, default is False.'
 enable_cache: 'Caching the dataset in memory to speedup dataset processing, default is False.'

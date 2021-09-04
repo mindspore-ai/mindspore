@@ -22,7 +22,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 
 
-__all__ = ["LessBN"]
+__all__ = ["CommonHeadLastFN", "LessBN"]
 
 
 class CommonHeadLastFN(Cell):

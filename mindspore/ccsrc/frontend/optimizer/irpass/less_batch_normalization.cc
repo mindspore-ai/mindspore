@@ -356,7 +356,10 @@ bool LessBatchNormalization::MatchStructureNode(const CNodePtr &cnode, const int
   }
   const auto &use_pattern = std::get<1>(patternTuple);
   int32_t use_index = index % static_cast<int32_t>(use_pattern.size());
-  return IsPrimitiveCNode(cnode, use_pattern[IntToSize(use_index)]);
+  if (!IsPrimitiveCNode(cnode, use_pattern[use_index]) && use_pattern[use_index] != prim::kPrimTupleGetItem) {
+    return false;
+  }
+  return true;
 }
 
 bool LessBatchNormalization::MatchGraphStructure(const CNodePtr &cnode,
@@ -384,7 +387,8 @@ bool LessBatchNormalization::MatchGraphStructure(const CNodePtr &cnode,
 }
 
 void LessBatchNormalization::IsRemoveNode(const CNodePtr &cnode, const std::vector<kStructureTuple> &match_pattern) {
-  if (!IsPrimitiveCNode(cnode, prim::kPrimBatchNorm) && !IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
+  if (!IsPrimitiveCNode(cnode, prim::kPrimBatchNorm) && !IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) &&
+      !IsValueNode<FuncGraph>(cnode->input(0))) {
     return;
   }
   if (match_pattern.empty()) {

@@ -14,9 +14,11 @@
 # ============================================================================
 """base process"""
 import copy
+import mindspore.nn as nn
 from mindspore.nn.optim import LARS
 from mindspore import log as logger
 from mindspore.common import Parameter
+from .less_batch_normalization import CommonHeadLastFN
 
 
 __all__ = ["OptimizerProcess", "ParameterProcess"]
@@ -41,8 +43,49 @@ class OptimizerProcess:
             self.opt_init_args = opt.init_args
         self.origin_params = opt.init_params["params"]
 
-    def add_grad_centralization(self):
+    def build_params_dict(self, network):
+        """Build the params dict of the network"""
+        cells = network.cells_and_names()
+        params_dict = {}
+        for _, cell in cells:
+            for par in cell.get_parameters(expand=False):
+                params_dict[id(par)] = cell
+        return params_dict
+
+    def build_gc_params_group(self, params_dict, parameters):
+        """Build the params group that needs gc"""
+        group_params = []
+        for group_param in parameters:
+            if 'order_params' in group_param.keys():
+                group_params.append(group_param)
+                continue
+            params_gc_value = []
+            params_value = []
+            for param in group_param['params']:
+                if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
+                    param_cell = params_dict[id(param)]
+                    if (isinstance(param_cell, nn.Conv2d) and param_cell.group > 1) or \
+                        isinstance(param_cell, CommonHeadLastFN):
+                        params_value.append(param)
+                    else:
+                        params_gc_value.append(param)
+                else:
+                    params_value.append(param)
+            if params_gc_value:
+                new_group_param = copy.deepcopy(group_param)
+                new_group_param['params'] = params_gc_value
+                new_group_param['grad_centralization'] = True
+                group_params.append(new_group_param)
+            if params_value:
+                new_group_param = copy.deepcopy(group_param)
+                new_group_param['params'] = params_value
+                group_params.append(new_group_param)
+        return group_params
+
+    def add_grad_centralization(self, network):
         """Add gradient centralization."""
+        params_dict = self.build_params_dict(network)
+
         parameters = self.origin_params
         if parameters is not None and not isinstance(parameters, list):
             parameters = list(parameters)
@@ -57,28 +100,7 @@ class OptimizerProcess:
             logger.warning("Only group parameters support gradient centralization.")
             return
 
-        group_params = []
-        for group_param in parameters:
-            if 'order_params' in group_param.keys():
-                group_params.append(group_param)
-                continue
-            params_gc_value = []
-            params_value = []
-            for param in group_param['params']:
-                if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
-                    params_gc_value.append(param)
-                else:
-                    params_value.append(param)
-            if params_gc_value:
-                new_group_param = copy.deepcopy(group_param)
-                new_group_param['params'] = params_gc_value
-                new_group_param['grad_centralization'] = True
-                group_params.append(new_group_param)
-            if params_value:
-                new_group_param = copy.deepcopy(group_param)
-                new_group_param['params'] = params_value
-                group_params.append(new_group_param)
-        self.origin_params = group_params
+        self.origin_params = self.build_gc_params_group(params_dict, parameters)
 
     def generate_new_optimizer(self):
         """Generate new optimizer."""
@@ -88,7 +110,6 @@ class OptimizerProcess:
             opt = LARS(self.opt_class(params=self.origin_params, **self.opt_init_args), **self.lars_init_args)
 
         return opt
-
 
 class ParameterProcess:
     """

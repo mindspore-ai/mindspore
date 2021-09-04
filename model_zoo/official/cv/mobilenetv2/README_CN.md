@@ -211,6 +211,7 @@ MobileNetV2总体网络架构如下：
   │      ├──local_adapter.py      # 获取本地id
   │      └──moxing_adapter.py     # 云上数据准备
   ├── default_config.yaml         # 训练配置参数(ascend)
+  ├── default_config_acc.yaml     # 训练配置参数(ascend acc模式)
   ├── default_config_cpu.yaml     # 训练配置参数(cpu)
   ├── default_config_gpu.yaml     # 训练配置参数(gpu)
   ├── train.py                    # 训练脚本
@@ -226,7 +227,7 @@ MobileNetV2总体网络架构如下：
 
 使用python或shell脚本开始训练。shell脚本的使用方法如下：
 
-- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
+- Ascend: sh run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 - GPU: bash run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 - CPU: bash run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 
@@ -269,34 +270,34 @@ MobileNetV2总体网络架构如下：
 ```shell
 # 训练示例
   python:
-      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH]
+      Ascend: python train.py --platform Ascend --config_path [CONFIG_PATH] --dataset_path [TRAIN_DATASET_PATH]
       GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH]
       CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH]
 
   shell:
-      Ascend: bash run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]
+      Ascend: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH]
       CPU: bash run_train.sh CPU [TRAIN_DATASET_PATH]
 
 # 全网微调示例
   python:
-      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
+      Ascend: python train.py --platform Ascend --config_path [CONFIG_PATH] --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
       GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
       CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
 
   shell:
-      Ascend: bash run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  [CKPT_PATH] none True
+      Ascend: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  [CKPT_PATH] none True
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] none True
       CPU: bash run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] none True
 
 # 全连接层微调示例
   python:
-      Ascend: python --platform Ascend train.py --dataset_path [TRAIN_DATASET_PATH]--pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
-      GPU: python --platform GPU train.py --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
-      CPU: python --platform CPU train.py --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
+      Ascend: python train.py --platform Ascend --config_path default_config.yaml --dataset_path [TRAIN_DATASET_PATH]--pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
+      GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
+      CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
 
   shell:
-      Ascend: bash run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
+      Ascend: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
       CPU: bash run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
 ```

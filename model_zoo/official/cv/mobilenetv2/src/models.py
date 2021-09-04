@@ -70,10 +70,13 @@ class Monitor(Callback):
         >>> Monitor(100,lr_init=Tensor([0.05]*100).asnumpy())
     """
 
-    def __init__(self, lr_init=None):
+    def __init__(self, lr_init=None, model=None, eval_dataset=None):
         super(Monitor, self).__init__()
         self.lr_init = lr_init
         self.lr_init_len = len(lr_init)
+        self.model = model
+        self.eval_dataset = eval_dataset
+        self.best_acc = 0.
 
     def epoch_begin(self, run_context):
         self.losses = []
@@ -84,9 +87,18 @@ class Monitor(Callback):
 
         epoch_mseconds = (time.time() - self.epoch_time) * 1000
         per_step_mseconds = epoch_mseconds / cb_params.batch_num
-        print("epoch time: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}".format(epoch_mseconds,
+
+        eval_acc = None
+        if self.model is not None and self.eval_dataset is not None:
+            eval_acc = self.model.eval(self.eval_dataset)["acc"]
+        log = "epoch time: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}".format(epoch_mseconds,
                                                                                       per_step_mseconds,
-                                                                                      np.mean(self.losses)))
+                                                                                      np.mean(self.losses))
+        if eval_acc is not None:
+            if eval_acc > self.best_acc:
+                self.best_acc = eval_acc
+            log += ", eval_acc: {:.6f}, best_acc: {:.6f}".format(eval_acc, self.best_acc)
+        print(log, flush=True)
 
     def step_begin(self, run_context):
         self.step_time = time.time()
