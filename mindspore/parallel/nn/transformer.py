@@ -598,6 +598,9 @@ class MultiHeadAttention(Cell):
         if num_heads % parallel_config.model_parallel != 0:
             raise ValueError(f"The number of heads {num_heads} must be a "
                              f"multiple of parallel_config.model_parallel {parallel_config.model_parallel}.")
+        if batch_size % parallel_config.data_parallel != 0:
+            raise ValueError(f"The batch size {num_heads} must be a "
+                             f"multiple of parallel_config.data_parallel {parallel_config.data_parallel}.")
         # Output layer
         self.projection = _Linear(in_channels=hidden_size,
                                   out_channels=hidden_size,

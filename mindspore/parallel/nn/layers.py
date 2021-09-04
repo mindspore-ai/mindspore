@@ -359,6 +359,12 @@ class FixedSparseAttention(nn.Cell):
         Validator.check_positive_int(seq_length, "seq_length")
         Validator.check_positive_int(num_different_global_patterns, "num_different_global_patterns")
         dp, mp = parallel_config.data_parallel, parallel_config.model_parallel
+        if num_heads % mp != 0:
+            raise ValueError(f"The number of heads {num_heads} must be a "
+                             f"multiple of parallel_config.model_parallel {mp}.")
+        if batch_size % dp != 0:
+            raise ValueError(f"The batch_size {batch_size} must be a "
+                             f"multiple of parallel_config.data_parallel {parallel_config.data_parallel}.")
         self.seq_length = seq_length
         self.batch_size = batch_size
         self.hidden_size = size_per_head * num_heads
