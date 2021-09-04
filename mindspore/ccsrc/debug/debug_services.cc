@@ -411,7 +411,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
   MS_LOG(INFO) << "tensor list size: " << tensor_list_size;
   if (tensor_list_size == 0) return;
   // default value for number of threads
-  const int default_thread_num = 32;
+  const int default_thread_num = 16;
   int max_thread_num = default_thread_num;
   if (max_thread_num > tensor_list_size) {
     max_thread_num = tensor_list_size;
@@ -528,20 +528,28 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
                   << " ErrInfo:" << strerror(errno);
     return;
   }
-  uint64_t file_size = infile.tellg();
-  infile.seekg(0, std::ios::beg);
-  auto buffer = std::make_unique<std::vector<char>>(file_size);
-  if (!infile.read(buffer->data(), file_size)) {
-    MS_LOG(ERROR) << "Failed to read file (In ReadTensorFromNpy) " << file_path;
-    return;
-  }
   const int substr_len = 2;
   const int header_len_offset = 8;
   const int header_offset = 9;
   const int type_offset = 10;
-  uint16_t header_len = *reinterpret_cast<uint16_t *>(buffer->data() + header_len_offset);
-  std::string header(buffer->data() + header_offset, header_len);
-  buffer.reset();
+  // get header length
+  infile.seekg(0, std::ios::beg);
+  auto header_len_buffer = std::make_unique<std::vector<char>>(header_len_offset + 2);
+  if (!infile.read(header_len_buffer->data(), header_len_offset + 2)) {
+    MS_LOG(ERROR) << "Failed to parse header length from " << file_path;
+    return;
+  }
+  uint16_t header_len = *reinterpret_cast<uint16_t *>(header_len_buffer->data() + header_len_offset);
+  header_len_buffer.reset();
+  // read in header
+  infile.seekg(0, std::ios::beg);
+  auto header_buffer = std::make_unique<std::vector<char>>(header_len_offset + header_len);
+  if (!infile.read(header_buffer->data(), header_len_offset + header_len)) {
+    MS_LOG(ERROR) << "Failed to read header from " << file_path;
+    return;
+  }
+  std::string header(header_buffer->data() + header_offset, header_len);
+  header_buffer.reset();
   std::size_t type_i = header.find("descr") + type_offset;
   if (header.length() < type_i + substr_len) {
     MS_LOG(ERROR) << "Cannot get tensor_type, header length is " << header.length();
@@ -566,7 +574,7 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
     has_enough_memory = tensor_loader_->CheckMemoryAvailable(tensor_name, data_size);
   }
   if (!has_enough_memory) {
-    MS_LOG(ERROR) << "No enough space available for loading " << tensor_name << " into host memory.";
+    MS_LOG(ERROR) << "No enough memory available for loading " << tensor_name << " into host memory.";
     *no_mem_to_read = true;
   } else {
     infile.seekg(header_len + type_offset);
