@@ -250,11 +250,8 @@ if(ENABLE_ASAN)
 endif()
 
 if(MSLITE_ENABLE_ACL)
-    set(ENABLE_ACL on)
     add_definitions(-D ENABLE_LITE_ACL)
     add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--allow-shlib-undefined")
-
     if(DEFINED ENV{ASCEND_CUSTOM_PATH})
         set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
     else()

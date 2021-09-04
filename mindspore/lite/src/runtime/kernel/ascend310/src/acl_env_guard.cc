@@ -18,7 +18,7 @@
 #include "common/log_adapter.h"
 #include "acl/acl.h"
 
-namespace mindspore {
+namespace mindspore::kernel {
 namespace acl {
 std::shared_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_ = nullptr;
 std::mutex AclEnvGuard::global_acl_env_mutex_;
@@ -63,4 +63,4 @@ std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
   return acl_env;
 }
 }  // namespace acl
-}  // namespace mindspore
+}  // namespace mindspore::kernel

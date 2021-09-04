@@ -20,7 +20,7 @@
 #include <map>
 #include "common/log_adapter.h"
 
-namespace mindspore {
+namespace mindspore::kernel {
 namespace acl {
 namespace {
 constexpr size_t kDynamicBatchSize = 1;
@@ -226,7 +226,7 @@ STATUS ModelProcess::InitOutputsBuffer() {
       return lite::RET_OK;
     }
     aclFormat format = aclmdlGetOutputFormat(model_desc_, i);
-    if (format != aclFormat::ACL_FORMAT_NCHW) {
+    if (format != aclFormat::ACL_FORMAT_NCHW && format != aclFormat::ACL_FORMAT_ND) {
       MS_LOG(WARNING) << "The output format of om should be nchw, but now is " << format;
     }
     aclDataType data_type = aclmdlGetOutputDataType(model_desc_, i);
@@ -573,4 +573,4 @@ STATUS ModelProcess::ConstructTensor(std::vector<mindspore::MSTensor> *outputs) 
   return lite::RET_OK;
 }
 }  // namespace acl
-}  // namespace mindspore
+}  // namespace mindspore::kernel

@@ -14,23 +14,39 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ACL_COMMON_UTILS_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ACL_COMMON_UTILS_H
+#ifndef ACL_MAPPER_TBE_OP_DEF_H
+#define ACL_MAPPER_TBE_OP_DEF_H
 
-#include <vector>
-#include "include/errorcode.h"
-#include "ir/anf.h"
-#include "ir/dtype/type_id.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
 namespace acl {
-STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int64_t> *shape_vector);
+#define ADD_CONVERTER_TBE_OP(name)       \
+  constexpr auto kName##name = #name;    \
+  class name : public ops::PrimitiveC {  \
+   public:                               \
+    name() : PrimitiveC(kName##name) {}  \
+    ~name() = default;                   \
+    MS_DECLARE_PARENT(name, PrimitiveC); \
+  };
 
-TypeId GetTypeFromNode(const AnfNodePtr &node);
+ADD_CONVERTER_TBE_OP(Pooling)
 
-std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
+ADD_CONVERTER_TBE_OP(AvgPoolV2)
+
+ADD_CONVERTER_TBE_OP(MaxPoolV3)
+
+ADD_CONVERTER_TBE_OP(PadV3)
+
+ADD_CONVERTER_TBE_OP(StridedSliceV2)
+
+ADD_CONVERTER_TBE_OP(GlobalAveragePool)
+
+ADD_CONVERTER_TBE_OP(BNInference)
+
+ADD_CONVERTER_TBE_OP(Deconvolution)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ACL_ACL_PASS_H
+#endif  // ACL_MAPPER_TBE_OP_DEF_H

@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ACL_COMMON_UTILS_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ACL_COMMON_UTILS_H
+#ifndef ACL_MAPPER_SPATIAL_NODE_ADAPTER_PASS_H
+#define ACL_MAPPER_SPATIAL_NODE_ADAPTER_PASS_H
 
-#include <vector>
+#include "ir/func_graph.h"
 #include "include/errorcode.h"
-#include "ir/anf.h"
-#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {
-namespace acl {
-STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int64_t> *shape_vector);
-
-TypeId GetTypeFromNode(const AnfNodePtr &node);
-
-std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
-}  // namespace acl
+STATUS AdapteSpatialNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ACL_ACL_PASS_H
+
+#endif  // ACL_MAPPER_SPATIAL_NODE_ADAPTER_PASS_H

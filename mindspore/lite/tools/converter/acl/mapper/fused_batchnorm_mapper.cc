@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ACL_COMMON_UTILS_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ACL_COMMON_UTILS_H
-
-#include <vector>
-#include "include/errorcode.h"
-#include "ir/anf.h"
-#include "ir/dtype/type_id.h"
+#include "tools/converter/acl/mapper/fused_batchnorm_mapper.h"
+#include "tools/converter/acl/mapper/primitive_mapper_register.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
-namespace acl {
-STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int64_t> *shape_vector);
+STATUS FusedBatchNormMapper::Mapper(const CNodePtr &cnode) {
+  ValueNodePtr value_node = nullptr;
+  PrimitivePtr src_prim = nullptr;
+  if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Get primitive from cnode failed.";
+    return lite::RET_ERROR;
+  }
+  src_prim->AddAttr(ops::kIsTraining, MakeValue(false));
+  return lite::RET_OK;
+}
 
-TypeId GetTypeFromNode(const AnfNodePtr &node);
-
-std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
-}  // namespace acl
+REGISTER_PRIMITIVE_MAPPER(kNameFusedBatchNorm, FusedBatchNormMapper)
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ACL_ACL_PASS_H

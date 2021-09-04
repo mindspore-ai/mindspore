@@ -1,6 +1,10 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
 add_definitions(-DUSE_GLOG)
 
+if(MSLITE_ENABLE_ACL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--allow-shlib-undefined")
+endif()
+
 set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
@@ -138,7 +142,6 @@ add_subdirectory(${CORE_DIR} mindspore_core)
 if(MSLITE_ENABLE_ACL)
     set(MODE_ASCEND_ACL ON)
     include(${TOP_DIR}/cmake/dependency_graphengine.cmake)
-
     add_subdirectory(acl)
     link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 endif()

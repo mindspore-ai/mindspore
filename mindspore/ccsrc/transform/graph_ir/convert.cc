@@ -1491,8 +1491,8 @@ std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) {
         cur_value = GetValue<std::vector<int64_t>>(value);
       } else {
         auto origin_value = GetValue<std::vector<int>>(value);
-        std::transform(origin_value.begin(), origin_value.end(), std::back_inserter(cur_value),
-                       [](int index) { return static_cast<int64_t>(index); });
+        (void)std::transform(origin_value.begin(), origin_value.end(), std::back_inserter(cur_value),
+                             [](int index) { return static_cast<int64_t>(index); });
       }
     }
   } else {
@@ -1529,7 +1529,7 @@ void DfGraphConvertor::ConvertReshape(const CNodePtr node) {
   std::vector<int64_t> list;
   list = CastToInt(value);
 
-  op->SetAttr("shape", list);
+  (void)op->SetAttr("shape", list);
   op_cache_[node.get()] = op;
 }
 

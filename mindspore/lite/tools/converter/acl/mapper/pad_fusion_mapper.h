@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ACL_COMMON_UTILS_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ACL_COMMON_UTILS_H
+#ifndef ACL_MAPPER_PRIMITIVE_PADFUSION_MAPPER_H
+#define ACL_MAPPER_PRIMITIVE_PADFUSION_MAPPER_H
 
-#include <vector>
-#include "include/errorcode.h"
-#include "ir/anf.h"
-#include "ir/dtype/type_id.h"
+#include "tools/converter/acl/mapper/primitive_mapper.h"
+#include "ops/fusion/pad_fusion.h"
+
+using mindspore::ops::kNamePadFusion;
 
 namespace mindspore {
 namespace lite {
-namespace acl {
-STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int64_t> *shape_vector);
+class PadFusionMapper : public PrimitiveMapper {
+ public:
+  PadFusionMapper() : PrimitiveMapper(kNamePadFusion) {}
+  ~PadFusionMapper() override = default;
 
-TypeId GetTypeFromNode(const AnfNodePtr &node);
+  STATUS Mapper(const CNodePtr &cnode) override;
 
-std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
-}  // namespace acl
+ private:
+  void AdjustPadAttr(const PrimitivePtr &dst_prim);
+};
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ACL_ACL_PASS_H
+#endif  // ACL_MAPPER_PRIMITIVE_PADFUSION_MAPPER_H

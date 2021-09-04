@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
-#define MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
 
-#include <vector>
-#include "include/kernel_interface.h"
+#ifndef ACL_MAPPER_PRIMITIVE_PRELUFUSION_MAPPER_H
+#define ACL_MAPPER_PRIMITIVE_PRELUFUSION_MAPPER_H
 
-namespace mindspore::kernel {
-namespace acl {
-class CustomInterface : public mindspore::kernel::KernelInterface {
+#include "tools/converter/acl/mapper/primitive_mapper.h"
+#include "ops/fusion/prelu_fusion.h"
+
+using mindspore::ops::kNamePReLUFusion;
+
+namespace mindspore {
+namespace lite {
+class PReluFusionMapper : public PrimitiveMapper {
  public:
-  CustomInterface() {}
-  ~CustomInterface() = default;
+  PReluFusionMapper() : PrimitiveMapper(kNamePReLUFusion) {}
+  ~PReluFusionMapper() override = default;
 
-  Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-               const mindspore::schema::Primitive *primitive) override;
+  STATUS Mapper(const CNodePtr &cnode) override;
 };
-}  // namespace acl
-}  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
+}  // namespace lite
+}  // namespace mindspore
+#endif  // ACL_MAPPER_PRIMITIVE_PRELUFUSION_MAPPER_H

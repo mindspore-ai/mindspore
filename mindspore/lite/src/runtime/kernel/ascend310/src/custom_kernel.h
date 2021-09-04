@@ -19,16 +19,17 @@
 
 #include <vector>
 #include <memory>
+#include "src/runtime/kernel/ascend310/src/acl_model_options.h"
+#include "src/runtime/kernel/ascend310/src/model_infer.h"
 #include "include/api/types.h"
 #include "include/api/context.h"
 #include "include/api/kernel.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/ascend310/src/model_infer.h"
 
+namespace mindspore::kernel {
+namespace acl {
 using mindspore::lite::STATUS;
 
-namespace mindspore {
-namespace acl {
 class CustomAscend310Kernel : public kernel::Kernel {
  public:
   CustomAscend310Kernel(const std::vector<mindspore::MSTensor> &inputs, const std::vector<mindspore::MSTensor> &outputs,
@@ -41,11 +42,12 @@ class CustomAscend310Kernel : public kernel::Kernel {
 
  private:
   STATUS PrepareModelInfer();
+  AclModelOptions GetAclModelOptions(const mindspore::Context *ctx) const;
 
   bool load_model_;
   std::shared_ptr<ModelInfer> model_infer_;
 };
 }  // namespace acl
-}  // namespace mindspore
+}  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ASCEND310_FP32_CUSTOM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ASCEND310_KERNEL_CUSTOM_H_

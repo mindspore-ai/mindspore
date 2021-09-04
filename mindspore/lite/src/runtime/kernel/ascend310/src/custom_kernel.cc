@@ -19,9 +19,10 @@
 #include "include/api/types.h"
 #include "include/api/data_type.h"
 #include "src/runtime/kernel/ascend310/src/model_infer.h"
+#include "src/common/log_util.h"
 #include "common/log_adapter.h"
 
-namespace mindspore {
+namespace mindspore::kernel {
 namespace acl {
 CustomAscend310Kernel::CustomAscend310Kernel(const std::vector<mindspore::MSTensor> &inputs,
                                              const std::vector<mindspore::MSTensor> &outputs,
@@ -37,6 +38,34 @@ CustomAscend310Kernel::~CustomAscend310Kernel() {
   }
 }
 
+AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Context *ctx) const {
+  AclModelOptions options;
+  options.device_id_ = 0;
+  if (ctx == nullptr) {
+    MS_LOG(WARNING) << "Context is nullptr.";
+    return options;
+  }
+  auto context = const_cast<mindspore::Context *>(ctx);
+  auto device_infos = context->MutableDeviceInfo();
+  if (device_infos.size() != 1) {
+    MS_LOG(WARNING) << "Size of device infos is not one.";
+    return options;
+  }
+  if (device_infos[0] == nullptr) {
+    MS_LOG(WARNING) << "Device info is nullptr.";
+    return options;
+  }
+  auto ascend31o_info = device_infos[0]->Cast<Ascend310DeviceInfo>();
+  if (ascend31o_info == nullptr) {
+    MS_LOG(WARNING) << "Ascend310 info is nullptr.";
+    return options;
+  }
+
+  options.device_id_ = static_cast<int32_t>(ascend31o_info->GetDeviceID());
+  options.dump_cfg_path_ = ascend31o_info->GetDumpConfigPath();
+  return options;
+}
+
 STATUS CustomAscend310Kernel::PrepareModelInfer() {
   if (inputs_.size() < 1) {
     MS_LOG(ERROR) << "Inputs size should not less than 1.";
@@ -46,7 +75,9 @@ STATUS CustomAscend310Kernel::PrepareModelInfer() {
   int idx = inputs_.size() - 1;
   Buffer om_data(inputs_[idx].Data().get(), inputs_[idx].DataSize());
   if (model_infer_ == nullptr) {
-    model_infer_.reset(new ModelInfer(om_data, 0));
+    auto options = GetAclModelOptions(context_);
+    model_infer_ = std::make_shared<ModelInfer>(om_data, options);
+    CHECK_NULL_RETURN(model_infer_);
   }
   int ret = model_infer_->Init();
   if (ret != lite::RET_OK) {
@@ -119,7 +150,7 @@ std::shared_ptr<kernel::Kernel> CustomCreateKernel(const std::vector<mindspore::
   return kernel;
 }
 }  // namespace acl
-}  // namespace mindspore
+}  // namespace mindspore::kernel
 namespace mindspore {
 namespace registry {
 namespace {
@@ -127,8 +158,8 @@ const auto kFloat32 = DataType::kNumberTypeFloat32;
 const auto kInt8 = DataType::kNumberTypeInt8;
 const auto kUInt8 = DataType::kNumberTypeUInt8;
 }  // namespace
-REGISTER_CUSTOM_KERNEL(ASCEND310, ACL, kFloat32, ACL, acl::CustomCreateKernel)
-REGISTER_CUSTOM_KERNEL(ASCEND310, ACL, kInt8, ACL, acl::CustomCreateKernel)
-REGISTER_CUSTOM_KERNEL(ASCEND310, ACL, kUInt8, ACL, acl::CustomCreateKernel)
+REGISTER_CUSTOM_KERNEL(ASCEND310, ACL, kFloat32, ACL, kernel::acl::CustomCreateKernel)
+REGISTER_CUSTOM_KERNEL(ASCEND310, ACL, kInt8, ACL, kernel::acl::CustomCreateKernel)
+REGISTER_CUSTOM_KERNEL(ASCEND310, ACL, kUInt8, ACL, kernel::acl::CustomCreateKernel)
 }  // namespace registry
 }  // namespace mindspore

@@ -225,7 +225,7 @@ void FuncGraph::DropNode(const AnfNodePtr &node) {
   }
   auto graph = node->func_graph();
   if (node->isa<Parameter>()) {
-    parameters_.erase(std::remove(parameters_.begin(), parameters_.end(), node), parameters_.end());
+    (void)parameters_.erase(std::remove(parameters_.begin(), parameters_.end(), node), parameters_.end());
   }
   // Remove the node from order list.
   if (graph) {

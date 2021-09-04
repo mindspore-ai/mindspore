@@ -19,8 +19,8 @@
 #include "tools/converter/ops/ops_def.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/acl/deparser/primitive_deparser_register.h"
-#include "tools/converter/acl/deparser/spatial_node_adapter.h"
+#include "tools/converter/acl/mapper/primitive_mapper_register.h"
+#include "tools/converter/acl/mapper/spatial_node_adapter.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/optimizer_manager.h"
 #include "include/registry/pass_registry.h"
@@ -29,6 +29,7 @@
 #include "base/core_ops.h"
 #include "cxx_api/model/acl/model_converter.h"
 #include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,7 +37,7 @@ namespace {
 constexpr auto kMakeTuple = "MakeTuple";
 constexpr auto kOutputNames = "outputs_names";
 constexpr auto kCustomPrimTypeACL = "ACL";
-constexpr auto kCustomNodeName = "Custom";
+constexpr auto kCustomNodeName = "Custom_0";
 }  // namespace
 
 ParameterPtr AclPass::CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data) {
@@ -83,7 +84,7 @@ STATUS AclPass::BuildGraph(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
-STATUS AclPass::RunPrimitiveDeparser(const FuncGraphPtr &func_graph) {
+STATUS AclPass::RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Deparser graph start.";
   MS_ASSERT(func_graph != nullptr);
   std::set<FuncGraphPtr> all_func_graphs = {};
@@ -101,13 +102,13 @@ STATUS AclPass::RunPrimitiveDeparser(const FuncGraphPtr &func_graph) {
         return lite::RET_ERROR;
       }
       auto name = prim->name();
-      auto deparser = lite::PrimitiveDeparserRegister::GetInstance().GetPrimitiveDeparser(name);
-      if (deparser == nullptr) {
-        MS_LOG(DEBUG) << "Name: " << name << " not need to deparser.";
+      auto mapper = lite::PrimitiveMapperRegister::GetInstance().GetPrimitiveMapper(name);
+      if (mapper == nullptr) {
+        MS_LOG(DEBUG) << "Name: " << name << " not need to mapper.";
         continue;
       }
       MS_LOG(INFO) << "Deparser cnode: " << name;
-      auto status = deparser->Deparser(cnode);
+      auto status = mapper->Mapper(cnode);
       if (status != lite::RET_OK) {
         MS_LOG(ERROR) << "Deparser primitive failed.";
         return lite::RET_ERROR;
@@ -119,11 +120,11 @@ STATUS AclPass::RunPrimitiveDeparser(const FuncGraphPtr &func_graph) {
 
 STATUS AclPass::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
   if (fmk_type_ == converter::kFmkTypeMs) {
-    MS_LOG(INFO) << "MindIr no need to deparser graph";
+    MS_LOG(INFO) << "MindIr no need to mapper graph";
     return lite::RET_OK;
   }
-  if (RunPrimitiveDeparser(func_graph) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Run deparser primitive failed.";
+  if (RunPrimitiveMapper(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Run mapper primitive failed.";
     return lite::RET_ERROR;
   }
 
