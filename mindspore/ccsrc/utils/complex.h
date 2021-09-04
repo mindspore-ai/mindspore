@@ -63,12 +63,8 @@ struct alignas(sizeof(T) * 2) Complex {
   }
 #endif
   template <typename U = T>
-  HOST_DEVICE explicit Complex(const std::enable_if_t<std::is_same<U, float>::value, Complex<double>> &other)
-      : real_(other.real()), imag_(other.imag()) {}
-
-  template <typename U = T>
-  HOST_DEVICE explicit Complex(const std::enable_if_t<std::is_same<U, double>::value, Complex<float>> &other)
-      : real_(other.real()), imag_(other.imag()) {}
+  HOST_DEVICE inline explicit Complex(const Complex<U> &other)
+      : real_(static_cast<T>(other.real())), imag_(static_cast<T>(other.imag())) {}
 
   HOST_DEVICE inline explicit operator bool() const { return static_cast<bool>(real_) || static_cast<bool>(imag_); }
   HOST_DEVICE inline explicit operator signed char() const { return static_cast<signed char>(real_); }
@@ -87,7 +83,7 @@ struct alignas(sizeof(T) * 2) Complex {
   inline explicit operator float16() const { return static_cast<float16>(real_); }
 #endif
 
-  HOST_DEVICE inline constexpr Complex<T> &operator=(const T &real) {
+  HOST_DEVICE inline Complex<T> &operator=(const T &real) {
     real_ = real;
     imag_ = T();
     return *this;
