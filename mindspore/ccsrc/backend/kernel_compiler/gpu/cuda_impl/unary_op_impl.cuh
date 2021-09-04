@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UNARYOPIMPL_H_
 
 #include "runtime/device/gpu/cuda_common.h"
+#include "utils/complex.h"
 template <typename T>
 void Exponential(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
@@ -64,5 +65,10 @@ template <typename T>
 void Round(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void Sign(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
-
+template <typename T>
+void Real(const Complex<T> *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void Imag(const Complex<T> *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void Conj(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UNARYOPIMPL_H_

@@ -36,25 +36,41 @@ namespace mindspore {
 namespace kernel {
 constexpr char kAxis[] = "axis";
 constexpr char kTypeInt32[] = "Int32";
-const std::unordered_map<std::string, TypeId> type_id_maps = {
-  {"float", TypeId::kNumberTypeFloat32},   {"float16", TypeId::kNumberTypeFloat16},
-  {"float32", TypeId::kNumberTypeFloat32}, {"float64", TypeId::kNumberTypeFloat64},
-  {"int", TypeId::kNumberTypeInt},         {"int8", TypeId::kNumberTypeInt8},
-  {"int16", TypeId::kNumberTypeInt16},     {"int32", TypeId::kNumberTypeInt32},
-  {"int64", TypeId::kNumberTypeInt64},     {"uint", TypeId::kNumberTypeUInt},
-  {"uint8", TypeId::kNumberTypeUInt8},     {"uint16", TypeId::kNumberTypeUInt16},
-  {"uint32", TypeId::kNumberTypeUInt32},   {"uint64", TypeId::kNumberTypeUInt64},
-  {"bool", TypeId::kNumberTypeBool},       {"complex64", TypeId::kNumberTypeComplex64}};
+const std::unordered_map<std::string, TypeId> type_id_maps = {{"float", TypeId::kNumberTypeFloat32},
+                                                              {"float16", TypeId::kNumberTypeFloat16},
+                                                              {"float32", TypeId::kNumberTypeFloat32},
+                                                              {"float64", TypeId::kNumberTypeFloat64},
+                                                              {"int", TypeId::kNumberTypeInt},
+                                                              {"int8", TypeId::kNumberTypeInt8},
+                                                              {"int16", TypeId::kNumberTypeInt16},
+                                                              {"int32", TypeId::kNumberTypeInt32},
+                                                              {"int64", TypeId::kNumberTypeInt64},
+                                                              {"uint", TypeId::kNumberTypeUInt},
+                                                              {"uint8", TypeId::kNumberTypeUInt8},
+                                                              {"uint16", TypeId::kNumberTypeUInt16},
+                                                              {"uint32", TypeId::kNumberTypeUInt32},
+                                                              {"uint64", TypeId::kNumberTypeUInt64},
+                                                              {"bool", TypeId::kNumberTypeBool},
+                                                              {"complex64", TypeId::kNumberTypeComplex64},
+                                                              {"complex128", TypeId::kNumberTypeComplex128}};
 
-const std::map<TypeId, std::string> type_id_str_map = {
-  {TypeId::kNumberTypeFloat32, "float32"}, {TypeId::kNumberTypeFloat16, "float16"},
-  {TypeId::kNumberTypeFloat, "float"},     {TypeId::kNumberTypeFloat64, "float64"},
-  {TypeId::kNumberTypeInt, "int"},         {TypeId::kNumberTypeInt8, "int8"},
-  {TypeId::kNumberTypeInt16, "int16"},     {TypeId::kNumberTypeInt32, "int32"},
-  {TypeId::kNumberTypeInt64, "int64"},     {TypeId::kNumberTypeUInt, "uint"},
-  {TypeId::kNumberTypeUInt8, "uint8"},     {TypeId::kNumberTypeUInt16, "uint16"},
-  {TypeId::kNumberTypeUInt32, "uint32"},   {TypeId::kNumberTypeUInt64, "uint64"},
-  {TypeId::kNumberTypeBool, "bool"},       {TypeId::kNumberTypeComplex64, "complex64"}};
+const std::map<TypeId, std::string> type_id_str_map = {{TypeId::kNumberTypeFloat32, "float32"},
+                                                       {TypeId::kNumberTypeFloat16, "float16"},
+                                                       {TypeId::kNumberTypeFloat, "float"},
+                                                       {TypeId::kNumberTypeFloat64, "float64"},
+                                                       {TypeId::kNumberTypeInt, "int"},
+                                                       {TypeId::kNumberTypeInt8, "int8"},
+                                                       {TypeId::kNumberTypeInt16, "int16"},
+                                                       {TypeId::kNumberTypeInt32, "int32"},
+                                                       {TypeId::kNumberTypeInt64, "int64"},
+                                                       {TypeId::kNumberTypeUInt, "uint"},
+                                                       {TypeId::kNumberTypeUInt8, "uint8"},
+                                                       {TypeId::kNumberTypeUInt16, "uint16"},
+                                                       {TypeId::kNumberTypeUInt32, "uint32"},
+                                                       {TypeId::kNumberTypeUInt64, "uint64"},
+                                                       {TypeId::kNumberTypeBool, "bool"},
+                                                       {TypeId::kNumberTypeComplex64, "complex64"},
+                                                       {TypeId::kNumberTypeComplex128, "complex128"}};
 
 const std::unordered_map<std::string, std::string> dtype_shortdtype_map_ = {
   {"float16", "f16"}, {"float32", "f32"}, {"float64", "f64"}, {"int8", "i8"},    {"int16", "i16"},  {"int32", "i32"},

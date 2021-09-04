@@ -306,6 +306,34 @@ __global__ void AbsKernel(const half *input, half *output, const size_t count) {
   return;
 }
 template <typename T>
+__global__ void AbsKernel(const Complex<T> *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = abs(input[i]);
+  }
+  return;
+}
+template <typename T>
+__global__ void RealKernel(const Complex<T> *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i].real();
+  }
+  return;
+}
+template <typename T>
+__global__ void ImagKernel(const Complex<T> *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i].imag();
+  }
+  return;
+}
+template <typename T>
+__global__ void ConjKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = Complex<T>(input[i].real(), -input[i].imag());
+  }
+  return;
+}
+template <typename T>
 __global__ void FloorKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = floorf(input[i]);
@@ -475,6 +503,26 @@ void Rsqrt(const T *input, T *output, const size_t count, cudaStream_t cuda_stre
 template <typename T>
 void Abs(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   AbsKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Abs(const Complex<T> *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  AbsKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Real(const Complex<T> *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  RealKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Imag(const Complex<T> *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  ImagKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Conj(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
+  ConjKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
 template <typename T>
@@ -671,3 +719,15 @@ template void Floor<int>(const int *input, int *output, const size_t count, cuda
 template void Rint<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template void Sign<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+
+// complex64
+template void Real<float>(const Complex<float> *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<float>(const Complex<float> *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<float>(const Complex<float> *input, Complex<float> *output, const size_t count,
+                          cudaStream_t cuda_stream);
+
+// complex128
+template void Real<double>(const Complex<double> *input, double *output, const size_t count, cudaStream_t cuda_stream);
+template void Imag<double>(const Complex<double> *input, double *output, const size_t count, cudaStream_t cuda_stream);
+template void Conj<double>(const Complex<double> *input, Complex<double> *output, const size_t count,
+                           cudaStream_t cuda_stream);
