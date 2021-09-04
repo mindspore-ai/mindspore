@@ -23,15 +23,8 @@ SET INSTRUCTION=%3
 SET BASEPATH=%CD%
 SET RET_CODE=0
 
-SET PACKAGE_PATH_CONVERT=%PACKAGE_PATH:"=%\windows_x64\avx
 SET PACKAGE_PATH=%PACKAGE_PATH:"=%\windows_x64\%INSTRUCTION%
-7z x -r "%PACKAGE_PATH_CONVERT%\mindspore-lite-*.zip"
-IF NOT %errorlevel% == 0 (
-    echo "Decompression of runtime tool fail!"
-    SET RET_CODE=1
-    goto run_eof
-)
-echo A | 7z x -r "%PACKAGE_PATH%\mindspore-lite-*.zip"
+7z x -r "%PACKAGE_PATH%\mindspore-lite-*.zip"
 IF NOT %errorlevel% == 0 (
     echo "Decompression of runtime tool fail!"
     SET RET_CODE=1

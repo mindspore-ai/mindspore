@@ -39,7 +39,6 @@ namespace mindspore::lite::quant {
 class WeightQuantizer : public Quantizer {
  public:
   WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config);
-  WeightQuantizer(FuncGraphPtr graph, const FullQuantParam &config);
   ~WeightQuantizer() override;
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
@@ -54,33 +53,18 @@ class WeightQuantizer : public Quantizer {
   int quant_max_{127};
   int quant_min_{-128};
   TypeId type_id_{kNumberTypeInt8};
-  std::map<std::string, int> opname_bit_;
 
  private:
   std::unique_ptr<QuantStrategy> quant_strategy_;
   size_t bit_num_{8};
   std::map<tensor::TensorPtr, ParameterPtr> weight_quantized_tensors_;
-  FullQuantParam config_param_;
-  std::map<std::string, std::vector<std::string>> images_;  // multi_input, [[mode_input_0], [model_input_1]...]
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
   bool is_mixed_bit_ = false;
 
-  STATUS DoMixedQuant(const FuncGraphPtr &);
   STATUS SetAbstract(const tensor::TensorPtr &tensor_info, const ParameterPtr &param_node,
                      const PrimitivePtr &primitive);
-  STATUS DoFixedQuant(const FuncGraphPtr &);
   STATUS MarkWeightQuantizationInNodes(const FuncGraphPtr &);
   STATUS DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
-  STATUS RunFp32Graph(const FuncGraphPtr &);
-
-  STATUS DoMixedQuantize(const FuncGraphPtr &func_graph);
-  STATUS CheckImageCnt();
-  static STATUS GetParamNodeAndValue(const std::shared_ptr<AnfNode> &input_node, const std::string &op_name,
-                                     ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
-  STATUS TryQuant(const int &bit_num_t, const ParameterPtr &param_node, const tensor::TensorPtr &tensor_info,
-                  const PrimitivePtr &primitive);
-  STATUS DoQuantSearch(const FuncGraphPtr &func_graph);
-  STATUS EvaluateQuant(const FuncGraphPtr &func_graph, size_t image_cnt, float *mean_error);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_

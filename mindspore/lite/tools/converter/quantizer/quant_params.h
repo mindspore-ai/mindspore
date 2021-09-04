@@ -42,8 +42,6 @@ struct FullQuantParam {
   ActivationQuantizedMethod activation_quant_method = MAX_MIN;
   bool bias_correction = true;
   int thread_num = 1;
-  bool mixed = false;
-  float mean_error_threshold = 0.04;
 };
 }  // namespace mindspore::lite::quant
 

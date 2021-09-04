@@ -121,62 +121,20 @@ int PreprocessParser::ParseCalibratePath(const std::string &str, std::map<std::s
 
 int PreprocessParser::ParseImagePreProcess(const DataPreProcessString &data_pre_process_str,
                                            preprocess::ImagePreProcessParam *image_pre_process) {
-  if (!data_pre_process_str.resize_width.empty()) {
-    if (!ConvertIntNum(data_pre_process_str.resize_width, &image_pre_process->resize_width)) {
-      MS_LOG(ERROR) << "resize_width should be a valid number.";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if (image_pre_process->resize_width <= 0) {
-      MS_LOG(ERROR) << "resize_width must be > 0";
-      return RET_INPUT_PARAM_INVALID;
-    }
+  auto ret = ParseImageNormalize(data_pre_process_str, image_pre_process);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse image normalize failed.";
+    return ret;
   }
-  if (!data_pre_process_str.resize_height.empty()) {
-    if (!ConvertIntNum(data_pre_process_str.resize_height, &image_pre_process->resize_height)) {
-      MS_LOG(ERROR) << "resize_width should be a valid number.";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if (image_pre_process->resize_height <= 0) {
-      MS_LOG(ERROR) << "resize_height must be > 0";
-      return RET_INPUT_PARAM_INVALID;
-    }
+  ret = ParseImageCenterCrop(data_pre_process_str, image_pre_process);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse image center crop failed.";
+    return ret;
   }
-
-  if (!data_pre_process_str.resize_method.empty()) {
-    image_pre_process->resize_method = preprocess::ConvertResizeMethod(data_pre_process_str.resize_method);
-  }
-
-  if (!data_pre_process_str.normalize_mean.empty() &&
-      !ConvertDoubleVector(data_pre_process_str.normalize_mean, &image_pre_process->normalize_mean)) {
-    MS_LOG(ERROR) << "Convert normalize_mean failed.";
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  if (!data_pre_process_str.normalize_std.empty() &&
-      !ConvertDoubleVector(data_pre_process_str.normalize_std, &image_pre_process->normalize_std)) {
-    MS_LOG(ERROR) << "Convert normalize_std failed.";
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  if (!data_pre_process_str.center_crop_width.empty()) {
-    if (!ConvertIntNum(data_pre_process_str.center_crop_width, &image_pre_process->center_crop_width)) {
-      MS_LOG(ERROR) << "center_crop_width should be a valid number.";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if (image_pre_process->center_crop_width <= 0) {
-      MS_LOG(ERROR) << "center_crop_width must be > 0";
-      return RET_INPUT_PARAM_INVALID;
-    }
-  }
-  if (!data_pre_process_str.center_crop_height.empty()) {
-    if (!ConvertIntNum(data_pre_process_str.center_crop_height, &image_pre_process->center_crop_height)) {
-      MS_LOG(ERROR) << "center_crop_height should be a valid number.";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if (image_pre_process->center_crop_height <= 0) {
-      MS_LOG(ERROR) << "center_crop_height must be > 0";
-      return RET_INPUT_PARAM_INVALID;
-    }
+  ret = ParseImageResize(data_pre_process_str, image_pre_process);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse image resize failed.";
+    return ret;
   }
   return RET_OK;
 }
@@ -239,6 +197,73 @@ int PreprocessParser::CollectCalibInputs(const std::map<std::string, std::string
   }
   return RET_OK;
 }
+int PreprocessParser::ParseImageNormalize(const DataPreProcessString &data_pre_process_str,
+                                          preprocess::ImagePreProcessParam *image_pre_process) {
+  if (!data_pre_process_str.normalize_mean.empty() &&
+      !ConvertDoubleVector(data_pre_process_str.normalize_mean, &image_pre_process->normalize_mean)) {
+    MS_LOG(ERROR) << "Convert normalize_mean failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
 
+  if (!data_pre_process_str.normalize_std.empty() &&
+      !ConvertDoubleVector(data_pre_process_str.normalize_std, &image_pre_process->normalize_std)) {
+    MS_LOG(ERROR) << "Convert normalize_std failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  return RET_OK;
+}
+int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_process_str,
+                                       preprocess::ImagePreProcessParam *image_pre_process) {
+  if (!data_pre_process_str.resize_width.empty()) {
+    if (!ConvertIntNum(data_pre_process_str.resize_width, &image_pre_process->resize_width)) {
+      MS_LOG(ERROR) << "resize_width should be a valid number.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if (image_pre_process->resize_width <= 0 || image_pre_process->resize_width > 65535) {
+      MS_LOG(ERROR) << "resize_width must be in (0,65535].";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  if (!data_pre_process_str.resize_height.empty()) {
+    if (!ConvertIntNum(data_pre_process_str.resize_height, &image_pre_process->resize_height)) {
+      MS_LOG(ERROR) << "resize_width should be a valid number.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if (image_pre_process->resize_height <= 0 || image_pre_process->resize_height > 65535) {
+      MS_LOG(ERROR) << "resize_height must be in (0,65535].";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+
+  if (!data_pre_process_str.resize_method.empty()) {
+    image_pre_process->resize_method = preprocess::ConvertResizeMethod(data_pre_process_str.resize_method);
+  }
+  return RET_OK;
+}
+int PreprocessParser::ParseImageCenterCrop(const DataPreProcessString &data_pre_process_str,
+                                           preprocess::ImagePreProcessParam *image_pre_process) {
+  if (!data_pre_process_str.center_crop_width.empty()) {
+    if (!ConvertIntNum(data_pre_process_str.center_crop_width, &image_pre_process->center_crop_width)) {
+      MS_LOG(ERROR) << "center_crop_width should be a valid number.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if (image_pre_process->center_crop_width <= 0 || image_pre_process->center_crop_width > 65535) {
+      MS_LOG(ERROR) << "center_crop_width must be in (0,65535].";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  if (!data_pre_process_str.center_crop_height.empty()) {
+    if (!ConvertIntNum(data_pre_process_str.center_crop_height, &image_pre_process->center_crop_height)) {
+      MS_LOG(ERROR) << "center_crop_height should be a valid number.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if (image_pre_process->center_crop_height <= 0 || image_pre_process->center_crop_height > 65535) {
+      MS_LOG(ERROR) << "center_crop_height must be in (0,65535].";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

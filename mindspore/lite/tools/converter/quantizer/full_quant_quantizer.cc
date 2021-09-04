@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/converter/quantizer/post_training_quantizer.h"
+#include "tools/converter/quantizer/full_quant_quantizer.h"
 #include <dirent.h>
 #include <future>
 #include <map>
@@ -43,7 +43,6 @@
 #include "tools/common/tensor_util.h"
 #include "src/common/quant_utils.h"
 #include "src/common/utils.h"
-#include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/preprocess/image_preprocess.h"
 #include "nnacl/op_base.h"
 
@@ -330,53 +329,6 @@ std::pair<CNodePtr, int32_t> DivergInfo::GetZeropoint() {
   return std::make_pair(this->cnode, zero_point);
 }
 
-std::unordered_map<CNodePtr, float> Calibrator::GetScale(
-  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info) {
-  MS_ASSERT(diverg_info != nullptr);
-  std::unordered_map<CNodePtr, float> result;
-  for (auto &iter : *diverg_info) {
-    DivergInfo *info = iter.second.get();
-    auto item = info->GetScale();
-    result.insert(item);
-  }
-  return result;
-}
-
-std::unordered_map<CNodePtr, int32_t> Calibrator::GetZeropoint(
-  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info) {
-  MS_ASSERT(diverg_info != nullptr);
-  std::unordered_map<CNodePtr, int32_t> result;
-  for (auto &iter : *diverg_info) {
-    DivergInfo *info = iter.second.get();
-    auto zeropoint = info->GetZeropoint();
-    result.insert(zeropoint);
-  }
-  return result;
-}
-
-std::map<CNodePtr, MaxMin> Calibrator::GetMinMax(
-  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info) {
-  MS_ASSERT(diverg_info != nullptr);
-  std::map<CNodePtr, MaxMin> result;
-  for (auto &iter : *diverg_info) {
-    DivergInfo *info = iter.second.get();
-    mindspore::lite::quant::MaxMin input_maxmin{};
-    input_maxmin.min = info->min;
-    input_maxmin.max = info->max;
-    result[info->cnode] = input_maxmin;
-  }
-  return result;
-}
-
-void Calibrator::Dump() {
-  for (auto &kv : this->inputs_diverg_info_) {
-    auto &infos = kv.second;
-    for (auto &info : infos) {
-      info->DumpHistogram();
-    }
-  }
-}
-
 std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *Calibrator::GetInputDivergInfo() {
   return &this->inputs_diverg_info_;
 }
@@ -479,7 +431,7 @@ STATUS Calibrator::GenerateInputData(const std::string &input_name, size_t image
   return preprocess::PreProcess(data_pre_process_param_, input_name, image_index, tensor);
 }
 
-PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type, bool per_channel)
+FullQuantQuantizer::FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type, bool per_channel)
     : Quantizer(std::move(graph)) {
   MS_ASSERT(graph != nullptr);
   this->per_channel_ = per_channel;
@@ -501,15 +453,15 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, int bit_num, Ty
   }
 }
 
-PostTrainingQuantizer::~PostTrainingQuantizer() {
+FullQuantQuantizer::~FullQuantQuantizer() {
   delete fp32_session_;
   delete fp32_model_;
   delete int8_session_;
   delete int8_model_;
 }
 
-STATUS PostTrainingQuantizer::DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min,
-                                           const PrimitivePtr &primitive) const {
+STATUS FullQuantQuantizer::DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min,
+                                        const PrimitivePtr &primitive) const {
   MS_ASSERT(max_min != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
@@ -529,8 +481,8 @@ STATUS PostTrainingQuantizer::DoQuantInput(double scale, int32_t zeropoint, stru
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct MaxMin *max_min,
-                                            const PrimitivePtr &primitive) const {
+STATUS FullQuantQuantizer::DoQuantOutput(double scale, int zeropoint, struct MaxMin *max_min,
+                                         const PrimitivePtr &primitive) const {
   MS_ASSERT(max_min != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
@@ -550,8 +502,8 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight,
-                                            const PrimitivePtr &primitive, bool per_channel) const {
+STATUS FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight,
+                                         const PrimitivePtr &primitive, bool per_channel) const {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   // perlayer
@@ -572,19 +524,9 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
   auto bit_num_t = bit_num;
   auto quant_max_t = quant_max;
   auto quant_min_t = quant_min;
-  if (calibrator_->full_quant_param_.mixed) {
-    auto opname_iter = opname_bit_.find(op_name);
-    if (opname_iter == opname_bit_.end()) {
-      MS_LOG(WARNING) << op_name << " not in the opname_bit_ map";
-    } else {
-      bit_num_t = opname_iter->second;
-      quant_max_t = (1 << (unsigned int)(bit_num_t - 1)) - 1;
-      quant_min_t = -(1 << (unsigned int)(bit_num_t - 1));
-    }
-  }
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
-  auto status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_PostTraining, quant_max_t, quant_min_t, bit_num_t,
-                                    weight_quant_type, kNumberTypeInt8);
+  auto status = FixedBitQuantFilter<int8_t>(tensor_info, primitive, QuantType_PostTraining, quant_max_t, quant_min_t,
+                                            bit_num_t, weight_quant_type, kNumberTypeInt8);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -608,7 +550,7 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive) {
+STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive) {
   if (primitive == nullptr || bias == nullptr) {
     MS_LOG(ERROR) << "null pointer!";
     return RET_NULL_PTR;
@@ -698,7 +640,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const Primitiv
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
+STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto inputs_diverg_info = calibrator_->GetInputDivergInfo();
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -780,7 +722,7 @@ STATUS PostTrainingQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::QuantNode() {
+STATUS FullQuantQuantizer::QuantNode() {
   auto inputs_diverg_info = calibrator_->GetInputDivergInfo();
   auto outputs_diverg_info = calibrator_->GetOutputDivergInfo();
 
@@ -879,7 +821,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::UpdateDivergInverval() {
+STATUS FullQuantQuantizer::UpdateDivergInverval() {
   this->calibrator_->UpdateDivergInverval(this->calibrator_->GetInputDivergInfo());
   this->calibrator_->UpdateDivergInverval(this->calibrator_->GetOutputDivergInfo());
   return RET_OK;
@@ -894,7 +836,7 @@ STATUS PostTrainingQuantizer::UpdateDivergInverval() {
  *   2.1 parse image files to input tensor
  * 3. save quantied node
  **/
-STATUS PostTrainingQuantizer::PreProcess() {
+STATUS FullQuantQuantizer::PreProcess() {
   // 3. collect to be quantized operators
   // from user input
   QuantStrategy strategy(kMillisecondsBase);
@@ -920,8 +862,8 @@ STATUS PostTrainingQuantizer::PreProcess() {
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::CheckFp32TensorVec(const std::string &node_name,
-                                                 const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) {
+STATUS FullQuantQuantizer::CheckFp32TensorVec(const std::string &node_name,
+                                              const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) {
   MS_ASSERT(tensor_vec != nullptr);
   if (tensor_vec.empty()) {
     MS_LOG(ERROR) << "node: " << node_name << " input tensors is 0";
@@ -942,7 +884,7 @@ STATUS PostTrainingQuantizer::CheckFp32TensorVec(const std::string &node_name,
  * 2. insert callback to session
  * 3. run session
  **/
-STATUS PostTrainingQuantizer::DoInference() {
+STATUS FullQuantQuantizer::DoInference() {
   // get input tensor
   vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
   if (inputs.size() != calibrator_->GetInputNum()) {
@@ -968,7 +910,7 @@ STATUS PostTrainingQuantizer::DoInference() {
       if (diverg_info_map->find(callParam.node_name) == diverg_info_map->end()) {
         return true;
       }
-      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
+      if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
         return false;
       }
       if ((*diverg_info_map)[callParam.node_name].size() == 1 &&
@@ -999,7 +941,7 @@ STATUS PostTrainingQuantizer::DoInference() {
       if (diverg_info_map->find(callParam.node_name) == diverg_info_map->end()) {
         return true;
       }
-      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
+      if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
         return false;
       }
       if ((*diverg_info_map)[callParam.node_name].size() == 1 && afterOutputs.size() > 1) {
@@ -1029,7 +971,7 @@ STATUS PostTrainingQuantizer::DoInference() {
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::Int8Inference() {
+STATUS FullQuantQuantizer::Int8Inference() {
   // int8 inference
   vector<mindspore::tensor::MSTensor *> inputs = int8_session_->GetInputs();
   for (auto input_tensor : inputs) {
@@ -1059,8 +1001,8 @@ STATUS PostTrainingQuantizer::Int8Inference() {
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
-  std::future<STATUS> int8_inference = std::async(std::launch::async, &PostTrainingQuantizer::Int8Inference, this);
+STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
+  std::future<STATUS> int8_inference = std::async(std::launch::async, &FullQuantQuantizer::Int8Inference, this);
   // get input tensor
   vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
   if (inputs.size() != 1) {
@@ -1115,7 +1057,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
   return status;
 }
 
-STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   auto op_name = cnode->fullname_with_scope();
   const auto &bias_diff = op_bias_diff_map[op_name];
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -1196,7 +1138,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, con
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::CollectDataFrequency() {
+STATUS FullQuantQuantizer::CollectDataFrequency() {
   // get input tensor
   vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
   if (inputs.size() != calibrator_->GetInputNum()) {
@@ -1221,7 +1163,7 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
       if (diverg_info_map->find(callParam.node_name) == diverg_info_map->end()) {
         return true;
       }
-      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
+      if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
         return false;
       }
       for (size_t i = 0; i < (*diverg_info_map)[callParam.node_name].size(); i++) {
@@ -1243,7 +1185,7 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
       if (diverg_info_map->find(call_param.node_name) == diverg_info_map->end()) {
         return true;
       }
-      if (PostTrainingQuantizer::CheckFp32TensorVec(call_param.node_name, after_outputs) != RET_OK) {
+      if (FullQuantQuantizer::CheckFp32TensorVec(call_param.node_name, after_outputs) != RET_OK) {
         return false;
       }
       int output_i = 0;
@@ -1267,9 +1209,9 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::ComputeThreshold() { return this->calibrator_->ComputeThreshold(); }
+STATUS FullQuantQuantizer::ComputeThreshold() { return this->calibrator_->ComputeThreshold(); }
 
-STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
+STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_LOG(INFO) << "start to parse config file";
   if (this->calibrator_ == nullptr) {
     MS_LOG(ERROR) << "calibrator is null!";
@@ -1278,22 +1220,6 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   calibrator_->full_quant_param_ = flags.fullQuantParam;
   calibrator_->data_pre_process_param_ = flags.dataPreProcessParam;
   STATUS status;
-  if (calibrator_->full_quant_param_.mixed) {  // get opname_bit map
-    auto weight_quant_func_graph = CopyFuncGraph(func_graph);
-    if (weight_quant_func_graph == nullptr) {
-      MS_LOG(ERROR) << "CopyFuncGraph error";
-      return RET_ERROR;
-    }
-    WeightQuantizer weight_quantizer(weight_quant_func_graph, calibrator_->full_quant_param_);
-    weight_quantizer.flags = flags;
-    status = weight_quantizer.DoQuantize(weight_quant_func_graph);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do mix weight quant error";
-      return RET_ERROR;
-    }
-    opname_bit_ = weight_quantizer.opname_bit_;
-  }
-
   status = PreProcess();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "do pre process failed!";
@@ -1366,7 +1292,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   return RET_OK;
 }
 
-bool PostTrainingQuantizer::OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data) {
+bool FullQuantQuantizer::OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data) {
   MS_ASSERT(data != nullptr);
   std::lock_guard<std::mutex> lg(mutex_op_input);
   if (type == STORE) {
@@ -1390,8 +1316,7 @@ bool PostTrainingQuantizer::OpInputDataHandle(OperationType type, const string &
   return false;
 }
 
-bool PostTrainingQuantizer::OpOutputChMeanDataHandle(OperationType type, const string &op_name,
-                                                     std::vector<float> *data) {
+bool FullQuantQuantizer::OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data) {
   MS_ASSERT(data != nullptr);
   std::lock_guard<std::mutex> lg(mutex_op_output);
   if (type == STORE) {
@@ -1415,14 +1340,14 @@ bool PostTrainingQuantizer::OpOutputChMeanDataHandle(OperationType type, const s
   return false;
 }
 
-KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
+KernelCallBack FullQuantQuantizer::GetBeforeCallBack(bool int8_op) {
   KernelCallBack before_call_back;
   if (!int8_op) {
     before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
                               const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
                               const CallBackParam &callParam) -> bool {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
-        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
+        if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
           return false;
         }
         auto tensor = beforeInputs[0];
@@ -1495,7 +1420,7 @@ KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
   return before_call_back;
 }
 
-KernelCallBack PostTrainingQuantizer::GetAfterCallBack(bool int8_op) {
+KernelCallBack FullQuantQuantizer::GetAfterCallBack(bool int8_op) {
   KernelCallBack after_call_back;
   if (!int8_op) {
     return GetFloatAfterCallBack();
@@ -1503,7 +1428,7 @@ KernelCallBack PostTrainingQuantizer::GetAfterCallBack(bool int8_op) {
   return GetInt8AfterCallBack();
 }
 
-KernelCallBack PostTrainingQuantizer::GetInt8AfterCallBack() {
+KernelCallBack FullQuantQuantizer::GetInt8AfterCallBack() {
   KernelCallBack after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
                                           const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
                                           const CallBackParam &callParam) -> bool {
@@ -1580,12 +1505,12 @@ KernelCallBack PostTrainingQuantizer::GetInt8AfterCallBack() {
   return after_call_back;
 }
 
-KernelCallBack PostTrainingQuantizer::GetFloatAfterCallBack() {
+KernelCallBack FullQuantQuantizer::GetFloatAfterCallBack() {
   KernelCallBack after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
                                           const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
                                           const CallBackParam &callParam) -> bool {
     if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
-      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
+      if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
         return false;
       }
       auto tensor = afterOutputs[0];

@@ -84,6 +84,7 @@ int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::strin
     }
     auto split_vector = SplitStringToVector(raw_line, split_delimiter);
     if (split_vector.size() != 2) {
+      MS_LOG(ERROR) << "split vector size != 2";
       return RET_ERROR;
     }
     std::string key = split_vector.at(0);

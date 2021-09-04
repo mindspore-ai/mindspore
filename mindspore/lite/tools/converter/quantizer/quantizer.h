@@ -36,36 +36,12 @@ class Quantizer {
 
   virtual ~Quantizer() = default;
 
-  virtual STATUS RemoveFakeQuant();
-
-  virtual STATUS GenerateQuantParam();
-
-  virtual STATUS DetermineNodeQuantType();
-
   virtual STATUS DoQuantize(FuncGraphPtr func_graph) = 0;
 
   converter::Flags flags;
 
  protected:
   FuncGraphPtr funcGraph = nullptr;
-};
-
-class FbQuantizer {
- public:
-  explicit FbQuantizer(schema::MetaGraphT *graph) : graph(graph) {}
-
-  virtual ~FbQuantizer() = default;
-
-  virtual STATUS RemoveFakeQuant();
-
-  virtual STATUS GenerateQuantParam();
-
-  virtual STATUS DetermineNodeQuantType();
-
-  virtual STATUS DoQuantize() = 0;
-
- protected:
-  schema::MetaGraphT *graph = nullptr;
 };
 }  // namespace mindspore::lite::quant
 #endif

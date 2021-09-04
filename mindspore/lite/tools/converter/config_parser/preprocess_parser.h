@@ -35,6 +35,15 @@ class PreprocessParser {
   int ParseImagePreProcess(const DataPreProcessString &data_pre_process_str,
                            preprocess::ImagePreProcessParam *image_pre_process);
 
+  int ParseImageNormalize(const DataPreProcessString &data_pre_process_str,
+                          preprocess::ImagePreProcessParam *image_pre_process);
+
+  int ParseImageResize(const DataPreProcessString &data_pre_process_str,
+                       preprocess::ImagePreProcessParam *image_pre_process);
+
+  int ParseImageCenterCrop(const DataPreProcessString &data_pre_process_str,
+                           preprocess::ImagePreProcessParam *image_pre_process);
+
   int ParseImageToFormat(const std::string &image_to_format_str, preprocess::ImageToFormat *image_to_format);
 
   int ParseCalibratePath(const std::string &str, std::map<std::string, std::string> *value);

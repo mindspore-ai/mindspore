@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "tools/converter/quantizer/fse_bit_stream.h"
-#include "tools/converter/quantizer/fix_bit_weight_quantizer.h"
+#include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
 namespace mindspore::lite::quant {
 constexpr int MAX_SYMS = 65534;
 constexpr int MAX_TABLE_LOG = 16;

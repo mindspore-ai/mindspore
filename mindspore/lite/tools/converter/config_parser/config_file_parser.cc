@@ -25,7 +25,7 @@ int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
   std::map<std::string, std::map<std::string, std::string>> maps;
   auto ret = mindspore::lite::ParseConfigFile(config_file_path, &maps);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "image_path=input1:/mnt/calibration_input1_path";
+    MS_LOG(ERROR) << "Parse config file failed.";
     return ret;
   }
   ret = ParseDataPreProcessString(maps);

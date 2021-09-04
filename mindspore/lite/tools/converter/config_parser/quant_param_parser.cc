@@ -58,13 +58,13 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
     MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_channel should be a valid number.";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (common_quant->min_quant_weight_size < 0) {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_size should be greater than or equal to zero." << std::endl;
+  if (common_quant->min_quant_weight_size < 0 || common_quant->min_quant_weight_size > 65535) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_size should in [0,65535]." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (common_quant->min_quant_weight_channel < 0) {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_channel should be greater than or equal to zero." << std::endl;
+  if (common_quant->min_quant_weight_channel < 0 || common_quant->min_quant_weight_size > 65535) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_channel should in [0,65535]." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;

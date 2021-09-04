@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "tools/converter/quantizer/fix_bit_weight_quantizer.h"
+#include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
 #include <cmath>
 
 namespace mindspore::lite::quant {
 // the error is currently measured per channel.
 // it could be measured per layer but it would be less good.
 // the `preferred` dim should point to the output channels dimension.
-float FixBitWeightQuantizer::MeasureQuantizationError(float *weights, const int *shape, int dims, int preferred_dim,
-                                                      float scale) {
+float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const int *shape, int dims, int preferred_dim,
+                                                        float scale) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(shape != nullptr);
   int numel = 1;
@@ -61,13 +61,13 @@ float FixBitWeightQuantizer::MeasureQuantizationError(float *weights, const int 
   }
   variance_dequant = std::sqrt(variance_dequant / numel);
   variance_raw = std::sqrt(variance_raw / numel);
-  var_corr = variance_raw / variance_dequant;
-  mean_corr = average_raw - average_dequant * var_corr;
+  var_corr_ = variance_raw / variance_dequant;
+  mean_corr_ = average_raw - average_dequant * var_corr_;
 
   for (int i = 0; i < numel; i++) {
     int bucket = (i / bucket_volume) % bucket_count;
     norms2[bucket] += weights[i] * weights[i];
-    float dequant = var_corr * (scale * (floorf(weights[i] / scale + 0.5))) + mean_corr;
+    float dequant = var_corr_ * (scale * (floorf(weights[i] / scale + 0.5))) + mean_corr_;
     float d = weights[i] - dequant;
     dnorms2[bucket] += d * d;
   }
@@ -82,7 +82,7 @@ float FixBitWeightQuantizer::MeasureQuantizationError(float *weights, const int 
   return t / (c + 1e-7);
 }
 
-MinMax FixBitWeightQuantizer::GetMinMax(const float *arr, int arrc) {
+MinMax MixedBitWeightQuantizer::GetMinMax(const float *arr, int arrc) {
   MS_ASSERT(arr != nullptr);
   MinMax min_max = {INFINITY, -INFINITY};
   for (int i = 0; i < arrc; i++)
@@ -93,9 +93,9 @@ MinMax FixBitWeightQuantizer::GetMinMax(const float *arr, int arrc) {
   return min_max;
 }
 
-BinarySearchResult FixBitWeightQuantizer::BinarySearchForQuantizationScale(float *weights, int *shape, int dims,
-                                                                           int preferred_dim, int max_iters,
-                                                                           float target_err, float rel_tol) {
+BinarySearchResult MixedBitWeightQuantizer::BinarySearchForQuantizationScale(float *weights, int *shape, int dims,
+                                                                             int preferred_dim, int max_iters,
+                                                                             float target_err, float rel_tol) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(shape != nullptr);
   int element_num = 1;
@@ -136,9 +136,9 @@ BinarySearchResult FixBitWeightQuantizer::BinarySearchForQuantizationScale(float
   }
 }
 
-int FixBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
-                                          std::vector<schema::QuantParamT> *quant_params,
-                                          std::vector<int16_t> *quant_datas) {
+int MixedBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
+                                            std::vector<schema::QuantParamT> *quant_params,
+                                            std::vector<int16_t> *quant_datas) {
   MS_ASSERT(weights != nullptr);
   int weight_count = 1;
   int dims = shape.size();
@@ -148,8 +148,8 @@ int FixBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t> s
     input_shape[i] = shape[i];
   }
 
-  BinarySearchResult br = BinarySearchForQuantizationScale(weights, input_shape, dims, preferred_dim, max_search_iters,
-                                                           target_relative_err, target_search_tolerance);
+  BinarySearchResult br = BinarySearchForQuantizationScale(weights, input_shape, dims, preferred_dim, max_search_iters_,
+                                                           target_relative_err_, target_search_tolerance_);
   if (br.status != 0) {
     MS_LOG(ERROR) << "reached_max_iters";
     return RET_ERROR;
@@ -166,15 +166,15 @@ int FixBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t> s
   return RET_OK;
 }
 
-int FixBitWeightQuantizer::QuantizeByScale(const float *weights, int weightsc, float scale,
-                                           schema::QuantParamT *quant_params, std::vector<int16_t> *quant_datas) {
+int MixedBitWeightQuantizer::QuantizeByScale(const float *weights, int weightsc, float scale,
+                                             schema::QuantParamT *quant_params, std::vector<int16_t> *quant_datas) {
   MS_ASSERT(weights != nullptr);
   for (int i = 0; i < weightsc; i++) {
     auto q = static_cast<int>(floorf(weights[i] / scale + 0.5));
     quant_datas->at(i) = q;
   }
-  quant_params->meanCorr = mean_corr;
-  quant_params->varCorr = var_corr;
+  quant_params->meanCorr = mean_corr_;
+  quant_params->varCorr = var_corr_;
   quant_params->scale = scale;
   quant_params->zeroPoint = 0;
   quant_params->numBits = 0;
