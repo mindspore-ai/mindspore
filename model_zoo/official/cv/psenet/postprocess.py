@@ -21,7 +21,7 @@ from functools import reduce
 import numpy as np
 import cv2
 from src.model_utils.config import config
-from src.ETSNET.pse import pse
+from src.PSENET.pse import pse
 
 
 def sort_to_clockwise(points):

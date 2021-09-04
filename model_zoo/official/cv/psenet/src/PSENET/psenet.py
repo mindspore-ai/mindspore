@@ -24,9 +24,9 @@ from .resnet50 import ResNet, ResidualBlock
 from .fpn import FPN
 
 
-class ETSNet(nn.Cell):
+class PSENet(nn.Cell):
     def __init__(self, config):
-        super(ETSNet, self).__init__()
+        super(PESNet, self).__init__()
         self.kernel_num = config.KERNEL_NUM
         self.inference = config.INFERENCE
         if config.INFERENCE:
@@ -65,7 +65,7 @@ class ETSNet(nn.Cell):
             self.greater = P.Greater()
             self.logic_and = P.LogicalAnd()
 
-        print('ETSNet initialized!')
+        print('PSENet initialized!')
 
     def construct(self, x):
         c2, c3, c4, c5 = self.feature_extractor(x)

@@ -176,7 +176,7 @@ bash scripts/run_eval_ascend.sh
 ## 脚本和样例代码
 
 ```path
-└── PSENet
+└── psenet
  ├── export.py                           // mindir转换脚本
  ├── mindspore_hub_conf.py               // 网络模型
  ├─postprogress.py                           # 310推理后处理脚本
@@ -193,10 +193,10 @@ bash scripts/run_eval_ascend.sh
    ├──local_adapter.py                     # 设备相关信息
    ├──moxing_adapter.py                    # 装饰器(主要用于ModelArts数据拷贝)
   ├── dataset.py                      // 创建数据集
-  ├── ETSNET
+  ├── PSENET
    ├── base.py                     // 卷积和BN算子
    ├── dice_loss.py                // 计算PSENet损耗值
-   ├── etsnet.py                   // PSENet中的子网
+   ├── psenet.py                   // PSENet中的子网
    ├── fpn.py                      // PSENet中的子网
    ├── __init__.py
    ├── pse                         // PSENet中的子网
@@ -371,7 +371,7 @@ dataset = dataset.create_dataset(cfg.data_path, 1, False)
 
 # 定义模型
 config.INFERENCE = False
-net = ETSNet(config)
+net = PSENet(config)
 net = net.set_train()
 param_dict = load_checkpoint(args.pre_trained)
 load_param_into_net(net, param_dict)
