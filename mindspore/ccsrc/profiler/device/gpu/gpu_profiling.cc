@@ -33,11 +33,15 @@ namespace profiler {
 namespace gpu {
 const size_t BUF_SIZE = 32 * 1024;
 const size_t ALIGN_SIZE = 8;
-#define CHECK_CUPTI_RET_WITH_ERROR(expression, message)                     \
-  if ((expression) != CUPTI_SUCCESS) {                                      \
-    const char *errstr;                                                     \
-    CuptiGetResultString(expression, &errstr);                              \
-    MS_LOG(ERROR) << "CUPTI Error:" << errstr << " function:" << (message); \
+#define CHECK_CUPTI_RET_WITH_ERROR(expression, message)                                          \
+  if ((expression) != CUPTI_SUCCESS) {                                                           \
+    const char *errstr;                                                                          \
+    CuptiGetResultString(expression, &errstr);                                                   \
+    MS_LOG(ERROR) << "CUPTI Error:" << errstr << " function:" << (message)                       \
+                  << ". You may not have access to the NVIDIA GPU performance counters on "      \
+                  << "the target device. Please use the root account to run profiling or "       \
+                  << "configure permissions. If there is still the problem, please refer to the" \
+                  << " GPU performance tuning document on the official website of mindinsight."; \
   }
 
 #define CHECK_CUPTI_RET_WITH_EXCEPT(expression, message)                        \
