@@ -78,7 +78,7 @@ class MsBackend : public Backend {
   ~MsBackend() override = default;
 
   LinConvertResult MsConvert(const GraphSegmentPtr &segment, const std::string &target = "");
-  VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target = "");
+  virtual VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target = "");
 
   VectorRef MsSimuRunGraph(const GraphId &g);
   GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
@@ -90,7 +90,7 @@ class MsBackend : public Backend {
   void SetDebugger() override;
 #endif
 
- private:
+ protected:
   session::SessionPtr target_sess_;
   session::SessionPtr other_sess_;
   std::string target_device_;

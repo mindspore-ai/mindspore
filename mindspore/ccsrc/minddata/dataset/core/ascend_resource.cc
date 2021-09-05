@@ -24,7 +24,6 @@ namespace dataset {
 
 Status AscendResource::InitResource(uint32_t device_id) {
   ResourceInfo resource;
-  resource.aclConfigPath = "";
   resource.deviceIds.insert(device_id);
   ascend_resource_ = ResourceManager::GetInstance();
   APP_ERROR ret = ascend_resource_->InitResource(resource);

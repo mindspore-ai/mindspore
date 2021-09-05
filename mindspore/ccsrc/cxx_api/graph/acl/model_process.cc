@@ -165,7 +165,7 @@ Status ModelProcess::InitInputsBuffer() {
     aclDataType data_type = aclmdlGetInputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
     const char *input_name_char = aclmdlGetInputNameByIndex(model_desc_, i);
-    std::string input_name = (input_name_char == nullptr) ? input_name_char : std::string();
+    std::string input_name = (input_name_char != nullptr) ? input_name_char : std::string();
     if (input_name.empty()) {
       MS_LOG(WARNING) << "Get name of input " << i << " failed.";
     }
@@ -249,7 +249,7 @@ Status ModelProcess::InitOutputsBuffer() {
     aclDataType data_type = aclmdlGetOutputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
     const char *output_name_char = aclmdlGetOutputNameByIndex(model_desc_, i);
-    std::string output_name = (output_name_char == nullptr) ? output_name_char : std::string();
+    std::string output_name = (output_name_char != nullptr) ? output_name_char : std::string();
     if (output_name.empty()) {
       MS_LOG(WARNING) << "Get name of output " << i << " failed.";
     }

@@ -292,9 +292,6 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   /// \return The device id.
   uint32_t GetDeviceID() const;
 
-  inline void SetDumpConfigPath(const std::string &cfg_path);
-  inline std::string GetDumpConfigPath() const;
-
   /// \brief Set AIPP configuration file path.
   ///
   /// \param[in] cfg_path AIPP configuration file path.
@@ -379,9 +376,6 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   inline std::string GetBufferOptimizeMode() const;
 
  private:
-  void SetDumpConfigPath(const std::vector<char> &cfg_path);
-  std::vector<char> GetDumpConfigPathChar() const;
-
   void SetInsertOpConfigPath(const std::vector<char> &cfg_path);
   std::vector<char> GetInsertOpConfigPathChar() const;
 
@@ -405,9 +399,6 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   void SetBufferOptimizeMode(const std::vector<char> &buffer_optimize_mode);
   std::vector<char> GetBufferOptimizeModeChar() const;
 };
-
-void Ascend310DeviceInfo::SetDumpConfigPath(const std::string &cfg_path) { SetDumpConfigPath(StringToChar(cfg_path)); }
-std::string Ascend310DeviceInfo::GetDumpConfigPath() const { return CharToString(GetDumpConfigPathChar()); }
 
 void Ascend310DeviceInfo::SetInsertOpConfigPath(const std::string &cfg_path) {
   SetInsertOpConfigPath(StringToChar(cfg_path));

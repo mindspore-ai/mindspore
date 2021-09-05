@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "cxx_api/model/acl/acl_model_options.h"
+#include <set>
 #include <memory>
 #include "utils/log_adapter.h"
 #include "external/ge/ge_api_types.h"
@@ -54,7 +55,6 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   op_select_impl_mode_ = ascend310_info->GetOpSelectImplMode();
   fusion_switch_cfg_path_ = ascend310_info->GetFusionSwitchConfigPath();
   device_id_ = ascend310_info->GetDeviceID();
-  dump_cfg_path_ = ascend310_info->GetDumpConfigPath();
   buffer_optimize_mode_ = ascend310_info->GetBufferOptimizeMode();
   const char *soc_name = aclrtGetSocName();
   if (soc_name == nullptr) {
@@ -98,6 +98,14 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
     {&dynamic_batch_size_, ge::ir_option::DYNAMIC_BATCH_SIZE},
     {&dynamic_image_size_, ge::ir_option::DYNAMIC_IMAGE_SIZE}};
 
+  const std::set<std::string> first_graph_options = {
+    ge::ir_option::INSERT_OP_FILE,
+    ge::ir_option::INPUT_FORMAT,
+    ge::ir_option::INPUT_SHAPE,
+  };
+
+  const std::set<std::string> multi_graph_unsupported_options = {ge::ir_option::OUTPUT_TYPE};
+
   std::map<std::string, std::string> init_options;
   std::map<std::string, std::string> build_options;
   for (auto [ms_option, acl_option_key] : init_options_map) {
@@ -115,6 +123,20 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
     MS_LOG(INFO) << "Option " << acl_option_key << " : " << *ms_option;
     build_options.emplace(acl_option_key, *ms_option);
   }
+
+  // first_graph_flag has value means being multi graph mode
+  if (first_graph_flag_.has_value()) {
+    for (const auto &option : multi_graph_unsupported_options) {
+      build_options.erase(option);
+    }
+    // non-input graph
+    if (!first_graph_flag_) {
+      for (const auto &option : first_graph_options) {
+        build_options.erase(option);
+      }
+    }
+  }
+
   return {init_options, build_options};
 }
 

@@ -47,7 +47,7 @@ class AclModel : public ModelImpl {
 
  private:
   ModelConverter model_converter_;
-  std::unique_ptr<AclModelOptions> options_;
+  std::shared_ptr<AclModelOptions> options_;
   std::map<std::string, std::shared_ptr<Graph>> dynamic_size_graph_map_;
 };
 }  // namespace mindspore

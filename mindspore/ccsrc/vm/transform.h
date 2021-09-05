@@ -53,14 +53,14 @@ class CompileGraph {
  public:
   explicit CompileGraph(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list = nonlinear_ops);
 
-  ~CompileGraph() = default;
+  virtual ~CompileGraph() = default;
 
-  InstSet Run(const FuncGraphPtr &func_graph);
+  InstSet Run(const FuncGraphPtr &func_graph, bool push_weight = true);
   bool IsCut(const AnfNodePtr &node);
   void Push(const AnfNodePtr &node);
   void Tie(const AnfNodePtr &n1, const AnfNodePtr &n2) { slots_[n2] = slots_[n1]; }
   void Ret(int64_t nargs);
-  int64_t Ref(const AnfNodePtr &node);
+  virtual int64_t Ref(const AnfNodePtr &node);
 
   void set_height(int64_t h) {
     height_ = h;
@@ -76,8 +76,9 @@ class CompileGraph {
     inst_.clear();
   }
 
- private:
+ protected:
   void PushParameters(const FuncGraphPtr &func_graph);
+  void PushInputs(const FuncGraphPtr &graph);
   bool Compile(const FuncGraphPtr &func_graph);
   int64_t LinConvert(const FuncGraphPtr &func_graph, const GraphSegmentPtr &segment, const std::string &target = "");
   int64_t InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);
@@ -114,18 +115,18 @@ class CompileGraphs {
  public:
   explicit CompileGraphs(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list = nonlinear_ops);
 
-  ~CompileGraphs() = default;
+  virtual ~CompileGraphs() = default;
 
   void Reset() {
     insts_.clear();
     mapping_.clear();
   }
 
-  void Compile(const FuncGraphPtr &func_graph);
+  virtual void Compile(const FuncGraphPtr &func_graph);
   FinalVMPtr Link();
   FinalVMPtr CompileAndLink(const FuncGraphPtr &func_graph);
 
- private:
+ protected:
   InstSet insts_;
   std::unordered_map<FuncGraphPtr, int64_t> mapping_;
   CompileGraphPtr transform_;

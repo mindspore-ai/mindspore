@@ -24,8 +24,6 @@
 #include "acl/acl_base.h"
 
 namespace mindspore {
-API_FACTORY_REG(ModelImpl, Ascend310, AclModel);
-
 Status AclModel::Build() {
   MS_LOG(INFO) << "Start build model.";
   MS_EXCEPTION_IF_NULL(graph_);
@@ -42,13 +40,8 @@ Status AclModel::Build() {
     return kSuccess;
   }
 
-  std::unique_ptr<AclModelOptions> options = std::make_unique<AclModelOptions>(model_context_);
+  std::shared_ptr<AclModelOptions> options = std::make_shared<AclModelOptions>(model_context_);
   MS_EXCEPTION_IF_NULL(options);
-  std::string dump_cfg = options->GetDumpCfgPath();
-  if (!dump_cfg.empty()) {
-    MS_LOG(INFO) << "Options dump config file path " << dump_cfg;
-    (void)AclEnvGuard::GetAclEnv(dump_cfg);
-  }
   std::string options_key = options->GenAclOptionsKey();
   std::shared_ptr<Graph> graph;
   if (auto iter = dynamic_size_graph_map_.find(options_key); iter != dynamic_size_graph_map_.end()) {
@@ -72,7 +65,7 @@ Status AclModel::Build() {
     }
     options->RenameInput(input_names);
     MS_EXCEPTION_IF_NULL(func_graph);
-    model_converter_.set_options(options.get());
+    model_converter_.set_options(options);
     auto om_data = model_converter_.LoadMindIR(func_graph);
     if (om_data.Data() == nullptr || om_data.DataSize() == 0) {
       MS_LOG(ERROR) << "Load MindIR failed.";

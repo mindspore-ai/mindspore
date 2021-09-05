@@ -1121,7 +1121,8 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
   return new_parameter;
 }
 
-KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
+KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
+                                                  bool common_opt) {
   std::unordered_map<AnfNodePtr, AnfNodePtr> other_graph_cnode;
   auto graph = NewKernelGraph();
   MS_EXCEPTION_IF_NULL(graph);
@@ -1161,7 +1162,9 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   // Update Graph Dynamic Shape Attr
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
   UpdateGraphAquireGilAttr(NOT_NULL(graph));
-  opt::BackendCommonOptimization(graph);
+  if (common_opt) {
+    opt::BackendCommonOptimization(graph);
+  }
   graph->SetInputNodes();
   SetInputNodeUsage(graph, manager);
   graph->SetOptimizerFlag();

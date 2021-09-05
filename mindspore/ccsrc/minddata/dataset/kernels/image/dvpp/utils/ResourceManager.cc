@@ -85,22 +85,11 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
     MS_LOG(INFO) << "Acl has been initialized, skip.";
     return APP_ERR_OK;
   }
-  std::string &aclConfigPath = resourceInfo.aclConfigPath;
   APP_ERROR ret = APP_ERR_OK;
-  if (aclConfigPath.length() == 0) {
-    // Init acl without aclconfig
-    acl_env_ = mindspore::AclEnvGuard::GetAclEnv("");
-  } else {
-    ret = ExistFile(aclConfigPath);
-    if (ret != APP_ERR_OK) {
-      MS_LOG(ERROR) << "Acl config file not exist, ret = " << ret << ".";
-      return ret;
-    }
-    acl_env_ = mindspore::AclEnvGuard::GetAclEnv(aclConfigPath);
-  }
+  acl_env_ = mindspore::AclEnvGuard::GetAclEnv();
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Failed to init acl.";
-    return ret;
+    return APP_ERR_COMM_FAILURE;
   }
   std::copy(resourceInfo.deviceIds.begin(), resourceInfo.deviceIds.end(), std::back_inserter(deviceIds_));
   MS_LOG(INFO) << "Initialized acl successfully.";
