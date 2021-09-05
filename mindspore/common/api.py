@@ -210,9 +210,7 @@ class _MindsporeFunctionExecutor:
 
         if context.get_context("mode") == context.PYNATIVE_MODE:
             _pynative_executor.set_graph_phase(phase)
-            _pynative_executor.grad_ms_function(output, *new_inputs)
-            if phase.find("export") == -1:
-                output = output[0]
+            output = _pynative_executor.grad_ms_function(output, *new_inputs)
 
         return output
 
@@ -396,7 +394,7 @@ class _PynativeExecutor:
         self._executor.sync()
 
     def grad_ms_function(self, output, *args):
-        self._executor.grad_ms_function(output, *args)
+        return self._executor.grad_ms_function(output, *args)
 
     def set_graph_phase(self, phase):
         self._executor.set_graph_phase(phase)

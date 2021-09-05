@@ -405,6 +405,8 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   std::string bprop_hash() const { return bprop_hash_; }
   void set_bprop_hash(const std::string &bprop_hash) { bprop_hash_ = bprop_hash; }
 
+  bool modify_output() const { return modify_output_; }
+  void set_modify_output(bool modify_output) { modify_output_ = modify_output; }
   const std::unordered_set<AnfNodePtr> &used_forward_nodes() const { return used_forward_nodes_; }
   void set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes);
   void ClearUsedForwardNodes() { used_forward_nodes_.clear(); }
@@ -496,6 +498,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
 
   // If the graph is decorated by @ms_function and runs grad process in pynative mode,
   // forward nodes used in grad graph will be added to output for holding output values.
+  bool modify_output_ = false;
   std::unordered_set<AnfNodePtr> used_forward_nodes_;
 };
 
