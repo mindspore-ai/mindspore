@@ -72,9 +72,10 @@ Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<s
 
   // HCCL does not support multi-dimension partition, and the hardware does not support excessive
   // number of EVENT, so we temporarily disable matmul's multi-dimension partition function.
-  const auto max_cut = 1.0 / g_device_manager->DeviceNum();
-  if (graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h != max_cut &&
-      graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w != max_cut) {
+  const auto max_cut = 1.0 / g_device_manager->DeviceNum() * 1.1;
+  // The rule of cut is 0.5, 0.125. To compare the result we have to use ">" so we multiply max_cut to 1.1
+  if (graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h > max_cut &&
+      graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w > max_cut) {
     graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h = 1.0;
     graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_w = 1.0;
     graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_h = 1.0;
