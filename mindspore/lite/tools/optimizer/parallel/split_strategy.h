@@ -71,10 +71,10 @@ enum SplitMode {
 };
 
 struct SplitStrategy {
-  Strategys strategys;
-  std::vector<std::string> dev_types;
-  size_t dev_num;
-  SplitMode split_mode_;
+  Strategys strategys{};
+  std::vector<std::string> dev_types{};
+  size_t dev_num{0};
+  SplitMode split_mode_{NoSplit};
 };
 
 // this is a map for key: <primitive,is_depth_wise>  value: parallel_op_name

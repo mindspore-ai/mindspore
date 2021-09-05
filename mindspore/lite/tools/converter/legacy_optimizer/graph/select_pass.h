@@ -35,7 +35,7 @@ class SelectPass : public GraphPass {
   STATUS RemoveSelectNodes();
 
  private:
-  std::vector<uint32_t> select_indices_;
+  std::vector<uint32_t> select_indices_{};
   schema::MetaGraphT *graph_ = nullptr;
 };
 

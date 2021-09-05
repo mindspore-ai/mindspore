@@ -37,7 +37,7 @@ class OnnxNodeParserRegistry {
   OnnxNodeParserRegistry();
 
  private:
-  std::unordered_map<std::string, OnnxNodeParser *> parsers;
+  std::unordered_map<std::string, OnnxNodeParser *> parsers{};
 };
 
 class OnnxNodeRegistrar {

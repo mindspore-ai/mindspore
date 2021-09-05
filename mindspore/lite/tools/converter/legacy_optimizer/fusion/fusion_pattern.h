@@ -131,7 +131,7 @@ class FusionPattern {
   // output PatternOp id of pattern
   std::string outputOpId{};
 
-  bool hasError = false;
+  bool hasError{false};
 };
 }  // namespace lite
 }  // namespace mindspore

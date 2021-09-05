@@ -56,7 +56,7 @@ STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int
       opt::BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
     inputs.push_back(param_node);
     auto manager = func_graph->manager();
-    MS_ASSERT(manager != nullptr);
+    MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "funcgraph has no manager");
     auto tr = manager->Transact();
     tr.AddEdge(cnode, param_node);
     tr.Commit();
@@ -90,7 +90,7 @@ STATUS ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const Parameter
     return lite::RET_OK;
   }
   auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "funcgraph has no manager");
   if (param_node->has_default()) {
     auto default_value = param_node->default_param();
     MS_ASSERT(default_value != nullptr);
@@ -221,7 +221,7 @@ STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNod
     shape_vector.insert(shape_vector.begin() + 1, channel);
     param_node->abstract()->set_shape(std::make_shared<abstract::Shape>(shape_vector));
     auto manager = func_graph->manager();
-    MS_ASSERT(manager != nullptr);
+    MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "funcgraph has no manager");
     manager->Replace(cnode, param_node);
   }
   return lite::RET_OK;
