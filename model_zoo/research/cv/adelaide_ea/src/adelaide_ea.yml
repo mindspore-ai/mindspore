@@ -1,0 +1,119 @@
+general:
+    backend: mindspore
+    parallel_search: True
+    parallel_fully_train: True
+
+
+pipeline: [random, mutate, fully_train]
+
+
+random:
+    pipe_step:
+        type: SearchPipeStep
+    dataset:
+        type: Cityscapes
+        common:
+            data_path: /cache/datasets/VOC2012
+        train:
+            list_file: train.txt
+            batch_size: 16
+            shuffle: true
+            Rescale:
+                size: 512
+            RandomMirror: true
+            RandomColor:
+                color_factor: [0.95, 1.05]
+                contrast_factor: [0.95, 1.05]
+                brightness_factor: [0.95, 1.05]
+            RandomGaussianBlur:
+                kernel_size: 3
+            RandomRotation:
+                rotation_factor: [-10, 10]
+                border_value: [0.485, 0.456, 0.406]
+                fill_label: 255
+            Normalization:
+                mean: [0.485, 0.456, 0.406]
+                std: [0.229, 0.224, 0.225]
+        val:
+            list_file: val.txt
+            Rescale:
+                size: 512
+            Normalization:
+                mean: [0.485, 0.456, 0.406]
+                std: [0.229, 0.224, 0.225]
+    search_space:
+        type: SearchSpace
+        modules: ['custom']
+        custom:
+            type: AdelaideFastNAS
+            backbone_out_sizes: [24, 32, 96, 320]
+            op_names: [conv1x1, conv3x3, sep_conv_3x3, sep_conv_5x5, conv3x3_dil3, sep_conv_3x3_dil3, sep_conv_5x5_dil6]
+            agg_size: 64
+            aux_cell: false
+            sep_repeats: 1
+            agg_concat: true
+            num_classes: 21
+    model:
+        pretrained_model_file: ~
+    search_algorithm:
+        type: AdelaideRandom
+        codec: AdelaideCodec
+        max_sample: 100
+    trainer:
+        type: Trainer
+        callbacks: AdelaideEATrainerCallback
+        distributed: False
+        execute_mode: PYNATIVE_MODE   # for mindspore
+        seed: 0
+        epochs: 6
+        optimizer:
+            type: Adam
+            params:
+                lr: !!float 5e-5
+        lr_scheduler:
+            type: StepLR
+            params:
+                step_size: 5
+                gamma: 0.5
+        loss:
+            type: CrossEntropyLoss
+            params:
+                ignore_index: 255
+
+        metric:
+            type: IoUMetric
+            params:
+                num_class: 21
+
+
+mutate:
+    pipe_step:
+        type: SearchPipeStep
+    dataset:
+        ref: random.dataset
+    search_space:
+           ref: random.search_space
+    search_algorithm:
+        type: AdelaideMutate
+        codec: AdelaideCodec
+        max_sample: 100
+    trainer:
+        ref: random.trainer
+        callbacks: AdelaideEATrainerCallback
+        save_model_desc: True
+
+
+fully_train:
+    pipe_step:
+        type: TrainPipeStep
+        models_folder: "{local_base_path}/output/mutate/"
+    dataset:
+        ref: random.dataset
+        train:
+            batch_size: 24
+    trainer:
+        ref: random.trainer
+        load_checkpoint: False
+        callbacks: AdelaideEATrainerCallback
+        model_statistics: True
+        epochs: 100
