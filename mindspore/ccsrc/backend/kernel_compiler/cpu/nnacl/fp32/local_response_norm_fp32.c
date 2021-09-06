@@ -27,17 +27,40 @@ int LocalResponseNorm(const float *input_ptr, int out_size, int channel, float *
   for (int i = 0; i < out_size; i++) {
     const float *in_data = input_ptr + i * channel;
     float *out_data = output_ptr + i * channel;
-
-    for (int j = 0; j < channel; j++) {
+    // border_left
+    for (int j = 0; j < MSMIN(depth_radius, channel); j++) {
       int left = MSMAX(0, j - depth_radius);
       int right = MSMIN(channel - 1, j + depth_radius);
-
-      float sum = 0.0;
+      float sum = 0.0f;
       for (int k = left; k <= right; k++) {
         const float in_val = in_data[k];
         sum += in_val * in_val;
       }
-      out_data[j] = in_data[j] * (float)(pow((double)(sum * alpha + bias), -beta));
+      out_data[j] = in_data[j] * (float)(powf(sum * alpha + bias, -beta));
+    }
+    // center
+    if (2 * depth_radius + 1 < channel) {
+      float tmp_sum = 0.0f;
+      for (int j = 0; j < depth_radius * 2 + 1; ++j) {
+        tmp_sum += in_data[j] * in_data[j];
+      }
+      out_data[depth_radius] = in_data[depth_radius] * (powf(tmp_sum * alpha + bias, -beta));
+      for (int j = depth_radius + 1; j < channel - depth_radius; ++j) {
+        tmp_sum -= in_data[j - depth_radius - 1] * in_data[j - depth_radius - 1];
+        tmp_sum += in_data[j + depth_radius] * in_data[j + depth_radius];
+        out_data[j] = in_data[j] * (float)(powf(tmp_sum * alpha + bias, -beta));
+      }
+    }
+    // border_right
+    for (int j = MSMAX(0, channel - depth_radius); j < channel; j++) {
+      int left = MSMAX(0, j - depth_radius);
+      int right = MSMIN(channel - 1, j + depth_radius);
+      float sum = 0.0f;
+      for (int k = left; k <= right; k++) {
+        const float in_val = in_data[k];
+        sum += in_val * in_val;
+      }
+      out_data[j] = in_data[j] * (float)(powf(sum * alpha + bias, -beta));
     }
   }
   return 0;
