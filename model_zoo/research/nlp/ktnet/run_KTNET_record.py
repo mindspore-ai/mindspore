@@ -65,7 +65,6 @@ RawResult = collections.namedtuple("RawResult",
                                    ["unique_id", "start_logits", "end_logits"])
 
 device_id = int(os.getenv('DEVICE_ID', "0"))
-device_num = int(os.getenv('RANK_SIZE', "0"))
 
 
 def parse_args():
@@ -143,6 +142,7 @@ def parse_args():
                            'path of retrieved concepts for devset')
 
     parser.add_argument('--device_target', type=str, default='Ascend', help='')
+    parser.add_argument('--is_distribute', type=ast.literal_eval, default=False, help='')
     parser.add_argument('--device_num', type=int, default=1, help='')
     parser.add_argument('--device_id', type=int, default=0, help='')
     parser.add_argument('--load_pretrain_checkpoint_path', type=str, default="data/cased_L-24_H-1024_A-16/roberta.ckpt",
@@ -222,6 +222,11 @@ def run_KTNET():
     target = args.device_target
     if target == "Ascend":
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id)
+        if args.is_distribute:
+            context.set_auto_parallel_context(device_num=args.device_num,
+                                              parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
+            init()
     else:
         raise Exception("Target error, GPU or Ascend is supported.")
 
@@ -234,7 +239,7 @@ def run_KTNET():
         os.chdir('/home/work/user-job-dir/ktnet/')
 
     if args.is_modelarts.lower() == "true":
-        context.set_auto_parallel_context(device_num=device_num,
+        context.set_auto_parallel_context(device_num=args.device_num,
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
 
@@ -245,13 +250,13 @@ def run_KTNET():
         ds = create_train_dataset(batch_size=args.batch_size,
                                   data_file=fp + args.train_mindrecord_file,
                                   do_shuffle=True,
-                                  device_num=device_num, rank=device_id,
+                                  device_num=args.device_num, rank=device_id,
                                   num_parallel_workers=8)
     else:
         ds = create_train_dataset(batch_size=args.batch_size,
                                   data_file=args.train_mindrecord_file,
                                   do_shuffle=True,
-                                  device_num=args.device_num, rank=args.device_id,
+                                  device_num=args.device_num, rank=device_id,
                                   num_parallel_workers=8)
 
     if args.do_train:

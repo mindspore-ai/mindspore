@@ -19,9 +19,7 @@
     - [训练过程](#训练过程)
         - [用法](#用法)
             - [Ascend处理器上运行squad数据集](#ascend处理器上运行squad数据集)
-        - [分布式训练](#分布式训练)
             - [Ascend处理器上训练squad数据集](#ascend处理器上训练squad数据集)
-            - [Ascend处理器上训练record数据集](#ascend处理器上训练record数据集)
     - [评估过程](#评估过程)
         - [用法](#用法-1)
             - [Ascend处理器上运行后评估squad数据集](#ascend处理器上运行后评估squad数据集)
@@ -151,7 +149,7 @@ mv wn_concept2vec.txt nell_concept2vec.txt data/KB_embeddings
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - 其他
     - python >= 3.7
-    - mindspore 1.1
+    - mindspore 1.2
     - paddlepaddle 2.0
     - NLTK >= 3.3 (with WordNet 3.0)
     - tqdm
@@ -174,7 +172,9 @@ mv wn_concept2vec.txt nell_concept2vec.txt data/KB_embeddings
     ├─__init__.py
     ├─export.sh                           # 模型输出脚本
     ├─run_record_twomemory.sh             # Ascend设备上单机训练shell脚本（record数据集）
+    ├─run_record_twomemory_distribute.sh  # Ascend设备上8机训练shell脚本（record数据集）
     ├─run_squad_twomemory.sh              # Ascend设备上单机训练shell脚本（squad数据集）
+    ├─run_squad_twomemory_distribute.sh   # Ascend设备上8机训练shell脚本（squad数据集）
     ├─run_squad_eval.sh                   # Ascend设备上单机评估shell脚本（record数据集）
     ├─run_record_eval.sh                  # Ascend设备上单机评估shell脚本（squad数据集）
     ├─export.sh
@@ -263,6 +263,7 @@ mv wn_concept2vec.txt nell_concept2vec.txt data/KB_embeddings
       --random_seed                   随机种子
       --save_finetune_checkpoint_path 训练检查点保存路径
       --is_modelarts                  是否在modelarts上运行任务
+      --is_distribute                 是否为分布式训练
       --save_url                      在modelarts上运行时的数据保存路径
       --log_url                       在modelarts上运行时的日志保存路径
       --checkpoints output
@@ -321,10 +322,13 @@ mv wn_concept2vec.txt nell_concept2vec.txt data/KB_embeddings
 #### Ascend处理器上运行squad数据集
 
 ```bash
-bash scripts/run_squad_twomemory.sh [DATAPATH] [DEVICE_NUM]
+# 单机
+bash scripts/run_squad_twomemory.sh [DATAPATH]
+# 分布式训练 8卡
+bash scripts/run_squad_twomemory.sh [DATAPATH] [RANK_TABLE_FILE]
 ```
 
-DATAPATH为必选项，为数据文件存放的路径。DEVICE_NUM为必选项，为训练使用的设备数量。
+DATAPATH为必选项，为数据文件存放的路径。
 
 output/train_squad.log中查看训练日志。训练结束后，您可以在默认脚本路径下脚本文件夹中找到检查点文件，得到如下损失值：
 
@@ -335,18 +339,6 @@ epoch: 0.0, current epoch percent: 0.000, step: 2, outputs are (Tensor(shape=[1]
 ...
 ```
 
-### 分布式训练
-
-#### Ascend处理器上训练squad数据集
-
-```bash
-bash scripts/run_squad_twomemory.sh [DATAPATH] [DEVICE_NUM]
-```
-
-DATAPATH为必选项，为数据文件存放的路径。DEVICE_NUM为必选项，为训练使用的设备数量。
-
-以上命令后台运行，您可以在output/train_squad.log中查看训练日志。
-
 ```bash
 python run_KTNET_squad.py
 ```
@@ -354,10 +346,13 @@ python run_KTNET_squad.py
 #### Ascend处理器上训练record数据集
 
 ```bash
-bash scripts/run_record_twomemory.sh [DATAPATH] [DEVICE_NUM]
+# 单机
+bash scripts/run_record_twomemory.sh [DATAPATH]
+# 分布式训练 8卡
+bash scripts/run_record_twomemory.sh [DATAPATH] [RANK_TABLE_FILE]
 ```
 
-DATAPATH为必选项，为数据文件存放的路径。DEVICE_NUM为必选项，为训练使用的设备数量。
+DATAPATH为必选项，为数据文件存放的路径。
 
 以上命令后台运行，您可以在output/train_record.log中查看训练日志。
 

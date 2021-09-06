@@ -118,5 +118,5 @@ if __name__ == '__main__':
                                            run_modelart=run_modelart)
         cb += [ckpoint_cb]
 
-    model = Model(oneStepNTSNet, amp_level="O3", keep_batchnorm_fp32=False)
+    model = Model(oneStepNTSNet, amp_level="O0", keep_batchnorm_fp32=False)
     model.train(config.num_epochs, train_data_set, callbacks=cb, dataset_sink_mode=True)
