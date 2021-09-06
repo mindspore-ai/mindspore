@@ -35,7 +35,7 @@
 
 namespace mindspore {
 namespace parallel {
-#define MAX_DEVICE_NUM 1024
+#define MAX_DEVICE_NUM 4096
 
 constexpr char HCCL_BACKEND[] = "hccl";
 constexpr char NCCL_BACKEND[] = "nccl";
