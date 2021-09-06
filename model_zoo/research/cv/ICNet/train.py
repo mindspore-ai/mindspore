@@ -48,16 +48,16 @@ def train_net():
                                           parameter_broadcast=True,
                                           gradients_mean=True)
         init()
-    prefix = 'cityscapes.mindrecord'
+    prefix = 'cityscapes-2975.mindrecord'
     mindrecord_dir = cfg['train']["mindrecord_dir"]
-    mindrecord_file = os.path.join(mindrecord_dir, prefix + '2975')
+    mindrecord_file = os.path.join(mindrecord_dir, prefix)
     dataset = create_icnet_dataset(mindrecord_file, batch_size=cfg['train']["train_batch_size_percard"],
                                    device_num=device_num, rank_id=device_id)
 
     train_data_size = dataset.get_dataset_size()
     print("data_size", train_data_size)
     epoch = cfg["train"]["epochs"]
-    network = ICNetdc()  # __init__
+    network = ICNetdc(pretrained_path=cfg["train"]["pretrained_model_path"])  # __init__
 
     iters_per_epoch = train_data_size
     total_train_steps = iters_per_epoch * epoch
@@ -85,7 +85,8 @@ if __name__ == '__main__':
     from src.cityscapes_mindrecord import create_icnet_dataset
     from src.models.icnet_dc import ICNetdc
     from src.lr_scheduler import poly_lr
-    config_path = args_opt.project_path + "src/model_utils/icnet.yaml"
+    config_file = "src/model_utils/icnet.yaml"
+    config_path = os.path.join(args_opt.project_path, config_file)
     with open(config_path, "r") as yaml_file:
         cfg = yaml.load(yaml_file.read())
     logging.basicConfig(level=logging.INFO)

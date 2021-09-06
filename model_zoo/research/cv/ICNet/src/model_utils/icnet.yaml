@@ -1,7 +1,7 @@
 ### 1.Model
 model:
   name: "icnet"
-  backbone: "resnet50"
+  backbone: "resnet50v1"
   base_size: 1024    # during augmentation, shorter size will be resized between [base_size*0.5, base_size*2.0]
   crop_size: 960     # end of augmentation, crop to training
 
@@ -19,7 +19,8 @@ train:
   epochs: 160
   val_epoch: 1        # run validation every val-epoch
   ckpt_dir: "./ckpt/" # ckpt and training log will be saved here
-  mindrecord_dir: '/root/mindrecord'
+  mindrecord_dir: '/data/cityscapes_mindrecord'
+  pretrained_model_path: '/root/ResNet50V1B-150_625.ckpt'
   save_checkpoint_epochs: 5
   keep_checkpoint_max: 10
 
