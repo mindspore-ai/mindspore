@@ -245,11 +245,21 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 - Ascend:
 
+```yaml
+ds_type:imagenet
+or
+ds_type:cifar10
+Take training cifar10 as an example, the ds_type parameter is set to cifar10
+````
+
 ```bash
 # distribute training example(8p)
-bash scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_PATH DATA_DIR
+bash scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [DATA_DIR]
+# example: bash scripts/run_distribute_train_ascend.sh /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/cifar10/
+
 # standalone training
-bash scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
+bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [DATA_DIR]
+# example: bash scripts/run_standalone_train_ascend.sh 0 /home/DataSet/cifar10/
 ```
 
 > Notes:
@@ -278,9 +288,13 @@ bash scripts/run_standalone_train_cpu.sh DATA_PATH
   shell:
       Ascend:
       # distribute training example(8p)
-      bash scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_PATH DATA_DIR
+      bash scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [DATA_DIR]
+      # example: bash scripts/run_distribute_train_ascend.sh /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/cifar10/
+
       # standalone training
-      bash scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
+      bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [DATA_DIR]
+      # example: bash scripts/run_standalone_train_ascend.sh 0 /home/DataSet/cifar10/
+
       GPU:
       # distribute training example(8p)
       bash scripts/run_distribute_train_gpu.sh DATA_PATH
@@ -324,7 +338,8 @@ You can start training using python or shell scripts. The usage of shell scripts
 - Ascend:
 
 ```bash
-  bash scripts/run_eval_ascend.sh DEVICE_ID DATA_DIR CHECKPOINT_PATH
+  bash scripts/run_eval_ascend.sh [DEVICE_ID] [DATA_DIR] [CHECKPOINT_PATH]
+  # example: bash scripts/run_eval_ascend.sh 0 /home/DataSet/cifar10/ /home/model/inceptionv4/ckpt/inceptionv4-train-250_1251
 ```
 
 - GPU
@@ -339,7 +354,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 # eval example
   shell:
       Ascend:
-            bash scripts/run_eval_ascend.sh DEVICE_ID DATA_DIR CHECKPOINT_PATH
+            bash scripts/run_eval_ascend.sh [DEVICE_ID] [DATA_DIR] [CHECKPOINT_PATH]
       GPU:
             bash scripts/run_eval_gpu.sh DATA_DIR CHECKPOINT_PATH
 ```

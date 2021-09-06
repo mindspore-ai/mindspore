@@ -106,10 +106,12 @@ pip install mmcv=0.2.14
     On Ascend:
 
     # distributed training
-    bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
+    bash run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_CKPT(optional)]
+    # example: bash run_distribute_train.sh /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/cocodataset/
 
     # standalone training
-    bash run_standalone_train.sh [PRETRAINED_CKPT]
+    bash run_standalone_train.sh [DATA_PATH] [PRETRAINED_CKPT(optional)]
+    # example: bash run_standalone_train.sh /home/DataSet/cocodataset/
 
     On CPU:
 
@@ -128,7 +130,8 @@ pip install mmcv=0.2.14
 
     ```bash
     # Evaluation on Ascend
-    bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+    bash run_eval.sh [ANN_FILE] [CHECKPOINT_PATH] [DATA_PATH]
+    # example: bash run_eval.sh /home/DataSet/cocodataset/annotations/instances_val2017.json /home/model/maskrcnn_mobilenetv1/ckpt/mask_rcnn-5_7393.ckpt /home/DataSet/cocodataset/
 
     # Evaluation on CPU
     bash run_eval_cpu.sh [ANN_FILE] [CHECKPOINT_PATH]
@@ -347,10 +350,12 @@ pip install mmcv=0.2.14
 On Ascend:
 
 # distributed training
-Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_CKPT(optional)]
+# example: bash run_distribute_train.sh /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/cocodataset/
 
 # standalone training
-Usage: bash run_standalone_train.sh [PRETRAINED_MODEL]
+Usage: bash run_standalone_train.sh [DATA_PATH] [PRETRAINED_CKPT(optional)]
+# example: bash run_standalone_train.sh /home/DataSet/cocodataset/
 
 On CPU:
 
@@ -360,7 +365,7 @@ Usage: bash run_standalone_train_cpu.sh [PRETRAINED_MODEL](optional)
 
 ### [Parameters Configuration](#contents)
 
-```bash
+```default_config.yaml
 "img_width": 1280,          # width of the input images
 "img_height": 768,          # height of the input images
 
@@ -510,7 +515,8 @@ Usage: bash run_standalone_train_cpu.sh [PRETRAINED_MODEL](optional)
 
 ```bash
 # standalone training
-bash run_standalone_train.sh [PRETRAINED_MODEL]
+bash run_standalone_train.sh [DATA_PATH] [PRETRAINED_CKPT(optional)]
+# example: bash run_standalone_train.sh /home/DataSet/cocodataset/
 ```
 
 - Run `run_standalone_train_cpu.sh` for non-distributed training of maskrcnn_mobilenetv1 model on CPU.
@@ -525,7 +531,8 @@ bash run_standalone_train_cpu.sh [PRETRAINED_MODEL](optional)
 - Run `run_distribute_train.sh` for distributed training of Mask model on Ascend.
 
 ```bash
-bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_MODEL(optional)]
+# example: bash run_distribute_train.sh /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/cocodataset/
 ```
 
 > hccl.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -536,7 +543,7 @@ bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the following in loss_rankid.log.
 
-```bash
+```log
 # distribute training result(8p)
 2123 epoch: 1 step: 7393 ,rpn_loss: 0.24854, rcnn_loss: 1.04492, rpn_cls_loss: 0.19238, rpn_reg_loss: 0.05603, rcnn_cls_loss: 0.47510, rcnn_reg_loss: 0.16919, rcnn_mask_loss: 0.39990, total_loss: 1.29346
 3973 epoch: 2 step: 7393 ,rpn_loss: 0.02769, rcnn_loss: 0.51367, rpn_cls_loss: 0.01746, rpn_reg_loss: 0.01023, rcnn_cls_loss: 0.24255, rcnn_reg_loss: 0.05630, rcnn_mask_loss: 0.21484, total_loss: 0.54137
@@ -557,7 +564,8 @@ Training result will be stored in the example path, whose folder name begins wit
 
 ```bash
 # infer
-bash run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
+bash run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH] [DATA_PATH]
+# example: bash run_eval.sh /home/DataSet/cocodataset/annotations/instances_val2017.json /home/model/maskrcnn_mobilenetv1/ckpt/mask_rcnn-5_7393.ckpt /home/DataSet/cocodataset/
 ```
 
 > As for the COCO2017 dataset, VALIDATION_ANN_FILE_JSON is refer to the annotations/instances_val2017.json in the dataset directory.  
@@ -567,7 +575,7 @@ bash run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 
 Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the following in log.
 
-```bash
+```log
 Evaluate annotation type *bbox*
 Accumulating evaluation results...
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.227
@@ -625,7 +633,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 
 Inference result is saved in current path, you can find result like this in acc.log file.
 
-```bash
+```log
 Evaluate annotation type *bbox*
 Accumulating evaluation results...
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.227

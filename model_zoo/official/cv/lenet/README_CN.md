@@ -75,11 +75,14 @@ LeNet非常简单，包含5层，由2个卷积层和3个全连接层组成。
 
 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
 
-```python
+```bash
 # 进入脚本目录，训练LeNet
-bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]  
+bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
+# example: bash run_standalone_train_ascend.sh /home/DataSet/MNIST/ ./ckpt/
+
 # 进入脚本目录，评估LeNet
 bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
+# example: bash run_standalone_eval_ascend.sh /home/DataSet/MNIST/ /home/model/lenet/ckpt/checkpoint_lenet-1_1875.ckpt
 ```
 
 - 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
@@ -147,7 +150,7 @@ bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 
 - 在 ModelArts 进行导出 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
 
-1. 使用voc val数据集评估多尺度和翻转s8。评估步骤如下：
+1. 使用ModelArts评估步骤如下：
 
     ```python
     # (1) 执行 a 或者 b.
@@ -206,8 +209,8 @@ bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 
 ## 脚本参数
 
-```python
-train.py和default_config.yaml中主要参数如下：
+```default_config.yaml
+default_config.yaml中主要参数如下：
 
 --data_path: 到训练和评估数据集的绝对全路径
 --epoch_size: 训练轮次数
@@ -226,7 +229,8 @@ train.py和default_config.yaml中主要参数如下：
 ```bash
 python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
-bash run_standalone_train_ascend.sh Data ckpt
+bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
+# example: bash run_standalone_train_ascend.sh /home/DataSet/MNIST/ ./ckpt/
 ```
 
 训练结束，损失值如下：
@@ -252,7 +256,8 @@ epoch:1 step:1538, loss is 1.0221305
 ```bash
 python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
-bash run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
+bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
+# example: bash run_standalone_eval_ascend.sh /home/DataSet/MNIST/ /home/model/lenet/ckpt/checkpoint_lenet-1_1875.ckpt
 ```
 
 您可以通过log.txt文件查看结果。测试数据集的准确性如下：

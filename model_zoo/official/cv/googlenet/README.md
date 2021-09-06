@@ -90,17 +90,28 @@ After installing MindSpore via the official website, you can start training and 
 
 - running on Ascend
 
+  ```yaml
+  # Add data set path, take training cifar10 as an example
+  train_data_path:/home/DataSet/cifar10/
+  val_data_path:/home/DataSet/cifar10/
+
+  # Add checkpoint path parameters before inference
+  chcekpoint_path:/home/model/googlenet/ckpt/train_googlenet_cifar10-125_390.ckpt
+  ```
+
   ```python
   # run training example
   python train.py > train.log 2>&1 &
 
   # run distributed training example
-  bash scripts/run_train.sh rank_table.json
+  bash scripts/run_train.sh [RANK_TABLE_FILE] [DATASET_NAME]
+  # example: bash scripts/run_train.sh /root/hccl_8p_01234567_10.155.170.71.json cifar10
 
   # run evaluation example
   python eval.py > eval.log 2>&1 &
   OR
-  bash run_eval.sh
+  bash run_eval.sh [DATASET_NAME]
+  # example: bash run_eval.sh cifar10
 
   # run inferenct example
   bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
@@ -390,7 +401,7 @@ For more configuration details, please refer the script `config.py`.
 - running on Ascend
 
   ```bash
-  bash scripts/run_train.sh rank_table.json
+  bash scripts/run_train.sh /root/hccl_8p_01234567_10.155.170.71.json cifar10
   ```
 
   The above shell script will run distribute training in the background. You can view the results through the file `train_parallel[X]/log`. The loss value will be achieved as follows:
@@ -425,7 +436,7 @@ For more configuration details, please refer the script `config.py`.
   ```python
   python eval.py > eval.log 2>&1 &  
   OR
-  bash scripts/run_eval.sh
+  bash run_eval.sh cifar10
   ```
 
   The above python command will run in the background. You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:
@@ -460,7 +471,7 @@ For more configuration details, please refer the script `config.py`.
   OR,
 
   ```bash
-  bash scripts/run_eval_gpu.sh [CHECKPOINT_PATH]
+  bash run_eval_gpu.sh [CHECKPOINT_PATH]
   ```
 
   The above python command will run in the background. You can view the results through the file "eval/eval.log". The accuracy of the test dataset will be as follows:
