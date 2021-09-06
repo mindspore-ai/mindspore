@@ -31,27 +31,31 @@ graphkernel::LiteGraphPtr OpExpander::Run(const BaseInfoList &inputs, const Base
   this->outputs_info_ = outputs;
   this->attrs_ = attrs;
   this->processor_ = processor;
-  for (const auto &v : validators_) {
-    v->Check(*this);
+  if (std::any_of(validators_.begin(), validators_.end(),
+                  [this](const std::unique_ptr<Validator> &v) { return !(v->Check(*this)); })) {
+    return nullptr;
   }
-  this->CheckInputs();
+  if (!this->CheckInputs()) {
+    return nullptr;
+  }
   for (auto &inp : inputs) {
     (void)gb.Parameter(inp);
   }
   auto result = this->Expand();
   gb.SetOutputs(result);
-  this->CheckOutputs();
+  if (!this->CheckOutputs()) {
+    return nullptr;
+  }
   return gb.Get();
 }
 
-void OpExpander::CheckOutputs() {
+bool OpExpander::CheckOutputs() {
   // check the output shape/type/format are same as the original basic node's output.
   const NodePtrList &outputs = gb.Get()->GetOutputs();
   if (outputs.size() != this->outputs_info_.size()) {
-    std::ostringstream oss;
-    oss << "the output num was not equal to the original output num : " << outputs.size() << " vs "
-        << outputs_info_.size();
-    throw graphkernel::GKException(oss.str());
+    MS_LOG(INFO) << "the output num was not equal to the original output num : " << outputs.size() << " vs "
+                 << outputs_info_.size();
+    return false;
   }
   for (size_t i = 0; i < outputs.size(); i++) {
     if (outputs[i]->shape != outputs_info_[i].shape) {
@@ -65,21 +69,21 @@ void OpExpander::CheckOutputs() {
         oss << s << ",";
       }
       oss << "]";
-      throw graphkernel::GKException(oss.str());
+      MS_LOG(INFO) << oss.str();
+      return false;
     }
     if (outputs[i]->type != outputs_info_[i].type) {
-      std::ostringstream oss;
-      oss << "Op " << this->op_ << "'s output type [" << outputs[i]->type << "] is wrong, expect: ["
-          << outputs_info_[i].type << "]";
-      throw graphkernel::GKException(oss.str());
+      MS_LOG(INFO) << "Op " << this->op_ << "'s output type [" << outputs[i]->type << "] is wrong, expect: ["
+                   << outputs_info_[i].type << "]";
+      return false;
     }
     if (outputs[i]->format != outputs_info_[i].format) {
-      std::ostringstream oss;
-      oss << "Op " << this->op_ << "'s output format [" << outputs[i]->format << "] is wrong, expect: ["
-          << outputs_info_[i].format << "]";
-      throw graphkernel::GKException(oss.str());
+      MS_LOG(INFO) << "Op " << this->op_ << "'s output format [" << outputs[i]->format << "] is wrong, expect: ["
+                   << outputs_info_[i].format << "]";
+      return false;
     }
   }
+  return true;
 }
 
 std::vector<int64_t> GetAxisList(const ValuePtr &value) {

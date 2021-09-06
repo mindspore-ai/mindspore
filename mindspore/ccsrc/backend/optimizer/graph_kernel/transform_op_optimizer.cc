@@ -229,9 +229,7 @@ class TransformOp {
       perm = perm_map[{format_b_, format_a_}];
     }
     if (perm.empty()) {
-      std::ostringstream oss;
-      oss << "unsupported format: " << format_a_ << " to " << format_b_;
-      throw graphkernel::GKException(oss.str());
+      MS_LOG(EXCEPTION) << "unsupported format: " << format_a_ << " to " << format_b_;
     }
     auto op = graphkernel::OpRegistry::Instance().NewOp("Transpose", "new_trans");
     op->SetAttr("perm", MakeValue(perm));
@@ -438,23 +436,19 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
   bool changed = false;
   for (auto node : todos) {
     if (!AnfAlgo::IsGraphKernel(node)) continue;
-    try {
-      auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-      auto litegraph = AnfGraph2LiteGraph(sub_func_graph);
-      if (Process(litegraph)) {
-        changed = true;
-        AnfNodePtrList outputs;
-        auto new_funcgraph = LiteGraph2AnfGraph(litegraph, &outputs);
-        new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
-        auto cnode = node->cast<CNodePtr>();
-        AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
-        auto new_node = CreateNewFuseCNode(kernel_graph, new_funcgraph, inputs, outputs);
-        SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
-        mng->Replace(node, new_node);
-        mng->AddFuncGraph(new_funcgraph);
-      }
-    } catch (const graphkernel::GKException &e) {
-      MS_LOG(WARNING) << e.what() << ", so we undo airthmetic simplify for this graph";
+    auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    auto litegraph = AnfGraph2LiteGraph(sub_func_graph);
+    if (Process(litegraph)) {
+      changed = true;
+      AnfNodePtrList outputs;
+      auto new_funcgraph = LiteGraph2AnfGraph(litegraph, &outputs);
+      new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+      auto cnode = node->cast<CNodePtr>();
+      AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
+      auto new_node = CreateNewFuseCNode(kernel_graph, new_funcgraph, inputs, outputs);
+      SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
+      mng->Replace(node, new_node);
+      mng->AddFuncGraph(new_funcgraph);
     }
   }
   return changed;

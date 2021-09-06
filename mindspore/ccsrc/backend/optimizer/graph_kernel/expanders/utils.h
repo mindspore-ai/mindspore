@@ -37,9 +37,9 @@ class OpExpander {
   virtual ~OpExpander() = default;
 
  protected:
-  virtual void CheckInputs() {}
+  virtual bool CheckInputs() { return true; }
   virtual NodePtrList Expand() = 0;
-  void CheckOutputs();
+  bool CheckOutputs();
 
   graphkernel::LiteGraph::GraphBuilder gb;
   std::string op_;
@@ -57,37 +57,36 @@ class OpExpander {
 
 class Validator {
  public:
-  virtual void Check(const OpExpander &e) = 0;
+  virtual bool Check(const OpExpander &e) = 0;
 };
 
 class CheckAllFormatsSame : public Validator {
  public:
-  void Check(const OpExpander &e) override {
-    if (e.inputs_info_.empty()) return;
+  bool Check(const OpExpander &e) override {
+    if (e.inputs_info_.empty()) return true;
     const auto &fmt_0 = e.inputs_info_[0].format;
     for (size_t i = 1; i < e.inputs_info_.size(); i++) {
       if (e.inputs_info_[i].format != fmt_0) {
-        std::ostringstream oss;
-        oss << "Unmatched format for op " << e.op_;
-        throw graphkernel::GKException(oss.str());
+        MS_LOG(INFO) << "Unmatched format for op " << e.op_;
+        return false;
       }
     }
+    return true;
   }
 };
 
 class CheckAttr : public Validator {
  public:
-  CheckAttr() = default;
   CheckAttr(std::initializer_list<std::string> l) : attrs_(l) {}
   ~CheckAttr() = default;
-  void Check(const OpExpander &e) override {
+  bool Check(const OpExpander &e) override {
     for (auto &a : attrs_) {
       if (e.attrs_.count(a) == 0) {
-        std::ostringstream oss;
-        oss << "attr " << a << " does not exist. op " << e.op_;
-        throw graphkernel::GKException(oss.str());
+        MS_LOG(INFO) << "attr " << a << " does not exist. op " << e.op_;
+        return false;
       }
     }
+    return true;
   }
 
  private:
@@ -97,7 +96,7 @@ class CheckAttr : public Validator {
 class SupportFormat : public Validator {
  public:
   void AddFormat(std::initializer_list<std::string> l) { formats_.emplace_back(l); }
-  void Check(const OpExpander &e) override {
+  bool Check(const OpExpander &e) override {
     for (auto &formats : formats_) {
       if (formats.size() != e.inputs_info_.size()) {
         continue;
@@ -110,12 +109,11 @@ class SupportFormat : public Validator {
         }
       }
       if (match) {
-        return;
+        return true;
       }
     }
-    std::ostringstream oss;
-    oss << "unsupported format for op " << e.op_;
-    throw graphkernel::GKException(oss.str());
+    MS_LOG(INFO) << "unsupported format for op " << e.op_;
+    return false;
   }
 
  private:
@@ -123,6 +121,7 @@ class SupportFormat : public Validator {
 };
 
 std::vector<int64_t> GetAxisList(const ValuePtr &value);
+ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis);
 }  // namespace expanders
 }  // namespace opt
 }  // namespace mindspore

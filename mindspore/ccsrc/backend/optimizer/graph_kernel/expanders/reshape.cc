@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_RESHAPE_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_RESHAPE_H_
-
 #include <memory>
 #include <vector>
 
-#include "backend/optimizer/graph_kernel/model/node.h"
-#include "backend/optimizer/graph_kernel/expanders/utils.h"
+#include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 
 namespace mindspore {
 namespace opt {
 namespace expanders {
 class ExpandDims : public OpExpander {
  public:
-  ExpandDims() { validators_.emplace_back(new CheckAttr({"axis"})); }
-  ~ExpandDims() {}
+  ExpandDims() {
+    std::initializer_list<std::string> attrs{"axis"};
+    validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
+  }
+  ~ExpandDims() = default;
   NodePtrList Expand() override {
     const auto &inputs = gb.Get()->inputs();
-    auto &input_x = inputs[0];
+    const auto &input_x = inputs[0];
     auto shape = MakeValue(ExpandDims::InferShape(input_x->shape, GetAxisList(this->attrs_["axis"])));
     auto result = gb.Emit("Reshape", {input_x}, {{"shape", shape}});
     return {result};
@@ -42,9 +41,7 @@ class ExpandDims : public OpExpander {
     for (auto x : axis) {
       int64_t rank = static_cast<int64_t>(new_shape.size());
       if (x > rank || x < -rank - 1) {
-        std::ostringstream oss;
-        oss << "ExpandDims axis " << x << " is out of range of size " << new_shape.size();
-        throw graphkernel::GKException(oss.str());
+        MS_LOG(EXCEPTION) << "ExpandDims axis " << x << " is out of range of size " << new_shape.size();
       }
       if (x >= 0) {
         new_shape.insert(new_shape.begin() + x, 1LL);
@@ -55,7 +52,11 @@ class ExpandDims : public OpExpander {
     return new_shape;
   }
 };
+OP_EXPANDER_REGISTER("ExpandDims", ExpandDims);
+
+ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis) {
+  return ExpandDims::InferShape(shape, axis);
+}
 }  // namespace expanders
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_RESHAPE_H_

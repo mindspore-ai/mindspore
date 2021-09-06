@@ -200,29 +200,35 @@ NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs, const
 
 // default format shape to fractal_Nz format shape
 DShape ToNz(const DShape &default_shape) {
-  if (default_shape.size() != 1 && default_shape.size() != 2) {
-    throw GKException("shape is too long");
+  constexpr size_t nz_size = 2;
+  auto len = default_shape.size();
+  DShape leading_shape;
+  DShape tail_shape;
+  if (default_shape.size() > nz_size) {
+    leading_shape.insert(leading_shape.end(), default_shape.begin(), default_shape.end() - nz_size);
   }
-  DShape output_shape;
-  if (default_shape.size() == 1 || (default_shape.size() == 2 && default_shape[0] == 1)) {
-    output_shape = {default_shape[default_shape.size() - 1] / 16, 1, 1, 16};
-    if (default_shape[default_shape.size() - 1] % 16 != 0) {
-      throw GKException("should be multiplies of 16");
+  if (default_shape.size() == 1 || (default_shape.size() >= nz_size && default_shape[len - nz_size] == 1)) {
+    // (32) or (N, 1, 32) -> (N, 2, 1, 1, 16)
+    if (default_shape.back() % 16 != 0) {
+      MS_LOG(EXCEPTION) << "default_shape[-1] should be multiplies of 16, but got " << default_shape.back();
     }
-
-  } else if (default_shape.size() == 2 || default_shape[1] == 1) {
-    output_shape = {1, default_shape[0] / 16, 16, 1};
-    if (default_shape[0] % 16 != 0) {
-      throw GKException("should be multiplies of 16");
+    tail_shape = {default_shape.back() / 16, 1, 1, 16};
+  } else if (default_shape.size() >= nz_size || default_shape[1] == 1) {
+    // (N, 32, 1) -> (N, 1, 2, 16, 1)
+    if (default_shape[len - nz_size] % 16 != 0) {
+      MS_LOG(EXCEPTION) << "default_shape[-2] should be multiplies of 16, but got " << default_shape[len - nz_size];
     }
-
+    tail_shape = {1, default_shape[0] / 16, 16, 1};
   } else {
-    output_shape = {default_shape[1] / 16, default_shape[0] / 16, 16, 16};
-    if (default_shape[0] % 16 != 0 || default_shape[1] % 16 != 0) {
-      throw GKException("should be multiplies of 16");
+    // (N, 32, 48) -> (N, 3, 2, 16, 16)
+    if (default_shape.back() % 16 != 0 || default_shape[len - nz_size] % 16 != 0) {
+      MS_LOG(EXCEPTION) << "default_shape[-1] and default_shape[-2]should be multiplies of 16, but got "
+                        << default_shape.back() << " " << default_shape[len - nz_size];
     }
+    tail_shape = {default_shape[1] / 16, default_shape[0] / 16, 16, 16};
   }
-  return output_shape;
+  leading_shape.insert(leading_shape.end(), tail_shape.begin(), tail_shape.end());
+  return leading_shape;
 }
 
 DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
@@ -252,7 +258,7 @@ DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
           output_shape[i] = align_shape[i];
         }
         if (output_shape[i] != align_shape[i]) {
-          throw GKException("shape broadcast failed");
+          MS_LOG(EXCEPTION) << "Shape broadcast failed. " << output_shape[i] << " vs " << align_shape[i];
         }
       }
     }
@@ -272,7 +278,7 @@ DShape ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
       })) {
     return BroadcastShape(inputs, true);
   }
-  throw GKException("Only support default and fractal_nz");
+  MS_LOG(EXCEPTION) << "Unsupported format.";
 }
 
 DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
@@ -374,22 +380,20 @@ DShape ReduceOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   return new_shape;
 }
 
-void CheckNd(const std::vector<int64_t> &shape, size_t n) {
-  if (shape.size() != n) {
-    std::ostringstream info;
-    info << "input dimension should be " << n << ", but got  " << shape.size();
-    throw GKException(info.str());
-  }
-}
-
 DShape Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  auto check_nd = [](const std::vector<int64_t> &shape, size_t n) {
+    if (shape.size() != n) {
+      MS_LOG(EXCEPTION) << "input dimension should be " << n << ", but got  " << shape.size();
+    }
+  };
   auto shape0 = inputs[0]->shape;
   auto shape1 = inputs[1]->shape;
-  CheckNd(shape0, 4);
-  CheckNd(shape1, 4);
+  check_nd(shape0, 4);
+  check_nd(shape1, 4);
+  CHECK_ATTR(attrs, "format");
   if (inputs[0]->format != kOpFormat_NHWC && inputs[1]->format != kOpFormat_NHWC &&
       GetValue<std::string>(attrs.find("format")->second) != kOpFormat_NHWC) {
-    throw GKException("check NHWC format failed");
+    MS_LOG(EXCEPTION) << "check NHWC format failed";
   }
   auto n = shape0[0];
   auto h = shape0[1];
@@ -405,10 +409,10 @@ DShape Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   auto kernel_size = GetListInt(attrs.find("kernel_size")->second);
   auto stride = GetListInt(attrs.find("stride")->second);
   auto dilation = GetListInt(attrs.find("dilation")->second);
-  CheckNd(pad_list, 4);
-  CheckNd(kernel_size, 2);
-  CheckNd(stride, 4);
-  CheckNd(dilation, 4);
+  check_nd(pad_list, 4);
+  check_nd(kernel_size, 2);
+  check_nd(stride, 4);
+  check_nd(dilation, 4);
   bool has_pad = false;
   if (pad_list[0] != pad_list[1] || pad_list[2] != pad_list[3]) {
     has_pad = true;
@@ -464,19 +468,17 @@ DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs)
     std::vector<int64_t> nhwc2nchw = {0, 3, 1, 2};
     if (perm == nhwc2nchw) return kOpFormat_DEFAULT;
   }
-  std::ostringstream info;
-  info << "Unsupported Transpose. ori_format = " << ori_format << ", perm = " << attrs.find("perm")->second->ToString();
-  throw GKException(info.str());
+  return kOpFormat_DEFAULT;
 }
 
 DShape MatMulOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   std::vector<int64_t> shape0 = inputs[0]->shape;
   std::vector<int64_t> shape1 = inputs[1]->shape;
   if (shape0.size() != 2 || shape1.size() != 2) {
-    std::ostringstream info;
-    info << "MatMul's input's dimension must be 2, but got " << shape0.size() << " and " << shape1.size();
-    throw GKException(info.str());
+    MS_LOG(EXCEPTION) << "MatMul's input's dimension must be 2, but got " << shape0.size() << " and " << shape1.size();
   }
+  CHECK_ATTR(attrs, "transpose_a");
+  CHECK_ATTR(attrs, "transpose_b");
   auto transpose_a = GetValue<bool>(attrs.find("transpose_a")->second);
   auto transpose_b = GetValue<bool>(attrs.find("transpose_b")->second);
   int64_t m = transpose_a ? shape0[1] : shape0[0];
@@ -491,6 +493,7 @@ DShape MatMulOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
 }
 
 TypeId MatMulOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
+  CHECK_ATTR(attrs, "dst_type");
   if (attrs.find("dst_type") == attrs.end()) return inputs[0]->type;
   auto dst_type = attrs.find("dst_type")->second;
   if (dst_type->isa<Type>()) {
@@ -502,6 +505,8 @@ TypeId MatMulOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
 DShape PadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   std::vector<int64_t> shape0 = inputs[0]->shape;
   size_t n = shape0.size();
+  CHECK_ATTR(attrs, "head");
+  CHECK_ATTR(attrs, "tail");
   std::vector<int64_t> pad_before = GetListInt(attrs.find("head")->second);
   std::vector<int64_t> pad_after = GetListInt(attrs.find("tail")->second);
   if (pad_before.size() != n || pad_after.size() != n) {
@@ -518,6 +523,7 @@ DShape PadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
 DShape UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   std::vector<int64_t> shape0 = inputs[0]->shape;
   size_t n = shape0.size();
+  CHECK_ATTR(attrs, "tail");
   std::vector<int64_t> unpad_after = GetListInt(attrs.find("tail")->second);
   if (unpad_after.size() != n) {
     MS_LOG(EXCEPTION) << "Input dimension and pad mismatch: " << n << " vs " << unpad_after.size();
@@ -531,13 +537,12 @@ DShape UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
 
 void ComplexOp::CheckType(const NodePtrList &inputs, const DAttrs &attrs) {
   if (inputs[0]->type != TypeId::kNumberTypeFloat32) {
-    throw GKException("Complex's input[0] should be float32");
+    MS_LOG(EXCEPTION) << "Complex's input[0] should be float32";
   }
   if (inputs[0]->type != inputs[1]->type) {
     MS_LOG(EXCEPTION) << "Complex's input[0] and inputs[1]'s type mismatch";
   }
 }
-
 }  // namespace graphkernel
 }  // namespace opt
 }  // namespace mindspore

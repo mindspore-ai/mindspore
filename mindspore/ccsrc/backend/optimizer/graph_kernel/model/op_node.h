@@ -251,7 +251,7 @@ class CImagOp : public ElemwiseOp {
  protected:
   void CheckType(const NodePtrList &inputs, const DAttrs &attrs) override {
     if (inputs[0]->type != TypeId::kNumberTypeComplex64) {
-      throw GKException("CImag's input[0] should be complex64");
+      MS_LOG(EXCEPTION) << "CImag's input[0] should be complex64";
     }
   };
 
@@ -266,7 +266,7 @@ class CRealOp : public ElemwiseOp {
  protected:
   void CheckType(const NodePtrList &inputs, const DAttrs &attrs) override {
     if (inputs[0]->type != TypeId::kNumberTypeComplex64) {
-      throw GKException("CReal's input[0] should be complex64");
+      MS_LOG(EXCEPTION) << "CReal's input[0] should be complex64";
     }
   };
 

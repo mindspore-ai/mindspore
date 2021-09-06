@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_BIAS_ADD_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_BIAS_ADD_H_
-
 #include <string>
 #include <utility>
 #include <vector>
 #include <memory>
 
+#include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 #include "backend/optimizer/graph_kernel/expanders/utils.h"
 
 namespace mindspore {
@@ -34,7 +32,8 @@ class BiasAdd : public OpExpander {
     support_format->AddFormat({kOpFormat_NCHW, kOpFormat_DEFAULT});
     support_format->AddFormat({kOpFormat_NHWC, kOpFormat_DEFAULT});
     validators_.emplace_back(std::move(support_format));
-    validators_.emplace_back(new CheckAttr({"format"}));
+    auto attrs = std::initializer_list<std::string>{"format"};
+    validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~BiasAdd() = default;
   NodePtrList Expand() override {
@@ -42,19 +41,19 @@ class BiasAdd : public OpExpander {
     auto input_x = inputs[0];
     auto input_y = inputs[1];
     if (input_x->format == kOpFormat_NCHW) {
-      input_y = gb.Emit("Reshape", {input_y}, {{"shape", MakeValue(ExpandDims::InferShape(input_y->shape, {1, 2}))}});
+      input_y = gb.Emit("Reshape", {input_y}, {{"shape", MakeValue(ExpandDimsInferShape(input_y->shape, {1, 2}))}});
     } else if (input_x->format == kOpFormat_DEFAULT) {
       auto data_format = GetValue<std::string>(attrs_["format"]);
       size_t channel_idx = (data_format == kOpFormat_NHWC) ? input_x->shape.size() - 1 : 1;
       std::vector<int64_t> axis(input_x->shape.size() - channel_idx - 1, -1);
       if (!axis.empty()) {
-        input_y = gb.Emit("Reshape", {input_y}, {{"shape", MakeValue(ExpandDims::InferShape(input_y->shape, axis))}});
+        input_y = gb.Emit("Reshape", {input_y}, {{"shape", MakeValue(ExpandDimsInferShape(input_y->shape, axis))}});
       }
     }
     return {gb.Emit("Add", {input_x, input_y})};
   }
 };
+OP_EXPANDER_REGISTER("BiasAdd", BiasAdd);
 }  // namespace expanders
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_BIAS_ADD_H_

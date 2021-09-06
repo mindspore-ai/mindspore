@@ -153,13 +153,12 @@ FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
     outputs[i].format = AnfAlgo::GetOutputFormat(node, i);
   }
   auto &attrs = AnfAlgo::GetCNodePrimitive(node)->attrs();
-  try {
-    auto litegraph = expander_ptr->Run(inputs, outputs, attrs, kernel::GetStrProcessorFromContext());
-    return LiteGraph2AnfGraph(litegraph);
-  } catch (const graphkernel::GKException &e) {
-    MS_LOG(INFO) << e.what() << ", undo expanding this op";
+  auto litegraph = expander_ptr->Run(inputs, outputs, attrs, kernel::GetStrProcessorFromContext());
+  if (litegraph == nullptr) {
+    MS_LOG(INFO) << "undo expanding " << node->fullname_with_scope();
     return nullptr;
   }
+  return LiteGraph2AnfGraph(litegraph);
 }
 
 AnfNodePtr PyExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node) {
