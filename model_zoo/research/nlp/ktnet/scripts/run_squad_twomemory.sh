@@ -14,35 +14,36 @@
 # limitations under the License.
 # ============================================================================
 
-if [ ! -d log ]; then
-mkdir log
-fi
-
-if [ ! -d output ]; then
-mkdir output
+if [ $# != 1 ]; then
+  echo "Usage: sh run_distribute_train.sh [DATA_PATH]"
+  exit 1
 fi
 
 PWD_DIR=`pwd`
 DATA=$1
-DEVICE_NUM=$2
+DEVICE_NUM=1
+export DEVICE_ID=0
+export RANK_ID=0
 
 BERT_DIR=$DATA/cased_L-24_H-1024_A-16
 WN_CPT_EMBEDDING_PATH=$DATA/KB_embeddings/wn_concept2vec.txt
 NELL_CPT_EMBEDDING_PATH=$DATA/KB_embeddings/nell_concept2vec.txt
 
-rm $PWD_DIR/log/train_squad.log
-for((i=0; i<${DEVICE_NUM}; i++))
-do
-  export DEVICE_ID=$i
-  echo "start training for device $DEVICE_ID"
-  python3 run_KTNET_squad.py \
+echo "start training for device $DEVICE_ID"
+rm -rf ./train
+mkdir train
+cp ../*.py ./train
+cp -r ../src ./train
+cp -r ../utils ./train
+cd ./train|| exit
+python3 run_KTNET_squad.py \
     --device_target "Ascend" \
     --device_num $DEVICE_NUM \
     --device_id $DEVICE_ID \
     --batch_size 8 \
-    --do_train true \
-    --do_predict false \
-    --do_lower_case false \
+    --do_train True \
+    --do_predict False \
+    --do_lower_case False \
     --init_pretraining_params $BERT_DIR/params \
     --load_pretrain_checkpoint_path $BERT_DIR/roberta.ckpt \
     --train_file $DATA/SQuAD/train-v1.1.json \
@@ -51,7 +52,7 @@ do
     --predict_mindrecord_file $DATA/SQuAD/dev.mindrecord \
     --vocab_path $BERT_DIR/vocab.txt \
     --bert_config_path $BERT_DIR/bert_config.json \
-    --freeze false \
+    --freeze False \
     --save_steps 4000 \
     --weight_decay 0.01 \
     --warmup_proportion 0.1 \
@@ -61,12 +62,13 @@ do
     --doc_stride 128 \
     --wn_concept_embedding_path $WN_CPT_EMBEDDING_PATH \
     --nell_concept_embedding_path $NELL_CPT_EMBEDDING_PATH \
-    --use_wordnet true \
-    --use_nell true \
+    --use_wordnet True \
+    --use_nell True \
     --random_seed 45 \
     --save_finetune_checkpoint_path $PWD_DIR/output/finetune_checkpoint \
-    --is_modelarts false \
+    --is_distribute False \
+    --is_modelarts False \
     --save_url /cache/ \
     --log_url /tmp/log/ \
-    --checkpoints output/ 1>>$PWD_DIR/log/train_squad.log 2>&1 &
-done
+    --checkpoints output/ &> train_squad.log &
+cd ..

@@ -222,3 +222,9 @@ We use random seed in train.py and eval.py for weight initialization.
 # [ModelZoo Homepage](#contents)
 
 Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
+
+# FAQ
+
+First refer to [ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/model_zoo#FAQ) to find some common public questions.
+
+- **Q: What to do if memory overflow occurs when using PYNATIVE_MODE？** **A**:Memory overflow is usually because PYNATIVE_MODE requires more memory. Setting the batch size to 2 reduces memory consumption and can be used for network training.
