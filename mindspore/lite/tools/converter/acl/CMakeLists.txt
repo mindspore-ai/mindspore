@@ -11,9 +11,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB ACL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/deparser/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mapper/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc
         )
+
+set(ENABLE_ACL on)
 
 add_subdirectory(${TOP_DIR}/mindspore/ccsrc/transform/graph_ir _mindspore_transform_graph_ir_obj)
 add_subdirectory(${TOP_DIR}/mindspore/ccsrc/cxx_api mindspore_shared_lib)

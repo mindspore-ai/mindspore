@@ -26,10 +26,9 @@
 #include "include/api/types.h"
 #include "include/errorcode.h"
 
-using mindspore::lite::STATUS;
-
-namespace mindspore {
+namespace mindspore::kernel {
 namespace acl {
+using mindspore::lite::STATUS;
 struct AclTensorInfo {
   void *cur_device_data;
   void *device_data;
@@ -91,5 +90,5 @@ class ModelProcess {
   std::vector<AclTensorInfo> output_infos_;
 };
 }  // namespace acl
-}  // namespace mindspore
+}  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_MODEL_PROCESS_H_

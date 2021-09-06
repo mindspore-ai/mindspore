@@ -18,15 +18,15 @@
 #include "common/log_adapter.h"
 #include "acl/acl.h"
 
-namespace mindspore {
+namespace mindspore::kernel {
 namespace acl {
-ModelInfer::ModelInfer(const Buffer &om_data, int32_t device_id)
+ModelInfer::ModelInfer(const Buffer &om_data, const AclModelOptions &options)
     : init_flag_(false),
       load_flag_(false),
       device_type_("AscendCL"),
-      device_id_(device_id),
       context_(nullptr),
       om_data_(om_data),
+      options_(options),
       model_process_(),
       acl_env_(nullptr) {}
 
@@ -36,20 +36,20 @@ STATUS ModelInfer::Init() {
     return lite::RET_OK;
   }
 
-  acl_env_ = AclEnvGuard::GetAclEnv("");
+  acl_env_ = AclEnvGuard::GetAclEnv(options_.dump_cfg_path_);
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Acl init failed.";
     return lite::RET_ERROR;
   }
-
-  aclError ret = aclrtSetDevice(device_id_);
+  int32_t device_id = options_.device_id_;
+  aclError ret = aclrtSetDevice(device_id);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Acl open device " << device_id_ << " failed.";
+    MS_LOG(ERROR) << "Acl open device " << device_id << " failed.";
     return lite::RET_ERROR;
   }
-  MS_LOG(INFO) << "Open device " << device_id_ << " success.";
+  MS_LOG(INFO) << "Open device " << device_id << " success.";
 
-  ret = aclrtCreateContext(&context_, device_id_);
+  ret = aclrtCreateContext(&context_, device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl create context failed.";
     return lite::RET_ERROR;
@@ -66,7 +66,7 @@ STATUS ModelInfer::Init() {
   model_process_.SetIsDevice(is_device);
   MS_LOG(INFO) << "Get run mode success is device input/output " << is_device;
 
-  MS_LOG(INFO) << "Init acl success, device id " << device_id_;
+  MS_LOG(INFO) << "Init acl success, device id " << device_id;
   init_flag_ = true;
   return lite::RET_OK;
 }
@@ -98,12 +98,13 @@ STATUS ModelInfer::Finalize() {
   }
   MS_LOG(INFO) << "End to destroy context.";
 
-  rt_ret = aclrtResetDevice(device_id_);
+  rt_ret = aclrtResetDevice(options_.device_id_);
   if (rt_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Reset device " << device_id_ << " failed.";
+    MS_LOG(ERROR) << "Reset device " << options_.device_id_ << " failed.";
   }
-  MS_LOG(INFO) << "End to reset device " << device_id_;
+  MS_LOG(INFO) << "End to reset device " << options_.device_id_;
   init_flag_ = false;
+  load_flag_ = false;
   return lite::RET_OK;
 }
 
@@ -159,4 +160,4 @@ STATUS ModelInfer::Inference(const std::vector<mindspore::MSTensor> &inputs,
   return model_process_.PredictFromHost(inputs, outputs);
 }
 }  // namespace acl
-}  // namespace mindspore
+}  // namespace mindspore::kernel

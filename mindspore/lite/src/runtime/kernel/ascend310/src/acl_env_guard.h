@@ -21,9 +21,9 @@
 #include <mutex>
 #include "acl/acl_base.h"
 
-namespace mindspore {
+namespace mindspore::kernel {
 namespace acl {
-class __attribute__((visibility("default"))) AclEnvGuard {
+class AclEnvGuard {
  public:
   explicit AclEnvGuard(std::string_view cfg_file);
   ~AclEnvGuard();
@@ -37,6 +37,6 @@ class __attribute__((visibility("default"))) AclEnvGuard {
   aclError errno_;
 };
 }  // namespace acl
-}  // namespace mindspore
+}  // namespace mindspore::kernel
 
 #endif  // LITE_ACL_ENV_GUARD_H

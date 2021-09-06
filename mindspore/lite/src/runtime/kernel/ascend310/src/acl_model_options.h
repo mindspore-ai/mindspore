@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
-#define MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
 
-#include <vector>
-#include "include/kernel_interface.h"
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_MODEL_OPTIONS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_MODEL_OPTIONS_H_
+
+#include <string>
 
 namespace mindspore::kernel {
 namespace acl {
-class CustomInterface : public mindspore::kernel::KernelInterface {
- public:
-  CustomInterface() {}
-  ~CustomInterface() = default;
+typedef struct AclModelOptions {
+  int32_t device_id_;
+  std::string dump_cfg_path_;
+} AclModelOptions;
 
-  Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-               const mindspore::schema::Primitive *primitive) override;
-};
 }  // namespace acl
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_MODEL_OPTIONS_H_

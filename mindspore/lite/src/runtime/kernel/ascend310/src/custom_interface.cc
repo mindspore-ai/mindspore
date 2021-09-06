@@ -20,7 +20,7 @@
 #include "include/registry/register_kernel_interface.h"
 #include "common/log_adapter.h"
 
-namespace mindspore {
+namespace mindspore::kernel {
 namespace acl {
 Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
                               const mindspore::schema::Primitive *primitive) {
@@ -44,15 +44,15 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
 }
 
 std::shared_ptr<mindspore::kernel::KernelInterface> CustomInferCreater() {
-  auto infer = new (std::nothrow) CustomInterface();
+  auto infer = std::make_shared<CustomInterface>();
   if (infer == nullptr) {
     MS_LOG(ERROR) << "New custom infer is nullptr";
     return nullptr;
   }
-  return std::shared_ptr<mindspore::kernel::KernelInterface>(infer);
+  return infer;
 }
 }  // namespace acl
-}  // namespace mindspore
+}  // namespace mindspore::kernel
 namespace mindspore {
 namespace kernel {
 REGISTER_CUSTOM_KERNEL_INTERFACE(ACL, ACL, acl::CustomInferCreater);

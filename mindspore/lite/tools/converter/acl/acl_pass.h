@@ -26,11 +26,11 @@
 #include "include/registry/parser_context.h"
 #include "cxx_api/model/acl/acl_model_options.h"
 
+namespace mindspore {
+namespace opt {
 using mindspore::converter::FmkType;
 using mindspore::lite::STATUS;
 
-namespace mindspore {
-namespace opt {
 class AclPass : public Pass {
  public:
   explicit AclPass(FmkType fmk_type) : Pass("Acl"), fmk_type_(fmk_type) {}
@@ -42,7 +42,7 @@ class AclPass : public Pass {
   STATUS PreProcGraph(const FuncGraphPtr &func_graph);
   STATUS PostProcGraph(const FuncGraphPtr &func_graph);
   STATUS DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
-  STATUS RunPrimitiveDeparser(const FuncGraphPtr &func_graph);
+  STATUS RunPrimitiveMapper(const FuncGraphPtr &func_graph);
   STATUS BuildGraph(const FuncGraphPtr &func_graph);
   STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);
   ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om);

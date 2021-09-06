@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
-#define MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
 
-#include <vector>
-#include "include/kernel_interface.h"
+#include "tools/converter/acl/mapper/mul_fusion_mapper.h"
+#include <memory>
+#include "tools/converter/acl/mapper/primitive_mapper_register.h"
 
-namespace mindspore::kernel {
-namespace acl {
-class CustomInterface : public mindspore::kernel::KernelInterface {
- public:
-  CustomInterface() {}
-  ~CustomInterface() = default;
+namespace mindspore {
+namespace lite {
+STATUS MulFusionMapper::Mapper(const CNodePtr &cnode) {
+  auto dst_prim = std::make_shared<ops::Mul>();
+  if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
+    MS_LOG(ERROR) << "MulFusion mapper failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 
-  Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-               const mindspore::schema::Primitive *primitive) override;
-};
-}  // namespace acl
-}  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
+REGISTER_PRIMITIVE_MAPPER(kNameMulFusion, MulFusionMapper)
+}  // namespace lite
+}  // namespace mindspore

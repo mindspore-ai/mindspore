@@ -13,22 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
-#define MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
 
-#include <vector>
-#include "include/kernel_interface.h"
+#ifndef ACL_MAPPER_PRIMITIVE_CONCAT_MAPPER_H
+#define ACL_MAPPER_PRIMITIVE_CONCAT_MAPPER_H
 
-namespace mindspore::kernel {
-namespace acl {
-class CustomInterface : public mindspore::kernel::KernelInterface {
+#include "tools/converter/acl/mapper/primitive_mapper.h"
+#include "ops/concat.h"
+
+using mindspore::ops::kNameConcat;
+
+namespace mindspore {
+namespace lite {
+class ConcatMapper : public PrimitiveMapper {
  public:
-  CustomInterface() {}
-  ~CustomInterface() = default;
+  ConcatMapper() : PrimitiveMapper(kNameConcat) {}
 
-  Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-               const mindspore::schema::Primitive *primitive) override;
+  ~ConcatMapper() override = default;
+
+  STATUS Mapper(const CNodePtr &cnode) override;
+
+ private:
+  STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode);
 };
-}  // namespace acl
-}  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
+}  // namespace lite
+}  // namespace mindspore
+#endif  // ACL_MAPPER_PRIMITIVE_CONCAT_MAPPER_H
