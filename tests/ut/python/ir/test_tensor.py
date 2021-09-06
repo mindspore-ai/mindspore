@@ -94,6 +94,14 @@ def test_tensor_type_complex64_user_define():
 
 
 def test_tensor_type_complex128():
+    #complex python object
+    py_input = 1 + 2.22222222j
+    t_complex128 = ms.Tensor(py_input)
+    assert t_complex128.shape == ()
+    assert t_complex128.dtype == ms.complex128
+    assert np.all(t_complex128.asnumpy() == py_input)
+
+    #complex in numpy array
     np_input = np.array(
         [[1+0.1j, 2j, 3+0.3j], [4-0.4j, 5, 6]], dtype=np.complex128)
     t_complex128 = ms.Tensor(np_input)
@@ -101,10 +109,19 @@ def test_tensor_type_complex128():
     assert t_complex128.shape == (2, 3)
     assert t_complex128.dtype == ms.complex128
     assert np.all(t_complex128.asnumpy() == np_input)
-    np_input = (1, 2.22222222j, 3)
-    t_complex128 = ms.Tensor(np_input)
-    assert np.all(t_complex128.asnumpy() == np_input)
 
+    #complex in tuple
+    py_input = (1, 2.22222222j, 3)
+    t_complex128 = ms.Tensor(py_input)
+    assert np.all(t_complex128.asnumpy() == py_input)
+
+    #complex in list
+    py_input = [[1+0.1j, 2j, 3+0.3j], [4-0.4j, 5, 6]]
+    t_complex128 = ms.Tensor(py_input)
+    assert isinstance(t_complex128, ms.Tensor)
+    assert t_complex128.shape == (2, 3)
+    assert t_complex128.dtype == ms.complex128
+    assert np.all(t_complex128.asnumpy() == py_input)
 
 def test_tensor_type_complex128_user_define():
     np_input = np.zeros([1, 2, 3])
