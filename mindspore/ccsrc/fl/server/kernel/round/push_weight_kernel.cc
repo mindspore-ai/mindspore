@@ -124,7 +124,7 @@ std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(const schema::R
   std::map<std::string, Address> upload_feature_map;
   auto fbs_feature_map = push_weight_req->feature_map();
   MS_ERROR_IF_NULL_W_RET_VAL(fbs_feature_map, upload_feature_map);
-  for (size_t i = 0; i < fbs_feature_map->size(); i++) {
+  for (uint32_t i = 0; i < fbs_feature_map->size(); i++) {
     std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
     float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());
     size_t weight_size = fbs_feature_map->Get(i)->data()->size() * sizeof(float);
@@ -141,7 +141,7 @@ void PushWeightKernel::BuildPushWeightRsp(const std::shared_ptr<FBBuilder> &fbb,
   }
   auto fbs_reason = fbb->CreateString(reason);
   schema::ResponsePushWeightBuilder rsp_push_weight_builder(*(fbb.get()));
-  rsp_push_weight_builder.add_retcode(retcode);
+  rsp_push_weight_builder.add_retcode(static_cast<int>(retcode));
   rsp_push_weight_builder.add_reason(fbs_reason);
   rsp_push_weight_builder.add_iteration(SizeToInt(iteration));
   auto rsp_push_weight = rsp_push_weight_builder.Finish();

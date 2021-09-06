@@ -297,8 +297,7 @@ void PSContext::GenerateResetterRound() {
     return;
   }
 
-  binary_server_context = ((unsigned int)is_parameter_server_mode << 0) |
-                          ((unsigned int)is_federated_learning_mode << 1) |
+  binary_server_context = ((unsigned int)is_parameter_server_mode) | ((unsigned int)is_federated_learning_mode << 1) |
                           ((unsigned int)is_mixed_training_mode << 2) | ((unsigned int)use_pairwise_encrypt << 3);
   if (kServerContextToResetRoundMap.count(binary_server_context) == 0) {
     resetter_round_ = ResetterRound::kNoNeedToReset;
@@ -317,7 +316,7 @@ uint16_t PSContext::fl_server_port() const { return fl_server_port_; }
 
 void PSContext::set_fl_client_enable(bool enabled) { fl_client_enable_ = enabled; }
 
-bool PSContext::fl_client_enable() { return fl_client_enable_; }
+bool PSContext::fl_client_enable() const { return fl_client_enable_; }
 
 void PSContext::set_start_fl_job_threshold(uint64_t start_fl_job_threshold) {
   start_fl_job_threshold_ = start_fl_job_threshold;

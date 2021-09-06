@@ -32,7 +32,7 @@
 #include "utils/ms_context.h"
 #include "debug/trace.h"
 #include "debug/anf_ir_dump.h"
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_context.h"
 #endif
 
@@ -609,7 +609,7 @@ void SetMindRTEnable() {
   return;
 #endif
 
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode()) {
     return;
   }

@@ -195,7 +195,7 @@ ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder>
   return ResultCode::kSuccess;
 }
 
-void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta) {
+void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &) {
   size_t last_iteration = LocalMetaStore::GetInstance().curr_iter_num() - 1;
   auto feature_maps = ModelStore::GetInstance().GetModelByIterNum(last_iteration);
   if (feature_maps.empty()) {

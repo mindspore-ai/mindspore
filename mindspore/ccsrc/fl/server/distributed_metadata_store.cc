@@ -204,7 +204,7 @@ void DistributedMetadataStore::HandleUpdateMetadataRequest(const std::shared_ptr
 void DistributedMetadataStore::HandleGetMetadataRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_ERROR_IF_NULL_WO_RET_VAL(message);
   GetMetadataRequest get_metadata_req;
-  (void)get_metadata_req.ParseFromArray(message->data(), message->len());
+  (void)get_metadata_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = get_metadata_req.name();
   MS_LOG(INFO) << "Getting metadata for " << name;
 

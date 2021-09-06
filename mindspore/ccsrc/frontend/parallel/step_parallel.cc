@@ -3182,7 +3182,7 @@ bool IsInsertVirtualOutput(const FuncGraphPtr &root) {
 }
 
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return false;
   }

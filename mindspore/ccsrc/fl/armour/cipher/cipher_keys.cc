@@ -21,7 +21,7 @@ namespace mindspore {
 namespace armour {
 bool CipherKeys::GetKeys(const int cur_iterator, const std::string &next_req_time,
                          const schema::GetExchangeKeys *get_exchange_keys_req,
-                         std::shared_ptr<fl::server::FBBuilder> get_exchange_keys_resp_builder) {
+                         const std::shared_ptr<fl::server::FBBuilder> &get_exchange_keys_resp_builder) {
   MS_LOG(INFO) << "CipherMgr::GetKeys START";
   if (get_exchange_keys_req == nullptr || get_exchange_keys_resp_builder == nullptr) {
     MS_LOG(ERROR) << "Request is nullptr or Response builder is nullptr.";
@@ -61,7 +61,7 @@ bool CipherKeys::GetKeys(const int cur_iterator, const std::string &next_req_tim
 
 bool CipherKeys::ExchangeKeys(const int cur_iterator, const std::string &next_req_time,
                               const schema::RequestExchangeKeys *exchange_keys_req,
-                              std::shared_ptr<fl::server::FBBuilder> exchange_keys_resp_builder) {
+                              const std::shared_ptr<fl::server::FBBuilder> &exchange_keys_resp_builder) {
   MS_LOG(INFO) << "CipherMgr::ExchangeKeys START";
   // step 0: judge if the input param is legal.
   if (exchange_keys_req == nullptr || exchange_keys_resp_builder == nullptr) {
@@ -147,7 +147,7 @@ bool CipherKeys::ExchangeKeys(const int cur_iterator, const std::string &next_re
   }
 }
 
-void CipherKeys::BuildExchangeKeysRsp(std::shared_ptr<fl::server::FBBuilder> exchange_keys_resp_builder,
+void CipherKeys::BuildExchangeKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &exchange_keys_resp_builder,
                                       const schema::ResponseCode retcode, const std::string &reason,
                                       const std::string &next_req_time, const int iteration) {
   auto rsp_reason = exchange_keys_resp_builder->CreateString(reason);
@@ -162,7 +162,7 @@ void CipherKeys::BuildExchangeKeysRsp(std::shared_ptr<fl::server::FBBuilder> exc
   return;
 }
 
-bool CipherKeys::BuildGetKeys(std::shared_ptr<fl::server::FBBuilder> fbb, const schema::ResponseCode retcode,
+bool CipherKeys::BuildGetKeys(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
                               const int iteration, const std::string &next_req_time, bool is_good) {
   bool flag = true;
   if (is_good) {

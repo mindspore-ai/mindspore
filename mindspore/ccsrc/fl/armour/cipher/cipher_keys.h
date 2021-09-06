@@ -45,18 +45,18 @@ class CipherKeys {
   // handle the client's request of get keys.
   bool GetKeys(const int cur_iterator, const std::string &next_req_time,
                const schema::GetExchangeKeys *get_exchange_keys_req,
-               std::shared_ptr<fl::server::FBBuilder> get_exchange_keys_resp_builder);
+               const std::shared_ptr<fl::server::FBBuilder> &get_exchange_keys_resp_builder);
 
   // handle the client's request of exchange keys.
   bool ExchangeKeys(const int cur_iterator, const std::string &next_req_time,
                     const schema::RequestExchangeKeys *exchange_keys_req,
-                    std::shared_ptr<fl::server::FBBuilder> exchange_keys_resp_builder);
+                    const std::shared_ptr<fl::server::FBBuilder> &exchange_keys_resp_builder);
 
   // build response code of get keys.
-  bool BuildGetKeys(std::shared_ptr<fl::server::FBBuilder> fbb, const schema::ResponseCode retcode, const int iteration,
-                    const std::string &next_req_time, bool is_good);
+  bool BuildGetKeys(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
+                    const int iteration, const std::string &next_req_time, bool is_good);
   // build response code of exchange keys.
-  void BuildExchangeKeysRsp(std::shared_ptr<fl::server::FBBuilder> exchange_keys_resp_builder,
+  void BuildExchangeKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &exchange_keys_resp_builder,
                             const schema::ResponseCode retcode, const std::string &reason,
                             const std::string &next_req_time, const int iteration);
   // clear the shared memory.

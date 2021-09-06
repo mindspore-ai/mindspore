@@ -82,7 +82,7 @@ bool IterationMetrics::Summarize() {
   js_[kMetricsLoss] = loss_;
   js_[kIterExecutionTime] = iteration_time_cost_;
   metrics_file_ << js_ << "\n";
-  metrics_file_.flush();
+  (void)metrics_file_.flush();
   return true;
 }
 

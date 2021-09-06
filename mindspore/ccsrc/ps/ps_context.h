@@ -118,7 +118,7 @@ class PSContext {
 
   // Set true if this process is a federated learning worker in cross-silo scenario.
   void set_fl_client_enable(bool enabled);
-  bool fl_client_enable();
+  bool fl_client_enable() const;
 
   void set_start_fl_job_threshold(uint64_t start_fl_job_threshold);
   uint64_t start_fl_job_threshold() const;

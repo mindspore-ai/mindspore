@@ -812,7 +812,7 @@ bool StartServerAction(const ResourcePtr &res) {
   const std::string &server_mode_ = ps::PSContext::instance()->server_mode();
   uint32_t worker_num = ps::PSContext::instance()->initial_worker_num();
   uint32_t server_num = ps::PSContext::instance()->initial_server_num();
-  uint64_t fl_server_port = ps::PSContext::instance()->fl_server_port();
+  uint16_t fl_server_port = ps::PSContext::instance()->fl_server_port();
 
   // Update model threshold is a certain ratio of start_fl_job threshold.
   // update_model_threshold = start_fl_job_threshold * update_model_ratio.

@@ -577,7 +577,7 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
         // But one time memory application scenarios need to be skipped, because the memory is not allocated next step:
         // 1. Non cnode 2. Communication kernel.
         bool ps_mode = false;
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
         ps_mode = ps::PSContext::instance()->is_ps_mode();
 #endif
         if (node->isa<CNode>() && !AnfAlgo::IsCommunicationOp(node) && !ps_mode) {
