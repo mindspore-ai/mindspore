@@ -22,7 +22,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_group_size
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from src.lr_generator import get_lr
 from src.shufflenetv1 import ShuffleNetV1
@@ -30,8 +30,7 @@ from src.dataset import create_dataset
 from src.crossentropysmooth import CrossEntropySmooth
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
-from src.model_utils.device_adapter import get_device_id, get_rank_id
-
+from src.model_utils.device_adapter import get_device_id
 
 set_seed(1)
 
@@ -49,7 +48,7 @@ def train():
         if os.getenv('DEVICE_ID', "not_set").isdigit():
             context.set_context(device_id=get_device_id())
         init()
-        rank = get_rank_id()
+        rank = get_rank()
         group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=group_size, gradients_mean=True)
@@ -59,7 +58,7 @@ def train():
         context.set_context(device_id=config.device_id)
 
     # define network
-    net = ShuffleNetV1(model_size=config.model_size)
+    net = ShuffleNetV1(model_size=config.model_size, n_class=config.num_classes)
 
     # define loss
     loss = CrossEntropySmooth(sparse=True, reduction="mean", smooth_factor=config.label_smooth_factor,
