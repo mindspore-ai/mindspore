@@ -33,19 +33,19 @@ void Compute(const ComputeParams<S, T> *params, const size_t start, const size_t
 
   for (size_t i = start; i < end; ++i) {
     int offset = 0;
-    for (int j = 0; j < params->indices_unit_rank_; ++j) {
-      auto index = indices[i * params->indices_unit_rank_ + j];
+    for (size_t j = 0; j < IntToSize(params->indices_unit_rank_); ++j) {
+      int index = static_cast<int>(indices[i * IntToSize(params->indices_unit_rank_) + j]);
       if (index < 0) {
         MS_LOG(EXCEPTION) << "Indices contains element " << index << " less than 0.";
       }
       offset += index * out_strides->at(j) * params->unit_size_;
     }
-    auto task = [&](size_t update_start, size_t update_end) {
+    auto task = [&target, &updates, &params, offset, i](size_t update_start, size_t update_end) {
       for (size_t idx = update_start; idx < update_end; idx++) {
-        target[offset + idx] += updates[params->unit_size_ * i + idx];
+        target[IntToSize(offset) + idx] += updates[IntToSize(params->unit_size_) * i + idx];
       }
     };
-    CPUKernelUtils::ParallelFor(task, params->unit_size_);
+    CPUKernelUtils::ParallelFor(task, IntToSize(params->unit_size_));
   }
 }
 }  // namespace
@@ -60,7 +60,7 @@ void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
   if (indices_unit_rank > shape.size()) {
     MS_LOG(EXCEPTION) << "Value of last dimension of indices is greater than shape rank";
   }
-  if (indices_shape.size() < 2) {
+  if (indices_shape.size() < MIN_INDICE_RANK) {
     MS_LOG(EXCEPTION) << "Indices has dimension less than 2";
   }
   if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
@@ -76,15 +76,17 @@ void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = indices_shape.size() - 1; i < updates_shape.size(); ++i) {
     unit_size_ *= SizeToInt(updates_shape[i]);
   }
+  constexpr int TWO = 2;
+  constexpr int THREE = 3;
   num_units_ = 1;
-  num_units_ *= updates_shape[indices_shape.size() - 2];
-  for (int i = SizeToInt(indices_shape.size()) - 3; i >= 0; i--) {
-    num_units_ *= updates_shape[i];
+  num_units_ *= updates_shape[indices_shape.size() - TWO];
+  for (int i = SizeToInt(indices_shape.size()) - THREE; i >= 0; i--) {
+    num_units_ *= updates_shape[IntToSize(i)];
   }
   int out_stride = 1;
   out_strides_.push_back(out_stride);
-  for (int i = indices_unit_rank_ - 2; i >= 0; i--) {
-    out_stride *= shape[i + 1];
+  for (int i = indices_unit_rank_ - TWO; i >= 0; i--) {
+    out_stride *= SizeToInt(shape[i + 1]);
     out_strides_.push_back(out_stride);
   }
   reverse(out_strides_.begin(), out_strides_.end());
@@ -95,9 +97,10 @@ bool ScatterNdCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   auto target = reinterpret_cast<T *>(outputs[0]->addr);
-  auto target_init = memset_s(target, outputs[0]->size, static_cast<T>(0.0), outputs[0]->size);
+  auto target_init = memset_s(target, outputs[0]->size, 0, outputs[0]->size);
   if (target_init != EOK) {
     MS_LOG(EXCEPTION) << "ScatterNdCPUKernel Launch task memset failed.";
+    return false;
   }
   ComputeParams<S, T> params;
   params.target_ = target;
@@ -108,7 +111,7 @@ bool ScatterNdCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inp
   params.indices_unit_rank_ = indices_unit_rank_;
   params.out_strides_ = &out_strides_;
 
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &params](size_t start, size_t end) {
     for (size_t idx = start; idx < end; idx++) {
       Compute<S, T>(&params, idx, idx + 1);
     }
@@ -120,11 +123,11 @@ bool ScatterNdCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inp
 template <typename S, typename T>
 void ScatterNdCPUKernel<S, T>::Check(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
+  if (input_num != INPUT_NUM) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but ScatterNd needs 2 input.";
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
+  if (output_num != OUTPUT_NUM) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ScatterNd needs 1 output.";
   }
 }

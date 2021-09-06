@@ -21,6 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t COORDINATE = 4;
 template <typename T>
 class CheckValidCPUKernel : public CPUKernel {
  public:

@@ -16,13 +16,11 @@
 
 #include "backend/kernel_compiler/cpu/random_choice_with_mask_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#define BLOCKSIZE 256
 #define MAX_DIMENSION 5
 
 namespace mindspore {
 namespace kernel {
-
-void ParseOutputCoordinate(std::vector<int64_t> dims, int32_t output_length, int32_t input_dim_size,
+void ParseOutputCoordinate(std::vector<int32_t> dims, int32_t output_length, int32_t input_dim_size,
                            int32_t input_total_count, const int *tmp_output, int *output) {
   int it = 0;
   int column = input_total_count / dims[0];
@@ -36,7 +34,7 @@ void ParseOutputCoordinate(std::vector<int64_t> dims, int32_t output_length, int
       }
       output[it++] = tmp_output_number / column;
       tmp_output_number = tmp_output_number % column;
-      tmp_column = tmp_column / dims[j + 1];
+      tmp_column = tmp_column / dims[IntToSize(j + 1)];
     }
   }
 }
@@ -60,15 +58,15 @@ void GetOutputLength(bool *padding_flag, int32_t *output_length, int32_t *output
   }
 }
 
-void GetInputTotalCount(const std::vector<int64_t> &dims_, int32_t *input_total_count, const int32_t &input_dim_size) {
-  for (int32_t i = 0; i < input_dim_size; i++) {
+void GetInputTotalCount(const std::vector<int32_t> &dims_, int32_t *input_total_count, const int32_t &input_dim_size) {
+  for (size_t i = 0; i < IntToSize(input_dim_size); i++) {
     *input_total_count *= dims_[i];
   }
 }
 
-void UpdateOutput(const std::vector<int64_t> &dims_, const int32_t &non_zero_num, const int32_t &count_,
+void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num, const int32_t &count_,
                   const int32_t &output_length, const int *mask_dim, int32_t *output_coordinate, bool *mask) {
-  for (int32_t i = non_zero_num * dims_.size(); i < static_cast<int32_t>(count_ * dims_.size()); i++) {
+  for (int32_t i = non_zero_num * SizeToInt(dims_.size()); i < count_ * SizeToInt(dims_.size()); i++) {
     output_coordinate[i] = 0;
   }
   for (int32_t i = 0; i < output_length; i++) {
@@ -82,12 +80,12 @@ void UpdateOutput(const std::vector<int64_t> &dims_, const int32_t &non_zero_num
 void RandomChoiceWithMaskCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1) {
+  if (input_num != INPUT_NUM) {
     MS_LOG(ERROR) << "Input num is " << input_num << ", but RandomChoiceWithMask needs 1 input.";
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 2) {
+  if (output_num != OUTPUT_NUM) {
     MS_LOG(ERROR) << "Output num is " << output_num << ", but RandomChoiceWithMask needs 2 outputs.";
   }
 
@@ -118,15 +116,15 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
   auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
   auto *output_coordinate = reinterpret_cast<int32_t *>(outputs[0]->addr);
   auto *mask = reinterpret_cast<bool *>(outputs[1]->addr);
-  int32_t input_dim_size = dims_.size();
+  int32_t input_dim_size = SizeToInt(dims_.size());
   int32_t non_zero_num = 0;
   int32_t input_total_count = 1;
 
-  if (input_dim_size < 1 || input_dim_size > 5) {
+  if (input_dim_size < 1 || input_dim_size > MAX_INPUT_DIMS) {
     MS_LOG(EXCEPTION) << "Input dim size is " << input_dim_size << ", which is not supported.";
   }
 
-  int seedc = seed2_ != 0 ? seed2_ : (seed_ != 0 ? seed_ : generator_());
+  int seedc = seed2_ != 0 ? seed2_ : (seed_ != 0 ? seed_ : SizeToInt(generator_()));
   GetInputTotalCount(dims_, &input_total_count, input_dim_size);
   int *input_dim = new (std::nothrow) int[input_total_count];
   if (input_dim == nullptr) {
@@ -140,9 +138,6 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
     }
   }
 
-  bool padding_flag = false;
-  int32_t output_length = 0;
-  int32_t output_non_zero_length = 0;
   GetOutputLength(&padding_flag, &output_length, &output_non_zero_length, count_, non_zero_num);
   int *tmp_output = new (std::nothrow) int[output_length];
   if (tmp_output == nullptr) {
@@ -158,8 +153,8 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
     delete[] tmp_output;
     return false;
   }
-  (void)memset_s(mask_dim, output_length, 0X00, output_length);
-  (void)memset_s(tmp_output, output_length, 0X00, output_length);
+  (void)memset_s(mask_dim, IntToSize(output_length), 0X00, IntToSize(output_length));
+  (void)memset_s(tmp_output, IntToSize(output_length), 0X00, IntToSize(output_length));
 
   std::vector<int32_t> all_nums(non_zero_num);
   std::iota(begin(all_nums), end(all_nums), 0);
@@ -197,10 +192,10 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
     delete[] mask_dim;
     return false;
   }
-  (void)memset_s(output, copy_output_length, 0X00, copy_output_length);
+  (void)memset_s(output, IntToSize(copy_output_length), 0X00, IntToSize(copy_output_length));
   ParseOutputCoordinate(dims_, output_length, input_dim_size, input_total_count, tmp_output, output);
 
-  int32_t actual_output_length = count_ * dims_.size();
+  int32_t actual_output_length = SizeToInt(count_ * dims_.size());
   copy_output_length = std::min(actual_output_length, copy_output_length);
   int32_t copy_output_bytes = 0;
   if (INT_MAX / static_cast<int>(sizeof(int32_t)) < copy_output_length) {
@@ -212,8 +207,12 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
     return false;
   }
 
-  copy_output_bytes = copy_output_length * sizeof(int32_t);
-  memcpy_s(output_coordinate, copy_output_bytes, output, copy_output_bytes);
+  copy_output_bytes = copy_output_length * SizeToInt(sizeof(int32_t));
+  auto ret = memcpy_s(output_coordinate, outputs[0]->size, output, IntToSize(copy_output_bytes));
+  if (ret != EOK) {
+    MS_LOG(INFO) << "memcpy_s failed, ret = " << ret;
+    return false;
+  }
   UpdateOutput(dims_, non_zero_num, count_, output_length, mask_dim, output_coordinate, mask);
   delete[] input_dim;
   delete[] mask_dim;
@@ -222,6 +221,5 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
 
   return true;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

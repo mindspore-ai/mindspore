@@ -23,6 +23,9 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUM = 2;
+constexpr size_t OUTPUT_NUM = 1;
+constexpr size_t MIN_INDICE_RANK = 2;
 template <typename S, typename T>
 struct ComputeParams {
   T *target_{nullptr};

@@ -37,7 +37,7 @@ void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (x_shape.size() == NC) {
-    x_shape.insert(x_shape.end(), 2, 1);
+    (void)x_shape.insert(x_shape.end(), 2, 1);
   } else if (x_shape.size() != NCHW) {
     MS_LOG(EXCEPTION) << "Fused batchnorm support nc or nchw input!";
   }

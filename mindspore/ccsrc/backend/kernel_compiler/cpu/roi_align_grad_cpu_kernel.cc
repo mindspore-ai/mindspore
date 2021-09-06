@@ -19,41 +19,38 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T, typename U>
-void AtomicAddTask(T *address, T val) {
+void AtomicAddTask(T *const address, const T val) {
   auto *address_as_ull = reinterpret_cast<U *>(address);
   U old = *address_as_ull;
   U assumed;
   T desired;
-  T *assumed_t = NULL;
-  U *desired_u = NULL;
   do {
     assumed = old;
-    assumed_t = reinterpret_cast<T *>(&assumed);
-    desired_u = reinterpret_cast<U *>(&desired);
+    T *assumed_t = reinterpret_cast<T *>(&assumed);
+    U *desired_u = reinterpret_cast<U *>(&desired);
     desired = *assumed_t + static_cast<T>(val);
     old = __sync_val_compare_and_swap(address_as_ull, assumed, *desired_u);
   } while (assumed != old);
 }
 
 template <typename T>
-void AtomicAdd(T *address, T val) {
+void AtomicAdd(T *const address, const T val) {
   switch (sizeof(T)) {
-    case 1: {
-      AtomicAddTask<T, uint8_t>(address, val);
+    case sizeof(int8_t): {
+      AtomicAddTask<T, int8_t>(address, val);
       break;
     }
-    case 2: {
-      AtomicAddTask<T, uint16_t>(address, val);
+    case sizeof(int16_t): {
+      AtomicAddTask<T, int16_t>(address, val);
       break;
     }
-    case 4: {
-      AtomicAddTask<T, uint32_t>(address, val);
+    case sizeof(int32_t): {
+      AtomicAddTask<T, int32_t>(address, val);
       break;
     }
-    case 8: {
-      AtomicAddTask<T, uint64_t>(address, val);
+    case sizeof(int64_t): {
+      AtomicAddTask<T, int64_t>(address, val);
       break;
     }
   }
@@ -63,20 +60,20 @@ template <typename T>
 void ROIAlignGradCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
   //  Get the number of the input args
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
+  if (input_num != INPUT_NUM) {
     MS_LOG(ERROR) << "Input number is: " << input_num << ", but ROIAlignGrad needs 2 inputs.";
   }
 
   //  Get the number of the output args
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
+  if (output_num != OUTPUT_NUM) {
     MS_LOG(ERROR) << "Output number is: " << output_num << ", but ROIAlignGrad needs 1 output.";
   }
 
   //  Get the input shapes
   auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto dy_shape_size = dy_shape.size();
-  if (dy_shape_size != 4) {
+  if (dy_shape_size != DY_DIMS) {
     MS_LOG(ERROR) << "dy shape size is " << dy_shape_size << ", but should be 4.";
   }
 }
@@ -87,8 +84,8 @@ void ROIAlignGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
 
   auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  roi_rows_ = rois_shape[0];
-  roi_cols_ = rois_shape[1];
+  roi_rows_ = SizeToInt(rois_shape[0]);
+  roi_cols_ = SizeToInt(rois_shape[1]);
 
   std::vector<int64_t> xdiff_shape_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "xdiff_shape");
   (void)std::transform(xdiff_shape_me.begin(), xdiff_shape_me.end(), std::back_inserter(xdiff_shape_),
@@ -99,10 +96,10 @@ void ROIAlignGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   sample_num_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "sample_num"));
   roi_end_mode_ = 1;
 
-  batch_size_ = xdiff_shape_[0];
-  channels_ = xdiff_shape_[1];
-  height_ = xdiff_shape_[2];
-  width_ = xdiff_shape_[3];
+  batch_size_ = xdiff_shape_[BATCH];
+  channels_ = xdiff_shape_[CHANNEL];
+  height_ = xdiff_shape_[HEIGHT];
+  width_ = xdiff_shape_[WIDTH];
 }
 
 template <typename T>
@@ -113,21 +110,22 @@ bool ROIAlignGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
   const T *rois = reinterpret_cast<T *>(inputs[1]->addr);
   T *dx = reinterpret_cast<T *>(outputs[0]->addr);
 
-  size_t size_init = batch_size_ * channels_ * height_ * width_;
-  auto task1 = [&](size_t start, size_t end) {
+  int size_init = batch_size_ * channels_ * height_ * width_;
+  auto task1 = [this, &dx](size_t start, size_t end) {
+    const T ZERO = T(0.0);
     for (size_t thread_idx = start; thread_idx < end; thread_idx++) {
-      dx[thread_idx] = static_cast<T>(0.);
+      dx[thread_idx] = ZERO;
     }
   };
-  CPUKernelUtils::ParallelFor(task1, size_init);
+  CPUKernelUtils::ParallelFor(task1, IntToSize(size_init));
 
-  size_t elem_num = roi_rows_ * channels_ * pooled_height_ * pooled_width_;
-  auto task2 = [&](size_t start, size_t end) {
+  int elem_num = roi_rows_ * channels_ * pooled_height_ * pooled_width_;
+  auto task2 = [this, &dy, &rois, &dx](size_t start, size_t end) {
+    const T OFFSET = T(0.001);
     for (size_t thread_idx = start; thread_idx < end; thread_idx++) {
-      int n = thread_idx / pooled_width_ / pooled_height_ / channels_;
+      int n = SizeToInt(thread_idx) / pooled_width_ / pooled_height_ / channels_;
       const T *roi_box = rois + n * roi_cols_;
-      if (roi_box[1] < static_cast<T>(0.001) && roi_box[3] < static_cast<T>(0.001) &&
-          roi_box[1] > static_cast<T>(-0.001) && roi_box[3] > static_cast<T>(-0.001)) {
+      if (roi_box[1] < OFFSET && roi_box[3] < OFFSET && roi_box[1] > -OFFSET && roi_box[3] > -OFFSET) {
         continue;
       }
       int offset = -1;
@@ -139,7 +137,7 @@ bool ROIAlignGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
               &bin_size_w, &roi_start_h, &roi_start_w);
 
       // (n, c, ph, pw) is the base param of pooled map
-      const T count_points_in_grid_cell = static_cast<T>(roi_bin_grid_h * roi_bin_grid_w);
+      const T count_points_in_grid_cell = static_cast<T>(roi_bin_grid_h) * static_cast<T>(roi_bin_grid_w);
 
       int top_offset = (n * channels_ + c) * pooled_height_ * pooled_width_;
       const T *offset_top_diff = dy + top_offset;
@@ -178,7 +176,7 @@ bool ROIAlignGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task2, elem_num);
+  CPUKernelUtils::ParallelFor(task2, IntToSize(elem_num));
   return true;
 }
 
@@ -186,15 +184,17 @@ template <typename T>
 void ROIAlignGradCPUKernel<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low,
                                                     int *x_high, int *y_high, T *w1, T *w2, T *w3, T *w4) {
   constexpr float eps = 0.00007;
+  const T ZERO = T(0.0);
+  const T ONE = T(1.0);
   if (y < static_cast<T>(-1.0) || y > static_cast<T>(height) || x < static_cast<T>(-1.0) || x > static_cast<T>(width)) {
-    *w1 = *w2 = *w3 = *w4 = static_cast<T>(0);
+    *w1 = *w2 = *w3 = *w4 = ZERO;
     *x_low = *x_high = *y_low = *y_high = -1;
     return;
   }
 
   // low bounder is at least zero
-  y = y <= static_cast<T>(.0) ? static_cast<T>(.0) : y;
-  x = x <= static_cast<T>(.0) ? static_cast<T>(.0) : x;
+  y = y <= ZERO ? ZERO : y;
+  x = x <= ZERO ? ZERO : x;
 
   // top left point
   *y_low = (y <= static_cast<T>(eps) ? 0 : static_cast<int>(floor(y)));
@@ -218,7 +218,7 @@ void ROIAlignGradCPUKernel<T>::bilinear_interpolate(const int height, const int 
   // distance to nearest points
   T lx, ly, hx, hy;
   ly = y - static_cast<T>(*y_low), lx = x - static_cast<T>(*x_low);
-  hy = static_cast<T>(1.) - ly, hx = static_cast<T>(1.) - lx;
+  hy = ONE - ly, hx = ONE - lx;
 
   // weight is evaluated by the distance to point away.
   //   the closer to point home, the more weight, the farther to point away.
@@ -232,6 +232,11 @@ void ROIAlignGradCPUKernel<T>::bin_box(int thread_idx, const T *roi_boxes, int r
                                        const int width, const int pooled_height, const int pooled_width, int *offset,
                                        int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
                                        T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
+  constexpr float eps = 0.00007;
+  constexpr int START_W = 0;
+  constexpr int START_H = 1;
+  constexpr int END_W = 2;
+  constexpr int END_H = 3;
   // (n, c, ph, pw) is the base param of pooled map
   *pw = thread_idx % pooled_width;
   *ph = (thread_idx / pooled_width) % pooled_height;
@@ -243,16 +248,16 @@ void ROIAlignGradCPUKernel<T>::bin_box(int thread_idx, const T *roi_boxes, int r
   //   2. indicator + 4 points (1 + 4)
   const T *roi_box = roi_boxes + (*n) * roi_cols;
   int roi_batch_ind = 0;
-  if (roi_cols == 5) {
-    roi_batch_ind = static_cast<int>(rint(static_cast<float>(roi_box[0]) + static_cast<float>(0.00007)));
+  if (roi_cols == ROIS_COLS) {
+    roi_batch_ind = FloatToInt(rint(static_cast<float>(roi_box[0]) + eps));
     roi_box++;
   }
 
   // Scale and shift ROI
-  *roi_start_w = roi_box[0] * spatial_scale;
-  *roi_start_h = roi_box[1] * spatial_scale;
-  T roi_end_w = (roi_box[2] + static_cast<T>(roi_end_mode)) * spatial_scale;
-  T roi_end_h = (roi_box[3] + static_cast<T>(roi_end_mode)) * spatial_scale;
+  *roi_start_w = roi_box[START_W] * spatial_scale;
+  *roi_start_h = roi_box[START_H] * spatial_scale;
+  T roi_end_w = (roi_box[END_W] + static_cast<T>(roi_end_mode)) * spatial_scale;
+  T roi_end_h = (roi_box[END_H] + static_cast<T>(roi_end_mode)) * spatial_scale;
 
   // New ROI height/width
   T roi_width = roi_end_w - (*roi_start_w);
@@ -275,6 +280,5 @@ void ROIAlignGradCPUKernel<T>::bin_box(int thread_idx, const T *roi_boxes, int r
   *roi_bin_grid_w = (sample_num > 0) ? sample_num : static_cast<int>(floor(roi_width / static_cast<T>(pooled_width)));
   return;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

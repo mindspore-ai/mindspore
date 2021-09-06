@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUMS = 2;
 template <typename T>
 class BoundingBoxEncodeCPUKernel : public CPUKernel {
  public:

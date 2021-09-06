@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void MaskedSelectGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);

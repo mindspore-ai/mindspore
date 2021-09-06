@@ -21,6 +21,11 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t ROIS_COLS = 5;
+constexpr size_t X_DIMS = 4;
+constexpr int CHANNEL = 1;
+constexpr int HEIGHT = 2;
+constexpr int WIDTH = 3;
 template <typename T>
 class ROIAlignCPUKernel : public CPUKernel {
  public:
@@ -43,17 +48,17 @@ class ROIAlignCPUKernel : public CPUKernel {
                const int pooled_width, int *offset, int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h,
                int *roi_bin_grid_w, T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w);
 
-  int pooled_height_;
-  int pooled_width_;
-  T spatial_scale_;
-  int sample_num_;
-  int roi_end_mode_;
+  int pooled_height_{0};
+  int pooled_width_{0};
+  T spatial_scale_{0.0};
+  int sample_num_{0};
+  int roi_end_mode_{0};
 
-  int roi_rows_;
-  int roi_cols_;
-  int channels_;
-  int height_;
-  int width_;
+  int roi_rows_{0};
+  int roi_cols_{0};
+  int channels_{0};
+  int height_{0};
+  int width_{0};
 };
 
 MS_REG_CPU_KERNEL_T(

@@ -18,41 +18,40 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void CropAndResizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 4) {
+  if (input_num != INPUT_NUM) {
     MS_LOG(ERROR) << "Input num is " << input_num << ", but CropAndResize needs 4 inputs.";
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
+  if (output_num != OUTPUT_NUM) {
     MS_LOG(ERROR) << "Output num is " << output_num << ", but CropAndResize needs 1 output.";
   }
 
   //  input image
-  auto input_image_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_image_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, IMAGE);
   size_t input_image_shape_len = input_image_shape.size();
-  if (input_image_shape_len != 4) {
-    MS_LOG(ERROR) << "Image tensor is " << input_image_shape_len << "-D, but CropAndResize supports only " << 4
+  if (input_image_shape_len != IMAGE_DIM) {
+    MS_LOG(ERROR) << "Image tensor is " << input_image_shape_len << "-D, but CropAndResize supports only " << IMAGE_DIM
                   << "-D image tensor.";
   }
 
-  input_height_ = input_image_shape[1];
-  input_width_ = input_image_shape[2];
+  input_height_ = SizeToInt(input_image_shape[IMAGE_HEIGHT]);
+  input_width_ = SizeToInt(input_image_shape[IMAGE_WEIGHT]);
 
   //  input boxes
-  auto input_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto input_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOXES);
   size_t input_boxes_shape_len = input_boxes_shape.size();
-  if (input_boxes_shape_len != 2) {
-    MS_LOG(ERROR) << "Box is rank " << input_boxes_shape_len << ", but CropAndResize supports only rank " << 2
+  if (input_boxes_shape_len != BOX_RANK) {
+    MS_LOG(ERROR) << "Box is rank " << input_boxes_shape_len << ", but CropAndResize supports only rank " << BOX_RANK
                   << "for boxes.";
   }
 
   //  input box_index
-  auto input_box_index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  auto input_box_index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOX_INDEX);
   size_t input_box_index_shape_len = input_box_index_shape.size();
   if (input_box_index_shape_len != 1) {
     MS_LOG(ERROR) << "Box index is rank " << input_box_index_shape_len << ", but CropAndResize supports only rank " << 1
@@ -60,38 +59,41 @@ void CropAndResizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   }
 
   //  input crop_size
-  auto input_crop_size_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+  auto input_crop_size_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, CROP_SIZE);
   size_t input_crop_size_shape_len = input_crop_size_shape.size();
   if (input_crop_size_shape_len != 1) {
     MS_LOG(ERROR) << "Crop_size is rank " << input_crop_size_shape_len << "-D, but CropAndResize supports only rank "
                   << 1 << "for Crop_size.";
   }
-  if (input_crop_size_shape[0] != 2) {
+  if (input_crop_size_shape[0] != CROP_SIZE_LEN) {
     MS_LOG(ERROR) << "Crop_size is size " << input_crop_size_shape[0] << "-D, but CropAndResize supports only size "
-                  << 2 << "for Crop_size.";
+                  << CROP_SIZE_LEN << "for Crop_size.";
   }
 
   //  output
+  constexpr size_t HEIGHT = 1;
+  constexpr size_t WEIGHT = 2;
+  constexpr size_t CHANNEL = 3;
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   auto output_shape_len = output_shape.size();
   output_size_ = 1;
   for (size_t i = 0; i < output_shape_len; i++) {
-    output_size_ *= output_shape[i];
+    output_size_ *= SizeToInt(output_shape[i]);
   }
 
   //  set expected output params
-  final_height_ = output_shape[1];
-  final_width_ = output_shape[2];
-  channel_ = output_shape[3];
+  final_height_ = SizeToInt(output_shape[HEIGHT]);
+  final_width_ = SizeToInt(output_shape[WEIGHT]);
+  channel_ = SizeToInt(output_shape[CHANNEL]);
 
   //  get op parameters
   string method = AnfAlgo::GetNodeAttr<string>(kernel_node, "method");
   if (method == "bilinear") {
-    method_ = 1;
+    method_ = BILINEAR;
   } else if (method == "nearest") {
-    method_ = 2;
+    method_ = NEAREST;
   } else {  //  bilinear-v2
-    method_ = 3;
+    method_ = BILINEAR_V2;
   }
   extrapolation_value_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "extrapolation_value");
 }
@@ -100,14 +102,15 @@ template <typename T>
 bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &,
                                        const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input_image = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *input_boxes = reinterpret_cast<float *>(inputs[1]->addr);
-  auto *input_box_index = reinterpret_cast<int *>(inputs[2]->addr);
+  auto *input_image = reinterpret_cast<T *>(inputs[IMAGE]->addr);
+  auto *input_boxes = reinterpret_cast<float *>(inputs[BOXES]->addr);
+  auto *input_box_index = reinterpret_cast<int *>(inputs[BOX_INDEX]->addr);
   auto *output = reinterpret_cast<float *>(outputs[0]->addr);
 
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &input_box_index, &input_boxes, &input_image, &output](size_t start, size_t end) {
+    const float HALF = 0.5;
     for (size_t pos = start; pos < end; pos++) {
-      size_t pos_temp = pos;
+      int pos_temp = SizeToInt(pos);
       const int pos_channel = pos_temp % channel_;
       pos_temp = pos_temp / channel_;
       const int pos_x = pos_temp % final_width_;
@@ -117,7 +120,7 @@ bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &in
       const int box_index = input_box_index[pos_image_idx];
 
       //  crop values
-      const float y1 = input_boxes[4 * pos_image_idx + 0];
+      const float y1 = input_boxes[4 * pos_image_idx];
       const float x1 = input_boxes[4 * pos_image_idx + 1];
       const float y2 = input_boxes[4 * pos_image_idx + 2];
       const float x2 = input_boxes[4 * pos_image_idx + 3];
@@ -126,24 +129,24 @@ bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &in
       float scale_height = final_height_ > 1 ? (y2 - y1) * (input_height_ - 1) / (final_height_ - 1) : 0;
       float scale_width = final_width_ > 1 ? (x2 - x1) * (input_width_ - 1) / (final_width_ - 1) : 0;
       float target_y =
-        final_height_ > 1 ? y1 * (input_height_ - 1) + pos_y * scale_height : 0.5 * (y1 + y2) + (input_height_ - 1);
+        final_height_ > 1 ? y1 * (input_height_ - 1) + pos_y * scale_height : HALF * (y1 + y2) + (input_height_ - 1);
       float target_x =
-        final_width_ > 1 ? x1 * (input_width_ - 1) + pos_x * scale_width : 0.5 * (x1 + x2) + (input_width_ - 1);
+        final_width_ > 1 ? x1 * (input_width_ - 1) + pos_x * scale_width : HALF * (x1 + x2) + (input_width_ - 1);
 
       //  use extrapolation value if out of range
       if (((target_x < 0) || (target_x > input_width_ - 1)) || ((target_y < 0) || (target_y > input_height_ - 1))) {
-        if ((method_ == 1) || (method_ == 2)) {
+        if ((method_ == BILINEAR) || (method_ == NEAREST)) {
           output[pos] = extrapolation_value_;
           continue;
         }
       }
 
-      if (method_ == 1) {
+      if (method_ == BILINEAR) {
         // Bilinear
-        const int top_y_index = floorf(target_y);
-        const int bottom_y_index = ceilf(target_y);
-        const int left_x_index = floorf(target_x);
-        const int right_x_index = ceilf(target_x);
+        const int top_y_index = FloatToInt(floorf(target_y));
+        const int bottom_y_index = FloatToInt(ceilf(target_y));
+        const int left_x_index = FloatToInt(floorf(target_x));
+        const int right_x_index = FloatToInt(ceilf(target_x));
 
         const float top_left = static_cast<float>(
           input_image[((box_index * input_height_ + top_y_index) * input_width_ + left_x_index) * channel_ +
@@ -160,21 +163,21 @@ bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &in
         const float top = top_left + (top_right - top_left) * (target_x - left_x_index);
         const float bottom = bottom_left + (bottom_right - bottom_left) * (target_x - left_x_index);
         output[pos] = top + (bottom - top) * (target_y - top_y_index);
-      } else if (method_ == 3) {
-        int y1h = static_cast<int>(y1 * input_height_);
-        int x1w = static_cast<int>(x1 * input_width_);
-        int y2h = static_cast<int>(y2 * input_height_);
-        int x2w = static_cast<int>(x2 * input_width_);
+      } else if (method_ == BILINEAR_V2) {
+        int y1h = FloatToInt(y1 * input_height_);
+        int x1w = FloatToInt(x1 * input_width_);
+        int y2h = FloatToInt(y2 * input_height_);
+        int x2w = FloatToInt(x2 * input_width_);
         int w = ((x2w - x1w + 1) > 1) ? x2w - x1w + 1 : 1;
         int h = ((y2h - y1h + 1) > 1) ? y2h - y1h + 1 : 1;
 
-        float y_point = (pos_y + 0.5) * (h / static_cast<float>(final_height_)) - 0.5;
-        int top_y_index = std::min(std::max(0, static_cast<int>(floorf(y_point))), h - 1);
-        int bottom_y_index = std::min(std::max(0, static_cast<int>(ceilf(y_point))), h - 1);
+        float y_point = (pos_y + HALF) * (h / IntToFloat(final_height_)) - HALF;
+        int top_y_index = std::min(std::max(0, FloatToInt(floorf(y_point))), h - 1);
+        int bottom_y_index = std::min(std::max(0, FloatToInt(ceilf(y_point))), h - 1);
 
-        float x_point = (pos_x + 0.5) * (w / static_cast<float>(final_width_)) - 0.5;
-        int left_x_index = std::min(std::max(0, static_cast<int>(floorf(x_point))), w - 1);
-        int right_x_index = std::min(std::max(0, static_cast<int>(ceilf(x_point))), w - 1);
+        float x_point = (pos_x + HALF) * (w / IntToFloat(final_width_)) - HALF;
+        int left_x_index = std::min(std::max(0, FloatToInt(floorf(x_point))), w - 1);
+        int right_x_index = std::min(std::max(0, FloatToInt(ceilf(x_point))), w - 1);
 
         const float y_lerp = y_point - top_y_index;
         const float x_lerp = x_point - left_x_index;
@@ -199,11 +202,10 @@ bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &in
 
         output[pos] = top_left * (1 - y_lerp) * (1 - x_lerp) + bottom_right * y_lerp * x_lerp +
                       top_right * (1 - y_lerp) * x_lerp + bottom_left * y_lerp * (1 - x_lerp);
-
       } else {
         // Nearest Neighbour
-        const int closest_x_index = roundf(target_x);
-        const int closest_y_index = roundf(target_y);
+        const int closest_x_index = FloatToInt(roundf(target_x));
+        const int closest_y_index = FloatToInt(roundf(target_y));
         const float val = static_cast<float>(
           input_image[((box_index * input_height_ + closest_y_index) * input_width_ + closest_x_index) * channel_ +
                       pos_channel]);
@@ -211,9 +213,8 @@ bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &in
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  CPUKernelUtils::ParallelFor(task, IntToSize(output_size_));
   return true;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

@@ -50,7 +50,7 @@ void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t /* size */) {
   param.num_split_ = static_cast<int>(output_num_);
   param.split_dim_ = static_cast<int>(axis_);
   param.strides_[input_shape_.size() - 1] = 1;
-  for (int i = input_shape_.size() - 2; i >= 0; i--) {  // from -2 to 0 dim
+  for (int i = SizeToInt(input_shape_.size()) - 2; i >= 0; i--) {  // from -2 to 0 dim
     param.strides_[i] = param.strides_[i + 1] * input_shape_[i + 1];
   }
   auto split_sizes = std::make_unique<int[]>(static_cast<size_t>(param.num_split_));
@@ -104,7 +104,7 @@ void SplitCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
   if (axis_ < 0) {
     axis_ += SizeToInt(input_shape_.size());
   }
-  if (output_num_ > IntToLong(input_shape_[axis_])) {
+  if (output_num_ > IntToLong(input_shape_[LongToUlong(axis_)])) {
     MS_LOG(EXCEPTION) << "Attr output_num " << output_num_ << " must less than " << input_shape_[axis_];
   }
   if (output_num_ != output_num) {

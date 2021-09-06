@@ -23,6 +23,13 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t X0 = 0;
+constexpr size_t Y0 = 1;
+constexpr size_t X1 = 2;
+constexpr size_t Y1 = 3;
+constexpr size_t SCORE = 4;
+constexpr size_t INPUT_NUM = 1;
+constexpr size_t OUTPUT_NUM = 3;
 template <typename T>
 class NMSWithMaskCPUKernel : public CPUKernel {
  public:
@@ -37,25 +44,27 @@ class NMSWithMaskCPUKernel : public CPUKernel {
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:
-  void NmsBitonicSortByKeyKernel(const int outer, const int inner, const int ceil_power2, T *input, T *data_buff,
+  void NmsBitonicSortByKeyKernel(const int inner, const size_t ceil_power2, const T *input, T *data_buff,
                                  int *index_buff, int box_size);
 
-  void MaskInit(int numSq, bool *row_mask);
+  void MaskInit(size_t numSq, bool *row_mask);
 
-  void PopulateOutput(T *data_in, T *data_out, int *index_buff, const int num, int box_size, bool flip_mode);
+  void PopulateOutput(T *data_in, T *data_out, const int *index_buff, const int num, int box_size, bool flip_mode);
 
-  void Preprocess(const int num, int *sel_idx, bool *sel_boxes, T *output, int box_size);
+  void Preprocess(const int num, int *sel_idx, bool *sel_boxes);
 
-  bool IouDecision(T *output, int box_A_ix, int box_B_ix, int box_A_start, int box_B_start, float IOU_value);
+  bool IouDecision(const T *output, int box_A_start, int box_B_start, float IOU_value);
 
-  void NmsPass(const int num, const float IOU_value, T *output, bool *sel_boxes, int box_size, bool *row_mask);
+  void NmsPass(const int num, const float IOU_value, const T *output, int box_size, bool *row_mask);
 
-  void ReducePass(const int num, bool *sel_boxes, bool *row_mask);
+  void ReducePass(const int num, bool *sel_boxes, const bool *row_mask);
 
-  int num_input_;
-  float iou_value_;
-  size_t ceil_power_2;
+  int num_input_{0};
+  float iou_value_{0.0};
+  size_t ceil_power_2{0};
   static const int box_size_ = 5;  //  pre_defined box width
+  enum workspace_list_ { DATA_BUFF, INDEX_BUFF, ROW_MASK };
+  enum output_list_ { OUTPUT, SEL_IDX, SEL_BOXES };
 };
 
 MS_REG_CPU_KERNEL_T(NMSWithMask,

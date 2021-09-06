@@ -23,7 +23,7 @@ namespace mindspore {
 namespace kernel {
 const int kMaxLSTMLayer = 100;
 const int kOutputWorkSpaceIndex = 3;
-const size_t kGateNum = 4;
+const int kGateNum = 4;
 void LstmCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   output_size_list_[kOutputWorkSpaceIndex] = reserve_size_;
@@ -35,7 +35,7 @@ void LstmCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
     auto shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
     output_shapes.emplace_back(shape);
   }
-  size_t len = reserve_size_ / kGateNum;
+  size_t len = reserve_size_ / IntToSize(kGateNum);
   output_shapes[kOutputWorkSpaceIndex] = {len, 1};
   AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node.get());
 }

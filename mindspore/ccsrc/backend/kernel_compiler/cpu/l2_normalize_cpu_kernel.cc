@@ -38,7 +38,7 @@ void L2NormalizeCPUKernel<T>::CalcDenominator(const T *input_addr, const size_t 
   // Calculate transpose axes and stride
   size_t stride = 1;
   std::vector<size_t> axes(input_shape_.size());
-  int k = 0;
+  size_t k = 0;
   size_t axis_size = IntToSize(axis_);
   for (size_t i = 0; i < IntToSize(dims); ++i) {
     if (i != axis_size) {
