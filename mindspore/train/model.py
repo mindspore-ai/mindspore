@@ -1018,7 +1018,7 @@ class Model:
             >>> context.set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), ms.float32)
             >>> model = Model(Net())
-            >>> model.infer_predict_layout(input_data)
+            >>> predict_map = model.infer_predict_layout(input_data)
         """
         if context.get_context("mode") != context.GRAPH_MODE:
             raise RuntimeError('Pre-compile process only supports GRAPH MODE currently.')

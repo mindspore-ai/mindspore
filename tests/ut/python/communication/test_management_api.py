@@ -132,13 +132,8 @@ def test_raise_error_funcs():
     assert has_raise_error(destroy_group2, '0-1') is False
 
 
-def test_get_rank_none():
-    assert D.get_rank(group=None) == 0
-
-
 def test_group_funs():
     D.GlobalComm.BACKEND = D.Backend.HCCL
-    assert D.get_group_size(group=None) == 1
     assert D.get_group_size('2-abcd') == 2
     assert D.get_world_rank_from_group_rank('0-1', 0) == 0
     assert D.get_group_rank_from_world_rank(0, '0-1') == 0

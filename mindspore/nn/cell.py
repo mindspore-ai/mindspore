@@ -336,7 +336,7 @@ class Cell(Cell_):
                 res.append(self.cast(item, dst_type))
         return tuple(res)
 
-    def do_parameter_broadcast(self):
+    def _do_parameter_broadcast(self):
         if context.get_auto_parallel_context("parallel_mode") == ParallelMode.DATA_PARALLEL:
             if not self.parameter_broadcast_done:
                 _pynative_executor.parameter_broadcast(self, self.phase, self._auto_parallel_mode)
@@ -392,7 +392,7 @@ class Cell(Cell_):
             return out
 
         # Run in PyNative mode.
-        self.do_parameter_broadcast()
+        self._do_parameter_broadcast()
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("The cell inputs should not be numpy arrays.")
@@ -671,6 +671,12 @@ class Cell(Cell_):
         return _cell_graph_executor(self, *new_inputs, phase=self.phase)
 
     def auto_parallel_compile_and_run(self):
+        """
+        Whether or not to execute compile and run.
+
+        Returns:
+            bool, `_auto_parallel_compile_and_run` value.
+        """
         return self._auto_parallel_compile_and_run
 
     def exec_checkpoint_graph(self):
@@ -860,6 +866,15 @@ class Cell(Cell_):
         return param_dict
 
     def parameters_broadcast_dict(self, recurse=True):
+        """
+        Gets the parameters broadcast dictionary of this cell.
+
+        Args:
+            recurse (bool): Whether contains the parameters of subcells. Default: True.
+
+        Returns:
+            OrderedDict, return parameters broadcast dictionary.
+        """
         param_dict = OrderedDict()
         for param in self.get_parameters(expand=recurse):
             if param.layerwise_parallel is False:

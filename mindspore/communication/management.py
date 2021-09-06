@@ -86,18 +86,17 @@ def init(backend_name=None):
         This method should be used after set_context.
 
     Args:
-        backend_name (str): Backend, using HCCL/NCCL. if not been set, infer it by device_target. Default: None.
+        backend_name (str): Backend, using HCCL/NCCL. If the `backend_name` is None, system will
+        recognize `device_target` by devices. Default: None.
 
     Raises:
         TypeError: If `backend_name` is not a string.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails,
                       or the environment variables RANK_ID/MINDSPORE_HCCL_CONFIG_PATH
                       have not been exported when backend is HCCL.
-        ValueError: If the environment variable RANK_ID has not been exported as a number.
 
     Examples:
         >>> from mindspore.context import set_context
-        >>> set_context(device_target="Ascend")
         >>> init()
     """
     if _is_role_pserver() or _is_role_sched():
@@ -172,6 +171,8 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If HCCL/NCCL is not available.
     """
+    if not isinstance(group, str):
+        raise TypeError("Group name must be a string, but got {}".format(type(group)))
     return _get_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
@@ -195,6 +196,8 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
     """
+    if not isinstance(group, str):
+        raise TypeError("Group name must be a string, but got {}".format(type(group)))
     return _get_local_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
@@ -217,6 +220,8 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If HCCL/NCCL is not available.
     """
+    if not isinstance(group, str):
+        raise TypeError("Group name must be a string, but got {}".format(type(group)))
     return _get_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
@@ -240,6 +245,8 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
     """
+    if not isinstance(group, str):
+        raise TypeError("Group name must be a string, but got {}".format(type(group)))
     return _get_local_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
@@ -273,8 +280,11 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         >>> rank_ids = [0,4]
         >>> create_group(group, rank_ids)
         >>> world_rank_id = get_world_rank_from_group_rank(group, 1)
-        >>> print("world_rank_id is: ", world_rank_id) # world_rank_id is: 4
+        >>> print("world_rank_id is: ", world_rank_id)
+        world_rank_id is: 4
     """
+    if not isinstance(group, str):
+        raise TypeError("Group name must be a string, but got {}".format(type(group)))
     return _get_world_rank_from_group_rank_helper(group=group, group_rank_id=group_rank_id, backend=GlobalComm.BACKEND)
 
 
@@ -308,8 +318,11 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         >>> rank_ids = [0,4]
         >>> create_group(group, rank_ids)
         >>> group_rank_id = get_group_rank_from_world_rank(4, group)
-        >>> print("group_rank_id is: ", group_rank_id) # group_rank_id is: 1
+        >>> print("group_rank_id is: ", group_rank_id)
+        group_rank_id is: 1
     """
+    if not isinstance(group, str):
+        raise TypeError("Group name must be a string, but got {}".format(type(group)))
     return _get_group_rank_from_world_rank_helper(world_rank_id=world_rank_id, group=group, backend=GlobalComm.BACKEND)
 
 
@@ -320,9 +333,7 @@ def create_group(group, rank_ids):
     Note:
         GPU version of MindSpore doesn't support this method.
 
-        The size of rank_ids should be larger than 1.
-
-        Rank_ids should not have duplicate data.
+        The size of rank_ids should be larger than 1, rank_ids should not have duplicate data.
 
         This method should be used after init().
 
@@ -345,6 +356,8 @@ def create_group(group, rank_ids):
         >>> rank_ids = [0,8]
         >>> create_group(group, rank_ids)
     """
+    if not isinstance(group, str):
+        raise TypeError("Group name must be a string, but got {}".format(type(group)))
     _create_group_helper(group, rank_ids, backend=GlobalComm.BACKEND)
 
 
@@ -365,4 +378,6 @@ def destroy_group(group):
         ValueError: If group is "hccl_world_group" or backend is invalid.
         RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
     """
+    if not isinstance(group, str):
+        raise TypeError("Group name must be a string, but got {}".format(type(group)))
     _destroy_group_helper(group, backend=GlobalComm.BACKEND)
