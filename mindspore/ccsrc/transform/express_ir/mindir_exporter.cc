@@ -306,8 +306,7 @@ void IrExportBuilder::SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueIn
     mind_ir::TensorProto *tensor_proto = value_proto->add_tensor();
     tensor_proto->set_data_type(GetMindirDataType(elem_type->type_id()));
     if (dims.size() == 0) {
-      MS_LOG(DEBUG) << "SetValueInfoProto set default dim 1.";
-      tensor_proto->add_dims(1);
+      MS_LOG(DEBUG) << "The dim of ValueInfoProto is 0.";
     } else {
       for (const auto &dim : dims) {
         MS_LOG(DEBUG) << "SetValueInfoProto dim: " << dim;

@@ -945,6 +945,19 @@ bool SetMindIRGraphAction(const ResourcePtr &res) {
                          return arg;
                        });
 
+  abstract::AbstractBasePtrList func_args;
+  const auto inputs = fg->get_inputs();
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(func_args),
+                       [](const AnfNodePtr &arg) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(arg);
+                         return arg->abstract()->Broaden();
+                       });
+  if (!AbstractBasePtrListDeepEqual(func_args, broaded_args)) {
+    MS_LOG(EXCEPTION) << "The args is not compatible with the function graph."
+                      << " Please check the args is compatible with the follow: " << abstract::ArgsToString(func_args)
+                      << " The input args:" << abstract::ArgsToString(broaded_args);
+  }
+
   // suppose that there is not KeywordArgument for the top graph
   // get the hyper parameter
   for (const auto &param : fg->parameters()) {
