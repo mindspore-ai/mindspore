@@ -233,7 +233,7 @@ def _calculate_in_and_out(arr):
 class XavierUniform(Initializer):
     r"""
     Initialize the array with xavier uniform algorithm, and from a uniform distribution collect samples within
-    :math:`{U}(-\text{boundary}, \text{boundary})`where:
+    :math:`{U}(-\text{boundary}, \text{boundary})` where:
 
     .. math::
         boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
@@ -272,7 +272,7 @@ class XavierUniform(Initializer):
 class HeUniform(Initializer):
     r"""
     Initialize the array with HeKaiming Uniform algorithm, and from a uniform distribution collect samples within
-    :math:`{U}(-\text{boundary}, \text{boundary})`where
+    :math:`{U}(-\text{boundary}, \text{boundary})` where
 
     .. math::
         boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}
@@ -319,7 +319,7 @@ class HeUniform(Initializer):
 class HeNormal(Initializer):
     r"""
     Initialize the array with HeKaiming Normal algorithm, and from a normal distribution collect samples within
-    :math:`{N}(0, \text{sigma}^2)`where
+    :math:`{N}(0, \text{sigma}^2)` where
 
     .. math::
         sigma = \frac{gain} {\sqrt{mode}}
@@ -386,7 +386,7 @@ class Constant(Initializer):
 @_register()
 class Uniform(Initializer):
     """
-    Initialize a uniform array, and obtain values :math:`{U}(-\text{scale}, \text{scale})`from the uniform distribution
+    Initialize a uniform array, and obtain values :math:`{U}(-\text{scale}, \text{scale})` from the uniform distribution
     to fill the input tensor.
 
     Args:
@@ -410,9 +410,12 @@ class Uniform(Initializer):
 
 @_register()
 class Normal(Initializer):
-    """
+    r"""
     Initialize a normal array, and obtain values :math:`{N}(\text{sigma}, \text{mean})` from the normal distribution
     to fill the input tensor.
+
+    .. math::
+        f(x) =  \frac{1} {\sqrt{2*π} * sigma}exp(-\frac{(x - mean)^2} {2*{sigma}^2})
 
     Args:
         sigma (float): The sigma of the array. Default: 0.01.

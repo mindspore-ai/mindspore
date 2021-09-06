@@ -87,7 +87,7 @@ def init(backend_name=None):
 
     Args:
         backend_name (str): Backend, using HCCL/NCCL. If the `backend_name` is None, system will
-        recognize `device_target` by devices. Default: None.
+    recognize `device_target` by devices. Default: None.
 
     Raises:
         TypeError: If `backend_name` is not a string.
