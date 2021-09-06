@@ -1,7 +1,7 @@
 general:
     backend: mindspore
-    parallel_search: False
-    parallel_fully_train: False
+    parallel_search: True
+    parallel_fully_train: True
 
 
 pipeline: [nas, fully_train, benchmark_DIV2K, benchmark_Set5, benchmark_Set14, benchmark_BSDS100]
