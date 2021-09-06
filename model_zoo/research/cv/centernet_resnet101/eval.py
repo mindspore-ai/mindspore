@@ -24,7 +24,6 @@ import cv2
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from mindspore import context
-from mindspore.common import set_seed
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.log as logger
@@ -66,13 +65,13 @@ def predict():
     context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
     if config.device_target == "Ascend":
         context.set_context(device_id=get_device_id())
-        enable_nms_fp16 = True
-    else:
         enable_nms_fp16 = False
+    else:
+        enable_nms_fp16 = True
 
     logger.info("Begin creating {} dataset".format(config.run_mode))
     coco = COCOHP(dataset_config, run_mode=config.run_mode, net_opt=net_config,
-                  enable_visual_image=(config.visual_image == "true"), save_path=config.save_result_dir,)
+                  enable_visual_image=config.visual_image, save_path=config.save_result_dir,)
     coco.init(config.data_dir, keep_res=eval_config.keep_res)
     dataset = coco.create_eval_dataset()
 
@@ -162,5 +161,4 @@ def run_eval(gt_anno, pred_anno):
 
 
 if __name__ == "__main__":
-    set_seed(317)
     predict()

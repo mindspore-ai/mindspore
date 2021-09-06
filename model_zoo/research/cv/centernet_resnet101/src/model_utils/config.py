@@ -121,7 +121,7 @@ def extra_operations(cfg):
         cfg: Object after instantiation of class 'Config'.
     """
     cfg.train_config.Adam.decay_filter = lambda x: x.name.endswith('.bias') or x.name.endswith('.beta') or x.name.endswith('.gamma')
-    cfg.export_config.input_res = cfg.dataset_config.input_res
+    cfg.export_config.input_res = cfg.dataset_config.input_res_test
     if cfg.export_load_ckpt:
         cfg.export_config.ckpt_file = cfg.export_load_ckpt
     if cfg.export_name:

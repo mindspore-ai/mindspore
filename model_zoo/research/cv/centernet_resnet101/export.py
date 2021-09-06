@@ -18,6 +18,7 @@ Export CenterNet mindir model.
 
 import os
 import numpy as np
+import mindspore
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
@@ -43,8 +44,7 @@ def run_export():
     load_param_into_net(net, param_dict)
     net.set_train(False)
 
-    input_shape = [1, 3, export_config.input_res[0], export_config.input_res[1]]
-    input_data = Tensor(np.random.uniform(-1.0, 1.0, size=input_shape).astype(np.float32))
+    input_data = Tensor(np.zeros([1, 3, export_config.input_res[0], export_config.input_res[1]]), mindspore.float32)
 
     export(net, input_data, file_name=export_config.export_name, file_format=export_config.export_format)
 

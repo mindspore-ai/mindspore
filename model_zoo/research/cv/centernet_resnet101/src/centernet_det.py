@@ -40,17 +40,11 @@ def _generate_feature(cin, cout, kernel_size, head_name, head_conv=0):
     Generate ResNet feature extraction function of each target head
     """
     fc = None
-    if head_conv > 0:
-        if 'hm' in head_name:
-            conv2d = nn.Conv2d(head_conv, cout, kernel_size=kernel_size, has_bias=True, bias_init=Constant(-2.19))
-        else:
-            conv2d = nn.Conv2d(head_conv, cout, kernel_size=kernel_size, has_bias=True)
-        fc = nn.SequentialCell([nn.Conv2d(cin, head_conv, kernel_size=3, has_bias=True), nn.ReLU(), conv2d])
+    if 'hm' in head_name:
+        conv2d = nn.Conv2d(head_conv, cout, kernel_size=kernel_size, has_bias=True, bias_init=Constant(-2.19))
     else:
-        if 'hm' in head_name:
-            fc = nn.Conv2d(cin, cout, kernel_size=kernel_size, has_bias=True, bias_init=Constant(-2.19))
-        else:
-            fc = nn.Conv2d(cin, cout, kernel_size=kernel_size, has_bias=True)
+        conv2d = nn.Conv2d(head_conv, cout, kernel_size=kernel_size, has_bias=True)
+    fc = nn.SequentialCell([nn.Conv2d(cin, head_conv, kernel_size=3, has_bias=True), nn.ReLU(), conv2d])
     return fc
 
 
@@ -292,12 +286,12 @@ class CenterNetDetEval(nn.Cell):
     Args:
         net_config: The config info of CenterNet network.
         K(number): Max number of output objects. Default: 100.
-        enable_nms_fp16(bool): Use float16 data for max_pool, adaption for CPU. Default: True.
+        enable_nms_fp16(bool): Use float16 data for max_pool, adaption for CPU. Default: False.
 
     Returns:
         Tensor, detection of images(bboxes, score, keypoints and category id of each objects)
     """
-    def __init__(self, net_config, K=100, enable_nms_fp16=True):
+    def __init__(self, net_config, K=100, enable_nms_fp16=False):
         super(CenterNetDetEval, self).__init__()
         self.network = GatherDetectionFeatureCell(net_config)
         self.decode = DetectionDecode(net_config, K, enable_nms_fp16)
