@@ -66,8 +66,9 @@ void Worker::Run() {
     } else {
       YieldAndDeactive();
     }
-    if (spin_count_ >= kDefaultSpinCount) {
+    if (spin_count_ >= max_spin_count_) {
       WaitUntilActive();
+      spin_count_ = 0;
     }
   }
 }
@@ -316,5 +317,13 @@ ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<in
   }
 #endif  // BIND_CORE
   return pool;
+}
+
+int ThreadPool::SetMaxSpinCount(int max_spin_count) {
+  for (auto worker : workers_) {
+    THREAD_ERROR_IF_NULL(worker);
+    worker->SetMaxSpinCount(max_spin_count);
+  }
+  return THREAD_OK;
 }
 }  // namespace mindspore

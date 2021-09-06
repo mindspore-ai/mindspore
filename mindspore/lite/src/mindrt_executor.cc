@@ -77,6 +77,8 @@ int MindrtExecutor::Resize(const std::vector<mindspore::tensor::MSTensor *> &inp
 
 int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
                             const std::vector<Tensor *> &outputs, const lite::InnerContext *ctx) {
+  MS_ASSERT(ctx != nullptr);
+  ctx_ = ctx;
   auto ret = MindrtInit();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindrtInit failed";
@@ -149,15 +151,31 @@ void MindrtExecutor::FreeOutputTensor() {
 int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                         const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                         const KernelCallBack &before, const KernelCallBack &after) {
+  // init the max spin count.
+  MS_ASSERT(ctx_ != nullptr);
+  auto thread_pool = ctx_->thread_pool();
+  CHECK_NULL_RETURN(thread_pool);
+  auto ret = thread_pool->SetMaxSpinCount(kDefaultSpinCount);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set max spin count failed.";
+    return ret;
+  }
   FreeOutputTensor();
 
-  auto ret = MindrtRun<Tensor>(input_data_, &output_data_, &before, &after);
+  ret = MindrtRun<Tensor>(input_data_, &output_data_, &before, &after);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindrtRun failed";
     return ret;
   }
 
   TransferGraphOutput();
+
+  // reset the max spin count.
+  ret = thread_pool->SetMaxSpinCount(0);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set max spin count failed.";
+    return ret;
+  }
   return RET_OK;
 }
 }  // namespace mindspore::lite
