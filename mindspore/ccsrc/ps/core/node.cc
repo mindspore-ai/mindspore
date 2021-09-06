@@ -85,8 +85,8 @@ bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::
 }
 
 bool Node::Wait(uint64_t request_id, const uint32_t &timeout) {
-  std::unique_lock<std::mutex> lock(message_tracker_mutex_);
-  bool res = message_tracker_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] {
+  std::unique_lock<std::mutex> tracker_lock(message_tracker_mutex_);
+  bool res = message_tracker_cond_.wait_for(tracker_lock, std::chrono::seconds(timeout), [&] {
     if (message_tracker_.count(request_id)) {
       bool ret = message_tracker_[request_id].first == message_tracker_[request_id].second;
       return ret;
@@ -94,6 +94,13 @@ bool Node::Wait(uint64_t request_id, const uint32_t &timeout) {
     return false;
   });
   (void)message_tracker_.erase(request_id);
+  tracker_lock.unlock();
+
+  std::unique_lock<std::mutex> msgs_lock(receive_messages_mutex_);
+  if (receive_messages_.count(request_id) != 0) {
+    (void)receive_messages_.erase(request_id);
+  }
+  msgs_lock.unlock();
   return res;
 }
 
