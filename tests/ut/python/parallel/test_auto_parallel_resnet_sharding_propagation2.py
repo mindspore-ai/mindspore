@@ -33,7 +33,7 @@ from mindspore.context import ParallelMode
 from mindspore.communication._comm_helper import GlobalComm
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(device_id=0)
+context.set_context.__wrapped__(device_id=0)
 GlobalComm.CHECK_ENVS = False
 init()
 GlobalComm.CHECK_ENVS = True

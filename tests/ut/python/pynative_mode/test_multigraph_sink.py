@@ -21,7 +21,6 @@ from mindspore.common.tensor import Tensor
 
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE, save_graphs=False, device_target="Ascend")
-    context.set_context(device_id=0)
 
 
 c1 = Tensor([2], mstype.int32)
