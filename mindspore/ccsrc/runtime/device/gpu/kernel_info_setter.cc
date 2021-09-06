@@ -80,7 +80,7 @@ std::string SupportedTypeList(const CNodePtr &kernel_node) {
   std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kAKG);
   if (op_info_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Unsupported op [" << op_name << "]";
+    MS_LOG(EXCEPTION) << "Unsupported op [" << op_name << "] on GPU";
   }
   (void)ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list);
   for (size_t i = 0; i < kernel_info_list.size(); i++) {
@@ -135,7 +135,7 @@ bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBu
                              return CheckKernelInfo(alternative_kernel_info, selected_kernel_info);
                            });
   if (!match) {
-    MS_LOG(ERROR) << "Not find op[" << op_name << "] in akg";
+    MS_LOG(ERROR) << "Not find op[" << op_name << "] which both match data type and format in akg";
     return false;
   }
   return true;

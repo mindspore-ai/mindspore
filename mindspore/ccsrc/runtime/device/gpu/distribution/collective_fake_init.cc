@@ -21,15 +21,13 @@ namespace mindspore {
 namespace device {
 namespace gpu {
 void CollectiveFakeInitializer::InitCollective() {
-  MS_LOG(EXCEPTION)
-    << "You are trying to call 'init('nccl')', but this MindSpore package is built without NCCL. Please download GPU "
-       "version of MindSpore and try again.";
+  MS_LOG(EXCEPTION) << "You are trying to call 'init('nccl')', Please check "
+                       "this MindSpore package is GPU version and built with NCCL.";
 }
 
 void CollectiveFakeInitializer::FinalizeCollective() {
-  MS_LOG(EXCEPTION)
-    << "You are trying to call 'init('nccl')', but this MindSpore package is built without NCCL. Please download GPU "
-       "version of MindSpore and try again.";
+  MS_LOG(EXCEPTION) << "You are trying to call 'init('nccl')', Please check "
+                       "this MindSpore package is GPU version and built with NCCL.";
 }
 }  // namespace gpu
 }  // namespace device

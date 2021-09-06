@@ -37,8 +37,10 @@ bool GPUMemoryAllocator::Init() {
     MS_LOG(INFO) << "GPU device total memory size " << total_size << ", current free memory size " << free_size
                  << ", set max available memory size " << available_device_memory_ << ".";
   } else {
-    MS_LOG(EXCEPTION) << "GPU device memory error, total memory size " << total_size << ", current free memory size "
-                      << free_size << ", set max available memory size " << available_device_memory_ << ".";
+    MS_LOG(EXCEPTION)
+      << "The total size or free size or max_device_memory size of GPU memory can't be zero, total memory size "
+      << total_size << ", current free memory size " << free_size << ", set max available memory size "
+      << available_device_memory_ << ".";
   }
   return true;
 }
@@ -50,7 +52,7 @@ void GPUMemoryAllocator::CheckMaxDeviceMemory() const {
   //  Currently not support modifying the max device memory.
   if (limited_device_memory_ != max_device_memory) {
     MS_LOG(EXCEPTION)
-      << "Can't change context param max_device_memory in runtime, currently effective max_device_memory("
+      << "Can't change or set context param max_device_memory during running, currently effective max_device_memory("
       << limited_device_memory_ << "GB), set new max_device_memory(" << max_device_memory << "GB) failed.";
   }
 }
