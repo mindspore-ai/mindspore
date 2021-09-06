@@ -26,7 +26,25 @@ from ...common import dtype as mstype
 
 class RestrainForce(PrimitiveWithInfer):
     """
-    Calculate the restrain force.
+    Calculate the restraint force.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        restrain_numbers(int32): the number of restrained atoms m.
+        factor(float32): the force constant of resilience when restrained atom is not at the reference coordinate.
+
+    Inputs:
+        - **restrain_list** (Tensor, int32) - [m, ], the atom index of each restrained atom.
+        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
+        - **uint_crd_ref** (Tensor, uint32) - [n, 3], the reference unsigned int coordinate of each atom.
+        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+
+    Outputs:
+        - **frc** (float32 Tensor) - [n, 3], the force felt by each atom.
 
     Supported Platforms:
         ``GPU``
@@ -74,6 +92,23 @@ class RestrainEnergy(PrimitiveWithInfer):
     """
     Calculate the restrain energy.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        restrain_numbers(int32): the number of restrained atoms m.
+        weight(float32): the force constant of resilience when restrained atom is not at the reference coordinate.
+
+    Inputs:
+        - **restrain_list** (Tensor, int32) - [m, ], the atom index of each restrained atom.
+        - **crd** (Tensor, float32) - [n, 3], the coordinate value of each atom.
+        - **crd_ref** (Tensor, float32) - [n, 3], the reference coordinate of each atom.
+        - **boxlength** (Tensor, float32) - [3,], the size of simulating system in each dimension (x, y, z).
+
+    Outputs:
+        - **ene** (float32 Tensor) - [n, ], the restrain energy of each atom.
+
     Supported Platforms:
         ``GPU``
     """
@@ -118,7 +153,26 @@ class RestrainEnergy(PrimitiveWithInfer):
 
 class RestrainForceWithAtomEnergyVirial(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Calculate the restraint force, energy and virial.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        restrain_numbers(int32): the number of restrained atoms m.
+        weight(float32): the force constant of resilience when restrained atom is not at the reference coordinate.
+
+    Inputs:
+        - **restrain_list** (Tensor, int32) - [m, ], the atom index of each restrained atom.
+        - **crd** (Tensor, float32) - [n, 3], the coordinate value of each atom.
+        - **crd_ref** (Tensor, float32) - [n, 3], the reference coordinate of each atom.
+        - **boxlength** (Tensor, float32) - [3,], the size of simulating system in each dimension (x, y, z).
+
+    Outputs:
+        - **atom_ene** (float32 Tensor) - [n, ], the restraint energy of each atom.
+        - **atom_virial** (float32 Tensor) - [n,], the virial caused by restraint force of each atom.
+        - **frc** (float32 Tensor) - [n, 3], the force felt by each atom.
 
     Supported Platforms:
         ``GPU``
@@ -164,7 +218,25 @@ class RestrainForceWithAtomEnergyVirial(PrimitiveWithInfer):
 
 class RefreshUintCrd(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Refresh the unsigned coordinate of each constrained atom in each constrain iteration.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        half_exp_gamma_plus_half(float32): constant value (1.0 + exp(gamma * dt)) if Langvin-Liu thermostat is used,
+        where gamma is friction coefficient and dt is the simulation time step, 1.0 otherwise.
+
+    Inputs:
+        - **crd** (Tensor, float32) - [n, 3], the coordinate value of each atom.
+        - **quarter_cof** (Tensor, float32) - [3, ], the 3-D scale factor (x, y, z)
+          between the real space float coordinates and the 0.25 times unsigned int coordinates.
+        - **test_frc** (Tensor, float32) - [n, 3], the constrained force calculated in last iteration.
+        - **mass_inverse** (Tensor, float32) - [n, ], the inverse value of mass of each atom.
+
+    Outputs:
+        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinate of each atom after update.
 
     Supported Platforms:
         ``GPU``
@@ -207,7 +279,29 @@ class RefreshUintCrd(PrimitiveWithInfer):
 
 class ConstrainForceCycleWithVirial(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Calculate the constraint force and virial in each iteration.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        constrain_pair_numbers(int32): the number of constrain pairs m.
+
+    Inputs:
+        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
+        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
+        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
+        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
+        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
+        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+
+    Outputs:
+        - **test_frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
+        - **atom_virial** (Tensor, float32) - [n,], the virial caused by constraint force of each atom.
+
 
     Supported Platforms:
         ``GPU``
@@ -252,7 +346,28 @@ class ConstrainForceCycleWithVirial(PrimitiveWithInfer):
 
 class LastCrdToDr(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Calculate the diplacement vector of each constrained atom pair.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        constrain_pair_numbers(int32): the number of constrain pairs m.
+
+    Inputs:
+        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
+        - **uint_dr_to_dr** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z)
+          between the unsigned int value and the real space coordinates.
+        - **quarter_cof** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z)
+          between the real space float coordinates and the 0.25 times unsigned int coordinates.
+        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
+        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
+        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
+        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+
+    Outputs:
+        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
 
     Supported Platforms:
         ``GPU``
@@ -296,7 +411,26 @@ class LastCrdToDr(PrimitiveWithInfer):
 
 class RefreshCrdVel(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Refresh the coordinate and velocity of each constrained atom after all iterations have ended.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        dt_inverse(float32): the inverse value of simulation time step.
+        dt(float32): the simulation time step.
+        exp_gamma(float32): constant value exp(gamma * dt).
+        half_exp_gamma_plus_half(float32): constant value (1 + exp_gamma)/2.
+
+    Inputs:
+        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
+        - **vel** (Tensor, float32) - [n, 3], the velocity of each atom.
+        - **test_frc** (Tensor, float32) - [n, 3], the constraint force calculated in the last oteration.
+        - **mass_inverse** (Tensor, float32) - [n, ], the inverse value of mass of each atom.
+
+    Outputs:
+        - **res** ()
 
     Supported Platforms:
         ``GPU``
@@ -340,7 +474,21 @@ class RefreshCrdVel(PrimitiveWithInfer):
 
 class CalculateNowrapCrd(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Calculate the inside-box periodic image of each atom.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+
+    Inputs:
+        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
+        - **box** (Tensor, float32) - [3, ], the 3-D size of system.
+        - **box_map_times** (Tensor, int32) - [n, 3], The number of times each atom has crossed the box.
+
+    Outputs:
+        - **nowrap_crd** (Tensor, float32) - [n, 3], the inside-box periodic image of each atom.
 
     Supported Platforms:
         ``GPU``
@@ -373,7 +521,23 @@ class CalculateNowrapCrd(PrimitiveWithInfer):
 
 class RefreshBoxmapTimes(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Refresh the box-crossing times of each atom.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+
+    Inputs:
+        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
+        - **old_crd** (Tensor, float32) - [n, 3], the coordinate of each atom at last update.
+        - **box_length_inverse** (Tensor, float32) - [3,], the inverse value of box length in 3 dimensions.
+        - **box_map_times** (Tensor, int32) - [n, 3], The number of times each atom has crossed the box
+        since the last update in 3 dimensions.
+
+    Outputs:
+        - **res** ()
 
     Supported Platforms:
         ``GPU``
@@ -410,14 +574,21 @@ class RefreshBoxmapTimes(PrimitiveWithInfer):
 
 class Totalc6get(PrimitiveWithInfer):
     """
-    Inverse FFT with Three-Dimensional Input.
+    Get the average dispersion constant of short range Lennard-Jones interaction,
+    for the subsequent long range correction energy and virial. Assume system has m Lennard-Jones types of atoms.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
 
     Inputs:
-        - **input_real** (Tensor, float32) - [fftx, ffty, fftz]
-        - **input_imag** (Tensor, float32) - [fftx, ffty, fftz]
+        - **atom_lj_type**(Tensor, int32) - [n, 3], the Lennard-Jones type of each atom.
+        - **lj_b** (Tensor, float32) - [m*(m+1)/2, ], the attraction coefficient.
 
     Outputs:
-        - **output_tensor** (float32)
+        - **factor** (float32) - the average dispersion constant of Lennard-Jones interaction.
 
     Supported Platforms:
         ``GPU``
@@ -443,6 +614,9 @@ class Totalc6get(PrimitiveWithInfer):
 class CrdToUintCrdQuarter(PrimitiveWithInfer):
     """
     Convert FP32 coordinate to Uint32 coordinate.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -483,20 +657,22 @@ class MDIterationLeapFrogLiujianWithMaxVel(PrimitiveWithInfer):
     """
     One step of classical leap frog algorithm to solve the finite difference
     Hamiltonian equations of motion for certain system, using Langevin dynamics
-    with Liu's thermostat scheme. Assume the number of atoms is n and the target
-    control temperature is T.
+    with Liu's thermostat scheme, but with an maximum velocity limit. Assume the
+    number of atoms is n and the target control temperature is T.
 
     Detailed iteration formula can be found in this paper: A unified thermostat
     scheme for efficient configurational sampling for classical/quantum canonical
     ensembles via molecular dynamics. DOI: 10.1063/1.4991621.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
     Args:
         atom_numbers(int32): the number of atoms n.
         dt(float32): time step for finite difference.
         half_dt(float32): half of time step for finite difference.
-        exp_gamma(float32): parameter in Liu's dynamic, equals
-        exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
-        dynamics.
+        exp_gamma(float32): parameter in Liu's dynamic, exp(-gamma_ln * dt).
+        max_vel(float32): the maximum velocity limit.
 
     Inputs:
         - **inverse_mass** (Tensor, float32) - [n,], the inverse value of
@@ -557,7 +733,22 @@ class MDIterationLeapFrogLiujianWithMaxVel(PrimitiveWithInfer):
 
 class GetCenterOfMass(PrimitiveWithInfer):
     """
-    Get Center Of Geometry.
+    Get coordinate of centroid of each residue. Assume system has n atoms.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        residue_numbers(int32): the number of residues m.
+
+    Inputs:
+        - **start** (Tensor, int32): [m, ], the start atom index of each residue.
+        - **end** (Tensor, int32): [m, ], the end atom index of each residue.
+        - **atom_mass** (Tensor, float32): [n, ], the mass of each atom.
+        - **residue_mass_inverse** (Tensor, float32): [m, ], the inverse of mass of each residue.
+
+    Outputs:
+        - **center_of_mass** (Tensor, float32): [m, 3], the coordinate of centroid of each residue.
 
     Supported Platforms:
         ``GPU``
@@ -583,7 +774,26 @@ class GetCenterOfMass(PrimitiveWithInfer):
 
 class MapCenterOfMass(PrimitiveWithInfer):
     """
-    Get Center Of Geometry.
+    Map all atoms in the same residue to the same periodic box, scale if necessary (usually in pressurestat).
+    Assume system has n atoms.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        residue_numbers(int32): the number of residues m.
+        scaler(float32): the scaling factor.
+
+    Inputs:
+        - **start** (Tensor, int32): [m, ], the start atom index of each residue.
+        - **end** (Tensor, int32): [m, ], the end atom index of each residue.
+        - **center_of_mass** (Tensor, float32): [m, 3], the coordinate of centroid of each residue.
+        - **box_length** (Tensor, float32): [3, ], the size of system in 3-dimensions.
+        - **no_wrap_crd** (Tensor, float32): [n, 3], the coordinate of each atom before wrap.
+        - **crd** (Tensor, float32): [n, 3], the coordinate of each atom after wrap.
+
+    Outputs:
+        - **res**
 
     Supported Platforms:
         ``GPU``
@@ -610,29 +820,30 @@ class MapCenterOfMass(PrimitiveWithInfer):
 class NeighborListRefresh(PrimitiveWithInfer):
     """
     Update (or construct if first time) the Verlet neighbor list for the
-    calculation of short-ranged force. Assume the number of atoms is n,
-    the number of grids divided is G, the maximum number of atoms in one
-    grid is m, the maximum number of atoms in single atom's neighbor list
-    is L, and the number of total atom in excluded list is E.
+    calculation of short-ranged force.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        grid_numbers(int32): the total number of grids divided.
-        not_first_time(int32): whether to construct the neighbor
-          list first time or not.
+        atom_numbers(int32): the number of atoms n.
+        grid_numbers(int32): the total number of grids divided G.
+        not_first_time(int32): whether to construct the neighbor list first time or not.
         nxy(int32): the total number of grids divided in xy plane.
-        excluded_atom_numbers(int32): the total atom numbers in the excluded list.
+        excluded_atom_numbers(int32): the total atom numbers in the excluded list E.
         cutoff(float32): the cutoff distance for short-range force calculation. Default: 10.0.
         skin(float32): the overflow value of cutoff to maintain a neighbor list. Default: 2.0.
         cutoff_square(float32): the suqare value of cutoff.
-        half_skin_square(float32): skin*skin/4, indicates the maximum
-          square value of the distance atom allowed to move between two updates.
-        cutoff_with_skin(float32): cutoff + skin, indicates the
-          radius of the neighbor list for each atom.
+        half_skin_square(float32): skin*skin/4, indicates the maximum square value of the distance atom
+        allowed to move between two updates.
+        cutoff_with_skin(float32): cutoff + skin, indicates the radius of the neighbor list for each atom.
         half_cutoff_with_skin(float32): cutoff_with_skin/2.
         cutoff_with_skin_square(float32): the square value of cutoff_with_skin.
         refresh_interval(int32): the number of iteration steps between two updates of neighbor list. Default: 20.
-        max_atom_in_grid_numbers(int32): the maximum number of atoms in one grid. Default: 64.
-        max_neighbor_numbers(int32): The maximum number of neighbors. Default: 800.
+        max_atom_in_grid_numbers(int32): the maximum number of atoms in one grid m. Default: 64.
+        max_neighbor_numbers(int32): The maximum number of neighbors L. Default: 800.
+        force_update(int32): the flag that decides whether to force an update.
+        force_check(int32): the flag that decides whether to force an check.
 
     Inputs:
         - **atom_numbers_in_grid_bucket** (Tensor, int32) - [G,], the number of atoms in each grid bucket.
@@ -804,6 +1015,26 @@ class NeighborListRefresh(PrimitiveWithInfer):
 
 class MDIterationLeapFrog(PrimitiveWithInfer):
     """
+    One step of classical leap frog algorithm to solve the finite difference
+    Hamiltonian equations of motion for certain system.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        dt(float32): the simulation time step.
+
+    Inputs:
+        -**sqrt_mass_inverse** (Tensor, float32):?
+        -**vel** (Tensor, float32): [n, 3], the velocity of each atom.
+        -**crd** (Tensor, float32): [n, 3], the coordinate of each atom.
+        -**frc** (Tensor, float32): [n, 3], the force on each atom.
+        -**acc** (Tensor, float32): [n, 3], the acceleration of each atom.
+        -**inverse_mass** (Tensor, float32): [n, 1], the inverse value of mass of each atom.
+
+    Outputs:
+        -**res**
 
     Supported Platforms:
         ``GPU``
@@ -838,6 +1069,27 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
 
 class MDIterationLeapFrogWithMaxVel(PrimitiveWithInfer):
     """
+    Leap frog algorithm to solve the Hamiltonian equations of motion with a maximum velocity limit.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        dt(float32): the simulation time step.
+        max_velocity(float32): the maximum velocity limit.
+
+    Inputs:
+        -**sqrt_mass_inverse** (Tensor, float32):?
+        -**vel** (Tensor, float32): [n, 3], the velocity of each atom.
+        -**crd** (Tensor, float32): [n, 3], the coordinate of each atom.
+        -**frc** (Tensor, float32): [n, 3], the force on each atom.
+        -**acc** (Tensor, float32): [n, 3], the acceleration of each atom.
+        -**inverse_mass** (Tensor, float32): [n, 1], the inverse value of mass of each atom.
+
+    Outputs:
+        -**res** ()
+
 
     Supported Platforms:
         ``GPU``
@@ -874,6 +1126,21 @@ class MDIterationLeapFrogWithMaxVel(PrimitiveWithInfer):
 
 class MDIterationGradientDescent(PrimitiveWithInfer):
     """
+    Update the coordinate of each atom in the direction of potential for energy minimization.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        learning_rate(float32): the update step length.
+
+    Inputs:
+        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
+        - **frc** (Tensor, float32) - [n, 3], the force on each atom.
+
+    Output:
+        - **res** ()
 
     Supported Platforms:
         ``GPU``
@@ -902,11 +1169,40 @@ class MDIterationGradientDescent(PrimitiveWithInfer):
 
 class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
     """
-    Calculate bond force and the virial coefficient caused by simple harmonic
-    bond for each atom together.
+    Calculate bond force, harmonic potential energy and atom virial together.
 
-    The calculation formula of the force part is the same as operator BondForce().
-    The Virial part is as follows:
+    The calculation formula is the same as operator BondForce() and BondEnergy().
+
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        bond_numbers(int32): the number of harmonic bonds m.
+
+    Inputs:
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor, int32) - The first atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The second atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **bond_k** (Tensor) - The force constant of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **bond_r0** (Tensor) - The equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
+
+    Outputs:
+        - **frc_f** (Tensor, float32) - [n, 3], same as operator BondForce().
+        - **atom_e** (Tensor, float32) - [n,], same as atom_ene in operator BondAtomEnergy().
+        - **atom_virial** (Tensor, float32) - [n,], same as atom_ene in operator BondAtomEnergy().
 
     Supported Platforms:
         ``GPU``
@@ -958,7 +1254,27 @@ class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
 
 class ConstrainForceCycle(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Calculate the constraint force in each iteration.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        constrain_pair_numbers(int32): the number of constrain pairs m.
+
+    Inputs:
+        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
+        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
+        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
+        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
+        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
+        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+
+    Outputs:
+        - **test_frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
 
     Supported Platforms:
         ``GPU``
@@ -1002,10 +1318,46 @@ class ConstrainForceCycle(PrimitiveWithInfer):
 
 class LJForceWithVirialEnergy(PrimitiveWithInfer):
     """
-    Calculate the Lennard-Jones force and PME direct force together.
+    Calculate the Lennard-Jones force, virial and atom energy together.
 
     The calculation formula of Lennard-Jones part is the same as operator
     LJForce(), and the PME direct part is within PME method.
+
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms, n.
+        cutoff_square(float32): the square value of cutoff.
+        pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().
+        max_neighbor_numbers(int32): the max neighbor numbers, default 800.
+
+    Inputs:
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **scaler** (Tensor) - The scale factor between real
+          space coordinate and its unsigned int value.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **nl_numbers** - (Tensor) - The each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+          The data type is int32 and the shape is :math:`(n, 800)`.
+        - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+
+    Outputs:
+        - **frc** (Tensor), The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -1069,31 +1421,46 @@ class LJForceWithVirialEnergy(PrimitiveWithInfer):
 
 class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
     """
-    Calculate the Lennard-Jones force and PME direct force together.
+    Calculate the Lennard-Jones force and PME direct force together for pressure.
 
     The calculation formula of Lennard-Jones part is the same as operator
     LJForce(), and the PME direct part is within PME method.
+
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         atom_numbers(int32): the number of atoms, n.
         cutoff_square(float32): the square value of cutoff.
         pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().
+        need_update(int32): if need_update = 1, calculate the pressure, default 0.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJtype** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge carried by each atom.
-        - **scaler** (Tensor, float32) - [3,], the scale factor between real
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **scaler** (Tensor) - The scale factor between real
           space coordinate and its unsigned int value.
-        - **nl_numbers** - (Tensor, int32) - [n,], the each atom.
-        - **nl_serial** - (Tensor, int32) - [n, 800], the neighbor list of each atom, the max number is 800.
-        - **d_LJ_A** (Tensor, float32) - [q,], the Lennard-Jones A coefficient of each kind of atom pair.
-          q is the number of atom pair.
-        - **d_LJ_B** (Tensor, float32) - [q,], the Lennard-Jones B coefficient of each kind of atom pair.
-          q is the number of atom pair.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **nl_numbers** - (Tensor) - The each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+          The data type is int32 and the shape is :math:`(n, 800)`.
+        - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **frc** (Tensor, float32), [n, 3], the force felt by each atom.
+        - **frc** (Tensor), The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -1157,11 +1524,18 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
 class PMEReciprocalForceUpdate(PrimitiveWithInfer):
     """
     Calculate the reciprocal part of long-range Coulumb force using
-    PME(Particle Meshed Ewald) method. Assume the number of atoms is n.
+    PME(Particle Meshed Ewald) method for pressure. Assume the number of atoms is n.
 
     The detailed calculation formula of PME(Particle Meshed Ewald) method
     can be found in this paper: A Smooth Particle Mesh Ewald Method. DOI:
     10.1063/1.470117.
+
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         atom_numbers(int32): the number of atoms, n.
@@ -1173,13 +1547,19 @@ class PMEReciprocalForceUpdate(PrimitiveWithInfer):
         box_length_0(float32): the value of boxlength idx 0
         box_length_1(float32): the value of boxlength idx 1
         box_length_2(float32): the value of boxlength idx 2
+        need_update(int32): if need_update = 1, calculate the pressure, default 0.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinates value of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge carried by each atom.
+        - **uint_crd** (Tensor) - [n, 3], the unsigned int coordinates value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3]`
+        - **charge** (Tensor) - [n,], the charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,]`
+        - **beta** (Tensor) - The PME beta parameter to be updated in pressure calculation.
+          The data type is float32 and the shape is :math:`(1,]`
 
     Outputs:
-        - **force** (Tensor, float32) - [n, 3], the force felt by each atom.
+        - **force** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3]`
 
     Supported Platforms:
         ``GPU``
@@ -1240,29 +1620,42 @@ class PMEReciprocalForceUpdate(PrimitiveWithInfer):
 class PMEExcludedForceUpdate(PrimitiveWithInfer):
     """
     Calculate the excluded  part of long-range Coulumb force using
-    PME(Particle Meshed Ewald) method. Assume the number of atoms is
+    PME(Particle Meshed Ewald) method for pressure. Assume the number of atoms is
     n, and the length of excluded list is E.
+
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         atom_numbers(int32): the number of atoms, n.
         excluded_numbers(int32): the length of excluded list, E.
         beta(float32): the PME beta parameter, determined by the
           non-bond cutoff value and simulation precision tolerance.
+        need_update(int32): if need_update = 1, calculate the pressure, default 0.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinates value of each atom.
-        - **scaler** (Tensor, float32) - [3,], the scale factor between real space
-          coordinates and its unsigned int value.
-        - **charge** (Tensor, float32) - [n,], the charge carried by each atom.
-        - **excluded_list_start** (Tensor, int32) - [n,], the start excluded index
-          in excluded list for each atom.
-        - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded
-          list of each atom. E is the number of excluded atoms.
-        - **excluded_atom_numbers** (Tensor, int32) - [n,], the number of atom excluded
-          in excluded list for each atom.
+        - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3]`
+        - **scaler** (Tensor) - The scale factor between real space
+          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,]`
+        - **excluded_list_start** (Tensor) - The start excluded index
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+        - **excluded_list** (Tensor) - The contiguous join of excluded
+          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,]`
+        - **excluded_atom_numbers** (Tensor) - The number of atom excluded
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+        - **beta** (Tensor) - The PME beta parameter to be updated in pressure calculation.
+          The data type is float32 and the shape is :math:`(1,]`
 
     Outputs:
-        - **force** (Tensor, float32) - [n, 3], the force felt by each atom.
+        - **force** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3]`
 
     Supported Platforms:
         ``GPU``
@@ -1321,10 +1714,53 @@ class PMEExcludedForceUpdate(PrimitiveWithInfer):
 
 class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
     """
-    Calculate the Lennard-Jones force and PME direct force together.
+    Calculate the Lennard-Jones force and PME direct force together for pressure.
 
     The calculation formula of Lennard-Jones part is the same as operator
     LJForce(), and the PME direct part is within PME method.
+
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms, n.
+        cutoff_square(float32): the square value of cutoff.
+        pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().
+        max_neighbor_numbers(int32): the max neighbor numbers, default 800.
+        need_update(int32): if need_update = 1, calculate the pressure, default 0.
+
+    Inputs:
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **scaler** (Tensor) - The scale factor between real
+          space coordinate and its unsigned int value.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **nl_numbers** - (Tensor) - The each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+          The data type is int32 and the shape is :math:`(n, 800)`.
+        - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **beta** (Tensor) - The PME beta parameter to be updated in pressure calculation.
+          The data type is float32 and the shape is :math:`(1,]`
+
+    Outputs:
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **atom_energy** (Tensor) - The accumulated potential energy for each atom.
+          The data type is float32 and the shape is :math:`(n, )`.
+        - **atom_virial** (Tensor) - The accumulated potential virial for each atom.
+          The data type is float32 and the shape is :math:`(n, )`.
 
     Supported Platforms:
         ``GPU``
@@ -1398,6 +1834,9 @@ class Dihedral14ForceWithAtomEnergyVirial(PrimitiveWithInfer):
     The calculation formula of force correction is the same as operator
     :class:`Dihedral14LJForceWithDirectCF`, and the energy correction part is the same
     as operator :class:`Dihedral14LJEnergy` and :class:`Dihedral14CFEnergy`.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
@@ -1489,7 +1928,58 @@ class Dihedral14ForceWithAtomEnergyVirial(PrimitiveWithInfer):
 
 class PMEEnergyUpdate(PrimitiveWithInfer):
     """
-    Calculate the Coulumb energy of the system using PME method.
+    Calculate the Coulumb energy of the system using PME method for pressure.
+
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms, n.
+        excluded_numbers(int32): the length of excluded list, E.
+        beta(float32): the PME beta parameter, determined by the
+                       non-bond cutoff value and simulation precision tolerance.
+        fftx(int32): the number of points for Fourier transform in dimension X.
+        ffty(int32): the number of points for Fourier transform in dimension Y.
+        fftz(int32): the number of points for Fourier transform in dimension Z.
+        box_length_0(float32): the value of boxlength idx 0.
+        box_length_1(float32): the value of boxlength idx 1.
+        box_length_2(float32): the value of boxlength idx 2.
+        max_neighbor_numbers(int32): the max neighbor numbers, default 800.
+        need_update(int32): if need_update = 1, calculate the pressure, default 0.
+
+    Inputs:
+        - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3]`
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,]`
+        - **nl_numbers** - (Tensor) - The each atom.
+          The data type is int32 and the shape is :math:`(n, 3]`
+        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+          The data type is int32 and the shape is :math:`(n, 800]`
+        - **scaler** (Tensor) - The scale factor between real space
+          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+        - **excluded_list_start** (Tensor) - The start excluded index
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+        - **excluded_list** (Tensor) - The contiguous join of excluded
+          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,]`
+        - **excluded_atom_numbers** (Tensor) - The number of atom excluded
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+        - **factor** (Tensor) - The factor parameter to be updated in pressure calculation.
+          The data type is float32 and the shape is :math:`(1,]`
+        - **beta** (Tensor) - The PME beta parameter to be updated in pressure calculation.
+          The data type is float32 and the shape is :math:`(1,]`
+
+    Outputs:
+        - **reciprocal_ene** (Scalar) - the reciprocal term of PME energy.
+          The data type is float32.
+        - **self_ene** (Scalar) - the self term of PME energy.
+          The data type is float32.
+        - **direct_ene** (Scalar) - the direct term of PME energy. The data type is float32.
+        - **correction_ene** (Scalar) - the correction term of PME energy. The data type is float32.
 
     Supported Platforms:
         ``GPU``
@@ -1578,7 +2068,31 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
 
 class ConstrainForceVirial(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Calculate the constraint force and virial in a step with iteration numbers.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        constrain_pair_numbers(int32): the number of constrain pairs m.
+        iteration_numbers(int32): the number of iteration numbers p.
+        half_exp_gamma_plus_half(float32): half exp_gamma plus half q.
+
+    Inputs:
+        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
+        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
+        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
+        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
+        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
+        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+
+    Outputs:
+        - **uint_crd** (Tensor, unsigned int32) - [n, 3], the uint crd on each atom.
+        - **frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
+        - **virial** (Tensor, float32) - [n, 3], the constraint virial on each atom.
 
     Supported Platforms:
         ``GPU``
@@ -1614,7 +2128,31 @@ class ConstrainForceVirial(PrimitiveWithInfer):
 
 class ConstrainForce(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Calculate the constraint force in a step with iteration numbers.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        constrain_pair_numbers(int32): the number of constrain pairs m.
+        iteration_numbers(int32): the number of iteration numbers p.
+        half_exp_gamma_plus_half(float32): half exp_gamma plus half q.
+
+    Inputs:
+        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
+        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
+        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
+        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
+        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
+        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+
+    Outputs:
+        - **uint_crd** (Tensor, unsigned int32) - [n, 3], the uint crd on each atom.
+        - **frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
+        - **virial** (Tensor, float32) - [n, 3], the constraint virial on each atom and it is zero.
 
     Supported Platforms:
         ``GPU``
@@ -1650,7 +2188,32 @@ class ConstrainForce(PrimitiveWithInfer):
 
 class Constrain(PrimitiveWithInfer):
     """
-    Calculate the restrain force with atom energy and virial.
+    Calculate the constraint force and virial depends on pressure calculation.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers(int32): the number of atoms n.
+        constrain_pair_numbers(int32): the number of constrain pairs m.
+        iteration_numbers(int32): the number of iteration numbers p.
+        half_exp_gamma_plus_half(float32): half exp_gamma plus half q.
+
+    Inputs:
+        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
+        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
+        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
+        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
+        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
+        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+        - **need_pressure** (Tensor, int32) - [1,], if need pressure, 1 else 0.
+
+    Outputs:
+        - **uint_crd** (Tensor, unsigned int32) - [n, 3], the uint crd on each atom.
+        - **frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
+        - **virial** (Tensor, float32) - [n, 3], the constraint virial on each atom.
 
     Supported Platforms:
         ``GPU``
