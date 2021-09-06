@@ -292,6 +292,9 @@ class Conv2dThor(_ConvThor):
     :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
     (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively.
 
+    Note:
+        For Ascend, the type of inputs should be subclass of Tensor[Float16], Tensor[Int8].
+        For GPU, the type of inputs should be subclass of Tensor[Float32].
 
     Args:
         in_channels (int): The number of the input channel :math:`C_{in}`.
@@ -351,7 +354,8 @@ class Conv2dThor(_ConvThor):
 
     Examples:
         >>> net = nn.Conv2dThor(120, 240, 4, has_bias=False, weight_init='normal')
-        >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
+        >>> # for Ascend
+        >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float16)
         >>> print(net(x).shape)
         (1, 240, 1024, 640)
     """
@@ -638,6 +642,7 @@ class EmbeddingThor(Cell):
             self.vocab_size, self.embedding_size, self.use_one_hot, self.embedding_table, self.dtype, self.padding_idx)
         return s
 
+
 @constexpr
 def _make_axis_range(start, end):
     axis = tuple(range(start, end))
@@ -804,10 +809,7 @@ class EmbeddingLookupThor(Cell):
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.getG = P.InsertGradientOf(self.save_gradient)
         self.cast = P.Cast()
-        if context.get_context("device_target") == "Ascend":
-            self.cube_matmul = P.MatMul(transpose_a=True)
-        else:
-            self.cube_matmul = P.MatMul(transpose_a=True)
+        self.cube_matmul = P.MatMul(transpose_a=True)
         self.mul = P.Mul()
         self.on_value = Tensor(1.0, self.dtype)
         self.off_value = Tensor(0.0, self.dtype)
