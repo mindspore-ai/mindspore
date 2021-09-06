@@ -274,8 +274,8 @@ class Dataset:
                 for d in item.children:
                     temp.append(d)
                     op_name[str(d)] = operator_id
-                    if isinstance(d, GeneratorDataset) and d.sample_fn and d.sample_fn.pid:
-                        generator_process[operator_id] = [d.num_parallel_workers, set(d.sample_fn.pid)]
+                    if isinstance(d, GeneratorDataset) and d.sample_fn and d.sample_fn.pids:
+                        generator_process[operator_id] = [d.num_parallel_workers, set(d.sample_fn.pids)]
 
             operator_id = operator_id + 1
             return process_name(temp, operator_id)
@@ -2390,13 +2390,16 @@ class ShuffleDataset(Dataset):
 
 # This wait function is for cleaning zombie subprocesses
 def wait_child_processes(signum, frame):
+    wait_pid()
+
+def wait_pid():
     try:
         while True:
             child_pid, _ = os.waitpid(-1, os.WNOHANG)
             if child_pid == 0:
                 break
     except OSError:
-        # waitpid may failed for some reasons so we ignored this error
+        # waitpid may be failed for some reasons so we ignore this error
         pass
 
 
@@ -3589,24 +3592,6 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
             logger.warning("Expected /dev/shm to exist.")
 
 
-def _watch_dog(pids, eof):
-    """
-    This thread is for get hang in SamplerFn.Process
-    """
-    exit_num = 0
-    while not eof.is_set():
-        for pid in pids:
-            if not psutil.pid_exists(pid):
-                exit_num += 1
-        if exit_num == 0:
-            continue
-        else:
-            ## multiprocessing.queue may hang in .get() forever when put() process was killed.
-            ## We have to exit main process otherwise main process will hang.
-            logger.error("The subprocess of GeneratorDataset may exit unexpected or be killed, main process will exit.")
-            os.kill(os.getpid(), signal.SIGTERM)
-
-
 def _convert_row(row):
     value = []
     # convert each column in row into numpy array
@@ -3629,13 +3614,9 @@ class SamplerFn:
         self.multi_process = multi_process
         self.need_join = False
         self.ppid = os.getpid()
-        self.pid = []
+        self.pids = []
         # Event for end of epoch
         if multi_process is True:
-            if platform.system().lower() != 'windows':
-                # Register clean zombie subprocesses signal here
-                signal.signal(signal.SIGCHLD, wait_child_processes)
-
             try:
                 self.eof = multiprocessing.Event()
             except:
@@ -3664,14 +3645,15 @@ class SamplerFn:
                 # which may cause deadlock. Therefore, the subprocess startup is performed in che initialization phase.
                 # In this phase, the main process is not locked.
                 worker.start()
-                self.pid.append(worker.pid)
+                self.pids.append(worker.pid)
                 self.need_join = True
             else:
                 worker = _GeneratorWorkerMt(dataset, self.eof)
                 worker.daemon = True
             self.workers.append(worker)
         if multi_process is True:
-            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.pid, self.eof))
+            self.need_abort = False
+            self.watch_dog = threading.Thread(target=self._watch_dog, args=())
             self.watch_dog.daemon = True
             self.watch_dog.start()
 
@@ -3718,6 +3700,38 @@ class SamplerFn:
                 idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
             yield _convert_row(result)
 
+    def _watch_dog(self):
+        """
+        This thread is for monitoring subprocesses forked by GeneratorDataset
+        """
+        while not self.need_abort:
+            subprocess_exit_num = 0
+            # Monitoring and count how many subprocesses already exit
+            for pid in self.pids:
+                try:
+                    p = psutil.Process(pid)
+                    if p.status() == psutil.STATUS_ZOMBIE:
+                        subprocess_exit_num += 1
+                except psutil.NoSuchProcess:
+                    subprocess_exit_num += 1
+            # If find subprocess exit, we will wait for 30s and do some waitpid operations
+            if subprocess_exit_num > 0:
+                start = time.time()
+                while time.time() - start < 30:
+                    # We need to distinguishing get_dataset_size or train finished normally and hang scenario.
+                    # If get_dataset_size or train finished normally, _stop_subprocess can be execute and
+                    # self._should_abort can be set to True. If main process is hang in get(), self._should_abort
+                    # will never set to True, then we wait for 30s and kill main process
+                    if self.need_abort is True:
+                        return
+                    # Sometimes subprocess may be zombie, so in 30s we can wait and do some useful tasks(waitpid).
+                    wait_pid()
+                ## multiprocessing.queue may hang in .get() forever when put() process was killed.
+                ## We have to exit main process otherwise main process will hang.
+                logger.error("The subprocess of GeneratorDataset may exit unexpected or be killed, "
+                             "main process will exit.")
+                os.kill(os.getpid(), signal.SIGTERM)
+
     def _stop_subprocess(self):
         # Only the main process can call join
         if self.need_join is True and self.ppid == os.getpid():
@@ -3726,6 +3740,7 @@ class SamplerFn:
             for w in self.workers:
                 if psutil.pid_exists(w.pid):
                     w.join()
+            self.need_abort = True
             self.watch_dog.join()
 
     def __del__(self):
