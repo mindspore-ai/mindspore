@@ -54,6 +54,8 @@ std::vector<int> CastToInt(const ValuePtr &value);
 
 std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value);
 
+std::vector<float> CastToFloat(const ValuePtr &value);
+
 bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type);
 
 bool IsRealCNodeKernel(const AnfNodePtr &node);
@@ -102,6 +104,9 @@ ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const st
 
 ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
                                           const std::string &node_name);
+
+ParameterPtr BuildFloatVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<float> &data,
+                                        const std::string &node_name);
 
 CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &perm,
                           const std::string &cnode_name);

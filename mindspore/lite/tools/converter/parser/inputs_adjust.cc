@@ -23,6 +23,7 @@ namespace {
 constexpr int kBuildInputFlagTwo = 2;
 constexpr int kBuildInputFlagThree = 3;
 constexpr int kBuildInputFlagFour = 4;
+constexpr int kBuildInputFlagFive = 5;
 }  // namespace
 STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
                                    const std::string &attr_name, int flag) {
@@ -69,6 +70,12 @@ STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePt
       auto value_data = GetValue<float>(value_ptr);
       param_node =
         opt::BuildFloatValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
+      break;
+    }
+    case kBuildInputFlagFive: {
+      auto value_data = opt::CastToFloat(value_ptr);
+      param_node =
+        opt::BuildFloatVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
       break;
     }
     default: {
@@ -126,7 +133,12 @@ bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(INFO) << "Adjust PowFuison";
       status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "power", kBuildInputFlagFour);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimResize)) {
+      MS_LOG(INFO) << "Adjust Resize";
+      // only one of zoom_factor and scale is valid.
       status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "zoom_factor", 1);
+      status = (status != lite::RET_NO_CHANGE)
+                 ? status
+                 : AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "scale", kBuildInputFlagFive);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "adjust input pass is failed.";
