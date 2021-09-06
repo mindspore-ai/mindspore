@@ -89,7 +89,7 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
     for (auto x : dx_shape) {
       dx_size_ *= x;
     }
-    workspace_size_ = (dx_size_ / sizeof(T)) * sizeof(T);
+    workspace_size_ = (dx_size_ / sizeof(T)) * sizeof(float);
     align_corners_ = GetAttr<bool>(kernel_node, "align_corners");
     InitSizeLists();
     return true;
