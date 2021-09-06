@@ -117,7 +117,7 @@ void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   device_id_ = device_id;
   MS_LOG(INFO) << "Debugger got device_target: " << device_target;
   device_target_ = device_target;
-  version_ = "1.4.0";
+  version_ = "1.5.0";
 }
 
 bool IsTypeDebuggerSupported(TypeId type) {
