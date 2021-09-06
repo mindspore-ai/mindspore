@@ -22,7 +22,7 @@ cfg = ed({
     })
 
 config1 = ed({
-    "class_num": 1000,
+    "class_num": 1001,
     "batch_size": 256,
     "loss_scale": 1024,
     "momentum": 0.9,
