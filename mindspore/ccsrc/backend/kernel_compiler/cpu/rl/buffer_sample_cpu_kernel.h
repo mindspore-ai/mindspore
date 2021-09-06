@@ -41,6 +41,12 @@ class BufferCPUSampleKernel : public CPUKernel {
     for (size_t i = 0; i < element_nums_; i++) {
       exp_element_list.push_back(shapes[i] * UnitSizeInBytes(types[i]->type_id()));
     }
+    // init seed for random_shuffle
+    if (seed_ == 0) {
+      std::srand(time(nullptr));
+    } else {
+      std::srand(seed_);
+    }
     // buffer size
     for (auto i : exp_element_list) {
       input_size_list_.push_back(i * capacity_);
@@ -67,12 +73,8 @@ class BufferCPUSampleKernel : public CPUKernel {
     for (size_t i = 0; i < IntToSize(count_addr[0]); ++i) {
       indexes.push_back(i);
     }
-    if (seed_ == 0) {
-      std::srand(time(nullptr));
-    } else {
-      std::srand(seed_);
-    }
-    random_shuffle(indexes.begin(), indexes.end());
+
+    random_shuffle(indexes.begin(), indexes.end(), [&](int i) { return std::rand() % i; });
 
     auto task = [&](size_t start, size_t end) {
       for (size_t j = start; j < end; j++) {
