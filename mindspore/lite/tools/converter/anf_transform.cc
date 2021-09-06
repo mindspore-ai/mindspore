@@ -62,7 +62,7 @@
 #include "tools/optimizer/graph/decrease_transpose_algo.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/optimizer/graph/dump_graph.h"
-#include "tools/converter/quantizer/post_training_quantizer.h"
+#include "tools/converter/quantizer/full_quant_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/optimizer/parallel/split_strategy.h"
@@ -278,9 +278,9 @@ void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGr
 int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   // quant
   if (config->commonQuantParam.quant_type == schema::QuantType_PostTraining) {
-    this->m_quantizer_ = std::make_unique<quant::PostTrainingQuantizer>(old_graph, config->commonQuantParam.bit_num);
+    this->m_quantizer_ = std::make_unique<quant::FullQuantQuantizer>(old_graph, config->commonQuantParam.bit_num);
     if (m_quantizer_ == nullptr) {
-      MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
+      MS_LOG(ERROR) << "New FullQuantQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }

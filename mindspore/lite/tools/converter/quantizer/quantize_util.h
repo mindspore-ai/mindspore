@@ -42,7 +42,7 @@
 #include "abstract/dshape.h"
 #include "tools/converter/quantizer/huffman_encode.h"
 #include "tools/converter/quantizer/bitpacking.h"
-#include "tools/converter/quantizer/fix_bit_weight_quantizer.h"
+#include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
 #include "src/lite_session.h"
 #include "tools/converter/graphdef_transform.h"
 #include "src/common/file_utils.h"
@@ -147,13 +147,13 @@ STATUS DoBitPack(const tensor::TensorPtr &weight, const size_t &bit_num, const s
   return RET_OK;
 }
 
-STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
-                   WeightQuantType weight_quant_type, TypeId quant_data_type, int index = 1);
+STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
+                           WeightQuantType weight_quant_type, TypeId quant_data_type, double init_scale, int index);
 
 template <typename T>
-STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type, int quant_max,
-                   int quant_min, size_t bit_num, WeightQuantType weight_quant_type, TypeId quant_data_type,
-                   int index = 1, bool k_means = false) {
+STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
+                           int quant_max, int quant_min, size_t bit_num, WeightQuantType weight_quant_type,
+                           TypeId quant_data_type, int index = 1, bool k_means = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto dims = weight->shape();
@@ -240,7 +240,5 @@ FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &);
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 
-int ConvertInputShapeMapToVector(FullQuantParam *config_param_, const std::vector<tensor::MSTensor *> &inputs,
-                                 std::vector<std::vector<int>> *shapes);
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_

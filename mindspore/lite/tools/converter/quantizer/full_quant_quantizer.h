@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_POSTRAINING_QUANTIZER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_POSTRAINING_QUANTIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FULL_QUANT_QUANTIZER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FULL_QUANT_QUANTIZER_H
 
 #include <string>
 #include <memory>
@@ -31,7 +31,6 @@
 #include "tools/converter/converter.h"
 #include "include/ms_tensor.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/preprocess/preprocess_param.h"
 
@@ -46,10 +45,10 @@ struct MaxMin {
 
 constexpr int kDefaultBinNumber = 2048;
 
-class PostTrainingQuantizer : public Quantizer {
+class FullQuantQuantizer : public Quantizer {
  public:
-  PostTrainingQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type = kNumberTypeInt8, bool per_channel = true);
-  ~PostTrainingQuantizer() override;
+  FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type = kNumberTypeInt8, bool per_channel = true);
+  ~FullQuantQuantizer() override;
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
 
@@ -201,18 +200,8 @@ class Calibrator {
     std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
 
   static STATUS UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
-  void Dump();
 
   STATUS ComputeThreshold();
-
-  static std::unordered_map<CNodePtr, float> GetScale(
-    std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
-
-  static std::unordered_map<CNodePtr, int32_t> GetZeropoint(
-    std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
-
-  static std::map<CNodePtr, MaxMin> GetMinMax(
-    std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
   std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *GetInputDivergInfo();
 
@@ -232,4 +221,4 @@ class Calibrator {
   int quant_min_;
 };
 }  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_POSTRAINING_QUANTIZER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FULL_QUANT_QUANTIZER_H

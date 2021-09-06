@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FIX_BIT_WEIGHT_QUANTIZER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FIX_BIT_WEIGHT_QUANTIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_MIXED_BIT_WEIGHT_QUANTIZER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_MIXED_BIT_WEIGHT_QUANTIZER_H
 #include <cstdint>
 #include <vector>
 #include <cmath>
@@ -34,14 +34,14 @@ typedef struct {
   float max;
 } MinMax;
 
-class FixBitWeightQuantizer {
+class MixedBitWeightQuantizer {
  public:
-  explicit FixBitWeightQuantizer(float target_relative_err = 0.01, float target_search_tolerance = 0.01,
-                                 int max_search_iters = 100)
-      : target_relative_err(target_relative_err),
-        target_search_tolerance(target_search_tolerance),
-        max_search_iters(max_search_iters) {}
-  ~FixBitWeightQuantizer() = default;
+  explicit MixedBitWeightQuantizer(float target_relative_err = 0.01, float target_search_tolerance = 0.01,
+                                   int max_search_iters = 100)
+      : target_relative_err_(target_relative_err),
+        target_search_tolerance_(target_search_tolerance),
+        max_search_iters_(max_search_iters) {}
+  ~MixedBitWeightQuantizer() = default;
 
   int DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
                      std::vector<schema::QuantParamT> *quant_params, std::vector<int16_t> *quant_datas);
@@ -58,11 +58,11 @@ class FixBitWeightQuantizer {
                                                       int max_iters, float target_err, float rel_tol);
 
  private:
-  float var_corr{1};
-  float mean_corr{0};
-  float target_relative_err;
-  float target_search_tolerance;
-  int max_search_iters;
+  float var_corr_{1};
+  float mean_corr_{0};
+  float target_relative_err_;
+  float target_search_tolerance_;
+  int max_search_iters_;
 };
 }  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FIX_BIT_WEIGHT_QUANTIZER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_MIXED_BIT_WEIGHT_QUANTIZER_H

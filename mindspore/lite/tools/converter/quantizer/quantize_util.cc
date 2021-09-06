@@ -726,8 +726,8 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
   }
 }
 
-STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
-                   WeightQuantType weight_quant_type, TypeId quant_data_type, int index) {
+STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
+                           WeightQuantType weight_quant_type, TypeId quant_data_type, double init_scale, int index) {
   MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   auto dims = weight->shape();
@@ -748,13 +748,13 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
   std::vector<int16_t> quant_data(elem_count);
   int ret = RET_OK;
   if (weight_quant_type == MIXED_BIT_PER_LAYER) {
-    FixBitWeightQuantizer quantizer(0.02);
+    MixedBitWeightQuantizer quantizer(init_scale);
     quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params, &quant_data);
   } else {
     MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
   }
   auto status =
-    UpdateTensorDataAndSize(weight, quant_data.data(), quant_data.size() * sizeof(int16_t), TypeId::kNumberTypeInt16);
+    UpdateTensorDataAndSize(weight, quant_data.data(), quant_data.size() * sizeof(int16_t), quant_data_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
     return RET_ERROR;

@@ -5,7 +5,6 @@ source ./scripts/base_functions.sh
 function Run_Converter() {
     # Unzip x86 runtime and converter
     cd ${x86_path} || exit 1
-    tar -zxf ${x86_path}/avx/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
 
