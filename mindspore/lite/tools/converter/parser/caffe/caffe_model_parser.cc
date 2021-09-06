@@ -193,12 +193,13 @@ STATUS CaffeModelParser::ConvertLayers() {
     }
 
     // build cnode
-    auto valueNode = NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c));
-    MSLITE_CHECK_PTR(valueNode);
-    std::vector<AnfNodePtr> op_inputs = {valueNode};
+    auto value_node = NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c));
+    MSLITE_CHECK_PTR(value_node);
+    std::vector<AnfNodePtr> op_inputs = {value_node};
     op_inputs.insert(op_inputs.end(), input_nodes.begin(), input_nodes.end());
     op_inputs.insert(op_inputs.end(), const_parameters.begin(), const_parameters.end());
     auto new_cnode = res_graph_->NewCNode(op_inputs);
+    MSLITE_CHECK_PTR(new_cnode);
     new_cnode->set_fullname_with_scope(layer.name());
 
     // convert outputs
@@ -263,6 +264,7 @@ STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
         return RET_ERROR;
       }
       auto parameter = res_graph_->add_parameter();
+      MSLITE_CHECK_PTR(parameter);
       std::vector<int64_t> shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(layer.name());
       if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
         MS_LOG(WARNING) << "Can not find name in map. name is " << layer.name();
@@ -300,6 +302,7 @@ STATUS CaffeModelParser::ConvertGraphInputsOfShape() {
       }
     }
     auto parameter = res_graph_->add_parameter();
+    MSLITE_CHECK_PTR(parameter);
     auto tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kNumberTypeFloat32);
     if (tensor_info == nullptr) {
       MS_LOG(ERROR) << "Create tensor info failed";
