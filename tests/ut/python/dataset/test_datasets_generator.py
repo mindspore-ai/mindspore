@@ -18,6 +18,7 @@ import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
+import mindspore.dataset.engine.iterators as it
 from mindspore import log as logger
 
 
@@ -419,6 +420,9 @@ def test_generator_14():
     Test 1D Generator MP + CPP sampler
     """
     logger.info("Test 1D Generator MP : 0 - 63")
+    # Sometimes there are some ITERATORS left in ITERATORS_LIST when run all UTs together,
+    # and cause core dump and blocking in this UT. Add cleanup() here to fix it.
+    it._cleanup()  # pylint: disable=W0212
 
     source = [(np.array([x]),) for x in range(256)]
     ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(), num_parallel_workers=4).repeat(2)
