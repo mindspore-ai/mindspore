@@ -36,7 +36,7 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
   for (auto &pass : schedule_passes) {
     CHECK_NULL_RETURN(pass);
     if (!pass->Run(func_graph)) {
-      MS_LOG(ERROR) << "run pass failed, pass name is " << pass_names[index];
+      MS_LOG(WARNING) << "run pass failed, pass name is " << pass_names[index];
       return false;
     }
     ++index;

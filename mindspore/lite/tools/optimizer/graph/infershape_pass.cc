@@ -103,7 +103,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
   if (!JudgeAllOpsCanInfer(func_graph)) {
-    MS_LOG(ERROR) << "exist op cannot support infer shape.";
+    MS_LOG(WARNING) << "exist op cannot support infer shape.";
     return false;
   }
   if (InferProcess(func_graph) != lite::RET_OK) {
