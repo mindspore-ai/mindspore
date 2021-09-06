@@ -16,6 +16,7 @@
 #include "backend/optimizer/common/node_pass.h"
 
 #include <unordered_set>
+#include <unordered_map>
 #include <deque>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -24,12 +25,38 @@
 
 namespace mindspore {
 namespace opt {
+const size_t kSwitchBranchIndex = 2;
+const size_t kCallArgsIndex = 1;
+const size_t kPartialArgsIndex = 1;
+
+void AddOutputAndCallerToMap(const CNodePtr &cnode, std::unordered_map<AnfNodePtr, AnfNodePtr> *out_caller_map) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(out_caller_map);
+  auto inputs = cnode->inputs();
+  if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
+    auto partial_node = dyn_cast<CNode>(inputs.at(kSwitchBranchIndex));
+    MS_EXCEPTION_IF_NULL(partial_node);
+    const auto &partial_inputs = partial_node->inputs();
+    if (!IsPrimitive(partial_inputs.at(0), prim::kPrimPartial)) {
+      MS_LOG(EXCEPTION) << "Invalid switch node: " << cnode->DebugString();
+    }
+    auto switch_subgraph = GetValueNode<FuncGraphPtr>(partial_inputs.at(kPartialArgsIndex));
+    MS_EXCEPTION_IF_NULL(switch_subgraph);
+    (*out_caller_map)[switch_subgraph->output()] = cnode;
+  } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall)) {
+    auto call_subgraph = GetValueNode<FuncGraphPtr>(inputs.at(kCallArgsIndex));
+    MS_EXCEPTION_IF_NULL(call_subgraph);
+    (*out_caller_map)[call_subgraph->output()] = cnode;
+  }
+}
+
 bool NodePass::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(func_graph);
 
+  std::unordered_map<AnfNodePtr, AnfNodePtr> subgraph_out_caller_map = {};
   std::unordered_set<AnfNodePtr> seen_node;
   std::deque<std::pair<AnfNodePtr, FuncGraphPtr>> todo{{func_graph->output(), func_graph}};
   bool changes = false;
@@ -46,6 +73,10 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     AnfNodePtr new_node = Run(fg, node);
     bool change = (new_node != nullptr);
     if (new_node != nullptr && new_node != node) {
+      auto find_iter = subgraph_out_caller_map.find(node);
+      if (find_iter != subgraph_out_caller_map.end()) {
+        find_iter->second->set_abstract(new_node->abstract());
+      }
       (void)manager->Replace(node, new_node);
       // if replaced node is end_goto, refresh relative params in kernel graph
       auto kernel_graph = fg->cast<std::shared_ptr<session::KernelGraph>>();
@@ -73,6 +104,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
       }
       auto cnode = new_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
+      AddOutputAndCallerToMap(cnode, &subgraph_out_caller_map);
       auto inputs = cnode->inputs();
       std::for_each(inputs.begin(), inputs.end(), [&fg, &todo](AnfNodePtr &node) {
         todo.emplace_back(std::pair<AnfNodePtr, FuncGraphPtr>(node, fg));
