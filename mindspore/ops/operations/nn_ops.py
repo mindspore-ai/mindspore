@@ -2292,6 +2292,9 @@ class TopK(PrimitiveWithInfer):
     """
     Finds values and indices of the `k` largest entries along the last dimension.
 
+    .. warning::
+        - If sorted set to 'False', it will use aicpu operator, performance may be reduced.
+
     If the `input_x` is a one-dimensional Tensor, finds the `k` largest entries in the Tensor,
     and outputs its value and index as a Tensor. Therefore, values[`k`] is the `k` largest item in `input_x`,
     and its index is indices [`k`].
@@ -2307,7 +2310,7 @@ class TopK(PrimitiveWithInfer):
 
     Args:
         sorted (bool): If true, the obtained elements will
-            be sorted by the values in descending order. Default: False.
+            be sorted by the values in descending order. Default: True.
 
     Inputs:
         - **input_x** (Tensor) - Input to be computed, data type must be float16, float32 or int32.
@@ -2339,9 +2342,10 @@ class TopK(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, sorted=False):
+    def __init__(self, sorted=True):
         """Initialize TopK."""
-        validator.check_value_type("sorted", sorted, [bool], self.name)
+        self.sorted = validator.check_value_type("sorted", sorted, [bool], self.name)
+        self.add_prim_attr("sorted", self.sorted)
         self.init_prim_io_names(inputs=['input', 'k'],
                                 outputs=['values', 'indices'])
 

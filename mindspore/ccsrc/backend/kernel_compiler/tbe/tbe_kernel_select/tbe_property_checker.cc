@@ -28,6 +28,7 @@ using AbstractTensor = mindspore::abstract::AbstractTensor;
 using AbstractTensorPtr = mindspore::abstract::AbstractTensorPtr;
 using CheckSupportFun = bool (*)(const CNodePtr &cnode);
 
+constexpr char kAttrSorted[] = "sorted";
 constexpr char kAttrStrides[] = "strides";
 constexpr char kAttrShrinkAxisMask[] = "shrink_axis_mask";
 
@@ -70,10 +71,18 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
   return true;
 }
 
+static bool CheckTopK(const CNodePtr &cnode) {
+  if (AnfAlgo::HasNodeAttr(kAttrSorted, cnode)) {
+    auto sorted = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrSorted);
+    return sorted;
+  }
+  MS_LOG(EXCEPTION) << "For 'TopK', it should be have attribute 'sorted'.";
+}
+
 bool TbePropertyChecker::CheckTbeProperties(const mindspore::CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  static std::map<std::string, CheckSupportFun> tbe_property_checker = {{kStridedSliceOpName, CheckStridedSlice},
-                                                                        {kStridedSliceGradOpName, CheckStridedSlice}};
+  static std::map<std::string, CheckSupportFun> tbe_property_checker = {
+    {kStridedSliceOpName, CheckStridedSlice}, {kStridedSliceGradOpName, CheckStridedSlice}, {kTopKOpName, CheckTopK}};
   auto cnode_type = AnfAlgo::GetCNodeName(cnode);
   auto find_iter = tbe_property_checker.find(cnode_type);
   if (find_iter != tbe_property_checker.end()) {
