@@ -175,7 +175,9 @@ std::shared_ptr<PullIterator> Dataset::CreatePullBasedIterator(std::vector<std::
 
   std::shared_ptr<PullIterator> iter = std::make_shared<PullIterator>();
   Status rc = iter->BuildAndLaunchTree(ds);
-  if (rc.IsError()) MS_LOG(ERROR) << "CreateIterator: Iterator exception caught: " << rc;
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "CreateIterator: Iterator exception caught: " << rc;
+  }
   RETURN_SECOND_IF_ERROR(rc, nullptr);
   return iter;
 }
@@ -202,7 +204,12 @@ bool Dataset::DeviceQueueCharIF(const std::vector<char> &queue_name, const std::
 
   // Get ToDevice consumer
   auto consumer = std::make_unique<ToDevice>(num_epochs);
-  ToDevice *consumer_ = consumer.get();
+  ToDevice *consumer_ptr = consumer.get();
+  if (consumer_ptr == nullptr) {
+    MS_LOG(ERROR) << "ToDevice: Failed to get consumer.";
+    return false;
+  }
+
   rc = consumer->Init(ds);
   if (rc.IsError()) {
     MS_LOG(ERROR) << "ToDevice: Failed to init. Error status: " << rc;
@@ -211,7 +218,7 @@ bool Dataset::DeviceQueueCharIF(const std::vector<char> &queue_name, const std::
   runtime_context->AssignConsumer(std::move(consumer));
 
   // Send data to device
-  rc = consumer_->Send();
+  rc = consumer_ptr->Send();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "ToDevice: Failed to send data to device. Error status: " << rc;
     return false;
@@ -240,16 +247,22 @@ bool Dataset::SaveCharIF(const std::vector<char> &dataset_path, int32_t num_file
     MS_LOG(ERROR) << "CreateSaver failed." << rc;
     return false;
   }
-  SaveToDisk *consumer_ = consumer.get();
+  SaveToDisk *consumer_ptr = consumer.get();
+  if (consumer_ptr == nullptr) {
+    MS_LOG(ERROR) << "ToDevice: Failed to get consumer.";
+    return false;
+  }
+
   rc = consumer->Init(ds->IRNode());
   if (rc.IsError()) {
     MS_LOG(ERROR) << "CreateSaver failed." << rc;
     return false;
   }
+
   runtime_context->AssignConsumer(std::move(consumer));
 
   // Save data into file
-  rc = consumer_->Save();
+  rc = consumer_ptr->Save();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "Saver: Failed to save data into file. Error status: " << rc;
     return false;
@@ -410,7 +423,9 @@ ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datase
 FilterDataset::FilterDataset(std::shared_ptr<Dataset> input, std::function<MSTensorVec(MSTensorVec)> predicate,
                              const std::vector<std::vector<char>> &input_columns) {
   std::shared_ptr<TensorOp> c_func = nullptr;
-  if (predicate) c_func = std::make_shared<CFuncOp>(std::bind(FuncPtrConverter, predicate, std::placeholders::_1));
+  if (predicate) {
+    c_func = std::make_shared<CFuncOp>(std::bind(FuncPtrConverter, predicate, std::placeholders::_1));
+  }
   auto ds = std::make_shared<FilterNode>(input->IRNode(), c_func, VectorCharToString(input_columns));
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);

@@ -37,7 +37,7 @@ TEST_F(MindDataTestPath, Test1) {
   int i = 0;
   while (dir_it->HasNext()) {
     Path v = dir_it->Next();
-    MS_LOG(DEBUG) << v.toString() << "\n";
+    MS_LOG(DEBUG) << v.ToString() << "\n";
     i++;
     if (i == 10) {
       break;

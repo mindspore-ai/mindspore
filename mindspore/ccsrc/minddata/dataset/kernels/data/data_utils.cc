@@ -84,7 +84,7 @@ Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_pt
   return Status::OK();
 }
 
-Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, dsize_t num_classes) {
+Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes) {
   input->Squeeze();
 
   if (input->Rank() > 1) {  // We expect the input to be int he first dimension
@@ -117,7 +117,7 @@ Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *ou
   }
 }
 
-Status FillHelper(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *out,
+Status FillHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out,
                   std::shared_ptr<Tensor> fill_output, std::shared_ptr<Tensor> fill_value) {
   const DataType &input_type = input->type();
   const TensorShape &input_shape = input->shape();
@@ -606,6 +606,7 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 
 Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::shared_ptr<Tensor> prepend,
                    std::shared_ptr<Tensor> append) {
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() > 0, "Concatenate: input is null");
   axis = Tensor::HandleNeg(axis, input[0]->shape().Rank());
   CHECK_FAIL_RETURN_UNEXPECTED(axis == 0, "Concatenate: only 1D input supported");
 

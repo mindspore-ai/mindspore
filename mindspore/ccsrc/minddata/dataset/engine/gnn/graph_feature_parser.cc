@@ -41,7 +41,9 @@ Status GraphFeatureParser::LoadFeatureTensor(const std::string &key, const std::
   MSRStatus rs = shard_column_->GetColumnValueByName(key, col_blob, {}, &data, &data_ptr, &n_bytes, &col_type,
                                                      &col_type_size, &column_shape);
   CHECK_FAIL_RETURN_UNEXPECTED(rs == mindrecord::SUCCESS, "fail to load column" + key);
-  if (data == nullptr) data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
+  if (data == nullptr) {
+    data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
+  }
   RETURN_IF_NOT_OK(Tensor::CreateFromMemory(std::move(TensorShape({static_cast<dsize_t>(n_bytes / col_type_size)})),
                                             std::move(DataType(mindrecord::ColumnDataTypeNameNormalized[col_type])),
                                             data, tensor));
@@ -60,7 +62,9 @@ Status GraphFeatureParser::LoadFeatureToSharedMemory(const std::string &key, con
   MSRStatus rs = shard_column_->GetColumnValueByName(key, col_blob, {}, &data, &data_ptr, &n_bytes, &col_type,
                                                      &col_type_size, &column_shape);
   CHECK_FAIL_RETURN_UNEXPECTED(rs == mindrecord::SUCCESS, "fail to load column" + key);
-  if (data == nullptr) data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
+  if (data == nullptr) {
+    data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
+  }
   std::shared_ptr<Tensor> tensor;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(std::move(TensorShape({2})), std::move(DataType(DataType::DE_INT64)), &tensor));
   auto fea_itr = tensor->begin<int64_t>();
@@ -85,7 +89,9 @@ Status GraphFeatureParser::LoadFeatureIndex(const std::string &key, const std::v
                                                      &col_type_size, &column_shape);
   CHECK_FAIL_RETURN_UNEXPECTED(rs == mindrecord::SUCCESS, "fail to load column:" + key);
 
-  if (data == nullptr) data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
+  if (data == nullptr) {
+    data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
+  }
 
   for (int i = 0; i < n_bytes; i += col_type_size) {
     int32_t feature_ind = -1;
@@ -96,7 +102,9 @@ Status GraphFeatureParser::LoadFeatureIndex(const std::string &key, const std::v
     } else {
       RETURN_STATUS_UNEXPECTED("Feature Index needs to be int32/int64 type!");
     }
-    if (feature_ind >= 0) indices->push_back(feature_ind);
+    if (feature_ind >= 0) {
+      indices->push_back(feature_ind);
+    }
   }
   return Status::OK();
 }

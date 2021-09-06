@@ -96,7 +96,7 @@ Status ConnectorSize::SaveToFile() {
 }
 
 Status ConnectorSize::Init(const std::string &dir_path, const std::string &device_id) {
-  file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + device_id + ".json")).toString();
+  file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + device_id + ".json")).ToString();
   return Status::OK();
 }
 

@@ -323,7 +323,7 @@ Status SentencePieceTokenizerOperation::ValidateParams() {
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
-    if (access(vocab_file.toString().c_str(), R_OK) == -1) {
+    if (access(vocab_file.ToString().c_str(), R_OK) == -1) {
       std::string err_msg = "SentencePieceTokenizer : no access to specified dataset file: " + vocab_path_;
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);

@@ -50,6 +50,14 @@ Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   IO_CHECK(input, output);
   dsize_t height = input->shape()[0];
   dsize_t width = input->shape()[1];
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / std::abs(translate_range_[0])) > width,
+                               "RandomAffineOp: multiplication out of bounds.");
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / std::abs(translate_range_[1])) > width,
+                               "RandomAffineOp: multiplication out of bounds.");
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / std::abs(translate_range_[2])) > height,
+                               "RandomAffineOp: multiplication out of bounds.");
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / std::abs(translate_range_[3])) > height,
+                               "RandomAffineOp: multiplication out of bounds.");
   float_t min_dx = translate_range_[0] * width;
   float_t max_dx = translate_range_[1] * width;
   float_t min_dy = translate_range_[2] * height;

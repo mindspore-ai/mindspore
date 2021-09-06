@@ -29,6 +29,7 @@ BoundingBox::BoundingBox(bbox_float x, bbox_float y, bbox_float width, bbox_floa
 
 Status BoundingBox::ReadFromTensor(const TensorPtr &bbox_tensor, dsize_t index_of_bbox,
                                    std::shared_ptr<BoundingBox> *bbox_out) {
+  CHECK_FAIL_RETURN_UNEXPECTED(bbox_tensor != nullptr, "BoundingBox: bbox_tensor is null.");
   bbox_float x;
   bbox_float y;
   bbox_float width;
@@ -50,16 +51,20 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
     return Status(StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
                   "BoundingBox: bounding boxes should have to be two-dimensional matrix at least.");
   }
-  uint32_t num_of_features = image_and_bbox[1]->shape()[1];
+  int64_t num_of_features = image_and_bbox[1]->shape()[1];
   if (num_of_features < kNumOfCols) {
     return Status(StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
                   "BoundingBox: bounding boxes should be have at least 4 features.");
   }
   std::vector<std::shared_ptr<BoundingBox>> bbox_list;
   RETURN_IF_NOT_OK(GetListOfBoundingBoxes(image_and_bbox[1], &bbox_list));
-  uint32_t img_h = image_and_bbox[0]->shape()[0];
-  uint32_t img_w = image_and_bbox[0]->shape()[1];
+  int64_t img_h = image_and_bbox[0]->shape()[0];
+  int64_t img_w = image_and_bbox[0]->shape()[1];
   for (auto &bbox : bbox_list) {
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int64_t>::max() - bbox->x()) > bbox->width(),
+                                 "BoundingBox: bbox_width is too large.");
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int64_t>::max() - bbox->y()) > bbox->height(),
+                                 "BoundingBox: bbox_height is too large.");
     if ((bbox->x() + bbox->width() > img_w) || (bbox->y() + bbox->height() > img_h)) {
       return Status(StatusCode::kMDBoundingBoxOutOfBounds, __LINE__, __FILE__,
                     "BoundingBox: bounding boxes is out of bounds of the image");
@@ -73,6 +78,7 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
 }
 
 Status BoundingBox::WriteToTensor(const TensorPtr &bbox_tensor, dsize_t index_of_bbox) {
+  CHECK_FAIL_RETURN_UNEXPECTED(bbox_tensor != nullptr, "BoundingBox: bbox_tensor is null.");
   RETURN_IF_NOT_OK(bbox_tensor->SetItemAt<bbox_float>({index_of_bbox, 0}, x_));
   RETURN_IF_NOT_OK(bbox_tensor->SetItemAt<bbox_float>({index_of_bbox, 1}, y_));
   RETURN_IF_NOT_OK(bbox_tensor->SetItemAt<bbox_float>({index_of_bbox, 2}, width_));
@@ -82,6 +88,7 @@ Status BoundingBox::WriteToTensor(const TensorPtr &bbox_tensor, dsize_t index_of
 
 Status BoundingBox::GetListOfBoundingBoxes(const TensorPtr &bbox_tensor,
                                            std::vector<std::shared_ptr<BoundingBox>> *bbox_out) {
+  CHECK_FAIL_RETURN_UNEXPECTED(bbox_tensor != nullptr, "BoundingBox: bbox_tensor is null.");
   dsize_t num_of_boxes = bbox_tensor->shape()[0];
   for (dsize_t i = 0; i < num_of_boxes; i++) {
     std::shared_ptr<BoundingBox> bbox;
@@ -104,10 +111,15 @@ Status BoundingBox::CreateTensorFromBoundingBoxList(const std::vector<std::share
 }
 
 Status BoundingBox::PadBBoxes(const TensorPtr *bbox_list, size_t bbox_count, int32_t pad_top, int32_t pad_left) {
+  CHECK_FAIL_RETURN_UNEXPECTED(bbox_list != nullptr, "BoundingBox: bbox_list ptr is null.");
   for (dsize_t i = 0; i < bbox_count; i++) {
     std::shared_ptr<BoundingBox> bbox;
     RETURN_IF_NOT_OK(ReadFromTensor(*bbox_list, i, &bbox));
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - bbox->x()) > pad_left,
+                                 "BoundingBox: pad_left is too large.");
     bbox->SetX(bbox->x() + pad_left);
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - bbox->y()) > pad_top,
+                                 "BoundingBox: pad_top is too large.");
     bbox->SetY(bbox->y() + pad_top);
     RETURN_IF_NOT_OK(bbox->WriteToTensor(*bbox_list, i));
   }
@@ -116,6 +128,7 @@ Status BoundingBox::PadBBoxes(const TensorPtr *bbox_list, size_t bbox_count, int
 
 Status BoundingBox::UpdateBBoxesForCrop(TensorPtr *bbox_list, size_t *bbox_count, int32_t CB_Xmin, int32_t CB_Ymin,
                                         int32_t CB_Xmax, int32_t CB_Ymax) {
+  CHECK_FAIL_RETURN_UNEXPECTED(bbox_list != nullptr, "BoundingBox: bbox_list ptr is null.");
   // PASS LIST, COUNT OF BOUNDING BOXES
   // Also PAss X/Y Min/Max of image cropped region - normally obtained from 'GetCropBox' functions
   std::vector<dsize_t> correct_ind;
@@ -156,6 +169,7 @@ Status BoundingBox::UpdateBBoxesForCrop(TensorPtr *bbox_list, size_t *bbox_count
   // create new tensor and copy over bboxes still valid to the image
   // bboxes outside of new cropped region are ignored - empty tensor returned in case of none
   *bbox_count = correct_ind.size();
+  CHECK_FAIL_RETURN_UNEXPECTED(*bbox_count >= 0, "BoundingBox: correct_ind.size() is smaller than zero.");
   bbox_float temp = 0.0;
   for (auto slice : correct_ind) {  // for every index in the loop
     for (dsize_t ix = 0; ix < bboxDim; ix++) {
@@ -172,6 +186,10 @@ Status BoundingBox::UpdateBBoxesForCrop(TensorPtr *bbox_list, size_t *bbox_count
 
 Status BoundingBox::UpdateBBoxesForResize(const TensorPtr &bbox_list, size_t bbox_count, int32_t target_width,
                                           int32_t target_height, int32_t orig_width, int32_t orig_height) {
+  CHECK_FAIL_RETURN_UNEXPECTED(bbox_list != nullptr, "BoundingBox: bbox_list ptr is null.");
+  CHECK_FAIL_RETURN_UNEXPECTED(orig_width != 0, "BoundingBox: orig_width is zero.");
+  CHECK_FAIL_RETURN_UNEXPECTED(orig_height != 0, "BoundingBox: orig_height is zero.");
+
   // cast to float to preserve fractional
   bbox_float W_aspRatio = (target_width * 1.0) / (orig_width * 1.0);
   bbox_float H_aspRatio = (target_height * 1.0) / (orig_height * 1.0);
@@ -179,6 +197,16 @@ Status BoundingBox::UpdateBBoxesForResize(const TensorPtr &bbox_list, size_t bbo
     // for each bounding box
     std::shared_ptr<BoundingBox> bbox;
     RETURN_IF_NOT_OK(ReadFromTensor(bbox_list, i, &bbox));
+
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / bbox->x()) > W_aspRatio,
+                                 "BoundingBox: W_aspRatio is too large.");
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / bbox->y()) > H_aspRatio,
+                                 "BoundingBox: H_aspRatio is too large.");
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / bbox->width()) > W_aspRatio,
+                                 "BoundingBox: W_aspRatio is too large.");
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / bbox->height()) > H_aspRatio,
+                                 "BoundingBox: H_aspRatio is too large.");
+
     // update positions and widths
     bbox->SetX(bbox->x() * W_aspRatio);
     bbox->SetY(bbox->y() * H_aspRatio);

@@ -39,7 +39,7 @@ class RandomResizeWithBBoxOp : public ResizeWithBBoxOp {
     is_deterministic_ = false;
   }
 
-  ~RandomResizeWithBBoxOp() = default;
+  ~RandomResizeWithBBoxOp() override = default;
 
   // Description: A function that prints info about the node
   void Print(std::ostream &out) const override {

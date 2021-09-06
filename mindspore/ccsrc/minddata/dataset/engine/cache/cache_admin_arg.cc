@@ -374,16 +374,23 @@ Status CacheAdminArgHandler::Validate() {
 
   // Additional checks here
   auto max_num_workers = std::max<int32_t>(std::thread::hardware_concurrency(), kMaxNumWorkers);
-  if (used_args_[ArgValue::kArgNumWorkers] && (num_workers_ < 1 || num_workers_ > max_num_workers))
+  if (used_args_[ArgValue::kArgNumWorkers] && (num_workers_ < 1 || num_workers_ > max_num_workers)) {
     // Check the value of num_workers only if it's provided by users.
     return Status(StatusCode::kMDSyntaxError,
                   "Number of workers must be in range of 1 and " + std::to_string(max_num_workers) + ".");
-  if (log_level_ < MsLogLevel::DEBUG || log_level_ > MsLogLevel::EXCEPTION)
+  }
+
+  if (log_level_ < MsLogLevel::DEBUG || log_level_ > MsLogLevel::EXCEPTION) {
     return Status(StatusCode::kMDSyntaxError, "Log level must be in range (0..4).");
-  if (memory_cap_ratio_ <= 0 || memory_cap_ratio_ > 1)
+  }
+
+  if (memory_cap_ratio_ <= 0 || memory_cap_ratio_ > 1) {
     return Status(StatusCode::kMDSyntaxError, "Memory cap ratio should be positive and no greater than 1");
-  if (port_ < kMinLegalPort || port_ > kMaxLegalPort)
+  }
+
+  if (port_ < kMinLegalPort || port_ > kMaxLegalPort) {
     return Status(StatusCode::kMDSyntaxError, "Port must be in range (1025..65535).");
+  }
 
   return Status::OK();
 }

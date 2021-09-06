@@ -44,7 +44,7 @@ Status RandomSelectSubpolicyOp::Compute(const TensorRow &input, TensorRow *outpu
 uint32_t RandomSelectSubpolicyOp::NumInput() {
   uint32_t num_in = policy_.front().front().first->NumInput();
   for (auto &sub : policy_) {
-    for (auto p : sub) {
+    for (auto &p : sub) {
       if (num_in != p.first->NumInput()) {
         MS_LOG(WARNING) << "Unable to determine numInput.";
         return 0;
@@ -57,7 +57,7 @@ uint32_t RandomSelectSubpolicyOp::NumInput() {
 uint32_t RandomSelectSubpolicyOp::NumOutput() {
   uint32_t num_out = policy_.front().front().first->NumOutput();
   for (auto &sub : policy_) {
-    for (auto p : sub) {
+    for (auto &p : sub) {
       if (num_out != p.first->NumOutput()) {
         MS_LOG(WARNING) << "Unable to determine numInput.";
         return 0;
@@ -76,7 +76,7 @@ Status RandomSelectSubpolicyOp::OutputShape(const std::vector<TensorShape> &inpu
 Status RandomSelectSubpolicyOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(policy_.front().front().first->OutputType(inputs, outputs));
   for (auto &sub : policy_) {
-    for (auto p : sub) {
+    for (auto &p : sub) {
       std::vector<DataType> tmp_types;
       RETURN_IF_NOT_OK(p.first->OutputType(inputs, tmp_types));
       if (outputs != tmp_types) {

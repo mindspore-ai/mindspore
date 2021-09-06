@@ -73,9 +73,9 @@ Status AlbumOp::PrescanEntry() {
   while (dirItr->HasNext()) {
     Path file = dirItr->Next();
     if (extensions_.empty() || extensions_.find(file.Extension()) != extensions_.end()) {
-      (void)image_rows_.push_back(file.toString().substr(dirname_offset_));
+      (void)image_rows_.push_back(file.ToString().substr(dirname_offset_));
     } else {
-      MS_LOG(INFO) << "Album operator unsupported file found: " << file.toString()
+      MS_LOG(INFO) << "Album operator unsupported file found: " << file.ToString()
                    << ", extension: " << file.Extension() << ".";
     }
   }
@@ -334,6 +334,7 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
 
       // loop over each column descriptor, this can optimized by switch cases
       for (int32_t i = 0; i < columns; i++) {
+        file_handle.close();
         RETURN_IF_NOT_OK(loadColumnData(file, i, js, row));
       }
     } catch (const std::exception &err) {
@@ -448,7 +449,9 @@ Status AlbumOp::ComputeColMap() {
 }
 
 Status AlbumOp::GetNextRowPullMode(TensorRow *const row) {
-  if (image_rows_.empty()) RETURN_IF_NOT_OK(PrescanEntry());
+  if (image_rows_.empty()) {
+    RETURN_IF_NOT_OK(PrescanEntry());
+  }
   if (sample_ids_ == nullptr) {
     RETURN_IF_NOT_OK(this->InitSampler());
     TensorRow sample_row;

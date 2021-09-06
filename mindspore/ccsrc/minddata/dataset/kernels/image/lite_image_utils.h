@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_LITE_IMAGE_UTILS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_LITE_IMAGE_UTILS_H_
 
-#include <setjmp.h>
-
+#include <csetjmp>
 #include <memory>
 #include <random>
 #include <string>
 #include <vector>
+
 #if defined(_WIN32) || defined(_WIN64)
 #undef HAVE_STDDEF_H
 #undef HAVE_STDLIB_H
 #endif
+
 #include "./jpeglib.h"
 #include "./jerror.h"
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
 #define MAX_PIXEL_VALUE 255
@@ -162,4 +163,4 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_LITE_IMAGE_UTILS_H_

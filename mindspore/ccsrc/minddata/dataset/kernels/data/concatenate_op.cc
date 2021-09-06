@@ -41,10 +41,16 @@ Status ConcatenateOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
   output_shape = output_shape + inputs.at(0).NumOfElements();
   if (prepend_ != nullptr) {
     CHECK_FAIL_RETURN_UNEXPECTED(prepend_->shape().Rank() == 1, "Concatenate: only 1D prepend supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      (std::numeric_limits<uint64_t>::max() - output_shape) > prepend_->shape().NumOfElements(),
+      "Concatenate: append parameter is too large to pend.");
     output_shape = output_shape + prepend_->shape().NumOfElements();
   }
   if (append_ != nullptr) {
     CHECK_FAIL_RETURN_UNEXPECTED(append_->shape().Rank() == 1, "Concatenate: only 1D append supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      (std::numeric_limits<uint64_t>::max() - output_shape) > append_->shape().NumOfElements(),
+      "Concatenate: append parameter is too large to pend.");
     output_shape = output_shape + append_->shape().NumOfElements();
   }
 

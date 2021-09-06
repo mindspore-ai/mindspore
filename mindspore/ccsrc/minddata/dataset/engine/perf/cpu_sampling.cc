@@ -653,7 +653,7 @@ Status CpuSampling::SaveToFile() {
 }
 
 Status CpuSampling::Init(const std::string &dir_path, const std::string &device_id) {
-  file_path_ = (Path(dir_path) / Path("minddata_cpu_utilization_" + device_id + ".json")).toString();
+  file_path_ = (Path(dir_path) / Path("minddata_cpu_utilization_" + device_id + ".json")).ToString();
   std::shared_ptr<DeviceCpu> device_cpu = std::make_shared<DeviceCpu>();
   std::shared_ptr<OperatorCpu> operator_cpu = std::make_shared<OperatorCpu>();
   std::shared_ptr<ProcessCpu> process_cpu = std::make_shared<ProcessCpu>();

@@ -23,6 +23,9 @@ namespace mindspore {
 namespace dataset {
 Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p, int32_t low_p, int32_t *hi,
                                        int32_t *lo) {
+  CHECK_FAIL_RETURN_UNEXPECTED(hist != nullptr, "hist is nullptr");
+  CHECK_FAIL_RETURN_UNEXPECTED(hi != nullptr, "hi is nullptr");
+  CHECK_FAIL_RETURN_UNEXPECTED(lo != nullptr, "lo is nullptr");
   try {
     int32_t n = std::accumulate(hist->begin(), hist->end(), 0);
     constexpr float kMaxPerc = 100.0;
@@ -61,11 +64,14 @@ Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p,
 }
 
 Status DegreesToRadians(float_t degrees, float_t *radians_target) {
+  CHECK_FAIL_RETURN_UNEXPECTED(radians_target != nullptr, "radians_target is nullptr");
   *radians_target = CV_PI * degrees / 180.0;
   return Status::OK();
 }
 
 Status GenerateRealNumber(float_t a, float_t b, std::mt19937 *rnd, float_t *result) {
+  CHECK_FAIL_RETURN_UNEXPECTED(rnd != nullptr, "rnd is nullptr");
+  CHECK_FAIL_RETURN_UNEXPECTED(result != nullptr, "result is nullptr");
   try {
     std::uniform_real_distribution<float_t> distribution{a, b};
     *result = distribution(*rnd);
