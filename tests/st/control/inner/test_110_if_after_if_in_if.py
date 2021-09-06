@@ -174,7 +174,6 @@ def test_if_after_if_in_if_02():
     expect2 = (Tensor(1, mstype.int32),)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet2, x, expect1, expect2)
 
-@pytest.mark.skip(reason="Handle Call Return error in multigraph sink.")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
