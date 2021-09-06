@@ -11,3 +11,13 @@ files:
     - gaoxiong1
     - ckey_dou
     - anyrenwei
+
+  "graphengine":
+    approvers:
+    - zhoufeng54
+    - jjfeing
+
+  "version.txt":
+    approvers:
+    - zhoufeng54
+    - jjfeing
