@@ -75,19 +75,24 @@ LeNet非常简单，包含5层，由2个卷积层和3个全连接层组成。
 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
 
 ```python
-# 进入../lenet目录，训练lenet网络，生成'.ckpt'文件。
-bash run_standalone_train_ascend.sh [DATA_PATH]
-# 进入lenet目录，训练LeNet-Quant
+# 进入../lenet目录，训练lenet网络，生成'.ckpt'文件作为lenet-quant预训练文件
+bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_PATH]
+# example: bash run_standalone_train_ascend.sh /home/DataSet/MNIST/ ./ckpt/
+
+# 进入lenet-quant目录，训练lenet-quant
 python train.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_PATH] --dataset_sink_mode=True
-# 评估LeNet-Quant
+# example: python train.py --device_target=Ascend --data_path=/home/DataSet/MNIST/ --ckpt_path=/home/model/lenet/checkpoint_lenet-10_1875.ckpt --dataset_sink_mode=True
+
+# 评估lenet-quant
 python eval.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_PATH] --dataset_sink_mode=True
+# example: python eval.py --device_target=Ascend --data_path=/home/DataSet/MNIST/ --ckpt_path=/home/model/lenet_quant/checkpoint_lenet-10_937.ckpt --dataset_sink_mode=True
 ```
 
 ## 脚本说明
 
 ### 脚本及样例代码
 
-```bash
+```lenet_quant
 ├── model_zoo
     ├── README.md                        // 所有型号的描述
     ├── lenet_quant

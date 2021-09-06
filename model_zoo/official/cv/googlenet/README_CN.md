@@ -92,17 +92,28 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
 
 - Ascend处理器环境运行
 
+  ```yaml
+  # 添加数据集路径,以训练cifar10为例
+  train_data_path:/home/DataSet/cifar10/
+  val_data_path:/home/DataSet/cifar10/
+
+  # 推理前添加checkpoint路径参数
+  chcekpoint_path:/home/model/googlenet/ckpt/train_googlenet_cifar10-125_390.ckpt
+  ```
+
   ```python
   # 运行训练示例
   python train.py > train.log 2>&1 &
 
   # 运行分布式训练示例
-  bash scripts/run_train.sh rank_table.json
+  bash scripts/run_train.sh [RANK_TABLE_FILE] [DATASET_NAME]
+  # example: bash scripts/run_train.sh /root/hccl_8p_01234567_10.155.170.71.json cifar10
 
   # 运行评估示例
   python eval.py > eval.log 2>&1 &
   或
-  bash run_eval.sh
+  bash run_eval.sh [DATASET_NAME]
+  # example: bash run_eval.sh cifar10
 
   # 运行推理示例
   bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
@@ -360,7 +371,7 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
 - Ascend处理器环境运行
 
   ```bash
-  bash scripts/run_train.sh rank_table.json
+  bash scripts/run_train.sh /root/hccl_8p_01234567_10.155.170.71.json cifar10
   ```
 
   上述shell脚本将在后台运行分布训练。您可以通过train_parallel[X]/log文件查看结果。采用以下方式达到损失值：
@@ -395,7 +406,7 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
   ```bash
   python eval.py > eval.log 2>&1 &
   OR
-  sh scripts/run_eval.sh
+  bash run_eval.sh cifar10
   ```
 
   上述python命令将在后台运行，您可以通过eval.log文件查看结果。测试数据集的准确性如下：
@@ -430,7 +441,7 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
   或者，
 
   ```bash
-  bash scripts/run_eval_gpu.sh [CHECKPOINT_PATH]
+  bash run_eval_gpu.sh [CHECKPOINT_PATH]
   ```
 
   上述python命令将在后台运行，您可以通过eval/eval.log文件查看结果。测试数据集的准确性如下：

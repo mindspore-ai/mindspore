@@ -73,11 +73,14 @@ Dataset used: [MNIST](<http://yann.lecun.com/exdb/mnist/>)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-```python
+```bash
 # enter script dir, train LeNet
-bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]  
+bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
+# example: bash run_standalone_train_ascend.sh /home/DataSet/MNIST/ ./ckpt/
+
 # enter script dir, evaluate LeNet
 bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
+# example: bash run_standalone_eval_ascend.sh /home/DataSet/MNIST/ /home/model/lenet/ckpt/checkpoint_lenet-1_1875.ckpt
 ```
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
@@ -147,7 +150,7 @@ bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 
 - Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start evaluating as follows)
 
-1. Export s8 multiscale and flip with voc val dataset on modelarts, evaluating steps are as follows:
+1. The evaluation steps using ModelArts are as follows:
 
     ```python
     # (1) Perform a or b.
@@ -206,8 +209,8 @@ bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 
 ## [Script Parameters](#contents)
 
-```python
-Major parameters in train.py and default_config.yaml as follows:
+```default_config.yaml
+default_config.yaml as follows:
 
 --data_path: The absolute full path to the train and evaluation datasets.
 --epoch_size: Total training epochs.
@@ -228,7 +231,8 @@ Major parameters in train.py and default_config.yaml as follows:
 ```bash
 python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
-bash run_standalone_train_ascend.sh Data ckpt
+bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
+# example: bash run_standalone_train_ascend.sh /home/DataSet/MNIST/ ./ckpt/
 ```
 
 After training, the loss value will be achieved as follows:
@@ -254,7 +258,8 @@ Before running the command below, please check the checkpoint path used for eval
 ```bash
 python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
-bash run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
+bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
+# example: bash run_standalone_eval_ascend.sh /home/DataSet/MNIST/ /home/model/lenet/ckpt/checkpoint_lenet-1_1875.ckpt
 ```
 
 You can view the results through the file "log.txt". The accuracy of the test dataset will be as follows:

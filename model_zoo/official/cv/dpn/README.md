@@ -94,12 +94,14 @@ To train the DPNs, run the shell script `scripts/train_standalone.sh` with the f
 
 ```shell
 bash scripts/train_standalone.sh [device_id] [train_data_dir] [ckpt_path_to_save] [eval_each_epoch] [pretrained_ckpt(optional)]
+# example: bash scripts/train_standalone.sh 0 /home/DataSet/ImageNet_Original/train/ ./ckpt 0
 ```
 
 To validate the DPNs, run the shell script `scripts/eval.sh` with the format below:
 
 ```shell
 bash scripts/eval.sh [device_id] [eval_data_dir] [checkpoint_path]
+# example bash scripts/eval.sh 0 /home/DataSet/ImageNet_Original/validation_preprocess/ /home/model/dpn/ckpt/dpn-100_40036.ckpt
 ```
 
 # [Script Description](#contents)
@@ -184,12 +186,7 @@ Run `scripts/train_standalone.sh` to train the model standalone. The usage of th
 
 ```shell
 bash scripts/train_standalone.sh [device_id] [train_data_dir] [ckpt_path_to_save] [eval_each_epoch] [pretrained_ckpt(optional)]
-```
-
-For example, you can run the shell command below to launch the training procedure.
-
-```shell
-bash scripts/train_standalone.sh 0 /data/dataset/imagenet/ scripts/pretrian/ 0
+# example: bash scripts/train_standalone.sh 0 /home/DataSet/ImageNet_Original/train/ ./ckpt 0
 ```
 
 If eval_each_epoch is 1, it will evaluate after each epoch and save the parameters with the max accuracy. But in this case, the time of one epoch will be longer.
@@ -231,12 +228,7 @@ Run `scripts/train_distributed.sh` to train the model distributed. The usage of 
 
 ```text
 bash scripts/train_distributed.sh [rank_table] [train_data_dir] [ckpt_path_to_save]  [rank_size] [eval_each_epoch] [pretrained_ckpt(optional)]
-```
-
-For example, you can run the shell command below to launch the training procedure.
-
-```shell
-bash scripts/train_distributed.sh /home/rank_table.json /data/dataset/imagenet/ ../scripts 8 0 ../pretrain/dpn92.ckpt
+# example: bash scripts/train_distributed.sh /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/ImageNet_Original/train/ ./ckpt/ 8 0
 ```
 
 The above shell script will run distribute training in the background. You can view the results through the file `train_parallel[X]/log.txt` as follows:
@@ -259,12 +251,7 @@ Run `scripts/eval.sh` to evaluate the model with one Ascend processor. The usage
 
 ```text
 bash scripts/eval.sh [device_id] [eval_data_dir] [checkpoint_path]
-```
-
-For example, you can run the shell command below to launch the validation procedure.
-
-```text
-bash scripts/eval.sh 0 /data/dataset/imagenet/ pretrain/dpn-180_5004.ckpt
+# example bash scripts/eval.sh 0 /home/DataSet/ImageNet_Original/validation_preprocess/ /home/model/dpn/ckpt/dpn-100_40036.ckpt
 ```
 
 The above shell script will run evaluation in the background. You can view the results through the file `eval_log.txt`. The result will be achieved as follows:

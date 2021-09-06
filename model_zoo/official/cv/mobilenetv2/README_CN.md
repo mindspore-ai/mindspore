@@ -227,7 +227,7 @@ MobileNetV2总体网络架构如下：
 
 使用python或shell脚本开始训练。shell脚本的使用方法如下：
 
-- Ascend: sh run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
+- Ascend: bash run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH(optional)] [FREEZE_LAYER(optional)] [FILTER_HEAD(optional)]
 - GPU: bash run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 - CPU: bash run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 
@@ -275,7 +275,9 @@ MobileNetV2总体网络架构如下：
       CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH]
 
   shell:
-      Ascend: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]
+      Ascend: bash run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH]
+      # example: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/ImageNet_Original/
+
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH]
       CPU: bash run_train.sh CPU [TRAIN_DATASET_PATH]
 
@@ -286,7 +288,9 @@ MobileNetV2总体网络架构如下：
       CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
 
   shell:
-      Ascend: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  [CKPT_PATH] none True
+      Ascend: bash run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
+      # example: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/ImageNet_Original/ /home/model/mobilenetv2/predtrain/mobilenet-200_625.ckpt none True
+
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] none True
       CPU: bash run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] none True
 
@@ -297,7 +301,8 @@ MobileNetV2总体网络架构如下：
       CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
 
   shell:
-      Ascend: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
+      Ascend: bash run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
+      # example: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/ImageNet_Original/ /home/model/mobilenetv2/backbone/mobilenet-200_625.ckpt backbone
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
       CPU: bash run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
 ```
@@ -306,7 +311,7 @@ MobileNetV2总体网络架构如下：
 
 训练结果保存在示例路径。检查点默认保存在 `./checkpoint`，训练日志会重定向到的CPU和GPU的`./train.log`，写入到Ascend的`./train/rank*/log*.log`。
 
-```shell
+```log
 epoch:[  0/200], step:[  624/  625], loss:[5.258/5.258], time:[140412.236], lr:[0.100]
 epoch time:140522.500, per step time:224.836, avg loss:5.258
 epoch:[  1/200], step:[  624/  625], loss:[3.917/3.917], time:[138221.250], lr:[0.200]
@@ -317,7 +322,7 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 
 ### 用法
 
-使用python或shell脚本开始训练。采用train或fine tune训练方法时，不建议输入`[CHECKPOINT_PATH]`。shell脚本的用法如下：
+使用python或shell脚本开始训练。采用train或finetune训练方法时，不建议输入`[CHECKPOINT_PATH]`。shell脚本的用法如下：
 
 - Ascend: bash run_eval.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
 - GPU: bash run_eval.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
@@ -333,7 +338,9 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
       CPU: python eval.py --platform CPU --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./ckpt_0/mobilenetv2_15.ckpt
 
   shell:
-      Ascend: bash run_eval.sh Ascend [VAL_DATASET_PATH] ./checkpoint/mobilenetv2_head_15.ckpt
+      Ascend: bash run_eval.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+      # example: bash run_eval.sh Ascend /home/DataSet/ImageNet_Original/ /home/model/mobilenetV2/ckpt/mobilenet-200_625.ckpt
+
       GPU: bash run_eval.sh GPU [VAL_DATASET_PATH] ./checkpoint/mobilenetv2_head_15.ckpt
       CPU: bash run_eval.sh CPU [VAL_DATASET_PATH] ./checkpoint/mobilenetv2_head_15.ckpt
 ```
@@ -344,7 +351,7 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 
 推理结果保存在示例路径，可以在`eval.log`中找到如下结果。
 
-```shell
+```log
 result:{'acc':0.71976314102564111} ckpt=./ckpt_0/mobilenet-200_625.ckpt
 ```
 

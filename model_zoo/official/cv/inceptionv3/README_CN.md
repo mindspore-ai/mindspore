@@ -280,12 +280,22 @@ train.py和config.py中主要参数如下：
 
 - Ascend：
 
-    ```shell
-    # 分布式训练示例(8卡)
-    bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
-    # 单机训练
-    bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
-    ```
+```yaml
+ds_type:imagenet
+or
+ds_type:cifar10
+以训练cifar10为例,ds_type参数设置为cifar10
+````
+
+```shell
+# 分布式训练示例(8卡)
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH] [CKPT_PATH]
+# example: bash run_distribute_train.sh /root/hccl_8p_012345467_10.155.170.71.json /home/DataSet/cifar10/ ./ckpt/
+
+# 单机训练
+bash scripts/run_standalone_train.sh [DEVICE_ID] [DATA_PATH] [CKPT_PATH]
+# example: bash scripts/run_standalone_train.sh 0 /home/DataSet/cifar10/ ./ckpt/
+```
 
 > 注：RANK_TABLE_FILE可参考[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ascend.html)。device_ip可以通过[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)获取
 > 这是关于device_num和处理器总数的处理器核绑定操作。如不需要，请删除scripts/run_distribute_train.sh中的taskset操作。
@@ -301,9 +311,12 @@ train.py和config.py中主要参数如下：
   shell:
       Ascend:
       # 分布式训练示例(8卡)
-      bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+      bash run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH] [CKPT_PATH]
+      # example: bash run_distribute_train.sh /root/hccl_8p_012345467_10.155.170.71.json /home/DataSet/cifar10/ ./ckpt/
+
       # 单机训练
-      bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+      bash scripts/run_standalone_train.sh [DEVICE_ID] [DATA_PATH] [CKPT_PATH]
+      # example: bash scripts/run_standalone_train.sh 0 /home/DataSet/cifar10/ ./ckpt/
 
       CPU:
       bash script/run_standalone_train_cpu.sh DATA_PATH
@@ -343,7 +356,8 @@ epoch time: 6358482.104 ms, per step time: 16303.800 ms
 - Ascend：
 
 ```shell
-    bash scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+    bash run_eval.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
+    # example: bash run_eval.sh 0 /home/DataSet/cifar10/ /home/model/inceptionv3/ckpt/inception_v3-rank0-2_1251.ckpt
 ```
 
 - CPU:
@@ -361,7 +375,7 @@ epoch time: 6358482.104 ms, per step time: 16303.800 ms
       CPU: python eval.py --config_path CONFIG_FILE --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform CPU
 
   shell:
-      Ascend: bash scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+      Ascend: bash run_eval.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
       CPU: bash scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
 ```
 

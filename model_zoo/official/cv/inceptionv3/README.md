@@ -81,7 +81,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
 
-    ```bash
+    ```inceptionv3
     # Train 8p with Ascend
     # (1) Perform a or b.
     #       a. Set "enable_modelarts=True" on default_config.yaml file.
@@ -274,11 +274,21 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 - Ascend:
 
+```yaml
+ds_type:imagenet
+or
+ds_type:cifar10
+Take training cifar10 as an example, the ds_type parameter is set to cifar10
+```
+
 ```shell
 # distribute training(8p)
-bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH] [CKPT_PATH]
+# example: bash run_distribute_train.sh /root/hccl_8p_012345467_10.155.170.71.json /home/DataSet/cifar10/ ./ckpt/
+
 # standalone training
-bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+bash scripts/run_standalone_train.sh [DEVICE_ID] [DATA_PATH] [CKPT_PATH]
+# example: bash scripts/run_standalone_train.sh 0 /home/DataSet/cifar10/ ./ckpt/
 ```
 
 - CPU:
@@ -302,10 +312,12 @@ bash scripts/run_standalone_train_cpu.sh DATA_PATH
 
   shell:
       Ascend:
-      # distribute training example(8p)
-      bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+      bash run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH] [CKPT_PATH]
+      # example: bash run_distribute_train.sh /root/hccl_8p_012345467_10.155.170.71.json /home/DataSet/cifar10/ ./ckpt/
+
       # standalone training example
-      bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+      bash scripts/run_standalone_train.sh [DEVICE_ID] [DATA_PATH] [CKPT_PATH]
+      # example: bash scripts/run_standalone_train.sh 0 /home/DataSet/cifar10/ ./ckpt/
 
       CPU:
       bash script/run_standalone_train_cpu.sh DATA_PATH
@@ -344,13 +356,14 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 - Ascend:
 
-```python
-    bash scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
+```shell
+    bash run_eval.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
+    # example: bash run_eval.sh 0 /home/DataSet/cifar10/ /home/model/inceptionv3/ckpt/inception_v3-rank0-2_1251.ckpt
 ```
 
 - CPU:
 
-```python
+```shell
     bash scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
 ```
 

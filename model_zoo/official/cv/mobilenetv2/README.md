@@ -225,7 +225,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- Ascend: bash run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
+- Ascend: bash run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH(optional)] [FREEZE_LAYER(optional)] [FILTER_HEAD(optional)]
 - GPU: bash run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 - CPU: bash run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 
@@ -273,29 +273,35 @@ You can start training using python or shell scripts. The usage of shell scripts
       CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH]
 
   shell:
-      Ascend: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]
+      Ascend: bash run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH]
+      # example: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/ImageNet_Original/
+
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH]
       CPU: bash run_train.sh CPU [TRAIN_DATASET_PATH]
 
-# fine tune whole network example
+# finetune whole network example
   python:
       Ascend: python train.py --platform Ascend --config_path [CONFIG_PATH] --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
       GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
       CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
 
   shell:
-      Ascend: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  [CKPT_PATH] none True
+      Ascend: bash run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
+      # example: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/ImageNet_Original/ /home/model/mobilenetv2/predtrain/mobilenet-200_625.ckpt none True
+
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] none True
       CPU: bash run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] none True
 
-# fine tune full connected layers example
+# finetune full connected layers example
   python:
       Ascend: python train.py --platform Ascend --config_path default_config.yaml --dataset_path [TRAIN_DATASET_PATH]--pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
       GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
       CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
 
   shell:
-      Ascend: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
+      Ascend: bash run_train.sh Ascend [CONFIG_PATH] [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
+      # example: bash run_train.sh Ascend default_config.yaml 8 0,1,2,3,4,5,6,7 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/ImageNet_Original/ /home/model/mobilenetv2/backbone/mobilenet-200_625.ckpt backbone
+
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
       CPU: bash run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
 ```
@@ -304,7 +310,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./train.log` like followings with the platform CPU and GPU, will be wrote to `./train/rank*/log*.log` with the platform Ascend .
 
-```shell
+```log
 epoch: [  0/200], step:[  624/  625], loss:[5.258/5.258], time:[140412.236], lr:[0.100]
 epoch time: 140522.500, per step time: 224.836, avg loss: 5.258
 epoch: [  1/200], step:[  624/  625], loss:[3.917/3.917], time:[138221.250], lr:[0.200]
@@ -331,7 +337,9 @@ You can start training using python or shell scripts.If the train method is trai
       CPU: python eval.py --platform CPU --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./ckpt_0/mobilenetv2_15.ckpt
 
   shell:
-      Ascend: bash run_eval.sh Ascend [VAL_DATASET_PATH] ./checkpoint/mobilenetv2_head_15.ckpt
+      Ascend: bash run_eval.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+      # example: bash run_eval.sh Ascend /home/DataSet/ImageNet_Original/ /home/model/mobilenetV2/ckpt/mobilenet-200_625.ckpt
+
       GPU: bash run_eval.sh GPU [VAL_DATASET_PATH] ./checkpoint/mobilenetv2_head_15.ckpt
       CPU: bash run_eval.sh CPU [VAL_DATASET_PATH] ./checkpoint/mobilenetv2_head_15.ckpt
 ```
@@ -342,7 +350,7 @@ You can start training using python or shell scripts.If the train method is trai
 
 Inference result will be stored in the example path, you can find result like the followings in `eval.log`.
 
-```shell
+```log
 result: {'acc': 0.71976314102564111} ckpt=./ckpt_0/mobilenet-200_625.ckpt
 ```
 

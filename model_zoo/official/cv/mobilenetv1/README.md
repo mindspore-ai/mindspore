@@ -46,12 +46,27 @@ Dataset used: [ImageNet2012](http://www.image-net.org/)
     - Test： 50,000 images
 - Data format：jpeg
     - Note：Data will be processed in dataset.py
+
+Dataset used: [CIFAR-10](http://www.cs.toronto.edu/~kriz/cifar.html)
+
+- Dataset size：175M，60,000 32*32 colorful images in 10 classes
+    - Train：146M，50,000 images
+    - Test：29M，10,000 images
+- Data format：binary files
+    - Note：Data will be processed in dataset.py
+
 - Download the dataset, the directory structure is as follows:
 
-```bash
-└─dataset
-    ├─ilsvrc                # train dataset
+```ImageNet2012
+└─ImageNet_Original
+    ├─train                # train dataset
     └─validation_preprocess # evaluate dataset
+```
+
+```cifar10
+└─cifar10
+    ├─cifar-10-batches-bin  # train dataset
+    └─cifar-10-verify-bin  # evaluate dataset
 ```
 
 ## Features
@@ -223,6 +238,9 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
 - Ascend: bash run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
+  # example: bash run_distribute_train.sh cifar10 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/cifar10/cifar-10-batches-bin/
+  # example: bash run_distribute_train.sh imagenet2012 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/ImageNet_Original/
+
 - CPU: bash run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
 - GPU(single device)：bash run_standalone_train_gpu.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 - GPU(distribute training): bash run_distribute_train_gpu.sh [cifar10|imagenet2012] [CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
@@ -246,6 +264,9 @@ Please follow the instructions in the link [hccn_tools](https://gitee.com/mindsp
 
   shell:
      Ascend: bash run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+     # example: bash run_distribute_train.sh cifar10 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/cifar10/cifar-10-batches-bin/
+     # example: bash run_distribute_train.sh imagenet2012 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/ImageNet_Original/
+
      CPU: bash run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
      GPU(single device): bash run_standalone_train_gpu.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
      GPU(distribute training): bash run_distribute_train_gpu.sh [cifar10|imagenet2012] [CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
@@ -278,6 +299,9 @@ Epoch time: 320744.265, per step time: 256.390
 You can start training using python or shell scripts.If the train method is train or fine tune, should not input the `[CHECKPOINT_PATH]` The usage of shell scripts as follows:
 
 - Ascend: bash run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+  # example: bash run_eval.sh cifar10 /home/DataSet/cifar10/cifar-10-verify-bin/ /home/model/mobilenetv1/ckpt/cifar10/mobilenetv1-90_1562.ckpt
+  # example: bash run_eval.sh imagenet2012 /home/DataSet/ImageNet_Original/ /home/model/mobilenetv1/ckpt/imagenet2012/mobilenetv1-90_625.ckpt
+
 - CPU: bash run_eval_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
@@ -291,6 +315,9 @@ You can start training using python or shell scripts.If the train method is trai
 
   shell:
       Ascend: bash run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+      # example: bash run_eval.sh cifar10 /home/DataSet/cifar10/cifar-10-verify-bin/ /home/model/mobilenetv1/ckpt/cifar10/mobilenetv1-90_1562.ckpt
+      # example: bash run_eval.sh imagenet2012 /home/DataSet/ImageNet_Original/ /home/model/mobilenetv1/ckpt/imagenet2012/mobilenetv1-90_625.ckpt
+
       CPU: bash run_eval_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 

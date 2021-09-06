@@ -99,18 +99,22 @@ DenseNet-100使用的数据集： Cifar-10
 
 - Ascend处理器环境运行
 
-  ```默认训练densenet121，训练densenet100需要修改 _config_path值，参数路径: src/model_utils/config.py
-  # 单卡训练示例
-  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+   ```默认训练densenet121，训练densenet100需要修改 _config_path值，参数路径: src/model_utils/config.py
 
-  # 分布式训练示例
-  bash scripts/run_distribute_train.sh 8 /PATH/TO/RANK_TABLE.JSON [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+   # 单卡训练示例
+   python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+   # example: python train.py --net densenet121 --dataset imagenet --train_data_dir /home/DataSet/ImageNet_Original/train/
 
-  # 单卡评估示例
-  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+   # 分布式训练示例
+   bash scripts/run_distribute_train.sh [DEVICE_NUM] [RANK_TABLE_FILE] [NET_NAME] [DATASET_NAME] [TRAIN_DATA_DIR]
+   # example bash scripts/run_distribute_train.sh 8 /root/hccl_8p_01234567_10.155.170.71.json densenet121 imagenet /home/DataSet/ImageNet_Original/train/
 
-  bash scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
-  ```
+   # 单卡评估示例
+   python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+
+   bash scripts/run_distribute_eval.sh [DEVICE_NUM] [RANDK_TABLE_FILE] [NET_NAME] [DATASET_NAME] [EVAL_DATA_DIR][CKPT_PATH]
+   # example: bash script/run_distribute_eval.sh 8 /root/hccl_8p_01234567_10.155.170.71.json densenet121 imagenet /home/DataSet/ImageNet_Original/train/validation_preprocess/ /home/model/densenet/ckpt/0-120_500.ckpt
+   ```
 
   分布式训练需要提前创建JSON格式的HCCL配置文件。
 
@@ -267,66 +271,67 @@ DenseNet-100使用的数据集： Cifar-10
 
 - Ascend处理器环境运行
 
-  ```python
-  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
-  ```
+ ```python
+ python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+ ```
 
-  以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。在ImageNet数据集上训练DenseNet-121的损失值的实现如下：
+以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。在ImageNet数据集上训练DenseNet-121的损失值的实现如下：
 
-  ```log
-  2020-08-22 16:58:56,617:INFO:epoch[0], iter[5003], loss:4.367, mean_fps:0.00 imgs/sec
-  2020-08-22 16:58:56,619:INFO:local passed
-  2020-08-22 17:02:19,920:INFO:epoch[1], iter[10007], loss:3.193, mean_fps:6301.11 imgs/sec
-  2020-08-22 17:02:19,921:INFO:local passed
-  2020-08-22 17:05:43,112:INFO:epoch[2], iter[15011], loss:3.096, mean_fps:6304.53 imgs/sec
-  2020-08-22 17:05:43,113:INFO:local passed
-  ...
-  ```
+```log
+2020-08-22 16:58:56,617:INFO:epoch[0], iter[5003], loss:4.367, mean_fps:0.00 imgs/sec
+2020-08-22 16:58:56,619:INFO:local passed
+2020-08-22 17:02:19,920:INFO:epoch[1], iter[10007], loss:3.193, mean_fps:6301.11 imgs/sec
+2020-08-22 17:02:19,921:INFO:local passed
+2020-08-22 17:05:43,112:INFO:epoch[2], iter[15011], loss:3.096, mean_fps:6304.53 imgs/sec
+2020-08-22 17:05:43,113:INFO:local passed
+...
+```
 
 - GPU处理器环境运行
 
-  ```python
-  export CUDA_VISIBLE_DEVICES=0
-  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
-  ```
+```python
+export CUDA_VISIBLE_DEVICES=0
+python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+```
 
-  以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。
+以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。
 
 - CPU处理器环境运行
 
-  ```python
-  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='CPU' > train.log 2>&1 &
-  ```
+```python
+python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='CPU' > train.log 2>&1 &
+```
 
-  以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。
+以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。
 
 ### 分布式训练
 
 - Ascend处理器环境运行
 
-  ```shell
-  bash scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
-  ```
+```shell
+bash scripts/run_distribute_train.sh [DEVICE_NUM] [RANK_TABLE_FILE] [NET_NAME] [DATASET_NAME] [TRAIN_DATA_DIR]
+# example bash scripts/run_distribute_train.sh 8 /root/hccl_8p_01234567_10.155.170.71.json densenet121 imagenet /home/DataSet/ImageNet_Original/train/
+```
 
   上述shell脚本将在后台进行分布式训练。可以通过文件`train[X]/output/202x-xx-xx_time_xx_xx_xx/`查看结果日志和模型检查点。在ImageNet数据集上训练DenseNet-121的损失值的实现如下：
 
-  ```log
-  2020-08-22 16:58:54,556:INFO:epoch[0], iter[5003], loss:3.857, mean_fps:0.00 imgs/sec
-  2020-08-22 17:02:19,188:INFO:epoch[1], iter[10007], loss:3.18, mean_fps:6260.18 imgs/sec
-  2020-08-22 17:05:42,490:INFO:epoch[2], iter[15011], loss:2.621, mean_fps:6301.11 imgs/sec
-  2020-08-22 17:09:05,686:INFO:epoch[3], iter[20015], loss:3.113, mean_fps:6304.37 imgs/sec
-  2020-08-22 17:12:28,925:INFO:epoch[4], iter[25019], loss:3.29, mean_fps:6303.07 imgs/sec
-  2020-08-22 17:15:52,167:INFO:epoch[5], iter[30023], loss:2.865, mean_fps:6302.98 imgs/sec
-  ...
-  ...
-  ```
+```log
+2020-08-22 16:58:54,556:INFO:epoch[0], iter[5003], loss:3.857, mean_fps:0.00 imgs/sec
+2020-08-22 17:02:19,188:INFO:epoch[1], iter[10007], loss:3.18, mean_fps:6260.18 imgs/sec
+2020-08-22 17:05:42,490:INFO:epoch[2], iter[15011], loss:2.621, mean_fps:6301.11 imgs/sec
+2020-08-22 17:09:05,686:INFO:epoch[3], iter[20015], loss:3.113, mean_fps:6304.37 imgs/sec
+2020-08-22 17:12:28,925:INFO:epoch[4], iter[25019], loss:3.29, mean_fps:6303.07 imgs/sec
+2020-08-22 17:15:52,167:INFO:epoch[5], iter[30023], loss:2.865, mean_fps:6302.98 imgs/sec
+...
+...
+```
 
 - GPU处理器环境运行
 
-  ```bash
-  cd scripts
-  bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
-  ```
+```bash
+cd scripts
+bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
+```
 
   上述shell脚本将在后台进行分布式训练。可以通过文件`train[X]/output/202x-xx-xx_time_xx_xx_xx/`查看结果日志和模型检查点。
 
@@ -341,7 +346,8 @@ DenseNet-100使用的数据集： Cifar-10
   ```eval
   python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
-  bash scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+  bash scripts/run_distribute_eval.sh [DEVICE_NUM] [RANDK_TABLE_FILE] [NET_NAME] [DATASET_NAME] [EVAL_DATA_DIR][CKPT_PATH]
+  # example: bash script/run_distribute_eval.sh 8 /root/hccl_8p_01234567_10.155.170.71.json densenet121 imagenet /home/DataSet/ImageNet_Original/train/validation_preprocess/ /home/model/densenet/ckpt/0-120_500.ckpt
   ```
 
   上述python命令在后台运行。可以通过“output/202x-xx-xx_time_xx_xx_xx/202x_xxxx.log”文件查看结果。DenseNet-121在ImageNet的测试数据集的准确率如下：
