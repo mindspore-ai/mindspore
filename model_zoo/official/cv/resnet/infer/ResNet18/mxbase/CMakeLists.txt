@@ -40,7 +40,7 @@ link_directories(${OPENSOURCE_DIR}/lib)
 link_directories(${MXBASE_LIB_DIR})
 link_directories(${MXBASE_POST_LIB_DIR})
 
-add_executable(${TARGET} main_opencv.cpp Resnet50ClassifyOpencv.cpp)
+add_executable(${TARGET} main.cpp Resnet18ClassifyOpencv.cpp)
 
 target_link_libraries(${TARGET} glog cpprest mxbase resnet50postprocess opencv_world stdc++fs)
 

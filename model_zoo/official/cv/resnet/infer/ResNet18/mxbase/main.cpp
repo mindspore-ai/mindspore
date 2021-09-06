@@ -14,39 +14,38 @@
  * limitations under the License.
  */
 
-#include "Resnet50ClassifyOpencv.h"
+#include "Resnet18ClassifyOpencv.h"
 #include "MxBase/Log/Log.h"
 #include <dirent.h>
 
 namespace {
 const uint32_t CLASS_NUM = 1001;
-} // namespace
+}
 
-APP_ERROR ScanImages(const std::string &path, std::vector<std::string> &imgFiles)
-{
-    DIR *dirPtr = opendir(path.c_str());
-    if (dirPtr == nullptr) {
-        LogError << "opendir failed. dir:" << path;
-        return APP_ERR_INTERNAL_ERROR;
+APP_ERROR ReadFilesFromPath(const std::string &path, std::vector<std::string> *files) {
+    DIR *dir = NULL;
+    struct dirent *ptr = NULL;
+
+    if ((dir=opendir(path.c_str())) == NULL) {
+        LogError << "Open dir error: " << path;
+        return APP_ERR_COMM_OPEN_FAIL;
     }
-    dirent *direntPtr = nullptr;
-    while ((direntPtr = readdir(dirPtr)) != nullptr) {
-        std::string fileName = direntPtr->d_name;
-        if (fileName == "." || fileName == "..") {
-            continue;
+
+    while ((ptr=readdir(dir)) != NULL) {
+        // d_type == 8 is file
+        if (ptr->d_type == 8) {
+            files->push_back(path + ptr->d_name);
         }
-
-        imgFiles.emplace_back(path + "/" + fileName);
     }
-    closedir(dirPtr);
+    closedir(dir);
+    // sort ascending order
+    sort(files->begin(), files->end());
     return APP_ERR_OK;
 }
 
-
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     if (argc <= 1) {
-        LogWarn << "Please input image path, such as './resnet50 image_dir'.";
+        LogWarn << "Please input image path, such as './resnet image_dir'.";
         return APP_ERR_OK;
     }
 
@@ -58,32 +57,34 @@ int main(int argc, char* argv[])
     initParam.softmax = false;
     initParam.checkTensor = true;
     initParam.modelPath = "../data/model/resnet18-304_304.om";
-    auto resnet50 = std::make_shared<Resnet50ClassifyOpencv>();
-    APP_ERROR ret = resnet50->Init(initParam);
+    auto resnet18 = std::make_shared<Resnet18ClassifyOpencv>();
+    APP_ERROR ret = resnet18->Init(initParam);
     if (ret != APP_ERR_OK) {
-        LogError << "Resnet50Classify init failed, ret=" << ret << ".";
+        LogError << "resnet18Classify init failed, ret=" << ret << ".";
         return ret;
     }
 
-    std::string imgPath = argv[1];
-    std::vector<std::string> imgFilePaths;
-    ret = ScanImages(imgPath, imgFilePaths);
+    std::string inferPath = argv[1];
+    std::vector<std::string> files;
+    ret = ReadFilesFromPath(inferPath, &files);
     if (ret != APP_ERR_OK) {
+        LogError << "Read files from path failed, ret=" << ret << ".";
         return ret;
     }
+
     auto startTime = std::chrono::high_resolution_clock::now();
-    for (auto &imgFile : imgFilePaths) {
-        ret = resnet50->Process(imgFile);
+    for (uint32_t i = 0; i < files.size(); i++) {
+        ret = resnet18->Process(files[i]);
         if (ret != APP_ERR_OK) {
-            LogError << "Resnet50Classify process failed, ret=" << ret << ".";
-            resnet50->DeInit();
+            LogError << "resnet18Classify process failed, ret=" << ret << ".";
+            resnet18->DeInit();
             return ret;
         }
     }
     auto endTime = std::chrono::high_resolution_clock::now();
-    resnet50->DeInit();
+    resnet18->DeInit();
     double costMilliSecs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
-    double fps = 1000.0 * imgFilePaths.size() / resnet50->GetInferCostMilliSec();
+    double fps = 1000.0 * files.size() / resnet18->GetInferCostMilliSec();
     LogInfo << "[Process Delay] cost: " << costMilliSecs << " ms\tfps: " << fps << " imgs/sec";
     return APP_ERR_OK;
 }

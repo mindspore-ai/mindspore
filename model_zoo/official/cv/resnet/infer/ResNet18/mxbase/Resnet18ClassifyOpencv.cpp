@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "Resnet50ClassifyOpencv.h"
+#include "Resnet18ClassifyOpencv.h"
 #include "MxBase/DeviceManager/DeviceManager.h"
 #include "MxBase/Log/Log.h"
 
@@ -25,8 +25,7 @@ namespace {
     const uint32_t VPC_H_ALIGN = 2;
 }
 
-APP_ERROR Resnet50ClassifyOpencv::Init(const InitParam &initParam)
-{
+APP_ERROR Resnet18ClassifyOpencv::Init(const InitParam &initParam) {
     deviceId_ = initParam.deviceId;
     APP_ERROR ret = MxBase::DeviceManager::GetInstance()->InitDevices();
     if (ret != APP_ERR_OK) {
@@ -73,8 +72,7 @@ APP_ERROR Resnet50ClassifyOpencv::Init(const InitParam &initParam)
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet50ClassifyOpencv::DeInit()
-{
+APP_ERROR Resnet18ClassifyOpencv::DeInit() {
     dvppWrapper_->DeInit();
     model_->DeInit();
     post_->DeInit();
@@ -82,25 +80,16 @@ APP_ERROR Resnet50ClassifyOpencv::DeInit()
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet50ClassifyOpencv::ReadImage(const std::string &imgPath, cv::Mat &imageMat)
-{
-    imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
-    return APP_ERR_OK;
-}
-
-APP_ERROR Resnet50ClassifyOpencv::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat)
-{
+APP_ERROR Resnet18ClassifyOpencv::ConvertImageToTensorBase(std::string &imgPath,
+                                                           MxBase::TensorBase &tensorBase) {
     static constexpr uint32_t resizeHeight = 304;
     static constexpr uint32_t resizeWidth = 304;
 
-    cv::resize(srcImageMat, dstImageMat, cv::Size(resizeWidth, resizeHeight));
-    return APP_ERR_OK;
-}
-
-APP_ERROR Resnet50ClassifyOpencv::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase)
-{
+    cv::Mat imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
+    cv::resize(imageMat, imageMat, cv::Size(resizeWidth, resizeHeight));
     const uint32_t dataSize =  imageMat.cols *  imageMat.rows * XRGB_WIDTH_NU;
-    LogInfo << "image size after crop" << imageMat.cols << " " << imageMat.rows;
+    LogInfo << "image size after resize" << imageMat.cols << " " << imageMat.rows;
+
     MemoryData memoryDataDst(dataSize, MemoryData::MEMORY_DEVICE, deviceId_);
     MemoryData memoryDataSrc(imageMat.data, dataSize, MemoryData::MEMORY_HOST_MALLOC);
 
@@ -115,9 +104,8 @@ APP_ERROR Resnet50ClassifyOpencv::CVMatToTensorBase(const cv::Mat &imageMat, MxB
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet50ClassifyOpencv::Inference(const std::vector<MxBase::TensorBase> &inputs,
-                                      std::vector<MxBase::TensorBase> &outputs)
-{
+APP_ERROR Resnet18ClassifyOpencv::Inference(std::vector<MxBase::TensorBase> &inputs,
+                                            std::vector<MxBase::TensorBase> &outputs) {
     auto dtypes = model_->GetOutputDataType();
     for (size_t i = 0; i < modelDesc_.outputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
@@ -137,7 +125,7 @@ APP_ERROR Resnet50ClassifyOpencv::Inference(const std::vector<MxBase::TensorBase
     auto startTime = std::chrono::high_resolution_clock::now();
     APP_ERROR ret = model_->ModelInference(inputs, outputs, dynamicInfo);
     auto endTime = std::chrono::high_resolution_clock::now();
-    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();// save time
+    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
     inferCostTimeMilliSec += costMs;
     if (ret != APP_ERR_OK) {
         LogError << "ModelInference failed, ret=" << ret << ".";
@@ -146,9 +134,8 @@ APP_ERROR Resnet50ClassifyOpencv::Inference(const std::vector<MxBase::TensorBase
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet50ClassifyOpencv::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
-                                        std::vector<std::vector<MxBase::ClassInfo>> &clsInfos)
-{
+APP_ERROR Resnet18ClassifyOpencv::PostProcess(std::vector<MxBase::TensorBase> &inputs,
+                                              std::vector<std::vector<MxBase::ClassInfo>> &clsInfos) {
     APP_ERROR ret = post_->Process(inputs, clsInfos);
     if (ret != APP_ERR_OK) {
         LogError << "Process failed, ret=" << ret << ".";
@@ -157,8 +144,8 @@ APP_ERROR Resnet50ClassifyOpencv::PostProcess(const std::vector<MxBase::TensorBa
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet50ClassifyOpencv::SaveResult(const std::string &imgPath, const std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos)
-{
+APP_ERROR Resnet18ClassifyOpencv::SaveResult(std::string &imgPath,
+                                             std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos) {
     LogInfo << "image path" << imgPath;
     std::string fileName = imgPath.substr(imgPath.find_last_of("/") + 1);
     size_t dot = fileName.find_last_of(".");
@@ -187,24 +174,14 @@ APP_ERROR Resnet50ClassifyOpencv::SaveResult(const std::string &imgPath, const s
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet50ClassifyOpencv::Process(const std::string &imgPath)
-{
-    cv::Mat imageMat;
-    APP_ERROR ret = ReadImage(imgPath, imageMat);
-    if (ret != APP_ERR_OK) {
-        LogError << "ReadImage failed, ret=" << ret << ".";
-        return ret;
-    }
-
-    ResizeImage(imageMat, imageMat);
-
+APP_ERROR Resnet18ClassifyOpencv::Process(std::string &imgPath) {
+    MxBase::TensorBase tensorBase;
     std::vector<MxBase::TensorBase> inputs = {};
     std::vector<MxBase::TensorBase> outputs = {};
 
-    TensorBase tensorBase;
-    ret = CVMatToTensorBase(imageMat, tensorBase);
+    APP_ERROR ret = ConvertImageToTensorBase(imgPath, tensorBase);
     if (ret != APP_ERR_OK) {
-        LogError << "CVMatToTensorBase failed, ret=" << ret << ".";
+        LogError << "Convert image to TensorBase failed, ret=" << ret << ".";
         return ret;
     }
 
@@ -213,7 +190,7 @@ APP_ERROR Resnet50ClassifyOpencv::Process(const std::string &imgPath)
     auto startTime = std::chrono::high_resolution_clock::now();
     ret = Inference(inputs, outputs);
     auto endTime = std::chrono::high_resolution_clock::now();
-    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();// save time
+    double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
     inferCostTimeMilliSec += costMs;
     if (ret != APP_ERR_OK) {
         LogError << "Inference failed, ret=" << ret << ".";

@@ -33,7 +33,7 @@ function check_env()
     fi
 }
 
-function build_resnet50()
+function build_resnet18()
 {
     cd $path_cur
     rm -rf build
@@ -43,11 +43,11 @@ function build_resnet50()
     make
     ret=$?
     if [ ${ret} -ne 0 ]; then
-        echo "Failed to build resnet50."
+        echo "Failed to build resnet18."
         exit ${ret}
     fi
     make install
 }
 
 check_env
-build_resnet50
+build_resnet18
