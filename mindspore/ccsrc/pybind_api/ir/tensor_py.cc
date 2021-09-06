@@ -456,6 +456,16 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                   return TensorPy::MakeTensor(py::array(input), type_ptr);
                                 }),
                                 py::arg("input"), py::arg("dtype") = nullptr)
+                           // We only suppot array/bool_/int_/float_/list/tuple/complex pybind objects as tensor input,
+                           // and array/bool_/int_/float_/list/tuple init will be matched above, other pybind objects
+                           // input will raise error except complex data type.
+                           .def(py::init([](const py::object &input, const TypePtr &type_ptr) {
+                                  if (!PyComplex_CheckExact(input.ptr())) {
+                                    MS_LOG(EXCEPTION) << "Unsupported tensor type: " << input.get_type();
+                                  }
+                                  return TensorPy::MakeTensor(py::array(input), type_ptr);
+                                }),
+                                py::arg("input"), py::arg("dtype") = nullptr)
                            .def_property("init_flag", &Tensor::is_init, &Tensor::set_init_flag)
                            .def_property_readonly("_dtype", &Tensor::Dtype, R"mydelimiter(
                              Get the tensor's data type.

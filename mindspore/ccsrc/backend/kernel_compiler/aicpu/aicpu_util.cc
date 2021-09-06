@@ -37,6 +37,8 @@ static const std::map<int32_t, int32_t> kMsProtoDataTypeMap = {
   {mindspore::TypeId::kNumberTypeFloat, mindspore::DataType::MS_FLOAT32},
   {mindspore::TypeId::kNumberTypeFloat32, mindspore::DataType::MS_FLOAT32},
   {mindspore::TypeId::kNumberTypeFloat64, mindspore::DataType::MS_FLOAT64},
+  {mindspore::TypeId::kNumberTypeComplex64, mindspore::DataType::MS_COMPLEX64},
+  {mindspore::TypeId::kNumberTypeComplex128, mindspore::DataType::MS_COMPLEX128},
 };
 
 static const std::map<int32_t, int32_t> kProtoDataTypeToMsDataTypeMap = {
@@ -53,6 +55,8 @@ static const std::map<int32_t, int32_t> kProtoDataTypeToMsDataTypeMap = {
   {mindspore::DataType::MS_FLOAT16, mindspore::TypeId::kNumberTypeFloat16},
   {mindspore::DataType::MS_FLOAT32, mindspore::TypeId::kNumberTypeFloat32},
   {mindspore::DataType::MS_FLOAT64, mindspore::TypeId::kNumberTypeFloat64},
+  {mindspore::DataType::MS_COMPLEX64, mindspore::TypeId::kNumberTypeComplex64},
+  {mindspore::DataType::MS_COMPLEX128, mindspore::TypeId::kNumberTypeComplex128},
 };
 
 int AicpuOpUtil::MsTypeToProtoType(TypeId ms_type) {
