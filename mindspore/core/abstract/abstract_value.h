@@ -104,7 +104,7 @@ class MS_CORE_API AbstractBase : public Base {
 class MS_CORE_API AbstractScalar : public AbstractBase {
  public:
   AbstractScalar() : AbstractBase(kAnyValue, kAnyType) {}
-  explicit AbstractScalar(const ValuePtr &value, const TypePtr &type) : AbstractBase(value, type) {}
+  AbstractScalar(const ValuePtr &value, const TypePtr &type) : AbstractBase(value, type) {}
   explicit AbstractScalar(const ValuePtr &value) : AbstractBase(value, value->type()) {}
   explicit AbstractScalar(int value) : AbstractBase(MakeValue(value), kInt32) {}
   explicit AbstractScalar(int64_t value) : AbstractBase(MakeValue(value), kInt64) {}
@@ -148,7 +148,7 @@ using AbstractTypePtr = std::shared_ptr<AbstractType>;
 
 class MS_CORE_API AbstractError : public AbstractBase {
  public:
-  explicit AbstractError(const StringImmPtr &err, const AnfNodePtr &node) : AbstractBase(err), node_(node) {
+  AbstractError(const StringImmPtr &err, const AnfNodePtr &node) : AbstractBase(err), node_(node) {
     if (err == nullptr || node == nullptr) {
       MS_LOG(EXCEPTION) << "err or node is nullptr";
     }
@@ -169,6 +169,25 @@ class MS_CORE_API AbstractError : public AbstractBase {
   // Origin node been specialized to AbstractError, for debug purpose only.
   const AnfNodePtr node_;
 };
+
+class MS_CORE_API AbstractScript : public AbstractBase {
+ public:
+  AbstractScript() : AbstractBase(kAnyValue, kAnyType) {}
+  AbstractScript(const ValuePtr &value, const TypePtr &type) : AbstractBase(value, type) {}
+  explicit AbstractScript(const ValuePtr &value) : AbstractBase(value, kString) {}
+  // explicit AbstractScript(const std::string &value) : AbstractBase(MakeValue(value), kString) {}
+  ~AbstractScript() override = default;
+  MS_DECLARE_PARENT(AbstractScript, AbstractBase)
+
+  std::size_t hash() const override { return hash_combine({tid(), GetValueTrack()->hash(), GetTypeTrack()->hash()}); }
+
+  TypePtr BuildType() const override { return GetTypeTrack(); }
+  AbstractBasePtr Clone() const override {
+    return std::make_shared<AbstractScript>(GetValueTrack(), GetTypeTrack()->Clone());
+  }
+  AbstractBasePtr Broaden() const override { return Clone(); }
+};
+using AbstractScriptPtr = std::shared_ptr<AbstractScript>;
 
 class Evaluator;
 using EvaluatorPtr = std::shared_ptr<Evaluator>;

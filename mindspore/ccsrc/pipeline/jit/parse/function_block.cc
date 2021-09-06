@@ -25,6 +25,7 @@
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
 #include "utils/info.h"
 #include "debug/trace.h"
@@ -71,7 +72,7 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " write var " << var_name << " with node "
                 << node->DebugString();
-  auto [iter, is_new_name] = vars_.emplace(var_name, std::make_pair(node, false));
+  auto [iter, is_new_name] = assigned_vars_.emplace(var_name, std::make_pair(node, false));
   if (!is_new_name) {
     // If a cnode variable with same name already existed but not used,
     // add it as an isolate node. for example:
@@ -97,8 +98,8 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
 // Read variable from predecessors
 AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
   // Get var node if it is found
-  auto found = vars_.find(var);
-  if (found != vars_.end()) {
+  auto found = assigned_vars_.find(var);
+  if (found != assigned_vars_.end()) {
     auto &node = found->second.first;
     MS_EXCEPTION_IF_NULL(node);
     // Mark the variable as used.
@@ -109,7 +110,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
     }
     return node;
   }
-  // Get var from predecessor block ,if can't get then make a resolve node to it
+  // Get var from predecessor block, if can't get then make a resolve node to it
   if (matured_) {
     // If only one predecessor block, read the definition of var from it.
     if (prev_blocks_.size() == 1) {
@@ -122,6 +123,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
       if (it != var_to_resolve_.end()) {
         return it->second;
       }
+      MS_LOG(DEBUG) << "var: " << var;
       auto tmp_node = MakeResolveSymbol(var);
       var_to_resolve_[var] = tmp_node;
       return tmp_node;
@@ -154,6 +156,7 @@ AnfNodePtr FunctionBlock::MakeResolveAstOp(const py::object &op) {
   }
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_AST, namespace_var[0]);
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[1].cast<std::string>());
+  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
   return MakeResolve(name_space, symbol);
 }
 
@@ -164,7 +167,37 @@ AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr) {
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
   SymbolPtr symbol = std::make_shared<Symbol>(attr);
+  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
   return MakeResolve(name_space, symbol);
+}
+
+AnfNodePtr FunctionBlock::HandleNamespaceInfo(const py::tuple &namespace_info) {
+  const size_t namespace_info_size = 2;
+  const size_t namespace_more_info_size = 3;
+  if (namespace_info.size() != namespace_info_size && namespace_info.size() != namespace_more_info_size) {
+    MS_EXCEPTION(NameError) << "namespace info size should be 2 or 3, but got " << namespace_info.size();
+  }
+  bool unsupported = false;
+  py::object py_obj;
+  if (namespace_info.size() == namespace_more_info_size) {
+    if (namespace_info[0].is_none()) {  // If namespace is None, the symbol is an undefined name.
+      MS_EXCEPTION(NameError) << namespace_info[namespace_more_info_size - 1].cast<std::string>();
+    } else {  // Or, the symbol is an unsupported builtin symbol in Graph mode.
+      unsupported = true;
+      py_obj = namespace_info[namespace_more_info_size - 1];
+    }
+  }
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, namespace_info[0]);
+  SymbolPtr symbol = std::make_shared<Symbol>(namespace_info[1].cast<std::string>());
+  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString()
+                << ", unsupported: " << unsupported;
+  auto resolved_node = MakeResolve(name_space, symbol);
+  if (unsupported) {
+    resolved_node->set_interpret(true);
+    AddGlobalPyParam(symbol->name(), py_obj);
+    MS_LOG(INFO) << "Added global python symblol: {" << symbol->name() << " : " << py::str(py_obj) << "}";
+  }
+  return resolved_node;
 }
 
 // Make a resolve node for symbol string
@@ -180,23 +213,17 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
   }
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
-  py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
-  const size_t namespace_info_size = 2;
-  if (namespace_info.size() < namespace_info_size) {
-    MS_EXCEPTION(NameError) << "namespace_info is less than 2";
+
+  // The fallback feature is enabled in default.
+  // Not support change the flag during the process is alive.
+  static const auto use_fallback = (parser_.support_fallback() == "0" ? false : true);
+  if (!use_fallback) {
+    py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
+    return HandleNamespaceInfo(namespace_info);
+  } else {
+    py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, value);
+    return HandleNamespaceInfo(namespace_info);
   }
-  // If namespace is None, the symbol is an undefined name or an unsupported builtin function.
-  if (namespace_info[0].is_none()) {
-    // If the size of namespace_var is greater than or equal to 3, the error information is stored in namespace_var[2].
-    if (namespace_info.size() > namespace_info_size) {
-      MS_EXCEPTION(NameError) << namespace_info[namespace_info_size].cast<std::string>();
-    }
-    // If the size of namespace_var is less than 3, the default error information is used.
-    MS_EXCEPTION(NameError) << "The name \'" << value << "\' is not defined.";
-  }
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, namespace_info[0]);
-  SymbolPtr symbol = std::make_shared<Symbol>(namespace_info[1].cast<std::string>());
-  return MakeResolve(name_space, symbol);
 }
 
 AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
@@ -209,6 +236,7 @@ AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
   }
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_COMMON_OPS, namespace_var[0]);
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[1].cast<std::string>());
+  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
   return MakeResolve(name_space, symbol);
 }
 
@@ -218,6 +246,17 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(resolve_symbol);
   auto node = func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
+  return node;
+}
+
+AnfNodePtr FunctionBlock::MakeInterpret(const std::string &script_text, const AnfNodePtr &global_dict_node,
+                                        const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node) {
+  MS_LOG(DEBUG) << "MakeInterpret for " << script_text;
+  ScriptPtr script = std::make_shared<Script>(script_text);
+  auto script_node = NewValueNode(script);
+  auto node = func_graph_->NewCNodeInOrder(
+    {NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
+  node->set_interpreted_node(orig_node);
   return node;
 }
 
@@ -418,7 +457,7 @@ void FunctionBlock::FindIsolatedNodes() {
   //
   std::set<AnfNodePtr> used;
   // Find used variables.
-  for (const auto &var : vars_) {
+  for (const auto &var : assigned_vars_) {
     auto &node = var.second.first;
     if (node == nullptr) {
       continue;
@@ -429,7 +468,7 @@ void FunctionBlock::FindIsolatedNodes() {
     }
   }
   // Add isolated nodes which is unused var but not found in used set.
-  for (const auto &var : vars_) {
+  for (const auto &var : assigned_vars_) {
     auto &node = var.second.first;
     bool is_used = var.second.second;
     if (node == nullptr || is_used) {

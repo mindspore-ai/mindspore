@@ -291,7 +291,7 @@ TEST_F(TestStepParallel, CreatOpInstance) {
 
     std::vector<py::object> arglist;
     (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(arglist),
-                         [](Attr attr) { return ValuePtrToPyData(attr.second); });
+                         [](Attr attr) { return ValueToPyData(attr.second); });
     py::object allreduce_pyobj = parse::python_adapter::CallPyFn(
       "mindspore.parallel._utils", "_get_python_op", "AllReduce", "mindspore.ops.operations", "test", arglist);
     py::dict opAttr = py::getattr(allreduce_pyobj, "attrs");

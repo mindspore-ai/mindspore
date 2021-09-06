@@ -359,7 +359,7 @@ py::object StructureOutput(const AnfNodePtr &output_node, const py::tuple &data,
   MS_EXCEPTION_IF_NULL(output_node);
 
   if (output_node->isa<ValueNode>()) {
-    return ValuePtrToPyData(GetValueNode(output_node));
+    return ValueToPyData(GetValueNode(output_node));
   }
 
   if (output_node->isa<Parameter>()) {

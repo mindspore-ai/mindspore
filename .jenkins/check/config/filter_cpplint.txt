@@ -13,9 +13,12 @@
 "mindspore/mindspore/core/mindrt/src/actor/actorpolicy.h"                                          "runtime/references"
 "mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/"                                     "readability/casting"
 "mindspore/mindspore/ccsrc/runtime/device/gpu/gpu_kernel_runtime.cc"                               "build/include_what_you_use"
+"mindspore/mindspore/ccsrc/utils/convert_utils_py.cc"                                              "whitespace/indent"
+
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/PostProcess/Yolov4TinyMindsporePost.h" "runtime/references"
+
 # MindData
 "mindspore/mindspore/ccsrc/minddata/mindrecord/include/shard_page.h"                               "runtime/string"
 "mindspore/mindspore/ccsrc/minddata/dataset/kernels/tensor_op.h"                                   "runtime/references"

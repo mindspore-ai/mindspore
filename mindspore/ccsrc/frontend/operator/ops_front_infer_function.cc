@@ -444,7 +444,7 @@ AbstractBasePtr InferImplTuple2Array(const AnalysisEnginePtr &, const PrimitiveP
   CheckArgsSize(op_name, args_spec_list, 1);
   AbstractTuplePtr input = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
 
-  py::tuple data_tuple = ValuePtrToPyData(input->BuildValue());
+  py::tuple data_tuple = ValueToPyData(input->BuildValue());
   py::array data = py::array(data_tuple);
   auto tensor = tensor::TensorPy::MakeTensor(data);
   auto ret = tensor->ToAbstract();

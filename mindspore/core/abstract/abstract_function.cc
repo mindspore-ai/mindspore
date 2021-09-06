@@ -320,6 +320,38 @@ std::string TypedPrimitiveAbstractClosure::ToString() const {
   return buffer.str();
 }
 
+bool PyInterpretAbstractClosure::operator==(const AbstractFunction &other) const {
+  if (!other.isa<PyInterpretAbstractClosure>()) {
+    return false;
+  }
+  auto other_partial = static_cast<const PyInterpretAbstractClosure *>(&other);
+  if (fn_ != other_partial->fn_) {
+    return false;
+  }
+  if (args_spec_list_.size() != other_partial->args_spec_list_.size()) {
+    return false;
+  }
+  return args_spec_list_ == other_partial->args_spec_list_;
+}
+
+std::size_t PyInterpretAbstractClosure::hash() const {
+  MS_EXCEPTION_IF_NULL(fn_);
+  auto hash_value = hash_combine(tid(), fn_->hash());
+  hash_value = hash_combine(hash_value, AbstractBasePtrListHash(args_spec_list_));
+  return hash_value;
+}
+
+std::string PyInterpretAbstractClosure::ToString() const {
+  std::ostringstream buffer;
+  buffer << "PyInterpretAbstractClosure(" << fn_->ToString() << "(";
+  for (const auto &arg : args_spec_list_) {
+    MS_EXCEPTION_IF_NULL(arg);
+    buffer << arg->ToString() << ", ";
+  }
+  buffer << "))";
+  return buffer.str();
+}
+
 bool DummyAbstractClosure::operator==(const AbstractFunction &other) const {
   return !other.isa<DummyAbstractClosure>();
 }

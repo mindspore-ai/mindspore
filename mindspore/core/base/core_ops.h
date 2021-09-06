@@ -604,6 +604,9 @@ inline const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_
 inline const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");
 inline const PrimitivePtr kPrimGetRefValue = std::make_shared<Primitive>("get_ref_value");
 
+// Python interpreter runner
+inline const PrimitivePtr kPrimPyInterpret = std::make_shared<Primitive>("PyInterpret");
+
 // Other primitive not used by backend but used in core;
 inline const PrimitivePtr kPrimStateSetItem = std::make_shared<Primitive>("state_setitem");
 inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J", kSideEffectPropagate);

@@ -26,16 +26,17 @@
 #include <unordered_map>
 #include <memory>
 #include <utility>
+#include <tuple>
 #include "pipeline/jit/parse/parse_base.h"
 #include "utils/log_adapter.h"
 #include "utils/ordered_set.h"
 
 namespace mindspore {
 namespace parse {
-
 class Parser;
 class NameSpace;
 class Symbol;
+class Script;
 class FunctionBlock;
 using FunctionBlockPtr = std::shared_ptr<FunctionBlock>;
 
@@ -70,10 +71,25 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr MakeResolveSymbol(const std::string &value);
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);
+  AnfNodePtr HandleNamespaceInfo(const py::tuple &namespace_info);
+  AnfNodePtr MakeInterpret(const std::string &script_text, const AnfNodePtr &global_dict_node,
+                           const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node);
   const std::unordered_map<ParameterPtr, AnfNodePtr> &removable_phis() const { return removable_phis_; }
   void FindIsolatedNodes();
   void AddIsolatedNode(const AnfNodePtr &target);
   void AttachIsolatedNodesBeforeReturn();
+
+  py::dict &global_py_params() { return global_py_params_; }
+  void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
+  void AddGlobalPyParam(const std::string &name, const py::object &obj) { global_py_params_[py::str(name)] = obj; }
+
+  std::tuple<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> local_py_params() {
+    return {local_py_params_keys_, local_py_params_values_};
+  }
+  void AddLocalPyParam(const std::string &name, const AnfNodePtr &node) {
+    local_py_params_keys_.emplace_back(NewValueNode(name));
+    local_py_params_values_.emplace_back(node);
+  }
 
  private:
   // Block graph
@@ -90,7 +106,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   std::vector<FunctionBlock *> prev_blocks_;
 
   // Store args and variable's node, use a bool flag to indicate if the variable is used.
-  std::map<std::string, std::pair<AnfNodePtr, bool>> vars_;
+  std::map<std::string, std::pair<AnfNodePtr, bool>> assigned_vars_;
 
   // Map the parameter node to variable, it can be resolved if the block's predecessors are processed
   std::map<ParameterPtr, std::string> phi_nodes_;
@@ -114,10 +130,25 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   // Keep new made resolve symbol for the variable not found in vars_.
   std::unordered_map<std::string, AnfNodePtr> var_to_resolve_;
 
+  // Collect all python symbols in the block.
+  // We treat both global symbols and local symbols declared previously as global symbols.
+  py::dict global_py_params_;
+  std::vector<AnfNodePtr> local_py_params_keys_;
+  std::vector<AnfNodePtr> local_py_params_values_;
+
   // Isolated nodes.
   OrderedSet<AnfNodePtr> isolated_nodes_;
 };
 
+class ScriptInfo {
+ public:
+  explicit ScriptInfo(const py::object &obj) : py_obj_(obj) {}
+
+  // Key for user data.
+  constexpr static char key[] = "ScriptInfo";
+
+  py::object py_obj_;
+};
 }  // namespace parse
 }  // namespace mindspore
 

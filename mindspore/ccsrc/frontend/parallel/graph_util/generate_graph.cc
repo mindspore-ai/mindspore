@@ -59,7 +59,7 @@ ValuePtr CreatOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name
   }
   std::vector<py::object> arg_list;
   (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(arg_list),
-                       [](const Attr &attr) { return ValuePtrToPyData(attr.second); });
+                       [](const Attr &attr) { return ValueToPyData(attr.second); });
   py::object obj =
     parse::python_adapter::CallPyFn(GET_OP_FUNCTION_PATH, GET_OP_FUNCTION, op_name, op_path, instance_name, arg_list);
   ValuePtr op_instance = nullptr;

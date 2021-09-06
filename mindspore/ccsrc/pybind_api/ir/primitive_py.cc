@@ -291,7 +291,7 @@ py::function PrimitivePy::GetComputeFunction() const {
 py::dict PrimitivePy::GetAttrDict() {
   py::dict attr_dict;
   for (auto &attr : attrs_) {
-    attr_dict[py::str(attr.first)] = ValuePtrToPyData(attr.second);
+    attr_dict[py::str(attr.first)] = ValueToPyData(attr.second);
   }
   return attr_dict;
 }
@@ -430,7 +430,7 @@ py::dict PrimitivePyAdapter::GetAttrDict() {
 
   py::dict attr_dict;
   for (auto &attr : attrs_) {
-    attr_dict[py::str(attr.first)] = ValuePtrToPyData(attr.second);
+    attr_dict[py::str(attr.first)] = ValueToPyData(attr.second);
   }
   return attr_dict;
 }

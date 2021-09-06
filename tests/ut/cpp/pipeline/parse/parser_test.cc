@@ -65,7 +65,7 @@ TEST_F(TestParser, TestParseApi) {
 TEST_F(TestParser, TestParseAst) {
   GetPythonFunction("test_f");
 
-  ParseAst ast = ParseAst(fn);
+  ParseFunctionAst ast = ParseFunctionAst(fn);
   bool succ = ast.InitParseAstInfo();
   ASSERT_TRUE(succ = true);
 
