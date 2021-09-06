@@ -361,7 +361,7 @@ Parameters for learning rate:
 ### [导出MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --model_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 参数ckpt_file为必填项，
