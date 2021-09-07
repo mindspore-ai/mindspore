@@ -211,7 +211,8 @@ class BaseStepTraceParser:
         """
         start_time = event_info.get('end', '-')
         event_info['start'] = start_time
-        event_info['reduce'] = {}
+        if 'reduce' not in event_info.keys():
+            event_info['reduce'] = {}
 
         i = 0
         while i < len(content):
