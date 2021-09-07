@@ -36,12 +36,12 @@ STATUS ModelInfer::Init() {
     return lite::RET_OK;
   }
 
-  acl_env_ = AclEnvGuard::GetAclEnv(options_.dump_cfg_path_);
+  acl_env_ = AclEnvGuard::GetAclEnv(options_.dump_cfg_path);
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Acl init failed.";
     return lite::RET_ERROR;
   }
-  int32_t device_id = options_.device_id_;
+  int32_t device_id = options_.device_id;
   aclError ret = aclrtSetDevice(device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl open device " << device_id << " failed.";
@@ -98,11 +98,11 @@ STATUS ModelInfer::Finalize() {
   }
   MS_LOG(INFO) << "End to destroy context.";
 
-  rt_ret = aclrtResetDevice(options_.device_id_);
+  rt_ret = aclrtResetDevice(options_.device_id);
   if (rt_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Reset device " << options_.device_id_ << " failed.";
+    MS_LOG(ERROR) << "Reset device " << options_.device_id << " failed.";
   }
-  MS_LOG(INFO) << "End to reset device " << options_.device_id_;
+  MS_LOG(INFO) << "End to reset device " << options_.device_id;
   init_flag_ = false;
   load_flag_ = false;
   return lite::RET_OK;

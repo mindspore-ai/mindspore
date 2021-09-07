@@ -21,13 +21,16 @@ if(ENABLE_D OR ENABLE_ACL)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 
     file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
-            "model/acl/*.cc"
+            "model/acl/acl_model_options.cc"
+            "model/acl/model_converter.cc"
             "model/model_converter_utils/*.cc"
             "graph/acl/*.cc"
             )
 
     if(NOT(BUILD_LITE))
-        list(APPEND API_ACL_SRC "akg_kernel_register.cc")
+        list(APPEND API_ACL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc"
+                                "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model_multi.cc"
+                                "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model.cc")
     endif()
 
     if(NOT ENABLE_D)
@@ -50,16 +53,19 @@ endif()
 set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
-              ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
-              ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
-              ${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc
               ${API_MS_INFER_SRC}
               ${API_ACL_SRC}
               ${API_OPS_SRC}
               ${LOAD_MINDIR_SRC}
               ${MS_UTILS_SRC})
+
+if(NOT(BUILD_LITE))
+    list(APPEND MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc"
+                          "${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc"
+                          "${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc")
+endif()
 
 add_library(mindspore_shared_lib SHARED ${MSLIB_SRC})
 if(NOT(BUILD_LITE))

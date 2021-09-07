@@ -40,7 +40,7 @@ CustomAscend310Kernel::~CustomAscend310Kernel() {
 
 AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Context *ctx) const {
   AclModelOptions options;
-  options.device_id_ = 0;
+  options.device_id = 0;
   if (ctx == nullptr) {
     MS_LOG(WARNING) << "Context is nullptr.";
     return options;
@@ -61,8 +61,8 @@ AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Conte
     return options;
   }
 
-  options.device_id_ = static_cast<int32_t>(ascend31o_info->GetDeviceID());
-  options.dump_cfg_path_ = ascend31o_info->GetDumpConfigPath();
+  options.device_id = static_cast<int32_t>(ascend31o_info->GetDeviceID());
+  options.dump_cfg_path = ascend31o_info->GetDumpConfigPath();
   return options;
 }
 

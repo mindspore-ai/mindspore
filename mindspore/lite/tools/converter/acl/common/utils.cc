@@ -156,6 +156,29 @@ std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr) {
   }
   return result;
 }
+
+bool IsCaseNode(const CNodePtr node) {
+  if (node->input(0) == nullptr) {
+    MS_LOG(WARNING) << "The input of node is nullptr.";
+    return false;
+  }
+  if (!node->inputs().empty() && node->input(0)->isa<CNode>() &&
+      GetCNodeFuncName(node->input(0)->cast<CNodePtr>()) == "switch_layer") {
+    return true;
+  }
+  return false;
+}
+
+std::string GetCNodeTargetFuncName(const CNodePtr &cnode) {
+  if (IsCaseNode(cnode)) {
+    return string("Case");
+  }
+  auto name = GetCNodeFuncName(cnode);
+  if (name == "switch_layer") {
+    name = "";
+  }
+  return name;
+}
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
