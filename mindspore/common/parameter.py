@@ -58,25 +58,21 @@ def init_to_value(init):
 
 class Parameter(Tensor_):
     """
-    Parameter types of cell models.
-
-    After initialized `Parameter` is a subtype of `Tensor`.
-
-    In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
-    an `Tensor`, the type of Parameter will be `Tensor`. `Tensor`
-    will save the shape and type info of a tensor with no memory usage. The shape can be changed while
-    compiling for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
+    Parameter types of cell models, after initialized `Parameter` is a subtype of `Tensor`.
 
     Note:
-        Each parameter of Cell is represented by Parameter class.
-        A Parameter has to belong to a Cell.
+        In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
+        an `Tensor`, the type of Parameter will be `Tensor`. `Tensor`
+        will save the shape and type info of a tensor with no memory usage. The shape can be changed while
+        compiling for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
         If there is an operator in the network that requires part of the inputs to be Parameter,
         then the Parameters as this part of the inputs are not allowed to be cast.
         It is recommended to use the default value of `name` when initialize a parameter as one attribute of a cell,
         otherwise, the parameter name may be different than expected.
 
     Args:
-        default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data, to be set initialized.
+        default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
+        to initialize the parameter data.
         name (str): Name of the child parameter. Default: None.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): When layerwise_parallel is true in data/hybrid parallel mode,
@@ -309,14 +305,14 @@ class Parameter(Tensor_):
     @property
     def comm_fusion(self):
         """
-        Get and Set the fusion type (int) for communication operators corresponding to this parameter.
+        Get and set the fusion type (int) for communication operators corresponding to this parameter.
 
         In `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode, some communication operators used for parameters or
         gradients aggregation are inserted automatically. Set the fusion type for communication operators generated
         for this parameter. The value of fusion must be greater than or equal to 0. When the value of fusion is 0,
         operators will not be fused together.
 
-        Only `Ascend` and `Graph` mode is supported.
+        Only support in Ascend environment with Graph mode.
         """
         return self.param_info.comm_fusion
 
@@ -340,9 +336,6 @@ class Parameter(Tensor_):
     def is_init(self):
         """
         Get the initialization status of the parameter.
-
-        In GE backend, the Parameter need a "init graph" to sync the data from host to device.
-        This flag indicates whether the data as been sync to the device.
 
         This flag only work in GE, and it will be set to False in other backend.
         """
