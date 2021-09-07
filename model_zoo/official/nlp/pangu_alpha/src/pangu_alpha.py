@@ -207,7 +207,7 @@ def set_parallel_configure_for_layer(network, layer_id, offset, parallel_config,
     print(f"pipeline stage id is {pp_id}", flush=True)
 
     # Used for optimizer's fusion tag
-    dis = max(int(layers / parallel_config.gradient_aggregation_group), 1)
+    dis = max(int((layers + 1) / parallel_config.gradient_aggregation_group), 1)
     if parallel_config.pipeline_stage > 1:
         # we give the fusion in pipeline mode a fixed value, otherwise the performance may become worse.
         network.set_comm_fusion(2)
