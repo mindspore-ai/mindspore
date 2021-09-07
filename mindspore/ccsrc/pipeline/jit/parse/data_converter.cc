@@ -579,10 +579,18 @@ std::vector<std::string> GetObjKey(const py::object &obj) {
 
 // Get obj detail type
 ResolveTypeDef GetObjType(const py::object &obj) {
-  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-  auto obj_type =
-    ResolveTypeDef(python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_GET_OBJ_TYPE, obj).cast<int32_t>());
-  return obj_type;
+  try {
+    py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+    auto obj_type =
+      ResolveTypeDef(python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_GET_OBJ_TYPE, obj).cast<int32_t>());
+    return obj_type;
+  } catch (const py::error_already_set &ex) {
+    MS_LOG(ERROR) << "Meet a exception from Python when get the type of `" << py::str(obj) << "`.\n" << ex.what();
+    std::rethrow_exception(std::current_exception());
+  } catch (const py::type_error &ex) {
+    MS_LOG(ERROR) << "Meet a exception when get the type of `" << py::str(obj) << "`.\n" << ex.what();
+    std::rethrow_exception(std::current_exception());
+  }
 }
 
 // Get class instance detail type.

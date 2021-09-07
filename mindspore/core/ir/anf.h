@@ -207,7 +207,7 @@ class MS_CORE_API AnfNode : public Base {
   void set_grad(const bool &need_grad) { need_grad_ = need_grad; }
 
   bool interpret() { return interpret_; }
-  void set_interpret(const bool interpret) { interpret_ = interpret; }
+  void set_interpret(const bool &interpret) { interpret_ = interpret; }
 
   AnfNodePtr interpreted_node() { return interpreted_node_; }
   void set_interpreted_node(const AnfNodePtr &node) { interpreted_node_ = node; }

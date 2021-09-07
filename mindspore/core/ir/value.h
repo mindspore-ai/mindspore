@@ -176,17 +176,23 @@ class MS_CORE_API ValueDictionary : public Value {
       keys.push_back(kv.first);
       values.push_back(kv.second);
     }
-    buffer << "(Dict: "
-           << " keys:(";
-    for (const auto &key : keys) {
-      buffer << key << ", ";
+    buffer << "dict: {keys: (";
+    for (size_t i = 0; i < keys.size(); i++) {
+      buffer << keys[i];
+      if (i != keys.size() - 1) {
+        buffer << ", ";
+      }
     }
-    buffer << ") values:(";
-    for (const auto &value : values) {
+    buffer << "), values: (";
+    for (size_t i = 0; i < values.size(); i++) {
+      const auto &value = values[i];
       MS_EXCEPTION_IF_NULL(value);
-      buffer << value->ToString() << ", ";
+      buffer << value->ToString();
+      if (i != values.size() - 1) {
+        buffer << ", ";
+      }
     }
-    buffer << ")";
+    buffer << ")}";
     return buffer.str();
   }
   abstract::AbstractBasePtr ToAbstract() override;

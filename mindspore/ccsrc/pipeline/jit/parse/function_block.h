@@ -49,6 +49,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   virtual ~FunctionBlock() = default;
 
   FuncGraphPtr func_graph() { return func_graph_; }
+  std::string ToString() const { return func_graph_->ToString(); }
   void WriteVariable(const std::string &var_name, const AnfNodePtr &node);
   AnfNodePtr ReadVariable(const std::string &var_name);
   void AddPrevBlock(const FunctionBlockPtr &block);
@@ -85,6 +86,13 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   py::dict &global_py_params() { return global_py_params_; }
   void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
   void AddGlobalPyParam(const std::string &name, const py::object &obj) { global_py_params_[py::str(name)] = obj; }
+  void CopyGlobalPyParam(const py::dict &symbols) {
+    for (auto &param : symbols) {
+      if (!global_py_params_.contains(param.first)) {
+        global_py_params_[param.first] = param.second;
+      }
+    }
+  }
 
   std::tuple<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> local_py_params() {
     return {local_py_params_keys_, local_py_params_values_};
