@@ -97,9 +97,9 @@ int main(int argc, char **argv) {
 
   Execute compose({std::shared_ptr<Decode>(new Decode()),
                    std::shared_ptr<SwapRedBlue>(new SwapRedBlue()),
-                   std::shared_ptr<Resize>(new Resize({32, 100}, InterpolationMode::kCubic)),
+                   std::shared_ptr<Resize>(new Resize({32, 100})),
                    std::shared_ptr<Normalize>(new Normalize({127.5, 127.5, 127.5},
-                                                                            {127.5, 127.5, 127.5})),
+                                                            {127.5, 127.5, 127.5})),
                    std::shared_ptr<HWC2CHW>(new HWC2CHW())});
   Execute composeCast(std::shared_ptr<TypeCast>(new TypeCast(DataType::kNumberTypeFloat16)));
 
