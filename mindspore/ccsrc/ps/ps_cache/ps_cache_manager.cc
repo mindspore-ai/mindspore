@@ -75,6 +75,7 @@ void PsCacheManager::InsertWeightInitInfo(const std::string &param_name, size_t 
   }
   MS_LOG(INFO) << "Insert embedding table init info:" << param_name << ", global seed:" << global_seed
                << ", op seed:" << op_seed;
+  hash_table_info.param_init_info_.param_name_ = param_name;
   hash_table_info.param_init_info_.param_type_ = kWeight;
   hash_table_info.param_init_info_.global_seed_ = global_seed;
   hash_table_info.param_init_info_.op_seed_ = op_seed;
@@ -94,6 +95,7 @@ void PsCacheManager::InsertAccumuInitInfo(const std::string &param_name, float i
     return;
   }
   MS_LOG(INFO) << "Insert accumulation init info:" << param_name << ", init value:" << init_val;
+  hash_table_info.param_init_info_.param_name_ = param_name;
   hash_table_info.param_init_info_.param_type_ = kAccumulation;
   hash_table_info.param_init_info_.init_val_ = init_val;
   if (CheckFinishInsertInitInfo()) {
@@ -185,6 +187,7 @@ void PsCacheManager::InitParameterServer() {
     std::vector<size_t> indices_shape = {1, 1};
     std::vector<size_t> output_shape = {1, 1, 1};
     ParamInitInfoMessage info;
+    info.set_param_name(param_name);
     info.set_param_type(param_init_info.param_type_);
     info.set_init_val(param_init_info.init_val_);
     info.set_global_seed(param_init_info.global_seed_);

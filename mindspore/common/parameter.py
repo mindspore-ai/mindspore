@@ -186,7 +186,7 @@ class Parameter(Tensor_):
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
         if isinstance(data, Tensor) and data.has_init:
-            if _is_in_parallel_mode() or _is_role_worker() or _is_role_sched():
+            if _is_in_parallel_mode() or _is_role_worker() or _is_role_sched() or _is_role_pserver():
                 # do not init data while in auto parallel.
                 return (Tensor, None, data.dtype, data.shape, data.init)
             data = data.init_data().asnumpy()
@@ -565,6 +565,9 @@ class Parameter(Tensor_):
                 raise ValueError("The length of layout must be larger than 5, but got layout is {}.".format(layout))
             slice_index = int(_get_slice_index(layout[0], layout[1]))
             init_data_args += (slice_index, layout[2], layout[5])
+
+        if _is_role_pserver():
+            return self
 
         if self.init_in_server and self.is_param_ps and isinstance(self.init_mode, Tensor) and \
            self.init_mode.init is not None and (_is_role_worker() or _is_role_sched()):

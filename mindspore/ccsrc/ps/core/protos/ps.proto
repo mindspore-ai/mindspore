@@ -36,10 +36,11 @@ enum CommandCode {
 }
 
 message ParamInitInfoMessage {
-  int32 param_type = 1;
-  uint64 global_seed = 2;
-  uint64 op_seed = 3;
-  float init_val = 4;
+  string param_name = 1;
+  int32 param_type = 2;
+  uint64 global_seed = 3;
+  uint64 op_seed = 4;
+  float init_val = 5;
 }
 
 message KVMessage {
