@@ -212,8 +212,6 @@ class BaseFuncGraphEvaluator : public Evaluator {
 
   virtual FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) = 0;
 
-  AnalysisContextPtr MakeContext(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list);
-
   AnalysisContextPtr parent_context() const { return parent_context_; }
   void set_parent_context(const AnalysisContextPtr &parent_context) { parent_context_ = parent_context; }
 
