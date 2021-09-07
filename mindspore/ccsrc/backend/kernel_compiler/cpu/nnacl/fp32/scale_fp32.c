@@ -25,14 +25,24 @@ void ScaleInner(const float *in_data, float *out_data, const float *scale, const
     for (int i = 0; i < axis_size; i++) {
       int axis_offset = out_offset + i * inner_size;
       int in_index = 0;
-#ifdef ENABLE_ARM64
-      for (; in_index < inner_size - 4; in_index += 4) {
+#ifdef ENABLE_AVX
+      MS_FLOAT32X8 scale_8 = MS_MOV256_F32(scale[i]);
+      MS_FLOAT32X8 offset_8 = MS_MOV256_F32(offset[i]);
+      for (; in_index <= inner_size - C8NUM; in_index += C8NUM) {
         int in_offset = axis_offset + in_index;
-        float32x4_t data = vld1q_f32(in_data + in_offset);
-        float32x4_t scale_4 = vdupq_n_f32(scale[i]);
-        float32x4_t offset_4 = vdupq_n_f32(offset[i]);
-        float32x4_t result = vfmaq_f32(offset_4, data, scale_4);
-        vst1q_f32(out_data + in_offset, result);
+        MS_FLOAT32X8 data = MS_LD256_F32(in_data + in_offset);
+        MS_FLOAT32X8 result = MS_MLA256_F32(offset_8, data, scale_8);
+        MS_ST256_F32(out_data + in_offset, result);
+      }
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+      MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale[i]);
+      MS_FLOAT32X4 offset_4 = MS_MOVQ_F32(offset[i]);
+      for (; in_index <= inner_size - C4NUM; in_index += C4NUM) {
+        int in_offset = axis_offset + in_index;
+        MS_FLOAT32X4 data = MS_LDQ_F32(in_data + in_offset);
+        MS_FLOAT32X4 result = MS_MLAQ_F32(offset_4, data, scale_4);
+        MS_STQ_F32(out_data + in_offset, result);
       }
 #endif
       for (; in_index < inner_size; in_index++) {
@@ -48,14 +58,24 @@ void ScaleAxis(const float *in_data, float *out_data, const float *scale, const 
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size;
     int index = 0;
-#ifdef ENABLE_ARM64
-    for (; index < axis_size - 4; index += 4) {
+#if defined(ENABLE_AVX)
+    for (; index <= axis_size - C8NUM; index += C8NUM) {
       int in_offset = out_offset + index;
-      float32x4_t data = vld1q_f32(in_data + in_offset);
-      float32x4_t scale_4 = vld1q_f32(scale + index);
-      float32x4_t offset_4 = vld1q_f32(offset + index);
-      float32x4_t result = vfmaq_f32(offset_4, data, scale_4);
-      vst1q_f32(out_data + in_offset, result);
+      MS_FLOAT32X8 scale_8 = MS_LD256_F32(scale + index);
+      MS_FLOAT32X8 offset_8 = MS_LD256_F32(offset + index);
+      MS_FLOAT32X8 data = MS_LD256_F32(in_data + in_offset);
+      MS_FLOAT32X8 result = MS_MLA256_F32(offset_8, data, scale_8);
+      MS_ST256_F32(out_data + in_offset, result);
+    }
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+    for (; index <= axis_size - C4NUM; index += C4NUM) {
+      MS_FLOAT32X4 scale_4 = MS_LDQ_F32(scale + index);
+      MS_FLOAT32X4 offset_4 = MS_LDQ_F32(offset + index);
+      int in_offset = out_offset + index;
+      MS_FLOAT32X4 data = MS_LDQ_F32(in_data + in_offset);
+      MS_FLOAT32X4 result = MS_MLAQ_F32(offset_4, data, scale_4);
+      MS_STQ_F32(out_data + in_offset, result);
     }
 #endif
     for (; index < axis_size; index++) {
@@ -84,23 +104,37 @@ void DoScale(const float *in_data, float *out_data, const float *scale, const fl
 
 void ScaleInnerRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                     int outer_end, int axis_size, int inner_size) {
-#ifdef ENABLE_ARM64
-  float32x4_t zeros = {0, 0, 0, 0};
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 zeros_8 = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 zeros = {0, 0, 0, 0};
 #endif
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size * inner_size;
     for (int i = 0; i < axis_size; i++) {
       int axis_offset = out_offset + i * inner_size;
       int in_index = 0;
-#ifdef ENABLE_ARM64
-      for (; in_index < inner_size - 4; in_index += 4) {
+#ifdef ENABLE_AVX
+      MS_FLOAT32X8 scale_8 = MS_MOV256_F32(scale[i]);
+      MS_FLOAT32X8 offset_8 = MS_MOV256_F32(offset[i]);
+      for (; in_index <= inner_size - C8NUM; in_index += C8NUM) {
         int in_offset = axis_offset + in_index;
-        float32x4_t data = vld1q_f32(in_data + in_offset);
-        float32x4_t scale_4 = vdupq_n_f32(scale[i]);
-        float32x4_t offset_4 = vdupq_n_f32(offset[i]);
-        float32x4_t tmp = vfmaq_f32(offset_4, data, scale_4);
-        float32x4_t result = vmaxq_f32(tmp, zeros);
-        vst1q_f32(out_data + in_offset, result);
+        MS_FLOAT32X8 data = MS_LD256_F32(in_data + in_offset);
+        MS_FLOAT32X8 tmp = MS_MLA256_F32(offset_8, data, scale_8);
+        MS_FLOAT32X8 result = MS_MAX256_F32(tmp, zeros_8);
+        MS_ST256_F32(out_data + in_offset, result);
+      }
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+      MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale[i]);
+      MS_FLOAT32X4 offset_4 = MS_MOVQ_F32(offset[i]);
+      for (; in_index <= inner_size - C4NUM; in_index += C4NUM) {
+        int in_offset = axis_offset + in_index;
+        MS_FLOAT32X4 data = MS_LDQ_F32(in_data + in_offset);
+        MS_FLOAT32X4 tmp = MS_MLAQ_F32(offset_4, data, scale_4);
+        MS_FLOAT32X4 result = MS_MAXQ_F32(tmp, zeros);
+        MS_STQ_F32(out_data + in_offset, result);
       }
 #endif
       for (; in_index < inner_size; in_index++) {
@@ -114,21 +148,35 @@ void ScaleInnerRelu(const float *in_data, float *out_data, const float *scale, c
 
 void ScaleAxisRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                    int outer_end, int axis_size) {
-#ifdef ENABLE_ARM64
-  float32x4_t zeros = {0, 0, 0, 0};
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 zeros_8 = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 zeros = {0, 0, 0, 0};
 #endif
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size;
     int index = 0;
-#ifdef ENABLE_ARM64
-    for (; index < axis_size - 4; index += 4) {
+#ifdef ENABLE_AVX
+    for (; index <= axis_size - C8NUM; index += C8NUM) {
       int in_offset = out_offset + index;
-      float32x4_t data = vld1q_f32(in_data + in_offset);
-      float32x4_t scale_4 = vld1q_f32(scale + index);
-      float32x4_t offset_4 = vld1q_f32(offset + index);
-      float32x4_t tmp = vfmaq_f32(offset_4, data, scale_4);
-      float32x4_t result = vmaxq_f32(tmp, zeros);
-      vst1q_f32(out_data + in_offset, result);
+      MS_FLOAT32X8 scale_8 = MS_LD256_F32(scale + index);
+      MS_FLOAT32X8 offset_8 = MS_LD256_F32(offset + index);
+      MS_FLOAT32X8 data = MS_LD256_F32(in_data + in_offset);
+      MS_FLOAT32X8 tmp = MS_MLA256_F32(offset_8, data, scale_8);
+      MS_FLOAT32X8 result = MS_MAX256_F32(tmp, zeros_8);
+      MS_ST256_F32(out_data + in_offset, result);
+    }
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+    for (; index <= axis_size - C4NUM; index += C4NUM) {
+      int in_offset = out_offset + index;
+      MS_FLOAT32X4 data = MS_LDQ_F32(in_data + in_offset);
+      MS_FLOAT32X4 scale_4 = MS_LDQ_F32(scale + index);
+      MS_FLOAT32X4 offset_4 = MS_LDQ_F32(offset + index);
+      MS_FLOAT32X4 tmp = MS_MLAQ_F32(offset_4, data, scale_4);
+      MS_FLOAT32X4 result = MS_MAXQ_F32(tmp, zeros);
+      MS_STQ_F32(out_data + in_offset, result);
     }
 #endif
     for (; index < axis_size; index++) {
@@ -158,24 +206,39 @@ void DoScaleRelu(const float *in_data, float *out_data, const float *scale, cons
 
 void ScaleInnerRelu6(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                      int outer_end, int axis_size, int inner_size) {
-#ifdef ENABLE_ARM64
-  float32x4_t zeros = {0, 0, 0, 0};
-  float32x4_t bounds = {6, 6, 6, 6};
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 zeros_8 = {0, 0, 0, 0, 0, 0, 0, 0};
+  MS_FLOAT32X8 bounds_8 = {6, 6, 6, 6, 6, 6, 6, 6};
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 zeros = {0, 0, 0, 0};
+  MS_FLOAT32X4 bounds = {6, 6, 6, 6};
 #endif
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size * inner_size;
     for (int i = 0; i < axis_size; i++) {
       int axis_offset = out_offset + i * inner_size;
       int in_index = 0;
-#ifdef ENABLE_ARM64
-      for (; in_index < inner_size - 4; in_index += 4) {
+#if defined(ENABLE_AVX)
+      MS_FLOAT32X8 scale_8 = MS_MOV256_F32(scale[i]);
+      MS_FLOAT32X8 offset_8 = MS_MOV256_F32(offset[i]);
+      for (; in_index <= inner_size - C8NUM; in_index += C8NUM) {
         int in_offset = axis_offset + in_index;
-        float32x4_t data = vld1q_f32(in_data + in_offset);
-        float32x4_t scale_4 = vdupq_n_f32(scale[i]);
-        float32x4_t offset_4 = vdupq_n_f32(offset[i]);
-        float32x4_t tmp = vfmaq_f32(offset_4, data, scale_4);
-        float32x4_t result = vminq_f32(vmaxq_f32(tmp, zeros), bounds);
-        vst1q_f32(out_data + in_offset, result);
+        MS_FLOAT32X8 data = MS_LD256_F32(in_data + in_offset);
+        MS_FLOAT32X8 tmp = MS_MLA256_F32(offset_8, data, scale_8);
+        MS_FLOAT32X8 result = MS_MIN256_F32(MS_MAX256_F32(tmp, zeros_8), bounds_8);
+        MS_ST256_F32(out_data + in_offset, result);
+      }
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+      for (; in_index < inner_size - C4NUM; in_index += C4NUM) {
+        int in_offset = axis_offset + in_index;
+        MS_FLOAT32X4 data = MS_LDQ_F32(in_data + in_offset);
+        MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale[i]);
+        MS_FLOAT32X4 offset_4 = MS_MOVQ_F32(offset[i]);
+        MS_FLOAT32X4 tmp = MS_MLAQ_F32(offset_4, data, scale_4);
+        MS_FLOAT32X4 result = MS_MINQ_F32(MS_MAXQ_F32(tmp, zeros), bounds);
+        MS_STQ_F32(out_data + in_offset, result);
       }
 #endif
       for (; in_index < inner_size; in_index++) {
@@ -189,22 +252,37 @@ void ScaleInnerRelu6(const float *in_data, float *out_data, const float *scale, 
 
 void ScaleAxisRelu6(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                     int outer_end, int axis_size) {
-#ifdef ENABLE_ARM64
-  float32x4_t zeros = {0, 0, 0, 0};
-  float32x4_t bounds = {6, 6, 6, 6};
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 zeros_8 = {0, 0, 0, 0, 0, 0, 0, 0};
+  MS_FLOAT32X8 bounds_8 = {6, 6, 6, 6, 6, 6, 6, 6};
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 zeros = {0, 0, 0, 0};
+  MS_FLOAT32X4 bounds = {6, 6, 6, 6};
 #endif
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size;
     int index = 0;
-#ifdef ENABLE_ARM64
-    for (; index < axis_size - 4; index += 4) {
+#ifdef ENABLE_AVX
+    for (; index <= axis_size - C8NUM; index += C8NUM) {
       int in_offset = out_offset + index;
-      float32x4_t data = vld1q_f32(in_data + in_offset);
-      float32x4_t scale_4 = vld1q_f32(scale + index);
-      float32x4_t offset_4 = vld1q_f32(offset + index);
-      float32x4_t tmp = vfmaq_f32(offset_4, data, scale_4);
-      float32x4_t result = vminq_f32(vmaxq_f32(tmp, zeros), bounds);
-      vst1q_f32(out_data + in_offset, result);
+      MS_FLOAT32X8 data = MS_LD256_F32(in_data + in_offset);
+      MS_FLOAT32X8 scale_8 = MS_LD256_F32(scale + index);
+      MS_FLOAT32X8 offset_8 = MS_LD256_F32(offset + index);
+      MS_FLOAT32X8 tmp = MS_MLA256_F32(offset_8, data, scale_8);
+      MS_FLOAT32X8 result = MS_MIN256_F32(MS_MAX256_F32(tmp, zeros_8), bounds_8);
+      MS_ST256_F32(out_data + in_offset, result);
+    }
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+    for (; index <= axis_size - C4NUM; index += C4NUM) {
+      int in_offset = out_offset + index;
+      MS_FLOAT32X4 data = MS_LDQ_F32(in_data + in_offset);
+      MS_FLOAT32X4 scale_4 = MS_LDQ_F32(scale + index);
+      MS_FLOAT32X4 offset_4 = MS_LDQ_F32(offset + index);
+      MS_FLOAT32X4 tmp = MS_MLAQ_F32(offset_4, data, scale_4);
+      MS_FLOAT32X4 result = MS_MINQ_F32(MS_MAXQ_F32(tmp, zeros), bounds);
+      MS_STQ_F32(out_data + in_offset, result);
     }
 #endif
     for (; index < axis_size; index++) {
