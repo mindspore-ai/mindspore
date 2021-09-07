@@ -46,6 +46,7 @@ class Generator {
   virtual int CodeNetHFile() = 0;
   virtual int CodeNetCFile() = 0;
   virtual int CodeWeightFile();
+  virtual int CodeRegKernelHFile();
 
   void CodeNetRunFunc(std::ofstream &ofs);
 

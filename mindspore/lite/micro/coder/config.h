@@ -48,9 +48,6 @@ class Configurator {
   int ParseProjDir(std::string model_path);
   std::string proj_dir() const { return proj_dir_; }
 
-  void SetCustomFlag() { has_custom_op_ = true; }
-  bool CustomFlag() const { return has_custom_op_; }
-
  private:
   Configurator() = default;
   ~Configurator() = default;
@@ -60,7 +57,6 @@ class Configurator {
   bool support_parallel_{false};
   bool debug_mode_{false};
   std::string proj_dir_;
-  bool has_custom_op_{false};
 };
 }  // namespace mindspore::lite::micro
 

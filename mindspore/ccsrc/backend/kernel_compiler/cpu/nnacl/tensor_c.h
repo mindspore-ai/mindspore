@@ -24,6 +24,7 @@ typedef struct TensorC {
   void *data_;
   size_t shape_size_;
   int shape_[MAX_SHAPE_SIZE];
+  char *name_;
 } TensorC;
 
 #endif  // MINDSPORE_NNACL_TENSOR_C_H_

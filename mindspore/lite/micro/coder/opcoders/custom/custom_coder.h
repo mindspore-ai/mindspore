@@ -38,11 +38,11 @@ class CustomCoder final : public OperatorCoder {
   void Populate(const void *prim);
   int TransformTensors(Serializer *code, std::string array_name, const std::vector<Tensor *> &tensors);
   int TransformParams(Serializer *code, std::string var_name);
+  void FreeParams(Serializer *code, std::string var_name);
+  void FreeTensors(Serializer *code, std::string array_name, size_t tensors_num);
 
   std::string type_;
   std::map<std::string, std::string> attrs_;
-  std::string header_;
-  std::string function_;
   static std::map<Tensor *, void *> const_tensor_map_;
 };
 }  // namespace mindspore::lite::micro
