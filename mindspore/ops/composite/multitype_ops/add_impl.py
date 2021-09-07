@@ -227,6 +227,21 @@ def add_rowtensor_tensor(x, y):
     return F.row_tensor_add(x, y)
 
 
+@add.register("None", "None")
+def _none_add_none(x, y):
+    """
+   Adds None and None.
+
+   Args:
+       x (None): x
+       y (None): y
+
+   Returns:
+       None.
+   """
+    return None
+
+
 @_add_backward.register("EnvType", "EnvType")
 def _add_env(x, y):
     """

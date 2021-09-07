@@ -2962,6 +2962,7 @@ void GradExecutor::ClearGrad(const py::object &cell, const py::args &args) {
   if (grad_order_ > 0) {
     --grad_order_;
   }
+  check_graph_cell_id_.clear();
   forward()->node_abs_map().clear();
   ad::CleanRes();
   pipeline::ReclaimOptimizer();
