@@ -1112,11 +1112,6 @@ bool AscendKernelRuntime::HcclInit() {
 }
 
 bool AscendKernelRuntime::DestroyHccl() {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    return true;
-  }
   if (!NeedDestroyHccl()) {
     MS_LOG(INFO) << "Hccl is not enable, no need to close.";
     return true;
@@ -1127,6 +1122,8 @@ bool AscendKernelRuntime::DestroyHccl() {
     return false;
   }
   MS_LOG(INFO) << "Hccl destroy successful.";
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   context_ptr->set_param<bool>(MS_CTX_ENABLE_HCCL, false);
   return true;
 }
