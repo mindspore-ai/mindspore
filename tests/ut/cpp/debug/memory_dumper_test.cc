@@ -38,7 +38,7 @@ TEST_F(TestMemoryDumper, test_DumpToFileAbsPath) {
 
   int ret;
   const std::string filename = "/tmp/dumpToFileTestFile";
-  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector {10, 100}, kNumberTypeInt32);
+  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector{10, 100}, kNumberTypeInt32);
   ASSERT_EQ(ret, true);
 
   int fd = open((filename + ".npy").c_str(), O_RDONLY);
@@ -74,30 +74,7 @@ TEST_F(TestMemoryDumper, test_DumpToFileRelativePath) {
   int ret;
    const std::string filename = "../../dumpToFileTestFile";
   ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector{100, 10}, kNumberTypeInt32);
-  ASSERT_EQ(ret, true);
-
-  int fd = open((filename + ".npy").c_str(), O_RDONLY);
-  int header_size = 32;
-  int npylen = len + header_size;
-  int readBack[npylen] = {0};
-  int readSize = read(fd, readBack, npylen * sizeof(int));
-  (void)close(fd);
-  ASSERT_EQ(readSize, npylen * sizeof(int));
-
-  ret = true;
-  for (uint32_t i = 0; i < len; i++) {
-    // Skip the size of npy header.
-    if (data[i] != readBack[i+header_size]) {
-      ret = false;
-      break;
-    }
-  }
-  std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
-  if (fs->FileExist(filename)) {
-    fs->DeleteFile(filename);
-  }
-
-  ASSERT_EQ(ret, true);
+  ASSERT_EQ(ret, false);
 }
 
 TEST_F(TestMemoryDumper, test_DumpToFileNotExistDir) {

@@ -31,6 +31,7 @@ class Common {
  public:
   Common() = default;
   ~Common() = default;
+  static std::optional<std::string> CreatePrefixPath(const std::string &input_path);
   static std::optional<std::string> GetRealPath(const std::string &input_path);
   static std::optional<std::string> GetConfigFile(const std::string &env);
   static bool IsStrLengthValid(const std::string &str, size_t length_limit, const std::string &error_message = "");
