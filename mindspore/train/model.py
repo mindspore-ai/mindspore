@@ -233,6 +233,8 @@ class Model:
                                                   acc_level=self._acc_level,
                                                   keep_batchnorm_fp32=self._keep_bn_fp32)
         elif self._loss_fn:
+            if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+                network = _VirtualDatasetCell(network)
             network = nn.WithLossCell(network, self._loss_fn)
         # If need to check if loss_fn is not None, but optimizer is None
 

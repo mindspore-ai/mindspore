@@ -167,3 +167,21 @@ def test_cus_matmul_dds_model_parallel_auto():
     dp = 1
     mp = 16
     compile_graph(batch_size, num_heads, dp, mp, auto=True, shard=False)
+
+def test_cus_matmul_dds_repeat_cal_auto():
+    set_algo_parameters(fully_use_devices=False)
+    context.set_auto_parallel_context(device_num=16, global_rank=0)
+    batch_size = 128
+    num_heads = 32
+    dp = 1
+    mp = 2
+    compile_graph(batch_size, num_heads, dp, mp, auto=True, shard=False)
+
+def test_cus_matmul_dds_repeat1_cal_auto():
+    set_algo_parameters(fully_use_devices=False)
+    context.set_auto_parallel_context(device_num=16, global_rank=0)
+    batch_size = 128
+    num_heads = 32
+    dp = 2
+    mp = 1
+    compile_graph(batch_size, num_heads, dp, mp, auto=True, shard=False)

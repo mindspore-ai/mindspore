@@ -55,6 +55,7 @@ class MatmulDDSInfo : public OperatorInfo {
 
  private:
   Dimensions input_strategy_;
+  Shape dev_matrix_shape_origin_;
   int64_t batch_size_ = 0;
   int64_t num_heads_ = 0;
 };
