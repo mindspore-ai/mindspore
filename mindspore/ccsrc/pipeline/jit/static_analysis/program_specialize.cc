@@ -520,7 +520,6 @@ AnalysisContextPtr FuncGraphSpecializer::MakeContext(const AnalysisEnginePtr &en
                                                      const BaseFuncGraphEvaluatorPtr &evaluator,
                                                      const AbstractBasePtrList &args_spec_list) {
   AbstractBasePtrList normalized_args_spec_list = evaluator->NormalizeArgs(args_spec_list);
-  normalized_args_spec_list = evaluator->BroadenUndeterminedArgs(normalized_args_spec_list);
   FuncGraphPtr fg = evaluator->GetFuncGraph(engine, normalized_args_spec_list);
   MS_EXCEPTION_IF_NULL(evaluator->parent_context());
   AnalysisContextPtr new_context = evaluator->parent_context()->NewContext(fg, normalized_args_spec_list);
