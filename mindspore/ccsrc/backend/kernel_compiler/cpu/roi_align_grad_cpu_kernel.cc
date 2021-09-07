@@ -132,9 +132,9 @@ bool ROIAlignGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
       int c, ph, pw, roi_bin_grid_h, roi_bin_grid_w;
       T bin_size_h, bin_size_w, roi_start_h, roi_start_w;
 
-      bin_box(thread_idx, rois, roi_cols_, spatial_scale_, sample_num_, roi_end_mode_, channels_, height_, width_,
-              pooled_height_, pooled_width_, &offset, &n, &c, &ph, &pw, &roi_bin_grid_h, &roi_bin_grid_w, &bin_size_h,
-              &bin_size_w, &roi_start_h, &roi_start_w);
+      bin_box(SizeToInt(thread_idx), rois, roi_cols_, spatial_scale_, sample_num_, roi_end_mode_, channels_, height_,
+              width_, pooled_height_, pooled_width_, &offset, &n, &c, &ph, &pw, &roi_bin_grid_h, &roi_bin_grid_w,
+              &bin_size_h, &bin_size_w, &roi_start_h, &roi_start_w);
 
       // (n, c, ph, pw) is the base param of pooled map
       const T count_points_in_grid_cell = static_cast<T>(roi_bin_grid_h) * static_cast<T>(roi_bin_grid_w);

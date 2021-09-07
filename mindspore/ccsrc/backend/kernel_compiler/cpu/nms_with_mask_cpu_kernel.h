@@ -23,11 +23,11 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t X0 = 0;
-constexpr size_t Y0 = 1;
-constexpr size_t X1 = 2;
-constexpr size_t Y1 = 3;
-constexpr size_t SCORE = 4;
+constexpr int X0 = 0;
+constexpr int Y0 = 1;
+constexpr int X1 = 2;
+constexpr int Y1 = 3;
+constexpr int SCORE = 4;
 constexpr size_t INPUT_NUM = 1;
 constexpr size_t OUTPUT_NUM = 3;
 template <typename T>
@@ -49,7 +49,8 @@ class NMSWithMaskCPUKernel : public CPUKernel {
 
   void MaskInit(size_t numSq, bool *row_mask);
 
-  void PopulateOutput(T *data_in, T *data_out, const int *index_buff, const int num, int box_size, bool flip_mode);
+  void PopulateOutput(const T *data_in, T *data_out, const int *index_buff, const int num, int box_size,
+                      bool flip_mode);
 
   void Preprocess(const int num, int *sel_idx, bool *sel_boxes);
 

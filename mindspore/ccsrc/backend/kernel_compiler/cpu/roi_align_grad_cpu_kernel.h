@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t ROIS_COLS = 5;
+constexpr int ROIS_COLS = 5;
 constexpr size_t DY_DIMS = 4;
 constexpr int BATCH = 0;
 constexpr int CHANNEL = 1;

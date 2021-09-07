@@ -34,10 +34,15 @@ class RandomChoiceWithMaskCPUKernel : public CPUKernel {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+
  private:
+  int32_t input_dim_size = 0;
+  int32_t non_zero_num = 0;
+  int32_t input_total_count = 1;
   bool padding_flag = false;
   int32_t output_length = 0;
   int32_t output_non_zero_length = 0;

@@ -58,12 +58,12 @@ bool ROIAlignCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
   const T *rois = reinterpret_cast<T *>(inputs[1]->addr);
   auto out_data = reinterpret_cast<T *>(outputs[0]->addr);
 
-  size_t elem_num = IntToSize(roi_rows_ * channels_) * pooled_height_ * pooled_width_;
+  size_t elem_num = IntToSize(roi_rows_ * channels_ * pooled_height_ * pooled_width_);
   auto task = [this, &input, &rois, &out_data](size_t start, size_t end) {
     const T OFFSET = T(0.001);
     const T ZERO = T(0.0);
     for (size_t thread_idx = start; thread_idx < end; thread_idx++) {
-      int n = SizeToInt(thread_idx / pooled_width_ / pooled_height_) / channels_;
+      int n = SizeToInt(thread_idx) / pooled_width_ / pooled_height_ / channels_;
       const T *roi_box = rois + n * roi_cols_;
       if (roi_box[1] < OFFSET && roi_box[3] < OFFSET && roi_box[1] > -OFFSET && roi_box[3] > -OFFSET) {
         continue;

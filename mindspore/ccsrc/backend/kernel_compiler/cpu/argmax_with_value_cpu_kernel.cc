@@ -67,7 +67,7 @@ void ArgMaxWithValueCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       num_after_axis_ *= shape_[i];
     }
   }
-  dim_axis_ = shape_[IntToSize(axis)];
+  dim_axis_ = shape_[LongToSize(axis)];
 }
 
 template <typename T>
