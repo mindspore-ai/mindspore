@@ -22,14 +22,33 @@ import random
 import cv2
 import numpy as np
 import pycocotools.coco as COCO
-from .config import dataset_config as data_cfg
-from .config import eval_config as eval_cfg
+from .model_utils.config import eval_config as eval_cfg
 from .image import get_affine_transform, affine_transform
+
+
+coco_class_name2id = {'person': 1, 'bicycle': 2, 'car': 3, 'motorcycle': 4, 'airplane': 5,
+                      'bus': 6, 'train': 7, 'truck': 8, 'boat': 9, 'traffic light': 10,
+                      'fire hydrant': 11, 'stop sign': 13, 'parking meter': 14, 'bench': 15,
+                      'bird': 16, 'cat': 17, 'dog': 18, 'horse': 19, 'sheep': 20, 'cow': 21,
+                      'elephant': 22, 'bear': 23, 'zebra': 24, 'giraffe': 25, 'backpack': 27,
+                      'umbrella': 28, 'handbag': 31, 'tie': 32, 'suitcase': 33, 'frisbee': 34,
+                      'skis': 35, 'snowboard': 36, 'sports ball': 37, 'kite': 38, 'baseball bat': 39,
+                      'baseball glove': 40, 'skateboard': 41, 'surfboard': 42, 'tennis racket': 43,
+                      'bottle': 44, 'wine glass': 46, 'cup': 47, 'fork': 48, 'knife': 49, 'spoon': 50,
+                      'bowl': 51, 'banana': 52, 'apple': 53, 'sandwich': 54, 'orange': 55, 'broccoli': 56,
+                      'carrot': 57, 'hot dog': 58, 'pizza': 59, 'donut': 60, 'cake': 61, 'chair': 62,
+                      'couch': 63, 'potted plant': 64, 'bed': 65, 'dining table': 67, 'toilet': 70,
+                      'tv': 72, 'laptop': 73, 'mouse': 74, 'remote': 75, 'keyboard': 76, 'cell phone': 77,
+                      'microwave': 78, 'oven': 79, 'toaster': 80, 'sink': 81, 'refrigerator': 82,
+                      'book': 84, 'clock': 85, 'vase': 86, 'scissors': 87, 'teddy bear': 88,
+                      'hair drier': 89, 'toothbrush': 90}
+
 
 def coco_box_to_bbox(box):
     """convert height/width to position coordinates"""
     bbox = np.array([box[0], box[1], box[0] + box[2], box[1] + box[3]], dtype=np.float32)
     return bbox
+
 
 def resize_image(image, anns, width, height):
     """resize image to specified scale"""
@@ -121,7 +140,7 @@ def visual_image(img, annos, save_path, ratio=None, height=None, width=None, nam
     num_objects = len(annos)
     name_list = []
     id_list = []
-    for class_name, class_id in data_cfg.coco_class_name2id.items():
+    for class_name, class_id in coco_class_name2id.items():
         name_list.append(class_name)
         id_list.append(class_id)
 

@@ -29,18 +29,24 @@ PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
+export DEVICE_ID=$DEVICE_ID
 
 # install nms module from third party
 if python -c "import nms" > /dev/null 2>&1
 then
     echo "NMS module already exits, no need reinstall."
 else
-    echo "NMS module was not found, install it now..."
-    git clone https://github.com/xingyizhou/CenterNet.git
-    cd CenterNet/src/lib/external/
+    if [ -f './CenterNet' ]
+    then
+        echo "NMS module was not found, but has been downloaded"
+    else
+        echo "NMS module was not found, install it now..."
+        git clone https://github.com/xingyizhou/CenterNet.git
+    fi
+    cd CenterNet/src/lib/external/ || exit
     make
     python setup.py install
-    cd -
+    cd - || exit
     rm -rf CenterNet
 fi
 
@@ -50,6 +56,6 @@ python ${PROJECT_DIR}/../eval.py  \
     --load_checkpoint_path=$LOAD_CHECKPOINT_PATH \
     --data_dir=$DATA_DIR \
     --run_mode=$RUN_MODE \
-    --visual_image=false \
+    --visual_image=true \
     --enable_eval=true \
     --save_result_dir=./ > eval_log.txt 2>&1 &

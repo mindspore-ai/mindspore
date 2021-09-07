@@ -20,13 +20,6 @@ from .image import get_affine_transform, affine_transform, transform_preds
 from .visual import coco_box_to_bbox
 
 
-try:
-    from nms import soft_nms
-except ImportError:
-    print('NMS not installed! Do \n cd $CenterNet_ROOT/scripts/ \n'
-          'and see run_standalone_eval.sh for more details to install it\n')
-
-
 def post_process(dets, meta, scale, num_classes):
     """rescale detection to original scale"""
     c, s, h, w = meta['c'], meta['s'], meta['out_height'], meta['out_width']
@@ -59,7 +52,12 @@ def merge_outputs(detections, num_classes, SOFT_NMS=True):
         results[j] = np.concatenate(
             [detection[j] for detection in detections], axis=0).astype(np.float32)
         if SOFT_NMS:
-            soft_nms(results[j], Nt=0.5, threshold=0.01, method=2)
+            try:
+                from nms import soft_nms
+            except ImportError:
+                print('NMS not installed! Do \n cd $CenterNet_ROOT/scripts/ \n'
+                      'and see run_standalone_eval.sh for more details to install it\n')
+            soft_nms(results[j], Nt=0.5, threshold=0.001, method=2)
 
     scores = np.hstack(
         [results[j][:, 4] for j in range(1, num_classes + 1)])
