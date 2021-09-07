@@ -1226,10 +1226,7 @@ void SessionBasic::GetSingleOpRunInfo(const CNodePtr cnode, OpRunInfo *run_info)
   run_info->abstract = abstract;
   const auto &shape = abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
-  const auto &shape_info = shape->ToString();
-  if (shape_info.find("-1") != string::npos) {
-    run_info->is_dynamic_shape = true;
-  }
+  run_info->is_dynamic_shape = shape->IsDynamic();
 }
 
 void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,

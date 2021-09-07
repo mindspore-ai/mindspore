@@ -779,7 +779,8 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
                               const std::vector<int64_t> &tensors_mask) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode || op_run_info->is_dynamic_shape) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode || op_run_info->is_dynamic_shape ||
+      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
     session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
     RunOpImplOrigin(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
     return;
