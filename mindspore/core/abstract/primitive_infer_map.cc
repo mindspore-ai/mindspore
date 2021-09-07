@@ -84,7 +84,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimNotInDict, {InferImplNotInDict, nullptr, true}},
     {prim::kPrimIsConsant, {InferImplIsConstant, nullptr, true}},
     // Maths
-    {prim::kPrimSquare, {InferImplSquare, nullptr, true}},
     {prim::kPrimMatMul, {InferImplMatMul, nullptr, true}},
     {prim::kPrimBatchMatMul, {InferImplBatchMatMul, nullptr, true}},
     {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, nullptr, true}},

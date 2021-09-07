@@ -1749,7 +1749,7 @@ class SquaredDifference(_MathBinaryOp):
         return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, valid_type, self.name)
 
 
-class Square(PrimitiveWithCheck):
+class Square(Primitive):
     """
     Returns square of a tensor element-wise.
 
@@ -1782,19 +1782,6 @@ class Square(PrimitiveWithCheck):
     def __init__(self):
         """Initialize Square"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
-
-    def __check__(self, x):
-        x_dtype = x["dtype"]
-        validator.check_tensor_dtype_valid("x", x_dtype, mstype.number_type, self.name)
-
-    def infer_value(self, x):
-        """Infer the value of input for Square."""
-        if x is not None:
-            x = x.asnumpy()
-            out = x * x
-            out = np.array(out, x.dtype)
-            return Tensor(out)
-        return None
 
 
 class Rsqrt(PrimitiveWithInfer):
