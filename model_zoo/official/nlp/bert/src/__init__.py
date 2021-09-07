@@ -18,7 +18,8 @@ from .bert_for_pre_training import BertNetworkWithLoss, BertPreTraining, \
     BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
     BertTrainAccumulationAllReduceEachWithLossScaleCell, \
     BertTrainAccumulationAllReducePostWithLossScaleCell, \
-    BertTrainOneStepWithLossScaleCellForAdam
+    BertTrainOneStepWithLossScaleCellForAdam, \
+    BertNetworkMatchBucket, BertPretrainEval
 from .bert_model import BertAttention, BertConfig, BertEncoderCell, BertModel, \
     BertOutput, BertSelfAttention, BertTransformer, EmbeddingLookup, \
     EmbeddingPostprocessor, RelaPosEmbeddingsGenerator, RelaPosMatrixGenerator, \
@@ -29,6 +30,7 @@ __all__ = [
     "GetMaskedLMOutput", "GetNextSentenceOutput", "BertTrainOneStepCell",
     "BertTrainOneStepWithLossScaleCell", "BertTrainAccumulationAllReduceEachWithLossScaleCell",
     "BertTrainAccumulationAllReducePostWithLossScaleCell",
+    "BertNetworkMatchBucket", "BertPretrainEval",
     "BertAttention", "BertConfig", "BertEncoderCell", "BertModel", "BertOutput",
     "BertSelfAttention", "BertTransformer", "EmbeddingLookup",
     "EmbeddingPostprocessor", "RelaPosEmbeddingsGenerator", "AdamWeightDecayForBert",

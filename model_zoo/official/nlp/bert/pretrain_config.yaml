@@ -43,9 +43,13 @@ scale_window: 1000
 optimizer: 'Lamb'
 enable_global_norm: False
 # pretrain_eval related
-data_file: ""
+train_with_eval: 'false'
+eval_data_dir: ""
 schema_file: ""
 finetune_ckpt: ""
+eval_samples: 300000
+# bucket list, default: []
+bucket_list: []
 # optimizer related
 AdamWeightDecay:
     learning_rate: 0.00003  # 3e-5
@@ -64,6 +68,8 @@ Lamb:
     weight_decay: 0.01
     decay_filter: ['layernorm', 'bias']
     eps: 0.00000001  # 1e-8,
+    beta1: 0.99
+    beta2: 0.999
 
 Momentum:
     learning_rate: 0.00002  # 2e-5

@@ -30,13 +30,16 @@ from mindspore.train.train_thor import ConvertModelUtils
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay, thor
 from mindspore import log as logger
 from mindspore.common import set_seed
-from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
+from src import BertNetworkWithLoss, BertNetworkMatchBucket, \
+    BertTrainOneStepCell, \
+    BertTrainOneStepWithLossScaleCell, \
     BertTrainAccumulationAllReduceEachWithLossScaleCell, \
     BertTrainAccumulationAllReducePostWithLossScaleCell, \
     BertTrainOneStepWithLossScaleCellForAdam, \
+    BertPretrainEval, \
     AdamWeightDecayForBert, AdamWeightDecayOp
-from src.dataset import create_bert_dataset
-from src.utils import LossCallBack, BertLearningRate
+from src.dataset import create_bert_dataset, create_eval_dataset
+from src.utils import LossCallBack, BertLearningRate, EvalCallBack, BertMetric
 from src.model_utils.config import config as cfg, bert_net_cfg
 from src.model_utils.moxing_adapter import moxing_wrapper
 from src.model_utils.device_adapter import get_device_id, get_device_num
@@ -81,7 +84,8 @@ def _get_optimizer(args_opt, network):
         group_params = [{'params': decay_params, 'weight_decay': cfg.Lamb.weight_decay},
                         {'params': other_params},
                         {'order_params': params}]
-        optimizer = Lamb(group_params, learning_rate=lr_schedule, eps=cfg.Lamb.eps)
+        optimizer = Lamb(group_params, learning_rate=lr_schedule, beta1=cfg.Lamb.beta1, beta2=cfg.Lamb.beta2,
+                         eps=cfg.Lamb.eps)
     elif cfg.optimizer == 'Momentum':
         optimizer = Momentum(network.trainable_params(), learning_rate=cfg.Momentum.learning_rate,
                              momentum=cfg.Momentum.momentum)
@@ -193,7 +197,8 @@ def run_pretrain():
             cfg.save_checkpoint_steps *= cfg.accumulation_steps
             logger.info("save checkpoint steps: {}".format(cfg.save_checkpoint_steps))
 
-    ds = create_bert_dataset(device_num, rank, cfg.do_shuffle, cfg.data_dir, cfg.schema_dir, cfg.batch_size)
+    ds = create_bert_dataset(device_num, rank, cfg.do_shuffle, cfg.data_dir, cfg.schema_dir, cfg.batch_size,
+                             cfg.bucket_list)
     net_with_loss = BertNetworkWithLoss(bert_net_cfg, True)
 
     new_repeat_count = cfg.epoch_size * ds.get_dataset_size() // cfg.data_sink_steps
@@ -244,7 +249,18 @@ def run_pretrain():
             net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer, sens=cfg.Thor.loss_scale,
                                                   enable_clip_grad=False)
 
+    if cfg.bucket_list:
+        net_with_grads = BertNetworkMatchBucket(net_with_grads, bert_net_cfg.seq_length, cfg.bucket_list)
+
     model = Model(net_with_grads)
+
+    if cfg.train_with_eval == 'true':
+        net_eval = BertPretrainEval(bert_net_cfg, network=net_with_loss.bert)
+        eval_ds = create_eval_dataset(cfg.batch_size, device_num, rank, cfg.eval_data_dir, cfg.schema_dir)
+        model = Model(net_with_grads, eval_network=net_eval, metrics={'bert_acc': BertMetric(cfg.batch_size)})
+        eval_callback = EvalCallBack(model, eval_ds, device_num * cfg.batch_size, cfg.eval_samples)
+        callback.append(eval_callback)
+
     model = ConvertModelUtils().convert_to_thor_model(model, network=net_with_grads, optimizer=optimizer)
     model.train(new_repeat_count, ds, callbacks=callback,
                 dataset_sink_mode=(cfg.enable_data_sink == "true"), sink_size=cfg.data_sink_steps)

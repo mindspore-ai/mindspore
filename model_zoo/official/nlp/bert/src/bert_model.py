@@ -197,7 +197,9 @@ class EmbeddingPostprocessor(nn.Cell):
             token_type_embeddings = self.token_type_embedding(token_type_ids)
             output = self.add(output, token_type_embeddings)
         if not self.use_relative_positions:
-            position_embeddings = self.full_position_embedding(self.position_ids)
+            shape = F.shape(output)
+            position_ids = self.position_ids[:, :shape[1]]
+            position_embeddings = self.full_position_embedding(position_ids)
             output = self.add(output, position_embeddings)
         output = self.layernorm(output)
         output = self.dropout(output)
@@ -246,12 +248,10 @@ class RelaPosMatrixGenerator(nn.Cell):
         length (int): Length of one dim for the matrix to be generated.
         max_relative_position (int): Max value of relative position.
     """
-    def __init__(self, length, max_relative_position):
+    def __init__(self, max_relative_position):
         super(RelaPosMatrixGenerator, self).__init__()
-        self._length = length
         self._max_relative_position = max_relative_position
         self._min_relative_position = -max_relative_position
-        self.range_length = -length + 1
 
         self.tile = P.Tile()
         self.range_mat = P.Reshape()
@@ -259,14 +259,14 @@ class RelaPosMatrixGenerator(nn.Cell):
         self.expanddims = P.ExpandDims()
         self.cast = P.Cast()
 
-    def construct(self):
+    def construct(self, length):
         """Generates matrix of relative positions between inputs."""
-        range_vec_row_out = self.cast(F.tuple_to_array(F.make_range(self._length)), mstype.int32)
-        range_vec_col_out = self.range_mat(range_vec_row_out, (self._length, -1))
-        tile_row_out = self.tile(range_vec_row_out, (self._length,))
-        tile_col_out = self.tile(range_vec_col_out, (1, self._length))
-        range_mat_out = self.range_mat(tile_row_out, (self._length, self._length))
-        transpose_out = self.range_mat(tile_col_out, (self._length, self._length))
+        range_vec_row_out = self.cast(F.tuple_to_array(F.make_range(length)), mstype.int32)
+        range_vec_col_out = self.range_mat(range_vec_row_out, (length, -1))
+        tile_row_out = self.tile(range_vec_row_out, (length,))
+        tile_col_out = self.tile(range_vec_col_out, (1, length))
+        range_mat_out = self.range_mat(tile_row_out, (length, length))
+        transpose_out = self.range_mat(tile_col_out, (length, length))
         distance_mat = self.sub(range_mat_out, transpose_out)
 
         distance_mat_clipped = C.clip_by_value(distance_mat,
@@ -291,7 +291,6 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
     """
     def __init__(self,
-                 length,
                  depth,
                  max_relative_position,
                  initializer_range,
@@ -305,17 +304,16 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
             initializer(TruncatedNormal(initializer_range),
                         [self.vocab_size, self.depth]))
 
-        self.relative_positions_matrix = RelaPosMatrixGenerator(length=length,
-                                                                max_relative_position=max_relative_position)
+        self.relative_positions_matrix = RelaPosMatrixGenerator(max_relative_position=max_relative_position)
         self.reshape = P.Reshape()
         self.one_hot = nn.OneHot(depth=self.vocab_size)
         self.shape = P.Shape()
         self.gather = P.Gather()  # index_select
         self.matmul = P.BatchMatMul()
 
-    def construct(self):
+    def construct(self, length):
         """Generate embedding for each relative position of dimension depth."""
-        relative_positions_matrix_out = self.relative_positions_matrix()
+        relative_positions_matrix_out = self.relative_positions_matrix(length)
 
         if self.use_one_hot_embeddings:
             flat_relative_positions_matrix = self.reshape(relative_positions_matrix_out, (-1,))
@@ -364,8 +362,6 @@ class BertAttention(nn.Cell):
     Args:
         from_tensor_width (int): Size of last dim of from_tensor.
         to_tensor_width (int): Size of last dim of to_tensor.
-        from_seq_length (int): Length of from_tensor sequence.
-        to_seq_length (int): Length of to_tensor sequence.
         num_attention_heads (int): Number of attention heads. Default: 1.
         size_per_head (int): Size of each attention head. Default: 512.
         query_act (str): Activation function for the query transform. Default: None.
@@ -376,16 +372,12 @@ class BertAttention(nn.Cell):
                                       BertAttention. Default: 0.0.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
         initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
-        do_return_2d_tensor (bool): True for return 2d tensor. False for return 3d
-                             tensor. Default: False.
         use_relative_positions (bool): Specifies whether to use relative positions. Default: False.
         compute_type (:class:`mindspore.dtype`): Compute type in BertAttention. Default: mstype.float32.
     """
     def __init__(self,
                  from_tensor_width,
                  to_tensor_width,
-                 from_seq_length,
-                 to_seq_length,
                  num_attention_heads=1,
                  size_per_head=512,
                  query_act=None,
@@ -395,13 +387,10 @@ class BertAttention(nn.Cell):
                  attention_probs_dropout_prob=0.0,
                  use_one_hot_embeddings=False,
                  initializer_range=0.02,
-                 do_return_2d_tensor=False,
                  use_relative_positions=False,
                  compute_type=mstype.float32):
 
         super(BertAttention, self).__init__()
-        self.from_seq_length = from_seq_length
-        self.to_seq_length = to_seq_length
         self.num_attention_heads = num_attention_heads
         self.size_per_head = size_per_head
         self.has_attention_mask = has_attention_mask
@@ -426,9 +415,6 @@ class BertAttention(nn.Cell):
                                     activation=value_act,
                                     weight_init=weight).to_float(compute_type)
 
-        self.shape_from = (-1, from_seq_length, num_attention_heads, size_per_head)
-        self.shape_to = (-1, to_seq_length, num_attention_heads, size_per_head)
-
         self.matmul_trans_b = P.BatchMatMul(transpose_b=True)
         self.multiply = P.Mul()
         self.transpose = P.Transpose()
@@ -447,31 +433,30 @@ class BertAttention(nn.Cell):
             self.add = P.Add()
             self.cast = P.Cast()
             self.get_dtype = P.DType()
-        if do_return_2d_tensor:
-            self.shape_return = (-1, num_attention_heads * size_per_head)
-        else:
-            self.shape_return = (-1, from_seq_length, num_attention_heads * size_per_head)
+
+        self.shape_return = (-1, num_attention_heads * size_per_head)
 
         self.cast_compute_type = SaturateCast(dst_type=compute_type)
         if self.use_relative_positions:
             self._generate_relative_positions_embeddings = \
-                RelaPosEmbeddingsGenerator(length=to_seq_length,
-                                           depth=size_per_head,
+                RelaPosEmbeddingsGenerator(depth=size_per_head,
                                            max_relative_position=16,
                                            initializer_range=initializer_range,
                                            use_one_hot_embeddings=use_one_hot_embeddings)
 
     def construct(self, from_tensor, to_tensor, attention_mask):
         """reshape 2d/3d input tensors to 2d"""
+        shape_from = F.shape(attention_mask)[2]
+        from_tensor = F.depend(from_tensor, shape_from)
         from_tensor_2d = self.reshape(from_tensor, self.shape_from_2d)
         to_tensor_2d = self.reshape(to_tensor, self.shape_to_2d)
         query_out = self.query_layer(from_tensor_2d)
         key_out = self.key_layer(to_tensor_2d)
         value_out = self.value_layer(to_tensor_2d)
 
-        query_layer = self.reshape(query_out, self.shape_from)
+        query_layer = self.reshape(query_out, (-1, shape_from, self.num_attention_heads, self.size_per_head))
         query_layer = self.transpose(query_layer, self.trans_shape)
-        key_layer = self.reshape(key_out, self.shape_to)
+        key_layer = self.reshape(key_out, (-1, shape_from, self.num_attention_heads, self.size_per_head))
         key_layer = self.transpose(key_layer, self.trans_shape)
 
         attention_scores = self.matmul_trans_b(query_layer, key_layer)
@@ -479,13 +464,13 @@ class BertAttention(nn.Cell):
         # use_relative_position, supplementary logic
         if self.use_relative_positions:
             # relations_keys is [F|T, F|T, H]
-            relations_keys = self._generate_relative_positions_embeddings()
+            relations_keys = self._generate_relative_positions_embeddings(shape_from)
             relations_keys = self.cast_compute_type(relations_keys)
             # query_layer_t is [F, B, N, H]
             query_layer_t = self.transpose(query_layer, self.trans_shape_relative)
             # query_layer_r is [F, B * N, H]
             query_layer_r = self.reshape(query_layer_t,
-                                         (self.from_seq_length,
+                                         (shape_from,
                                           -1,
                                           self.size_per_head))
             # key_position_scores is [F, B * N, F|T]
@@ -493,10 +478,10 @@ class BertAttention(nn.Cell):
                                                       relations_keys)
             # key_position_scores_r is [F, B, N, F|T]
             key_position_scores_r = self.reshape(key_position_scores,
-                                                 (self.from_seq_length,
+                                                 (shape_from,
                                                   -1,
                                                   self.num_attention_heads,
-                                                  self.from_seq_length))
+                                                  shape_from))
             # key_position_scores_r_t is [B, N, F, F|T]
             key_position_scores_r_t = self.transpose(key_position_scores_r,
                                                      self.trans_shape_position)
@@ -515,29 +500,29 @@ class BertAttention(nn.Cell):
         attention_probs = self.softmax(attention_scores)
         attention_probs = self.dropout(attention_probs)
 
-        value_layer = self.reshape(value_out, self.shape_to)
+        value_layer = self.reshape(value_out, (-1, shape_from, self.num_attention_heads, self.size_per_head))
         value_layer = self.transpose(value_layer, self.trans_shape)
         context_layer = self.matmul(attention_probs, value_layer)
 
         # use_relative_position, supplementary logic
         if self.use_relative_positions:
             # relations_values is [F|T, F|T, H]
-            relations_values = self._generate_relative_positions_embeddings()
+            relations_values = self._generate_relative_positions_embeddings(shape_from)
             relations_values = self.cast_compute_type(relations_values)
             # attention_probs_t is [F, B, N, T]
             attention_probs_t = self.transpose(attention_probs, self.trans_shape_relative)
             # attention_probs_r is [F, B * N, T]
             attention_probs_r = self.reshape(
                 attention_probs_t,
-                (self.from_seq_length,
+                (shape_from,
                  -1,
-                 self.to_seq_length))
+                 shape_from))
             # value_position_scores is [F, B * N, H]
             value_position_scores = self.matmul(attention_probs_r,
                                                 relations_values)
             # value_position_scores_r is [F, B, N, H]
             value_position_scores_r = self.reshape(value_position_scores,
-                                                   (self.from_seq_length,
+                                                   (shape_from,
                                                     -1,
                                                     self.num_attention_heads,
                                                     self.size_per_head))
@@ -557,7 +542,6 @@ class BertSelfAttention(nn.Cell):
     Apply self-attention.
 
     Args:
-        seq_length (int): Length of input sequence.
         hidden_size (int): Size of the bert encoder layers.
         num_attention_heads (int): Number of attention heads. Default: 12.
         attention_probs_dropout_prob (float): The dropout probability for
@@ -569,7 +553,6 @@ class BertSelfAttention(nn.Cell):
         compute_type (:class:`mindspore.dtype`): Compute type in BertSelfAttention. Default: mstype.float32.
     """
     def __init__(self,
-                 seq_length,
                  hidden_size,
                  num_attention_heads=12,
                  attention_probs_dropout_prob=0.1,
@@ -588,8 +571,6 @@ class BertSelfAttention(nn.Cell):
         self.attention = BertAttention(
             from_tensor_width=hidden_size,
             to_tensor_width=hidden_size,
-            from_seq_length=seq_length,
-            to_seq_length=seq_length,
             num_attention_heads=num_attention_heads,
             size_per_head=self.size_per_head,
             attention_probs_dropout_prob=attention_probs_dropout_prob,
@@ -597,7 +578,6 @@ class BertSelfAttention(nn.Cell):
             initializer_range=initializer_range,
             use_relative_positions=use_relative_positions,
             has_attention_mask=True,
-            do_return_2d_tensor=True,
             compute_type=compute_type)
 
         self.output = BertOutput(in_channels=hidden_size,
@@ -609,7 +589,6 @@ class BertSelfAttention(nn.Cell):
         self.shape = (-1, hidden_size)
 
     def construct(self, input_tensor, attention_mask):
-        input_tensor = self.reshape(input_tensor, self.shape)
         attention_output = self.attention(input_tensor, input_tensor, attention_mask)
         output = self.output(attention_output, input_tensor)
         return output
@@ -621,7 +600,6 @@ class BertEncoderCell(nn.Cell):
 
     Args:
         hidden_size (int): Size of the bert encoder layers. Default: 768.
-        seq_length (int): Length of input sequence. Default: 512.
         num_attention_heads (int): Number of attention heads. Default: 12.
         intermediate_size (int): Size of intermediate layer. Default: 3072.
         attention_probs_dropout_prob (float): The dropout probability for
@@ -635,7 +613,6 @@ class BertEncoderCell(nn.Cell):
     """
     def __init__(self,
                  hidden_size=768,
-                 seq_length=512,
                  num_attention_heads=12,
                  intermediate_size=3072,
                  attention_probs_dropout_prob=0.02,
@@ -648,7 +625,6 @@ class BertEncoderCell(nn.Cell):
         super(BertEncoderCell, self).__init__()
         self.attention = BertSelfAttention(
             hidden_size=hidden_size,
-            seq_length=seq_length,
             num_attention_heads=num_attention_heads,
             attention_probs_dropout_prob=attention_probs_dropout_prob,
             use_one_hot_embeddings=use_one_hot_embeddings,
@@ -682,7 +658,6 @@ class BertTransformer(nn.Cell):
 
     Args:
         hidden_size (int): Size of the encoder layers.
-        seq_length (int): Length of input sequence.
         num_hidden_layers (int): Number of hidden layers in encoder cells.
         num_attention_heads (int): Number of attention heads in encoder cells. Default: 12.
         intermediate_size (int): Size of intermediate layer in encoder cells. Default: 3072.
@@ -698,7 +673,6 @@ class BertTransformer(nn.Cell):
     """
     def __init__(self,
                  hidden_size,
-                 seq_length,
                  num_hidden_layers,
                  num_attention_heads=12,
                  intermediate_size=3072,
@@ -716,7 +690,6 @@ class BertTransformer(nn.Cell):
         layers = []
         for _ in range(num_hidden_layers):
             layer = BertEncoderCell(hidden_size=hidden_size,
-                                    seq_length=seq_length,
                                     num_attention_heads=num_attention_heads,
                                     intermediate_size=intermediate_size,
                                     attention_probs_dropout_prob=attention_probs_dropout_prob,
@@ -732,7 +705,6 @@ class BertTransformer(nn.Cell):
 
         self.reshape = P.Reshape()
         self.shape = (-1, hidden_size)
-        self.out_shape = (-1, seq_length, hidden_size)
 
     def construct(self, input_tensor, attention_mask):
         """Multi-layer bert transformer."""
@@ -744,11 +716,13 @@ class BertTransformer(nn.Cell):
             prev_output = layer_output
 
             if self.return_all_encoders:
-                layer_output = self.reshape(layer_output, self.out_shape)
+                shape = F.shape(input_tensor)
+                layer_output = self.reshape(layer_output, shape)
                 all_encoder_layers = all_encoder_layers + (layer_output,)
 
         if not self.return_all_encoders:
-            prev_output = self.reshape(prev_output, self.out_shape)
+            shape = F.shape(input_tensor)
+            prev_output = self.reshape(prev_output, shape)
             all_encoder_layers = all_encoder_layers + (prev_output,)
         return all_encoder_layers
 
@@ -766,10 +740,10 @@ class CreateAttentionMaskFromInputMask(nn.Cell):
 
         self.cast = P.Cast()
         self.reshape = P.Reshape()
-        self.shape = (-1, 1, config.seq_length)
 
     def construct(self, input_mask):
-        attention_mask = self.cast(self.reshape(input_mask, self.shape), mstype.float32)
+        seq_length = F.shape(input_mask)[1]
+        attention_mask = self.cast(self.reshape(input_mask, (-1, 1, seq_length)), mstype.float32)
         return attention_mask
 
 
@@ -792,14 +766,13 @@ class BertModel(nn.Cell):
             config.hidden_dropout_prob = 0.0
             config.attention_probs_dropout_prob = 0.0
 
-        self.seq_length = config.seq_length
         self.hidden_size = config.hidden_size
         self.num_hidden_layers = config.num_hidden_layers
         self.embedding_size = config.hidden_size
         self.token_type_ids = None
 
         self.last_idx = self.num_hidden_layers - 1
-        output_embedding_shape = [-1, self.seq_length, self.embedding_size]
+        output_embedding_shape = [-1, config.seq_length, self.embedding_size]
 
         self.bert_embedding_lookup = nn.Embedding(
             vocab_size=config.vocab_size,
@@ -820,7 +793,6 @@ class BertModel(nn.Cell):
 
         self.bert_encoder = BertTransformer(
             hidden_size=self.hidden_size,
-            seq_length=self.seq_length,
             num_attention_heads=config.num_attention_heads,
             num_hidden_layers=self.num_hidden_layers,
             intermediate_size=config.intermediate_size,
