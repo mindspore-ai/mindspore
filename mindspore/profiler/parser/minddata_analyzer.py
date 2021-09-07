@@ -452,7 +452,7 @@ class MinddataProfilingAnalyzer:
 
         # Initialize oplist_avg_cpu_pct with -1 for each pipeline op, since
         # CPU utilization data may not have information for each pipeline op
-        oplist_avg_cpu_pct = [-1] * num_pipeline_ops
+        oplist_avg_cpu_pct = [-1] * len(dict_opid_cpuutil)
         total_cpu = 0
         for op_id, cpu in dict_opid_cpuutil.items():
             op_avg_cpu_pct = sum(cpu) / len(cpu) if cpu else 0
