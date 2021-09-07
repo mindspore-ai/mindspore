@@ -175,6 +175,7 @@ from .sparse_apply_ftrl_d_ds import _sparse_apply_ftrl_d_ds
 from .sparse_apply_proximal_adagrad import _sparse_apply_proximal_adagrad
 from .sparse_apply_proximal_adagrad_ds import _sparse_apply_proximal_adagrad_ds
 from .apply_proximal_adagrad import _apply_proximal_adagrad
+from .transpose import _transpose_tbe
 from .transpose_d import _transpose_d_tbe
 from .truncate_div import _truncate_div_tbe
 from .truncate_mod import _truncate_mod_tbe

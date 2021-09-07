@@ -2311,6 +2311,12 @@ bool AnfRuntimeAlgorithm::IsNodeInputContainMonad(const AnfNodePtr &node) {
 
 void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
+      ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) == true) {
+    return;
+  }
   auto nodes = kernel_graph->execution_order();
   for (auto &kernel : nodes) {
     // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose

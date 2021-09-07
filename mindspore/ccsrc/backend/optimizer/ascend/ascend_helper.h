@@ -25,6 +25,7 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
+#include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_select.h"
 
 namespace mindspore {
 namespace opt {
@@ -72,6 +73,17 @@ class KernelQuery {
   }
 };
 using KernelQueryPtr = std::shared_ptr<KernelQuery>;
+
+class TbeKernelQuery {
+ public:
+  TbeKernelQuery() = default;
+  virtual ~TbeKernelQuery() = default;
+  virtual void GetTbeKernelMetaInfo(const CNodePtr &kernel_node,
+                                    std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
+    kernel::TbeMetadataInfo(kernel_node, kernel_info_list);
+  }
+};
+using TbeKernelQueryPtr = std::shared_ptr<TbeKernelQuery>;
 
 class OpFinder {
  public:

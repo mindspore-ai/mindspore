@@ -74,6 +74,7 @@
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/set_fracz_group_attr.h"
 #include "backend/optimizer/ascend/ir_fusion/bn_reduce_grad_conv2d_backprop_filter_fusion.h"
+#include "backend/optimizer/ascend/ir_fusion/transposed_update_fusion.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
 #include "backend/optimizer/ascend/format_type/trans_op_format_refine.h"
 #include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
@@ -265,6 +266,7 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
   mixed_precision_pm->AddPass(std::make_shared<TransOpFormatRefine>());
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  mixed_precision_pm->AddPass(std::make_shared<TransposedUpdateFusion>());
   mixed_precision_pm->AddPass(std::make_shared<ConvertUnSupportNodeToAICPU>());
   mixed_precision_pm->AddPass(std::make_shared<RemoveInternalOutputCast>());
   optimizer->AddPassManager(mixed_precision_pm);
