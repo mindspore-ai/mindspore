@@ -277,11 +277,9 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   if (copy_input_device_tensors_[input_data->index_]->GetPtr() == nullptr) {
     if (!device_contexts_[0]->AllocateMemory(copy_input_device_tensors_[input_data->index_].get(),
                                              copy_input_device_tensors_[input_data->index_]->GetSize())) {
-      std::string error_info =
-        "Device(id:" + std::to_string(device_contexts_[0]->device_context_key().device_id_) +
-        ") memory isn't enough and alloc failed, actor name: " + GetAID().Name() +
-        ", alloc size: " + std::to_string(copy_input_device_tensors_[input_data->index_]->GetSize());
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), device_contexts_[0],
+                                                  GetAID().Name(),
+                                                  copy_input_device_tensors_[input_data->index_]->GetSize());
     }
   }
 

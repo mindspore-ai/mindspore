@@ -757,7 +757,6 @@ bool ExecuteAction(const ResourcePtr &res) {
     MS_LOG(EXCEPTION) << "Execute args error";
   }
   std::string backend = MsContext::GetInstance()->backend_policy();
-
   // The graph running of mindRT.
   if ((backend == kMsConvert) && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     ExecuteActionForMindRT(res);

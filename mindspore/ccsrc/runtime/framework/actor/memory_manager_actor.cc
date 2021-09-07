@@ -36,10 +36,8 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
     }
     // Allocate memory through the device context.
     if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
-      std::string error_info = "Device(id:" + std::to_string(device_context->device_context_key().device_id_) +
-                               ") memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
-                               ", alloc size: " + std::to_string(device_tensor->GetSize());
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*op_context), device_context,
+                                                  from_aid.Name(), device_tensor->GetSize());
     }
   }
 
@@ -71,10 +69,8 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
     auto &device_context = (*device_contexts)[i];
     // Allocate memory through the device context.
     if (!device_context->AllocateContinuousMemory(alloc_list, total_size, size_list)) {
-      std::string error_info = "Device(id:" + std::to_string(device_context->device_context_key().device_id_) +
-                               ") memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
-                               ", alloc size: " + std::to_string(total_size);
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*op_context), device_context,
+                                                  from_aid.Name(), total_size);
     }
   }
 
@@ -104,10 +100,8 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
 
     // Allocate memory through the device context.
     if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
-      std::string error_info = "Device(id:" + std::to_string(device_context->device_context_key().device_id_) +
-                               ") memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
-                               ", alloc size: " + std::to_string(device_tensor->GetSize());
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*op_context), device_context,
+                                                  from_aid.Name(), device_tensor->GetSize());
     }
   }
 

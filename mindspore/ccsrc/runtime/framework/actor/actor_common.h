@@ -25,12 +25,14 @@
 #include <algorithm>
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/device/device_address.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
 #include "utils/log_adapter.h"
 #include "ir/tensor.h"
 
 namespace mindspore {
 namespace runtime {
+using mindspore::session::KernelWithIndex;
 using tensor::TensorPtr;
 using DeviceTensor = mindspore::device::DeviceAddress;
 
@@ -45,6 +47,7 @@ enum class GraphExecutionStrategy {
 
 enum class KernelTransformType {
   kUnknown,
+  kDataPrepareActor,
   kDeviceDataSourceActor,
   kHostDataSourceActor,
   kKernelActor,
@@ -79,6 +82,19 @@ enum class KernelTransformType {
     return;                                                                          \
   }
 
+#define SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, op_context, device_context, kernel_name, alloc_size) \
+  {                                                                                                                \
+    std::string message = "Device(id:" + std::to_string(device_context->device_context_key().device_id_) +         \
+                          ") memory isn't enough and alloc failed, kernel name: " + kernel_name +                  \
+                          ", alloc size: " + std::to_string(alloc_size) + "B.";                                    \
+    if (strategy == GraphExecutionStrategy::kStep) {                                                               \
+      MS_LOG(EXCEPTION) << message;                                                                                \
+    }                                                                                                              \
+    MS_LOG(ERROR) << message;                                                                                      \
+    op_context.SetFailed(kFailure);                                                                                \
+    return;                                                                                                        \
+  }
+
 void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num, size_t *max_thread_num);
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
@@ -109,6 +125,15 @@ bool IsGatherActor(const AnfNodePtr &front_node,
 
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);
+
+void UpdateRefCount(DeviceTensor *const device_tensor, bool is_max_ref_count = false);
+// Update the reference count of device tensor by the output index of node.
+void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_count = false);
+
+// Get front node by backend node.
+AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph);
+KernelWithIndex FetchFrontNodeWithIndexByGraphOutput(const KernelWithIndex &output_with_index,
+                                                     const KernelGraphPtr &graph);
 }  // namespace runtime
 }  // namespace mindspore
 

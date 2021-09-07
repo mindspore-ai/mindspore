@@ -15,8 +15,7 @@
  */
 
 #include "runtime/framework/actor/loop_count_actor.h"
-#include "runtime/framework/actor/data_source_actor.h"
-#include "runtime/framework/actor/kernel_actor.h"
+#include "runtime/framework/actor/data_prepare_actor.h"
 #include "runtime/framework/actor/output_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "runtime/framework/actor/recorder_actor.h"
@@ -26,78 +25,20 @@
 
 namespace mindspore {
 namespace runtime {
-namespace {
-void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr> *const addr_list,
-                               std::vector<size_t> *const size_list, size_t *const total_size, bool is_input) {
-  MS_EXCEPTION_IF_NULL(node);
-  const auto &kernel_mod = AnfAlgo::GetKernelMod(node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  (*addr_list).clear();
-  (*size_list).clear();
-  *total_size = 0;
-
-  if (is_input) {
-    const auto &intput_sizes = kernel_mod->GetInputSizeList();
-    for (size_t i = 0; i < intput_sizes.size(); ++i) {
-      const auto &device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, false);
-      MS_EXCEPTION_IF_NULL(device_tensor);
-      *total_size += intput_sizes[i];
-      (void)size_list->emplace_back(intput_sizes[i]);
-      (void)addr_list->emplace_back(device_tensor);
-    }
-  } else {
-    const auto &output_sizes = kernel_mod->GetOutputSizeList();
-    for (size_t i = 0; i < output_sizes.size(); ++i) {
-      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, i, false);
-      MS_EXCEPTION_IF_NULL(device_tensor);
-      *total_size += output_sizes[i];
-      (void)size_list->emplace_back(output_sizes[i]);
-      (void)addr_list->emplace_back(device_tensor);
-    }
-  }
-}
-}  // namespace
-void LoopCountActor::Init() {
-  for (auto &iter : continuous_memory_nodes_) {
-    size_t total_size = 0;
-    std::vector<size_t> size_list;
-    std::vector<DeviceTensorPtr> addr_list;
-    // Inputs need continuous memory.
-    if (iter.second.first == true) {
-      FetchContinuousMemoryInfo(iter.first.first, &addr_list, &size_list, &total_size, true);
-      (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
-      (void)size_list_list_.emplace_back(size_list);
-      (void)total_size_list_.emplace_back(total_size);
-      (void)device_contexts_.emplace_back(iter.first.second);
-    }
-
-    // Outputs need continuous memory.
-    if (iter.second.second == true) {
-      FetchContinuousMemoryInfo(iter.first.first, &addr_list, &size_list, &total_size, false);
-      (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
-      (void)size_list_list_.emplace_back(size_list);
-      (void)total_size_list_.emplace_back(total_size);
-      (void)device_contexts_.emplace_back(iter.first.second);
-    }
-  }
-}
-
 void LoopCountActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   (void)input_op_controls_[sequential_num].emplace_back(input_control);
   if (CheckRunningCondition(context)) {
-    IncreaseLoopCount(context);
+    // Need wait MemoryManagerActor running finished to avoid the illegal memory timing problem before
+    // LoopCountActor exits, because other processors which are not in actor also will process device tensor.
+    Async(memory_manager_aid_, &MemoryManagerActor::Wait, context, GetAID());
   }
 }
 
-void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  Async(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID());
-}
-
-void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
+void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  SendOutput(context);
+  IncreaseLoopCount(context);
 }
 
 void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
@@ -118,30 +59,21 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   SendOutput(context);
 }
 
+void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
+  Async(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID());
+}
+
+void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  SendOutput(context);
+}
+
 void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send recorder info.
   if (recorder_aid_ != nullptr) {
     Async(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);
   }
-  SendMemoryAllocReq(context);
-}
 
-void LoopCountActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
-  if (current_count_ == loop_count_) {
-    // Need wait MemoryManagerActor running finished to avoid the illegal memory timing problem before
-    // LoopCountActor exits, because other processors which are not in actor also will allocate or free memory.
-    Async(memory_manager_aid_, &MemoryManagerActor::Wait, context, GetAID());
-  } else if (continuous_memory_alloc_list_list_.size() > 0) {
-    // Allocate continuous memory in the begin of next step running.
-    Async(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory, &continuous_memory_alloc_list_list_,
-          &size_list_list_, &total_size_list_, &device_contexts_, context, GetAID());
-  } else {
-    OnMemoryAllocFinish(context);
-  }
-}
-
-void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
   // Send loop count to output actor.
   Async(output_aid_, &OutputActor::CollectLoopCount, current_count_, context);
 
@@ -151,14 +83,9 @@ void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context)
     return;
   }
 
-  // Send output control to trigger next step running.
-  for (auto &data_source_aid : data_source_aids_) {
-    Async(data_source_aid, &DataSourceActor::FetchData, context);
-  }
-  auto source_aid = const_cast<AID *>(&GetAID());
-  for (auto &kernel_aid : no_input_kernel_aids_) {
-    Async(kernel_aid, &KernelActor::RunOpControl, source_aid, context);
-  }
+  // Send to DataPrepareActor to trigger next step running.
+  std::vector<std::vector<TensorPtr>> input_tensors;
+  Async(data_prepare_aid_, &DataPrepareActor::PrepareData, input_tensors, context);
 }
 }  // namespace runtime
 }  // namespace mindspore

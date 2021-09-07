@@ -322,6 +322,13 @@ size_t HostQueueDataSourceActor::FetchNodePosition(const AnfNodePtr &data_node) 
   return iter->second;
 }
 
+AnfNodePtr HostQueueDataSourceActor::FetchNode(size_t node_position) const {
+  if (node_position >= data_nodes_.size()) {
+    MS_LOG(EXCEPTION) << "The position of node is out of range: " << node_position;
+  }
+  return data_nodes_[node_position];
+}
+
 bool HostQueueDataSourceActor::IsSameDeviceType() const {
   for (size_t i = 1; i < device_contexts_.size(); i++) {
     if (device_contexts_[i] != device_contexts_[0]) {

@@ -18,6 +18,7 @@
 #include <numeric>
 #include <map>
 #include <utility>
+#include "runtime/framework/graph_scheduler.h"
 #include "runtime/device/device_address.h"
 #include "common/trans.h"
 #include "utils/convert_utils.h"
@@ -289,6 +290,8 @@ void UpdateRefCountForGraphOutput(const std::vector<KernelWithIndex> &output_wit
   }
 }
 }  // namespace
+
+GraphCompilerInfo::~GraphCompilerInfo() { GraphScheduler::GetInstance().Clear(name_, graphs_); }
 
 GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs,
                                     const DeviceContext *device_context) {

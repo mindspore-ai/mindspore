@@ -131,6 +131,8 @@ class HostQueueDataSourceActor : public DataSourceActor {
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
   size_t FetchNodePosition(const AnfNodePtr &node) const override;
+  AnfNodePtr FetchNode(size_t node_position) const;
+  std::vector<AnfNodePtr> &data_nodes() { return data_nodes_; }
 
  protected:
   void FillDataBuffer() override;
