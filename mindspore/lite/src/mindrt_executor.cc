@@ -193,7 +193,7 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
   TransferGraphOutput();
 
   // reset the max spin count.
-  ret = thread_pool->SetMaxSpinCount(0);
+  ret = thread_pool->SetMaxSpinCount(kMinSpinCount);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set max spin count failed.";
     return ret;
