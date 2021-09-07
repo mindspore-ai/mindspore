@@ -52,6 +52,7 @@ void MatmulFp32BaseCPUKernel::InitParameter() {
 }
 
 void MatmulFp32BaseCPUKernel::ResizeParameter() {
+  init_global_variable();
   if (params_->row_ == 1) {
     vec_matmul_ = true;
 #ifdef ENABLE_AVX
@@ -277,9 +278,7 @@ int MatmulFp32BaseCPUKernel::FloatRun(int task_id) const {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+void MatmulFp32BaseCPUKernel::init_global_variable() {
 #ifdef ENABLE_AVX
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row6Major : RowMajor2Col6Major;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col16Major : RowMajor2Row16Major;
@@ -302,6 +301,13 @@ int MatmulFp32BaseCPUKernel::Init() {
   col_tile_ = C8NUM;
 #endif
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
+  vec_matmul_ = false;
+}
+
+int MatmulFp32BaseCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  init_global_variable();
   matrix_a_pack_size_ = params_->batch * params_->row_align_ * params_->deep_;
   if (matrix_a_pack_size_ < 0) {
     MS_LOG(ERROR) << "Matrix pack size is negative "

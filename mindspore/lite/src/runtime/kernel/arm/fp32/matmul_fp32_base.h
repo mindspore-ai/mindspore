@@ -52,6 +52,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   void FreeBiasBuf();
   int InitBiasData();
   void InitParameter();
+  void init_global_variable();
 
  private:
   void ResizeParameter();
