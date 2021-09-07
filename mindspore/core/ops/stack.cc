@@ -32,7 +32,7 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
     MS_EXCEPTION_IF_NULL(item);
   }
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  for (int64_t i = 1; i < SizeToLong(input_args.size()); ++i) {
+  for (size_t i = 1; i < input_args.size(); ++i) {
     auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->BuildShape())[kShape];
     if (input_shape_tmp.size() != input_shape.size()) {
       MS_LOG(ERROR) << "All input shape size should be the same!";

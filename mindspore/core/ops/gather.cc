@@ -81,8 +81,8 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto calc_shape = [axis_val](const ShapeVector &ind_vec, const ShapeVector &params_vec) -> ShapeVector {
     ShapeVector out_vec;
     (void)std::copy(params_vec.begin(), params_vec.begin() + axis_val, std::back_inserter(out_vec));
-    copy(ind_vec.begin(), ind_vec.end(), std::back_inserter(out_vec));
-    copy(params_vec.begin() + axis_val + 1, params_vec.end(), std::back_inserter(out_vec));
+    (void)copy(ind_vec.begin(), ind_vec.end(), std::back_inserter(out_vec));
+    (void)copy(params_vec.begin() + axis_val + 1, params_vec.end(), std::back_inserter(out_vec));
     return out_vec;
   };
   ShapeVector out_shape = calc_shape(indices_shp, params_shp);

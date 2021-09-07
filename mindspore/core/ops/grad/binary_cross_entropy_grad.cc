@@ -69,8 +69,8 @@ AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &,
     MS_EXCEPTION_IF_NULL(item);
   }
   const int64_t input_num = 4;
-  CheckAndConvertUtils::CheckInteger("BinaryCrossEntropyGrad infer", SizeToLong(input_args.size()), kGreaterEqual,
-                                     input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("BinaryCrossEntropyGrad infer", SizeToLong(input_args.size()), kGreaterEqual,
+                                           input_num, primitive->name());
   return std::make_shared<abstract::AbstractTensor>(BinaryCrossEntroyGradInferType(primitive, input_args),
                                                     BinaryCrossEntroyGradInferShape(primitive, input_args));
 }
