@@ -54,8 +54,8 @@ acc_mode: "O0"
 conv_init: "XavierUniform"
 dense_init: "TruncatedNormal"
 all_reduce_fusion_config:
-    - 2
-    - 115
+    - 85
+    - 160
 train_image_size: 224
 eval_image_size: 224
 
