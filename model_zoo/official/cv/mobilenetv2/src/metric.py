@@ -42,14 +42,16 @@ class ClassifyCorrectCell(nn.Cell):
         >>> eval_net = nn.ClassifyCorrectCell(net)
     """
 
-    def __init__(self, network):
+    def __init__(self, network, run_distribute):
         super(ClassifyCorrectCell, self).__init__(auto_prefix=False)
         self._network = network
         self.argmax = P.Argmax()
         self.equal = P.Equal()
         self.cast = P.Cast()
         self.reduce_sum = P.ReduceSum()
-        self.allreduce = P.AllReduce(P.ReduceOp.SUM, GlobalComm.WORLD_COMM_GROUP)
+        self.run_distribute = run_distribute
+        if run_distribute:
+            self.allreduce = P.AllReduce(P.ReduceOp.SUM, GlobalComm.WORLD_COMM_GROUP)
 
     def construct(self, data, label):
         outputs = self._network(data)
@@ -58,8 +60,9 @@ class ClassifyCorrectCell(nn.Cell):
         y_correct = self.equal(y_pred, label)
         y_correct = self.cast(y_correct, mstype.float32)
         y_correct = self.reduce_sum(y_correct)
-        total_correct = self.allreduce(y_correct)
-        return (total_correct,)
+        if self.run_distribute:
+            y_correct = self.allreduce(y_correct)
+        return (y_correct,)
 
 
 class DistAccuracy(nn.Metric):

@@ -46,7 +46,10 @@ run_ascend()
         echo "error: DATASET_PATH=$6 is not a directory or file"
     exit 1
     fi
-
+    RUN_DISTRIBUTE=True
+    if [ $2 -eq 1 ] ; then
+        RUN_DISTRIBUTE=False
+    fi
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
     CONFIG_FILE="${BASEPATH}/../$2"
 
@@ -85,6 +88,7 @@ run_ascend()
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
         taskset -c $cmdopt python train.py \
+            --run_distribute=$RUN_DISTRIBUTE \
             --config_path=$CONFIG_FILE \
             --platform=$1 \
             --dataset_path=$6 \

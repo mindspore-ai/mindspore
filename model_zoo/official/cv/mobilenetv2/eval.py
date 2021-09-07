@@ -19,21 +19,14 @@ import time
 import os
 from mindspore import nn
 from mindspore.train.model import Model
-from mindspore.common import dtype as mstype
-
 from src.dataset import create_dataset
 from src.models import define_net, load_ckpt
-from src.utils import switch_precision, set_context
+from src.utils import context_device_init
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
-from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
-
+from src.model_utils.device_adapter import get_device_id, get_device_num
 
 config.is_training = config.is_training_eval
-config.device_id = get_device_id()
-config.rank_id = get_rank_id()
-config.rank_size = get_device_num()
-config.run_distribute = config.rank_size > 1.
 
 def modelarts_process():
     """ modelarts process """
@@ -96,12 +89,12 @@ def modelarts_process():
 def eval_mobilenetv2():
     config.dataset_path = os.path.join(config.dataset_path, 'validation_preprocess')
     print('\nconfig: \n', config)
-    set_context(config)
+    if not config.device_id:
+        config.device_id = get_device_id()
+    context_device_init(config)
     _, _, net = define_net(config, config.is_training)
 
     load_ckpt(net, config.pretrain_ckpt)
-
-    switch_precision(net, mstype.float16, config)
 
     dataset = create_dataset(dataset_path=config.dataset_path, do_train=False, config=config)
     step_size = dataset.get_dataset_size()

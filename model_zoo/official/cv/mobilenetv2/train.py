@@ -24,7 +24,6 @@ from mindspore import Tensor
 from mindspore.nn import WithLossCell, TrainOneStepCell
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.communication.management import get_rank
 from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import save_checkpoint
@@ -37,7 +36,7 @@ from src.models import CrossEntropyWithLabelSmooth, define_net, load_ckpt
 from src.metric import DistAccuracy, ClassifyCorrectCell
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
-from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+from src.model_utils.device_adapter import get_device_id, get_device_num
 
 
 set_seed(1)
@@ -116,23 +115,16 @@ def build_params_groups(net):
 def train_mobilenetv2():
     config.train_dataset_path = os.path.join(config.dataset_path, 'train')
     config.eval_dataset_path = os.path.join(config.dataset_path, 'validation_preprocess')
-
-    config.device_id = get_device_id()
-    config.rank_id = get_rank_id()
-    config.rank_size = get_device_num()
-    if config.platform == 'Ascend':
-        config.run_distribute = config.rank_size > 1.
-
-    print('\nconfig: {} \n'.format(config))
+    if not config.device_id:
+        config.device_id = get_device_id()
     start = time.time()
     # set context and device init
     context_device_init(config)
-
+    print('\nconfig: {} \n'.format(config))
     # define network
     backbone_net, head_net, net = define_net(config, config.is_training)
     dataset = create_dataset(dataset_path=config.train_dataset_path, do_train=True, config=config,
                              enable_cache=config.enable_cache, cache_session_id=config.cache_session_id)
-    eval_dataset = create_dataset(dataset_path=config.eval_dataset_path, do_train=False, config=config)
     step_size = dataset.get_dataset_size()
     if config.platform == "GPU":
         context.set_context(enable_graph_kernel=True)
@@ -165,23 +157,27 @@ def train_mobilenetv2():
                        warmup_epochs=config.warmup_epochs,
                        total_epochs=epoch_size,
                        steps_per_epoch=step_size))
-
+    metrics = {"acc"}
+    dist_eval_network = None
+    eval_dataset = None
+    if config.run_eval:
+        metrics = {'acc': DistAccuracy(batch_size=config.batch_size, device_num=config.rank_size)}
+        dist_eval_network = ClassifyCorrectCell(net, config.run_distribute)
+        eval_dataset = create_dataset(dataset_path=config.eval_dataset_path, do_train=False, config=config)
     if config.pretrain_ckpt == "" or config.freeze_layer != "backbone":
-        loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-        group_params = build_params_groups(net)
-        opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
+        if config.platform == "Ascend":
+            loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+            group_params = build_params_groups(net)
+            opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
+            model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale,
+                          metrics=metrics, eval_network=dist_eval_network,
+                          amp_level="O2", keep_batchnorm_fp32=False,
+                          acc_level=config.acc_mode)
 
-        metrics = {"acc"}
-        dist_eval_network = None
-        if config.run_distribute:
-            metrics = {'acc': DistAccuracy(batch_size=config.batch_size, device_num=config.rank_size)}
-            dist_eval_network = ClassifyCorrectCell(net)
-
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale,
-                      metrics=metrics, eval_network=dist_eval_network,
-                      amp_level="O2", keep_batchnorm_fp32=False,
-                      acc_level=config.acc_mode)
-
+        else:
+            opt = Momentum(net.trainable_params(), lr, config.momentum, config.weight_decay)
+            model = Model(net, loss_fn=loss, optimizer=opt, metrics=metrics, eval_network=dist_eval_network,
+                          acc_level=config.acc_mode)
         cb = config_ckpoint(config, lr, step_size, model, eval_dataset)
         print("============== Starting Training ==============")
         model.train(epoch_size, dataset, callbacks=cb)
@@ -197,9 +193,7 @@ def train_mobilenetv2():
 
         features_path = config.train_dataset_path + '_features'
         idx_list = list(range(step_size))
-        rank = 0
-        if config.run_distribute:
-            rank = get_rank()
+        rank = config.rank_id
         save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
         if not os.path.isdir(save_ckpt_path):
             os.mkdir(save_ckpt_path)
