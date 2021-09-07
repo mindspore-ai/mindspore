@@ -46,6 +46,6 @@ if [[ ! -z ${QUANTIZE} ]]; then
   QUANT_OPTIONS="--configFile=${WEIGHT_QUANT_CONFIG}"
 fi
 LD_LIBRARY_PATH=./:${LD_LIBRARY_PATH} $CONVERTER --fmk=MINDIR --trainModel=true --modelFile=lenet_tod.mindir --outputFile=lenet_tod $QUANT_OPTIONS
-if [ -n "$3" ]; then
+if [[ ! -z ${MIX_FLAG} ]]; then
 LD_LIBRARY_PATH=./:${LD_LIBRARY_PATH} $CONVERTER --fmk=MINDIR --trainModel=true --modelFile=mix_lenet_tod.mindir --outputFile=mix_lenet_tod
 fi

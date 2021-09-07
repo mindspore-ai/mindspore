@@ -104,7 +104,7 @@ fi
 
 cd model/ || exit 1
 rm -f *.ms
-EXPORT=${EXPORT} QUANTIZE=${QUANTIZE} ./prepare_model.sh $BATCH $DOCKER $MIX_FLAG || exit 1
+EXPORT=${EXPORT} QUANTIZE=${QUANTIZE} MIX_FLAG=${MIX_FLAG} ./prepare_model.sh $BATCH $DOCKER  || exit 1
 cd ../
 
 # Copy the .ms model to the package folder

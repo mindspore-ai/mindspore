@@ -257,7 +257,7 @@ void NetRunner::Usage() {
 
 bool NetRunner::ReadArgs(int argc, char *argv[]) {
   int opt;
-  while ((opt = getopt(argc, argv, "f:e:d:s:ihc:vob:")) != -1) {
+  while ((opt = getopt(argc, argv, "f:e:d:s:ihc:vmob:")) != -1) {
     switch (opt) {
       case 'f':
         ms_file_ = std::string(optarg);
@@ -280,8 +280,8 @@ bool NetRunner::ReadArgs(int argc, char *argv[]) {
       case 'b':
         virtual_batch_ = atoi(optarg);
         break;
-      case 'r':
-        is_raw_mix_precision_ = atoi(optarg);
+      case 'm':
+        is_raw_mix_precision_ = true;
         break;
       case 'h':
       default:

@@ -141,7 +141,7 @@ Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type, bool support_fp16) {
   std::vector<TypeId> valid_type = {kNumberTypeFloat32, kNumberTypeFloat16, kNumberTypeFloat};
   std::vector<TypeId> fp32_type = {kNumberTypeFloat32, kNumberTypeFloat};
   if (!IsContain(valid_type, tensor->data_type())) {
-    MS_LOG(ERROR) << "source data type must be fp32 or fp16";
+    MS_LOG(ERROR) << "source data type must be fp32 or fp16,cur is " << tensor->data_type();
     return nullptr;
   }
 

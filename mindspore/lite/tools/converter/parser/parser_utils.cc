@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 #include "tools/converter/parser/parser_utils.h"
-#include <memory>
 #include <algorithm>
-#include <vector>
+#include <memory>
 #include <set>
 #include <string>
-#include "tools/converter/parser/tf_bidirection_gru_cf_fusion.h"
-#include "tools/converter/parser/unused_node_remove_pass.h"
+#include <vector>
+#include <unordered_map>
+#include "ops/transpose.h"
+#include "tools/common/tensor_util.h"
 #include "tools/converter/parser/conv1d_inout_adjust.h"
 #include "tools/converter/parser/inputs_adjust.h"
-#include "ops/transpose.h"
+#include "tools/converter/parser/tf_bidirection_gru_cf_fusion.h"
+#include "tools/converter/parser/unused_node_remove_pass.h"
 #include "tools/converter/quant_param_holder.h"
-#include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/format/to_format_base.h"
 
 namespace mindspore::lite {
 namespace {
-constexpr size_t kNumWeightIndex = 2;
-bool IsWeightNodeSensitive(const AnfNodePtr &node) {
-  return opt::CheckPrimitiveType(node, prim::kPrimConv2DFusion) ||
-         opt::CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) ||
-         opt::CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion) ||
-         opt::CheckPrimitiveType(node, prim::kPrimApplyMomentum) || opt::CheckPrimitiveType(node, prim::kPrimSGD) ||
-         opt::CheckPrimitiveType(node, prim::kPrimAdam);
-}
+std::unordered_map<std::string, size_t> weight_indexs = {{ops::kNameConv2DFusion, 2},
+                                                         {ops::kNameConv2DBackpropInputFusion, 2},
+                                                         {ops::kNameConv2dTransposeFusion, 2},
+                                                         {ops::kNameApplyMomentum, 1},
+                                                         {ops::kNameSGD, 1},
+                                                         {ops::kNameAdam, 1}};
 }  // namespace
 
 void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
@@ -146,15 +146,9 @@ int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format
   return lite::RET_OK;
 }
 
-AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode) {
+AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index) {
   MS_ASSERT(graph != nullptr && cnode != nullptr);
-  if (!opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) &&
-      !opt::CheckPrimitiveType(cnode, opt::kPrimConv2DBackpropInputFusion) &&
-      !opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
-    MS_LOG(ERROR) << "cnode is not a member of convolution's family.";
-    return nullptr;
-  }
-  auto weight_node = cnode->input(opt::kInputIndexTwo);
+  auto weight_node = cnode->input(index);
   bool is_real_weight =
     !opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) && !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
   while (!is_real_weight) {
@@ -169,7 +163,7 @@ AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
   }
   auto manager = Manage(graph);
   MS_ASSERT(manager != nullptr);
-  manager->Replace(cnode->input(opt::kInputIndexTwo), weight_node);
+  manager->Replace(cnode->input(index), weight_node);
   return weight_node;
 }
 
@@ -179,18 +173,19 @@ int UnifyConvWeightFormat(const FuncGraphPtr &graph, const CNodePtr &cnode, sche
   if (src_format == dst_format) {
     return lite::RET_OK;
   }
-  if (!opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) &&
-      !opt::CheckPrimitiveType(cnode, opt::kPrimConv2DBackpropInputFusion) &&
-      !opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
-    MS_LOG(ERROR) << "cnode is not a member of convolution's family.";
+  auto primitive_ptr = GetValueNode<PrimitivePtr>(cnode->input(0));
+  auto primitive_name = primitive_ptr->name();
+  if (weight_indexs.find(primitive_name) == weight_indexs.end()) {
+    MS_LOG(ERROR) << primitive_name << " is not a member of convolution's family.";
     return RET_ERROR;
   }
-  if (GetRealConvWeightNode(graph, cnode) == nullptr) {
+  size_t index = weight_indexs[primitive_name];
+  if (GetRealConvWeightNode(graph, cnode, index) == nullptr) {
     MS_LOG(ERROR) << "current conv node is invalid, node name is " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
   bool is_const_weight = true;
-  auto weight_node = cnode->input(opt::kInputIndexTwo);
+  auto weight_node = cnode->input(index);
   if (utils::isa<CNode>(weight_node)) {
     is_const_weight = false;
   } else if (utils::isa<Parameter>(weight_node)) {
@@ -234,7 +229,7 @@ int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_
       MS_LOG(ERROR) << "post node is invalid.";
       return RET_ERROR;
     }
-    if (!IsWeightNodeSensitive(post_node)) {
+    if (!opt::ToFormatBase::IsWeightNodeSensitive(post_node)) {
       continue;
     }
     has_visited->insert(post_node);
@@ -285,6 +280,9 @@ int UnifyConstConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_nod
     MS_LOG(ERROR) << "conv weight is non-const.";
     return RET_ERROR;
   }
+  if (weight_value->shape().size() != kShape4dDims) {
+    return lite::RET_OK;
+  }
   auto status = opt::TransFilterFormat(weight_value, src_format, dst_format);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(src_format) << "To" << EnumNameFormat(dst_format)
@@ -328,7 +326,7 @@ int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &wei
       MS_LOG(ERROR) << "post node is invalid.";
       return RET_ERROR;
     }
-    if (IsWeightNodeSensitive(post_node)) {
+    if (opt::ToFormatBase::IsWeightNodeSensitive(post_node)) {
       has_visited->insert(post_node);
       continue;
     }

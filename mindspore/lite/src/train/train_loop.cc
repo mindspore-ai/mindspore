@@ -22,6 +22,7 @@
 #include "include/errorcode.h"
 #include "include/dataset/iterator.h"
 #include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -35,14 +36,24 @@ using session::RET_STOP_TRAINING;
 TrainLoop::~TrainLoop() {}
 
 int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCallBack *> cbs, LoadDataFunc load_func) {
-  train_session_->Train();
+  MS_CHECK_TRUE_MSG(train_session_ != nullptr && ds != nullptr, RET_ERROR, "graph data cannot be nullptr");
+  auto ret = train_session_->Train();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "TrainLoop train failed";
+    return RET_ERROR;
+  }
+  MS_CHECK_GT(epochs, 0, RET_ERROR);
   session::TrainLoopCallBackData cb_data(true, epoch_, train_session_, this);
 
   if (load_func == nullptr) load_func = TrainLoop::LoadData;
 
-  for (auto cb : cbs) cb->Begin(cb_data);
+  for (auto cb : cbs) {
+    MS_CHECK_TRUE_MSG(cb != nullptr, RET_ERROR, "callback cannot be nullptr");
+    cb->Begin(cb_data);
+  }
 
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  MS_CHECK_TRUE_MSG(iter != nullptr, RET_ERROR, "iterator cannot be nullptr");
   for (int i = 0; i < epochs; i++) {
     cb_data.epoch_ = epoch_++;
     for (auto cb : cbs) cb->EpochBegin(cb_data);
@@ -51,10 +62,9 @@ int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCall
     int s = 0;
 
     iter->GetNextRow(&row_vec);
-    while (row_vec.size() != 0) {
-      auto ret = load_func(cb_data.session_->GetInputs(), &row_vec);
+    while (!row_vec.empty()) {
+      ret = load_func(cb_data.session_->GetInputs(), &row_vec);
       if (ret != RET_OK) break;
-
       cb_data.step_ = s++;
       for (auto cb : cbs) cb->StepBegin(cb_data);
 
@@ -64,7 +74,7 @@ int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCall
     }
     int break_loop = false;
     for (auto cb : cbs) {
-      int ret = cb->EpochEnd(cb_data);
+      ret = cb->EpochEnd(cb_data);
       if (ret != RET_CONTINUE) {
         if (ret == RET_EXIT) {
           MS_LOG(ERROR) << "Error in TrainLoop callback";
@@ -85,23 +95,35 @@ int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCall
 }
 
 int TrainLoop::Eval(Dataset *ds, std::vector<session::TrainLoopCallBack *> cbs, LoadDataFunc load_func, int max_steps) {
-  train_session_->Eval();
+  MS_CHECK_TRUE_MSG(train_session_ != nullptr && ds != nullptr, RET_ERROR, "graph data cannot be nullptr");
+  auto ret = train_session_->Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "TrainLoop train failed";
+    return RET_ERROR;
+  }
   session::TrainLoopCallBackData cb_data(false, epoch_, train_session_, this);
 
   if (load_func == nullptr) load_func = TrainLoop::LoadData;
 
-  for (auto metric : metrics_) metric->Clear();
-  for (auto cb : cbs) cb->Begin(cb_data);
+  for (auto metric : metrics_) {
+    MS_CHECK_TRUE_MSG(metric != nullptr, RET_ERROR, "metric cannot be nullptr");
+    metric->Clear();
+  }
+  for (auto cb : cbs) {
+    MS_CHECK_TRUE_MSG(cb != nullptr, RET_ERROR, "callback cannot be nullptr");
+    cb->Begin(cb_data);
+  }
   for (auto cb : cbs) cb->EpochBegin(cb_data);
 
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  MS_CHECK_TRUE_MSG(iter != nullptr, RET_ERROR, "iterator cannot be nullptr");
   MSTensorVec row_vec;
   int s = 0;
 
   iter->GetNextRow(&row_vec);
-  while (row_vec.size() != 0) {
+  while (!row_vec.empty()) {
     if (s >= max_steps) break;
-    auto ret = load_func(cb_data.session_->GetInputs(), &row_vec);
+    ret = load_func(cb_data.session_->GetInputs(), &row_vec);
     if (ret != RET_OK) break;
 
     cb_data.step_ = ++s;

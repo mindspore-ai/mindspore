@@ -27,7 +27,7 @@ class LiteSession;
 class TrainLoop;
 
 struct TrainLoopCallBackData {
-  TrainLoopCallBackData(bool train_mode, int epoch, LiteSession *session, TrainLoop *loop)
+  TrainLoopCallBackData(bool train_mode, unsigned int epoch, LiteSession *session, TrainLoop *loop)
       : train_mode_(train_mode), epoch_(epoch), session_(session), loop_(loop) {}
 
   bool train_mode_;       /**< training mode of LiteSession object */

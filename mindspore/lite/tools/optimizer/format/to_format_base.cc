@@ -368,9 +368,7 @@ STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<A
       }
       continue;
     }
-    if (!CheckPrimitiveType(node, prim::kPrimConv2DFusion) &&
-        !CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) &&
-        !CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
+    if (!IsWeightNodeSensitive(cnode)) {
       continue;
     }
     if (has_visited->find(node) != has_visited->end()) {

@@ -26,6 +26,11 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/infershape_pass.h"
+#include "ops/fusion/conv2d_fusion.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/adam.h"
+#include "ops/sgd.h"
+#include "ops/apply_momentum.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore {
@@ -37,6 +42,16 @@ class ToFormatBase : public Pass {
       : Pass(pass_name), fmk_type_(fmk_type), train_flag_(train_flag) {}
   ~ToFormatBase() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
+  static bool IsConvFamilyNode(const AnfNodePtr &node) {
+    return opt::CheckPrimitiveType(node, prim::kPrimConv2DFusion) ||
+           opt::CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) ||
+           opt::CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion);
+  }
+  static bool IsOptimizerNode(const AnfNodePtr &node) {
+    return opt::CheckPrimitiveType(node, prim::kPrimApplyMomentum) || opt::CheckPrimitiveType(node, prim::kPrimSGD) ||
+           opt::CheckPrimitiveType(node, prim::kPrimAdam);
+  }
+  static bool IsWeightNodeSensitive(const AnfNodePtr &node) { return IsConvFamilyNode(node) || IsOptimizerNode(node); }
 
  private:
   bool BasicProcess(const FuncGraphPtr &func_graph, bool main_graph);

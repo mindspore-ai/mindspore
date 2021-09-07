@@ -366,8 +366,10 @@ bool TransposeStrategy::CanFusionIfInsert(const FuncGraphPtr &func_graph, const 
   MS_ASSERT(pre_type != nullptr && post_type != nullptr);
   size_t trans_count = 0;
   std::vector<AnfNodePtr> in_nodes;
+  auto graph_inputs = func_graph->get_inputs();
   for (size_t i = 1; i < cnode->size(); ++i) {
-    if (utils::isa<CNodePtr>(cnode->input(i))) {
+    if (utils::isa<CNodePtr>(cnode->input(i)) ||
+        std::find(graph_inputs.begin(), graph_inputs.end(), cnode->input(i)) != graph_inputs.end()) {
       in_nodes.push_back(cnode->input(i));
     }
   }
