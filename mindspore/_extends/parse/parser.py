@@ -576,6 +576,12 @@ class Parser:
                 error_info = f"The builtin function '{var}' is not supported in graph mode."
                 return None, var, error_info
             return self.global_namespace, var
+
+        # For ms_function the function_name not equals to __code__.co_name
+        if self.function_name != self.fn.__code__.co_name:
+            raise TypeError(f"Not support nested calling of local ms_function, "
+                            f"please delete decorator of '{self.function_name}'.")
+
         error_info = f"The name '{var}' is not defined."
         return None, var, error_info
 
