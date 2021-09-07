@@ -1991,6 +1991,10 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
     up. Segment_ids does not need to be sorted, and it does not need to cover all values in the entire valid value
     range.
 
+    The following figure shows the calculation process of UnsortedSegmentSum:
+
+    .. image:: api_img/UnsortedSegmentSum.png
+
     Note:
         If the segment_id i is absent in the segment_ids, then output[i] will be filled with 0.
 
@@ -2091,6 +2095,10 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
     """
     Computes the minimum of a tensor along segments.
 
+    The following figure shows the calculation process of UnsortedSegmentMin:
+
+    .. image:: api_img/UnsortedSegmentMin.png
+
     Note:
         If the segment_id i is absent in the segment_ids, then output[i] will be filled with
         the maximum value of the input_x's type.
@@ -2149,6 +2157,10 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
 class UnsortedSegmentMax(PrimitiveWithCheck):
     """
     Computes the maximum along segments of a tensor.
+
+    The following figure shows the calculation process of UnsortedSegmentMax:
+
+    .. image:: api_img/UnsortedSegmentMax.png
 
     Note:
         If the segment_id i is absent in the segment_ids, then output[i] will be filled with
@@ -2209,6 +2221,10 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
 class UnsortedSegmentProd(PrimitiveWithInfer):
     """
     Computes the product of a tensor along segments.
+
+    The following figure shows the calculation process of UnsortedSegmentProd:
+
+    .. image:: api_img/UnsortedSegmentProd.png
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
