@@ -38,7 +38,7 @@
 
 增强的深度超分辨率网络(EDSR)是2017年提出的单图超分辨重建网络，在NTIRE2017超分辨重建比赛中获取第一名。它通过删除传统剩余网络中不必要的模块（BatchNorm），扩大模型的大小，同时应用了稳定训练的方法进行优化，显著提升了性能。
 
-[论文](https://arxiv.org/pdf/1707.02921.pdf)：Lim B ,  Son S ,  Kim H , et al. Enhanced Deep Residual Networks for Single Image Super-Resolution[C]// 2017 IEEE Conference on Computer Vision and Pattern Recognition Workshops (CVPRW). IEEE, 2017.
+论文: [Enhanced Deep Residual Networks for Single Image Super-Resolution](https://arxiv.org/pdf/1707.02921.pdf): Lim B ,  Son S ,  Kim H , et al. Enhanced Deep Residual Networks for Single Image Super-Resolution[C]// 2017 IEEE Conference on Computer Vision and Pattern Recognition Workshops (CVPRW). IEEE, 2017.
 
 # 模型架构
 
@@ -54,6 +54,44 @@ EDSR是由多个优化后的residual blocks串联而成，相比原始版本的r
     - 测试集：349.53M，共100组图像(无HR图)
 - 数据格式：PNG图片文件文件
     - 注：数据将在src/dataset.py中处理。
+- 数据目录树：官网下载数据后，解压压缩包，训练和验证所需的数据目录结构如下：
+
+```shell
+├─DIV2K_train_HR
+│  ├─0001.png
+│  ├─...
+│  └─0800.png
+├─DIV2K_train_LR_bicubic
+│  ├─X2
+│  │  ├─0001x2.png
+│  │  ├─...
+│  │  └─0800x2.png
+│  ├─X3
+│  │  ├─0001x3.png
+│  │  ├─...
+│  │  └─0800x3.png
+│  └─X4
+│     ├─0001x4.png
+│     ├─...
+│     └─0800x4.png
+├─DIV2K_valid_LR_bicubic
+│  ├─0801.png
+│  ├─...
+│  └─0900.png
+└─DIV2K_valid_LR_bicubic
+   ├─X2
+   │  ├─0801x2.png
+   │  ├─...
+   │  └─0900x2.png
+   ├─X3
+   │  ├─0801x3.png
+   │  ├─...
+   │  └─0900x3.png
+   └─X4
+      ├─0801x4.png
+      ├─...
+      └─0900x4.png
+```
 
 # 特性
 
@@ -81,66 +119,66 @@ EDSR是由多个优化后的residual blocks串联而成，相比原始版本的r
 
   ```python
   # 运行训练示例(EDSR(x2) in the paper)
-  python train.py --batch_size 16 --scale 2 --config_path DIV2K_config.yaml > train.log 2>&1 &
+  python train.py --batch_size 16 --config_path DIV2K_config.yaml --scale 2 --data_path [DIV2K path] --output_path [path to save .ckpt] > train.log 2>&1 &
   # 运行训练示例(EDSR(x3) in the paper - from EDSR(x2))
-  python train.py --batch_size 16 --scale 3 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x2 model path] train.log 2>&1 &
+  python train.py --batch_size 16 --config_path DIV2K_config.yaml --scale 3 --data_path [DIV2K path] --output_path [path to save .ckpt] --pre_trained [pre-trained EDSR_x2 model path] train.log 2>&1 &
   # 运行训练示例(EDSR(x4) in the paper - from EDSR(x2))
-  python train.py --batch_size 16 --scale 4 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x2 model path] train.log 2>&1 &
+  python train.py --batch_size 16 --config_path DIV2K_config.yaml --scale 4 --data_path [DIV2K path] --output_path [path to save .ckpt] --pre_trained [pre-trained EDSR_x2 model path] train.log 2>&1 &
   ```
 
 - Ascend-910处理器环境运行8卡训练DIV2K
 
   ```python
   # 运行分布式训练示例(EDSR(x2) in the paper)
-  bash scripts/run_train.sh rank_table.json --scale 2 --config_path DIV2K_config.yaml
+  bash scripts/run_train.sh rank_table.json --config_path DIV2K_config.yaml --scale 2 --data_path [DIV2K path] --output_path [path to save .ckpt]
   # 运行分布式训练示例(EDSR(x3) in the paper)
-  bash scripts/run_train.sh rank_table.json --scale 3 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x2 model path]
+  bash scripts/run_train.sh rank_table.json --config_path DIV2K_config.yaml --scale 3 --data_path [DIV2K path] --output_path [path to save .ckpt] --pre_trained [pre-trained EDSR_x2 model path]
   # 运行分布式训练示例(EDSR(x4) in the paper)
-  bash scripts/run_train.sh rank_table.json --scale 4 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x2 model path]
+  bash scripts/run_train.sh rank_table.json --config_path DIV2K_config.yaml --scale 4 --data_path [DIV2K path] --output_path [path to save .ckpt] --pre_trained [pre-trained EDSR_x2 model path]
   ```
 
 - Ascend-910处理器环境运行单卡评估DIV2K
 
   ```python
   # 运行评估示例(EDSR(x2) in the paper)
-  python eval.py --scale 2 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x2 model path] > train.log 2>&1 &
+  python eval.py --config_path DIV2K_config.yaml --scale 2 --data_path [DIV2K path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x2 model path] > train.log 2>&1 &
   # 运行评估示例(EDSR(x3) in the paper)
-  python eval.py --scale 3 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x3 model path] > train.log 2>&1 &
+  python eval.py --config_path DIV2K_config.yaml --scale 3 --data_path [DIV2K path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x3 model path] > train.log 2>&1 &
   # 运行评估示例(EDSR(x4) in the paper)
-  python eval.py --scale 4 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x4 model path] > train.log 2>&1 &
+  python eval.py --config_path DIV2K_config.yaml --scale 4 --data_path [DIV2K path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x4 model path] > train.log 2>&1 &
   ```
 
 - Ascend-910处理器环境运行8卡评估DIV2K
 
   ```python
   # 运行分布式评估示例(EDSR(x2) in the paper)
-  bash scripts/run_eval.sh rank_table.json --scale 2 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x2 model path]
+  bash scripts/run_eval.sh rank_table.json --config_path DIV2K_config.yaml --scale 2 --data_path [DIV2K path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x2 model path]
   # 运行分布式评估示例(EDSR(x3) in the paper)
-  bash scripts/run_eval.sh rank_table.json --scale 3 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x3 model path]
+  bash scripts/run_eval.sh rank_table.json --config_path DIV2K_config.yaml --scale 3 --data_path [DIV2K path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x3 model path]
   # 运行分布式评估示例(EDSR(x4) in the paper)
-  bash scripts/run_eval.sh rank_table.json --scale 4 --config_path DIV2K_config.yaml --pre_trained [pre-trained EDSR_x4 model path]
+  bash scripts/run_eval.sh rank_table.json --config_path DIV2K_config.yaml --scale 4 --data_path [DIV2K path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x4 model path]
   ```
 
 - Ascend-910处理器环境运行单卡评估benchmark
 
   ```python
   # 运行评估示例(EDSR(x2) in the paper)
-  python eval.py --scale 2 --config_path benchmark_config.yaml --pre_trained [pre-trained EDSR_x2 model path] > train.log 2>&1 &
+  python eval.py --config_path benchmark_config.yaml --scale 2 --data_path [benchmark path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x2 model path] > train.log 2>&1 &
   # 运行评估示例(EDSR(x3) in the paper)
-  python eval.py --scale 3 --config_path benchmark_config.yaml --pre_trained [pre-trained EDSR_x3 model path] > train.log 2>&1 &
+  python eval.py --config_path benchmark_config.yaml --scale 3 --data_path [benchmark path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x3 model path] > train.log 2>&1 &
   # 运行评估示例(EDSR(x4) in the paper)
-  python eval.py --scale 4 --config_path benchmark_config.yaml --pre_trained [pre-trained EDSR_x4 model path] > train.log 2>&1 &
+  python eval.py --config_path benchmark_config.yaml --scale 4 --data_path [benchmark path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x4 model path] > train.log 2>&1 &
   ```
 
 - Ascend-910处理器环境运行8卡评估benchmark
 
   ```python
   # 运行分布式评估示例(EDSR(x2) in the paper)
-  bash scripts/run_eval.sh rank_table.json --scale 2 --config_path benchmark_config.yaml --pre_trained [pre-trained EDSR_x2 model path]
+  bash scripts/run_eval.sh rank_table.json --config_path benchmark_config.yaml --scale 2 --data_path [benchmark path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x2 model path]
   # 运行分布式评估示例(EDSR(x3) in the paper)
-  bash scripts/run_eval.sh rank_table.json --scale 3 --config_path benchmark_config.yaml --pre_trained [pre-trained EDSR_x3 model path]
+  bash scripts/run_eval.sh rank_table.json --config_path benchmark_config.yaml --scale 3 --data_path [benchmark path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x3 model path]
   # 运行分布式评估示例(EDSR(x4) in the paper)
-  bash scripts/run_eval.sh rank_table.json --scale 4 --config_path benchmark_config.yaml --pre_trained [pre-trained EDSR_x4 model path]
+  bash scripts/run_eval.sh rank_table.json --config_path benchmark_config.yaml --scale 4 --data_path [benchmark path] --output_path [path to save sr] --pre_trained [pre-trained EDSR_x4 model path]
   ```
 
 - Ascend-310处理器环境运行单卡评估DIV2K

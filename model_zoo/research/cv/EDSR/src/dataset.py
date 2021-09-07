@@ -47,8 +47,8 @@ class FolderImagePair:
         self.reader = reader
         self.pair_keys, self.image_pairs = self.scan_pair(self.dir_patterns)
 
-    @classmethod
-    def scan_pair(cls, dir_patterns):
+    @staticmethod
+    def scan_pair(dir_patterns):
         """
         scan pair
         """
@@ -105,7 +105,8 @@ class LrHrImages(FolderImagePair):
 
     def __getitem__(self, idx):
         _, *images = super(LrHrImages, self).__getitem__(idx)
-        return images
+        return tuple(images)
+
 
 class _BasePatchCutter:
     """
