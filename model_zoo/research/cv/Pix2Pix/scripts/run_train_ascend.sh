@@ -19,4 +19,30 @@ echo "python train.py device_target device_id dataset_size train_data_dir"
 echo "for example: python train.py --device_target Ascend --device_id 0 --dataset_size 400 --train_data_dir ./facades/train"
 echo "====================================================================================================================="
 
-python train.py --device_target Ascend --device_id 0 --dataset_size 400 --train_data_dir ./facades/train
+if [ $# != 2 ]
+then
+    echo "Usage: bash run_train_ascend.sh [DATASET_PATH] [DATASET_NAME]"
+    exit 1
+fi
+
+get_real_path(){
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
+
+PATH1=$(get_real_path $1)
+
+if [ ! -d $PATH1 ]
+then
+    echo "error: DATASET_PATH=$PATH1 is not a directory"
+    exit 1
+fi
+
+if [ $2 == 'facades' ]; then
+    python train.py --device_target Ascend --device_id 0 --dataset_size 400 --train_data_dir $PATH1
+elif [ $2 == 'maps' ]; then
+    python train.py --device_target Ascend --device_id 0 --dataset_size 1096 --train_data_dir $PATH1
+fi 

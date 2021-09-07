@@ -62,7 +62,7 @@ class ConvNormReLU(nn.Cell):
             padding = (kernel_size - 1) // 2
         if args.pad_mode == 'REFLECT':
             pad_mode = "REFLECT"
-        elif arg.pad_mode == "SYMMETRIC":
+        elif args.pad_mode == "SYMMETRIC":
             pad_mode = "SYMMETRIC"
         if pad_mode == 'CONSTANT':
             conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='pad',
