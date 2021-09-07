@@ -23,6 +23,7 @@
 #include "backend/optimizer/common/common_backend_optimization.h"
 #include "backend/optimizer/gpu/adam_weight_decay_fusion.h"
 #include "backend/optimizer/gpu/adam_fusion.h"
+#include "backend/optimizer/gpu/alltoall_fusion.h"
 #include "backend/optimizer/gpu/apply_momentum_weight_scale_fusion.h"
 #include "backend/optimizer/gpu/apply_momentum_scale_fusion.h"
 #include "backend/optimizer/gpu/apply_momentum_weight_fusion.h"
@@ -160,6 +161,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::MatMulBiasAddFusion>());
   pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
   pm->AddPass(std::make_shared<opt::AdamFusion>());
+  pm->AddPass(std::make_shared<opt::AllToAllFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayFusion>());
