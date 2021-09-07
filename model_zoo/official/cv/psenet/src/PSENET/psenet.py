@@ -26,7 +26,7 @@ from .fpn import FPN
 
 class PSENet(nn.Cell):
     def __init__(self, config):
-        super(PESNet, self).__init__()
+        super(PSENet, self).__init__()
         self.kernel_num = config.KERNEL_NUM
         self.inference = config.INFERENCE
         if config.INFERENCE:
