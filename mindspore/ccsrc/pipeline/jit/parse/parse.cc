@@ -92,7 +92,7 @@ FuncGraphWeakPtr Parser::top_func_graph_ = FuncGraphWeakPtr();
 
 Parser::Parser(const std::shared_ptr<ParseFunctionAst> &ast) : ast_(ast) {
   max_for_loop_count_str_ = common::GetEnv("ENV_FOR_TO_WHILE_LOOP");
-  support_fallback_ = "0";  // We will open it later by call common::GetEnv("ENV_SUPPORT_FALLBACK")
+  support_fallback_ = common::GetEnv("ENV_SUPPORT_FALLBACK");
   errcode_ = PARSE_SUCCESS;
   BuildMethodMap();
 }
@@ -1792,7 +1792,7 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
                                    const py::object &value_object) {
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
-  static const auto use_fallback = (support_fallback_ == "0" ? false : true);
+  static const auto use_fallback = (support_fallback() != "1" ? false : true);
   if (!use_fallback) {
     return value_node;
   }

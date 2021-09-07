@@ -56,7 +56,12 @@ static inline bool IsSupportedCreateInstanceType(const py::object &obj) {
 abstract::AbstractBasePtr ClassType::ToAbstract() {
   auto abs_scalar =
     std::make_shared<abstract::AbstractScalar>(shared_from_base<ClassType>(), std::make_shared<TypeType>());
-  if (!IsSupportedCreateInstanceType(obj())) {
+
+  // The fallback feature is enabled in default.
+  // Not support change the flag during the process is alive.
+  static const auto support_fallback = common::GetEnv("ENV_SUPPORT_FALLBACK");
+  static const auto use_fallback = (support_fallback != "1" ? false : true);
+  if (use_fallback && !IsSupportedCreateInstanceType(obj())) {
     return abs_scalar;
   }
   AbstractBasePtrList args_spec_list = {abs_scalar};

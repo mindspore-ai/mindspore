@@ -529,6 +529,9 @@ class Parser:
         # Used to resolve mindspore builtin ops namespace.
         self.ms_common_ns = CellNamespace('mindspore.common')
         self.ms_ops_ns = CellNamespace('mindspore.ops')
+        self.ms_ops_c = CellNamespace('mindspore.ops.composite')
+        self.ms_ops_c_multitype = CellNamespace('mindspore.ops.composite.multitype_ops')
+        self.ms_ops_p = CellNamespace('mindspore.ops.operations')
         # Used to resolve the function's globals namespace.
         self.global_namespace = CellNamespace(fn.__module__)
         self.function_module = fn.__module__
@@ -549,7 +552,7 @@ class Parser:
                 src = dedent(original_src)
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
-                logger.debug("get source = %s", src)
+                logger.debug("Get source = %s", src)
                 try:
                     ast_tokens = asttokens.ASTTokens(src, parse=True)
                 except IndentationError as idt_err:
@@ -567,10 +570,10 @@ class Parser:
     def get_namespace_symbol(self, var: str):
         """Get symbol type and namespace and symbol."""
         if var in self.closure_namespace:
-            logger.debug(f"found {var} in closure_namespace {self.closure_namespace.__str__()}")
+            logger.debug(f"Found `{var}` in closure_namespace {self.closure_namespace.__str__()}")
             return self.closure_namespace, var
         if var in self.global_namespace:
-            logger.debug(f"found {var} in global_namespace {self.global_namespace.__str__()}")
+            logger.debug(f"Found `{var}` in global_namespace {self.global_namespace.__str__()}")
             value = self.global_namespace[var]
             if isinstance(value, type(abs)) and self.global_namespace[var] not in convert_object_map:
                 error_info = f"The builtin function '{var}' is not supported in graph mode."
@@ -587,43 +590,63 @@ class Parser:
 
     def is_unsupported_builtin_type(self, value_type):
         """To check if not supported builtin type"""
-        logger.debug(f'value_type: {value_type}, {type([])}, {type(())}')
+        logger.debug(f'value_type: {value_type}, {type([])}, {type(())}.')
         return value_type == type([]) or value_type == type(())
 
     def is_supported_namespace_module(self, value):
         """To check if the module is allowed to support."""
+        # Check `mindspore` namespace.
         if not hasattr(value, '__name__'):
+            logger.debug(f'`{str(value)}` has no `__name__` attribute.')
             return True
-
         name = value.__name__
         if name == 'mindspore':
-            logger.debug(f'...found {name} in mindspore root namespace')
+            logger.debug(f'Found `{name}` in mindspore root namespace.')
             return True
 
+        # Check `builtins` namespace.
+        if hasattr(value, '__module__'):  # Not types.ModuleType
+            mod = value.__module__
+            if mod == 'builtins':
+                logger.debug(f'Found `{name}` in `builtins` namespace.')
+                return True
+
+        # We suppose it's supported if not a Module.
         if not isinstance(value, types.ModuleType):
-            return False
+            return True
+
+        # Check supported Module namespace.
         rightmost_name = name.split('.')[-1]
-        # if rightmost_name in self.ms_common_ns:
-        #     logger.error(f'...found {module_name} in common namespace: {self.ms_common_ns.__str__()}')
-        #     return True
+        # By now, we don't check `self.ms_common_ns`.
         if rightmost_name in self.ms_ops_ns:
-            logger.debug(f'...found {name}({rightmost_name}) in ops namespace: {self.ms_ops_ns.__str__()}')
+            logger.debug(f'Found `{name}`({rightmost_name}) in ops namespace: {self.ms_ops_ns.__str__()}.')
+            return True
+        if rightmost_name in self.ms_ops_c:
+            logger.debug(f'Found `{name}`({rightmost_name}) in ops namespace: {self.ms_ops_c.__str__()}.')
+            return True
+        if rightmost_name in self.ms_ops_c_multitype:
+            logger.debug(f'Found `{name}`({rightmost_name}) in ops namespace: {self.ms_ops_c_multitype.__str__()}.')
+            return True
+        if rightmost_name in self.ms_ops_p:
+            logger.debug(f'Found `{name}`({rightmost_name}) in ops namespace: {self.ms_ops_p.__str__()}.')
             return True
         if rightmost_name in trope_ns:
-            logger.debug(f'...found {name}({rightmost_name}) in trope namespace: {self.trope_ns.__str__()}')
+            logger.debug(f'Found `{name}`({rightmost_name}) in trope namespace: {self.trope_ns.__str__()}.')
             return True
+
+        logger.error(f'Not found `{name}` in mindspore supported namespace.')
         return False
 
     def get_builtin_namespace_symbol(self, var: str):
         """Get mindspore builtin namespace and symbol."""
         if var in self.closure_namespace:
-            logger.debug(f"found {var} in closure_namespace {self.closure_namespace.__str__()}")
+            logger.debug(f"Found `{var}` in closure_namespace {self.closure_namespace.__str__()}.")
             return self.closure_namespace, var
         if var in self.global_namespace:
-            logger.debug(f"found {var} in global_namespace {self.global_namespace.__str__()}")
+            logger.debug(f"Found `{var}` in global_namespace {self.global_namespace.__str__()}.")
             value = self.global_namespace[var]
             value_str = value.__name__ if hasattr(value, '__name__') else str(value)
-            logger.debug(f"value: {type(value)}, : {value_str}, hasattr(__name__): {hasattr(value, '__name__')}")
+            logger.debug(f"value: {type(value)}, `{value_str}`, hasattr(__name__): {hasattr(value, '__name__')}.")
             # To check if allowed to support.
             if self.is_unsupported_builtin_type(value):
                 return self.global_namespace, var, value

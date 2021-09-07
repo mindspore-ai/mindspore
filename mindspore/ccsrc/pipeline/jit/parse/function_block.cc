@@ -216,7 +216,7 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
 
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
-  static const auto use_fallback = (parser_.support_fallback() == "0" ? false : true);
+  static const auto use_fallback = (parser_.support_fallback() != "1" ? false : true);
   if (!use_fallback) {
     py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
     return HandleNamespaceInfo(namespace_info);
