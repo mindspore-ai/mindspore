@@ -377,7 +377,7 @@ class TupleListGetitemDependReorder : public AnfVisitor {
     auto depend_cnode = depend->cast<CNodePtr>();
     auto fg = node->func_graph();
     // Avoid generating redundant depend nodes.
-    if (ExistUpdateStateUser(mgr, node)) {
+    if (ExistUpdateStateUser(mgr, depend)) {
       auto inputs = node->cast<CNodePtr>()->inputs();
       inputs[1] = depend_cnode->input(1);
       auto new_node = fg->NewCNode(inputs);
@@ -410,8 +410,7 @@ class TupleListGetitemDependReorder : public AnfVisitor {
     return depend_node;
   }
 
-  bool ExistUpdateStateUser(const FuncGraphManagerPtr &mgr, const AnfNodePtr &node) {
-    auto depend = node->cast<CNodePtr>()->input(1);
+  bool ExistUpdateStateUser(const FuncGraphManagerPtr &mgr, const AnfNodePtr &depend) {
     if (!IsPrimitiveCNode(y_, prim::kPrimUpdateState)) {
       return false;
     }
@@ -424,8 +423,8 @@ class TupleListGetitemDependReorder : public AnfVisitor {
     if (users.size() <= 1) {
       return false;
     }
-    bool has_updatestate_user = std::any_of(users.begin(), users.end(), [&node](const auto &user) {
-      return (user.first != node) && IsPrimitiveCNode(user.first, prim::kPrimUpdateState);
+    bool has_updatestate_user = std::any_of(users.begin(), users.end(), [](const auto &user) {
+      return IsPrimitiveCNode(user.first, prim::kPrimUpdateState);
     });
     return has_updatestate_user;
   }
