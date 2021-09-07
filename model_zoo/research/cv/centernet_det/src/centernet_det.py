@@ -23,44 +23,33 @@ from mindspore import context
 from mindspore import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.context import ParallelMode
-from mindspore.common.initializer import Constant
 from mindspore.communication.management import get_group_size
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from src.utils import Sigmoid, GradScale
 from src.utils import FocalLoss, RegLoss
 from src.decode import DetectionDecode
-from src.config import dataset_config as data_cfg
 from src.hourglass import Convolution, Residual, Kp_module
-
-
+from .model_utils.config import dataset_config as data_cfg
 BN_MOMENTUM = 0.9
 
 
-def _generate_feature(cin, cout, kernel_size, head_name, head, num_stacks, with_bn=True):
+def _generate_feature(cin, cout, kernel_size, head, num_stacks, with_bn=True):
     """
-    Generate feature extraction function of each target head
+    Generate hourglass network feature extraction function of each target head
     """
     module = None
-    if 'hm' in head_name:
-        module = nn.CellList([
-            nn.SequentialCell(
-                Convolution(cin, cout, kernel_size, with_bn=with_bn),
-                nn.Conv2d(cout, head, kernel_size=1, has_bias=True, bias_init=Constant(-2.19), pad_mode='pad')
-            ) for _ in range(num_stacks)
-        ])
-    else:
-        module = nn.CellList([
-            nn.SequentialCell(
-                Convolution(cin, cout, kernel_size, with_bn=with_bn),
-                nn.Conv2d(cout, head, kernel_size=1, has_bias=True, pad_mode='pad')
-            ) for _ in range(num_stacks)
-        ])
+    module = nn.CellList([
+        nn.SequentialCell(
+            Convolution(cin, cout, kernel_size, with_bn=with_bn),
+            nn.Conv2d(cout, head, kernel_size=1, has_bias=True, pad_mode='pad')
+        ) for _ in range(num_stacks)
+    ])
     return module
 
 
 class GatherDetectionFeatureCell(nn.Cell):
     """
-    Gather features of object detection.
+    Gather hourglass features of object detection.
 
     Args:
         net_config: The config info of CenterNet network.
@@ -71,13 +60,15 @@ class GatherDetectionFeatureCell(nn.Cell):
 
     def __init__(self, net_config):
         super(GatherDetectionFeatureCell, self).__init__()
-        self.heads = net_config.heads
         self.nstack = net_config.num_stacks
         self.n = net_config.n
         self.cnv_dim = net_config.cnv_dim
         self.dims = net_config.dims
         self.modules = net_config.modules
         curr_dim = self.dims[0]
+        self.heads = {'hm': data_cfg.num_classes, 'wh': 2}
+        if net_config.reg_offset:
+            self.heads.update({'reg': 2})
 
         self.pre = nn.SequentialCell(
             Convolution(3, 128, 7, stride=2),
@@ -114,12 +105,13 @@ class GatherDetectionFeatureCell(nn.Cell):
 
         self.relu = nn.ReLU()
 
-        self.hm_fn = _generate_feature(cin=self.cnv_dim, cout=curr_dim, kernel_size=3, head_name='hm',
-                                       head=self.heads['hm'], num_stacks=self.nstack, with_bn=False)
-        self.wh_fn = _generate_feature(cin=self.cnv_dim, cout=curr_dim, kernel_size=3, head_name='wh',
-                                       head=self.heads['wh'], num_stacks=self.nstack, with_bn=False)
-        self.reg_fn = _generate_feature(cin=self.cnv_dim, cout=curr_dim, kernel_size=3, head_name='reg',
-                                        head=self.heads['reg'], num_stacks=self.nstack, with_bn=False)
+        self.hm_fn = _generate_feature(cin=self.cnv_dim, cout=curr_dim, kernel_size=3, head=self.heads['hm'],
+                                       num_stacks=self.nstack, with_bn=False)
+        self.wh_fn = _generate_feature(cin=self.cnv_dim, cout=curr_dim, kernel_size=3, head=self.heads['wh'],
+                                       num_stacks=self.nstack, with_bn=False)
+        if net_config.reg_offset:
+            self.reg_fn = _generate_feature(cin=self.cnv_dim, cout=curr_dim, kernel_size=3, head=self.heads['reg'],
+                                            num_stacks=self.nstack, with_bn=False)
 
     def construct(self, image):
         """Defines the computation performed."""
@@ -134,13 +126,9 @@ class GatherDetectionFeatureCell(nn.Cell):
                 inter = self.inters[ind](inter)
 
             out = {}
-            for head in self.heads.keys():
-                if head == 'hm':
-                    out[head] = self.hm_fn[ind](cnv)
-                if head == 'wh':
-                    out[head] = self.wh_fn[ind](cnv)
-                if head == 'reg':
-                    out[head] = self.reg_fn[ind](cnv)
+            out['hm'] = self.hm_fn[ind](cnv)
+            out['wh'] = self.wh_fn[ind](cnv)
+            out['reg'] = self.reg_fn[ind](cnv)
             outs += (out,)
         return outs
 
@@ -158,20 +146,18 @@ class CenterNetLossCell(nn.Cell):
     def __init__(self, net_config):
         super(CenterNetLossCell, self).__init__()
         self.network = GatherDetectionFeatureCell(net_config)
-        self.net_config = net_config
+        self.num_stacks = net_config.num_stacks
         self.reduce_sum = ops.ReduceSum()
         self.Sigmoid = Sigmoid()
         self.FocalLoss = FocalLoss()
         self.crit = nn.MSELoss() if net_config.mse_loss else self.FocalLoss
         self.crit_reg = RegLoss(net_config.reg_loss)
         self.crit_wh = RegLoss(net_config.reg_loss)
-        self.num_stacks = net_config.num_stacks
         self.wh_weight = net_config.wh_weight
         self.hm_weight = net_config.hm_weight
         self.off_weight = net_config.off_weight
         self.reg_offset = net_config.reg_offset
         self.not_enable_mse_loss = not net_config.mse_loss
-        self.Print = ops.Print()
 
     def construct(self, image, hm, reg_mask, ind, wh, reg):
         """Defines the computation performed."""
@@ -250,8 +236,9 @@ class CenterNetWithoutLossScaleCell(nn.Cell):
         weights = self.weights
         loss = self.network(image, hm, reg_mask, ind, wh, reg)
         grads = self.grad(self.network, weights)(image, hm, reg_mask, ind, wh, reg)
-        self.optimizer(grads)
-        return loss
+        succ = self.optimizer(grads)
+        ret = loss
+        return ops.depend(ret, succ)
 
 
 class CenterNetWithLossScaleCell(nn.Cell):
@@ -319,9 +306,12 @@ class CenterNetWithLossScaleCell(nn.Cell):
         else:
             cond = self.less_equal(self.base, flag_sum)
         overflow = cond
-        if not overflow:
-            self.optimizer(grads)
-        return (loss, cond, scaling_sens)
+        if overflow:
+            succ = False
+        else:
+            succ = self.optimizer(grads)
+        ret = (loss, cond, scaling_sens)
+        return ops.depend(ret, succ)
 
 
 class CenterNetDetEval(nn.Cell):
@@ -331,17 +321,15 @@ class CenterNetDetEval(nn.Cell):
     Args:
         net_config: The config info of CenterNet network.
         K(number): Max number of output objects. Default: 100.
-        enable_nms_fp16(bool): Use float16 data for max_pool, adaption for CPU. Default: True.
+        enable_nms_fp16(bool): Use float16 data for max_pool, adaption for CPU. Default: False.
 
     Returns:
         Tensor, detection of images(bboxes, score, keypoints and category id of each objects)
     """
-    def __init__(self, net_config, K=100, enable_nms_fp16=True):
+    def __init__(self, net_config, K=100, enable_nms_fp16=False):
         super(CenterNetDetEval, self).__init__()
         self.network = GatherDetectionFeatureCell(net_config)
         self.decode = DetectionDecode(net_config, K, enable_nms_fp16)
-        self.shape = ops.Shape()
-        self.reshape = ops.Reshape()
 
     def construct(self, image):
         """Calculate prediction scores"""

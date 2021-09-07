@@ -17,20 +17,34 @@ Data operations, will be used in train.py
 """
 
 import os
+import sys
 import math
-import argparse
 import cv2
 import numpy as np
 import pycocotools.coco as coco
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
-from src.image import color_aug, get_affine_transform, affine_transform
-from src.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian, draw_dense_reg
-from src.visual import visual_image
+
+try:
+    from src.model_utils.config import config, dataset_config
+    from src.model_utils.moxing_adapter import moxing_wrapper
+    from src.image import color_aug, get_affine_transform, affine_transform
+    from src.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian, draw_dense_reg
+    from src.visual import visual_image
+except ImportError as import_error:
+    print('Import Error: {}, trying append path/centernet_det/src/../'.format(import_error))
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    from src.model_utils.config import config, dataset_config
+    from src.model_utils.moxing_adapter import moxing_wrapper
+    from src.image import color_aug, get_affine_transform, affine_transform
+    from src.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian, draw_dense_reg
+    from src.visual import visual_image
+
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 cv2.setNumThreads(0)
+
 
 class COCOHP(ds.Dataset):
     """
@@ -386,16 +400,19 @@ class COCOHP(ds.Dataset):
         return data_set
 
 
-if __name__ == '__main__':
-    # Convert coco2017 dataset to mindrecord to improve performance on host
-    from src.config import dataset_config
+def modelarts_pre_process():
+    """modelarts pre process function."""
+    config.coco_data_dir = config.data_path
+    config.mindrecord_dir = config.output_path
 
-    parser = argparse.ArgumentParser(description='CenterNet MindRecord dataset')
-    parser.add_argument("--coco_data_dir", type=str, default="", help="Coco dataset directory.")
-    parser.add_argument("--mindrecord_dir", type=str, default="", help="MindRecord dataset dir.")
-    parser.add_argument("--mindrecord_prefix", type=str, default="coco_det.train.mind",
-                        help="Prefix of MindRecord dataset filename.")
-    args_opt = parser.parse_args()
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def coco2mindrecord():
+    """Convert coco2017 dataset to mindrecord"""
     dsc = COCOHP(dataset_config, run_mode="train")
-    dsc.init(args_opt.coco_data_dir)
-    dsc.transfer_coco_to_mindrecord(args_opt.mindrecord_dir, args_opt.mindrecord_prefix, shard_num=8)
+    dsc.init(config.coco_data_dir)
+    dsc.transfer_coco_to_mindrecord(config.mindrecord_dir, config.mindrecord_prefix, shard_num=8)
+
+
+if __name__ == '__main__':
+    coco2mindrecord()

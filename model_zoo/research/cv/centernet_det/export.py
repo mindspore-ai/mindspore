@@ -16,21 +16,27 @@
 Export CenterNet mindir model.
 """
 
-import argparse
+import os
 import numpy as np
+import mindspore
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
 from src import CenterNetDetEval
-from src.config import net_config, eval_config, export_config
+from src.model_utils.config import config, net_config, eval_config, export_config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description='centernet export')
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    export_config.ckpt_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), export_config.ckpt_file)
+    export_config.export_name = os.path.join(config.output_path, export_config.export_name)
 
-if __name__ == '__main__':
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    '''export function'''
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=config.device_id)
     net = CenterNetDetEval(net_config, eval_config.K)
     net.set_train(False)
 
@@ -38,7 +44,10 @@ if __name__ == '__main__':
     load_param_into_net(net, param_dict)
     net.set_train(False)
 
-    input_shape = [1, 3, export_config.input_res[0], export_config.input_res[1]]
-    input_data = Tensor(np.random.uniform(-1.0, 1.0, size=input_shape).astype(np.float32))
+    input_data = Tensor(np.zeros([1, 3, export_config.input_res[0], export_config.input_res[1]]), mindspore.float32)
 
     export(net, input_data, file_name=export_config.export_name, file_format=export_config.export_format)
+
+
+if __name__ == '__main__':
+    run_export()
