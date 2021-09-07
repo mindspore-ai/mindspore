@@ -34,8 +34,8 @@ from mindspore.nn import RMSProp
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from mindspore.train.model import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.context import ParallelMode
 
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'

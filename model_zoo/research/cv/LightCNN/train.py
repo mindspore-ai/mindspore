@@ -22,7 +22,7 @@ from mindspore.train import Model
 from mindspore.common import set_seed
 from mindspore import context, Tensor
 import mindspore.common.dtype as mstype
-from mindspore.train.model import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor

@@ -20,8 +20,8 @@ import numpy as np
 
 from mindspore.communication import init, get_rank
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
-from mindspore.train.model import ParallelMode
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.context import ParallelMode
 from mindspore import Model
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn import RMSProp

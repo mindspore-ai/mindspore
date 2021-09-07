@@ -19,7 +19,8 @@ import argparse
 import copy
 
 from mindspore.communication.management import init, get_rank, get_group_size
-from mindspore.train.model import ParallelMode, Model
+from mindspore.context import ParallelMode
+from mindspore.train.model import Model
 from mindspore.train.callback import TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
@@ -101,18 +102,18 @@ parser.add_argument('--GPU', action='store_true', default=False,
                     help='Use GPU for training (default: False)')
 
 
-def main():
-    """Main entrance for training"""
+if __name__ == '__main__':
     args = parser.parse_args()
     print(sys.argv)
     devid, args.rank_id, args.rank_size = 0, 0, 1
 
     context.set_context(mode=context.GRAPH_MODE)
+    if args.GPU:
+        context.set_context(device_target='GPU')
 
     if args.distributed:
         if args.GPU:
             init("nccl")
-            context.set_context(device_target='GPU')
         else:
             init()
             devid = int(os.getenv('DEVICE_ID'))
@@ -125,15 +126,11 @@ def main():
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True,
                                           device_num=args.rank_size)
-    else:
-        if args.GPU:
-            context.set_context(device_target='GPU')
 
     is_master = not args.distributed or (args.rank_id == 0)
 
     # parse model argument
-    assert args.model.startswith(
-        "tinynet"), "Only Tinynet models are supported."
+    assert args.model.startswith("tinynet"), "Only Tinynet models are supported."
     _, sub_name = args.model.split("_")
     net = tinynet(sub_model=sub_name,
                   num_classes=args.num_classes,
@@ -166,11 +163,9 @@ def main():
                                        input_size=input_size)
         batches_per_epoch = train_dataset.get_dataset_size()
 
-    loss = LabelSmoothingCrossEntropy(
-        smooth_factor=args.smoothing, num_classes=args.num_classes)
+    loss = LabelSmoothingCrossEntropy(smooth_factor=args.smoothing, num_classes=args.num_classes)
     time_cb = TimeMonitor(data_size=batches_per_epoch)
-    loss_scale_manager = FixedLossScaleManager(
-        args.loss_scale, drop_overflow_update=False)
+    loss_scale_manager = FixedLossScaleManager(args.loss_scale, drop_overflow_update=False)
 
     lr_array = get_lr(base_lr=args.lr,
                       total_epochs=args.epochs,
@@ -181,26 +176,18 @@ def main():
                       warmup_lr_init=args.warmup_lr,
                       global_epoch=0)
     lr = Tensor(lr_array)
-
-    loss_cb = LossMonitor(lr_array,
-                          args.epochs,
-                          per_print_times=args.per_print_times,
-                          start_epoch=0)
-
+    loss_cb = LossMonitor(lr_array, args.epochs, per_print_times=args.per_print_times, start_epoch=0)
     param_group = add_weight_decay(net, weight_decay=args.weight_decay)
 
+    if is_master:
+        print(f'Using {args.opt} optimizer')
     if args.opt == 'sgd':
-        if is_master:
-            print('Using SGD optimizer')
-        optimizer = SGD(param_group,
-                        learning_rate=lr,
+        optimizer = SGD(param_group, learning_rate=lr,
                         momentum=args.momentum,
                         weight_decay=args.weight_decay,
                         loss_scale=args.loss_scale)
 
     elif args.opt == 'rmsprop':
-        if is_master:
-            print('Using rmsprop optimizer')
         optimizer = RMSProp(param_group,
                             learning_rate=lr,
                             decay=0.9,
@@ -239,12 +226,5 @@ def main():
     callbacks = [loss_cb, ema_cb, time_cb] if is_master else []
 
     if is_master:
-        print("Training on " + args.model
-              + " with " + str(args.num_classes) + " classes")
-
-    model.train(args.epochs, train_dataset, callbacks=callbacks,
-                dataset_sink_mode=args.dataset_sink)
-
-
-if __name__ == '__main__':
-    main()
+        print("Training on " + args.model + " with " + str(args.num_classes) + " classes")
+    model.train(args.epochs, train_dataset, callbacks=callbacks, dataset_sink_mode=args.dataset_sink)

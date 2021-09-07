@@ -21,7 +21,8 @@ import argparse
 import ast
 from mindspore import context
 from mindspore import Tensor
-from mindspore.train.model import Model, ParallelMode
+from mindspore.context import ParallelMode
+from mindspore.train.model import Model
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net

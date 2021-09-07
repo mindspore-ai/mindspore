@@ -24,7 +24,8 @@ import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.communication.management import init
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, LossMonitor, TimeMonitor
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 from mindspore.common import set_seed
 from original_model import Net
 set_seed(1234)

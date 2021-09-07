@@ -18,7 +18,7 @@ import datetime
 import numpy as np
 from mindspore import context
 from mindspore import Tensor, Model
-from mindspore.train.model import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.nn.optim import Momentum
 from mindspore.common import dtype as mstype
 from mindspore.train.serialization import load_checkpoint
