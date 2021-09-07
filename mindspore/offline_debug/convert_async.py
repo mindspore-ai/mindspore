@@ -35,6 +35,10 @@ class ConvertToolLoader:
         self.common = None
         self.dump_data_parser = None
         self.format_conversion = None
+        self.progress = None
+        self.log = None
+        self.compare_none_error = None
+        self.compare_exception = None
         self.load_convert_tool()
 
     @staticmethod
@@ -72,6 +76,23 @@ class ConvertToolLoader:
                 "Failed to load CANN conversion tools under " + toolkit_path + ". Please make sure Ascend " +
                 "toolkit has been installed properly.")
 
+        try:
+            self.progress = import_module("progress").Progress
+        except (ModuleNotFoundError, AttributeError):
+            self.progress = self.utils.Progress
+        try:
+            self.log = import_module("log")
+            if not hasattr(self.log, "print_error_log"):
+                raise ModuleNotFoundError
+        except ModuleNotFoundError:
+            self.log = self.utils
+        try:
+            compare_error = import_module("compare_error")
+            self.compare_none_error = compare_error.CompareError.MSACCUCMP_NONE_ERROR
+            self.compare_exception = compare_error.CompareError
+        except ModuleNotFoundError:
+            self.compare_none_error = self.utils.VECTOR_COMPARISON_NONE_ERROR
+            self.compare_exception = self.utils.CompareError
 
 def parse_args(file_list, output_path):
     """Helper function to parse the input argument for the conversion configuration."""
@@ -114,30 +135,30 @@ class AsyncDumpConverter:
 
     def convert_files(self):
         """Main entry of the converter to convert async dump files into npy format."""
-        self.convert_tool.utils.print_info_log('Start to convert async dump files.')
-        ret_code = self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR
+        self.convert_tool.log.print_info_log('Start to convert async dump files.')
+        ret_code = self.convert_tool.compare_none_error
         if self.args.format is not None:
             convert = self.convert_tool.format_conversion(self.args)
         else:
             convert = self.convert_tool.dump_data_parser(self.args)
         ret_code = self.handle_multi_process(convert, self.files_to_convert)
         self._rename_generated_npy_files()
-        if ret_code != self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR:
+        if ret_code != self.convert_tool.compare_none_error:
             if os.path.exists(self.failed_file_path):
                 self.convert_failed_tensors()
-        self.convert_tool.utils.print_info_log('Finish to convert async dump files.')
+        self.convert_tool.log.print_info_log('Finish to convert async dump files.')
 
     def convert_failed_tensors(self):
         """Convert the failed tensor recorded in the failed txt file."""
-        self.convert_tool.utils.print_info_log(
+        self.convert_tool.log.print_info_log(
             'Start to convert failed tensors recorded in ' + self.failed_file_path + '.')
         with open(self.failed_file_path) as failed_lines:
             for failed_line in failed_lines:
                 try:
                     failed_line_list = failed_line.rstrip().split(',')
                     self.convert_one_failed_tensor(failed_line_list)
-                except (ValueError, OSError, AttributeError, self.convert_tool.utils.CompareError) as err:
-                    self.convert_tool.utils.print_error_log(
+                except (ValueError, OSError, AttributeError, self.convert_tool.compare_exception) as err:
+                    self.convert_tool.log.print_error_log(
                         'Failed to convert ' + failed_line + ' to Host format: ' + str(err))
 
     def convert_one_failed_tensor(self, failed_tensor):
@@ -160,12 +181,13 @@ class AsyncDumpConverter:
 
     def handle_multi_process(self, convert_obj, files):
         """Convert async format files to npy in a multithreaded manner."""
-        return_code = self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR
+        return_code = self.convert_tool.compare_none_error
         # try looking for function in compatibility with the toolkit package version.
+        progress = self.convert_tool.progress(len(files))
         if hasattr(convert_obj, 'multi_process'):
-            _ = setattr(convert_obj.multi_process, '_progress', self.convert_tool.utils.Progress(len(files)))
+            _ = setattr(convert_obj.multi_process, '_progress', progress)
         else:
-            _ = setattr(convert_obj, 'progress', self.convert_tool.utils.Progress(len(files)))
+            _ = setattr(convert_obj, 'progress', progress)
         multi_process_file_list = []
         big_file_list = []
         max_file_size = 0
@@ -181,15 +203,15 @@ class AsyncDumpConverter:
                 else:
                     multi_process_file_list.append(cur_path)
         if multi_process_file_list:
-            ret_mp = self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR
+            ret_mp = self.convert_tool.compare_none_error
             if hasattr(convert_obj, 'multi_process'):
                 ret_mp = getattr(convert_obj.multi_process, '_do_multi_process')(multi_process_file_list)
             else:
                 ret_mp = getattr(convert_obj, '_do_multi_process')(multi_process_file_list)
-            if ret_mp != self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR:
+            if ret_mp != self.convert_tool.compare_none_error:
                 return_code = ret_mp
         for big_file in big_file_list:
-            ret_bf = self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR
+            ret_bf = self.convert_tool.compare_none_error
             if hasattr(convert_obj, '_convert_format_for_one_file'):
                 ret_bf, _ = getattr(convert_obj, '_convert_format_for_one_file')(big_file)
             else:
@@ -198,11 +220,11 @@ class AsyncDumpConverter:
                 getattr(convert_obj.multi_process, '_handle_result_callback')([ret_bf, big_file])
             else:
                 getattr(convert_obj, '_handle_result_callback')([ret_bf, big_file])
-            if ret_bf != self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR:
+            if ret_bf != self.convert_tool.compare_none_error:
                 return_code = ret_bf
-        if return_code != self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR:
+        if return_code != self.convert_tool.compare_none_error:
             if os.path.exists(self.failed_file_path):
-                self.convert_tool.utils.print_info_log(
+                self.convert_tool.log.print_info_log(
                     'The list of file that failed to convert has been written to "'
                     + self.failed_file_path + '".')
         return return_code
@@ -237,4 +259,4 @@ class AsyncDumpConverter:
             out_path = os.path.join(self.output_path, new_file_name)
             os.rename(target_file, out_path)
             os.chmod(out_path, stat.S_IRUSR)
-            self.convert_tool.utils.print_info_log("Rename file " + target_file + " to " + out_path)
+            self.convert_tool.log.print_info_log("Rename file " + target_file + " to " + out_path)
