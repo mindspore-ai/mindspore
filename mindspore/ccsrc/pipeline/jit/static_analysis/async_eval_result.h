@@ -28,6 +28,7 @@
 #include <functional>
 #include <list>
 #include <fstream>
+#include <chrono>
 
 #include "pipeline/jit/static_analysis/static_analysis.h"
 
@@ -38,82 +39,87 @@ class AsyncAbstract;
 using AsyncAbstractPtr = std::shared_ptr<AsyncAbstract>;
 class AnalysisSchedule {
  public:
-  ~AnalysisSchedule() = default;
+  ~AnalysisSchedule() { Stop(); }
   AnalysisSchedule(const AnalysisSchedule &) = delete;
   AnalysisSchedule &operator=(const AnalysisSchedule &) = delete;
   static AnalysisSchedule &GetInstance() { return instance_; }
   static void SetThreadID(const std::string &caller);
   static std::string &GetThreadID();
   void HandleException(const std::exception &ex);
-  std::string GetExtendException() { return exceptionStream_.str(); }
+  void Stop() { notExit_ = false; }
   void Wait();
 
   void Reset() {
-    activeThreadCount_ = 1;
-    threadNum_ = 0;
-    exceptionStream_.clear();
-  }
-
-  void SetNextRunnable() {
-    std::lock_guard<std::mutex> lock(lock_);
-    SetNextRunnableImpl();
-  }
-
-  void Check() {
-    MS_LOG(DEBUG) << "The active thread count: " << activeThreadCount_;
-    if (activeThreadCount_ == 0) {
-      SetNextRunnableImpl();
-    } else if (activeThreadCount_ < 0) {
-      MS_LOG(ERROR) << "There is something wrong. active thread count: " << activeThreadCount_;
-    }
+    active_thread_count_.store(1);
+    infer_thread_count_.store(0);
   }
 
   void EnterWaiting() {
-    std::lock_guard<std::mutex> lock(lock_);
-    --activeThreadCount_;
-    MS_LOG(DEBUG) << this << " The active thread count: " << activeThreadCount_;
-    Check();
+    {
+      std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
+      active_thread_count_.fetch_sub(1);
+      MS_LOG(DEBUG) << "The active thread count: " << active_thread_count_;
+    }
+    activate_thread_cv_.notify_one();
   }
 
   void LeaveWaiting() {
-    std::lock_guard<std::mutex> lock(lock_);
-    ++activeThreadCount_;
-    MS_LOG(DEBUG) << this << " The active thread count: " << activeThreadCount_;
+    {
+      std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
+      active_thread_count_.fetch_add(1);
+      MS_LOG(DEBUG) << "The active thread count: " << active_thread_count_;
+    }
+    activate_thread_cv_.notify_one();
   }
 
   void Add2Schedule(const AsyncAbstractPtr &asyncAbastract) {
-    std::lock_guard<std::mutex> lock(lock_);
-    asyncAbstractList_.push_back(asyncAbastract);
+    std::lock_guard<std::mutex> lock(activate_thread_lock_);
+    MS_LOG(DEBUG) << " push async:" << asyncAbastract.get() << " schedule list size:" << scheduleList_.size();
+    scheduleList_.push_back(asyncAbastract);
   }
+
   void IncreaseThreadCount() {
-    std::lock_guard<std::mutex> lock(lock_);
-    ++threadNum_;
-    ++activeThreadCount_;
-    MS_LOG(DEBUG) << "The active thread count: " << activeThreadCount_;
+    infer_thread_count_.fetch_add(1);
+    {
+      std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
+      active_thread_count_.fetch_add(1);
+      MS_LOG(DEBUG) << "The active thread count: " << active_thread_count_;
+    }
+    activate_thread_cv_.notify_one();
   }
+
   void DecreaseThreadCount() {
     {
-      std::lock_guard<std::mutex> threadNumLock(lock_);
-      --threadNum_;
+      std::lock_guard<std::mutex> threadNumLock(infer_thread_lock_);
+      infer_thread_count_.fetch_sub(1);
     }
-    condition_var_.notify_one();
+    infer_thread_cv_.notify_one();
 
-    std::lock_guard<std::mutex> activeLock(lock_);
-    --activeThreadCount_;
-    MS_LOG(DEBUG) << "The active thread count: " << activeThreadCount_;
-    Check();
+    {
+      std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
+      active_thread_count_.fetch_sub(1);
+      MS_LOG(DEBUG) << "The active thread count: " << active_thread_count_;
+    }
+    activate_thread_cv_.notify_one();
   }
 
  private:
-  void SetNextRunnableImpl();
-  AnalysisSchedule() = default;
+  void Schedule();
+  bool SetNextReady();
+  void Start() {
+    auto thread = std::thread([this] { Schedule(); });
+    thread.detach();
+  }
+  AnalysisSchedule() { Start(); }
   static AnalysisSchedule instance_;
-  int activeThreadCount_{1};
-  int threadNum_{0};
-  std::mutex lock_;
-  std::condition_variable condition_var_;
-  std::list<AsyncAbstractPtr> asyncAbstractList_;
-  std::ostringstream exceptionStream_;
+  std::atomic<int> active_thread_count_{1};
+  std::atomic<int> infer_thread_count_{0};
+  bool notExit_{true};
+  std::mutex infer_thread_lock_;
+  std::condition_variable infer_thread_cv_;
+  std::mutex activate_thread_lock_;
+  std::condition_variable activate_thread_cv_;
+  std::list<AsyncAbstractPtr> scheduleList_;
 };
 
 template <typename KeyType, typename ValueType, typename CacheType>
@@ -216,57 +222,79 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
   ~AsyncAbstract() = default;
   // Wait
   AbstractBasePtr GetResult() {
-    StaticAnalysisException::Instance().CheckException();
+    MS_LOG(DEBUG) << this << " begin GetResult.";
+    std::unique_lock<std::mutex> lock(lock_);
     while (true) {
-      ++count_;
-      // The active thread count should be dropped if it can't run. It will be added when it can run.
-      MS_LOG(DEBUG) << this << " continue runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
-      bool hasEnterWaiting = false;
-      if (!runnable_) {
+      // Enter waiting ,and let the other thread to run
+      MS_LOG(DEBUG) << this << " ready: " << ready_ << " result: " << (result_ ? result_.get() : 0);
+      if (!ready_) {
         AnalysisSchedule::GetInstance().EnterWaiting();
-        hasEnterWaiting = true;
       }
-      MS_LOG(DEBUG) << this << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
-      {
-        std::unique_lock<std::mutex> lock(lock_);
-        condition_var_.wait(lock, [this] { return runnable_; });
-      }
-      if (hasEnterWaiting) {
-        AnalysisSchedule::GetInstance().LeaveWaiting();
-      }
-      MS_LOG(DEBUG) << this << " continue runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
-
+      condition_var_.wait(lock, [this] { return ready_; });
+      ClearReady();  // Clear nomal ready flag
+      MS_LOG(DEBUG) << this << " can go: " << ready_ << " result: " << (result_ ? result_.get() : 0);
+      HandleEndLessLoopException();
       StaticAnalysisException::Instance().CheckException();
-      SetUnrunnable();
       if (result_ != nullptr) {
-        MS_LOG(DEBUG) << this << " Return  result: " << (result_ ? result_.get() : 0);
+        MS_LOG(DEBUG) << this << " Success to GetResult. Return  result: " << (result_ ? result_.get() : 0);
         return result_;
       }
-      // Push to list
+      // wait for result until it is not null.
+      ++count_;
       AnalysisSchedule::GetInstance().Add2Schedule(shared_from_this());
-      // Notify the next asyncAbastract to run.
-      AnalysisSchedule::GetInstance().SetNextRunnable();
-      MS_LOG(DEBUG) << this << " SetNextRunnable "
-                    << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
+      MS_LOG(DEBUG) << this << " ready: " << ready_ << " result: " << (result_ ? result_.get() : 0)
+                    << " Enter schedule list to wait.";
     }
   }
 
-  void SetRunnable() {
-    MS_LOG(DEBUG) << this << " Runnable.";
+  void SetReady() {
+    MS_LOG(DEBUG) << this << " want to set ready.";
     {
       std::lock_guard<std::mutex> lock(lock_);
-      runnable_ = true;
+      ready_ = ready_ | 1;  // Set the first bit = 1
+      MS_LOG(DEBUG) << this << " ready: " << ready_ << " result: " << (result_ ? result_.get() : 0);
     }
     condition_var_.notify_one();
   }
-  void SetUnrunnable() {
-    std::lock_guard<std::mutex> lock(lock_);
-    runnable_ = false;
+
+  void SetException() {
+    MS_LOG(DEBUG) << this << " want to set ready.";
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      ready_ = ready_ | 2;  // Set the second bit = 1
+      MS_LOG(DEBUG) << this << " ready: " << ready_ << " result: " << (result_ ? result_.get() : 0);
+    }
+    condition_var_.notify_one();
+  }
+
+  void SetEndLessLoopException() {
+    MS_LOG(DEBUG) << this << " want to set ready.";
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      ready_ = ready_ | 4;  // Set the third bit = 1
+      MS_LOG(DEBUG) << this << " ready: " << ready_ << " result: " << (result_ ? result_.get() : 0);
+    }
+    condition_var_.notify_one();
+  }
+
+  void ClearReady() {
+    ready_ = ready_ & 6;  // Set first bit = 0
+    MS_LOG(DEBUG) << this << " ready: " << ready_ << " result: " << (result_ ? result_.get() : 0);
+  }
+
+  void HandleEndLessLoopException() {
+    // Get third bit
+    if (ready_ & 4) {
+      ready_ = ready_ & 3;  // Set the third bit = 0 , Only trigger once.
+      MS_LOG(EXCEPTION) << "Enter endless loop. There isn't any branch that can been evaluated. Please check the code.";
+    }
   }
 
   int count() const { return count_; }
-
-  bool HasResult() { return result_ != nullptr; }
+  bool HasResult() {
+    std::lock_guard<std::mutex> lock(lock_);
+    return result_ != nullptr;
+  }
   // Not wait
   AbstractBasePtr TryGetResult() {
     std::lock_guard<std::mutex> lock(lock_);
@@ -287,7 +315,7 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
  private:
   std::mutex lock_;
   std::condition_variable condition_var_;
-  bool runnable_{false};
+  int ready_{0};  // 0: not ready, bit 1 = 1: ready, bit 2 = 1: exception, bit 3 = 1: endless loop
   int count_{0};
   AbstractBasePtr result_{nullptr};
 };

@@ -1438,6 +1438,7 @@ void ClearResAtexit() {
   parse::python_adapter::ResetPythonScope();
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();
   abstract::AnalysisContext::ClearContext();
+  abstract::AnalysisSchedule::GetInstance().Stop();
 #ifdef ENABLE_DEBUGGER
   Debugger::GetInstance()->Reset();
 #endif
