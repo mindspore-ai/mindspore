@@ -211,7 +211,7 @@ GraphDebugInfoPtr FuncGraph::debug_info() {
 
 const AnfNodeSet &FuncGraph::nodes() const { return nodes_; }
 
-void FuncGraph::CopyNodes(const FuncGraphPtr &source) { nodes_ = source->nodes(); }
+void FuncGraph::CopyNodes(const FuncGraphPtr &source) { nodes_.update(source->nodes()); }
 
 void FuncGraph::ClearNodes() { nodes_.clear(); }
 

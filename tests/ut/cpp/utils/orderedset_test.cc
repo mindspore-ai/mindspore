@@ -19,6 +19,7 @@
 #include <algorithm>
 
 #include "utils/ordered_set.h"
+#include "utils/ordered_map.h"
 #include "common/common_test.h"
 
 using std::cout;
@@ -88,7 +89,7 @@ TEST_F(TestOrderedSet, test_add_remove_first) {
   a.add(3);
   a.erase(1);
   auto first = a.pop();
-  // 1 removed, 2 3 followd, 2 should be the poped one, remaining size = 1
+  // 1 removed, 2 3 followed, 2 should be the popped one, remaining size = 1
   ASSERT_EQ(first, 2);
   ASSERT_EQ(a.size(), 1);
 }
@@ -145,6 +146,33 @@ TEST_F(TestOrderedSet, test_contains) {
   res.add(e1);
   ASSERT_TRUE(res.contains(e1));
   ASSERT_TRUE(!res.contains(e2));
+}
+
+TEST_F(TestOrderedSet, test_assign) {
+  OrderedSet<int> s;
+  s.add(10);
+  ASSERT_EQ(s.size(), 1);
+  OrderedSet<int> s1;
+  s1.add(20);
+  s1.add(30);
+  ASSERT_EQ(s1.size(), 2);
+  s = s1;
+  ASSERT_EQ(s.size(), 2);
+  ASSERT_EQ(s, s1);
+}
+
+TEST_F(TestOrderedSet, test_map_assign) {
+  OrderedMap<int, int> m;
+  m[10] = 10;
+  ASSERT_EQ(m.size(), 1);
+  OrderedMap<int, int> m1;
+  m1[20] = 20;
+  m1[30] = 30;
+  ASSERT_EQ(m1.size(), 2);
+  m = m1;
+  ASSERT_EQ(m.size(), 2);
+  ASSERT_EQ(m[20], m1[20]);
+  ASSERT_EQ(m[30], m1[30]);
 }
 
 }  // namespace mindspore

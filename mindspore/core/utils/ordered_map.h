@@ -78,9 +78,11 @@ class OrderedMap {
     }
   }
 
-  OrderedMap &operator=(const OrderedMap &os) {
-    if (this != &os) {
-      for (auto &item : os.sequential_data_) {
+  OrderedMap &operator=(const OrderedMap &other) {
+    if (this != &other) {
+      clear();
+      reserve(other.size());
+      for (auto &item : other.sequential_data_) {
         (void)insert(pair_type(item.first, item.second));
       }
     }
@@ -88,9 +90,7 @@ class OrderedMap {
   }
 
   void clear() {
-    if (!map_data_.empty()) {
-      map_data_.clear();
-    }
+    map_data_.clear();
     sequential_data_.clear();
   }
 
@@ -99,10 +99,7 @@ class OrderedMap {
     std::swap(sequential_data_, rhs.sequential_data_);
   }
 
-  void reserve(size_type num_entries) {
-    map_data_.reserve(num_entries);
-    sequential_data_.reserve(num_entries);
-  }
+  void reserve(size_type num_entries) { map_data_.reserve(num_entries); }
 
   std::pair<iterator, bool> add(const key_t &key) {
     iterator empty_itr;
