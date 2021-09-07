@@ -42,19 +42,9 @@ class TestMinddataProfilingAnalyzer():
         self._SUMMARY_CSV_FILE = "./minddata_pipeline_summary_7.csv"
         self._ANALYZE_FILE_PATH = "./"
 
-        # These are the minimum subset of expected keys (in alphabetical order) in the MindData Analyzer summary output
-
         # This is the set of keys for success case
         self._EXPECTED_SUMMARY_KEYS_SUCCESS = \
             ['avg_cpu_pct', 'avg_cpu_pct_per_worker', 'children_ids', 'num_workers', 'op_ids', 'op_names',
-             'parent_id', 'per_batch_time', 'per_pipeline_time', 'per_push_queue_time', 'pipeline_ops',
-             'queue_average_size', 'queue_empty_freq_pct', 'queue_utilization_pct']
-
-        # This is the set of keys for the case which omits the keys for composite computation of more than one raw file.
-        # This is used for the invalid user case in which the number of ops in the pipeline file does not match
-        # the number of ops in the CPU utilization file.
-        self._EXPECTED_SUMMARY_KEYS_OMIT_COMPOSITE = \
-            ['avg_cpu_pct', 'children_ids', 'num_workers', 'op_ids', 'op_names',
              'parent_id', 'per_batch_time', 'per_pipeline_time', 'per_push_queue_time', 'pipeline_ops',
              'queue_average_size', 'queue_empty_freq_pct', 'queue_utilization_pct']
 
@@ -269,13 +259,10 @@ class TestMinddataProfilingAnalyzer():
         md_summary_dict = md_analyzer.analyze()
 
         # Verify MindData Profiling Analyze Summary output
-        # Use self._EXPECTED_SUMMARY_KEYS_OMIT_COMPOSITE, since composite keys are not produced, since there is a mismatch
-        # between the 4 ops in the stale pipeline file versus the 3 ops in the recreated cpu util file
-        self.verify_md_summary(md_summary_dict, self._EXPECTED_SUMMARY_KEYS_OMIT_COMPOSITE)
+        self.verify_md_summary(md_summary_dict, self._EXPECTED_SUMMARY_KEYS_SUCCESS)
 
-        # Confirm pipeline data wrongly contains info for 4 ops
-        assert md_summary_dict["pipeline_ops"] == ["EpochCtrl(id=0)", "Batch(id=1)", "Map(id=2)",
-                                                   "Generator(id=3)"]
+        # Confirm pipeline data contains info for 3 ops
+        assert md_summary_dict["pipeline_ops"] == ["Batch(id=0)", "Map(id=1)", "Generator(id=2)"]
 
-        # Verify CPU util data contains info for only 3 ops
+        # Verify CPU util data contains info for 3 ops
         assert len(md_summary_dict["avg_cpu_pct"]) == 3

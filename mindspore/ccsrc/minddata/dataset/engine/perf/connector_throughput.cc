@@ -125,11 +125,15 @@ Status ConnectorThroughput::SaveToFile() {
   // Discard the content of the file when opening.
   std::ofstream os(file_path_, std::ios::trunc);
   os << output;
+  os.close();
   return Status::OK();
 }
 
 Status ConnectorThroughput::Init(const std::string &dir_path, const std::string &device_id) {
   file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + device_id + ".json")).toString();
+  Path path = Path(file_path_);
+  // Remove the file if it exists (from prior profiling usage)
+  RETURN_IF_NOT_OK(path.Remove());
   return Status::OK();
 }
 
