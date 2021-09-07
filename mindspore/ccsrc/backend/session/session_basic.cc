@@ -1251,8 +1251,9 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
         MS_LOG(EXCEPTION) << "Shapes of input and parameter are different, input index: " << index
                           << ", parameter: " << param->fullname_with_scope();
       }
+      bool is_dynamic = param->Shape()->IsDynamic();
       for (size_t i = 0; i < input_shape.size(); i += 1) {
-        if (input_shape[i] < 0 || static_cast<size_t>(input_shape[i]) != param_shape[i]) {
+        if (input_shape[i] < 0 || (static_cast<size_t>(input_shape[i]) != param_shape[i] && !is_dynamic)) {
           MS_LOG(EXCEPTION) << "Shapes of input and parameter are different, input index: " << index
                             << ", parameter: " << param->fullname_with_scope();
         }
