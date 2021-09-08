@@ -32,8 +32,11 @@ class ELBO(nn.Cell):
     def construct(self, *inputs, **kwargs):
         if len(inputs) >= 2:
             x, y = inputs[0], inputs[1]
-        else:
+        elif len(inputs) >= 1:
             x = inputs[0]
+            y = None
+        else:
+            x = None
             y = None
 
         z, log_prob_z = self.variational(x, None, y)

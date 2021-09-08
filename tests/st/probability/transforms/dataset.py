@@ -20,7 +20,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as CV
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore.dataset.vision import Inter
-from mindspore.common import dtype as mstype
+from mindspore import dtype as mstype
 
 
 def create_dataset(data_path, batch_size=32, repeat_size=1,

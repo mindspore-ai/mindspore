@@ -20,7 +20,7 @@ from mindspore.common.initializer import TruncatedNormal
 import mindspore.nn as nn
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.probability import transforms, bnn_layers
-from mindspore.ops import operations as P
+import mindspore.ops as ops
 from mindspore import context
 from dataset import create_dataset
 
@@ -72,7 +72,7 @@ class LeNet5(nn.Cell):
         self.relu = nn.ReLU()
         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
         self.flatten = nn.Flatten()
-        self.reshape = P.Reshape()
+        self.reshape = ops.Reshape()
 
     def construct(self, x):
         x = self.conv1(x)
@@ -98,7 +98,7 @@ def train_model(train_net, net, dataset):
         label = Tensor(data['label'].astype(np.int32))
         loss = train_net(train_x, label)
         output = net(train_x)
-        log_output = P.LogSoftmax(axis=1)(output)
+        log_output = ops.LogSoftmax(axis=1)(output)
         acc = np.mean(log_output.asnumpy().argmax(axis=1) == label.asnumpy())
         accs.append(acc)
         loss_sum += loss.asnumpy()
@@ -114,7 +114,7 @@ def validate_model(net, dataset):
         train_x = Tensor(data['image'].astype(np.float32))
         label = Tensor(data['label'].astype(np.int32))
         output = net(train_x)
-        log_output = P.LogSoftmax(axis=1)(output)
+        log_output = ops.LogSoftmax(axis=1)(output)
         acc = np.mean(log_output.asnumpy().argmax(axis=1) == label.asnumpy())
         accs.append(acc)
 

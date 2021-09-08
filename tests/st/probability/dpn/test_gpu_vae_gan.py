@@ -21,8 +21,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as CV
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.ops import operations as P
-from mindspore.ops import composite as C
+import mindspore.ops as ops
 from mindspore.nn.probability.dpn import VAE
 from mindspore.nn.probability.infer import ELBO, SVI
 
@@ -51,7 +50,7 @@ class Decoder(nn.Cell):
         self.fc1 = nn.Dense(400, 1024)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
-        self.reshape = P.Reshape()
+        self.reshape = ops.Reshape()
 
     def construct(self, z):
         z = self.fc1(z)
@@ -93,9 +92,9 @@ class VaeGan(nn.Cell):
         self.D = Discriminator()
         self.dense = nn.Dense(20, 400)
         self.vae = VAE(self.E, self.G, 400, 20)
-        self.shape = P.Shape()
-        self.normal = C.normal
-        self.to_tensor = P.ScalarToArray()
+        self.shape = ops.Shape()
+        self.normal = ops.normal
+        self.to_tensor = ops.ScalarToArray()
 
     def construct(self, x):
         recon_x, x, mu, std = self.vae(x)
@@ -111,7 +110,7 @@ class VaeGan(nn.Cell):
 class VaeGanLoss(ELBO):
     def __init__(self):
         super(VaeGanLoss, self).__init__()
-        self.zeros = P.ZerosLike()
+        self.zeros = ops.ZerosLike()
         self.mse = nn.MSELoss(reduction='sum')
 
     def construct(self, data, label):
