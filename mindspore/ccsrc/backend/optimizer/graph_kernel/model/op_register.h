@@ -79,6 +79,7 @@ class OpRegistry {
     Register("CImag", OP_CREATOR(CImagOp));
     Register("Complex", OP_CREATOR(ComplexOp));
     Register("Opaque", OP_CREATOR(OpaqueOp));
+    Register("StandardNormal", OP_CREATOR(StandardNormalOp));
   }
   ~OpRegistry() = default;
   std::unordered_map<std::string, std::function<PrimOpPtr(const std::string &, const std::string &)>> creators;
