@@ -31,6 +31,7 @@ def get_args():
     # parameters
     parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU'),
                         help='device where the code will be implemented (default: Ascend)')
+    parser.add_argument('--run_distribute', type=int, default=0, help='distributed training, default is 0.')
     parser.add_argument('--device_num', type=int, default=1, help='device num, default is 1.')
     parser.add_argument('--device_id', type=int, default=6, help='device id, default is 0.')
     parser.add_argument('--save_graphs', type=ast.literal_eval, default=False,
@@ -64,7 +65,7 @@ def get_args():
                         help='during training, the file path of stored fake img.')
     parser.add_argument('--loss_show_dir', type=str, default='./results/loss_show',
                         help='during training, the file path of stored loss img.')
-    parser.add_argument('--ckpt_dir', type=str, default='./results/ckpt',
+    parser.add_argument('--ckpt_dir', type=str, default='./results/ckpt/',
                         help='during training, the file path of stored CKPT.')
     parser.add_argument('--ckpt', type=str, default=None, help='during validating, the file path of the CKPT used.')
     parser.add_argument('--predict_dir', type=str, default='./results/predict/',
