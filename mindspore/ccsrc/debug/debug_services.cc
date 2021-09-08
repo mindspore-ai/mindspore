@@ -390,9 +390,9 @@ void DebugServices::CheckWatchpointsForTensor(
     std::string key_name_in_cache = tensor_name + ":" + std::to_string(tensor->GetDeviceId()) + ":" +
                                     std::to_string(tensor->GetRootGraphId()) + ":" +
                                     std::to_string(tensor->GetIsOutput()) + ":" + std::to_string(tensor->GetSlot());
-    ReleaseInUsedStatus(key_name_in_cache);
+    AppendToCacheEvictQueue(key_name_in_cache);
     if (previous_tensor_ptr != nullptr) {
-      ReleaseInUsedStatus(key_name_in_cache + ":prev");
+      AppendToCacheEvictQueue(key_name_in_cache + ":prev");
     }
     // in offline mode remove the need for the data
     tensor.reset();
@@ -1500,9 +1500,9 @@ void DebugServices::MoveTensorCurrentToPrev(const std::string &tensor_name) {
   tensor_loader_->MoveTensorCurrentToPrev(tensor_name);
 }
 
-void DebugServices::ReleaseInUsedStatus(const std::string &tensor_name) {
+void DebugServices::AppendToCacheEvictQueue(const std::string &tensor_name) {
   if (tensor_loader_->EnableMemoryControl()) {
-    tensor_loader_->ReleaseInUsedStatus(tensor_name);
+    tensor_loader_->AppendToCacheEvictQueue(tensor_name);
   }
 }
 

@@ -410,7 +410,7 @@ class DebugServices {
 
   void MoveTensorCurrentToPrev(const std::string &tensor_name);
 
-  void ReleaseInUsedStatus(const std::string &tensor_name);
+  void AppendToCacheEvictQueue(const std::string &tensor_name);
 
   void SetNetName(std::string net_name);
 

@@ -96,9 +96,6 @@ class TensorLoader {
         tensor->GetIteration() == tensor_list_map_[key_name]->GetIteration() - 1) {
       key_name += ":prev";
     }
-    lock_.unlock();
-    AppendToCacheRecord(key_name, tensor->GetByteSize());
-    lock_.lock();
     auto iter = tensor_list_map_.find(key_name);
     if (iter != tensor_list_map_.end()) {
       iter->second->DeleteDataPtr();
@@ -159,20 +156,11 @@ class TensorLoader {
 
   bool EnableMemoryControl() { return mem_total_ > 0; }
 
-  void ReleaseInUsedStatus(const std::string &tensor_name) {
-    if (cache_status_map_.find(tensor_name) != cache_status_map_.end()) {
-      cache_status_map_[tensor_name] = CacheStatus::KNotInUsed;
-    }
-  }
-
-  void AppendToCacheRecord(const std::string &tensor_name, const uint64_t data_size) {
+  void AppendToCacheEvictQueue(const std::string &tensor_name) {
     std::lock_guard<std::mutex> lk(mem_lock_);
-    // Set the current tensor to in-use because it's ready to be read in.
-    cache_status_map_[tensor_name] = CacheStatus::KInUsed;
-    // Push the current target tensor into cache record.
-    auto find_key = std::find(tensor_queue_.begin(), tensor_queue_.end(), tensor_name);
-    if (find_key == tensor_queue_.end()) {
-      tensor_queue_.push_back(tensor_name);
+    if (std::find(cache_evict_queue_.begin(), cache_evict_queue_.end(), tensor_name) == cache_evict_queue_.end()) {
+      cache_evict_queue_.push_back(tensor_name);
+      evict_cond.notify_one();
     }
   }
 
@@ -185,55 +173,30 @@ class TensorLoader {
       return false;
     }
     // 2. Check if there's is enough cache space available for current tensor. If not, try evict cache.
-    mem_lock_.lock();
     bool ret = CheckAndEvictTensorCache(data_size);
-    if (ret) {
-      // Reserve space for the current target tensor.
-      mem_usage_ = std::min(mem_total_, mem_usage_ + data_size);
-    }
-    mem_lock_.unlock();
     return ret;
   }
 
   bool CheckAndEvictTensorCache(const uint64_t data_size) {
-    if (mem_total_ >= mem_usage_ && data_size <= mem_total_ - mem_usage_) {
-      return true;
-    }
-    // Calculate the total size of all the not-in-used tensor in the cache.
-    uint64_t candidates_size = 0;
-    std::vector<std::pair<std::string, uint32_t>> candidate_tensors;
-    for (uint32_t i = 0; i < tensor_queue_.size(); i++) {
-      if (candidates_size >= data_size) {
-        break;
-      }
-      std::string tensor_name = tensor_queue_[i];
-      auto tensor_status = cache_status_map_[tensor_name];
-      if (tensor_status == CacheStatus::KInUsed) {
-        continue;
-      }
+    std::string candidate_name;
+    uint64_t candidates_size;
+    std::unique_lock<std::mutex> lk(mem_lock_);
+    while (data_size > mem_total_ - mem_usage_) {
+      // wait until there is any not-in-use candidate to be evicted from cache
+      evict_cond.wait(lk, [&] { return !cache_evict_queue_.empty(); });
+      candidate_name = cache_evict_queue_.front();
+      candidates_size = tensor_list_map_[candidate_name]->GetByteSize();
+      // evict candidate tensor
       lock_.lock();
-      candidates_size += tensor_list_map_[tensor_name]->GetByteSize();
+      tensor_list_map_[candidate_name]->DeleteDataPtr();
+      tensor_list_map_.erase(candidate_name);
       lock_.unlock();
-      candidate_tensors.push_back(std::make_pair(tensor_name, i));
-    }
-    // Evict the candidate tensors if they can make room for the current target tensor.
-    if (candidates_size < data_size) {
-      return false;
-    } else {
-      uint32_t cnt = 0;
-      for (auto candidate_tensor : candidate_tensors) {
-        auto key_to_evict = candidate_tensor.first;
-        auto idx_to_evict = candidate_tensor.second;
-        lock_.lock();
-        tensor_list_map_[key_to_evict]->DeleteDataPtr();
-        tensor_list_map_.erase(key_to_evict);
-        lock_.unlock();
-        tensor_queue_.erase(tensor_queue_.begin() + idx_to_evict - cnt);
-        MS_LOG(INFO) << "Evict tensor: " << key_to_evict;
-        cnt++;
-      }
+      cache_evict_queue_.pop_front();
       mem_usage_ = std::max(uint64_t(0), mem_usage_ - candidates_size);
+      MS_LOG(INFO) << "Evict tensor: " << candidate_name;
     }
+    // Reserve space for the current target tensor.
+    mem_usage_ = std::min(mem_total_, mem_usage_ + data_size);
     return true;
   }
 
@@ -278,10 +241,8 @@ class TensorLoader {
   std::mutex mem_lock_;
   uint64_t mem_total_;
   uint64_t mem_usage_;
-  std::deque<std::string> tensor_queue_;
-  std::map<std::string, bool> cache_status_map_;
-
-  enum CacheStatus { KNotInUsed = 0, KInUsed = 1 };
+  std::deque<std::string> cache_evict_queue_;
+  std::condition_variable evict_cond;
 };
 #ifdef ONLINE_DBG_MODE
 }  // namespace mindspore

@@ -192,7 +192,7 @@ class DbgServices {
 
   ~DbgServices();
 
-  int32_t Initialize(std::string net_name, std::string dump_folder_path, bool is_sync_mode, uint32_t max_mem_usage);
+  int32_t Initialize(std::string net_name, std::string dump_folder_path, bool is_sync_mode, uint64_t max_mem_usage);
 
   int32_t AddWatchpoint(
     unsigned int id, unsigned int watch_condition,
