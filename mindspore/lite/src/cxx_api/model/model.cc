@@ -109,6 +109,12 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
   return impl_->Predict(inputs, outputs, before, after);
 }
 
+Status Model::Predict(const std::vector<char> &input, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
+                      const MSKernelCallBack &after) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kLiteNotSupport;
+}
+
 Model::Model() : impl_(nullptr) {}
 
 Model::~Model() {}

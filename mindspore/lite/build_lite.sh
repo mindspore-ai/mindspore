@@ -219,11 +219,17 @@ build_lite() {
           mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
         fi
 
-        if [[ "${local_lite_platform}" == "x86_64" && "${MSLITE_ENABLE_TESTCASES}" == "on" ]]; then
-          mkdir -pv ${BASEPATH}/mindspore/lite/test/do_test || true
-          cp ${BASEPATH}/output/tmp/mindspore-lite*/tools/converter/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
-          cp ${BASEPATH}/output/tmp/mindspore-lite*/runtime/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
-          cp ${BASEPATH}/output/tmp/mindspore-lite*/runtime/third_party/libjpeg-turbo/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+        if [[ "${local_lite_platform}" == "x86_64" ]]; then
+          if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]]; then
+            mkdir -pv ${BASEPATH}/mindspore/lite/test/do_test || true
+            if [[ ! "${MSLITE_ENABLE_CONVERTER}" || "${MSLITE_ENABLE_CONVERTER}"  == "ON" || "${MSLITE_ENABLE_CONVERTER}"  == "on" ]]; then
+              cp ${BASEPATH}/output/tmp/mindspore-lite*/tools/converter/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+            fi
+            cp ${BASEPATH}/output/tmp/mindspore-lite*/runtime/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+            if [[ ! "${MSLITE_ENABLE_TRAIN}" || "${MSLITE_ENABLE_TRAIN}"  == "ON" || "${MSLITE_ENABLE_TRAIN}"  == "on" ]]; then
+              cp ${BASEPATH}/output/tmp/mindspore-lite*/runtime/third_party/libjpeg-turbo/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+            fi
+          fi
         fi
 
         [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output/tmp/

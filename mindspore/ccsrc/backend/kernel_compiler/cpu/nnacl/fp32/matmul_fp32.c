@@ -15,8 +15,9 @@
  */
 
 #include "nnacl/fp32/matmul_fp32.h"
+#include "nnacl/fp32/pack_fp32.h"
 #ifdef ENABLE_SSE
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
 #include <immintrin.h>
 #else
 #include <x86intrin.h>
@@ -614,19 +615,22 @@ void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) 
 
 void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   int row16 = row / C16NUM * C16NUM;
-  int col_skip = col / C4NUM * C4NUM;
-  int skip_size = C4NUM;
+  int col8 = col / C8NUM * C8NUM;
   const float *src_r = src_ptr;
   float *dst_r = dst_ptr;
 
   int ri = 0;
   for (; ri < row16; ri += C16NUM) {
     int ci = 0;
-    for (; ci < col_skip; ci += skip_size) {
+    for (; ci < col8; ci += C8NUM) {
       const float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C16NUM;
+#ifdef ENABLE_AVX
+      Transpose8X8Fp32Avx(src_c, dst_c, col, C16NUM);
+      Transpose8X8Fp32Avx(src_c + C8NUM * col, dst_c + C8NUM, col, C16NUM);
+#endif
       for (int tr = 0; tr < C16NUM; tr++) {
-        for (int tc = 0; tc < C4NUM; tc++) {
+        for (int tc = 0; tc < C8NUM; tc++) {
           dst_c[tc * C16NUM + tr] = src_c[tr * col + tc];
         }
       }
