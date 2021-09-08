@@ -159,3 +159,6 @@ class FuncWrapper:
             result = ExceptionHandler(where="in map(or batch) worker and execute python function")
             result.reraise()
         return result
+
+    def to_json(self):
+        return self.transform.to_json()
