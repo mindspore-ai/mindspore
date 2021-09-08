@@ -1872,7 +1872,6 @@ OperatorPtr DfGraphConvertor::ConvertValueNode(const ValueNodePtr node) {
     MS_LOG(WARNING) << "set attr value for const failed";
   }
 
-#if (defined ENABLE_GE)
   auto const_op = std::static_pointer_cast<Constant>(op);
   if (const_op == nullptr) {
     MS_LOG(ERROR) << "Get Constant operator failed";
@@ -1881,7 +1880,6 @@ OperatorPtr DfGraphConvertor::ConvertValueNode(const ValueNodePtr node) {
   auto ge_tensor = const_op->get_attr_value();
   auto ge_desc = ge_tensor.GetTensorDesc();
   (void)const_op->update_output_desc_y(ge_desc);
-#endif
 
   op_cache_[node.get()] = op;
   return op_cache_[node.get()];

@@ -424,17 +424,11 @@ AbstractBasePtr InferImplLess(const AnalysisEnginePtr &, const PrimitivePtr &pri
   ShapeVector y_shape_max = y->shape()->max_shape().empty() ? y_shape : y->shape()->max_shape();
 
   auto out_shape = BroadcastShape(x_shape, y_shape);
-  if (out_shape.empty()) {
-    MS_LOG(EXCEPTION) << "Less op BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
-                      << args_spec_list[1]->ToString();
-  }
   auto out_shape_min = BroadcastShape(x_shape_min, y_shape_min);
   auto out_shape_max = BroadcastShape(x_shape_max, y_shape_max);
-
   auto output_type = std::make_shared<Bool>();
-  auto ret =
-    std::make_shared<AbstractTensor>(output_type, std::make_shared<Shape>(out_shape, out_shape_min, out_shape_max));
-  return ret;
+  return std::make_shared<AbstractTensor>(output_type,
+                                          std::make_shared<Shape>(out_shape, out_shape_min, out_shape_max));
 }
 }  // namespace abstract
 }  // namespace mindspore

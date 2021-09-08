@@ -53,7 +53,6 @@ struct DeviceResInfo {
 
 struct ResourceInfo {
   std::set<int> deviceIds;
-  std::string aclConfigPath;
   std::string singleOpFolderPath;
   std::unordered_map<int, DeviceResInfo> deviceResInfos;  // map <deviceId, deviceResourceInfo>
 };

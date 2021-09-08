@@ -21,6 +21,7 @@
 #include <map>
 #include <tuple>
 #include <memory>
+#include <optional>
 #include "include/api/types.h"
 #include "include/api/status.h"
 #include "include/api/context.h"
@@ -32,11 +33,11 @@ class AclModelOptions {
   ~AclModelOptions() = default;
   std::string GenAclOptionsKey() const;
   uint32_t GetDeviceID() const { return device_id_; }
-  std::string GetDumpCfgPath() const { return dump_cfg_path_; }
-  void RenameInput(const std::vector<std::string> &name);
+  void RenameInput(const std::vector<std::string> &);
 
   // return tuple<init_options, build_options>
   std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> GenAclOptions() const;
+  void SetFirstGraph(bool is_first_graph) { first_graph_flag_ = is_first_graph; }
 
  private:
   std::string output_node_;  // todo: at convert.cc::BuildGraph(), no atc options
@@ -55,7 +56,7 @@ class AclModelOptions {
   std::map<int, std::vector<int>> input_shape_map_;
   // other options
   uint32_t device_id_;
-  std::string dump_cfg_path_;
+  std::optional<bool> first_graph_flag_;
 };
 }  // namespace mindspore
 

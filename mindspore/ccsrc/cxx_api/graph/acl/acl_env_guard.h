@@ -23,10 +23,10 @@
 namespace mindspore {
 class __attribute__((visibility("default"))) AclEnvGuard {
  public:
-  explicit AclEnvGuard(std::string_view cfg_file);
+  explicit AclEnvGuard();
   ~AclEnvGuard();
   aclError GetErrno() const { return errno_; }
-  static std::shared_ptr<AclEnvGuard> GetAclEnv(std::string_view cfg_file);
+  static std::shared_ptr<AclEnvGuard> GetAclEnv();
 
  private:
   static std::shared_ptr<AclEnvGuard> global_acl_env_;

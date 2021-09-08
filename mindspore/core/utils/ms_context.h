@@ -51,6 +51,7 @@ const char kCPUDevice[] = "CPU";
 const char kGPUDevice[] = "GPU";
 const char kAscendDevice[] = "Ascend";
 const char kDavinciInferenceDevice[] = "AscendInference";
+const char kDavinciMultiGraphInferenceDevice[] = "AscendMultiGraphInference";
 const char kGpuInferenceDevice[] = "GpuInference";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";

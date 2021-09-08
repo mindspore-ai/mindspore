@@ -226,8 +226,9 @@ Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
 
   std::map<std::string, std::string> init_options;
   std::map<std::string, std::string> build_options;
-  if (options_ != nullptr) {
-    std::tie(init_options, build_options) = options_->GenAclOptions();
+  auto option = options_.lock();
+  if (option != nullptr) {
+    std::tie(init_options, build_options) = option->GenAclOptions();
   }
 
   return BuildAirModel(df_graph, init_options, build_options);

@@ -29,7 +29,6 @@ constexpr auto kModelOptionGPUTrtInferMode = "mindspore.option.gpu.trt_infer_mod
 constexpr auto kModelOptionGPUPrecisionMode = "mindspore.option.gpu.precision_mode";
 constexpr auto kModelOptionAscend910DeviceID = kModelOptionDeviceID;
 constexpr auto kModelOptionAscend310DeviceID = kModelOptionDeviceID;
-constexpr auto kModelOptionAscend310DumpCfgPath = "mindspore.option.ascend310.dump_config_file_path";
 constexpr auto kModelOptionAscend310InsertOpCfgPath = "mindspore.option.ascend310.insert_op_config_file_path";
 constexpr auto kModelOptionAscend310InputFormat = "mindspore.option.ascend310.input_format";
 constexpr auto kModelOptionAscend310InputShapeMap = "mindspore.option.ascend310.input_shape_map";
@@ -191,16 +190,6 @@ void Ascend310DeviceInfo::SetDeviceID(uint32_t device_id) {
 uint32_t Ascend310DeviceInfo::GetDeviceID() const {
   MS_EXCEPTION_IF_NULL(data_);
   return GetValue<uint32_t>(data_, kModelOptionAscend310DeviceID);
-}
-
-void Ascend310DeviceInfo::SetDumpConfigPath(const std::vector<char> &cfg_path) {
-  MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310DumpCfgPath] = CharToString(cfg_path);
-}
-std::vector<char> Ascend310DeviceInfo::GetDumpConfigPathChar() const {
-  MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DumpCfgPath);
-  return StringToChar(ref);
 }
 
 void Ascend310DeviceInfo::SetInsertOpConfigPath(const std::vector<char> &cfg_path) {

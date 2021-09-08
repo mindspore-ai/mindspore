@@ -317,11 +317,6 @@ size_t OpAdapterImpl::GetCustomOpOutputSize(const CusOperatorPtr &cus_op) {
 
 std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateOutputDesc(const abstract::ShapePtr &shape_ptr, const TypePtr &type,
                                                               const std::string &format) {
-  if (shape_ptr == nullptr) {
-    MS_LOG(ERROR) << "Shape ptr is nullptr";
-    return nullptr;
-  }
-
   if (type == nullptr) {
     MS_LOG(ERROR) << "Type ptr is nullptr";
     return nullptr;
@@ -331,8 +326,8 @@ std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateOutputDesc(const abstract::Sh
   if (kObjectTypeTensorType == me_type) {
     me_type = dyn_cast<TensorType>(type)->element()->type_id();
   }
-  auto desc = TransformUtil::GetGeTensorDesc(shape_ptr->shape(), me_type, format);
-  return desc;
+
+  return TransformUtil::GetGeTensorDesc((shape_ptr == nullptr) ? ShapeVector{} : shape_ptr->shape(), me_type, format);
 }
 
 Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp,
@@ -472,7 +467,7 @@ void OpAdapterImpl::updateOutputDesc(const OperatorPtr &op, const abstract::Base
     return;
   }
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Op name is " << op->GetName();
+  MS_LOG(INFO) << "Op name is " << op->GetName() << " anf is " << node->DebugString();
 
   auto normal_shape_ptr = dyn_cast<abstract::Shape>(shp);
   auto no_shape_ptr = dyn_cast<abstract::NoShape>(shp);

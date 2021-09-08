@@ -36,7 +36,6 @@ constexpr auto kModelOptionProvider = "mindspore.option.provider";
 constexpr auto kModelOptionProviderDevice = "mindspore.option.provider.device";
 constexpr auto kModelOptionDeviceID = "mindspore.option.device_id";
 constexpr auto kModelOptionAscend310DeviceID = kModelOptionDeviceID;
-constexpr auto kModelOptionAscend310DumpCfgPath = "mindspore.option.ascend310.dump_config_file_path";
 constexpr auto kModelOptionAscend310InsertOpCfgPath = "mindspore.option.ascend310.insert_op_config_file_path";
 constexpr auto kModelOptionAscend310InputFormat = "mindspore.option.ascend310.input_format";
 constexpr auto kModelOptionAscend310InputShapeMap = "mindspore.option.ascend310.input_shape_map";
@@ -328,23 +327,6 @@ uint32_t Ascend310DeviceInfo::GetDeviceID() const {
     return 0;
   }
   return GetValue<uint32_t>(data_, kModelOptionAscend310DeviceID);
-}
-
-void Ascend310DeviceInfo::SetDumpConfigPath(const std::vector<char> &cfg_path) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->params[kModelOptionAscend310DumpCfgPath] = CharToString(cfg_path);
-}
-
-std::vector<char> Ascend310DeviceInfo::GetDumpConfigPathChar() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return std::vector<char>();
-  }
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DumpCfgPath);
-  return StringToChar(ref);
 }
 
 void Ascend310DeviceInfo::SetInsertOpConfigPath(const std::vector<char> &cfg_path) {

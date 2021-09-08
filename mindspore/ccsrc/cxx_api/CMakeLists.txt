@@ -32,6 +32,7 @@ if(ENABLE_D OR ENABLE_ACL)
 
     if(NOT ENABLE_D)
         list(APPEND API_ACL_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
+        list(APPEND API_ACL_SRC $<TARGET_OBJECTS:_mindspore_vm_obj>)
     endif()
 endif()
 
