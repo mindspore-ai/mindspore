@@ -196,9 +196,15 @@ std::shared_ptr<DatasetCache> toDatasetCache(std::shared_ptr<CacheClient> cc) {
 }
 
 ShuffleMode toShuffleMode(const int32_t shuffle) {
-  if (shuffle == 0) return ShuffleMode::kFalse;
-  if (shuffle == 1) return ShuffleMode::kFiles;
-  if (shuffle == 2) return ShuffleMode::kGlobal;
+  if (shuffle == 0) {
+    return ShuffleMode::kFalse;
+  }
+  if (shuffle == 1) {
+    return ShuffleMode::kFiles;
+  }
+  if (shuffle == 2) {
+    return ShuffleMode::kGlobal;
+  }
   return ShuffleMode();
 }
 

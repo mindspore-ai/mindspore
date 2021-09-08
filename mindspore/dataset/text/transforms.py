@@ -248,7 +248,7 @@ class JiebaTokenizer(TextTensorOperation):
 
     def __check_path__(self, model_path):
         """check model path"""
-        if not os.path.exists(model_path):
+        if not os.path.exists(os.path.realpath(model_path)):
             raise ValueError(
                 " jieba mode file {} is not exist.".format(model_path))
 

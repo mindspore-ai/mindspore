@@ -42,7 +42,7 @@ Status DatasetIteratorTracing::Record(const int32_t type, const int32_t extra_in
 }
 
 Status DatasetIteratorTracing::Init(const std::string &dir_path, const std::string &device_id) {
-  file_path_ = (Path(dir_path) / Path("dataset_iterator_profiling_" + device_id + ".txt")).toString();
+  file_path_ = (Path(dir_path) / Path("dataset_iterator_profiling_" + device_id + ".txt")).ToString();
   return Status::OK();
 }
 

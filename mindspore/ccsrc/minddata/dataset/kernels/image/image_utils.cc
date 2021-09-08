@@ -87,7 +87,13 @@ Status GetConvertShape(ConvertMode convert_mode, const std::shared_ptr<CVTensor>
 }
 
 bool CheckTensorShape(const std::shared_ptr<Tensor> &tensor, const int &channel) {
+  if (tensor == nullptr) {
+    return false;
+  }
   bool rc = false;
+  if (tensor->shape().Size() <= channel) {
+    return false;
+  }
   if (tensor->Rank() != DEFAULT_IMAGE_RANK ||
       (tensor->shape()[channel] != 1 && tensor->shape()[channel] != DEFAULT_IMAGE_CHANNELS)) {
     rc = true;
@@ -271,6 +277,8 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
                                 int buffer_size, int crop_w, int crop_w_aligned, int offset, int stride) {
   // scanlines will be read to this buffer first, must have the number
   // of components equal to the number of components in the image
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int64_t>::max() / cinfo->output_components) > crop_w_aligned,
+                               "JpegReadScanlines: multiplication out of bounds.");
   int64_t scanline_size = crop_w_aligned * cinfo->output_components;
   std::vector<JSAMPLE> scanline(scanline_size);
   JSAMPLE *scanline_ptr = &scanline[0];
@@ -364,6 +372,10 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   } catch (std::runtime_error &e) {
     return DestroyDecompressAndReturnError(e.what());
   }
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - crop_w) > crop_x,
+                               "JpegCropAndDecode: addition out of bounds.");
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - crop_h) > crop_y,
+                               "JpegCropAndDecode: addition out of bounds.");
   if (crop_x == 0 && crop_y == 0 && crop_w == 0 && crop_h == 0) {
     crop_w = cinfo.output_width;
     crop_h = cinfo.output_height;
@@ -372,6 +384,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     return DestroyDecompressAndReturnError("Crop: invalid crop size.");
   }
   const int mcu_size = cinfo.min_DCT_scaled_size;
+  CHECK_FAIL_RETURN_UNEXPECTED(mcu_size != 0, "JpegCropAndDecode: divisor mcu_size is zero.");
   unsigned int crop_x_aligned = (crop_x / mcu_size) * mcu_size;
   unsigned int crop_w_aligned = crop_w + crop_x - crop_x_aligned;
   try {
@@ -388,12 +401,19 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(ts, DataType(DataType::DE_UINT8), &output_tensor));
   const int buffer_size = output_tensor->SizeInBytes();
   JSAMPLE *buffer = reinterpret_cast<JSAMPLE *>(&(*output_tensor->begin<uint8_t>()));
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - skipped_scanlines) > crop_h,
+                               "JpegCropAndDecode: addition out of bounds.");
   const int max_scanlines_to_read = skipped_scanlines + crop_h;
   // stride refers to output tensor, which has 3 components at most
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / crop_w) > kOutNumComponents,
+                               "JpegCropAndDecode: multiplication out of bounds.");
   const int stride = crop_w * kOutNumComponents;
   // offset is calculated for scanlines read from the image, therefore
   // has the same number of components as the image
-  const int offset = (crop_x - crop_x_aligned) * cinfo.output_components;
+  int minius_value = crop_x - crop_x_aligned;
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / minius_value) > cinfo.output_components,
+                               "JpegCropAndDecode: multiplication out of bounds.");
+  const int offset = minius_value * cinfo.output_components;
   RETURN_IF_NOT_OK(
     JpegReadScanlines(&cinfo, max_scanlines_to_read, buffer, buffer_size, crop_w, crop_w_aligned, offset, stride));
   *output = output_tensor;
@@ -426,12 +446,14 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != 2) {
     RETURN_STATUS_UNEXPECTED("Crop: invalid image Shape, only support <H,W,C> or <H,W>");
   }
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - y) > h, "Crop: addition out of bounds.");
   // account for integer overflow
   if (y < 0 || (y + h) > input_cv->shape()[0] || (y + h) < 0) {
     RETURN_STATUS_UNEXPECTED(
       "Crop: invalid y coordinate value for crop, "
       "y coordinate value exceeds the boundary of the image.");
   }
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - x) > w, "Crop: addition out of bounds.");
   // account for integer overflow
   if (x < 0 || (x + w) > input_cv->shape()[1] || (x + w) < 0) {
     RETURN_STATUS_UNEXPECTED(
@@ -495,6 +517,7 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
       *output = input;
       return Status::OK();
     }
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "HWC2CHW: invalid shape.");
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->shape().Size() < MIN_IMAGE_DIMENSION || input_cv->shape().Size() > DEFAULT_IMAGE_CHANNELS ||
         (input_cv->shape().Size() == DEFAULT_IMAGE_CHANNELS && num_channels != DEFAULT_IMAGE_CHANNELS &&
@@ -609,6 +632,7 @@ Status CopyTensorValue(const std::shared_ptr<Tensor> &source_tensor, std::shared
 Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "SwapRedAndBlue: shape is invalid.");
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->shape().Size() != 3 || num_channels != DEFAULT_IMAGE_CHANNELS) {
       RETURN_STATUS_UNEXPECTED("SwapRedBlue: image shape is not <H,W,C>.");
@@ -882,6 +906,7 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("AdjustBrightness: load image failed.");
     }
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "AdjustBrightness: shape is invalid.");
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     // Rank of the image represents how many dimensions, image is expected to be HWC
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels != DEFAULT_IMAGE_CHANNELS) {
@@ -904,6 +929,7 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("AdjustContrast: load image failed.");
     }
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "AdjustBrightness: shape is invalid.");
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->Rank() != DEFAULT_IMAGE_CHANNELS || num_channels != DEFAULT_IMAGE_CHANNELS) {
       RETURN_STATUS_UNEXPECTED("AdjustContrast: image shape is not <H,W,C> or channel is not 3.");
@@ -990,7 +1016,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
       RETURN_STATUS_UNEXPECTED("AutoContrast: load image failed.");
     }
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_DIMENSION) {
-      RETURN_STATUS_UNEXPECTED("AutoContrast: image shape is not <H,W,C> or <H,W>");
+      RETURN_STATUS_UNEXPECTED("AutoContrast: image channel should be 1 or 3.");
     }
     // Reshape to extend dimension if rank is 2 for algorithm to work. then reshape output to be of rank 2 like input
     if (input_cv->Rank() == MIN_IMAGE_DIMENSION) {
@@ -1067,6 +1093,7 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("AdjustSaturation: load image failed.");
     }
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "AdjustSaturation: shape is invalid.");
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels != DEFAULT_IMAGE_CHANNELS) {
       RETURN_STATUS_UNEXPECTED("AdjustSaturation: image shape is not <H,W,C> or channel is not 3.");
@@ -1095,6 +1122,7 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("AdjustHue: load image failed.");
     }
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > 2, "AdjustHue: shape is invalid.");
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels != DEFAULT_IMAGE_CHANNELS) {
       RETURN_STATUS_UNEXPECTED("AdjustHue: image shape is not <H,W,C> or channel is not 3.");
@@ -1166,6 +1194,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
              uint8_t fill_g, uint8_t fill_b) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "Erase: shape is invalid.");
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->mat().data == nullptr) {
       RETURN_STATUS_UNEXPECTED("CutOut: load image failed.");

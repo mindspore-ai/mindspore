@@ -205,6 +205,9 @@ static void RemapBilinearNotCurMoreC(int dx, const int16_t *HW, const uint16_t *
 static void RemapBilinearCur1C(LiteMat _src, int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
                                size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr, PaddBorderType borderType,
                                const std::vector<uint8_t> &borderValue) {
+  if (borderValue.size() == 0) {
+    return;
+  }
   int shx = HW[dx * 2];
   int shy = HW[dx * 2 + 1];
   if (borderType == PADD_BORDER_CONSTANT && (shx >= _src.width_ || shx + 1 < 0 || shy >= _src.height_ || shy + 1 < 0)) {
@@ -233,6 +236,9 @@ static void RemapBilinearCurMoreC(LiteMat _src, int dx, const int16_t *HW, const
                                   PaddBorderType borderType, const std::vector<uint8_t> &borderValue) {
   int shx = HW[dx * 2];
   int shy = HW[dx * 2 + 1];
+  if (borderValue.size() < cn || borderValue.size() == 0) {
+    return;
+  }
   if (borderType == PADD_BORDER_CONSTANT && (shx >= _src.width_ || shx + 1 < 0 || shy >= _src.height_ || shy + 1 < 0)) {
     for (int k = 0; k < cn; k++) dst_ptr[k] = borderValue[k];
   } else {

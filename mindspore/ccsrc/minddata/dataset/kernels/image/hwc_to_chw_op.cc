@@ -29,6 +29,7 @@ Status HwcToChwOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
 Status HwcToChwOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
+  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() > 0, "HwcToChwOp::OutputShape inputs size should > 0");
   TensorShape in = inputs[0];
   TensorShape out = TensorShape{in[2], in[0], in[1]};
   if (inputs[0].Rank() == 3) {

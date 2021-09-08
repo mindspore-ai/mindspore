@@ -116,6 +116,8 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   std::gamma_distribution<float> distribution(alpha_, 1);
   float x1 = distribution(rnd_);
   float x2 = distribution(rnd_);
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - x1) > x2, "multiplication out of bounds");
+  CHECK_FAIL_RETURN_UNEXPECTED(x1 + x2 != 0.0, "addition out of bounds");
   float lam = x1 / (x1 + x2);
 
   // Calculate random labels

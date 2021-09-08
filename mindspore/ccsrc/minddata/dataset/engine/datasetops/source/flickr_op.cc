@@ -126,7 +126,7 @@ Status FlickrOp::ParseFlickrData() {
                                  "; line: " + line);
       }
 
-      image_file_path = (dataset_dir / image_name).toString();
+      image_file_path = (dataset_dir / image_name).ToString();
       std::string annotation = line.substr(flag_idx + 1);
       if (annotation.empty()) {
         file_handle.close();

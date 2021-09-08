@@ -121,9 +121,12 @@ Status RandomCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
 
   // Apply padding first then crop
   std::shared_ptr<Tensor> pad_image;
-  int32_t t_pad_top, t_pad_bottom, t_pad_left, t_pad_right;
-  int32_t padded_image_w;
-  int32_t padded_image_h;
+  int32_t t_pad_top = 0;
+  int32_t t_pad_bottom = 0;
+  int32_t t_pad_left = 0;
+  int32_t t_pad_right = 0;
+  int32_t padded_image_w = 0;
+  int32_t padded_image_h = 0;
   bool crop_further = true;  // whether image needs further cropping based on new size & requirements
 
   RETURN_IF_NOT_OK(  // error code sent back directly
@@ -134,7 +137,8 @@ Status RandomCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
     return Status::OK();
   }
 
-  int x, y;
+  int x = 0;
+  int y = 0;
   GenRandomXY(&x, &y, padded_image_w, padded_image_h);
   return Crop(pad_image, output, x, y, crop_width_, crop_height_);
 }

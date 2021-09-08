@@ -21,6 +21,7 @@
 namespace mindspore {
 namespace dataset {
 Status ToFloat16Op::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
   return ToFloat16(input, output);
 }
 Status ToFloat16Op::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {

@@ -45,6 +45,9 @@ RotateOp::RotateOp(float degrees, InterpolationMode resample, bool expand, std::
 
 Status RotateOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->shape().Size() == 2 || input->shape().Size() == 3,
+    "Rotate: image shape " + std::to_string(input->shape().Size()) + " is not <H,W,C> or <H,W>.");
 #ifndef ENABLE_ANDROID
   return Rotate(input, output, center_, degrees_, interpolation_, expand_, fill_r_, fill_g_, fill_b_);
 #else

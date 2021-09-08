@@ -97,7 +97,22 @@ class BertTokenizer final : public TensorTransform {
                          bool with_offsets = false)
       : BertTokenizer(vocab, StringToChar(suffix_indicator), max_bytes_per_token, StringToChar(unknown_token),
                       lower_case, keep_whitespace, normalize_form, preserve_unused_token, with_offsets) {}
-
+  /// \brief Constructor.
+  /// \param[in] vocab A Vocab object.
+  /// \param[in] suffix_indicator This parameter is used to show that the sub-word
+  ///    is the last part of a word (default='##').
+  /// \param[in] max_bytes_per_token Tokens exceeding this length will not be further split (default=100).
+  /// \param[in] unknown_token When a token cannot be found, return the token directly if 'unknown_token' is an empty
+  ///    string, else return the specified string (default='[UNK]').
+  /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8 (NFD mode) and RegexReplace operations to
+  ///    the input text to fold the text to lower case and strip accents characters. If false, only apply
+  ///    the NormalizeUTF8('normalization_form' mode) operation to the input text (default=false).
+  /// \param[in] keep_whitespace If true, the whitespace will be kept in output tokens (default=false).
+  /// \param[in] normalize_form This parameter is used to specify a specific normalize mode. This is only effective
+  ///    when 'lower_case' is false. See NormalizeUTF8 for details (default=NormalizeForm::kNone).
+  /// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]' and
+  ///   '[MASK]' (default=true).
+  /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
   explicit BertTokenizer(const std::shared_ptr<Vocab> &vocab, const std::vector<char> &suffix_indicator,
                          int32_t max_bytes_per_token, const std::vector<char> &unknown_token, bool lower_case,
                          bool keep_whitespace, const NormalizeForm normalize_form, bool preserve_unused_token,
@@ -151,6 +166,17 @@ class JiebaTokenizer final : public TensorTransform {
                           const JiebaMode &mode = JiebaMode::kMix, bool with_offsets = false)
       : JiebaTokenizer(StringToChar(hmm_path), StringToChar(mp_path), mode, with_offsets) {}
 
+  /// \brief Constructor.
+  /// \param[in] hmm_path Dictionary file is used by the HMMSegment algorithm. The dictionary can be obtained on the
+  ///   official website of cppjieba (https://github.com/yanyiwu/cppjieba).
+  /// \param[in] mp_path Dictionary file is used by the MPSegment algorithm. The dictionary can be obtained on the
+  ///   official website of cppjieba (https://github.com/yanyiwu/cppjieba).
+  /// \param[in] mode Valid values can be any of JiebaMode.kMP, JiebaMode.kHMM and JiebaMode.kMIX
+  ///   (default=JiebaMode.kMIX).
+  ///   - JiebaMode.kMP, tokenizes with MPSegment algorithm.
+  ///   - JiebaMode.kHMM, tokenizes with Hidden Markov Model Segment algorithm.
+  ///   - JiebaMode.kMIX, tokenizes with a mix of MPSegment and HMMSegment algorithms.
+  /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
   explicit JiebaTokenizer(const std::vector<char> &hmm_path, const std::vector<char> &mp_path, const JiebaMode &mode,
                           bool with_offsets);
 
@@ -222,6 +248,13 @@ class Lookup final : public TensorTransform {
     new (this) Lookup(vocab, unknown_token_c, data_type);
   }
 
+  /// \brief Constructor.
+  /// \param[in] vocab a Vocab object.
+  /// \param[in] unknown_token Word is used for lookup. In case of the word is out of vocabulary (OOV),
+  ///    the result of lookup will be replaced to unknown_token. If the unknown_token is not specified or it is OOV,
+  ///    runtime error will be thrown (default={}, means no unknown_token is specified).
+  /// \param[in] data_type mindspore::DataType of the tensor after lookup; must be numeric, including bool.
+  ///   (default=mindspore::DataType::kNumberTypeInt32).
   explicit Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::vector<char>> &unknown_token,
                   mindspore::DataType data_type = mindspore::DataType::kNumberTypeInt32);
 
@@ -254,6 +287,15 @@ class Ngram final : public TensorTransform {
                  const std::pair<std::string, int32_t> &right_pad = {"", 0}, const std::string &separator = " ")
       : Ngram(ngrams, PairStringToChar(left_pad), PairStringToChar(right_pad), StringToChar(separator)) {}
 
+  /// \brief Constructor.
+  /// \param[in] ngrams ngrams is a vector of positive integers. For example, if ngrams={4, 3}, then the result
+  ///    would be a 4-gram followed by a 3-gram in the same tensor. If the number of words is not enough to make up
+  ///    a n-gram, an empty string will be returned.
+  /// \param[in] left_pad {"pad_token", pad_width}. Padding performed on left side of the sequence. pad_width will
+  ///    be capped at n-1. left_pad=("_",2) would pad the left side of the sequence with "__" (default={"", 0}}).
+  /// \param[in] right_pad {"pad_token", pad_width}. Padding performed on right side of the sequence.pad_width will
+  ///    be capped at n-1. right_pad=("-",2) would pad the right side of the sequence with "--" (default={"", 0}}).
+  /// \param[in] separator Symbol used to join strings together (default=" ").
   explicit Ngram(const std::vector<int32_t> &ngrams, const std::pair<std::vector<char>, int32_t> &left_pad,
                  const std::pair<std::vector<char>, int32_t> &right_pad, const std::vector<char> &separator);
 
@@ -309,6 +351,11 @@ class RegexReplace final : public TensorTransform {
   explicit RegexReplace(std::string pattern, std::string replace, bool replace_all = true)
       : RegexReplace(StringToChar(pattern), StringToChar(replace), replace_all) {}
 
+  /// \brief Constructor.
+  /// \param[in] pattern The regex expression patterns. Type should be char of vector.
+  /// \param[in] replace The string to replace the matched element.
+  /// \param[in] replace_all Confirm whether to replace all. If false, only replace the first matched element;
+  ///   if true, replace all matched elements (default=true).
   explicit RegexReplace(const std::vector<char> &pattern, const std::vector<char> &replace, bool replace_all);
 
   /// \brief Destructor
@@ -368,6 +415,9 @@ class SentencePieceTokenizer final : public TensorTransform {
   SentencePieceTokenizer(const std::string &vocab_path, mindspore::dataset::SPieceTokenizerOutType out_type)
       : SentencePieceTokenizer(StringToChar(vocab_path), out_type) {}
 
+  /// \brief Constructor.
+  /// \param[in] vocab_path vocab model file path. type should be char of vector.
+  /// \param[in] out_type The type of the output.
   SentencePieceTokenizer(const std::vector<char> &vocab_path, mindspore::dataset::SPieceTokenizerOutType out_type);
 
   /// \brief Destructor

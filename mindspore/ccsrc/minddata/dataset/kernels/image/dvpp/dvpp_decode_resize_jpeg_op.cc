@@ -120,6 +120,9 @@ Status DvppDecodeResizeJpegOp::OutputShape(const std::vector<TensorShape> &input
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
   TensorShape out({-1, 1, 1});  // we don't know what is output image size, but we know it should be 1 channels
+  if (inputs.size() < 1) {
+    RETURN_STATUS_UNEXPECTED("DvppDecodeResizeJpegOp::OutputShape inputs is null");
+  }
   if (inputs[0].Rank() == 1) outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();
   return Status(StatusCode::kMDUnexpectedError, "Input has a wrong shape");

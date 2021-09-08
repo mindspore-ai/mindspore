@@ -39,7 +39,7 @@ namespace dataset {
 // @param output: Tensor. The shape of the output tensor is <input_shape, numClasses>
 //                and the type is same as input.
 // @param num_classes: Number of classes to.
-Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, dsize_t num_classes);
+Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes);
 
 Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
                               dsize_t num_classes, int64_t index);

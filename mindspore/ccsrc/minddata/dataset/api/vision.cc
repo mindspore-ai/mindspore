@@ -668,7 +668,7 @@ std::shared_ptr<TensorOperation> RandomResizedCropWithBBox::Parse() {
 struct RandomRotation::Data {
   Data(const std::vector<float> &degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
        const std::vector<uint8_t> &fill_value)
-      : degrees_(degrees), interpolation_mode_(resample), expand_(expand), center_(center), fill_value_(fill_value) {}
+      : degrees_(degrees), interpolation_mode_(resample), center_(center), expand_(expand), fill_value_(fill_value) {}
   std::vector<float> degrees_;
   InterpolationMode interpolation_mode_;
   std::vector<float> center_;
@@ -852,7 +852,7 @@ std::shared_ptr<TensorOperation> ResizePreserveAR::Parse() {
 struct Rotate::Data {
   Data(const float &degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
        const std::vector<uint8_t> &fill_value)
-      : degrees_(degrees), interpolation_mode_(resample), expand_(expand), center_(center), fill_value_(fill_value) {}
+      : degrees_(degrees), interpolation_mode_(resample), center_(center), expand_(expand), fill_value_(fill_value) {}
   explicit Data(const FixRotationAngle &angle_id) : angle_id_(angle_id), lite_impl_(true) {}
   FixRotationAngle angle_id_{FixRotationAngle::k0Degree};
   bool lite_impl_{false};

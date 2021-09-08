@@ -199,6 +199,16 @@ void DestroyLibjpegSource(struct jpeg_decompress_struct *libjpeg_handler, const 
 
 uint32_t SoftJpegd::JpegdSoftwareDecodeProcess(struct VpcInfo *vpc_input_info,
                                                struct SoftDpProcsessInfo *soft_dp_process_info) {
+  if (vpc_input_info == nullptr) {
+    JPEGD_LOGE("vpc_input_info is nullptr");
+    return decodeErr;
+  }
+
+  if (soft_dp_process_info == nullptr) {
+    JPEGD_LOGE("soft_dp_process_info is nullptr");
+    return decodeErr;
+  }
+
   int32_t width = 0;
   int32_t height = 0;
   int32_t sub_sample = 0;

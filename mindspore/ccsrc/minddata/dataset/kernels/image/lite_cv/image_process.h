@@ -41,6 +41,7 @@ namespace dataset {
 #define IM_TOOL_DATA_TYPE_UINT8 (2)
 #define IM_TOOL_RETURN_STATUS_SUCCESS (0)
 #define IM_TOOL_RETURN_STATUS_INVALID_INPUT (1)
+#define IM_TOOL_RETURN_STATUS_FAILED (2)
 
 #define INT16_CAST(X) \
   static_cast<int16_t>(::std::min(::std::max(static_cast<int>(X + (X >= 0.f ? 0.5f : -0.5f)), -32768), 32767));

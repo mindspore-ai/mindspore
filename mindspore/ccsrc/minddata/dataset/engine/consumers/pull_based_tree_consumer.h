@@ -42,8 +42,7 @@ class PullBasedIteratorConsumer {
   /// \brief Returns the next row in a vector format
   /// \note This is currently a placeholder function
   /// \param[in] num_rows the number of rows that we want to get
-  /// \param[out] out std::vector of TensorRows
-  /// \return Status error code
+  /// \return out std::vector of TensorRows
   std::vector<TensorRow> GetRows(int64_t num_rows);
 
   /// Returns the next row in a vector format
@@ -57,7 +56,7 @@ class PullBasedIteratorConsumer {
   Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *out);
 
   /// Returns the next row in as a vector
-  /// \param[out] out std::vector of pairs of string to Tensor
+  /// \param[out] vec std::vector of pairs of string to Tensor
   /// \return Status error code
   Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec);
 

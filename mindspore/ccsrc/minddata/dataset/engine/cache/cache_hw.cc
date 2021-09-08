@@ -123,14 +123,14 @@ Status CacheServerHW::GetNumaNodeInfo() {
     numa_id_t numa_node = static_cast<numa_id_t>(strtol(node_dir.data() + strlen(kNodeName), nullptr, kDecimal));
     Path f = p / kCpuList;
 
-    auto realpath = Common::GetRealPath(f.toString());
+    auto realpath = Common::GetRealPath(f.ToString());
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Get real path failed, path=" << f.toString();
-      RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + f.toString());
+      MS_LOG(ERROR) << "Get real path failed, path=" << f.ToString();
+      RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + f.ToString());
     }
 
     std::ifstream fs(realpath.value());
-    CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + f.toString());
+    CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + f.ToString());
     std::string cpu_string;
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
@@ -155,7 +155,7 @@ Status CacheServerHW::GetNumaNodeInfo() {
         ++iter;
       }
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(!fs.bad(), "Fail to read file: " + f.toString());
+    CHECK_FAIL_RETURN_UNEXPECTED(!fs.bad(), "Fail to read file: " + f.ToString());
     fs.close();
     // Remember which cpu is attached to this numa node.
     numa_cpuset_.emplace(numa_node, cpuset);
