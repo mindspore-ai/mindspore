@@ -3011,6 +3011,7 @@ class TransferDataset(Dataset):
         super().__init__(children=input_dataset)
         self.queue_name = str(uuid.uuid1())
         self.device_type = context.get_context("device_target") if context else "CPU"
+        self.device_id = context.get_context("device_id") if context else 0
 
         self._send_epoch_end = replace_none(send_epoch_end, True)
         self._create_data_info_queue = create_data_info_queue
@@ -3018,10 +3019,9 @@ class TransferDataset(Dataset):
 
     def parse(self, children=None):
         total_batch = 0
-        device_id = context.get_context("device_id")
         if hasattr(self.children[0], "__total_batch__"):
             total_batch = self.children[0].__total_batch__
-        return cde.TransferNode(children[0], self.queue_name, self.device_type, device_id, self._send_epoch_end,
+        return cde.TransferNode(children[0], self.queue_name, self.device_type, self.device_id, self._send_epoch_end,
                                 total_batch, self._create_data_info_queue)
 
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):

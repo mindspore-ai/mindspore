@@ -87,8 +87,8 @@ Status BucketBatchByLengthNode::Build(std::vector<std::shared_ptr<DatasetOp>> *c
   auto op = std::make_shared<BucketBatchByLengthOp>(column_names_, bucket_boundaries_, bucket_batch_sizes_,
                                                     element_length_function_, pad_info_, pad_to_bucket_boundary_,
                                                     drop_remainder_, connector_que_size_);
-  op->set_total_repeats(GetTotalRepeats());
-  op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  op->SetTotalRepeats(GetTotalRepeats());
+  op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);
   if (bucket_boundaries_[0] == 0) {
     bucket_boundaries_.erase(bucket_boundaries_.begin());

@@ -681,7 +681,7 @@ Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std
 
 int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &filenames, int64_t begin, int64_t end) {
   int64_t rows_read = 0;
-  for (int i = begin; i < end; i++) {
+  for (int64_t i = begin; i < end; ++i) {
     auto realpath = Common::GetRealPath(filenames[i]);
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed, path=" << filenames[i];

@@ -415,8 +415,8 @@ TEST_F(MindDataTestMapOp, TestTFReaderRepeatMap) {
   rc = my_map_op->AddChild(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
-  my_tfreader_op->set_total_repeats(num_repeats);
-  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
+  my_tfreader_op->SetTotalRepeats(num_repeats);
+  my_tfreader_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = my_repeat_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -472,13 +472,13 @@ TEST_F(MindDataTestMapOp, TestTFReaderMapRepeat) {
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
 
-  my_map_op->set_total_repeats(num_repeats);
-  my_map_op->set_num_repeats_per_epoch(num_repeats);
+  my_map_op->SetTotalRepeats(num_repeats);
+  my_map_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = my_repeat_op->AddChild(my_map_op);
   EXPECT_TRUE(rc.IsOk());
 
-  my_tfreader_op->set_total_repeats(num_repeats);
-  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
+  my_tfreader_op->SetTotalRepeats(num_repeats);
+  my_tfreader_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = my_map_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -545,13 +545,13 @@ TEST_F(MindDataTestMapOp, TFReader_Decode_Repeat_Resize) {
   rc = my_tree_->AssociateNode(my_map_resize_op);
   EXPECT_TRUE(rc.IsOk());
 
-  my_tfreader_op->set_total_repeats(num_repeats);
-  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
+  my_tfreader_op->SetTotalRepeats(num_repeats);
+  my_tfreader_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = my_map_decode_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
-  my_map_decode_op->set_total_repeats(num_repeats);
-  my_map_decode_op->set_num_repeats_per_epoch(num_repeats);
+  my_map_decode_op->SetTotalRepeats(num_repeats);
+  my_map_decode_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = my_repeat_op->AddChild(my_map_decode_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -610,10 +610,10 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
     std::make_shared<MapOp>(input_columns, output_columns, func_list2, 5, op_connector_size);
 
   auto image_folder_op = ImageFolder(num_parallel_workers, 2, 32, folder_path, false);
-  image_folder_op->set_total_repeats(num_repeats);
-  image_folder_op->set_num_repeats_per_epoch(num_repeats);
-  map_decode_map->set_total_repeats(num_repeats);
-  map_decode_map->set_num_repeats_per_epoch(num_repeats);
+  image_folder_op->SetTotalRepeats(num_repeats);
+  image_folder_op->SetNumRepeatsPerEpoch(num_repeats);
+  map_decode_map->SetTotalRepeats(num_repeats);
+  map_decode_map->SetNumRepeatsPerEpoch(num_repeats);
   my_tree_ = Build({image_folder_op, map_decode_map, repeat_op, map_resize_op});
   rc = my_tree_->Prepare();
   EXPECT_TRUE(rc.IsOk());
@@ -649,10 +649,10 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   map_resize_op = std::make_shared<MapOp>(input_columns, output_columns, func_list2, 15, op_connector_size);
 
   image_folder_op = ImageFolder(16, 2, 32, folder_path, false);
-  image_folder_op->set_total_repeats(num_repeats);
-  image_folder_op->set_num_repeats_per_epoch(num_repeats);
-  map_decode_map->set_total_repeats(num_repeats);
-  map_decode_map->set_num_repeats_per_epoch(num_repeats);
+  image_folder_op->SetTotalRepeats(num_repeats);
+  image_folder_op->SetNumRepeatsPerEpoch(num_repeats);
+  map_decode_map->SetTotalRepeats(num_repeats);
+  map_decode_map->SetNumRepeatsPerEpoch(num_repeats);
   auto my_tree_2 = Build({image_folder_op, map_decode_map, repeat_op, map_resize_op});
 
   rc = my_tree_2->Prepare();
@@ -710,10 +710,10 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize_NoInputColumns) {
   ;
 
   auto image_folder_op = ImageFolder(16, 2, 32, folder_path, false);
-  image_folder_op->set_total_repeats(num_repeats);
-  image_folder_op->set_num_repeats_per_epoch(num_repeats);
-  map_decode_map->set_total_repeats(num_repeats);
-  map_decode_map->set_num_repeats_per_epoch(num_repeats);
+  image_folder_op->SetTotalRepeats(num_repeats);
+  image_folder_op->SetNumRepeatsPerEpoch(num_repeats);
+  map_decode_map->SetTotalRepeats(num_repeats);
+  map_decode_map->SetNumRepeatsPerEpoch(num_repeats);
   my_tree_ = Build({image_folder_op, map_decode_map, repeat_op, map_resize_op});
   rc = my_tree_->Prepare();
   EXPECT_TRUE(rc.IsOk());

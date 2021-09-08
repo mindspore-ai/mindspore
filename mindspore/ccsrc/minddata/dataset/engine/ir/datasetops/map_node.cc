@@ -86,12 +86,12 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
 
   if (!project_columns_.empty()) {
     auto project_op = std::make_shared<ProjectOp>(project_columns_);
-    project_op->set_total_repeats(GetTotalRepeats());
-    project_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+    project_op->SetTotalRepeats(GetTotalRepeats());
+    project_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
     node_ops->push_back(project_op);
   }
-  map_op->set_total_repeats(GetTotalRepeats());
-  map_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  map_op->SetTotalRepeats(GetTotalRepeats());
+  map_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(map_op);
   return Status::OK();
 }

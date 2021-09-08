@@ -48,10 +48,10 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestAutoWorkerPass) {
   std::shared_ptr<Dataset> batch = Zip({map_leaf, nonmap_leaf})->Batch(1)->SetNumWorkers(0);
   std::shared_ptr<Dataset> map = batch->Map({std::shared_ptr<TensorTransform>()})->SetNumWorkers(0);
   //  {ImageFolder, RandomData} -> zip -> batch
-  EXPECT_EQ(map_leaf->IRNode()->num_workers(), 0);
-  EXPECT_EQ(nonmap_leaf->IRNode()->num_workers(), 0);
-  EXPECT_EQ(batch->IRNode()->num_workers(), 0);
-  EXPECT_EQ(map->IRNode()->num_workers(), 0);
+  EXPECT_EQ(map_leaf->IRNode()->NumWorkers(), 0);
+  EXPECT_EQ(nonmap_leaf->IRNode()->NumWorkers(), 0);
+  EXPECT_EQ(batch->IRNode()->NumWorkers(), 0);
+  EXPECT_EQ(map->IRNode()->NumWorkers(), 0);
 
   std::unique_ptr<IRPass> pass = std::make_unique<AutoWorkerPass>();
   bool m = false;
@@ -60,14 +60,14 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestAutoWorkerPass) {
   // checking that after this pass, num_workers are set correctly (aka a positive number)
   // It is hard to test a exact value because num_threads are different for different machine
   // however, this will for sure succeed bc regardless of the total threads on cpu, this would always be >= 1
-  EXPECT_NE(map_leaf->IRNode()->num_workers(), 0);
-  EXPECT_NE(nonmap_leaf->IRNode()->num_workers(), 0);
-  EXPECT_NE(batch->IRNode()->num_workers(), 0);
-  EXPECT_NE(map->IRNode()->num_workers(), 0);
-  MS_LOG(DEBUG) << map_leaf->IRNode()->Name() << ": num_worker=" << map_leaf->IRNode()->num_workers();
-  MS_LOG(DEBUG) << nonmap_leaf->IRNode()->Name() << ": num_worker=" << nonmap_leaf->IRNode()->num_workers();
-  MS_LOG(DEBUG) << batch->IRNode()->Name() << ": num_worker=" << batch->IRNode()->num_workers();
-  MS_LOG(DEBUG) << map->IRNode()->Name() << ": num_worker=" << map->IRNode()->num_workers();
+  EXPECT_NE(map_leaf->IRNode()->NumWorkers(), 0);
+  EXPECT_NE(nonmap_leaf->IRNode()->NumWorkers(), 0);
+  EXPECT_NE(batch->IRNode()->NumWorkers(), 0);
+  EXPECT_NE(map->IRNode()->NumWorkers(), 0);
+  MS_LOG(DEBUG) << map_leaf->IRNode()->Name() << ": num_worker=" << map_leaf->IRNode()->NumWorkers();
+  MS_LOG(DEBUG) << nonmap_leaf->IRNode()->Name() << ": num_worker=" << nonmap_leaf->IRNode()->NumWorkers();
+  MS_LOG(DEBUG) << batch->IRNode()->Name() << ": num_worker=" << batch->IRNode()->NumWorkers();
+  MS_LOG(DEBUG) << map->IRNode()->Name() << ": num_worker=" << map->IRNode()->NumWorkers();
 }
 
 TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPass) {

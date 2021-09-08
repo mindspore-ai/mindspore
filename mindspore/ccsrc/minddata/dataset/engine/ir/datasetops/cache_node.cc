@@ -55,8 +55,8 @@ Status CacheNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
   cache_op->SetSampler(sampler_rt);
-  cache_op->set_total_repeats(GetTotalRepeats());
-  cache_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  cache_op->SetTotalRepeats(GetTotalRepeats());
+  cache_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(cache_op);
   return Status::OK();
 }

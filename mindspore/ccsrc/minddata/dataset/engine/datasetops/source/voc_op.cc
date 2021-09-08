@@ -196,10 +196,10 @@ Status VOCOp::ParseImageIds() {
 Status VOCOp::ParseAnnotationIds() {
   std::vector<std::string> new_image_ids;
   for (auto id : image_ids_) {
-    const std::string kAnnotationName =
+    const std::string annotation_name =
       folder_path_ + std::string(kAnnotationsFolder) + id + std::string(kAnnotationExtension);
-    RETURN_IF_NOT_OK(ParseAnnotationBbox(kAnnotationName));
-    if (annotation_map_.find(kAnnotationName) != annotation_map_.end()) {
+    RETURN_IF_NOT_OK(ParseAnnotationBbox(annotation_name));
+    if (annotation_map_.find(annotation_name) != annotation_map_.end()) {
       new_image_ids.push_back(id);
     }
   }
@@ -226,7 +226,9 @@ void VOCOp::ParseNodeValue(XMLElement *bbox_node, const char *name, float *value
   *value = 0.0;
   if (bbox_node != nullptr) {
     XMLElement *node = bbox_node->FirstChildElement(name);
-    if (node != nullptr) *value = node->FloatText();
+    if (node != nullptr) {
+      *value = node->FloatText();
+    }
   }
 }
 

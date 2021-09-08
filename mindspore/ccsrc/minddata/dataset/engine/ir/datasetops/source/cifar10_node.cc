@@ -66,8 +66,8 @@ Status Cifar10Node::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_op
 
   auto cifar_op = std::make_shared<CifarOp>(CifarOp::CifarType::kCifar10, usage_, num_workers_, dataset_dir_,
                                             connector_que_size_, std::move(schema), std::move(sampler_rt));
-  cifar_op->set_total_repeats(GetTotalRepeats());
-  cifar_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  cifar_op->SetTotalRepeats(GetTotalRepeats());
+  cifar_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(cifar_op);
 
   return Status::OK();

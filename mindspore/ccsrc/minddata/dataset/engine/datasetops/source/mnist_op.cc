@@ -260,7 +260,9 @@ Status MnistOp::WalkAllFiles() {
   const std::string train_prefix = "train";
   const std::string test_prefix = "t10k";
 
-  Path dir(folder_path_);
+  std::string real_path{""};
+  RETURN_IF_NOT_OK(Path::RealPath(folder_path_, real_path));
+  Path dir(real_path);
   auto dir_it = Path::DirIterator::OpenDirectory(&dir);
   std::string prefix;  // empty string, used to match usage = "" (default) or usage == "all"
   if (usage_ == "train" || usage_ == "test") prefix = (usage_ == "test" ? test_prefix : train_prefix);

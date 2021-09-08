@@ -96,7 +96,7 @@ TEST_F(MindDataTestClientConfig, TestClientConfig2) {
     1, 2, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
   rc = my_tfreader_op->Init();
   ASSERT_OK(rc);
-  ASSERT_EQ(my_tfreader_op->num_workers(), 1);
+  ASSERT_EQ(my_tfreader_op->NumWorkers(), 1);
   my_tree->AssociateNode(my_tfreader_op);
 
   // Set children/root layout.
@@ -118,5 +118,5 @@ TEST_F(MindDataTestClientConfig, TestClientConfig2) {
     row_count++;
   }
   ASSERT_EQ(row_count, 10);  // Should be 10 rows fetched
-  ASSERT_EQ(my_tfreader_op->num_workers(), 1);
+  ASSERT_EQ(my_tfreader_op->NumWorkers(), 1);
 }

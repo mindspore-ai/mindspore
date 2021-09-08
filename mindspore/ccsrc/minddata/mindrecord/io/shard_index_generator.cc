@@ -45,27 +45,27 @@ MSRStatus ShardIndexGenerator::Build() {
   auto json_header = ret.second;
 
   auto ret2 = GetDatasetFiles(file_path_, json_header["shard_addresses"]);
-  if (SUCCESS != ret2.first) {
+  if (ret2.first != SUCCESS) {
     return FAILED;
   }
   ShardHeader header = ShardHeader();
   auto addresses = ret2.second;
-  if (header.BuildDataset(addresses) == FAILED) {
+  if (header.BuildDataset(addresses) != SUCCESS) {
     return FAILED;
   }
   shard_header_ = header;
-  MS_LOG(INFO) << "Init header from mindrecord file for index successfully.";
+  MS_LOG(INFO) << "Initialize header from mindrecord file for index successfully.";
   return SUCCESS;
 }
 
 std::pair<MSRStatus, std::string> ShardIndexGenerator::GetValueByField(const string &field, json input) {
   if (field.empty()) {
-    MS_LOG(ERROR) << "The input field is None.";
+    MS_LOG(ERROR) << "The input field is empty.";
     return {FAILED, ""};
   }
 
   if (input.empty()) {
-    MS_LOG(ERROR) << "The input json is None.";
+    MS_LOG(ERROR) << "The input json is empty.";
     return {FAILED, ""};
   }
 
@@ -105,7 +105,7 @@ std::pair<MSRStatus, std::string> ShardIndexGenerator::GetValueByField(const str
 
 std::string ShardIndexGenerator::TakeFieldType(const string &field_path, json schema) {
   std::vector<std::string> field_name = StringSplit(field_path, kPoint);
-  for (uint64_t i = 0; i < field_name.size(); i++) {
+  for (uint64_t i = 0; i < field_name.size(); ++i) {
     try {
       if (i != field_name.size() - 1) {
         // Get type information from json schema
@@ -183,7 +183,7 @@ std::pair<MSRStatus, std::string> ShardIndexGenerator::GenerateFieldName(
   return {SUCCESS, field_name + "_" + std::to_string(field.first)};
 }
 
-std::pair<MSRStatus, sqlite3 *> ShardIndexGenerator::CheckDatabase(const std::string &shard_address) {
+std::pair<MSRStatus, sqlite3 *> ShardIndexGenerator::CreateDatabase(const std::string &shard_address) {
   auto realpath = Common::GetRealPath(shard_address);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << shard_address;
@@ -256,7 +256,7 @@ std::pair<MSRStatus, sqlite3 *> ShardIndexGenerator::CreateDatabase(int shard_no
 
   string shard_name = GetFileName(shard_address).second;
   shard_address += ".db";
-  auto ret1 = CheckDatabase(shard_address);
+  auto ret1 = CreateDatabase(shard_address);
   if (ret1.first != SUCCESS) {
     return {FAILED, nullptr};
   }

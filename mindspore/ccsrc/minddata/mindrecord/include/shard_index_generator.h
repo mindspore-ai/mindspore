@@ -72,7 +72,7 @@ class __attribute__((visibility("default"))) ShardIndexGenerator {
 
   static std::pair<MSRStatus, std::string> GenerateRawSQL(const std::vector<std::pair<uint64_t, std::string>> &fields);
 
-  std::pair<MSRStatus, sqlite3 *> CheckDatabase(const std::string &shard_address);
+  std::pair<MSRStatus, sqlite3 *> CreateDatabase(const std::string &shard_address);
 
   ///
   /// \param shard_no

@@ -73,8 +73,8 @@ class ConcatOp : public PipelineOp {
   Status GetNumClasses(int64_t *num_classes) override;
 
   Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
-  int32_t num_consumers() const override;
-  int32_t num_producers() const override;
+  int32_t NumConsumers() const override;
+  int32_t NumProducers() const override;
 
   /// Check if the current sample will be taken or dropped
   /// \return bool

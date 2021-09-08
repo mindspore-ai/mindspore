@@ -70,6 +70,10 @@ std::pair<MSRStatus, std::vector<std::string>> ShardReader::GetMeta(const std::s
 }
 
 MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool load_dataset) {
+  if (file_paths.empty()) {
+    MS_LOG(ERROR) << "Error in parameter file_paths.";
+    return FAILED;
+  }
   std::string file_path = file_paths[0];
   auto first_meta_data_ptr = std::make_shared<json>();
   auto ret = GetMeta(file_path, first_meta_data_ptr);
@@ -85,7 +89,7 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
   } else if (file_paths.size() >= 1 && load_dataset == false) {
     file_paths_ = file_paths;
   } else {
-    MS_LOG(ERROR) << "Error in parameter file_path or load_dataset.";
+    MS_LOG(ERROR) << "Error in parameter file_paths or load_dataset.";
     return FAILED;
   }
   for (const auto &file : file_paths_) {
@@ -417,7 +421,7 @@ MSRStatus ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::str
   }
   fs->close();
   return SUCCESS;
-}  // namespace mindrecord
+}
 
 MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, const std::vector<std::string> &columns,
                                           std::shared_ptr<std::vector<std::vector<std::vector<uint64_t>>>> offset_ptr,
@@ -787,6 +791,11 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabelsFromBinaryFile(
 
   for (unsigned int i = 0; i < label_offsets.size(); ++i) {
     const auto &labelOffset = label_offsets[i];
+    if (labelOffset.size() < 3) {
+      MS_LOG(ERROR) << "labelOffset size is not correct.";
+      fs->close();
+      return {FAILED, {}};
+    }
     uint64_t label_start = std::stoull(labelOffset[1]) + kInt64Len;
     uint64_t label_end = std::stoull(labelOffset[2]);
     int raw_page_id = std::stoi(labelOffset[0]);
@@ -889,6 +898,9 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabels(int page_id, int 
     }
     for (unsigned int i = 0; i < labels_ptr->size(); ++i) {
       json construct_json;
+      if ((*labels_ptr)[i].size() < columns.size()) {
+        return {FAILED, {}};
+      }
       for (unsigned int j = 0; j < columns.size(); ++j) {
         // construct json "f1": value
         auto schema = shard_header_->GetSchemas()[0]->GetSchema()["schema"];

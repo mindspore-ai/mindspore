@@ -209,7 +209,6 @@ bool Dataset::DeviceQueueCharIF(const std::vector<char> &queue_name, const std::
     MS_LOG(ERROR) << "ToDevice: Failed to get consumer.";
     return false;
   }
-
   rc = consumer->Init(ds);
   if (rc.IsError()) {
     MS_LOG(ERROR) << "ToDevice: Failed to init. Error status: " << rc;
@@ -252,7 +251,6 @@ bool Dataset::SaveCharIF(const std::vector<char> &dataset_path, int32_t num_file
     MS_LOG(ERROR) << "ToDevice: Failed to get consumer.";
     return false;
   }
-
   rc = consumer->Init(ds->IRNode());
   if (rc.IsError()) {
     MS_LOG(ERROR) << "CreateSaver failed." << rc;
@@ -283,11 +281,15 @@ bool Dataset::SaveCharIF(const std::vector<char> &dataset_path, int32_t num_file
 Dataset::Dataset() { tree_getters_ = std::make_shared<TreeGetters>(); }
 
 int64_t Dataset::GetDatasetSize(bool estimate) {
-  int64_t dataset_size;
+  int64_t dataset_size = -1;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
   std::shared_ptr<DatasetSizeGetter> size_getter = std::make_shared<DatasetSizeGetter>();
   DatasetSizeGetter *consumer = size_getter.get();
+  if (consumer == nullptr) {
+    MS_LOG(ERROR) << "DatasetSizeGetter: Failed to get consumer.";
+    return -1;
+  }
   runtime_context->AssignConsumer(size_getter);
   RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), -1);
   RETURN_SECOND_IF_ERROR(consumer->GetDatasetSize(&dataset_size, estimate), -1);
@@ -299,6 +301,10 @@ std::vector<mindspore::DataType> Dataset::GetOutputTypes() {
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
   TreeGetters *consumer = tree_getters_.get();
+  if (consumer == nullptr) {
+    MS_LOG(ERROR) << "TreeGetters: Failed to get consumer.";
+    return std::vector<mindspore::DataType>();
+  }
   runtime_context->AssignConsumer(tree_getters_);
   RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), {});
   RETURN_SECOND_IF_ERROR(consumer->GetOutputTypes(&types), {});
@@ -314,6 +320,10 @@ std::vector<std::vector<int64_t>> Dataset::GetOutputShapes() {
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
   TreeGetters *consumer = tree_getters_.get();
+  if (consumer == nullptr) {
+    MS_LOG(ERROR) << "TreeGetters: Failed to get consumer.";
+    return std::vector<std::vector<int64_t>>();
+  }
   runtime_context->AssignConsumer(tree_getters_);
   RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), {});
   RETURN_SECOND_IF_ERROR(consumer->GetOutputShapes(&shapes), {});
@@ -324,10 +334,14 @@ std::vector<std::vector<int64_t>> Dataset::GetOutputShapes() {
 }
 
 int64_t Dataset::GetNumClasses() {
-  int64_t num_classes;
+  int64_t num_classes = -1;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
   TreeGetters *consumer = tree_getters_.get();
+  if (consumer == nullptr) {
+    MS_LOG(ERROR) << "TreeGetters: Failed to get consumer.";
+    return -1;
+  }
   runtime_context->AssignConsumer(tree_getters_);
   RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), -1);
   RETURN_SECOND_IF_ERROR(consumer->GetNumClasses(&num_classes), -1);
@@ -339,6 +353,10 @@ std::vector<std::vector<char>> Dataset::GetColumnNamesCharIF() {
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
   TreeGetters *consumer = tree_getters_.get();
+  if (consumer == nullptr) {
+    MS_LOG(ERROR) << "TreeGetters: Failed to get consumer.";
+    return std::vector<std::vector<char>>();
+  }
   runtime_context->AssignConsumer(tree_getters_);
   RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), {});
   RETURN_SECOND_IF_ERROR(consumer->GetColumnNames(&col_names), {});
@@ -350,6 +368,10 @@ std::vector<std::pair<std::vector<char>, std::vector<int32_t>>> Dataset::GetClas
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
   TreeGetters *consumer = tree_getters_.get();
+  if (consumer == nullptr) {
+    MS_LOG(ERROR) << "TreeGetters: Failed to get consumer.";
+    return std::vector<std::pair<std::vector<char>, std::vector<int32_t>>>();
+  }
   runtime_context->AssignConsumer(tree_getters_);
   RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), {});
   RETURN_SECOND_IF_ERROR(consumer->GetClassIndexing(&output_class_indexing), {});
@@ -487,10 +509,10 @@ TakeDataset::TakeDataset(std::shared_ptr<Dataset> input, int32_t count) {
 
 ZipDataset::ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) {
   std::vector<std::shared_ptr<DatasetNode>> all_datasets;
-  (void)std::transform(
-    datasets.begin(), datasets.end(), std::back_inserter(all_datasets),
-    [](std::shared_ptr<Dataset> dataset) -> std::shared_ptr<DatasetNode> { return dataset->IRNode(); });
-
+  (void)std::transform(datasets.begin(), datasets.end(), std::back_inserter(all_datasets),
+                       [](std::shared_ptr<Dataset> dataset) -> std::shared_ptr<DatasetNode> {
+                         return (dataset != nullptr) ? dataset->IRNode() : nullptr;
+                       });
   auto ds = std::make_shared<ZipNode>(all_datasets);
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
@@ -538,6 +560,10 @@ std::shared_ptr<SentencePieceVocab> Dataset::BuildSentencePieceVocabCharIF(
 
   auto consumer = std::make_unique<BuildVocabConsumer>();
   BuildVocabConsumer *bv_consumer = consumer.get();
+  if (bv_consumer == nullptr) {
+    MS_LOG(ERROR) << "BuildVocabConsumer: Failed to get bv_consumer.";
+    return nullptr;
+  }
   rc = consumer->Init(ds);
   if (rc.IsError()) {
     MS_LOG(ERROR) << "BuildSentencePieceVocab: Failed to init consumer. Error status: " << rc;
@@ -571,6 +597,10 @@ std::shared_ptr<Vocab> Dataset::BuildVocabCharIF(const std::vector<std::vector<c
 
   auto consumer = std::make_unique<BuildVocabConsumer>();
   BuildVocabConsumer *bv_consumer = consumer.get();
+  if (bv_consumer == nullptr) {
+    MS_LOG(ERROR) << "BuildVocabConsumer: Failed to get bv_consumer.";
+    return nullptr;
+  }
   rc = consumer->Init(ds);
   if (rc.IsError()) {
     MS_LOG(ERROR) << "BuildVocab: Failed to init consumer. Error status: " << rc;

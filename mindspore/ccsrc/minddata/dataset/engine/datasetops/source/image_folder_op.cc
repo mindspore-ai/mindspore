@@ -84,20 +84,20 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
 
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow
 Status ImageFolderOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
-  ImageLabelPair pairPtr = image_label_pairs_[row_id];
+  ImageLabelPair pair_ptr = image_label_pairs_[row_id];
   std::shared_ptr<Tensor> image, label;
-  RETURN_IF_NOT_OK(Tensor::CreateScalar(pairPtr->second, &label));
-  RETURN_IF_NOT_OK(Tensor::CreateFromFile(folder_path_ + (pairPtr->first), &image));
+  RETURN_IF_NOT_OK(Tensor::CreateScalar(pair_ptr->second, &label));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(folder_path_ + (pair_ptr->first), &image));
 
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
-      std::string err = "Invalid data, failed to decode image: " + folder_path_ + (pairPtr->first);
+      std::string err = "Invalid data, failed to decode image: " + folder_path_ + (pair_ptr->first);
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
   (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
-  trow->setPath({folder_path_ + (pairPtr->first), std::string("")});
+  trow->setPath({folder_path_ + (pair_ptr->first), std::string("")});
   return Status::OK();
 }
 

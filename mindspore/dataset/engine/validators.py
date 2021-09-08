@@ -170,6 +170,7 @@ def check_vocdataset(method):
 
         usage = param_dict.get('usage')
         type_check(usage, (str,), "usage")
+        dataset_dir = os.path.realpath(dataset_dir)
 
         if task == "Segmentation":
             imagesets_file = os.path.join(dataset_dir, "ImageSets", "Segmentation", usage + ".txt")
@@ -711,7 +712,7 @@ def check_take(method):
         [count], _ = parse_user_args(method, *args, **kwargs)
         type_check(count, (int,), "count")
         if (count <= 0 and count != -1) or count > INT32_MAX:
-            raise ValueError("count should be either -1 or positive integer.")
+            raise ValueError("count should be either -1 or positive integer, range[1, INT32_MAX].")
 
         return method(self, *args, **kwargs)
 

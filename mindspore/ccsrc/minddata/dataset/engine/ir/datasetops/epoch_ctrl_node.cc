@@ -46,8 +46,8 @@ void EpochCtrlNode::Print(std::ostream &out) const {
 // Function to build the EpochCtrlOp
 Status EpochCtrlNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   auto new_op_ = std::make_shared<EpochCtrlOp>(repeat_count_);
-  new_op_->set_total_repeats(GetTotalRepeats());
-  new_op_->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  new_op_->SetTotalRepeats(GetTotalRepeats());
+  new_op_->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(new_op_);
   op_ = new_op_;
   return Status::OK();

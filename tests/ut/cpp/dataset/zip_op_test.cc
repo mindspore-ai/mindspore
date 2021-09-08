@@ -162,20 +162,20 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
   std::shared_ptr<ZipOp> zip_op = std::make_shared<ZipOp>(op_connector_size);
   rc = my_tree->AssociateNode(zip_op);
   EXPECT_TRUE(rc.IsOk());
-  my_tfreader_op->set_total_repeats(num_repeats);
-  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
+  my_tfreader_op->SetTotalRepeats(num_repeats);
+  my_tfreader_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = zip_op->AddChild(std::move(my_tfreader_op));
   EXPECT_TRUE(rc.IsOk());
-  my_tfreader_op2->set_total_repeats(num_repeats);
-  my_tfreader_op2->set_num_repeats_per_epoch(num_repeats);
+  my_tfreader_op2->SetTotalRepeats(num_repeats);
+  my_tfreader_op2->SetNumRepeatsPerEpoch(num_repeats);
   rc = zip_op->AddChild(std::move(my_tfreader_op2));
   EXPECT_TRUE(rc.IsOk());
 
   std::shared_ptr<RepeatOp> my_repeat_op = std::make_shared<RepeatOp>(num_repeats);
   rc = my_tree->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
-  zip_op->set_total_repeats(num_repeats);
-  zip_op->set_num_repeats_per_epoch(num_repeats);
+  zip_op->SetTotalRepeats(num_repeats);
+  zip_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = my_repeat_op->AddChild(zip_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(my_repeat_op);

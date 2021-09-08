@@ -43,11 +43,11 @@ std::vector<std::string> StringSplit(const std::string &field, char separator) {
 }
 
 bool ValidateFieldName(const std::string &str) {
-  std::string::const_iterator it = str.begin();
-  if (it == str.end()) {
+  auto it = str.cbegin();
+  if (it == str.cend()) {
     return false;
   }
-  for (; it != str.end(); ++it) {
+  for (; it != str.cend(); ++it) {
     if (*it == '_' || ((*it >= '0') && (*it <= '9')) || ((*it >= 'A') && (*it <= 'Z')) ||
         ((*it >= 'a') && (*it <= 'z'))) {
       continue;
@@ -83,8 +83,7 @@ std::pair<MSRStatus, std::string> GetFileName(const std::string &path) {
   }
 #endif
   std::string s = real_path;
-  char sep = '/';
-  size_t i = s.rfind(sep, s.length());
+  size_t i = s.rfind(kPathSeparator, s.length());
   if (i != std::string::npos) {
     if (i + 1 < s.size()) {
       return {SUCCESS, s.substr(i + 1)};
@@ -119,10 +118,10 @@ std::pair<MSRStatus, std::string> GetParentDir(const std::string &path) {
   }
 #endif
   std::string s = real_path;
-  if (s.rfind('/') + 1 <= s.size()) {
-    return {SUCCESS, s.substr(0, s.rfind('/') + 1)};
+  if (s.rfind(kPathSeparator) + 1 <= s.size()) {
+    return {SUCCESS, s.substr(0, s.rfind(kPathSeparator) + 1)};
   }
-  return {SUCCESS, "/"};
+  return {SUCCESS, std::string()};
 }
 
 bool CheckIsValidUtf8(const std::string &str) {
@@ -155,7 +154,7 @@ bool CheckIsValidUtf8(const std::string &str) {
 bool IsLegalFile(const std::string &path) {
   struct stat s;
   if (stat(common::SafeCStr(path), &s) == 0) {
-    if (s.st_mode & S_IFDIR) {
+    if (S_ISDIR(s.st_mode)) {
       return false;
     }
     return true;
