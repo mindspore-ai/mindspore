@@ -44,7 +44,7 @@ static std::unordered_map<AnfNodePtr, std::set<int64_t>> parameter_color_map;
 // map<rank, tag>
 static std::unordered_map<int64_t, int64_t> send_tag_map;
 static std::unordered_map<int64_t, int64_t> recv_tag_map;
-const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimCast, prim::kPrimTupleGetItem, prim::kPrimMakeTuple};
+const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimCast};
 
 static bool IsInWhiteList(const CNodePtr &cnode) {
   for (auto &prim : WHITE_LIST) {
@@ -88,42 +88,59 @@ ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micr
   return MakeValue(micro);
 }
 
-bool PipelineTransformer::NeedGrad(const CNodePtr &cnode) {
+bool PipelineTransformer::NeedGrad(const CNodePtr &cnode, const CNodePtr &graph_cnode) {
   for (auto &input : cnode->inputs()) {
-    if (input->isa<Parameter>() && ParameterRequireGrad(input)) {
-      return true;
+    auto temp = input;
+    while (IsPrimitiveCNode(temp, prim::kPrimLoad) || IsPrimitiveCNode(temp, prim::kPrimCast)) {
+      auto input_cnode = input->cast<CNodePtr>();
+      temp = input_cnode->input(1);
     }
-    if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
-      auto load = input->cast<CNodePtr>();
-      if (load->input(1)->isa<Parameter>() && ParameterRequireGrad(load->input(1))) {
+    if (temp->isa<Parameter>()) {
+      auto graph = cnode->func_graph();
+      auto parameters = graph->parameters();
+      auto iter = std::find(parameters.begin(), parameters.end(), temp);
+      if (iter == parameters.end() && ParameterRequireGrad(temp)) {
         return true;
       }
-    }
-    if (IsPrimitiveCNode(input, prim::kPrimCast)) {
-      return NeedGrad(input->cast<CNodePtr>());
+      if (iter != parameters.end() && graph != main_graph_) {
+        auto pos = std::distance(parameters.begin(), iter);
+        MS_EXCEPTION_IF_NULL(graph_cnode);
+        auto real_param = graph_cnode->input(pos + 1);
+        if (real_param->isa<Parameter>() && ParameterRequireGrad(real_param)) {
+          return true;
+        }
+      }
     }
   }
   return false;
 }
 
-void PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph) {
+bool PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph, const CNodePtr &graph_cnode) {
   auto orders = graph->GetOrderedCnodes();
   for (auto &node : orders) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->stage() > 0) {
+      continue;
+    }
     if (IsValueNode<FuncGraph>(cnode->input(0))) {
       auto sub_graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-      return LabelParameterStart(sub_graph);
+      if (LabelParameterStart(sub_graph, cnode)) {
+        return true;
+      } else {
+        continue;
+      }
     }
     if (!IsPipelineCareNode(cnode)) {
       continue;
     }
-    if (NeedGrad(cnode)) {
+    if (NeedGrad(cnode, graph_cnode)) {
       auto prim = GetCNodePrimitive(cnode);
       prim->AddAttr(PARAMETER_START, MakeValue(0));
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 void PipelineTransformer::LabelMicroBatch() {
@@ -131,7 +148,9 @@ void PipelineTransformer::LabelMicroBatch() {
     return;
   }
   MS_EXCEPTION_IF_NULL(main_graph_);
-  LabelParameterStart(main_graph_);
+  if (!LabelParameterStart(main_graph_, nullptr)) {
+    MS_LOG(EXCEPTION) << "Stage 0 should has at least 1 parameter. but got none.";
+  }
   MS_EXCEPTION_IF_NULL(virtual_dataset_);
   auto node_user_map = manager_->node_users();
   auto node_users = node_user_map[virtual_dataset_];
@@ -488,10 +507,25 @@ AnfNodePtr PipelineTransformer::FindPipelineCareNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  int64_t get_item_index = 0;
+  if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
+    get_item_index = LongToInt(GetTupleGetItemIndex(cnode));
+    cnode = cnode->input(1)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+  }
   if (IsValueNode<FuncGraph>(cnode->input(0))) {
     auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
     auto output = graph->output();
     MS_EXCEPTION_IF_NULL(output);
+    while (IsPrimitiveCNode(output, prim::kPrimDepend)) {
+      auto output_cnode = output->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(output_cnode);
+      output = output_cnode->input(1);
+    }
+    if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+      auto make_tuple_cnode = output->cast<CNodePtr>();
+      output = make_tuple_cnode->input(get_item_index + 1);
+    }
     if (output->isa<Parameter>()) {
       auto parameters = graph->parameters();
       auto pos_iter = std::find(parameters.begin(), parameters.end(), output);
@@ -540,12 +574,7 @@ SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNod
     op_info_pair = GetParameterPair(parameter);
     tensor_info = op_info_pair.first->inputs_tensor_info().at(IntToSize(op_info_pair.second));
   } else {
-    if (IsPrimitiveCNode(parameter, prim::kPrimCast)) {
-      auto parameter_cnode = parameter->cast<CNodePtr>();
-      care_node = FindPipelineCareNode(parameter_cnode->input(1));
-    } else {
-      care_node = FindPipelineCareNode(parameter);
-    }
+    care_node = FindPipelineCareNode(parameter);
     if (care_node->isa<Parameter>()) {
       op_info_pair = GetParameterPair(care_node);
       tensor_info = op_info_pair.first->inputs_tensor_info().at(IntToSize(op_info_pair.second));
@@ -683,7 +712,7 @@ AnfNodePtr PipelineTransformer::Reuse(const AnfNodePtr &node, int64_t stage, con
 }
 
 AnfNodePtr PipelineTransformer::ActualOp(const AnfNodePtr &node) {
-  // skip some virtual op like:Depend, Load, Cast.
+  // skip some virtual op like:Depend, Load, Cast
   if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimCast) ||
       IsPrimitiveCNode(node, prim::kPrimLoad)) {
     auto cnode = node->cast<CNodePtr>();

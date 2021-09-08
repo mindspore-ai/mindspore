@@ -81,8 +81,8 @@ class PipelineTransformer {
   std::pair<OperatorInfoPtr, int> GetOpInfo(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, int> GetParameterPair(const AnfNodePtr &node);
   OperatorInfoPtr CreateOpInfo(const CNodePtr &cnode, int tuple_index);
-  void LabelParameterStart(const FuncGraphPtr &graph);
-  bool NeedGrad(const CNodePtr &cnode);
+  bool LabelParameterStart(const FuncGraphPtr &graph, const CNodePtr &graph_cnode);
+  bool NeedGrad(const CNodePtr &cnode, const CNodePtr &graph_cnode);
   CNodePtr GraphOutNode(const AnfNodePtr &node, int tuple_index);
   bool IsPipelineCareNode(const CNodePtr &cnode);
   std::pair<CNodePtr, FuncGraphPtr> FindSensNode();
