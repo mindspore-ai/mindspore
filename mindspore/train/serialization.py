@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -243,7 +243,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             each_param = {"name": key}
             param_data = Tensor(value.data)
 
-            # in automatic model parallel scenario, some parameters were spliteds to all the devices,
+            # in automatic model parallel scenario, some parameters were split to all the devices,
             # which should be combined before saving
             if key in save_obj.parameter_layout_dict:
                 param_data = _get_merged_param_data(save_obj, key, param_data, integrated_save)
