@@ -343,6 +343,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
 
 static bool SearchLowerBound(const std::vector<float> &data, const size_t &index, const float &max_tmp, float *min_tmp,
                              size_t *min_idx) {
+  MS_ASSERT(!data.empty());
   size_t length = data.size();
   if (max_tmp - data.at(index) < delta) {
     return false;
@@ -366,6 +367,7 @@ static bool SearchLowerBound(const std::vector<float> &data, const size_t &index
 
 static bool SearchUpperBound(const std::vector<float> &data, const size_t &index, float *max_tmp, const float &min_tmp,
                              size_t *max_idx) {
+  MS_ASSERT(!data.empty());
   size_t length = data.size();
   if (data.at(index) - min_tmp < delta) {
     return false;
@@ -388,6 +390,7 @@ static bool SearchUpperBound(const std::vector<float> &data, const size_t &index
 }
 
 static float CalPercentile(const std::vector<float> &data, const int &outlier_percent) {
+  MS_ASSERT(!data.empty());
   const int size = data.size();
   float val = outlier_percent / kPercentBase * size;
   int index = std::ceil(val);
@@ -401,6 +404,8 @@ static float CalPercentile(const std::vector<float> &data, const int &outlier_pe
 }
 
 std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<float> max_datas) {
+  MS_ASSERT(!min_datas.empty());
+  MS_ASSERT(!max_datas.empty());
   std::sort(max_datas.begin(), max_datas.end());
   std::sort(min_datas.begin(), min_datas.end());
   float min_val = CalPercentile(min_datas, percent);
@@ -454,6 +459,7 @@ static std::vector<float> InitClusters(float *data, size_t elem_count, size_t k)
 
 std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam) {
   MS_ASSERT(data != nullptr);
+  MS_CHECK_TRUE_MSG(elem_count != 0, std::vector<int8_t>{}, "elem_count is zero.");
   std::vector<float> clusters = InitClusters(data, elem_count, k);
   std::vector<int8_t> clusters_index{};
   double error{0};
@@ -671,6 +677,11 @@ int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first
 
 void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes, int index, bool *channel_at_first,
                        int *channel_cnt) {
+  MS_ASSERT(primitive != nullptr);
+  if (shapes.empty()) {
+    MS_LOG(ERROR) << " shape vector is empty.";
+    return;
+  }
   if (primitive->name() == ops::kNameMatMul && static_cast<int>(shapes.size()) == 2) {
     auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMul>>();
     MS_ASSERT(matmul_prim != nullptr);
@@ -700,6 +711,11 @@ void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes,
 
 void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
                        bool *channel_at_first, int *channel_cnt) {
+  MS_ASSERT(primitive != nullptr);
+  if (shapes.empty()) {
+    MS_LOG(ERROR) << " shape vector is empty.";
+    return;
+  }
   if (primitive.value.type == schema::PrimitiveType_MatMul && static_cast<int>(shapes.size()) == 2) {
     auto matmul_prim = primitive.value.AsMatMul();
     MS_ASSERT(matmul_prim != nullptr);
