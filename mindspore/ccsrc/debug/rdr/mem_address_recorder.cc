@@ -33,27 +33,22 @@ std::string MemInfo2String(const std::string &label, const AddressPtrList &info)
 }
 }  // namespace
 
-void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const MemInfo &mem_info, size_t id) {
-  if (op_names_.size() <= id) {
-    return;
-  }
+void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo &mem_info) {
   std::lock_guard<std::mutex> lock(mtx_);
-  op_names_[id] = op_name;
-  mem_info_inputs_[id] = *(mem_info.inputs_);
-  mem_info_workspaces_[id] = *(mem_info.workspaces_);
-  mem_info_outputs_[id] = *(mem_info.outputs_);
-}
-
-void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo *mem_info) {
-  std::lock_guard<std::mutex> lock(mtx_);
-  if (!printed) {
+  if (!printed_) {
     MS_LOG(INFO) << "RDR update mem info.";
-    printed = true;
+    printed_ = true;
   }
-  op_names_.emplace_back(op_name);
-  mem_info_inputs_.emplace_back(mem_info->inputs_);
-  mem_info_workspaces_.emplace_back(mem_info->workspaces_);
-  mem_info_outputs_.emplace_back(mem_info->outputs_);
+  if (op_names_.count(op_name) != 0) {
+    op_names_.clear();
+    mem_info_stream_.str("");
+  }
+  op_names_.insert(op_name);
+  mem_info_stream_ << op_name << std::endl;
+  mem_info_stream_ << MemInfo2String("kernel_inputs", mem_info.inputs_);
+  mem_info_stream_ << MemInfo2String("kernel_workspaces", mem_info.workspaces_);
+  mem_info_stream_ << MemInfo2String("kernel_outputs", mem_info.outputs_);
+  mem_info_stream_ << std::endl;
 }
 
 void MemAddressRecorder::Export() {
@@ -69,19 +64,8 @@ void MemAddressRecorder::Export() {
     MS_LOG(WARNING) << "Open file for saving memory information failed. File path: '" << file_path << "'.";
     return;
   }
-  MS_LOG(INFO) << "RDR export mem info.";
-  std::ostringstream mem_info_stream;
-  for (size_t i = 0; i < op_names_.size(); i++) {
-    mem_info_stream << op_names_[i] << std::endl;
-    auto inputs = mem_info_inputs_[i];
-    mem_info_stream << MemInfo2String("kernel_inputs", inputs);
-    auto workspaces = mem_info_workspaces_[i];
-    mem_info_stream << MemInfo2String("kernel_workspaces", workspaces);
-    auto outputs = mem_info_outputs_[i];
-    mem_info_stream << MemInfo2String("kernel_outputs", outputs);
-    mem_info_stream << std::endl;
-  }
-  fout << mem_info_stream.str();
+  MS_LOG(INFO) << "RDR export device memory information.";
+  fout << mem_info_stream_.str();
   fout.close();
   ChangeFileMode(file_path, S_IRUSR);
 }
@@ -90,9 +74,7 @@ void MemAddressRecorder::CleanUp() {
   std::lock_guard<std::mutex> lock(mtx_);
   MS_LOG(INFO) << "RDR clean up mem info, kernel size equals " << op_names_.size();
   op_names_.clear();
-  mem_info_inputs_.clear();
-  mem_info_workspaces_.clear();
-  mem_info_outputs_.clear();
-  printed = false;
+  mem_info_stream_.str("");
+  printed_ = false;
 }
 }  // namespace mindspore

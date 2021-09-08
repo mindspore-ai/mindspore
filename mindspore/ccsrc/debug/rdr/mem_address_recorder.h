@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 #include <memory>
 #include <mutex>
 
@@ -42,24 +43,20 @@ class MemAddressRecorder : public BaseRecorder {
   ~MemAddressRecorder() {}
 
   virtual void Export();
-  void SaveMemInfo(const std::string &op_name, const MemInfo &mem_info, size_t id);
-  void SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo *mem_info);
+  void SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo &mem_info);
 
-  void Reset(size_t nsize) {
-    op_names_.resize(nsize);
-    mem_info_inputs_.resize(nsize);
-    mem_info_workspaces_.resize(nsize);
-    mem_info_outputs_.resize(nsize);
+  void Reset() {
+    op_names_.clear();
+    mem_info_stream_.str("");
   }
   void CleanUp();
 
  private:
   mutable std::mutex mtx_;
-  bool printed{false};
-  std::vector<std::string> op_names_;
-  std::vector<AddressPtrList> mem_info_inputs_;
-  std::vector<AddressPtrList> mem_info_workspaces_;
-  std::vector<AddressPtrList> mem_info_outputs_;
+  bool printed_{false};
+
+  std::set<std::string> op_names_;
+  std::ostringstream mem_info_stream_;
 };
 using MemAddressRecorderPtr = std::shared_ptr<MemAddressRecorder>;
 }  // namespace mindspore

@@ -420,8 +420,7 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
 #endif
 #ifdef ENABLE_DUMP_IR
   std::string name = "mem_address_list";
-  (void)mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, name, kernels.size());
-  size_t id = 0;
+  (void)mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, name);
 #endif
   for (const auto &kernel : kernels) {
 #ifdef ENABLE_PROFILE
@@ -458,9 +457,9 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
       profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
     }
 #ifdef ENABLE_DUMP_IR
-    MemInfo mem_info = {&kernel_inputs, &kernel_workspaces, &kernel_outputs};
+    kernel::KernelLaunchInfo mem_info = {kernel_inputs, kernel_workspaces, kernel_outputs};
     std::string op_name = kernel->fullname_with_scope();
-    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info, id++);
+    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info);
 #endif
     try {
       ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
