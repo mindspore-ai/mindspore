@@ -45,8 +45,8 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
         __m128 src128 = _mm_add_ps(_mm256_extractf128_ps(srcv, 0), _mm256_extractf128_ps(srcv, 1));
         __m128 square128 = _mm_add_ps(_mm256_extractf128_ps(squarev, 0), _mm256_extractf128_ps(squarev, 1));
         for (int i = 0; i < C4NUM; ++i) {
-          mean += src128[i];
-          square_mean += square128[i];
+          mean += MS_F32X4_GETI(src128, i);
+          square_mean += MS_F32X4_GETI(square128, i);
         }
       }
 #endif
