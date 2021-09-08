@@ -83,7 +83,7 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManager>(1, "cluster");
 
   // Expand complex op to composite kernels
-  pm->AddPass(std::make_shared<GraphKernelComplexExpander>(), OptLevel_1, false);
+  pm->AddPass(std::make_shared<GraphKernelComplexExpander>(), OptLevel_1, is_gpu);
 
   // Expand complex basic kernels to composite kernels
   pm->AddPass(std::make_shared<GraphKernelExpander>(), OptLevel_1);
@@ -125,7 +125,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   pm->AddPass(std::make_shared<GraphKernelCSE>(), OptLevel_2);
 
   // Eliminate Redundant Complex op
-  pm->AddPass(std::make_shared<EliminateRedundantComplex>(), OptLevel_2, false);
+  pm->AddPass(std::make_shared<EliminateRedundantComplex>(), OptLevel_2, is_gpu);
 
   // Eliminate unnecessary transform ops
   auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_trans_op_optimize);
