@@ -578,7 +578,7 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
     NodeInfo info;
     info.ip_ = it.ip();
     info.node_id_ = it.node_id();
-    info.port_ = it.port();
+    info.port_ = static_cast<uint16_t>(it.port());
     info.node_role_ = it.role();
     info.rank_id_ = it.rank_id();
     info.is_alive = it.is_alive();
@@ -1072,8 +1072,8 @@ void AbstractNode::InitNodeInfo(const NodeRole &role) {
 }
 
 void AbstractNode::InitNodeNum() {
-  worker_num_ = PSContext::instance()->cluster_config().initial_worker_num;
-  server_num_ = PSContext::instance()->cluster_config().initial_server_num;
+  worker_num_ = SizeToInt(PSContext::instance()->cluster_config().initial_worker_num);
+  server_num_ = SizeToInt(PSContext::instance()->cluster_config().initial_server_num);
   scheduler_ip_ = PSContext::instance()->cluster_config().scheduler_host;
   scheduler_port_ = PSContext::instance()->cluster_config().scheduler_port;
   MS_LOG(INFO) << "The worker num:" << worker_num_ << ", the server num:" << server_num_
