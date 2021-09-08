@@ -66,8 +66,6 @@ int DepthToSpaceInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int DepthToSpaceInt8CPUKernel::ReSize() { return DepthToSpaceBaseCPUKernel::ReSize(); }
-
 int DepthToSpaceInt8CPUKernel::Run() {
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
