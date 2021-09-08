@@ -912,7 +912,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     std::string slot_string_to_check;
     std::string prefix_dump_file_name;
     SetPrefixToCheck(&prefix_dump_file_name, &slot_string_to_check, &dump_style_kernel_name, slot[i], is_output[i]);
-    std::string prefix_dump_to_check = dump_style_kernel_name;
+    std::string prefix_dump_to_check = dump_style_kernel_name + '.';
     GetNodeNameWithoutScope(&prefix_dump_to_check);
 
     std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id[i]) + "/" + net_name_ + "/" +
@@ -1283,12 +1283,12 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
 #ifdef ONLINE_DBG_MODE
   auto debugger = Debugger::GetInstance();
   overflow_bin_path = DumpJsonParser::GetInstance().GetOpOverflowBinPath(debugger->GetGraphPtr()->graph_id());
-  auto realpath = Common::GetRealPath(overflow_bin_path);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed for overflow_bin_path.";
+  std::string check_overflow_bin_path = RealPath(overflow_bin_path);
+  if (check_overflow_bin_path.empty()) {
+    MS_LOG(WARNING) << "Get real path failed for overflow_bin_path.";
     return false;
   }
-  overflow_bin_path = realpath.value();
+  overflow_bin_path = check_overflow_bin_path;
 #else
   overflow_bin_path = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
                       std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
@@ -1471,7 +1471,7 @@ std::string DebugServices::RealPath(const std::string &input_path) {
       MS_LOG(EXCEPTION) << "The length of file name : " << file_name.length() << " exceeds limit: " << NAME_MAX;
     }
     if (realpath(prefix_path.c_str(), real_path) == nullptr) {
-      MS_LOG(ERROR) << "The dir " << prefix_path << " does not exist.";
+      MS_LOG(WARNING) << "The dir " << prefix_path << " does not exist.";
       return "";
     }
 
