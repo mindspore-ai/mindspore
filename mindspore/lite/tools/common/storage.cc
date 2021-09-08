@@ -52,6 +52,11 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
   }
 
   output.write((const char *)content, size);
+  if (output.bad()) {
+    output.close();
+    MS_LOG(ERROR) << "Write output file : " << filename << " failed";
+    return RET_ERROR;
+  }
   output.close();
 #ifndef _MSC_VER
   chmod(filename.c_str(), S_IRUSR);

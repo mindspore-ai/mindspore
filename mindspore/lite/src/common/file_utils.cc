@@ -42,7 +42,14 @@ inline int AccessFile(const std::string &file_path, int access_mode) {
 #ifdef _WIN32
   return _access(file_path.c_str(), access_mode);
 #else
-  return access(file_path.c_str(), access_mode);
+  // android access interface always return true
+  struct stat st;
+  if (stat(file_path.c_str(), &st) == 0) {
+    mode_t perm = st.st_mode;
+    auto can_read = perm & S_IRUSR;
+    return (can_read && access(file_path.c_str(), access_mode) == 0) ? 0 : -1;
+  }
+  return -1;
 #endif
 }
 
@@ -62,6 +69,10 @@ char *ReadFile(const char *file, size_t *size) {
   }
   MS_ASSERT(size != nullptr);
   std::string real_path = RealPath(file);
+  if (AccessFile(real_path, R_OK) != 0) {
+    MS_LOG(ERROR) << "cannot access file:" << real_path << ".please check file if exists and file mod";
+    return nullptr;
+  }
   std::ifstream ifs(real_path, std::ifstream::in | std::ifstream::binary);
   if (!ifs.good()) {
     MS_LOG(ERROR) << "file: " << real_path << " is not exist";

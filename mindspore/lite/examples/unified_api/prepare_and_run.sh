@@ -111,11 +111,12 @@ cp scripts/*.sh ${PACKAGE}/
 tar -xzf ${TARBALL}
 mv mindspore-*/runtime/lib ${PACKAGE}/
 mv mindspore-*/runtime/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
-if [ "${TARGET}" == "arm64" ]; then
-  tar -xzf ${TARBALL} --wildcards --no-anchored hiai_ddk
-  mv mindspore-*/runtime/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/
+cd mindspore-*
+if [[ "${TARGET}" == "arm64" ]] && [[ -d "runtime/third_party/hiai_ddk/lib" ]]; then
+  mv runtime/third_party/hiai_ddk/lib/* ../${PACKAGE}/lib/
 fi
 
+cd ..
 rm -rf msl
 mv mindspore-* msl/
 rm -rf msl/tools/
