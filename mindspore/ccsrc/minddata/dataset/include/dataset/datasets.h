@@ -926,6 +926,84 @@ inline std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
   return std::make_shared<Cifar100Dataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+class CityscapesDataset : public Dataset {
+ public:
+  explicit CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                             const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
+                             const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  explicit CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                             const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
+                             const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+  explicit CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                             const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
+                             const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  ~CityscapesDataset() = default;
+};
+
+/// \brief Function to create a CityscapesDataset.
+/// \notes The generated dataset has two columns ["image", "task"].
+/// \param[in] dataset_dir The dataset dir to be read.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test", "val" or "all" if
+///     quality_mode is "fine" otherwise "train", "train_extra", "val" or "all".
+/// \param[in] quality_mode The quality mode of processed image. Acceptable quality_modes include
+///     "fine" or "coarse".
+/// \param[in] task The type of task which is used to select output data. Acceptable tasks include
+///     "instance", "semantic", "polygon" or "color".
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current CityscapesDataset.
+inline std::shared_ptr<CityscapesDataset> Cityscapes(
+  const std::string &dataset_dir, const std::string &usage, const std::string &quality_mode, const std::string &task,
+  bool decode = false, const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<CityscapesDataset>(StringToChar(dataset_dir), StringToChar(usage), StringToChar(quality_mode),
+                                             StringToChar(task), decode, sampler, cache);
+}
+
+/// \brief Function to create a CityscapesDataset.
+/// \notes The generated dataset has two columns ["image", "task"].
+/// \param[in] dataset_dir The dataset dir to be read.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test", "val" or "all" if
+///     quality_mode is "fine" otherwise "train", "train_extra", "val" or "all".
+/// \param[in] quality_mode The quality mode of processed image. Acceptable quality_modes include
+///     "fine" or "coarse".
+/// \param[in] task The type of task which is used to select output data. Acceptable tasks include
+///     "instance", "semantic", "polygon" or "color".
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current CityscapesDataset.
+inline std::shared_ptr<CityscapesDataset> Cityscapes(const std::string &dataset_dir, const std::string &usage,
+                                                     const std::string &quality_mode, const std::string &task,
+                                                     bool decode, const Sampler *sampler,
+                                                     const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<CityscapesDataset>(StringToChar(dataset_dir), StringToChar(usage), StringToChar(quality_mode),
+                                             StringToChar(task), decode, sampler, cache);
+}
+
+/// \brief Function to create a CityscapesDataset.
+/// \notes The generated dataset has two columns ["image", "task"].
+/// \param[in] dataset_dir The dataset dir to be read.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test", "val" or "all" if
+///     quality_mode is "fine" otherwise "train", "train_extra", "val" or "all".
+/// \param[in] quality_mode The quality mode of processed image. Acceptable quality_modes include
+///     "fine" or "coarse".
+/// \param[in] task The type of task which is used to select output data. Acceptable tasks include
+///     "instance", "semantic", "polygon" or "color".
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current CityscapesDataset.
+inline std::shared_ptr<CityscapesDataset> Cityscapes(const std::string &dataset_dir, const std::string &usage,
+                                                     const std::string &quality_mode, const std::string &task,
+                                                     bool decode, const std::reference_wrapper<Sampler> sampler,
+                                                     const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<CityscapesDataset>(StringToChar(dataset_dir), StringToChar(usage), StringToChar(quality_mode),
+                                             StringToChar(task), decode, sampler, cache);
+}
+
 class CLUEDataset : public Dataset {
  public:
   explicit CLUEDataset(const std::vector<std::vector<char>> &dataset_files, const std::vector<char> &task,

@@ -64,7 +64,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
-    check_sb_dataset, check_flowers102dataset
+    check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -6340,3 +6340,173 @@ class DeserializedDataset(Dataset):
             json_str = json.dumps(self.input_obj)
             return cde.Dataset.from_json_string(json_str)
         return cde.Dataset.from_json_file(self.input_obj)
+
+
+class CityscapesDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing Cityscapes dataset.
+
+    The generated dataset has two columns :py:obj:`[image, task]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`task` is of the uint8 type if task is not 'polygon' otherwise task is
+    a string tensor with serialize json.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str): Acceptable usages include `train`, `test`, `val` or `all` if quality_mode is `fine`
+            otherwise `train`, `train_extra`, `val` or `all` (default=`train`).
+        quality_mode (str): Acceptable quality_modes include `fine` or `coarse` (default=`fine`).
+        task (str): Acceptable tasks include `instance`, `semantic`, `polygon` or `color` (default=`instance`).
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir is invalid or does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If task is invalid.
+        ValueError: If quality_mode is invalid.
+        ValueError: If usage is invalid.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> cityscapes_dataset_dir = "/path/to/cityscapes_dataset_directory"
+        >>>
+        >>> # 1) Get all samples from Cityscapes dataset in sequence
+        >>> dataset = ds.CityscapesDataset(dataset_dir=cityscapes_dataset_dir, task="instance", quality_mode="fine",
+        >>>                                usage="train", shuffle=False, num_parallel_workers=1)
+        >>>
+        >>> # 2) Randomly select 350 samples from Cityscapes dataset
+        >>> dataset = ds.CityscapesDataset(dataset_dir=cityscapes_dataset_dir, num_samples=350, shuffle=True,
+        >>>                                num_parallel_workers=1)
+        >>>
+        >>> # 3) Get samples from Cityscapes dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.CityscapesDataset(dataset_dir=cityscapes_dataset_dir, num_shards=2, shard_id=0,
+        >>>                                num_parallel_workers=1)
+        >>>
+        >>> # In Cityscapes dataset, each dictionary has keys "image" and "task"
+
+    About Cityscapes dataset:
+
+    The Cityscapes dataset consists of 5000 colour images with high quality dense pixel annotations and
+    19998 colour images with coarser polygonal annotations in 50 cities. There are 30 classes in this
+    dataset and the polygonal annotations include dense semantic segmentation and instance segmentation
+    for vehicle and people.
+
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+
+    Taking the quality_mode of `fine` as an example.
+
+    .. code-block::
+
+        .
+        └── Cityscapes
+             ├── leftImg8bit
+             |    ├── train
+             |    |    ├── aachen
+             |    |    |    ├── aachen_000000_000019_leftImg8bit.png
+             |    |    |    ├── aachen_000001_000019_leftImg8bit.png
+             |    |    |    ├── ...
+             |    |    ├── bochum
+             |    |    |    ├── ...
+             |    |    ├── ...
+             |    ├── test
+             |    |    ├── ...
+             |    ├── val
+             |    |    ├── ...
+             └── gtFine
+                  ├── train
+                  |    ├── aachen
+                  |    |    ├── aachen_000000_000019_gtFine_color.png
+                  |    |    ├── aachen_000000_000019_gtFine_instanceIds.png
+                  |    |    ├── aachen_000000_000019_gtFine_labelIds.png
+                  |    |    ├── aachen_000000_000019_gtFine_polygons.json
+                  |    |    ├── aachen_000001_000019_gtFine_color.png
+                  |    |    ├── aachen_000001_000019_gtFine_instanceIds.png
+                  |    |    ├── aachen_000001_000019_gtFine_labelIds.png
+                  |    |    ├── aachen_000001_000019_gtFine_polygons.json
+                  |    |    ├── ...
+                  |    ├── bochum
+                  |    |    ├── ...
+                  |    ├── ...
+                  ├── test
+                  |    ├── ...
+                  └── val
+                       ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{Cordts2016Cityscapes,
+        title       = {The Cityscapes Dataset for Semantic Urban Scene Understanding},
+        author      = {Cordts, Marius and Omran, Mohamed and Ramos, Sebastian and Rehfeld, Timo and Enzweiler,
+                        Markus and Benenson, Rodrigo and Franke, Uwe and Roth, Stefan and Schiele, Bernt},
+        booktitle   = {Proc. of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+        year        = {2016}
+        }
+    """
+
+    @check_cityscapes_dataset
+    def __init__(self, dataset_dir, usage="train", quality_mode="fine", task="instance", num_samples=None,
+                 num_parallel_workers=None, shuffle=None, decode=None, sampler=None, num_shards=None,
+                 shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.task = task
+        self.quality_mode = quality_mode
+        self.usage = usage
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.CityscapesNode(self.dataset_dir, self.usage, self.quality_mode, self.task, self.decode, self.sampler)
