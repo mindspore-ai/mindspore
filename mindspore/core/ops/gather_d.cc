@@ -42,8 +42,8 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   if (dim_v < 0) {
     dim_v = dim_v + x_rank;
   }
-  for (int i = 0; i < x_rank; ++i) {
-    if (i == dim_v) continue;
+  for (size_t i = 0; i < x_shape.size(); ++i) {
+    if (SizeToLong(i) == dim_v) continue;
     MS_LOG(INFO) << "Check " << i << "th x shape";
     CheckAndConvertUtils::Check("x shape", x_shape[i], kEqual, "index_rank", index_shape[i], prim_name);
   }

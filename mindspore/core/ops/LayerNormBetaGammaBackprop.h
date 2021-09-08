@@ -32,7 +32,7 @@ class MS_CORE_API LayerNormBetaGammaBackprop : public PrimitiveC {
   LayerNormBetaGammaBackprop() : PrimitiveC(prim::kPrimLayerNormBetaGammaBackprop->name()) {}
   ~LayerNormBetaGammaBackprop() = default;
   MS_DECLARE_PARENT(LayerNormBetaGammaBackprop, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr LayerNormBetaGammaBackpropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

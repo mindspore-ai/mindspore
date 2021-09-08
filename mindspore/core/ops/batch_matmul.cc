@@ -52,8 +52,8 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
   bool transpose_a = GetValue<bool>(transpose_a_ptr);
   bool transpose_b = GetValue<bool>(transpose_b_ptr);
-  int64_t x_col = x_last[!transpose_a];
-  int64_t y_row = y_last[transpose_b];
+  int64_t x_col = x_last[static_cast<size_t>(!transpose_a)];
+  int64_t y_row = y_last[static_cast<size_t>(transpose_b)];
   if (std::find(x_shp.begin(), x_shp.end(), -1) == x_shp.end() &&
       std::find(y_shp.begin(), y_shp.end(), -1) == y_shp.end()) {
     if (x_col != y_row) {

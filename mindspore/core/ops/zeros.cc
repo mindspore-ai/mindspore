@@ -32,7 +32,7 @@ abstract::ShapePtr ZerosInferShape(const PrimitivePtr &primitive, const std::vec
   // check
   auto shape_value = input_args[0]->BuildValue();
   std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("shape", shape_value, prim_name);
-  CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
+  (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

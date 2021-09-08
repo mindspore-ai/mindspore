@@ -54,14 +54,13 @@ int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, cons
   return attr_val;
 }
 
-std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &attr, const size_t start_idx,
-                                         const size_t num_element) {
+std::vector<int64_t> CheckAttrIntOrTuple(const ValuePtr &attr, const size_t start_idx, const size_t num_element) {
   std::vector<int64_t> result;
   MS_EXCEPTION_IF_NULL(attr);
   if (attr->isa<ValueTuple>()) {
     std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
-    auto it_start = attr_vec.begin() + start_idx;
-    (void)std::transform(it_start, it_start + num_element, std::back_inserter(result),
+    auto it_start = attr_vec.begin() + SizeToLong(start_idx);
+    (void)std::transform(it_start, it_start + SizeToLong(num_element), std::back_inserter(result),
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   } else {
     int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
@@ -186,16 +185,16 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   if ((w_shape[n_axis] != Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {
     MS_LOG(EXCEPTION) << "w_shape[" << n_axis << "] = " << w_shape[n_axis] << " must equal to = " << out_channel;
   }
-  std::vector<int64_t> kernel_size = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("kernel_size"), 0, 2);
+  std::vector<int64_t> kernel_size = CheckAttrIntOrTuple(primitive->GetAttr("kernel_size"), 0, 2);
   if ((w_shape[h_axis] != Shape::SHP_ANY) && (w_shape[h_axis] != kernel_size[0])) {
     MS_LOG(EXCEPTION) << "weight height = " << w_shape[h_axis] << ", must equal to = " << kernel_size[0];
   }
   if ((w_shape[w_axis] != Shape::SHP_ANY) && (w_shape[w_axis] != kernel_size[1])) {
     MS_LOG(EXCEPTION) << "weight width = " << w_shape[w_axis] << ", must equal to = " << kernel_size[1];
   }
-  std::vector<int64_t> stride = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("stride"), 2, 2);
-  std::vector<int64_t> dilation = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("dilation"), 2, 2);
-  std::vector<int64_t> padding = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("pad"), 0, 4);
+  std::vector<int64_t> stride = CheckAttrIntOrTuple(primitive->GetAttr("stride"), 2, 2);
+  std::vector<int64_t> dilation = CheckAttrIntOrTuple(primitive->GetAttr("dilation"), 2, 2);
+  std::vector<int64_t> padding = CheckAttrIntOrTuple(primitive->GetAttr("pad"), 0, 4);
   int64_t pad_mode;
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr("pad_mode"), &pad_mode);
   std::vector<int64_t> output_hw;

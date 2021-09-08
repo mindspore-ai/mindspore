@@ -39,7 +39,7 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto infer_type = input_args[0]->BuildType();
   auto valid_type = common_valid_types;
-  valid_type.insert(kBool);
+  (void)valid_type.insert(kBool);
   return CheckAndConvertUtils::CheckTensorTypeValid("infer_type", infer_type, valid_type, op_name);
 }
 }  // namespace
