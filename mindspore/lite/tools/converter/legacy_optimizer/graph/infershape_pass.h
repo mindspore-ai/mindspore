@@ -46,7 +46,7 @@ class InferShapePass : public GraphPass {
   STATUS Run(MetaGraphT *graph) override;
 
  private:
-  std::vector<uint32_t> InitSearchTensor(const int &subgraph_index, MetaGraphT *graph);
+  int InitSearchTensor(const int &subgraph_index, MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes);
   void AddNextInferShapeNode(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes,
                              std::vector<uint32_t> next_nodes_indexes, size_t index);
   void AddOutputNodes(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes, uint32_t infer_node_index);

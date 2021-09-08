@@ -471,10 +471,15 @@ int InferShapePass::InferCallNode(const std::unique_ptr<CNodeT> &call_node, Meta
 }
 
 int InferShapePass::InferSubgraph(const int &subgraph_index, MetaGraphT *graph) {
-  auto infer_node_indexes = InitSearchTensor(subgraph_index, graph);
-  if (infer_node_indexes.empty()) {
+  std::vector<uint32_t> infer_node_indexes{};
+  int ret = InitSearchTensor(subgraph_index, graph, &infer_node_indexes);
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitSearchTensor failed.";
-    return RET_ERROR;
+    return ret;
+  }
+  if (infer_node_indexes.empty()) {
+    MS_LOG(DEBUG) << "no need to infer.";
+    return RET_OK;
   }
 
   while (!infer_node_indexes.empty()) {
@@ -482,7 +487,7 @@ int InferShapePass::InferSubgraph(const int &subgraph_index, MetaGraphT *graph) 
     auto &node = graph->nodes.at(infer_node_index);
     auto node_type = node->primitive->value.type;
     if (node_type == PrimitiveType_Call) {
-      int ret = InferCallNode(node, graph);
+      ret = InferCallNode(node, graph);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "infer call node failed.";
         return ret;
@@ -537,12 +542,12 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
   return RET_OK;
 }
 
-std::vector<uint32_t> InferShapePass::InitSearchTensor(const int &subgraph_index, MetaGraphT *graph) {
-  std::vector<uint32_t> infer_node_indexes = {};
+int InferShapePass::InitSearchTensor(const int &subgraph_index, MetaGraphT *graph,
+                                     std::vector<uint32_t> *infer_node_indexes) {
   if (static_cast<size_t>(subgraph_index) >= graph->subGraph.size()) {
     MS_LOG(ERROR) << "subgraph_index: " << subgraph_index
                   << " is larger than graph->subGraph.size(): " << graph->subGraph.size();
-    return {};
+    return RET_ERROR;
   }
   auto &subgraph = graph->subGraph.at(subgraph_index);
   for (uint32_t i = 0; i < tensors_.size(); i++) {
@@ -554,10 +559,10 @@ std::vector<uint32_t> InferShapePass::InitSearchTensor(const int &subgraph_index
     auto &node = graph->nodes.at(subgraph->nodeIndices.at(i));
     if (std::all_of(node->inputIndex.begin(), node->inputIndex.end(),
                     [&](uint32_t idx) { return tensors_[idx].is_inferred_; })) {
-      infer_node_indexes.push_back(subgraph->nodeIndices.at(i));
+      infer_node_indexes->push_back(subgraph->nodeIndices.at(i));
     }
   }
-  return infer_node_indexes;
+  return RET_OK;
 }
 
 void InferShapePass::AddOutputNodes(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes,
