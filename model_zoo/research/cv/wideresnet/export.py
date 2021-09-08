@@ -26,6 +26,7 @@ from mindspore import Tensor, load_checkpoint, load_param_into_net, export, cont
 from src.wide_resnet import wideresnet
 
 parser = argparse.ArgumentParser(description='WideResNet export')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--run_modelart", type=ast.literal_eval, default=False, help="Run on modelArt, default is false.")
 parser.add_argument('--data_url', default=None, help='Directory contains cifar10 dataset.')
 parser.add_argument('--train_url', default=None, help='Directory contains checkpoint file')
@@ -34,8 +35,9 @@ parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
 args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(device_id=int(os.environ["DEVICE_ID"]))
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+if args.device_target == "Ascend":
+    context.set_context(device_id=args.device_id)
 
 if args.run_modelart:
     import moxing as mox
@@ -48,10 +50,10 @@ if __name__ == '__main__':
 
     net = wideresnet()
 
-    param_dict = load_checkpoint(os.path.join(local_output_url, args.ckpt_file))
     print('load ckpt')
-    load_param_into_net(net, param_dict)
+    param_dict = load_checkpoint(args.ckpt_file)
     print('load ckpt to net')
+    load_param_into_net(net, param_dict)
     net.set_train(False)
     input_arr = Tensor(np.ones([args.batch_size, 3, 32, 32]), mstype.float32)
     print('input')
