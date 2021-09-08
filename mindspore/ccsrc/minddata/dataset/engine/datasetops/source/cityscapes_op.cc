@@ -135,20 +135,20 @@ Status CityscapesOp::ParseCityscapesData() {
   if (usage_ == "all" && quality_mode_ == "fine") {
     std::vector<std::string> all_usage_fine = {"train", "test", "val"};
     for (auto item : all_usage_fine) {
-      std::string images_dir_fine = (dataset_dir / "leftImg8bit" / item).toString();
-      std::string task_dir_fine = (dataset_dir / real_quality_mode / item).toString();
+      std::string images_dir_fine = (dataset_dir / "leftImg8bit" / item).ToString();
+      std::string task_dir_fine = (dataset_dir / real_quality_mode / item).ToString();
       RETURN_IF_NOT_OK(GetCityscapesDataByUsage(images_dir_fine, task_dir_fine, real_quality_mode));
     }
   } else if (usage_ == "all" && quality_mode_ == "coarse") {
     std::vector<std::string> all_usage_coarse = {"train", "train_extra", "val"};
     for (auto item : all_usage_coarse) {
-      std::string images_dir_coarse = (dataset_dir / "leftImg8bit" / item).toString();
-      std::string task_dir_coarse = (dataset_dir / real_quality_mode / item).toString();
+      std::string images_dir_coarse = (dataset_dir / "leftImg8bit" / item).ToString();
+      std::string task_dir_coarse = (dataset_dir / real_quality_mode / item).ToString();
       RETURN_IF_NOT_OK(GetCityscapesDataByUsage(images_dir_coarse, task_dir_coarse, real_quality_mode));
     }
   } else {
-    std::string images_dir = (dataset_dir / "leftImg8bit" / usage_).toString();
-    std::string task_dir = (dataset_dir / real_quality_mode / usage_).toString();
+    std::string images_dir = (dataset_dir / "leftImg8bit" / usage_).ToString();
+    std::string task_dir = (dataset_dir / real_quality_mode / usage_).ToString();
     RETURN_IF_NOT_OK(GetCityscapesDataByUsage(images_dir, task_dir, real_quality_mode));
   }
   return Status::OK();
@@ -162,15 +162,15 @@ Status CityscapesOp::GetCityscapesDataByUsage(const std::string &images_dir, con
 
   Path images_dir_p(images_dir);
   if (!images_dir_p.IsDirectory()) {
-    RETURN_STATUS_UNEXPECTED("Invalid path, " + images_dir_p.toString() + " is an invalid directory path.");
+    RETURN_STATUS_UNEXPECTED("Invalid path, " + images_dir_p.ToString() + " is an invalid directory path.");
   }
   Path task_dir_p(task_dir);
   if (!task_dir_p.IsDirectory()) {
-    RETURN_STATUS_UNEXPECTED("Invalid path, " + task_dir_p.toString() + " is an invalid directory path.");
+    RETURN_STATUS_UNEXPECTED("Invalid path, " + task_dir_p.ToString() + " is an invalid directory path.");
   }
   std::shared_ptr<Path::DirIterator> d_it = Path::DirIterator::OpenDirectory(&images_dir_p);
   if (d_it == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid path, failed to open directory: " + images_dir_p.toString());
+    RETURN_STATUS_UNEXPECTED("Invalid path, failed to open directory: " + images_dir_p.ToString());
   }
 
   while (d_it->HasNext()) {
@@ -184,7 +184,7 @@ Status CityscapesOp::GetCityscapesDataByUsage(const std::string &images_dir, con
       Path task_city_dir = task_dir_p / city_dir.Basename();
       std::shared_ptr<Path::DirIterator> img_city_it = Path::DirIterator::OpenDirectory(&img_city_dir);
       if (img_city_it == nullptr) {
-        RETURN_STATUS_UNEXPECTED("Invalid path, failed to open directory: " + img_city_dir.toString());
+        RETURN_STATUS_UNEXPECTED("Invalid path, failed to open directory: " + img_city_dir.ToString());
       }
 
       while (img_city_it->HasNext()) {
@@ -198,10 +198,10 @@ Status CityscapesOp::GetCityscapesDataByUsage(const std::string &images_dir, con
         Path task_file_path = task_city_dir / (img_file_name.substr(0, img_file_name.find("_leftImg8bit")) + "_" +
                                                GetTaskSuffix(task_, real_quality_mode));
         if (!task_file_path.Exists()) {
-          RETURN_STATUS_UNEXPECTED("Invalid file, " + task_file_path.toString() + " not found.");
+          RETURN_STATUS_UNEXPECTED("Invalid file, " + task_file_path.ToString() + " not found.");
         }
 
-        image_task_map_[image_file_path.toString()] = task_file_path.toString();
+        image_task_map_[image_file_path.ToString()] = task_file_path.ToString();
       }
     } catch (const std::exception &err) {
       RETURN_STATUS_UNEXPECTED("Invalid path, failed to load Cityscapes Dataset: " + dataset_dir_);
