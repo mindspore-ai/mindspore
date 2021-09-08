@@ -386,7 +386,7 @@ class Validator:
         return arg_value
 
     @staticmethod
-    def check_bool(arg_value, arg_name=None):
+    def check_bool(arg_value, arg_name=None, prim_name=None):
         """
         Check argument is instance of bool.
 
@@ -395,8 +395,13 @@ class Validator:
         - has_bias = check_bool(has_bias, "has_bias")
         """
         if not isinstance(arg_value, bool):
-            arg_name = arg_name if arg_name else "Parameter"
-            raise TypeError(f'`{arg_name}` should be isinstance of bool, but got `{arg_value}`.')
+            if prim_name and arg_name:
+                msg_prefix = f"For '{prim_name}', the '{arg_name}'"
+            elif prim_name and arg_name is None:
+                msg_prefix = f"For '{prim_name}', Parameter"
+            else:
+                msg_prefix = "Parameter"
+            raise TypeError(f"{msg_prefix} should be isinstance of bool, but got {arg_value}.")
         return arg_value
 
     @staticmethod
@@ -495,10 +500,10 @@ class Validator:
                             f' and it is a subset of the data types above.')
 
     @staticmethod
-    def check_const_input(arg_name, arg_value, prim_name):
+    def check_valid_input(arg_name, arg_value, prim_name):
         """Checks valid value."""
         if arg_value is None:
-            raise ValueError(f'For \'{prim_name}\', the `{arg_name}` must be a const input, but got {arg_value}.')
+            raise ValueError(f"For \'{prim_name}\', the '{arg_name}' can not be None, but got {arg_value}.")
         return arg_value
 
     @staticmethod
@@ -622,8 +627,8 @@ class Validator:
         axis = axis if isinstance(axis, Iterable) else (axis,)
         exp_shape = [ori_shape[i] for i in range(len(ori_shape)) if i not in axis]
         if list(shape) != exp_shape:
-            raise ValueError(f'For {prim_name}, {ori_shape} reduce on {axis} should be '
-                             f'{tuple(exp_shape)}, but got {shape}.')
+            raise ValueError(f"For '{prim_name}', the origin shape {ori_shape} reduce on {axis} should be "
+                             f"{tuple(exp_shape)}, but got {shape}.")
 
     @staticmethod
     def check_astype_dtype(dtype):

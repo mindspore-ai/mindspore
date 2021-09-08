@@ -39,7 +39,7 @@ __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
 @constexpr
 def _check_input_2d(input_shape, param_name, func_name):
     if len(input_shape) != 2:
-        raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
+        raise ValueError(f"For '{func_name}', the '{param_name}' should be 2d, but got shape {input_shape}")
     return True
 
 
@@ -232,11 +232,10 @@ class EmbeddingLookup(Cell):
         self.sparse = sparse
         self.cache_enable = self.vocab_cache_size > 0
         self.forward_unique = False
-        if target not in ('CPU', 'DEVICE'):
-            raise ValueError('Attr \'target\' of \'EmbeddingLookup\' Op passed '
-                             + str(target) + ', should be one of values in \'CPU\', \'DEVICE\'.')
+        validator.check_string(target, ['CPU', 'DEVICE'], 'target', self.cls_name)
         if not sparse and target == 'CPU':
-            raise ValueError('When target is CPU, embedding_lookup must be sparse.')
+            raise ValueError(f"For '{self.cls_name}', 'sparse' must be True when 'target' is \"CPU\", "
+                             f"but got 'sparse': {sparse} and 'target': {target}")
         if sparse:
             self.gatherv2 = P.SparseGatherV2()
         else:
@@ -264,9 +263,11 @@ class EmbeddingLookup(Cell):
         indices_shape_size = 2
         if slice_mode == "field_slice" and is_auto_parallel:
             if not manual_shapes:
-                raise ValueError("in slice field mode, the manual_shapes should not be none")
+                raise ValueError(f"For '{self.cls_name}', the 'manual_shapes' should not be none "
+                                 f"when the 'slice_mode' is \"filed_slice\", but got {manual_shapes}.")
             if not isinstance(manual_shapes, tuple):
-                raise TypeError("manual_shapes type must be tuple(int) cannot be {}!".format(type(manual_shapes)))
+                raise TypeError(f"For '{self.cls_name}', the type of 'manual_shapes' must be tuple(int), "
+                                f"but got {type(manual_shapes).__name__}!")
             for dim in manual_shapes:
                 validator.check_positive_int(dim, 'manual shape dim', self.cls_name)
             self.gatherv2.add_prim_attr("manual_split", manual_shapes)
@@ -298,11 +299,11 @@ class EmbeddingLookup(Cell):
             self.embeddinglookup.shard(((1, 1), indices_strategy))
         else:
             if is_auto_parallel:
-                raise ValueError("slice_mode should support mode in nn.EmbeddingLookup, but get "
-                                 + str(slice_mode))
+                Support_mode = ["field_slice", "table_row_slice", "table_column_slice", "batch_slice"]
+                validator.check_string(slice_mode, Support_mode, "slice_mode", self.cls_name)
         if self.cache_enable and not enable_ps:
             if parallel_mode != ParallelMode.STAND_ALONE:
-                raise ValueError("parallel mode haven't supported cache enable yet.")
+                raise ValueError(f"For '{self.cls_name}', parallel mode haven't supported cache enable yet.")
             self._set_cache_enable()
         self.embedding_table.unique = self.forward_unique
         self.max_norm = max_norm
@@ -313,11 +314,14 @@ class EmbeddingLookup(Cell):
     def _set_cache_enable(self):
         """EmbeddingLookup cache check for not ps env, which is only support 'ascend'."""
         if self.target != 'DEVICE':
-            raise ValueError("The configuration of 'vocab_cache_size' is valid only in 'DEVICE' target.")
+            raise ValueError(f"For '{self.cls_name}', the configuration of 'vocab_cache_size' is valid only "
+                             f"when 'target' is 'DEVICE', but got 'target': {self.target}")
         if not self.sparse:
-            raise ValueError("The configuration of 'vocab_cache_size' is valid only 'sparse' is true.")
+            raise ValueError(f"For '{self.cls_name}', the configuration of 'vocab_cache_size' is valid only "
+                             f"when 'sparse' is true, but got 'sparse': {self.sparse}.")
         if context.get_context("device_target") != 'Ascend':
-            raise ValueError("The configuration of 'vocab_cache_size' is valid only in 'ascend'.")
+            raise ValueError(f"For '{self.cls_name}', the configuration of 'vocab_cache_size' is valid only "
+                             f"when device target is 'Ascend', but got {context.get_context('device_target')}.")
 
         logger.info("EmbeddingLookup cache enable takes effect.")
         self.forward_unique = True
@@ -347,17 +351,20 @@ class EmbeddingLookup(Cell):
                 rank_id = get_rank()
                 full_batch = _get_full_batch()
                 if rank_size > 1 and not (full_batch and slice_mode == "table_row_slice"):
-                    raise ValueError("The embeddingLookup cache of parameter server parallel only be used "
-                                     "in 'full_batch' and 'table_row_slice' parallel strategy.")
+                    raise ValueError(f"For '{self.cls_name}', the cache of parameter server parallel only be used "
+                                     f"in \"full_batch\" and \"table_row_slice\" parallel strategy, but got "
+                                     f"full_batch: {full_batch} and 'slice_mode': {slice_mode}.")
                 self.vocab_cache_size = self.vocab_cache_size * rank_size
                 _set_rank_id(rank_id)
             self.cache_enable = True
             if _is_role_worker():
                 self.vocab_size = self.vocab_cache_size
                 if context.get_context("enable_sparse") != self.sparse:
-                    raise ValueError("The value of parameter 'sparse' must be same for all EmbeddingLookup "
-                                     "kernels and equal the value of 'enable_sparse' in context setting in "
-                                     "parameter server cache mode")
+                    raise ValueError(f"For '{self.cls_name}', the value of parameter 'sparse' must be same for all "
+                                     f"kernels and equal the value of 'enable_sparse' in context setting in "
+                                     f"parameter server cache mode, but got value of parameter 'sparse': {self.sparse}"
+                                     f" and the 'enable_sparse' in context setting: "
+                                     f"{context.get_context('enable_sparse')}.")
 
     def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size):
         """PS embeddingLookup cache enable set."""
@@ -487,14 +494,14 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         self.max_mask_mul = P.Mul()
         self.max_no_equal = P.NotEqual()
 
+        validator.check_string(operator, ['SUM', 'MAX', 'MEAN'], 'operator', self.cls_name)
         if operator == MultiFieldEmbeddingLookup.OPERATOR_SUM:
             self.merge_op = P.UnsortedSegmentSum()
         elif operator == MultiFieldEmbeddingLookup.OPERATOR_MAX:
             self.merge_op = P.UnsortedSegmentMax()
-        elif operator == MultiFieldEmbeddingLookup.OPERATOR_MEAN:
-            self.merge_op = P.UnsortedSegmentSum()
         else:
-            raise ValueError("The operator supports ['SUM', 'MAX', 'MEAN'], but found: "+str(operator))
+            self.merge_op = P.UnsortedSegmentSum()
+
 
         parallel_mode = _get_parallel_mode()
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
@@ -532,8 +539,8 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
                 self.inf_add.shard(((1, 1, get_group_size()), (1, 1, 1)))
         else:
             if is_auto_parallel:
-                raise ValueError("slice_mode should be  ['table_row_slice', 'batch_slice' and \
-                       'table_column_slice'], but get " + str(slice_mode))
+                raise ValueError("For '{}', the 'slice_mode' should be in ['table_row_slice', 'batch_slice' and \
+                                       'table_column_slice'], but got {}".format(self.cls_name, str(slice_mode)))
 
         # Min value for fp32
         self.negative_inf_value = -3.402823466E+38

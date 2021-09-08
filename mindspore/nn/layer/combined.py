@@ -127,9 +127,9 @@ class Conv2dBnAct(Cell):
                               has_bias=has_bias,
                               weight_init=weight_init,
                               bias_init=bias_init)
-        self.has_bn = Validator.check_bool(has_bn, "has_bn")
+        self.has_bn = Validator.check_bool(has_bn, "has_bn", self.cls_name)
         self.has_act = activation is not None
-        self.after_fake = Validator.check_bool(after_fake, "after_fake")
+        self.after_fake = Validator.check_bool(after_fake, "after_fake", self.cls_name)
         if has_bn:
             self.batchnorm = BatchNorm2d(out_channels, eps, momentum)
         if activation == "leakyrelu":
@@ -137,7 +137,8 @@ class Conv2dBnAct(Cell):
         else:
             self.activation = get_activation(activation) if isinstance(activation, str) else activation
             if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
-                raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
+                raise TypeError(f"For '{self.cls_name}', the 'activation' must be str or Cell or Primitive, "
+                                f"but got {type(activation).__name__}.")
 
     def construct(self, x):
         x = self.conv(x)
@@ -217,9 +218,9 @@ class DenseBnAct(Cell):
             weight_init,
             bias_init,
             has_bias)
-        self.has_bn = Validator.check_bool(has_bn, "has_bn")
+        self.has_bn = Validator.check_bool(has_bn, "has_bn", self.cls_name)
         self.has_act = activation is not None
-        self.after_fake = Validator.check_bool(after_fake, "after_fake")
+        self.after_fake = Validator.check_bool(after_fake, "after_fake", self.cls_name)
         if has_bn:
             self.batchnorm = BatchNorm1d(out_channels, eps, momentum)
         if activation == "leakyrelu":
@@ -227,7 +228,8 @@ class DenseBnAct(Cell):
         else:
             self.activation = get_activation(activation) if isinstance(activation, str) else activation
             if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
-                raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
+                raise TypeError(f"For '{self.cls_name}', the 'activation' must be str or Cell or Primitive, "
+                                f"but got {type(activation).__name__}.")
 
     def construct(self, x):
         x = self.dense(x)

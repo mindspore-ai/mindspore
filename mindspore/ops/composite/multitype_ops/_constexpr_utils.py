@@ -252,7 +252,7 @@ def is_same_type(inst, type_):
 def check_valid_dim(dim, name):
     """Checks whether the dim is valid."""
     if dim not in (1, 2):
-        raise ValueError(f"For {name}, inputs dim must be 1d or 2d")
+        raise ValueError(f"For '{name}', inputs dim must be 1d or 2d, but got {dim}.")
 
 
 @constexpr
