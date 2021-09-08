@@ -23,9 +23,44 @@
 #include "utils/system/env.h"
 #include "utils/system/file_system.h"
 #include "utils/log_adapter.h"
+#include "utils/file_utils.h"
 #include "utils/utils.h"
 
 namespace mindspore {
+std::optional<std::string> Common::CreatePrefixPath(const std::string &input_path) {
+  std::optional<std::string> prefix_path;
+  std::optional<std::string> file_name;
+  FileUtils::SplitDirAndFileName(input_path, &prefix_path, &file_name);
+  if (!file_name.has_value()) {
+    MS_LOG(ERROR) << "Cannot get file_name from: " << input_path;
+    return std::nullopt;
+  }
+  auto file_name_str = file_name.value();
+#if defined(SYSTEM_ENV_POSIX)
+  if (file_name_str.length() > NAME_MAX) {
+    MS_LOG(ERROR) << "The length of file name: " << file_name_str.length() << " exceeds limit: " << NAME_MAX;
+    return std::nullopt;
+  }
+#endif
+
+  std::string prefix_path_str;
+  if (prefix_path.has_value()) {
+    auto create_prefix_path = FileUtils::CreateNotExistDirs(prefix_path.value());
+    if (!create_prefix_path.has_value()) {
+      return std::nullopt;
+    }
+    prefix_path_str = create_prefix_path.value();
+  } else {
+    auto pwd_path = FileUtils::GetRealPath("./");
+    if (!pwd_path.has_value()) {
+      MS_LOG(ERROR) << "Cannot get pwd path";
+      return std::nullopt;
+    }
+    prefix_path_str = pwd_path.value();
+  }
+  return std::string(prefix_path_str + "/" + file_name_str);
+}
+
 bool Common::CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path, std::string *value) {
   MS_EXCEPTION_IF_NULL(value);
   value->clear();
@@ -39,6 +74,7 @@ bool Common::CommonFuncForConfigPath(const std::string &default_path, const std:
     *value = real_path;
     return true;
 #else
+
     if (realpath(env_path.c_str(), real_path)) {
       *value = real_path;
       return true;
@@ -148,16 +184,21 @@ std::optional<std::string> Common::GetConfigFile(const std::string &env) {
   auto config_path_str = std::getenv(env.c_str());
   if (config_path_str == nullptr) {
     MS_LOG(ERROR) << "Please export env:" << env;
-    return {};
+    return std::nullopt;
   }
   MS_LOG(INFO) << "Async Dump Getenv env:" << env << "=" << config_path_str;
 
-  std::string dump_config_file(config_path_str);
+  auto real_path = FileUtils::GetRealPath(common::SafeCStr(config_path_str));
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Can't get real_path";
+    return std::nullopt;
+  }
+  std::string dump_config_file = real_path.value();
   std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
   if (!fs->FileExist(dump_config_file)) {
     MS_LOG(ERROR) << dump_config_file << " not exist.";
-    return {};
+    return std::nullopt;
   }
   auto point_pos = dump_config_file.find_last_of('.');
   if (point_pos == std::string::npos) {

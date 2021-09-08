@@ -212,16 +212,16 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     return false;
   }
 
-  auto realpath = Common::GetRealPath(filename + ".npy");
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed.";
+  auto file_path = Common::CreatePrefixPath(filename + ".npy");
+  if (!file_path.has_value()) {
+    MS_LOG(ERROR) << "CreatePrefixPath failed.";
     return false;
   }
-  const std::string file_path = realpath.value();
-  ChangeFileMode(file_path, S_IWUSR);
-  std::ofstream fd(file_path, std::ios::out | std::ios::trunc | std::ios::binary);
+  const std::string file_path_str = file_path.value();
+  ChangeFileMode(file_path_str, S_IWUSR);
+  std::ofstream fd(file_path_str, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!fd.is_open()) {
-    MS_LOG(EXCEPTION) << "Open file " << file_path << " failed."
+    MS_LOG(EXCEPTION) << "Open file " << file_path_str << " failed."
                       << " Errno:" << errno << " ErrInfo:" << strerror(errno);
   }
   std::string npy_header = GenerateNpyHeader(shape, type);
@@ -230,10 +230,10 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
     if (fd.bad()) {
       fd.close();
-      MS_LOG(EXCEPTION) << "Write mem to file " << file_path << " failed.";
+      MS_LOG(EXCEPTION) << "Write mem to file " << file_path_str << " failed.";
     }
     fd.close();
-    ChangeFileMode(file_path, S_IRUSR);
+    ChangeFileMode(file_path_str, S_IRUSR);
   }
   return true;
 }
