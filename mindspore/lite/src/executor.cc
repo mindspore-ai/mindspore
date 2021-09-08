@@ -62,7 +62,7 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
   }
 
   // reset the max spin count.
-  status = thread_pool->SetMaxSpinCount(0);
+  status = thread_pool->SetMaxSpinCount(kMinSpinCount);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Set max spin count failed.";
     return status;
