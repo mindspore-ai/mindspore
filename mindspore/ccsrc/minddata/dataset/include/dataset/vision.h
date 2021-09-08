@@ -331,7 +331,7 @@ class RandomColor final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] t_lb Lower bound random weights.
-  /// \param[in] t_lb Upper bound random weights.
+  /// \param[in] t_ub Upper bound random weights.
   explicit RandomColor(float t_lb, float t_ub);
 
   /// \brief Destructor.

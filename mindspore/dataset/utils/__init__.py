@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""
-This module is to support audio augmentations.
-It includes two parts: transforms and utils.
-transforms is a high performance processing module with common audio operations.
-utils provides some general methods for audio processing.
-"""
-from . import transforms
-from . import utils
+"""init file for MindData utils"""
+from .browse_dataset import imshow_det_bbox
+
+__all__ = ["imshow_det_bbox"]

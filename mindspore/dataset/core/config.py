@@ -262,7 +262,7 @@ def get_monitor_sampling_interval():
     Examples:
         >>> # Get the global configuration of monitor sampling interval.
         >>> # If set_monitor_sampling_interval() is never called before, the default value(1000) will be returned.
-        >>> ds.config.get_monitor_sampling_interval()
+        >>> sampling_interval = ds.config.get_monitor_sampling_interval()
     """
     return _config.get_monitor_sampling_interval()
 
@@ -362,7 +362,7 @@ def get_callback_timeout():
     Examples:
         >>> # Get the global configuration of callback timeout.
         >>> # If set_callback_timeout() is never called before, the default value(60) will be returned.
-        >>> ds.config.get_callback_timeout()
+        >>> callback_timeout = ds.config.get_callback_timeout()
     """
     return _config.get_callback_timeout()
 

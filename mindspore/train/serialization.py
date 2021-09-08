@@ -717,7 +717,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
             - enc_key (byte): Byte type key used for encryption. Tha valid length is 16, 24, or 32.
             - enc_mode (str): Specifies the encryption mode, take effect when enc_key is set.
               Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
-            - dataset (str): Specifies the preprocess methods of network.
+            - dataset (Dataset): Specifies the preprocess methods of network.
 
     Examples:
         >>> import numpy as np
