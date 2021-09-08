@@ -43,6 +43,8 @@ const std::unordered_map<std::string, TypeId> type_str_id_maps = {
   {"uint64", TypeId::kNumberTypeUInt64},
   {"bool", TypeId::kNumberTypeBool},
   {"int4", TypeId::kNumberTypeInt4},
+  {"complex64", TypeId::kNumberTypeComplex64},
+  {"complex128", TypeId::kNumberTypeComplex128},
   {"", TypeId::kMetaTypeNone},
 };
 
@@ -63,15 +65,17 @@ const std::map<TypeId, std::string> type_id_str_maps = {
   {TypeId::kNumberTypeUInt64, "uint64"},
   {TypeId::kNumberTypeBool, "int8"},
   {TypeId::kNumberTypeInt4, "int4"},
+  {TypeId::kNumberTypeComplex64, "complex64"},
+  {TypeId::kNumberTypeComplex128, "complex128"},
   {TypeId::kMetaTypeNone, ""},
 };
 
 const std::unordered_map<std::string, size_t> type_nbyte_maps = {
-  {"float16", sizeof(float) / 2}, {"float32", sizeof(float)},  {"float64", sizeof(float) * 2},
-  {"int8", sizeof(int) / 4},      {"int16", sizeof(int) / 2},  {"int32", sizeof(int)},
-  {"int64", sizeof(int) * 2},     {"uint8", sizeof(int) / 4},  {"uint16", sizeof(int) / 2},
-  {"uint32", sizeof(int)},        {"uint64", sizeof(int) * 2}, {"bool", sizeof(char)},
-  {"int4", sizeof(int) / 4},
+  {"float16", sizeof(float) / 2}, {"float32", sizeof(float)},       {"float64", sizeof(float) * 2},
+  {"int8", sizeof(int) / 4},      {"int16", sizeof(int) / 2},       {"int32", sizeof(int)},
+  {"int64", sizeof(int) * 2},     {"uint8", sizeof(int) / 4},       {"uint16", sizeof(int) / 2},
+  {"uint32", sizeof(int)},        {"uint64", sizeof(int) * 2},      {"bool", sizeof(char)},
+  {"int4", sizeof(int) / 4},      {"complex64", sizeof(float) * 2}, {"complex128", sizeof(double) * 2},
 };
 
 TypeId DtypeToTypeId(const std::string &dtypes) {
