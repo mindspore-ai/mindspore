@@ -68,7 +68,7 @@ std::vector<AnfNodePtr> MindIRControlFlowAdjust::GetFgOutput(const FuncGraphPtr 
   auto output_cnode = output_node->cast<CNodePtr>();
   if (output_cnode == nullptr) {
     MS_LOG(INFO) << "graph output is not cnode.";
-    return {};
+    return {output_node};
   }
   if (!IsMakeTuple(output_node)) {
     MS_LOG(INFO) << "graph is single output.";
