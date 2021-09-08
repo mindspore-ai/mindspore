@@ -43,7 +43,22 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   transpose_b_ = primitive->transpose_b() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
   auto weight = ConvertTensorWithExpandDims(network, in_tensors_[1], in_tensors_[0].Shape().size());
 
-  auto matmul_layer = network->addMatrixMultiply(*tensorrt_in_tensors_[0], transpose_a_, *weight, transpose_b_);
+  nvinfer1::ITensor *matmul_input = tensorrt_in_tensors_[0].trt_tensor_;
+  Format out_format = tensorrt_in_tensors_[0].format_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+    // transpose: NCHW->NHWC
+    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    if (transpose_layer_in == nullptr) {
+      MS_LOG(ERROR) << "op action convert failed";
+      return RET_ERROR;
+    }
+    transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
+    matmul_input = transpose_layer_in->getOutput(0);
+    out_format = Format::NHWC;
+  }
+
+  auto matmul_layer = network->addMatrixMultiply(*matmul_input, transpose_a_, *weight, transpose_b_);
   matmul_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = matmul_layer->getOutput(0);
 
@@ -56,7 +71,7 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   out_tensor->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(out_tensor);
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format});
   return RET_OK;
 }
 }  // namespace mindspore::lite

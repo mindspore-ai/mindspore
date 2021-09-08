@@ -44,7 +44,7 @@ int UnaryTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "network or input tensor is invalid";
     return RET_ERROR;
   }
-  nvinfer1::IUnaryLayer *cal_layer = network->addUnary(*tensorrt_in_tensors_[0], unary_op_);
+  nvinfer1::IUnaryLayer *cal_layer = network->addUnary(*tensorrt_in_tensors_[0].trt_tensor_, unary_op_);
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addUnary failed for: " << op_name_;
     return RET_ERROR;
@@ -53,7 +53,7 @@ int UnaryTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
   op_out_tensor->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(op_out_tensor);
+  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, tensorrt_in_tensors_[0].format_});
   return RET_OK;
 }
 }  // namespace mindspore::lite

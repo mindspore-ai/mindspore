@@ -23,11 +23,17 @@
 #include "include/api/kernel.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
+#include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
 constexpr int INPUT_SIZE2 = 2;
 constexpr int INPUT_SIZE3 = 3;
 constexpr int INPUT_SIZE4 = 4;
+
+struct ITensorHelper {
+  nvinfer1::ITensor *trt_tensor_{nullptr};
+  mindspore::Format format_;
+};
 
 class TensorRTOp {
  public:
@@ -51,13 +57,13 @@ class TensorRTOp {
 
   const schema::Primitive *GetPrimitive();
 
-  void AddInnerInTensors(nvinfer1::ITensor *tensor);
+  void AddInnerInTensors(ITensorHelper tensor);
 
-  void AddInnerOutTensors(nvinfer1::ITensor *tensor);
+  void AddInnerOutTensors(ITensorHelper tensor);
 
-  std::vector<nvinfer1::ITensor *> &GetInnerOutTensor();
+  std::vector<ITensorHelper> &GetInnerOutTensor();
 
-  std::vector<nvinfer1::ITensor *> &GetInnerInTensors();
+  std::vector<ITensorHelper> &GetInnerInTensors();
 
   std::string GetOpName();
 
@@ -86,9 +92,9 @@ class TensorRTOp {
 
   std::vector<mindspore::MSTensor> out_tensors_;
 
-  std::vector<nvinfer1::ITensor *> tensorrt_in_tensors_;
+  std::vector<ITensorHelper> tensorrt_in_tensors_;
 
-  std::vector<nvinfer1::ITensor *> tensorrt_out_tensors_;
+  std::vector<ITensorHelper> tensorrt_out_tensors_;
 
   std::vector<TensorRTOp *> in_ops_;
 

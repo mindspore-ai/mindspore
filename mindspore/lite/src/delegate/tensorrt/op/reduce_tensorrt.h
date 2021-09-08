@@ -36,6 +36,7 @@ class ReduceTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
+  uint32_t GetAxis();
   std::map<schema::ReduceMode, nvinfer1::ReduceOperation> reduce_ops_ = {
     {schema::ReduceMode::ReduceMode_ReduceMean, nvinfer1::ReduceOperation::kAVG},
     {schema::ReduceMode::ReduceMode_ReduceMax, nvinfer1::ReduceOperation::kMAX},
@@ -44,6 +45,7 @@ class ReduceTensorRT : public TensorRTOp {
     {schema::ReduceMode::ReduceMode_ReduceSum, nvinfer1::ReduceOperation::kSUM},
   };
   nvinfer1::ReduceOperation reduce_op_;
+  Format out_format_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_

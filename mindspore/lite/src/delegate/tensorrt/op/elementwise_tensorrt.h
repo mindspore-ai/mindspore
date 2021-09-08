@@ -37,6 +37,8 @@ class ElementWiseTensorRT : public TensorRTOp {
  private:
   nvinfer1::ITensor *AddActivation(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *in_tensor);
 
+  int AddConstTensor(nvinfer1::INetworkDefinition *network);
+
   nvinfer1::ElementWiseOperation element_wise_op_;
 
   // index of first input MSTensor in the trt input tensor vector

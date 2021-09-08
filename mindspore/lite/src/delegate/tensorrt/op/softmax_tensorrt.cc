@@ -23,19 +23,10 @@ int SoftMaxTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  if (primitive->value_type() == schema::PrimitiveType::PrimitiveType_LogSoftmax) {
-    with_log_ = true;
-    auto softmax_op = primitive->value_as_LogSoftmax();
-    if (softmax_op == nullptr) {
-      MS_LOG(ERROR) << "LogSoftmax convert failed";
-      return RET_ERROR;
-    }
-  } else {
-    auto softmax_op = primitive->value_as_Softmax();
-    if (softmax_op == nullptr) {
-      MS_LOG(ERROR) << "convert failed";
-      return RET_ERROR;
-    }
+  softmax_op_ = primitive->value_as_Softmax();
+  if (softmax_op_ == nullptr) {
+    MS_LOG(ERROR) << "convert failed";
+    return RET_ERROR;
   }
 
   if (in_tensors.size() != 1) {
@@ -48,7 +39,6 @@ int SoftMaxTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
   }
   return RET_OK;
 }
-
 int SoftMaxTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is invalid";
@@ -66,58 +56,36 @@ int SoftMaxTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "softmax output tensor create failed for TensorRT.";
     return RET_ERROR;
   }
-  if (with_log_) {
-    nvinfer1::IUnaryLayer *log_layer = network->addUnary(*out_tensor, nvinfer1::UnaryOperation::kLOG);
-    if (log_layer == nullptr) {
-      MS_LOG(ERROR) << "add log op failed for TensorRT.";
-      return RET_ERROR;
-    }
-    log_layer->setName((op_name_ + "_log").c_str());
-    out_tensor = log_layer->getOutput(0);
-    if (out_tensor == nullptr) {
-      MS_LOG(ERROR) << "softmax log output tensor create failed for TensorRT.";
-      return RET_ERROR;
-    }
-  }
   out_tensor->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(out_tensor);
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, tensorrt_in_tensors_[0].format_});
   return RET_OK;
 }
 
 nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(nvinfer1::INetworkDefinition *network) {
-  nvinfer1::ISoftMaxLayer *current_layer_ = network->addSoftMax(*this->GetInnerInTensors()[0]);
+  nvinfer1::ISoftMaxLayer *current_layer_ = network->addSoftMax(*tensorrt_in_tensors_[0].trt_tensor_);
   if (current_layer_ == nullptr) {
     MS_LOG(ERROR) << "add softmax op failed for TensorRT.";
     return nullptr;
   }
   std::vector<int64_t> axis_val;
-  if (with_log_) {
-    auto softmax_op = this->GetPrimitive()->value_as_LogSoftmax();
-    if (softmax_op == nullptr) {
-      MS_LOG(ERROR) << "LogSoftmax convert failed";
-      return nullptr;
-    }
-    int64_t axis = softmax_op->axis();
-    axis_val.push_back(axis);
-  } else {
-    auto softmax_op = this->GetPrimitive()->value_as_Softmax();
-    if (softmax_op == nullptr) {
-      MS_LOG(ERROR) << "Softmax convert failed";
-      return nullptr;
-    }
-    auto axis = softmax_op->axis();
-    axis_val = std::vector<int64_t>(axis->begin(), axis->end());
-  }
+  auto axis = softmax_op_->axis();
+  axis_val = std::vector<int64_t>(axis->begin(), axis->end());
 
   if (axis_val.size() != 1) {
     MS_LOG(WARNING) << "axis needs check";
   }
 
-  if (axis_val[0] >= this->tensorrt_in_tensors_[0]->getDimensions().nbDims) {
+  if (axis_val[0] >= this->tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims) {
     MS_LOG(ERROR) << "axis is larger than input tensor dims.";
     return nullptr;
   }
-  current_layer_->setAxes(axis_val[0]);
+  int64_t axis_format_value = axis_val[0];
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == 4 &&
+      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+    // transpose axis to NCHW
+    axis_format_value = ConvertAxisFromNHWC2NCHW(axis_val[0]);
+  }
+  current_layer_->setAxes(axis_format_value);
   return current_layer_;
 }
 }  // namespace mindspore::lite

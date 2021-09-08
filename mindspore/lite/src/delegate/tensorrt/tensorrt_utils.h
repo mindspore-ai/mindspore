@@ -23,6 +23,10 @@
 #include "schema/ops_generated.h"
 #include "nnacl/pack.h"
 
+#define kNCHW_N 0
+#define kNCHW_C 1
+#define kNCHW_H 2
+#define kNCHW_W 3
 namespace mindspore::lite {
 struct ActivationParams {
   nvinfer1::ActivationType activation_type;
@@ -61,5 +65,9 @@ nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, float **
 nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor);
 
 void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_);
+
+Format GetOutputFormat(Format input_format, nvinfer1::Permutation perm);
+
+int ConvertAxisFromNHWC2NCHW(int nhwc_axis);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_

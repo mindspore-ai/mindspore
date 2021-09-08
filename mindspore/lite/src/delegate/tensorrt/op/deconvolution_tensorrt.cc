@@ -16,7 +16,6 @@
 
 #include "src/delegate/tensorrt/op/deconvolution_tensorrt.h"
 #include "src/delegate/tensorrt/op/activation_tensorrt.h"
-#include "src/delegate/tensorrt/tensorrt_utils.h"
 #include "nnacl/pack.h"
 
 namespace mindspore::lite {
@@ -35,6 +34,10 @@ int DeconvolutionTensorRT::IsSupport(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
+  if (in_tensors[0].format() != Format::NHWC && in_tensors[0].format() != Format::NCHW) {
+    MS_LOG(ERROR) << "Unsupported input tensor format of " << in_tensors[0].format();
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
@@ -47,13 +50,18 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "op action convert failed";
     return RET_ERROR;
   }
-  // transpose: NHWC->NCHW
-  nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0]);
-  if (transpose_layer_in == nullptr) {
-    MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
-    return RET_ERROR;
+  nvinfer1::ITensor *deconv_input = tensorrt_in_tensors_[0].trt_tensor_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+    // transpose: NHWC->NCHW
+    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    if (transpose_layer_in == nullptr) {
+      MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
+      return RET_ERROR;
+    }
+    transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
+    deconv_input = transpose_layer_in->getOutput(0);
   }
-  transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
 
   // transpose weight
   const mindspore::MSTensor &weight_tensor = in_tensors_[1];
@@ -83,8 +91,8 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     biasWeights.values = nullptr;
   }
 
-  nvinfer1::IDeconvolutionLayer *deconv_layer = network->addDeconvolutionNd(
-    *transpose_layer_in->getOutput(0), nbOutputMaps, kernelSize, kernelWeights, biasWeights);
+  nvinfer1::IDeconvolutionLayer *deconv_layer =
+    network->addDeconvolutionNd(*deconv_input, nbOutputMaps, kernelSize, kernelWeights, biasWeights);
 
   if (deconv_layer == nullptr) {
     MS_LOG(ERROR) << "DeconvolutionLayer failed";
@@ -109,15 +117,8 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
 
-  // transpose: NCHW->NHWC
-  nvinfer1::IShuffleLayer *transpose_layer_out = NCHW2NHWC(network, *activation_layer->getOutput(0));
-  if (transpose_layer_out == nullptr) {
-    MS_LOG(ERROR) << "op action convert failed";
-    return RET_ERROR;
-  }
-  transpose_layer_out->setName((op_name_ + "_transpose2NHWC").c_str());
-  transpose_layer_out->getOutput(0)->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(transpose_layer_out->getOutput(0));
+  activation_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW});
   return RET_OK;
 }
 

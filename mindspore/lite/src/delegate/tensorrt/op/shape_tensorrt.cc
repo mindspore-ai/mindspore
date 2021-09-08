@@ -38,7 +38,7 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "network is invalid";
     return RET_ERROR;
   }
-  nvinfer1::IShapeLayer *shape_layer = network->addShape(*tensorrt_in_tensors_[0]);
+  nvinfer1::IShapeLayer *shape_layer = network->addShape(*tensorrt_in_tensors_[0].trt_tensor_);
 
   if (shape_layer == nullptr) {
     MS_LOG(DEBUG) << "add shape op failed for TensorRT.";
@@ -46,7 +46,7 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   shape_layer->setName(op_name_.c_str());
   shape_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(shape_layer->getOutput(0));
+  this->AddInnerOutTensors(ITensorHelper{shape_layer->getOutput(0), tensorrt_in_tensors_[0].format_});
   return RET_OK;
 }
 }  // namespace mindspore::lite
