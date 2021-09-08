@@ -14,12 +14,12 @@
 # ============================================================================
 import os
 
-import mindspore.common.dtype as mstype
+from mindspore import dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as CV
 import mindspore.nn as nn
 from mindspore import context, Tensor
-from mindspore.ops import operations as P
+import mindspore.ops as ops
 from mindspore.nn.probability.dpn import ConditionalVAE
 from mindspore.nn.probability.infer import ELBO, SVI
 
@@ -34,7 +34,7 @@ class Encoder(nn.Cell):
         self.fc1 = nn.Dense(1024 + num_classes, 400)
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
-        self.concat = P.Concat(axis=1)
+        self.concat = ops.Concat(axis=1)
         self.one_hot = nn.OneHot(depth=num_classes)
 
     def construct(self, x, y):
@@ -51,7 +51,7 @@ class Decoder(nn.Cell):
         super(Decoder, self).__init__()
         self.fc2 = nn.Dense(400, 1024)
         self.sigmoid = nn.Sigmoid()
-        self.reshape = P.Reshape()
+        self.reshape = ops.Reshape()
 
     def construct(self, z):
         z = self.fc2(z)

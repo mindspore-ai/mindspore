@@ -18,11 +18,11 @@ import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as CV
 import mindspore.nn as nn
 from mindspore import context, Tensor
-from mindspore.common import dtype as mstype
+from mindspore import dtype as mstype
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.dataset.vision import Inter
 from mindspore.nn.probability.toolbox.uncertainty_evaluation import UncertaintyEvaluation
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.train import load_checkpoint, load_param_into_net
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
