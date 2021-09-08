@@ -91,6 +91,9 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bo
       return (AbsOf(main) == AbsOf(node)) && (*main_value == *node_value);
     }
   } else if (main->isa<CNode>() && node->isa<CNode>()) {
+    if (CheckRandomEffect(main, node)) {
+      return false;
+    }
     if (check_side_effect && HasSideEffectAttr(main)) {
       return false;
     }
