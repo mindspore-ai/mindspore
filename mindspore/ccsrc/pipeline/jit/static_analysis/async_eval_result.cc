@@ -28,21 +28,40 @@ AnalysisSchedule AnalysisSchedule::instance_;
 void AnalysisSchedule::Schedule() {
   const auto checkPeriod = std::chrono::seconds(3);
   std::unique_lock<std::mutex> lock(activate_thread_lock_);
-  while (notExit_) {
-    // Check Error
-    if (StaticAnalysisException::Instance().HasException()) {
-      // Reset
-      active_thread_count_.store(1);
-    } else if (active_thread_count_.load() < 0) {
-      MS_LOG(ERROR) << "There is something wrong. active thread count: " << active_thread_count_;
+  while (notExit_ || infer_thread_count_.load() > 0) {
+    if (activate_threads_.size() > 1) {
+      MS_LOG(ERROR) << "There is something wrong."
+                    << " The active thread count: " << activate_threads_.size()
+                    << " The infer_thread_count: " << infer_thread_count_
+                    << " schedule list size: " << scheduleList_.size();
     }
 
-    auto ok = activate_thread_cv_.wait_for(lock, checkPeriod, [this] { return active_thread_count_.load() == 0; });
+    auto ok = activate_thread_cv_.wait_for(lock, checkPeriod, [this] { return activate_threads_.empty(); });
     if (ok && (!SetNextReady())) {
       // If schedule list is empty, wait.
-      (void)activate_thread_cv_.wait_for(lock, checkPeriod, [this] { return active_thread_count_.load() != 0; });
+      (void)activate_thread_cv_.wait_for(lock, checkPeriod, [this] { return !scheduleList_.empty(); });
     }
   }
+  MS_LOG(DEBUG) << "Success to exit. The active thread count: " << activate_threads_.size()
+                << " The infer_thread_count: " << infer_thread_count_
+                << " schedule list size: " << scheduleList_.size();
+}
+
+void AnalysisSchedule::Yield(const AsyncInferTask *async_infer_task) {
+  {
+    std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
+    // Double check ready()
+    if (async_infer_task->Ready() == 0) {
+      MS_LOG(DEBUG) << " The active thread count: " << activate_threads_.size() << " thread id: " << GetThreadID()
+                    << " async_infer_task thread id:" << async_infer_task->ThreadID();
+      activate_threads_.erase(GetThreadID());
+    }
+    MS_LOG(DEBUG) << " The active thread count: " << activate_threads_.size()
+                  << " The infer_thread_count: " << infer_thread_count_
+                  << " schedule list size: " << scheduleList_.size() << " thread: " << GetThreadID() + " "
+                  << (activate_threads_.size() > 0 ? activate_threads_.begin()->c_str() : "");
+  }
+  activate_thread_cv_.notify_one();
 }
 
 void AnalysisSchedule::HandleException(const std::exception &ex) {
@@ -74,7 +93,7 @@ void AnalysisSchedule::HandleException(const std::exception &ex) {
 
 void AnalysisSchedule::Wait() {
   EnterWaiting();
-  {
+  if (infer_thread_count_.load() > 0) {
     py::gil_scoped_release infer_gil_release;
     std::unique_lock<std::mutex> lock(infer_thread_lock_);
     infer_thread_cv_.wait(lock, [this] { return infer_thread_count_.load() <= 0; });
@@ -82,7 +101,6 @@ void AnalysisSchedule::Wait() {
   if (infer_thread_count_.load() < 0) {
     MS_LOG(ERROR) << "There is something wrong. thread count: " << infer_thread_count_;
   }
-  LeaveWaiting();
   if (IS_OUTPUT_ON(DEBUG)) {
     AnalysisResultCacheMgr::GetInstance().Todo();
   }
@@ -90,6 +108,16 @@ void AnalysisSchedule::Wait() {
   StaticAnalysisException::Instance().CheckException();
 }
 
+void AnalysisSchedule::Add2Schedule(const AsyncInferTaskPtr &async_infer_task_ptr) {
+  std::lock_guard<std::mutex> lock(activate_thread_lock_);
+  MS_EXCEPTION_IF_NULL(async_infer_task_ptr);
+  scheduleList_.push_back(async_infer_task_ptr);
+  activate_thread_cv_.notify_one();
+  MS_LOG(DEBUG) << " async: " << async_infer_task_ptr->ThreadID() << " address: " << async_infer_task_ptr.get()
+                << " The active thread count: " << activate_threads_.size()
+                << " The infer_thread_count: " << infer_thread_count_
+                << " schedule list size: " << scheduleList_.size();
+}
 bool AnalysisSchedule::SetNextReady() {
   if (scheduleList_.empty()) {
     MS_LOG(DEBUG) << "The schedule list is empty. ";
@@ -101,39 +129,35 @@ bool AnalysisSchedule::SetNextReady() {
     return item->HasResult();
   });
   if (it == scheduleList_.end()) {
+    if ((size_t)infer_thread_count_.load() >= scheduleList_.size()) {
+      MS_LOG(DEBUG) << "There is some task to be added. Please wait.";
+      return false;
+    }
+    MS_LOG(WARNING) << "Enter endless loop. The active thread count: " << activate_threads_.size()
+                    << " The infer_thread_count: " << infer_thread_count_
+                    << " schedule list size: " << scheduleList_.size();
     // Enter endless loop if there is not ready result.
-    active_thread_count_.fetch_add(1);
+    activate_threads_.insert(scheduleList_.front()->ThreadID());
     // Let the first thread to trigger endless loop exception.
     MS_LOG(DEBUG) << "Enter endless loop if there is not ready result.Set the async to trigger exception:"
-                  << scheduleList_.front().get() << " The active thread count: " << active_thread_count_;
+                  << scheduleList_.front().get() << " The active thread count: " << activate_threads_.size();
     scheduleList_.front()->SetEndLessLoopException();
     scheduleList_.pop_front();
     return true;
   }
-
-  // Push back the not ready async.
-  MS_LOG(DEBUG) << " The active thread count: " << active_thread_count_
-                << " Before assign, schedule list size: " << scheduleList_.size();
-  (void)scheduleList_.insert(scheduleList_.end(), scheduleList_.begin(), it);
-  (void)scheduleList_.erase(scheduleList_.begin(), it);
-
-  active_thread_count_.fetch_add(1);
-  MS_LOG(DEBUG) << scheduleList_.front().get() << " The active thread count: " << active_thread_count_
-                << " Called times: " << scheduleList_.front()->count();
-  scheduleList_.front()->SetReady();
-  scheduleList_.pop_front();
-  MS_LOG(DEBUG) << " The active thread count: " << active_thread_count_
-                << " Success to SetNext, schedule list size: " << scheduleList_.size();
+  auto async_task = *it;
+  activate_threads_.insert(async_task->ThreadID());
+  async_task->SetReady();
+  scheduleList_.erase(it);
+  MS_LOG(DEBUG) << " Success to SetReady. The active thread count: " << activate_threads_.size()
+                << " The infer_thread_count: " << infer_thread_count_ << " schedule list size: " << scheduleList_.size()
+                << " async: " << async_task->ThreadID() << "  address: " << async_task.get();
 
   return true;
 }
 // The thread id format is XXXX.YYYY.ZZZZ
-thread_local std::string localThreadID;
-void AnalysisSchedule::SetThreadID(const std::string &caller) {
-  std::ostringstream buffer;
-  buffer << caller << "." << std::this_thread::get_id();
-  localThreadID = buffer.str();
-}
+thread_local std::string localThreadID = "1";
+void AnalysisSchedule::SetThreadID(const std::string &threadID) { localThreadID = threadID; }
 
 std::string &AnalysisSchedule::GetThreadID() { return localThreadID; }
 
@@ -177,9 +201,11 @@ AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &c
   // Conf has been visited and set value.
   if (async_eval_result != nullptr) {
     // Add to schedule
-    AnalysisSchedule::GetInstance().Add2Schedule(async_eval_result);
+    auto async_infer_task = AsyncInferTask::MakeShared(async_eval_result);
+    MS_LOG(DEBUG) << " add to schedule: " << async_infer_task.get();
+    AnalysisSchedule::GetInstance().Add2Schedule(async_infer_task);
     // Maybe blocked for waiting. AsyncAbstract maybe null, if time out.
-    auto result = async_eval_result->GetResult();
+    auto result = async_infer_task->GetResult();
     if (result == nullptr) {
       result = std::make_shared<AbstractTimeOut>();
       MS_LOG(ERROR) << "AsyncAbstract of NodeConfig " << conf->node()->ToString()
