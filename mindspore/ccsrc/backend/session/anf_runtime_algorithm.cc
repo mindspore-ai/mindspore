@@ -2060,7 +2060,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const An
     auto max_shape = GetInputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetInputFormat(anf_node, index);
-    trans::TransShapeToDevice(device_shape, format, anf_node, index, false);
+    (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, false);
   }
   return device_shape;
 }
@@ -2072,7 +2072,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const A
     auto max_shape = GetOutputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetOutputFormat(anf_node, index);
-    trans::TransShapeToDevice(device_shape, format, anf_node, index);
+    (void)trans::TransShapeToDevice(device_shape, format, anf_node, index);
   }
   return device_shape;
 }
