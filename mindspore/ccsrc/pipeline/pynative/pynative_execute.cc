@@ -1574,6 +1574,9 @@ void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, con
       auto same_param = graph_info->params.at(param_name);
       manage->Replace(anf_node, same_param);
       param = same_param;
+    } else {
+      (void)df_builder->add_parameter(param);
+      param->debug_info()->set_name(param_name);
     }
     new_params.push_back(param);
     input_nodes.emplace_back(param);
@@ -2917,7 +2920,6 @@ void GradExecutor::GradMsFunctionInner(const std::string &phase, const py::objec
     UpdateMsFunctionForwardTensors(op_exec_info, added_out);
     return;
   }
-
   MS_LOG(DEBUG) << "Ms func graph run firstly. The graph phase is: " << graph_phase();
   if (!need_construct_graph()) {
     MS_LOG(EXCEPTION) << "The flag of need construct graph is False.";
@@ -2935,26 +2937,35 @@ void GradExecutor::GradMsFunctionInner(const std::string &phase, const py::objec
   MakeAdjointForMsFunction(new_ms_func_graph, new_grad_graph, actual_out, args, actual_out_v);
 }
 
-void GradExecutor::GradMsFunction(const py::object &out, const py::args &args) {
-  if (!grad_flag_) {
-    MS_LOG(DEBUG) << "Only run forward infer computation, no need to construct grad graph.";
-    return;
-  }
+py::object GradExecutor::GradMsFunction(const py::object &out, const py::args &args) {
+  // Get actual forward output object.
   if (graph_phase().empty()) {
     MS_LOG(EXCEPTION) << "The graph phase is empty, can not obtain ms_function func graph.";
   }
-
-  // Get ms_function func graph and grad graph.
   const auto &phase = graph_phase();
   MS_LOG(DEBUG) << "ms_function func graph phase: " << phase;
   auto executor = pipeline::GraphExecutorPy::GetInstance();
+  MS_EXCEPTION_IF_NULL(executor);
   FuncGraphPtr ms_func_graph = executor->GetFuncGraph(phase);
   MS_EXCEPTION_IF_NULL(ms_func_graph);
+  py::object ret = out;
+  if (ms_func_graph->modify_output()) {
+    auto tuple_out = py::cast<py::tuple>(out);
+    ret = tuple_out[0];
+  }
+
+  // Make Adjoint for grad graph of ms_function.
+  if (!grad_flag_) {
+    MS_LOG(DEBUG) << "Only run forward infer computation, no need to construct grad graph.";
+    set_graph_phase("");
+    return ret;
+  }
   FuncGraphPtr grad_graph = executor->GetGradGraph(phase);
   MS_EXCEPTION_IF_NULL(grad_graph);
-
   GradMsFunctionInner(phase, out, args, ms_func_graph, grad_graph);
+
   set_graph_phase("");
+  return ret;
 }
 
 void GradExecutor::ClearGrad(const py::object &cell, const py::args &args) {
@@ -3083,8 +3094,8 @@ void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, c
   MS_LOG(DEBUG) << "Leave end graph process.";
 }
 
-void PynativeExecutor::GradMsFunction(const py::object &out, const py::args &args) {
-  grad_executor()->GradMsFunction(out, args);
+py::object PynativeExecutor::GradMsFunction(const py::object &out, const py::args &args) {
+  return grad_executor()->GradMsFunction(out, args);
 }
 
 void PynativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,

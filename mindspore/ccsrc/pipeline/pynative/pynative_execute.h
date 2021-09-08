@@ -194,7 +194,7 @@ class GradExecutor {
   // Construct grad graph for ms_function
   bool eliminate_forward() const { return eliminate_forward_; }
   void set_eliminate_forward(bool eliminate_forward) { eliminate_forward_ = eliminate_forward; }
-  void GradMsFunction(const py::object &out, const py::args &args);
+  py::object GradMsFunction(const py::object &out, const py::args &args);
   void GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
                            const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph);
   void UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const ValuePtr &new_forward_value);
@@ -370,11 +370,11 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_graph_phase(const std::string &graph_phase);
   void set_py_exe_path(const py::object &py_exe_path);
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);
-  void GradMsFunction(const py::object &out, const py::args &args);
   void NewGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                const py::args &args);
+  py::object GradMsFunction(const py::object &out, const py::args &args);
   py::object CheckGraph(const py::object &cell, const py::args &args);
   py::object CheckAlreadyRun(const py::object &cell, const py::args &args);
   py::object Run(const py::object &cell, const py::tuple &args);

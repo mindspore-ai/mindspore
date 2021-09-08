@@ -58,6 +58,27 @@
 namespace mindspore {
 namespace pipeline {
 namespace {
+void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> new_paras;
+  for (const auto &param : func_graph->parameters()) {
+    auto param_node = param->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_node);
+    if (param_node->has_default()) {
+      new_paras.push_back(param_node);
+      continue;
+    }
+    AbstractBasePtr par_abs = param_node->abstract();
+    MS_EXCEPTION_IF_NULL(par_abs);
+    if (par_abs->isa<abstract::AbstractUndetermined>() ||
+        (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && par_abs->BuildType() != nullptr &&
+         par_abs->BuildType()->isa<Number>())) {
+      new_paras.push_back(param_node);
+    }
+  }
+  func_graph->set_parameters(new_paras);
+}
+
 // Disable mindRT in the control flow scenario.
 void ResetMindRTEnable(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
@@ -161,6 +182,7 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   func_graph->set_output(merge_node);
 
   // Clear
+  func_graph->set_modify_output(true);
   func_graph->ClearUsedForwardNodes();
 }
 }  // namespace
@@ -541,6 +563,8 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   if (loaded_graph_ptr != nullptr) {
     CheckRootInputShapeAndType(res, loaded_graph_ptr);
   }
+
+  UpdateFuncGraphParameter(new_fg);
   MS_LOG(DEBUG) << "End graph: " << new_fg->ToString() << ", return: " << new_fg->get_return()->DebugString(true);
   return true;
 }
