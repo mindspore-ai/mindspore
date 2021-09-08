@@ -16,12 +16,12 @@
 echo "====================================================================================================================="
 echo "Please run the train as: "
 echo "python train.py device_target device_id dataset_size train_data_dir"
-echo "for example: python train.py --device_target Ascend --device_id 0 --dataset_size 400 --train_data_dir ./facades/train"
+echo "for example: python train.py --device_target GPU --device_id 0 --dataset_size 400 --train_data_dir ./facades/train"
 echo "====================================================================================================================="
 
 if [ $# != 2 ]
 then
-    echo "Usage: bash run_train_ascend.sh [DATASET_PATH] [DATASET_NAME]"
+    echo "Usage: bash run_train_gpu.sh [DATASET_PATH] [DATASET_NAME]"
     exit 1
 fi
 
@@ -41,8 +41,23 @@ then
     exit 1
 fi
 
+
+rm -rf ./train
+mkdir ./train
+mkdir ./train/results
+mkdir ./train/results/fake_img
+mkdir ./train/results/loss_show
+mkdir ./train/results/ckpt
+mkdir ./train/results/predict
+cp ./*.py ./train
+cp ./scripts/*.sh ./train
+cp -r ./src ./train
+cd ./train || exit
+
 if [ $2 == 'facades' ]; then
-    python train.py --device_target Ascend --device_id 0 --dataset_size 400 --train_data_dir $PATH1
+    mpirun --allow-run-as-root -n 1 --output-filename log_output --merge-stderr-to-stdout \
+    python train.py --device_target GPU --device_id 0 --dataset_size 400 --train_data_dir $PATH1 --pad_mode REFLECT &> log &
 elif [ $2 == 'maps' ]; then
-    python train.py --device_target Ascend --device_id 0 --dataset_size 1096 --train_data_dir $PATH1
-fi 
+    mpirun --allow-run-as-root -n 1 --output-filename log_output --merge-stderr-to-stdout \
+    python train.py --device_target GPU --device_id 0 --dataset_size 1096 --train_data_dir $PATH1 --pad_mode REFLECT &> log &
+fi

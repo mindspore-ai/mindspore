@@ -105,6 +105,7 @@ Fat - DeepFFM consists of three parts. The FFM component is a factorization mach
 .
 └─Fat-deepffm
   ├─README.md
+  ├─asecend310                        # C++ running module
   ├─scripts
     ├─run_alone_train.sh              # launch standalone training(1p) in Ascend
     ├─run_distribute_train.sh         # launch distributed training(8p) in Ascend
@@ -117,6 +118,8 @@ Fat - DeepFFM consists of three parts. The FFM component is a factorization mach
     ├─metrics.py                      # verify the model
     ├─dataset.py                      # create dataset for deepfm
   ├─eval.py                           # eval net
+  ├─eval310.py                        # infer 310 net
+  ├─GetDatasetBinary.py               # get binary dataset
   ├─export.py                         # export net
   └─train.py                          # train net
 ```
@@ -237,18 +240,19 @@ Before performing inference, the mindir file must be exported by `export.py` scr
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+bash scripts/run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
 ```
 
 - `NEED_PREPROCESS` means weather need preprocess or not, it's value is 'y' or 'n'.
 - `DEVICE_ID` is optional, default value is 0.
+- `DATASET_PATH` is path that contains the mindrecord dataset.
 
 ### result
 
 Inference result is saved in current path, you can find result like this in acc.log file.
 
 ```bash
-'AUC': 0.8091001899667086
+'AUC': 0.8088441692761583
 ```
 
 # [Model Description](#contents)
@@ -273,7 +277,7 @@ Inference result is saved in current path, you can find result like this in acc.
 | Total time                 | 1pc: 4 hours;                                               |
 | Parameters (M)             | 560.34                                                        |
 | Checkpoint for Fine tuning | 87.65M (.ckpt file)                                           |
-| Scripts                    | [deepfm script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/recommend/Fat-DeepFFM) |
+| Scripts                    | [deepfm script](https://gitee.com/mindspore/mindspore/tree/r1.3/model_zoo/research/recommend/Fat-DeepFFM) |
 
 ### Inference Performance
 
