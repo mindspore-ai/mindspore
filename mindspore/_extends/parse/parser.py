@@ -27,7 +27,6 @@ from textwrap import dedent
 import asttokens
 
 from mindspore import Tensor
-from mindspore import context
 from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
@@ -105,8 +104,6 @@ def get_parse_method_of_class(obj, parse_method=None):
         method_name = parse_method
     elif isinstance(obj, nn.Cell):
         if obj.enable_hook:
-            if context.get_context("mode") == context.GRAPH_MODE:
-                raise ValueError("The graph mode does not support hook function.")
             method_name = "_hook_construct"
         else:
             method_name = "construct"

@@ -210,6 +210,11 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
   for (size_t i = 0; i < cnode_morph->size(); i++) {
     auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToLong(i))});
     auto input = cnode_morph->input(i);
+    // Skip HookBackward op
+    if (IsPrimitiveCNode(input, prim::kPrimHookBackward)) {
+      auto inp_i = input->cast<CNodePtr>();
+      input = inp_i->input(1);
+    }
     // Backprop sens wrt fvs.
     if (IsValueNode<FuncGraph>(input)) {
       auto func_graph = GetValueNode<FuncGraphPtr>(input);
@@ -257,6 +262,13 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   std::vector<AdjointPtr> param_adjoints;
   for (size_t i = 0; i < cnode_morph->size(); i++) {
     auto node = cnode_morph->input(i);
+    // Skip HookBackward op
+    if (IsPrimitiveCNode(node, prim::kPrimHookBackward)) {
+      auto input_i = node->cast<CNodePtr>();
+      MS_LOG(WARNING)
+        << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
+      node = input_i->input(1);
+    }
     AdjointPtr node_adjoint = nullptr;
     auto node_adjoint_iter = anfnode_to_adjoin_.find(node);
     if (node_adjoint_iter != anfnode_to_adjoin_.end()) {
@@ -417,11 +429,19 @@ void DFunctor::MapMorphism() {
 
   // Handle free morphism before output, because in some case, free morphism might depend on output's fv tangent
   MapFreeMorphism();
+  // Skip HookBackward when it is the output node.
+  auto output_node = primal_graph_->output();
+  if (IsPrimitiveCNode(output_node, prim::kPrimHookBackward)) {
+    auto output_cnode = output_node->cast<CNodePtr>();
+    MS_LOG(WARNING)
+      << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
+    output_node = output_cnode->input(1);
+  }
   // Handle morphism from output.
-  (void)MapMorphism(primal_graph_->output());
+  (void)MapMorphism(output_node);
 
-  // Construct K for primal_graph_
-  auto output_adjoint = anfnode_to_adjoin_.find(primal_graph_->output());
+  // Construct K for primal_graph_.
+  auto output_adjoint = anfnode_to_adjoin_.find(output_node);
   // Attach dout_ parameter to output_adjoint.
   output_adjoint->second->AccumulateDout(dout_);
 
@@ -612,7 +632,9 @@ void DFunctor::MapValueObject() {
 
     AdjointPtr adjoint = nullptr;
     if (IsValueNode<Primitive>(node)) {  // Primitive.
-      if (GetValueNode<PrimitivePtr>(node) == prim::kPrimReturn) {
+      auto prim = GetValueNode<PrimitivePtr>(node);
+      if (GetValueNode<PrimitivePtr>(node) == prim::kPrimReturn ||
+          (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name())) {
         continue;
       }
       MS_LOG(DEBUG) << "Map Primitive node " << node->DebugString() << ".";
