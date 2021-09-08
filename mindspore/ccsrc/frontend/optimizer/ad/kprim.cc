@@ -16,6 +16,9 @@
  * limitations under the License.
  */
 
+#ifndef _WIN32
+#include <dirent.h>
+#endif
 #include <memory>
 #include <string>
 #include <utility>
@@ -52,9 +55,35 @@ constexpr char serializable_bprop_ops[] = "serializable_bprop_ops";
 constexpr char bprop_mindir_module[] = "mindspore.ops.bprop_mindir";
 
 #ifndef _WIN32
+std::string GetBpropDir() {
+  static std::string bprop_dir;
+  if (bprop_dir.empty()) {
+    py::module mod = py::module::import("mindspore.ops._grad");
+    auto grad_file_path = mod.attr("__file__").cast<std::string>();
+    bprop_dir = grad_file_path.substr(0, grad_file_path.find_last_of('/'));
+  }
+  return bprop_dir;
+}
+
+bool BpropMindirDirExists() {
+  auto bprop_mindir_dir = GetBpropDir() + kBpropMindIRDir;
+  DIR *dir = opendir(bprop_mindir_dir.c_str());
+  if (dir != nullptr) {
+    if (closedir(dir) == -1) {
+      MS_LOG(WARNING) << "The bprop mindir dir \"" << bprop_mindir_dir << "\" close failed!";
+    }
+    return true;
+  }
+  MS_LOG(INFO) << "The bprop mindir dir \"" << bprop_mindir_dir << "\" doesn't exists.";
+  return false;
+}
+
 // Get the serializable bprop list from the module mindspore.ops.bprop_mindir in python.
 std::unordered_set<std::string> GetSerializableBpropList() {
   std::unordered_set<std::string> serializable_bprop_list;
+  if (!BpropMindirDirExists()) {
+    return serializable_bprop_list;
+  }
   py::module mod = py::module::import(bprop_mindir_module);
   py::object serializable_bprop_ops_attr = mod.attr(serializable_bprop_ops);
   if (!py::isinstance<py::list>(serializable_bprop_ops_attr)) {
@@ -78,22 +107,8 @@ bool IsSerializableBprop(const std::string &prim_name) {
   static std::unordered_set<std::string> serializable_bprop_list = GetSerializableBpropList();
   return std::any_of(serializable_bprop_list.begin(), serializable_bprop_list.end(),
                      [&prim_name](const std::string &serializable_bprop_prim_name) {
-                       auto str1 = prim_name;
-                       auto str2 = serializable_bprop_prim_name;
-                       (void)transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
-                       (void)transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
-                       return str1 == str2;
+                       return prim_name == serializable_bprop_prim_name;
                      });
-}
-
-std::string GetBpropDir() {
-  static std::string bprop_dir;
-  if (bprop_dir.empty()) {
-    py::module mod = py::module::import("mindspore.ops._grad");
-    auto grad_file_path = mod.attr("__file__").cast<std::string>();
-    bprop_dir = grad_file_path.substr(0, grad_file_path.find_last_of('/'));
-  }
-  return bprop_dir;
 }
 
 std::string GetBpropHash() {
