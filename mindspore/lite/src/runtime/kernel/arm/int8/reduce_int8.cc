@@ -560,14 +560,19 @@ int ReduceInt8CPUKernel::CallReduceUnit(int task_id) {
     MS_LOG(ERROR) << "Input data of reduce int8 operator is null.";
     return RET_NULL_PTR;
   }
-  if (dst_data_ == nullptr) {
-    MS_LOG(ERROR) << "Output data of reduce int8 operator is null.";
-    return RET_NULL_PTR;
-  }
+
   if (!is_last_axis_) {
+    if (dst_data_ == nullptr) {
+      MS_LOG(ERROR) << "Output data of reduce int8 operator is null.";
+      return RET_NULL_PTR;
+    }
     return reducer_(outer_size_, inner_size_, axis_size_, src_data_, dst_data_, &quant_arg_, task_id,
                     op_parameter_->thread_num_);
   } else {
+    if (last_dst_data_ == nullptr) {
+      MS_LOG(ERROR) << "Output data of reduce int8 operator is null.";
+      return RET_NULL_PTR;
+    }
     return last_reducer_(outer_size_, inner_size_, axis_size_, src_data_, last_dst_data_, &quant_arg_, task_id,
                          op_parameter_->thread_num_);
   }

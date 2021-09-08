@@ -51,7 +51,7 @@ cv::InterpolationFlags ConvertResizeMethod(const std::string &method) {
   } else if (method == "CUBIC") {
     return cv::INTER_CUBIC;
   } else {
-    MS_LOG(ERROR) << "Unsupported resize method:" << method;
+    MS_LOG(ERROR) << "INPUT ILLEGAL: resize_method must be NEAREST|LINEAR|CUBIC.";
     return cv::INTER_MAX;
   }
 }

@@ -78,6 +78,9 @@ int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::strin
       return RET_ERROR;
     }
 
+    if (raw_line.empty()) {
+      continue;
+    }
     if (raw_line.at(0) == '[') {
       section = raw_line.substr(1, raw_line.size() - 2);
       continue;
