@@ -97,6 +97,7 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
 
 // Read variable from predecessors
 AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
+  MS_LOG(DEBUG) << "Read begin, var: " << var << ", block id: " << func_graph_->debug_info()->debug_id();
   // Get var node if it is found
   auto found = assigned_vars_.find(var);
   if (found != assigned_vars_.end()) {
@@ -202,6 +203,7 @@ AnfNodePtr FunctionBlock::HandleNamespaceInfo(const py::tuple &namespace_info) {
 
 // Make a resolve node for symbol string
 AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
+  MS_LOG(DEBUG) << "value: " << value;
   if (value.compare(0, strlen("self"), "self") == 0) {
     auto start = value.find_first_of('.') + 1;
     if (start >= value.size()) {
@@ -287,12 +289,11 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
 
 AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const ParameterPtr &phi) {
   AnfNodePtr arg_node = nullptr;
+  MS_LOG(DEBUG) << "Prev_blocks size: " << prev_blocks_.size();
   for (auto &prev : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(prev);
     AnfNodePtr temp_node = prev->ReadVariable(var);
     MS_EXCEPTION_IF_NULL(temp_node);
-    MS_LOG(DEBUG) << "graph " << (prev->func_graph_ ? prev->func_graph_->ToString() : "FG(Null)") << " phi "
-                  << (phi ? phi->ToString() : "null") << " for var " << var << " is " << temp_node->DebugString();
     if (temp_node != phi) {
       if (arg_node == nullptr) {
         arg_node = temp_node;
@@ -401,7 +402,14 @@ CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
 
 // Perform a jump from this block to target block
 void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args) {
+  MS_LOG(DEBUG) << "Jump from " << func_graph_->debug_info()->debug_id() << " to "
+                << target_block->func_graph()->debug_info()->debug_id();
   MS_EXCEPTION_IF_NULL(target_block);
+  if (is_dead_block_) {
+    MS_LOG(DEBUG) << "Dead code block should not jump to other block! Block id:"
+                  << func_graph_->debug_info()->debug_id();
+    return;
+  }
   if (func_graph_->get_return() != nullptr) {
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
                       << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
@@ -536,5 +544,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
                << ", state: " << state->DebugString(2);
   func_graph_->set_output(depend_node, true);
 }
+
+void FunctionBlock::SetAsDeadBlock() { is_dead_block_ = true; }
 }  // namespace parse
 }  // namespace mindspore

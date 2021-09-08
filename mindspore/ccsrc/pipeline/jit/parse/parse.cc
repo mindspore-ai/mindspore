@@ -166,7 +166,8 @@ void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseFunction
     }
     py::str desc =
       python_adapter::CallPyModFn(ast->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast->function(), ret[0], ret[1]);
-    MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ".";
+    MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ". "
+                            << "Func graph id: " << func_graph->debug_info()->debug_id();
   }
 }
 
@@ -325,11 +326,17 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr block, const py::objec
   size_t count = py::len(node_list);
   MS_LOG(DEBUG) << "The nodes count is " << count;
   for (size_t i = 0; i < count; ++i) {
+    MS_LOG(DEBUG) << "Start parse statement[" << i << "]: " << py::str(node_list[i]);
     auto node = node_list[i];
     block = ParseStatement(block, node);
     MS_EXCEPTION_IF_NULL(block);
     // Insert appropriate depended items for the function block if it has a return node
-    if (block->func_graph()->get_return() != nullptr) {
+    if (block->func_graph()->get_return() != nullptr || block->is_dead_block()) {
+      // If break is not the last expr.
+      if (i != count - 1) {
+        TraceGuard trace_guard(GetLocation(node_list[i + 1]));
+        MS_LOG(EXCEPTION) << "Dead code exist, please remove it.";
+      }
       // Skip statements after 'return' (or 'break', 'continue').
       break;
     }
@@ -361,7 +368,7 @@ FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py:
 }
 
 AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object &node) {
-  MS_LOG(DEBUG) << "Process ast expr";
+  MS_LOG(DEBUG) << "Process ast expr.";
   TraceGuard trace_guard(GetLocation(node));
   auto node_type = ast_->GetNodeType(node);
   // Check the node type
@@ -1063,7 +1070,6 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   MS_LOG(DEBUG) << "Process ast AugAssign";
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(ast_);
-
   py::object target_obj = python_adapter::GetPyObjAttr(node, "target");
   py::object op_obj = python_adapter::GetPyObjAttr(node, "op");
   py::object value_obj = python_adapter::GetPyObjAttr(node, "value");
@@ -1086,6 +1092,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   }
   CNodePtr augassign_app = block->func_graph()->NewCNodeInOrder({op_node, target_node, value_node});
   WriteAssignVars(block, target_obj, augassign_app);
+
   return block;
 }
 // Process global declaration such as 'global x';
@@ -1139,6 +1146,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
 
   // If the return_ is set, it has its own continuation block
   if (true_end->func_graph()->get_return() == nullptr) {
+    MS_LOG(DEBUG) << "true end jump to after.";
     true_end->Jump(after_block, {});
   }
 
@@ -1148,10 +1156,14 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
 
   // If the return_ is set, it has its own continuation block
   if (false_end->func_graph()->get_return() == nullptr) {
+    MS_LOG(DEBUG) << "false_end jump to after.";
     false_end->Jump(after_block, {});
   }
 
   block->ConditionalJump(bool_node, true_block, false_block);
+  if (after_block->prev_blocks().empty()) {
+    after_block->SetAsDeadBlock();
+  }
   after_block->Mature();
   return after_block;
 }
@@ -1159,7 +1171,6 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
 FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast While";
   MS_EXCEPTION_IF_NULL(block);
-  MS_LOG(INFO) << "Parse while statement";
   FunctionBlockPtr header_block = nullptr;
   FunctionBlockPtr body_block = nullptr;
   FunctionBlockPtr after_block = nullptr;
@@ -1193,12 +1204,11 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   if (after_body->func_graph()->get_return() == nullptr) {
     after_body->Jump(header_block, {});
   }
-
   header_block->Mature();
   after_block->Mature();
   auto &end_block = loop_context.EndBlock();
+  // end_block exists if we encounter 'break' in loop body.
   if (end_block) {
-    // end_block exists if we encounter 'break' in loop body.
     after_block->Jump(end_block, {});
     end_block->Mature();
     return end_block;

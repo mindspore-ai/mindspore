@@ -46,7 +46,7 @@ using FunctionBlockPtr = std::shared_ptr<FunctionBlock>;
 class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
  public:
   explicit FunctionBlock(const Parser &parser);
-  virtual ~FunctionBlock() {}
+  virtual ~FunctionBlock() = default;
 
   FuncGraphPtr func_graph() { return func_graph_; }
   void WriteVariable(const std::string &var_name, const AnfNodePtr &node);
@@ -78,6 +78,9 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void FindIsolatedNodes();
   void AddIsolatedNode(const AnfNodePtr &target);
   void AttachIsolatedNodesBeforeReturn();
+  const std::vector<FunctionBlock *> &prev_blocks() const { return prev_blocks_; }
+  bool is_dead_block() const { return is_dead_block_; }
+  void SetAsDeadBlock();
 
   py::dict &global_py_params() { return global_py_params_; }
   void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
@@ -138,6 +141,16 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   // Isolated nodes.
   OrderedSet<AnfNodePtr> isolated_nodes_;
+
+  // If a block can never be executed, it's prev blocks will be empty, so this block is a dead block.
+  // while x > 5:
+  //    x = x - 2
+  //    if x > 7 :
+  //         break
+  //    else :
+  //         break
+  //    x = x - 1   #This after block is a dead block
+  bool is_dead_block_{false};
 };
 
 class ScriptInfo {
