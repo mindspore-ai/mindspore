@@ -13,7 +13,7 @@ output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
 device_target: "Ascend"
 checkpoint_path: "./checkpoint/"
-checkpoint_file_path: "Unet3d-9-877.ckpt"
+checkpoint_file_path: "Unet3d-10-110.ckpt"
 
 # ==============================================================================
 # Training options
@@ -35,9 +35,13 @@ lower_limit: 3
 
 # Export options
 device_id: 0
-ckpt_file: ""
-file_name: ""
-file_format: ""
+ckpt_file: "./checkpoint/Unet3d-10-110.ckpt"
+file_name: "unet3d"
+file_format: "MINDIR"
+
+# 310 infer options
+pre_result_path: "./preprocess_Result"
+post_result_path: "./result_Files"
 
 ---
 # Help description for each configuration
