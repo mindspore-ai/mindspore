@@ -22,10 +22,11 @@ import mindspore
 from mindspore import Tensor, context
 from mindspore.communication.management import get_group_size, get_rank, init
 from mindspore.nn import SGD, RMSProp
+from mindspore.context import ParallelMode
 from mindspore.train.callback import (CheckpointConfig, LossMonitor,
                                       ModelCheckpoint, TimeMonitor)
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.config import basic_config, dataset_config
 from src.dataset import create_dataset

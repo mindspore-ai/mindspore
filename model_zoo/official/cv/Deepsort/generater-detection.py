@@ -21,7 +21,7 @@ import matplotlib
 import numpy as np
 import cv2
 
-from mindspore.train.model import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.communication.management import init
 from mindspore import context
 from src.deep.feature_extractor import Extractor

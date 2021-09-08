@@ -30,7 +30,8 @@ from mindspore.nn.metrics import Accuracy
 from mindspore.communication.management import init
 import mindspore.common.initializer as weight_init
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.model import Model, ParallelMode
+from mindspore.context import ParallelMode
+from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor

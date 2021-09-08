@@ -19,7 +19,8 @@ from mindspore import context
 from mindspore import Tensor
 from mindspore.common import set_seed
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.model import Model, ParallelMode
+from mindspore.context import ParallelMode
+from mindspore.train.model import Model
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init, get_rank, get_group_size

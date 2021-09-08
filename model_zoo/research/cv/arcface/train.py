@@ -22,7 +22,8 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import context, Tensor
 import mindspore.ops as ops
-from mindspore.train.model import Model, ParallelMode
+from mindspore.context import ParallelMode
+from mindspore.train.model import Model
 from mindspore import dtype as mstype
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.communication.management import init

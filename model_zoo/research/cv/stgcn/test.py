@@ -29,7 +29,7 @@ from mindspore import context
 from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init
-from mindspore.train.model import ParallelMode
+from mindspore.context import ParallelMode
 
 from src.model import models
 from src.config import stgcn_chebconv_45min_cfg, stgcn_chebconv_30min_cfg, stgcn_chebconv_15min_cfg, stgcn_gcnconv_45min_cfg, stgcn_gcnconv_30min_cfg, stgcn_gcnconv_15min_cfg
