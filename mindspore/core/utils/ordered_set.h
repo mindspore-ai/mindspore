@@ -73,16 +73,18 @@ class OrderedSet {
     }
   }
 
-  OrderedSet &operator=(const OrderedSet &os) {
-    if (this != &os) {
-      for (auto &item : os.ordered_data_) {
+  OrderedSet &operator=(const OrderedSet &other) {
+    if (this != &other) {
+      clear();
+      reserve(other.size());
+      for (auto &item : other.ordered_data_) {
         add(item);
       }
     }
     return *this;
   }
 
-  OrderedSet &operator=(OrderedSet &&os) = default;
+  OrderedSet &operator=(OrderedSet &&other) = default;
 
   // insert an element to the OrderedSet after the given position.
   std::pair<iterator, bool> insert(iterator pos, const element_type &e) {
@@ -142,11 +144,12 @@ class OrderedSet {
 
   // Clear the elements
   void clear() {
-    if (!mapped_data_.empty()) {
-      mapped_data_.clear();
-    }
+    mapped_data_.clear();
     ordered_data_.clear();
   }
+
+  // Reserve memory for the number of entries.
+  void reserve(size_t num_entries) { mapped_data_.reserve(num_entries); }
 
   // Compare two orderedset, if the order is not equal shall return false
   bool operator==(const OrderedSet &other) const { return ordered_data_ == other.ordered_data_; }
