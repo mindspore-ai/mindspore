@@ -56,9 +56,12 @@ void DynamicAttrUpdate(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto primitive = AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
-  auto axis_attr = primitive->GetAttr(kAttrAxis);
-  AnfAlgo::SetNodeAttr(kAttrAxes, axis_attr, node);
-  AnfAlgo::EraseNodeAttr(kAttrAxis, node);
+  auto input_names_ptr = primitive->GetAttr(kAttrInputNames);
+  MS_EXCEPTION_IF_NULL(input_names_ptr);
+  auto input_names_vec = GetValue<std::vector<std::string>>(input_names_ptr);
+  const size_t axes_index = 1;
+  input_names_vec[axes_index] = kAttrAxes;
+  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names_vec), node);
 }
 
 void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
