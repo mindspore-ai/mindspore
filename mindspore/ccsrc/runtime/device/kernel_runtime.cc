@@ -134,7 +134,7 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
         continue;
       }
       auto op_runtime_info = item->user_data<session::OpRuntimeInfo>();
-
+      MS_EXCEPTION_IF_NULL(op_runtime_info);
       TypeId output_type_id = op_runtime_info->output_type(index);
       auto output_tensor_size = op_runtime_info->output_tensor_size(index);
       auto output_format = op_runtime_info->output_format(index);
