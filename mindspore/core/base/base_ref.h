@@ -85,7 +85,7 @@ inline std::shared_ptr<VectorRef> MakeNode(const AnfNodePtrList &a) {
 inline std::shared_ptr<SetRef> MakeNode(const SetRef &a) { return std::make_shared<SetRef>(std::move(a)); }
 inline std::shared_ptr<RunFunctionRef> MakeNode(const RunFuncPtr &a) { return std::make_shared<RunFunctionRef>(a); }
 
-class BaseRef : public Base {
+class MS_CORE_API BaseRef : public Base {
  public:
   BaseRef() : m_ptr(nullptr) {}
   BaseRef(const BaseRef &other);

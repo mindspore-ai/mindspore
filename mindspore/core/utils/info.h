@@ -64,7 +64,7 @@ class Location {
 class TraceContext;
 using TraceContextPtr = std::shared_ptr<TraceContext>;
 
-class TraceManager {
+class MS_CORE_API TraceManager {
  public:
   TraceManager() = default;
   ~TraceManager() = default;
@@ -127,7 +127,7 @@ class TraceContext {
   std::string func_name_;
 };
 
-class DebugInfo : public Base {
+class MS_CORE_API DebugInfo : public Base {
  public:
   DebugInfo();
 
@@ -179,7 +179,7 @@ class DebugInfo : public Base {
   std::string name_;
 };
 
-class NodeDebugInfo : public DebugInfo {
+class MS_CORE_API NodeDebugInfo : public DebugInfo {
  public:
   NodeDebugInfo() {
     if (TraceManager::CurrentContextInfo() != nullptr) {

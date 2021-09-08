@@ -19,13 +19,14 @@
 #include <string>
 #include <memory>
 #include <stack>
+#include "utils/visible.h"
 
 namespace mindspore {
 class Scope;
 using ScopePtr = std::shared_ptr<Scope>;
 extern const ScopePtr kDefaultScope;
 
-class Scope {
+class MS_CORE_API Scope {
  public:
   // using the default scope
   explicit Scope(const std::string &name) : name_(name) {}
@@ -36,7 +37,7 @@ class Scope {
   std::string name_;
 };
 
-class ScopeManager {
+class MS_CORE_API ScopeManager {
  public:
   static ScopeManager &GetInstance() noexcept {
     static ScopeManager instance;

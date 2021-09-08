@@ -60,7 +60,8 @@ class MS_CORE_API NoShape : public BaseShape {
   std::string ToString() const override { return type_name(); }
   bool IsDynamic() const override { return false; }
 };
-extern const std::shared_ptr<NoShape> kNoShape;
+
+inline const std::shared_ptr<NoShape> kNoShape = std::make_shared<NoShape>();
 
 class MS_CORE_API Shape : public BaseShape {
  public:

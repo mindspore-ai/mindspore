@@ -55,6 +55,10 @@ class MS_CORE_API FuncGraph {
   static std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &node);
 
   static FuncGraphPtr Create();
+
+  static AnfNodePtr MakeValueNode(const FuncGraphPtr &func_graph);
+
+  static FuncGraphPtr GetFuncGraphFromAnfNode(const AnfNodePtr &input);
 };
 }  // namespace mindspore::api
 #endif  // MINDSPORE_CORE_API_IR_FUNC_GRAPH_H_
