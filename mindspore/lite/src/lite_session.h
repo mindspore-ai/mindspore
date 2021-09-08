@@ -116,6 +116,8 @@ class LiteSession : public session::LiteSession {
 
   int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims);
 
+  int SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel);
+
   int PrepareKernels(Model *model);
 
   static int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
