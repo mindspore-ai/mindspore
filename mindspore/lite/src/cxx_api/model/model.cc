@@ -174,19 +174,19 @@ Status Model::LoadConfig(const std::string &config_path) {
   std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
   if (impl_ != nullptr) {
     MS_LOG(ERROR) << "impl_ illegal in LoadConfig.";
-    return kLiteFileError;
+    return Status(kLiteFileError, "Illegal operation.");
   }
 
   impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
-    return kLiteFileError;
+    return Status(kLiteFileError, "Fail to load config file.");
   }
 
   auto ret = impl_->LoadConfig(config_path);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "impl_ LoadConfig failed,";
-    return kLiteFileError;
+    return Status(kLiteFileError, "Invalid config file.");
   }
   return kSuccess;
 }
