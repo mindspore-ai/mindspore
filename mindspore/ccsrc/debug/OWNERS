@@ -1,10 +1,10 @@
 approvers:
-- caifubi
 - john_tzanakakis
 - ouwenchang
 - robingrosman
 - yelihua
+- wenkai_dist
 reviewers:
 - lilongfei15
 - wangyue01
-- wenkai_dist
+- caifubi
