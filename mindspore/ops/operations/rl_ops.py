@@ -206,20 +206,27 @@ class BufferAppend(PrimitiveWithInfer):
             exp_batch = exp_shape[0][0]
             for i in range(len(data_shape)):
                 if len(data_shape[i]) != len(exp_shape[i]):
-                    raise ValueError(f'For {self.name}, exp shape size must equal to buffer')
+                    raise ValueError(f"For '{self.name}', the dimension of {i}th 'exp_shape' must equal to "
+                                     f"the dimension of {i}th 'data_shape', but got the {i}th 'exp_shape': "
+                                     f"{exp_shape[i]}, the {i}th 'data_shape': {data_shape[i]}.")
                 if data_shape[i][0] < exp_shape[i][0]:
-                    raise ValueError(f'For {self.name}, exp batch size must lessequal than buffer')
+                    raise ValueError(f"For '{self.name}', the first dimension of {i}th 'data_shape' must be greater "
+                                     f"than or equal to the first dimension of {i}th 'exp_shape', but got the {i}th "
+                                     f"'exp_shape': {exp_shape[i]}, the {i}th 'data_shape': {data_shape[i]}.")
         else:
             for i in range(len(data_shape)):
                 if data_shape[i][1:] != exp_shape[i]:
-                    raise ValueError(f'For {self.name}, exp shape must equal to one of buffer shape')
+                    raise ValueError(f"For '{self.name}', the {i}th 'exp_shape' must equal to the {i}th 'data_shape'"
+                                     f"which excepts the first dimension. but got the {i}th 'exp_shape': "
+                                     f"{exp_shape[i]}, the {i}th 'data_shape': {data_shape[i]}.")
         self.add_prim_attr('exp_batch', exp_batch)
         return count_shape
 
     def infer_dtype(self, data_type, exp_type, count_type, head_type):
         for i in range(len(data_type)):
             if data_type[i] != exp_type[i]:
-                raise TypeError(f'For {self.name}, each tensor in exp must has the same type with buffer')
+                raise TypeError(f"For '{self.name}', each tensor in 'exp' must has the same type with 'data', but got "
+                                f"'data_type': {data_type}, 'exp_type': {exp_type}.")
         validator.check_type_name("count type", count_type, (mstype.int32), self.name)
         validator.check_type_name("head type", head_type, (mstype.int32), self.name)
         return count_type

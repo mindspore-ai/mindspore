@@ -64,13 +64,11 @@ class PQC(PrimitiveWithInfer):
 
     def check_shape_size(self, encoder_data, ansatz_data):
         if len(encoder_data) != 2:
-            raise ValueError(
-                "PQC input encoder_data should have dimension size \
-equal to 2, but got {}.".format(len(encoder_data)))
+            raise ValueError(f"For '{self.name}', the dimension of 'encoder_data' should be 2, "
+                             f"but got {len(encoder_data)}.")
         if len(ansatz_data) != 1:
-            raise ValueError(
-                "PQC input ansatz_data should have dimension size \
-equal to 1, but got {}.".format(len(ansatz_data)))
+            raise ValueError(f"For '{self.name}', the dimension of 'ansatz_data' should be 1, "
+                             f"but got {len(ansatz_data)}.")
 
     def infer_shape(self, encoder_data, ansatz_data):
         self.check_shape_size(encoder_data, ansatz_data)
@@ -124,8 +122,8 @@ class Evolution(PrimitiveWithInfer):
 
     def check_shape_size(self, param_data):
         if len(param_data) != 1:
-            raise ValueError("PQC input param_data should have dimension size \
-equal to 1, but got {}.".format(len(param_data)))
+            raise ValueError(f"For '{self.name}', the dimension of 'param_data' should be 1, "
+                             f"but got {len(param_data)}.")
 
     def infer_shape(self, param_data):
         self.check_shape_size(param_data)

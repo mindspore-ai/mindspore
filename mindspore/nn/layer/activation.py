@@ -593,20 +593,24 @@ class PReLU(Cell):
             w = Tensor(tmp, dtype=mstype.float32)
         elif isinstance(w, list):
             if len(w) != channel:
-                raise ValueError(f"When the 'w' is a list, the length should be equal to the channel, "
-                                 f"but got the length  {len(w)}, the channel {channel}")
+                raise ValueError(f"For '{self.cls_name}', the length of 'w' should be equal to the 'channel' when "
+                                 f"the 'w' is a list, but got the length of 'w': {len(w)}, the 'channel': {channel}.")
+
             for i in w:
                 if not isinstance(i, (float, np.float32)):
-                    raise ValueError(f"When the 'w' is a list, the all elements should be float, but got {w}")
+                    raise ValueError(f"For '{self.cls_name}', all elements in 'w' should be "
+                                     f"float when the 'w' is a list, but got {i}.")
             w = Tensor(w, dtype=mstype.float32)
         elif isinstance(w, Tensor):
             if w.dtype not in (mstype.float16, mstype.float32):
-                raise ValueError(f"When the 'w' is a tensor, the dtype should be float16 or float32, but got {w.dtype}")
+                raise ValueError(f"For '{self.cls_name}', the dtype of 'w' should be float16 or "
+                                 f"float32 when the 'w' is a tensor, but got {w.dtype}.")
             if len(w.shape) != 1 or w.shape[0] != channel:
-                raise ValueError(f"When the 'w' is a tensor, the rank should be 1, and the elements number "
-                                 f"should be equal to the channel, but got w shape {w}, the channel {channel}")
+                raise ValueError(f"For '{self.cls_name}', the dimension of 'w' should be 1, and the elements number "
+                                 f"should be equal to the 'channel' when the 'w' is a tensor, but got 'w' shape {w}, "
+                                 f"the 'channel' {channel}.")
         else:
-            raise TypeError(f"The 'w' only supported float list and tensor, but got {type(w)}")
+            raise TypeError(f"For '{self.cls_name}', the 'w' only supported float, list and tensor, but got {type(w)}.")
         self.w = Parameter(w, name='a')
         self.prelu = P.PReLU()
         self.relu = P.ReLU()
@@ -870,7 +874,7 @@ _activation = {
 }
 
 
-def get_activation(name):
+def get_activation(name, prim_name=None):
     """
     Gets the activation function.
 
@@ -888,9 +892,11 @@ def get_activation(name):
         >>> print(sigmoid)
         Sigmoid<>
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if name is None:
         return None
 
     if name not in _activation:
-        raise KeyError(f"Unknown activation type '{name}'")
+        raise KeyError(f"{msg_prefix} 'name' should be in {_activation}, but got '{name}'. "
+                       f"Refer to official documents for more information.")
     return _activation[name]()

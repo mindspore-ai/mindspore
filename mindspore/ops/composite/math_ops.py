@@ -119,48 +119,53 @@ def _int_to_tuple_conv(axes):
 
 
 @constexpr
-def _check_axes(axes):
+def _check_axes(axes, prim_name=None):
     """
     Check for validity and type of axes passed to function.
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     validator.check_value_type('axes', axes, [int, tuple, list], "tensor dot")
     if not isinstance(axes, int):
         axes = list(axes)  # to avoid immutability issues
         if len(axes) != 2:
-            raise ValueError("Require two axes inputs, given less")
+            raise ValueError(f"{msg_prefix} dimension of axes should be 2, but got {axes}.")
         axes = _int_to_tuple_conv(axes)  # convert before length checks
         if len(axes[0]) != len(axes[1]):
-            raise ValueError("Axes have to be the same size/length")
+            raise ValueError(f"{msg_prefix} first and second dim of axes have to be the same size/length, "
+                             f"but got {axes}.")
         if len(axes[0]) != len(set(axes[0])) or len(axes[1]) != len(set(axes[1])):
-            raise ValueError("Axes cannot have duplicating values")
+            raise ValueError(f"{msg_prefix} axes cannot have duplicating values, but got {axes}.")
     return axes
 
 
 @constexpr
-def _typecheck_input(x1_type, x2_type):
+def _typecheck_input(x1_type, x2_type, prim_name=None):
     """
     Check input tensor types to be valid and confirm they are the same type.
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     const_utils.check_type_valid(x1_type, [mstype.float32, mstype.float16], 'x1')
     const_utils.check_type_valid(x2_type, [mstype.float32, mstype.float16], 'x2')
     if x1_type != x2_type:
-        raise TypeError(f'Both Inputs must be the same Type. x1 is \'{x1_type}\' and x2 is \'{x2_type}\' ')
+        raise TypeError(f"{msg_prefix} inputs must be the same type, but got x1_type: {x1_type} "
+                        f"and x2_type: {x2_type}.")
 
 
 @constexpr
-def _axes_int_check(x1_shape, x2_shape, axes):
+def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     """
     Convert from single int axes to 2d tuple if required
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if isinstance(axes, int):
         if axes < 0:
-            raise ValueError(f"axes must be at least 0 for tensor dot, got {axes}")
+            raise ValueError(f"{msg_prefix} axes must be at least 0, but got {axes}.")
         if axes == 0:
             # outer product, no input validation required
             return [], []
         if axes > len(x1_shape) or axes > len(x2_shape):
-            raise ValueError(
-                "Axes value too high for given input arrays dimensions.")
+            raise ValueError(f"{msg_prefix} axes cannot be greater than the length of x1_shape and x2_shape, "
+                             f"but got axes: {axes}, x1_shape: {x1_shape}, x2_shape: {x2_shape}.")
         x1_ind = tuple(range(len(x1_shape))[-1 * axes:])
         x2_ind = tuple(range(len(x2_shape))[:axes])
         axes = tuple((x1_ind, x2_ind))
@@ -169,12 +174,13 @@ def _axes_int_check(x1_shape, x2_shape, axes):
 
 
 @constexpr
-def _validate_axes(x1_shape, x2_shape, axes):
+def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
     """
     Checks for axes having the correct length according to input, for any value in axis
     being out of range with given shape and also checking for compatible axes values
     with given inputs.
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     shapes = [x1_shape, x2_shape]
 
     # axis length check
@@ -182,8 +188,8 @@ def _validate_axes(x1_shape, x2_shape, axes):
         axes_len = len(x_axes)
         shape_dim_len = len(shapes[ix_input])
         if axes_len > shape_dim_len:
-            raise ValueError(f"axes for input: {ix_input + 1} are of length: {axes_len} "
-                             f"can only be max: {shape_dim_len} due to input shape.")
+            raise ValueError(f"{msg_prefix} length of x_axes should be less than or equal to {shape_dim_len}, "
+                             f"but got 'len(x_axes)': {axes_len}.")
 
     # axis values range check
     for ix_input, x_axes in enumerate(axes):
@@ -192,8 +198,8 @@ def _validate_axes(x1_shape, x2_shape, axes):
         min_val = -1 * len(comp_shape)
         for _, x_value in enumerate(x_axes):
             if not min_val <= x_value <= max_val:
-                raise ValueError(f"axes for input: {ix_input + 1} contains index: "
-                                 f"{x_value}, but range is: [{min_val}, {max_val}]")
+                raise ValueError(f"{msg_prefix} value in axes should be in range: [{min_val}, {max_val}], "
+                                 f"but got {x_value}.")
 
     # check axis value with input shape - both ways for axis valid
     invalid_a = False
@@ -204,7 +210,9 @@ def _validate_axes(x1_shape, x2_shape, axes):
         if x1_shape[axes[0][i]] != x2_shape[axes[1][len(axes[0])-1-i]]:
             invalid_b = True
     if invalid_a and invalid_b:
-        raise ValueError("Given Axes are incompatible with given input arrays")
+        raise ValueError(f"{msg_prefix} 'i' should exist such that 'x1_shape[axes[0][i]]' is equal to "
+                         f"'x2_shape[axes[1][i]]' or 'x2_shape[axes[1][len(axes[0])-1-i]]', but got "
+                         f"x1_shape: {x1_shape}, x2_shape: {x2_shape}, axes: {axes}.")
 
 
 @constexpr
@@ -224,7 +232,7 @@ def _calc_new_shape(shape, axes, position=0):
     return new_shape, transpose_perm, free_dims
 
 
-def tensor_dot(x1, x2, axes):
+def tensor_dot(x1, x2, axes, prim_name='tensor_dot'):
     """
     Computation of Tensor contraction on arbitrary axes between tensors `a` and `b`.
 
@@ -276,11 +284,11 @@ def tensor_dot(x1, x2, axes):
     x2_shape = shape_op(x2)
     x1_type = F.dtype(x1)
     x2_type = F.dtype(x2)
-    axes = _check_axes(axes)
-    _typecheck_input(x1_type, x2_type)
+    axes = _check_axes(axes, prim_name)
+    _typecheck_input(x1_type, x2_type, prim_name)
     # input compatibility check & axes format update
-    axes = _axes_int_check(x1_shape, x2_shape, axes)
-    _validate_axes(x1_shape, x2_shape, axes)
+    axes = _axes_int_check(x1_shape, x2_shape, axes, prim_name)
+    _validate_axes(x1_shape, x2_shape, axes, prim_name)
     x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape(x1_shape, axes, 0)
     x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape(x2_shape, axes, 1)
     output_shape = x1_ret + x2_ret  # combine free axes from both inputs
@@ -295,21 +303,24 @@ def tensor_dot(x1, x2, axes):
 
 
 @constexpr
-def _check_invalid_input(x1_shape, x2_shape):
+def _check_invalid_input(x1_shape, x2_shape, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(x1_shape) < 2 or len(x2_shape) < 2:
-        raise ValueError('C.dot inputs x1, x2 should has dimension >= 2,'
-                         + f'while x1 is ({len(x1_shape)}) and x2 is ({len(x2_shape)}).')
+        raise ValueError(f"{msg_prefix} inputs x1, x2 should have 'dimension >= 2',"
+                         f"but got 'len(x1_shape)': ({len(x1_shape)}) and 'len(x2_shape)': ({len(x2_shape)}).")
 
 
 @constexpr
-def _typecheck_input_dot(x1_type, x2_type):
+def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
     """
     Check input tensor types to be valid and confirm they are the same type for dot and batch dot ops.
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     const_utils.check_type_valid(x1_type, [mstype.float16, mstype.float32], 'x1')
     const_utils.check_type_valid(x2_type, [mstype.float16, mstype.float32], 'x2')
     if x1_type != x2_type:
-        raise TypeError(f'Both Inputs must be the same Type. x1 is \'{x1_type}\' and x2 is \'{x2_type}\' ')
+        raise TypeError(f"{msg_prefix} inputs must be the same type, but got "
+                        f"x1_type: {x1_type} and x2_type: {x2_type}.")
 
 
 @constexpr
@@ -319,7 +330,7 @@ def _get_transpose_shape(x2_shape):
     return x2_shape_transpose
 
 
-def dot(x1, x2):
+def dot(x1, x2, prim_name=None):
     """
     Computation a dot product between samples in two tensors.
 
@@ -394,8 +405,8 @@ def dot(x1, x2):
     x2_shape = shape_op(x2)
     x1_type = F.dtype(x1)
     x2_type = F.dtype(x2)
-    _typecheck_input_dot(x1_type, x2_type)
-    _check_invalid_input(x1_shape, x2_shape)
+    _typecheck_input_dot(x1_type, x2_type, prim_name)
+    _check_invalid_input(x1_shape, x2_shape, prim_name)
 
     if len(x1_shape) > 2 or len(x2_shape) > 2:
         x2_shape_transpose = _get_transpose_shape(x2_shape)
@@ -408,31 +419,36 @@ def dot(x1, x2):
 
 
 @constexpr
-def _get_batch_size(x1_shape, x2_shape):
+def _get_batch_size(x1_shape, x2_shape, prim_name=None):
     """
     Get batch sizes from two inputs
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(x1_shape) < 2 or len(x2_shape) < 2:
-        raise ValueError("Require both inputs with rank >= 2.")
+        raise ValueError(f"{msg_prefix} inputs x1, x2 should have 'dimension >= 2', "
+                         f"but got 'len(x1_shape)': ({len(x1_shape)}) and 'len(x2_shape)': ({len(x2_shape)}).")
     return x1_shape[0], x2_shape[0]
 
 
 @constexpr
-def _typecheck_input_batch_dot(x1_type, x2_type):
+def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
     """
     Check input tensor types to be valid and confirm they are the same type for batch dot ops.
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     const_utils.check_type_valid(x1_type, [mstype.float32], 'x1')
     const_utils.check_type_valid(x2_type, [mstype.float32], 'x2')
     if x1_type != x2_type:
-        raise TypeError(f'Both Inputs must be the same Type. x1 is \'{x1_type}\' and x2 is \'{x2_type}\' ')
+        raise TypeError(f"{msg_prefix} inputs must be the same type, but got x1_type: {x1_type} and "
+                        f"x2_type: {x2_type}.")
 
 
 @constexpr
-def _check_axes_for_batch_dot(x1_shape, x2_shape, axes):
+def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
     """
     Check whether axes are valid and cast axes from tuple to list
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if axes is None:
         if len(x2_shape) == 2:
             axes = [len(x1_shape) - 1, len(x2_shape) - 1]
@@ -441,9 +457,9 @@ def _check_axes_for_batch_dot(x1_shape, x2_shape, axes):
 
     if isinstance(axes, (list, tuple)):
         if 0 in axes:
-            raise ValueError("Batch dim cannot be used as in axes.")
+            raise ValueError(f"{msg_prefix} axes cannot contain 0, but got axes: {axes}.")
         if len(axes) != 2:
-            raise ValueError("Require two axes inputs, given less")
+            raise ValueError(f"{msg_prefix} length of axes must be equal to 2, but got {len(axes)}.")
         if isinstance(axes, tuple):
             axes = list(axes)
         validator.check_value_type('axes[0]', axes[0], [int], 'batch_dot')
@@ -456,22 +472,23 @@ def _check_axes_for_batch_dot(x1_shape, x2_shape, axes):
         validator.check_non_negative_int(axes[0], 'reversed axes[0]', 'batch_dot')
         validator.check_non_negative_int(axes[1], 'reversed axes[1]', 'batch_dot')
         if axes[0] > len(x1_shape) or axes[1] > len(x2_shape):
-            raise ValueError(
-                "Axes value too high for given input arrays dimensions.")
+            raise ValueError(f"{msg_prefix} axes[0] must be less than or equal to len(x1_shape), "
+                             f"and axes[1] must be less than or equal to len(x2_shape)."
+                             f"But got axes: {axes}, x1_shape: {x1_shape}, x2_shape: {x2_shape}.")
     elif isinstance(axes, int):
         if axes == 0:
-            raise ValueError("Batch dim cannot be used as in axes.")
+            raise ValueError(f"{msg_prefix} axes should not equal to 0, but got {axes}.")
         if axes < 0:
             axes = [axes + len(x1_shape), axes + len(x2_shape)]
             validator.check_non_negative_int(axes[0], 'reversed axes', 'batch_dot')
         elif axes > len(x1_shape) or axes > len(x2_shape):
-            raise ValueError(
-                "Axes value too high for given input arrays dimensions.")
+            raise ValueError(f"{msg_prefix} axes cannot be greater than the length of x1_shape and x2_shape, "
+                             f"but got axes: {axes}, x1_shape: {x1_shape}, x2_shape: {x2_shape}.")
         else:
             axes = [axes, axes]
     else:
-        raise ValueError(
-            "Axes type must be one of those: int, tuple(int), list(int).")
+        raise ValueError(f"{msg_prefix} type of axes must be one of those: int, tuple(int), list(int), "
+                         f"but got {type(axes)}.")
     return axes
 
 
@@ -496,12 +513,14 @@ def _calc_new_shape_batchdot(shape, axes, position=0):
 
 
 @constexpr
-def _check_batch_size(x1_batch_size, x2_batch_size):
+def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
     """
     Check whether batch size of two inputs are the same
     """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if x1_batch_size != x2_batch_size:
-        raise ValueError("Require both inputs with the same batch sizes.")
+        raise ValueError(f"{msg_prefix} both inputs x1, x2 should have the same batch sizes, but got "
+                         f"x1_batch_size: {x1_batch_size} and x2_batch_size: {x2_batch_size}.")
 
 
 @constexpr
@@ -513,7 +532,7 @@ def _get_output_shape(batch_size, x1_ret, x2_ret):
     return output_shape
 
 
-def batch_dot(x1, x2, axes=None):
+def batch_dot(x1, x2, axes=None, prim_name=None):
     """
     Computation of batch dot product between samples in two tensors containing batch dims.
 
@@ -593,11 +612,11 @@ def batch_dot(x1, x2, axes=None):
     x1_type = F.dtype(x1)
     x2_type = F.dtype(x2)
 
-    x1_batch_size, x2_batch_size = _get_batch_size(x1_shape, x2_shape)
+    x1_batch_size, x2_batch_size = _get_batch_size(x1_shape, x2_shape, prim_name)
 
-    _typecheck_input_batch_dot(x1_type, x2_type)
-    _check_batch_size(x1_batch_size, x2_batch_size)
-    axes = _check_axes_for_batch_dot(x1_shape, x2_shape, axes)
+    _typecheck_input_batch_dot(x1_type, x2_type, prim_name)
+    _check_batch_size(x1_batch_size, x2_batch_size, prim_name)
+    axes = _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name)
 
     if x1_dim_num == 2:
         x1 = F.expand_dims(x1, 1)
@@ -664,19 +683,23 @@ def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
 
 
 @constexpr
-def _check_matmul_shapes(shape1, shape2):
+def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     ndim1, ndim2 = len(shape1), len(shape2)
     if ndim1 < 1 or ndim2 < 1:
-        raise ValueError('input operands must have at least 1 dimension')
+        raise ValueError(f"{msg_prefix} dimension of input operands must be at least 1, but got "
+                         f"the length of shape1: {ndim1}, the length of shape2: {ndim2}.")
     if ndim2 >= 2 and shape1[-1] != shape2[-2]:
-        raise ValueError(f'mismatch in core dimension of input operands (size '
-                         f'{shape1[-1]} is different from {shape2[-2]})')
+        raise ValueError(f"{msg_prefix} shape1[-1] should be equal to shape2[-2] when the length of shape2 "
+                         f"is greater than or equal to 2, but got shape1[-1]: {shape1[-1]}, "
+                         f"shape2[-2]: {shape2[-2]}.")
     shape_out = deque()
     for items in zip_longest(reversed(shape1[:-2]), reversed(shape2[:-2]), fillvalue=1):
         max_size = max(items)
         if any(item not in (1, max_size) for item in items):
-            raise ValueError(f'operands could not be broadcast together with shapes {shape1} {shape2}')
+            raise ValueError(f"{msg_prefix} operands could not be broadcast together with shape1 {shape1} and "
+                             f"shape2 {shape2}.")
         shape_out.appendleft(max_size)
     return tuple(shape_out)
 
@@ -710,7 +733,7 @@ def _broadcast_to(x, shape_cur, shape_to, ndim_to):
     return F.tile(x, size)
 
 
-def matmul(x1, x2, dtype=None):
+def matmul(x1, x2, dtype=None, prim_name=None):
     """
     Returns the matrix product of two arrays.
 
@@ -775,7 +798,7 @@ def matmul(x1, x2, dtype=None):
     ndim1_orig, ndim2_orig = F.rank(x1), F.rank(x2)
     shape1_orig, shape2_orig = F.shape(x1), F.shape(x2)
     transpose_b = ndim2_orig == 1
-    shape_backbone = _check_matmul_shapes(shape1_orig, shape2_orig)
+    shape_backbone = _check_matmul_shapes(shape1_orig, shape2_orig, prim_name)
     # infers the shape of the output
     shape_out = shape_backbone + _infer_shape_rem(shape1_orig, shape2_orig,
                                                   ndim1_orig, ndim2_orig, transpose_b)

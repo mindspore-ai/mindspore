@@ -116,18 +116,17 @@ tensor_operator_registry.register('repeat_elements', repeat_elements)
 
 
 @constexpr
-def _check_sequence_mask_input_len(input_shape):
+def _check_sequence_mask_input_len(input_shape, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if not input_shape:
-        raise ValueError(f"Sequence_mask lengths_shape should be > 0. "
-                         f"Current lengths_shape is {input_shape}.")
+        raise ValueError(f"{msg_prefix} lengths_shape should be greater than 0, but got {input_shape}.")
     # broadcast only supports 7d shape
     shape_size = len(input_shape)
     if shape_size >= 7:
-        raise ValueError(f"Sequence_mask lengths_shape's size only support a value less than 7. "
-                         f"Current lengths_shape is {shape_size}d.")
+        raise ValueError(f"{msg_prefix} size of lengths_shape should be less than 7, but got {shape_size}d.")
 
 
-def sequence_mask(lengths, maxlen=None):
+def sequence_mask(lengths, maxlen=None, prim_name='sequence_mask'):
     """
     Returns a mask tensor representing the first N positions of each cell.
 
@@ -188,7 +187,7 @@ def sequence_mask(lengths, maxlen=None):
     to_tensor_op = P.ScalarToArray()
 
     const_utils.check_type_valid(F.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
-    _check_sequence_mask_input_len(shape_op(lengths))
+    _check_sequence_mask_input_len(shape_op(lengths), prim_name)
 
     if maxlen is None:
         flatten_data = reshape_op(lengths, (-1,))

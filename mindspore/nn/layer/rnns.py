@@ -110,7 +110,8 @@ class _DynamicRNN(Cell):
         elif mode == "GRU":
             cell = _gru_cell
         else:
-            raise ValueError("Unrecognized RNN mode: " + mode)
+            raise ValueError(f"For '{self.cls_name}', the 'mode' should be in ['RNN_RELU', 'RNN_TANH', 'LSTM', 'GRU'], "
+                             f"but got {mode}.")
         self.cell = cell
         self.is_lstm = mode == "LSTM"
 
@@ -187,10 +188,8 @@ class _RNNBase(Cell):
         validator.check_value_type("bidirectional", bidirectional, [bool], self.cls_name)
 
         if not 0 <= dropout < 1:
-            raise ValueError(f"For '{self.cls_name}', "
-                             "dropout should be a number in range [0, 1) "
-                             "representing the probability of an element being "
-                             "zeroed")
+            raise ValueError(f"For '{self.cls_name}', the 'dropout' should be a number in range [0, 1) "
+                             f"representing the probability of an element being zeroed, but got {dropout}.")
 
         if dropout > 0 and num_layers == 1:
             logger.warning("dropout option adds dropout after all but last "
@@ -206,7 +205,8 @@ class _RNNBase(Cell):
         elif mode == "RNN_RELU":
             gate_size = hidden_size
         else:
-            raise ValueError("Unrecognized RNN mode: " + mode)
+            raise ValueError(f"For '{self.cls_name}', the 'mode' should be in ['RNN_RELU', 'RNN_TANH', 'LSTM', 'GRU'], "
+                             f"but got {mode}.")
 
         self.reverse = P.ReverseV2([0])
         self.reverse_sequence = P.ReverseSequence(0, 1)
@@ -424,8 +424,8 @@ class RNN(_RNNBase):
             elif kwargs['nonlinearity'] == 'relu':
                 mode = 'RNN_RELU'
             else:
-                raise ValueError("Unknown nonlinearity '{}'".format(
-                    kwargs['nonlinearity']))
+                raise ValueError(f"For '{self.cls_name}', the 'nonlinearity' should be in ['tanh', 'relu'], "
+                                 f"but got {kwargs['nonlinearity']}.")
             del kwargs['nonlinearity']
         else:
             mode = 'RNN_TANH'
@@ -583,7 +583,8 @@ class RNNCell(_RNNCellBase):
     def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = "tanh"):
         super().__init__(input_size, hidden_size, has_bias, num_chunks=1)
         if nonlinearity not in self._non_linearity:
-            raise ValueError("Unknown nonlinearity: {}".format(nonlinearity))
+            raise ValueError(f"For '{self.cls_name}', the 'nonlinearity' should be in ['tanh', 'relu'], "
+                             f"but got {nonlinearity}.")
         self.nonlinearity = nonlinearity
 
     def construct(self, inputs, hx):

@@ -81,12 +81,13 @@ class ReduceOp:
 target_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
 
 
-def check_hcom_group_valid(group):
+def check_hcom_group_valid(group, prim_name=None):
     """Check if hcom group is valid."""
+    msg_pfefix = f"For '{prim_name}', only" if prim_name else "Only"
     if context.get_context("mode") == context.PYNATIVE_MODE and \
             context.get_context("device_target") == "Ascend" and \
             group != GlobalComm.WORLD_COMM_GROUP:
-        raise RuntimeError("Only hccl_world_group is supported in Pynative mode, but got {}".format(group))
+        raise RuntimeError(f"{msg_pfefix} hccl_world_group is supported in Pynative mode, but got 'group': {group}.")
 
 
 class AllReduce(PrimitiveWithInfer):
@@ -147,10 +148,11 @@ class AllReduce(PrimitiveWithInfer):
     def __init__(self, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         """Initialize AllReduce."""
         if not isinstance(op, type(ReduceOp.SUM)):
-            raise TypeError("The operation of AllReduce should be str.")
+            raise TypeError(f"For '{self.name}', the 'op' of AllReduce should be str, but got {type(op)}.")
         if not isinstance(_get_group(group), str):
-            raise TypeError("The group of AllReduce should be str.")
-        check_hcom_group_valid(group)
+            raise TypeError(f"For '{self.name}', the 'group' of AllReduce should be str, "
+                            f"but got {type(_get_group(group))}.")
+        check_hcom_group_valid(group, prim_name=self.name)
         self.op = op
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
@@ -339,7 +341,7 @@ class _HostAllGather(PrimitiveWithInfer):
     def __init__(self, group=None):
         """Initialize _HostAllGather."""
         if group is None:
-            raise ValueError(f"For '{self.name}' group must be set.")
+            raise ValueError(f"For '{self.name}', the 'group' cannot be None, but got {group}.")
         validator.check_value_type('group', group, (tuple, list), self.name)
         validator.check_int(len(group), 2, Rel.GE, "group size", self.name)
         for r in group:
@@ -426,9 +428,10 @@ class ReduceScatter(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         if self.rank_size == 0:
-            raise ValueError(f"For '{self.name}' rank_size can not be zero.")
+            raise ValueError(f"For '{self.name}', the 'rank_size' cannot be zero, but got {self.rank_size}.")
         if x_shape[0] % self.rank_size != 0:
-            raise ValueError(f"For '{self.name}' the first dimension of x should be divided by rank_size.")
+            raise ValueError(f"For '{self.name}', the first dimension of 'x_shape' should be divided by 'rank_size', "
+                             f"but got 'x_shape[0]': {x_shape[0]}, 'rank_size': {self.rank_size}.")
         x_shape[0] = int(x_shape[0] / self.rank_size)
         return x_shape
 
@@ -466,7 +469,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
     def __init__(self, op=ReduceOp.SUM, group=None):
         """Initialize _HostReduceScatter."""
         if group is None:
-            raise ValueError(f"For '{self.name}' group must be set.")
+            raise ValueError(f"For '{self.name}', the 'group' cannot be None, but got {group}.")
         validator.check_value_type('op', op, (type(ReduceOp.SUM),), self.name)
         validator.check_value_type('group', group, (tuple, list), self.name)
         validator.check_int(len(group), 2, Rel.GE, "group size", self.name)
@@ -480,7 +483,8 @@ class _HostReduceScatter(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         if x_shape[0] % self.group_size != 0:
-            raise ValueError(f"For '{self.name}' the first dimension of x should be divided by group_size.")
+            raise ValueError(f"For '{self.name}', the first dimension of 'x_shape' should be divided by 'group_size', "
+                             f"but got 'x_shape[0]': {x_shape[0]}, 'rank_size': {self.group_size}.")
         x_shape[0] = int(x_shape[0] / self.group_size)
         return x_shape
 
@@ -551,7 +555,7 @@ class Broadcast(PrimitiveWithInfer):
         """Initialize Broadcast."""
         validator.check_value_type('root_rank', root_rank, (int,), self.name)
         validator.check_value_type('group', _get_group(group), (str,), self.name)
-        check_hcom_group_valid(group)
+        check_hcom_group_valid(group, prim_name=self.name)
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('no_elimilate', True)
 
@@ -560,7 +564,7 @@ class Broadcast(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         if not isinstance(x_dtype, tuple):
-            raise TypeError(f"{self.name}'s input should be a tuple!")
+            raise TypeError(f"For '{self.name}', the 'input_x' should be a tuple, but got {type(x_dtype)}!")
         for _ele in x_dtype:
             validator.check_tensor_dtype_valid('x', _ele, target_dtypes, self.name)
         return x_dtype
@@ -690,10 +694,11 @@ class AlltoAll(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         rank_size = get_group_size(_get_group(self.group))
         if self.split_count != rank_size:
-            raise ValueError(f"split count '{self.split_count}' must be equal to rank size '{rank_size}'.")
+            raise ValueError(f"For '{self.name}', the 'split_count' must be equal to 'rank_size', "
+                             f"but got 'split_count': {self.split_count}, 'rank_size': {rank_size}.")
         if x_shape[self.split_dim] % self.split_count != 0:
-            raise ValueError(
-                f"split count '{self.split_count}' must be divisible by rank size '{x_shape[self.split_dim]}'.")
+            raise ValueError(f"For '{self.name}', the 'split_count' must be divisible by 'rank_size', "
+                             f"but got 'split_count' {self.split_count}, 'rank_size' {x_shape[self.split_dim]}.")
         x_shape[self.concat_dim] = x_shape[self.concat_dim] * self.split_count
         x_shape[self.split_dim] = int(x_shape[self.split_dim] / self.split_count)
         return x_shape

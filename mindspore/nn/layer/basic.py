@@ -81,9 +81,9 @@ class L1Regularizer(Cell):
         super(L1Regularizer, self).__init__()
         Validator.check_value_type("scale", scale, [int, float], self.cls_name)
         if scale <= 0:
-            raise ValueError("scale should be a number which greater than 0")
+            raise ValueError(f"For '{self.cls_name}', the 'scale' should be greater than 0, but got {scale}.")
         if math.isinf(scale) or math.isnan(scale):
-            raise ValueError("scale can not be INF or NAN")
+            raise ValueError(f"For '{self.cls_name}', the 'scale' can not be INF or NAN, but got {scale}.")
         self.abs = P.Abs()
         self.reduce_sum = P.ReduceSum()
         self.scale = Tensor(scale, dtype=mstype.float32)
@@ -149,7 +149,8 @@ class Dropout(Cell):
         """Initialize Dropout."""
         super(Dropout, self).__init__()
         if keep_prob <= 0 or keep_prob > 1:
-            raise ValueError("dropout probability should be a number in range (0, 1], but got {}".format(keep_prob))
+            raise ValueError(f"For '{self.cls_name}', the 'keep_prob' should be a number in range (0, 1], "
+                             f"but got {keep_prob}.")
         Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
         self.keep_prob = keep_prob
@@ -215,10 +216,10 @@ class Flatten(Cell):
 
 
 @constexpr
-def check_dense_input_shape(x):
+def check_dense_input_shape(x, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(x) < 2:
-        raise ValueError('For Dense, the dimension of input should not be less than 2, while the input dimension is '
-                         + f'{len(x)}.')
+        raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 2, but got {len(x)}.")
 
 
 class Dense(Cell):
@@ -292,26 +293,32 @@ class Dense(Cell):
         if isinstance(weight_init, Tensor):
             if weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
                     weight_init.shape[1] != in_channels:
-                raise ValueError("Weight init shape error.")
+                raise ValueError(f"For '{self.cls_name}', weight init shape error. The ndim of 'weight_init' should "
+                                 f"be equal to 2, and the first dim should be equal to 'out_channels', and the "
+                                 f"second dim should be equal to 'in_channels'. But got 'weight_init': {weight_init}, "
+                                 f"'out_channels': {out_channels}, 'in_channels': {in_channels}.")
         self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
 
         self.bias = None
         if self.has_bias:
             if isinstance(bias_init, Tensor):
                 if bias_init.ndim != 1 or bias_init.shape[0] != out_channels:
-                    raise ValueError("Bias init shape error.")
+                    raise ValueError(f"For '{self.cls_name}', bias init shape error. The ndim of 'bias_init' should "
+                                     f"be equal to 1, and the first dim should be equal to 'out_channels'. But got "
+                                     f"'bias_init': {bias_init}, 'out_channels': {out_channels}.")
             self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
             self.bias_add = P.BiasAdd()
 
         self.matmul = P.MatMul(transpose_b=True)
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
         if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
-            raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
+            raise TypeError(f"For '{self.cls_name}', the 'activation' must be str or Cell or Primitive, but got "
+                            f"{type(activation)}.")
         self.activation_flag = self.activation is not None
 
     def construct(self, x):
         x_shape = self.shape_op(x)
-        check_dense_input_shape(x_shape)
+        check_dense_input_shape(x_shape, self.cls_name)
         if len(x_shape) != 2:
             x = self.reshape(x, (-1, x_shape[-1]))
         x = self.matmul(x, self.weight)
@@ -341,9 +348,10 @@ def _is_equal_one(x):
 
 
 @constexpr
-def _dtype_check(x_dtype):
+def _dtype_check(x_dtype, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if x_dtype not in [mstype.float32, mstype.float16]:
-        raise TypeError("The input type must be float32 or float16.")
+        raise TypeError(f"{msg_prefix} x_dtype must be float32 or float16, but got {x_dtype}.")
 
 
 @constexpr
@@ -430,7 +438,7 @@ class ClipByNorm(Cell):
         l2sum_safe = self.select_(cond, l2sum, self.cast(ones_, self.dtype(l2sum)))
         l2norm = self.select_(cond, self.sqrt(l2sum_safe), l2sum)
 
-        _dtype_check(self.dtype(x))
+        _dtype_check(self.dtype(x), self.cls_name)
         if _is_equal_one(clip_norm):
             intermediate = x
         else:
@@ -792,12 +800,14 @@ class Pad(Cell):
         self.paddings = paddings
         Validator.check_string(self.mode, ["CONSTANT", "REFLECT", "SYMMETRIC"], 'mode', self.cls_name)
         if not isinstance(paddings, tuple):
-            raise TypeError('Paddings must be tuple type.')
+            raise TypeError(f"For '{self.cls_name}', the type of 'paddings' must be tuple, but got {type(paddings)}.")
         for item in paddings:
             if len(item) != 2:
-                raise ValueError('The shape of paddings must be (n, 2).')
+                raise ValueError(f"For '{self.cls_name}', the dimension of 'paddings' must be (n, 2), "
+                                 f"but got {paddings}.")
         if len(paddings) > 4:
-            raise ValueError('Only padding up to 4 dims is supported')
+            raise ValueError(f"For '{self.cls_name}', only 'paddings' up to 4 dims is supported, but got "
+                             f"{len(paddings)}.")
         if mode == "CONSTANT":
             self.pad = P.Pad(self.paddings)
         else:
@@ -813,17 +823,18 @@ class Pad(Cell):
 
 
 @constexpr
-def bilinear(shape, size, scale, align_corners):
+def bilinear(shape, size, scale, align_corners, prim_name=None):
     """Check input and calculate shape"""
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if not isinstance(align_corners, bool):
-        raise TypeError("align_corners should be type boolean")
+        raise TypeError(f"{msg_prefix} type of 'align_corners' should be boolean, but got {type(align_corners)}.")
     if size is None and scale is None:
-        raise ValueError("size and scale both none")
+        raise ValueError(f"{msg_prefix} 'size' and 'scale' both none.")
     if size is not None and scale is not None:
-        raise ValueError("size and scale both not none")
+        raise ValueError(f"{msg_prefix} 'size' and 'scale' both not none.")
     if size is not None:
         if not isinstance(size, (tuple, list)):
-            raise ValueError("size must be tuple or list")
+            raise ValueError(f"{msg_prefix} 'size' must be tuple or list, but got {type(size)}.")
         Validator.check_int(len(size), 2, Rel.EQ, "size", "bilinear")
         Validator.check_int(size[0], 1, Rel.GE, "size[0]", "bilinear")
         Validator.check_int(size[1], 1, Rel.GE, "size[1]", "bilinear")
@@ -958,7 +969,7 @@ class Unfold(Cell):
         def _check_tuple_or_list(arg_name, arg_val, prim_name):
             Validator.check_value_type(f"{arg_name}s", ksizes, [tuple, list], self.cls_name)
             if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[3] != 1:
-                raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s should be [1, {arg_name}_row, "
+                raise ValueError(f"For '{prim_name}' the format of {arg_name}s should be [1, {arg_name}_row, "
                                  f"{arg_name}_col, 1], but got {arg_val}.")
             if not isinstance(arg_val[1], int) or not isinstance(arg_val[2], int) or arg_val[1] < 1 or arg_val[2] < 1:
                 raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s should be "
@@ -1422,7 +1433,9 @@ class Roll(Cell):
             self.op_list.append((inner.Roll(shift=self.shift, axis=0), self.axis))
         else:
             if len(self.shift) != len(self.axis):
-                raise ValueError('The shape of shift and the shape of axis must be the same.')
+                raise ValueError(f"For '{self.cls_name}', the shape of 'shift' and the shape of 'axis' must be "
+                                 f"the same, but got the length of 'shift' {len(self.shift)} and the length of 'axis'"
+                                 f" {len(self.axis)}.")
             for idx, _ in enumerate(self.axis):
                 self.op_list.append((inner.Roll(shift=self.shift[idx], axis=0), self.axis[idx]))
 

@@ -26,9 +26,11 @@ from mindspore.ops.primitive import constexpr
 
 
 @constexpr
-def _check_shape(input_shape, out_shape):
+def _check_shape(input_shape, out_shape, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if input_shape != out_shape:
-        raise ValueError("Cannot broadcast the shape of x to the shape of clip_value_min or clip_value_max.")
+        raise ValueError(f"{msg_prefix} input_shape should be equal to the out_shape, but got "
+                         f"input_shape {input_shape} and out_shape {out_shape}.")
 
 
 def clip_by_value(x, clip_value_min, clip_value_max):
@@ -74,7 +76,7 @@ def clip_by_value(x, clip_value_min, clip_value_max):
     max_op = P.Maximum()
     x_min = min_op(x, clip_value_max)
     x_max = max_op(x_min, clip_value_min)
-    _check_shape(F.shape(x), F.shape(x_max))
+    _check_shape(F.shape(x), F.shape(x_max), 'clip_by_value')
     return x_max
 
 
@@ -115,7 +117,8 @@ class _ClipByGlobalNorm(Cell):
         super(_ClipByGlobalNorm, self).__init__()
         # Add interface. This parameter is not used at present
         if use_norm is not None:
-            raise ValueError("Input 'use_norm' only supports None currently!")
+            raise ValueError(f"For '{self.cls_name}', input 'use_norm' only supports None currently, "
+                             f"but got 'use_norm': {use_norm}")
         validator.check_number("clip_norm", clip_norm, 0.0, Rel.GT, self.cls_name)
         self.clip_norm = Tensor([clip_norm], mstype.float32)
         self.hyper_map = C.HyperMap()

@@ -408,13 +408,15 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         min_array = self._get_init_array(self.min_init)
         max_array = self._get_init_array(self.max_init)
         if not np.greater(max_array, min_array).all():
-            raise ValueError("`min_init` is not less than `max_init`, please reset the initial value.")
+            raise ValueError(f"For '{self.cls_name}', the 'max_init' should be greater than 'min_init', "
+                             f"but got 'max_array': {max_array}, 'min_init': {min_init}.")
         if self.mode == "DEFAULT":
             self._default_init(min_array, max_array)
         elif self.mode == "LEARNED_SCALE":
             self._learned_scale_init(min_array, max_array)
         else:
-            raise ValueError("Invalid mode, currently only valid for `DEFAULT` and `LEARNED_SCALE` mode.")
+            raise ValueError(f"For '{self.cls_name}', only `DEFAULT` and `LEARNED_SCALE` mode are valid, but got "
+                             f"'mode': {self.mode}.")
 
     def reset(self, quant_dtype=QuantDtype.INT8, min_init=-6, max_init=6):
         r"""
@@ -433,12 +435,14 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
             min_array = self._get_init_array(self.min_init)
             max_array = self._get_init_array(self.max_init)
             if not np.greater(max_array, min_array).all():
-                raise ValueError("`min_init` is not less than `max_init`, please reset the initial value.")
+                raise ValueError(f"For '{self.cls_name}', the 'max_init' should be greater than 'min_init', "
+                                 f"but got 'max_array': {max_array}, 'min_init': {min_init}.")
+
             self.minq.set_data(Tensor(min_array))
             self.maxq.set_data(Tensor(max_array))
             self.quant_max.set_data(Tensor(np.array([self._quant_max]).astype(np.float32)))
         else:
-            raise ValueError("The `reset` function is currently only valid for `LEARNED_SCALE` mode.")
+            raise ValueError(f"For '{self.cls_name}', only `LEARNED_SCALE` mode is valid, but got 'mode': {self.mode}.")
 
     def _default_init(self, min_array, max_array):
         """
@@ -479,16 +483,18 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         Initialization of `LEARNED_SCALE` mode.
         """
         if not self.symmetric:
-            raise ValueError("The 'LEARNED_SCALE' mode only support symmetric quant, "
-                             "please set symmetric to True.")
+            raise ValueError(f"For '{self.cls_name}', the 'LEARNED_SCALE' mode only support 'symmetric' quant, "
+                             f"but got 'symmetric': {self.symmetric}. Please set 'symmetric' to True.")
         if self.neg_trunc:
             min_array = self._get_init_array(0)
             if self.narrow_range:
-                raise ValueError("The 'LEARNED_SCALE' mode only support the combination of "
-                                 "neg_trunc=True and narrow_range=False config scenario.")
+                raise ValueError(f"For '{self.cls_name}', the 'LEARNED_SCALE' mode only support the combination of "
+                                 f"'neg_trunc=True and narrow_range=False' config scenario, but got 'narrow_range': "
+                                 f"{self.narrow_range}.")
         elif not self.narrow_range:
-            raise ValueError("The 'LEARNED_SCALE' mode only support narrow_range=True config, "
-                             "except for neg_trunc=True scenario.")
+            raise ValueError(f"For '{self.cls_name}', the 'LEARNED_SCALE' mode only support 'narrow_range=True' "
+                             f"config, except for 'neg_trunc=True' scenario. But got 'narrow_range': "
+                             f"{self.narrow_range}.")
 
         self._calculate_quant_max()
 
@@ -514,11 +520,11 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         Convert the initial value to array.
         """
         if isinstance(init_date, list) and self.per_channel and len(init_date) != self.num_channels:
-            raise ValueError("The length of the min_init/max_init list should be equal to num_channels for "
-                             "perchannel quant scenario, but get {}".format(len(init_date)))
+            raise ValueError(f"For '{self.cls_name}', the length of 'min_init/max_init' list should be equal to "
+                             f"'num_channels' for perchannel quant scenario, but got {len(init_date)}.")
         if isinstance(init_date, list) and not self.per_channel and len(init_date) != 1:
-            raise ValueError("The length of the min_init/max_init list should be 1 for perlayer quant "
-                             "scenario, but get {}".format(len(init_date)))
+            raise ValueError(f"For '{self.cls_name}', the length of the 'min_init/max_init' list should be 1 for "
+                             f"perlayer quant scenario, but got {len(init_date)}.")
 
         if isinstance(init_date, list):
             min_max_array = np.array(init_date).astype(np.float32)
@@ -690,8 +696,8 @@ class Conv2dBnFoldQuantOneConv(Cell):
         for dilation_elem in self.dilation:
             Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
         if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError('Attr \'pad_mode\' of \'Conv2dBnFoldQuant\' Op passed '
-                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
+            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' should be one of values "
+                             f"in ('valid', 'same', 'pad'), but got {pad_mode}.")
         self.pad_mode = pad_mode
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
@@ -701,7 +707,8 @@ class Conv2dBnFoldQuantOneConv(Cell):
                 Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
             self.padding = padding
         else:
-            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+            raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), but got "
+                            f"{type(padding)}!")
         self.group = Validator.check_positive_int(group)
         self.eps = eps
         self.momentum = 1 - momentum
@@ -931,8 +938,8 @@ class Conv2dBnFoldQuant(Cell):
         for dilation_elem in self.dilation:
             Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
         if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError('Attr \'pad_mode\' of \'Conv2dBnFoldQuant\' Op passed '
-                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
+            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' should be one of values in "
+                             f"('valid', 'same', 'pad'), but got {pad_mode}.")
         self.pad_mode = pad_mode
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
@@ -942,7 +949,8 @@ class Conv2dBnFoldQuant(Cell):
                 Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
             self.padding = padding
         else:
-            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+            raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), "
+                            f"but got {type(padding)}!")
         self.group = Validator.check_positive_int(group)
         self.eps = eps
         self.momentum = momentum
@@ -990,7 +998,8 @@ class Conv2dBnFoldQuant(Cell):
             self.batchnorm_fold2_train = Q.BatchNormFold2(freeze_bn=freeze_bn)
             self.batchnorm_fold2_infer = Q.BatchNormFold2(freeze_bn=0)
         else:
-            raise ValueError("Unsupported platform: {}".format(context.get_context('device_target')))
+            raise ValueError(f"For '{self.cls_name}', only the 'Ascend' and 'GPU' platforms"
+                             f" are supported, but got {context.get_context('device_target')}.")
         self.step = Parameter(initializer('normal', [1], dtype=mstype.int32), name='step', requires_grad=False)
         self.one = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
@@ -1141,8 +1150,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
         for dilation_elem in self.dilation:
             Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
         if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError('Attr \'pad_mode\' of \'Conv2dBnWithoutFoldQuant\' Op passed '
-                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
+            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' should be one of values in "
+                             f"('valid', 'same', 'pad'), but got {pad_mode}.")
         self.pad_mode = pad_mode
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
@@ -1152,9 +1161,9 @@ class Conv2dBnWithoutFoldQuant(Cell):
                 Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
             self.padding = padding
         else:
-            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+            raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), "
+                            f"but got {type(padding)}!")
         self.group = Validator.check_positive_int(group)
-
         self.bias_add = P.BiasAdd()
         if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
@@ -1285,8 +1294,8 @@ class Conv2dQuant(Cell):
         for dilation_elem in self.dilation:
             Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
         if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError('Attr \'pad_mode\' of \'Conv2dQuant\' Op passed '
-                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
+            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' should be one of values "
+                             f"in ('valid', 'same', 'pad'), but got {pad_mode}.")
         self.pad_mode = pad_mode
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
@@ -1296,7 +1305,8 @@ class Conv2dQuant(Cell):
                 Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
             self.padding = padding
         else:
-            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+            raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), "
+                            f"but got {type(padding)}!")
         self.group = Validator.check_positive_int(group)
 
         weight_shape = [out_channels, in_channels // group, *self.kernel_size]
@@ -1414,7 +1424,10 @@ class DenseQuant(Cell):
         if isinstance(weight_init, Tensor):
             if weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
                     weight_init.shape[1] != in_channels:
-                raise ValueError("weight_init shape error")
+                raise ValueError(f"For '{self.cls_name}', weight init shape error. The ndim of 'weight_init' should "
+                                 f"be equal to 2, and the first dim should be equal to 'out_channels', and the "
+                                 f"second dim should be equal to 'in_channels'. But got 'weight_init': {weight_init}, "
+                                 f"'out_channels': {out_channels}, 'in_channels': {in_channels}.")
 
         self.weight = Parameter(initializer(
             weight_init, [out_channels, in_channels]), name="weight")
@@ -1422,7 +1435,9 @@ class DenseQuant(Cell):
         if self.has_bias:
             if isinstance(bias_init, Tensor):
                 if bias_init.ndim != 1 or bias_init.shape[0] != out_channels:
-                    raise ValueError("bias_init shape error")
+                    raise ValueError(f"For '{self.cls_name}', bias init shape error. The ndim of 'bias_init' should "
+                                     f"be equal to 1, and the first dim should be equal to 'out_channels'. But got "
+                                     f"'bias_init': {bias_init}, 'out_channels': {out_channels}.")
 
             self.bias = Parameter(initializer(
                 bias_init, [out_channels]), name="bias")
@@ -1432,7 +1447,9 @@ class DenseQuant(Cell):
 
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
         if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
-            raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
+            raise TypeError(f"For '{self.cls_name}', the 'activation' must be str or Cell or Primitive, "
+                            f"but got {activation}.")
+
         self.activation_flag = self.activation is not None
         self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=0,

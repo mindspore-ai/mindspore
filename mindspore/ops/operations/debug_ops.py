@@ -27,7 +27,7 @@ def _check_mode(class_name):
     """Check for PyNative mode."""
     mode = context.get_context('mode')
     if mode == context.PYNATIVE_MODE:
-        raise RuntimeError(f'{class_name} operator does not support PyNative mode.')
+        raise RuntimeError(f"For '{class_name}', the operator does not support PyNative mode.")
 
 
 def _check_summary_param(name, value, class_name):
@@ -37,7 +37,7 @@ def _check_summary_param(name, value, class_name):
     n_value = name['value']
     validator.check_value_type('name', n_type, [type(mstype.string)], class_name)
     if not n_value:
-        raise ValueError(f"For 'name' the value should by valid string in {class_name}, but got an empty string.")
+        raise ValueError(f"For '{class_name}', the name should be valid string, but got '{n_value}'.")
 
     v_type = value['dtype']
     validator.check_value_type('value', v_type, [type(mstype.tensor)], class_name)
@@ -135,7 +135,7 @@ class ImageSummary(PrimitiveWithInfer):
         v_shape = value['shape']
         image_dim = 4
         if len(v_shape) != image_dim:
-            raise ValueError(f"For 'value' the dim should be {image_dim} in {self.__class__.__name__},"
+            raise ValueError(f"For '{self.name}', the dimension of 'value' should be {image_dim},"
                              f" but got {len(v_shape)}.")
 
         return SUMMARY_RETURN_VALUE
@@ -226,8 +226,8 @@ class HistogramSummary(PrimitiveWithInfer):
         v_shape = value['shape']
         # In the summary, the histogram value should be a tensor whose shape is not [].
         if not v_shape:
-            raise ValueError(f"For 'value' the type should be tensor in {self.__class__.__name__}, "
-                             f"shape should not be [].")
+            raise ValueError(f"For '{self.name}', the type of 'value' should be tensor, "
+                             f"and whose shape should not be [], but got {v_shape}.")
 
         return SUMMARY_RETURN_VALUE
 
@@ -343,7 +343,8 @@ class HookBackward(PrimitiveWithInfer):
         self.add_prim_attr("cell_id", cell_id)
         self.init_attrs["cell_id"] = cell_id
         if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError("Hook function should be python function type.")
+            raise TypeError(f"For '{self.name}', the tye of 'hook_fn' should be python function, "
+                            f"but got {type(hook_fn)}.")
         self.register_hook(hook_fn)
         self.cell_id = cell_id
 
