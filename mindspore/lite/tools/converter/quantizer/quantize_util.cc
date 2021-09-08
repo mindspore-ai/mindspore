@@ -96,10 +96,7 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
     return false;
   }
   auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
-  size_t shapeSize = 1;
-  for (auto dim : weight_shape) {
-    shapeSize = shapeSize * dim;
-  }
+  size_t shapeSize = std::accumulate(weight_shape.begin(), weight_shape.end(), 1, std::multiplies<int>());
   if (shapeSize < m_weight_size_) {
     MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
     return false;
@@ -180,10 +177,7 @@ bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
     return false;
   }
   auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
-  size_t shapeSize = 1;
-  for (auto dim : weight_shape) {
-    shapeSize = shapeSize * dim;
-  }
+  size_t shapeSize = std::accumulate(weight_shape.begin(), weight_shape.end(), 1, std::multiplies<int>());
   if (shapeSize < m_weight_size_) {
     MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
     return false;
@@ -218,10 +212,7 @@ bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &inputNode) const {
   if (weight_shape.size() < kDim2) {  // do not quant single dim tensors
     return false;
   }
-  size_t shapeSize = 1;
-  for (auto dim : weight_shape) {
-    shapeSize = shapeSize * dim;
-  }
+  size_t shapeSize = std::accumulate(weight_shape.begin(), weight_shape.end(), 1, std::multiplies<int>());
   if (shapeSize < m_weight_size_) {
     MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
     return false;

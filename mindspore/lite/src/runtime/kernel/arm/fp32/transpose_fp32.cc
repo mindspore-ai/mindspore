@@ -118,23 +118,26 @@ int TransposeCPUKernel::TransposeDimGreaterThan6(int task_id) {
   return RET_OK;
 }
 
-void TransposeCPUKernel::GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor) {
+int TransposeCPUKernel::GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor) {
   if (in_tensor->shape().size() != 4) {
-    return;
+    return RET_OK;
   }
   auto out_shape = out_tensor->shape();
   if (param_->perm_[0] == 0 && param_->perm_[1] == 2 && param_->perm_[2] == 3 && param_->perm_[3] == 1) {
     nhnc_param_[0] = out_shape[0];
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(out_shape[1], out_shape[2]), RET_ERROR);
     nhnc_param_[1] = out_shape[1] * out_shape[2];
     nhnc_param_[2] = out_shape[3];
     GetNchwToNhwcFunc(in_tensor->data_type());
   }
   if (param_->perm_[0] == 0 && param_->perm_[1] == 3 && param_->perm_[2] == 1 && param_->perm_[3] == 2) {
     nhnc_param_[0] = out_shape[0];
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(out_shape[2], out_shape[3]), RET_ERROR);
     nhnc_param_[1] = out_shape[2] * out_shape[3];
     nhnc_param_[2] = out_shape[1];
     GetNhwcToNchwFunc(in_tensor->data_type());
   }
+  return RET_OK;
 }
 
 int TransposeCPUKernel::RunImpl(int task_id) {
@@ -167,14 +170,17 @@ int TransposeCPUKernel::Run() {
   }
   in_data_ = in_tensor->data_c();
   out_data_ = out_tensor->data_c();
-  MS_ASSERT(in_data_);
-  MS_ASSERT(out_data_);
+  CHECK_NULL_RETURN(in_data_);
+  CHECK_NULL_RETURN(out_data_);
 
   if (in_tensor->shape().size() != static_cast<size_t>(param_->num_axes_)) {
     memcpy(out_data_, in_data_, in_tensor->Size());
     return RET_OK;
   }
-  GetNHNCTransposeFunc(in_tensor, out_tensor);
+  if (GetNHNCTransposeFunc(in_tensor, out_tensor) != RET_OK) {
+    MS_LOG(ERROR) << "Get NHWC tranpose func fail!";
+    return RET_ERROR;
+  }
   if (NHNCTransposeFunc_ != nullptr) {
     return ParallelLaunch(this->ms_context_, TransposeImpl, this, op_parameter_->thread_num_);
   }

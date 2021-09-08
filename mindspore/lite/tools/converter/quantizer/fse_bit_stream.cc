@@ -22,12 +22,12 @@
 namespace mindspore::lite::quant {
 int BitStream::Create(int bit_capacity) {
   chunk_count_ = (bit_capacity >> 6);
-  chunks_ = static_cast<uint64_t *>(malloc(chunk_count_ * sizeof(uint64_t)));
+  chunks_ = static_cast<uint64_t *>(calloc(chunk_count_, sizeof(uint64_t)));
   if (chunks_ == nullptr) {
     MS_LOG(ERROR) << "malloc memory failed.";
     return RET_ERROR;
   }
-  memset(chunks_, 0, chunk_count_ * sizeof(uint64_t));
+
   return RET_OK;
 }
 

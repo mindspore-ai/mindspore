@@ -62,9 +62,9 @@ int AddNCPUKernel::Run() {
   auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto input1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   auto output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
-  MS_ASSERT(input0_data != nullptr);
-  MS_ASSERT(input1_data != nullptr);
-  MS_ASSERT(output_data != nullptr);
+  CHECK_NULL_RETURN(input0_data);
+  CHECK_NULL_RETURN(input1_data);
+  CHECK_NULL_RETURN(output_data);
   if (static_cast<int>(elements_num_) < op_parameter_->thread_num_) {
     if (in_tensors_[0]->shape() == in_tensors_[1]->shape()) {
       ElementAdd(input0_data, input1_data, output_data, elements_num_);
@@ -78,16 +78,17 @@ int AddNCPUKernel::Run() {
     }
 
     for (size_t i = 2; i < in_tensors_.size(); ++i) {
+      auto in_data = reinterpret_cast<float *>(in_tensors_[i]->MutableData());
+      CHECK_NULL_RETURN(in_data);
       if (in_tensors_[i]->shape() == out_tensors_[0]->shape()) {
-        ElementAdd(reinterpret_cast<float *>(in_tensors_[i]->MutableData()), output_data, output_data, elements_num_);
+        ElementAdd(in_data, output_data, output_data, elements_num_);
       } else {
         ArithmeticParameter param;
         param.in_elements_num0_ = in_tensors_[i]->ElementsNum();
         param.in_elements_num1_ = out_tensors_[0]->ElementsNum();
         param.out_elements_num_ = out_tensors_[0]->ElementsNum();
         param.broadcasting_ = true;
-        ElementOptAdd(reinterpret_cast<float *>(in_tensors_[i]->MutableData()), output_data, output_data, elements_num_,
-                      &param);
+        ElementOptAdd(in_data, output_data, output_data, elements_num_, &param);
       }
     }
     return RET_OK;
@@ -102,6 +103,7 @@ int AddNCPUKernel::Run() {
   }
   for (size_t i = 2; i < in_tensors_.size(); ++i) {
     in1_addr_ = reinterpret_cast<float *>(in_tensors_[i]->MutableData());
+    CHECK_NULL_RETURN(in1_addr_);
     in2_addr_ = output_data;
     ret = ParallelLaunch(this->ms_context_, AddNLaunch, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {

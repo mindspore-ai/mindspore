@@ -97,6 +97,9 @@ int InitLstmWeight(const ParameterPtr &parameter, void *data, size_t data_size, 
 
 int ConvertBiWeight(char *flatten_weight, int hh_weight_size, int ih_weight_size) {
   // convert weight
+  if (hh_weight_size < 0) {
+    return RET_ERROR;
+  }
   auto hh_temp_ptr = reinterpret_cast<char *>(malloc(hh_weight_size));
   if (hh_temp_ptr == nullptr) {
     MS_LOG(ERROR) << "tensor_data is nullptr";
