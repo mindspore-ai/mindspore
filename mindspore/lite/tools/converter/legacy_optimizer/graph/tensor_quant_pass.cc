@@ -71,7 +71,7 @@ STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor, int32_t index) 
   tensor->data.clear();
   MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD(wShapeSize, sizeof(int8_t), SIZE_MAX), RET_ERROR, "int mul overflow");
   tensor->data.resize(wShapeSize * sizeof(int8_t));
-  if (memcpy_s(tensor->data.data(), wShapeSize * sizeof(int8_t), qDatas.data(), wShapeSize * sizeof(int8_t)) != EOK) {
+  if (memcpy_s(tensor->data.data(), tensor->data.size(), qDatas.data(), wShapeSize * sizeof(int8_t)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
     return RET_ERROR;
   }

@@ -34,16 +34,16 @@ using mindspore::schema::PrimitiveType;
 namespace opt {
 
 struct SplitInfo {
-  int64_t axis;
-  int64_t out_num;
-  std::vector<int64_t> size_splits;
-  std::vector<int64_t> extend_top;
-  std::vector<int64_t> extend_bottom;
-  std::vector<mindspore::lite::DeviceType> dev_types;
-  int64_t ori_split_axis_value;
-  int64_t in_num_conv;
-  int64_t fmk_type;
-  PrimitiveType primitive_type;
+  int64_t axis{0};
+  int64_t out_num{0};
+  std::vector<int64_t> size_splits{};
+  std::vector<int64_t> extend_top{};
+  std::vector<int64_t> extend_bottom{};
+  std::vector<mindspore::lite::DeviceType> dev_types{};
+  int64_t ori_split_axis_value{0};
+  int64_t in_num_conv{0};
+  int64_t fmk_type{0};
+  PrimitiveType primitive_type{schema::PrimitiveType_NONE};
 };
 
 typedef enum { CUT_N, CUT_H, CUT_W, CUT_C_IN, CUT_C_OUT, CUT_NONE } CuttingStragedy;

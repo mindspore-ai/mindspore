@@ -324,7 +324,15 @@ int InferShapePass::CopyPartialShapeToSubGraph(const CNodeT *partial_node, MetaG
     subgraph_input->dims = partial_input->dims;
     subgraph_input->format = partial_input->format;
     subgraph_input->data.resize(partial_input->data.size(), 0);
-    memcpy(subgraph_input->data.data(), partial_input->data.data(), partial_input->data.size());
+    if (partial_input->data.empty()) {
+      continue;
+    }
+    auto ret = memcpy_s(subgraph_input->data.data(), subgraph_input->data.size(), partial_input->data.data(),
+                        partial_input->data.size());
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy failed, ret: " << ret;
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

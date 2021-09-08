@@ -394,6 +394,10 @@ bool UpdateRatioWithPadStride(int64_t *ratio, size_t ratio_len, size_t split_siz
   for (size_t i = 0; i < split_size; i++) {
     total_block_count += ratio[i];
   }
+  if (ratio_len < split_size) {
+    MS_LOG(ERROR) << "out of ratio range";
+    return false;
+  }
 
   std::vector<int64_t> new_ratio(split_size);
   int visited_block = 0;
@@ -403,10 +407,6 @@ bool UpdateRatioWithPadStride(int64_t *ratio, size_t ratio_len, size_t split_siz
     new_ratio[i + 1] = cur_border;
   }
 
-  if (ratio_len < split_size) {
-    MS_LOG(ERROR) << "out of ratio range";
-    return false;
-  }
   for (size_t i = 0; i < split_size; i++) {
     ratio[i] = new_ratio[i];
   }
