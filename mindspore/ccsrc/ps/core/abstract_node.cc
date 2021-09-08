@@ -390,7 +390,9 @@ bool AbstractNode::CollectiveWait(const std::pair<uint32_t, uint64_t> &request_i
   std::unique_lock<std::mutex> lock(receive_callbacks_mutex_);
   bool res =
     receive_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] { return receive_messages_done_[request_id]; });
-  receive_messages_done_[request_id] = true;
+  if (receive_messages_done_.count(request_id) != 0) {
+    receive_messages_done_.erase(request_id);
+  }
   return res;
 }
 
@@ -993,7 +995,7 @@ void AbstractNode::RunReceiveCallback(const std::shared_ptr<MessageMeta> &meta, 
                 << ", the send request id is:" << meta->request_id() << " the size is:" << size;
   auto it = receive_callbacks_.find(std::make_pair(rank_id, rank_request_id));
   if (it != receive_callbacks_.end()) {
-    if (receive_messages_done_[std::make_pair(rank_id, rank_request_id)] == false) {
+    if (receive_messages_done_.count(std::make_pair(rank_id, rank_request_id)) != 0) {
       if (it->second) {
         it->second();
       }
