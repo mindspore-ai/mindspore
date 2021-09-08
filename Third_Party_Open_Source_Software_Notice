@@ -214,45 +214,6 @@ Copyright 2016 Grist Labs, Inc.
    See the License for the specific language governing permissions and
    limitations under the License.
 
-Software: cffi 1.12.3
-Copyright notice: 
-Copyright (c) 2002  Ranjit Mathew
-Copyright (c) 2002  Roger Sayle
-types.c - Copyright (c) 1996, 1998  Red Hat, Inc.
-assert list(c) == [0, 100, 1000, 600, 0]
-Copyright (c) 2002  Bo Thorsen
-fficommon.h - Copyright (c) 1996  Red Hat, Inc.
-prepcif.c - Copyright (c) 1996, 1998  Red Hat, Inc.
-ffitarget.h - Copyright (c) 1996-2003  Red Hat, Inc.
-copyright = u'2012-2018, Armin Rigo, Maciej Fijalkowski'
-libffi - Copyright (c) 1996-2003  Red Hat, Inc.
-Copyright (c) 2001  John Beniton
-libffi 2.00-beta - Copyright (c) 1996-2003  Red Hat, Inc.
-win32.S - Copyright (c) 1996, 1998, 2001, 2002  Red Hat, Inc.
-ffi.c - Copyright (c) 1996, 1998, 1999, 2001  Red Hat, Inc.
-
-License:The MIT License
-
-Permission is hereby granted, free of charge, to any person 
-obtaining a copy of this software and associated documentation 
-files (the "Software"), to deal in the Software without 
-restriction, including without limitation the rights to use, 
-copy, modify, merge, publish, distribute, sublicense, and/or 
-sell copies of the Software, and to permit persons to whom the 
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included 
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
-THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
-DEALINGS IN THE SOFTWARE.
-
-
 Software: easydict 1.9
 Copyright notice:
 Copyright (C) 2007 Free Software Foundation, Inc. <http:fsf.org/>
