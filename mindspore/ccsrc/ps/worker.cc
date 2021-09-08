@@ -307,7 +307,7 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
   }
 
   std::vector<VectorPtr> resp;
-  if (!worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, cmd, &resp)) {
+  if (!worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(cmd), &resp)) {
     MS_LOG(ERROR) << "Worker send failed!";
   }
   int64_t single_id_len = SizeToLong(lookup_result->size() / lookup_ids.size());
@@ -391,7 +391,7 @@ void Worker::UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vecto
       sizes.push_back(kv_data.length());
     }
   }
-  worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, kUpdateEmbeddingsCmd);
+  worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(kUpdateEmbeddingsCmd));
 }
 
 void Worker::Finalize() {
@@ -844,11 +844,11 @@ void Worker::RoundRobinPartitioner(const KVMessage &send, PartitionKVMessages *p
   for (int i = 0; i < send.keys_size(); i++) {
     param_key = keys[i];
     int64_t server_id = key_to_server_id_[param_key];
-    if (!partition->at(server_id).first) {
-      partition->at(server_id).first = true;
+    if (!partition->at(LongToUlong(server_id)).first) {
+      partition->at(LongToUlong(server_id)).first = true;
     }
 
-    KVMessage &server_kv_pairs = partition->at(server_id).second;
+    KVMessage &server_kv_pairs = partition->at(LongToUlong(server_id)).second;
     server_kv_pairs.add_keys(param_key);
     if (values.empty()) {
       continue;
@@ -865,7 +865,7 @@ void Worker::RoundRobinPartitioner(const KVMessage &send, PartitionKVMessages *p
 }
 
 void Worker::WorkerInitEmbeddingPartitioner(const KVMessage &send, std::vector<std::pair<bool, KVMessage>> *partition,
-                                            const std::map<int64_t, int64_t> &attrs) {
+                                            const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
   partition->resize(LongToSize(server_num_));
   auto keys = send.keys();
@@ -890,8 +890,8 @@ void Worker::UpdateEmbeddingPartitioner(const KVMessage &send, PartitionKVMessag
   MS_EXCEPTION_IF_NULL(partition);
   const float *embedding_vals = send.values().data();
   const uint64_t *lookup_ids = send.len().data();
-  size_t val_size = send.values_size();
-  size_t id_size = send.len_size();
+  size_t val_size = IntToSize(send.values_size());
+  size_t id_size = IntToSize(send.len_size());
   size_t embedding_dim = val_size / id_size;
 
   const Key &key = send.keys()[0];

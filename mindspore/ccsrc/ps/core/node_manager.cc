@@ -25,7 +25,7 @@ void NodeManager::InitNode() {
   meta_data_ = std::make_unique<ClusterMetadata>(PSContext::instance()->cluster_config().initial_worker_num,
                                                  PSContext::instance()->cluster_config().initial_server_num);
   MS_EXCEPTION_IF_NULL(meta_data_);
-  total_node_num_ = initial_total_node_num_;
+  total_node_num_ = UintToInt(initial_total_node_num_);
 }
 
 uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta) {
@@ -79,7 +79,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     node_info.node_id_ = node_id;
     node_info.rank_id_ = rank_id;
     node_info.ip_ = ip;
-    node_info.port_ = port;
+    node_info.port_ = static_cast<uint16_t>(port);
     node_info.is_alive = true;
     registered_nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The server node id:" << node_id << ",node ip: " << node_info.ip_ << ",node port:" << port
@@ -118,7 +118,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     node_info.node_id_ = node_id;
     node_info.rank_id_ = rank_id;
     node_info.ip_ = ip;
-    node_info.port_ = port;
+    node_info.port_ = static_cast<uint16_t>(port);
     node_info.is_alive = true;
     registered_nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The worker node id:" << node_id << " assign rank id:" << rank_id;

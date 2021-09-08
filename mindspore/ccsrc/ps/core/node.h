@@ -92,7 +92,9 @@ class Node {
   void RunMessageCallback(const uint64_t &request_id);
 
   NodeInfo node_info_;
+  // Whether the cluster is ready
   std::atomic<bool> is_ready_;
+  // Whether the cluster is finished.
   std::atomic<bool> is_finish_;
 
   std::atomic<bool> is_already_stopped_;

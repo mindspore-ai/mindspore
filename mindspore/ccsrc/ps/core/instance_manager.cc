@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-void InstanceManager::NewInstanceAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager,
+void InstanceManager::NewInstanceAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &,
                                        const std::string &body, const uint64_t &request_id, const NodeInfo &node_info) {
   MS_EXCEPTION_IF_NULL(client);
   MS_EXCEPTION_IF_NULL(node_);
@@ -38,7 +38,7 @@ void InstanceManager::NewInstanceAsync(const std::shared_ptr<TcpClient> &client,
   MS_LOG(INFO) << "The scheduler is sending new instance to workers and servers!";
 }
 
-void InstanceManager::QueryInstanceAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager,
+void InstanceManager::QueryInstanceAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &,
                                          const uint64_t &request_id, const NodeInfo &node_info) {
   MS_EXCEPTION_IF_NULL(client);
   MS_EXCEPTION_IF_NULL(node_);
@@ -58,7 +58,7 @@ void InstanceManager::QueryInstanceAsync(const std::shared_ptr<TcpClient> &clien
   MS_LOG(INFO) << "The scheduler is sending query instance to workers and servers!";
 }
 
-void InstanceManager::EnableFLSAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager,
+void InstanceManager::EnableFLSAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &,
                                      const uint64_t &request_id, const NodeInfo &node_info) {
   MS_EXCEPTION_IF_NULL(client);
   MS_EXCEPTION_IF_NULL(node_);
@@ -78,7 +78,7 @@ void InstanceManager::EnableFLSAsync(const std::shared_ptr<TcpClient> &client, c
   MS_LOG(INFO) << "The scheduler is sending query instance to workers and servers!";
 }
 
-void InstanceManager::DisableFLSAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager,
+void InstanceManager::DisableFLSAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &,
                                       const uint64_t &request_id, const NodeInfo &node_info) {
   MS_EXCEPTION_IF_NULL(client);
   MS_EXCEPTION_IF_NULL(node_);
