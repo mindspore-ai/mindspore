@@ -18,9 +18,8 @@ Validators for TensorOps.
 
 from functools import wraps
 
-from mindspore.dataset.core.validator_helpers import check_float32, check_int32_not_zero, \
-    check_non_negative_float32, check_non_negative_float64, check_pos_float32, check_pos_int64, check_value, \
-    parse_user_args, type_check
+from mindspore.dataset.core.validator_helpers import check_float32, check_int32_not_zero, check_non_negative_float32, \
+    check_pos_float32, check_pos_int32, check_value, parse_user_args, type_check
 from .utils import ScaleType
 
 
@@ -211,10 +210,10 @@ def check_time_stretch(method):
 
         if hop_length is not None:
             type_check(hop_length, (int,), "hop_length")
-            check_pos_int64(hop_length, "hop_length")
+            check_pos_int32(hop_length, "hop_length")
 
         type_check(n_freq, (int,), "n_freq")
-        check_pos_int64(n_freq, "n_freq")
+        check_pos_int32(n_freq, "n_freq")
 
         if fixed_rate is not None:
             type_check(fixed_rate, (int, float), "fixed_rate")
@@ -237,7 +236,7 @@ def check_masking(method):
         type_check(mask_start, (int,), "mask_start")
         check_non_negative_float32(mask_start, "mask_start")
         type_check(mask_value, (int, float), "mask_value")
-        check_non_negative_float64(mask_value, "mask_value")
+        check_non_negative_float32(mask_value, "mask_value")
         return method(self, *args, **kwargs)
 
     return new_method
