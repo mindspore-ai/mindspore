@@ -20,7 +20,7 @@ from pycocotools.cocoeval import COCOeval
 
 def get_image_id(label_file):
     """
-    :param: label file path, default is coco2014_minival.txt
+    :param: label file path, default is coco2017_minival.txt
     :return: image id
     """
     image_list = []
@@ -37,7 +37,7 @@ def get_image_id(label_file):
 def get_category_id(class_id):
     """
     :param: class id which corresponding coco.names
-    :return: category id is used in instances_val2014.json
+    :return: category id is used in instances_val2017.json
     """
     if 0 <= class_id <= 10:
         class_id = class_id + 1
@@ -81,7 +81,7 @@ def get_img_set(anno_json_path):
 def get_dict_from_file(file_path, id_list):
     """
     :param: file_path contain all infer result
-    :param: id_list contain all images id which is corresponding instances_val2014.json
+    :param: id_list contain all images id which is corresponding instances_val2017.json
     :return: dict_list contain infer result of every images
     """
     print(len(id_list))
@@ -122,7 +122,7 @@ def get_img_id(file_name):
 
 
 if __name__ == "__main__":
-    ban_path = './coco2014_minival.txt'
+    ban_path = './coco2017_minival.txt'
     input_file = './result/result.txt'
     if not os.path.exists(ban_path):
         print('The infer text file does not exist.')
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     ann_type = ('segm', 'bbox', 'keypoints')
     # specify type here
     ann_type = ann_type[1]
-    coco_gt_file = './instances_val2014.json'
+    coco_gt_file = './instances_val2017.json'
     coco_gt = COCO(coco_gt_file)
     coco_dt_file = './result.json'
 
