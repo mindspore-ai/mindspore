@@ -38,6 +38,7 @@ device_id: 0
 rank_id: 0
 rank_size: 1
 run_distribute: False
+run_eval: True
 activation: "Softmax"
         
 # Image classification trian. train_parse_args():return train_args
@@ -86,6 +87,7 @@ file_name: "output file name."
 result_path: "result files path."
 label_path: "label path."
 enable_profiling: 'Whether enable profiling while training, default: False'
+run_eval: 'Whether run evaluation while training, default is false.'
 run_distribute: 'Run distribute, default is false.'
 device_id: 'Device id, default is 0.'
 rank_id: 'Rank id, default is 0.'

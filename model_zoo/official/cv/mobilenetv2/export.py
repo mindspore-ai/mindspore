@@ -16,24 +16,15 @@
 mobilenetv2 export file.
 """
 import numpy as np
-from mindspore import Tensor, export, context
+from mindspore import Tensor, export
 from src.models import define_net, load_ckpt
-from src.utils import set_context
+from src.utils import context_device_init
 from src.model_utils.config import config
-from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+from src.model_utils.device_adapter import get_device_id
 from src.model_utils.moxing_adapter import moxing_wrapper
 
-
-config.device_id = get_device_id()
-config.rank_id = get_rank_id()
-config.rank_size = get_device_num()
-config.run_distribute = config.rank_size > 1.
 config.batch_size = config.batch_size_export
 config.is_training = config.is_training_export
-
-context.set_context(mode=context.GRAPH_MODE, device_target=config.platform)
-if config.platform == "Ascend":
-    context.set_context(device_id=get_device_id())
 
 def modelarts_process():
     pass
@@ -42,7 +33,9 @@ def modelarts_process():
 def export_mobilenetv2():
     """ export_mobilenetv2 """
     print('\nconfig: \n', config)
-    set_context(config)
+    if not config.device_id:
+        config.device_id = get_device_id()
+    context_device_init(config)
     _, _, net = define_net(config, config.is_training)
 
     load_ckpt(net, config.ckpt_file)

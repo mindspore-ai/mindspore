@@ -14,72 +14,40 @@
 # ============================================================================
 
 from mindspore import context
-from mindspore import nn
-from mindspore.common import dtype as mstype
 from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.communication.management import get_rank, init, get_group_size
 
 from src.models import Monitor
 
-
-def switch_precision(net, data_type, config):
-    if config.platform == "Ascend":
-        net.to_float(data_type)
-        for _, cell in net.cells_and_names():
-            if isinstance(cell, nn.Dense):
-                cell.to_float(mstype.float32)
-
-
 def context_device_init(config):
+    if config.platform == "GPU" and config.run_distribute:
+        config.device_id = 0
+    config.rank_id = 0
+    config.rank_size = 1
     if config.platform == "CPU":
         context.set_context(mode=context.GRAPH_MODE, device_target=config.platform, save_graphs=False)
 
-    elif config.platform == "GPU":
-        context.set_context(mode=context.GRAPH_MODE, device_target=config.platform, save_graphs=False)
-        if config.run_distribute:
-            init()
-            context.set_auto_parallel_context(device_num=get_group_size(),
-                                              parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True)
-
-    elif config.platform == "Ascend":
+    elif config.platform in ["Ascend", "GPU"]:
         context.set_context(mode=context.GRAPH_MODE, device_target=config.platform, device_id=config.device_id,
                             save_graphs=False)
         if config.run_distribute:
+            init()
+            config.rank_id = get_rank()
+            config.rank_size = get_group_size()
             context.set_auto_parallel_context(device_num=config.rank_size,
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True, all_reduce_fusion_config=[140])
-            init()
+                                              gradients_mean=True)
     else:
         raise ValueError("Only support CPU, GPU and Ascend.")
 
 
-def set_context(config):
-    if config.platform == "CPU":
-        context.set_context(mode=context.GRAPH_MODE, device_target=config.platform,
-                            save_graphs=False)
-    elif config.platform == "Ascend":
-        context.set_context(mode=context.GRAPH_MODE, device_target=config.platform,
-                            device_id=config.device_id, save_graphs=False)
-    elif config.platform == "GPU":
-        context.set_context(mode=context.GRAPH_MODE,
-                            device_target=config.platform, save_graphs=False)
-
-
 def config_ckpoint(config, lr, step_size, model=None, eval_dataset=None):
     cb = [Monitor(lr_init=lr.asnumpy(), model=model, eval_dataset=eval_dataset)]
-    if config.platform in ("CPU", "GPU") or config.rank_id == 0:
-
-        if config.save_checkpoint:
-            config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
-                                         keep_checkpoint_max=config.keep_checkpoint_max)
-
-            rank = 0
-            if config.run_distribute:
-                rank = get_rank()
-
-            ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(rank) + "/"
-            ckpt_cb = ModelCheckpoint(prefix="mobilenetv2", directory=ckpt_save_dir, config=config_ck)
-            cb += [ckpt_cb]
+    if config.save_checkpoint and config.rank_id == 0:
+        config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
+                                     keep_checkpoint_max=config.keep_checkpoint_max)
+        ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(config.rank_id) + "/"
+        ckpt_cb = ModelCheckpoint(prefix="mobilenetv2", directory=ckpt_save_dir, config=config_ck)
+        cb += [ckpt_cb]
     return cb
