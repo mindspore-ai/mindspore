@@ -153,7 +153,7 @@ class Somas {
   std::map<size_t, size_t> GetRefTensorsInContiguousList();
   bool SaveSomasResult(const session::KernelGraph *graph);
   bool VerifySomasResult(const session::KernelGraph *graph, const nlohmann::json &somas_json) const;
-  bool LoadSomasResult(const session::KernelGraph *graph, const string filename);
+  bool LoadSomasResult(const session::KernelGraph *graph, const string &filename);
   bool UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json);
   bool CalcSomasModelHash(const session::KernelGraph *graph);
   void UpdateInputTensor(SomasNodePtr node, SomasNodePtr pre_somas_node, SomasTensorPtr input_somas_tensor) const;

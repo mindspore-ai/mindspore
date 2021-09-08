@@ -94,6 +94,7 @@ class SomasTensor {
   SomasStreamPtr GetSourceStream() const { return source_stream_; }
   const size_t &GetOriginalSize() { return original_size_; }
   const size_t &GetAlignedSize() { return aligned_size_; }
+  const size_t &GetNumConstraints() { return num_constraints_; }
   bool IsLifelong() { return lifelong_value_ == kLifeLongGraphAll; }
   bool IsWorkspace() { return type_ == kWorkspace; }
   bool IsOutputOnly() { return type_ == kOutputOnly; }
