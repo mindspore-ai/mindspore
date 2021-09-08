@@ -30,11 +30,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationType_SIGMOID;
 
 namespace mindspore::kernel {
-void CalculateTableList(int8_t *table, const float input_scale, const int32_t input_zp) {
+void CalculateTableList(int8_t *table, const float input_scale, const int32_t input_zp, const float output_scale,
+                        const int32_t output_zp) {
   int32_t min_value = std::numeric_limits<int8_t>::min();
   int32_t max_value = std::numeric_limits<int8_t>::max();
-  const float output_scale = 1.0f / 256;
-  const int32_t output_zp = -128;
 
   for (int i = min_value; i < max_value; ++i) {
     const float real_input_value = input_scale * (i - input_zp);
@@ -58,7 +57,7 @@ int SigmoidInt8CPUKernel::Init() {
                   << ", should be -128.";
     return RET_ERROR;
   }
-  CalculateTableList(table_list_, input_scale, input_zp);
+  CalculateTableList(table_list_, input_scale, input_zp, output_scale, output_zp);
   return RET_OK;
 }
 

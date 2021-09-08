@@ -23,6 +23,7 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include <functional>
 #include "include/version.h"
 #include "ops/concat.h"
 #include "ops/crop.h"
@@ -339,13 +340,13 @@ static bool SearchLowerBound(const std::vector<float> &data, const size_t &index
     return false;
   }
   if (fabs(max_tmp - *min_tmp) <= 0.0f || fabs(length - *min_idx) <= 0.0f) {
-    MS_LOG(ERROR) << "divisor cannot be 0";
+    MS_LOG(INFO) << "divisor cannot be 0";
     return false;
   }
   float range_ratio = (data.at(index) - *min_tmp) / (max_tmp - *min_tmp);
   float index_ratio = static_cast<float>(index - *min_idx) / (length - *min_idx);
   if (fabs(index_ratio) <= 0.0f) {
-    MS_LOG(ERROR) << "divisor cannot be 0";
+    MS_LOG(INFO) << "divisor cannot be 0";
     return false;
   }
   if (index_ratio > 0 && range_ratio / index_ratio > ratio) {
@@ -362,13 +363,13 @@ static bool SearchUpperBound(const std::vector<float> &data, const size_t &index
     return false;
   }
   if (fabs(*max_tmp - min_tmp) <= 0.0f || fabs(length - *max_idx) <= 0.0f) {
-    MS_LOG(ERROR) << "divisor cannot be 0";
+    MS_LOG(INFO) << "divisor cannot be 0";
     return false;
   }
   float range_ratio = (*max_tmp - data.at(index)) / (*max_tmp - min_tmp);
   float index_ratio = static_cast<float>(index - *max_idx) / (length - *max_idx);
   if (fabs(index_ratio) <= 0.0f) {
-    MS_LOG(ERROR) << "divisor cannot be 0";
+    MS_LOG(INFO) << "divisor cannot be 0";
     return false;
   }
   if (index_ratio > 0 && range_ratio / index_ratio > ratio) {
@@ -384,8 +385,10 @@ static float CalPercentile(const std::vector<float> &data, const int &outlier_pe
   int index = std::ceil(val);
   float result;
   if (index - val > 0) {
+    MS_ASSERT(index - 1 >= 0);
     result = data.at(index - 1);
   } else {
+    MS_ASSERT(index - 1 >= 0);
     result = (data.at(index - 1) + data.at(index)) / 2;
   }
   return result;

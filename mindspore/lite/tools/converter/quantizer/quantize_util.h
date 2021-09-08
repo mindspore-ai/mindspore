@@ -57,7 +57,7 @@ enum WeightQuantType {
 constexpr size_t kUint8Quantization = 8;
 constexpr size_t kMaxBit = 8;
 constexpr size_t kMaxNum1024 = 1024;
-constexpr size_t kPercentBase = 100;
+constexpr float kPercentBase = 100.0;
 constexpr size_t kMillisecondsBase = 10;
 constexpr size_t kWightIndex = 1;
 constexpr double kScaleThreashold = 1e-38;

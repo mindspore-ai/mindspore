@@ -25,11 +25,10 @@
 namespace mindspore::lite::micro::nnacl {
 constexpr auto kInt8Range = 256;
 
-void CalculateTableList(int8_t *table, const float input_scale, const int32_t input_zp) {
+void CalculateTableList(int8_t *table, const float input_scale, const int32_t input_zp, const float output_scale,
+                        const int32_t output_zp) {
   constexpr int32_t min_value = std::numeric_limits<int8_t>::min();
   constexpr int32_t max_value = std::numeric_limits<int8_t>::max();
-  constexpr float output_scale = 1.0f / kInt8Range;
-  constexpr int32_t output_zp = std::numeric_limits<int8_t>::min();
 
   for (int i = min_value; i < max_value; ++i) {
     const float real_input_value = input_scale * (i - input_zp);
@@ -49,12 +48,7 @@ int SigmodInt8Coder::Prepare(CoderContext *const context) {
   const int32_t input_zp = input_tensor_->quant_params().at(0).zeroPoint;
   const float output_scale = output_tensor_->quant_params().at(0).scale;
   const int32_t output_zp = output_tensor_->quant_params().at(0).zeroPoint;
-  if (output_scale != (1.0f / kInt8Range) || output_zp != static_cast<int32_t>(std::numeric_limits<int8_t>::min())) {
-    MS_LOG(ERROR) << "Output scale is : " << output_scale << ", should be 1/kInt8Range. Output zp is : " << output_zp
-                  << ", should be -128.";
-    return RET_ERROR;
-  }
-  CalculateTableList(table_list_, input_scale, input_zp);
+  CalculateTableList(table_list_, input_scale, input_zp, output_scale, output_zp);
   return RET_OK;
 }
 

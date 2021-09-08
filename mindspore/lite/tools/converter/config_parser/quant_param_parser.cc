@@ -22,6 +22,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr int kQuantBitNumInt16 = 16;
+constexpr int kQuantBitNumInt8 = 8;
 }  // namespace
 int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_string,
                                        quant::CommonQuantParam *common_quant) {
@@ -39,12 +40,12 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
   }
   if (common_quant->quant_type == schema::QuantType_WeightQuant) {
     if (common_quant->bit_num < 0 || common_quant->bit_num > kQuantBitNumInt16) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be greater than zero and less than 16 currently.";
+      MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be [0,16].";
       return RET_INPUT_PARAM_INVALID;
     }
   } else if (common_quant->quant_type == schema::QuantType_PostTraining) {
-    if (common_quant->bit_num <= 0 || common_quant->bit_num > kQuantBitNumInt16) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be greater or equal to zero and less than 16 currently.";
+    if (common_quant->bit_num <= 0 || common_quant->bit_num > kQuantBitNumInt8) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be [1,8].";
       return RET_INPUT_PARAM_INVALID;
     }
   }
