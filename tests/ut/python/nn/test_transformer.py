@@ -25,7 +25,7 @@ from mindspore.common.api import _cell_graph_executor
 def test_transformer_encoder_only():
     model = Transformer(batch_size=2,
                         src_seq_length=20,
-                        tgt_seq_length=0,
+                        tgt_seq_length=10,
                         encoder_layers=2,
                         decoder_layers=0,
                         hidden_size=64,
@@ -41,7 +41,7 @@ def test_transformer_encoder_log_softmax():
     with pytest.raises(ValueError):
         model = Transformer(batch_size=2,
                             src_seq_length=20,
-                            tgt_seq_length=0,
+                            tgt_seq_length=10,
                             encoder_layers=2,
                             decoder_layers=0,
                             hidden_act='logsoftmax',
@@ -57,7 +57,7 @@ def test_transformer_encoder_log_softmax():
 def test_transformer_encoder_leakyrelu():
     model = Transformer(batch_size=2,
                         src_seq_length=20,
-                        tgt_seq_length=0,
+                        tgt_seq_length=10,
                         encoder_layers=2,
                         decoder_layers=0,
                         hidden_act='leakyrelu',
@@ -73,7 +73,7 @@ def test_transformer_encoder_leakyrelu():
 def test_transformer_encoder_logsigmoid():
     model = Transformer(batch_size=2,
                         src_seq_length=20,
-                        tgt_seq_length=0,
+                        tgt_seq_length=10,
                         encoder_layers=2,
                         decoder_layers=0,
                         hidden_act='logsigmoid',

@@ -156,6 +156,37 @@ def test_transformer_model():
     model.train(1, dataset, dataset_sink_mode=False)
 
 
+def test_transformer_model_int64_inputs():
+    set_auto_parallel_context(device_num=8, global_rank=0,
+                              full_batch=True,
+                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    net = Transformer(encoder_layers=1,
+                      decoder_layers=2,
+                      batch_size=2,
+                      src_seq_length=20,
+                      tgt_seq_length=10,
+                      hidden_size=64,
+                      num_heads=8,
+                      ffn_hidden_size=64,
+                      parallel_config=config)
+
+    encoder_input_value = Tensor(np.ones((2, 20, 64)), mstype.int64)
+    encoder_input_mask = Tensor(np.ones((2, 20, 20)), mstype.float16)
+    decoder_input_value = Tensor(np.ones((2, 10, 64)), mstype.float32)
+    decoder_input_mask = Tensor(np.ones((2, 10, 10)), mstype.float16)
+    memory_mask = Tensor(np.ones((2, 10, 20)), mstype.float16)
+    net = NetWithLossFiveInputs(net)
+    params = net.trainable_params()
+    optimizer = AdamWeightDecay(params)
+    dataset = Dataset(encoder_input_value, encoder_input_mask, decoder_input_value, decoder_input_mask,
+                      memory_mask)
+    net_with_grad = TrainOneStepCell(net, optimizer=optimizer)
+    model = Model(net_with_grad)
+
+    with pytest.raises(TypeError):
+        model.train(1, dataset, dataset_sink_mode=False)
+
+
 def test_transformer_model_head_parallel_only_encoder():
     local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
     run_total_transformer_model_head(e_layer=2, d_layer=0, arg_parallel_config=local_config)
@@ -451,6 +482,33 @@ def test_parallel_cross_entroy_loss_semi_auto_parallel():
 
     model = Model(net)
     model.train(1, dataset, dataset_sink_mode=False)
+
+
+def test_transformer_args():
+
+    with pytest.raises(TypeError):
+        Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
+                    tgt_seq_length=20, decoder_layers="aa")
+
+    with pytest.raises(TypeError):
+        Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
+                    tgt_seq_length="a")
+
+    with pytest.raises(TypeError):
+        Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
+                    tgt_seq_length=20, softmax_comptue_type=mstype.int64)
+
+    with pytest.raises(TypeError):
+        Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
+                    tgt_seq_length=20, layernorm_compute_type=mstype.int64)
+
+    with pytest.raises(TypeError):
+        Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
+                    tgt_seq_length=20, param_init_type=mstype.int64)
+
+    with pytest.raises(TypeError):
+        Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
+                    tgt_seq_length=20, hidden_dropout_rate=mstype.int64)
 
 
 def test_transformer_parallel_config():
