@@ -172,9 +172,17 @@ void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bo
 #endif
 
 void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, bool recheck,
-                                          const std::string &tensor_name, const std::string &tensor_name_no_slot,
-                                          bool *previous_iter_tensor_needed, std::string *const qualified_tensor_name,
+                                          const std::shared_ptr<TensorData> &tensor, bool *previous_iter_tensor_needed,
+                                          std::string *const qualified_tensor_name,
                                           std::vector<watchpoint_t> *const watchpoints_to_check) {
+  if (tensor == nullptr) {
+    MS_LOG(DEBUG) << "tensor is nullptr.";
+    return;
+  }
+  const auto tensor_name = tensor->GetName();
+  const auto tensor_name_no_slot = tensor_name.substr(0, tensor_name.find_first_of(':'));
+  const auto tensor_device_id = tensor->GetDeviceId();
+  const auto tensor_root_graph_id = tensor->GetRootGraphId();
   for (auto w_table_item : watchpoint_table) {
     auto wp = std::get<1>(w_table_item);
     // check ONLY init conditions on initial suspended state.
@@ -192,7 +200,7 @@ void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, 
       wp_lock_.unlock();
       if (wp_cache_hit) continue;
     }
-    std::string found = wp.FindQualifiedTensorName(tensor_name_no_slot);
+    std::string found = wp.FindQualifiedTensorName(tensor_name_no_slot, tensor_device_id, tensor_root_graph_id);
     if (!found.empty()) {
       *qualified_tensor_name = found;
       watchpoints_to_check->push_back(w_table_item.second);
@@ -252,8 +260,8 @@ void DebugServices::CheckWatchpointsForTensor(
     bool previous_iter_tensor_needed = false;
     // Add do nothing line in case offline debug is off, prevent unused var warning
     (void)previous_iter_tensor_needed;
-    AddWatchPointsToCheck(init_dbg_suspend, step_end, recheck, tensor_name, tensor_name_no_slot,
-                          &previous_iter_tensor_needed, &qualified_tensor_name, &watchpoints_to_check);
+    AddWatchPointsToCheck(init_dbg_suspend, step_end, recheck, tensor, &previous_iter_tensor_needed,
+                          &qualified_tensor_name, &watchpoints_to_check);
     // no wp set on current tensor
     if (watchpoints_to_check.empty()) continue;
     uint32_t num_elements = tensor->GetNumElements();
