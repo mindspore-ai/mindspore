@@ -184,7 +184,7 @@ class _LayerNorm(Cell):
         Args:
             strategy (tuple): The strategy for the dropout. Should be the same shape as the inputs.
         Examples:
-            >>> net = nn.parallel.transformer.LayerNorm(normalized_shape=(1024, 10))
+            >>> net = mindspore.parallel.nn.transformer.LayerNorm(normalized_shape=(1024, 10))
             >>> net.shard(((10, 2, 1),))
         """
         self.mean.shard(strategy)

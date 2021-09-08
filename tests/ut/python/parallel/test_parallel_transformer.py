@@ -74,14 +74,15 @@ class NetWithLossFiveInputs(nn.Cell):
 
 def run_total_transformer_model_head(e_layer,
                                      d_layer,
-                                     arg_parallel_config):
+                                     arg_parallel_config,
+                                     mode=ParallelMode.SEMI_AUTO_PARALLEL):
     dp = arg_parallel_config.data_parallel
     mp = arg_parallel_config.model_parallel
     pp = arg_parallel_config.pipeline_stage
     if dp * mp * pp != 1:
         set_auto_parallel_context(device_num=8,
                                   full_batch=True,
-                                  global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+                                  global_rank=0, parallel_mode=mode)
 
     class Net(nn.Cell):
         def __init__(self, en_layer, de_layer, parallel_config):
@@ -206,6 +207,13 @@ def test_transformer_model_head_parallel_decoder():
 def test_transformer_model_head_stand_alone():
     local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=1)
     run_total_transformer_model_head(e_layer=2, d_layer=2, arg_parallel_config=local_config)
+
+
+def test_transformer_model_auto_parallel_no_support():
+    local_config = TransformerOpParallelConfig(data_parallel=8, model_parallel=1)
+    with pytest.raises(RuntimeError):
+        run_total_transformer_model_head(e_layer=2, d_layer=2, arg_parallel_config=local_config,
+                                         mode=ParallelMode.AUTO_PARALLEL)
 
 
 def test_pipeline_single_transformer():
@@ -405,6 +413,7 @@ def test_sparse_attention_parallel_mp():
     model = Model(net)
     model.train(1, dataset, dataset_sink_mode=False)
 
+
 def test_sparse_attention_parallel_mix():
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
     set_algo_parameters(fully_use_devices=False)
@@ -422,6 +431,7 @@ def test_sparse_attention_parallel_mix():
     dataset = Dataset(q, k, v, mask)
     model = Model(net)
     model.train(1, dataset, dataset_sink_mode=False)
+
 
 def test_sparse_attention_parallel_mix1():
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
@@ -441,6 +451,7 @@ def test_sparse_attention_parallel_mix1():
     model = Model(net)
     model.train(1, dataset, dataset_sink_mode=False)
 
+
 def test_sparse_attention_parallel_dp():
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
     set_algo_parameters(fully_use_devices=False)
@@ -458,6 +469,7 @@ def test_sparse_attention_parallel_dp():
     dataset = Dataset(q, k, v, mask)
     model = Model(net)
     model.train(1, dataset, dataset_sink_mode=False)
+
 
 def test_parallel_cross_entroy_loss_semi_auto_parallel():
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
@@ -496,7 +508,7 @@ def test_transformer_args():
 
     with pytest.raises(TypeError):
         Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
-                    tgt_seq_length=20, softmax_comptue_type=mstype.int64)
+                    tgt_seq_length=20, softmax_compute_type=mstype.int64)
 
     with pytest.raises(TypeError):
         Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
@@ -509,6 +521,9 @@ def test_transformer_args():
     with pytest.raises(TypeError):
         Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
                     tgt_seq_length=20, hidden_dropout_rate=mstype.int64)
+
+    Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
+                tgt_seq_length=20, softmax_compute_type=mstype.float16)
 
 
 def test_transformer_parallel_config():

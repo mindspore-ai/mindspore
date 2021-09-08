@@ -398,7 +398,7 @@ class PanGUAlphaWithLoss(Cell):
         self.not_equal = P.NotEqual().shard(((dp, 1), ()))
         self.batch_size = config.batch_size
         self.len = config.seq_length
-        self.expand = P.ExpandDims().shard(((dp, 1, 1),))
+        self.slice2 = P.StridedSlice().shard(((dp, 1, 1),))
         self.micro_batch_step = 1
         if config.parallel_config.pipeline_stage > 1:
             self.micro_batch_step = config.parallel_config.micro_batch_num
@@ -407,13 +407,14 @@ class PanGUAlphaWithLoss(Cell):
         r"""Forward process of the pangu alpha model"""
         tokens = self.slice(input_ids, (0, 0), (self.batch_size, -1), (1, 1))
         input_position = self.slice(input_position, (0, 0), (self.batch_size, self.len), (1, 1))
-        encoder_attention_masks = attention_mask
+        decoder_attention_masks = self.slice2(attention_mask, (0, 0, 0), (self.batch_size, self.len, self.len),
+                                              (1, 1, 1))
         input_mask = F.cast(self.not_equal(tokens, self.eod_token),
                             mstype.float32)
 
         logits = self.network(tokens,
                               input_position,
-                              encoder_attention_masks)
+                              decoder_attention_masks)
         # Get label corresponding to input tokens
         labels = self.slice(input_ids, (0, 1), (self.batch_size, self.len + 1),
                             (1, 1))
