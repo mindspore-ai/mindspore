@@ -1765,6 +1765,18 @@ inline std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std
                                       MapStringToChar(class_indexing), decode, sampler, cache, extra_metadata);
 }
 
+/// \brief Function to create a cache to be attached to a dataset.
+/// \note The reason for providing this API is that std::string will be constrained by the
+///    compiler option '_GLIBCXX_USE_CXX11_ABI' while char is free of this restriction.
+/// \param[in] id A user assigned session id for the current pipeline.
+/// \param[in] mem_sz Size of the memory set aside for the row caching (default=0 which means unlimited,
+///     note that it might bring in the risk of running out of memory on the machine).
+/// \param[in] spill Spill to disk if out of memory (default=False).
+/// \param[in] hostname optional host name (default="127.0.0.1").
+/// \param[in] port optional port (default=50052).
+/// \param[in] num_connections optional number of connections (default=12).
+/// \param[in] prefetch_sz optional prefetch size (default=20).
+/// \return Shared pointer to DatasetCache. If error, nullptr is returned.
 std::shared_ptr<DatasetCache> CreateDatasetCacheCharIF(session_id_type id, uint64_t mem_sz, bool spill,
                                                        std::optional<std::vector<char>> hostname = std::nullopt,
                                                        std::optional<int32_t> port = std::nullopt,
@@ -1772,14 +1784,14 @@ std::shared_ptr<DatasetCache> CreateDatasetCacheCharIF(session_id_type id, uint6
                                                        std::optional<int32_t> prefetch_sz = std::nullopt);
 
 /// \brief Function the create a cache to be attached to a dataset.
-/// \param id A user assigned session id for the current pipeline.
-/// \param mem_sz Size of the memory set aside for the row caching (default=0 which means unlimited,
+/// \param[in] id A user assigned session id for the current pipeline.
+/// \param[in] mem_sz Size of the memory set aside for the row caching (default=0 which means unlimited,
 ///     note that it might bring in the risk of running out of memory on the machine).
-/// \param spill Spill to disk if out of memory (default=False).
-/// \param hostname optional host name (default="127.0.0.1").
-/// \param port optional port (default=50052).
-/// \param num_connections optional number of connections (default=12).
-/// \param prefetch_sz optional prefetch size (default=20).
+/// \param[in] spill Spill to disk if out of memory (default=False).
+/// \param[in] hostname optional host name (default="127.0.0.1").
+/// \param[in] port optional port (default=50052).
+/// \param[in] num_connections optional number of connections (default=12).
+/// \param[in] prefetch_sz optional prefetch size (default=20).
 /// \return Shared pointer to DatasetCache. If error, nullptr is returned.
 inline std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t mem_sz, bool spill,
                                                         std::optional<std::string> hostname = std::nullopt,

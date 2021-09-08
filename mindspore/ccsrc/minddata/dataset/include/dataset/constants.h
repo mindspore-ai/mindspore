@@ -186,9 +186,15 @@ enum class OutputFormat {
   kCsr = 2      ///< CSR format>
 };
 
-// convenience functions for 32bit int bitmask
+/// \brief Convenience function to check bitmask for a 32bit int
+/// \param[in] bits a 32bit int to be tested
+/// \param[in] bitMask a 32bit int representing bit mask
+/// \return bool Result for the check
 inline bool BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
 
+/// \brief Convenience function to set bitmask for a 32bit int
+/// \param[in] bits a 32bit int to deal with
+/// \param[in] bitMask a 32bit int representing bit mask
 inline void BitSet(uint32_t *bits, uint32_t bitMask) {
   if (bits == nullptr) {
     return;
@@ -196,6 +202,9 @@ inline void BitSet(uint32_t *bits, uint32_t bitMask) {
   *bits |= bitMask;
 }
 
+/// \brief Convenience function to clear bitmask from a 32bit int
+/// \param[in] bits a 32bit int to deal with
+/// \param[in] bitMask a 32bit int representing bit mask
 inline void BitClear(uint32_t *bits, uint32_t bitMask) {
   if (bits == nullptr) {
     return;
