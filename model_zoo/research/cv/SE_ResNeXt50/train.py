@@ -185,10 +185,10 @@ if __name__ == '__main__':
     device_target = cfg.device_target
 
     context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
-    device_num = int(os.environ.get("DEVICE_NUM", 1))
+    device_num = int(os.getenv('RANK_SIZE', '1'))
 
-    rank = 0
     if device_target == "Ascend":
+        device_id = int(os.getenv('DEVICE_ID', '0'))
         if args_opt.device_id is not None:
             context.set_context(device_id=args_opt.device_id)
         else:
@@ -199,18 +199,19 @@ if __name__ == '__main__':
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             init()
-            rank = get_rank()
     elif device_target == "GPU":
         if args_opt.device_id is not None:
-            context.set_context(device_id=args_opt.device_id)
+            device_id = args_opt.device_id
+            context.set_context(device_id=device_id)
         else:
-            context.set_context(device_id=cfg.device_id)
+            device_id = cfg.device_id
+            context.set_context(device_id=device_id)
         if device_num > 1:
             init()
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
-            rank = get_rank()
+            device_id = get_rank()
     else:
         raise ValueError("Unsupported platform.")
 
@@ -284,9 +285,12 @@ if __name__ == '__main__':
 
     config_ck = CheckpointConfig(save_checkpoint_steps=batch_num * 2, keep_checkpoint_max=cfg.keep_checkpoint_max)
     time_cb = TimeMonitor(data_size=batch_num)
-    ckpt_save_dir = "./ckpt_" + str(rank) + "/"
+    ckpt_save_dir = "./ckpt/"
     ckpoint_cb = ModelCheckpoint(prefix="train_senet_" + args_opt.dataset_name, directory=ckpt_save_dir,
                                  config=config_ck)
     loss_cb = LossMonitor()
-    model.train(cfg.epoch_size, dataset, callbacks=[time_cb, ckpoint_cb, loss_cb])
+    cbs = [time_cb, ckpoint_cb, loss_cb]
+    if device_num > 1 and device_id != 0:
+        cbs = [time_cb, loss_cb]
+    model.train(cfg.epoch_size, dataset, callbacks=cbs)
     print("train success")
