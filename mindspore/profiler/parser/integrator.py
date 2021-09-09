@@ -522,6 +522,8 @@ class BaseTimelineGenerator:
     }
     _op_name_idx, _tid_idx, _start_time_idx, _duration_idx = 0, 1, 2, 3
     _max_scope_name_num = 0
+    _host_cpu_process = 11000
+    _host_cpu_Op_label = 'HostCpuOps'
 
     def write_timeline(self, size_limit=SIZE_LIMIT_DEFAULT):
         """Load data according to the parsed profiling files."""
@@ -610,6 +612,9 @@ class BaseTimelineGenerator:
             tid = int(tid_name.split("#")[-1])
         else:
             return
+
+        if tid_name == self._host_cpu_Op_label:
+            thread_name_meta_data['pid'] = self._host_cpu_process
 
         thread_name_meta_data["tid"] = tid
         thread_name_meta_data["args"]["name"] = tid_name
@@ -768,6 +773,8 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             # remove the level of scope name which has a format like "0-conv2-Conv2d".
             timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
             timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
+        elif op_meta.stream_id == self._host_cpu_Op_label:
+            timeline_dict['pid'] = self._host_cpu_process
 
         if len(timeline) > 4:
             # len(timeline) > 4 refers to activity data, else op data.
@@ -1042,6 +1049,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             # remove the level of scope name which has a format like "0-conv2-Conv2d".
             timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
             timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
+        elif op_meta.stream_id == self._host_cpu_Op_label:
+            timeline_dict['pid'] = self._host_cpu_process
 
         if op_meta.pid is None:
             timeline_dict['pid'] = int(self._device_id)
