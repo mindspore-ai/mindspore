@@ -25,6 +25,7 @@
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
+#include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -160,6 +161,18 @@ Contrast::Contrast(float enhancement_amount) : data_(std::make_shared<Data>(enha
 
 std::shared_ptr<TensorOperation> Contrast::Parse() {
   return std::make_shared<ContrastOperation>(data_->enhancement_amount_);
+}
+
+// DeemphBiquad Transform Operation.
+struct DeemphBiquad::Data {
+  explicit Data(int32_t sample_rate) : sample_rate_(sample_rate) {}
+  int32_t sample_rate_;
+};
+
+DeemphBiquad::DeemphBiquad(int32_t sample_rate) : data_(std::make_shared<Data>(sample_rate)) {}
+
+std::shared_ptr<TensorOperation> DeemphBiquad::Parse() {
+  return std::make_shared<DeemphBiquadOperation>(data_->sample_rate_);
 }
 
 // FrequencyMasking Transform Operation.

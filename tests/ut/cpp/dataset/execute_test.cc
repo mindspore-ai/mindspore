@@ -734,6 +734,39 @@ TEST_F(MindDataTestExecute, TestContrastWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+TEST_F(MindDataTestExecute, TestDeemphBiquadWithEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDeemphBiquadWithEager";
+  // Original waveform
+  std::vector<float> labels = {
+    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
+    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
+    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
+    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
+    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> deemph_biquad_01 = std::make_shared<audio::DeemphBiquad>(44100);
+  mindspore::dataset::Execute Transform01({deemph_biquad_01});
+  // Filtered waveform by deemphbiquad
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_TRUE(s01.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestDeemphBiquadWithWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDeemphBiquadWithWrongArg.";
+  std::vector<double> labels = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 6}), &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  // Check sample_rate
+  MS_LOG(INFO) << "sample_rate is zero.";
+  std::shared_ptr<TensorTransform> deemph_biquad_op = std::make_shared<audio::DeemphBiquad>(0);
+  mindspore::dataset::Execute Transform01({deemph_biquad_op});
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_FALSE(s01.IsOk());
+}
+
 TEST_F(MindDataTestExecute, TestHighpassBiquadEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestHighpassBiquadEager.";
   int sample_rate = 44100;

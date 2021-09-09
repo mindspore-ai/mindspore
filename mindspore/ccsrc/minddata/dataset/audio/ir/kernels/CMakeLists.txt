@@ -11,6 +11,7 @@ add_library(audio-ir-kernels OBJECT
         bass_biquad_ir.cc
         complex_norm_ir.cc
         contrast_ir.cc
+        deemph_biquad_ir.cc
         frequency_masking_ir.cc
         highpass_biquad_ir.cc
         lowpass_biquad_ir.cc

@@ -201,6 +201,20 @@ def check_contrast(method):
     return new_method
 
 
+def check_deemph_biquad(method):
+    """Wrapper method to check the parameters of CutMixBatch."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate], _ = parse_user_args(method, *args, **kwargs)
+        type_check(sample_rate, (int,), "sample_rate")
+        if sample_rate not in (44100, 48000):
+            raise ValueError("Input sample_rate should be 44100 or 48000, but got {0}.".format(sample_rate))
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_lowpass_biquad(method):
     """Wrapper method to check the parameters of LowpassBiquad."""
 

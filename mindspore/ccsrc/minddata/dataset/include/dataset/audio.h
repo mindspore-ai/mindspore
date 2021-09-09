@@ -230,6 +230,25 @@ class Contrast final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Design two-pole deemph filter. Similar to SoX implementation.
+class DeemphBiquad final : public TensorTransform {
+ public:
+  /// \param[in] sample_rate Sampling rate of the waveform, the value can only be 44100 (Hz) or 48000(hz).
+  explicit DeemphBiquad(int32_t sample_rate);
+
+  /// \brief Destructor.
+  ~DeemphBiquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief FrequencyMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the frequency domain.
 class FrequencyMasking final : public TensorTransform {
