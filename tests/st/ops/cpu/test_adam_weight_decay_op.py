@@ -33,7 +33,8 @@ class NetAdamWeightDecay(nn.Cell):
         self.batch_size = 1
         self.reshape = P.Reshape()
         weight = Tensor(np.ones([10, 16]).astype(np.float32) * 0.01)
-        self.fc1 = Dense(16, 10, weight_init=weight)
+        bias = Tensor(np.zeros(10).astype(np.float32))
+        self.fc1 = Dense(16, 10, weight_init=weight, bias_init=bias)
 
     def construct(self, input_x):
         output = self.reshape(input_x, (self.batch_size, -1))
@@ -47,18 +48,15 @@ class NetAdamWeightDecay(nn.Cell):
 def test_adam_weight_decay():
     epoch = 3
     net = NetAdamWeightDecay()
-    optimizer = AdamWeightDecayOp(filter(lambda x: x.requires_grad,
-                                         net.get_parameters()), learning_rate=0.01)
+    optimizer = AdamWeightDecayOp(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate=0.01)
     criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net_with_criterion = WithLossCell(net, criterion)
-    train_network = TrainOneStepCell(
-        net_with_criterion, optimizer)
+    train_network = TrainOneStepCell(net_with_criterion, optimizer)
     train_network.set_train()
 
     losses1 = []
     for _ in range(epoch):
-        data = Tensor(np.arange(0, 16).reshape(
-            1, 1, 4, 4).astype(np.float32) * 0.01)
+        data = Tensor(np.arange(0, 16).reshape(1, 1, 4, 4).astype(np.float32) * 0.01)
         label = Tensor(np.array([0]).astype(np.int32))
         loss = train_network(data, label)
         losses1.append(loss.asnumpy())

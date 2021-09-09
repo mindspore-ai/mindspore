@@ -35,7 +35,7 @@ adam_weight_decay_op_info = CpuRegOp("AdamWeightDecay") \
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F16_Default,
                   DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
     .get_op_info()
 
