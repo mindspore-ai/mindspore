@@ -55,16 +55,16 @@ const MindrtAddress &GetMindrtAddress() { return local::g_mindrtAddress; }
 
 class MindrtExit {
  public:
-  MindrtExit() { MS_LOG(DEBUG) << "trace: enter MindrtExit()---------"; }
+  MindrtExit() { MS_LOG(DEBUG) << "trace: enter MindrtExit()."; }
   ~MindrtExit() {
-    MS_LOG(DEBUG) << "trace: enter ~MindrtExit()---------";
+    MS_LOG(DEBUG) << "trace: enter ~MindrtExit().";
     mindspore::Finalize();
   }
 };
 
 int InitializeImp(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
                   const std::string &udpUrlAdv, int threadCount) {
-  MS_LOG(DEBUG) << "mindrt starts ......";
+  MS_LOG(DEBUG) << "mindrt starts.";
   ActorMgr::GetActorMgrRef()->Initialize();
   MS_LOG(DEBUG) << "mindrt has started.";
   return MINDRT_OK;
