@@ -1087,5 +1087,26 @@ STATUS FetchShapeFromAbstract(const abstract::AbstractBasePtr &abstract, ShapeVe
   *shape = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
   return lite::RET_OK;
 }
+
+bool IsTrainOp(const CNodePtr &cnode) {
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  auto cnode_type = prim->type_name();
+  // optimizer op
+  if (cnode_type == "Adam" || cnode_type == "SGD" || cnode_type == "ApplyMomentum") {
+    return true;
+  }
+  // loss op
+  if (cnode_type == "SoftmaxCrossEntropyWithLogits" || cnode_type == "SpareSoftmaxCrossEntropyWithLogits" ||
+      cnode_type == "SmoothL1Loss" || cnode_type == "SmoothL1LossGrad" ||
+      cnode_type == "SigmoidCrossEntropyWithLogits" || cnode_type == "SigmoidCrossEntropyWithLogpitsGrad") {
+    return true;
+  }
+  // grad op
+  if (cnode_type.find("Grad") != std::string::npos ||
+      cnode->fullname_with_scope().find("Gradients") != std::string::npos) {
+    return true;
+  }
+  return false;
+}
 }  // namespace opt
 }  // namespace mindspore

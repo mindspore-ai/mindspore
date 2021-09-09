@@ -123,6 +123,9 @@ inline bool IsSpecifiedNode(const BaseRef &n) {
   }
   return false;
 }
+
+bool IsTrainOp(const CNodePtr &cnode);
+
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_

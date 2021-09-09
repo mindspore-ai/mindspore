@@ -58,6 +58,12 @@ class AnfTransform {
   int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
   void AppendPassToStoreRoom(const converter::Flags *config);
+
+  static STATUS FindInputCnode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+
+  static STATUS FindSameParameterCnode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+
+  static STATUS FindTrainOp(const FuncGraphPtr &func_graph);
 };
 }  // namespace lite
 }  // namespace mindspore
