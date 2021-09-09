@@ -78,6 +78,7 @@ constexpr auto kJModuleName = "module_name";
 constexpr auto kJModuleNamePrefix = "impl.";
 constexpr auto kJPattern = "pattern";
 constexpr auto kJPyModulePath = "py_module_path";
+constexpr auto kJAttrs = "attrs";
 constexpr auto kJAttrDesc = "attr_desc";
 constexpr auto kJSocInfo = "SocInfo";
 constexpr auto kJFusionOpName = "fusion_op_name";

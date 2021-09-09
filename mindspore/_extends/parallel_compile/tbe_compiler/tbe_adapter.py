@@ -467,7 +467,7 @@ def ga_tune(job: TbeJob):
     """
     l1_size = job.content["l1_size"]
     op_kernel_name = job.content["fusion_op_name"]
-    dispatch_autotune_task(job.source_id, job.id, l1_size, json.dumps(job.content), [], op_kernel_name)
+    dispatch_autotune_task(job.source_id, job.id, l1_size, json.dumps(job.content), {}, op_kernel_name)
     job.status = JobStatus.JOB_RUNNING
     return True
 
@@ -519,7 +519,7 @@ def rl_tune_single_op(job: TbeJob):
     pack_args = pack_op_args(inputs, outputs, attrs)
     res = dispatch_single_tune_task(job.source_id, job.id, l1_size, base_kernel, op_kernel_name, full_name,
                                     tune_op_module_name, op_func_name, op_type, pack_args)
-    res = _process_rl_tune_result(job, res)
+    res = _process_rl_tune_result(job, op_type, res)
     return res
 
 
@@ -546,19 +546,24 @@ def rl_tune_fusion_op(job: TbeJob):
     base_kernel = job.content["SocInfo"]["op_debug_dir"] + "/kernel_meta/" + op_kernel_name + ".o"
     compute_op_list = get_compute_op_list(job.content)
     op_module_names_str = ""
+    op_type_set = set()
     for op in compute_op_list:
         op_module_names_str = op_module_names_str + "," + get_module_name(op)
+        op_type_set.add(op["type"])
     op_module_names_str = op_module_names_str[1:]
+    op_type = "__".join(list(op_type_set))
     from schedule_search.rl_online_tune import dispatch_fusion_tune_task
     res = dispatch_fusion_tune_task(job.source_id, job.id, l1_size, base_kernel, op_kernel_name, op_module_names_str,
                                     json.dumps(job.content))
-    res = _process_rl_tune_result(job, res)
+    res = _process_rl_tune_result(job, op_type, res)
     return res
 
 
-def _process_rl_tune_result(job, res):
+def _process_rl_tune_result(job, op_type, res):
     if not res:
-        res = bool(job.sys_offline_tune or os.getenv("REPEAT_TUNE", "False").lower() != "true")
+        from schedule_search.tune_util import filter_black_op_type
+        res = bool(job.sys_offline_tune or os.getenv("REPEAT_TUNE", "False").lower() != "true" or filter_black_op_type(
+            op_type))
     else:
         job.status = JobStatus.JOB_RUNNING
         res = True

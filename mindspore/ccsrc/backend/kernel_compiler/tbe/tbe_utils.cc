@@ -112,8 +112,9 @@ std::string TbeUtils::GetOpDebugPath() {
   if (!old_build.empty()) {
     if (config_path[config_path.length() - 1] == '/') {
       debug_path = config_path;
+    } else {
+      debug_path = config_path + "/";
     }
-    debug_path = config_path + "/";
     return debug_path;
   } else {
     std::string rank_id_str = common::GetEnv(kRankID);
@@ -123,8 +124,9 @@ std::string TbeUtils::GetOpDebugPath() {
     }
     if (config_path[config_path.length() - 1] == '/') {
       debug_path = config_path + "rank_" + rank_id_str + "/";
+    } else {
+      debug_path = config_path + "/" + "rank_" + rank_id_str + "/";
     }
-    debug_path = config_path + "/" + "rank_" + rank_id_str + "/";
     return debug_path;
   }
 }
@@ -382,12 +384,17 @@ void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info,
   std::ifstream file(path.c_str());
   std::string ori_file = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
   if (!ParseJson(ori_file, &read_new_json)) {
-    MS_LOG(EXCEPTION) << "Parse compile info error.";
+    MS_LOG(EXCEPTION) << "Parse compile info error :" << ori_file;
   }
-  *compile_info = read_new_json[kBuildRes].dump();
+  auto build_res_str = GetJsonValue<std::string>(read_new_json, kBuildRes);
+  nlohmann::json build_res_json;
+  if (!ParseJson(build_res_str, &build_res_json)) {
+    MS_LOG(EXCEPTION) << "Parse build result for " << node->fullname_with_scope() << " error :" << build_res_str;
+  }
+  *compile_info = build_res_json.dump();
   file.close();
   file.clear();
-  MS_LOG(INFO) << "Get compile info from json file success";
+  MS_LOG(INFO) << "Get compile info from json file success :" << *compile_info;
 }
 
 void TbeUtils::SaveCompileInfo(const std::string &json_name, const std::string &build_res, bool *save_flag) {
@@ -407,11 +414,7 @@ void TbeUtils::SaveCompileInfo(const std::string &json_name, const std::string &
   }
   file.close();
   file.clear();
-  if (build_res.empty()) {
-    save_new_json[kBuildRes] = build_res;
-  } else {
-    save_new_json[kBuildRes] = nlohmann::json::parse(build_res);
-  }
+  save_new_json[kBuildRes] = build_res;
   std::ofstream file_write;
   file_write.open(path);
   if (!file_write.is_open()) {

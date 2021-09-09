@@ -301,6 +301,7 @@ bool TbeJsonCreator::GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
   nlohmann::json attrs_json;
   GenAttrsJson(cnode, op_info_ptr, &attrs_json);
+  (*compute_json)[kJAttrs] = attrs_json;
 
   nlohmann::json attrs_desc;
   for (const auto &attr : attrs_json) {
