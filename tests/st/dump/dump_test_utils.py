@@ -73,7 +73,6 @@ def generate_dump_json(dump_path, json_file_name, test_key):
     """
     Util function to generate dump configuration json file.
     """
-    data = dict()
     if test_key == "test_async_dump":
         data = async_dump_dict
         data["common_dump_settings"]["path"] = dump_path

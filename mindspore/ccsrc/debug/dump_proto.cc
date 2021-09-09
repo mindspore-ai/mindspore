@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -548,7 +548,7 @@ void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix) {
     return;
   }
   std::string file_path = GetSaveGraphsPathName("ms_output_" + suffix + ".pb");
-  auto realpath = Common::GetRealPath(file_path);
+  auto realpath = Common::CreatePrefixPath(file_path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file_path;
     return;

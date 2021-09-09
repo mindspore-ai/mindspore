@@ -1285,7 +1285,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
   overflow_bin_path = DumpJsonParser::GetInstance().GetOpOverflowBinPath(debugger->GetGraphPtr()->graph_id());
   std::string check_overflow_bin_path = RealPath(overflow_bin_path);
   if (check_overflow_bin_path.empty()) {
-    MS_LOG(WARNING) << "Get real path failed for overflow_bin_path.";
+    MS_LOG(INFO) << "Get real path failed for overflow_bin_path.";
     return false;
   }
   overflow_bin_path = check_overflow_bin_path;

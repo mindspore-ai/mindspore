@@ -43,7 +43,7 @@ std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suff
   if (config_file.empty()) {
     file_path = directory_ + "rank_" + std::to_string(GetRank()) + "/rdr/" + filename;
   }
-  auto realpath = Common::GetRealPath(file_path);
+  auto realpath = Common::CreatePrefixPath(file_path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. "
                   << "Info: module=" << module_ << ", name=" << name_ << ", "
