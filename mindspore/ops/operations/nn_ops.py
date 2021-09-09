@@ -4174,19 +4174,19 @@ class Pad(PrimitiveWithInfer):
                 raise ValueError('The shape of paddings must be (n, 2).')
         self.paddings = paddings
 
-    def infer_shape(self, x):
+    def infer_shape(self, x_shape):
+        validator.check_int(len(self.paddings), len(x_shape), Rel.EQ, 'paddings.shape', self.name)
         paddings = np.array(self.paddings)
-        validator.check_int(paddings.size, len(x) * 2, Rel.EQ, 'paddings.shape', self.name)
         if not np.all(paddings >= 0):
             raise ValueError('All elements of paddings must be >= 0.')
         y_shape = ()
         for i in range(int(paddings.size / 2)):
-            y_shape += ((x[i] + paddings[i, 0] + paddings[i, 1]),)
+            y_shape += ((x_shape[i] + paddings[i, 0] + paddings[i, 1]),)
         return y_shape
 
-    def infer_dtype(self, x):
-        validator.check_subclass("input_x", x, mstype.tensor, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
+        return x_dtype
 
 
 class MirrorPad(PrimitiveWithInfer):
