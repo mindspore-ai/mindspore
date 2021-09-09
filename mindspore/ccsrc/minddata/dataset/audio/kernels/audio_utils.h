@@ -272,7 +272,7 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 /// \brief Compute the norm of complex tensor input.
 /// \param power Power of the norm description (optional).
 /// \param input Tensor shape of <..., complex=2>.
-/// \param output Tensor shape of <..., complex=2>.
+/// \param output Tensor shape of <..., >.
 /// \return Status code.
 Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power);
 

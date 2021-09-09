@@ -629,7 +629,7 @@ TEST_F(MindDataTestPipeline, TestComplexNormBasic) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
 
-  std::vector<int64_t> expected = {3, 2, 2};
+  std::vector<int64_t> expected = {3, 2, 4};
 
   int i = 0;
   while (row.size() != 0) {
