@@ -42,7 +42,7 @@
 #include "utils/utils.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/trace_base.h"
 #include "frontend/parallel/context.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
@@ -2677,24 +2677,25 @@ void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
 }  // namespace session
 void DumpGraphExeOrder(const std::string &file_name, const std::string &target_dir,
                        const std::vector<CNodePtr> &execution_order) {
-  bool status = Common::CreateNotExistDirs(target_dir + "/execution_order/");
-  std::string file_path = target_dir + "/execution_order/" + file_name;
-  if (!status) {
-    MS_LOG(ERROR) << "Failed at CreateNotExistDirs in DumpGraphExeOrder";
+  auto dir_path = FileUtils::CreateNotExistDirs(target_dir + "/execution_order/");
+  if (!dir_path.has_value()) {
+    MS_LOG(ERROR) << "Failed to CreateNotExistDirs: " << target_dir << "/execution_order/ in DumpGraphExeOrder";
     return;
   }
 
-  auto realpath = Common::GetRealPath(file_path);
+  std::string file_path = dir_path.value() + "/" + file_name;
+  auto realpath = FileUtils::GetRealPath(common::SafeCStr(file_path));
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file_path;
+    MS_LOG(ERROR) << "Get real path: " << file_path << " filed.";
     return;
   }
+  file_path = realpath.value();
 
-  ChangeFileMode(realpath.value(), S_IWUSR);
+  ChangeFileMode(file_path, S_IWUSR);
   // write to csv file
-  std::ofstream ofs(realpath.value());
+  std::ofstream ofs(file_path);
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << realpath.value() << "' failed!";
+    MS_LOG(ERROR) << "Open file '" << file_path << "' failed!";
     return;
   }
   ofs << "NodeExecutionOrder-FullNameWithScope\n";
