@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_NNACL_CUSTOM_PARAMETER_H_
+#define MINDSPORE_NNACL_CUSTOM_PARAMETER_H_
+#include "nnacl/op_base.h"
 
-#ifndef MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MTENSOR_H_
-#define MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MTENSOR_H_
+#define MAX_STR_LEN 64
+#define MAX_ATTR_NUM 8
 
-namespace mindspore::lite::micro {
-
-extern const char tensor_header[];
-extern const char tensor_source[];
-
-}  // namespace mindspore::lite::micro
-
-#endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MTENSOR_H_
+typedef struct CustomParameter {
+  OpParameter op_parameter_;
+  char type[MAX_STR_LEN];
+  char attr_name[MAX_ATTR_NUM][MAX_STR_LEN];
+  char *attr_data[MAX_ATTR_NUM];
+  int attr_num;
+} CustomParameter;
+#endif  // MINDSPORE_NNACL_CUSTOM_PARAMETER_H_

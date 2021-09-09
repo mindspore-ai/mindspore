@@ -33,6 +33,7 @@
 #include "coder/generator/component/const_blocks/license.h"
 #include "coder/log.h"
 #include "coder/opcoders/parallel.h"
+#include "coder/opcoders/kernel_registry.h"
 
 namespace mindspore::lite::micro {
 int WriteContentToFile(const std::string &file, const std::string &content) {
@@ -97,9 +98,6 @@ int Generator::CodeStaticContent() {
     {net_src_file_path_ + "tensor.cc", tensor_source},
     {net_src_file_path_ + "mmodel.h", model_header}};
 
-  if (config_->CustomFlag()) {
-    const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "custom_params.h", custom_params_source));
-  }
   if (config_->support_parallel()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + kThreadWrapper, thread_header));
   }
@@ -167,6 +165,24 @@ int Generator::CodeWeightFile() {
   return RET_OK;
 }
 
+int Generator::CodeRegKernelHFile() {
+  if (!KernelRegistry::GetInstance()->HasKernelRegistered()) return RET_OK;
+  if (!KernelRegistry::GetInstance()->CheckRegistered(schema::PrimitiveType_Custom)) {
+    MS_LOG(ERROR) << "Only support custom kernel to register now!";
+    return RET_ERROR;
+  }
+
+  std::string reg_kernel_header = net_src_file_path_ + "registered_kernel.h";
+  std::ofstream cofs(reg_kernel_header);
+  MS_CHECK_TRUE(!cofs.bad(), "filed to open file");
+  MS_LOG(INFO) << "write " << reg_kernel_header;
+  cofs << g_hwLicense;
+  cofs << "#include \"nnacl/tensor_c.h\"\n";
+  cofs << "#include \"nnacl/custom_parameter.h\"\n\n";
+  cofs << KernelRegistry::GetInstance()->GenKernelInterface(kCustomKernelName, kCustomKernelParam) << "\n";
+  return RET_OK;
+}
+
 int Generator::GenerateCode() {
   MS_CHECK_RET_CODE(CodeNetHFile(), "code net h file failed.");
   MS_CHECK_RET_CODE(CodeNetCFile(), "code net c file failed.");
@@ -174,6 +190,7 @@ int Generator::GenerateCode() {
   MS_CHECK_RET_CODE(CodeSourceCMakeFile(), "code net cmake file failed.");
   MS_CHECK_RET_CODE(CodeStaticContent(), "code static content failed.");
   MS_CHECK_RET_CODE(CodeSessionImplement(), "code session file failed.");
+  MS_CHECK_RET_CODE(CodeRegKernelHFile(), "code registered kernel header file failed.");
   return RET_OK;
 }
 }  // namespace mindspore::lite::micro

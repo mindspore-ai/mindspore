@@ -20,7 +20,7 @@
 #include <arm_neon.h>
 #endif
 #include <memory.h>
-#include <mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/resize_parameter.h>
+#include "nnacl/resize_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/crop_parameter.h"
 

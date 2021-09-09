@@ -14,13 +14,25 @@
  * limitations under the License.
  */
 
-#include "coder/user_registry/user_kernel_register.h"
+#include "coder/opcoders/kernel_registry.h"
+#include <set>
 #include "schema/ops_generated.h"
 
-using mindspore::schema::PrimitiveType_Custom;
-
 namespace mindspore::lite::micro {
-REG_USER_KERNEL(kARM32A, kNumberTypeInt8, PrimitiveType_Custom, nnie_micro.h, NnieKernel, nniemicro)
-REG_USER_KERNEL(kARM32A, kNumberTypeUInt8, PrimitiveType_Custom, nnie_micro.h, NnieKernel, nniemicro)
-REG_USER_KERNEL(kARM32A, kNumberTypeFloat32, PrimitiveType_Custom, nnie_micro.h, NnieKernel, nniemicro)
+KernelRegistry *KernelRegistry::GetInstance() {
+  static KernelRegistry reg;
+  return &reg;
+}
+
+void KernelRegistry::RegisterKernel(schema::PrimitiveType op) { registry_.insert(op); }
+
+bool KernelRegistry::CheckRegistered(schema::PrimitiveType op) { return registry_.find(op) != registry_.end(); }
+
+bool KernelRegistry::HasKernelRegistered() { return !registry_.empty(); }
+
+std::string KernelRegistry::GenKernelInterface(const char *func, const char *param) {
+  return "int " + std::string(func) + "(TensorC *inputs, int input_num, TensorC *outputs, int output_num, " +
+         std::string(param) + " *param);";
+}
+
 }  // namespace mindspore::lite::micro

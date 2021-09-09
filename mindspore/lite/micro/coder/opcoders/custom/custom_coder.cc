@@ -21,14 +21,12 @@
 #include "coder/opcoders/serializers/serializer.h"
 #include "coder/opcoders/custom/custom_coder.h"
 #include "coder/opcoders/op_coder_register.h"
-#include "coder/user_registry/user_kernel_register.h"
+#include "coder/opcoders/kernel_registry.h"
 #include "src/common/prim_util.h"
+#include "nnacl/custom_parameter.h"
 
 using mindspore::schema::PrimitiveType_Custom;
 #define MAX_TENSORS 16
-#define MAX_STR_LEN 32
-#define MAX_ATTR_NUM 8
-#define MAX_TENSOR_NAME_LEN 32
 
 namespace mindspore::lite::micro {
 std::map<Tensor *, void *> CustomCoder::const_tensor_map_;
@@ -51,14 +49,6 @@ int CustomCoder::Prepare(CoderContext *const context) {
     MS_LOG(ERROR) << "Primitive type should be custom";
     return RET_ERROR;
   }
-  CoderKey key(target_, input_tensors_[0]->data_type(), PrimitiveType_Custom);
-  auto result = UserKernelFactory::GetInstance()->FindUserKernel(key);
-  if (result.empty()) {
-    MS_LOG(ERROR) << "No user kernel register for custom op";
-    return RET_ERROR;
-  }
-  header_ = result[0];
-  function_ = result[1];
   Populate(node_->primitive_);
   for (const auto &tensor : input_tensors_) {
     if (tensor->category() == Tensor::Category::CONST_TENSOR) {
@@ -69,7 +59,7 @@ int CustomCoder::Prepare(CoderContext *const context) {
       }
     }
   }
-  Configurator::GetInstance()->SetCustomFlag();
+
   return RET_OK;
 }
 
@@ -78,7 +68,7 @@ int CustomCoder::TransformTensors(Serializer *code, std::string array_name, cons
     MS_LOG(ERROR) << "The number of tensors is too large";
     return RET_ERROR;
   }
-  (*code) << "\t\tCustomTensor " << array_name << "[" << tensors.size() << "];\n";
+  (*code) << "\t\tTensorC " << array_name << "[" << tensors.size() << "];\n";
   for (size_t i = 0; i < tensors.size(); ++i) {
     if (tensors[i]->category() == Tensor::Category::CONST_TENSOR) {
       if (!const_tensor_map_.count(tensors[i])) {
@@ -86,22 +76,23 @@ int CustomCoder::TransformTensors(Serializer *code, std::string array_name, cons
         return RET_ERROR;
       }
       (*code) << "\t\t" << array_name << "[" << i
-              << "].data = " << allocator_->GetRuntimeAddr(const_tensor_map_[tensors[i]]) << ";\n";
+              << "].data_ = " << allocator_->GetRuntimeAddr(const_tensor_map_[tensors[i]]) << ";\n";
     } else {
-      (*code) << "\t\t" << array_name << "[" << i << "].data = " << allocator_->GetRuntimeAddr(tensors[i]) << ";\n";
+      (*code) << "\t\t" << array_name << "[" << i << "].data_ = " << allocator_->GetRuntimeAddr(tensors[i]) << ";\n";
     }
-    (*code) << "\t\t" << array_name << "[" << i << "].data_size = " << tensors[i]->Size() << ";\n";
     for (size_t j = 0; j < tensors[i]->shape().size(); ++j) {
-      (*code) << "\t\t" << array_name << "[" << i << "].shape[" << j << "] = " << tensors[i]->shape()[j] << ";\n";
+      (*code) << "\t\t" << array_name << "[" << i << "].shape_[" << j << "] = " << tensors[i]->shape()[j] << ";\n";
     }
-    (*code) << "\t\t" << array_name << "[" << i << "].shape_size = " << tensors[i]->shape().size() << ";\n";
-    (*code) << "\t\t" << array_name << "[" << i << "].data_type = " << tensors[i]->data_type() << ";\n";
-    (*code) << "\t\t" << array_name << "[" << i << "].format = " << tensors[i]->format() << ";\n";
-    if (tensors[i]->tensor_name().size() > MAX_TENSOR_NAME_LEN) {
+    (*code) << "\t\t" << array_name << "[" << i << "].shape_size_ = " << tensors[i]->shape().size() << ";\n";
+    (*code) << "\t\t" << array_name << "[" << i << "].data_type_ = " << tensors[i]->data_type() << ";\n";
+    (*code) << "\t\t" << array_name << "[" << i << "].format_ = " << tensors[i]->format() << ";\n";
+    if (tensors[i]->tensor_name().size() > MAX_STR_LEN) {
       MS_LOG(ERROR) << "tensor name is too long: " << tensors[i]->tensor_name();
       return RET_ERROR;
     }
-    (*code) << "\t\tstrcpy(" << array_name << "[" << i << "].name, "
+    (*code) << "\t\t" << array_name << "[" << i << "].name_ = "
+            << "malloc(" << tensors[i]->tensor_name().length() + 1 << ");\n";
+    (*code) << "\t\tstrcpy(" << array_name << "[" << i << "].name_, "
             << "\"" << tensors[i]->tensor_name() << "\""
             << ");\n";
   }
@@ -115,7 +106,7 @@ int CustomCoder::TransformParams(Serializer *code, std::string var_name) {
     return RET_ERROR;
   }
 
-  (*code) << "\t\tCustomParams " << var_name << ";\n";
+  (*code) << "\t\tCustomParameter " << var_name << ";\n";
   if (type_.size() > MAX_STR_LEN) {
     MS_LOG(ERROR) << "type name is too long: " << type_;
     return RET_ERROR;
@@ -129,13 +120,11 @@ int CustomCoder::TransformParams(Serializer *code, std::string var_name) {
       MS_LOG(ERROR) << "attr name is too long: " << iter->first;
       return RET_ERROR;
     }
-    if (iter->second.size() > MAX_STR_LEN) {
-      MS_LOG(ERROR) << "attr " << iter->first << " data is too long";
-      return RET_ERROR;
-    }
     (*code) << "\t\tstrcpy(" << var_name << ".attr_name[" << i << "], "
             << "\"" << iter->first << "\""
             << ");\n";
+    (*code) << "\t\t" << var_name << ".attr_data[" << i << "] = "
+            << "malloc(" << iter->second.size() + 1 << ");\n";
     (*code) << "\t\tstrcpy(" << var_name << ".attr_data[" << i++ << "], "
             << "\"" << iter->second << "\""
             << ");\n";
@@ -144,13 +133,29 @@ int CustomCoder::TransformParams(Serializer *code, std::string var_name) {
   return RET_OK;
 }
 
+void CustomCoder::FreeParams(Serializer *code, std::string var_name) {
+  int i = 0;
+  for (auto iter = attrs_.begin(); iter != attrs_.end(); ++iter) {
+    (*code) << "\t\tfree(" << var_name << ".attr_data[" << i++ << "]);\n";
+  }
+}
+
+void CustomCoder::FreeTensors(Serializer *code, std::string array_name, size_t tensors_num) {
+  for (size_t i = 0; i < tensors_num; i++) {
+    (*code) << "\t\tfree(" << array_name << "[" << i << "].name_);\n";
+  }
+}
+
 int CustomCoder::DoCode(CoderContext *const context) {
-  Collect(context, {header_, "custom_params.h"}, {});
+  Collect(context, {"nnacl/custom_parameter.h", "nnacl/tensor_c.h", "registered_kernel.h"}, {});
   Serializer code;
   MS_CHECK_RET_CODE(TransformTensors(&code, "inputs", input_tensors_), "Transform input tensors error!");
   MS_CHECK_RET_CODE(TransformTensors(&code, "outputs", output_tensors_), "Transform output tensors error!");
   MS_CHECK_RET_CODE(TransformParams(&code, "param"), "Transform output tensors error!");
-  code.CodeFunction(function_, "inputs", input_tensors_.size(), "outputs", output_tensors_.size(), "&param");
+  code.CodeFunction(kCustomKernelName, "inputs", input_tensors_.size(), "outputs", output_tensors_.size(), "&param");
+  FreeParams(&code, "param");
+  FreeTensors(&code, "inputs", input_tensors_.size());
+  FreeTensors(&code, "outputs", output_tensors_.size());
   context->AppendCode(code.str());
   return 0;
 }

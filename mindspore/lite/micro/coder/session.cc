@@ -25,6 +25,7 @@
 #include "coder/generator/inference/inference_generator.h"
 #include "coder/generator/train/train_generator.h"
 #include "coder/opcoders/op_coder_builder.h"
+#include "coder/opcoders/kernel_registry.h"
 #include "coder/utils/coder_utils.h"
 #include "coder/log.h"
 #include "src/ops/populate/populate_register.h"
@@ -35,6 +36,7 @@
 #include "include/errorcode.h"
 #include "include/model.h"
 #include "src/common/file_utils.h"
+#include "src/common/prim_util.h"
 #include "coder/opcoders/nnacl/dequant/de_quant.h"
 
 namespace mindspore::lite::micro {
@@ -263,13 +265,13 @@ int CoderSession::CreateOpCoders() {
       }
       inputs.push_back(all_tensors.at(in_index));
     }
-    for (auto ou_index : output_indices) {
-      ou_index = static_cast<size_t>(ou_index);
-      if (ou_index > all_tensors.size()) {
-        MS_LOG(ERROR) << "ou_index is invalid";
+    for (auto out_index : output_indices) {
+      out_index = static_cast<size_t>(out_index);
+      if (out_index > all_tensors.size()) {
+        MS_LOG(ERROR) << "out_index is invalid";
         return RET_ERROR;
       }
-      outputs.push_back(all_tensors.at(ou_index));
+      outputs.push_back(all_tensors.at(out_index));
     }
     if (inputs.empty()) {
       MS_LOG(ERROR) << "node: " << node->name_ << "has  no inputs tensor";
@@ -281,9 +283,10 @@ int CoderSession::CreateOpCoders() {
     }
 
     OpParameter *parameter = nullptr;
-    if (lite::KernelInferShape(inputs, outputs, node->primitive_, std::set<std::string>{}, schema_version_) ==
-        lite::RET_NOT_SUPPORT) {                                 // custom op infer
-      parameter = GenParameterAndInfer(node, inputs, &outputs);  // general ops infer
+    if (IsCustomNode(node->primitive_, schema_version_)) {
+      KernelRegistry::GetInstance()->RegisterKernel(schema::PrimitiveType_Custom);
+    } else {
+      parameter = GenParameterAndInfer(node, inputs, &outputs);  // built-in ops infer
       MS_CHECK_PTR(parameter);
     }
 

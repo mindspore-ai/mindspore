@@ -154,9 +154,7 @@ set(LITE_SRC
         )
 
 set(REGISTRY_SRC
-        ${MICRO_DIR}/coder/user_registry/user_kernel_register.cc
-        ${MICRO_DIR}/coder/user_registry/nnie_kernel_reg.cc
-        ${MICRO_DIR}/coder/user_registry/nnie_infer.cc
+        ${MICRO_DIR}/coder/opcoders/kernel_registry.cc
         )
 
 list(APPEND FILE_SET ${CODER_SRC} ${CODER_OPCODERS_SRC} ${CODER_GENERATOR_SRC}
