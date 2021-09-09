@@ -134,20 +134,22 @@ static bool HasSideEffect(const AnfNodePtr &node) {
 
 // If true do not merge the node.
 bool CSE::CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) const {
-  bool has_random_effect = false;
   auto prim_main = GetCNodePrimitive(main);
   auto prim_node = GetCNodePrimitive(node);
   // if has random effect, when generate by different op (not same object), do not merge.
   if (prim_main != nullptr) {
-    if (prim_main == prim_node) {
-      return false;
-    }
     auto effect_val = prim_main->GetAttr(GRAPH_FLAG_RANDOM_EFFECT);
     if (effect_val != nullptr && effect_val->isa<BoolImm>()) {
-      has_random_effect = GetValue<bool>(effect_val);
+      bool has_random_effect = GetValue<bool>(effect_val);
+      if (has_random_effect) {
+        return true;
+      }
+    }
+    if (prim_main != prim_node) {
+      return true;
     }
   }
-  return has_random_effect;
+  return false;
 }
 
 bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect) const {
