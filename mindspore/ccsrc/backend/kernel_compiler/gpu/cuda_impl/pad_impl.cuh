@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_PADIMPL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_PADIMPL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_PAD_IMPL_CUH_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_PAD_IMPL_CUH_
 #include <cuda_runtime.h>
 #include "runtime/device/gpu/cuda_common.h"
 
@@ -36,10 +36,8 @@ void CalPadGradNHWC(const size_t size, const T* input, const int num, const int 
                 const int channels, const int padded_height, const int padded_width, const int pad_top,
                 const int pad_left, T* output, cudaStream_t cuda_stream);
 template <typename T>
-void CalPadGeneral(const size_t size, const T *input, const int num, const int channels_orig,
-                   const int pad_channel_before, const int pad_channel_after, const int old_height, const int old_width,
-                   const int padded_height, const int padded_width, const int pad_top, const int pad_left,
-                   const T pad_value, T *output, cudaStream_t cuda_stream);
+void CalPadGeneral(const T *input, T *output, const size_t *input_shape, const size_t *strides,
+                   const int *paddings, const int input_size, const size_t input_rank, cudaStream_t cuda_stream);
 template <typename T>
 void CalPad3d(const size_t size, const T* input, const int num, const int channels, const int old_depth,
               const int old_height, const int old_width, const int padded_depth, const int padded_height,
@@ -60,4 +58,4 @@ void CalPadGradNDHWC(const size_t size, const T *dy, const int num, const int ol
                      const int old_width, const int channels, const int padded_depth, const int padded_height,
                      const int padded_width, const int pad_head, const int pad_top, const int pad_left, T *dx,
                      cudaStream_t cuda_stream);
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_PADIMPL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_PAD_IMPL_CUH_
