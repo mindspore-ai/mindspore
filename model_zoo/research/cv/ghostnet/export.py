@@ -40,4 +40,5 @@ if __name__ == '__main__':
     net.set_train(False)
 
     input_data = Tensor(np.zeros([1, 3, 224, 224]), ms.float32)
+    print(input_data.shape)
     export(net, input_data, file_name='ghost', file_format=args.file_format)

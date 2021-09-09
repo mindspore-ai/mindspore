@@ -22,6 +22,7 @@
     - [结果](#结果-1)
 - [推理过程](#推理过程)
     - [导出MindIR](#导出MindIR)
+    - [在Ascend310执行推理](#在Ascend310执行推理)
     - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
@@ -98,17 +99,32 @@ GhostNet的总体网络架构如下：[链接](https://arxiv.org/pdf/1911.11907.
 ```text
 └──ghostnet
   ├── README.md
-  ├── scripts
-    ├── run_distribute_train.sh            # 启动Ascend分布式训练（8卡）
-    ├── run_eval.sh                        # 启动Ascend评估
-    └── run_standalone_train.sh            # 启动Ascend单机训练（单卡）
+  ├── ascend310_infer                      # ascend310推理
+    ├── inc
+      └──  utils.h                         # ascend310推理
+    ├── src
+      ├── build.sh                         # ascend310推理
+      ├── CMakeLists.txt                   # ascend310推理
+      ├── main.cc                          # ascend310推理
+      └──  utils.cc                        # ascend310推理
+    ├── scripts
+      ├── run_distribute_train.sh          # 启动Ascend分布式训练（8卡）
+      ├── run_eval.sh                      # 启动Ascend评估
+      ├── run_infer_310.sh                 # 启动Ascend310推理
+      └── run_standalone_train.sh          # 启动Ascend单机训练（单卡）
   ├── src
     ├── config.py                          # 参数配置
     ├── dataset.py                         # 数据预处理
     ├── CrossEntropySmooth.py              # ImageNet2012数据集的损失定义
     ├── lr_generator.py                    # 生成每个步骤的学习率
-    └── ghostnet.py                          # ghostnet网络
+    ├── ghostnet600.py
+    ├── launch.py
+    └── ghostnet.py                        # ghostnet网络
   ├── eval.py                              # 评估网络
+  ├── create_imagenet2012_label.py         # 创建ImageNet2012标签
+  ├── export.py                            # 导出MindIR模型
+  ├── postprocess.py                       # 310推理的后期处理
+  ├── requirements.txt                     # 需求文件
   └── train.py                             # 训练网络
 ```
 
@@ -147,10 +163,10 @@ GhostNet的总体网络架构如下：[链接](https://arxiv.org/pdf/1911.11907.
 
 ```Shell
 # 分布式训练
-用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法:sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法:sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 ```
 
@@ -219,9 +235,25 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 参数ckpt_file为必填项，
 `EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
 
+## 在Ascend310执行推理
+
+在执行推理前， mindir文件必须通过export.py脚本导出。以下展示了使用mindir模型执行推理的示例。目前仅支持batch_Size为1的推理。
+
+```shell
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+- DEVICE_ID 可选，默认值为0。
+
 ## 结果
 
-导出“.mindir”文件可在当前目录查看
+推理结果保存在脚本执行的当前路径， 你可以在acc.log中看到以下精度计算结果。
+
+- 使用ImageNet2012数据集评估ghostnet
+
+```shell
+Total data: 50000, top1 accuracy: 0.73816, top5 accuracy: 0.9178.
+```
 
 # 模型描述
 
@@ -245,7 +277,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 |总时长   |  39小时 |
 |参数(M)   | 5.18 |
 |  微调检查点 | 42.05M（.ckpt文件）  |
-| 脚本  | [链接](https://gitee.com/alreadyhad/mindspore/tree/master/model_zoo/research/cv/ghostnet)  |
+| 脚本  | [链接](https://gitee.com/alreadyhad/mindspore/tree/r1.3/model_zoo/research/cv/ghostnet)  |
 
 # 随机情况说明
 
@@ -253,4 +285,4 @@ dataset.py中设置了“create_dataset”函数内的种子，同时还使用�
 
 # ModelZoo主页
 
-请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
+请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/r1.3/model_zoo)。
