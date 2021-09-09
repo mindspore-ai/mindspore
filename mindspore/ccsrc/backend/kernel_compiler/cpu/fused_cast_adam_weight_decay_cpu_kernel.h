@@ -75,7 +75,7 @@ MS_REG_CPU_KERNEL(FusedCastAdamWeightDecay,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat16)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   FusedCastAdamWeightDecayCPUKernel)

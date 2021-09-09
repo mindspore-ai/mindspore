@@ -103,7 +103,7 @@ bool AdamWeightDecayCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   }
   if (inputs[VAR]->size != inputs[M]->size || inputs[VAR]->size != inputs[V]->size ||
       inputs[VAR]->size != inputs[GRAD]->size) {
-    MS_LOG(EXCEPTION) << "Error input data size!";
+    MS_LOG(EXCEPTION) << "Var, m, v, grad input data size must be same!";
   }
   if (inputs[LR]->size != kSizeFloat32 || inputs[BETA1]->size != kSizeFloat32 || inputs[BETA2]->size != kSizeFloat32 ||
       inputs[EPSILON]->size != kSizeFloat32 || inputs[DECAY]->size != kSizeFloat32) {

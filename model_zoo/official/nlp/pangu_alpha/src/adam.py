@@ -30,11 +30,6 @@ _adam_opt = C.MultitypeFuncGraph("adam_opt")
 _scaler_one = Tensor(1, mstype.int32)
 _scaler_ten = Tensor(10, mstype.float32)
 
-op_assign = P.Assign()
-op_assign.add_prim_attr("primitive_target", "CPU")
-op_cast = P.Cast()
-op_cast.add_prim_attr("primitive_target", "CPU")
-
 
 @_adam_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
                     "Tensor", "Bool", "Bool")
