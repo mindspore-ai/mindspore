@@ -973,7 +973,7 @@ def args_unreset_check(*unreset_args, **unreset_kwargs):
                 argument_dict = argument_dict["kwargs"]
             for name, value in argument_dict.items():
                 if name in _set_record.keys():
-                    raise TypeError('Argument{}non resettable parameter{}.'.format(name, bound_unreset[name]))
+                    raise TypeError('Argument {} is non-renewable parameter {}.'.format(name, bound_unreset[name]))
                 if name in bound_unreset:
                     _set_record[name] = value
             return func(*args, **kwargs)
