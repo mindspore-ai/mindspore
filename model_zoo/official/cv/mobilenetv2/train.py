@@ -172,7 +172,7 @@ def train_mobilenetv2():
             model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale,
                           metrics=metrics, eval_network=dist_eval_network,
                           amp_level="O2", keep_batchnorm_fp32=False,
-                          acc_level=config.acc_mode)
+                          boost_level=config.boost_mode)
 
         else:
             opt = Momentum(net.trainable_params(), lr, config.momentum, config.weight_decay)

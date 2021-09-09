@@ -210,6 +210,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   │      ├──local_adapter.py     # Get local ID
   │      └──moxing_adapter.py    # Parameter processing
   ├── default_config.yaml        # Training parameter profile(ascend)
+  ├── default_config_boost.yaml        # Training parameter profile(ascend boost)
   ├── default_config_cpu.yaml    # Training parameter profile(cpu)
   ├── default_config_gpu.yaml    # Training parameter profile(gpu)
   ├── train.py                   # training script

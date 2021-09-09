@@ -32,7 +32,7 @@ from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..nn.metrics import Loss
 from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
-from ..nn.acc import acc
+from ..boost import AutoBoost
 from ..context import ParallelMode
 from ..parallel._cost_model_context import _set_multi_subgraphs
 from .dataset_helper import DatasetHelper, connect_network_with_dataset
@@ -89,13 +89,13 @@ class Model:
 
             O2 is recommended on GPU, O3 is recommended on Ascend.The more detailed explanation of `amp_level` setting
             can be found at `mindspore.amp.build_train_network` .
-        acc_level (str): Option for argument `level` in `mindspore.acc` , level for acc mode
+        boost_level (str): Option for argument `level` in `mindspore.boost` , level for boost mode
             training. Supports ["O0", "O1", "O2"]. Default: "O0".
 
             - O0: Do not change.
-            - O1: Enable the acc mode, the performance is improved by about 20%, and
+            - O1: Enable the boost mode, the performance is improved by about 20%, and
               the accuracy is the same as the original accuracy.
-            - O2: Enable the acc mode, the performance is improved by about 30%, and
+            - O2: Enable the boost mode, the performance is improved by about 30%, and
               the accuracy is reduced by less than 3%.
     Examples:
         >>> from mindspore import Model, nn
@@ -132,7 +132,7 @@ class Model:
     """
 
     def __init__(self, network, loss_fn=None, optimizer=None, metrics=None, eval_network=None,
-                 eval_indexes=None, amp_level="O0", acc_level="O0", **kwargs):
+                 eval_indexes=None, amp_level="O0", boost_level="O0", **kwargs):
         self._network = network
         self._loss_fn = loss_fn
         self._optimizer = optimizer
@@ -141,7 +141,7 @@ class Model:
         self._keep_bn_fp32 = True
         self._check_kwargs(kwargs)
         self._amp_level = amp_level
-        self._acc_level = acc_level
+        self._boost_level = boost_level
         self._eval_network = eval_network
         self._process_amp_args(kwargs)
         self._parallel_mode = _get_parallel_mode()
@@ -152,7 +152,7 @@ class Model:
 
         self._check_amp_level_arg(optimizer, amp_level)
         self._check_for_graph_cell(kwargs)
-        self._build_acc_network(kwargs)
+        self._build_boost_network(kwargs)
         self._train_network = self._build_train_network()
         self._build_eval_network(metrics, self._eval_network, eval_indexes)
         self._build_predict_network()
@@ -194,16 +194,16 @@ class Model:
         if hasattr(dataset, '__model_hash__') and dataset.__model_hash__ != hash(self):
             raise RuntimeError('The Dataset cannot be bound to different models, please create a new dataset.')
 
-    def _build_acc_network(self, kwargs):
-        """Build the acc network."""
-        processor = acc.AutoAcc(self._acc_level, kwargs)
+    def _build_boost_network(self, kwargs):
+        """Build the boost network."""
+        processor = AutoBoost(self._boost_level, kwargs)
         if processor.level not in ["O1", "O2"]:
             return
         if self._optimizer is None:
-            logger.warning("In acc mode, the optimizer must be defined.")
+            logger.warning("In boost mode, the optimizer must be defined.")
             return
         if self._eval_network is None and self._metrics is None:
-            logger.warning("In acc mode, the eval_network and metrics cannot be undefined at the same time.")
+            logger.warning("In boost mode, the eval_network and metrics cannot be undefined at the same time.")
             return
 
         self._network, self._optimizer = processor.network_auto_process_train(self._network, self._optimizer)
@@ -222,7 +222,7 @@ class Model:
                                                   self._optimizer,
                                                   self._loss_fn,
                                                   level=self._amp_level,
-                                                  acc_level=self._acc_level,
+                                                  boost_level=self._boost_level,
                                                   loss_scale_manager=self._loss_scale_manager,
                                                   keep_batchnorm_fp32=self._keep_bn_fp32)
             else:
@@ -230,7 +230,7 @@ class Model:
                                                   self._optimizer,
                                                   self._loss_fn,
                                                   level=self._amp_level,
-                                                  acc_level=self._acc_level,
+                                                  boost_level=self._boost_level,
                                                   keep_batchnorm_fp32=self._keep_bn_fp32)
         elif self._loss_fn:
             if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):

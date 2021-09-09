@@ -277,6 +277,7 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/mindrecord
         ${CMAKE_SOURCE_DIR}/mindspore/numpy
         ${CMAKE_SOURCE_DIR}/mindspore/train
+        ${CMAKE_SOURCE_DIR}/mindspore/boost
         ${CMAKE_SOURCE_DIR}/mindspore/common
         ${CMAKE_SOURCE_DIR}/mindspore/ops
         ${CMAKE_SOURCE_DIR}/mindspore/communication

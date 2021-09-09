@@ -1145,29 +1145,29 @@ class Cell(Cell_):
         self._add_init_args(**flags)
         return self
 
-    def set_acc(self, acc_type):
+    def set_boost(self, boost_type):
         """
         In order to improve the network performance, configure the network auto enable to
         accelerate the algorithm in the algorithm library.
 
-        If `acc_type is not in the algorithm library`, Please view the algorithm in the algorithm library
+        If `boost_type is not in the algorithm library`, Please view the algorithm in the algorithm library
         through `algorithm library`.
 
         Note:
             Some acceleration algorithms may affect the accuracy of the network, please choose carefully.
 
         Args:
-            acc_type (str): accelerate algorithm.
+            boost_type (str): accelerate algorithm.
 
         Returns:
             Cell, the cell itself.
 
         Raises:
-            ValueError: If acc_type is not in the algorithm library.
+            ValueError: If boost_type is not in the algorithm library.
         """
-        if acc_type not in ("less_bn",):
-            raise ValueError("The acc_type is not in the algorithm library.")
-        flags = {"less_bn": acc_type == "less_bn"}
+        if boost_type not in ("less_bn",):
+            raise ValueError("The boost_type is not in the algorithm library.")
+        flags = {"less_bn": boost_type == "less_bn"}
         self.add_flags_recursive(**flags)
         return self
 

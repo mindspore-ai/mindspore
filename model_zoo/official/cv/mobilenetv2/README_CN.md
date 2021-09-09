@@ -211,7 +211,7 @@ MobileNetV2总体网络架构如下：
   │      ├──local_adapter.py      # 获取本地id
   │      └──moxing_adapter.py     # 云上数据准备
   ├── default_config.yaml         # 训练配置参数(ascend)
-  ├── default_config_acc.yaml     # 训练配置参数(ascend acc模式)
+  ├── default_config_boost.yaml     # 训练配置参数(ascend boost模式)
   ├── default_config_cpu.yaml     # 训练配置参数(cpu)
   ├── default_config_gpu.yaml     # 训练配置参数(gpu)
   ├── train.py                    # 训练脚本

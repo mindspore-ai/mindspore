@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Acc Mode Cell Wrapper."""
+"""Boost Mode Cell Wrapper."""
 from mindspore.nn.wrap import TrainOneStepCell
 import mindspore.context as context
 from mindspore.context import ParallelMode, get_auto_parallel_context
@@ -31,7 +31,7 @@ from .adasum import AdaSum
 from .grad_accumulation import gradient_accumulation_op, gradient_clear_op
 
 
-__all__ = ["AccTrainOneStepCell", "AccTrainOneStepWithLossScaleCell"]
+__all__ = ["BoostTrainOneStepCell", "BoostTrainOneStepWithLossScaleCell"]
 
 
 _get_delta_weight = C.MultitypeFuncGraph("_get_delta_weight")
@@ -51,9 +51,9 @@ def _save_weight_process(new_parameter, old_parameter):
     return P.Assign()(new_parameter, old_parameter)
 
 
-class AccTrainOneStepCell(TrainOneStepCell):
+class BoostTrainOneStepCell(TrainOneStepCell):
     r"""
-    Acc Network training package class.
+    Boost Network training package class.
 
     Wraps the network with an optimizer. The resulting Cell is trained with input '\*inputs'.
     The backward graph will be created in the construct function to update the parameter. Different
@@ -82,29 +82,29 @@ class AccTrainOneStepCell(TrainOneStepCell):
         >>> optim = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> #1) Using the WithLossCell existing provide
         >>> loss_net = nn.WithLossCell(net, loss_fn)
-        >>> train_net = nn.acc.AccTrainOneStepCell(loss_net, optim)
+        >>> train_net = boost.BoostTrainOneStepCell(loss_net, optim)
         >>>
         >>> #2) Using user-defined WithLossCell
         >>> class MyWithLossCell(Cell):
-        mindspore.    def __init__(self, backbone, loss_fn):
-        mindspore.        super(MyWithLossCell, self).__init__(auto_prefix=False)
-        mindspore.        self._backbone = backbone
-        mindspore.        self._loss_fn = loss_fn
-        mindspore.
-        mindspore.    def construct(self, x, y, label):
-        mindspore.        out = self._backbone(x, y)
-        mindspore.        return self._loss_fn(out, label)
-        mindspore.
-        mindspore.    @property
-        mindspore.    def backbone_network(self):
-        mindspore.        return self._backbone
-        mindspore.
+        ...    def __init__(self, backbone, loss_fn):
+        ...        super(MyWithLossCell, self).__init__(auto_prefix=False)
+        ...        self._backbone = backbone
+        ...        self._loss_fn = loss_fn
+        ...
+        ...    def construct(self, x, y, label):
+        ...        out = self._backbone(x, y)
+        ...        return self._loss_fn(out, label)
+        ...
+        ...    @property
+        ...    def backbone_network(self):
+        ...        return self._backbone
+        ...
         >>> loss_net = MyWithLossCell(net, loss_fn)
-        >>> train_net = nn.acc.AccTrainOneStepCellTrainOneStepCell(loss_net, optim)
+        >>> train_net = boost.BoostTrainOneStepCellTrainOneStepCell(loss_net, optim)
     """
 
     def __init__(self, network, optimizer, sens=1.0):
-        super(AccTrainOneStepCell, self).__init__(network, optimizer, sens)
+        super(BoostTrainOneStepCell, self).__init__(network, optimizer, sens)
         self.hyper_map = C.HyperMap()
         self.freeze = isinstance(optimizer, FreezeOpt)
         if not self.freeze:
@@ -240,13 +240,13 @@ class AccTrainOneStepCell(TrainOneStepCell):
         return is_enable
 
 
-class AccTrainOneStepWithLossScaleCell(AccTrainOneStepCell):
+class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
     r"""
-    Acc Network training with loss scaling.
+    Boost Network training with loss scaling.
 
     This is a training step with loss scaling. It takes a network, an optimizer and possibly a scale update
     Cell as args. The loss scale value can be updated in both host side or device side. The
-    AccTrainOneStepWithLossScaleCell will be compiled to be graph which takes `*inputs` as input data.
+    BoostTrainOneStepWithLossScaleCell will be compiled to be graph which takes `*inputs` as input data.
     The Tensor type of `scale_sense` is acting as loss scaling value. If you want to update it on host side,
     the value must be provided. If  the Tensor type of `scale_sense` is not given, the loss scale update logic
     must be provied by Cell type of `scale_sense`.
@@ -282,16 +282,16 @@ class AccTrainOneStepWithLossScaleCell(AccTrainOneStepCell):
         >>> from mindspore.common import dtype as mstype
         >>>
         >>> class Net(nn.Cell):
-        mindspore.     def __init__(self, in_features, out_features):
-        mindspore.         super(Net, self).__init__()
-        mindspore.         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
-        mindspore.                                 name='weight')
-        mindspore.         self.matmul = P.MatMul()
-        mindspore.
-        mindspore.     def construct(self, x):
-        mindspore.         output = self.matmul(x, self.weight)
-        mindspore.         return output
-        mindspore.
+        ...     def __init__(self, in_features, out_features):
+        ...         super(Net, self).__init__()
+        ...         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        ...                                 name='weight')
+        ...         self.matmul = ops.MatMul()
+        ...
+        ...     def construct(self, x):
+        ...         output = self.matmul(x, self.weight)
+        ...         return output
+        ...
         >>> size, in_features, out_features = 16, 16, 10
         >>> #1) when the type of scale_sense is Cell:
         >>> net = Net(in_features, out_features)
@@ -299,7 +299,7 @@ class AccTrainOneStepWithLossScaleCell(AccTrainOneStepCell):
         >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> net_with_loss = WithLossCell(net, loss)
         >>> manager = nn.DynamicLossScaleUpdateCell(loss_scale_value=2**12, scale_factor=2, scale_window=1000)
-        >>> train_network = nn.acc.AccTrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=manager)
+        >>> train_network = boost.BoostTrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=manager)
         >>> input = Tensor(np.ones([out_features, in_features]), mindspore.float32)
         >>> labels = Tensor(np.ones([out_features,]), mindspore.float32)
         >>> output = train_network(input, labels)
@@ -312,11 +312,11 @@ class AccTrainOneStepWithLossScaleCell(AccTrainOneStepCell):
         >>> inputs = Tensor(np.ones([size, in_features]).astype(np.float32))
         >>> label = Tensor(np.zeros([size, out_features]).astype(np.float32))
         >>> scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
-        >>> train_network = nn.acc.AccTrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=scaling_sens)
+        >>> train_network = boost.BoostTrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=scaling_sens)
         >>> output = train_network(inputs, label)
     """
     def __init__(self, network, optimizer, scale_sense):
-        super(AccTrainOneStepWithLossScaleCell, self).__init__(network, optimizer, sens=None)
+        super(BoostTrainOneStepWithLossScaleCell, self).__init__(network, optimizer, sens=None)
         self.base = Tensor(1, mstype.float32)
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.less_equal = P.LessEqual()

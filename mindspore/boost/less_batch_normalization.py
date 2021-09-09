@@ -91,13 +91,13 @@ class LessBN(Cell):
         network (Cell): Network to be modified.
 
     Examples:
-        >>> network = acc.LessBN(network)
+        >>> network = boost.LessBN(network)
     """
 
     def __init__(self, network, fn_flag=False):
         super(LessBN, self).__init__()
         self.network = network
-        self.network.set_acc("less_bn")
+        self.network.set_boost("less_bn")
         self.network.update_cell_prefix()
         if fn_flag:
             self._convert_to_less_bn_net(self.network)
