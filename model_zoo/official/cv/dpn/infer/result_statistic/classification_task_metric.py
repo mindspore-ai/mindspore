@@ -13,16 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import numpy as np
 import os
 import sys
 import json
+import numpy as np
 
 np.set_printoptions(threshold=sys.maxsize)
 
 LABEL_FILE = "HiAI_label.json"
-
 
 def gen_file_name(img_name):
     full_name = img_name.split('/')[-1]
@@ -36,7 +34,7 @@ def cre_groundtruth_dict(gtfile_path):
     """
     img_gt_dict = {}
     for gtfile in os.listdir(gtfile_path):
-        if (gtfile != LABEL_FILE):
+        if gtfile != LABEL_FILE:
             with open(os.path.join(gtfile_path, gtfile), 'r') as f:
                 gt = json.load(f)
                 ret = gt["image"]["annotations"][0]["category_id"]
@@ -87,7 +85,7 @@ def load_statistical_predict_result(filepath):
 
 
 def create_visualization_statistical_result(prediction_file_path,
-                                            result_store_path, json_file_name,
+                                            rst_store_path, json_file_name,
                                             img_gt_dict, topn=5):
     """
     :param prediction_file_path:
@@ -97,7 +95,7 @@ def create_visualization_statistical_result(prediction_file_path,
     :param topn:
     :return:
     """
-    writer = open(os.path.join(result_store_path, json_file_name), 'w')
+    writer = open(os.path.join(rst_store_path, json_file_name), 'w')
     table_dict = {}
     table_dict["title"] = "Overall statistical evaluation"
     table_dict["value"] = []
@@ -151,9 +149,9 @@ def create_visualization_statistical_result(prediction_file_path,
 if __name__ == '__main__':
     try:
         # txt file path
-        folder_davinci_target = sys.argv[1]       
+        folder_davinci_target = sys.argv[1]      
         # annotation files path, "val_label.txt"
-        annotation_file_path = sys.argv[2]                
+        annotation_file_path = sys.argv[2]
         # the path to store the results json path
         result_json_path = sys.argv[3]
         # result json file name
@@ -176,4 +174,3 @@ if __name__ == '__main__':
     create_visualization_statistical_result(folder_davinci_target,
                                             result_json_path, json_file_name,
                                             img_label_dict, topn=5)
-
