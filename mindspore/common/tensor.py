@@ -417,13 +417,13 @@ class Tensor(Tensor_):
 
     def asnumpy(self):
         """Convert tensor to numpy array."""
-        self.init_check()
+        self._init_check()
         PynativeExecutor_.get_instance().execute_all_task()
         return Tensor_.asnumpy(self)
 
     def flush_from_cache(self):
         """Flush cache data to host if tensor is cache enable."""
-        self.init_check()
+        self._init_check()
         Tensor_._flush_from_cache(self)
 
     def all(self, axis=(), keep_dims=False):
@@ -450,7 +450,7 @@ class Tensor(Tensor_):
             False
         """
 
-        self.init_check()
+        self._init_check()
         if axis is None:
             axis = ()
         return tensor_operator_registry.get('all')(keep_dims)(self, axis)
@@ -479,7 +479,7 @@ class Tensor(Tensor_):
             True
         """
 
-        self.init_check()
+        self._init_check()
         if axis is None:
             axis = ()
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
@@ -494,7 +494,7 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same dimension as the input shape.
         """
-        self.init_check()
+        self._init_check()
         if not shape:
             raise ValueError("The shape variable should not be empty")
         if isinstance(shape[0], tuple):
@@ -514,7 +514,7 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same dimension as input tensor.
         """
-        self.init_check()
+        self._init_check()
         return tensor_operator_registry.get('broadcast_to')(x.shape)(self)
 
     def abs(self):
@@ -534,7 +534,7 @@ class Tensor(Tensor_):
             >>> print(output)
             [1.1 2.1]
         """
-        self.init_check()
+        self._init_check()
         return tensor_operator_registry.get('abs')()(self)
 
     def mean(self, axis=(), keep_dims=False):
@@ -560,7 +560,7 @@ class Tensor(Tensor_):
             >>> print(output)
             2.0
         """
-        self.init_check()
+        self._init_check()
         if axis is None:
             axis = ()
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
@@ -601,7 +601,7 @@ class Tensor(Tensor_):
             >>> print(x.shape)
             (3, 2, 1)
         """
-        self.init_check()
+        self._init_check()
         perm = validator.check_transpose_axis(axes, self.ndim)
         return tensor_operator_registry.get('transpose')()(self, perm)
 
@@ -635,7 +635,7 @@ class Tensor(Tensor_):
             [ 3.6  0.4]
             [ 0.5 -3.2]]
         """
-        self.init_check()
+        self._init_check()
         new_shape = validator.check_reshape_shp(shape)
         return tensor_operator_registry.get('reshape')()(self, new_shape)
 
@@ -657,7 +657,7 @@ class Tensor(Tensor_):
             >>> print(output.shape)
             (24,)
         """
-        self.init_check()
+        self._init_check()
         reshape_op = tensor_operator_registry.get('reshape')()
         return reshape_op(self, (-1,))
 
@@ -688,7 +688,7 @@ class Tensor(Tensor_):
             >>> print(output.shape)
             (24,)
         """
-        self.init_check()
+        self._init_check()
         reshape_op = tensor_operator_registry.get('reshape')()
         trans_op = tensor_operator_registry.get('transpose')()
 
@@ -725,7 +725,7 @@ class Tensor(Tensor_):
             >>> print(output.shape)
             (4,3,2)
         """
-        self.init_check()
+        self._init_check()
         axis1, axis2 = validator.check_swapaxes_axis((axis1, axis2), self.ndim)
 
         if axis1 == axis2:
@@ -770,7 +770,7 @@ class Tensor(Tensor_):
             >>> print(x.shape)
             (2, 2)
         """
-        self.init_check()
+        self._init_check()
         if axis is None:
             return tensor_operator_registry.get('squeeze')(self)
         new_shape = validator.prepare_shape_for_squeeze(self.shape, axis)
@@ -805,7 +805,7 @@ class Tensor(Tensor_):
             >>> print(x.dtype)
             Int32
         """
-        self.init_check()
+        self._init_check()
         dtype = validator.check_astype_dtype(dtype)
         if not copy and dtype == self.dtype:
             return self
@@ -1191,7 +1191,7 @@ class Tensor(Tensor_):
             return x.astype(dtype)
         return x
 
-    def init_check(self):
+    def _init_check(self):
         if self.has_init:
             self.init_data()
         return self
