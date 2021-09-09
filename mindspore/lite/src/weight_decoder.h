@@ -89,9 +89,9 @@ STATUS UnSparseTensorData(const std::vector<int> &unique_values, const std::vect
       return RET_ERROR;
     }
     auto coor = coors[i];
-    auto cur_channel = data_index / elem_perchannel;
-    auto zp = quant_params->Get(cur_channel)->zeroPoint();
     for (size_t j = 0; j < coor; j++) {
+      auto cur_channel = data_index / elem_perchannel;
+      auto zp = quant_params->Get(cur_channel)->zeroPoint();
       un_sparsed_data.push_back(zp);
       data_index++;
     }
