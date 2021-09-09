@@ -1,10 +1,7 @@
 asttokens==2.0.5
-astunparse==1.6.3
 attrs==21.2.0
 cached-property==1.5.2
 certifi==2018.10.15
-cffi==1.14.5
-decorator==5.0.9
 easydict==1.9
 h5py==3.3.0
 imageio==2.9.0
