@@ -127,33 +127,51 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
                                     lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
-  if (src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
-    if (dst_tensor->data_type() == kObjectTypeTensorType) {
+  if (src_tensor->data() == nullptr || src_tensor->data()->size() <= 0) {
+    MS_LOG(DEBUG) << "No valid data converted.";
+    return RET_OK;
+  }
+
+  /* tensor list convert */
+  if (dst_tensor->data_type() == kObjectTypeTensorType) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-      auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
-      if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
-        MS_LOG(ERROR) << "Decode tensorlist data failed";
-        return RET_ERROR;
-      }
-#else
-      MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-      return RET_NOT_SUPPORT;
-#endif
-    } else {
-      auto ret = DecompressTensor(*src_tensor, dst_tensor);
-      if (ret == RET_NO_CHANGE) {
-        dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
-        dst_tensor->set_own_data(false);
-      } else if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Decompress tensor data failed: " << ret;
-        return ret;
-      }
+    auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
+    if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
+      MS_LOG(ERROR) << "Decode tensorlist data failed";
+      return RET_ERROR;
     }
+    return RET_OK;
+#else
+    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
+    return RET_NOT_SUPPORT;
+#endif
+  }
+
+  /* normal tensor check */
+  auto shape_info = dst_tensor->shape();
+  if (shape_info.end() !=
+      std::find_if(shape_info.begin(), shape_info.end(), [](const int shape) { return shape <= 0; })) {
+    MS_LOG(ERROR) << "Invalid shape size." << src_tensor->name()->c_str();
+    return RET_ERROR;
+  }
+
+  auto ret = DecompressTensor(*src_tensor, dst_tensor);
+  if (ret == RET_NO_CHANGE) {
+    dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
+    dst_tensor->set_own_data(false);
+  } else if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Decompress tensor data failed: " << ret;
+    return ret;
   }
   return RET_OK;
 }
 
 lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
+  int32_t data_type = src_tensor.dataType();
+  if (data_type <= kTypeUnknown || data_type >= kMonadTypeEnd) {
+    MS_LOG(ERROR) << "invalid data type. " << data_type;
+    return nullptr;
+  }
   auto src_category = TensorCategory(&src_tensor);
   std::vector<int> shape;
   if (src_tensor.dims() == nullptr) {
@@ -169,7 +187,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
     }
   }
   lite::Tensor *dst_tensor = nullptr;
-  if (TypeId(src_tensor.dataType()) == kObjectTypeTensorType) {
+  if (TypeId(data_type) == kObjectTypeTensorType) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>(), src_category);
     // set tensor list datatype
@@ -183,7 +201,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
 #endif
   } else {
     dst_tensor = new (std::nothrow)
-      Tensor(TypeId(src_tensor.dataType()), shape, static_cast<mindspore::Format>(src_tensor.format()), src_category);
+      Tensor(TypeId(data_type), shape, static_cast<mindspore::Format>(src_tensor.format()), src_category);
   }
   return dst_tensor;
 }
@@ -207,13 +225,14 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     auto ret = ConvertTensorsData(model, i, src_tensor, dst_tensor);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Convert data of " << i << "th tensor failed";
-      delete (dst_tensor);
+      delete dst_tensor;
       return ret;
     }
     ConvertTensorsQuantParam(src_tensor, dst_tensor);
     if (IsContain(model_input_indices, i)) {
       if (dst_tensor->data_c() != nullptr) {
         MS_LOG(ERROR) << "Graph input shouldn't have data";
+        delete dst_tensor;
         return RET_ERROR;
       }
       dst_tensor->set_category(Tensor::GRAPH_INPUT);
@@ -221,6 +240,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     if (IsContain(model_output_indices, i)) {
       if (dst_tensor->data_c() != nullptr) {
         MS_LOG(ERROR) << "Graph output shouldn't have data";
+        delete dst_tensor;
         return RET_ERROR;
       }
       dst_tensor->set_category(Tensor::GRAPH_OUTPUT);
