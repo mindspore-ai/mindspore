@@ -105,7 +105,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::model_file_, "modelFile", "Input model file", "");
     AddFlag(&BenchmarkFlags::in_data_file_, "inDataFile", "Input data file, if not set, use random input", "");
     AddFlag(&BenchmarkFlags::config_file_, "configFile", "Config file", "");
-    AddFlag(&BenchmarkFlags::device_, "device", "CPU | GPU | NPU", "CPU");
+    AddFlag(&BenchmarkFlags::device_, "device", "CPU | GPU | NPU | Ascend310", "CPU");
     AddFlag(&BenchmarkFlags::cpu_bind_mode_, "cpuBindMode",
             "Input 0 for NO_BIND, 1 for HIGHER_CPU, 2 for MID_CPU, default value: 1", 1);
     // MarkPerformance
@@ -297,6 +297,8 @@ class MS_API BenchmarkBase {
   }
 
   int CheckThreadNumValid();
+
+  int CheckDeviceTypeValid();
 
  protected:
   BenchmarkFlags *flags_;

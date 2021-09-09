@@ -58,7 +58,7 @@ class AclPass : public Pass {
   FmkType fmk_type_;
   ParameterPtr om_parameter_ = nullptr;
   CNodePtr custom_node_ = nullptr;
-  std::unique_ptr<AclModelOptions> options_;
+  std::shared_ptr<AclModelOptions> options_;
   AnfNodePtrList graph_outputs_;
   std::vector<std::string> graph_output_names_;
   std::vector<std::vector<int64_t>> graph_output_dims_;
