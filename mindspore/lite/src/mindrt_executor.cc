@@ -136,12 +136,7 @@ void MindrtExecutor::TransferGraphOutput() {
                     reinterpret_cast<float *>(dst_tensor->data_c()), dst_tensor->ElementsNum());
     } else {
       dst_tensor->set_data(src_tensor->data());
-      if (src_tensor->own_data() == true && src_tensor->allocator() == nullptr) {
-        dst_tensor->set_own_data(false);
-        src_tensor->IncRefCount();
-      } else {
-        src_tensor->set_data(nullptr);
-      }
+      src_tensor->set_data(nullptr);
     }
     src_tensor->DecRefCount();
   }
@@ -157,12 +152,8 @@ void MindrtExecutor::FreeOutputTensor() {
     } else {
       if (dst_tensor->data_type() == src_tensor->data_type()) {
         /* user set graph-output-tensor from outside */
-        if (dst_tensor->data() == nullptr || dst_tensor->own_data() == false) {
-          src_tensor->set_own_data(true);
-        } else {
-          src_tensor->set_data(dst_tensor->data());
-          src_tensor->set_own_data(false);
-        }
+        src_tensor->set_data(dst_tensor->data());
+        src_tensor->set_own_data(false);
         src_tensor->set_allocator(nullptr);
       }
     }

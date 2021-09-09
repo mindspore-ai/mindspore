@@ -89,6 +89,9 @@ echo 'run mindrt parallel ut test'
 echo 'user set output tensors st test'
 ./lite-test --gtest_filter="GraphTest.UserSetGraphOutput*"
 
+echo 'run custom delegate st test'
+./lite-test --gtest_filter="DelegateTest.CustomDelegate"
+
 echo 'runtime pass'
 ./lite-test --gtest_filter="RuntimePass.*"
 

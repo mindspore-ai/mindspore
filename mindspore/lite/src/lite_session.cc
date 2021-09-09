@@ -594,6 +594,21 @@ bool LiteSession::IsIsolatedSubGraph(kernel::LiteKernel *kernel) {
   return true;
 }
 
+int LiteSession::SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel) {
+  if (kernel == nullptr) {
+    return RET_NULL_PTR;
+  }
+  for (auto input : kernel->in_tensors()) {
+    CHECK_NULL_RETURN(input);
+    input->set_allocator(this->context_->allocator);
+  }
+  for (auto output : kernel->out_tensors()) {
+    CHECK_NULL_RETURN(output);
+    output->set_allocator(this->context_->allocator);
+  }
+  return RET_OK;
+}
+
 int LiteSession::PrepareKernels(Model *model) {
   std::vector<kernel::LiteKernel *> all_kernels;
   for (auto kernel : this->kernels_) {
@@ -638,6 +653,13 @@ int LiteSession::PrepareKernels(Model *model) {
   }
   AdjustModelOutputTensorInitRefCount(model);
   for (auto kernel : this->kernels_) {
+    if (kernel->desc().arch == kernel::kDelegate) {
+      auto ret = SetAllocatorForDelegateKernels(kernel);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
+        return ret;
+      }
+    }
     auto ret = kernel->Prepare();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
