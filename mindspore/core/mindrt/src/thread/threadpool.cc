@@ -305,6 +305,22 @@ int ThreadPool::SetProcessAffinity(BindMode bind_mode) const {
 #endif  // BIND_CORE
 }
 
+void ThreadPool::InitSpinCount() {
+  for (auto worker : workers_) {
+    THREAD_RETURN_IF_NULL(worker);
+    worker->SetMaxSpinCount(max_spin_count_);
+  }
+  return;
+}
+
+void ThreadPool::UnInitSpinCount() {
+  for (auto worker : workers_) {
+    THREAD_RETURN_IF_NULL(worker);
+    worker->SetMaxSpinCount(min_spin_count_);
+  }
+  return;
+}
+
 ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<int> &core_list) {
   ThreadPool *pool = new (std::nothrow) ThreadPool();
   if (pool == nullptr) {
@@ -323,13 +339,5 @@ ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<in
   }
 #endif  // BIND_CORE
   return pool;
-}
-
-int ThreadPool::SetMaxSpinCount(int max_spin_count) {
-  for (auto worker : workers_) {
-    THREAD_ERROR_IF_NULL(worker);
-    worker->SetMaxSpinCount(max_spin_count);
-  }
-  return THREAD_OK;
 }
 }  // namespace mindspore

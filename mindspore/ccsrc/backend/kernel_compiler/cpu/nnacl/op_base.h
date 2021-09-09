@@ -101,6 +101,9 @@
 #define MAX_LEN 256
 #define FLT16_MAX 65504
 #define NNACL_NC4HW4 13
+#define kDefaulLiteMaxSpinCount 300000
+#define kDefaulLiteMinSpinCount 1
+#define kDefaulLiteIosSpinCount 1
 
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)

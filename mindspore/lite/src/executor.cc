@@ -24,10 +24,10 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
                   const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before,
                   const KernelCallBack &after) {
   // init the max spin count.
-  MS_ASSERT(ctx_ != nullptr);
+  CHECK_NULL_RETURN(ctx_);
   auto thread_pool = ctx_->thread_pool();
   CHECK_NULL_RETURN(thread_pool);
-  thread_pool->SetMaxSpinCount(kDefaultSpinCount);
+  thread_pool->InitSpinCount();
 
   // clear ref_count
   for (auto *kernel : kernels) {
@@ -57,8 +57,8 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
     }
   }
 
-  // reset the max spin count.
-  thread_pool->SetMaxSpinCount(kMinSpinCount);
+  thread_pool->UnInitSpinCount();
+
   return RET_OK;
 }
 }  // namespace mindspore::lite
