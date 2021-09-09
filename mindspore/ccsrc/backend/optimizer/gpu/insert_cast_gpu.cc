@@ -27,8 +27,9 @@
 
 namespace mindspore {
 namespace opt {
-const std::unordered_set<std::string> kConv3DKernel = {
-  prim::kPrimConv3DBackpropInput->name(), prim::kPrimConv3DBackpropFilter->name(), prim::kPrimConv3D->name()};
+const std::unordered_set<std::string> kConv3DKernel = {prim::kPrimConv3DBackpropInput->name(),
+                                                       prim::kPrimConv3DBackpropFilter->name(),
+                                                       prim::kPrimConv3D->name(), prim::kPrimConv3DTranspose->name()};
 
 void InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i, const TypeId &src_type,
                 const TypeId &cast_type) {

@@ -292,6 +292,7 @@ inline const PrimitivePtr kPrimCTCLossV2Grad = std::make_shared<Primitive>("CTCL
 inline const PrimitivePtr kPrimCTCLoss = std::make_shared<Primitive>(kCTCLoss);
 inline const PrimitivePtr kPrimFullConnection = std::make_shared<Primitive>("FullConnection");
 inline const PrimitivePtr kPrimConv2DTranspose = std::make_shared<Primitive>(kConv2DTranspose);
+inline const PrimitivePtr kPrimConv3DTranspose = std::make_shared<Primitive>("Conv3DTranspose");
 inline const PrimitivePtr kPrimRoll = std::make_shared<Primitive>(kRoll);
 inline const PrimitivePtr kPrimGroupConv2DGradInput = std::make_shared<Primitive>("GroupConv2DGradInput");
 inline const PrimitivePtr kPrimBatchNorm = std::make_shared<Primitive>("BatchNorm");
