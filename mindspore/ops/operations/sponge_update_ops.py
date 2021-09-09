@@ -24,198 +24,6 @@ from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 
 
-class RestrainForce(PrimitiveWithInfer):
-    """
-    Calculate the restraint force.
-
-    .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
-
-    Args:
-        atom_numbers(int32): the number of atoms n.
-        restrain_numbers(int32): the number of restrained atoms m.
-        factor(float32): the force constant of resilience when restrained atom is not at the reference coordinate.
-
-    Inputs:
-        - **restrain_list** (Tensor, int32) - [m, ], the atom index of each restrained atom.
-        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **uint_crd_ref** (Tensor, uint32) - [n, 3], the reference unsigned int coordinate of each atom.
-        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
-          between the real space float coordinates and the unsigned int coordinates.
-
-    Outputs:
-        - **frc** (float32 Tensor) - [n, 3], the force felt by each atom.
-
-    Supported Platforms:
-        ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, restrain_numbers, atom_numbers, factor):
-        self.restrain_numbers = restrain_numbers
-        self.atom_numbers = atom_numbers
-        self.factor = factor
-        self.add_prim_attr('restrain_numbers', self.restrain_numbers)
-        self.add_prim_attr('atom_numbers', self.atom_numbers)
-        self.add_prim_attr('factor', self.factor)
-        self.init_prim_io_names(
-            inputs=['restrain_list', 'uint_crd', 'uint_crd_ref', 'scaler'],
-            outputs=['frc'])
-
-    def infer_shape(self, restrain_list_shape, uint_crd_shape, uint_crd_ref_shape, scaler_shape):
-        cls_name = self.name
-        n = self.atom_numbers
-        m = self.restrain_numbers
-        validator.check_int(len(uint_crd_shape), 2, Rel.EQ, "uint_crd_dim", cls_name)
-        validator.check_int(len(scaler_shape), 1, Rel.EQ, "scaler_dim", cls_name)
-        validator.check_int(len(uint_crd_ref_shape), 2, Rel.EQ, "atom_auint_crd_ref_dim", cls_name)
-        validator.check_int(len(restrain_list_shape), 1, Rel.EQ, "restrain_list_dim", cls_name)
-
-        validator.check_int(uint_crd_shape[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
-        validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
-        validator.check_int(scaler_shape[0], 3, Rel.EQ, "scaler_shape", cls_name)
-
-        validator.check_int(restrain_list_shape[0], m, Rel.EQ, "restrain_list_shape", cls_name)
-        validator.check_int(uint_crd_ref_shape[0], n, Rel.EQ, "uint_crd_ref_shape[0]", cls_name)
-        validator.check_int(uint_crd_ref_shape[1], 3, Rel.EQ, "uint_crd_ref_shape[1]", cls_name)
-        return [n, 3]
-
-    def infer_dtype(self, restrain_list_dtype, uint_crd_f_dtype, uint_crd_ref_dtype, scaler_f_type):
-        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('restrain_list', restrain_list_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('uint_crd_ref', uint_crd_ref_dtype, [mstype.int32], self.name)
-        return mstype.float32
-
-
-class RestrainEnergy(PrimitiveWithInfer):
-    """
-    Calculate the restrain energy.
-
-    .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
-
-    Args:
-        atom_numbers(int32): the number of atoms n.
-        restrain_numbers(int32): the number of restrained atoms m.
-        weight(float32): the force constant of resilience when restrained atom is not at the reference coordinate.
-
-    Inputs:
-        - **restrain_list** (Tensor, int32) - [m, ], the atom index of each restrained atom.
-        - **crd** (Tensor, float32) - [n, 3], the coordinate value of each atom.
-        - **crd_ref** (Tensor, float32) - [n, 3], the reference coordinate of each atom.
-        - **boxlength** (Tensor, float32) - [3,], the size of simulating system in each dimension (x, y, z).
-
-    Outputs:
-        - **ene** (float32 Tensor) - [n, ], the restrain energy of each atom.
-
-    Supported Platforms:
-        ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, restrain_numbers, atom_numbers, weight):
-        self.restrain_numbers = restrain_numbers
-        self.atom_numbers = atom_numbers
-        self.weight = weight
-        self.add_prim_attr('restrain_numbers', self.restrain_numbers)
-        self.add_prim_attr('atom_numbers', self.atom_numbers)
-        self.add_prim_attr('weight', self.weight)
-        self.init_prim_io_names(
-            inputs=['restrain_list', 'crd', 'crd_ref', 'boxlength'],
-            outputs=['ene'])
-
-    def infer_shape(self, restrain_list_shape, crd_shape, crd_ref_shape, boxlength_shape):
-        cls_name = self.name
-        n = self.atom_numbers
-        m = self.restrain_numbers
-        validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", cls_name)
-        validator.check_int(len(boxlength_shape), 1, Rel.EQ, "scaler_dim", cls_name)
-        validator.check_int(len(crd_ref_shape), 2, Rel.EQ, "crd_ref_shape_dim", cls_name)
-        validator.check_int(len(restrain_list_shape), 1, Rel.EQ, "restrain_list_dim", cls_name)
-
-        validator.check_int(crd_shape[0], n, Rel.EQ, "crd_shape[0]", cls_name)
-        validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[1]", cls_name)
-        validator.check_int(boxlength_shape[0], 3, Rel.EQ, "boxlength_shape", cls_name)
-
-        validator.check_int(restrain_list_shape[0], m, Rel.EQ, "restrain_list_shape", cls_name)
-        validator.check_int(crd_ref_shape[0], n, Rel.EQ, "crd_ref_shape[0]", cls_name)
-        validator.check_int(crd_ref_shape[1], 3, Rel.EQ, "crd_ref_shape[1]", cls_name)
-        return [n,]
-
-    def infer_dtype(self, restrain_list_dtype, crd_f_dtype, crd_ref_dtype, boxlength_type):
-        validator.check_tensor_dtype_valid('crd', crd_f_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('boxlength', boxlength_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('restrain_list', restrain_list_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('crd_ref', crd_ref_dtype, [mstype.float32], self.name)
-        return mstype.float32
-
-
-class RestrainForceWithAtomEnergyVirial(PrimitiveWithInfer):
-    """
-    Calculate the restraint force, energy and virial.
-
-    .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
-
-    Args:
-        atom_numbers(int32): the number of atoms n.
-        restrain_numbers(int32): the number of restrained atoms m.
-        weight(float32): the force constant of resilience when restrained atom is not at the reference coordinate.
-
-    Inputs:
-        - **restrain_list** (Tensor, int32) - [m, ], the atom index of each restrained atom.
-        - **crd** (Tensor, float32) - [n, 3], the coordinate value of each atom.
-        - **crd_ref** (Tensor, float32) - [n, 3], the reference coordinate of each atom.
-        - **boxlength** (Tensor, float32) - [3,], the size of simulating system in each dimension (x, y, z).
-
-    Outputs:
-        - **atom_ene** (float32 Tensor) - [n, ], the restraint energy of each atom.
-        - **atom_virial** (float32 Tensor) - [n,], the virial caused by restraint force of each atom.
-        - **frc** (float32 Tensor) - [n, 3], the force felt by each atom.
-
-    Supported Platforms:
-        ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, restrain_numbers, atom_numbers, weight):
-        self.restrain_numbers = restrain_numbers
-        self.atom_numbers = atom_numbers
-        self.weight = weight
-        self.add_prim_attr('restrain_numbers', self.restrain_numbers)
-        self.add_prim_attr('atom_numbers', self.atom_numbers)
-        self.add_prim_attr('weight', self.weight)
-        self.init_prim_io_names(
-            inputs=['restrain_list', 'crd', 'crd_ref', 'boxlength'],
-            outputs=['atom_ene', 'atom_virial', 'frc'])
-
-    def infer_shape(self, restrain_list_shape, crd_shape, crd_ref_shape, boxlength_shape):
-        cls_name = self.name
-        n = self.atom_numbers
-        m = self.restrain_numbers
-        validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", cls_name)
-        validator.check_int(len(boxlength_shape), 1, Rel.EQ, "scaler_dim", cls_name)
-        validator.check_int(len(crd_ref_shape), 2, Rel.EQ, "crd_ref_shape_dim", cls_name)
-        validator.check_int(len(restrain_list_shape), 1, Rel.EQ, "restrain_list_dim", cls_name)
-
-        validator.check_int(crd_shape[0], n, Rel.EQ, "crd_shape[0]", cls_name)
-        validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[1]", cls_name)
-        validator.check_int(boxlength_shape[0], 3, Rel.EQ, "boxlength_shape", cls_name)
-
-        validator.check_int(restrain_list_shape[0], m, Rel.EQ, "restrain_list_shape", cls_name)
-        validator.check_int(crd_ref_shape[0], n, Rel.EQ, "crd_ref_shape[0]", cls_name)
-        validator.check_int(crd_ref_shape[1], 3, Rel.EQ, "crd_ref_shape[1]", cls_name)
-        return [n,], [n,], [n, 3]
-
-    def infer_dtype(self, restrain_list_dtype, crd_f_dtype, crd_ref_dtype, boxlength_type):
-        validator.check_tensor_dtype_valid('crd', crd_f_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('boxlength', boxlength_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('restrain_list', restrain_list_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('crd_ref', crd_ref_dtype, [mstype.float32], self.name)
-        return mstype.float32, mstype.float32, mstype.float32
-
-
 class RefreshUintCrd(PrimitiveWithInfer):
     """
     Refresh the unsigned coordinate of each constrained atom in each constrain iteration.
@@ -224,8 +32,8 @@ class RefreshUintCrd(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        half_exp_gamma_plus_half(float32): constant value (1.0 + exp(gamma * dt)) if Langvin-Liu thermostat is used,
+        atom_numbers (int32): the number of atoms n.
+        half_exp_gamma_plus_half (float32): constant value (1.0 + exp(gamma * dt)) if Langvin-Liu thermostat is used,
         where gamma is friction coefficient and dt is the simulation time step, 1.0 otherwise.
 
     Inputs:
@@ -244,6 +52,8 @@ class RefreshUintCrd(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, half_exp_gamma_plus_half):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('half_exp_gamma_plus_half', half_exp_gamma_plus_half, float, self.name)
         self.atom_numbers = atom_numbers
         self.half_exp_gamma_plus_half = half_exp_gamma_plus_half
         self.add_prim_attr('atom_numbers', self.atom_numbers)
@@ -256,17 +66,17 @@ class RefreshUintCrd(PrimitiveWithInfer):
         cls_name = self.name
         n = self.atom_numbers
         validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", cls_name)
-        # validator.check_int(len(quarter_cof_shape), 1, Rel.EQ, "scaler_dim", cls_name)
-        # validator.check_int(len(test_frc_shape), 2, Rel.EQ, "crd_ref_shape_dim", cls_name)
-        # validator.check_int(len(restrain_list_shape), 1, Rel.EQ, "restrain_list_dim", cls_name)
+        validator.check_int(len(quarter_cof_shape), 1, Rel.EQ, "quarter_cof_dim", cls_name)
+        validator.check_int(len(test_frc_shape), 2, Rel.EQ, "test_frc_dim", cls_name)
+        validator.check_int(len(mass_inverse_shape), 1, Rel.EQ, "mass_inverse_dim", cls_name)
 
         validator.check_int(crd_shape[0], n, Rel.EQ, "crd_shape[0]", cls_name)
         validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[1]", cls_name)
-        # validator.check_int(boxlength_shape[0], 3, Rel.EQ, "boxlength_shape", cls_name)
+        validator.check_int(quarter_cof_shape[0], 3, Rel.EQ, "quarter_cof_shape", cls_name)
+        validator.check_int(test_frc_shape[0], n, Rel.EQ, "test_frc_shape[0]", cls_name)
+        validator.check_int(test_frc_shape[1], 3, Rel.EQ, "test_frc_shape[1]", cls_name)
+        validator.check_int(mass_inverse_shape[0], n, Rel.EQ, "mass_inverse_shape", cls_name)
 
-        # validator.check_int(restrain_list_shape[0], m, Rel.EQ, "restrain_list_shape", cls_name)
-        # validator.check_int(crd_ref_shape[0], n, Rel.EQ, "crd_ref_shape[0]", cls_name)
-        # validator.check_int(crd_ref_shape[1], 3, Rel.EQ, "crd_ref_shape[1]", cls_name)
         return [n, 3]
 
     def infer_dtype(self, crd_dtype, quarter_cof_dtype, test_frc_dtype, mass_inverse_dtype):
@@ -285,11 +95,11 @@ class ConstrainForceCycleWithVirial(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        constrain_pair_numbers(int32): the number of constrain pairs m.
+        atom_numbers (int32): the number of atoms n.
+        constrain_pair_numbers (int32): the number of constrain pairs m.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
+        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
         - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
           between the real space float coordinates and the unsigned int coordinates.
         - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
@@ -300,7 +110,7 @@ class ConstrainForceCycleWithVirial(PrimitiveWithInfer):
 
     Outputs:
         - **test_frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
-        - **atom_virial** (Tensor, float32) - [n,], the virial caused by constraint force of each atom.
+        - **atom_virial** (Tensor, float32) - [m,], the virial caused by constraint force of each atom.
 
 
     Supported Platforms:
@@ -309,6 +119,8 @@ class ConstrainForceCycleWithVirial(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, constrain_pair_numbers):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('constrain_pair_numbers', constrain_pair_numbers, int, self.name)
         self.atom_numbers = atom_numbers
         self.constrain_pair_numbers = constrain_pair_numbers
         self.add_prim_attr('atom_numbers', self.atom_numbers)
@@ -325,11 +137,21 @@ class ConstrainForceCycleWithVirial(PrimitiveWithInfer):
         m = self.constrain_pair_numbers
         validator.check_int(len(uint_crd_shape), 2, Rel.EQ, "uint_crd_dim", cls_name)
         validator.check_int(len(scaler_shape), 1, Rel.EQ, "scaler_dim", cls_name)
+        validator.check_int(len(pair_dr_shape), 2, Rel.EQ, "pair_dr_dim", cls_name)
+        validator.check_int(len(atom_i_serials_shape), 1, Rel.EQ, "atom_i_serials_dim", cls_name)
+        validator.check_int(len(atom_j_serials_shape), 1, Rel.EQ, "atom_j_serials_dim", cls_name)
+        validator.check_int(len(constant_rs_shape), 1, Rel.EQ, "constant_rs_dim", cls_name)
+        validator.check_int(len(constrain_ks_shape), 1, Rel.EQ, "constrain_ks_dim", cls_name)
 
         validator.check_int(uint_crd_shape[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
         validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
         validator.check_int(scaler_shape[0], 3, Rel.EQ, "scaler_shape", cls_name)
-
+        validator.check_int(pair_dr_shape[0], m, Rel.EQ, "pair_dr_shape[0]", cls_name)
+        validator.check_int(pair_dr_shape[1], 3, Rel.EQ, "pair_dr_shape[1]", cls_name)
+        validator.check_int(atom_i_serials_shape[0], m, Rel.EQ, "atom_i_serials_shape", cls_name)
+        validator.check_int(atom_j_serials_shape[0], m, Rel.EQ, "atom_j_serials_shape", cls_name)
+        validator.check_int(constant_rs_shape[0], m, Rel.EQ, "constant_rs_shape", cls_name)
+        validator.check_int(constrain_ks_shape[0], m, Rel.EQ, "constrain_ks_shape", cls_name)
         return [n, 3], [m,]
 
     def infer_dtype(self, uint_crd_dtype, scaler_dtype, pair_dr_dtype, atom_i_serials_dtype,
@@ -352,15 +174,15 @@ class LastCrdToDr(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        constrain_pair_numbers(int32): the number of constrain pairs m.
+        atom_numbers (int32): the number of atoms n.
+        constrain_pair_numbers (int32): the number of constrain pairs m.
 
     Inputs:
         - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **uint_dr_to_dr** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z)
-          between the unsigned int value and the real space coordinates.
         - **quarter_cof** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z)
           between the real space float coordinates and the 0.25 times unsigned int coordinates.
+        - **uint_dr_to_dr** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z)
+          between the unsigned int value and the real space coordinates.
         - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
         - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
         - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
@@ -375,6 +197,8 @@ class LastCrdToDr(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, constrain_pair_numbers):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('constrain_pair_numbers', constrain_pair_numbers, int, self.name)
         self.constrain_pair_numbers = constrain_pair_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('constrain_pair_numbers', self.constrain_pair_numbers)
@@ -390,10 +214,20 @@ class LastCrdToDr(PrimitiveWithInfer):
         m = self.constrain_pair_numbers
         validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", cls_name)
         validator.check_int(len(quarter_cof_shape), 1, Rel.EQ, "quarter_cof_dim", cls_name)
+        validator.check_int(len(uint_dr_to_dr_shape), 1, Rel.EQ, "quarter_cof_dim", cls_name)
+        validator.check_int(len(atom_i_serials_shape), 1, Rel.EQ, "atom_i_serials_dim", cls_name)
+        validator.check_int(len(atom_j_serials_shape), 1, Rel.EQ, "atom_j_serials_dim", cls_name)
+        validator.check_int(len(constant_rs_shape), 1, Rel.EQ, "constant_rs_dim", cls_name)
+        validator.check_int(len(constrain_ks_shape), 1, Rel.EQ, "constrain_ks_dim", cls_name)
 
         validator.check_int(crd_shape[0], n, Rel.EQ, "crd_shape[0]", cls_name)
         validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[1]", cls_name)
         validator.check_int(quarter_cof_shape[0], 3, Rel.EQ, "quarter_cof_shape", cls_name)
+        validator.check_int(uint_dr_to_dr_shape[0], 3, Rel.EQ, "uint_dr_to_dr_shape", cls_name)
+        validator.check_int(atom_i_serials_shape[0], m, Rel.EQ, "atom_i_serials_shape", cls_name)
+        validator.check_int(atom_j_serials_shape[0], m, Rel.EQ, "atom_j_serials_shape", cls_name)
+        validator.check_int(constant_rs_shape[0], m, Rel.EQ, "constant_rs_shape", cls_name)
+        validator.check_int(constrain_ks_shape[0], m, Rel.EQ, "constrain_ks_shape", cls_name)
 
         return [m, 3]
 
@@ -417,11 +251,11 @@ class RefreshCrdVel(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        dt_inverse(float32): the inverse value of simulation time step.
-        dt(float32): the simulation time step.
-        exp_gamma(float32): constant value exp(gamma * dt).
-        half_exp_gamma_plus_half(float32): constant value (1 + exp_gamma)/2.
+        atom_numbers (int32): the number of atoms n.
+        dt_inverse (float32): the inverse value of simulation time step.
+        dt (float32): the simulation time step.
+        exp_gamma (float32): constant value exp(gamma * dt).
+        half_exp_gamma_plus_half (float32): constant value (1 + exp_gamma)/2.
 
     Inputs:
         - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
@@ -430,7 +264,7 @@ class RefreshCrdVel(PrimitiveWithInfer):
         - **mass_inverse** (Tensor, float32) - [n, ], the inverse value of mass of each atom.
 
     Outputs:
-        - **res** ()
+        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
 
     Supported Platforms:
         ``GPU``
@@ -438,6 +272,10 @@ class RefreshCrdVel(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, dt_inverse, dt, exp_gamma, half_exp_gamma_plus_half):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('dt', dt, float, self.name)
+        validator.check_value_type('exp_gamma', dt, float, self.name)
+        validator.check_value_type('half_exp_gamma_plus_half', half_exp_gamma_plus_half, float, self.name)
         self.atom_numbers = atom_numbers
         self.dt_inverse = dt_inverse
         self.dt = dt
@@ -457,11 +295,16 @@ class RefreshCrdVel(PrimitiveWithInfer):
         n = self.atom_numbers
         validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", cls_name)
         validator.check_int(len(vel_shape), 2, Rel.EQ, "vel_dim", cls_name)
+        validator.check_int(len(test_frc_shape), 2, Rel.EQ, "frc_dim", cls_name)
+        validator.check_int(len(mass_inverse_shape), 1, Rel.EQ, "mass_inverse_dim", cls_name)
 
         validator.check_int(crd_shape[0], n, Rel.EQ, "crd_shape[0]", cls_name)
         validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[1]", cls_name)
         validator.check_int(vel_shape[0], n, Rel.EQ, "vel_shape[0]", cls_name)
         validator.check_int(vel_shape[1], 3, Rel.EQ, "vel_shape[1]", cls_name)
+        validator.check_int(test_frc_shape[0], n, Rel.EQ, "frc_shape[0]", cls_name)
+        validator.check_int(test_frc_shape[1], 3, Rel.EQ, "frc_shape[1]", cls_name)
+        validator.check_int(mass_inverse_shape[0], n, Rel.EQ, "mass_inverse_shape[0]", cls_name)
         return [1,]
 
     def infer_dtype(self, crd_dtype, vel_dtype, test_frc_dtype, mass_inverse_dtype):
@@ -480,7 +323,7 @@ class CalculateNowrapCrd(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
+        atom_numbers (int32): the number of atoms n.
 
     Inputs:
         - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
@@ -496,6 +339,7 @@ class CalculateNowrapCrd(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.atom_numbers = atom_numbers
         self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.init_prim_io_names(
@@ -506,9 +350,14 @@ class CalculateNowrapCrd(PrimitiveWithInfer):
         cls_name = self.name
         n = self.atom_numbers
         validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", cls_name)
+        validator.check_int(len(box_shape), 1, Rel.EQ, "box_dim", cls_name)
+        validator.check_int(len(box_map_times_shape), 2, Rel.EQ, "box_map_times_dim", cls_name)
 
         validator.check_int(crd_shape[0], n, Rel.EQ, "crd_shape[0]", cls_name)
         validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[1]", cls_name)
+        validator.check_int(box_shape[0], 3, Rel.EQ, "box_shape[0]", cls_name)
+        validator.check_int(box_map_times_shape[0], n, Rel.EQ, "box_map_times_shape[0]", cls_name)
+        validator.check_int(box_map_times_shape[1], 3, Rel.EQ, "box_map_times_shape[1]", cls_name)
         return [n, 3]
 
     def infer_dtype(self, crd_dtype, box_dtype, box_map_times_dtype):
@@ -527,17 +376,16 @@ class RefreshBoxmapTimes(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
+        atom_numbers (int32): the number of atoms n.
 
     Inputs:
         - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
         - **old_crd** (Tensor, float32) - [n, 3], the coordinate of each atom at last update.
         - **box_length_inverse** (Tensor, float32) - [3,], the inverse value of box length in 3 dimensions.
-        - **box_map_times** (Tensor, int32) - [n, 3], The number of times each atom has crossed the box
-        since the last update in 3 dimensions.
+        - **box_map_times** (Tensor, int32) - [n, 3], the number of times each atom has crossed the box.
 
     Outputs:
-        - **res** ()
+        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
 
     Supported Platforms:
         ``GPU``
@@ -545,6 +393,7 @@ class RefreshBoxmapTimes(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.atom_numbers = atom_numbers
         self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.init_prim_io_names(
@@ -556,11 +405,16 @@ class RefreshBoxmapTimes(PrimitiveWithInfer):
         n = self.atom_numbers
         validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", cls_name)
         validator.check_int(len(old_crd_shape), 2, Rel.EQ, "old_crd_dim", cls_name)
+        validator.check_int(len(box_length_inverse_shape), 1, Rel.EQ, "box_length_inverse_dim", cls_name)
+        validator.check_int(len(box_map_times_shape), 2, Rel.EQ, "box_map_times_dim", cls_name)
 
         validator.check_int(crd_shape[0], n, Rel.EQ, "crd_shape[0]", cls_name)
         validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[1]", cls_name)
         validator.check_int(old_crd_shape[0], n, Rel.EQ, "old_crd_shape[0]", cls_name)
         validator.check_int(old_crd_shape[1], 3, Rel.EQ, "old_crd_shape[1]", cls_name)
+        validator.check_int(box_length_inverse_shape[0], 3, Rel.EQ, "box_length_inverse_shape[0]", cls_name)
+        validator.check_int(box_map_times_shape[0], n, Rel.EQ, "box_map_times_shape[0]", cls_name)
+        validator.check_int(box_map_times_shape[1], 3, Rel.EQ, "box_map_times_shape[1]", cls_name)
         return [1,]
 
     def infer_dtype(self, crd_dtype, old_crd_dtype, box_length_inverse_dtype, box_map_times_dtype):
@@ -581,11 +435,11 @@ class Totalc6get(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
+        atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **atom_lj_type**(Tensor, int32) - [n, 3], the Lennard-Jones type of each atom.
-        - **lj_b** (Tensor, float32) - [m*(m+1)/2, ], the attraction coefficient.
+        - **atom_lj_type** (Tensor, int32) - [n, ], the Lennard-Jones type of each atom.
+        - **lj_b** (Tensor, float32) - [pair_number, ], the attraction coefficient of each type.
 
     Outputs:
         - **factor** (float32) - the average dispersion constant of Lennard-Jones interaction.
@@ -596,6 +450,7 @@ class Totalc6get(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.atom_numbers = atom_numbers
         self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.init_prim_io_names(
@@ -603,6 +458,11 @@ class Totalc6get(PrimitiveWithInfer):
             outputs=['factor'])
 
     def infer_shape(self, atom_lj_type, lj_b):
+        cls_name = self.name
+        n = self.atom_numbers
+        validator.check_int(len(atom_lj_type), 1, Rel.EQ, "atom_lj_type_dim", cls_name)
+        validator.check_int(len(lj_b), 1, Rel.EQ, "LJ_b_dim", cls_name)
+        validator.check_int(atom_lj_type[0], n, Rel.EQ, "atom_lj_type_shape[0]", cls_name)
         return [1,]
 
     def infer_dtype(self, atom_lj_type, lj_b):
@@ -619,10 +479,10 @@ class CrdToUintCrdQuarter(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
+        atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **crd_to_uint_crd_cof** (Tensor, float32) - [3,], the .
+        - **crd_to_uint_crd_cof** (Tensor, float32) - [3,], the crd_to_uint_crd coefficient.
         - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
 
     Outputs:
@@ -635,6 +495,7 @@ class CrdToUintCrdQuarter(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, atom_numbers):
         """Initialize CrdToUintCrdQuarter."""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.atom_numbers = atom_numbers
         self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.init_prim_io_names(
@@ -642,8 +503,12 @@ class CrdToUintCrdQuarter(PrimitiveWithInfer):
             outputs=['output'])
 
     def infer_shape(self, crd_to_uint_crd_cof, crd):
+        cls_name = self.name
+        n = self.atom_numbers
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", cls_name)
+        validator.check_int(len(crd_to_uint_crd_cof), 1, Rel.EQ, "crd_to_uint_crd_cof_dim", cls_name)
         validator.check_int(crd_to_uint_crd_cof[0], 3, Rel.EQ, "crd_to_uint_crd_cof_shape", self.name)
-        validator.check_int(crd[0], self.atom_numbers, Rel.EQ, "crd[0]", self.name)
+        validator.check_int(crd[0], n, Rel.EQ, "crd[0]", self.name)
         validator.check_int(crd[1], 3, Rel.EQ, "crd[1]", self.name)
         return crd
 
@@ -668,11 +533,11 @@ class MDIterationLeapFrogLiujianWithMaxVel(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        dt(float32): time step for finite difference.
-        half_dt(float32): half of time step for finite difference.
-        exp_gamma(float32): parameter in Liu's dynamic, exp(-gamma_ln * dt).
-        max_vel(float32): the maximum velocity limit.
+        atom_numbers (int32): the number of atoms n.
+        dt (float32): time step for finite difference.
+        half_dt (float32): half of time step for finite difference.
+        exp_gamma (float32): parameter in Liu's dynamic, exp(-gamma_ln * dt).
+        max_vel (float32): the maximum velocity limit.
 
     Inputs:
         - **inverse_mass** (Tensor, float32) - [n,], the inverse value of
@@ -697,6 +562,11 @@ class MDIterationLeapFrogLiujianWithMaxVel(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, atom_numbers, half_dt, dt, exp_gamma, max_vel):
         """Initialize MDIterationLeapFrogLiujian."""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('half_dt', half_dt, float, self.name)
+        validator.check_value_type('dt', dt, float, self.name)
+        validator.check_value_type('exp_gamma', exp_gamma, float, self.name)
+        validator.check_value_type('max_vel', max_vel, float, self.name)
         self.atom_numbers = atom_numbers
         self.half_dt = half_dt
         self.dt = dt
@@ -716,6 +586,10 @@ class MDIterationLeapFrogLiujianWithMaxVel(PrimitiveWithInfer):
         n = self.atom_numbers
         validator.check_int(len(inverse_mass), 1, Rel.EQ, "inverse_mass", self.name)
         validator.check_int(len(sqrt_mass_inverse), 1, Rel.EQ, "sqrt_mass_inverse", self.name)
+        validator.check_int(len(vel), 2, Rel.EQ, "vel_dim", self.name)
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", self.name)
+        validator.check_int(len(frc), 2, Rel.EQ, "frc_dim", self.name)
+        validator.check_int(len(acc), 2, Rel.EQ, "acc_dim", self.name)
         validator.check_int(inverse_mass[0], n, Rel.EQ, "inverse_mass", self.name)
         validator.check_int(sqrt_mass_inverse[0], n, Rel.EQ, "sqrt_mass_inverse", self.name)
         return [self.atom_numbers, 3]
@@ -739,12 +613,13 @@ class GetCenterOfMass(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        residue_numbers(int32): the number of residues m.
+        residue_numbers (int32): the number of residues m.
 
     Inputs:
         - **start** (Tensor, int32): [m, ], the start atom index of each residue.
         - **end** (Tensor, int32): [m, ], the end atom index of each residue.
-        - **atom_mass** (Tensor, float32): [n, ], the mass of each atom.
+        - **crd** (Tensor, float32): [atom_numbers, 3], the end atom index of each residue.
+        - **atom_mass** (Tensor, float32): [atom_numbers, ], the mass of each atom.
         - **residue_mass_inverse** (Tensor, float32): [m, ], the inverse of mass of each residue.
 
     Outputs:
@@ -766,9 +641,22 @@ class GetCenterOfMass(PrimitiveWithInfer):
 
     def infer_shape(self, start, end, crd, atom_mass, residue_mass_inverse):
         m = self.residue_numbers
+        validator.check_int(len(start), 1, Rel.EQ, "start_dim", self.name)
+        validator.check_int(len(end), 1, Rel.EQ, "end_dim", self.name)
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", self.name)
+        validator.check_int(len(atom_mass), 1, Rel.EQ, "atom_mass_dim", self.name)
+        validator.check_int(len(residue_mass_inverse), 1, Rel.EQ, "residue_mass_inverse_dim", self.name)
+        validator.check_int(start[0], m, Rel.EQ, "start_shape", self.name)
+        validator.check_int(end[0], m, Rel.EQ, "end_shape", self.name)
+        validator.check_int(residue_mass_inverse[0], m, Rel.EQ, "residue_mass_inverse_shape", self.name)
         return [m, 3]
 
     def infer_dtype(self, start, end, crd, atom_mass, residue_mass_inverse):
+        validator.check_tensor_dtype_valid('start', start, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('end', end, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('crd', crd, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_mass', atom_mass, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('residue_mass_inverse', residue_mass_inverse, [mstype.float32], self.name)
         return mstype.float32
 
 
@@ -781,8 +669,8 @@ class MapCenterOfMass(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        residue_numbers(int32): the number of residues m.
-        scaler(float32): the scaling factor.
+        residue_numbers (int32): the number of residues m.
+        scaler (float32): the scaling factor.
 
     Inputs:
         - **start** (Tensor, int32): [m, ], the start atom index of each residue.
@@ -791,9 +679,11 @@ class MapCenterOfMass(PrimitiveWithInfer):
         - **box_length** (Tensor, float32): [3, ], the size of system in 3-dimensions.
         - **no_wrap_crd** (Tensor, float32): [n, 3], the coordinate of each atom before wrap.
         - **crd** (Tensor, float32): [n, 3], the coordinate of each atom after wrap.
+        - **box_length** (Tensor, float32): [3, ], the size of system in 3-dimensions.
+        - **scaler** (Tensor, float32): [1, ], the scaler of system.
 
     Outputs:
-        - **res**
+        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
 
     Supported Platforms:
         ``GPU``
@@ -811,9 +701,30 @@ class MapCenterOfMass(PrimitiveWithInfer):
             outputs=['res'])
 
     def infer_shape(self, start, end, center_of_mass, box_length, no_wrap_crd, crd, scaler):
+        m = self.residue_numbers
+        validator.check_int(len(start), 1, Rel.EQ, "start_dim", self.name)
+        validator.check_int(len(end), 1, Rel.EQ, "end_dim", self.name)
+        validator.check_int(len(center_of_mass), 2, Rel.EQ, "center_of_mass_dim", self.name)
+        validator.check_int(len(box_length), 1, Rel.EQ, "box_length_dim", self.name)
+        validator.check_int(len(no_wrap_crd), 2, Rel.EQ, "no_wrap_crd_dim", self.name)
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", self.name)
+        validator.check_int(len(scaler), 1, Rel.EQ, "scaler_dim", self.name)
+
+        validator.check_int(start[0], m, Rel.EQ, "start_shape", self.name)
+        validator.check_int(end[0], m, Rel.EQ, "end_shape", self.name)
+        validator.check_int(center_of_mass[0], m, Rel.EQ, "center_of_mass_shape", self.name)
+        validator.check_int(box_length[0], 3, Rel.EQ, "box_length_shape", self.name)
+        validator.check_int(scaler[0], 1, Rel.EQ, "scaler_shape", self.name)
         return [1,]
 
     def infer_dtype(self, start, end, center_of_mass, box_length, no_wrap_crd, crd, scaler):
+        validator.check_tensor_dtype_valid('start', start, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('end', end, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('crd', crd, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('center_of_mass', center_of_mass, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('box_length', box_length, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('no_wrap_crd', no_wrap_crd, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('scaler', scaler, [mstype.float32], self.name)
         return mstype.float32
 
 
@@ -826,24 +737,23 @@ class NeighborListRefresh(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        grid_numbers(int32): the total number of grids divided G.
-        not_first_time(int32): whether to construct the neighbor list first time or not.
-        nxy(int32): the total number of grids divided in xy plane.
-        excluded_atom_numbers(int32): the total atom numbers in the excluded list E.
-        cutoff(float32): the cutoff distance for short-range force calculation. Default: 10.0.
-        skin(float32): the overflow value of cutoff to maintain a neighbor list. Default: 2.0.
-        cutoff_square(float32): the suqare value of cutoff.
-        half_skin_square(float32): skin*skin/4, indicates the maximum square value of the distance atom
-        allowed to move between two updates.
-        cutoff_with_skin(float32): cutoff + skin, indicates the radius of the neighbor list for each atom.
-        half_cutoff_with_skin(float32): cutoff_with_skin/2.
-        cutoff_with_skin_square(float32): the square value of cutoff_with_skin.
-        refresh_interval(int32): the number of iteration steps between two updates of neighbor list. Default: 20.
-        max_atom_in_grid_numbers(int32): the maximum number of atoms in one grid m. Default: 64.
-        max_neighbor_numbers(int32): The maximum number of neighbors L. Default: 800.
-        force_update(int32): the flag that decides whether to force an update.
-        force_check(int32): the flag that decides whether to force an check.
+        atom_numbers (int32): the number of atoms n.
+        grid_numbers (int32): the total number of grids divided G.
+        not_first_time (int32): whether to construct the neighbor list first time or not.
+        nxy (int32): the total number of grids divided in xy plane.
+        excluded_atom_numbers (int32): the total atom numbers in the excluded list E.
+        cutoff (float32): the cutoff distance for short-range force calculation. Default: 10.0.
+        skin (float32): the overflow value of cutoff to maintain a neighbor list. Default: 2.0.
+        cutoff_square (float32): the suqare value of cutoff.
+        half_skin_square (float32): the maximum square value of the distance atom allowed to move between two updates.
+        cutoff_with_skin (float32): cutoff + skin, indicates the radius of the neighbor list for each atom.
+        half_cutoff_with_skin (float32): cutoff_with_skin/2.
+        cutoff_with_skin_square (float32): the square value of cutoff_with_skin.
+        refresh_interval (int32): the number of iteration steps between two updates of neighbor list. Default: 20.
+        max_atom_in_grid_numbers (int32): the maximum number of atoms in one grid m. Default: 64.
+        max_neighbor_numbers (int32): The maximum number of neighbors L. Default: 800.
+        force_update (int32): the flag that decides whether to force an update.
+        force_check (int32): the flag that decides whether to force an check.
 
     Inputs:
         - **atom_numbers_in_grid_bucket** (Tensor, int32) - [G,], the number of atoms in each grid bucket.
@@ -870,7 +780,7 @@ class NeighborListRefresh(PrimitiveWithInfer):
         - **refresh_count** (Tensor, int32) - [1,], count how many iteration steps have passed since last update.
 
     Outputs:
-        - **res** (float32)
+        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
 
     Supported Platforms:
         ``GPU``
@@ -1022,8 +932,8 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        dt(float32): the simulation time step.
+        atom_numbers (int32): the number of atoms n.
+        dt (float32): the simulation time step.
 
     Inputs:
         -**sqrt_mass_inverse** (Tensor, float32):?
@@ -1031,10 +941,10 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
         -**crd** (Tensor, float32): [n, 3], the coordinate of each atom.
         -**frc** (Tensor, float32): [n, 3], the force on each atom.
         -**acc** (Tensor, float32): [n, 3], the acceleration of each atom.
-        -**inverse_mass** (Tensor, float32): [n, 1], the inverse value of mass of each atom.
+        -**inverse_mass** (Tensor, float32): [n, ], the inverse value of mass of each atom.
 
     Outputs:
-        -**res**
+        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
 
     Supported Platforms:
         ``GPU``
@@ -1042,10 +952,11 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, dt):
-        """Initialize MDIterationLeapFrogLiujian."""
+        """Initialize MDIterationLeapFrog."""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('dt', dt, float, self.name)
         self.atom_numbers = atom_numbers
         self.dt = dt
-
         self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.add_prim_attr('dt', self.dt)
         self.init_prim_io_names(
@@ -1054,8 +965,20 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
 
     def infer_shape(self, vel, crd, frc, acc, inverse_mass):
         n = self.atom_numbers
-        validator.check_int(len(inverse_mass), 1, Rel.EQ, "inverse_mass", self.name)
-        validator.check_int(inverse_mass[0], n, Rel.EQ, "inverse_mass", self.name)
+        validator.check_int(len(vel), 2, Rel.EQ, "vel_dim", self.name)
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", self.name)
+        validator.check_int(len(frc), 2, Rel.EQ, "frc_dim", self.name)
+        validator.check_int(len(acc), 2, Rel.EQ, "acc_dim", self.name)
+        validator.check_int(len(inverse_mass), 1, Rel.EQ, "inverse_mass_dim", self.name)
+        validator.check_int(vel[0], n, Rel.EQ, "vel_shape[0]", self.name)
+        validator.check_int(vel[1], 3, Rel.EQ, "vel_shape[1]", self.name)
+        validator.check_int(crd[0], n, Rel.EQ, "crd_shape[0]", self.name)
+        validator.check_int(crd[1], 3, Rel.EQ, "crd_shape[1]", self.name)
+        validator.check_int(frc[0], n, Rel.EQ, "frc_shape[0]", self.name)
+        validator.check_int(frc[1], 3, Rel.EQ, "frc_shape[1]", self.name)
+        validator.check_int(acc[0], n, Rel.EQ, "acc_shape[0]", self.name)
+        validator.check_int(acc[1], 3, Rel.EQ, "acc_shape[1]", self.name)
+        validator.check_int(inverse_mass[0], n, Rel.EQ, "inverse_mass_shape", self.name)
         return [1,]
 
     def infer_dtype(self, vel, crd, frc, acc, inverse_mass):
@@ -1075,20 +998,20 @@ class MDIterationLeapFrogWithMaxVel(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        dt(float32): the simulation time step.
-        max_velocity(float32): the maximum velocity limit.
+        atom_numbers (int32): the number of atoms n.
+        dt (float32): the simulation time step.
+        max_velocity (float32): the maximum velocity limit.
 
     Inputs:
-        -**sqrt_mass_inverse** (Tensor, float32):?
+        -**sqrt_mass_inverse** (Tensor, float32): [n,], the sqrt inverse value of mass of each atom
         -**vel** (Tensor, float32): [n, 3], the velocity of each atom.
         -**crd** (Tensor, float32): [n, 3], the coordinate of each atom.
         -**frc** (Tensor, float32): [n, 3], the force on each atom.
         -**acc** (Tensor, float32): [n, 3], the acceleration of each atom.
-        -**inverse_mass** (Tensor, float32): [n, 1], the inverse value of mass of each atom.
+        -**inverse_mass** (Tensor, float32): [n,], the inverse value of mass of each atom.
 
     Outputs:
-        -**res** ()
+        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
 
 
     Supported Platforms:
@@ -1097,7 +1020,10 @@ class MDIterationLeapFrogWithMaxVel(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, dt, max_velocity):
-        """Initialize MDIterationLeapFrogLiujian."""
+        """Initialize MDIterationLeapFrogWithMaxVel"""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('dt', dt, float, self.name)
+        validator.check_value_type('max_velocity', max_velocity, float, self.name)
         self.atom_numbers = atom_numbers
         self.dt = dt
         self.max_velocity = max_velocity
@@ -1111,8 +1037,20 @@ class MDIterationLeapFrogWithMaxVel(PrimitiveWithInfer):
 
     def infer_shape(self, vel, crd, frc, acc, inverse_mass):
         n = self.atom_numbers
+        validator.check_int(len(vel), 2, Rel.EQ, "vel_dim", self.name)
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", self.name)
+        validator.check_int(len(frc), 2, Rel.EQ, "frc_dim", self.name)
+        validator.check_int(len(acc), 2, Rel.EQ, "acc_dim", self.name)
         validator.check_int(len(inverse_mass), 1, Rel.EQ, "inverse_mass", self.name)
         validator.check_int(inverse_mass[0], n, Rel.EQ, "inverse_mass", self.name)
+        validator.check_int(vel[0], n, Rel.EQ, "vel_shape[0]", self.name)
+        validator.check_int(vel[1], 3, Rel.EQ, "vel_shape[1]", self.name)
+        validator.check_int(crd[0], n, Rel.EQ, "crd_shape[0]", self.name)
+        validator.check_int(crd[1], 3, Rel.EQ, "crd_shape[1]", self.name)
+        validator.check_int(frc[0], n, Rel.EQ, "frc_shape[0]", self.name)
+        validator.check_int(frc[1], 3, Rel.EQ, "frc_shape[1]", self.name)
+        validator.check_int(acc[0], n, Rel.EQ, "acc_shape[0]", self.name)
+        validator.check_int(acc[1], 3, Rel.EQ, "acc_shape[1]", self.name)
         return [1,]
 
     def infer_dtype(self, vel, crd, frc, acc, inverse_mass):
@@ -1132,15 +1070,15 @@ class MDIterationGradientDescent(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        learning_rate(float32): the update step length.
+        atom_numbers (int32): the number of atoms n.
+        learning_rate (float32): the update step length.
 
     Inputs:
         - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
         - **frc** (Tensor, float32) - [n, 3], the force on each atom.
 
     Output:
-        - **res** ()
+        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
 
     Supported Platforms:
         ``GPU``
@@ -1148,10 +1086,11 @@ class MDIterationGradientDescent(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, learning_rate):
-        """Initialize MDIterationGradientDescent."""
+        """Initialize MDIterationGradientDescent"""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('learning_rate', learning_rate, float, self.name)
         self.atom_numbers = atom_numbers
         self.learning_rate = learning_rate
-
         self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.add_prim_attr('learning_rate', self.learning_rate)
         self.init_prim_io_names(
@@ -1159,6 +1098,13 @@ class MDIterationGradientDescent(PrimitiveWithInfer):
             outputs=['res'])
 
     def infer_shape(self, crd, frc):
+        n = self.atom_numbers
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", self.name)
+        validator.check_int(len(frc), 2, Rel.EQ, "frc_dim", self.name)
+        validator.check_int(crd[0], n, Rel.EQ, "crd_shape[0]", self.name)
+        validator.check_int(crd[1], 3, Rel.EQ, "crd_shape[1]", self.name)
+        validator.check_int(frc[0], n, Rel.EQ, "frc_shape[0]", self.name)
+        validator.check_int(frc[1], 3, Rel.EQ, "frc_shape[1]", self.name)
         return [1,]
 
     def infer_dtype(self, crd, frc):
@@ -1181,8 +1127,8 @@ class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        bond_numbers(int32): the number of harmonic bonds m.
+        atom_numbers (int32): the number of atoms n.
+        bond_numbers (int32): the number of harmonic bonds m.
 
     Inputs:
         - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
@@ -1252,70 +1198,6 @@ class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
         return mstype.float32, mstype.float32, mstype.float32
 
 
-class ConstrainForceCycle(PrimitiveWithInfer):
-    """
-    Calculate the constraint force in each iteration.
-
-    .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
-
-    Args:
-        atom_numbers(int32): the number of atoms n.
-        constrain_pair_numbers(int32): the number of constrain pairs m.
-
-    Inputs:
-        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
-          between the real space float coordinates and the unsigned int coordinates.
-        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
-        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
-        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
-        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
-        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
-
-    Outputs:
-        - **test_frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
-
-    Supported Platforms:
-        ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, atom_numbers, constrain_pair_numbers):
-        self.atom_numbers = atom_numbers
-        self.constrain_pair_numbers = constrain_pair_numbers
-        self.add_prim_attr('atom_numbers', self.atom_numbers)
-        self.add_prim_attr('constrain_pair_numbers', self.constrain_pair_numbers)
-        self.init_prim_io_names(
-            inputs=['uint_crd', 'scaler', 'pair_dr', 'atom_i_serials', 'atom_j_serials',
-                    'constant_rs', 'constrain_ks'],
-            outputs=['test_frc'])
-
-    def infer_shape(self, uint_crd_shape, scaler_shape, pair_dr_shape, atom_i_serials_shape,
-                    atom_j_serials_shape, constant_rs_shape, constrain_ks_shape):
-        cls_name = self.name
-        n = self.atom_numbers
-        validator.check_int(len(uint_crd_shape), 2, Rel.EQ, "uint_crd_dim", cls_name)
-        validator.check_int(len(scaler_shape), 1, Rel.EQ, "scaler_dim", cls_name)
-
-        validator.check_int(uint_crd_shape[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
-        validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
-        validator.check_int(scaler_shape[0], 3, Rel.EQ, "scaler_shape", cls_name)
-
-        return [n, 3]
-
-    def infer_dtype(self, uint_crd_dtype, scaler_dtype, pair_dr_dtype, atom_i_serials_dtype,
-                    atom_j_serials_dtype, constant_rs_dtype, constrain_ks_dtype):
-        validator.check_tensor_dtype_valid('uint_crd', uint_crd_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler', scaler_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('pair_dr', pair_dr_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_i_serials', atom_i_serials_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_j_serials', atom_j_serials_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('constant_rs', constant_rs_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('constrain_ks', constrain_ks_dtype, [mstype.float32], self.name)
-        return mstype.float32
-
-
 class LJForceWithVirialEnergy(PrimitiveWithInfer):
     """
     Calculate the Lennard-Jones force, virial and atom energy together.
@@ -1331,10 +1213,10 @@ class LJForceWithVirialEnergy(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms, n.
-        cutoff_square(float32): the square value of cutoff.
-        pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().
-        max_neighbor_numbers(int32): the max neighbor numbers, default 800.
+        atom_numbers (int32): the number of atoms, n.
+        cutoff_square (float32): the square value of cutoff.
+        pme_beta (float32): PME beta parameter, same as operator PMEReciprocalForce().
+        max_neighbor_numbers (int32): the max neighbor numbers, default 800.
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
@@ -1357,6 +1239,10 @@ class LJForceWithVirialEnergy(PrimitiveWithInfer):
 
     Outputs:
         - **frc** (Tensor), The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **virial** (Tensor), The virial felt by each atom.
+          The data type is float32 and the shape is :math:`(n, )`.
+        - **atom_energy** (Tensor), The atom energy felt by each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
@@ -1434,10 +1320,10 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms, n.
-        cutoff_square(float32): the square value of cutoff.
-        pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().
-        need_update(int32): if need_update = 1, calculate the pressure, default 0.
+        atom_numbers (int32): the number of atoms, n.
+        cutoff_square (float32): the square value of cutoff.
+        pme_beta (float32): PME beta parameter, same as operator PMEReciprocalForce().
+        need_update (int32): if need_update = 1, calculate the pressure, default 0.
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
@@ -1457,6 +1343,7 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
         - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **beta** (Tensor) - PME beta parameter. The data type is float32 and the shape is :math:`(1,)`.
 
     Outputs:
         - **frc** (Tensor), The force felt by each atom.
@@ -1496,6 +1383,7 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
         validator.check_int(len(nl_serial), 2, Rel.EQ, "nl_serial_dim", cls_name)
         validator.check_int(len(scaler), 1, Rel.EQ, "scaler_dim", cls_name)
         validator.check_int(len(d_lj_b), 1, Rel.EQ, "d_LJ_B_dim", cls_name)
+        validator.check_int(len(beta), 1, Rel.EQ, "beta_dim", cls_name)
 
         validator.check_int(uint_crd[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
         validator.check_int(uint_crd[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
@@ -1507,6 +1395,7 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
         validator.check_int(nl_serial[1], 800, Rel.EQ, "nl_serial_shape[1]", cls_name)
         validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
+        validator.check_int(beta[0], 1, Rel.EQ, "beta_shape", cls_name)
         return [n, 3]
 
     def infer_dtype(self, uint_crd, ljtype, charge, scaler, nl_numbers, nl_serial, d_lj_a, d_lj_b, beta):
@@ -1518,6 +1407,7 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('nl_serial', nl_serial, [mstype.int32], self.name)
         validator.check_tensor_dtype_valid('d_LJ_A', d_lj_a, [mstype.float32], self.name)
         validator.check_tensor_dtype_valid('d_LJ_B', d_lj_b, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('beta', beta, [mstype.float32], self.name)
         return mstype.float32
 
 
@@ -1538,16 +1428,16 @@ class PMEReciprocalForceUpdate(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms, n.
-        beta(float32): the PME beta parameter, determined by the
+        atom_numbers (int32): the number of atoms, n.
+        beta (float32): the PME beta parameter, determined by the
                        non-bond cutoff value and simulation precision tolerance.
-        fftx(int32): the number of points for Fourier transform in dimension X.
-        ffty(int32): the number of points for Fourier transform in dimension Y.
-        fftz(int32): the number of points for Fourier transform in dimension Z.
-        box_length_0(float32): the value of boxlength idx 0
-        box_length_1(float32): the value of boxlength idx 1
-        box_length_2(float32): the value of boxlength idx 2
-        need_update(int32): if need_update = 1, calculate the pressure, default 0.
+        fftx (int32): the number of points for Fourier transform in dimension X.
+        ffty (int32): the number of points for Fourier transform in dimension Y.
+        fftz (int32): the number of points for Fourier transform in dimension Z.
+        box_length_0 (float32): the value of boxlength idx 0
+        box_length_1 (float32): the value of boxlength idx 1
+        box_length_2 (float32): the value of boxlength idx 2
+        need_update (int32): if need_update = 1, calculate the pressure, default 0.
 
     Inputs:
         - **uint_crd** (Tensor) - [n, 3], the unsigned int coordinates value of each atom.
@@ -1577,7 +1467,6 @@ class PMEReciprocalForceUpdate(PrimitiveWithInfer):
         validator.check_value_type('box_length_0', box_length_0, float, self.name)
         validator.check_value_type('box_length_1', box_length_1, float, self.name)
         validator.check_value_type('box_length_2', box_length_2, float, self.name)
-        # print(box_length_0.shape, box_length_1.shape, box_length_2.shape)
         self.atom_numbers = atom_numbers
         self.beta = beta
         self.fftx = fftx
@@ -1605,15 +1494,17 @@ class PMEReciprocalForceUpdate(PrimitiveWithInfer):
         n = self.atom_numbers
         validator.check_int(len(uint_crd_shape), 2, Rel.EQ, "uint_crd_dim", cls_name)
         validator.check_int(len(charge_shape), 1, Rel.EQ, "charge_dim", cls_name)
-
+        validator.check_int(len(beta), 1, Rel.EQ, "beta_dim", cls_name)
         validator.check_int(uint_crd_shape[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
         validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
         validator.check_int(charge_shape[0], n, Rel.EQ, "charge_shape", cls_name)
+        validator.check_int(beta[0], 1, Rel.EQ, "beta_shape", cls_name)
         return uint_crd_shape
 
     def infer_dtype(self, uint_crd_type, charge_type, beta):
         validator.check_tensor_dtype_valid('uint_crd', uint_crd_type, [mstype.uint32], self.name)
         validator.check_tensor_dtype_valid('charge', charge_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('beta', beta, [mstype.float32], self.name)
         return charge_type
 
 
@@ -1631,11 +1522,11 @@ class PMEExcludedForceUpdate(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms, n.
-        excluded_numbers(int32): the length of excluded list, E.
-        beta(float32): the PME beta parameter, determined by the
+        atom_numbers (int32): the number of atoms, n.
+        excluded_numbers (int32): the length of excluded list, E.
+        beta (float32): the PME beta parameter, determined by the
           non-bond cutoff value and simulation precision tolerance.
-        need_update(int32): if need_update = 1, calculate the pressure, default 0.
+        need_update (int32): if need_update = 1, calculate the pressure, default 0.
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
@@ -1689,13 +1580,14 @@ class PMEExcludedForceUpdate(PrimitiveWithInfer):
         validator.check_int(len(charge_shape), 1, Rel.EQ, "charge_dim", cls_name)
         validator.check_int(len(excluded_list_start_shape), 1, Rel.EQ, "excluded_list_start_dim", cls_name)
         validator.check_int(len(excluded_atom_numbers_shape), 1, Rel.EQ, "excluded_atom_numbers_dim", cls_name)
-
+        validator.check_int(len(beta), 1, Rel.EQ, "beta_dim", cls_name)
         validator.check_int(uint_crd_shape[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
         validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
         validator.check_int(sacler_shape[0], 3, Rel.EQ, "sacler_shape", cls_name)
         validator.check_int(charge_shape[0], n, Rel.EQ, "charge_shape", cls_name)
         validator.check_int(excluded_list_start_shape[0], n, Rel.EQ, "excluded_list_start_shape", cls_name)
         validator.check_int(excluded_atom_numbers_shape[0], n, Rel.EQ, "excluded_atom_numbers_shape", cls_name)
+        validator.check_int(beta[0], 1, Rel.EQ, "beta_shape", cls_name)
         return [n, 3]
 
     def infer_dtype(self, uint_crd_type, sacler_type, charge_type, excluded_list_start_type, excluded_list_type,
@@ -1709,6 +1601,7 @@ class PMEExcludedForceUpdate(PrimitiveWithInfer):
                                            self.name)
         validator.check_tensor_dtype_valid('excluded_atom_numbers', excluded_atom_numbers_type, [mstype.int32],
                                            self.name)
+        validator.check_tensor_dtype_valid('beta', beta, [mstype.float32], self.name)
         return mstype.float32
 
 
@@ -1727,11 +1620,11 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms, n.
-        cutoff_square(float32): the square value of cutoff.
-        pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().
-        max_neighbor_numbers(int32): the max neighbor numbers, default 800.
-        need_update(int32): if need_update = 1, calculate the pressure, default 0.
+        atom_numbers (int32): the number of atoms, n.
+        cutoff_square (float32): the square value of cutoff.
+        pme_beta (float32): PME beta parameter, same as operator PMEReciprocalForce().
+        max_neighbor_numbers (int32): the max neighbor numbers, default 800.
+        need_update (int32): if need_update = 1, calculate the pressure, default 0.
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
@@ -1780,7 +1673,7 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
         self.max_neighbor_numbers = max_neighbor_numbers
         self.need_update = need_update
         self.init_prim_io_names(
-            inputs=['uint_crd', 'LJtype', 'charge', 'scaler', 'nl_numbers', 'nl_serial', 'd_LJ_A', 'd_LJ_B'],
+            inputs=['uint_crd', 'LJtype', 'charge', 'scaler', 'nl_numbers', 'nl_serial', 'd_LJ_A', 'd_LJ_B', 'beta'],
             outputs=['frc', 'virial', 'atom_energy'])
         self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.add_prim_attr('cutoff', self.cutoff)
@@ -1800,7 +1693,7 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
         validator.check_int(len(nl_serial), 2, Rel.EQ, "nl_serial_dim", cls_name)
         validator.check_int(len(scaler), 1, Rel.EQ, "scaler_dim", cls_name)
         validator.check_int(len(d_lj_b), 1, Rel.EQ, "d_LJ_B_dim", cls_name)
-
+        validator.check_int(len(beta), 1, Rel.EQ, "beta_dim", cls_name)
         validator.check_int(uint_crd[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
         validator.check_int(uint_crd[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
         validator.check_int(ljtype[0], n, Rel.EQ, "LJtype_shape", cls_name)
@@ -1811,6 +1704,7 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
         validator.check_int(nl_serial[1], 800, Rel.EQ, "nl_serial_shape[1]", cls_name)
         validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
+        validator.check_int(beta[0], 1, Rel.EQ, "beta_shape[0]", cls_name)
         return [n, 3], [n,], [n,]
 
     def infer_dtype(self, uint_crd, ljtype, charge, scaler, nl_numbers, nl_serial, d_lj_a, d_lj_b, beta):
@@ -1822,6 +1716,7 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('nl_serial', nl_serial, [mstype.int32], self.name)
         validator.check_tensor_dtype_valid('d_LJ_A', d_lj_a, [mstype.float32], self.name)
         validator.check_tensor_dtype_valid('d_LJ_B', d_lj_b, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('beta', beta, [mstype.float32], self.name)
         return mstype.float32, mstype.float32, mstype.float32
 
 
@@ -1938,18 +1833,18 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms, n.
-        excluded_numbers(int32): the length of excluded list, E.
-        beta(float32): the PME beta parameter, determined by the
+        atom_numbers (int32): the number of atoms, n.
+        excluded_numbers (int32): the length of excluded list, E.
+        beta (float32): the PME beta parameter, determined by the
                        non-bond cutoff value and simulation precision tolerance.
-        fftx(int32): the number of points for Fourier transform in dimension X.
-        ffty(int32): the number of points for Fourier transform in dimension Y.
-        fftz(int32): the number of points for Fourier transform in dimension Z.
-        box_length_0(float32): the value of boxlength idx 0.
-        box_length_1(float32): the value of boxlength idx 1.
-        box_length_2(float32): the value of boxlength idx 2.
-        max_neighbor_numbers(int32): the max neighbor numbers, default 800.
-        need_update(int32): if need_update = 1, calculate the pressure, default 0.
+        fftx (int32): the number of points for Fourier transform in dimension X.
+        ffty (int32): the number of points for Fourier transform in dimension Y.
+        fftz (int32): the number of points for Fourier transform in dimension Z.
+        box_length_0 (float32): the value of boxlength idx 0.
+        box_length_1 (float32): the value of boxlength idx 1.
+        box_length_2 (float32): the value of boxlength idx 2.
+        max_neighbor_numbers (int32): the max neighbor numbers, default 800.
+        need_update (int32): if need_update = 1, calculate the pressure, default 0.
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
@@ -2038,7 +1933,6 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
         validator.check_int(len(excluded_list_start), 1, Rel.EQ, "excluded_list_start_dim", cls_name)
         validator.check_int(len(excluded_atom_numbers), 1, Rel.EQ, "excluded_atom_numbers_dim", cls_name)
         validator.check_int(len(excluded_list), 1, Rel.GE, "excluded_list", cls_name)
-
         validator.check_int(uint_crd[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
         validator.check_int(uint_crd[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
         validator.check_int(charge[0], n, Rel.EQ, "charge_shape", cls_name)
@@ -2048,6 +1942,8 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
         validator.check_int(excluded_list_start[0], n, Rel.EQ, "excluded_list_start_shape", cls_name)
         validator.check_int(excluded_atom_numbers[0], n, Rel.EQ, "excluded_atom_numbers_shape", cls_name)
         validator.check_int(excluded_list[0], 0, Rel.GE, "excluded_list_shape", cls_name)
+        validator.check_int(factor[0], 1, Rel.EQ, "factor_shape", cls_name)
+        validator.check_int(beta[0], 1, Rel.EQ, "beta_shape", cls_name)
         return [1,], [1,], [1,], [1,]
 
     def infer_dtype(self, uint_crd, charge, nl_numbers, nl_serial, scaler, excluded_list_start,
@@ -2063,21 +1959,21 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
                                            self.name)
         validator.check_tensor_dtype_valid('excluded_atom_numbers', excluded_atom_numbers, [mstype.int32],
                                            self.name)
+        validator.check_tensor_dtype_valid('factor', factor, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('beta', beta, [mstype.float32], self.name)
         return charge, charge, charge, charge
 
 
-class ConstrainForceVirial(PrimitiveWithInfer):
+class ConstrainForceCycle(PrimitiveWithInfer):
     """
-    Calculate the constraint force and virial in a step with iteration numbers.
+    Calculate the constraint force in each iteration.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        constrain_pair_numbers(int32): the number of constrain pairs m.
-        iteration_numbers(int32): the number of iteration numbers p.
-        half_exp_gamma_plus_half(float32): half exp_gamma plus half q.
+        atom_numbers (int32): the number of atoms n.
+        constrain_pair_numbers (int32): the number of constrain pairs m.
 
     Inputs:
         - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
@@ -2090,9 +1986,91 @@ class ConstrainForceVirial(PrimitiveWithInfer):
         - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
 
     Outputs:
+        - **test_frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
+
+    Supported Platforms:
+        ``GPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, atom_numbers, constrain_pair_numbers):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('constrain_pair_numbers', constrain_pair_numbers, int, self.name)
+        self.atom_numbers = atom_numbers
+        self.constrain_pair_numbers = constrain_pair_numbers
+        self.add_prim_attr('atom_numbers', self.atom_numbers)
+        self.add_prim_attr('constrain_pair_numbers', self.constrain_pair_numbers)
+        self.init_prim_io_names(
+            inputs=['uint_crd', 'scaler', 'pair_dr', 'atom_i_serials', 'atom_j_serials',
+                    'constant_rs', 'constrain_ks'],
+            outputs=['test_frc'])
+
+    def infer_shape(self, uint_crd_shape, scaler_shape, pair_dr_shape, atom_i_serials_shape,
+                    atom_j_serials_shape, constant_rs_shape, constrain_ks_shape):
+        cls_name = self.name
+        n = self.atom_numbers
+        m = self.constrain_pair_numbers
+        validator.check_int(len(uint_crd_shape), 2, Rel.EQ, "uint_crd_dim", cls_name)
+        validator.check_int(len(scaler_shape), 1, Rel.EQ, "scaler_dim", cls_name)
+        validator.check_int(len(pair_dr_shape), 2, Rel.EQ, "pair_dr_dim", cls_name)
+        validator.check_int(len(atom_i_serials_shape), 1, Rel.EQ, "atom_i_serials_dim", cls_name)
+        validator.check_int(len(atom_j_serials_shape), 1, Rel.EQ, "atom_j_serials_dim", cls_name)
+        validator.check_int(len(constant_rs_shape), 1, Rel.EQ, "constant_rs_dim", cls_name)
+        validator.check_int(len(constrain_ks_shape), 1, Rel.EQ, "constrain_ks_dim", cls_name)
+
+        validator.check_int(uint_crd_shape[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
+        validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
+        validator.check_int(scaler_shape[0], 3, Rel.EQ, "scaler_shape", cls_name)
+        validator.check_int(pair_dr_shape[0], m, Rel.EQ, "pair_dr_shape[0]", cls_name)
+        validator.check_int(pair_dr_shape[1], 3, Rel.EQ, "pair_dr_shape[1]", cls_name)
+        validator.check_int(atom_i_serials_shape[0], m, Rel.EQ, "atom_i_serials_shape[0]", cls_name)
+        validator.check_int(atom_j_serials_shape[0], m, Rel.EQ, "atom_j_serials_shape[0]", cls_name)
+        validator.check_int(constant_rs_shape[0], m, Rel.EQ, "constant_rs_shape[0]", cls_name)
+        validator.check_int(constrain_ks_shape[0], m, Rel.EQ, "constrain_ks_shape[0]", cls_name)
+        return [n, 3]
+
+    def infer_dtype(self, uint_crd_dtype, scaler_dtype, pair_dr_dtype, atom_i_serials_dtype,
+                    atom_j_serials_dtype, constant_rs_dtype, constrain_ks_dtype):
+        validator.check_tensor_dtype_valid('uint_crd', uint_crd_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler', scaler_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('pair_dr', pair_dr_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_i_serials', atom_i_serials_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_j_serials', atom_j_serials_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('constant_rs', constant_rs_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('constrain_ks', constrain_ks_dtype, [mstype.float32], self.name)
+        return mstype.float32
+
+
+class ConstrainForceVirial(PrimitiveWithInfer):
+    """
+    Calculate the constraint force and virial in a step with iteration numbers.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        atom_numbers (int32): the number of atoms n.
+        constrain_pair_numbers (int32): the number of constrain pairs m.
+        iteration_numbers (int32): the number of iteration numbers p.
+        half_exp_gamma_plus_half (float32): half exp_gamma plus half q.
+
+    Inputs:
+        - **crd** (Tensor, float32 ) - [n, 3], the coordinate value of each atom.
+        - **quarter_cof** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z)
+          between the real space float coordinates and the 0.25 times unsigned int coordinates.
+        - **mass_inverse** (Tensor, float32) - [n, ], the inverse value of mass of each atom.
+        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
+        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
+        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
+        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
+        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+
+    Outputs:
         - **uint_crd** (Tensor, unsigned int32) - [n, 3], the uint crd on each atom.
         - **frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
-        - **virial** (Tensor, float32) - [n, 3], the constraint virial on each atom.
+        - **virial** (Tensor, float32) - [m, ], the constraint virial on each atom.
 
     Supported Platforms:
         ``GPU``
@@ -2100,6 +2078,10 @@ class ConstrainForceVirial(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, constrain_pair_numbers, iteration_numbers, half_exp_gamma_plus_half):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('constrain_pair_numbers', constrain_pair_numbers, int, self.name)
+        validator.check_value_type('iteration_numbers', iteration_numbers, int, self.name)
+        validator.check_value_type('half_exp_gamma_plus_half', half_exp_gamma_plus_half, float, self.name)
         self.atom_numbers = atom_numbers
         self.constrain_pair_numbers = constrain_pair_numbers
         self.iteration_numbers = iteration_numbers
@@ -2115,14 +2097,42 @@ class ConstrainForceVirial(PrimitiveWithInfer):
                     'constant_rs', 'constrain_ks', 'test_frc', 'atom_virial'],
             outputs=['uint_crd', 'frc', 'virial'])
 
-    def infer_shape(self, crd, quarter_cof, mass_inverse, scaler_dtype, pair_dr_dtype, atom_i_serials_dtype,
-                    atom_j_serials_dtype, constant_rs_dtype, constrain_ks_dtype):
+    def infer_shape(self, crd, quarter_cof, mass_inverse, scaler_shape, pair_dr_shape, atom_i_serials_shape,
+                    atom_j_serials_shape, constant_rs_shape, constrain_ks_shape):
+        cls_name = self.name
         n = self.atom_numbers
         m = self.constrain_pair_numbers
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", cls_name)
+        validator.check_int(len(quarter_cof), 1, Rel.EQ, "quarter_cof_dim", cls_name)
+        validator.check_int(len(mass_inverse), 1, Rel.EQ, "mass_inverse_dim", cls_name)
+        validator.check_int(len(scaler_shape), 1, Rel.EQ, "scaler_dim", cls_name)
+        validator.check_int(len(pair_dr_shape), 2, Rel.EQ, "pair_dr_dim", cls_name)
+        validator.check_int(len(atom_i_serials_shape), 1, Rel.EQ, "atom_i_serials_dim", cls_name)
+        validator.check_int(len(atom_j_serials_shape), 1, Rel.EQ, "atom_j_serials_dim", cls_name)
+        validator.check_int(len(constant_rs_shape), 1, Rel.EQ, "constant_rs_dim", cls_name)
+        validator.check_int(len(constrain_ks_shape), 1, Rel.EQ, "constrain_ks_dim", cls_name)
+        validator.check_int(quarter_cof[0], 3, Rel.EQ, "quarter_cof_shape", cls_name)
+        validator.check_int(mass_inverse[0], n, Rel.EQ, "quarter_cof_shape", cls_name)
+        validator.check_int(scaler_shape[0], 3, Rel.EQ, "scaler_shape", cls_name)
+        validator.check_int(pair_dr_shape[0], m, Rel.EQ, "pair_dr_shape[0]", cls_name)
+        validator.check_int(pair_dr_shape[1], 3, Rel.EQ, "pair_dr_shape[1]", cls_name)
+        validator.check_int(atom_i_serials_shape[0], m, Rel.EQ, "atom_i_serials_shape[0]", cls_name)
+        validator.check_int(atom_j_serials_shape[0], m, Rel.EQ, "atom_j_serials_shape[0]", cls_name)
+        validator.check_int(constant_rs_shape[0], m, Rel.EQ, "constant_rs_shape[0]", cls_name)
+        validator.check_int(constrain_ks_shape[0], m, Rel.EQ, "constrain_ks_shape[0]", cls_name)
         return [n, 3], [n, 3], [m,]
 
     def infer_dtype(self, crd, quarter_cof, mass_inverse, scaler_dtype, pair_dr_dtype, atom_i_serials_dtype,
                     atom_j_serials_dtype, constant_rs_dtype, constrain_ks_dtype):
+        validator.check_tensor_dtype_valid('crd', crd, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('quarter_cof', quarter_cof, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('mass_inverse', mass_inverse, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('scaler', scaler_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('pair_dr', pair_dr_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_i_serials', atom_i_serials_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_j_serials', atom_j_serials_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('constant_rs', constant_rs_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('constrain_ks', constrain_ks_dtype, [mstype.float32], self.name)
         return mstype.uint32, mstype.float32, mstype.float32
 
 
@@ -2134,10 +2144,10 @@ class ConstrainForce(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        constrain_pair_numbers(int32): the number of constrain pairs m.
-        iteration_numbers(int32): the number of iteration numbers p.
-        half_exp_gamma_plus_half(float32): half exp_gamma plus half q.
+        atom_numbers (int32): the number of atoms n.
+        constrain_pair_numbers (int32): the number of constrain pairs m.
+        iteration_numbers (int32): the number of iteration numbers p.
+        half_exp_gamma_plus_half (float32): half exp_gamma plus half q.
 
     Inputs:
         - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
@@ -2152,7 +2162,7 @@ class ConstrainForce(PrimitiveWithInfer):
     Outputs:
         - **uint_crd** (Tensor, unsigned int32) - [n, 3], the uint crd on each atom.
         - **frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
-        - **virial** (Tensor, float32) - [n, 3], the constraint virial on each atom and it is zero.
+        - **virial** (Tensor, float32) - [m, ], the constraint virial on each atom and it is zero.
 
     Supported Platforms:
         ``GPU``
@@ -2160,6 +2170,10 @@ class ConstrainForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, constrain_pair_numbers, iteration_numbers, half_exp_gamma_plus_half):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('constrain_pair_numbers', constrain_pair_numbers, int, self.name)
+        validator.check_value_type('iteration_numbers', iteration_numbers, int, self.name)
+        validator.check_value_type('half_exp_gamma_plus_half', half_exp_gamma_plus_half, float, self.name)
         self.atom_numbers = atom_numbers
         self.constrain_pair_numbers = constrain_pair_numbers
         self.iteration_numbers = iteration_numbers
@@ -2171,18 +2185,45 @@ class ConstrainForce(PrimitiveWithInfer):
 
         self.init_prim_io_names(
             inputs=['crd', 'quarter_cof', 'mass_inverse',
-                    'scaler', 'pair_dr', 'atom_i_serials', 'atom_j_serials',
-                    'constant_rs', 'constrain_ks', 'test_frc', 'atom_virial'],
+                    'scaler', 'pair_dr', 'atom_i_serials', 'atom_j_serials', 'constant_rs', 'constrain_ks'],
             outputs=['uint_crd', 'frc', 'virial'])
 
-    def infer_shape(self, crd, quarter_cof, mass_inverse, scaler_dtype, pair_dr_dtype, atom_i_serials_dtype,
-                    atom_j_serials_dtype, constant_rs_dtype, constrain_ks_dtype):
+    def infer_shape(self, crd, quarter_cof, mass_inverse, scaler_shape, pair_dr_shape, atom_i_serials_shape,
+                    atom_j_serials_shape, constant_rs_shape, constrain_ks_shape):
+        cls_name = self.name
         n = self.atom_numbers
         m = self.constrain_pair_numbers
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", cls_name)
+        validator.check_int(len(quarter_cof), 1, Rel.EQ, "quarter_cof_dim", cls_name)
+        validator.check_int(len(mass_inverse), 1, Rel.EQ, "mass_inverse_dim", cls_name)
+        validator.check_int(len(scaler_shape), 1, Rel.EQ, "scaler_dim", cls_name)
+        validator.check_int(len(pair_dr_shape), 2, Rel.EQ, "pair_dr_dim", cls_name)
+        validator.check_int(len(atom_i_serials_shape), 1, Rel.EQ, "atom_i_serials_dim", cls_name)
+        validator.check_int(len(atom_j_serials_shape), 1, Rel.EQ, "atom_j_serials_dim", cls_name)
+        validator.check_int(len(constant_rs_shape), 1, Rel.EQ, "constant_rs_dim", cls_name)
+        validator.check_int(len(constrain_ks_shape), 1, Rel.EQ, "constrain_ks_dim", cls_name)
+        validator.check_int(quarter_cof[0], 3, Rel.EQ, "quarter_cof_shape", cls_name)
+        validator.check_int(mass_inverse[0], n, Rel.EQ, "quarter_cof_shape", cls_name)
+        validator.check_int(scaler_shape[0], 3, Rel.EQ, "scaler_shape", cls_name)
+        validator.check_int(pair_dr_shape[0], m, Rel.EQ, "pair_dr_shape[0]", cls_name)
+        validator.check_int(pair_dr_shape[1], 3, Rel.EQ, "pair_dr_shape[1]", cls_name)
+        validator.check_int(atom_i_serials_shape[0], m, Rel.EQ, "atom_i_serials_shape[0]", cls_name)
+        validator.check_int(atom_j_serials_shape[0], m, Rel.EQ, "atom_j_serials_shape[0]", cls_name)
+        validator.check_int(constant_rs_shape[0], m, Rel.EQ, "constant_rs_shape[0]", cls_name)
+        validator.check_int(constrain_ks_shape[0], m, Rel.EQ, "constrain_ks_shape[0]", cls_name)
         return [n, 3], [n, 3], [m,]
 
     def infer_dtype(self, crd, quarter_cof, mass_inverse, scaler_dtype, pair_dr_dtype, atom_i_serials_dtype,
                     atom_j_serials_dtype, constant_rs_dtype, constrain_ks_dtype):
+        validator.check_tensor_dtype_valid('crd', crd, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('quarter_cof', quarter_cof, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('mass_inverse', mass_inverse, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('scaler', scaler_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('pair_dr', pair_dr_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_i_serials', atom_i_serials_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_j_serials', atom_j_serials_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('constant_rs', constant_rs_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('constrain_ks', constrain_ks_dtype, [mstype.float32], self.name)
         return mstype.uint32, mstype.float32, mstype.float32
 
 
@@ -2194,10 +2235,10 @@ class Constrain(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        atom_numbers(int32): the number of atoms n.
-        constrain_pair_numbers(int32): the number of constrain pairs m.
-        iteration_numbers(int32): the number of iteration numbers p.
-        half_exp_gamma_plus_half(float32): half exp_gamma plus half q.
+        atom_numbers (int32): the number of atoms n.
+        constrain_pair_numbers (int32): the number of constrain pairs m.
+        iteration_numbers (int32): the number of iteration numbers p.
+        half_exp_gamma_plus_half (float32): half exp_gamma plus half q.
 
     Inputs:
         - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
@@ -2222,6 +2263,11 @@ class Constrain(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, atom_numbers, constrain_pair_numbers, iteration_numbers, half_exp_gamma_plus_half,
                  update_interval=10):
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('constrain_pair_numbers', constrain_pair_numbers, int, self.name)
+        validator.check_value_type('iteration_numbers', iteration_numbers, int, self.name)
+        validator.check_value_type('half_exp_gamma_plus_half', half_exp_gamma_plus_half, float, self.name)
+        validator.check_value_type('update_interval', update_interval, int, self.name)
         self.atom_numbers = atom_numbers
         self.constrain_pair_numbers = constrain_pair_numbers
         self.iteration_numbers = iteration_numbers
@@ -2236,15 +2282,44 @@ class Constrain(PrimitiveWithInfer):
         self.init_prim_io_names(
             inputs=['crd', 'quarter_cof', 'mass_inverse',
                     'scaler', 'pair_dr', 'atom_i_serials', 'atom_j_serials',
-                    'constant_rs', 'constrain_ks', 'test_frc', 'atom_virial', 'need_pressure'],
+                    'constant_rs', 'constrain_ks', 'need_pressure'],
             outputs=['uint_crd', 'frc', 'virial'])
 
-    def infer_shape(self, crd, quarter_cof, mass_inverse, scaler_dtype, pair_dr_dtype, atom_i_serials_dtype,
-                    atom_j_serials_dtype, constant_rs_dtype, constrain_ks_dtype, need_pressure):
+    def infer_shape(self, crd, quarter_cof, mass_inverse, scaler_shape, pair_dr_shape, atom_i_serials_shape,
+                    atom_j_serials_shape, constant_rs_shape, constrain_ks_shape, need_pressure):
+        cls_name = self.name
         n = self.atom_numbers
         m = self.constrain_pair_numbers
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", cls_name)
+        validator.check_int(len(quarter_cof), 1, Rel.EQ, "quarter_cof_dim", cls_name)
+        validator.check_int(len(mass_inverse), 1, Rel.EQ, "mass_inverse_dim", cls_name)
+        validator.check_int(len(scaler_shape), 1, Rel.EQ, "scaler_dim", cls_name)
+        validator.check_int(len(pair_dr_shape), 2, Rel.EQ, "pair_dr_dim", cls_name)
+        validator.check_int(len(atom_i_serials_shape), 1, Rel.EQ, "atom_i_serials_dim", cls_name)
+        validator.check_int(len(atom_j_serials_shape), 1, Rel.EQ, "atom_j_serials_dim", cls_name)
+        validator.check_int(len(constant_rs_shape), 1, Rel.EQ, "constant_rs_dim", cls_name)
+        validator.check_int(len(constrain_ks_shape), 1, Rel.EQ, "constrain_ks_dim", cls_name)
+        validator.check_int(quarter_cof[0], 3, Rel.EQ, "quarter_cof_shape", cls_name)
+        validator.check_int(mass_inverse[0], n, Rel.EQ, "quarter_cof_shape", cls_name)
+        validator.check_int(scaler_shape[0], 3, Rel.EQ, "scaler_shape", cls_name)
+        validator.check_int(pair_dr_shape[0], m, Rel.EQ, "pair_dr_shape[0]", cls_name)
+        validator.check_int(pair_dr_shape[1], 3, Rel.EQ, "pair_dr_shape[1]", cls_name)
+        validator.check_int(atom_i_serials_shape[0], m, Rel.EQ, "atom_i_serials_shape[0]", cls_name)
+        validator.check_int(atom_j_serials_shape[0], m, Rel.EQ, "atom_j_serials_shape[0]", cls_name)
+        validator.check_int(constant_rs_shape[0], m, Rel.EQ, "constant_rs_shape[0]", cls_name)
+        validator.check_int(constrain_ks_shape[0], m, Rel.EQ, "constrain_ks_shape[0]", cls_name)
         return [n, 3], [n, 3], [m,]
 
     def infer_dtype(self, crd, quarter_cof, mass_inverse, scaler_dtype, pair_dr_dtype, atom_i_serials_dtype,
                     atom_j_serials_dtype, constant_rs_dtype, constrain_ks_dtype, need_pressure):
+        validator.check_tensor_dtype_valid('crd', crd, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('quarter_cof', quarter_cof, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('mass_inverse', mass_inverse, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('scaler', scaler_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('pair_dr', pair_dr_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_i_serials', atom_i_serials_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_j_serials', atom_j_serials_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('constant_rs', constant_rs_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('constrain_ks', constrain_ks_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('need_pressure', need_pressure, [mstype.int32], self.name)
         return mstype.uint32, mstype.float32, mstype.float32

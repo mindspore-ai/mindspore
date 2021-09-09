@@ -110,8 +110,7 @@ from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAto
                          Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy,
                          GetCenterOfGeometry, MDTemperature, MDIterationLeapFrogLiujian,
                          CrdToUintCrd, MDIterationSetupRandState, TransferCrd, FFT3D, IFFT3D, NeighborListUpdate)
-from .sponge_update_ops import (RestrainForce, RestrainEnergy, RestrainForceWithAtomEnergyVirial,
-                                ConstrainForceCycleWithVirial, RefreshUintCrd, LastCrdToDr, RefreshCrdVel,
+from .sponge_update_ops import (ConstrainForceCycleWithVirial, RefreshUintCrd, LastCrdToDr, RefreshCrdVel,
                                 CalculateNowrapCrd, RefreshBoxmapTimes, Totalc6get, CrdToUintCrdQuarter,
                                 MDIterationLeapFrogLiujianWithMaxVel, GetCenterOfMass, MapCenterOfMass,
                                 NeighborListRefresh, MDIterationLeapFrog, MDIterationLeapFrogWithMaxVel,
@@ -516,9 +515,6 @@ __all__ = [
 ]
 
 __sponge__ = [
-    "RestrainForce",
-    "RestrainEnergy",
-    "RestrainForceWithAtomEnergyVirial",
     "ConstrainForceCycleWithVirial",
     "RefreshUintCrd",
     "LastCrdToDr",

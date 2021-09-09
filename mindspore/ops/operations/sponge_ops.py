@@ -218,7 +218,7 @@ class BondAtomEnergy(PrimitiveWithInfer):
         - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
           between the real space float coordinates and the unsigned int coordinates.
           The data type is float32 and the shape is :math:`(3,)`.
-        - **atom_a** (Tensor, int32) - The first atom index of each bond.
+        - **atom_a** (Tensor) - The first atom index of each bond.
           The data type is int32 and the shape is :math:`(m,)`.
         - **atom_b** (Tensor) - The second atom index of each bond.
           The data type is int32 and the shape is :math:`(m,)`.
@@ -228,7 +228,8 @@ class BondAtomEnergy(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **atom_ene** (Tensor, float32) - [n,], the accumulated potential energy for each atom.
+        - **atom_ene** (Tensor) - The accumulated potential energy for each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -464,8 +465,6 @@ class DihedralForce(PrimitiveWithInfer):
         dihedral_numbers(int32): the number of dihedral terms m.
 
     Inputs:
-        - **dihedral_numbers** (Scalar) - The number of dihedral terms m.
-          The data type is int32.
         - **uint_crd_f** (Tensor) - The unsigned int coordinates
           value of each atom. The data type is uint32 and the shape is :math:`(n, 3)`.
         - **scaler_f** (Tensor) - The 3-D scale factor between
@@ -568,8 +567,6 @@ class DihedralEnergy(PrimitiveWithInfer):
         dihedral_numbers(int32): the number of dihedral terms m.
 
     Inputs:
-        - **dihedral_numbers** (Scalar) - the number of dihedral terms m.
-          The data type is int32.
         - **uint_crd_f** (Tensor) - The unsigned int coordinates
           value of each atom.
           The data type is uint32 and the shape is :math:`(n, 3)`.
@@ -675,8 +672,6 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
         dihedral_numbers(int32): the number of dihedral terms m.
 
     Inputs:
-        - **dihedral_numbers** (Scalar) - the number of dihedral terms m.
-          The data type is int32.
         - **uint_crd_f** (Tensor) - The unsigned int coordinates
           value of each atom. The data type is uint32 and the shape is :math:`(n, 3)`.
         - **scaler_f** (Tensor) - The 3-D scale factor between
@@ -780,8 +775,6 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
         dihedral_numbers(int32): the number of dihedral terms m.
 
     Inputs:
-        - **dihedral_numbers** (Scalar) - the number of dihedral terms m.
-          The data type is int32.
         - **uint_crd_f** (Tensor) - The unsigned int coordinates
           value of each atom. The data type is uint32 and the shape is :math:`(n, 3)`.
         - **scaler_f** (Tensor) - The 3-D scale factor between
