@@ -117,8 +117,8 @@ TEST_F(MindDataTestCelebaDataset, TestCelebaRepeat) {
   auto op1 = Celeba(16, 2, dir);
   auto op2 = Repeat(2);
   auto tree = Build({op1, op2});
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {

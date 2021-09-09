@@ -102,7 +102,7 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   // clear the old tensor row
   out_row->clear();
 
-  bool isProfilingEnable = root_->Tree()->GetProfilingManager()->IsProfilingEnable();
+  bool is_profiling_enable = root_->Tree()->GetProfilingManager()->IsProfilingEnable();
 
   // Once eof is handled, always return empty row.  Class must be destroyed and recreated if you
   // want to iterate again.
@@ -124,7 +124,7 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   // The next row in the pipeline might be an EOF or a TensorRow for next epoch
   if (out_row->eoe()) {
     MS_LOG(INFO) << "End of data iteration.";
-    if (isProfilingEnable) {
+    if (is_profiling_enable) {
       root_->Tree()->SetEpochEnd();
     }
     return Status::OK();

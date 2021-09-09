@@ -46,7 +46,7 @@ MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std
 }
 
 // The number of threads consuming data from previous op's output Connector.
-int32_t MapOp::num_consumers() const {
+int32_t MapOp::NumConsumers() const {
   // When Performance Mode is on, there is only one thread consuming from the previous Connector.
   return 1;
 }
@@ -144,7 +144,7 @@ Status MapOp::operator()() {
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
   while (!new_row.eof()) {
-    if (op_current_repeats_ % op_num_repeats_per_epoch() == 0) {
+    if (op_current_repeats_ % GetOpNumRepeatsPerEpoch() == 0) {
       RETURN_IF_NOT_OK(callback_manager_.EpochBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
     }
     while (!new_row.eoe()) {
@@ -168,7 +168,7 @@ Status MapOp::operator()() {
     }
 
     // check whether this is the end of a real epoch (not all eoe signals end of epoch)
-    if ((op_current_repeats_ + 1) % op_num_repeats_per_epoch() == 0) {
+    if ((op_current_repeats_ + 1) % GetOpNumRepeatsPerEpoch() == 0) {
       RETURN_IF_NOT_OK(callback_manager_.EpochEnd(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
 
       ep_step = 0;

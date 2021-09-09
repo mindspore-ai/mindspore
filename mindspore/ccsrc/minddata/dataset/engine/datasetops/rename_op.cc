@@ -113,7 +113,7 @@ void RenameOp::Print(std::ostream &out,      // In: The output stream to print t
   }
 }
 
-int32_t RenameOp::num_consumers() const {
+int32_t RenameOp::NumConsumers() const {
   if (parent_.empty()) {
     MS_LOG(DEBUG) << "Rename operator, no parent node, assuming it's the root and returning 1.";
     return 1;
@@ -121,16 +121,16 @@ int32_t RenameOp::num_consumers() const {
     MS_LOG(DEBUG) << "Rename operator, pointer to the first parent is null. Returning 0.";
     return 0;
   } else {
-    return parent_[0]->num_consumers();
+    return parent_[0]->NumConsumers();
   }
 }
 
-int32_t RenameOp::num_producers() const {
+int32_t RenameOp::NumProducers() const {
   if (child_.empty() || child_[0] == nullptr) {
     MS_LOG(DEBUG) << "Rename operator, pointer to child node is null. Returning 0.";
     return 0;
   } else {
-    return child_[0]->num_producers();
+    return child_[0]->NumProducers();
   }
 }
 }  // namespace dataset

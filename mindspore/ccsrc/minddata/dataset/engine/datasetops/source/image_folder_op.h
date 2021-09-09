@@ -57,11 +57,14 @@ class ImageFolderOp : public MappableLeafOp {
   // @param int32_t num_wkrs - Num of workers reading images in parallel
   // @param std::string - dir directory of ImageNetFolder
   // @param int32_t queue_size - connector queue size
-  // @param std::set<std::string> exts - set of file extensions to read, if empty, read everything under the dir
-  // @param td::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
+  // @param bool recursive - read recursively
+  // @param bool do_decode - decode the images after reading
+  // @param std::set<std::string> &exts - set of file extensions to read, if empty, read everything under the dir
+  // @param std::map<std::string, int32_t> &map- map of folder name and class id
+  // @param std::unique_ptr<dataschema> data_schema - schema of data
   ImageFolderOp(int32_t num_wkrs, std::string file_dir, int32_t queue_size, bool recursive, bool do_decode,
                 const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
-                std::unique_ptr<DataSchema>, std::shared_ptr<SamplerRT> sampler);
+                std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
 
   /// Destructor.
   ~ImageFolderOp() = default;

@@ -72,11 +72,11 @@ class ParallelOp : public DatasetOp {
 
   // Getter
   // @return the number of workers
-  int32_t num_workers() const override { return num_workers_; }
+  int32_t NumWorkers() const override { return num_workers_; }
 
   // Getter
   // @return the number of threads consuming from the previous Connector
-  int32_t num_consumers() const override { return num_workers_; }
+  int32_t NumConsumers() const override { return num_workers_; }
 
   // Getter
   // @return the number of producers pushing to the output Connector
@@ -84,7 +84,7 @@ class ParallelOp : public DatasetOp {
   // when a worker connector is set up.  In that case, there are n workers, and a single master
   // such that only 1 thread is a producer rather than the n workers.
   // @return the number of producers
-  int32_t num_producers() const override { return num_producers_; }
+  int32_t NumProducers() const override { return num_producers_; }
 
   // Register the internal worker connectors.
   // @return Status

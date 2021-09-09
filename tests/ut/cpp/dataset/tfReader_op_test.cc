@@ -350,8 +350,8 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderRepeat) {
   ASSERT_TRUE(rc.IsOk());
 
   // Set children/root layout.
-  my_tfreader_op->set_total_repeats(num_repeats);
-  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
+  my_tfreader_op->SetTotalRepeats(num_repeats);
+  my_tfreader_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = my_repeat_op->AddChild(my_tfreader_op);
   ASSERT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(my_repeat_op);

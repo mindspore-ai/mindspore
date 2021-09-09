@@ -73,6 +73,7 @@ Status CacheOp::InitCache() { return Status::OK(); }
 
 // This class functor will provide the master loop that drives the logic for performing the work
 Status CacheOp::operator()() {
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   if (!sampler_) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, CacheOp requires a sampler before it can be executed, but got nullptr.");
@@ -199,6 +200,7 @@ Status CacheOp::WorkerEntry(int32_t worker_id) {
   return Status::OK();
 }
 Status CacheOp::RegisterResources() {
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_IF_NOT_OK(CacheBase::RegisterResources());
   RETURN_IF_NOT_OK(rows_cache_done_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(keys_miss_->Register(tree_->AllTasks()));

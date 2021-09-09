@@ -312,9 +312,9 @@ Status DatasetOp::PrepareOperator() {
   // The consumer of the root node is assumed to be one thread.
   // If multiple threads are consuming from the root node, they will get the ordered data in round robin fashion.
   if (parent_.empty()) {
-    this->CreateConnector(num_producers(), 1);
+    this->CreateConnector(NumProducers(), 1);
   } else {
-    this->CreateConnector(num_producers(), parent_[0]->num_consumers());
+    this->CreateConnector(NumProducers(), parent_[0]->NumConsumers());
   }
   if (out_connector_) {
     RETURN_IF_NOT_OK(out_connector_->Register(tree_->AllTasks()));

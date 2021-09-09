@@ -101,7 +101,7 @@ class CifarOp : public MappableLeafOp {
   Status ParseCifarData();
 
   /// Method derived from RandomAccess Op, enable Sampler to get all ids for each class
-  /// @param (std::map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
+  /// @param (std::map<uint32_t, std::vector<uint32_t >> *cls_ids - val all ids for this class
   /// @return Status The status code returned
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 

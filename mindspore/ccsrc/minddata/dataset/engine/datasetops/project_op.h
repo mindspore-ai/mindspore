@@ -63,11 +63,11 @@ class ProjectOp : public PipelineOp {
 
   // Base-class override. Return the number of workers in the first parent.
   // @param workerId - The worker id
-  int32_t num_consumers() const override;
+  int32_t NumConsumers() const override;
 
   // Base-class override. Return the number of producers in the first child.
   // @param workerId - The worker id
-  int32_t num_producers() const override;
+  int32_t NumProducers() const override;
 
   // Base-class override for special eoe handler.
   // Inline operators must override this because there is no connector to push eoe onto.

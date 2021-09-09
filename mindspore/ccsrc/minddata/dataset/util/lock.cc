@@ -63,7 +63,6 @@ void RWLock::Unlock() noexcept {
 
 void RWLock::Upgrade() {
   std::unique_lock<std::mutex> lck(mtx_);
-  MS_ASSERT(status_);
   if (status_ == -1) {
     // I am a writer already.
     return;
@@ -81,7 +80,6 @@ void RWLock::Upgrade() {
 
 void RWLock::Downgrade() {
   std::unique_lock<std::mutex> lck(mtx_);
-  MS_ASSERT(status_);
   if (status_ == -1) {
     // If there are no other writers waiting, just change the status
     if (waiting_writers_ == 0) {
@@ -111,26 +109,18 @@ SharedLock::~SharedLock() {
 }
 
 void SharedLock::Unlock() {
-  MS_ASSERT(ownlock_ == true);
   rw_->Unlock();
   ownlock_ = false;
 }
 
 void SharedLock::Lock() {
-  MS_ASSERT(ownlock_ == false);
   rw_->LockShared();
   ownlock_ = true;
 }
 
-void SharedLock::Upgrade() {
-  MS_ASSERT(ownlock_ == true);
-  rw_->Upgrade();
-}
+void SharedLock::Upgrade() { rw_->Upgrade(); }
 
-void SharedLock::Downgrade() {
-  MS_ASSERT(ownlock_ == true);
-  rw_->Downgrade();
-}
+void SharedLock::Downgrade() { rw_->Downgrade(); }
 
 UniqueLock::UniqueLock(RWLock *rw) : rw_(rw), ownlock_(false) {
   rw_->LockExclusive();
@@ -146,13 +136,11 @@ UniqueLock::~UniqueLock() {
 }
 
 void UniqueLock::Unlock() {
-  MS_ASSERT(ownlock_ == true);
   rw_->Unlock();
   ownlock_ = false;
 }
 
 void UniqueLock::Lock() {
-  MS_ASSERT(ownlock_ == false);
   rw_->LockExclusive();
   ownlock_ = true;
 }
@@ -171,13 +159,11 @@ LockGuard::~LockGuard() {
 }
 
 void LockGuard::Unlock() {
-  MS_ASSERT(own_lock_);
   lck_->Unlock();
   own_lock_ = false;
 }
 
 void LockGuard::Lock() {
-  MS_ASSERT(own_lock_ == false);
   lck_->Lock();
   own_lock_ = true;
 }

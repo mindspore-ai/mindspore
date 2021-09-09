@@ -102,12 +102,12 @@ Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     // Add the shuffle op after this op
     RETURN_IF_NOT_OK(
       AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_, &shuffle_op));
-    shuffle_op->set_total_repeats(GetTotalRepeats());
-    shuffle_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+    shuffle_op->SetTotalRepeats(GetTotalRepeats());
+    shuffle_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
     node_ops->push_back(shuffle_op);
   }
-  text_file_op->set_total_repeats(GetTotalRepeats());
-  text_file_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  text_file_op->SetTotalRepeats(GetTotalRepeats());
+  text_file_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   // Add TextFileOp
   node_ops->push_back(text_file_op);
 

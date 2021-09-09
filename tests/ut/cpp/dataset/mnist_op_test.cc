@@ -78,8 +78,8 @@ TEST_F(MindDataTestMnistSampler, TestSequentialMnistWithRepeat) {
   auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   auto op1 = CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler));
   auto op2 = Repeat(2);
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   auto tree = Build({op1, op2});
   tree->Prepare();
   uint32_t res[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -113,8 +113,8 @@ TEST_F(MindDataTestMnistSampler, TestSequentialImageFolderWithRepeatBatch) {
   auto op1 = CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler));
   auto op2 = Repeat(2);
   auto op3 = Batch(5);
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   auto tree = Build({op1, op2, op3});
   tree->Prepare();
   uint32_t res[4][5] = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};

@@ -74,7 +74,7 @@ class DeviceQueueOp : public PipelineOp {
 
   Status EoeReceived(int32_t worker_id) override;
 
-  const int32_t get_prefetch_size() { return prefetch_size_; }
+  const int32_t GetPrefetchSize() { return prefetch_size_; }
 
   void StopSend() { stop_send_ = true; }
 
@@ -103,9 +103,9 @@ class DeviceQueueOp : public PipelineOp {
   Status operator()() override;
 
   // Record the pipeline profiling info
-  void ProfilingRecorder(bool isProfilingEnable, std::shared_ptr<DeviceQueueTracing> profiling_node, int64_t send_batch,
-                         int32_t tdt_cost, uint64_t *batch_start_time, uint64_t *end_time, int32_t connector_capacity,
-                         int32_t connector_size);
+  void ProfilingRecorder(bool is_profiling_enable, std::shared_ptr<DeviceQueueTracing> profiling_node,
+                         int64_t send_batch, int32_t tdt_cost, uint64_t *batch_start_time, uint64_t *end_time,
+                         int32_t connector_capacity, int32_t connector_size);
 
   // Op name getter
   // @return Name of the current Op
@@ -125,7 +125,7 @@ class DeviceQueueOp : public PipelineOp {
   void WaitContinueSignal() const;
   Status SendDataToAscend();
   void LimitSendingBatches(int64_t send_batch, int64_t *sending_num, std::shared_ptr<ConfigManager> cfg);
-  Status SendRowToTdt(TensorRow currRow, bool isProfilingEnable, int32_t *tdt_cost);
+  Status SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, int32_t *tdt_cost);
   bool ascend_keep_waiting_;
 #endif
 

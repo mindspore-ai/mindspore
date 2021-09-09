@@ -76,8 +76,8 @@ Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
 
   auto album_op = std::make_shared<AlbumOp>(num_workers_, dataset_dir_, connector_que_size_, decode_, extensions,
                                             std::move(schema), std::move(sampler_rt));
-  album_op->set_total_repeats(GetTotalRepeats());
-  album_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  album_op->SetTotalRepeats(GetTotalRepeats());
+  album_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(album_op);
   return Status::OK();
 }
