@@ -23,6 +23,7 @@
 #include "MxBase/DvppWrapper/DvppWrapper.h"
 #include "MxBase/Log/Log.h"
 
+
 APP_ERROR UnetSegmentation::Init(const InitParam &initParam) {
     deviceId_ = initParam.deviceId;
     APP_ERROR ret = MxBase::DeviceManager::GetInstance()->InitDevices();
@@ -66,25 +67,25 @@ void UnetSegmentation::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImage
     resizedImageInfo.heightResize = resizeHeight;
     resizedImageInfo.widthOriginal = srcImageMat.cols;
     resizedImageInfo.widthResize = resizeWidth;
-    resizedImageInfo.resizeType = RESIZER_STRETCHING;
+    resizedImageInfo.resizeType = MxBase::RESIZER_STRETCHING;
 
     cv::resize(srcImageMat, dstImageMat, cv::Size(resizeHeight, resizeWidth));
     return;
 }
 
 APP_ERROR UnetSegmentation::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase) {
-    const uint32_t dataSize = imageMat.cols * imageMat.rows * YUV444_RGB_WIDTH_NU;
-    MemoryData memoryDataDst(dataSize, MemoryData::MEMORY_DEVICE, deviceId_);
-    MemoryData memoryDataSrc(imageMat.data, dataSize, MemoryData::MEMORY_HOST_MALLOC);
+    const uint32_t dataSize = imageMat.cols * imageMat.rows * MxBase::YUV444_RGB_WIDTH_NU;
+    MxBase::MemoryData memoryDataDst(dataSize, MxBase::MemoryData::MEMORY_DEVICE, deviceId_);
+    MxBase::MemoryData memoryDataSrc(imageMat.data, dataSize, MxBase::MemoryData::MEMORY_HOST_MALLOC);
 
-    APP_ERROR ret = MemoryHelper::MxbsMallocAndCopy(memoryDataDst, memoryDataSrc);
+    APP_ERROR ret = MxBase::MemoryHelper::MxbsMallocAndCopy(memoryDataDst, memoryDataSrc);
     if (ret != APP_ERR_OK) {
         LogError << GetError(ret) << "Memory malloc failed.";
         return ret;
     }
 
-    std::vector<uint32_t> shape = {imageMat.rows * YUV444_RGB_WIDTH_NU, static_cast<uint32_t>(imageMat.cols)};
-    tensorBase = TensorBase(memoryDataDst, false, shape, TENSOR_DTYPE_UINT8);
+    std::vector<uint32_t> shape = {imageMat.rows * MxBase::YUV444_RGB_WIDTH_NU, static_cast<uint32_t>(imageMat.cols)};
+    tensorBase = MxBase::TensorBase(memoryDataDst, false, shape, MxBase::TENSOR_DTYPE_UINT8);
     return APP_ERR_OK;
 }
 
@@ -96,16 +97,16 @@ APP_ERROR UnetSegmentation::Inference(const std::vector<MxBase::TensorBase> &inp
         for (size_t j = 0; j < modelDesc_.outputTensors[i].tensorDims.size(); ++j) {
             shape.push_back((uint32_t)modelDesc_.outputTensors[i].tensorDims[j]);
         }
-        TensorBase tensor(shape, dtypes[i], MemoryData::MemoryType::MEMORY_DEVICE, deviceId_);
-        APP_ERROR ret = TensorBase::TensorBaseMalloc(tensor);
+        MxBase::TensorBase tensor(shape, dtypes[i], MxBase::MemoryData::MemoryType::MEMORY_DEVICE, deviceId_);
+        APP_ERROR ret = MxBase::TensorBase::TensorBaseMalloc(tensor);
         if (ret != APP_ERR_OK) {
             LogError << "TensorBaseMalloc failed, ret=" << ret << ".";
             return ret;
         }
         outputs.push_back(tensor);
     }
-    DynamicInfo dynamicInfo = {};
-    dynamicInfo.dynamicType = DynamicType::STATIC_BATCH;
+    MxBase::DynamicInfo dynamicInfo = {};
+    dynamicInfo.dynamicType = MxBase::DynamicType::STATIC_BATCH;
     APP_ERROR ret = model_->ModelInference(inputs, outputs, dynamicInfo);
     if (ret != APP_ERR_OK) {
         LogError << "ModelInference failed, ret=" << ret << ".";
@@ -114,7 +115,7 @@ APP_ERROR UnetSegmentation::Inference(const std::vector<MxBase::TensorBase> &inp
     return APP_ERR_OK;
 }
 
-APP_ERROR UnetSegmentation::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
+APP_ERROR UnetSegmentation::PostProcess(std::vector<MxBase::TensorBase> &inputs,
                                         const MxBase::ResizedImageInfo &resizedInfo, cv::Mat &output) {
     MxBase::TensorBase &tensor = inputs[0];
     int ret = tensor.ToHost();
@@ -126,9 +127,9 @@ APP_ERROR UnetSegmentation::PostProcess(const std::vector<MxBase::TensorBase> &i
     uint32_t imgHeight = resizedInfo.heightOriginal;
     uint32_t imgWidth = resizedInfo.widthOriginal;
 
-    uint32_t outputModelChannel = tensor.GetShape()[VECTOR_FOURTH_INDEX];
-    uint32_t outputModelWidth = tensor.GetShape()[VECTOR_THIRD_INDEX];
-    uint32_t outputModelHeight = tensor.GetShape()[VECTOR_SECOND_INDEX];
+    uint32_t outputModelChannel = tensor.GetShape()[MxBase::VECTOR_FOURTH_INDEX];
+    uint32_t outputModelWidth = tensor.GetShape()[MxBase::VECTOR_THIRD_INDEX];
+    uint32_t outputModelHeight = tensor.GetShape()[MxBase::VECTOR_SECOND_INDEX];
 
     cv::Mat imageMat(outputModelHeight, outputModelWidth, CV_32FC1);
     auto data = reinterpret_cast<float(*)[outputModelWidth][outputModelChannel]>(tensor.GetBuffer());
@@ -156,10 +157,10 @@ APP_ERROR UnetSegmentation::Process(const std::string &imgPath) {
         return ret;
     }
 
-    ResizedImageInfo resizedImageInfo;
+    MxBase::ResizedImageInfo resizedImageInfo;
     ResizeImage(imageMat, imageMat, resizedImageInfo);
 
-    TensorBase tensorBase;
+    MxBase::TensorBase tensorBase;
     ret = CVMatToTensorBase(imageMat, tensorBase);
     if (ret != APP_ERR_OK) {
         LogError << "CVMatToTensorBase failed, ret=" << ret << ".";
