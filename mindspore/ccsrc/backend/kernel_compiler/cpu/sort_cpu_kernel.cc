@@ -32,32 +32,24 @@ void SortCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Number of outputs is " << output_count << ", but should be 2 for Sort.";
   }
 
-  auto x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto input_rank = x_shape_.size();
-
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   descending_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "descending");
-  auto axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis");
-  if (axis < 0) {
-    axis += input_rank;
+  auto axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
+  if (axis_t >= input_shape.size()) {
+    MS_LOG(EXCEPTION) << "the evaluated axis should be smaller than the dimension of input tensor "
+                      << input_shape.size() << "D, but got " << axis_t;
   }
 
-  if ((axis < 0) || (axis >= static_cast<int64_t>(input_rank))) {
-    MS_LOG(EXCEPTION) << "evaluated axis is " << axis << ", but should be in range [0, " << input_rank << "].";
-  }
+  axisIterator_.Init(input_shape, axis_t);
+}
 
-  size_t axis_t = axis;
-
-  outer_size_ = 1;
-  for (size_t i = 0; i < axis_t; i++) {
-    outer_size_ *= x_shape_[i];
-  }
-
-  axis_size_ = x_shape_[axis_t];
-
-  inner_size_ = 1;
-  for (size_t i = axis_t + 1; i < input_rank; ++i) {
-    inner_size_ *= x_shape_[i];
-  }
+template <typename T>
+void SortCpuKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
+  // id
+  workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
 }
 
 template <typename T>
@@ -67,10 +59,11 @@ bool SortCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
     MS_LOG(EXCEPTION) << "Sort needs 1 input and 2 outputs, but get inputs: " << inputs.size()
                       << "outputs: " << outputs.size();
   }
-  if (inputs[0]->size != outer_size_ * axis_size_ * inner_size_ * sizeof(T)) {
+  if (inputs[0]->size != axisIterator_.OuterSize() * axisIterator_.AxisSize() * axisIterator_.InnerSize() * sizeof(T)) {
     MS_LOG(EXCEPTION) << "Error input data size!";
   }
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto ids_addr = reinterpret_cast<size_t *>(workspace[0]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   auto indices = reinterpret_cast<int *>(outputs[1]->addr);
 
@@ -86,23 +79,24 @@ bool SortCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
   }
 
   std::vector<common::Task> tasks;
-  tasks.reserve(outer_size_ * inner_size_);
-  for (size_t i = 0; i < outer_size_; ++i) {
-    const auto out_offset = i * axis_size_ * inner_size_;
-    for (size_t j = 0; j < inner_size_; ++j) {
-      const auto axis_offset = out_offset + j;
-      auto task = [this, axis_offset, &input, &indices, &output, &comparator]() {
-        std::vector<size_t> idx(axis_size_);
-        // fill idx starts with out_offset + j, step inner_size_
-        for (size_t k = 0; k < axis_size_; ++k) {
-          idx[k] = axis_offset + k * inner_size_;
+  tasks.reserve(axisIterator_.OuterSize() * axisIterator_.InnerSize());
+  for (size_t i = 0; i < axisIterator_.OuterSize(); ++i) {
+    for (size_t j = 0; j < axisIterator_.InnerSize(); ++j) {
+      auto task = [this, i, j, ids_addr, input, indices, output, &comparator]() {
+        AxisIterator iter(axisIterator_);
+        iter.SetOffset(i, j);
+
+        size_t offset = (i * iter.InnerSize() + j) * iter.AxisSize();
+        size_t *idx = ids_addr + offset;
+        for (size_t k = 0; k < iter.AxisSize(); ++k) {
+          idx[k] = iter.GetPos(k);
         }
 
-        std::stable_sort(idx.begin(), idx.end(), comparator);
+        std::stable_sort(idx, idx + iter.AxisSize(), comparator);
 
-        for (size_t k = 0; k < axis_size_; ++k) {
-          const auto index = axis_offset + k * inner_size_;
-          indices[index] = (SizeToInt(idx[k]) - SizeToInt(axis_offset)) / inner_size_;
+        for (size_t k = 0; k < iter.AxisSize(); ++k) {
+          const auto index = iter.GetPos(k);
+          indices[index] = iter.RevertPos(idx[k]);
           output[index] = input[idx[k]];
         }
         return common::SUCCESS;

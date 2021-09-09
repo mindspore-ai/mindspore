@@ -36,28 +36,13 @@ void ShiftCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
   periods_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, PERIODS);
   auto axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  if (axis < 0) {
-    axis += input_shape.size();
-  }
-  if ((axis < 0) || (axis >= static_cast<int64_t>(input_shape.size()))) {
-    MS_LOG(EXCEPTION) << "axis should be smaller than the dimension of input tensor " << input_shape.size()
-                      << "D, but got " << axis;
+  size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
+  if (axis_t >= input_shape.size()) {
+    MS_LOG(EXCEPTION) << "the evaluated axis should be smaller than the dimension of input tensor "
+                      << input_shape.size() << "D, but got " << axis_t;
   }
 
-  // calculating axis size
-  size_t axis_t = axis;
-
-  outer_size_ = 1;
-  for (size_t i = 0; i < axis_t; i++) {
-    outer_size_ *= input_shape[i];
-  }
-
-  axis_size_ = input_shape[axis_t];
-
-  inner_size_ = 1;
-  for (size_t i = axis_t + 1; i < input_shape.size(); ++i) {
-    inner_size_ *= input_shape[i];
-  }
+  axisIterator_.Init(input_shape, axis_t);
 
   // index calculation
   if (periods_ > 0) {
@@ -99,18 +84,22 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
     return true;
   }
 
+  const size_t outer_size = axisIterator_.OuterSize();
+  const size_t axis_size = axisIterator_.AxisSize();
+  const size_t inner_size = axisIterator_.InnerSize();
+
   // periods is larger than size, all value of the tensor would be fill_value
-  if (std::abs(periods_) >= static_cast<int>(axis_size_)) {
-    std::fill_n(output, outer_size_ * axis_size_ * inner_size_, fill_value);
+  if (std::abs(periods_) >= static_cast<int>(axis_size)) {
+    std::fill_n(output, outer_size * axis_size * inner_size, fill_value);
     return true;
   }
 
-  if (inputs[0]->size != outer_size_ * axis_size_ * inner_size_ * sizeof(T)) {
+  if (inputs[0]->size != outer_size * axis_size * inner_size * sizeof(T)) {
     MS_LOG(EXCEPTION) << "Error input data size!";
   }
 
   // check if the tensor is linear
-  if ((inner_size_ == 1) && (outer_size_ == 1)) {
+  if ((inner_size == 1) && (outer_size == 1)) {
     // treat it as a simple 1D array
     memcpy(output + copy_dst_begin_, input + copy_src_begin_, copy_size_ * sizeof(T));
     std::fill_n(output + fill_begin_, fill_size_, fill_value);
@@ -119,15 +108,15 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
 
   // normal procedure
   std::vector<common::Task> tasks;
-  tasks.reserve(outer_size_);
-  for (size_t i = 0; i < outer_size_; ++i) {
-    tasks.emplace_back([this, i, fill_value, input, output] {
-      size_t offset = i * axis_size_ * inner_size_;
-      size_t input_offset = offset + copy_src_begin_ * inner_size_;
-      size_t output_offset = offset + copy_dst_begin_ * inner_size_;
-      memcpy(output + output_offset, input + input_offset, copy_size_ * inner_size_ * sizeof(T));
-      size_t fill_offset = offset + fill_begin_ * inner_size_;
-      std::fill_n(output + fill_offset, fill_size_ * inner_size_, fill_value);
+  tasks.reserve(outer_size);
+  for (size_t i = 0; i < outer_size; ++i) {
+    tasks.emplace_back([this, i, fill_value, axis_size, inner_size, input, output] {
+      size_t offset = i * axis_size * inner_size;
+      size_t input_offset = offset + copy_src_begin_ * inner_size;
+      size_t output_offset = offset + copy_dst_begin_ * inner_size;
+      memcpy(output + output_offset, input + input_offset, copy_size_ * inner_size * sizeof(T));
+      size_t fill_offset = offset + fill_begin_ * inner_size;
+      std::fill_n(output + fill_offset, fill_size_ * inner_size, fill_value);
       return common::SUCCESS;
     });
   }

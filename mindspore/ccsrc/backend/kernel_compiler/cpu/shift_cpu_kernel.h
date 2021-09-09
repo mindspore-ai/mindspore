@@ -40,9 +40,7 @@ class ShiftCpuKernel : public CPUKernel {
   T fill_value_{0};
 
   // slice info
-  size_t outer_size_{0};
-  size_t axis_size_{0};
-  size_t inner_size_{0};
+  AxisIterator axisIterator_{};
 
   size_t copy_src_begin_{0};
   size_t copy_dst_begin_{0};
