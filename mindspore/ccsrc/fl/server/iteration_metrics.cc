@@ -27,8 +27,8 @@ bool IterationMetrics::Initialize() {
   config_ = std::make_unique<ps::core::FileConfiguration>(config_file_path_);
   MS_EXCEPTION_IF_NULL(config_);
   if (!config_->Initialize()) {
-    MS_LOG(EXCEPTION) << "Initializing for metrics failed. Config file path " << config_file_path_
-                      << " may be invalid or not exist.";
+    MS_LOG(WARNING) << "Initializing for metrics failed. Config file path " << config_file_path_
+                    << " may be invalid or not exist.";
     return false;
   }
 
@@ -62,11 +62,13 @@ bool IterationMetrics::Initialize() {
     }
 
     metrics_file_.open(metrics_file_path_, std::ios::ate | std::ios::out);
+    metrics_file_.close();
   }
   return true;
 }
 
 bool IterationMetrics::Summarize() {
+  metrics_file_.open(metrics_file_path_, std::ios::ate | std::ios::out);
   if (!metrics_file_.is_open()) {
     MS_LOG(ERROR) << "The metrics file is not opened.";
     return false;
@@ -83,6 +85,7 @@ bool IterationMetrics::Summarize() {
   js_[kIterExecutionTime] = iteration_time_cost_;
   metrics_file_ << js_ << "\n";
   (void)metrics_file_.flush();
+  metrics_file_.close();
   return true;
 }
 

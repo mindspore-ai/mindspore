@@ -80,13 +80,17 @@ void FLWorker::Run() {
 }
 
 void FLWorker::Finalize() {
-  MS_EXCEPTION_IF_NULL(worker_node_);
-  if (!worker_node_->Finish()) {
-    MS_LOG(ERROR) << "Worker node finishing failed.";
+  if (worker_node_ == nullptr) {
+    MS_LOG(INFO) << "The worker is not initialized yet.";
     return;
   }
+
+  // In some cases, worker calls the Finish function while other nodes don't. So timeout is acceptable.
+  if (!worker_node_->Finish()) {
+    MS_LOG(WARNING) << "Finishing worker node timeout.";
+  }
   if (!worker_node_->Stop()) {
-    MS_LOG(ERROR) << "Worker node stopping failed.";
+    MS_LOG(ERROR) << "Stopping worker node failed.";
     return;
   }
 }
