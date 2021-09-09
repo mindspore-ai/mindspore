@@ -539,11 +539,11 @@ Status CopyTensorValue(const std::shared_ptr<Tensor> &source_tensor, std::shared
       "CutMixBatch: CopyTensorValue failed: "
       "source and destination tensor must have the same type.");
   if (source_tensor->type() == DataType::DE_UINT8) {
-    uint8_t pixel_value;
+    uint8_t pixel_value = 0;
     RETURN_IF_NOT_OK(source_tensor->GetItemAt(&pixel_value, source_indx));
     RETURN_IF_NOT_OK((*dest_tensor)->SetItemAt(dest_indx, pixel_value));
   } else if (source_tensor->type() == DataType::DE_FLOAT32) {
-    float pixel_value;
+    float pixel_value = 0;
     RETURN_IF_NOT_OK(source_tensor->GetItemAt(&pixel_value, source_indx));
     RETURN_IF_NOT_OK((*dest_tensor)->SetItemAt(dest_indx, pixel_value));
   } else {

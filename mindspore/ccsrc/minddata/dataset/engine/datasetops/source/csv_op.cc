@@ -177,6 +177,7 @@ int CsvOp::CsvParser::PutRow(int c) {
   Status s = rows_connector_->Add(worker_id_, std::move(cur_row_));
   if (s.IsError()) {
     err_message_ = s.ToString();
+    // if error type is interrupted, return error code -2
     if (s.StatusCode() == kMDInterrupted) return -2;
     return -1;
   }
@@ -475,6 +476,7 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
       int chr = ifs.get();
       int err = csv_parser.ProcessMessage(chr);
       if (err != 0) {
+        // if error code is -2, the returned error is interrupted
         if (err == -2) return Status(kMDInterrupted);
         RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse file: " + file + ": line " +
                                  std::to_string(csv_parser.GetTotalRows() + 1) +

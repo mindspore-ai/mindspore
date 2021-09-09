@@ -30,9 +30,6 @@ Status TreeAdapterLite::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir,
 
   (*op) = ops.front();  // return the first op to be added as child by the caller of this function
 
-  if (op == NULL) {
-    return StatusCode::kLiteNullptr;
-  }
   for (size_t i = 0; i < ops.size(); i++) {
     RETURN_IF_NOT_OK(tree_->AssociateNode(ops[i]));
     if (i > 0) {

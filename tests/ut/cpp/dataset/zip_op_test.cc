@@ -75,7 +75,7 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
   EXPECT_TRUE(rc.IsOk());
 
   // Creating DatasetOp
-  std::shared_ptr<ZipOp> zip_op = std::make_shared<ZipOp>(op_connector_size);
+  std::shared_ptr<ZipOp> zip_op = std::make_shared<ZipOp>();
 
   rc = my_tree->AssociateNode(zip_op);
   EXPECT_TRUE(rc.IsOk());
@@ -159,7 +159,7 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
   rc = my_tree->AssociateNode(my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
   // Creating DatasetOp
-  std::shared_ptr<ZipOp> zip_op = std::make_shared<ZipOp>(op_connector_size);
+  std::shared_ptr<ZipOp> zip_op = std::make_shared<ZipOp>();
   rc = my_tree->AssociateNode(zip_op);
   EXPECT_TRUE(rc.IsOk());
   my_tfreader_op->set_total_repeats(num_repeats);
