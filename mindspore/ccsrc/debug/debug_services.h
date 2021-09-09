@@ -128,14 +128,14 @@ class DebugServices {
 
     std::string FindQualifiedTensorName(const std::string &tensor_name, unsigned const int &tensor_device_id,
                                         unsigned const int &tensor_root_graph_id) const {
-      std::string node_name = tensor_name.substr(0, tensor_name.find_first_of(':'));
       int indx = 0;
       for (auto check_node : check_node_list) {
         std::string w_name = std::get<0>(check_node);
         bool w_type = std::get<1>(check_node);
         auto found = w_name.find_last_of('/');
         bool check_tensor_name = found != std::string::npos && w_name.substr(found + 1) == tensor_name;
-        bool check_node_name = (w_type && (node_name == w_name || w_name == "*")) || (!w_type && node_name == w_name);
+        bool check_node_name =
+          (w_type && (tensor_name == w_name || w_name == "*")) || (!w_type && tensor_name == w_name);
         if (check_tensor_name || check_node_name) {
           auto device_vec = std::get<1>(check_node_device_list[indx]);
           auto root_graph_vec = std::get<1>(check_node_graph_list[indx]);
