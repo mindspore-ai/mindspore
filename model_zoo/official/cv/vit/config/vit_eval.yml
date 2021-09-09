@@ -1,0 +1,20 @@
+enable_modelarts: 0
+
+# eval datasets
+interpolation: 'BILINEAR'
+eval_path: '/opt/npu/datasets/imagenet/val'
+eval_image_size: 224
+eval_batch_size: 256
+eval_interval: 1
+eval_offset: -1
+eval_num_workers: 12
+
+# load model
+pretrained: '../vit_base_patch32.ckpt'
+
+# network
+backbone: 'vit_base_patch32'
+class_num: 1001
+vit_config_path: 'src.vit.VitConfig'
+
+open_profiler: 0
