@@ -18,10 +18,8 @@
 #include "runtime/device/ascend/ascend_memory_pool.h"
 #include "utils/ms_context.h"
 #include "runtime/mem.h"
-#include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "profiler/device/common/memory_profiling.h"
 
-using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::MemoryProfiling;
 
 namespace mindspore {

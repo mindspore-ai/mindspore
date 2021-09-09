@@ -26,7 +26,6 @@
 #include "utils/ms_context.h"
 #include "utils/context/context_extends.h"
 #include "utils/mpi/mpi_config.h"
-#include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "common/trans.h"
 #include "runtime/rt.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
@@ -34,7 +33,10 @@
 #include "runtime/device/ascend/tasksink/task_generator.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_build_client.h"
+#ifndef ENABLE_SECURITY
+#include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
+#endif
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "runtime/device/ascend/ascend_event.h"
 #include "debug/data_dump/dump_json_parser.h"
@@ -65,8 +67,10 @@ using mindspore::dataset::TdtHandle;
 
 #include "backend/session/pynative_task_manager.h"
 
+#ifndef ENABLE_SECURITY
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
+#endif
 using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::ge::model_runner::ModelRunner;
 using mindspore::kernel::tbe::TbeUtils;
@@ -142,6 +146,7 @@ void AscendKernelRuntime::SetCurrentContext() {
 
 void AscendKernelRuntime::ClearGraphModelMap() {
   SetCurrentContext();
+#ifndef ENABLE_SECURITY
   for (auto &iter : graph_data_dumper_) {
     MS_LOG(INFO) << "[DataDump] Unload data dumper:" << iter.first;
     auto &data_dumper = iter.second;
@@ -152,6 +157,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
   graph_data_dumper_.clear();
   // tell users which dump kernel name not used
   DumpJsonParser::GetInstance().PrintUnusedKernel();
+#endif
 
   graph_dynamic_kernel_map_.clear();
   graph_kernel_events_map_.clear();
@@ -164,6 +170,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   SetCurrentContext();
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " data dumper";
+#ifndef ENABLE_SECURITY
   if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
     MS_LOG(DEBUG) << "Unload dump info " << graph_id;
     auto &data_dumper = dumper_iter->second;
@@ -174,6 +181,7 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   } else {
     MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
   }
+#endif
 
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " dynamic kernels";
   if (auto dynamic_kernel_iter = graph_dynamic_kernel_map_.find(graph_id);
@@ -220,6 +228,7 @@ void AsyncDataDumpUninit() {
   }
 }
 
+#ifndef ENABLE_SECURITY
 void AscendKernelRuntime::ReportProfilingData() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -230,6 +239,7 @@ void AscendKernelRuntime::ReportProfilingData() {
     reporter.ReportData();
   }
 }
+#endif
 
 void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_LOG(INFO) << "Ascend finalize start";
@@ -246,7 +256,9 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     return;
   }
   SetCurrentContext();
+#ifndef ENABLE_SECURITY
   ReportProfilingData();
+#endif
   // release ge runtime
   ClearGraphModelMap();
 
@@ -268,7 +280,9 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   }
 
   (void)ResetDevice(device_id);
+#ifndef ENABLE_SECURITY
   (void)ProfilingManager::GetInstance().StopProfiling();
+#endif
   current_graph_ = nullptr;
   if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
       !context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
@@ -277,6 +291,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_LOG(INFO) << "Ascend finalize end";
 }
 
+#ifndef ENABLE_SECURITY
 void AscendKernelRuntime::PreInit() {
   const auto error_manager_ret = ErrorManager::GetInstance().Init();
   if (error_manager_ret != 0) {
@@ -291,6 +306,7 @@ void AscendKernelRuntime::PreInit() {
     MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
   }
 }
+#endif
 
 uint32_t AscendKernelRuntime::GetRankId() {
   uint32_t rank_id;
@@ -514,9 +530,11 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "LoadDavinciModel mode_id:" << model_iter->first;
   ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first, model_iter->second);
 
+#ifndef ENABLE_SECURITY
   std::function<void *()> model_handle =
     std::bind(&ModelRunner::GetModelHandle, &ModelRunner::Instance(), model_iter->first);
   DistributeDebugTask(NOT_NULL(graph), NOT_NULL(model_handle));
+#endif
 
   try {
     ModelRunner::Instance().DistributeTask(model_iter->first);
@@ -527,18 +545,20 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
     MS_LOG(EXCEPTION) << "Distribute Task Failed, error: " << e.what();
   }
 
+#ifndef ENABLE_SECURITY
   if (ProfilingManager::GetInstance().IsProfiling()) {
     auto task_ids = ModelRunner::Instance().GetTaskIdList(model_iter->first);
     auto stream_ids = ModelRunner::Instance().GetStreamIdList(model_iter->first);
     ProfilingUtils::ReportProfilingData(task_ids, stream_ids, *graph);
   }
-
   LaunchDataDump(graph->graph_id());
+#endif
 
   ModelRunner::Instance().LoadModelComplete(model_iter->first);
   return true;
 }
 
+#ifndef ENABLE_SECURITY
 void AscendKernelRuntime::DistributeDebugTask(NotNull<const session::KernelGraph *> graph,
                                               const NotNull<std::function<void *()>> &model_handle) {
   if (!DumpJsonParser::GetInstance().async_dump_enabled()) {
@@ -553,6 +573,7 @@ void AscendKernelRuntime::DistributeDebugTask(NotNull<const session::KernelGraph
     MS_LOG(WARNING) << "[DataDump] Insert graphId:" << graph->graph_id() << " data dumper failed";
   }
 }
+#endif
 
 void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
   if (!DumpJsonParser::GetInstance().async_dump_enabled()) {

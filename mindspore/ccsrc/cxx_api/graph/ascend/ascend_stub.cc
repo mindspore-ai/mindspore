@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef ENABLE_SECURITY
 #include "runtime/device/ascend/profiling/profiling_callback_register.h"
 
 VMCallbackRegister &VMCallbackRegister::GetInstance() {
@@ -28,3 +30,4 @@ bool VMCallbackRegister::Register(Status (*pRegProfCtrlCallback)(MsprofCtrlCallb
 }
 
 void VMCallbackRegister::ForceMsprofilerInit() {}
+#endif

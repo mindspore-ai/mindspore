@@ -83,7 +83,9 @@
 #include "runtime/device/ascend/ascend_bucket.h"
 #include "profiler/device/common/memory_profiling.h"
 
+#ifndef ENABLE_SECURITY
 using mindspore::device::ascend::ProfilingManager;
+#endif
 using mindspore::profiler::MemoryProfiling;
 
 namespace mindspore {
@@ -469,8 +471,10 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 #endif
   // assign stream
   AssignStream(NOT_NULL(root_graph));
+#ifndef ENABLE_SECURITY
   // insert profiling point
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(root_graph.get()));
+#endif
   device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(root_graph));
   // build kernel
   BuildKernel(root_graph);
@@ -541,8 +545,9 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
 #endif
   // Assign streams for control sink and hccl and so on
   AssignStream(NOT_NULL(graph));
-
+#ifndef ENABLE_SECURITY
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
+#endif
   device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(graph));
   // build kernel if node is cnode
   BuildKernel(graph);

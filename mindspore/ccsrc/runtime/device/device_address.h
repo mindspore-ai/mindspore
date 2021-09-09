@@ -38,7 +38,9 @@ class CPUDeviceContext;
 namespace ascend {
 class AscendKernelRuntime;
 class AscendMemoryManager;
+#ifndef ENABLE_SECURITY
 class DataDumper;
+#endif
 namespace tasksink {
 class TaskGenerator;
 }  // namespace tasksink
@@ -122,7 +124,9 @@ class DeviceAddress : public mindspore::DeviceSync {
   friend class mindspore::device::gpu::GPUDeviceContext;
   friend class mindspore::device::ascend::AscendKernelRuntime;
   friend class mindspore::device::ascend::AscendMemoryManager;
+#ifndef ENABLE_SECURITY
   friend class mindspore::device::ascend::DataDumper;
+#endif
   friend class mindspore::device::Bucket;
 };
 

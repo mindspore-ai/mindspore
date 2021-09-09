@@ -91,7 +91,9 @@ using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 
 #ifdef ENABLE_D
+#ifndef ENABLE_SECURITY
 using mindspore::device::ascend::ProfilingManager;
+#endif
 using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 #endif
 
@@ -1275,7 +1277,9 @@ void InitHccl() {
       ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_name, device_id);
     MS_EXCEPTION_IF_NULL(runtime_instance);
+#ifndef ENABLE_SECURITY
     runtime_instance->PreInit();
+#endif
     (void)context::OpenTsd(ms_context);
     if (!runtime_instance->Init()) {
       MS_LOG(EXCEPTION) << "Runtime init failed.";
@@ -1285,9 +1289,11 @@ void InitHccl() {
   }
 #endif
 #if (defined ENABLE_D)
+#ifndef ENABLE_SECURITY
   if (!ProfilingManager::GetInstance().IsProfiling()) {
     ProfilingManager::GetInstance().SetHcclEnabledBefProfilingEnabled();
   }
+#endif
 #endif
 }
 
@@ -1355,6 +1361,7 @@ void ReleaseGeTsd() {
   }
 }
 
+#ifndef ENABLE_SECURITY
 void StartUpProfiling() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1372,12 +1379,15 @@ void StartUpProfiling() {
     runtime_instance->PreInit();
   }
 }
+#endif
 
 void InitPipeline() {
   // set python env flag
   mindspore::parse::python_adapter::set_python_env_flag(true);
+#ifndef ENABLE_SECURITY
   // Startup profiling before open tsd
   StartUpProfiling();
+#endif
   // open tsd before ge initialize
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

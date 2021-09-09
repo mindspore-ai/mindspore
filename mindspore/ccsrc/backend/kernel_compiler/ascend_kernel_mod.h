@@ -33,9 +33,13 @@ class AscendKernelMod : public KernelMod {
   uint32_t block_dim() { return block_dim_; }
   uint32_t stream_id() { return stream_id_; }
   virtual bool NeedDump() {
+#ifndef ENABLE_SECURITY
     const auto &dump_json = DumpJsonParser::GetInstance();
     return dump_json.NeedDump(fullname_) && dump_json.async_dump_enabled() && dump_json.op_debug_mode() == 0 &&
            !is_monad_;
+#else
+    return false;
+#endif
   }
   void SetStream(void *stream) { stream_ = stream; }
   void *GetStream() { return stream_; }

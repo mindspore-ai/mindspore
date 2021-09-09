@@ -88,6 +88,10 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/fl/push_metrics_kernel.cc")
 endif()
 
+if(ENABLE_SECURITY)
+    list(REMOVE_ITEM D_SRC_LIST "rts/profiling_kernel_mod.cc")
+endif()
+
 if(ENABLE_GPU)
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "gpu/*.cu"
