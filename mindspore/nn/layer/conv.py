@@ -49,8 +49,8 @@ class _Conv(Cell):
                  transposed=False):
         """Initialize _Conv."""
         super(_Conv, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels, 'in_channels', self.cls_name)
+        self.out_channels = Validator.check_positive_int(out_channels, 'out_channels', self.cls_name)
         self.kernel_size = kernel_size
         self.stride = stride
         self.pad_mode = pad_mode

@@ -28,6 +28,7 @@ roi_align_grad_op_info = TBERegOp("ROIAlignGrad") \
     .attr("pooled_height", "required", "int", "all") \
     .attr("spatial_scale", "required", "float", "all") \
     .attr("sample_num", "optional", "int", "all") \
+    .attr("roi_end_mode", "optional", "int", "0,1,2", "1") \
     .input(0, "ydiff", False, "required", "all") \
     .input(1, "rois", False, "required", "all") \
     .input(2, "rois_n", False, "optional", "all") \
