@@ -14,19 +14,20 @@
 # ============================================================================
 """Data operations, will be used in train.py and eval.py"""
 import os
-from src.config import config
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.vision.c_transforms as C
-from mindspore.communication.management import get_rank, get_group_size
 
 
-def create_dataset(dataset_path, do_train, target="Ascend"):
+def create_dataset(dataset_path, do_train, repeat_num=1, infer_910=True, device_id=0, batch_size=128):
     """
     create a train or eval dataset
 
     Args:
+        batch_size:
+        device_id:
+        infer_910:
         dataset_path(string): the path of dataset.
         do_train(bool): whether dataset is used for train or eval.
         rank (int): The shard ID within num_shards (default=None).
@@ -36,12 +37,16 @@ def create_dataset(dataset_path, do_train, target="Ascend"):
     Returns:
         dataset
     """
+    device_num = 1
+    device_id = device_id
+    if infer_910:
+        device_id = int(os.getenv('DEVICE_ID'))
+        device_num = int(os.getenv('RANK_SIZE'))
+
     if not do_train:
         dataset_path = os.path.join(dataset_path, 'val')
     else:
         dataset_path = os.path.join(dataset_path, 'train')
-    if target == "Ascend":
-        device_num, rank_id = _get_rank_info()
 
     if device_num == 1:
         ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
@@ -74,21 +79,5 @@ def create_dataset(dataset_path, do_train, target="Ascend"):
     ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=8)
 
     # apply batch operations
-    ds = ds.batch(config.batch_size, drop_remainder=True)
+    ds = ds.batch(batch_size, drop_remainder=True)
     return ds
-
-
-def _get_rank_info():
-    """
-    get rank size and rank id
-    """
-    rank_size = int(os.environ.get("RANK_SIZE", 1))
-
-    if rank_size > 1:
-        rank_size = get_group_size()
-        rank_id = get_rank()
-    else:
-        rank_size = 1
-        rank_id = 0
-
-    return rank_size, rank_id
