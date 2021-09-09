@@ -688,6 +688,7 @@ int LiteSession::Init(const Context *context) {
       MS_LOG(ERROR) << "New delegate_ failed";
       return RET_ERROR;
     }
+    this->context_->delegate = delegate_;
   }
 #endif
 #if GPU_TENSORRT
@@ -697,6 +698,7 @@ int LiteSession::Init(const Context *context) {
       MS_LOG(ERROR) << "New tensorrt delegate_ failed";
       return RET_ERROR;
     }
+    this->context_->delegate = delegate_;
   }
 #endif
   if (delegate_ != nullptr) {

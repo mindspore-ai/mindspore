@@ -42,6 +42,7 @@ InnerContext::InnerContext(const Context *context) {
 #else
   device_and_pkg_support_fp16_ = false;
 #endif
+  this->delegate = context->delegate;
 }
 
 void InnerContext::SetContextDevice(const Context *context) {

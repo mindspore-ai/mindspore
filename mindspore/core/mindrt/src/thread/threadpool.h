@@ -29,6 +29,8 @@
 
 namespace mindspore {
 constexpr int kDefaultSpinCount = 300000;
+constexpr int kMaxCount = 30000;
+constexpr int kMinSpinCount = 1;
 constexpr int kDefaultFrequency = 1;
 constexpr float kMaxScale = 1.;
 
@@ -59,6 +61,8 @@ class Worker {
   void CreateThread();
   // assign task and then activate thread
   void Active(Task *task, int task_id);
+  // activate thread
+  void Active();
   // whether or not it is idle and marked as held
   bool available();
   // assigns task first before running
@@ -101,7 +105,7 @@ class Worker {
   float rhs_scale_{kMaxScale};
   int frequency_{kDefaultFrequency};
   int spin_count_{0};
-  int max_spin_count_{kDefaultSpinCount};
+  int max_spin_count_{kMinSpinCount};
 };
 
 class ThreadPool {
@@ -116,7 +120,7 @@ class ThreadPool {
   int SetProcessAffinity(BindMode bind_mode) const;
 
   int ParallelLaunch(const Func &func, Content content, int task_num) const;
-  int SetMaxSpinCount(int max_spin_count);
+  void SetMaxSpinCount(int max_spin_count);
 
  protected:
   ThreadPool() = default;
