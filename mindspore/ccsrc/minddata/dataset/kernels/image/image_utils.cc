@@ -480,15 +480,17 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, ConvertMode convert_mode) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    int num_channels = input_cv->shape()[CHANNEL_INDEX];
-    if (input_cv->Rank() != DEFAULT_IMAGE_RANK) {
+    if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != 2) {
       RETURN_STATUS_UNEXPECTED("ConvertColor: invalid image Shape, only support <H,W,C> or <H,W>");
     }
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("ConvertColor: load image failed.");
     }
-    if (num_channels != 1 && num_channels != 3 && num_channels != 4) {
-      RETURN_STATUS_UNEXPECTED("ConvertColor: number of channels of image should be 1, 3, 4");
+    if (input_cv->Rank() == 3) {
+      int num_channels = input_cv->shape()[CHANNEL_INDEX];
+      if (num_channels != 3 && num_channels != 4) {
+        RETURN_STATUS_UNEXPECTED("ConvertColor: number of channels of image should be 3, 4");
+      }
     }
     std::vector<dsize_t> node;
     RETURN_IF_NOT_OK(GetConvertShape(convert_mode, input_cv, &node));
