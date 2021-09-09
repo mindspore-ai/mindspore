@@ -380,8 +380,8 @@ class RNN(_RNNBase):
         nonlinearity (str): The non-linearity to use. Can be either ``'tanh'`` or ``'relu'``. Default: ``'tanh'``
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: False.
-        dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
-            RNN layer except the last layer. Default 0. The range of dropout is [0.0, 1.0).
+        dropout (float): If not 0.0, append `Dropout` layer on the outputs of each
+            RNN layer except the last layer. Default 0.0. The range of dropout is [0.0, 1.0).
         bidirectional (bool): Specifies whether it is a bidirectional RNN,
             num_directions=2 if bidirectional=True otherwise 1. Default: False.
 
@@ -469,8 +469,8 @@ class GRU(_RNNBase):
         num_layers (int): Number of layers of stacked GRU. Default: 1.
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: False.
-        dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
-            GRU layer except the last layer. Default 0. The range of dropout is [0.0, 1.0).
+        dropout (float): If not 0.0, append `Dropout` layer on the outputs of each
+            GRU layer except the last layer. Default 0.0. The range of dropout is [0.0, 1.0).
         bidirectional (bool): Specifies whether it is a bidirectional GRU,
             num_directions=2 if bidirectional=True otherwise 1. Default: False.
 
@@ -561,7 +561,7 @@ class RNNCell(_RNNCellBase):
         - **h'** (Tensor) - Tensor of shape (batch_size, `hidden_size`).
 
     Raises:
-        TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
+        TypeError: If `input_size`, `hidden_size` is not an int.
         TypeError: If `has_bias` is not a bool.
         ValueError: If `nonlinearity` is not in ['tanh', 'relu'].
 
@@ -586,11 +586,16 @@ class RNNCell(_RNNCellBase):
             raise ValueError("Unknown nonlinearity: {}".format(nonlinearity))
         self.nonlinearity = nonlinearity
 
-    def construct(self, inputs, hx):
+    def construct(self, x, hx):
+        x_dtype = P.dtype(x)
+        hx_dtype = P.dtype(hx)
+        _check_input_dtype(x_dtype, "x", [mstype.float32], self.cls_name)
+        _check_input_dtype(hx_dtype, "hx", [mstype.float32], self.cls_name)
+
         if self.nonlinearity == "tanh":
-            ret = _rnn_tanh_cell(inputs, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
+            ret = _rnn_tanh_cell(x, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
         else:
-            ret = _rnn_relu_cell(inputs, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
+            ret = _rnn_relu_cell(x, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
         return ret
 
 class GRUCell(_RNNCellBase):
@@ -647,5 +652,10 @@ class GRUCell(_RNNCellBase):
     def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True):
         super().__init__(input_size, hidden_size, has_bias, num_chunks=3)
 
-    def construct(self, inputs, hx):
-        return _gru_cell(inputs, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
+    def construct(self, x, hx):
+        x_dtype = P.dtype(x)
+        hx_dtype = P.dtype(hx)
+        _check_input_dtype(x_dtype, "x", [mstype.float32], self.cls_name)
+        _check_input_dtype(hx_dtype, "hx", [mstype.float32], self.cls_name)
+
+        return _gru_cell(x, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
