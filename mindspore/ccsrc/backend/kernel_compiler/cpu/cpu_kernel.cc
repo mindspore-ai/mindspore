@@ -375,5 +375,19 @@ std::vector<size_t> CPUKernelUtils::GetBroadcastShape(const std::vector<size_t> 
   }
   return broadcast_shape;
 }
+
+void AxisIterator::Init(const std::vector<size_t> &input_shape, size_t axis) {
+  outer_size_ = 1;
+  for (size_t i = 0; i < axis; i++) {
+    outer_size_ *= input_shape[i];
+  }
+
+  axis_size_ = input_shape[axis];
+
+  inner_size_ = 1;
+  for (size_t i = axis + 1; i < input_shape.size(); ++i) {
+    inner_size_ *= input_shape[i];
+  }
+}
 }  // namespace kernel
 }  // namespace mindspore
