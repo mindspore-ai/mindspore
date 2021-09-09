@@ -366,6 +366,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   GradExecutorPtr grad_executor() const;
   ForwardExecutorPtr forward_executor() const;
 
+  bool grad_flag() const;
   void set_grad_flag(bool flag);
   void set_graph_phase(const std::string &graph_phase);
   void set_py_exe_path(const py::object &py_exe_path);

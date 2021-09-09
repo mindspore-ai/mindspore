@@ -157,6 +157,8 @@ class _MindsporeFunctionExecutor:
         dic = dict(zip(arg_names, args_list))
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
             str(self.fn.__code__.co_firstlineno) + '.' + str(id(self.fn))
+        if _pynative_executor.grad_flag():
+            generate_name = generate_name + ".grad"
         self.fn.__parse_method__ = method_name
 
         # Add key with obj
@@ -397,6 +399,9 @@ class _PynativeExecutor:
 
     def set_graph_phase(self, phase):
         self._executor.set_graph_phase(phase)
+
+    def grad_flag(self):
+        return self._executor.grad_flag()
 
     def set_grad_flag(self, flag):
         self._executor.set_grad_flag(flag)

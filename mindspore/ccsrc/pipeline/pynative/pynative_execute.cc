@@ -3006,6 +3006,8 @@ ForwardExecutorPtr PynativeExecutor::forward_executor() const {
   return forward_executor_;
 }
 
+bool PynativeExecutor::grad_flag() const { return grad_executor()->grad_flag(); }
+
 void PynativeExecutor::set_grad_flag(bool flag) { grad_executor()->set_grad_flag(flag); }
 
 void PynativeExecutor::set_graph_phase(const std::string &graph_phase) {
@@ -3140,6 +3142,7 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("execute_all_task", &PynativeExecutor::ExecuteAllTask, "clear all task")
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
                            .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")
+                           .def("grad_flag", &PynativeExecutor::grad_flag, "pynative grad flag")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
                                 "Executor set grad flag.")
                            .def("set_py_exe_path", &PynativeExecutor::set_py_exe_path,
