@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/resource.h"
 #include "frontend/optimizer/ad/adjoint.h"
+#include "frontend/optimizer/ad/pynative_dfunctor.h"
 #include "frontend/operator/ops.h"
 #include "debug/trace.h"
 #include "utils/utils.h"
@@ -65,6 +66,8 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
 
   // Clear resources.
   static void Clear();
+
+  friend class PynativeDFunctor;
 
  private:
   // Map one morphism.
