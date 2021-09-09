@@ -25,9 +25,11 @@
 namespace mindspore {
 class AnfUtils {
  public:
+  static bool IsDimUnknown(const abstract::ShapePtr &shape);
   static bool IsShapeDynamic(const abstract::ShapePtr &shape);
   static bool IsShapeDynamic(const std::vector<size_t> &shape);
   static bool IsNodeOutputDynamicShape(const CNodePtr &node);
+  static bool IsDimUnknown(const AnfNodePtr &node);
 };
 }  // namespace mindspore
 

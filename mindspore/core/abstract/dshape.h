@@ -47,6 +47,7 @@ class MS_CORE_API BaseShape : public Base {
   bool operator!=(const BaseShape &other) const;
   std::size_t hash() const override { return tid(); }
   virtual bool IsDynamic() const = 0;
+  virtual bool IsDimUnknown() const = 0;
 
   // return a deep copy
   virtual BaseShapePtr Clone() const = 0;
@@ -59,6 +60,7 @@ class MS_CORE_API NoShape : public BaseShape {
   BaseShapePtr Clone() const override { return std::make_shared<NoShape>(); }
   std::string ToString() const override { return type_name(); }
   bool IsDynamic() const override { return false; }
+  bool IsDimUnknown() const override { return false; }
 };
 
 inline const std::shared_ptr<NoShape> kNoShape = std::make_shared<NoShape>();
@@ -84,6 +86,9 @@ class MS_CORE_API Shape : public BaseShape {
   const ShapeVector &max_shape() { return max_shape_; }
   bool IsDynamic() const override {
     return std::any_of(shape_.begin(), shape_.end(), [](int64_t s) { return s < 0; });
+  }
+  bool IsDimUnknown() const override {
+    return std::any_of(shape_.begin(), shape_.end(), [](int64_t s) { return s < -1; });
   }
 
  private:
@@ -112,6 +117,9 @@ class MS_CORE_API SequeueShape : public BaseShape {
   const BaseShapePtr operator[](std::size_t dim) const { return p_shapes_[dim]; }
   bool IsDynamic() const override {
     return std::any_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDynamic(); });
+  }
+  bool IsDimUnknown() const override {
+    return std::any_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDimUnknown(); });
   }
 
  protected:
