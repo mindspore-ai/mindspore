@@ -48,10 +48,13 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   const auto kGatherV2 = prim::kPrimGatherV2->name();
   const auto kDynamicShape = prim::kPrimDynamicShape->name();
   const auto kRange = prim::kPrimRange->name();
+  const auto kConv2DBackpropFilter = prim::kPrimConv2DBackpropFilter->name();
+  const auto kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
   static std::map<std::string, std::vector<int64_t>> dynamic_shape_depends = {
     {kUnsortedSegmentSum, {2}}, {kUnsortedSegmentMin, {2}}, {kUnsortedSegmentMax, {2}}, {kGather, {2}},
-    {kGatherV2, {2}},           {kDynamicShape, {0}},       {kRange, {0, 1, 2}},
-  };
+    {kGatherV2, {2}},           {kDynamicShape, {0}},       {kRange, {0, 1, 2}},        {kConv2DBackpropFilter, {2}},
+    {kConv2DBackpropInput, {2}}};
+
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);

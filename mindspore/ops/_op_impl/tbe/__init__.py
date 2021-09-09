@@ -58,6 +58,8 @@ from .conv2d import _conv2d_tbe
 from .conv2d_backprop_filter import _conv2d_backprop_filter_tbe
 from .conv2d_backprop_input import _conv2d_backprop_input_tbe
 from .conv2d_ds import _conv2d_ds_tbe
+from .conv2d_backprop_filter_ds import _conv2d_backprop_filter_ds_tbe
+from .conv2d_backprop_input_ds import _conv2d_backprop_input_ds_tbe
 from .confusion_mul_grad import _confusion_mul_grad_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
 from .dropout_do_mask_ds import _dropout_do_mask_ds_tbe

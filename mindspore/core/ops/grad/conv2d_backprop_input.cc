@@ -25,6 +25,10 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr size_t DOUT_INDEX = 0;
+constexpr size_t X_INDEX = 1;
+constexpr size_t XSIZE_INDEX = 2;
+
 void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
                 const std::vector<int64_t> &x_size_v) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -48,14 +52,22 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
     auto kernel_w = kernel_size[1];
     auto dilation_h = dilation[2];
     auto dilation_w = dilation[3];
-    auto pad_needed_h = (dout_shape_norm[2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[2];
-    pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
-    auto pad_top = pad_needed_h / 2;
-    auto pad_bottom = pad_needed_h - pad_top;
-    auto pad_needed_w = (dout_shape_norm[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[3];
-    pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;
-    auto pad_left = pad_needed_w / 2;
-    auto pad_right = pad_needed_w - pad_left;
+    int64_t pad_top = abstract::Shape::SHP_ANY;
+    int64_t pad_bottom = abstract::Shape::SHP_ANY;
+    int64_t pad_left = abstract::Shape::SHP_ANY;
+    int64_t pad_right = abstract::Shape::SHP_ANY;
+    if (dout_shape_norm[2] != abstract::Shape::SHP_ANY && x_size_v[2] != abstract::Shape::SHP_ANY) {
+      auto pad_needed_h = (dout_shape_norm[2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[2];
+      pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
+      pad_top = pad_needed_h / 2;
+      pad_bottom = pad_needed_h - pad_top;
+    }
+    if (dout_shape_norm[3] != abstract::Shape::SHP_ANY && x_size_v[3] != abstract::Shape::SHP_ANY) {
+      auto pad_needed_w = (dout_shape_norm[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[3];
+      pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;
+      pad_left = pad_needed_w / 2;
+      pad_right = pad_needed_w - pad_left;
+    }
     pad_list = {pad_top, pad_bottom, pad_left, pad_right};
   } else if (pad_mode == PAD) {
     pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
@@ -67,14 +79,63 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_size_v = input_args[kInputIndex2]->BuildValue();
-  auto ret_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("x_size", x_size_v, prim_name);
-  auto dout_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  std::vector<int64_t> out_shape;
+  abstract::ShapePtr ret_shape;
+  auto input_size = input_args[XSIZE_INDEX];
+  auto input_size_v = input_size->BuildValue();
+  MS_EXCEPTION_IF_NULL(input_size_v);
+
+  if (input_size->isa<abstract::AbstractTensor>()) {
+    if (input_size_v->isa<tensor::Tensor>()) {
+      out_shape = CheckAndConvertUtils::CheckTensorIntValue("input x size", input_size_v, prim_name);
+      ret_shape = std::make_shared<abstract::Shape>(out_shape);
+    } else {
+      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, XSIZE_INDEX);
+      MS_EXCEPTION_IF_NULL(shape_ptr);
+      auto shape_shape = shape_ptr->shape();
+      if (shape_shape.size() != 1) {
+        MS_LOG(EXCEPTION) << "The " << prim_name << "'s x size must be 1-D.";
+      }
+
+      auto abstract_tensor = input_size->cast<abstract::AbstractTensorPtr>();
+      MS_EXCEPTION_IF_NULL(abstract_tensor);
+      auto shape_max_value = abstract_tensor->get_max_value();
+      auto shape_min_value = abstract_tensor->get_min_value();
+
+      if (shape_max_value == nullptr && shape_min_value == nullptr) {
+        MS_LOG(EXCEPTION) << "Max_value or min value of x size can not be empty when its value is dynamic.";
+      }
+      auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
+      auto shape_min = GetValue<std::vector<int64_t>>(shape_min_value);
+
+      auto x_size_len = LongToSize(shape_shape[0]);
+      if (shape_max.size() != x_size_len || shape_min.size() != x_size_len) {
+        MS_LOG(EXCEPTION) << "For " << prim_name << ", x size's min or max value is valid.";
+      }
+
+      for (size_t i = 0; i < x_size_len; i++) {
+        if (shape_min[i] == shape_max[i]) {
+          out_shape.push_back(shape_min[i]);
+        } else {
+          out_shape.push_back(abstract::Shape::SHP_ANY);
+        }
+      }
+      ret_shape = std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
+    }
+  } else if (input_size->isa<abstract::AbstractTuple>()) {
+    // check tensor, tuple or int to raise error.
+    out_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("input x size", input_size_v, prim_name);
+    ret_shape = std::make_shared<abstract::Shape>(out_shape);
+  } else {
+    MS_EXCEPTION(TypeError) << "Conv2DBackpropInput x_size must be a tuple or tensor, but " << input_size->ToString();
+  }
+  auto dout_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[DOUT_INDEX]->BuildShape())[kShape];
+
   auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
   ShapeVector tmp_shape = {dout_shape[0], dout_shape[2], dout_shape[3], dout_shape[1]};
   auto dout_shape_norm = format == Format::NCHW ? dout_shape : tmp_shape;
-  SetPadList(primitive, dout_shape_norm, ret_shape);
-  return std::make_shared<abstract::Shape>(ret_shape);
+  SetPadList(primitive, dout_shape_norm, out_shape);
+  return ret_shape;
 }
 
 TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -82,8 +143,9 @@ TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector
   auto prim_name = prim->name();
   // check
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("doutput", input_args[0]->BuildType());
-  (void)types.emplace("w", input_args[1]->BuildType());
+  // todo: check input_sizes
+  (void)types.emplace("x", input_args[X_INDEX]->BuildType());
+  (void)types.emplace("doutput", input_args[DOUT_INDEX]->BuildType());
   std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }

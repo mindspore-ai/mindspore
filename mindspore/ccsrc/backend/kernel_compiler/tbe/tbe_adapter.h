@@ -26,6 +26,7 @@
 #include "base/base.h"
 #include "backend/kernel_compiler/oplib/opinfo.h"
 #include "backend/kernel_compiler/kernel_fusion.h"
+#include "backend/session/anf_runtime_algorithm.h"
 // Note: This file is mainly used to adapt the ME front-end operator description and
 //       the TBE back-end operator implementation difference
 namespace mindspore {
@@ -60,9 +61,13 @@ class TbeAdapter {
   TbeAdapter() = default;
   ~TbeAdapter() = default;
   template <typename T>
-  static void InputOrderPass(const std::string &op_name, std::vector<T> const &inputs_list,
+  static void InputOrderPass(const std::shared_ptr<AnfNode> &anf_node, std::vector<T> const &inputs_list,
                              std::vector<T> *inputs_json) {
     MS_EXCEPTION_IF_NULL(inputs_json);
+    if (DynamicInputAdjusted(anf_node, inputs_list, inputs_json)) {
+      return;
+    }
+    auto op_name = AnfAlgo::GetCNodeName(anf_node);
     if (input_order_adjusted_ops_.find(op_name) == input_order_adjusted_ops_.end()) {
       (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
     } else {
@@ -95,12 +100,40 @@ class TbeAdapter {
     }
   }
 
+  template <typename T>
+  static bool DynamicInputAdjusted(const std::shared_ptr<AnfNode> &anf_node, std::vector<T> const &inputs_list,
+                                   std::vector<T> *inputs_json) {
+    if (!AnfAlgo::IsNodeDynamicShape(anf_node) && !AnfAlgo::IsDynamicShape(anf_node)) {
+      return false;
+    }
+    auto op_name = AnfAlgo::GetCNodeName(anf_node);
+    if (op_name == kConv2DBackpropInputOpName) {
+      // process dynamic Conv2DBackpropInput, tbe kernel input is x, input_size and dout
+      inputs_json->push_back(inputs_list[kIndex2]);
+      inputs_json->push_back(inputs_list[kIndex1]);
+      inputs_json->push_back(inputs_list[kIndex0]);
+      return true;
+    }
+    if (op_name == kConv2DBackpropFilterOpName) {
+      // process dynamic Conv2DBackpropFilter, tbe kernel input is filter_size, x and dout
+      inputs_json->push_back(inputs_list[kIndex1]);
+      inputs_json->push_back(inputs_list[kIndex2]);
+      inputs_json->push_back(inputs_list[kIndex0]);
+      return true;
+    }
+    return false;
+  }
+
   // TODO(xxx): delete
   //  FusionInputOrderPass/InputOrderPass/FusionDataOrderPass/GenTopKV2IndicesTensorInfo/GetNodeFusionType
-  static void FusionInputOrderPass(const std::string &op_name, const std::vector<nlohmann::json> &inputs_list,
+  static void FusionInputOrderPass(const std::shared_ptr<AnfNode> &anf_node,
+                                   const std::vector<nlohmann::json> &inputs_list,
                                    std::vector<nlohmann::json> *inputs_json);
-  static void InputOrderPass(const std::string &op_name, std::vector<std::vector<nlohmann::json>> const &inputs_list,
-                             nlohmann::json *inputs_json);
+  static void InputOrderPass(const std::shared_ptr<AnfNode> &anf_node,
+                             std::vector<std::vector<nlohmann::json>> const &inputs_list, nlohmann::json *inputs_json);
+  static bool DynamicInputAdjusted(const std::shared_ptr<AnfNode> &anf_node,
+                                   std::vector<std::vector<nlohmann::json>> const &inputs_list,
+                                   nlohmann::json *inputs_json);
   static void FusionDataOrderPass(const std::string &op_name, const std::vector<AnfNodePtr> &data_layer,
                                   std::vector<AnfNodePtr> *reorder_data_layer);
   static void GenTopKV2IndicesTensorInfo(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index,

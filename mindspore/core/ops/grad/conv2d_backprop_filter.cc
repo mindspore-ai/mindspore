@@ -24,14 +24,89 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr size_t DOUT_INDEX = 0;
+constexpr size_t X_INDEX = 1;
+constexpr size_t FILTERSIZE_INDEX = 2;
+constexpr size_t STRIDE_2D_SIZE = 2;
+constexpr size_t STRIDE_4D_SIZE = 4;
+
+void TransStrideTo4D(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  auto x_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, X_INDEX);
+  auto dout_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, DOUT_INDEX);
+
+  if (!x_shape->IsDynamic() && !dout_shape->IsDynamic()) {
+    return;
+  }
+  auto stride = primitive->GetAttr(kStride);
+  MS_EXCEPTION_IF_NULL(stride);
+  auto stride_value = GetValue<std::vector<int64_t>>(stride);
+  if (stride_value.size() == STRIDE_2D_SIZE) {
+    std::vector<int64_t> stride_value_4d(stride_value);
+    stride_value_4d.insert(stride_value_4d.begin(), 1);
+    stride_value_4d.insert(stride_value_4d.begin(), 1);
+    (void)primitive->set_attr(kStride, MakeValue(stride_value_4d));
+  }
+  return;
+}
+
 abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  // check
-  auto w_size_v = input_args[kInputIndex2]->BuildValue();
-  auto ret_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("w_size", w_size_v, prim_name);
-  return std::make_shared<abstract::Shape>(ret_shape);
+  std::vector<int64_t> out_shape;
+  abstract::ShapePtr ret_shape;
+  TransStrideTo4D(primitive, input_args);
+
+  auto filter_size = input_args[FILTERSIZE_INDEX];
+  auto filter_size_v = filter_size->BuildValue();
+  MS_EXCEPTION_IF_NULL(filter_size_v);
+
+  if (filter_size->isa<abstract::AbstractTensor>()) {
+    if (filter_size_v->isa<tensor::Tensor>()) {
+      out_shape = CheckAndConvertUtils::CheckTensorIntValue("filter size", filter_size_v, prim_name);
+      ret_shape = std::make_shared<abstract::Shape>(out_shape);
+    } else {
+      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, FILTERSIZE_INDEX);
+      MS_EXCEPTION_IF_NULL(shape_ptr);
+      auto shape_shape = shape_ptr->shape();
+      if (shape_shape.size() != 1) {
+        MS_LOG(EXCEPTION) << "The " << prim_name << "'s filter size must be 1-D.";
+      }
+
+      auto abstract_tensor = filter_size->cast<abstract::AbstractTensorPtr>();
+      MS_EXCEPTION_IF_NULL(abstract_tensor);
+      auto shape_max_value = abstract_tensor->get_max_value();
+      auto shape_min_value = abstract_tensor->get_min_value();
+
+      if (shape_max_value == nullptr && shape_min_value == nullptr) {
+        MS_LOG(EXCEPTION) << "Max_value or min value of filter size can not be empty when its value is dynamic.";
+      }
+      auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
+      auto shape_min = GetValue<std::vector<int64_t>>(shape_min_value);
+
+      auto filter_len = LongToSize(shape_shape[0]);
+      if (shape_max.size() != filter_len || shape_min.size() != filter_len) {
+        MS_LOG(EXCEPTION) << "For " << prim_name << ", filter size's min or max value is valid.";
+      }
+
+      for (size_t i = 0; i < filter_len; i++) {
+        if (shape_min[i] == shape_max[i]) {
+          out_shape.push_back(shape_min[i]);
+        } else {
+          out_shape.push_back(abstract::Shape::SHP_ANY);
+        }
+      }
+      ret_shape = std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
+    }
+  } else if (filter_size->isa<abstract::AbstractTuple>()) {
+    // check tensor, tuple or int to raise error.
+    out_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("filter_size", filter_size_v, prim_name);
+    ret_shape = std::make_shared<abstract::Shape>(out_shape);
+  } else {
+    MS_EXCEPTION(TypeError) << "Conv2DBackpropFilter filter_size must be a tuple or tensor, but "
+                            << filter_size->ToString();
+  }
+  return ret_shape;
 }
 
 TypePtr Conv2DBackpropFilterInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -39,8 +114,8 @@ TypePtr Conv2DBackpropFilterInferType(const PrimitivePtr &prim, const std::vecto
   auto prim_name = prim->name();
   // check
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("doutput", input_args[0]->BuildType());
-  (void)types.emplace("x", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[X_INDEX]->BuildType());
+  (void)types.emplace("doutput", input_args[DOUT_INDEX]->BuildType());
   std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }
@@ -55,7 +130,7 @@ void Conv2DBackpropFilter::Init(const int64_t out_channel, const std::vector<int
   set_pad_mode(pad_mode);
   set_pad_list(pad_list);
   set_mode(mode);
-  if (stride.size() == 4) {
+  if (stride.size() == STRIDE_4D_SIZE) {
     set_stride({stride[2], stride[3]});
   } else {
     set_stride(stride);
