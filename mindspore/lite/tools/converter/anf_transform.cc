@@ -299,6 +299,7 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
+  convert_pm->AddPass(std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel));
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run graph convert pass failed.";

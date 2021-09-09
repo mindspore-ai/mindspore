@@ -77,8 +77,8 @@ Flags::Flags() {
           "characteristics of dynamic shape. "
           "e.g. \"inTensor1:1,32,32,32;inTensor2:1,1,32,32,4\"",
           "");
-  AddFlag(&Flags::graphInputFormatStr, "inputFormat",
-          "Assign the format of model inputs. Valid only for 4-dimensional input. NHWC | NCHW", "NHWC");
+  AddFlag(&Flags::graphInputFormatStr, "inputDataFormat",
+          "Assign the input format of exported model. Only Valid for 4-dimensional input. NHWC | NCHW", "NHWC");
 }
 
 int Flags::InitInputOutputDataType() {
