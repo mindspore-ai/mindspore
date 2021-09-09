@@ -62,10 +62,11 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
       MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
       return RET_ERROR;
     }
+    MS_LOG(WARNING) << "The maximum and minimum values are equal to 0.";
     quantParam->inited = true;
     quantParam->min = mMin;
     quantParam->max = mMax;
-    quantParam->scale = 0.0f;
+    quantParam->scale = 1;
     quantParam->zeroPoint = 0;
     quantParam->narrowRange = narrowRange;
     quantParam->numBits = num_bits;
