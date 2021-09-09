@@ -531,7 +531,7 @@ template <typename T, typename S>
 Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &shape, const int64_t num_of_elements,
                                    std::unique_ptr<T> *data, std::unique_ptr<std::vector<uint8_t>> *data_ptr,
                                    std::unique_ptr<S> *s, bool need_convert) {
-  RETURN_UNEXPECTED_IF_NULL(src);
+  // No need to check src since we support some scenarios that src is nullptr and num_of_elements is 0.
   RETURN_UNEXPECTED_IF_NULL(data);
   RETURN_UNEXPECTED_IF_NULL(data_ptr);
   RETURN_UNEXPECTED_IF_NULL(s);
