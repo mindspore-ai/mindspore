@@ -257,6 +257,28 @@ class FrequencyMasking final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief HighpassBiquad TensorTransform. Apply highpass biquad filter on audio.
+class HighpassBiquad final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+  /// \param[in] cutoff_freq Filter cutoff frequency (in Hz).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  HighpassBiquad(int32_t sample_rate, float cutoff_freq, float Q = 0.707);
+
+  /// \brief Destructor.
+  ~HighpassBiquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Design biquad lowpass filter and perform filtering. Similar to SoX implementation.
 class LowpassBiquad final : public TensorTransform {
  public:

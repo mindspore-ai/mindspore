@@ -26,6 +26,7 @@
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
+#include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -180,6 +181,21 @@ FrequencyMasking::FrequencyMasking(bool iid_masks, int32_t frequency_mask_param,
 std::shared_ptr<TensorOperation> FrequencyMasking::Parse() {
   return std::make_shared<FrequencyMaskingOperation>(data_->iid_masks_, data_->frequency_mask_param_,
                                                      data_->mask_start_, data_->mask_value_);
+}
+
+// HighpassBiquad Transform Operation.
+struct HighpassBiquad::Data {
+  Data(int32_t sample_rate, float cutoff_freq, float Q) : sample_rate_(sample_rate), cutoff_freq_(cutoff_freq), Q_(Q) {}
+  int32_t sample_rate_;
+  float cutoff_freq_;
+  float Q_;
+};
+
+HighpassBiquad::HighpassBiquad(int32_t sample_rate, float cutoff_freq, float Q)
+    : data_(std::make_shared<Data>(sample_rate, cutoff_freq, Q)) {}
+
+std::shared_ptr<TensorOperation> HighpassBiquad::Parse() {
+  return std::make_shared<HighpassBiquadOperation>(data_->sample_rate_, data_->cutoff_freq_, data_->Q_);
 }
 
 // LowpassBiquad Transform Operation.
