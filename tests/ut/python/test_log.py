@@ -165,7 +165,6 @@ def test_log_verify_envconfig():
     # path does not exist
     _rm_env_config()
     os.environ['GLOG_logtostderr'] = '0'
-    os.environ['GLOG_log_dir'] = '/test'
     verify_dict_4 = logger._get_env_config()
 
     # path is not configured
@@ -176,7 +175,6 @@ def test_log_verify_envconfig():
     # logger_maxBytes is not a number
     _rm_env_config()
     os.environ['GLOG_logtostderr'] = '0'
-    os.environ['GLOG_log_dir'] = '/tmp'
     os.environ['logger_maxBytes'] = 'test'
     os.environ['logger_backupCount'] = '10'
     verify_dict_6 = logger._get_env_config()
@@ -184,7 +182,6 @@ def test_log_verify_envconfig():
     # logger_maxBytes is a negative number
     _rm_env_config()
     os.environ['GLOG_logtostderr'] = '0'
-    os.environ['GLOG_log_dir'] = '/tmp'
     os.environ['logger_maxBytes'] = '-1'
     os.environ['logger_backupCount'] = '10'
     verify_dict_7 = logger._get_env_config()
@@ -192,7 +189,6 @@ def test_log_verify_envconfig():
     # logger_backupCount is not a number
     _rm_env_config()
     os.environ['GLOG_logtostderr'] = '0'
-    os.environ['GLOG_log_dir'] = '/tmp'
     os.environ['logger_maxBytes'] = '0'
     os.environ['logger_backupCount'] = 'test'
     verify_dict_8 = logger._get_env_config()
@@ -200,7 +196,6 @@ def test_log_verify_envconfig():
     # logger_backupCount is a negative number
     _rm_env_config()
     os.environ['GLOG_logtostderr'] = '0'
-    os.environ['GLOG_log_dir'] = '/tmp'
     os.environ['logger_maxBytes'] = '0'
     os.environ['logger_backupCount'] = '-1'
     verify_dict_9 = logger._get_env_config()
