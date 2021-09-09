@@ -115,7 +115,7 @@ class TbeJobManager:
             res = func(job)
             return res
         # pylint: disable=broad-except
-        except Exception:
+        except Exception as e:
             # pylint: disable=no-value-for-parameter
             sys_info = self._get_job_sys_info()
             job = TbeJob(-1, -1, "", None, job_str, sys_info) if job is None else job
@@ -124,6 +124,7 @@ class TbeJobManager:
             job.error("Process Job Failed")
             job.error("Job json string:\n{}\n".format(job_str))
             job.error("Error message:{}".format(traceback.format_exc()))
+            job.error_manager(e)
             return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
 
     def initialize_handler(self, job: TbeJob):
