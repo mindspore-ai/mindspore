@@ -184,7 +184,7 @@ bool Somas::SaveSomasResult(const session::KernelGraph *graph) {
   return true;
 }
 
-bool Somas::LoadSomasResult(const session::KernelGraph *graph, const string filename) {
+bool Somas::LoadSomasResult(const session::KernelGraph *graph, const string &filename) {
   if (filename.length() <= strlen(".json")) {
     MS_LOG(WARNING) << "please check somas cache file path.";
     return false;
@@ -812,6 +812,11 @@ void Somas::RefNodeProcess(const session::KernelGraph *graph) {
         if (AnfAlgo::IsRealCNodeKernel(origin_pair.first)) {
           auto ori_node = origin_pair.first->cast<CNodePtr>();
           auto ori_index = origin_pair.second;
+          if (nodes_map_.find(ori_node.get()) == nodes_map_.end()) {
+            MS_LOG(EXCEPTION)
+              << "The ori_node is not included in nodes_map_ constructed from exec_order of graph. Info ori_node: "
+              << ori_node->DebugString();
+          }
           auto &repeat_node = nodes_map_[ori_node.get()].at(0);
           MS_EXCEPTION_IF_NULL(repeat_node);
           auto input_tensor = repeat_node->output_tensors_[ori_index];
@@ -1078,7 +1083,8 @@ void Somas::ComputeMultiTensorConflicts(const std::vector<SomasTensorPtr> &calc_
   for (size_t i = 0; i < calc_tensors_list.size(); i++) {
     auto calc_tensor = calc_tensors_list[i];
     MS_EXCEPTION_IF_NULL(calc_tensor);
-    if (calc_tensor->IsLifelong() || calc_tensor->IsRefOverlap() || calc_tensor->GetAlignedSize() == 0) {
+    if (calc_tensor->IsLifelong() || calc_tensor->IsSemiLifelongEnd() || calc_tensor->IsRefOverlap() ||
+        calc_tensor->GetAlignedSize() == 0) {
       continue;
     }
 
@@ -1097,8 +1103,8 @@ void Somas::ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &calc_t
   for (size_t j = 0; j < all_tensors_list.size(); j++) {
     auto target_tensor = all_tensors_list[j];
     MS_EXCEPTION_IF_NULL(target_tensor);
-    if (calc_tensor == target_tensor || target_tensor->IsLifelong() || target_tensor->IsRefOverlap() ||
-        target_tensor->GetAlignedSize() == 0) {
+    if (calc_tensor == target_tensor || target_tensor->IsLifelong() || target_tensor->IsSemiLifelongStart() ||
+        target_tensor->IsRefOverlap() || target_tensor->GetAlignedSize() == 0) {
       continue;
     }
     size_t calc_src_node = calc_tensor->GetSourceNode()->GetId();
@@ -1738,7 +1744,7 @@ uint8_t *Somas::GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const {
     auto &somas_node = iter->second.at(0);
     MS_EXCEPTION_IF_NULL(somas_node);
     if (index >= somas_node->output_tensors_.size()) {
-      MS_LOG(EXCEPTION) << "index:[" << index << "] is larger than it's workspace size:["
+      MS_LOG(EXCEPTION) << "index:[" << index << "] is larger than it's output size:["
                         << somas_node->output_tensors_.size() << "]";
     }
     auto output_tensor = somas_node->output_tensors_[index];

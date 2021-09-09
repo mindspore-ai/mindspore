@@ -116,7 +116,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
         return FAILED;
       }
       auto start = std::chrono::system_clock::now();
-      for (size_t algorithm = 0, sol = 0; algorithm < kNumAlgorithmTypes; algorithm++) {
+      for (size_t algorithm_strategy = 0, sol = 0; algorithm_strategy < kNumAlgorithmTypes; algorithm_strategy++) {
         for (size_t sort_strategy = 0; sort_strategy < kNumSortingTypes; sort_strategy++) {
           for (size_t branching_strategy = 0; branching_strategy < kNumFittingTypes; branching_strategy++) {
             std::shared_ptr<SomasSolverCore> pSolver =
@@ -240,15 +240,6 @@ void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph, const Ten
     oss << "T " << t.second->index_ << " " << t.second->size_ << " " << t.second->lifelong_ << std::endl;
   }
 
-  for (auto &t1 : tensors) {
-    for (auto &t2 : tensors) {
-      size_t idx1 = t1.first;
-      size_t idx2 = t2.first;
-      if ((idx1 != idx2) && (*pConstraints)[idx1].IsBitTrue(idx2) == false) {
-        oss << "C " << idx1 << " " << idx2 << std::endl;
-      }
-    }
-  }
   for (auto &s : continuous_v) {
     oss << "S";
     for (auto idx : s) {
