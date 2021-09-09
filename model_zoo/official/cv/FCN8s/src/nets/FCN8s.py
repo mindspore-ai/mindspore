@@ -114,6 +114,8 @@ class FCN8s(nn.Cell):
                                            kernel_size=16, stride=8, weight_init='xavier_uniform')
         self.shape = P.Shape()
         self.cast = P.Cast()
+        self.add1 = P.Add()
+        self.add2 = P.Add()
 
     def set_model_parallel_shard_strategy(self, device_num):
         self.conv2d_strategy = ((1, 1, 1, device_num), (1, 1, 1, 1))
@@ -200,11 +202,11 @@ class FCN8s(nn.Cell):
         u2 = self.upscore2(sf)
 
         s4 = self.score_pool4(p4)
-        f4 = s4 + u2
+        f4 = self.add1(s4, u2)
         u4 = self.upscore_pool4(f4)
 
         s3 = self.score_pool3(p3)
-        f3 = s3 + u4
+        f3 = self.add2(s3, u4)
         out = self.upscore8(f3)
 
         return out
