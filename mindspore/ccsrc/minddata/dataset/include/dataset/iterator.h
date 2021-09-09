@@ -89,11 +89,13 @@ class Iterator {
   /// \brief Function to shut down the data pipeline.
   void Stop();
 
+  /// \brief Inter class as iterator of Iterator.
   class _Iterator {
    public:
+    /// \brief Constructor
     explicit _Iterator(Iterator *lt);
 
-    // Destructor
+    /// \brief Destructor
     ~_Iterator() {
       if (cur_row_ != nullptr) {
         delete cur_row_;
@@ -101,10 +103,16 @@ class Iterator {
       }
     }
 
-    _Iterator &operator++();                        // prefix ++ overload
-    MSTensorMap &operator*() { return *cur_row_; }  // dereference operator
+    /// \brief prefix ++ overload
+    _Iterator &operator++();
+
+    /// \brief dereference operator
+    MSTensorMap &operator*() { return *cur_row_; }
+
+    /// \brief dereference operator
     MSTensorMap *operator->() { return cur_row_; }
 
+    /// \brief bool operator
     bool operator!=(const _Iterator &rhs) { return cur_row_ != rhs.cur_row_; }
 
    private:
@@ -113,8 +121,10 @@ class Iterator {
     MSTensorMap *cur_row_;
   };
 
+  /// \brief Function to return the iterator points to the begin of Iterator.
   _Iterator begin() { return _Iterator(this); }
 
+  /// \brief Function to return the iterator points to the end of Iterator.
   _Iterator end() { return _Iterator(nullptr); }
 
  private:
@@ -137,8 +147,7 @@ class PullIterator : public Iterator {
   Status GetNextRow(MSTensorVec *const row) override;
 
   /// \brief Function to get specified rows from the data pipeline.
-  /// \note Type of return data is a vector(without column name).
-  /// \note This behavior is subject to change.
+  /// \note Type of return data is a vector(without column name). This behavior is subject to change.
   /// \param[in] num_rows The number of rows to fetch.
   /// \param[out] row The output tensor row.
   /// \return Status error code, returns OK if no error encountered else false.

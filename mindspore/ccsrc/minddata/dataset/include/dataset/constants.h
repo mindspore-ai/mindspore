@@ -181,9 +181,9 @@ enum class SamplingStrategy {
 
 /// \brief Possible values for output format in get all neighbors function of gnn dataset
 enum class OutputFormat {
-  kNormal = 0,  ///< Normal format>
-  kCoo = 1,     ///< COO format>
-  kCsr = 2      ///< CSR format>
+  kNormal = 0,  ///< Normal format.
+  kCoo = 1,     ///< COO format.
+  kCsr = 2      ///< CSR format.
 };
 
 // convenience functions for 32bit int bitmask
