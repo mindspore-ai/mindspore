@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/fp32/matmul_fp32.h"
 
 void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel) {
   PackNCHWToNHWCFp32(src, dst, 1, plane, channel, 0, 0);
@@ -106,22 +107,13 @@ void PackNHWCToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int 
     }
   }
 }
+
 void PackNCHWToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
     int src_offset = b * plane * channel;
     int dst_offset = b * plane * c4 * C4NUM;
-    for (int c = 0; c < channel; c++) {
-      int c4_block_num = c / C4NUM;
-      int c4_block_rem = c % C4NUM;
-      int src_c_offset = src_offset + c * plane;
-      int dst_c_offset = dst_offset + c4_block_num * plane * C4NUM;
-      for (int k = 0; k < plane; k++) {
-        int src_kernel_offset = src_c_offset + k;
-        int dst_kernel_offset = dst_c_offset + C4NUM * k + c4_block_rem;
-        ((float *)dst + dst_kernel_offset)[0] = ((float *)src + src_kernel_offset)[0];
-      }
-    }
+    RowMajor2Col4Major((const float *)src + src_offset, (float *)dst + dst_offset, channel, plane);
   }
 }
 
