@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,35 +112,38 @@ void RandomCropOp::GenRandomXY(int *x, int *y, const int32_t &padded_image_w, co
   *y = std::uniform_int_distribution<int>(0, padded_image_h - crop_height_)(rnd_);
 }
 
-Status RandomCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  IO_CHECK(input, output);
-
-  if (input->Rank() != 3 && input->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("RandomCrop: image shape is not <H,W,C> or <H,W>.");
-  }
-
-  // Apply padding first then crop
-  std::shared_ptr<Tensor> pad_image;
-  int32_t t_pad_top = 0;
-  int32_t t_pad_bottom = 0;
-  int32_t t_pad_left = 0;
-  int32_t t_pad_right = 0;
-  int32_t padded_image_w = 0;
-  int32_t padded_image_h = 0;
-  bool crop_further = true;  // whether image needs further cropping based on new size & requirements
-
-  RETURN_IF_NOT_OK(  // error code sent back directly
-    ImagePadding(input, &pad_image, &t_pad_top, &t_pad_bottom, &t_pad_left, &t_pad_right, &padded_image_w,
-                 &padded_image_h, &crop_further));
-  if (!crop_further) {
-    *output = pad_image;
-    return Status::OK();
-  }
-
+Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
   int x = 0;
   int y = 0;
-  GenRandomXY(&x, &y, padded_image_w, padded_image_h);
-  return Crop(pad_image, output, x, y, crop_width_, crop_height_);
+  const int output_count = input.size();
+  output->resize(output_count);
+  for (size_t i = 0; i < input.size(); i++) {
+    if (input[i]->Rank() != 3 && input[i]->Rank() != 2) {
+      RETURN_STATUS_UNEXPECTED("RandomCrop: image shape is not <H,W,C> or <H,W>.");
+    }
+    std::shared_ptr<Tensor> pad_image = nullptr;
+    int32_t t_pad_top = 0;
+    int32_t t_pad_bottom = 0;
+    int32_t t_pad_left = 0;
+    int32_t t_pad_right = 0;
+    int32_t padded_image_w = 0;
+    int32_t padded_image_h = 0;
+    bool crop_further = true;  // whether image needs further cropping based on new size & requirements
+
+    RETURN_IF_NOT_OK(  // error code sent back directly
+      ImagePadding(input[i], &pad_image, &t_pad_top, &t_pad_bottom, &t_pad_left, &t_pad_right, &padded_image_w,
+                   &padded_image_h, &crop_further));
+    if (!crop_further) {
+      (*output)[i] = pad_image;
+      return Status::OK();
+    }
+    if (i == 0) {
+      GenRandomXY(&x, &y, padded_image_w, padded_image_h);
+    }
+    RETURN_IF_NOT_OK(Crop(pad_image, &(*output)[i], x, y, crop_width_, crop_height_));
+  }
+  return Status::OK();
 }
 
 Status RandomCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {

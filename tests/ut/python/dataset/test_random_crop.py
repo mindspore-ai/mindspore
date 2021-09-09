@@ -18,13 +18,14 @@ Testing RandomCrop op in DE
 import numpy as np
 
 import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.transforms.c_transforms as ops
 import mindspore.dataset.vision.c_transforms as c_vision
 import mindspore.dataset.vision.py_transforms as py_vision
 import mindspore.dataset.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, config_get_set_seed, \
-    config_get_set_num_parallel_workers
+    config_get_set_num_parallel_workers, diff_mse
 
 
 GENERATE_GOLDEN = False
@@ -541,6 +542,30 @@ def test_random_crop_comp(plot=False):
     if plot:
         visualize_list(image_c_cropped, image_py_cropped, visualize_mode=2)
 
+def test_random_crop_09_c():
+    """
+    Test RandomCrop with different fields.
+    """
+    logger.info("Test RandomCrop with different fields.")
+
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = data.map(operations=ops.Duplicate(), input_columns=["image"],
+                    output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
+    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = c_vision.Decode()
+
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=decode_op, input_columns=["image_copy"])
+    data = data.map(operations=random_crop_op, input_columns=["image", "image_copy"])
+
+    num_iter = 0
+    for data1 in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        image = data1["image"]
+        image_copy = data1["image_copy"]
+        mse = diff_mse(image, image_copy)
+        assert mse == 0
+        num_iter += 1
+
 
 if __name__ == "__main__":
     test_random_crop_01_c()
@@ -563,3 +588,4 @@ if __name__ == "__main__":
     test_random_crop_op_c(True)
     test_random_crop_op_py(True)
     test_random_crop_comp(True)
+    test_random_crop_09_c()

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ class MindDataTestRandomCropOp : public UT::CVOP::CVOpCommon {
  protected:
   MindDataTestRandomCropOp() : CVOpCommon() {}
 
-  std::shared_ptr<Tensor> output_tensor_;
+  TensorRow output_tensor_row;
 };
 
 TEST_F(MindDataTestRandomCropOp, TestOp1) {
@@ -36,14 +36,18 @@ TEST_F(MindDataTestRandomCropOp, TestOp1) {
   unsigned int crop_height = 128;
   unsigned int crop_width = 128;
   std::unique_ptr<RandomCropOp> op(new RandomCropOp(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant));
-  EXPECT_TRUE(op->OneToOne());
-  Status s = op->Compute(input_tensor_, &output_tensor_);
-  size_t actual = 0;
-  if (s == Status::OK()) {
-    actual = output_tensor_->shape()[0] * output_tensor_->shape()[1] * output_tensor_->shape()[2];
+  TensorRow input_tensor_row;
+  input_tensor_row.push_back(input_tensor_);
+  input_tensor_row.push_back(input_tensor_);
+  Status s = op->Compute(input_tensor_row, &output_tensor_row);
+  for (size_t i = 0; i < input_tensor_row.size(); i++) {
+    size_t actual = 0;
+    if (s == Status::OK()) {
+      actual = output_tensor_row[i]->shape()[0] * output_tensor_row[i]->shape()[1] * output_tensor_row[i]->shape()[2];
+    }
+    EXPECT_EQ(actual, crop_height * crop_width * 3);
+    EXPECT_EQ(s, Status::OK());
   }
-  EXPECT_EQ(actual, crop_height * crop_width * 3);
-  EXPECT_EQ(s, Status::OK());
 }
 
 TEST_F(MindDataTestRandomCropOp, TestOp2) {
@@ -51,10 +55,12 @@ TEST_F(MindDataTestRandomCropOp, TestOp2) {
   // Crop params
   unsigned int crop_height = 1280;
   unsigned int crop_width = 1280;
+  TensorRow input_tensor_row;
+  input_tensor_row.push_back(input_tensor_);
+  input_tensor_row.push_back(input_tensor_);
   std::unique_ptr<RandomCropOp> op(
     new RandomCropOp(crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant));
-  EXPECT_TRUE(op->OneToOne());
-  Status s = op->Compute(input_tensor_, &output_tensor_);
+  Status s = op->Compute(input_tensor_row, &output_tensor_row);
   EXPECT_EQ(true, s.IsOk());
   MS_LOG(INFO) << "testRandomCrop end.";
 }

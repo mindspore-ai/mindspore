@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
+#include <limits>
 #include <random>
 
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -44,19 +45,28 @@ RandomCropAndResizeOp::RandomCropAndResizeOp(int32_t target_height, int32_t targ
   is_deterministic_ = false;
 }
 
-Status RandomCropAndResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "RandomCropAndResize: the image is not <H,W,C> or <H,W>");
-
-  int h_in = input->shape()[0];
-  int w_in = input->shape()[1];
+Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
+  const int output_count = input.size();
+  output->resize(output_count);
   int x = 0;
   int y = 0;
   int crop_height = 0;
   int crop_width = 0;
-  (void)GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width);
-  return CropAndResize(input, output, x, y, crop_height, crop_width, target_height_, target_width_, interpolation_);
+  for (size_t i = 0; i < input.size(); i++) {
+    CHECK_FAIL_RETURN_UNEXPECTED(input[i]->shape().Size() >= 2,
+                                 "RandomCropAndResize: the image is not <H,W,C> or <H,W>");
+    int h_in = input[i]->shape()[0];
+    int w_in = input[i]->shape()[1];
+    if (i == 0) {
+      (void)GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width);
+    }
+    RETURN_IF_NOT_OK(CropAndResize(input[i], &(*output)[i], x, y, crop_height, crop_width, target_height_,
+                                   target_width_, interpolation_));
+  }
+  return Status::OK();
 }
+
 Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ class MindDataTestRandomCropDecodeResizeOp : public UT::CVOP::CVOpCommon {
 TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
   MS_LOG(INFO) << "starting RandomCropDecodeResizeOp test 1";
 
-  std::shared_ptr<Tensor> decode_and_crop_output;
   std::shared_ptr<Tensor> crop_and_decode_output;
 
   constexpr int target_height = 884;
@@ -52,13 +51,18 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
                                                   interpolation, max_iter);
   auto crop_and_decode_copy = crop_and_decode;
   auto decode_and_crop = static_cast<RandomCropAndResizeOp>(crop_and_decode_copy);
-  EXPECT_TRUE(crop_and_decode.OneToOne());
   GlobalContext::config_manager()->set_seed(42);
+  TensorRow input_tensor_row_decode;
+  TensorRow output_tensor_row_decode;
+  input_tensor_row_decode.push_back(raw_input_tensor_);
+  TensorRow input_tensor_row;
+  TensorRow output_tensor_row;
+  input_tensor_row.push_back(input_tensor_);
   for (int k = 0; k < 10; k++) {
-    (void)crop_and_decode.Compute(raw_input_tensor_, &crop_and_decode_output);
-    (void)decode_and_crop.Compute(input_tensor_, &decode_and_crop_output);
-    cv::Mat output1 = CVTensor::AsCVTensor(crop_and_decode_output)->mat().clone();
-    cv::Mat output2 = CVTensor::AsCVTensor(decode_and_crop_output)->mat().clone();
+    (void)crop_and_decode.Compute(input_tensor_row_decode, &output_tensor_row_decode);
+    (void)decode_and_crop.Compute(input_tensor_row, &output_tensor_row);
+    cv::Mat output1 = CVTensor::AsCVTensor(output_tensor_row_decode[0])->mat().clone();
+    cv::Mat output2 = CVTensor::AsCVTensor(output_tensor_row[0])->mat().clone();
 
     long int mse_sum = 0;
     long int count = 0;

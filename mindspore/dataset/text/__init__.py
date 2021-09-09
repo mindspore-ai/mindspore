@@ -34,5 +34,5 @@ if platform.system().lower() != 'windows':
     from .transforms import UnicodeScriptTokenizer, WhitespaceTokenizer, CaseFold, NormalizeUTF8, \
         RegexReplace, RegexTokenizer, BasicTokenizer, BertTokenizer
 
-    __all__.append(["UnicodeScriptTokenizer", "WhitespaceTokenizer", "CaseFold", "NormalizeUTF8",
+    __all__.extend(["UnicodeScriptTokenizer", "WhitespaceTokenizer", "CaseFold", "NormalizeUTF8",
                     "RegexReplace", "RegexTokenizer", "BasicTokenizer", "BertTokenizer"])

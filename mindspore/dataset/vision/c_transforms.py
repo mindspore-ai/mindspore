@@ -260,6 +260,46 @@ class ConvertColor(ImageTensorOperation):
     Args:
         convert_mode (ConvertMode): The mode of image channel conversion.
 
+            - ConvertMode.COLOR_BGR2BGRA, Add alpha channel to BGR image.
+
+            - ConvertMode.COLOR_RGB2RGBA, Add alpha channel to RGB image.
+
+            - ConvertMode.COLOR_BGRA2BGR, Remove alpha channel to BGR image.
+
+            - ConvertMode.COLOR_RGBA2RGB, Remove alpha channel to RGB image.
+
+            - ConvertMode.COLOR_BGR2RGBA, Convert BGR image to RGBA image.
+
+            - ConvertMode.COLOR_RGB2BGRA, Convert RGB image to BGRA image.
+
+            - ConvertMode.COLOR_RGBA2BGR, Convert RGBA image to BGR image.
+
+            - ConvertMode.COLOR_BGRA2RGB, Convert BGRA image to RGB image.
+
+            - ConvertMode.COLOR_BGR2RGB, Convert BGR image to RGB image.
+
+            - ConvertMode.COLOR_RGB2BGR, Convert RGB image to BGR image.
+
+            - ConvertMode.COLOR_BGRA2RGBA, Convert BGRA image to RGBA image.
+
+            - ConvertMode.COLOR_RGBA2BGRA, Convert RGBA image to BGRA image.
+
+            - ConvertMode.COLOR_BGR2GRAY, Convert BGR image to GRAY image.
+
+            - ConvertMode.COLOR_RGB2GRAY, Convert RGB image to GRAY image.
+
+            - ConvertMode.COLOR_GRAY2BGR, Convert GRAY image to BGR image.
+
+            - ConvertMode.COLOR_GRAY2RGB, Convert GRAY image to RGB image.
+
+            - ConvertMode.COLOR_GRAY2BGRA, Convert GRAY image to BGRA image.
+
+            - ConvertMode.COLOR_GRAY2RGBA, Convert GRAY image to RGBA image.
+
+            - ConvertMode.COLOR_BGRA2GRAY, Convert BGRA image to GRAY image.
+
+            - ConvertMode.COLOR_RGBA2GRAY, Convert RGBA image to GRAY image.
+
     Examples:
         >>> # Convert RGB images to GRAY images
         >>> convert_op = c_vision.ConvertColor(ConvertMode.COLOR_RGB2GRAY)

@@ -18,6 +18,7 @@ Testing the random horizontal flip op in DE
 import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.transforms.c_transforms as ops
 import mindspore.dataset.vision.c_transforms as c_vision
 import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
@@ -208,6 +209,31 @@ def test_random_horizontal_comp(plot=False):
     if plot:
         visualize_list(images_list_c, images_list_py, visualize_mode=2)
 
+def test_random_horizontal_op_1():
+    """
+    Test RandomHorizontalFlip with different fields.
+    """
+    logger.info("Test RandomHorizontalFlip with different fields.")
+
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = data.map(operations=ops.Duplicate(), input_columns=["image"],
+                    output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
+    random_horizontal_op = c_vision.RandomHorizontalFlip(1.0)
+    decode_op = c_vision.Decode()
+
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=decode_op, input_columns=["image_copy"])
+    data = data.map(operations=random_horizontal_op, input_columns=["image", "image_copy"])
+
+    num_iter = 0
+    for data1 in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        image = data1["image"]
+        image_copy = data1["image_copy"]
+        mse = diff_mse(image, image_copy)
+        logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
+        assert mse == 0
+        num_iter += 1
+
 
 if __name__ == "__main__":
     test_random_horizontal_op(plot=True)
@@ -216,3 +242,4 @@ if __name__ == "__main__":
     test_random_horizontal_invalid_prob_c()
     test_random_horizontal_invalid_prob_py()
     test_random_horizontal_comp(plot=True)
+    test_random_horizontal_op_1()

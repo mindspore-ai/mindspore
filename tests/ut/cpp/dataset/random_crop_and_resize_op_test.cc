@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,10 @@ class MindDataTestRandomCropAndResizeOp : public UT::CVOP::CVOpCommon {
 TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
+  TensorRow input_tensor_row;
+  input_tensor_row.push_back(input_tensor_);
+  input_tensor_row.push_back(input_tensor_);
+  TensorRow output_tensor_row;
   std::shared_ptr<Tensor> output_tensor;
   int h_out = 1024;
   int w_out = 2048;
@@ -44,7 +48,7 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
   auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
   Status s;
   for (auto i = 0; i < 100; i++) {
-    s = op->Compute(input_tensor_, &output_tensor);
+    s = op->Compute(input_tensor_row, &output_tensor_row);
     EXPECT_TRUE(s.IsOk());
   }
 
@@ -53,6 +57,10 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
 TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
+  TensorRow input_tensor_row;
+  input_tensor_row.push_back(input_tensor_);
+  input_tensor_row.push_back(input_tensor_);
+  TensorRow output_tensor_row;
   std::shared_ptr<Tensor> output_tensor;
   int h_out = 1024;
   int w_out = 2048;
@@ -66,7 +74,7 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
   auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
   Status s;
   for (auto i = 0; i < 100; i++) {
-    s = op->Compute(input_tensor_, &output_tensor);
+    s = op->Compute(input_tensor_row, &output_tensor_row);
     EXPECT_TRUE(s.IsOk());
   }
 
@@ -75,6 +83,10 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
 TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest3) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
+  TensorRow input_tensor_row;
+  input_tensor_row.push_back(input_tensor_);
+  input_tensor_row.push_back(input_tensor_);
+  TensorRow output_tensor_row;
   std::shared_ptr<Tensor> output_tensor;
   int h_out = 1024;
   int w_out = 2048;
@@ -88,7 +100,7 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest3) {
   auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
   Status s;
   for (auto i = 0; i < 100; i++) {
-    s = op->Compute(input_tensor_, &output_tensor);
+    s = op->Compute(input_tensor_row, &output_tensor_row);
     EXPECT_TRUE(s.IsOk());
   }
 

@@ -19,6 +19,7 @@ import numpy as np
 import cv2
 
 import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.transforms.c_transforms as ops
 import mindspore.dataset.vision.c_transforms as c_vision
 import mindspore.dataset.vision.py_transforms as py_vision
 import mindspore.dataset.vision.utils as mode
@@ -405,6 +406,31 @@ def test_random_crop_and_resize_06():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Argument scale[1] with value 2 is not of type [<class 'float'>, <class 'int'>]" in str(e)
 
+def test_random_crop_and_resize_07():
+    """
+    Test RandomCropAndResize with different fields.
+    """
+    logger.info("Test RandomCropAndResize with different fields.")
+
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = data.map(operations=ops.Duplicate(), input_columns=["image"],
+                    output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
+    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
+    decode_op = c_vision.Decode()
+
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=decode_op, input_columns=["image_copy"])
+    data = data.map(operations=random_crop_and_resize_op, input_columns=["image", "image_copy"])
+
+    num_iter = 0
+    for data1 in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        image = data1["image"]
+        image_copy = data1["image_copy"]
+        mse = diff_mse(image, image_copy)
+        logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
+        assert mse == 0
+        num_iter += 1
+
 
 if __name__ == "__main__":
     test_random_crop_and_resize_callable()
@@ -420,3 +446,4 @@ if __name__ == "__main__":
     test_random_crop_and_resize_05_py()
     test_random_crop_and_resize_06()
     test_random_crop_and_resize_comp(True)
+    test_random_crop_and_resize_07()

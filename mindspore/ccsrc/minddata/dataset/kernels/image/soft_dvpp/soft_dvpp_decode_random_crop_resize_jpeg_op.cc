@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_random_crop_resize_jpeg_op.h"
 #include <string>
 
 #include "opencv2/opencv.hpp"
 
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
+#include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
+#include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_random_crop_resize_jpeg_op.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {
@@ -28,8 +29,13 @@ SoftDvppDecodeRandomCropResizeJpegOp::SoftDvppDecodeRandomCropResizeJpegOp(int32
                                                                            float scale_lb, float scale_ub,
                                                                            float aspect_lb, float aspect_ub,
                                                                            int32_t max_attempts)
-    : RandomCropAndResizeOp(target_height, target_width, scale_lb, scale_ub, aspect_lb, aspect_ub,
-                            InterpolationMode::kLinear, max_attempts) {}
+    : target_height_(target_height),
+      target_width_(target_width),
+      scale_lb_(scale_lb),
+      scale_ub_(scale_ub),
+      aspect_lb_(aspect_lb),
+      aspect_ub_(aspect_ub),
+      max_attempts_(max_attempts) {}
 
 Status SoftDvppDecodeRandomCropResizeJpegOp::GetCropInfo(const std::shared_ptr<Tensor> &input,
                                                          SoftDpCropInfo *crop_info) {
@@ -40,7 +46,10 @@ Status SoftDvppDecodeRandomCropResizeJpegOp::GetCropInfo(const std::shared_ptr<T
   int y = 0;
   int crop_heigh = 0;
   int crop_widht = 0;
-  RETURN_IF_NOT_OK(GetCropBox(img_height, img_width, &x, &y, &crop_heigh, &crop_widht));
+  std::unique_ptr<RandomCropAndResizeOp> random_crop_resize(
+    new RandomCropAndResizeOp(target_height_, target_width_, scale_lb_, scale_ub_, aspect_lb_, aspect_ub_,
+                              InterpolationMode::kLinear, max_attempts_));
+  RETURN_IF_NOT_OK(random_crop_resize->GetCropBox(img_height, img_width, &x, &y, &crop_heigh, &crop_widht));
   crop_info->left = x;
   crop_info->up = y;
   crop_info->right = crop_info->left + crop_widht - 1;

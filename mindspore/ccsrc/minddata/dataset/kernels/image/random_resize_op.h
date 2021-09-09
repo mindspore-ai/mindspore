@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,13 @@ class RandomResizeOp : public ResizeOp {
   // Description: A function that prints info about the node
   void Print(std::ostream &out) const override { out << Name() << ": " << ResizeOp::size1_ << " " << ResizeOp::size2_; }
 
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
 
   std::string Name() const override { return kRandomResizeOp; }
+
+  uint32_t NumInput() override { return -1; }
+
+  uint32_t NumOutput() override { return -1; }
 
  private:
   std::mt19937 random_generator_;
