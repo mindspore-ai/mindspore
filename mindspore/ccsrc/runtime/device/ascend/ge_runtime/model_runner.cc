@@ -86,6 +86,15 @@ void *ModelRunner::GetModelHandle(uint32_t model_id) const {
   return model_iter->second->GetModelHandle();
 }
 
+void *ModelRunner::GetModelStream(uint32_t model_id) const {
+  auto model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.end()) {
+    MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
+  }
+  MS_EXCEPTION_IF_NULL(model_iter->second);
+  return model_iter->second->GetModelStream();
+}
+
 void ModelRunner::UnloadModel(uint32_t model_id) {
   auto iter = runtime_models_.find(model_id);
   if (iter != runtime_models_.end()) {

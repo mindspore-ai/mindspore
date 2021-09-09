@@ -758,6 +758,21 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
   }
 }
 
+DeviceAddressPtr KernelRuntime::AssignExtraStaticMem(const TensorPtr &tensor, const AnfNodePtr &node, int index) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  auto i = SizeToInt(index);
+  auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_LOG(DEBUG) << "Assign Node:" << node->fullname_with_scope()
+                << "Assign Static Memory for Output node, size:" << tensor_address->size();
+  auto device_address = CreateDeviceAddress(nullptr, tensor_address->size(), tensor_address->format(),
+                                            tensor_address->type_id(), {node, i});
+  MS_EXCEPTION_IF_NULL(device_address);
+  uint8_t *ptr = mem_manager_->MallocOutputMem(node, i, kStaticMem, tensor_address->size(), device_address, false);
+  MS_EXCEPTION_IF_NULL(ptr);
+  return device_address;
+}
+
 void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value,
                                           size_t output_idx) {
   MS_EXCEPTION_IF_NULL(value_node);

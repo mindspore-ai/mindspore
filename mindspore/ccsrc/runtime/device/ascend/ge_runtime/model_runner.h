@@ -46,6 +46,8 @@ class ModelRunner {
 
   void *GetModelHandle(uint32_t model_id) const;
 
+  void *GetModelStream(uint32_t model_id) const;
+
   void UnloadModel(uint32_t model_id);
 
   void RunModel(uint32_t model_id);

@@ -705,7 +705,7 @@ bool GPUSession::DumpDataEnabledIteration() const {
   return runtime_instance->DumpDataEnabledIteration();
 }
 
-void GPUSession::SyncStream() {
+void GPUSession::SyncStream() const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto ret = runtime_instance->SyncStream();

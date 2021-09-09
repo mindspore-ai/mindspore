@@ -34,7 +34,7 @@ class GPUSession : public SessionBasic {
   GPUSession() = default;
   ~GPUSession() override = default;
   void Init(uint32_t device_id) override;
-  void SyncStream() override;
+  void SyncStream() const override;
 
  protected:
   void UnifyMindIR(const KernelGraphPtr &graph) override { SessionBasic::UnifyMindIR(graph); }
