@@ -16,6 +16,8 @@
 #include "common/common.h"
 #include "common/cvop_common.h"
 #include "minddata/dataset/kernels/image/random_posterize_op.h"
+#include "minddata/dataset/include/dataset/execute.h"
+#include "minddata/dataset/include/dataset/vision.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "utils/log_adapter.h"
 
@@ -25,8 +27,6 @@ using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::INFO;
 
 class MindDataTestRandomPosterizeOp : public UT::CVOP::CVOpCommon {
- public:
-  MindDataTestRandomPosterizeOp() : CVOpCommon() {}
 };
 
 TEST_F(MindDataTestRandomPosterizeOp, TestOp1) {
@@ -38,4 +38,33 @@ TEST_F(MindDataTestRandomPosterizeOp, TestOp1) {
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());
   CheckImageShapeAndData(output_tensor, kRandomPosterize);
+}
+
+TEST_F(MindDataTestRandomPosterizeOp, TestOp2) {
+   // Test Eager RandomPosterize image = (h, w, c)
+  MS_LOG(INFO) << "Doing VisionRandomPosterizeTest.";
+  std::shared_ptr<Tensor> de_tensor;
+  std::string dataset_root_path = "data/dataset";
+  Tensor::CreateFromFile(dataset_root_path + "/testPK/data/class1/0.jpg", &de_tensor);
+  auto image = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+  std::shared_ptr<TensorTransform>  decode_op = std::make_shared<vision::Decode>();
+  std::shared_ptr<TensorTransform> randomposterize_op(new vision::RandomPosterize({3, 5}));
+  auto transform = Execute({decode_op, randomposterize_op});
+  Status rc = transform(image, &image);
+  EXPECT_TRUE(rc.IsOk());
+  EXPECT_EQ(image.Shape().size(), 3);
+  EXPECT_EQ(image.Shape()[2], 3);
+}
+
+TEST_F(MindDataTestRandomPosterizeOp, TestOp3) {
+  // Test Eager RandomSolarize image.size = {2, 2, 2, 1}
+  MS_LOG(INFO) << "Doing VisionRandomSolarizeTest.";
+
+  std::shared_ptr<Tensor> de_tensor;
+  Tensor::CreateFromVector(std::vector<uint8_t>({0, 25, 120, 0, 38, 2, 10, 13}), TensorShape({2, 2, 2, 1}), &de_tensor);
+  auto image = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+  std::shared_ptr<TensorTransform> randomsolarize_op(new vision::RandomSolarize({12, 25}));
+  auto transform = Execute({randomsolarize_op});
+  Status rc = transform(image, &image);
+  EXPECT_TRUE(rc.IsError());
 }
