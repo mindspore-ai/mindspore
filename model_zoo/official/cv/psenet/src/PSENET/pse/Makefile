@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-mindspore_home = ../../../../../../../
+mindspore_home = ../../../
 CXXFLAGS = -I include -I ${mindspore_home} -std=c++11 -O3
 CXX_SOURCES = adaptor.cpp
 opencv_home = ${OPENCV_HOME}

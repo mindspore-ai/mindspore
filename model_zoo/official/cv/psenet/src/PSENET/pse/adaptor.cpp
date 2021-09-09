@@ -26,7 +26,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "model_zoo/official/cv/psenet/src/PSENET/pse/adaptor.h"
+#include "src/PSENET/pse/adaptor.h"
 
 using std::vector;
 using std::queue;

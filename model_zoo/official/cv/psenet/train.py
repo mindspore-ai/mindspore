@@ -121,7 +121,7 @@ def train():
     loss_cb = LossCallBack(per_print_times=10)
     # set and apply parameters of check point config.TRAIN_MODEL_SAVE_PATH
     ckpoint_cf = CheckpointConfig(save_checkpoint_steps=1875, keep_checkpoint_max=3)
-    ckpoint_cb = ModelCheckpoint(prefix="ETSNet",
+    ckpoint_cb = ModelCheckpoint(prefix="PSENet",
                                  config=ckpoint_cf,
                                  directory="{}/ckpt_{}".format(config.TRAIN_MODEL_SAVE_PATH,
                                                                rank_id))
