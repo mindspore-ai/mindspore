@@ -784,6 +784,10 @@ bool DecreaseTransposeAlgo::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   node_infer_shape_.Init(fmk_type_, train_flag_);
   transpose_strategy_.Init(fmk_type_, train_flag_);
+  if (!delete_redundant_transpose_.Run(func_graph)) {
+    MS_LOG(ERROR) << "Run delete-redundant-transpose pass failed.";
+    return false;
+  }
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     auto prim = GetValueNode<PrimitivePtr>(node);

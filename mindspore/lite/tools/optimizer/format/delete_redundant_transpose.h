@@ -24,7 +24,7 @@ namespace mindspore {
 namespace opt {
 class DeleteRedundantTranspose : public Pass {
  public:
-  DeleteRedundantTranspose() : Pass("delete_redundant_transpose") {}
+  DeleteRedundantTranspose() : Pass("DeleteRedundantTranspose") {}
   ~DeleteRedundantTranspose() = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 

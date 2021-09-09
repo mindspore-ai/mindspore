@@ -26,6 +26,7 @@
 #include "utils/utils.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/format_utils.h"
+#include "tools/optimizer/format/delete_redundant_transpose.h"
 #include "tools/optimizer/graph/transpose_strategy.h"
 
 using mindspore::converter::FmkType;
@@ -36,12 +37,6 @@ class DecreaseTransposeAlgo : public Pass {
   explicit DecreaseTransposeAlgo(FmkType fmk_type = FmkType::kFmkTypeMs, bool train_flag = false)
       : Pass("DecreaseTransposeAlgo"), fmk_type_(fmk_type), train_flag_(train_flag) {}
   ~DecreaseTransposeAlgo() override = default;
-  void Init(FmkType fmk_type, bool train_flag) {
-    fmk_type_ = fmk_type;
-    train_flag_ = train_flag;
-    node_infer_shape_.Init(fmk_type, train_flag);
-    transpose_strategy_.Init(fmk_type, train_flag);
-  }
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
@@ -67,6 +62,7 @@ class DecreaseTransposeAlgo : public Pass {
   bool train_flag_{false};
   NodeInferShape node_infer_shape_;
   TransposeStrategy transpose_strategy_;
+  DeleteRedundantTranspose delete_redundant_transpose_;
   std::unordered_map<FuncGraphPtr, std::vector<AnfNodePtr>> sub_inputs_map_;
 };
 }  // namespace opt

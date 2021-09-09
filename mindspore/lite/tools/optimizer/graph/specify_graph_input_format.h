@@ -31,7 +31,6 @@ class SpecifyGraphInputFormat : public Pass {
 
  private:
   STATUS HandleGraphInput(const FuncGraphPtr &graph);
-  STATUS PostTransposeFusion(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   mindspore::Format format_;
 };
 }  // namespace opt

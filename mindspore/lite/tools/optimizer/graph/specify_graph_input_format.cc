@@ -88,37 +88,7 @@ STATUS SpecifyGraphInputFormat::HandleGraphInput(const FuncGraphPtr &graph) {
     }
     trans_cnode->set_abstract(abstract->Clone());
     abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
-    manager->Replace(input, trans_cnode);
-    if (PostTransposeFusion(graph, trans_cnode) != lite::RET_OK) {
-      MS_LOG(ERROR) << "post transpose and transpose fusion failed.";
-      return lite::RET_ERROR;
-    }
-  }
-  return lite::RET_OK;
-}
-
-STATUS SpecifyGraphInputFormat::PostTransposeFusion(const FuncGraphPtr &graph, const CNodePtr &cnode) {
-  MS_ASSERT(graph != nullptr && cnode != nullptr);
-  std::vector<int> cur_perm;
-  if (GetTransposePerm(cnode, &cur_perm) != lite::RET_OK) {
-    MS_LOG(ERROR) << "get transpose perm failed.";
-    return lite::RET_ERROR;
-  }
-  auto node_users = graph->manager()->node_users()[cnode];
-  for (auto &node_user : node_users) {
-    auto post_node = node_user.first;
-    if (CheckPrimitiveType(post_node, prim::kPrimTranspose)) {
-      std::vector<int> post_trans_perm;
-      auto post_trans_node = post_node->cast<CNodePtr>();
-      MS_ASSERT(post_trans_node != nullptr);
-      if (GetTransposePerm(post_trans_node, &post_trans_perm) != lite::RET_OK) {
-        MS_LOG(ERROR) << "get post transpose node perm failed.";
-        return lite::RET_ERROR;
-      }
-      if ((cur_perm == kNH2NC && post_trans_perm == kNC2NH) || (cur_perm == kNC2NH && post_trans_perm == kNH2NC)) {
-        graph->manager()->Replace(post_node, cnode->input(1));
-      }
-    }
+    (void)manager->Replace(input, trans_cnode);
   }
   return lite::RET_OK;
 }

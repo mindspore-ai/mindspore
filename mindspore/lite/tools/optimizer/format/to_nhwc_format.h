@@ -24,7 +24,7 @@ namespace opt {
 class ToNHWCFormat : public ToFormatBase {
  public:
   explicit ToNHWCFormat(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false)
-      : ToFormatBase(fmk_type, train_flag, "to_nhwc_format") {}
+      : ToFormatBase(fmk_type, train_flag, "ToNHWCFormat") {}
   ~ToNHWCFormat() = default;
 
  private:

@@ -38,7 +38,7 @@ namespace opt {
 class ToFormatBase : public Pass {
  public:
   explicit ToFormatBase(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
-                        std::string pass_name = "to_format_base")
+                        std::string pass_name = "ToFormatBase")
       : Pass(pass_name), fmk_type_(fmk_type), train_flag_(train_flag) {}
   ~ToFormatBase() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
