@@ -134,6 +134,7 @@ bool NormFusion::GetNormTypeAndAxis(const FuncGraphPtr &func_graph, const CNodeP
     return false;
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
+  MS_CHECK_TRUE_RET(abstract_tensor->BuildShape() != nullptr, false);
   if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
     MS_LOG(DEBUG) << "Shape of Abstract should be ShapePtr";
     return false;

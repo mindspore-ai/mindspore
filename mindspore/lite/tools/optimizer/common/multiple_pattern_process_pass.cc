@@ -15,6 +15,7 @@
  */
 
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 MultiplePatternProcessPass::MultiplePatternProcessPass(const std::string &name, bool multigraph)
@@ -23,15 +24,18 @@ MultiplePatternProcessPass::MultiplePatternProcessPass(const std::string &name, 
 AnfNodePtr MultiplePatternProcessPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   if (patterns_.empty()) {
     VarPtr fg = std::make_shared<Var>("RootG");
+    MS_CHECK_TRUE_RET(fg != nullptr, nullptr);
     auto patterns = std::move(DefinePatterns());
     for (const auto &pattern : patterns) {
       auto primitive_var = std::make_shared<PrimitiveVarMap>();
+      MS_CHECK_TRUE_RET(primitive_var != nullptr, nullptr);
       this->patterns_[pattern.first] = (SexpToNode(pattern.second, fg, primitive_var.get(), multigraph_));
       this->primitive_var_maps_[pattern.first] = primitive_var;
     }
   }
 
   auto empty_equiv = std::make_shared<Equiv>();
+  MS_CHECK_TRUE_RET(empty_equiv != nullptr, nullptr);
   MS_ASSERT(primitive_var_maps_.size() == patterns_.size());
   for (const auto &iter : primitive_var_maps_) {
     auto name = iter.first;

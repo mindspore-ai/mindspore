@@ -239,7 +239,7 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
           return lite::RET_ERROR;
         }
         new_parameter->set_name(input_node->fullname_with_scope() + "_const_" + std::to_string(k));
-        manager->Replace(tuple_node, new_parameter);
+        (void)manager->Replace(tuple_node, new_parameter);
       } else {
         MS_LOG(ERROR) << " multi out tensor must connect tuple-getitem: " << input_node->fullname_with_scope();
         return lite::RET_ERROR;
@@ -252,7 +252,7 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
       return lite::RET_ERROR;
     }
     new_parameter->set_name("constfold_" + input_node->fullname_with_scope());
-    manager->Replace(input_node, new_parameter);
+    (void)manager->Replace(input_node, new_parameter);
   }
   return lite::RET_OK;
 }

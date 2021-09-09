@@ -80,8 +80,10 @@ bool MultiConvSplit::CheckSplitValid() {
     if (i >= static_cast<int64_t>(final_ratios.size()) || final_ratios.at(i) <= 0) {
       return false;
     }
+    MS_CHECK_INT_ADD_NOT_OVERFLOW(total_block_count, final_ratios.at(i), false);
     total_block_count += final_ratios.at(i);
     if (i == 0) {
+      MS_CHECK_INT_ADD_NOT_OVERFLOW(visited_block, final_ratios.at(i), false);
       visited_block += final_ratios.at(i);
     }
   }
@@ -92,6 +94,7 @@ bool MultiConvSplit::CheckSplitValid() {
   if (ori_front_conv_input_iter == ori_graph_input_shape.end()) {
     return false;
   }
+  MS_CHECK_TRUE_RET(total_block_count != 0, false);
   int64_t split_axis_value_0 = UP_DIV(split_info_.ori_split_axis_value * visited_block, total_block_count);
   if (split_axis_value_0 > split_info_.ori_split_axis_value) {
     return false;

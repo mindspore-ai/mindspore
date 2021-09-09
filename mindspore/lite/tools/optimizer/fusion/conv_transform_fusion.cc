@@ -215,6 +215,10 @@ void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const
   CalNewBiasTensor(bias_data, kernel_num, bias_flag, trans_scale, trans_bias);
   if (!bias_flag) {
     auto bias_node = AddNewBiasNode(bias_data, func_graph, kernel_num, weight_tensor->data_type());
+    if (bias_node == nullptr) {
+      MS_LOG(ERROR) << "generate a new bias node failed.";
+      return;
+    }
     delete[] bias_data;
     bias_node->set_name(conv_node->fullname_with_scope() + "_bias");
     conv_node->add_input(bias_node);

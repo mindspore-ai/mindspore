@@ -623,7 +623,6 @@ STATUS TfliteLstmCellFusion::AdjustOtherGetItems(const FuncGraphPtr &func_graph,
     MS_LOG(ERROR) << "manager is nullptr";
     return RET_ERROR;
   }
-  auto tr = manager->Transact();
   auto while_node_users = manager->node_users()[while_cnode];
   for (auto &node_user : while_node_users) {
     if (node_user.first == output_get_item) {
@@ -671,10 +670,9 @@ STATUS TfliteLstmCellFusion::AdjustOtherGetItems(const FuncGraphPtr &func_graph,
 
     auto get_item_users = manager->node_users()[get_item];
     for (auto &get_item_user : get_item_users) {
-      tr.SetEdge(get_item_user.first, get_item_user.second, squeeze_node);
+      manager->SetEdge(get_item_user.first, get_item_user.second, squeeze_node);
     }
   }
-  tr.Commit();
   return RET_OK;
 }
 

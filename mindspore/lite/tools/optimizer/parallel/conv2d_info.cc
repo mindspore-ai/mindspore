@@ -304,6 +304,8 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
       } break;
       case SplitCIN: {
         auto in_channel = prim->get_in_channel();
+        MS_CHECK_TRUE_RET(cin_strategy_sum != 0, RET_ERROR);
+        MS_CHECK_INT_MUL_NOT_OVERFLOW(in_channel, strategys[0][kAxisCIn][0], RET_ERROR);
         if (i == 0) {
           prim->set_in_channel(in_channel * strategys[0][kAxisCIn][0] / cin_strategy_sum);
         } else {
@@ -312,6 +314,8 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
       } break;
       case SplitCOUT: {
         auto out_channel = prim->get_out_channel();
+        MS_CHECK_TRUE_RET(cout_strategy_sum != 0, RET_ERROR);
+        MS_CHECK_INT_MUL_NOT_OVERFLOW(out_channel, strategys[1][kAxisCOut][0], RET_ERROR);
         if (i == 0) {
           prim->set_out_channel(out_channel * strategys[1][kAxisCOut][0] / cout_strategy_sum);
         } else {
@@ -321,7 +325,7 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
       default:
         break;
     }
-    std::vector<AnfNodePtr> conv_inputs = {NewValueNode(prim)};
+    std::vector<AnfNodePtr> conv_inputs;
     // if split Cout, feature will not be splited
     if (split_mode_ == SplitCOUT) {
       conv_inputs.push_back(cnode_->input(kAnfConvInput));
@@ -341,7 +345,7 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
         conv_inputs.push_back(cnode_->input(kAnfConvBias));
       }
     }
-    auto conv_cnode = func_graph_->NewCNode(conv_inputs);
+    auto conv_cnode = func_graph_->NewCNode(prim, conv_inputs);
     if (conv_cnode == nullptr) {
       MS_LOG(ERROR) << name_ << " : Failed to create parallel Conv2D node " << i;
       return lite::RET_ERROR;
