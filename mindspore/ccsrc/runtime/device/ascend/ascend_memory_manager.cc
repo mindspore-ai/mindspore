@@ -57,7 +57,7 @@ void AscendMemoryManager::MallocDeviceMemory() {
       auto context_ptr = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context_ptr);
       unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-      MS_LOG(EXCEPTION) << "Malloc device memory failed, size[" << device_mem_size_ << "], ret[" << ret << "]"
+      MS_LOG(EXCEPTION) << "Malloc device memory failed, size[" << device_mem_size_ << "], ret[" << ret << "], "
                         << "Device " << device_id
                         << " may be other processes occupying this card, check as: ps -ef|grep python";
     } else {
@@ -93,8 +93,10 @@ uint64_t AscendMemoryManager::GetDeviceMemSizeFromContext() {
   auto total_hbm_size_GB = GetDeviceHBMSize() >> kMemSizeGB;
   auto backend_max_size_GB = total_hbm_size_GB - 1;  // reserved 1 GB for other component
   if (gb_var > backend_max_size_GB || gb_var == 0) {
-    MS_LOG(EXCEPTION) << "The Total Device Memory Size is " << total_hbm_size_GB << " GB, variable_memory_max_size "
-                      << gb_var << " GB is out of range (0-" << backend_max_size_GB << "]GB";
+    MS_LOG(EXCEPTION) << "The Total Device Memory Size is " << total_hbm_size_GB
+                      << " GB, variable_memory_max_size should be in range (0-" << backend_max_size_GB
+                      << "]GB, but got " << gb_var
+                      << "GB, please set the context key 'variable_memory_max_size' in valid range.";
   }
   return gb_var << kMemSizeGB;
 }

@@ -504,12 +504,12 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   if (select_status == kNoMatched) {
     std::ostringstream buffer;
     PrintInputAndOutputInferType(buffer, kernel_node);
-    MS_LOG(WARNING) << ">>> Candidates kernel info list:";
+    MS_LOG(WARNING) << ">>> Candidates supported kernel info(input and output data type) list:";
     for (size_t index = 0; index < kernel_info_list.size(); ++index) {
-      MS_LOG(WARNING) << "Kernel [" << index << "] :" << kernel_info_list[index]->ToString();
+      MS_LOG(WARNING) << "Kernel info [" << index << "] :" << kernel_info_list[index]->ToString();
     }
     for (size_t index = 0; index < aicpu_kernel_info_list.size(); ++index) {
-      MS_LOG(WARNING) << "Kernel [" << (kernel_info_list.size() + index)
+      MS_LOG(WARNING) << "Kernel info [" << (kernel_info_list.size() + index)
                       << "] :" << aicpu_kernel_info_list[index]->ToString();
     }
     if (IsPrimitiveCNode(kernel_node, prim::kPrimLabelSwitch)) {
@@ -519,10 +519,11 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
       SetTensorDeviceInfo(kernel_node);
     } else {
       MS_LOG(WARNING) << " <<<";
-      MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
-                              << "] cannot find valid kernel info, not supported the type:" << buffer.str()
-                              << ", please refer to the supported dtypes in candidates kernel info list."
-                              << " trace: " << trace::DumpSourceLines(kernel_node);
+      MS_EXCEPTION(TypeError)
+        << "The operator [" << AnfAlgo::GetCNodeName(kernel_node)
+        << "] cannot find valid kernel info(input and output data type), not supported the data type: " << buffer.str()
+        << ", please refer to the supported data types in candidates kernel info list."
+        << " trace: " << trace::DumpSourceLines(kernel_node) << ", Node DebugString: " << kernel_node->DebugString();
     }
   }
   return select_status;

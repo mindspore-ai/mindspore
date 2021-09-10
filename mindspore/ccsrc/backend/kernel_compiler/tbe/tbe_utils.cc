@@ -80,7 +80,9 @@ std::string TbeUtils::GetBankPath() {
       save_path = real_path;
       return save_path;
     }
-    MS_LOG(EXCEPTION) << "Invalid env TUNE_BANK_PATH, path : " << save_path;
+    MS_LOG(EXCEPTION) << "Invalid environment variable 'TUNE_BANK_PATH', the path is " << save_path
+                      << ". Please check (1) whether the path exists, (2) whether the path has the access "
+                         "permission, (3) whether the path is too long. ";
   }
   return "";
 }
@@ -94,7 +96,9 @@ std::string TbeUtils::GetTuneDumpPath() {
       save_path = real_path;
       return save_path;
     }
-    MS_LOG(EXCEPTION) << "Invalid env kTUNE_DUMP_PATH, path : " << save_path;
+    MS_LOG(EXCEPTION) << "Invalid environment variable 'TUNE_DUMP_PATH', the path is " << save_path
+                      << ". Please check (1) whether the path exists, (2) whether the path has the access "
+                         "permission, (3) whether the path is too long. ";
   }
   return "";
 }
@@ -107,7 +111,10 @@ std::string TbeUtils::GetOpDebugPath() {
   auto old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
   std::string config_path;
   if (!Common::CommonFuncForConfigPath("./", common::GetEnv(kCOMPILER_CACHE_PATH), &config_path)) {
-    MS_LOG(EXCEPTION) << "Invalid env " << kCOMPILER_CACHE_PATH << " : " << common::GetEnv(kCOMPILER_CACHE_PATH);
+    MS_LOG(EXCEPTION) << "Invalid environment variable 'MS_COMPILER_CACHE_PATH', the path is "
+                      << common::GetEnv(kCOMPILER_CACHE_PATH)
+                      << ". Please check (1) whether the path exists, (2) whether the path has the access "
+                         "permission, (3) whether the path is too long. ";
   }
   if (!old_build.empty()) {
     if (config_path[config_path.length() - 1] == '/') {
@@ -171,11 +178,15 @@ nlohmann::json TbeUtils::GenSocInfo() {
   soc_info_json["deviceId"] = std::to_string(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   std::string config_path;
   if (!Common::CommonFuncForConfigPath("", common::GetEnv("OP_BANK_PATH"), &config_path)) {
-    MS_LOG(EXCEPTION) << "Invalid env OP_BANK_PATH : " << common::GetEnv("OP_BANK_PATH");
+    MS_LOG(EXCEPTION) << "Invalid environment variable 'OP_BANK_PATH', the path is " << common::GetEnv("OP_BANK_PATH")
+                      << ". Please check (1) whether the path exists, (2) whether the path has the access "
+                         "permission, (3) whether the path is too long. ";
   }
   soc_info_json["op_bank_path"] = config_path;
   if (!Common::CommonFuncForConfigPath("", common::GetEnv("MDL_BANK_PATH"), &config_path)) {
-    MS_LOG(EXCEPTION) << "Invalid env MDL_BANK_PATH : " << common::GetEnv("MDL_BANK_PATH");
+    MS_LOG(EXCEPTION) << "Invalid environment variable 'MDL_BANK_PATH', the path is " << common::GetEnv("MDL_BANK_PATH")
+                      << ". Please check (1) whether the path exists, (2) whether the path has the access "
+                         "permission, (3) whether the path is too long. ";
   }
   soc_info_json["mdl_bank_path"] = config_path;
   return soc_info_json;
@@ -438,7 +449,8 @@ bool TbeUtils::CheckOfflineTune() {
       offline_tune[j] = tolower(offline_tune[j]);
     }
     if (!(offline_tune == "true" || offline_tune == "false")) {
-      MS_LOG(EXCEPTION) << "The value of ENABLE_TUNE_DUMP must be 'true' or 'false'";
+      MS_LOG(ERROR) << "Invalid environment variable 'ENABLE_TUNE_DUMP', it should be 'true' or 'false', but got "
+                    << offline_tune;
     }
     offline = (offline_tune == "true");
   }

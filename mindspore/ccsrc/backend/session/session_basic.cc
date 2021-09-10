@@ -2315,7 +2315,8 @@ void SessionBasic::UpdateAllGraphDynamicShapeAttr(const std::vector<KernelGraphP
     is_dynamic = graph->is_dynamic_shape() || is_dynamic;
   }
   if (is_dynamic && all_graphs.size() > 1) {
-    MS_LOG(EXCEPTION) << "Dynamic shape is not supported with control flow.";
+    MS_LOG(EXCEPTION)
+      << "Dynamic shape is not supported with control flow(loop control statements and condition control statements).";
   }
 }
 
@@ -2680,7 +2681,7 @@ void DumpGraphExeOrder(const std::string &file_name, const std::string &target_d
   std::string file_path = target_dir + "/execution_order/" + file_name;
   auto realpath = Common::CreatePrefixPath(file_path);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path: " << file_path << " filed.";
+    MS_LOG(ERROR) << "Failed to get real path: [" << file_path << "] in dump graph execution order.";
     return;
   }
   file_path = realpath.value();
@@ -2689,7 +2690,9 @@ void DumpGraphExeOrder(const std::string &file_name, const std::string &target_d
   // write to csv file
   std::ofstream ofs(file_path);
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << file_path << "' failed!";
+    MS_LOG(ERROR) << "Failed to open file [" << file_path
+                  << "] in dump graph execution order, please check the file access permission and whether disk space "
+                     "is available.";
     return;
   }
   ofs << "NodeExecutionOrder-FullNameWithScope\n";

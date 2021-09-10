@@ -98,7 +98,7 @@ std::string GetRankIdStr() {
   std::string rank_id_str;
   rank_id_str = std::getenv("RANK_ID");
   if (rank_id_str.empty()) {
-    MS_LOG(EXCEPTION) << "Get hccl rankid failed, please set env RANK_ID";
+    MS_LOG(EXCEPTION) << "Invalid environment variable 'RANK_ID', it should not be empty.";
   }
   return rank_id_str;
 }
@@ -441,7 +441,7 @@ bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto dynamic_kernel = kernel_mod->GenDynamicKernel(cnode, stream_);
     if (dynamic_kernel == nullptr) {
-      MS_LOG(EXCEPTION) << cnode->fullname_with_scope() << " does not support dynamic shape.";
+      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with the operator [" << AnfAlgo::GetCNodeName(cnode) << "].";
     }
     dynamic_kernel->Initialize();
     dynamic_kernels.emplace_back(dynamic_kernel);
@@ -456,10 +456,10 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   SetCurrentContext();
   if (graph->is_dynamic_shape()) {
     if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && (ConfigManager::GetInstance().iter_num() > 1)) {
-      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with sink mode.";
+      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with dataset_sink_mode.";
     }
     if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with asyn dump. Please use other debugging methods.";
+      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with Asynchronous Dump. Please use Synchronous Dump.";
     }
     MS_LOG(INFO) << "Dynamic Shape Graph Generate Dynamic kernel";
     return GenDynamicKernel(graph);

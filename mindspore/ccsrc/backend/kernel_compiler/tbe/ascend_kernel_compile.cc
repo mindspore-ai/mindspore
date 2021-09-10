@@ -146,8 +146,8 @@ uint32_t GetProcessNum() {
     try {
       process_num = UlongToUint(std::stoul(env_process_num));
     } catch (std::invalid_argument &e) {
-      MS_LOG(EXCEPTION) << "Invalid MS_BUILD_PROCESS_NUM env:" << env_process_num
-                        << ". Please set the value of MS_BUILD_PROCESS_NUM in [0, 24]";
+      MS_LOG(EXCEPTION) << "Invalid environment variable 'MS_BUILD_PROCESS_NUM', it should be in [1, 24], but got "
+                        << env_process_num;
     }
   }
   return process_num;
@@ -177,7 +177,9 @@ std::string GetParaDebugPath() {
     if (realpath(save_path.c_str(), real_path)) {
       save_path = real_path;
     } else {
-      MS_LOG(EXCEPTION) << "Invalid env PARA_DEBUG_PATH, path : " << save_path;
+      MS_LOG(EXCEPTION) << "Invalid environment variable 'PARA_DEBUG_PATH', the path is " << save_path
+                        << ". Please check (1) whether the path exists, (2) whether the path has the access "
+                           "permission, (3) whether the path is too long.";
     }
   } else {
     save_path = "";
@@ -192,7 +194,9 @@ std::string GetTbePath() {
     if (realpath(save_path.c_str(), real_path)) {
       save_path = real_path;
     } else {
-      MS_LOG(EXCEPTION) << "Invalid env TBE_IMPL_PATH, path : " << save_path;
+      MS_LOG(EXCEPTION) << "Invalid environment variable 'TBE_IMPL_PATH', the path is " << save_path
+                        << ". Please check (1) whether the path exists, (2) whether the path has the access "
+                           "permission, (3) whether the path is too long. ";
     }
   } else {
     if (realpath(kDefPath, real_path)) {
@@ -624,7 +628,7 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
     } else {
       ResetOldTask();
       single_processed_kernels_.clear();
-      MS_LOG(EXCEPTION) << "Kernel compile failed, op [" << op_name << "], build result: " << build_result;
+      MS_LOG(EXCEPTION) << "Kernel compile failed, operator [" << op_name << "], build result: " << build_result;
     }
   }
   QueryFinishJob(job_type);

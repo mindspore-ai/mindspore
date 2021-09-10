@@ -624,7 +624,8 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
                << ", independent stream number: " << independent_stream_num << ".";
 
   if (total_stream_num > kMaxStreamNum) {
-    MS_LOG(EXCEPTION) << "Total stream number " << total_stream_num << " exceeds the limit of " << kMaxStreamNum << ".";
+    MS_LOG(EXCEPTION) << "Total stream number " << total_stream_num << " exceeds the limit of " << kMaxStreamNum
+                      << ", search details information in mindspore's FAQ.";
   }
 
   MS_LOG(INFO) << "After stream assign, total stream nums:" << resource_manager.get_cur_stream_num();
