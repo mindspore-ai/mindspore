@@ -67,6 +67,9 @@ typedef struct SlidingWindowParam {
   int ic_align_;
   int out_step_;
   int out_h_step_;
+  int out_c_step_;
+  int out_w_step_;
+  int out_block_step_;
   int in_step_;
   int in_h_step_;
   int in_sh_step_;  // stride H

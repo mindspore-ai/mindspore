@@ -123,7 +123,19 @@ void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_par
   sliding->c_block_ = UP_DIV(conv_param->output_channel_, block);
   sliding->block_channel_ = UP_DIV(conv_param->output_channel_, block) * block;
   sliding->out_step_ = conv_param->output_h_ * conv_param->output_w_ * sliding->block_channel_;
-  sliding->out_h_step_ = conv_param->output_w_ * sliding->block_channel_;
+  if (conv_param->out_format_ == NNACL_NC4HW4) {
+    // write to nc8hw8
+    sliding->out_h_step_ = conv_param->output_w_ * block;
+    sliding->out_c_step_ = block * conv_param->output_h_ * conv_param->output_w_;
+    sliding->out_w_step_ = block;
+    sliding->out_block_step_ = sliding->out_c_step_;
+  } else {
+    // write to nhwc
+    sliding->out_h_step_ = conv_param->output_w_ * sliding->block_channel_;
+    sliding->out_c_step_ = block;
+    sliding->out_w_step_ = sliding->block_channel_;
+    sliding->out_block_step_ = sliding->out_w_step_;
+  }
 }
 
 void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int input_block,

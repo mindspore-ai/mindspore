@@ -27,6 +27,10 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
                  const InstanceNormParameter *param, size_t task_id);
 int InstanceNormNC4HW4(const float *src_data, float *dst_data, const float *gamma_data, const float *beta_data,
                        const InstanceNormParameter *param, size_t task_id);
+#ifdef ENABLE_AVX
+int InstanceNormNC8HW8(const float *src_data, float *dst_data, const float *gamma_data, const float *beta_data,
+                       const InstanceNormParameter *param, size_t task_id);
+#endif
 #ifdef __cplusplus
 }
 #endif

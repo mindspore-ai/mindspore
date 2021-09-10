@@ -37,6 +37,7 @@ void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int ch
 void PackNHWCXToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel, int cx_num);
 void PackNC4HW4ToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
+void PackNC8HW8ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToCXHWNXFp32(const float *src, float *dst, int batch, int plane, int channel);
 

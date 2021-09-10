@@ -56,6 +56,10 @@ int ConvolutionSWCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
+  // is not 1x1 conv
+  if (!(conv_param_->kernel_h_ == 1 && conv_param_->kernel_w_ == 1)) {
+    conv_param_->out_format_ = out_tensors_[0]->format();
+  }
   return ReSize();
 }
 

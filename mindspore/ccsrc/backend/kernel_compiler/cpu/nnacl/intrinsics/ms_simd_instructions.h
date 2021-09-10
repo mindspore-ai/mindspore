@@ -23,13 +23,22 @@
 #define MS_F32X4_GETI(src, i) src[i]
 #endif
 
-#if defined(ENABLE_SSE) || defined(ENABLE_AVX)
+#if defined(ENABLE_SSE)
 #ifdef _MSC_VER
 #include <immintrin.h>
 #define MS_F32X4_GETI(src, i) src.m128_f32[i]
 #else
 #include <x86intrin.h>
 #define MS_F32X4_GETI(src, i) src[i]
+#endif
+#endif
+
+#ifdef ENABLE_AVX
+#ifdef _MSC_VER
+#include <immintrin.h>
+#define MS_F32X8_GETI(src, i) src.m256_f32[i]
+#else
+#define MS_F32X8_GETI(src, i) src[i]
 #endif
 #endif
 
@@ -203,6 +212,19 @@ static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
 #endif
 
 #ifdef ENABLE_AVX
+static inline MS_FLOAT32X8 MS_SQRTFX8_F32(MS_FLOAT32X8 src) {
+  MS_FLOAT32X8 dst;
+  MS_F32X8_GETI(dst, 0) = sqrtf(MS_F32X8_GETI(src, 0));
+  MS_F32X8_GETI(dst, 1) = sqrtf(MS_F32X8_GETI(src, 1));
+  MS_F32X8_GETI(dst, 2) = sqrtf(MS_F32X8_GETI(src, 2));
+  MS_F32X8_GETI(dst, 3) = sqrtf(MS_F32X8_GETI(src, 3));
+  MS_F32X8_GETI(dst, 4) = sqrtf(MS_F32X8_GETI(src, 4));
+  MS_F32X8_GETI(dst, 5) = sqrtf(MS_F32X8_GETI(src, 5));
+  MS_F32X8_GETI(dst, 6) = sqrtf(MS_F32X8_GETI(src, 6));
+  MS_F32X8_GETI(dst, 7) = sqrtf(MS_F32X8_GETI(src, 7));
+  return dst;
+}
+
 #define LOAD256X8_F32(src, input_ptr, num)                 \
   MS_FLOAT32X8 src##1 = MS_LD256_F32(input_ptr + 0 * num); \
   MS_FLOAT32X8 src##2 = MS_LD256_F32(input_ptr + 1 * num); \

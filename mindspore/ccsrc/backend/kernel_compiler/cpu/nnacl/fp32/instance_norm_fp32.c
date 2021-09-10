@@ -309,3 +309,117 @@ int InstanceNormNC4HW4(const float *src_data, float *dst_data, const float *gamm
   }
   return NNACL_OK;
 }
+
+#ifdef ENABLE_AVX
+int InstanceNormNC8HW8(const float *src_data, float *dst_data, const float *gamma_data, const float *beta_data,
+                       const InstanceNormParameter *param, size_t task_id) {
+  NNACL_CHECK_NULL_RETURN_ERR(src_data);
+  NNACL_CHECK_NULL_RETURN_ERR(dst_data);
+  NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
+  int channel = param->channel_;
+  int hw_plane = param->inner_size_;
+  int channel_step = UP_DIV(UP_DIV(channel, C8NUM), param->op_parameter_.thread_num_) * C8NUM;
+  int channel_begin = (int)(task_id)*channel_step;
+  int channel_end = MSMIN(channel_begin + channel_step, channel);
+  MS_FLOAT32X8 hw_planev = MS_MOV256_F32((float)(hw_plane));
+  for (int b = 0; b < param->batch_; b++) {
+    const float *src_b = src_data + b * channel * hw_plane;
+    float *dst_b = dst_data + b * channel * hw_plane;
+    int c = channel_begin;
+    for (; c <= channel_end - C16NUM; c += C16NUM) {
+      const float *src = src_b + c * hw_plane;
+      const float *src1 = src_b + (c + C8NUM) * hw_plane;
+      float *dst = dst_b + c;
+      MS_FLOAT32X8 mean = MS_MOV256_F32(0.0f);
+      MS_FLOAT32X8 mean1 = MS_MOV256_F32(0.0f);
+      MS_FLOAT32X8 square_mean = MS_MOV256_F32(0.0f);
+      MS_FLOAT32X8 square_mean1 = MS_MOV256_F32(0.0f);
+      for (int index = 0; index < hw_plane; ++index) {
+        MS_FLOAT32X8 srcv = MS_LD256_F32(src + index * C8NUM);
+        MS_FLOAT32X8 srcv1 = MS_LD256_F32(src1 + index * C8NUM);
+        MS_FLOAT32X8 squarev = MS_MUL256_F32(srcv, srcv);
+        MS_FLOAT32X8 squarev1 = MS_MUL256_F32(srcv1, srcv1);
+        mean = MS_ADD256_F32(mean, srcv);
+        mean1 = MS_ADD256_F32(mean1, srcv1);
+        square_mean = MS_ADD256_F32(square_mean, squarev);
+        square_mean1 = MS_ADD256_F32(square_mean1, squarev1);
+      }
+      mean = MS_DIV256_F32(mean, hw_planev);
+      mean1 = MS_DIV256_F32(mean1, hw_planev);
+      square_mean = MS_DIV256_F32(square_mean, hw_planev);
+      square_mean1 = MS_DIV256_F32(square_mean1, hw_planev);
+      MS_FLOAT32X8 deno =
+        MS_ADD256_F32(MS_SUB256_F32(square_mean, MS_MUL256_F32(mean, mean)), MS_MOV256_F32(param->epsilon_));
+      MS_FLOAT32X8 deno1 =
+        MS_ADD256_F32(MS_SUB256_F32(square_mean1, MS_MUL256_F32(mean1, mean1)), MS_MOV256_F32(param->epsilon_));
+      deno = MS_DIV256_F32(MS_MOV256_F32(1.0f), MS_SQRTFX8_F32(deno));
+      deno1 = MS_DIV256_F32(MS_MOV256_F32(1.0f), MS_SQRTFX8_F32(deno1));
+
+      MS_FLOAT32X8 gammav = MS_MUL256_F32(MS_LD256_F32(gamma_data + c), deno);            // deno * gamma_data[c]
+      MS_FLOAT32X8 gammav1 = MS_MUL256_F32(MS_LD256_F32(gamma_data + c + C8NUM), deno1);  // deno1 * gamma_data[c]
+      MS_FLOAT32X8 betav = MS_LD256_F32(beta_data + c);
+      MS_FLOAT32X8 betav1 = MS_LD256_F32(beta_data + c + C8NUM);
+      for (int index = 0; index < hw_plane; ++index) {
+        MS_FLOAT32X8 srcv = MS_LD256_F32(src + index * C8NUM);
+        MS_FLOAT32X8 srcv1 = MS_LD256_F32(src1 + index * C8NUM);
+        MS_FLOAT32X8 outv = MS_SUB256_F32(srcv, mean);
+        MS_FLOAT32X8 outv1 = MS_SUB256_F32(srcv1, mean1);
+        outv = MS_MUL256_F32(outv, gammav);
+        outv1 = MS_MUL256_F32(outv1, gammav1);
+        outv = MS_ADD256_F32(outv, betav);
+        outv1 = MS_ADD256_F32(outv1, betav1);
+        MS_ST256_F32(dst + index * channel, outv);
+        MS_ST256_F32(dst + index * channel + C8NUM, outv1);
+      }
+    }
+    for (; c <= channel_end - C8NUM; c += C8NUM) {
+      const float *src = src_b + c * hw_plane;
+      float *dst = dst_b + c;
+      MS_FLOAT32X8 mean = MS_MOV256_F32(0.0f);
+      MS_FLOAT32X8 square_mean = MS_MOV256_F32(0.0f);
+      for (int index = 0; index < hw_plane; ++index) {
+        MS_FLOAT32X8 srcv = MS_LD256_F32(src + index * C8NUM);
+        MS_FLOAT32X8 squarev = MS_MUL256_F32(srcv, srcv);
+        mean = MS_ADD256_F32(mean, srcv);
+        square_mean = MS_ADD256_F32(square_mean, squarev);
+      }
+      mean = MS_DIV256_F32(mean, hw_planev);
+      square_mean = MS_DIV256_F32(square_mean, hw_planev);
+      MS_FLOAT32X8 deno = MS_ADD256_F32(MS_SUB256_F32(square_mean, MS_MUL256_F32(mean, mean)),
+                                        MS_MOV256_F32(param->epsilon_));  // 256uestion
+      deno = MS_DIV256_F32(MS_MOV256_F32(1.0f), MS_SQRTFX8_F32(deno));
+
+      MS_FLOAT32X8 gammav = MS_MUL256_F32(MS_LD256_F32(gamma_data + c), deno);  // deno * gamma_data[c]
+      MS_FLOAT32X8 betav = MS_LD256_F32(beta_data + c);
+      for (int index = 0; index < hw_plane; ++index) {
+        MS_FLOAT32X8 srcv = MS_LD256_F32(src + index * C8NUM);
+        MS_FLOAT32X8 outv = MS_SUB256_F32(srcv, mean);
+        outv = MS_MUL256_F32(outv, gammav);
+        outv = MS_ADD256_F32(outv, betav);
+        MS_ST256_F32(dst + index * channel, outv);
+      }
+    }
+    for (; c < channel_end; ++c) {
+      int c8_down_loop = c / C8NUM * C8NUM;
+      int c8_mod = c % C8NUM;
+      int c_res = MSMIN(channel_end - c8_down_loop, C8NUM);
+      const float *src = src_b + c8_down_loop * hw_plane + c8_mod;
+      float *dst = dst_b + c;
+      float mean = 0.0f;
+      float square_mean = 0.0f;
+      for (int index = 0; index < hw_plane; ++index) {
+        float tmp = src[index * c_res];
+        mean += tmp;
+        square_mean += tmp * tmp;
+      }
+      mean /= (float)hw_plane;
+      square_mean /= (float)hw_plane;
+      const float deno = gamma_data[c] / sqrtf(square_mean - mean * mean + param->epsilon_);
+      for (int index = 0; index < hw_plane; ++index) {
+        dst[index * channel] = (src[index * c_res] - mean) * deno + beta_data[c];
+      }
+    }
+  }
+  return NNACL_OK;
+}
+#endif

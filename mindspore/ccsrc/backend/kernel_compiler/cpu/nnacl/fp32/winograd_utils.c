@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/fp32/winograd_utils.h"
+#include "nnacl/fp32/winograd_avx.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/base/minimal_filtering_generator.h"
 #include "nnacl/base/conv_common_base.h"
@@ -22,6 +23,21 @@
 static InputTransFunc InputTransFuncList[] = {
   NULL, NULL, NULL, NULL, InputTransform4x4Unit, NULL, InputTransform6x6Unit, NULL, InputTransform8x8Unit};
 
+#ifdef ENABLE_AVX
+static OutputTransFunc OutputTransFuncList[] = {
+  OutputTransform4x2AvxUnit,      OutputTransform4x3AvxUnit,      OutputTransform4x2ReluAvxUnit,
+  OutputTransform4x3ReluAvxUnit,  OutputTransform4x2Relu6AvxUnit, OutputTransform4x3Relu6AvxUnit,
+  OutputTransform6x2AvxUnit,      OutputTransform6x3AvxUnit,      OutputTransform6x4AvxUnit,
+  OutputTransform6x5AvxUnit,      OutputTransform6x2ReluAvxUnit,  OutputTransform6x3ReluAvxUnit,
+  OutputTransform6x4ReluAvxUnit,  OutputTransform6x5ReluAvxUnit,  OutputTransform6x2Relu6AvxUnit,
+  OutputTransform6x3Relu6AvxUnit, OutputTransform6x4Relu6AvxUnit, OutputTransform6x5Relu6AvxUnit,
+  OutputTransform8x2AvxUnit,      OutputTransform8x3AvxUnit,      OutputTransform8x4AvxUnit,
+  OutputTransform8x5AvxUnit,      OutputTransform8x6AvxUnit,      OutputTransform8x7AvxUnit,
+  OutputTransform8x2ReluAvxUnit,  OutputTransform8x3ReluAvxUnit,  OutputTransform8x4ReluAvxUnit,
+  OutputTransform8x5ReluAvxUnit,  OutputTransform8x6ReluAvxUnit,  OutputTransform8x7ReluAvxUnit,
+  OutputTransform8x2Relu6AvxUnit, OutputTransform8x3Relu6AvxUnit, OutputTransform8x4Relu6AvxUnit,
+  OutputTransform8x5Relu6AvxUnit, OutputTransform8x6Relu6AvxUnit, OutputTransform8x7Relu6AvxUnit};
+#else
 static OutputTransFunc OutputTransFuncList[] = {
   OutputTransform4x2Unit,      OutputTransform4x3Unit,      OutputTransform4x2ReluUnit,  OutputTransform4x3ReluUnit,
   OutputTransform4x2Relu6Unit, OutputTransform4x3Relu6Unit, OutputTransform6x2Unit,      OutputTransform6x3Unit,
@@ -32,6 +48,7 @@ static OutputTransFunc OutputTransFuncList[] = {
   OutputTransform8x2ReluUnit,  OutputTransform8x3ReluUnit,  OutputTransform8x4ReluUnit,  OutputTransform8x5ReluUnit,
   OutputTransform8x6ReluUnit,  OutputTransform8x7ReluUnit,  OutputTransform8x2Relu6Unit, OutputTransform8x3Relu6Unit,
   OutputTransform8x4Relu6Unit, OutputTransform8x5Relu6Unit, OutputTransform8x6Relu6Unit, OutputTransform8x7Relu6Unit};
+#endif
 
 InputTransFunc GetInputTransFunc(int input_unit) { return InputTransFuncList[input_unit]; }
 

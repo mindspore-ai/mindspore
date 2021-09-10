@@ -102,7 +102,9 @@ void WinogradOutputNHWCTransform(const float *gemm_out, float *out_data, const f
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
   int output_channel = conv_param->output_channel_;
+#ifndef ENABLE_AVX
   int oc4 = UP_DIV(output_channel, C4NUM);
+#endif
   int oc8 = UP_DIV(output_channel, C8NUM);
   int input_unit = conv_param->input_unit_;
   NNACL_CHECK_ZERO_RETURN(output_unit_num);
@@ -121,7 +123,8 @@ void WinogradOutputNHWCTransform(const float *gemm_out, float *out_data, const f
 
     int src_tile_offset = i * oc8 * C8NUM * input_unit * input_unit;
     int dst_tile_offset = output_channel * (dst_x_s + dst_y_s * output_w);
-
+#ifndef ENABLE_AVX
+    // avx is write to nc4hw4
     for (int j = 0; j < oc4; j++) {
       int c8_block = j / 2;
       int c8_res = j % 2;
@@ -134,6 +137,19 @@ void WinogradOutputNHWCTransform(const float *gemm_out, float *out_data, const f
       float *dst_ptr = out_data + dst_oc4_offset;
       func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w, output_channel, r_w, r_h, r_c);
     }
+#else
+    // avx is write to nc8hw8
+    for (int j = 0; j < oc8; j++) {
+      int r_c = output_channel - j * C8NUM;
+      r_c = r_c > C8NUM ? C8NUM : r_c;
+      int src_oc8_offset = src_tile_offset + j * input_unit * input_unit * C8NUM;
+      int dst_oc8_offset = dst_tile_offset + j * C8NUM;
+      const float *src_ptr = gemm_out + src_oc8_offset;
+      const float *bias_ptr = bias_data + j * C8NUM;
+      float *dst_ptr = out_data + dst_oc8_offset;
+      func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w, output_channel, r_w, r_h, r_c);
+    }
+#endif
     out_tile_index++;
   }
 }
@@ -146,7 +162,9 @@ void WinogradOutputNC4HW4Transform(const float *gemm_out, float *out_data, const
   int output_h = conv_param->output_h_;
   int output_plane = output_w * output_h;
   int output_channel = conv_param->output_channel_;
+#ifndef ENABLE_AVX
   int oc4 = UP_DIV(output_channel, C4NUM);
+#endif
   int oc8 = UP_DIV(output_channel, C8NUM);
   int input_unit = conv_param->input_unit_;
   NNACL_CHECK_ZERO_RETURN(output_unit_num);
@@ -165,7 +183,18 @@ void WinogradOutputNC4HW4Transform(const float *gemm_out, float *out_data, const
 
     int src_tile_offset = i * oc8 * C8NUM * input_unit * input_unit;
     int dst_tile_offset = dst_x_s + dst_y_s * output_w;
-
+#ifdef ENABLE_AVX
+    for (int j = 0; j < oc8; j++) {
+      int r_c = output_channel - j * C8NUM;
+      r_c = r_c > C8NUM ? C8NUM : r_c;
+      int src_oc8_offset = src_tile_offset + j * input_unit * input_unit * C8NUM;
+      int dst_oc8_offset = (dst_tile_offset + output_plane * j) * C8NUM;
+      const float *src_ptr = gemm_out + src_oc8_offset;
+      const float *bias_ptr = bias_data + j * C8NUM;
+      float *dst_ptr = out_data + dst_oc8_offset;
+      func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w, r_c, r_w, r_h, r_c);
+    }
+#else
     for (int j = 0; j < oc4; j++) {
       int c8_block = j / 2;
       int c8_res = j % 2;
@@ -178,6 +207,7 @@ void WinogradOutputNC4HW4Transform(const float *gemm_out, float *out_data, const
       float *dst_ptr = out_data + dst_oc4_offset;
       func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w, r_c, r_w, r_h, r_c);
     }
+#endif
     out_tile_index++;
   }
 }

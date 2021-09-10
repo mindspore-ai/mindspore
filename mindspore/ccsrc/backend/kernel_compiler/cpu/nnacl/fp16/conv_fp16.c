@@ -248,7 +248,7 @@ void ConvWinogardFp16(const float16_t *input_data, const float16_t *trans_weight
         WinogradOutputNHWCTransformFp16(gemm_out + task_id * gemm_out_offset, output_data + out_batch_offset, bias_data,
                                         cal_num, out_tile_index, out_w_block, conv_param, out_func);
       } else {
-        WinogradOutputNC4HW4TransformFp16(gemm_out + task_id * gemm_out_offset, output_data + out_batch_offset,
+        WinogradOutputNC8HW8TransformFp16(gemm_out + task_id * gemm_out_offset, output_data + out_batch_offset,
                                           bias_data, cal_num, out_tile_index, out_w_block, conv_param, out_func);
       }
     }
