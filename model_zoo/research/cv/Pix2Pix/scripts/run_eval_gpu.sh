@@ -16,7 +16,7 @@
 echo "======================================================================================================================================="
 echo "Please run the eval as: "
 echo "python eval.py device_target device_id val_data_dir ckpt"
-echo "for example: python eval.py --device_target Ascend --device_id 0 --val_data_dir ./facades/test --ckpt ./results/ckpt/Generator_200.ckpt"
+echo "for example: python eval.py --device_target GPU --device_id 0 --val_data_dir ./facades/test --ckpt ./results/ckpt/Generator_200.ckpt"
 echo "======================================================================================================================================="
 
 if [ $# != 4 ]
@@ -36,6 +36,7 @@ get_real_path(){
 PATH1=$(get_real_path $1)
 CKPT_PATH=$(get_real_path $3)
 RESULT_PATH=$4
+
 if [ ! -d $PATH1 ]
 then
     echo "error: DATASET_PATH=$PATH1 is not a directory"
@@ -43,8 +44,9 @@ then
 fi
 
 if [ $2 == 'facades' ]; then
-  python eval.py --device_target Ascend --device_id 0 --val_data_dir $PATH1 --ckpt $CKPT_PATH --predict_dir $RESULT_PATH --dataset_size 400
+  python eval.py --device_target GPU --device_id 0 --val_data_dir $PATH1 --ckpt $CKPT_PATH --predict_dir $RESULT_PATH --pad_mod REFLECT \
+  --dataset_size 400
 elif [ $2 == 'maps' ]; then
-  python eval.py --device_target Ascend --device_id 0 --val_data_dir $PATH1 --ckpt $CKPT_PATH --predict_dir $RESULT_PATH --dataset_size 1096
+  python eval.py --device_target GPU --device_id 0 --val_data_dir $PATH1 --ckpt $CKPT_PATH --predict_dir $RESULT_PATH --dataset_size 1096 \
+  --pad_mode REFLECT
 fi
-
