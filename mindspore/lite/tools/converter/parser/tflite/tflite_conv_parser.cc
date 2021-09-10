@@ -50,12 +50,20 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
   // get weight tensor
+  if (tflite_op->inputs.size() < 2) {
+    MS_LOG(ERROR) << "the tflite_op shape is illegal";
+    return nullptr;
+  }
   const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[1]);
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";
     return nullptr;
   }
   auto weight_shape = weight_tensor->shape;
+  if (weight_shape.empty() || weight_shape.size() < 4) {
+    MS_LOG(ERROR) << "the weight shape is illegal";
+    return nullptr;
+  }
   prim->set_in_channel(weight_shape[3]);
   prim->set_out_channel(weight_shape[0]);
   prim->set_kernel_size({weight_shape[1], weight_shape[2]});
@@ -102,12 +110,20 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
   // get weight tensor
+  if (tflite_op->inputs.size() < 2) {
+    MS_LOG(ERROR) << "the tflite_op shape is illegal";
+    return nullptr;
+  }
   const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(1));
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";
     return nullptr;
   }
   auto weight_shape = weight_tensor->shape;
+  if (weight_shape.empty() || weight_shape.size() < 4) {
+    MS_LOG(ERROR) << "the weight shape is illegal";
+    return nullptr;
+  }
   prim->set_kernel_size({weight_shape[1], weight_shape[2]});
   prim->set_in_channel(weight_shape[3]);
   if (tflite_attr->depth_multiplier == 0) {

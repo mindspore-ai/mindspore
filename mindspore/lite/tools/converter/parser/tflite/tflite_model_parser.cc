@@ -33,6 +33,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 using mindspore::converter::kFmkTypeTflite;
 namespace mindspore::lite {
@@ -166,7 +167,9 @@ STATUS TfliteModelParser::ConvertOps() {
 
     std::vector<AnfNodePtr> op_inputs;
     if (primitive_c != nullptr) {
-      op_inputs = {NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c))};
+      auto value_node = NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c));
+      MSLITE_CHECK_PTR(value_node);
+      op_inputs = {value_node};
     } else {
       MS_LOG(ERROR) << "parse failed for node: " << op_name;
       return RET_ERROR;
@@ -216,6 +219,7 @@ STATUS TfliteModelParser::ConvertOps() {
       nodes_.insert(std::pair(input_idx, parameter));
     }
     auto new_cnode = res_graph_->NewCNode(op_inputs);
+    MSLITE_CHECK_PTR(new_cnode);
     new_cnode->set_fullname_with_scope(op_name);
 
     // parse outputs
@@ -400,8 +404,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     int output_idx = tflite_subgraph->outputs.front() < 0
                        ? static_cast<int>(tflite_subgraph->outputs.front() + tflite_subgraph->tensors.size())
                        : static_cast<int>(tflite_subgraph->outputs.front());
-    auto valueNode = NewValueNode(returnPrim);
-    std::vector<AnfNodePtr> op_inputs{valueNode};
+    auto value_node = NewValueNode(returnPrim);
+    MSLITE_CHECK_PTR(value_node);
+    std::vector<AnfNodePtr> op_inputs{value_node};
     auto cnode = nodes_.at(output_idx);
     if (cnode == nullptr) {
       MS_LOG(ERROR) << "Can't find input node.";
@@ -409,6 +414,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     }
     op_inputs.emplace_back(cnode);
     auto returnCnode = res_graph_->NewCNode(op_inputs);
+    MSLITE_CHECK_PTR(returnCnode);
     returnCnode->set_fullname_with_scope("Return");
     res_graph_->set_return(returnCnode);
   }
@@ -537,9 +543,12 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
         return RET_NULL_PTR;
       }
       auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+      MSLITE_CHECK_PTR(tuple_get_item_prim);
       auto get_item_value = NewValueNode(MakeValue<int>(op_idx));
+      MSLITE_CHECK_PTR(get_item_value);
       std::vector<AnfNodePtr> inputs{tuple_get_item_prim, dst_cnode, get_item_value};
       CNodePtr get_item_cnode = res_graph_->NewCNode(inputs);
+      MSLITE_CHECK_PTR(get_item_cnode);
       get_item_cnode->set_fullname_with_scope(dst_cnode->fullname_with_scope() + "_getitem_" + std::to_string(op_idx));
       nodes_.insert(std::pair(output_idx, get_item_cnode));
       op_idx++;
@@ -552,6 +561,7 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
 int TfliteModelParser::Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   for (const auto &func_graph : all_func_graphs) {
     auto tflite_inputs_adjust = std::make_shared<TfliteInputsAdjust>();
+    MSLITE_CHECK_PTR(tflite_inputs_adjust);
     if (!tflite_inputs_adjust->Run(func_graph)) {
       MS_LOG(ERROR) << "adjust input failed.";
       return RET_ERROR;

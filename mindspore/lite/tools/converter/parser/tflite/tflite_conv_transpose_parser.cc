@@ -51,12 +51,20 @@ ops::PrimitiveC *TfliteDeConvParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_pad_mode(padMode);
 
   // get weight tensor
+  if (tflite_op->inputs.size() < 3) {
+    MS_LOG(ERROR) << "the tflite_op shape is illegal";
+    return nullptr;
+  }
   const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(1));
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";
     return nullptr;
   }
   auto weight_shape = weight_tensor->shape;
+  if (weight_shape.empty() || weight_shape.size() < 4) {
+    MS_LOG(ERROR) << "the weight shape is illegal";
+    return nullptr;
+  }
   prim->set_in_channel(weight_shape[3]);
   prim->set_out_channel(weight_shape[0]);
   prim->set_kernel_size({weight_shape[1], weight_shape[2]});
