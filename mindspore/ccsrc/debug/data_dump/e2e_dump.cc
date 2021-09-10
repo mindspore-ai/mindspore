@@ -280,10 +280,21 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
   bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
 
   if (dump_json_parser.async_dump_enabled() || dump_json_parser.e2e_dump_enabled()) {
-    if (starting_graph_id == INT32_MAX) {
-      starting_graph_id = graph_id;
-    } else if (starting_graph_id == graph_id) {
-      dump_json_parser.UpdateDumpIter();
+    if (IsDeviceTargetGPU()) {
+      if (starting_graph_id == INT32_MAX) {
+        starting_graph_id = graph_id;
+      } else if (starting_graph_id == graph_id) {
+        dump_json_parser.UpdateDumpIter();
+      }
+    } else {
+      // Identify the first graph id and not increamenting dump iter for the first iteration (initial dump iter = 0).
+      if (starting_graph_id == INT32_MAX) {
+        starting_graph_id = graph_id;
+      } else {
+        // Update dump iter for ascend.
+        // In multi network scripts, dump iter is equal to the number of networks that have been run so far.
+        dump_json_parser.UpdateDumpIter();
+      }
     }
     MS_LOG(DEBUG) << "sink_mode = " << sink_mode;
   }
