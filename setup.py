@@ -113,8 +113,6 @@ required_package = [
     'asttokens >= 1.1.13',
     'pillow >= 6.2.0',
     'scipy >= 1.5.2',
-    'wheel >= 0.32.0',
-    'setuptools >= 40.8.0',
     'packaging >= 20.0',
     'psutil >= 5.6.1'
 ]
