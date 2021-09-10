@@ -81,7 +81,7 @@ bool MultinomialGpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     float sum = cumulative_value[(i + 1) * num_col - 1];
     if (sum != 0) {
       for (int k = 0; k < num_col; ++k) {
-	size_t index = i * num_col + k;
+        size_t index = i * num_col + k;
         cumulative_value[index] /= sum;
       }
     }
