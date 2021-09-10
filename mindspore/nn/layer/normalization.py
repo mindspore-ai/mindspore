@@ -642,7 +642,6 @@ class GlobalBatchNorm(_BatchNorm):
         >>> from mindspore.context import ParallelMode
         >>> from mindspore import nn
         >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
         >>>
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>> init()
@@ -762,7 +761,7 @@ class SyncBatchNorm(_BatchNorm):
         >>> from mindspore.context import ParallelMode
         >>> from mindspore import Tensor
         >>> from mindspore import nn
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>>
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>> init()
