@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <set>
 #include <unordered_map>
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
@@ -60,6 +61,16 @@ class MemoryManagerActor : public ActorBase {
 
   // Wait the MemoryManagerActor to finish running all current messages.
   void Wait(OpContext<DeviceTensor> *const op_context, const AID from_aid);
+
+ private:
+  // When allocate device memory fail, print error log and set op context failed status.
+  void SetOpContextMemoryAllocFail(const std::string &kernel_name, const DeviceContext *device_context,
+                                   size_t alloc_size, OpContext<DeviceTensor> *const op_context);
+
+  // MemoryManagerActor object is used like a single instance, if one actor allocates memory failed in one batch, which
+  // will set fail message info OpContext, major thread will destroy the OpContext object, subsequent actor can not set
+  // fail message again, so we record allocating memory fail event by the uuid of the batch, which is key of the set.
+  std::set<std::string> mem_alloc_failed_step_ids_;
 };
 }  // namespace runtime
 }  // namespace mindspore
