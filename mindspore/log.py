@@ -446,8 +446,8 @@ def _get_rank_id():
     gpu_rank_id = os.getenv('OMPI_COMM_WORLD_RANK')
     rank = '0'
     if rank_id and gpu_rank_id:
-        logger.warning("Environment variables RANK_ID and OMPI_COMM_WORLD_RANK both exist,"
-                       "RANK_ID will be used.")
+        warnings.warn("Environment variables RANK_ID and OMPI_COMM_WORLD_RANK both exist,"
+                      "we will use RANK_ID to get rank id by default.")
     if rank_id:
         rank = rank_id
     elif gpu_rank_id:
