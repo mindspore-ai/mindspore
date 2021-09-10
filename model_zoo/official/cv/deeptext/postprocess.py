@@ -17,7 +17,7 @@
 import os
 from PIL import Image
 import numpy as np
-import mmcv
+import cv2
 
 from src.utils import metrics
 from model_utils.config import config
@@ -37,8 +37,8 @@ def get_pred(file, result_path):
 
 def get_gt_bboxes_labels(label_file, img_file):
     img_data = np.array(Image.open(img_file))
-    img_data, w_scale, h_scale = mmcv.imresize(
-        img_data, (config.img_width, config.img_height), return_scale=True)
+    img_data, w_scale, h_scale = cv2.resize(
+        img_data, (config.img_width, config.img_height), interpolation=cv2.INTER_LINEAR)
     scale_factor = np.array(
         [w_scale, h_scale, w_scale, h_scale], dtype=np.float32)
     img_shape = (config.img_height, config.img_width, 1.0)

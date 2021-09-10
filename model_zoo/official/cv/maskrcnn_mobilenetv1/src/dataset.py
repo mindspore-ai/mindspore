@@ -18,7 +18,6 @@ from __future__ import division
 
 import os
 import re
-import mmcv
 import cv2
 import numpy as np
 from numpy import random
@@ -117,7 +116,7 @@ class PhotoMetricDistortion:
                 img *= alpha
 
         # convert color from BGR to HSV
-        img = mmcv.bgr2hsv(img)
+        img = cv2.cvtColor((img, getattr(cv2, f'COLOR_BGR2HSV')))
 
         # random saturation
         if random.randint(2):
@@ -131,7 +130,7 @@ class PhotoMetricDistortion:
             img[..., 0][img[..., 0] < 0] += 360
 
         # convert color from HSV to BGR
-        img = mmcv.hsv2bgr(img)
+        img = cv2.cvtColor((img, getattr(cv2, f'COLOR_HSV2BGR')))
 
         # random contrast
         if mode == 0:
@@ -176,11 +175,24 @@ class Expand:
 
         return img, boxes, labels, mask
 
+def rescale_with_tuple(img, scale):
+    h, w = img.shape[:2]
+    scale_factor = min(max(scale) / max(h, w), min(scale) / min(h, w))
+    new_size = int(w * float(scale_factor) + 0.5), int(h * float(scale_factor) + 0.5)
+    rescaled_img = cv2.resize(img, new_size, interpolation=cv2.INTER_LINEAR)
+
+    return rescaled_img, scale_factor
+
+def rescale_with_factor(img, scale_factor):
+    h, w = img.shape[:2]
+    new_size = int(w * float(scale_factor) + 0.5), int(h * float(scale_factor) + 0.5)
+    return cv2.resize(img, new_size, interpolation=cv2.INTER_NEAREST)
+
 def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     """rescale operation for image"""
-    img_data, scale_factor = mmcv.imrescale(img, (config.img_width, config.img_height), return_scale=True)
+    img_data, scale_factor = rescale_with_tuple(img, (config.img_width, config.img_height))
     if img_data.shape[0] > config.img_height:
-        img_data, scale_factor2 = mmcv.imrescale(img_data, (config.img_height, config.img_height), return_scale=True)
+        img_data, scale_factor2 = rescale_with_tuple(img_data, (config.img_height, config.img_height))
         scale_factor = scale_factor*scale_factor2
 
     gt_bboxes = gt_bboxes * scale_factor
@@ -188,7 +200,7 @@ def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_data.shape[0] - 1)
 
     gt_mask_data = np.array([
-        mmcv.imrescale(mask, scale_factor, interpolation='nearest')
+        rescale_with_factor(mask, scale_factor)
         for mask in gt_mask
     ])
 
@@ -210,9 +222,9 @@ def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
 
 def rescale_column_test(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     """rescale operation for image of eval"""
-    img_data, scale_factor = mmcv.imrescale(img, (config.img_width, config.img_height), return_scale=True)
+    img_data, scale_factor = rescale_with_tuple(img, (config.img_width, config.img_height))
     if img_data.shape[0] > config.img_height:
-        img_data, scale_factor2 = mmcv.imrescale(img_data, (config.img_height, config.img_height), return_scale=True)
+        img_data, scale_factor2 = rescale_with_tuple(img_data, (config.img_height, config.img_height))
         scale_factor = scale_factor*scale_factor2
 
     pad_h = config.img_height - img_data.shape[0]
@@ -230,8 +242,12 @@ def rescale_column_test(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
 def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     """resize operation for image"""
     img_data = img
-    img_data, w_scale, h_scale = mmcv.imresize(
-        img_data, (config.img_width, config.img_height), return_scale=True)
+    img_data = cv2.resize(
+        img_data, (config.img_width, config.img_height), interpolation=cv2.INTER_LINEAR)
+    h, w = img_data.shape[:2]
+    h_scale = config.img_height / h
+    w_scale = config.img_width / w
+
     scale_factor = np.array(
         [w_scale, h_scale, w_scale, h_scale], dtype=np.float32)
     img_shape = (config.img_height, config.img_width, 1.0)
@@ -242,7 +258,7 @@ def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_shape[0] - 1) # y1, y2   [0, H-1]
 
     gt_mask_data = np.array([
-        mmcv.imresize(mask, (config.img_width, config.img_height), interpolation='nearest')
+        cv2.resize(mask, (config.img_width, config.img_height), interpolation=cv2.INTER_NEAREST)
         for mask in gt_mask
     ])
     return  (img_data, img_shape, gt_bboxes, gt_label, gt_num, gt_mask_data)
@@ -250,8 +266,12 @@ def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
 def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     """resize operation for image of eval"""
     img_data = img
-    img_data, w_scale, h_scale = mmcv.imresize(
-        img_data, (config.img_width, config.img_height), return_scale=True)
+    img_data, w_scale, h_scale = cv2.resize(
+        img_data, (config.img_width, config.img_height), interpolation=cv2.INTER_LINEAR)
+    h, w = img_data.shape[:2]
+    h_scale = config.img_height / h
+    w_scale = config.img_width / w
+
     img_shape = np.append(img_shape, (h_scale, w_scale))
     img_shape = np.asarray(img_shape, dtype=np.float32)
 
@@ -259,20 +279,29 @@ def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
 
 def impad_to_multiple_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     """impad operation for image"""
-    img_data = mmcv.impad(img, (config.img_height, config.img_width))
+    img_data = cv2.copyMakeBorder(img,
+                                  0, config.img_height - img.shape[0], 0, config.img_width - img.shape[1],
+                                  cv2.BORDER_CONSTANT,
+                                  value=0)
     img_data = img_data.astype(np.float32)
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num, gt_mask)
 
 def imnormalize_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     """imnormalize operation for image"""
-    img_data = mmcv.imnormalize(img, np.array([123.675, 116.28, 103.53]), np.array([58.395, 57.12, 57.375]), True)
+    mean = np.asarray([123.675, 116.28, 103.53])
+    std = np.asarray([58.395, 57.12, 57.375])
+    img_data = img.copy().astype(np.float32)
+    cv2.cvtColor(img_data, cv2.COLOR_BGR2RGB, img_data)  # inplace
+    cv2.subtract(img_data, np.float64(mean.reshape(1, -1)), img_data)  # inplace
+    cv2.multiply(img_data, 1 / np.float64(std.reshape(1, -1)), img_data)  # inplace
+
     img_data = img_data.astype(np.float32)
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num, gt_mask)
 
 def flip_column(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask):
     """flip operation for image"""
     img_data = img
-    img_data = mmcv.imflip(img_data)
+    img_data = np.flip(img_data, axis=1)
     flipped = gt_bboxes.copy()
     _, w, _ = img_data.shape
 

@@ -20,7 +20,7 @@ import os
 import numpy as np
 from numpy import random
 
-import mmcv
+import cv2
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as CC
@@ -107,7 +107,7 @@ class PhotoMetricDistortion:
                 img *= alpha
 
         # convert color from BGR to HSV
-        img = mmcv.bgr2hsv(img)
+        img = cv2.cvtColor((img, getattr(cv2, f'COLOR_BGR2HSV')))
 
         # random saturation
         if random.randint(2):
@@ -121,7 +121,7 @@ class PhotoMetricDistortion:
             img[..., 0][img[..., 0] < 0] += 360
 
         # convert color from HSV to BGR
-        img = mmcv.hsv2bgr(img)
+        img = cv2.cvtColor((img, getattr(cv2, f'COLOR_HSV2BGR')))
 
         # random contrast
         if mode == 0:
@@ -166,8 +166,8 @@ class Expand:
 def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """resize operation for image"""
     img_data = img
-    img_data, w_scale, h_scale = mmcv.imresize(
-        img_data, (config.img_width, config.img_height), return_scale=True)
+    img_data, w_scale, h_scale = cv2.resize(
+        img_data, (config.img_width, config.img_height), interpolation=cv2.INTER_LINEAR)
     scale_factor = np.array(
         [w_scale, h_scale, w_scale, h_scale], dtype=np.float32)
     img_shape = (config.img_height, config.img_width, 1.0)
@@ -184,8 +184,8 @@ def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
     """resize operation for image of eval"""
     img_data = img
-    img_data, w_scale, h_scale = mmcv.imresize(
-        img_data, (config.img_width, config.img_height), return_scale=True)
+    img_data, w_scale, h_scale = cv2.resize(
+        img_data, (config.img_width, config.img_height), interpolation=cv2.INTER_LINEAR)
     scale_factor = np.array(
         [w_scale, h_scale, w_scale, h_scale], dtype=np.float32)
     img_shape = (config.img_height, config.img_width)
@@ -202,14 +202,23 @@ def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
 
 def impad_to_multiple_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """impad operation for image"""
-    img_data = mmcv.impad(img, (config.img_height, config.img_width))
+    img_data = cv2.copyMakeBorder(img,
+                                  0, config.img_height - img.shape[0], 0, config.img_width - img.shape[1],
+                                  cv2.BORDER_CONSTANT,
+                                  value=0)
     img_data = img_data.astype(np.float32)
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
 
 def imnormalize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """imnormalize operation for image"""
-    img_data = mmcv.imnormalize(img, [123.675, 116.28, 103.53], [58.395, 57.12, 57.375], True)
+    mean = np.asarray([123.675, 116.28, 103.53])
+    std = np.asarray([58.395, 57.12, 57.375])
+    img_data = img.copy().astype(np.float32)
+    cv2.cvtColor(img_data, cv2.COLOR_BGR2RGB, img_data)  # inplace
+    cv2.subtract(img_data, np.float64(mean.reshape(1, -1)), img_data)  # inplace
+    cv2.multiply(img_data, 1 / np.float64(std.reshape(1, -1)), img_data)  # inplace
+
     img_data = img_data.astype(np.float32)
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
@@ -217,7 +226,7 @@ def imnormalize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 def flip_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """flip operation for image"""
     img_data = img
-    img_data = mmcv.imflip(img_data)
+    img_data = np.flip(img_data, axis=1)
     flipped = gt_bboxes.copy()
     _, w, _ = img_data.shape
 
