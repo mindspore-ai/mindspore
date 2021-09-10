@@ -59,7 +59,7 @@ class Jvp(Cell):
         - **jvp** (Tensors or Tuple of Tensors) - The result of the jacobian vector product.
 
     Examples:
-        >>> from mindspore.nn.grad import Jvp
+        >>> from mindspore.nn import Jvp
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y):
         ...         return x**3 + y
@@ -123,7 +123,7 @@ class Vjp(Cell):
         - **vjp** (Tensors or Tuple of Tensors) - The result of the dot product.
 
     Examples:
-        >>> from mindspore.nn.grad import Vjp
+        >>> from mindspore.nn import Vjp
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y):
         ...         return x**3 + y
