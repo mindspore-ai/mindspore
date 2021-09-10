@@ -31,7 +31,7 @@ namespace mindspore {
 namespace kernel {
 
 BufferSampleKernel::BufferSampleKernel()
-    : element_nums_(0), capacity_(0), batch_size_(0), seed_(0), states_init_(false) {}
+    : element_nums_(0), capacity_(0), batch_size_(0), seed_(0), states_init_(false), unique_(false) {}
 
 BufferSampleKernel::~BufferSampleKernel() {
   if (devStates_ != nullptr) {
@@ -53,6 +53,7 @@ bool BufferSampleKernel::Init(const CNodePtr &kernel_node) {
   auto types = GetAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
   capacity_ = GetAttr<int64_t>(kernel_node, "capacity");
   seed_ = GetAttr<int64_t>(kernel_node, "seed");
+  unique_ = GetAttr<bool>(kernel_node, "unique");
   batch_size_ = LongToSize(GetAttr<int64_t>(kernel_node, "batch_size"));
   element_nums_ = shapes.size();
   // Set default seed, if seed == 0
@@ -60,8 +61,10 @@ bool BufferSampleKernel::Init(const CNodePtr &kernel_node) {
     generator_.seed(std::chrono::system_clock::now().time_since_epoch().count());
     seed_ = generator_();
   }
+  auto indexes_size = batch_size_;
+  if (unique_) indexes_size = capacity_;
   // Keep the device memory for curandstate
-  const size_t cap_state_size = sizeof(curandState) * capacity_;
+  const size_t cap_state_size = sizeof(curandState) * indexes_size;
   void *dev_state = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(cap_state_size);
   if (dev_state == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to alloc dev_state, size is " << cap_state_size;
@@ -77,8 +80,10 @@ bool BufferSampleKernel::Init(const CNodePtr &kernel_node) {
   // count and head
   input_size_list_.push_back(sizeof(int));
   input_size_list_.push_back(sizeof(int));
-  workspace_size_list_.push_back(capacity_ * sizeof(unsigned int));
-  workspace_size_list_.push_back(capacity_ * sizeof(unsigned int));
+  workspace_size_list_.push_back(indexes_size * sizeof(unsigned int));
+  if (unique_) {
+    workspace_size_list_.push_back(indexes_size * sizeof(unsigned int));
+  }
   return true;
 }
 
@@ -96,14 +101,18 @@ bool BufferSampleKernel::Launch(const std::vector<AddressPtr> &inputs, const std
                              "sync dev to host failed");
   // 1 Init curandState for the first time
   if (!states_init_) {
-    RandInit(capacity_, seed_, devStates_, cuda_stream);
+    RandInit(unique_ ? capacity_ : batch_size_, seed_, devStates_, cuda_stream);
     states_init_ = true;
   }
-  auto key = GetDeviceAddress<unsigned int>(workspaces, 0);
-  auto indexes = GetDeviceAddress<unsigned int>(workspaces, 1);
   // 2 Generate random indexes by kernel
-  RandomGen(k_num, devStates_, indexes, key, cuda_stream);
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSync failed, random generate.");
+  auto indexes = GetDeviceAddress<unsigned int>(workspaces, 0);
+  if (unique_) {
+    auto key = GetDeviceAddress<unsigned int>(workspaces, 1);
+    RandomGen(k_num, devStates_, indexes, key, cuda_stream);
+  } else {
+    RandomGenUniform(batch_size_, devStates_, k_num, indexes, cuda_stream);
+  }
+  // 3 Sample data by indexes
   for (size_t i = 0; i < element_nums_; i++) {
     auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
     auto out_addr = GetDeviceAddress<unsigned char>(outputs, i);

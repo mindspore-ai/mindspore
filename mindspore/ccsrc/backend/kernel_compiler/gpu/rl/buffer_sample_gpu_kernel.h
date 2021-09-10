@@ -49,6 +49,7 @@ class BufferSampleKernel : public GpuKernel {
   size_t batch_size_;
   int64_t seed_;
   bool states_init_;
+  bool unique_;
   std::mt19937 generator_;
   curandState *devStates_;
   std::vector<size_t> exp_element_list;

@@ -108,6 +108,14 @@ __global__ void SrandUInt(const int size, curandState *globalState, unsigned int
   }
 }
 
+__global__ void SrandUniformInt(const int size, curandState *globalState, const int upBound, unsigned int *out) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    // curand_uniform return a pseudorandom floats uniformly distributed between 0.0 and 1.0, where 1.0 is
+    // included and 0.0 is excluded. So decrease the upBound by 1 to avoid out of range.
+    out[i] = static_cast<unsigned int>(curand_uniform(&globalState[i]) * (upBound - 1));
+  }
+}
+
 void BufferAppend(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
                   unsigned char *buffer, const unsigned char *exp, cudaStream_t cuda_stream) {
   BufferAppendKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(capacity, size, index, exp_batch, buffer, exp);
@@ -149,4 +157,9 @@ void RandomGen(const int size, curandState *globalState, unsigned int *value, un
   thrust::device_ptr<unsigned int> dev_key_ptr(key);
   // 2 Sort the key and get the sorted indexes.
   thrust::sort_by_key(policy, dev_key_ptr, dev_key_ptr + size, dev_data_ptr);
+}
+
+void RandomGenUniform(const int size, curandState *globalState, const int up_bound, unsigned int *indexes,
+                      cudaStream_t stream) {
+  SrandUniformInt<<<(size + 255) / 256, 256, 0, stream>>>(size, globalState, up_bound, indexes);
 }
