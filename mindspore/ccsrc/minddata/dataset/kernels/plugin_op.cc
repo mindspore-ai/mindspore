@@ -89,6 +89,5 @@ Status PluginOp::Init() {
   CHECK_FAIL_RETURN_UNEXPECTED(rc.IsOk(), rc.ToString());
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

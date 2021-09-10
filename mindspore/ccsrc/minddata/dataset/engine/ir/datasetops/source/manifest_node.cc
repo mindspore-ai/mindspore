@@ -125,7 +125,7 @@ Status ManifestNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
   RETURN_IF_NOT_OK(Build(&ops));
   CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build op.");
   auto op = std::dynamic_pointer_cast<ManifestOp>(ops.front());
-  op->CountTotalRows(&num_rows);
+  RETURN_IF_NOT_OK(op->CountTotalRows(&num_rows));
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
   sample_size = sampler_rt->CalculateNumSamples(num_rows);

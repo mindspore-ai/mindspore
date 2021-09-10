@@ -34,7 +34,7 @@ class ZipOp : public PipelineOp {
  public:
   // Constructor for ZipOp
   // @param op_connector_size - connector size
-  explicit ZipOp(int32_t op_connector_size);
+  ZipOp();
 
   // Destructor
   ~ZipOp();

@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace dataset {
 // Construct ZipOp here, local variables initialized in operator due to tree construction restrictions
-ZipOp::ZipOp(int32_t op_connector_size) : PipelineOp(0) {}
+ZipOp::ZipOp() : PipelineOp(0) {}
 
 // destructor
 ZipOp::~ZipOp() {}

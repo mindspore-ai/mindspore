@@ -58,7 +58,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
             for _ in range(self.num_seg):
                 a = multiprocessing.Array("b", self.seg_size)
                 self.shm_list.append(a)
-        except:
+        except Exception:
             raise RuntimeError(
                 "_SharedQueue: Error allocating "
                 + str(self.seg_size)
