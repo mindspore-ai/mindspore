@@ -169,6 +169,11 @@ class MS_API MSTensor {
   /// \return The length of the data of the MSTensor, in bytes.
   size_t DataSize() const;
 
+  /// \brief Get whether the MSTensor data is const data
+  ///
+  /// \return Const flag of MSTensor
+  bool IsConst() const;
+
   /// \brief Gets the boolean value that indicates whether the memory of MSTensor is on device.
   ///
   /// \return The boolean value that indicates whether the memory of MSTensor is on device.

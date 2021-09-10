@@ -77,14 +77,8 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data, AllocatorPt
 }
 
 Tensor::~Tensor() {
-  if (this->data_ != nullptr && this->own_data_) {
-    if (this->allocator_ != nullptr) {
-      this->allocator_->Free(this->data_);
-    } else {
-      free(this->data_);
-    }
-    this->data_ = nullptr;
-  }
+  FreeData();
+  this->data_ = nullptr;
 }
 
 bool Tensor::operator==(const Tensor &tensor) {
@@ -304,18 +298,14 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
 }
 
 void Tensor::FreeData() {
-  if (this->data_ == nullptr) {
-    return;
-  }
-  if (!this->own_data_) {
-    return;
-  }
-  if (allocator_ == nullptr) {
-    free(this->data_);
-    this->data_ = nullptr;
-  } else {
-    allocator_->Free(this->data_);
-    if (!IS_STATIC_ALLOCATOR(allocator_) || (allocator_->RefCount(this->data_) != 0)) {
+  if (this->data_ != nullptr && this->own_data_) {
+    if (this->allocator_ != nullptr) {
+      this->allocator_->Free(this->data_);
+      if (!IS_STATIC_ALLOCATOR(allocator_) || (allocator_->RefCount(this->data_) != 0)) {
+        this->data_ = nullptr;
+      }
+    } else {
+      free(this->data_);
       this->data_ = nullptr;
     }
   }

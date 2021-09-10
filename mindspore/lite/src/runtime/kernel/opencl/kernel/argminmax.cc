@@ -68,11 +68,11 @@ int ArgMinMaxOpenCLKernel::SetConstArgs() {
                    static_cast<int>(im_in_.C)};
   cl_int4 flags = {param->out_value_, param->get_max_, param->axis_, param->topk_};
   int arg_cnt = 2;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, buff_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, buff_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, ids_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, ids_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
@@ -228,11 +228,11 @@ int ArgMinMaxOpenCLKernel::Prepare() {
 
 int ArgMinMaxOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

@@ -157,7 +157,7 @@ class LiteSession : public session::LiteSession {
   bool is_train_session_ = false;
   friend class TransferSession;
 #if GPU_OPENCL
-  opencl::OpenCLRuntimeWrapper *opencl_runtime_wrapper_{nullptr};
+  opencl::OpenCLRuntimeInnerWrapper *opencl_runtime_wrapper_{nullptr};
 #endif
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::shared_ptr<Delegate> delegate_ = nullptr;

@@ -119,7 +119,7 @@ int Conv2dTransposeOpenCLKernel::SetConstArgs() {
   cl_int2 padding = {pad_h, pad_w};
   cl_int4 src_size = {h, w, UP_DIV(ci, C4NUM), n};
   cl_int4 dst_size = {oh, ow, UP_DIV(co, C4NUM), n};
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padWeight_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padWeight_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

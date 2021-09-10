@@ -51,7 +51,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
 
   // simulating benchmark: session::LiteSession::CreateSession() -> session->Init()
   MS_LOG(DEBUG) << "initialize OpenCLRuntime and OpenCLAllocator";
-  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+  auto runtime_wrapper = lite::opencl::OpenCLRuntimeInnerWrapper();
   auto ocl_runtime = runtime_wrapper.GetInstance();
   ocl_runtime->SetFp16Enable(fp16_enable);
   EXPECT_TRUE(ocl_runtime->Init() == RET_OK);
@@ -222,7 +222,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
 
   // simulating benchmark: session::LiteSession::CreateSession() -> session->Init()
   MS_LOG(DEBUG) << "initialize OpenCLRuntime and OpenCLAllocator";
-  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+  auto runtime_wrapper = lite::opencl::OpenCLRuntimeInnerWrapper();
   auto ocl_runtime = runtime_wrapper.GetInstance();
   ocl_runtime->SetFp16Enable(fp16_enable);
   EXPECT_TRUE(ocl_runtime->Init() == RET_OK);

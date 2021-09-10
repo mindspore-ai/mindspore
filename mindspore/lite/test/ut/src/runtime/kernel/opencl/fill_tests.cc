@@ -33,7 +33,7 @@ class TestFillOpenCLCI : public mindspore::CommonTest {
 
 TEST_F(TestFillOpenCLCI, Fp32testfill) {
   MS_LOG(INFO) << " begin test ";
-  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+  auto runtime_wrapper = lite::opencl::OpenCLRuntimeInnerWrapper();
   auto runtime = runtime_wrapper.GetInstance();
   runtime->Init();
   auto allocator = runtime->GetAllocator();
@@ -104,7 +104,7 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
 
 TEST_F(TestFillOpenCLCI, Fp32testshape) {
   MS_LOG(INFO) << " begin test ";
-  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+  auto runtime_wrapper = lite::opencl::OpenCLRuntimeInnerWrapper();
   auto runtime = runtime_wrapper.GetInstance();
   runtime->Init();
   auto allocator = runtime->GetAllocator();

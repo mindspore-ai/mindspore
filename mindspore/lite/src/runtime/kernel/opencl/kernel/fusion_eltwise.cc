@@ -288,8 +288,7 @@ int FusionEltwiseOpenCLKernel::SetConstArgs() {
           }
         }
       } else {
-        if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, buffer_weights_[buffer_idx++], lite::opencl::MemType::BUF) !=
-            CL_SUCCESS) {
+        if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, buffer_weights_[buffer_idx++], true) != CL_SUCCESS) {
           MS_LOG(ERROR) << "SetKernelArg failed.";
           return RET_ERROR;
         }

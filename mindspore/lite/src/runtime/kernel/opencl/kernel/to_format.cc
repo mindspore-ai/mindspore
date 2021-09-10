@@ -108,11 +108,13 @@ int ToFormatOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   auto src_mem_type = (out_mem_type_ == MemType::IMG) ? lite::opencl::MemType::BUF : lite::opencl::MemType::IMG;
   auto dst_mem_type = out_mem_type_;
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c(), src_mem_type) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c(),
+                                 (src_mem_type == lite::opencl::MemType::BUF)) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c(), dst_mem_type) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c(),
+                                 (dst_mem_type == lite::opencl::MemType::BUF)) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

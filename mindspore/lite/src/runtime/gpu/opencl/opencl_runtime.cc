@@ -204,6 +204,9 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
                                                        0};
   context_ =
     new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, ctx_properties.data(), nullptr, nullptr, &ret);
+  if (context_ == nullptr || ret != CL_SUCCESS) {
+    context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
+  }
 #else
   context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
 #endif
@@ -334,7 +337,7 @@ cl::Device *OpenCLRuntime::Device() { return device_; }
 
 uint64_t OpenCLRuntime::DeviceGlobalMemoryCacheSize() const { return global_memery_cachesize_; }
 
-int OpenCLRuntime::DeviceMaxWorkGroupSize() const { return max_work_group_size_; }
+uint64_t OpenCLRuntime::DeviceMaxWorkGroupSize() const { return max_work_group_size_; }
 
 uint32_t OpenCLRuntime::DeviceComputeUnits() const { return compute_units_; }
 
@@ -382,18 +385,24 @@ bool OpenCLRuntime::SetFp16Enable(bool enable) {
 }
 
 int OpenCLRuntime::BuildKernel(const cl::Kernel &kernel, const std::string &program_name,
-                               const std::string &kernel_name, const std::vector<std::string> &build_options_ext) {
-  std::string build_option = default_build_option_;
-  if (fp16_enable_) {
-    build_option +=
-      " -DFP16_ENABLE=1 -DFLT=half -DFLT4=half4 -DFLT16=half16 -DAS_FLT4=as_half4 -DAS_UINT4=as_ushort4 -DUINT4=ushort4"
-      " -DTO_FLT=convert_half -DTO_FLT4=convert_half4";
-  } else {
-    build_option +=
-      " -DFP16_ENABLE=0 -DFLT=float -DFLT4=float4 -DFLT16=float16 -DAS_FLT4=as_float4 -DAS_UINT4=as_uint4 -DUINT4=uint4"
-      " -DTO_FLT=convert_float -DTO_FLT4=convert_float4";
+                               const std::string &kernel_name, const std::vector<std::string> &build_options_ext,
+                               const bool is_builtin) {
+  std::string build_option;
+  if (is_builtin) {
+    build_option = default_build_option_;
+    if (fp16_enable_) {
+      build_option +=
+        " -DFP16_ENABLE=1 -DFLT=half -DFLT4=half4 -DFLT16=half16 -DAS_FLT4=as_half4 -DAS_UINT4=as_ushort4 "
+        "-DUINT4=ushort4"
+        " -DTO_FLT=convert_half -DTO_FLT4=convert_half4";
+    } else {
+      build_option +=
+        " -DFP16_ENABLE=0 -DFLT=float -DFLT4=float4 -DFLT16=float16 -DAS_FLT4=as_float4 -DAS_UINT4=as_uint4 "
+        "-DUINT4=uint4"
+        " -DTO_FLT=convert_float -DTO_FLT4=convert_float4";
+    }
+    build_option += " -DMAX_IMAGE2D_WIDTH=" + std::to_string(max_image2d_width_);
   }
-  build_option += " -DMAX_IMAGE2D_WIDTH=" + std::to_string(max_image2d_width_);
   build_option =
     std::accumulate(build_options_ext.begin(), build_options_ext.end(), build_option,
                     [](const std::string &options, const std::string &option) { return options + " " + option; });
@@ -515,7 +524,7 @@ bool OpenCLRuntime::BuildProgram(const std::string &build_option, const cl::Prog
 
 int OpenCLRuntime::ReadOrWriteImage(void *buffer, void *data, bool is_read) {
   cl::CommandQueue *command_queue = profiling_ ? profiling_command_queue_ : default_command_queue_;
-  auto *image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(buffer));
+  auto *image = allocator_->GetImage(buffer);
   if (image == nullptr) {
     MS_LOG(WARNING) << "Can't get Image2D for " << buffer;
     return RET_ERROR;

@@ -27,7 +27,7 @@
 namespace mindspore::lite::opencl {
 class OpenCLExecutor : public Executor {
  public:
-  OpenCLExecutor() : Executor() { allocator_ = ocl_runtime.GetInstance()->GetAllocator().get(); }
+  OpenCLExecutor() : Executor() { allocator_ = ocl_runtime_.GetInstance()->GetAllocator().get(); }
 
   ~OpenCLExecutor() override = default;
 
@@ -43,10 +43,10 @@ class OpenCLExecutor : public Executor {
                 const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before = nullptr,
                 const KernelCallBack &after = nullptr, bool is_tune = false);
 
- protected:
-  InnerContext *context = nullptr;
+ private:
+  int Tune(kernel::OpenCLKernel *op_kernel);
   OpenCLAllocator *allocator_ = nullptr;
-  OpenCLRuntimeWrapper ocl_runtime;
+  OpenCLRuntimeInnerWrapper ocl_runtime_;
 };
 }  // namespace mindspore::lite::opencl
 #endif

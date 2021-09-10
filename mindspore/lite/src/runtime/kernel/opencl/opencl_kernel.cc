@@ -105,7 +105,7 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
   GpuTensorInfo img_info(tensor);
   auto size = mem_type == lite::opencl::MemType::BUF ? img_info.OriginSize : img_info.Image2DSize;
   std::vector<char> data(size);
-  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+  auto runtime_wrapper = lite::opencl::OpenCLRuntimeInnerWrapper();
   auto runtime = runtime_wrapper.GetInstance();
   auto allocator = runtime->GetAllocator();
   if (!runtime->SyncCommandQueue()) {
@@ -158,10 +158,10 @@ int OpenCLKernel::PreProcess() {
   if (ret != RET_OK) {
     return ret;
   }
-  auto allocator = ocl_runtime_->GetAllocator();
   for (auto i = 0; i < out_tensors_.size(); ++i) {
     auto *output = out_tensors_.at(i);
-    MS_ASSERT(output);
+    CHECK_NULL_RETURN(output);
+    CHECK_NULL_RETURN(output->allocator());
     if (GetMemType() == lite::opencl::MemType::IMG) {
       ImageSize img_size;
       ret = GetImageSize(i, &img_size);
@@ -169,20 +169,20 @@ int OpenCLKernel::PreProcess() {
         MS_LOG(ERROR) << "GetImageSize failed";
         return ret;
       }
-      auto data_ptr = allocator->Malloc(img_size);
+      auto data_ptr =
+        output->allocator()->Malloc(img_size.width, img_size.height, static_cast<enum DataType>(output->data_type()));
       if (data_ptr == nullptr) {
         MS_LOG(ERROR) << "Malloc data failed";
         return RET_ERROR;
       }
       output->set_data(data_ptr);
     } else {
-      ret = output->MallocData(allocator);
+      ret = output->MallocData();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "MallocData failed";
         return ret;
       }
     }
-    output->set_allocator(allocator);
     output->ResetRefCount();
   }
   return RET_OK;

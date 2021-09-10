@@ -32,6 +32,15 @@ class MS_API Allocator {
   /// \param[in] size Define the memory size to request.
   virtual void *Malloc(size_t size) = 0;
 
+  /// \brief Method to request memory.
+  ///
+  /// \param[in] weight Defines the width of memory to request
+  /// \param[in] height Defines the height of memory to request
+  /// \param[in] type Defines the data type of memory to request
+  virtual void *Malloc(size_t weight, size_t height, DataType type) {
+    return nullptr;
+  }
+
   /// \brief Method to free memory.
   ///
   /// \param[in] ptr Define the pointer of a certain memory.

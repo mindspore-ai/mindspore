@@ -28,6 +28,8 @@
 #include "CL/cl2.hpp"
 
 namespace mindspore::lite::opencl {
+// OpenCL memory type, SHARED only valid on Mali devices.
+enum class MemType : char { BUF, IMG, SHARED };
 #define UNLOCK_AND_RETURN_NULL(condition, ptr) \
   do {                                         \
     if (condition) {                           \
@@ -37,7 +39,6 @@ namespace mindspore::lite::opencl {
   } while (0)
 
 class OpenCLRuntime;
-enum class MemType : char { BUF, IMG, SHARED };
 
 struct ImageSize {
   size_t width = 0;
@@ -57,6 +58,7 @@ class OpenCLAllocator : public mindspore::Allocator {
 
   // malloc shared
   void *Malloc(size_t size) override { return _Malloc(MemType::SHARED, nullptr, size); }
+  void *Malloc(size_t weight, size_t height, DataType type) override;
   // malloc buffer
   void *Malloc(size_t size, void *data) { return _Malloc(MemType::BUF, data, size); }
   // malloc image
@@ -69,8 +71,8 @@ class OpenCLAllocator : public mindspore::Allocator {
   size_t total_size();
 
   void Clear();
-  void *GetImage(void *host_ptr);
-  void *GetBuffer(void *host_ptr);
+  cl::Image2D *GetImage(void *host_ptr);
+  void *GetOpenclMemPtr(void *buffer, MemType *type, bool force_buffer = false);
   void *MapBuffer(void *host_ptr, int flags, void *command_queue = nullptr, bool sync = true);
   int UnmapBuffer(void *host_ptr, void *command_queue = nullptr);
   MemType GetMemType(void *host_ptr);
@@ -88,8 +90,8 @@ class OpenCLAllocator : public mindspore::Allocator {
   void *MinimumFit(MemType mem_type, size_t size, const ImageSize &img_size);
   void *_Malloc(MemType mem_type, void *data, size_t size = 0, const ImageSize &img_size = ImageSize());
   void *CreateBuffer(size_t size, void *data, size_t flags, cl::Buffer **buffer);
-  void *CreateImage2D(size_t size, const ImageSize &img_size, void *data, size_t flags, bool is_map,
-                      cl::Buffer **buffer, cl::Image2D **image);
+  int CreateImage2D(size_t size, const ImageSize &img_size, void *data, size_t flags, bool is_map, cl::Buffer **buffer,
+                    cl::Image2D **image, void **host_ptr);
   int GetImgDtypeSize(const ImageSize &img_size);
   template <typename T>
   void ClearMemList(T *list);

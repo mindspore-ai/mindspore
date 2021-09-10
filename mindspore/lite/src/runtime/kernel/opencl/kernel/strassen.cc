@@ -249,11 +249,11 @@ int StrassenOpenCLKernel::StrassenDataFilled(cl::Kernel *kernel, void *input, vo
       return RET_ERROR;
     }
   } else {
-    if (ocl_runtime_->SetKernelArg(*kernel, 0, input, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, 0, input, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
-    if (ocl_runtime_->SetKernelArg(*kernel, 1, output, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, 1, output, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
@@ -277,20 +277,20 @@ int StrassenOpenCLKernel::StrassenAddSub(cl::Kernel *kernel, void *input, void *
     return RET_ERROR;
   }
   if (mem_type == lite::opencl::MemType::IMG) {
-    if (ocl_runtime_->SetKernelArg(*kernel, 0, input, lite::opencl::MemType::IMG) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, 0, input) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
-    if (ocl_runtime_->SetKernelArg(*kernel, 1, output, lite::opencl::MemType::IMG) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, 1, output) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   } else {
-    if (ocl_runtime_->SetKernelArg(*kernel, 0, input, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, 0, input, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
-    if (ocl_runtime_->SetKernelArg(*kernel, 1, output, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, 1, output, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
@@ -371,7 +371,7 @@ int StrassenOpenCLKernel::StrassenRunMmatmul(void *input, void *weight, void *ou
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 2, weight, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 2, weight, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

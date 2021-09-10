@@ -268,7 +268,7 @@ int MatMulOpenCLKernel::SetConstArgs() {
   if (act_weight_) {
     arg_count++;
   } else {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

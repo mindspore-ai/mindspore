@@ -39,7 +39,7 @@ void CompareOutputData1(T *output_data, T *correct_data, int size, float err_bou
 
 TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeInnerWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
@@ -149,7 +149,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
 
 TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeInnerWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 

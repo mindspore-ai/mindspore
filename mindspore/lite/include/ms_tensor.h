@@ -123,6 +123,11 @@ class MS_API MSTensor {
   virtual Vector<lite::LiteQuantParam> quant_params() const = 0;
 
   virtual void set_quant_params(Vector<lite::LiteQuantParam>) = 0;
+
+  /// \brief Get whether the MSTensor data is const data
+  ///
+  /// \return Const flag of MSTensor
+  virtual bool IsConst() const = 0;
 };
 }  // namespace tensor
 }  // namespace mindspore

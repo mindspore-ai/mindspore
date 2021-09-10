@@ -38,11 +38,12 @@ enum InitState { UnInit = 0, InitSuccess = 1, InitFailed = 2 };
 struct GpuInfo {
   GpuType type = OTHER;
 };
+class OpenCLRuntimeInnerWrapper;
 class OpenCLRuntimeWrapper;
 class OpenCLRuntime {
  public:
+  friend OpenCLRuntimeInnerWrapper;
   friend OpenCLRuntimeWrapper;
-
   ~OpenCLRuntime();
   OpenCLRuntime(const OpenCLRuntime &) = delete;
   OpenCLRuntime &operator=(const OpenCLRuntime &) = delete;
@@ -55,7 +56,7 @@ class OpenCLRuntime {
   std::shared_ptr<OpenCLAllocator> GetAllocator() { return allocator_; }
   cl::CommandQueue *GetDefaultCommandQueue() { return profiling_ ? profiling_command_queue_ : default_command_queue_; }
   uint64_t DeviceGlobalMemoryCacheSize() const;
-  int DeviceMaxWorkGroupSize() const;
+  uint64_t DeviceMaxWorkGroupSize() const;
   uint32_t DeviceComputeUnits() const;
   uint32_t DeviceMaxFreq() const;
   uint64_t GetMaxWorkGroupSize(const cl::Kernel &kernel);
@@ -76,50 +77,35 @@ class OpenCLRuntime {
   template <typename T>
   typename std::enable_if<std::is_pointer<T>::value, cl_int>::type SetKernelArg(const cl::Kernel &kernel,
                                                                                 uint32_t index, const T value,
-                                                                                const MemType mem_type = MemType::IMG) {
+                                                                                bool force_buffer = false) {
     if (value == nullptr) {
       MS_LOG(ERROR) << "value is nullptr.";
       return CL_INVALID_VALUE;
     }
-    switch (mem_type) {
-      case MemType::BUF: {
-        auto svm_capabilities = GetSVMCapabilities();
-        if (svm_capabilities) {
-          MS_LOG(DEBUG) << "Set kernel arg[" << index << "] SVM pointer " << value;
-          return clSetKernelArgSVMPointer(kernel.get(), index, value);
-        }
-        cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
-        if (buffer == nullptr) {
-          MS_LOG(ERROR) << "buffer is nullptr.";
-          return CL_INVALID_VALUE;
-        }
-        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
-        return const_cast<cl::Kernel &>(kernel).setArg(index, *buffer);
-      }
-      case MemType::IMG: {
-        cl::Image2D *image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(value));
-        if (image == nullptr) {
-          MS_LOG(WARNING) << "Can't get Image2D, try to use Buffer. Please confirm the buffer type.";
-          cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
-          if (buffer == nullptr) {
-            MS_LOG(ERROR) << "buffer is nullptr.";
-            return CL_INVALID_VALUE;
-          }
-          MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
-          return const_cast<cl::Kernel &>(kernel).setArg(index, *buffer);
-        }
-        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Image2D " << image << ", host_ptr: " << value;
-        return const_cast<cl::Kernel &>(kernel).setArg(index, *image);
-      }
-      default:
-        MS_LOG(ERROR) << "Unsupported opencl memory type: " << static_cast<int>(mem_type);
-        return CL_IMAGE_FORMAT_NOT_SUPPORTED;
+    auto svm_capabilities = GetSVMCapabilities();
+    if (svm_capabilities) {
+      MS_LOG(DEBUG) << "Set kernel arg[" << index << "] SVM pointer " << value;
+      return clSetKernelArgSVMPointer(kernel.get(), index, value);
+    }
+    lite::opencl::MemType mem_type;
+    void *buffer = allocator_->GetOpenclMemPtr(value, &mem_type, force_buffer);
+    if (buffer == nullptr) {
+      MS_LOG(ERROR) << "buffer is nullptr.";
+      return CL_INVALID_VALUE;
+    }
+    MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL "
+                  << (mem_type == lite::opencl::MemType::IMG ? "Image " : "Buffer ") << buffer
+                  << ", host_ptr: " << value;
+    if (mem_type == lite::opencl::MemType::IMG) {
+      return const_cast<cl::Kernel &>(kernel).setArg(index, *reinterpret_cast<cl::Image2D *>(buffer));
+    } else {
+      return const_cast<cl::Kernel &>(kernel).setArg(index, *reinterpret_cast<cl::Buffer *>(buffer));
     }
   }
 
   template <typename T>
-  typename std::enable_if<!std::is_pointer<T>::value, cl_int>::type SetKernelArg(
-    const cl::Kernel &kernel, uint32_t index, const T value, const MemType mem_type = MemType::IMG) {
+  typename std::enable_if<!std::is_pointer<T>::value, cl_int>::type SetKernelArg(const cl::Kernel &kernel,
+                                                                                 uint32_t index, const T value) {
     return const_cast<cl::Kernel &>(kernel).setArg(index, value);
   }
 
@@ -129,7 +115,7 @@ class OpenCLRuntime {
   std::vector<unsigned char> GetProgramBinary(const cl::Program &program);
   bool LoadSource(const std::string &program_name, const std::string &source);
   int BuildKernel(const cl::Kernel &kernel, const std::string &program_name, const std::string &kernel_name,
-                  const std::vector<std::string> &build_options_ext = {});
+                  const std::vector<std::string> &build_options_ext = {}, const bool is_builtin = true);
   int RunKernel(const cl::Kernel &kernel, const cl::NDRange &global, const cl::NDRange &local,
                 cl::CommandQueue *command_queue = nullptr, cl::Event *event = nullptr);
   int ReadOrWriteImage(void *buffer, void *data, bool is_read);
@@ -192,7 +178,7 @@ class OpenCLRuntime {
   uint64_t max_alloc_size_{0};
   uint64_t max_image2d_width_{0};
   uint64_t max_image2d_height_{0};
-  int max_work_group_size_{1};
+  uint64_t max_work_group_size_{1};
   uint32_t compute_units_{0};
   uint32_t max_freq_{0};
   std::string default_build_option_{"-cl-mad-enable -cl-fast-relaxed-math -Werror"};
@@ -226,12 +212,12 @@ class OpenCLRuntime {
   const std::string cache_version_{"V0.1"};
 };
 
-class OpenCLRuntimeWrapper {
+class OpenCLRuntimeInnerWrapper {
  public:
-  OpenCLRuntimeWrapper() { ocl_runtime_ = OpenCLRuntime::GetInstance(); }
-  ~OpenCLRuntimeWrapper() { OpenCLRuntime::DeleteInstance(); }
-  OpenCLRuntimeWrapper(const OpenCLRuntimeWrapper &) = delete;
-  OpenCLRuntimeWrapper &operator=(const OpenCLRuntimeWrapper &) = delete;
+  OpenCLRuntimeInnerWrapper() { ocl_runtime_ = OpenCLRuntime::GetInstance(); }
+  ~OpenCLRuntimeInnerWrapper() { OpenCLRuntime::DeleteInstance(); }
+  OpenCLRuntimeInnerWrapper(const OpenCLRuntimeInnerWrapper &) = delete;
+  OpenCLRuntimeInnerWrapper &operator=(const OpenCLRuntimeInnerWrapper &) = delete;
   OpenCLRuntime *GetInstance() { return ocl_runtime_; }
 
  private:

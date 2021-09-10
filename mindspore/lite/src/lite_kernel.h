@@ -133,7 +133,7 @@ class LiteKernel {
     }
     return mindspore::lite::RET_OK;
   }
-
+  bool IsBuiltin() { return desc_.provider == kBuiltin; }
   virtual int ReSize() {
     MS_ASSERT(kernel_ != nullptr);
     return kernel_->ReSize();

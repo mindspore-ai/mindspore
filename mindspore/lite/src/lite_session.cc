@@ -984,9 +984,9 @@ int LiteSession::InitGPURuntime() {
   }
 #if GPU_OPENCL
   if (this->context_->IsGpuEnabled()) {
-    opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeWrapper();
+    opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeInnerWrapper();
     if (opencl_runtime_wrapper_ == nullptr) {
-      MS_LOG(ERROR) << "create OpenCLRuntimeWrapper failed";
+      MS_LOG(ERROR) << "create OpenCLRuntimeInnerWrapper failed";
       return RET_ERROR;
     }
     auto gpu_device_info = this->context_->GetGpuInfo();

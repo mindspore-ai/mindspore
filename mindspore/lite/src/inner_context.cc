@@ -215,7 +215,7 @@ bool InnerContext::IsGpuFloat16Enabled() const {
   if (!IsGpuEnabled()) {
     return false;
   }
-  opencl::OpenCLRuntimeWrapper wrapper;
+  opencl::OpenCLRuntimeInnerWrapper wrapper;
   if (!wrapper.GetInstance()->GetFp16Enable()) {
     return false;
   }

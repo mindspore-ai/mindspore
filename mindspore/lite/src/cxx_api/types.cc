@@ -259,6 +259,14 @@ void *MSTensor::MutableData() {
   return impl_->MutableData();
 }
 
+bool MSTensor::IsConst() const {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return false;
+  }
+  return impl_->IsConst();
+}
+
 size_t MSTensor::DataSize() const {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
