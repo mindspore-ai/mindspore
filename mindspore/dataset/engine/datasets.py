@@ -64,7 +64,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
-    check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset
+    check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -6643,3 +6643,190 @@ class CityscapesDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.CityscapesNode(self.dataset_dir, self.usage, self.quality_mode, self.task, self.decode, self.sampler)
+
+
+class DIV2KDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing DIV2KDataset dataset.
+
+    The generated dataset has two columns :py:obj:`[hr_image, lr_image]`.
+    The tensor of column :py:obj:`hr_image` is of the uint8 type.
+    The tensor of column :py:obj:`lr_image` is of the uint8 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str): Acceptable usages include `train`, `valid` or `all` (default=`train`).
+        downgrade (str): Acceptable downgrades include `bicubic`, `unknown`, `mild`, `difficult` or
+            `wild` (default=`bicubic`).
+        scale (int): Acceptable scales include 2, 3, 4 or 8 (default=2).
+            When `downgrade` is `bicubic`, scale can be 2, 3, 4, 8.
+            When `downgrade` is `unknown`, scale can only be 2, 3, 4.
+            When `downgrade` is `mild`, `difficult` or `wild`, scale can only be 4.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir is invalid or does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If usage is invalid.
+        ValueError: If downgrade is invalid.
+        ValueError: If scale is invalid.
+        ValueError: If scale equal to 8 and downgrade not equal to `bicubic`.
+        ValueError: If downgrade in [`mild`, `difficult`, `wild`] and scale not equal to 4.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> div2k_dataset_dir = "/path/to/div2k_dataset_directory"
+        >>>
+        >>> # 1) Get all samples from DIV2K dataset in sequence
+        >>> dataset = ds.DIV2KDataset(dataset_dir=div2k_dataset_dir, usage="train", scale=2, downgrade="bicubic",
+        >>>                           shuffle=False)
+        >>>
+        >>> # 2) Randomly select 350 samples from DIV2K dataset
+        >>> dataset = ds.DIV2KDataset(dataset_dir=div2k_dataset_dir, usage="train", scale=2, downgrade="bicubic",
+        >>>                           num_samples=350, shuffle=True)
+        >>>
+        >>> # 3) Get samples from DIV2K dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.DIV2KDataset(dataset_dir=div2k_dataset_dir, usage="train", scale=2, downgrade="bicubic",
+        >>>                           num_shards=2, shard_id=0)
+        >>>
+        >>> # In DIV2K dataset, each dictionary has keys "hr_image" and "lr_image"
+
+    About DIV2K dataset:
+
+    The DIV2K dataset consists of 1000 2K resolution images, among which 800 images are for training, 100 images
+    are for validation and 100 images are for testing. NTIRE 2017 and NTIRE 2018 include only training dataset
+    and validation dataset.
+
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+
+    Take the training set as an example.
+
+    .. code-block::
+
+        .
+        └── DIV2K
+             ├── DIV2K_train_HR
+             |    ├── 0001.png
+             |    ├── 0002.png
+             |    ├── ...
+             ├── DIV2K_train_LR_bicubic
+             |    ├── X2
+             |    |    ├── 0001x2.png
+             |    |    ├── 0002x2.png
+             |    |    ├── ...
+             |    ├── X3
+             |    |    ├── 0001x3.png
+             |    |    ├── 0002x3.png
+             |    |    ├── ...
+             |    └── X4
+             |         ├── 0001x4.png
+             |         ├── 0002x4.png
+             |         ├── ...
+             ├── DIV2K_train_LR_unknown
+             |    ├── X2
+             |    |    ├── 0001x2.png
+             |    |    ├── 0002x2.png
+             |    |    ├── ...
+             |    ├── X3
+             |    |    ├── 0001x3.png
+             |    |    ├── 0002x3.png
+             |    |    ├── ...
+             |    └── X4
+             |         ├── 0001x4.png
+             |         ├── 0002x4.png
+             |         ├── ...
+             ├── DIV2K_train_LR_mild
+             |    ├── 0001x4m.png
+             |    ├── 0002x4m.png
+             |    ├── ...
+             ├── DIV2K_train_LR_difficult
+             |    ├── 0001x4d.png
+             |    ├── 0002x4d.png
+             |    ├── ...
+             ├── DIV2K_train_LR_wild
+             |    ├── 0001x4w.png
+             |    ├── 0002x4w.png
+             |    ├── ...
+             └── DIV2K_train_LR_x8
+                  ├── 0001x8.png
+                  ├── 0002x8.png
+                  ├── ...
+    Citation:
+
+    .. code-block::
+
+        @InProceedings{Agustsson_2017_CVPR_Workshops,
+        author    = {Agustsson, Eirikur and Timofte, Radu},
+        title     = {NTIRE 2017 Challenge on Single Image Super-Resolution: Dataset and Study},
+        booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+        url       = "http://www.vision.ee.ethz.ch/~timofter/publications/Agustsson-CVPRW-2017.pdf",
+        month     = {July},
+        year      = {2017}
+        }
+    """
+
+    @check_div2k_dataset
+    def __init__(self, dataset_dir, usage="train", downgrade="bicubic", scale=2, num_samples=None,
+                 num_parallel_workers=None, shuffle=None, decode=None, sampler=None, num_shards=None,
+                 shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = usage
+        self.scale = scale
+        self.downgrade = downgrade
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.DIV2KNode(self.dataset_dir, self.usage, self.downgrade, self.scale, self.decode, self.sampler)

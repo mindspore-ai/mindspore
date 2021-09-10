@@ -22,6 +22,7 @@ SET(DE_UT_SRCS
         c_api_dataset_coco_test.cc
         c_api_dataset_config_test.cc
         c_api_dataset_csv_test.cc
+        c_api_dataset_div2k_test.cc
         c_api_dataset_flickr_test.cc
         c_api_dataset_iterator_test.cc
         c_api_dataset_manifest_test.cc
