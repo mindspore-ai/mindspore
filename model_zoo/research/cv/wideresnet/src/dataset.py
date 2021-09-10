@@ -23,7 +23,7 @@ import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 
 
-def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
+def create_dataset(dataset_path, do_train, repeat_num=1, infer_910=True, device_id=0, batch_size=32):
     """
     create a train or evaluate cifar10 dataset for WideResnet
     Args:
@@ -31,13 +31,17 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
         do_train(bool): whether dataset is used for train or eval.
         repeat_num(int): the repeat times of dataset. Default: 1
         batch_size(int): the batch size of dataset. Default: 32
-
+        infer_910(bool): infer 910 or infer 310. Default: True
+        device_id(int): infer 310 device_id. Default: 0
     Returns:
         dataset
     """
 
-    device_id = int(os.getenv('DEVICE_ID'))
-    device_num = int(os.getenv('RANK_SIZE'))
+    device_num = 1
+    device_id = device_id
+    if infer_910:
+        device_id = int(os.getenv('DEVICE_ID'))
+        device_num = int(os.getenv('RANK_SIZE'))
 
     if do_train:
         dataset_path = os.path.join(dataset_path, 'train')
