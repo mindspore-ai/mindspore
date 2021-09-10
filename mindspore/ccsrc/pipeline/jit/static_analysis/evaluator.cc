@@ -80,8 +80,11 @@ void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, co
   if (FunctionCallDepth() > max_depth) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit " << max_depth
                       << ", (function call depth: " << FunctionCallDepth()
-                      << ", simulate call depth: " << StackFrameDepth()
-                      << "), please call 'context.set_context(max_call_depth=value)' to adjust this value.";
+                      << ", simulate call depth: " << StackFrameDepth() << ").\n"
+                      << "It's always happened with complex construction of code or infinite recursion or loop.\n"
+                      << "Please check the code if it's has the infinite recursion "
+                      << "or call 'context.set_context(max_call_depth=value)' to adjust this value.\n"
+                      << "For more details, please refer to the FAQ at https://www.mindspore.cn.";
   }
   MS_LOG(DEBUG) << evaluator << "(" << evaluator->type_name() << "/" << evaluator->ToString()
                 << "), enter, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
@@ -195,8 +198,11 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   if (FunctionCallDepth() > max_depth) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit " << max_depth
                       << ", (function call depth: " << FunctionCallDepth()
-                      << ", simulate call depth: " << StackFrameDepth()
-                      << "), please call 'context.set_context(max_call_depth=value)' to adjust this value.";
+                      << ", simulate call depth: " << StackFrameDepth() << ").\n"
+                      << "It's always happened with complex construction of code or infinite recursion or loop.\n"
+                      << "Please check the code if it's has the infinite recursion "
+                      << "or call 'context.set_context(max_call_depth=value)' to adjust this value.\n"
+                      << "For more details, please refer to the FAQ at https://www.mindspore.cn.";
   }
   MS_LOG(DEBUG) << this << "(" << type_name() << "/" << ToString()
                 << "), enter, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
@@ -208,9 +214,10 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
 
   std::size_t nargs = fg->parameters().size();
   if (args_abs_list.size() != nargs) {
-    MS_EXCEPTION(TypeError) << "For function " << fg->ToString() << ", the number of parameters of this function is "
-                            << fg->parameters().size() << ", but the number of provided arguments is "
-                            << args_abs_list.size() << ".";
+    MS_EXCEPTION(TypeError) << "The parameters number of the function is " << fg->parameters().size()
+                            << ", but the number of provided arguments is " << args_abs_list.size() << ".\n"
+                            << "FunctionGraph : " << fg->ToString()
+                            << "\nNodeInfo: " << trace::GetDebugInfo(fg->debug_info());
   }
   MS_EXCEPTION_IF_NULL(parent_context_);
   MS_LOG(DEBUG) << GetInferThread() << "@" << fg->ToString() << ArgsToString(args_abs_list) << " { ";

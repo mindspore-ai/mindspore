@@ -287,7 +287,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   if (func == nullptr) {
     MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << possible_func->ToString() << ".";
     MS_LOG(ERROR) << "It's called at: " << cnode->DebugString();
-    MS_EXCEPTION(ValueError) << "This may be not defined, and it can't be a operator. Please check code.";
+    MS_EXCEPTION(ValueError) << "This may be not defined, or it can't be a operator. Please check code.";
   }
 
   ConfigPtrList args_conf_list;
@@ -678,11 +678,11 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
 std::string JoinBranchesFailedInfo(const AbstractBasePtr &spec, const AbstractBasePtr &last_spec,
                                    const AnfNodePtr &node, const std::string &error_info) {
   std::ostringstream buffer;
-  buffer << "The return values of different branches do not match. " << error_info
-         << ". For more details, please refer to the FAQ at https://www.mindspore.cn."
-         << " The abstract type of the return value of the current branch is " << spec->ToString()
-         << ", and that of the previous branch is " << last_spec->ToString() << ". Please check the node "
-         << node->DebugString();
+  buffer << "The return values of different branches do not join. \n"
+         << error_info << "\nFor more details, please refer to the FAQ at https://www.mindspore.cn.\n"
+         << "The abstract type of the return value of the current branch is " << spec->ToString()
+         << ", and that of the previous branch is " << last_spec->ToString() << ".\n"
+         << "The node " << node->DebugString();
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>()->input(0);
     if (IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {

@@ -140,8 +140,9 @@ const std::map<CompareRange, std::function<bool(T, std::pair<T, T>)>> kCompareRa
   {kIncludeRight, [](T num1, std::pair<T, T> range) -> bool { return num1 > range.first && num1 <= range.second; }}};
 
 const std::map<CompareEnum, std::string> kCompareToString = {
-  {kEqual, "equal "},          {kNotEqual, "not equal "},       {kLessThan, "less than "},
-  {kLessEqual, "less equal "}, {kGreaterThan, "greater than "}, {kGreaterEqual, "greater equal "}};
+  {kEqual, "be equal to "},           {kNotEqual, "be not equal to "},
+  {kLessThan, "be less than "},       {kLessEqual, "be less than or equal to "},
+  {kGreaterThan, "be greater than "}, {kGreaterEqual, "be greater than or equal to "}};
 
 const std::map<CompareRange, std::pair<std::string, std::string>> kCompareRangeToString = {
   {kIncludeNeither, {"in (", ")"}},
@@ -158,7 +159,7 @@ class CheckAndConvertUtils {
 
   // CheckValue should replace CheckInteger
   static int64_t CheckInteger(const std::string &arg_name, int64_t arg_value, CompareEnum compare_operator,
-                              int64_t match_value, const std::string &prim_name);
+                              int64_t match_value, const std::string &prim_name = "");
 
   template <typename T>
   static T CheckValue(const std::string &arg_name, T arg_value, CompareEnum compare_operator, T match_value,
@@ -172,17 +173,16 @@ class CheckAndConvertUtils {
     }
     std::ostringstream buffer;
     if (prim_name.empty()) {
-      buffer << "The ";
+      buffer << "The attribute[" << arg_name << "] must ";
     } else {
-      buffer << "For " << prim_name << " the ";
+      buffer << "For primitive[" << prim_name << "]'s " << arg_name << " must ";
     }
-    buffer << arg_name << " must ";
     auto iter_to_string = kCompareToString.find(compare_operator);
     if (iter_to_string == kCompareToString.end()) {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
                                    << " cannot find in the compare string map";
     }
-    buffer << iter_to_string->second << match_value << " , but got " << arg_value;
+    buffer << iter_to_string->second << "\'" << match_value << "\' , but got \'" << arg_value << "\'";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
 
@@ -202,18 +202,17 @@ class CheckAndConvertUtils {
     }
     std::ostringstream buffer;
     if (prim_name.empty()) {
-      buffer << "The ";
+      buffer << "The attribute[" << arg_name << "] must ";
     } else {
-      buffer << "For " << prim_name << " the ";
+      buffer << "For primitive[" << prim_name << "] " << arg_name << " must ";
     }
-    buffer << arg_name << " must ";
     auto iter_to_string = kCompareRangeToString.find(compare_operator);
     if (iter_to_string == kCompareRangeToString.end()) {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
                                    << " cannot find in the compare string map";
     }
     auto range_strng = iter_to_string->second;
-    buffer << range_strng.first << range.first << "," << range.second << range_strng.second << " , but got "
+    buffer << range_strng.first << range.first << "," << range.second << range_strng.second << " ,but got "
            << arg_value;
     MS_EXCEPTION(ValueError) << buffer.str();
   }
@@ -241,38 +240,39 @@ class CheckAndConvertUtils {
     }
     std::ostringstream buffer;
     if (prim_name.empty()) {
-      buffer << "The ";
+      buffer << "The attribute[" << arg_name << "]:";
     } else {
-      buffer << "For " << prim_name << " the ";
+      buffer << "For primitive[" << prim_name << "]'s " << arg_name << ":";
     }
     auto iter_to_string = kCompareToString.find(compare_type);
     if (iter_to_string == kCompareToString.end()) {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_type << " cannot find in the compare string map";
     }
-    buffer << arg_name << "should be " << iter_to_string->second << " [";
+
+    buffer << " \"{";
+    for (auto item : arg_value) {
+      buffer << item << ",";
+    }
+    buffer << "}\"";
+    buffer << " must " << iter_to_string->second << " \"{";
     for (auto item : value) {
       buffer << item << ",";
     }
-    buffer << "] "
-           << "but got [";
-    for (auto item : arg_value) {
-      buffer << item << " ,";
-    }
-    buffer << "]";
+    buffer << "}\" ";
     MS_EXCEPTION(exception_type) << buffer.str();
   }
 
   template <typename T>
   static std::shared_ptr<T> CheckArgs(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t index) {
     if (index >= args_spec_list.size()) {
-      MS_EXCEPTION(ValueError) << op << " evaluator args list index out of bound, size " << args_spec_list.size()
+      MS_EXCEPTION(ValueError) << op << " evaluator arguments list index out of bound, size " << args_spec_list.size()
                                << ", index " << index;
     }
     auto args_spec = args_spec_list[index];
     MS_EXCEPTION_IF_NULL(args_spec);
     auto arg = dyn_cast<T>(args_spec);
     if (arg == nullptr) {
-      MS_EXCEPTION(TypeError) << "Operator " << op << " input[" << index << "] should be "
+      MS_EXCEPTION(TypeError) << "Primitive[" << op << "]'s input[" << index << "] should be a "
                               << abstract::ReportNameTraits<T>::name << ", but got "
                               << args_spec_list[index]->BuildType()->ToString() << ".";
     }
@@ -318,9 +318,8 @@ class CheckAndConvertUtils {
   static bool HasDynamicShapeInput(const AbstractBasePtrList &abs_list);
 
  private:
-  static bool IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2);
   static TypePtr _CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
-                                const bool allow_mix);
+                                const std::set<TypePtr> &check_list, const bool allow_mix);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H_

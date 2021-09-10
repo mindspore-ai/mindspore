@@ -82,9 +82,10 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   MS_EXCEPTION_IF_NULL(fg);
   std::size_t nargs = fg->parameters().size();
   if (args_abs_list.size() != nargs) {
-    MS_EXCEPTION(TypeError) << "Function " << fg->ToString() << ", The number of parameters of this function is "
-                            << fg->parameters().size() << ", but the number of provided arguments is "
-                            << args_abs_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
+    MS_EXCEPTION(TypeError) << "The parameters number of the function is " << fg->parameters().size()
+                            << ", but the number of provided arguments is " << args_abs_list.size() << ".\n"
+                            << "FunctionGraph ID : " << fg->ToString()
+                            << "\nNodeInfo: " << trace::GetDebugInfo(fg->debug_info());
   }
   MS_LOG(DEBUG) << "current_node: " << current_cnode->DebugString() << ", fg: " << fg->ToString()
                 << ", current_context_: " << current_context_->ToString();

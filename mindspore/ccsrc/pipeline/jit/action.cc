@@ -987,9 +987,10 @@ bool SetMindIRGraphAction(const ResourcePtr &res) {
                          return arg->abstract()->Broaden();
                        });
   if (!AbstractBasePtrListDeepEqual(func_args, broaded_args)) {
-    MS_LOG(EXCEPTION) << "The args is not compatible with the function graph."
-                      << " Please check the args is compatible with the follow: " << abstract::ArgsToString(func_args)
-                      << " The input args:" << abstract::ArgsToString(broaded_args);
+    MS_LOG(EXCEPTION) << "The input arguments is not compatible with the function graph which has been exported before."
+                      << " Please check the args is same with export.\n"
+                      << "Export input args info:" << abstract::ArgsToString(func_args) << "\n"
+                      << "The input args info:" << abstract::ArgsToString(broaded_args);
   }
 
   // suppose that there is not KeywordArgument for the top graph
