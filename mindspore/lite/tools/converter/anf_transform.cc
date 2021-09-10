@@ -161,9 +161,11 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     MS_LOG(ERROR) << "FindTrainOp failed.";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(config);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
   auto fusion_pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
-
+  CHECK_NULL_RETURN(fusion_pm);
   // for now - training is not supporting fuse operations
   if (!config->trainModel) {
     // remove quantdtype when awaretraining
@@ -212,6 +214,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
 }
 
 int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  CHECK_NULL_RETURN(old_graph);
+  CHECK_NULL_RETURN(config);
   MS_LOG(DEBUG) << "Run ParallelPass start";
   if (config->trainModel || config->parallel_split_config_.parallel_split_type_ == converter::SplitNo) {
     return RET_OK;
@@ -270,13 +274,18 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
 }
 
 int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  CHECK_NULL_RETURN(old_graph);
+  CHECK_NULL_RETURN(config);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
+  CHECK_NULL_RETURN(graph_pm);
   if (config->fmk == converter::kFmkTypeTflite || config->fmk == converter::kFmkTypeTf ||
       config->fmk == converter::kFmkTypeOnnx) {
     graph_pm->AddPass(std::make_shared<opt::ControlFlowPass>());
   }
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
+  CHECK_NULL_RETURN(slice_prepose_pass);
   slice_prepose_pass->SetFmkType(config->fmk);
   graph_pm->AddPass(slice_prepose_pass);
   graph_pm->AddPass(std::make_shared<opt::AddTensorArray>());
@@ -297,7 +306,9 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
   }
 #endif
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
+  CHECK_NULL_RETURN(convert_pm);
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   convert_pm->AddPass(std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel));
   optimizer->AddPassManager(convert_pm);
@@ -309,13 +320,17 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
 }
 
 int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  CHECK_NULL_RETURN(config);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
+  CHECK_NULL_RETURN(optimizer);
+  CHECK_NULL_RETURN(const_fold_pm);
   const_fold_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel));
   if (!config->trainModel) {
     const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
   }
   auto infershape_pass = std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel);
+  CHECK_NULL_RETURN(infershape_pass);
   const_fold_pm->AddPass(infershape_pass);
   auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
   const_fold_pm->AddPass(update_conv2d_param_pass);
@@ -328,6 +343,8 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
 }
 
 void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(all_func_graphs != nullptr);
   all_func_graphs->insert(func_graph);
   auto nodes = func_graph->GetOrderedCnodes();
   std::deque<CNodePtr> to_process{};
@@ -486,6 +503,10 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
 }
 
 void AnfTransform::AppendPassToStoreRoom(const converter::Flags *config) {
+  if (config == nullptr) {
+    MS_LOG(ERROR) << "config is nullptr";
+    return;
+  }
   auto fmk = config->fmk;
   auto is_train = config->trainModel;
   registry::PassRegistry("DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train));

@@ -38,6 +38,7 @@ using mindspore::lite::RET_OK;
 namespace {
 constexpr int kQuantBitNumInt16 = 16;
 constexpr int kPathLengthUpperLimit = 1024;
+constexpr int kMinShapeSizeInStr = 2;
 }  // namespace
 Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX", "");
@@ -173,7 +174,7 @@ int Flags::InitInTensorShape() {
   for (const auto &shape_str : shape_strs) {
     shape.clear();
     auto string_split = lite::StrSplit(shape_str, std::string(":"));
-    CHECK_LESS_RETURN(string_split.size(), 2);
+    CHECK_LESS_RETURN(string_split.size(), kMinShapeSizeInStr);
     auto name = string_split[0];
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
