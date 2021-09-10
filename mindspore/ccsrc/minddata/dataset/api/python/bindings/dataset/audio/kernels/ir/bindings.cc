@@ -29,6 +29,7 @@
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
+#include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -143,6 +144,17 @@ PYBIND_REGISTER(ContrastOperation, 1, ([](const py::module *m) {
                         return contrast;
                       }));
                 }));
+
+PYBIND_REGISTER(
+  DeemphBiquadOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::DeemphBiquadOperation, TensorOperation, std::shared_ptr<audio::DeemphBiquadOperation>>(
+      *m, "DeemphBiquadOperation")
+      .def(py::init([](int32_t sample_rate) {
+        auto deemph_biquad = std::make_shared<audio::DeemphBiquadOperation>(sample_rate);
+        THROW_IF_ERROR(deemph_biquad->ValidateParams());
+        return deemph_biquad;
+      }));
+  }));
 
 PYBIND_REGISTER(
   FrequencyMaskingOperation, 1, ([](const py::module *m) {
