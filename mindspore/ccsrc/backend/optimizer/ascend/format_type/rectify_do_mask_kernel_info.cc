@@ -60,18 +60,7 @@ const AnfNodePtr RectifyDoMaskKernelInfo::Process(const FuncGraphPtr &graph, con
       do_mask_node_list.push_back(output_cnode);
     }
   }
-  std::vector<size_t> input_shape;
-  for (const auto &output_node : do_mask_node_list) {
-    if (input_shape.empty()) {
-      input_shape = AnfAlgo::GetPrevNodeOutputInferShape(output_node, 0);
-      continue;
-    }
-    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(output_node, 0);
-    if (!kernel::IsSameShape(shape, input_shape)) {
-      MS_LOG(EXCEPTION) << "The DropOutGenMask connected with same genmask's shape must be equal!"
-                        << " GenMask " << node->DebugString();
-    }
-  }
+
   RectifyKernelInfo(do_mask_node_list, graph);
   return nullptr;
 }

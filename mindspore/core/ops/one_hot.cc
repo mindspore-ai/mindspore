@@ -30,28 +30,43 @@ namespace {
 abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  const size_t depth_index = 1;
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
-  auto max_shape = shape_map[kMinShape];
-  auto min_shape = shape_map[kMaxShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-1, SizeToLong(in_shape.size())}, op_name);
-  auto depth_val = GetValue<int64_t>(input_args[1]->BuildValue());
-  (void)CheckAndConvertUtils::CheckInteger("depth value", depth_val, kGreaterEqual, 0, op_name);
+  auto depth = input_args[depth_index]->BuildValue();
+  MS_EXCEPTION_IF_NULL(depth);
+  int64_t depth_value;
+  if (depth->isa<tensor::Tensor>()) {
+    CheckAndConvertUtils::CheckTensorTypeValid("depth", input_args[1]->BuildType(), {kInt64}, op_name);
+    auto depth_data = depth->cast<tensor::TensorPtr>()->data_c();
+    MS_EXCEPTION_IF_NULL(depth_data);
+    auto data_value = reinterpret_cast<int64_t *>(depth_data);
+    depth_value = *data_value;
+  } else if (depth->isa<Int64Imm>()) {
+    depth_value = GetValue<int64_t>(depth);
+  } else {
+    MS_EXCEPTION(TypeError) << "OneHot depth must be a tensor or number of int64.";
+  }
+
+  (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);
   if (min_shape.size() == 0 || max_shape.size() == 0) {
     if (axis >= 0) {
-      (void)in_shape.insert(in_shape.begin() + axis, depth_val);
+      (void)in_shape.insert(in_shape.begin() + axis, depth_value);
     } else {
-      in_shape.push_back(depth_val);
+      in_shape.push_back(depth_value);
     }
   } else {
     if (axis >= 0) {
-      (void)in_shape.insert(in_shape.begin() + axis, depth_val);
-      (void)min_shape.insert(min_shape.begin() + axis, depth_val);
-      (void)max_shape.insert(max_shape.begin() + axis, depth_val);
+      (void)in_shape.insert(in_shape.begin() + axis, depth_value);
+      (void)min_shape.insert(min_shape.begin() + axis, depth_value);
+      (void)max_shape.insert(max_shape.begin() + axis, depth_value);
     } else {
-      in_shape.push_back(depth_val);
-      min_shape.push_back(depth_val);
-      max_shape.push_back(depth_val);
+      in_shape.push_back(depth_value);
+      min_shape.push_back(depth_value);
+      max_shape.push_back(depth_value);
     }
   }
   return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);

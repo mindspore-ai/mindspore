@@ -40,7 +40,12 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     (void)std::transform(std::begin(perm_val_data), std::end(perm_val_data), std::back_inserter(p_value),
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   } else {
-    p_value = CheckAndConvertUtils::CheckAttrTupleInt("shape", input_args[1]->BuildValue(), op_name);
+    auto perm_value = input_args[1]->BuildValue();
+    if (perm_value->isa<tensor::Tensor>()) {
+      p_value = CheckAndConvertUtils::CheckTensorIntValue("perm value", perm_value, op_name);
+    } else {
+      p_value = CheckAndConvertUtils::CheckAttrTupleInt("perm value", perm_value, op_name);
+    }
   }
   if (x_shape.size() != p_value.size()) {
     MS_EXCEPTION(ValueError) << "The dimension of x " << x_shape.size() << " and perm " << p_value.size()

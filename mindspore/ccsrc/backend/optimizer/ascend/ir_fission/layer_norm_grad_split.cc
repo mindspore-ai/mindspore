@@ -32,9 +32,9 @@ constexpr size_t kLayerNormGradOutputBetaIndex = 2;
 constexpr size_t kLayerNormGradInputGammaIndex = 4;
 }  // namespace
 
-void LayerNormGradSplit::CreateOutputsOfLayerNormXBackpropV2(
-  const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
-  std::vector<AnfNodePtr> *layer_norm_x_backprop_outputs) const {
+void LayerNormGradSplit::CreateOutputsOfLayerNormXBackpropV2(const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
+                                                             std::vector<AnfNodePtr> *layer_norm_x_backprop_outputs,
+                                                             bool is_dynamic) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(layer_norm_grad);
   MS_EXCEPTION_IF_NULL(layer_norm_x_backprop_outputs);
@@ -46,10 +46,14 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackpropV2(
   auto layer_norm_x_backprop = graph->NewCNode(layer_norm_x_backprop_inputs);
   MS_EXCEPTION_IF_NULL(layer_norm_x_backprop);
   layer_norm_x_backprop->set_scope(layer_norm_grad->scope());
-
   auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, 0), kNumberTypeFloat32};
   auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, 0),
                  AnfAlgo::GetPrevNodeOutputDetailShape(layer_norm_grad, 1)};
+  if (is_dynamic) {
+    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
+    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
+    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
+  }
   AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, layer_norm_x_backprop.get());
 
   CreateMultipleOutputsOfAnfNode(graph, layer_norm_x_backprop, kLayerNormXBackpropV2OutputNum,
@@ -58,7 +62,7 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackpropV2(
 
 void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackpropV2(
   const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad, const AnfNodePtr &res_for_gamma,
-  std::vector<AnfNodePtr> *layer_norm_beta_gamma_backprop_outputs) const {
+  std::vector<AnfNodePtr> *layer_norm_beta_gamma_backprop_outputs, bool is_dynamic) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(layer_norm_grad);
   auto prim = std::make_shared<Primitive>(kLayerNormBetaGammaBackpropV2OpName);
@@ -69,7 +73,10 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackpropV2(
   auto kernel_info = std::make_shared<device::KernelInfo>();
   layer_norm_beta_gamma_backprop->set_kernel_info(kernel_info);
   layer_norm_beta_gamma_backprop->set_scope(layer_norm_grad->scope());
-
+  if (is_dynamic) {
+    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), layer_norm_beta_gamma_backprop);
+    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), layer_norm_beta_gamma_backprop);
+  }
   auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, kLayerNormGradOutputGammaIndex),
                 AnfAlgo::GetOutputInferDataType(layer_norm_grad, kLayerNormGradOutputBetaIndex)};
   auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, kLayerNormGradOutputGammaIndex),
@@ -99,10 +106,10 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
   if (AnfAlgo::GetInputTensorNum(cnode) != kLayerNormGradInputTensorNum) {
     return nullptr;
   }
-
+  bool is_dynamic_shape = AnfAlgo::IsDynamicShape(cnode);
   // create layer_norm_x_backprop
   std::vector<AnfNodePtr> layer_norm_x_backprop_outputs;
-  CreateOutputsOfLayerNormXBackpropV2(graph, cnode, &layer_norm_x_backprop_outputs);
+  CreateOutputsOfLayerNormXBackpropV2(graph, cnode, &layer_norm_x_backprop_outputs, is_dynamic_shape);
   if (layer_norm_x_backprop_outputs.size() != kLayerNormXBackpropV2OutputNum) {
     MS_LOG(EXCEPTION) << "layer_norm_grad_outputs has wrong size"
                       << " trace: " << trace::DumpSourceLines(node);
@@ -111,7 +118,7 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
   // create layer_norm_beta_gamma_backprop
   std::vector<AnfNodePtr> layer_norm_beta_gamma_backprop_outputs;
   CreateOutputsOfLayerNormBetaGammaBackpropV2(graph, cnode, layer_norm_x_backprop_outputs[1],
-                                              &layer_norm_beta_gamma_backprop_outputs);
+                                              &layer_norm_beta_gamma_backprop_outputs, is_dynamic_shape);
   if (layer_norm_beta_gamma_backprop_outputs.size() != kLayerNormBetaGammaBackpropOutputNum) {
     MS_LOG(EXCEPTION) << "layer_norm_beta_gamma_outputs has wrong size"
                       << " trace: " << trace::DumpSourceLines(node);

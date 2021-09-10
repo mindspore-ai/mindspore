@@ -25,10 +25,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameDropoutGrad = "DropoutGrad";
 class MS_CORE_API DropoutGrad : public PrimitiveC {
  public:
-  DropoutGrad() : PrimitiveC(kNameDropoutGrad) {}
+  DropoutGrad() : PrimitiveC(prim::kPrimDropoutGrad->name()) {}
   ~DropoutGrad() = default;
   MS_DECLARE_PARENT(DropoutGrad, PrimitiveC);
   void Init(const float keep_prob = 0.5);
@@ -41,5 +40,4 @@ AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const Prim
 using PrimDropoutGradPtr = std::shared_ptr<DropoutGrad>;
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_

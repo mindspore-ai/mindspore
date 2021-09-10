@@ -34,7 +34,12 @@ ShapeVector CalDynamicOutputShape(const ValuePtrList value_list) {
   size_t x_rank = value_list.size();
   for (std::size_t i = 0; i < x_rank; ++i) {
     auto indexed_value = value_list[i];
-    int64_t value = GetValue<int64_t>(indexed_value);
+    int64_t value = 0;
+    if (indexed_value->isa<Int64Imm>()) {
+      value = GetValue<int64_t>(indexed_value);
+    } else {
+      MS_LOG(EXCEPTION) << "DropOutGenMask shape value must be int64, but " << indexed_value->ToString();
+    }
 
     if (value <= 0) {
       MS_LOG(EXCEPTION) << "DropOutGenMask product of value should be > 0";

@@ -15,7 +15,12 @@
  */
 
 #include "ops/grad/dropout_grad.h"
+#include <string>
+#include <set>
+#include <vector>
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
@@ -32,40 +37,24 @@ float DropoutGrad::get_keep_prob() const {
   return GetValue<float>(value_ptr);
 }
 
-namespace {
-abstract::ShapePtr DropoutGradInferShape(const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  return std::make_shared<abstract::Shape>(in_shape);
-}
-
-TypePtr DropoutGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto op_name = prim->name();
-  auto mask_dtype = input_args[1]->BuildType();
-  auto dy_dtype = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", mask_dtype, {kTensorType}, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("dy", dy_dtype, {kFloat16, kFloat32}, op_name);
-  auto tensor_type = dy_dtype->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto data_type = tensor_type->element();
-  return data_type;
-}
-}  // namespace
-
 AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  auto op_name = primitive->name();
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("DropoutGrad infer", SizeToLong(input_args.size()), kGreaterEqual, input_num,
-                                           primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(DropoutGradInferType(primitive, input_args),
-                                                    DropoutGradInferShape(primitive, input_args));
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+
+  const int64_t dy_index = 0;
+  const int64_t mask_index = 1;
+  auto dy_type = input_args[dy_index]->BuildType();
+  auto mask_type = input_args[mask_index]->BuildType();
+
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", mask_type, {kTensorType}, op_name);
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  auto out_type = CheckAndConvertUtils::CheckTensorTypeValid("x", dy_type, valid_types, op_name);
+  auto shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, dy_index);
+  return abstract::MakeAbstract(shape, out_type);
 }
-REGISTER_PRIMITIVE_C(kNameDropoutGrad, DropoutGrad);
+REGISTER_PRIMITIVE_EVAL_IMPL(DropoutGrad, prim::kPrimDropoutGrad, DropoutGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

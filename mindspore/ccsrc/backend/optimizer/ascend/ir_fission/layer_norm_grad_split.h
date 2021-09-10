@@ -33,10 +33,11 @@ class LayerNormGradSplit : public PatternProcessPass {
 
  private:
   void CreateOutputsOfLayerNormXBackpropV2(const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
-                                           std::vector<AnfNodePtr> *layer_norm_grad_outputs) const;
+                                           std::vector<AnfNodePtr> *layer_norm_grad_outputs, bool is_dynamic) const;
   void CreateOutputsOfLayerNormBetaGammaBackpropV2(const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
                                                    const AnfNodePtr &res_for_gamma,
-                                                   std::vector<AnfNodePtr> *layer_norm_beta_gamma_outputs) const;
+                                                   std::vector<AnfNodePtr> *layer_norm_beta_gamma_outputs,
+                                                   bool is_dynamic) const;
 };
 }  // namespace opt
 }  // namespace mindspore

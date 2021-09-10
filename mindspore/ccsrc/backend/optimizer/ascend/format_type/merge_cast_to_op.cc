@@ -136,6 +136,10 @@ void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size
     (void)types.emplace_back(AnfAlgo::GetOutputInferDataType(cnode, index));
   }
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, cnode.get());
+  auto prim_op = AnfAlgo::GetCNodePrimitive(cnode);
+  if (prim_op != nullptr) {
+    prim_op->AddAttr("cast_type", TypeIdToType(cast_dtype));
+  }
 }
 
 AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, const KernelQueryPtr kernel_query) {

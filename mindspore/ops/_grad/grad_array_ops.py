@@ -143,6 +143,16 @@ def get_bprop_shape(self):
     return bprop
 
 
+@bprop_getters.register(P.DynamicShape)
+def get_bprop_dynamicshape(self):
+    """Generate bprop for Shape"""
+
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
+
+    return bprop
+
+
 @bprop_getters.register(P.Split)
 def get_bprop_split(self):
     """Generate bprop for Split"""
@@ -644,7 +654,10 @@ def get_bprop_strided_slice(self):
                                     self.shrink_axis_mask)
 
     def bprop(x, begin, end, strides, out, dout):
-        dx = input_grad(dout, shape_op(x), begin, end, strides)
+        x_shape = shape_op(x)
+        if -1 in x_shape:
+            x_shape = dyn_shape_op(x)
+        dx = input_grad(dout, x_shape, begin, end, strides)
         return dx, zeros_like(begin), zeros_like(end), zeros_like(strides)
 
     return bprop

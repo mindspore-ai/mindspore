@@ -76,6 +76,11 @@ class _BinaryOp(PrimitiveWithInfer):
     def infer_shape(self, x_shape, y_shape):
         return get_broadcast_shape(x_shape, y_shape, self.name)
 
+    def infer_min_shape(self, x_shape, y_shape):
+        return get_broadcast_shape(x_shape, y_shape, self.name, "min_shape")
+
+    def infer_max_shape(self, x_shape, y_shape):
+        return get_broadcast_shape(x_shape, y_shape, self.name, "max_shape")
 
 class _MathBinaryOp(_BinaryOp):
     """

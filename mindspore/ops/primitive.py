@@ -557,9 +557,14 @@ class PrimitiveWithInfer(Primitive):
         if not (has_min_shape or has_max_shape):
             return out
         if has_min_shape and has_max_shape:
-            fn_infer_shape = getattr(self, 'infer_shape')
-            out['min_shape'] = fn_infer_shape(*min_shapes)
-            out['max_shape'] = fn_infer_shape(*max_shapes)
+            fn_infer_min_shape = getattr(self, 'infer_shape')
+            fn_infer_max_shape = fn_infer_min_shape
+            if hasattr(self, 'infer_min_shape'):
+                fn_infer_min_shape = getattr(self, 'infer_min_shape')
+            if hasattr(self, 'infer_max_shape'):
+                fn_infer_max_shape = getattr(self, 'infer_max_shape')
+            out['min_shape'] = fn_infer_min_shape(*min_shapes)
+            out['max_shape'] = fn_infer_max_shape(*max_shapes)
             return out
         raise ValueError('Input args has invalid dynamic shape, args info: {args}')
 
