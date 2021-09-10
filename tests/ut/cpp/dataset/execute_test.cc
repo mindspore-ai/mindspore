@@ -1564,3 +1564,20 @@ TEST_F(MindDataTestExecute, TestSlidingWindowCmnWrongArgs) {
   Status status_2 = Transform_2(input_ms, &input_ms);
   EXPECT_FALSE(status_2.IsOk());
 }
+
+/// Feature: AutoAugment
+/// Description: test AutoAugment eager
+/// Expectation: load one image data and process auto augmentation with given policy on it.
+TEST_F(MindDataTestExecute, TestAutoAugmentEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAutoAugmentEager.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto auto_augment_op = vision::AutoAugment(AutoAugmentPolicy::kImageNet, InterpolationMode::kLinear, {0, 0, 0});
+
+  auto transform = Execute({decode, auto_augment_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}

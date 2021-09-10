@@ -38,6 +38,13 @@ enum class Interpolation {
   kQuadratic = 1  ///< Use quadratic for delay-line interpolation.
 };
 
+/// \brief The dataset auto augment policy in AutoAugment
+enum class AutoAugmentPolicy {
+  kImageNet = 0,  ///< AutoAugment policy learned on the ImageNet dataset.
+  kCifar10 = 1,   ///< AutoAugment policy learned on the Cifar10 dataset.
+  kSVHN = 2       ///< AutoAugment policy learned on the SVHN dataset.
+};
+
 /// \brief The color conversion code
 enum class ConvertMode {
   COLOR_BGR2BGRA = 0,                 ///< Add alpha channel to BGR image.

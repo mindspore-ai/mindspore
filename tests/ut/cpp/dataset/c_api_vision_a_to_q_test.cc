@@ -1270,3 +1270,57 @@ TEST_F(MindDataTestPipeline, TestConvertColorFail) {
     std::shared_ptr<Iterator> iter = ds->CreateIterator();
     EXPECT_EQ(iter, nullptr);
 }
+
+/// Feature: AutoAugment
+/// Description: test AutoAugment pipeline
+/// Expectation: create an ImageFolder dataset then do auto augmentation on it with the policy
+TEST_F(MindDataTestPipeline, TestAutoAugment) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoAugment.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+
+  EXPECT_NE(ds, nullptr);
+
+  auto auto_augment_op = vision::AutoAugment(AutoAugmentPolicy::kImageNet, InterpolationMode::kLinear, {0, 0, 0});
+
+  ds = ds->Map({auto_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+/// Feature: AutoAugment
+/// Description: test AutoAugment with invalid fill_value
+/// Expectation: pipeline iteration failed with wrong argument fill_value
+TEST_F(MindDataTestPipeline, TestAutoAugmentInvalidFillValue) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoAugmentInvalidFillValue.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto auto_augment_op = vision::AutoAugment(AutoAugmentPolicy::kImageNet,
+                                             InterpolationMode::kNearestNeighbour, {20, 20});
+
+  ds = ds->Map({auto_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

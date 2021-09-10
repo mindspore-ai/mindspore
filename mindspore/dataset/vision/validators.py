@@ -23,7 +23,7 @@ from mindspore.dataset.core.validator_helpers import check_value, check_uint8, F
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
     parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, \
     check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32
-from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode
+from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 
 
 def check_crop_size(size):
@@ -1028,6 +1028,21 @@ def check_convert_color(method):
         [convert_mode], _ = parse_user_args(method, *args, **kwargs)
         if convert_mode is not None:
             type_check(convert_mode, (ConvertMode,), "convert_mode")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_auto_augment(method):
+    """Wrapper method to check the parameters of AutoAugment."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [policy, interpolation, fill_value], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(policy, (AutoAugmentPolicy,), "policy")
+        type_check(interpolation, (Inter,), "interpolation")
+        check_fill_value(fill_value)
         return method(self, *args, **kwargs)
 
     return new_method
