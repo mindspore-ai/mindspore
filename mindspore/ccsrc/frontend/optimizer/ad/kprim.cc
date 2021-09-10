@@ -43,6 +43,7 @@
 #include "debug/dump_proto.h"
 #include "mindspore/core/load_mindir/load_model.h"
 #include "utils/system/sha256.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace ad {
@@ -115,7 +116,7 @@ std::string GetBpropHash() {
   static std::string bprop_hash;
   if (bprop_hash.empty()) {
     auto bprop_dir = GetBpropDir();
-    auto realpath = Common::GetRealPath(bprop_dir);
+    auto realpath = FileUtils::GetRealPath(common::SafeCStr(bprop_dir));
     if (!realpath.has_value()) {
       MS_LOG(EXCEPTION) << "Get real path of bprop dir failed. path=" << bprop_dir;
     }
@@ -129,7 +130,7 @@ FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
   std::string bprop_dir = GetBpropDir();
   auto bprop_mindir_path = bprop_dir + kBpropMindIRDir;
   std::optional<std::string> bprop_mindir_realpath =
-    Common::GetRealPath(bprop_mindir_path + prim->name() + kBpropMindIRSuffix);
+    FileUtils::GetRealPath(common::SafeCStr(bprop_mindir_path + prim->name() + kBpropMindIRSuffix));
   bool bprop_cache_file_exists = bprop_mindir_realpath.has_value() && Common::FileExists(bprop_mindir_realpath.value());
   if (!bprop_cache_file_exists) {
     return nullptr;
@@ -150,7 +151,7 @@ void ExportBpropToMindIR(const PrimitivePtr &prim, const FuncGraphPtr &func_grap
   func_graph->set_bprop_hash(GetBpropHash());
   auto bprop_mindir_path = bprop_dir + kBpropMindIRDir;
   std::optional<std::string> bprop_mindir_realpath =
-    Common::GetRealPath(bprop_mindir_path + prim->name() + kBpropMindIRSuffix);
+    Common::CreatePrefixPath(bprop_mindir_path + prim->name() + kBpropMindIRSuffix);
   if (!bprop_mindir_realpath.has_value()) {
     MS_LOG(ERROR) << "Failed to get the realpath of bprop mindir: " << bprop_mindir_path << prim->name()
                   << kBpropMindIRSuffix;
