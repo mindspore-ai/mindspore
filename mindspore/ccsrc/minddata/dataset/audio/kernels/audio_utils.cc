@@ -466,5 +466,48 @@ Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
     RETURN_STATUS_UNEXPECTED("ComplexNorm: " + std::string(e.what()));
   }
 }
+
+template <typename T>
+float sgn(T val) {
+  return (static_cast<T>(0) < val) - (val < static_cast<T>(0));
+}
+
+template <typename T>
+Status Decoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T mu) {
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), output));
+  auto itr_out = (*output)->begin<T>();
+  auto itr = input->begin<T>();
+  auto end = input->end<T>();
+
+  while (itr != end) {
+    auto x_mu = *itr;
+    x_mu = ((x_mu) / mu) * 2 - 1.0;
+    x_mu = sgn(x_mu) * expm1(fabs(x_mu) * log1p(mu)) / mu;
+    *itr_out = x_mu;
+    ++itr_out;
+    ++itr;
+  }
+  return Status::OK();
+}
+
+Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int quantization_channels) {
+  if (input->type().value() >= DataType::DE_INT8 && input->type().value() <= DataType::DE_FLOAT32) {
+    float f_mu = static_cast<float>(quantization_channels) - 1;
+
+    // convert the data type to float
+    std::shared_ptr<Tensor> input_tensor;
+    RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+
+    RETURN_IF_NOT_OK(Decoding<float>(input_tensor, output, f_mu));
+  } else if (input->type().value() == DataType::DE_FLOAT64) {
+    double f_mu = static_cast<double>(quantization_channels) - 1;
+
+    RETURN_IF_NOT_OK(Decoding<double>(input, output, f_mu));
+  } else {
+    RETURN_STATUS_UNEXPECTED("MuLawDecoding: input tensor type should be int, float or double, but got: " +
+                             input->type().ToString());
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

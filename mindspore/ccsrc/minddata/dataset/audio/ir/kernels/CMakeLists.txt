@@ -15,6 +15,7 @@ add_library(audio-ir-kernels OBJECT
         frequency_masking_ir.cc
         highpass_biquad_ir.cc
         lowpass_biquad_ir.cc
+        mu_law_decoding_ir.cc
         time_masking_ir.cc
         time_stretch_ir.cc
         )

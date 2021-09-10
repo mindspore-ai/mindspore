@@ -773,9 +773,9 @@ TEST_F(MindDataTestExecute, TestHighpassBiquadEager) {
   float Q = 0.707;
   std::vector<mindspore::MSTensor> output;
   std::shared_ptr<Tensor> test;
-  std::vector<double> test_vector = {0.8236, 0.2049, 0.3335, 0.5933, 0.9911, 0.2482,
-                                     0.3007, 0.9054, 0.7598, 0.5394, 0.2842, 0.5634, 0.6363, 0.2226, 0.2288};
-  Tensor::CreateFromVector(test_vector, TensorShape({5,3}), &test);
+  std::vector<double> test_vector = {0.8236, 0.2049, 0.3335, 0.5933, 0.9911, 0.2482, 0.3007, 0.9054,
+                                     0.7598, 0.5394, 0.2842, 0.5634, 0.6363, 0.2226, 0.2288};
+  Tensor::CreateFromVector(test_vector, TensorShape({5, 3}), &test);
   auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
   std::shared_ptr<TensorTransform> highpass_biquad(new audio::HighpassBiquad({sample_rate, cutoff_freq, Q}));
   auto transform = Execute({highpass_biquad});
@@ -787,11 +787,10 @@ TEST_F(MindDataTestExecute, TestHighpassBiquadParamCheckQ) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestHighpassBiquadParamCheckQ.";
   std::vector<mindspore::MSTensor> output;
   std::shared_ptr<Tensor> test;
-  std::vector<float> test_vector = {0.6013, 0.8081, 0.6600, 0.4278, 0.4049, 0.0541, 0.8800, 0.7143, 0.0926,
-                                    0.3502, 0.6148, 0.8738, 0.1869, 0.9023, 0.4293, 0.2175, 0.5132, 0.2622,
-                                    0.6490, 0.0741, 0.7903, 0.3428, 0.1598, 0.4841, 0.8128, 0.7409, 0.7226,
-                                    0.4951, 0.5589, 0.9210};
-  Tensor::CreateFromVector(test_vector, TensorShape({5,3,2}), &test);
+  std::vector<float> test_vector = {0.6013, 0.8081, 0.6600, 0.4278, 0.4049, 0.0541, 0.8800, 0.7143, 0.0926, 0.3502,
+                                    0.6148, 0.8738, 0.1869, 0.9023, 0.4293, 0.2175, 0.5132, 0.2622, 0.6490, 0.0741,
+                                    0.7903, 0.3428, 0.1598, 0.4841, 0.8128, 0.7409, 0.7226, 0.4951, 0.5589, 0.9210};
+  Tensor::CreateFromVector(test_vector, TensorShape({5, 3, 2}), &test);
   auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
   // Check Q
   std::shared_ptr<TensorTransform> highpass_biquad_op = std::make_shared<audio::HighpassBiquad>(44100, 3000.5, 0);
@@ -804,13 +803,27 @@ TEST_F(MindDataTestExecute, TestHighpassBiquadParamCheckSampleRate) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestHighpassBiquadParamCheckSampleRate.";
   std::vector<mindspore::MSTensor> output;
   std::shared_ptr<Tensor> test;
-  std::vector<double> test_vector = {0.0237, 0.6026, 0.3801, 0.1978, 0.8672, 
-                                     0.0095, 0.5166, 0.2641, 0.5485, 0.5144};
-  Tensor::CreateFromVector(test_vector, TensorShape({1,10}), &test);
+  std::vector<double> test_vector = {0.0237, 0.6026, 0.3801, 0.1978, 0.8672, 0.0095, 0.5166, 0.2641, 0.5485, 0.5144};
+  Tensor::CreateFromVector(test_vector, TensorShape({1, 10}), &test);
   auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
   // Check sample_rate
   std::shared_ptr<TensorTransform> highpass_biquad_op = std::make_shared<audio::HighpassBiquad>(0, 3000.5, 0.7);
   mindspore::dataset::Execute transform({highpass_biquad_op});
   Status rc = transform({input}, &output);
   ASSERT_FALSE(rc.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestMuLawDecodingEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMuLawDecodingEager.";
+  // testing
+  std::shared_ptr<Tensor> input_tensor_;
+  Tensor::CreateFromVector(std::vector<float>({1, 254, 231, 155, 101, 77}), TensorShape({1, 6}), &input_tensor_);
+
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> mu_law_encoding_01 = std::make_shared<audio::MuLawDecoding>(255);
+
+  // Filtered waveform by mulawencoding
+  mindspore::dataset::Execute Transform01({mu_law_encoding_01});
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_TRUE(s01.IsOk());
 }

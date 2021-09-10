@@ -825,7 +825,7 @@ TEST_F(MindDataTestPipeline, TestHighpassBiquadWrongArgs) {
 
   // Check sample_rate
   MS_LOG(INFO) << "sample_rate is zero.";
-  auto highpass_biquad_op_01 = audio::HighpassBiquad(0,200.0,0.7);
+  auto highpass_biquad_op_01 = audio::HighpassBiquad(0, 200.0, 0.7);
   ds01 = ds->Map({highpass_biquad_op_01});
   EXPECT_NE(ds01, nullptr);
 
@@ -834,10 +834,68 @@ TEST_F(MindDataTestPipeline, TestHighpassBiquadWrongArgs) {
 
   // Check Q
   MS_LOG(INFO) << "Q is zero.";
-  auto highpass_biquad_op_02 = audio::HighpassBiquad(44100,2000.0,0);
+  auto highpass_biquad_op_02 = audio::HighpassBiquad(44100, 2000.0, 0);
   ds02 = ds->Map({highpass_biquad_op_02});
   EXPECT_NE(ds02, nullptr);
 
   std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
   EXPECT_EQ(iter02, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestMuLawDecodingBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMuLawDecodingBasic.";
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt64, {1, 100}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto MuLawDecodingOp = audio::MuLawDecoding();
+
+  ds = ds->Map({MuLawDecodingOp});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by MuLawDecoding
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {1, 100};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestMuLawDecodingWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMuLawDecodingWrongArgs.";
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt64, {1, 100}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto MuLawDecodingOp = audio::MuLawDecoding(-10);
+
+  ds = ds->Map({MuLawDecodingOp});
+  std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
+  EXPECT_EQ(iter1, nullptr);
 }

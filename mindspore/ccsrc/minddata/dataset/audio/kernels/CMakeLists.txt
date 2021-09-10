@@ -16,6 +16,7 @@ add_library(audio-kernels OBJECT
         frequency_masking_op.cc
         highpass_biquad_op.cc
         lowpass_biquad_op.cc
+        mu_law_decoding_op.cc
         time_masking_op.cc
         time_stretch_op.cc
         )

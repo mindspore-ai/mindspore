@@ -229,6 +229,18 @@ def check_lowpass_biquad(method):
     return new_method
 
 
+def check_mu_law_decoding(method):
+    """Wrapper method to check the parameters of MuLawDecoding"""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [quantization_channels], _ = parse_user_args(method, *args, **kwargs)
+        check_pos_int32(quantization_channels, "quantization_channels")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_time_stretch(method):
     """Wrapper method to check the parameters of TimeStretch."""
 

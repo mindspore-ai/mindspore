@@ -276,6 +276,13 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 /// \return Status code.
 Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power);
 
+/// \brief Decode mu-law encoded signal.
+/// \param input Tensor of shape <..., time>.
+/// \param output Tensor of shape <..., time>.
+/// \param quantization_channels Number of channels.
+/// \return Status code.
+Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int quantization_channels);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

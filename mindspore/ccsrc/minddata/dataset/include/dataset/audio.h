@@ -320,6 +320,27 @@ class LowpassBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief MuLawDecoding TensorTransform.
+/// \note Decode mu-law encoded signal.
+class MuLawDecoding final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] quantization_channels Number of channels, which must be positive (Default: 256).
+  explicit MuLawDecoding(int quantization_channels = 256);
+
+  /// \brief Destructor.
+  ~MuLawDecoding() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief TimeMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the time domain.
 class TimeMasking final : public TensorTransform {
