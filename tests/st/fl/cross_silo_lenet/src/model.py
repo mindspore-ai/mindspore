@@ -14,6 +14,7 @@
 # ============================================================================
 
 import mindspore.nn as nn
+from mindspore.ops import operations as P
 from mindspore.common.initializer import TruncatedNormal
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -70,3 +71,25 @@ class LeNet5(nn.Cell):
         x = self.relu(x)
         x = self.fc3(x)
         return x
+
+
+class StartFLJob(nn.Cell):
+    def __init__(self, data_size):
+        super(StartFLJob, self).__init__()
+        self.start_fl_job = P.StartFLJob(data_size)
+
+    def construct(self):
+        return self.start_fl_job()
+
+
+class UpdateAndGetModel(nn.Cell):
+    def __init__(self, weights):
+        super(UpdateAndGetModel, self).__init__()
+        self.update_model = P.UpdateModel()
+        self.get_model = P.GetModel()
+        self.weights = weights
+
+    def construct(self):
+        self.update_model(self.weights)
+        get_model = self.get_model(self.weights)
+        return get_model

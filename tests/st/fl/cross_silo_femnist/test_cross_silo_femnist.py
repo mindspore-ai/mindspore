@@ -47,25 +47,22 @@ parser.add_argument("--start_fl_job_time_window", type=int, default=3000)
 parser.add_argument("--update_model_ratio", type=float, default=1.0)
 parser.add_argument("--update_model_time_window", type=int, default=3000)
 parser.add_argument("--fl_name", type=str, default="Lenet")
+# fl_iteration_num is also used as the global epoch number for Worker.
 parser.add_argument("--fl_iteration_num", type=int, default=25)
 parser.add_argument("--client_epoch_num", type=int, default=20)
+# client_batch_size is also used as the batch size of each mini-batch for Worker.
 parser.add_argument("--client_batch_size", type=int, default=32)
-parser.add_argument("--client_learning_rate", type=float, default=0.1)
+# client_learning_rate is also used as the learning rate for Worker.
+parser.add_argument("--client_learning_rate", type=float, default=0.01)
 parser.add_argument("--worker_step_num_per_iteration", type=int, default=65)
 parser.add_argument("--scheduler_manage_port", type=int, default=11202)
 parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
-parser.add_argument("--dp_eps", type=float, default=50.0)
-parser.add_argument("--dp_delta", type=float, default=0.01)
-parser.add_argument("--dp_norm_clip", type=float, default=1.0)
-parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
-parser.add_argument("--cipher_time_window", type=int, default=300000)
-parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
 parser.add_argument("--dataset_path", type=str, default="")
+# The user_id is used to set each worker's dataset path.
 parser.add_argument("--user_id", type=str, default="0")
 
 parser.add_argument('--img_size', type=int, default=(32, 32, 1), help='the image size of (h,w,c)')
-parser.add_argument('--batch_size', type=float, default=32, help='batch size')
 parser.add_argument('--repeat_size', type=int, default=1, help='the repeat size when create the dataLoader')
 
 args, _ = parser.parse_known_args()
@@ -90,12 +87,6 @@ worker_step_num_per_iteration = args.worker_step_num_per_iteration
 scheduler_manage_port = args.scheduler_manage_port
 config_file_path = args.config_file_path
 encrypt_type = args.encrypt_type
-share_secrets_ratio = args.share_secrets_ratio
-cipher_time_window = args.cipher_time_window
-reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
-dp_eps = args.dp_eps
-dp_delta = args.dp_delta
-dp_norm_clip = args.dp_norm_clip
 dataset_path = args.dataset_path
 user_id = args.user_id
 
@@ -120,12 +111,6 @@ ctx = {
     "worker_step_num_per_iteration": worker_step_num_per_iteration,
     "scheduler_manage_port": scheduler_manage_port,
     "config_file_path": config_file_path,
-    "share_secrets_ratio": share_secrets_ratio,
-    "cipher_time_window": cipher_time_window,
-    "reconstruct_secrets_threshold": reconstruct_secrets_threshold,
-    "dp_eps": dp_eps,
-    "dp_delta": dp_delta,
-    "dp_norm_clip": dp_norm_clip,
     "encrypt_type": encrypt_type
 }
 
@@ -314,13 +299,13 @@ class UpdateAndGetModel(nn.Cell):
 
 
 def train():
-    epoch = client_epoch_num
+    epoch = fl_iteration_num
     network = LeNet5(62, 3)
 
     # define the loss function
     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     # define the optimizer
-    net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
+    net_opt = nn.Momentum(network.trainable_params(), client_learning_rate, 0.9)
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy(), 'Loss': nn.Loss()})
 
     ds.config.set_seed(1)
@@ -329,7 +314,7 @@ def train():
     train_path = os.path.join(data_root_path, user, "train")
     test_path = os.path.join(data_root_path, user, "test")
 
-    dataset = create_dataset_from_folder(train_path, args.img_size, args.batch_size, args.repeat_size)
+    dataset = create_dataset_from_folder(train_path, args.img_size, args.client_batch_size, args.repeat_size)
     print("size is ", dataset.get_dataset_size(), flush=True)
     num_batches = dataset.get_dataset_size()
 
@@ -341,7 +326,7 @@ def train():
 
     for iter_num in range(fl_iteration_num):
         if context.get_fl_context("ms_role") == "MS_WORKER":
-            start_fl_job = StartFLJob(dataset.get_dataset_size() * args.batch_size)
+            start_fl_job = StartFLJob(dataset.get_dataset_size() * args.client_batch_size)
             start_fl_job()
 
         for _ in range(epoch):
@@ -356,8 +341,8 @@ def train():
         ckpt_name = os.path.join(ckpt_path, ckpt_name)
         save_checkpoint(network, ckpt_name)
 
-        train_acc, _ = evalute_process(model, train_path, args.img_size, args.batch_size)
-        test_acc, _ = evalute_process(model, test_path, args.img_size, args.batch_size)
+        train_acc, _ = evalute_process(model, train_path, args.img_size, args.client_batch_size)
+        test_acc, _ = evalute_process(model, test_path, args.img_size, args.client_batch_size)
         loss_list = loss_cb.get_loss()
         loss = sum(loss_list) / len(loss_list)
         print('local epoch: {}, loss: {}, trian acc: {}, test acc: {}'.format(iter_num, loss, train_acc, test_acc),

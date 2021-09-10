@@ -76,9 +76,10 @@ bool TcpCommunicator::Start() {
 
 bool TcpCommunicator::Stop() {
   MS_EXCEPTION_IF_NULL(abstrace_node_);
+
+  // In some cases, server calls the Finish function while other nodes don't. So timeout is acceptable.
   if (!abstrace_node_->Finish()) {
-    MS_LOG(ERROR) << "Finishing server node failed.";
-    return false;
+    MS_LOG(WARNING) << "Finishing server node timeout.";
   }
   if (!abstrace_node_->Stop()) {
     MS_LOG(ERROR) << "Stopping server node failed.";

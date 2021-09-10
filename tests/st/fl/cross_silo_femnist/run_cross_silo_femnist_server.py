@@ -32,18 +32,10 @@ parser.add_argument("--fl_name", type=str, default="Lenet")
 parser.add_argument("--fl_iteration_num", type=int, default=25)
 parser.add_argument("--client_epoch_num", type=int, default=20)
 parser.add_argument("--client_batch_size", type=int, default=32)
-parser.add_argument("--client_learning_rate", type=float, default=0.1)
+parser.add_argument("--client_learning_rate", type=float, default=0.01)
 parser.add_argument("--local_server_num", type=int, default=-1)
 parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
-# parameters for encrypt_type='DP_ENCRYPT'
-parser.add_argument("--dp_eps", type=float, default=50.0)
-parser.add_argument("--dp_delta", type=float, default=0.01)  # 1/worker_num
-parser.add_argument("--dp_norm_clip", type=float, default=1.0)
-# parameters for encrypt_type='PW_ENCRYPT'
-parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
-parser.add_argument("--cipher_time_window", type=int, default=300000)
-parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
 parser.add_argument("--dataset_path", type=str, default="")
 
 args, _ = parser.parse_known_args()
@@ -66,12 +58,6 @@ client_learning_rate = args.client_learning_rate
 local_server_num = args.local_server_num
 config_file_path = args.config_file_path
 encrypt_type = args.encrypt_type
-share_secrets_ratio = args.share_secrets_ratio
-cipher_time_window = args.cipher_time_window
-reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
-dp_eps = args.dp_eps
-dp_delta = args.dp_delta
-dp_norm_clip = args.dp_norm_clip
 dataset_path = args.dataset_path
 
 if local_server_num == -1:
@@ -104,12 +90,6 @@ for i in range(local_server_num):
     cmd_server += " --client_batch_size=" + str(client_batch_size)
     cmd_server += " --client_learning_rate=" + str(client_learning_rate)
     cmd_server += " --encrypt_type=" + str(encrypt_type)
-    cmd_server += " --share_secrets_ratio=" + str(share_secrets_ratio)
-    cmd_server += " --cipher_time_window=" + str(cipher_time_window)
-    cmd_server += " --reconstruct_secrets_threshold=" + str(reconstruct_secrets_threshold)
-    cmd_server += " --dp_eps=" + str(dp_eps)
-    cmd_server += " --dp_delta=" + str(dp_delta)
-    cmd_server += " --dp_norm_clip=" + str(dp_norm_clip)
     cmd_server += " --dataset_path=" + str(dataset_path)
     cmd_server += " --user_id=" + str(0)
     cmd_server += " > server.log 2>&1 &"
