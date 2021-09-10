@@ -152,7 +152,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   void SetOutputType(enum DataType output_type);
   enum DataType GetOutputType() const;
 
-  // "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
+  // "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype", default as "force_fp16"
   inline void SetPrecisionMode(const std::string &precision_mode);
   inline std::string GetPrecisionMode() const;
 

@@ -74,7 +74,6 @@ py::object MsCtxGetParameter(const std::shared_ptr<MsContext> &ctx, MsCtxParam p
 // Note: exported python enum variables beginning with '_' are for internal use
 REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                          (void)py::enum_<MsCtxParam>(*m, "ms_ctx_param", py::arithmetic())
-                           .value("enable_auto_mixed_precision", MsCtxParam::MS_CTX_ENABLE_AUTO_MIXED_PRECISION)
                            .value("check_bprop", MsCtxParam::MS_CTX_CHECK_BPROP_FLAG)
                            .value("enable_dump", MsCtxParam::MS_CTX_ENABLE_DUMP)
                            .value("enable_graph_kernel", MsCtxParam::MS_CTX_ENABLE_GRAPH_KERNEL)

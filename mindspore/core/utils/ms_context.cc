@@ -68,7 +68,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_HCCL, false);
   set_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY, true);
   set_param<bool>(MS_CTX_PRECOMPILE_ONLY, false);
-  set_param<bool>(MS_CTX_ENABLE_AUTO_MIXED_PRECISION, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, false);
   set_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL, true);
