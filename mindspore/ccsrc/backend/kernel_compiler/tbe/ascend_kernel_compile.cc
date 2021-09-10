@@ -45,6 +45,9 @@ namespace ascend {
 using mindspore::kernel::tbe::TbeAdapter;
 using mindspore::kernel::tbe::TbeUtils;
 const int indent = 4;  // for dump json
+const int kAscii_0 = 48;
+const int kAscii_9 = 57;
+const uint32_t kDEFAULT_PROCESS_NUM = 24;
 constexpr auto kInitialize = "Initialize";
 constexpr auto kPreCompile = "PreCompile";
 constexpr auto kFinalize = "Finalize";
@@ -128,26 +131,43 @@ void PrintInfo(const nlohmann::json &info, const std::string &job_name, const in
   auto message = GetJsonValue<std::string>(info, kMessage);
   if (level == 0) {
     MS_LOG(DEBUG) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == 1) {
+  } else if (level == INFO) {
     MS_LOG(INFO) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == 2) {
+  } else if (level == WARNING) {
     MS_LOG(WARNING) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == 3) {
+  } else if (level == ERROR) {
     MS_LOG(ERROR) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == 4) {
+  } else if (level == EXCEPTION) {
     ReportToErrorManager(message);
   }
 }
 
+bool IsDigit(const std::string &str) {
+  if (str.empty()) {
+    return false;
+  }
+  size_t i = 0;
+  while (i < str.size()) {
+    if (static_cast<int>(str[i]) < kAscii_0 || static_cast<int>(str[i]) > kAscii_9) {
+      return false;
+    }
+    i++;
+  }
+  return true;
+}
+
 uint32_t GetProcessNum() {
-  uint32_t process_num = 24;
+  uint32_t process_num = kDEFAULT_PROCESS_NUM;
   auto env_process_num = common::GetEnv(kMS_BUILD_PROCESS_NUM);
   if (!env_process_num.empty()) {
-    try {
-      process_num = UlongToUint(std::stoul(env_process_num));
-    } catch (std::invalid_argument &e) {
-      MS_LOG(EXCEPTION) << "Invalid environment variable 'MS_BUILD_PROCESS_NUM', it should be in [1, 24], but got "
+    if (!IsDigit(env_process_num)) {
+      MS_LOG(EXCEPTION) << "Invalid environment of 'MS_BUILD_PROCESS_NUM',it should be a digit, but got: "
                         << env_process_num;
+    }
+    process_num = UlongToUint(std::stoul(env_process_num));
+    if (process_num < 1 || process_num > kDEFAULT_PROCESS_NUM) {
+      MS_LOG(EXCEPTION) << "Invalid environment of 'MS_BUILD_PROCESS_NUM', the value should be in [1, 24], but got: "
+                        << process_num;
     }
   }
   return process_num;
@@ -311,13 +331,13 @@ std::string AscendKernelCompileManager::FormatSelectResultProcess(const nlohmann
 void AscendKernelCompileManager::QueryResultProcess(const nlohmann::json &json, TargetJobStatus *task_info,
                                                     int adjust_log_level = EXCEPTION) {
   auto job_type = GetJsonValue<std::string>(json, kJobType);
-  auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
   MS_LOG(DEBUG) << "Job: " << job_type << " post processing";
   if (GetJsonValue<std::string>(json, kStatus) == kSuccess) {
     nlohmann::json query_result;
     if (!ParseJson(GetJsonValue<std::string>(json, kResult), &query_result)) {
       MS_LOG(EXCEPTION) << "Parse query result error.";
     }
+    auto json_name = GetJsonValue<std::string>(query_result, kFusionOpName);
     auto target_job_id = query_result.at(kJobId);
     auto target_status = query_result.at(kStatus);
     task_info->target_job_id = target_job_id;
@@ -330,7 +350,7 @@ void AscendKernelCompileManager::QueryResultProcess(const nlohmann::json &json, 
       return;
     } else if (target_status != kSuccess && target_status != kRunning) {
       MS_LOG(INFO) << "Target job running failed, target_job_type:" << target_job << ", job id: " << target_job_id
-                   << ", target_result: " << query_result.dump();
+                   << ", json name: " << json_name;
       task_info->job_status = kFailed;
     }
     PrintProcessLog(query_result, adjust_log_level);
@@ -376,13 +396,18 @@ void AscendKernelCompileManager::ParseTargetJobStatus(const std::string &type, c
       } else {
         ResetOldTask();
         single_processed_kernels_.clear();
-        MS_LOG(EXCEPTION) << "Single op compile failed ,op: " << kernel_name;
+        MS_LOG(EXCEPTION) << "Single op compile failed, op: " << kernel_name
+                          << ",trace: " << trace::DumpSourceLines(node_);
       }
     }
   } else {
     auto file_name = GetJsonValue<std::string>(json_obj, kJobType) + "_" + json_obj.at(kJobId).dump();
     TbeUtils::SaveJsonInfo(file_name, job_result);
-    MS_LOG(EXCEPTION) << "Query job failed";
+    if (type == kPreCompile) {
+      MS_LOG(WARNING) << "Query job failed";
+    } else {
+      MS_LOG(EXCEPTION) << "Query job failed, trace:" << trace::DumpSourceLines(node_);
+    }
   }
 }
 
@@ -541,6 +566,7 @@ void AscendKernelCompileManager::AscendPreBuild(const std::shared_ptr<session::K
   MS_EXCEPTION_IF_NULL(json_creator);
   for (const auto &node : anf_nodes) {
     MS_EXCEPTION_IF_NULL(node);
+    node_ = node;
     auto op_name = AnfAlgo::GetCNodeName(node);
     nlohmann::json kernel_json;
     if (!json_creator->GenJson(node, &kernel_json)) {
@@ -586,6 +612,7 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
     if (AnfAlgo::GetKernelMod(node) != nullptr && !is_tune_flag_) {
       continue;
     }
+    node_ = node;
     auto op_name = AnfAlgo::GetCNodeName(node);
     nlohmann::json kernel_json;
     if (!json_creator->GenJson(node, &kernel_json)) {

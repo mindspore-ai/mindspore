@@ -1540,9 +1540,9 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result) {
   auto c = args.host_shape[kC];
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
-  size_t c0 = 16;
+  size_t c0 = kCubeSize;
   if (args.device_format == kOpFormat_NC1HWC0_C04) {
-    c0 = 4;
+    c0 = kCubeSize_C04;
   }
   auto c1 = DivCeil(c, c0);
   auto hw = h * w;

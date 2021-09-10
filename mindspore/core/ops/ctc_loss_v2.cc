@@ -54,7 +54,6 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
   int64_t N = log_probs_shape[1];
   int64_t S = targets_shape[1];
 
-  ShapeVector output_shape;
   std::vector<int64_t> out_dim0 = {N};
   std::vector<int64_t> out_dim1 = {N, T, kMulti * S + 1};
   abstract::ShapePtr neg_log_shape = std::make_shared<abstract::Shape>(out_dim0);

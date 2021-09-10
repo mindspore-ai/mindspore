@@ -31,16 +31,16 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
   if (x_shape == y_shape) {
     return x_shape;
   }
-  auto x_length = x_shape.size();
-  auto y_length = y_shape.size();
+  auto x_length = static_cast<int64_t>(x_shape.size());
+  auto y_length = static_cast<int64_t>(y_shape.size());
   auto length = x_length < y_length ? x_length : y_length;
   std::vector<int64_t> broadcast_shape;
   if (x_length == length) {
-    (void)std::copy(y_shape.begin(), y_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
+    (void)std::copy(y_shape.begin(), y_shape.end() - length, std::back_inserter(broadcast_shape));
   } else {
-    (void)std::copy(x_shape.begin(), x_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
+    (void)std::copy(x_shape.begin(), x_shape.end() - length, std::back_inserter(broadcast_shape));
   }
-  for (int64_t i = -SizeToLong(length); i < 0; i++) {
+  for (int64_t i = -length; i < 0; i++) {
     if (x_shape[x_length + i] == 1) {
       broadcast_shape.push_back(y_shape[y_length + i]);
     } else if (y_shape[y_length + i] == 1) {

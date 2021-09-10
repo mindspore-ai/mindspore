@@ -86,6 +86,7 @@ class AscendKernelCompileManager {
   std::shared_ptr<ParallelBuildManager> build_manager_ = nullptr;
   std::map<int, nlohmann::json> job_list_;
   std::map<int, std::string> fusion_op_names_;
+  AnfNodePtr node_;
 };
 }  // namespace ascend
 }  // namespace kernel

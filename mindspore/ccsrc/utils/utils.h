@@ -486,6 +486,7 @@ const size_t kShape2dDims = 2;
 const size_t kShape5dDims = 5;
 const size_t kShape1dDims = 1;
 const size_t kCubeSize = 16;
+const size_t kCubeSize_C04 = 4;
 const size_t kNiSize = 16;
 const size_t kMemAlignSize = 512;
 const size_t kBNChannelMultipleFactor = 4;
