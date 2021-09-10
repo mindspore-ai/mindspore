@@ -173,11 +173,7 @@ APP_ERROR DeeplabV3plus::Inference(const std::vector<MxBase::TensorBase> &inputs
 
 APP_ERROR DeeplabV3plus::Process(const std::string &imgPath) {
     cv::Mat imageMat;
-    APP_ERROR ret = ReadImage(imgPath, imageMat);
-    if (ret != APP_ERR_OK) {
-        LogError << "ReadImage failed, ret=" << ret << ".";
-        return ret;
-    }
+    ReadImage(imgPath, imageMat);
 
     MxBase::ResizedImageInfo resizedImageInfo;
     ResizeImage(imageMat, imageMat, resizedImageInfo);
@@ -185,7 +181,7 @@ APP_ERROR DeeplabV3plus::Process(const std::string &imgPath) {
     Padding(imageMat, imageMat);
 
     MxBase::TensorBase tensorBase;
-    ret = CVMatToTensorBase(imageMat, tensorBase);
+    APP_ERROR ret = CVMatToTensorBase(imageMat, tensorBase);
     if (ret != APP_ERR_OK) {
         LogError << "CVMatToTensorBase failed, ret=" << ret << ".";
         return ret;

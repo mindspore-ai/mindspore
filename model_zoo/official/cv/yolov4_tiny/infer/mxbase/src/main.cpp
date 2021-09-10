@@ -39,7 +39,7 @@ void SplitString(const std::string &s, std::vector<std::string> *v, const std::s
 
 void InitYolov4TinyParam(InitParam *initParam) {
     initParam->deviceId = 0;
-    initParam->labelPath = "../data/models/coco2014.names";
+    initParam->labelPath = "../data/models/coco2017.names";
     initParam->checkTensor = true;
     initParam->modelPath = "../data/models/yolov4_tiny.om";
     initParam->classNum = 80;

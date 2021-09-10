@@ -85,7 +85,7 @@ if __name__ == '__main__':
     # Construct the input of the stream
     data_input = MxDataInput()
 
-    infer_file = './coco2014_minival.txt'
+    infer_file = './coco2017_minival.txt'
     file_list = read_file_list(infer_file)
     res_dir_name = 'result'
     if not os.path.exists(res_dir_name):
