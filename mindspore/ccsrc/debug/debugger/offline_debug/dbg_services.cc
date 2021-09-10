@@ -52,7 +52,7 @@ std::string DbgServices::GetVersion() {
 }
 
 int32_t DbgServices::Initialize(std::string net_name, std::string dump_folder_path, bool is_sync_mode,
-                                uint32_t max_mem_usage) {
+                                uint64_t max_mem_usage) {
   MS_LOG(INFO) << "cpp DbgServices initialize network name " << net_name;
   MS_LOG(INFO) << "cpp DbgServices initialize dump folder path " << dump_folder_path;
   MS_LOG(INFO) << "cpp DbgServices initialize sync mode " << is_sync_mode;
@@ -66,7 +66,7 @@ int32_t DbgServices::Initialize(std::string net_name, std::string dump_folder_pa
   debug_services_->SetDumpDir(dump_folder_path);
   debug_services_->SetSyncMode(is_sync_mode);
   // Set the memory ratio used by tensor cache. Leave 50% for other debugger backend usage.
-  const int32_t kMegabytesToBytes = pow(2, 20);  // max_mem_usage will be bytes in unit in debugger backend.
+  const uint64_t kMegabytesToBytes = pow(2, 20);  // max_mem_usage will be bytes in unit in debugger backend.
   auto cache_mem_ratio = 0.5;
   debug_services_->SetMemLimit(max_mem_usage * kMegabytesToBytes * cache_mem_ratio);
   return 0;
@@ -267,7 +267,7 @@ std::vector<std::shared_ptr<TensorData>> DbgServices::ReadTensorsUtil(std::vecto
     std::string key_name_in_cache = result->GetName() + ":" + std::to_string(result->GetDeviceId()) + ":" +
                                     std::to_string(result->GetRootGraphId()) + ":" +
                                     std::to_string(result->GetIsOutput()) + ":" + std::to_string(result->GetSlot());
-    debug_services_->ReleaseInUsedStatus(key_name_in_cache);
+    debug_services_->AppendToCacheEvictQueue(key_name_in_cache);
   }
   auto t2 = std::chrono::high_resolution_clock::now();
   /* Getting number of milliseconds as a double. */
