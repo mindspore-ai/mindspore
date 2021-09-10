@@ -253,6 +253,15 @@ class Dataset:
         for child in self.children:
             child.close_pool()
 
+    def notify_watchdog(self):
+        if hasattr(self, 'sample_fn') and self.sample_fn is not None:
+            if self.sample_fn.multi_process:
+                self.sample_fn._abort_watchdog()  # pylint: disable=W0212
+        if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
+            self._abort_watchdog()
+        for child in self.children:
+            child.notify_watchdog()
+
     @staticmethod
     def _get_operator_id(dataset):
         """
@@ -1519,6 +1528,7 @@ class Dataset:
             runtime_getter = self._init_tree_getters()
             self._col_names = runtime_getter[0].GetColumnNames()
             self.close_pool()
+            runtime_getter[2].notify_watchdog()
         return self._col_names
 
     def output_shapes(self):
@@ -1533,6 +1543,7 @@ class Dataset:
             self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
             self.close_pool()
+            runtime_getter[2].notify_watchdog()
         if self.dynamic_setting[0]:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
         return self.saved_output_shapes
@@ -1549,6 +1560,7 @@ class Dataset:
             self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
             self.close_pool()
+            runtime_getter[2].notify_watchdog()
         if self.dynamic_setting[0]:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
         return self.saved_output_types
@@ -1564,6 +1576,7 @@ class Dataset:
             runtime_getter = self.__init_size_getter()
             self.dataset_size = runtime_getter[0].GetDatasetSize(False)
             self.close_pool()
+            runtime_getter[2].notify_watchdog()
         return self.dataset_size
 
     def set_dynamic_columns(self, columns=None):
@@ -1678,6 +1691,7 @@ class Dataset:
             runtime_getter = self._init_tree_getters()
             self._num_classes = runtime_getter[0].GetNumClasses()
             self.close_pool()
+            runtime_getter[2].notify_watchdog()
         if self._num_classes == -1:
             return None
         return self._num_classes
@@ -2101,6 +2115,9 @@ class BatchDataset(Dataset):
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
         self.hook = None
+        self.pids = []
+        self.eot = None
+        self.watch_dog = None
         self.max_rowsize = max_rowsize
 
     def parse(self, children=None):
@@ -2157,10 +2174,6 @@ class BatchDataset(Dataset):
             arg_q_list = []
             res_q_list = []
 
-            if platform.system().lower() != 'windows':
-                # Register clean zombie subprocesses signal here
-                signal.signal(signal.SIGCHLD, wait_child_processes)
-
             # If user didn't specify num_parallel_workers, set it to default
             if self.num_parallel_workers is not None:
                 num_parallel = self.num_parallel_workers
@@ -2186,6 +2199,7 @@ class BatchDataset(Dataset):
             # obtain process id from multiprocessing.pool
             for pool in self.process_pool._pool:  # pylint: disable=W0212
                 process_id[op_id][1].add(pool.pid)
+                self.pids.append(pool.pid)
             with _LOCK:
                 _OP_PROCESS.update(process_id)
 
@@ -2196,13 +2210,23 @@ class BatchDataset(Dataset):
             # If Python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
             if sys.version_info >= (3, 8):
                 atexit.register(self.process_pool.close)
+            self.eot = threading.Event()
+            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
+            self.watch_dog.daemon = True
+            self.watch_dog.start()
         else:
             if self.per_batch_map is not None:
                 self.per_batch_map = FuncWrapper(self.per_batch_map)
 
+    def _abort_watchdog(self):
+        if not self.eot.is_set():
+            self.eot.set()
+
     def __del__(self):
         if hasattr(self, 'process_pool') and self.process_pool is not None:
             self.process_pool.close()
+        if self.watch_dog is not None and self.eot is not None:
+            self._abort_watchdog()
 
 
 class BatchInfo(cde.CBatchInfo):
@@ -2389,9 +2413,6 @@ class ShuffleDataset(Dataset):
 
 
 # This wait function is for cleaning zombie subprocesses
-def wait_child_processes(signum, frame):
-    wait_pid()
-
 def wait_pid():
     try:
         while True:
@@ -2401,6 +2422,40 @@ def wait_pid():
     except OSError:
         # waitpid may be failed for some reasons so we ignore this error
         pass
+
+# Dataset need _watch_dog thread to monitoring fork multi-processing,
+# and thread can't be a member function otherwise python won't collect and release resources.
+def _watch_dog(eot, pids):
+    """
+    This thread is for monitoring subprocesses forked by BatchDataset
+    """
+    while not eot.is_set():
+        subprocess_exit_num = 0
+        # Monitoring and count how many subprocesses already exit
+        for pid in pids:
+            try:
+                p = psutil.Process(pid)
+                if p.status() == psutil.STATUS_ZOMBIE:
+                    subprocess_exit_num += 1
+            except psutil.NoSuchProcess:
+                subprocess_exit_num += 1
+        # If find subprocess exit, we will wait for 30s and do some waitpid operations
+        if subprocess_exit_num > 0:
+            start = time.time()
+            while time.time() - start < 30:
+                # We need to distinguishing get_dataset_size or train finished normally and hang scenario.
+                # If get_dataset_size or train finished normally, _stop_subprocess can be execute and
+                # self.need_abort can be set to True. If main process is hang in get(), self.need_abort
+                # will never set to True, then we wait for 30s and kill main process
+                if eot.is_set():
+                    return
+                # Sometimes subprocess may be zombie, so in 30s we can wait and do some useful tasks(waitpid).
+                wait_pid()
+            ## multiprocessing.queue may hang in .get() forever when put() process was killed.
+            ## We have to exit main process otherwise main process will hang.
+            logger.error("The subprocess of BatchDataset may exit unexpected or be killed, "
+                         "main process will exit.")
+            os.kill(os.getpid(), signal.SIGTERM)
 
 
 # Pyfunc collection for multiprocess pyfunc
@@ -2607,6 +2662,9 @@ class MapDataset(Dataset):
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
         self.hook = None
+        self.pids = []
+        self.eot = None
+        self.watch_dog = None
 
         self.callbacks = to_list(callbacks)
         self.max_rowsize = max_rowsize
@@ -2659,10 +2717,6 @@ class MapDataset(Dataset):
                     callable_list.append(op)
 
             if callable_list:
-                # Register clean zombie subprocesses signal here
-                if platform.system().lower() != 'windows':
-                    signal.signal(signal.SIGCHLD, wait_child_processes)
-
                 # Construct pool with the callable list
                 # The callable list and _pyfunc_worker_init are used to pass lambda function in to subprocesses
                 self.process_pool = multiprocessing.Pool(processes=num_parallel,
@@ -2677,6 +2731,7 @@ class MapDataset(Dataset):
                 process_id = {op_id: [self.num_parallel_workers, set()]}
                 for pool in self.process_pool._pool:  # pylint: disable=W0212
                     process_id[op_id][1].add(pool.pid)
+                    self.pids.append(pool.pid)
                 with _LOCK:
                     _OP_PROCESS.update(process_id)
                 for op in self.operations:
@@ -2695,11 +2750,21 @@ class MapDataset(Dataset):
                 # If Python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
                 if sys.version_info >= (3, 8):
                     atexit.register(self.process_pool.close)
+                self.eot = threading.Event()
+                self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
+                self.watch_dog.daemon = True
+                self.watch_dog.start()
+
+    def _abort_watchdog(self):
+        if not self.eot.is_set():
+            self.eot.set()
 
     def __del__(self):
         if hasattr(self, 'process_pool') and self.process_pool is not None:
             self.process_pool.close()
             self.process_pool.join()
+        if self.watch_dog is not None and self.eot is not None:
+            self._abort_watchdog()
 
 
 class FilterDataset(Dataset):
@@ -3652,8 +3717,8 @@ class SamplerFn:
                 worker.daemon = True
             self.workers.append(worker)
         if multi_process is True:
-            self.need_abort = False
-            self.watch_dog = threading.Thread(target=self._watch_dog, args=())
+            self.eot = threading.Event()
+            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
             self.watch_dog.daemon = True
             self.watch_dog.start()
 
@@ -3700,38 +3765,6 @@ class SamplerFn:
                 idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
             yield _convert_row(result)
 
-    def _watch_dog(self):
-        """
-        This thread is for monitoring subprocesses forked by GeneratorDataset
-        """
-        while not self.need_abort:
-            subprocess_exit_num = 0
-            # Monitoring and count how many subprocesses already exit
-            for pid in self.pids:
-                try:
-                    p = psutil.Process(pid)
-                    if p.status() == psutil.STATUS_ZOMBIE:
-                        subprocess_exit_num += 1
-                except psutil.NoSuchProcess:
-                    subprocess_exit_num += 1
-            # If find subprocess exit, we will wait for 30s and do some waitpid operations
-            if subprocess_exit_num > 0:
-                start = time.time()
-                while time.time() - start < 30:
-                    # We need to distinguishing get_dataset_size or train finished normally and hang scenario.
-                    # If get_dataset_size or train finished normally, _stop_subprocess can be execute and
-                    # self._should_abort can be set to True. If main process is hang in get(), self._should_abort
-                    # will never set to True, then we wait for 30s and kill main process
-                    if self.need_abort is True:
-                        return
-                    # Sometimes subprocess may be zombie, so in 30s we can wait and do some useful tasks(waitpid).
-                    wait_pid()
-                ## multiprocessing.queue may hang in .get() forever when put() process was killed.
-                ## We have to exit main process otherwise main process will hang.
-                logger.error("The subprocess of GeneratorDataset may exit unexpected or be killed, "
-                             "main process will exit.")
-                os.kill(os.getpid(), signal.SIGTERM)
-
     def _stop_subprocess(self):
         # Only the main process can call join
         if self.need_join is True and self.ppid == os.getpid():
@@ -3740,8 +3773,11 @@ class SamplerFn:
             for w in self.workers:
                 if psutil.pid_exists(w.pid):
                     w.join()
-            self.need_abort = True
-            self.watch_dog.join()
+            self._abort_watchdog()
+
+    def _abort_watchdog(self):
+        if not self.eot.is_set():
+            self.eot.set()
 
     def __del__(self):
         self._stop_subprocess()
