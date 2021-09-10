@@ -46,6 +46,7 @@ class Sampler : std::enable_shared_from_this<Sampler> {
   friend class RandomDataDataset;
   friend class TextFileDataset;
   friend class TFRecordDataset;
+  friend class USPSDataset;
   friend class VOCDataset;
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 

@@ -19,6 +19,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         random_node.cc
         text_file_node.cc
         tf_record_node.cc
+        usps_node.cc
         voc_node.cc
         )
 
