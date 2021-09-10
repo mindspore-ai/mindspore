@@ -15,6 +15,7 @@
 # ============================================================================
 #Usage: sh train_distributed.sh  [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [SAVE_CKPT_PATH] [RANK_SIZE] [EVAL_EACH_EPOCH] [PRETRAINED_CKPT_PATH](optional)
 
+export HCCL_CONNECT_TIMEOUT=1800
 DATA_DIR=$2
 export RANK_TABLE_FILE=$1
 echo "RaNK_TABLE_FiLE=$RANK_TABLE_FILE"
@@ -27,9 +28,17 @@ then
     PATH_CHECKPOINT=$6
 fi
 
+cpus=`cat /proc/cpuinfo| grep "processor"| wc -l`
+avg=`expr $cpus \/ $RANK_SIZE`
+gap=`expr $avg \- 1`
+
 device=(0 1 2 3 4 5 6 7)
 for((i=0;i<RANK_SIZE;i++))
 do
+    start=`expr $i \* $avg`
+    end=`expr $start \+ $gap`
+    cmdopt=$start"-"$end
+
     export DEVICE_ID=${device[$i]}
     export RANK_ID=$i
 
@@ -44,7 +53,7 @@ do
     env > env.log
     if [ $# == 5 ]
     then
-        python train.py  \
+        taskset -c $cmdopt python train.py  \
         --is_distributed=1 \
         --ckpt_path=$SAVE_PATH \
         --eval_each_epoch=$EVAL_EACH_EPOCH\
@@ -58,7 +67,7 @@ do
 
     if [ $# == 6 ]
     then
-        python train.py  \
+        taskset -c $cmdopt python train.py  \
         --is_distributed=1 \
         --eval_each_epoch=$EVAL_EACH_EPOCH\
         --ckpt_path=$SAVE_PATH \
