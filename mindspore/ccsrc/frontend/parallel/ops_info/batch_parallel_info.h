@@ -41,6 +41,7 @@ class BatchParallelInfo : public OperatorInfo {
   Status InitForCostModel(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  void ReplaceNodeInputOrAttrs() override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -48,11 +49,12 @@ class BatchParallelInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetAttrs() override;
-  Strategys GetOutputsStrategy();
   Status InferAsLossDivisor() override;
 
  private:
-  int64_t dev_num_;
+  int64_t dev_num_ = 1;
+  bool need_replace_input_ = false;
+  Shape replace_shape_;
 };
 
 class SparseSoftmaxCrossEntropyWithLogitsInfo : public BatchParallelInfo {

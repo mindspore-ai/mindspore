@@ -59,32 +59,10 @@ namespace mindspore {
 namespace parallel {
 static const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER};
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
+static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL};
 // g_RefMap, for CNode B input i is a RefKey[Parameter C],
 // it will be one item in map with key: C, and value: (B, i)
 static std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
-
-void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input) {
-  if (new_node_input.empty()) {
-    return;
-  }
-
-  auto prim_anf_node = new_node_input[0]->cast<ValueNodePtr>();
-  auto prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-  MS_EXCEPTION_IF_NULL(prim);
-
-  auto attrs = prim->attrs();
-  auto iter = attrs.find(GROUP);
-  if (iter != attrs.end()) {
-    auto value = iter->second;
-    MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<StringImm>()) {
-      std::string hash_name = value->cast<StringImmPtr>()->value();
-      MS_EXCEPTION_IF_NULL(g_device_manager);
-      std::string rank_list_name = g_device_manager->FindRankListNameByHashName(hash_name);
-      (void)prim->AddAttr(GROUP_RANKS, MakeValue(rank_list_name));
-    }
-  }
-}
 
 void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool accu_flag) {
   if (new_node_input.empty()) {
@@ -280,17 +258,6 @@ static CNodePtr ReplaceNode(const Operator &op, const AnfNodePtr &pre_node, cons
   manager->Replace(pre_node, new_node);
   MS_LOG(INFO) << "Insert " << instance_name << " success";
   return new_node;
-}
-
-std::string CreateInstanceName(const CNodePtr &node, size_t index) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!IsValueNode<Primitive>(node->input(0))) {
-    MS_LOG(EXCEPTION) << "CreateInstanceName: " << node->ToString() << " doesn't have primitive";
-  }
-  std::string name_base = node->fullname_with_scope();
-  std::string name = name_base + "_" + std::to_string(index);
-  std::string instance_name = HashInstanceName(name);
-  return instance_name;
 }
 
 void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node) {
@@ -729,7 +696,8 @@ void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &manager)
     MS_EXCEPTION_IF_NULL(prim_anf_node);
     PrimitivePtr use_cnode_prim = prim_anf_node->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(use_cnode_prim);
-    if (use_cnode_prim->name() == DEPEND && node_pair.second != 1) {
+    if ((use_cnode_prim->name() == DEPEND && node_pair.second != 1) ||
+        NO_INPUT_TENSOR_OPS.find(use_cnode_prim->name()) != NO_INPUT_TENSOR_OPS.end()) {
       continue;
     }
     if (IsParallelCareNode(use_cnode)) {
@@ -740,76 +708,6 @@ void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &manager)
       }
     }
   }
-}
-
-std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
-                                       const CNodePtr &node) {
-  OperatorArgs arg_replace_op = replace_op.second;
-  ValuePtr pyop_instance = CreatOpInstance(arg_replace_op.first, replace_op.first, instance_name);
-  if (pyop_instance == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure: " << replace_op.first << " CreatOpInstance failed";
-  }
-  OperatorParams params = arg_replace_op.second;
-  if (node->inputs().size() < 2) {
-    // GetNext operator dose not has input
-    if (node->inputs().size() == 1) {
-      return {NewValueNode(pyop_instance)};
-    }
-    MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
-  }
-  std::vector<AnfNodePtr> replace_input = {NewValueNode(pyop_instance), node->input(1)};
-
-  if (replace_op.first == EMBEDDING_LOOKUP) {
-    replace_input = {NewValueNode(pyop_instance), node->input(1), node->input(2)};
-  }
-
-  if (!params.empty()) {
-    Param param_first = *(params.begin());
-    int64_t first_position = param_first.second;
-    if (first_position == 1) {
-      replace_input.pop_back();
-    }
-    for (auto &param : params) {
-      AnfNodePtr val = NewValueNode(param.first.second);
-      if (val == nullptr) {
-        MS_LOG(EXCEPTION) << "Failure:val is nullptr";
-      }
-      int64_t position = param.second;
-      (void)replace_input.insert(replace_input.begin() + position, val);
-    }
-  } else if (replace_op.first == SYNC_BATCH_NORM) {
-    for (size_t i = 2; i < node->inputs().size(); ++i) {
-      replace_input.push_back(node->input(i));
-    }
-  }
-  SetCommunicationOpGroupLabel(replace_input);
-  return replace_input;
-}
-
-void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
-  FuncGraphPtr func_graph = node->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  FuncGraphManagerPtr manager = func_graph->manager();
-  if (manager == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure:AddNode error since manager is nullptr";
-  }
-  std::string instance_name = CreateInstanceName(node, 0);
-  std::vector<AnfNodePtr> replace_input;
-  replace_input = ReplaceOpInput(replace_op, instance_name, node);
-  if (node->inputs().size() == DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
-    replace_input.push_back(node->input(3));
-  }
-  CNodePtr replace_node = func_graph->NewCNode(replace_input);
-  MS_EXCEPTION_IF_NULL(replace_node);
-  ScopePtr scope = node->scope();
-  MS_EXCEPTION_IF_NULL(scope);
-  replace_node->set_scope(scope);
-  replace_node->set_in_forward_flag(true);
-  replace_input[0]->set_scope(scope);
-  PrimitivePtr prim = GetValueNode<PrimitivePtr>(replace_node->input(0));
-  PrimitivePtr origin_prim = GetValueNode<PrimitivePtr>(node->input(0));
-  SetUserAttrs(origin_prim->attrs(), prim);
-  (void)manager->Replace(node, replace_node);
 }
 
 void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
@@ -2522,64 +2420,6 @@ void StepReplace(const OperatorInfoPtr &distribute_operator, const CNodePtr &cno
   }
 }
 
-void HandleDropoutNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(distribute_operator);
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  std::string op_name = distribute_operator->name();
-  if (op_name.find(DROPOUT_DO_MASK) == std::string::npos) {
-    return;
-  }
-
-  DropoutDoMaskInfoPtr dropout_do_mask = std::dynamic_pointer_cast<DropoutDoMaskInfo>(distribute_operator);
-  MS_EXCEPTION_IF_NULL(dropout_do_mask);
-  std::vector<Operator> replace_op = dropout_do_mask->GetDropoutGenMaskReplaceOp(cnode);
-  if (replace_op.empty()) {
-    MS_LOG(DEBUG) << "No need to replace dropout_gen_mask";
-    return;
-  }
-  if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
-    MS_LOG(EXCEPTION) << "The size of drop out do mask cnode's input is not " << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
-  }
-  ReplaceOneOp(replace_op[0], cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
-}
-
-void HandleTileNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->size() < 3 || !IsValueNode<Primitive>(cnode->input(0))) {
-    return;
-  }
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (prim->name() != TILE) {
-    return;
-  }
-
-  TileInfoPtr tile = std::dynamic_pointer_cast<TileInfo>(distribute_operator);
-  MS_EXCEPTION_IF_NULL(tile);
-  tile->UpdateMultiples(cnode);
-}
-
-void HandleConv2dTransposeNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->size() != 4 || !IsValueNode<Primitive>(cnode->input(0))) {
-    return;
-  }
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (prim->name() != CONV2D_BACK_PROP_INPUT && prim->name() != CONV2D_TRANSPOSE) {
-    return;
-  }
-
-  Conv2DBackpropInputInfoPtr op_ptr = std::dynamic_pointer_cast<Conv2DBackpropInputInfo>(distribute_operator);
-  MS_EXCEPTION_IF_NULL(op_ptr);
-  op_ptr->UpdateOutShape(cnode);
-}
-
-void HandleSpecialNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
-  HandleDropoutNode(distribute_operator, cnode);
-  HandleTileNode(distribute_operator, cnode);
-  HandleConv2dTransposeNode(distribute_operator, cnode);
-}
-
 std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_nodes) {
   // J->CNode->Graph
   std::set<FuncGraphPtr> graph_set;
@@ -2719,7 +2559,7 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
         BackwardCommunication(root, distribute_operator, cnode, sens_loss_pairs);
       }
 
-      HandleSpecialNode(distribute_operator, cnode);
+      distribute_operator->ReplaceNodeInputOrAttrs();
     } else if (IsValueNode<Tensor>(node) || IsValueNode<ValueList>(node) || IsValueNode<ValueTuple>(node)) {
       StepSplitTensor(node, manager);
     }

@@ -42,7 +42,8 @@ class TileInfo : public OperatorInfo {
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;
-  void UpdateMultiples(const CNodePtr &cnode);
+  void UpdateMultiples();
+  void ReplaceNodeInputOrAttrs() override;
 
  protected:
   Status GetAttrs() override;

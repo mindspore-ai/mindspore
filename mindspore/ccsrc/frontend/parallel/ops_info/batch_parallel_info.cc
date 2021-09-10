@@ -54,20 +54,39 @@ Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
 
 Status BatchParallelInfo::InferDevMatrixShape() {
   dev_matrix_shape_.push_back(stage_device_size_);
+
+  if (need_replace_input_ && !inputs_shape_.empty()) {
+    replace_shape_ = inputs_shape_[0];
+    if (!replace_shape_.empty()) {
+      replace_shape_[0] /= stage_device_size_;
+    }
+  }
+
   return SUCCESS;
 }
 
 Status BatchParallelInfo::InferForwardCommunication() { return SUCCESS; }
 
 Status BatchParallelInfo::InferTensorMap() {
-  if (strategy_->GetInputDim()[0][0] != stage_device_size_) {
-    MS_LOG(ERROR) << name_ << " : It is not a valid data parallel strategy.";
+  auto strategy = strategy_->GetInputDim();
+  if (strategy.empty()) {
+    MS_LOG(INFO) << name_ << ": the strategy is empty";
+    return SUCCESS;
+  }
+
+  if (strategy[0].empty()) {
+    MS_LOG(INFO) << name_ << ": the first element of strategy is empty";
+    return FAILED;
+  }
+
+  if (strategy[0][0] != stage_device_size_) {
+    MS_LOG(ERROR) << name_ << ": It is not a valid data parallel strategy.";
     return FAILED;
   }
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     Shape tensor_map_index;
     for (size_t j = 0; j < inputs_shape_[i].size(); ++j) {
-      if (strategy_->GetInputDim()[i][j] == stage_device_size_ && j == 0) {
+      if (strategy[i][j] == stage_device_size_ && j == 0) {
         tensor_map_index.push_back(0);
       } else {
         tensor_map_index.push_back(MAP_NONE);
@@ -89,25 +108,23 @@ Status BatchParallelInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Strategys BatchParallelInfo::GetOutputsStrategy() {
-  Strategys outputs_strategy;
-
-  for (size_t i = 0; i < outputs_shape_.size(); ++i) {
-    Dimensions strategy;
-    for (size_t j = 0; j < outputs_shape_[i].size(); ++j) {
-      if (i == 0 && j == 0) {
-        strategy.push_back(stage_device_size_);
-      } else {
-        strategy.push_back(1);
-      }
-    }
-    outputs_strategy.push_back(strategy);
+Status BatchParallelInfo::GetAttrs() {
+  // if the operator's input is a shape(is not a tensor), need to assign the shape value to inputs_shape_
+  if (!inputs_shape_.empty()) {
+    return SUCCESS;
   }
 
-  return outputs_strategy;
-}
+  if (input_value_.empty()) {
+    return SUCCESS;
+  }
 
-Status BatchParallelInfo::GetAttrs() { return SUCCESS; }
+  auto shape_ptr = input_value_[0]->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+
+  inputs_shape_.push_back(GetValue<Shape>(shape_ptr));
+  need_replace_input_ = true;
+  return SUCCESS;
+}
 
 Status BatchParallelInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
@@ -157,6 +174,31 @@ void SparseSoftmaxCrossEntropyWithLogitsInfo::ReComputeBatchSplitFlagList() {
 Status BatchParallelInfo::InferAsLossDivisor() {
   as_loss_divisor_ = 1;
   return SUCCESS;
+}
+
+void BatchParallelInfo::ReplaceNodeInputOrAttrs() {
+  if (!need_replace_input_) {
+    return;
+  }
+
+  auto cnode = cnode_;
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->size() != 2) {
+    MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 2";
+  }
+
+  if (!IsValueNode<ValueTuple>(cnode->input(1))) {
+    MS_LOG(EXCEPTION) << name_ << ": The input[1] of tile cnode is not ValueTuple.";
+  }
+
+  auto func_graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+
+  ValuePtr replace_shape = MakeValue(replace_shape_);
+  AnfNodePtr val = NewValueNode(replace_shape);
+  (void)manager->Replace(cnode->input(1), val);
 }
 }  // namespace parallel
 }  // namespace mindspore

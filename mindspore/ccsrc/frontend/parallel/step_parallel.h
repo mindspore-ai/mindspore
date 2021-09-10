@@ -55,7 +55,6 @@ struct CommInfo {
 };
 
 std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name);
-std::string CreateInstanceName(const CNodePtr &node, size_t index);
 void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node);
 
 void InsertRedistribution(const RedistributionOpListPtr &redistribution_oplist_ptr, const CNodePtr &node,
@@ -78,9 +77,6 @@ bool FindCommunicationOp(const std::vector<AnfNodePtr> &all_nodes);
 
 void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_operator, const CNodePtr &insert_node,
                         const TensorRedistribution &tensor_redistribution, const CNodePtr &pre_node);
-
-std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
-                                       const CNodePtr &node);
 
 void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node);
 

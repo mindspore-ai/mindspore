@@ -182,6 +182,7 @@ class OperatorInfo {
   int32_t stage_id() const { return stage_id_; }
   Status CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group);
   Status CreateGroupForOptShard(TensorLayout *const tensor_layout, std::vector<Group> *group);
+  virtual void ReplaceNodeInputOrAttrs() {}
 
   // Key for user data.
   constexpr static char key[] = "OpInfo";
