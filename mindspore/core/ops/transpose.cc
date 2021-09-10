@@ -66,8 +66,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     std::vector<int64_t> min_shape;
     std::vector<int64_t> max_shape;
     for (auto i : p_value) {
-      min_shape.push_back(x_min_shape[i]);
-      max_shape.push_back(x_max_shape[i]);
+      min_shape.push_back(x_min_shape[LongToSize(i)]);
+      max_shape.push_back(x_max_shape[LongToSize(i)]);
     }
     return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
   } else {
