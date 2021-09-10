@@ -56,7 +56,8 @@ Status CVTensor::CreateFromMat(const cv::Mat &mat, const dsize_t rank, CVTensorP
   } else if (mat.dims == 2 && rank == 3) {
     shape = TensorShape({mat.rows, mat.cols, mat.channels()});
   } else {
-    RETURN_STATUS_UNEXPECTED("Error in creating CVTensor: Invalid input rank or cv::mat dimension.");
+    // the info of <C, H, W> tensor is: dims = 3, size = (C, H, W), channels = 1
+    RETURN_STATUS_UNEXPECTED("CreateFromMat: tensor should be in shape of <H,W,C> or <H,W>.");
   }
   DataType type = DataType::FromCVType(mat_local.type());
   RETURN_IF_NOT_OK(CreateFromMemory(shape, type, mat_local.data, &out_tensor));

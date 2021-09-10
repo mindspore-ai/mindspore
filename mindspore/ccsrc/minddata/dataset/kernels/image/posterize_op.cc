@@ -39,6 +39,7 @@ Status PosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
     lut_vector.push_back(i & mask_value);
   }
   cv::Mat in_image = input_cv->mat();
+
   cv::Mat output_img;
   CHECK_FAIL_RETURN_UNEXPECTED(in_image.depth() == CV_8U || in_image.depth() == CV_8S,
                                "Posterize: input image data type can not be float, "
