@@ -1666,8 +1666,8 @@ class _Pool(PrimitiveWithInfer):
 
         for shape_value in out_shape:
             if shape_value <= 0:
-                raise ValueError(f"For '{self.name}' The kernel size is not valid, "
-                                 f"please check if it is larger than data's shape size.")
+                raise ValueError(f"For '{self.name}', the kernel size is not valid, "
+                                 f"the input shape: {x_shape}, strides shape: {self.strides}.")
         return out_shape
 
     def infer_dtype(self, x_dtype):
@@ -4029,13 +4029,12 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     Adds sigmoid activation function to input `logits`, and uses the given logits to compute binary cross entropy
     between the logits and the label.
 
-    Sets input logits as :math:`X`, input label as :math:`Y`, output as :math:`L`. Then,
+    Sets input logits as :math:`X`, input label as :math:`Y`, input weight as :math:`W`, output as :math:`L`. Then,
 
     .. math::
 
         \begin{array}{ll} \\
-            p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
-            L_{ij} = -[Y_{ij} * log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+            L_{ij} = -W_{ij}[Y_{ij}log(X_{ij}) + (1 - Y_{ij})log(1 - X_{ij})]
         \end{array}
 
     :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
