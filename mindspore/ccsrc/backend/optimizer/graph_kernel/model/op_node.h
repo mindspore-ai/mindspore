@@ -282,6 +282,17 @@ class ComplexOp : public ElemwiseOp {
   void CheckType(const NodePtrList &inputs, const DAttrs &attrs) override;
   TypeId InferType(const NodePtrList &inputs, const DAttrs &attrs) override { return TypeId::kNumberTypeComplex64; }
 };
+
+class StandardNormalOp : public OpaqueOp {
+ public:
+  StandardNormalOp(const std::string &op, const std::string &node_name) : OpaqueOp("StandardNormal", node_name) {}
+  ~StandardNormalOp() = default;
+
+ protected:
+  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  TypeId InferType(const NodePtrList &inputs, const DAttrs &attrs) override { return TypeId::kNumberTypeFloat32; }
+  DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override { return kOpFormat_DEFAULT; }
+};
 }  // namespace graphkernel
 }  // namespace opt
 }  // namespace mindspore

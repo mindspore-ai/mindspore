@@ -543,6 +543,11 @@ void ComplexOp::CheckType(const NodePtrList &inputs, const DAttrs &attrs) {
     MS_LOG(EXCEPTION) << "Complex's input[0] and inputs[1]'s type mismatch";
   }
 }
+
+DShape StandardNormalOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  CHECK_ATTR(attrs, "shape");
+  return GetListInt(attrs.find("shape")->second);
+}
 }  // namespace graphkernel
 }  // namespace opt
 }  // namespace mindspore
