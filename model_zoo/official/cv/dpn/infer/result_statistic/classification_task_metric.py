@@ -85,7 +85,7 @@ def load_statistical_predict_result(filepath):
 
 
 def create_visualization_statistical_result(prediction_file_path,
-                                            rst_store_path, json_file_name,
+                                            rst_store_path, js_file_name,
                                             img_gt_dict, topn=5):
     """
     :param prediction_file_path:
@@ -95,7 +95,7 @@ def create_visualization_statistical_result(prediction_file_path,
     :param topn:
     :return:
     """
-    writer = open(os.path.join(rst_store_path, json_file_name), 'w')
+    writer = open(os.path.join(rst_store_path, js_file_name), 'w')
     table_dict = {}
     table_dict["title"] = "Overall statistical evaluation"
     table_dict["value"] = []
@@ -149,7 +149,7 @@ def create_visualization_statistical_result(prediction_file_path,
 if __name__ == '__main__':
     try:
         # txt file path
-        folder_davinci_target = sys.argv[1]      
+        folder_davinci_target = sys.argv[1]
         # annotation files path, "val_label.txt"
         annotation_file_path = sys.argv[2]
         # the path to store the results json path
