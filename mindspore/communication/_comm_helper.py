@@ -91,13 +91,8 @@ DEFAULT_BACKEND = Backend("hccl")
 
 class GlobalComm:
     """
-    World communication information.
-
-    Note:
-        The GlobalComm is a global class. The members contains: BACKEND, WORLD_COMM_GROUP.
+    World communication information. The GlobalComm is a global class. The members contains: BACKEND, WORLD_COMM_GROUP.
     """
-
-
     BACKEND = DEFAULT_BACKEND
     WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
     INITED = False
@@ -111,29 +106,29 @@ class _ExistingGroup:
 
 def is_hccl_available():
     """
-    Check hccl api is available.
+    Check HCCL api is available.
 
     Returns:
-        Boolean. Return whether hccl is available or not.
+        Boolean. Return whether HCCL is available or not.
     """
     return _HCCL_AVAILABLE
 
 def is_mpi_available():
     """
-    Check hccl & mpi api is available.
+    Check HCCL & MPI api is available.
 
     Returns:
-        Boolean. Return whether hccl & mpi is available or not.
+        Boolean. Return whether HCCL & MPI is available or not.
     """
     return _MPI_AVAILABLE
 
 
 def is_nccl_available():
     """
-    Check nccl api is available.
+    Check NCCL api is available.
 
     Returns:
-        Boolean. Return whether nccl is available or not.
+        Boolean. Return whether NCCL is available or not.
     """
     return _NCCL_AVAILABLE
 

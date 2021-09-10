@@ -1362,9 +1362,10 @@ class Cell(Cell_):
 
         Args:
             mp_comm_recompute (bool): Specifies whether the model parallel communication operators
-        in the cell are recomputed in auto parallel or semi auto parallel mode. Default: True.
+                in the cell are recomputed in auto parallel or semi auto parallel mode. Default: True.
             parallel_optimizer_comm_recompute (bool): Specifies whether the communication operator allgathers
-        introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode. Default: False.
+                introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
+                Default: False.
         """
         self._recompute()
         if 'mp_comm_recompute' in kwargs.keys():

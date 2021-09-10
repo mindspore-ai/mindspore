@@ -96,7 +96,7 @@ def init(backend_name=None):
                       have not been exported when backend is HCCL.
 
     Examples:
-        >>> from mindspore.context import set_context
+        >>> from mindspore.communication import init
         >>> init()
     """
     if _is_role_pserver() or _is_role_sched():
@@ -148,6 +148,11 @@ def release():
 
     Raises:
         RuntimeError: If failed to release distributed resource.
+
+    Examples:
+        >>> from mindspore.communication import init, release
+        >>> init()
+        >>> release()
     """
     finalize_hccl()
 
@@ -170,6 +175,12 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
         TypeError: If group is not a string.
         ValueError: If backend is invalid.
         RuntimeError: If HCCL/NCCL is not available.
+
+    >>> from mindspore.communication import init, get_rank()
+    >>> init()
+    >>> rank_id = get_rank()
+    >>> print(rank_id)
+    >>> # the result is the rank_id in world_group
     """
     if not isinstance(group, str):
         raise TypeError("Group name must be a string, but got {}".format(type(group)))
@@ -194,7 +205,15 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
     Raises:
         TypeError: If group is not a string.
         ValueError: If backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
+        RuntimeError: If HCCL is not available or MindSpore is GPU version.
+    Examples:
+        >>> from mindspore.context import set_context
+        >>> set_context(device_target="Ascend", device_num=16) # 2 server, each server with 8 NPU.
+        >>> init()
+        >>> world_rank = get_rank() # rank_id is 7.
+        >>> local_rank = get_local_rank()
+        >>> print("local_rank is: {}, world_rank is {}"%(local_rank, world_rank))
+        local_rank_size is: 1, world_rank is 7
     """
     if not isinstance(group, str):
         raise TypeError("Group name must be a string, but got {}".format(type(group)))
@@ -243,7 +262,14 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
     Raises:
         TypeError: If group is not a string.
         ValueError: If backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
+        RuntimeError: If HCCL is not available or MindSpore is GPU version.
+    Examples:
+        >>> from mindspore.context import set_context
+        >>> set_context(device_target="Ascend", device_num=16) # 2 server, each server with 8 NPU.
+        >>> init()
+        >>> local_rank_size = get_local_rank_size()
+        >>> print("local_rank_size is: ", local_rank_size)
+        local_rank_size is: 8
     """
     if not isinstance(group, str):
         raise TypeError("Group name must be a string, but got {}".format(type(group)))
@@ -270,7 +296,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
     Raises:
         TypeError: If `group_rank_id` is not an integer or the group is not a string.
         ValueError: If group is 'hccl_world_group' or backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
+        RuntimeError: If HCCL is not available or MindSpore is GPU version.
 
     Examples:
         >>> from mindspore.context import set_context
@@ -308,7 +334,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
     Raises:
         TypeError: If world_rank_id is not an integer or the group is not a string.
         ValueError: If group is 'hccl_world_group' or backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
+        RuntimeError: If HCCL is not available or MindSpore is GPU version.
 
     Examples:
         >>> from mindspore.context import set_context
@@ -346,15 +372,17 @@ def create_group(group, rank_ids):
     Raises:
         TypeError: If group is not a string or `rank_ids` is not a list.
         ValueError: If `rank_ids` size is not larger than 1, or `rank_ids` has duplicate data, or backend is invalid.
-        RuntimeError: If hccl is not available or MindSpore is GPU version.
+        RuntimeError: If HCCL is not available or MindSpore is GPU version.
 
     Examples:
         >>> from mindspore.context import set_context
+        >>> from mindspore.ops import operations as ops
         >>> set_context(device_target="Ascend")
         >>> init()
         >>> group = "0-8"
         >>> rank_ids = [0,8]
         >>> create_group(group, rank_ids)
+        >>> allreduce = ops.AllReduce(group)
     """
     if not isinstance(group, str):
         raise TypeError("Group name must be a string, but got {}".format(type(group)))
@@ -376,7 +404,7 @@ def destroy_group(group):
     Raises:
         TypeError: If group is not a string.
         ValueError: If group is "hccl_world_group" or backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
+        RuntimeError: If HCCL is not available or MindSpore is GPU version.
     """
     if not isinstance(group, str):
         raise TypeError("Group name must be a string, but got {}".format(type(group)))
