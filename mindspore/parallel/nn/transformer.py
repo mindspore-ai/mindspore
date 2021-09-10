@@ -784,7 +784,7 @@ class MultiHeadAttention(Cell):
             raise ValueError(f"The number of heads {num_heads} must be a "
                              f"multiple of parallel_config.model_parallel {parallel_config.model_parallel}.")
         if batch_size % parallel_config.data_parallel != 0:
-            raise ValueError(f"The batch size {num_heads} must be a "
+            raise ValueError(f"The batch size {batch_size} must be a "
                              f"multiple of parallel_config.data_parallel {parallel_config.data_parallel}.")
         # Output layer
         self.projection = _Linear(in_channels=hidden_size,
@@ -1584,7 +1584,7 @@ class TransformerDecoderLayer(Cell):
                            [self.batch_size, self.tgt_seq_length, self.hidden_size])
         _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
                            [self.batch_size, self.tgt_seq_length, self.tgt_seq_length])
-        _check_input_dtype(F.dtype(hidden_states), "hidden_size", [mstype.float32, mstype.float16], self.cls_name)
+        _check_input_dtype(F.dtype(hidden_states), "hidden_states", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32, mstype.float16], self.cls_name)
         if encoder_output is not None:
             _check_shape_equal(F.shape(encoder_output), "encoder_output", self.cls_name,
