@@ -66,17 +66,43 @@ def one_hot_encoding(label, num_classes, epsilon):
 
     Returns:
         img (numpy.ndarray), label after being one hot encoded and done label smoothed.
+
+    Examples:
+        >>> # assume num_classes = 5
+        >>> # 1) input np.array(3) output [0, 0, 0, 1, 0]
+        >>> # 2) input np.array([4, 2, 0]) output [[0, 0, 0, 0, 1], [0, 0, 1, 0, 0], [1, 0, 0, 0, 0]]
+        >>> # 3) input np.array([[4], [2], [0]]) output [[[0, 0, 0, 0, 1]], [[0, 0, 1, 0, 0][, [[1, 0, 0, 0, 0]]]
     """
-    if label > num_classes:
-        raise ValueError('the num_classes is smaller than the category number.')
+    if isinstance(label, np.ndarray):  # the numpy should be () or (1, ) or shape: (n, 1)
+        if label.dtype not in [np.int8, np.int16, np.int32, np.int64,
+                               np.uint8, np.uint16, np.uint32, np.uint64]:
+            raise ValueError('the input numpy type should be int, but the input is: ' + str(label.dtype))
 
-    num_elements = label.size
-    one_hot_label = np.zeros((num_elements, num_classes), dtype=int)
+        if label.ndim == 0:
+            if label >= num_classes:
+                raise ValueError('the num_classes is smaller than the category number.')
 
-    if isinstance(label, list) is False:
-        label = [label]
-    for index in range(num_elements):
-        one_hot_label[index, label[index]] = 1
+            one_hot_label = np.zeros((num_classes), dtype=int)
+            one_hot_label[label] = 1
+        else:
+            label_flatten = label.flatten()
+            for item in label_flatten:
+                if item >= num_classes:
+                    raise ValueError('the num_classes:' + str(num_classes) +
+                                     ' is smaller than the category number:' + str(item))
+
+            num_elements = label_flatten.size
+            one_hot_label = np.zeros((num_elements, num_classes), dtype=int)
+            for index in range(num_elements):
+                one_hot_label[index][label_flatten[index]] = 1
+
+            new_shape = []
+            for dim in label.shape:
+                new_shape.append(dim)
+            new_shape.append(num_classes)
+            one_hot_label = one_hot_label.reshape(new_shape)
+    else:
+        raise ValueError('the input is invalid, it should be numpy.ndarray.')
 
     return (1 - epsilon) * one_hot_label + epsilon / num_classes
 

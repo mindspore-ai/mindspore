@@ -31,4 +31,9 @@ def main():
     cache_server = os.path.join(cache_admin_dir, "cache_server")
     os.chmod(cache_admin, stat.S_IRWXU)
     os.chmod(cache_server, stat.S_IRWXU)
-    sys.exit(subprocess.call([cache_admin] + sys.argv[1:], shell=False))
+
+    # set LD_LIBRARY_PATH for libpython*.so
+    python_lib_dir = os.path.join(os.path.dirname(mindspore.__file__), "../../..")
+    os.environ['LD_LIBRARY_PATH'] = python_lib_dir + ":" + os.environ.get('LD_LIBRARY_PATH')
+
+    sys.exit(subprocess.call([cache_admin] + sys.argv[1:], shell=False, env=os.environ))

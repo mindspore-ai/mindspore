@@ -193,7 +193,12 @@ Status ShardReader::Open() {
 
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
     fs->open(whole_path.value(), std::ios::in | std::ios::binary);
-    CHECK_FAIL_RETURN_UNEXPECTED(fs->good(), "Failed to open file: " + file);
+    if (!fs->good()) {
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        !fs->fail(),
+        "Maybe reach the maximum number of open files, use \"ulimit -a\" to view \"open files\" and further resize");
+      RETURN_STATUS_UNEXPECTED("Failed to open file: " + file);
+    }
     MS_LOG(INFO) << "Open shard file successfully.";
     file_streams_.push_back(fs);
   }
@@ -220,7 +225,12 @@ Status ShardReader::Open(int n_consumer) {
 
       std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
       fs->open(whole_path.value(), std::ios::in | std::ios::binary);
-      CHECK_FAIL_RETURN_UNEXPECTED(fs->good(), "Failed to open file: " + file);
+      if (!fs->good()) {
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          !fs->fail(),
+          "Maybe reach the maximum number of open files, use \"ulimit -a\" to view \"open files\" and further resize");
+        RETURN_STATUS_UNEXPECTED("Failed to open file: " + file);
+      }
       file_streams_random_[j].push_back(fs);
     }
     MS_LOG(INFO) << "Open shard file successfully.";
