@@ -52,9 +52,8 @@ class AclPass : public Pass {
   STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
                                  const CNodePtr &custom_node);
   void SetAclModelOptions(const FuncGraphPtr &func_graph);
-  STATUS GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph, AnfNodePtrList *graph_outputs,
-                                std::vector<std::string> *graph_output_names,
-                                std::vector<std::vector<int64_t>> *graph_output_dims);
+  STATUS GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph);
+  STATUS TraceOutput(const AnfNodePtr &node);
 
   FmkType fmk_type_;
   ParameterPtr om_parameter_ = nullptr;
@@ -62,7 +61,7 @@ class AclPass : public Pass {
   std::unique_ptr<AclModelOptions> options_;
   AnfNodePtrList graph_outputs_;
   std::vector<std::string> graph_output_names_;
-  std::vector<std::vector<int64_t>> graph_outputs_dims_;
+  std::vector<std::vector<int64_t>> graph_output_dims_;
 };
 }  // namespace opt
 }  // namespace mindspore

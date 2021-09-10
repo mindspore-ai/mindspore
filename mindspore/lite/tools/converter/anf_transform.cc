@@ -309,6 +309,11 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
   CHECK_NULL_RETURN(optimizer);
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
   CHECK_NULL_RETURN(convert_pm);
+  auto infershape_pass = std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel);
+  CHECK_NULL_RETURN(infershape_pass);
+  convert_pm->AddPass(infershape_pass);
+  auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
+  convert_pm->AddPass(update_conv2d_param_pass);
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   convert_pm->AddPass(std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel));
   optimizer->AddPassManager(convert_pm);
@@ -329,11 +334,6 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   if (!config->trainModel) {
     const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
   }
-  auto infershape_pass = std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel);
-  CHECK_NULL_RETURN(infershape_pass);
-  const_fold_pm->AddPass(infershape_pass);
-  auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
-  const_fold_pm->AddPass(update_conv2d_param_pass);
   optimizer->AddPassManager(const_fold_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run const fold failed.";

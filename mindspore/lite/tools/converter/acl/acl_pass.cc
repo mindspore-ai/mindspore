@@ -37,7 +37,10 @@ namespace {
 constexpr auto kMakeTuple = "MakeTuple";
 constexpr auto kOutputNames = "outputs_names";
 constexpr auto kCustomPrimTypeACL = "ACL";
-constexpr auto kCustomNodeName = "Custom_0";
+constexpr auto kCustomNodeName = "custom_0";
+constexpr size_t kDependInputNum = 3;
+constexpr size_t kDependFirstInputIdx = 1;
+constexpr size_t kTupleGetItemFirstInputIdx = 1;
 }  // namespace
 
 ParameterPtr AclPass::CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data) {
@@ -256,58 +259,76 @@ void AclPass::SetAclModelOptions(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Set acl model options end.";
 }
 
-STATUS AclPass::GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph, AnfNodePtrList *graph_outputs,
-                                       std::vector<std::string> *graph_output_names,
-                                       std::vector<std::vector<int64_t>> *graph_output_dims) {
-  CHECK_NULL_RETURN(graph_outputs);
-  CHECK_NULL_RETURN(graph_output_names);
-  CHECK_NULL_RETURN(graph_output_dims);
-  AnfNodePtr return_input = func_graph->output();
-  CHECK_NULL_RETURN(return_input);
-  auto input_cnode = return_input->cast<CNodePtr>();
-  CHECK_NULL_RETURN(input_cnode);
-  auto primitive = mindspore::GetValueNode<PrimitivePtr>(input_cnode->input(0));
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr, node: " << input_cnode->fullname_with_scope();
-    return lite::RET_ERROR;
+STATUS AclPass::TraceOutput(const AnfNodePtr &node) {
+  static size_t iter = 0;
+  CHECK_NULL_RETURN(node);
+  AnfNodePtr cur_node = node;
+  AnfNodePtr pre_node = nullptr;
+  while (cur_node->isa<CNode>() && IsPrimitiveCNode(cur_node, prim::kPrimTupleGetItem)) {
+    pre_node = cur_node;
+    auto tmp = cur_node->cast<CNodePtr>();
+    CHECK_NULL_RETURN(tmp);
+    cur_node = tmp->input(kTupleGetItemFirstInputIdx);
   }
-  // not consider custom op
-  std::string primitive_type = primitive->name();
-  if (primitive_type == kMakeTuple) {
-    for (size_t j = 1; j < input_cnode->inputs().size(); j++) {
-      auto item = input_cnode->input(j);
-      MS_ASSERT(item != nullptr);
-      graph_outputs->emplace_back(item);
-      graph_output_names->emplace_back(item->fullname_with_scope());
-      auto item_cnode = item->cast<CNodePtr>();
-      if (item_cnode == nullptr) {
-        MS_LOG(ERROR) << "Input of MakeTuple is not a cnode for input_id: " << j;
+  auto cnode = cur_node->cast<CNodePtr>();
+  CHECK_NULL_RETURN(cnode);
+  std::string name = lite::acl::GetCNodeTargetFuncName(cnode);
+  iter++;
+  MS_LOG(INFO) << "Func name of cnode " << name << " ,trace iter: " << iter;
+  if (name == kMakeTuple) {
+    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      if (TraceOutput(cnode->input(i)) != lite::RET_OK) {
+        MS_LOG(ERROR) << "The input[ " << i << "]"
+                      << " trace output failed, name: " << name;
         return lite::RET_ERROR;
       }
-      std::vector<int64_t> dims;
-      if (lite::acl::GetShapeVectorFromCNode(item_cnode, &dims) != lite::RET_OK) {
-        MS_LOG(ERROR) << "Get node shape failed.";
-        return lite::RET_ERROR;
-      }
-      graph_output_dims->emplace_back(dims);
+    }
+  } else if (name == prim::kPrimDepend->name()) {
+    if (cnode->inputs().size() < kDependInputNum) {
+      MS_LOG(ERROR) << "Length of inputs is " << cnode->inputs().size() << ", which is less than three.";
+      return lite::RET_ERROR;
+    }
+    if (TraceOutput(cnode->input(kDependFirstInputIdx)) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Depend node trace output failed.";
+      return lite::RET_ERROR;
     }
   } else {
-    graph_outputs->emplace_back(input_cnode);
-    graph_output_names->emplace_back(input_cnode->fullname_with_scope());
+    MS_LOG(INFO) << "Graph out name: " << cnode->fullname_with_scope();
+    graph_output_names_.emplace_back(cnode->fullname_with_scope());
+    if (pre_node != nullptr && IsPrimitiveCNode(pre_node, prim::kPrimTupleGetItem)) {
+      cnode = pre_node->cast<CNodePtr>();
+    }
     std::vector<int64_t> dims;
-    if (lite::acl::GetShapeVectorFromCNode(input_cnode, &dims) != lite::RET_OK) {
+    if (lite::acl::GetShapeVectorFromCNode(cnode, &dims) != lite::RET_OK) {
       MS_LOG(ERROR) << "Get node shape failed.";
       return lite::RET_ERROR;
     }
-    graph_output_dims->emplace_back(dims);
+    graph_output_dims_.emplace_back(dims);
+    graph_outputs_.emplace_back(cnode);
   }
+  return lite::RET_OK;
+}
+
+STATUS AclPass::GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph) {
+  AnfNodePtr return_input = func_graph->output();
+  CHECK_NULL_RETURN(return_input);
+  if (TraceOutput(return_input) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Trace output failed.";
+    return lite::RET_ERROR;
+  }
+  if (graph_outputs_.empty() || graph_outputs_.size() != graph_output_dims_.size()) {
+    MS_LOG(ERROR) << "Graph output size is error, num size: " << graph_outputs_.size()
+                  << " dim size: " << graph_output_dims_.size();
+    return lite::RET_ERROR;
+  }
+
   return lite::RET_OK;
 }
 
 STATUS AclPass::SetMultiOutputs(const CNodePtr &new_cnode, TypeId data_type) {
   AbstractBasePtrList abstract_list;
   for (size_t j = 0; j < graph_outputs_.size(); j++) {
-    auto abstract_tensor = lite::CreateTensorAbstract(graph_outputs_dims_[j], data_type);
+    auto abstract_tensor = lite::CreateTensorAbstract(graph_output_dims_[j], data_type);
     if (abstract_tensor == nullptr) {
       MS_LOG(ERROR) << "Abstract tensor is nullptr for output " << j;
       return lite::RET_ERROR;
@@ -319,21 +340,16 @@ STATUS AclPass::SetMultiOutputs(const CNodePtr &new_cnode, TypeId data_type) {
 }
 
 STATUS AclPass::SetCustomOutputs(const FuncGraphPtr &func_graph, const CNodePtr &custom_node) {
-  STATUS ret = GetFuncGraphOutputInfo(func_graph, &graph_outputs_, &graph_output_names_, &graph_outputs_dims_);
+  STATUS ret = GetFuncGraphOutputInfo(func_graph);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Get output info of graph failed.";
-    return lite::RET_ERROR;
-  }
-  if (graph_outputs_.empty() || graph_outputs_.size() != graph_outputs_dims_.size()) {
-    MS_LOG(ERROR) << "Graph output size is error, num size: " << graph_outputs_.size()
-                  << " dim size: " << graph_outputs_dims_.size();
     return lite::RET_ERROR;
   }
   custom_node->AddAttr(kOutputNames, MakeValue(graph_output_names_));
 
   TypeId type = lite::acl::GetTypeFromNode(graph_outputs_[0]);
   if (graph_outputs_.size() == 1) {
-    auto abstract_tensor = lite::CreateTensorAbstract(graph_outputs_dims_[0], type);
+    auto abstract_tensor = lite::CreateTensorAbstract(graph_output_dims_[0], type);
     if (abstract_tensor == nullptr) {
       MS_LOG(ERROR) << "Abstract_tensor is nullptr.";
       return lite::RET_ERROR;

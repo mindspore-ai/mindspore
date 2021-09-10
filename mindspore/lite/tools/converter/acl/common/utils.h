@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ACL_COMMON_UTILS_H
 
 #include <vector>
+#include <string>
 #include "include/errorcode.h"
 #include "ir/anf.h"
 #include "ir/dtype/type_id.h"
@@ -30,6 +31,8 @@ STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int
 TypeId GetTypeFromNode(const AnfNodePtr &node);
 
 std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
+
+std::string GetCNodeTargetFuncName(const CNodePtr &cnode);
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
