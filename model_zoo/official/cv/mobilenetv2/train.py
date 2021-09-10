@@ -177,7 +177,7 @@ def train_mobilenetv2():
         else:
             opt = Momentum(net.trainable_params(), lr, config.momentum, config.weight_decay)
             model = Model(net, loss_fn=loss, optimizer=opt, metrics=metrics, eval_network=dist_eval_network,
-                          acc_level=config.acc_mode)
+                          boost_level=config.boost_mode)
         cb = config_ckpoint(config, lr, step_size, model, eval_dataset)
         print("============== Starting Training ==============")
         model.train(epoch_size, dataset, callbacks=cb)
