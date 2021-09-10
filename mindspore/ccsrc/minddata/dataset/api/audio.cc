@@ -29,6 +29,7 @@
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 
@@ -224,6 +225,18 @@ LowpassBiquad::LowpassBiquad(int32_t sample_rate, float cutoff_freq, float Q)
 
 std::shared_ptr<TensorOperation> LowpassBiquad::Parse() {
   return std::make_shared<LowpassBiquadOperation>(data_->sample_rate_, data_->cutoff_freq_, data_->Q_);
+}
+
+// MuLawDecoding Transform Operation.
+struct MuLawDecoding::Data {
+  explicit Data(int quantization_channels) : quantization_channels_(quantization_channels) {}
+  int quantization_channels_;
+};
+
+MuLawDecoding::MuLawDecoding(int quantization_channels) : data_(std::make_shared<Data>(quantization_channels)) {}
+
+std::shared_ptr<TensorOperation> MuLawDecoding::Parse() {
+  return std::make_shared<MuLawDecodingOperation>(data_->quantization_channels_);
 }
 
 // TimeMasking Transform Operation.

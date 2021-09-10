@@ -33,6 +33,7 @@
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 
@@ -188,6 +189,17 @@ PYBIND_REGISTER(
         auto lowpass_biquad = std::make_shared<audio::LowpassBiquadOperation>(sample_rate, cutoff_freq, Q);
         THROW_IF_ERROR(lowpass_biquad->ValidateParams());
         return lowpass_biquad;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  MuLawDecodingOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::MuLawDecodingOperation, TensorOperation, std::shared_ptr<audio::MuLawDecodingOperation>>(
+      *m, "MuLawDecodingOperation")
+      .def(py::init([](int quantization_channels) {
+        auto mu_law_decoding = std::make_shared<audio::MuLawDecodingOperation>(quantization_channels);
+        THROW_IF_ERROR(mu_law_decoding->ValidateParams());
+        return mu_law_decoding;
       }));
   }));
 
