@@ -526,7 +526,10 @@ static std::vector<Expression> expressions = {
   // reduce2
   {58, "ReduceSum(Neg(A))=Neg(ReduceSum(A))", EXPR_PATTERN(ExtraReduce2PatternTree)},
   {59, "ReduceSum(RealDiv(A,const1))=RealDiv(ReduceSum(A),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)},
-  {60, "ReduceSum(Mul(A,const1))=Mul(ReduceSum(A),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)}};
+  {60, "ReduceSum(Mul(A,const1))=Mul(ReduceSum(A),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)},
+  {61, "CReal(Complex(A,B))=A", EXPR_PATTERN(PatternTree)},
+  {62, "CImag(Complex(A,B))=B", EXPR_PATTERN(PatternTree)},
+};
 
 std::unordered_map<std::string, std::vector<PatternTreePtr>> GetExpressions() {
   const auto &flags = context::GraphKernelFlags::GetInstance();
@@ -570,7 +573,8 @@ bool ArithmeticSimplify::DoArithmeticTrans(const graphkernel::LiteGraphPtr &lite
         // match a pattern;if return is empty,then fails to match
         matched_nodes = p->MatchGraph(*iter, para_to_ref, const_to_ref);
         if (!matched_nodes.empty()) {
-          if (OutsideRely(matched_nodes, *iter)) {
+          auto right_root_type = PatternNodeType(p->rhs_root()->op());
+          if (right_root_type == graphkernel::NType::Primitive && OutsideRely(matched_nodes, *iter)) {
             continue;
           }
           // if no outside rely,then this is a successful match

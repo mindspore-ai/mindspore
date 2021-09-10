@@ -27,7 +27,6 @@
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
-#include "backend/optimizer/graph_kernel/eliminate_redundant_complex.h"
 #include "backend/optimizer/graph_kernel/insert_pad.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
@@ -123,9 +122,6 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
 
   // Common subexpression elimination
   pm->AddPass(std::make_shared<GraphKernelCSE>(), OptLevel_2);
-
-  // Eliminate Redundant Complex op
-  pm->AddPass(std::make_shared<EliminateRedundantComplex>(), OptLevel_2, is_gpu);
 
   // Eliminate unnecessary transform ops
   auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_trans_op_optimize);
