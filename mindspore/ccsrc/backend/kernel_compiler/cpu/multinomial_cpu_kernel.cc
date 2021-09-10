@@ -78,10 +78,11 @@ bool MultinomialGpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     }
 
     // Normalize the cumulative array.
-    float sum = cumulative_value[num_col - 1];
+    float sum = cumulative_value[(i + 1) * num_col - 1];
     if (sum != 0) {
       for (int k = 0; k < num_col; ++k) {
-        cumulative_value[k] /= sum;
+	size_t index = i * num_col + k;
+        cumulative_value[index] /= sum;
       }
     }
 
@@ -113,7 +114,7 @@ bool MultinomialGpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
           begin = pivot + 1;
         }
       }
-      output[i * num_col + n] = begin;
+      output[i * num_sample + n] = begin;
     }
   }
   return true;
