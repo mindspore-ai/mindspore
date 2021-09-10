@@ -25,6 +25,9 @@
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
 #include "fl/server/executor.h"
+#ifdef ENABLE_ARMOUR
+#include "fl/armour/cipher/cipher_meta_storage.h"
+#endif
 
 namespace mindspore {
 namespace fl {

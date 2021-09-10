@@ -31,6 +31,8 @@ table ClientPublicKeys {
   fl_id:string;
   c_pk:[ubyte];
   s_pk: [ubyte];
+  pw_iv: [ubyte];
+  pw_salt: [ubyte];
 }
 
 table ClientShare {
@@ -45,6 +47,9 @@ table RequestExchangeKeys{
   s_pk:[ubyte];
   iteration:int;
   timestamp:string;
+  ind_iv:[ubyte];
+  pw_iv:[ubyte];
+  pw_salt:[ubyte];
 }
 
 table ResponseExchangeKeys{

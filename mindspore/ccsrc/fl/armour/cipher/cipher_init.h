@@ -29,17 +29,6 @@
 namespace mindspore {
 namespace armour {
 
-template <typename T1>
-bool CreateArray(std::vector<T1> *newData, const flatbuffers::Vector<T1> &fbs_arr) {
-  size_t size = newData->size();
-  size_t size_fbs_arr = fbs_arr.size();
-  if (size != size_fbs_arr) return false;
-  for (size_t i = 0; i < size; ++i) {
-    newData->at(i) = fbs_arr.Get(i);
-  }
-  return true;
-}
-
 // Initialization of secure aggregation.
 class CipherInit {
  public:
@@ -49,9 +38,10 @@ class CipherInit {
   }
 
   // Initialize the parameters of the secure aggregation.
-  bool Init(const CipherPublicPara &param, size_t time_out_mutex, size_t cipher_initial_client_cnt,
-            size_t cipher_exchange_secrets_cnt, size_t cipher_share_secrets_cnt, size_t cipher_get_clientlist_cnt,
-            size_t cipher_reconstruct_secrets_down_cnt, size_t cipher_reconstruct_secrets_up_cnt);
+  bool Init(const CipherPublicPara &param, size_t time_out_mutex, size_t cipher_exchange_keys_cnt,
+            size_t cipher_get_keys_cnt, size_t cipher_share_secrets_cnt, size_t cipher_get_secrets_cnt,
+            size_t cipher_get_clientlist_cnt, size_t cipher_reconstruct_secrets_down_cnt,
+            size_t cipher_reconstruct_secrets_up_cnt);
 
   // Check whether the parameters are valid.
   bool Check_Parames();
@@ -59,10 +49,12 @@ class CipherInit {
   // Get public params. which is given to start fl job thread.
   CipherPublicPara *GetPublicParams() { return &publicparam_; }
 
-  size_t share_clients_num_need_;        // the minimum number of clients to share secrets.
-  size_t reconstruct_clients_num_need_;  // the minimum number of clients to reconstruct secret mask.
-  size_t client_num_need_;               // the minimum number of clients to update model.
-  size_t get_model_num_need_;            // the minimum number of clients to get model.
+  size_t share_secrets_threshold;        // the minimum number of clients to share secret fragments.
+  size_t get_secrets_threshold;          // the minimum number of clients to get secret fragments.
+  size_t reconstruct_secrets_threshold;  // the minimum number of clients to reconstruct secret mask.
+  size_t exchange_key_threshold;         // the minimum number of clients to send public keys.
+  size_t get_key_threshold;              // the minimum number of clients to get public keys.
+  size_t client_list_threshold;          // the minimum number of clients to get update model client list.
 
   size_t secrets_minnums_;  // the minimum number of secret fragment s to reconstruct secret mask.
   size_t featuremap_;       // the size of data to deal.

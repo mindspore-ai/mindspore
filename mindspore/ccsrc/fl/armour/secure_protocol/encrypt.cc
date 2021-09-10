@@ -18,12 +18,7 @@
 
 namespace mindspore {
 namespace armour {
-
-#define KEY_STEP_MAX 32
-#define KEY_STEP_MIN 16
-#define PAD_SIZE 5
-
-AESEncrypt::AESEncrypt(const unsigned char *key, int key_len, unsigned char *ivec, int ivec_len, const AES_MODE mode) {
+AESEncrypt::AESEncrypt(const uint8_t *key, int key_len, const uint8_t *ivec, int ivec_len, const AES_MODE mode) {
   privKey = key;
   privKeyLen = key_len;
   iVec = ivec;
@@ -47,12 +42,20 @@ int AESEncrypt::DecryptData(const unsigned char *encrypt_data, const int encrypt
 #else
 int AESEncrypt::EncryptData(const unsigned char *data, const int len, unsigned char *encrypt_data, int *encrypt_len) {
   int ret;
-  if (privKeyLen != KEY_STEP_MIN && privKeyLen != KEY_STEP_MAX) {
-    MS_LOG(ERROR) << "key length must be 16 or 32!";
+  if (privKey == NULL || iVec == NULL) {
+    MS_LOG(ERROR) << "private key or init vector is invalid.";
     return -1;
   }
-  if (iVecLen != INIT_VEC_SIZE) {
-    MS_LOG(ERROR) << "initial vector size must be 16!";
+  if (privKeyLen != KEY_LENGTH_16 && privKeyLen != KEY_LENGTH_32) {
+    MS_LOG(ERROR) << "key length is invalid.";
+    return -1;
+  }
+  if (iVecLen != AES_IV_SIZE) {
+    MS_LOG(ERROR) << "initial vector size is invalid.";
+    return -1;
+  }
+  if (data == NULL || len <= 0 || encrypt_data == NULL) {
+    MS_LOG(ERROR) << "input data is invalid.";
     return -1;
   }
   if (aesMode == AES_CBC || aesMode == AES_CTR) {
@@ -69,12 +72,20 @@ int AESEncrypt::EncryptData(const unsigned char *data, const int len, unsigned c
 
 int AESEncrypt::DecryptData(const unsigned char *encrypt_data, const int encrypt_len, unsigned char *data, int *len) {
   int ret = 0;
-  if (privKeyLen != KEY_STEP_MIN && privKeyLen != KEY_STEP_MAX) {
-    MS_LOG(ERROR) << "key length must be 16 or 32!";
+  if (privKey == NULL || iVec == NULL) {
+    MS_LOG(ERROR) << "private key or init vector is invalid.";
     return -1;
   }
-  if (iVecLen != INIT_VEC_SIZE) {
-    MS_LOG(ERROR) << "initial vector size must be 16!";
+  if (privKeyLen != KEY_LENGTH_16 && privKeyLen != KEY_LENGTH_32) {
+    MS_LOG(ERROR) << "key length is invalid.";
+    return -1;
+  }
+  if (iVecLen != AES_IV_SIZE) {
+    MS_LOG(ERROR) << "initial vector size is invalid.";
+    return -1;
+  }
+  if (data == NULL || encrypt_len <= 0 || encrypt_data == NULL) {
+    MS_LOG(ERROR) << "input data is invalid.";
     return -1;
   }
   if (aesMode == AES_CBC || aesMode == AES_CTR) {
@@ -88,17 +99,21 @@ int AESEncrypt::DecryptData(const unsigned char *encrypt_data, const int encrypt
   return 0;
 }
 
-int AESEncrypt::evp_aes_encrypt(const unsigned char *data, const int len, const unsigned char *key, unsigned char *ivec,
-                                unsigned char *encrypt_data, int *encrypt_len) {
+int AESEncrypt::evp_aes_encrypt(const uint8_t *data, const int len, const uint8_t *key, const uint8_t *ivec,
+                                uint8_t *encrypt_data, int *encrypt_len) {
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+  if (ctx == NULL) {
+    MS_LOG(ERROR) << "EVP_CIPHER_CTX_new fail!";
+    return -1;
+  }
   int out_len;
-  int ret = 0;
+  int ret;
   if (aesMode == AES_CBC) {
     switch (privKeyLen) {
-      case 16:
+      case KEY_LENGTH_16:
         ret = EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, ivec);
         break;
-      case 32:
+      case KEY_LENGTH_32:
         ret = EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, ivec);
         break;
       default:
@@ -107,16 +122,16 @@ int AESEncrypt::evp_aes_encrypt(const unsigned char *data, const int len, const 
     }
     if (ret != 1) {
       MS_LOG(ERROR) << "EVP_EncryptInit_ex CBC fail!";
+      EVP_CIPHER_CTX_free(ctx);
       return -1;
     }
-    EVP_CIPHER_CTX_set_key_length(ctx, EVP_MAX_KEY_LENGTH);
-    EVP_CIPHER_CTX_set_padding(ctx, PAD_SIZE);
+    EVP_CIPHER_CTX_set_padding(ctx, EVP_PADDING_PKCS7);
   } else if (aesMode == AES_CTR) {
     switch (privKeyLen) {
-      case 16:
+      case KEY_LENGTH_16:
         ret = EVP_EncryptInit_ex(ctx, EVP_aes_128_ctr(), NULL, key, ivec);
         break;
-      case 32:
+      case KEY_LENGTH_32:
         ret = EVP_EncryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, ivec);
         break;
       default:
@@ -125,21 +140,25 @@ int AESEncrypt::evp_aes_encrypt(const unsigned char *data, const int len, const 
     }
     if (ret != 1) {
       MS_LOG(ERROR) << "EVP_EncryptInit_ex CTR fail!";
+      EVP_CIPHER_CTX_free(ctx);
       return -1;
     }
   } else {
     MS_LOG(ERROR) << "Unsupported AES mode";
+    EVP_CIPHER_CTX_free(ctx);
     return -1;
   }
   ret = EVP_EncryptUpdate(ctx, encrypt_data, &out_len, data, len);
   if (ret != 1) {
     MS_LOG(ERROR) << "EVP_EncryptUpdate fail!";
+    EVP_CIPHER_CTX_free(ctx);
     return -1;
   }
   *encrypt_len = out_len;
   ret = EVP_EncryptFinal_ex(ctx, encrypt_data + *encrypt_len, &out_len);
   if (ret != 1) {
     MS_LOG(ERROR) << "EVP_EncryptFinal_ex fail!";
+    EVP_CIPHER_CTX_free(ctx);
     return -1;
   }
   *encrypt_len += out_len;
@@ -147,17 +166,21 @@ int AESEncrypt::evp_aes_encrypt(const unsigned char *data, const int len, const 
   return 0;
 }
 
-int AESEncrypt::evp_aes_decrypt(const unsigned char *encrypt_data, const int len, const unsigned char *key,
-                                unsigned char *ivec, unsigned char *decrypt_data, int *decrypt_len) {
+int AESEncrypt::evp_aes_decrypt(const uint8_t *encrypt_data, const int len, const uint8_t *key, const uint8_t *ivec,
+                                uint8_t *decrypt_data, int *decrypt_len) {
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+  if (ctx == NULL) {
+    MS_LOG(ERROR) << "EVP_CIPHER_CTX_new fail!";
+    return -1;
+  }
   int out_len;
-  int ret = 0;
+  int ret;
   if (aesMode == AES_CBC) {
     switch (privKeyLen) {
-      case 16:
+      case KEY_LENGTH_16:
         ret = EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, ivec);
         break;
-      case 32:
+      case KEY_LENGTH_32:
         ret = EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, ivec);
         break;
       default:
@@ -165,40 +188,46 @@ int AESEncrypt::evp_aes_decrypt(const unsigned char *encrypt_data, const int len
         ret = -1;
     }
     if (ret != 1) {
+      EVP_CIPHER_CTX_free(ctx);
       return -1;
     }
-    EVP_CIPHER_CTX_set_key_length(ctx, EVP_MAX_KEY_LENGTH);
   } else if (aesMode == AES_CTR) {
     switch (privKeyLen) {
-      case 16:
+      case KEY_LENGTH_16:
         ret = EVP_DecryptInit_ex(ctx, EVP_aes_128_ctr(), NULL, key, ivec);
         break;
-      case 32:
+      case KEY_LENGTH_32:
         ret = EVP_DecryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, ivec);
         break;
       default:
         MS_LOG(ERROR) << "key length is incorrect!";
         ret = -1;
     }
+    if (ret != 1) {
+      EVP_CIPHER_CTX_free(ctx);
+      return -1;
+    }
   } else {
-    ret = -1;
-  }
-
-  if (ret != 1) {
+    MS_LOG(ERROR) << "Unsupported AES mode";
+    EVP_CIPHER_CTX_free(ctx);
     return -1;
   }
+
   ret = EVP_DecryptUpdate(ctx, decrypt_data, &out_len, encrypt_data, len);
   if (ret != 1) {
+    MS_LOG(ERROR) << "EVP_DecryptUpdate fail!";
+    EVP_CIPHER_CTX_free(ctx);
     return -1;
   }
   *decrypt_len = out_len;
   ret = EVP_DecryptFinal_ex(ctx, decrypt_data + *decrypt_len, &out_len);
   if (ret != 1) {
+    MS_LOG(ERROR) << "EVP_DecryptFinal_ex fail!";
+    EVP_CIPHER_CTX_free(ctx);
     return -1;
   }
   *decrypt_len += out_len;
   EVP_CIPHER_CTX_free(ctx);
-
   return 0;
 }
 #endif

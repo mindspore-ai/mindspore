@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2019-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.mindspore.flclient;
 
+/**
+ * The early stop mod.
+ *
+ * @since 2021-06-30
+ */
 public enum EarlyStopMod {
     LOSS_DIFF,
     LOSS_ABS,
     WEIGHT_DIFF,
     NOT_EARLY_STOP
 }
-
-

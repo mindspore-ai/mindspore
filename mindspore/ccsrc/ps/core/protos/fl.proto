@@ -126,6 +126,13 @@ message SharesPb {
 
 message KeysPb {
   repeated bytes key = 1;
+  string timestamp = 2;
+  int32 iter_num = 3;
+  bytes ind_iv = 4;
+  bytes pw_iv = 5;
+  bytes pw_salt = 6;
+  bytes signature = 7;
+  repeated string certificate_chain = 8;
 }
 
 message Prime {

@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2019-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,50 @@
 
 package com.mindspore.flclient.cipher.struct;
 
+/**
+ * class used define new array type
+ *
+ * @param <T> an array
+ *
+ * @since 2021-8-27
+ */
 public class NewArray<T> {
     private int size;
     private T array;
 
+    /**
+     * get array size
+     *
+     * @return array size
+     */
     public int getSize() {
         return size;
     }
 
+    /**
+     * set array size
+     *
+     * @param size array size
+     */
     public void setSize(int size) {
         this.size = size;
     }
 
+    /**
+     * get array
+     *
+     * @return an array
+     */
     public T getArray() {
         return array;
     }
 
+    /**
+     * set array
+     *
+     * @param array input
+     */
     public void setArray(T array) {
         this.array = array;
     }
-
 }

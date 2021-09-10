@@ -54,14 +54,22 @@ PrivateKey::PrivateKey(EVP_PKEY *evpKey) { evpPrivKey = evpKey; }
 
 PrivateKey::~PrivateKey() { EVP_PKEY_free(evpPrivKey); }
 
-int PrivateKey::GetPrivateBytes(size_t *len, unsigned char *privKeyBytes) {
+int PrivateKey::GetPrivateBytes(size_t *len, uint8_t *privKeyBytes) {
+  if (privKeyBytes == nullptr || len <= 0) {
+    MS_LOG(ERROR) << "input privKeyBytes invalid.";
+    return -1;
+  }
   if (!EVP_PKEY_get_raw_private_key(evpPrivKey, privKeyBytes, len)) {
     return -1;
   }
   return 0;
 }
 
-int PrivateKey::GetPublicBytes(size_t *len, unsigned char *pubKeyBytes) {
+int PrivateKey::GetPublicBytes(size_t *len, uint8_t *pubKeyBytes) {
+  if (pubKeyBytes == nullptr || len <= 0) {
+    MS_LOG(ERROR) << "input pubKeyBytes invalid.";
+    return -1;
+  }
   if (!EVP_PKEY_get_raw_public_key(evpPrivKey, pubKeyBytes, len)) {
     return -1;
   }
@@ -69,7 +77,19 @@ int PrivateKey::GetPublicBytes(size_t *len, unsigned char *pubKeyBytes) {
 }
 
 int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned char *salt, int salt_len,
-                         unsigned char *exchangeKey) {
+                         uint8_t *exchangeKey) {
+  if (peerPublicKey == nullptr) {
+    MS_LOG(ERROR) << "peerPublicKey is nullptr.";
+    return -1;
+  }
+  if (key_len != KEY_LEN || exchangeKey == nullptr) {
+    MS_LOG(ERROR) << "exchangeKey is nullptr or input key_len is incorrect.";
+    return -1;
+  }
+  if (salt == nullptr || salt_len != SALT_LEN) {
+    MS_LOG(ERROR) << "input salt in invalid.";
+    return -1;
+  }
   EVP_PKEY_CTX *ctx;
   size_t len = 0;
   ctx = EVP_PKEY_CTX_new(evpPrivKey, NULL);
@@ -79,30 +99,38 @@ int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned c
   }
   if (EVP_PKEY_derive_init(ctx) <= 0) {
     MS_LOG(ERROR) << "EVP_PKEY_derive_init failed!";
+    EVP_PKEY_CTX_free(ctx);
     return -1;
   }
   if (EVP_PKEY_derive_set_peer(ctx, peerPublicKey->evpPubKey) <= 0) {
     MS_LOG(ERROR) << "EVP_PKEY_derive_set_peer failed!";
+    EVP_PKEY_CTX_free(ctx);
     return -1;
   }
   unsigned char *secret;
   if (EVP_PKEY_derive(ctx, NULL, &len) <= 0) {
     MS_LOG(ERROR) << "get derive key size failed!";
+    EVP_PKEY_CTX_free(ctx);
     return -1;
   }
 
   secret = (unsigned char *)OPENSSL_malloc(len);
   if (!secret) {
     MS_LOG(ERROR) << "malloc secret memory failed!";
+    EVP_PKEY_CTX_free(ctx);
     return -1;
   }
 
   if (EVP_PKEY_derive(ctx, secret, &len) <= 0) {
     MS_LOG(ERROR) << "derive key failed!";
+    OPENSSL_free(secret);
+    EVP_PKEY_CTX_free(ctx);
     return -1;
   }
-
-  if (!PKCS5_PBKDF2_HMAC((char *)secret, len, salt, salt_len, ITERATION, EVP_sha256(), key_len, exchangeKey)) {
+  if (!PKCS5_PBKDF2_HMAC(reinterpret_cast<char *>(secret), len, salt, salt_len, ITERATION, EVP_sha256(), key_len,
+                         exchangeKey)) {
+    OPENSSL_free(secret);
+    EVP_PKEY_CTX_free(ctx);
     return -1;
   }
   OPENSSL_free(secret);
@@ -118,9 +146,11 @@ PrivateKey *KeyAgreement::GeneratePrivKey() {
     return NULL;
   }
   if (EVP_PKEY_keygen_init(pctx) <= 0) {
+    EVP_PKEY_CTX_free(pctx);
     return NULL;
   }
   if (EVP_PKEY_keygen(pctx, &evpKey) <= 0) {
+    EVP_PKEY_CTX_free(pctx);
     return NULL;
   }
   EVP_PKEY_CTX_free(pctx);
@@ -131,14 +161,30 @@ PrivateKey *KeyAgreement::GeneratePrivKey() {
 PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
   unsigned char *pubKeyBytes;
   size_t len = 0;
+  if (privKey == nullptr) {
+    return NULL;
+  }
   if (!EVP_PKEY_get_raw_public_key(privKey->evpPrivKey, NULL, &len)) {
     return NULL;
   }
-  pubKeyBytes = (unsigned char *)OPENSSL_malloc(len);
-  if (!EVP_PKEY_get_raw_public_key(privKey->evpPrivKey, pubKeyBytes, &len)) {
+  pubKeyBytes = reinterpret_cast<uint8_t *>(OPENSSL_malloc(len));
+  if (!pubKeyBytes) {
+    MS_LOG(ERROR) << "malloc secret memory failed!";
     return NULL;
   }
-  EVP_PKEY *evp_pubKey = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, (unsigned char *)pubKeyBytes, len);
+
+  if (!EVP_PKEY_get_raw_public_key(privKey->evpPrivKey, pubKeyBytes, &len)) {
+    MS_LOG(ERROR) << "EVP_PKEY_get_raw_public_key failed!";
+    OPENSSL_free(pubKeyBytes);
+    return NULL;
+  }
+  EVP_PKEY *evp_pubKey =
+    EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, reinterpret_cast<uint8_t *>(pubKeyBytes), len);
+  if (evp_pubKey == NULL) {
+    MS_LOG(ERROR) << "EVP_PKEY_new_raw_public_key failed!";
+    OPENSSL_free(pubKeyBytes);
+    return NULL;
+  }
   OPENSSL_free(pubKeyBytes);
   PublicKey *pubKey = new PublicKey(evp_pubKey);
   return pubKey;
@@ -147,6 +193,7 @@ PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
 PrivateKey *KeyAgreement::FromPrivateBytes(unsigned char *data, int len) {
   EVP_PKEY *evp_Key = EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, NULL, data, len);
   if (evp_Key == NULL) {
+    MS_LOG(ERROR) << "create evp_Key from raw bytes failed!";
     return NULL;
   }
   PrivateKey *privKey = new PrivateKey(evp_Key);
@@ -164,7 +211,11 @@ PublicKey *KeyAgreement::FromPublicBytes(unsigned char *data, int len) {
 }
 
 int KeyAgreement::ComputeSharedKey(PrivateKey *privKey, PublicKey *peerPublicKey, int key_len,
-                                   const unsigned char *salt, int salt_len, unsigned char *exchangeKey) {
+                                   const unsigned char *salt, int salt_len, uint8_t *exchangeKey) {
+  if (privKey == nullptr) {
+    MS_LOG(ERROR) << "privKey is nullptr!";
+    return -1;
+  }
   return privKey->Exchange(peerPublicKey, key_len, salt, salt_len, exchangeKey);
 }
 #endif

@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2019-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mindspore.flclient;
 
-import java.util.logging.Logger;
+package com.mindspore.flclient;
 
 import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 
+import java.util.Arrays;
+import java.util.UUID;
+import java.util.logging.Logger;
+
+/**
+ * Defines global parameters used during federated learning and these parameters are provided for users to set.
+ *
+ * @since 2021-06-30
+ */
 public class FLParameter {
     private static final Logger LOGGER = Logger.getLogger(FLParameter.class.toString());
 
+    /**
+     * The timeout interval for communication on the device.
+     */
     public static final int TIME_OUT = 100;
+
+    /**
+     * The waiting time of repeated requests.
+     */
     public static final int SLEEP_TIME = 1000;
+    private static volatile FLParameter flParameter;
 
-    private String hostName;
+    private String domainName;
     private String certPath;
-    private boolean useHttps = false;
-
     private String trainDataset;
     private String vocabFile = "null";
     private String idsFile = "null";
@@ -37,22 +51,21 @@ public class FLParameter {
     private String trainModelPath;
     private String inferModelPath;
     private String clientID;
-    private String ip;
-    private int port;
     private boolean useSSL = false;
     private int timeOut;
     private int sleepTime;
-    private boolean useElb = false;
+    private boolean ifUseElb = false;
     private int serverNum = 1;
 
-    private boolean timer = true;
-    private int timeWindow = 6000;
-    private int reRequestNum = timeWindow / SLEEP_TIME + 1;
+    private FLParameter() {
+        clientID = UUID.randomUUID().toString();
+    }
 
-    private static volatile FLParameter flParameter;
-
-    private FLParameter() {}
-
+    /**
+     * Get the singleton object of the class FLParameter.
+     *
+     * @return the singleton object of the class FLParameter.
+     */
     public static FLParameter getInstance() {
         FLParameter localRef = flParameter;
         if (localRef == null) {
@@ -66,95 +79,100 @@ public class FLParameter {
         return localRef;
     }
 
-    public String getHostName() {
-        if ("".equals(hostName) || hostName.isEmpty()) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <hostName> is null, please set it before use"));
-            throw new RuntimeException();
+    public String getDomainName() {
+        if (domainName == null || domainName.isEmpty()) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <domainName> is null or empty, please set it " +
+                    "before use"));
+            throw new IllegalArgumentException();
         }
-        return hostName;
+        return domainName;
     }
 
-    public void setHostName(String hostName) {
-        this.hostName = hostName;
+    public void setDomainName(String domainName) {
+        if (domainName == null || domainName.isEmpty() || (!("https".equals(domainName.split(":")[0]) || "http".equals(domainName.split(":")[0])))) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <domainName> is not valid, it should be like " +
+                    "as https://...... or http://......, please check it before set"));
+            throw new IllegalArgumentException();
+        }
+        this.domainName = domainName;
     }
 
     public String getCertPath() {
-        if ("".equals(certPath) || certPath.isEmpty()) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <certPath> is null, please set it before use"));
-            throw new RuntimeException();
+        if (certPath == null || certPath.isEmpty()) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <certPath> is null or empty, please set it " +
+                    "before use"));
+            throw new IllegalArgumentException();
         }
         return certPath;
     }
 
     public void setCertPath(String certPath) {
-        certPath = Common.getRealPath(certPath);
-        if (Common.checkPath(certPath)) {
-            this.certPath = certPath;
+        String realCertPath = Common.getRealPath(certPath);
+        if (Common.checkPath(realCertPath)) {
+            this.certPath = realCertPath;
         } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <certPath> is not exist, please check it before set"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <certPath> is not exist, please check it " +
+                    "before set"));
+            throw new IllegalArgumentException();
         }
     }
 
-    public boolean isUseHttps() {
-        return useHttps;
-    }
-
-    public void setUseHttps(boolean useHttps) {
-        this.useHttps = useHttps;
-    }
-
     public String getTrainDataset() {
-        if ("".equals(trainDataset) || trainDataset.isEmpty()) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <trainDataset> is null, please set it before use"));
-            throw new RuntimeException();
+        if (trainDataset == null || trainDataset.isEmpty()) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <trainDataset> is null or empty, please set " +
+                    "it before use"));
+            throw new IllegalArgumentException();
         }
         return trainDataset;
     }
 
     public void setTrainDataset(String trainDataset) {
-        trainDataset = Common.getRealPath(trainDataset);
-        if (Common.checkPath(trainDataset)) {
-            this.trainDataset = trainDataset;
+        String realTrainDataset = Common.getRealPath(trainDataset);
+        if (Common.checkPath(realTrainDataset)) {
+            this.trainDataset = realTrainDataset;
         } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <trainDataset> is not exist, please check it before set"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <trainDataset> is not exist, please check it " +
+                    "before set"));
+            throw new IllegalArgumentException();
         }
     }
 
     public String getVocabFile() {
         if ("null".equals(vocabFile) && ALBERT.equals(flName)) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <vocabFile> is null, please set it before use"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <vocabFile> is null, please set it before " +
+                    "use"));
+            throw new IllegalArgumentException();
         }
         return vocabFile;
     }
 
     public void setVocabFile(String vocabFile) {
-        vocabFile = Common.getRealPath(vocabFile);
-        if (Common.checkPath(vocabFile)) {
-            this.vocabFile = vocabFile;
+        String realVocabFile = Common.getRealPath(vocabFile);
+        if (Common.checkPath(realVocabFile)) {
+            this.vocabFile = realVocabFile;
         } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <vocabFile> is not exist, please check it before set"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <vocabFile> is not exist, please check it " +
+                    "before set"));
+            throw new IllegalArgumentException();
         }
     }
 
     public String getIdsFile() {
         if ("null".equals(idsFile) && ALBERT.equals(flName)) {
             LOGGER.severe(Common.addTag("[flParameter] the parameter of <idsFile> is null, please set it before use"));
-            throw new RuntimeException();
+            throw new IllegalArgumentException();
         }
         return idsFile;
     }
 
     public void setIdsFile(String idsFile) {
-        idsFile = Common.getRealPath(idsFile);
-        if (Common.checkPath(idsFile)) {
-            this.idsFile = idsFile;
+        String realIdsFile = Common.getRealPath(idsFile);
+        if (Common.checkPath(realIdsFile)) {
+            this.idsFile = realIdsFile;
         } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <idsFile> is not exist, please check it before set"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <idsFile> is not exist, please check it " +
+                    "before set"));
+            throw new IllegalArgumentException();
         }
     }
 
@@ -163,19 +181,21 @@ public class FLParameter {
     }
 
     public void setTestDataset(String testDataset) {
-        testDataset = Common.getRealPath(testDataset);
-        if (Common.checkPath(testDataset)) {
-            this.testDataset = testDataset;
+        String realTestDataset = Common.getRealPath(testDataset);
+        if (Common.checkPath(realTestDataset)) {
+            this.testDataset = realTestDataset;
         } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <testDataset> is not exist, please check it before set"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <testDataset> is not exist, please check it " +
+                    "before set"));
+            throw new IllegalArgumentException();
         }
     }
 
     public String getFlName() {
-        if ("".equals(flName) || flName.isEmpty()) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <flName> is null, please set it before use"));
-            throw new RuntimeException();
+        if (flName == null || flName.isEmpty()) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <flName> is null or empty, please set it " +
+                    "before use"));
+            throw new IllegalArgumentException();
         }
         return flName;
     }
@@ -184,61 +204,50 @@ public class FLParameter {
         if (Common.checkFLName(flName)) {
             this.flName = flName;
         } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <flName> is not in flNameTrustList, please check it before set"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <flName> is not in FL_NAME_TRUST_LIST: " +
+                    Arrays.toString(Common.FL_NAME_TRUST_LIST.toArray(new String[0])) + ", please check it before " +
+                    "set"));
+            throw new IllegalArgumentException();
         }
     }
 
     public String getTrainModelPath() {
-        if ("".equals(trainModelPath) || trainModelPath.isEmpty()) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <trainModelPath> is null, please set it before use"));
-            throw new RuntimeException();
+        if (trainModelPath == null || trainModelPath.isEmpty()) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <trainModelPath> is null or empty, please set" +
+                    " it before use"));
+            throw new IllegalArgumentException();
         }
         return trainModelPath;
     }
 
     public void setTrainModelPath(String trainModelPath) {
-        trainModelPath = Common.getRealPath(trainModelPath);
-        if (Common.checkPath(trainModelPath)) {
-            this.trainModelPath = trainModelPath;
+        String realTrainModelPath = Common.getRealPath(trainModelPath);
+        if (Common.checkPath(realTrainModelPath)) {
+            this.trainModelPath = realTrainModelPath;
         } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <trainModelPath> is not exist, please check it before set"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <trainModelPath> is not exist, please check " +
+                    "it before set"));
+            throw new IllegalArgumentException();
         }
     }
 
     public String getInferModelPath() {
-        if ("".equals(inferModelPath) || inferModelPath.isEmpty()) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <inferModelPath> is null, please set it before use"));
-            throw new RuntimeException();
+        if (inferModelPath == null || inferModelPath.isEmpty()) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <inferModelPath> is null or empty, please set" +
+                    " it before use"));
+            throw new IllegalArgumentException();
         }
         return inferModelPath;
     }
 
     public void setInferModelPath(String inferModelPath) {
-        inferModelPath = Common.getRealPath(inferModelPath);
-        if (Common.checkPath(inferModelPath)) {
-            this.inferModelPath = inferModelPath;
+        String realInferModelPath = Common.getRealPath(inferModelPath);
+        if (Common.checkPath(realInferModelPath)) {
+            this.inferModelPath = realInferModelPath;
         } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <inferModelPath> is not exist, please check it before set"));
-            throw new RuntimeException();
-        }
-    }
-
-    public String getIp() {
-        if ("".equals(ip) || ip.isEmpty()) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <ip> is null, please set it before use"));
-            throw new RuntimeException();
-        }
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        if (Common.checkIP(ip)) {
-            this.ip = ip;
-        } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <ip> is not valid, please check it before set"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <inferModelPath> is not exist, please check " +
+                    "it before set"));
+            throw new IllegalArgumentException();
         }
     }
 
@@ -248,23 +257,6 @@ public class FLParameter {
 
     public void setUseSSL(boolean useSSL) {
         this.useSSL = useSSL;
-    }
-
-    public int getPort() {
-        if (port == 0) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <port> is null, please set it before use"));
-            throw new RuntimeException();
-        }
-        return port;
-    }
-
-    public void setPort(int port) {
-        if (Common.checkPort(port)) {
-            this.port = port;
-        } else {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <port> is not valid, please check it before set"));
-            throw new RuntimeException();
-        }
     }
 
     public int getTimeOut() {
@@ -284,17 +276,18 @@ public class FLParameter {
     }
 
     public boolean isUseElb() {
-        return useElb;
+        return ifUseElb;
     }
 
-    public void setUseElb(boolean useElb) {
-        this.useElb = useElb;
+    public void setUseElb(boolean ifUseElb) {
+        this.ifUseElb = ifUseElb;
     }
 
     public int getServerNum() {
         if (serverNum <= 0) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <serverNum> is <= 0, it should be > 0, please set it before use"));
-            throw new RuntimeException();
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <serverNum> <= 0, it should be > 0, please " +
+                    "set it before use"));
+            throw new IllegalArgumentException();
         }
         return serverNum;
     }
@@ -303,40 +296,11 @@ public class FLParameter {
         this.serverNum = serverNum;
     }
 
-    public boolean isTimer() {
-        return timer;
-    }
-
-    public void setTimer(boolean timer) {
-        this.timer = timer;
-    }
-
-    public int getTimeWindow() {
-        return timeWindow;
-    }
-
-    public void setTimeWindow(int timeWindow) {
-        this.timeWindow = timeWindow;
-    }
-
-    public int getReRequestNum() {
-        return reRequestNum;
-    }
-
-    public void setReRequestNum(int reRequestNum) {
-        this.reRequestNum = reRequestNum;
-    }
-
     public String getClientID() {
-        if ("".equals(clientID) || clientID.isEmpty()) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <clientID> is null, please set it before use"));
-            throw new RuntimeException();
+        if (clientID == null || clientID.isEmpty()) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <clientID> is null or empty, please check"));
+            throw new IllegalArgumentException();
         }
         return clientID;
     }
-
-    public void setClientID(String clientID) {
-        this.clientID = clientID;
-    }
-
 }

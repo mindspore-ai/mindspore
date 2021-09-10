@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2019-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,15 @@
 
 package com.mindspore.flclient;
 
-import com.mindspore.flclient.cipher.BaseUtil;
+import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
+import static com.mindspore.flclient.LocalFLParameter.LENET;
+
 import com.mindspore.flclient.model.AlInferBert;
 import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.TrainLenet;
+
 import mindspore.schema.CipherPublicParams;
 import mindspore.schema.FLPlan;
 import mindspore.schema.ResponseCode;
@@ -36,18 +40,21 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
-import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
-import static com.mindspore.flclient.LocalFLParameter.LENET;
-
+/**
+ * Defining the general process of federated learning tasks.
+ *
+ * @since 2021-06-30
+ */
 public class FLLiteClient {
     private static final Logger LOGGER = Logger.getLogger(FLLiteClient.class.toString());
-    private FLCommunication flCommunication;
+    private static int iteration = 0;
+    private static Map<String, float[]> mapBeforeTrain;
 
+    private double dpNormClipFactor = 1.0d;
+    private double dpNormClipAdapt = 0.05d;
+    private FLCommunication flCommunication;
     private FLClientStatus status;
     private int retCode;
-
-    private static int iteration = 0;
     private int iterations = 1;
     private int epochs = 1;
     private int batchSize = 16;
@@ -55,22 +62,21 @@ public class FLLiteClient {
     private byte[] prime;
     private int featureSize;
     private int trainDataSize;
-    private double dpEps = 100;
-    private double dpDelta = 0.01;
-    public double dpNormClipFactor = 1.0;
-    public double dpNormClipAdapt = 0.05;
-
+    private double dpEps = 100d;
+    private double dpDelta = 0.01d;
     private FLParameter flParameter = FLParameter.getInstance();
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
     private SecureProtocol secureProtocol = new SecureProtocol();
-    private static Map<String, float[]> mapBeforeTrain;
     private String nextRequestTime;
 
+    /**
+     * Defining a constructor of teh class FLLiteClient.
+     */
     public FLLiteClient() {
         flCommunication = FLCommunication.getInstance();
     }
 
-    public int setGlobalParameters(ResponseFLJob flJob) {
+    private int setGlobalParameters(ResponseFLJob flJob) {
         FLPlan flPlan = flJob.flPlanConfig();
         if (flPlan == null) {
             LOGGER.severe(Common.addTag("[startFLJob] the FLPlan get from server is null"));
@@ -90,14 +96,22 @@ public class FLLiteClient {
             LOGGER.info(Common.addTag("[startFLJob] set <batchSize> for TrainLenet: " + batchSize));
             TrainLenet trainLenet = TrainLenet.getInstance();
             trainLenet.setBatchSize(batchSize);
+        } else {
+            LOGGER.severe(Common.addTag("[startFLJob] the ServerMod returned from server is not valid"));
+            return -1;
         }
         LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <iterations> from server: " + iterations));
         LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <epochs> from server: " + epochs));
         LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <batchSize> from server: " + batchSize));
         CipherPublicParams cipherPublicParams = flPlan.cipher();
+        if (cipherPublicParams == null) {
+            LOGGER.severe(Common.addTag("[startFLJob] the cipherPublicParams returned from server is null"));
+            return -1;
+        }
         String encryptLevel = cipherPublicParams.encryptType();
-        if ("".equals(encryptLevel) || encryptLevel.isEmpty()) {
-            LOGGER.severe(Common.addTag("[startFLJob] GlobalParameters <encryptLevel> from server is null, set the encryptLevel to NOT_ENCRYPT "));
+        if (encryptLevel == null || encryptLevel.isEmpty()) {
+            LOGGER.severe(Common.addTag("[startFLJob] GlobalParameters <encryptLevel> from server is null, set the " +
+                    "encryptLevel to NOT_ENCRYPT "));
             localFLParameter.setEncryptLevel(EncryptLevel.NOT_ENCRYPT.toString());
         } else {
             localFLParameter.setEncryptLevel(encryptLevel);
@@ -113,10 +127,10 @@ public class FLLiteClient {
                 }
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <minSecretNum> from server: " + minSecretNum));
                 if (minSecretNum <= 0) {
-                    LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <minSecretNum> from server is not valid:  <=0"));
+                    LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <minSecretNum> from server is not valid:" +
+                            "  <=0"));
                     return -1;
                 }
-                LOGGER.info(Common.addTag("[Encrypt] the prime from server: " + BaseUtil.byte2HexString(prime)));
                 break;
             case DP_ENCRYPT:
                 dpEps = cipherPublicParams.dpEps();
@@ -124,53 +138,97 @@ public class FLLiteClient {
                 dpNormClipFactor = cipherPublicParams.dpNormClip();
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpEps> from server: " + dpEps));
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpDelta> from server: " + dpDelta));
-                LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpNormClipFactor> from server: " + dpNormClipFactor));
+                LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpNormClipFactor> from server: " +
+                        dpNormClipFactor));
                 break;
             default:
-                LOGGER.info(Common.addTag("[startFLJob] NotEncrypt, do not set parameter for Encrypt"));
+                LOGGER.info(Common.addTag("[startFLJob] NOT_ENCRYPT, do not set parameter for Encrypt"));
         }
         return 0;
     }
 
+    /**
+     * Obtain retCode returned by server.
+     *
+     * @return the retCode returned by server.
+     */
     public int getRetCode() {
         return retCode;
     }
 
+    /**
+     * Obtain current iteration returned by server.
+     *
+     * @return the current iteration returned by server.
+     */
     public int getIteration() {
         return iteration;
     }
 
+    /**
+     * Obtain total iterations for the task returned by server.
+     *
+     * @return the total iterations for the task returned by server.
+     */
     public int getIterations() {
         return iterations;
     }
 
-    public int getEpochs() {
-        return epochs;
-    }
-
-    public int getBatchSize() {
-        return batchSize;
-    }
-
+    /**
+     * Obtain the returned timestamp for next request from server.
+     *
+     * @return the timestamp for next request.
+     */
     public String getNextRequestTime() {
         return nextRequestTime;
     }
 
-    public void setNextRequestTime(String nextRequestTime) {
-        this.nextRequestTime = nextRequestTime;
-    }
-
+    /**
+     * set the size of train date set.
+     *
+     * @param trainDataSize the size of train date set.
+     */
     public void setTrainDataSize(int trainDataSize) {
         this.trainDataSize = trainDataSize;
     }
 
-    public FLClientStatus checkStatus() {
-        return this.status;
+    /**
+     * Obtain the dpNormClipFactor.
+     *
+     * @return the dpNormClipFactor.
+     */
+    public double getDpNormClipFactor() {
+        return dpNormClipFactor;
     }
 
+    /**
+     * Obtain the dpNormClipAdapt.
+     *
+     * @return the dpNormClipAdapt.
+     */
+    public double getDpNormClipAdapt() {
+        return dpNormClipAdapt;
+    }
+
+    /**
+     * Set the dpNormClipAdapt.
+     *
+     * @param dpNormClipAdapt the dpNormClipAdapt.
+     */
+    public void setDpNormClipAdapt(double dpNormClipAdapt) {
+        this.dpNormClipAdapt = dpNormClipAdapt;
+    }
+
+    /**
+     * Send serialized request message of startFLJob to server.
+     *
+     * @return the status code corresponding to the response message.
+     */
     public FLClientStatus startFLJob() {
-        LOGGER.info(Common.addTag("[startFLJob] ====================================Verify server===================================="));
-        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        LOGGER.info(Common.addTag("[startFLJob] ====================================Verify " +
+                "server===================================="));
+        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
+                flParameter.getDomainName());
         StartFLJob startFLJob = StartFLJob.getInstance();
         Date date = new Date();
         long time = date.getTime();
@@ -179,8 +237,9 @@ public class FLLiteClient {
             long start = Common.startTime("single startFLJob");
             LOGGER.info(Common.addTag("[startFLJob] the request message length: " + msg.length));
             byte[] message = flCommunication.syncRequest(url + "/startFLJob", msg);
-            if (Common.isSafeMod(message, localFLParameter.getSafeMod())) {
-                LOGGER.info(Common.addTag("[startFLJob] The cluster is in safemode, need wait some time and request again"));
+            if (!Common.isSeverReady(message)) {
+                LOGGER.info(Common.addTag("[startFLJob] the server is not ready now, need wait some time and request " +
+                        "again"));
                 status = FLClientStatus.RESTART;
                 Common.sleep(SLEEP_TIME);
                 nextRequestTime = "";
@@ -193,14 +252,15 @@ public class FLLiteClient {
             status = judgeStartFLJob(startFLJob, responseDataBuf);
             retCode = responseDataBuf.retcode();
         } catch (IOException e) {
-            LOGGER.severe(Common.addTag("[startFLJob] unsolved error code in StartFLJob: catch IOException: " + e.getMessage()));
+            LOGGER.severe(Common.addTag("[startFLJob] unsolved error code in StartFLJob: catch IOException: " +
+                    e.getMessage()));
             status = FLClientStatus.FAILED;
             retCode = ResponseCode.RequestError;
         }
         return status;
     }
 
-    public FLClientStatus judgeStartFLJob(StartFLJob startFLJob, ResponseFLJob responseDataBuf) {
+    private FLClientStatus judgeStartFLJob(StartFLJob startFLJob, ResponseFLJob responseDataBuf) {
         iteration = responseDataBuf.iteration();
         FLClientStatus response = startFLJob.doResponse(responseDataBuf);
         status = response;
@@ -218,6 +278,10 @@ public class FLLiteClient {
                 break;
             case RESTART:
                 FLPlan flPlan = responseDataBuf.flPlanConfig();
+                if (flPlan == null) {
+                    LOGGER.severe(Common.addTag("[startFLJob] the flPlan returned from server is null"));
+                    return FLClientStatus.FAILED;
+                }
                 iterations = flPlan.iterations();
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <iterations> from server: " + iterations));
                 nextRequestTime = responseDataBuf.nextReqTime();
@@ -226,14 +290,21 @@ public class FLLiteClient {
                 LOGGER.severe(Common.addTag("[startFLJob] startFLJob failed"));
                 break;
             default:
-                LOGGER.severe(Common.addTag("[startFLJob] failed: the response of startFLJob is out of range <SUCCESS, WAIT, FAILED, Restart>"));
+                LOGGER.severe(Common.addTag("[startFLJob] failed: the response of startFLJob is out of range " +
+                        "<SUCCESS, WAIT, FAILED, Restart>"));
                 status = FLClientStatus.FAILED;
         }
         return status;
     }
 
+    /**
+     * Define the training process.
+     *
+     * @return the status code corresponding to the response message.
+     */
     public FLClientStatus localTrain() {
-        LOGGER.info(Common.addTag("[train] ====================================global train epoch " + iteration + "===================================="));
+        LOGGER.info(Common.addTag("[train] ====================================global train epoch " + iteration +
+                "===================================="));
         status = FLClientStatus.SUCCESS;
         retCode = ResponseCode.SUCCEED;
         if (flParameter.getFlName().equals(ALBERT)) {
@@ -254,12 +325,22 @@ public class FLLiteClient {
                 status = FLClientStatus.FAILED;
                 retCode = ResponseCode.RequestError;
             }
+        } else {
+            LOGGER.severe(Common.addTag("[train] the flName is not valid"));
+            status = FLClientStatus.FAILED;
+            retCode = ResponseCode.RequestError;
         }
         return status;
     }
 
+    /**
+     * Send serialized request message of updateModel to server.
+     *
+     * @return the status code corresponding to the response message.
+     */
     public FLClientStatus updateModel() {
-        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
+                flParameter.getDomainName());
         UpdateModel updateModelBuf = UpdateModel.getInstance();
         byte[] updateModelBuffer = updateModelBuf.getRequestUpdateFLJob(iteration, secureProtocol, trainDataSize);
         if (updateModelBuf.getStatus() == FLClientStatus.FAILED) {
@@ -270,8 +351,9 @@ public class FLLiteClient {
             long start = Common.startTime("single updateModel");
             LOGGER.info(Common.addTag("[updateModel] the request message length: " + updateModelBuffer.length));
             byte[] message = flCommunication.syncRequest(url + "/updateModel", updateModelBuffer);
-            if (Common.isSafeMod(message, localFLParameter.getSafeMod())) {
-                LOGGER.info(Common.addTag("[updateModel] The cluster is in safemode, need wait some time and request again"));
+            if (!Common.isSeverReady(message)) {
+                LOGGER.info(Common.addTag("[updateModel] the server is not ready now, need wait some time and request" +
+                        " again"));
                 status = FLClientStatus.RESTART;
                 Common.sleep(SLEEP_TIME);
                 nextRequestTime = "";
@@ -288,23 +370,31 @@ public class FLLiteClient {
             }
             LOGGER.info(Common.addTag("[updateModel] get response from server ok!"));
         } catch (IOException e) {
-            LOGGER.severe(Common.addTag("[updateModel] unsolved error code in updateModel: catch IOException: " + e.getMessage()));
+            LOGGER.severe(Common.addTag("[updateModel] unsolved error code in updateModel: catch IOException: " +
+                    e.getMessage()));
             status = FLClientStatus.FAILED;
             retCode = ResponseCode.RequestError;
         }
         return status;
     }
 
+    /**
+     * Send serialized request message of getModel to server.
+     *
+     * @return the status code corresponding to the response message.
+     */
     public FLClientStatus getModel() {
-        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
+                flParameter.getDomainName());
         GetModel getModelBuf = GetModel.getInstance();
         byte[] buffer = getModelBuf.getRequestGetModel(flParameter.getFlName(), iteration);
         try {
             long start = Common.startTime("single getModel");
             LOGGER.info(Common.addTag("[getModel] the request message length: " + buffer.length));
             byte[] message = flCommunication.syncRequest(url + "/getModel", buffer);
-            if (Common.isSafeMod(message, localFLParameter.getSafeMod())) {
-                LOGGER.info(Common.addTag("[getModel] The cluster is in safemode, need wait some time and request again"));
+            if (!Common.isSeverReady(message)) {
+                LOGGER.info(Common.addTag("[getModel] the server is not ready now, need wait some time and request " +
+                        "again"));
                 status = FLClientStatus.WAIT;
                 return status;
             }
@@ -327,6 +417,12 @@ public class FLLiteClient {
         return status;
     }
 
+    /**
+     * Obtain the weight of the model before training.
+     *
+     * @param map a map to store the weight of the model.
+     * @return the weight.
+     */
     public static synchronized Map<String, float[]> getOldMapCopy(Map<String, float[]> map) {
         if (mapBeforeTrain == null) {
             Map<String, float[]> copyMap = new TreeMap<>();
@@ -334,7 +430,8 @@ public class FLLiteClient {
                 float[] data = map.get(key);
                 int dataLen = data.length;
                 float[] weights = new float[dataLen];
-                if ((key.indexOf("Default") < 0) && (key.indexOf("nhwc") < 0) && (key.indexOf("moment") < 0) && (key.indexOf("learning") < 0)) {
+                if ((key.indexOf("Default") < 0) && (key.indexOf("nhwc") < 0) && (key.indexOf("moment") < 0) &&
+                        (key.indexOf("learning") < 0)) {
                     for (int j = 0; j < dataLen; j++) {
                         float weight = data[j];
                         weights[j] = weight;
@@ -348,7 +445,8 @@ public class FLLiteClient {
                 float[] data = map.get(key);
                 float[] copyData = mapBeforeTrain.get(key);
                 int dataLen = data.length;
-                if ((key.indexOf("Default") < 0) && (key.indexOf("nhwc") < 0) && (key.indexOf("moment") < 0) && (key.indexOf("learning") < 0)) {
+                if ((key.indexOf("Default") < 0) && (key.indexOf("nhwc") < 0) && (key.indexOf("moment") < 0) &&
+                        (key.indexOf("learning") < 0)) {
                     for (int j = 0; j < dataLen; j++) {
                         copyData[j] = data[j];
                     }
@@ -358,18 +456,25 @@ public class FLLiteClient {
         return mapBeforeTrain;
     }
 
+    /**
+     * Obtain pairwise mask and individual mask.
+     *
+     * @return the status code corresponding to the response message.
+     */
     public FLClientStatus getFeatureMask() {
         FLClientStatus curStatus;
         switch (localFLParameter.getEncryptLevel()) {
             case PW_ENCRYPT:
-                LOGGER.info(Common.addTag("[Encrypt] creating feature mask of <" + localFLParameter.getEncryptLevel().toString() + ">"));
+                LOGGER.info(Common.addTag("[Encrypt] creating feature mask of <" +
+                        localFLParameter.getEncryptLevel().toString() + ">"));
                 secureProtocol.setPWParameter(iteration, minSecretNum, prime, featureSize);
                 curStatus = secureProtocol.pwCreateMask();
                 if (curStatus == FLClientStatus.RESTART) {
                     nextRequestTime = secureProtocol.getNextRequestTime();
                 }
                 retCode = secureProtocol.getRetCode();
-                LOGGER.info(Common.addTag("[Encrypt] the response of create mask for <" + localFLParameter.getEncryptLevel().toString() + "> : " + curStatus));
+                LOGGER.info(Common.addTag("[Encrypt] the response of create mask for <" +
+                        localFLParameter.getEncryptLevel().toString() + "> : " + curStatus));
                 return curStatus;
             case DP_ENCRYPT:
                 Map<String, float[]> map = new HashMap<String, float[]>();
@@ -388,7 +493,7 @@ public class FLLiteClient {
                     retCode = ResponseCode.RequestError;
                     return FLClientStatus.FAILED;
                 }
-                LOGGER.info(Common.addTag("[Encrypt] set parameters for DPEncrypt!"));
+                LOGGER.info(Common.addTag("[Encrypt] set parameters for DP_ENCRYPT!"));
                 return FLClientStatus.SUCCESS;
             case NOT_ENCRYPT:
                 retCode = ResponseCode.SUCCEED;
@@ -401,6 +506,11 @@ public class FLLiteClient {
         }
     }
 
+    /**
+     * Reconstruct the secrets used for unmasking model weights.
+     *
+     * @return current status code in client.
+     */
     public FLClientStatus unMasking() {
         FLClientStatus curStatus;
         switch (localFLParameter.getEncryptLevel()) {
@@ -413,7 +523,7 @@ public class FLLiteClient {
                 }
                 return curStatus;
             case DP_ENCRYPT:
-                LOGGER.info(Common.addTag("[Encrypt] DPEncrypt do not need unmasking"));
+                LOGGER.info(Common.addTag("[Encrypt] DP_ENCRYPT do not need unmasking"));
                 retCode = ResponseCode.SUCCEED;
                 return FLClientStatus.SUCCESS;
             case NOT_ENCRYPT:
@@ -427,18 +537,26 @@ public class FLLiteClient {
         }
     }
 
+    /**
+     * Evaluate model after getting model from server.
+     *
+     * @return the status code in client.
+     */
     public FLClientStatus evaluateModel() {
         status = FLClientStatus.SUCCESS;
         retCode = ResponseCode.SUCCEED;
-        LOGGER.info(Common.addTag("===================================evaluate model after getting model from server==================================="));
+        LOGGER.info(Common.addTag("===================================evaluate model after getting model from " +
+                "server==================================="));
         if (flParameter.getFlName().equals(ALBERT)) {
             float acc = 0;
             if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
                 LOGGER.info(Common.addTag("[evaluate] evaluateModel by " + localFLParameter.getServerMod()));
                 AlInferBert alInferBert = AlInferBert.getInstance();
-                int dataSize = alInferBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(), flParameter.getIdsFile(), true);
+                int dataSize = alInferBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(),
+                        flParameter.getIdsFile(), true);
                 if (dataSize <= 0) {
-                    LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alInferBert.initDataSet>: the return dataSize<=0"));
+                    LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alInferBert.initDataSet>: the " +
+                            "return dataSize<=0"));
                     status = FLClientStatus.FAILED;
                     retCode = ResponseCode.RequestError;
                     return status;
@@ -447,47 +565,66 @@ public class FLLiteClient {
             } else {
                 LOGGER.info(Common.addTag("[evaluate] evaluateModel by " + localFLParameter.getServerMod()));
                 AlTrainBert alTrainBert = AlTrainBert.getInstance();
-                int dataSize = alTrainBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(), flParameter.getIdsFile());
+                int dataSize = alTrainBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(),
+                        flParameter.getIdsFile());
                 if (dataSize <= 0) {
-                    LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alTrainBert.initDataSet>: the return dataSize<=0"));
+                    LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alTrainBert.initDataSet>: the " +
+                            "return dataSize<=0"));
                     status = FLClientStatus.FAILED;
                     retCode = ResponseCode.RequestError;
                     return status;
                 }
                 acc = alTrainBert.evalModel();
             }
-            if (acc == Float.NaN) {
+            if (Float.isNaN(acc)) {
                 LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <evalModel>: the return acc is NAN"));
                 status = FLClientStatus.FAILED;
                 retCode = ResponseCode.RequestError;
                 return status;
             }
-            LOGGER.info(Common.addTag("[evaluate] modelPath: " + flParameter.getInferModelPath() + " dataPath: " + flParameter.getTestDataset() + " vocabFile: " + flParameter.getVocabFile() + " idsFile: " + flParameter.getIdsFile()));
+            LOGGER.info(Common.addTag("[evaluate] modelPath: " + flParameter.getInferModelPath() + " dataPath: " +
+                    flParameter.getTestDataset() + " vocabFile: " + flParameter.getVocabFile() +
+                    " idsFile: " + flParameter.getIdsFile()));
             LOGGER.info(Common.addTag("[evaluate] evaluate acc: " + acc));
         } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
-            int dataSize = trainLenet.initDataSet(flParameter.getTestDataset().split(",")[0], flParameter.getTestDataset().split(",")[1]);
+            if (flParameter.getTestDataset().split(",").length < 2) {
+                LOGGER.severe(Common.addTag("[evaluate] the set testDataPath for lenet is not valid, should be the " +
+                        "format of <data.bin,label.bin> "));
+                status = FLClientStatus.FAILED;
+                retCode = ResponseCode.RequestError;
+                return status;
+            }
+            int dataSize = trainLenet.initDataSet(flParameter.getTestDataset().split(",")[0],
+                    flParameter.getTestDataset().split(",")[1]);
             if (dataSize <= 0) {
-                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <trainLenet.initDataSet>: the return dataSize<=0"));
+                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <trainLenet.initDataSet>: the return " +
+                        "dataSize<=0"));
                 status = FLClientStatus.FAILED;
                 retCode = ResponseCode.RequestError;
                 return status;
             }
             float acc = trainLenet.evalModel();
-            if (acc == Float.NaN) {
-                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <trainLenet.evalModel>: the return acc is NAN"));
+            if (Float.isNaN(acc)) {
+                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <trainLenet.evalModel>: the return acc" +
+                        " is NAN"));
                 status = FLClientStatus.FAILED;
                 retCode = ResponseCode.RequestError;
                 return status;
             }
-            LOGGER.info(Common.addTag("[evaluate] modelPath: " + flParameter.getInferModelPath() + " dataPath: " + flParameter.getTestDataset().split(",")[0] + " labelPath: " + flParameter.getTestDataset().split(",")[1]));
+            LOGGER.info(Common.addTag("[evaluate] modelPath: " + flParameter.getInferModelPath() + " dataPath: " +
+                    flParameter.getTestDataset().split(",")[0] + " labelPath: " +
+                    flParameter.getTestDataset().split(",")[1]));
             LOGGER.info(Common.addTag("[evaluate] evaluate acc: " + acc));
         }
         return status;
     }
 
     /**
-     * @param dataPath,  train or test dataset and label set
+     * Set date path.
+     *
+     * @param dataPath, train or test dataset and label set.
+     * @return date size.
      */
     public int setInput(String dataPath) {
         retCode = ResponseCode.SUCCEED;
@@ -496,15 +633,18 @@ public class FLLiteClient {
         if (flParameter.getFlName().equals(ALBERT)) {
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             dataSize = alTrainBert.initDataSet(dataPath, flParameter.getVocabFile(), flParameter.getIdsFile());
-            LOGGER.info(Common.addTag("[set input] " + "dataPath: " + dataPath + " dataSize: " + +dataSize + " vocabFile: " + flParameter.getVocabFile() + " idsFile: " + flParameter.getIdsFile()));
+            LOGGER.info(Common.addTag("[set input] " + "dataPath: " + dataPath + " dataSize: " + +dataSize + " " +
+                    "vocabFile: " + flParameter.getVocabFile() + " idsFile: " + flParameter.getIdsFile()));
         } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
             if (dataPath.split(",").length < 2) {
-                LOGGER.info(Common.addTag("[set input] the set dataPath for lenet is not valid, should be the format of <data.bin,label.bin>"));
+                LOGGER.severe(Common.addTag("[set input] the set dataPath for lenet is not valid, should be the " +
+                        "format of <data.bin,label.bin> "));
                 return -1;
             }
             dataSize = trainLenet.initDataSet(dataPath.split(",")[0], dataPath.split(",")[1]);
-            LOGGER.info(Common.addTag("[set input] " + "dataPath: " + dataPath.split(",")[0] + " dataSize: " + +dataSize + " labelPath: " + dataPath.split(",")[1]));
+            LOGGER.info(Common.addTag("[set input] " + "dataPath: " + dataPath.split(",")[0] + " dataSize: " +
+                    dataSize + " labelPath: " + dataPath.split(",")[1]));
         }
         if (dataSize <= 0) {
             retCode = ResponseCode.RequestError;
@@ -513,36 +653,48 @@ public class FLLiteClient {
         return dataSize;
     }
 
+    /**
+     * Initialization session.
+     *
+     * @return the status code in client.
+     */
     public FLClientStatus initSession() {
         int tag = 0;
         retCode = ResponseCode.SUCCEED;
         if (flParameter.getFlName().equals(ALBERT)) {
-            LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create Train Session============="));
+            LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
+                    "Train Session============="));
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             tag = alTrainBert.initSessionAndInputs(flParameter.getTrainModelPath(), true);
             if (tag == -1) {
-                LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return is -1"));
+                LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
+                        "is -1"));
                 retCode = ResponseCode.RequestError;
                 return FLClientStatus.FAILED;
             }
-            LOGGER.info(Common.addTag("==========Loading inference model, " + flParameter.getInferModelPath() + " Create inference Session============="));
+            LOGGER.info(Common.addTag("==========Loading inference model, " + flParameter.getInferModelPath() + " " +
+                    "Create inference Session============="));
             AlInferBert alInferBert = AlInferBert.getInstance();
             tag = alInferBert.initSessionAndInputs(flParameter.getInferModelPath(), false);
         } else if (flParameter.getFlName().equals(LENET)) {
-            LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create Train Session============="));
+            LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
+                    "Train Session============="));
             TrainLenet trainLenet = TrainLenet.getInstance();
             tag = trainLenet.initSessionAndInputs(flParameter.getTrainModelPath(), true);
         }
         if (tag == -1) {
-            LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return is -1"));
+            LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return is " +
+                    "-1"));
             retCode = ResponseCode.RequestError;
             return FLClientStatus.FAILED;
         }
         return FLClientStatus.SUCCESS;
     }
 
-    @Override
-    protected void finalize() {
+    /**
+     * Free session.
+     */
+    protected void freeSession() {
         if (flParameter.getFlName().equals(ALBERT)) {
             LOGGER.info(Common.addTag("===========free train session============="));
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
@@ -558,5 +710,4 @@ public class FLLiteClient {
             SessionUtil.free(trainLenet.getTrainSession());
         }
     }
-
 }
