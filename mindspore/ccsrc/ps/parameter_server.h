@@ -142,6 +142,8 @@ class ParameterServer {
   inline std::mutex &mutex();
   void GetEmbeddingTableParamPtr();
   void SyncEmbeddingTables();
+  // Cache embedding table parameter by map, key: parameter name, value: parameter node pointer
+  void CacheEmbeddingTableParamPtr();
 
   size_t pserver_num_;
   size_t worker_num_;
@@ -150,6 +152,9 @@ class ParameterServer {
   FuncGraphPtr func_graph_;
   std::shared_ptr<session::SessionBasic> sess_;
   bool running_;
+  bool embedding_param_ptr_cached_{false};
+  // Used to cache embedding table parameter, key: parameter name, value: parameter node pointer
+  std::map<std::string, ParameterPtr> embedding_parameter_tables_;
 
   std::unordered_map<Key, std::shared_ptr<PServerKernel>> optimizers_;
   std::unordered_map<Key, InputsShapePtr> optim_inputs_shape_;

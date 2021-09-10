@@ -15,9 +15,14 @@
  */
 
 #include "ps/parameter_server.h"
+#include <algorithm>
+#include <thread>
 
 namespace mindspore {
 namespace ps {
+static const uint32_t kMaxThreadNum = 16;
+static const uint32_t kCPUCoreNum = std::thread::hardware_concurrency();
+
 void ParameterServer::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "PServer starts connecting to scheduler and workers...";
@@ -158,6 +163,37 @@ void ParameterServer::InitGrad(const Key &key, const GradPtr &grad) {
   }
 }
 
+namespace {
+// Initialize accumulation by multithreading parallelism.
+void InitAccumParallel(float init_value, size_t total_len, float *embedding_data) {
+  MS_EXCEPTION_IF_NULL(embedding_data);
+  auto init_task = [](float value, size_t task_len, float *data) {
+    for (size_t i = 0; i < task_len; i++) {
+      data[i] = value;
+    }
+  };
+
+  size_t thread_num = std::max(kMaxThreadNum, kCPUCoreNum);
+  if (total_len <= thread_num) {
+    thread_num = 1;
+  }
+
+  std::vector<std::thread> threads(thread_num);
+  size_t task_offset = 0;
+
+  for (size_t i = 0; i < thread_num; ++i) {
+    // The value of thread_num is >= 1.
+    size_t task_len = total_len / thread_num + (i < (total_len % thread_num) ? 1 : 0);
+    threads[i] = std::thread(init_task, init_value, task_len, embedding_data + task_offset);
+    task_offset += task_len;
+  }
+
+  for (size_t i = 0; i < thread_num; i++) {
+    threads[i].join();
+  }
+}
+}  // namespace
+
 void ParameterServer::InitEmbeddingTable(
   const Key &key, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes,
   const ParamInitInfo &param_init_info) {
@@ -178,13 +214,20 @@ void ParameterServer::InitEmbeddingTable(
     std::default_random_engine engine;
     std::normal_distribution<float> random(0, kStdDev);
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+      CacheEmbeddingTableParamPtr();
       if (param_init_info.param_type_ == kWeight) {
+        const std::string &param_name = param_init_info.param_name_;
+        auto iter = embedding_parameter_tables_.find(param_name);
+        if (iter == embedding_parameter_tables_.end()) {
+          MS_LOG(EXCEPTION) << "Can not find parameter info for: " << param_name;
+        }
+        // Cache embedding table parameter by weight key to parameter node pointer.
+        embedding_tables_.emplace(key, iter->second);
+
         InitRandomNormal(0, kStdDev, input_shapes, param_init_info.global_seed_, param_init_info.op_seed_,
                          embedding_data);
       } else if (param_init_info.param_type_ == kAccumulation) {
-        for (size_t i = 0; i < total_dims; i++) {
-          embedding_data[i] = param_init_info.init_val_;
-        }
+        InitAccumParallel(param_init_info.init_val_, total_dims, embedding_data);
       }
     } else {
       for (size_t i = 0; i < total_dims; i++) {
@@ -423,6 +466,10 @@ const CNodePtr ParameterServer::GetCNode(const std::string &name) const {
 inline std::mutex &ParameterServer::mutex() { return mutex_; }
 
 void ParameterServer::GetEmbeddingTableParamPtr() {
+  if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+    return;
+  }
+
   MS_EXCEPTION_IF_NULL(func_graph_);
   auto cnodes = func_graph_->GetOrderedCnodes();
   Key count = 0;
@@ -443,6 +490,36 @@ void ParameterServer::GetEmbeddingTableParamPtr() {
       }
     }
   }
+}
+
+void ParameterServer::CacheEmbeddingTableParamPtr() {
+  if (embedding_param_ptr_cached_) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  auto cnodes = func_graph_->GetOrderedCnodes();
+  for (auto cnode : cnodes) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    std::string cnode_name = AnfAlgo::GetCNodeName(cnode);
+    if (cnode_name != kGatherV2OpName && cnode_name != kSparseGatherV2OpName) {
+      continue;
+    }
+
+    auto embedding_table = AnfAlgo::GetInputNode(cnode, 0);
+    if (IsPrimitiveCNode(embedding_table, prim::kPrimLoad)) {
+      auto embedding_cnode = embedding_table->cast<CNodePtr>();
+      embedding_table = AnfAlgo::GetInputNode(embedding_cnode, 0);
+    }
+
+    MS_EXCEPTION_IF_NULL(embedding_table);
+    if (embedding_table->isa<Parameter>()) {
+      embedding_parameter_tables_.emplace(embedding_table->fullname_with_scope(),
+                                          embedding_table->cast<ParameterPtr>());
+    }
+  }
+
+  embedding_param_ptr_cached_ = true;
 }
 
 void ParameterServer::SyncEmbeddingTables() {
@@ -467,9 +544,18 @@ void ParameterServer::SyncEmbeddingTables() {
     }
     MS_EXCEPTION_IF_NULL(new_tensor_data_ptr);
     MS_EXCEPTION_IF_NULL(weights_[key]->data());
-    int64_t ret = memcpy_s(new_tensor_data_ptr, new_tensor_size, weights_[key]->data(), embedding_table_size);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+
+    if (new_tensor_size < SECUREC_MEM_MAX_LEN) {
+      int64_t ret = memcpy_s(new_tensor_data_ptr, new_tensor_size, weights_[key]->data(), embedding_table_size);
+      if (ret != 0) {
+        MS_LOG(EXCEPTION) << "Failed to memcpy embedding table, key: " << key << ", errorno(" << ret << ")";
+        return;
+      }
+    } else {
+      auto ret = std::memcpy(new_tensor_data_ptr, weights_[key]->data(), new_tensor_size);
+      if (ret != new_tensor_data_ptr) {
+        MS_LOG(EXCEPTION) << "Failed to memcpy embedding table, key: " << key;
+      }
       return;
     }
 
@@ -645,6 +731,7 @@ void ParameterServer::ServerHandler::HandleInitEmbeddings(const DataPtr &data, s
   const ParamInitInfoMessage &info = embedding_table_meta.info();
   ParamInitInfo param_init_info;
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+    param_init_info.param_name_ = info.param_name();
     param_init_info.param_type_ = static_cast<ParamType>(info.param_type());
     if (param_init_info.param_type_ == kWeight) {
       param_init_info.global_seed_ = info.global_seed();
