@@ -82,6 +82,7 @@ void TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_shape
   for (int i = 0; i < count; ++i) {
     int temp = i;
     for (int j = static_cast<int>(origin_shape.size()) - 1; j >= 0; --j) {
+      MS_ASSERT(origin_shape[j] > 0);
       position_map[j] = temp % origin_shape[j];
       temp /= origin_shape[j];
     }
@@ -101,6 +102,10 @@ STATUS DoTransposeData(const tensor::TensorPtr &tensor, schema::Format src_forma
     MS_LOG(ERROR) << "Filter dim-num is not supported, dim-num: " << origin_shape.size();
     return lite::RET_ERROR;
   }
+  if (std::any_of(origin_shape.begin(), origin_shape.end(), [](int64_t val) { return val <= 0; })) {
+    MS_LOG(ERROR) << "the tensor's shape is invalid.";
+    return lite::RET_ERROR;
+  }
   std::vector<int> perm;
   if (DeduceDimConvertion(src_format, dst_format, &perm) != RET_OK) {
     MS_LOG(ERROR) << "deduce perm failed.";
@@ -114,9 +119,9 @@ STATUS DoTransposeData(const tensor::TensorPtr &tensor, schema::Format src_forma
     }
     new_shape.push_back(origin_shape[val]);
   }
-  int count = std::accumulate(origin_shape.begin(), origin_shape.end(), 1, std::multiplies<int>());
-  if (count <= 0) {
-    MS_LOG(ERROR) << "Dim size invalid";
+  auto count = std::accumulate(origin_shape.begin(), origin_shape.end(), 1LL, std::multiplies<int64_t>());
+  if (count <= 0 || count > static_cast<int64_t>(INT32_MAX)) {
+    MS_LOG(ERROR) << "tensor element num is too big, which should be smaller than int32_max.";
     return RET_ERROR;
   }
   std::vector<T> buf(count);
@@ -212,7 +217,9 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
   const auto &tuple = utils::cast<VectorRef>(sexp);
   if (multigraph && utils::isa<VarPtr>(graph)) {
     for (auto &x : tuple) {
-      AnfNodePtr node = SexpToNode(x, std::make_shared<Var>("G"), primitive_vars, true);
+      auto is_var = std::make_shared<Var>("G");
+      MS_CHECK_TRUE_RET(is_var != nullptr, nullptr);
+      AnfNodePtr node = SexpToNode(x, is_var, primitive_vars, true);
       input_nodes.push_back(node);
     }
     auto var_ptr = utils::cast<VarPtr>(graph);
@@ -754,6 +761,7 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(con
     return nullptr;
   }
   auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
+  MS_CHECK_TRUE_RET(output_node_list != nullptr, nullptr);
   auto manager = graph->manager();
   if (manager == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -1020,6 +1028,7 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   manager->SetEdge(cnode, kInputIndexTwo, perm_node);
   cnode->set_fullname_with_scope(cnode_name);
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSizeTwo, 1);
+  MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   trans_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;
 }
@@ -1051,6 +1060,7 @@ CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
   manager->SetEdge(cnode, kInputIndexThree, axis_node);
   cnode->set_fullname_with_scope(cnode_name);
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSizeThree, 1);
+  MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   gather_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;
 }

@@ -170,7 +170,9 @@ AnfNodePtr OperatorInfo::CreateReduceNode(const CNodePtr &orig_node, const std::
   }
   // addup inputs element-wise
   auto addn_prim = std::make_shared<ops::AddN>();
+  MS_CHECK_TRUE_RET(addn_prim != nullptr, nullptr);
   auto value_node = NewValueNode(addn_prim);
+  MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> addn_inputs = {value_node};
   (void)std::transform(input_nodes.begin(), input_nodes.end(), std::back_inserter(addn_inputs),
                        [](const AnfNodePtr &p) { return p->cast<CNodePtr>()->input(1); });

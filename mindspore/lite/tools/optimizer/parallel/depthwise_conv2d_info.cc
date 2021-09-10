@@ -69,7 +69,13 @@ void CreateSplitConstantTensors(const tensor::TensorPtr &constant_tensor, const 
     visited_block += splits[i];
     auto cur_shape = UP_DIV(split_dim_size * visited_block, total_block_count);
     split_constant_shapes.at(i).at(split_dim) = cur_shape;
-    split_constant_tensors->push_back(std::make_shared<tensor::Tensor>(weight_type_id, split_constant_shapes.at(i)));
+    auto tensor = std::make_shared<tensor::Tensor>(weight_type_id, split_constant_shapes.at(i));
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "make shared failed.";
+      split_constant_tensors->clear();
+      return;
+    }
+    split_constant_tensors->push_back(std::move(tensor));
   }
 
   std::vector<int64_t> borders;
@@ -77,6 +83,11 @@ void CreateSplitConstantTensors(const tensor::TensorPtr &constant_tensor, const 
   visited_block = 0;
   for (int64_t i = 0; i < split_num - 1; i++) {
     visited_block += splits[i];
+    if (total_block_count == 0) {
+      MS_LOG(ERROR) << "divisor is zero.";
+      split_constant_tensors->clear();
+      return;
+    }
     auto cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
     borders.emplace_back(cur_border);
   }
@@ -279,6 +290,10 @@ void DepthwiseConv2DInfo::AdJustInputs(const std::shared_ptr<ops::Conv2DFusion> 
   }
   // create new depthwise_conv node
   auto conv_cnode = func_graph_->NewCNode(conv_inputs);
+  if (conv_cnode == nullptr) {
+    MS_LOG(ERROR) << "new a cnode failed.";
+    return;
+  }
   conv_cnode->set_fullname_with_scope(conv_cnode_name + std::to_string(output_conv_index));
   (void)CreateMultipleOutputsOfAnfNode(conv_cnode, 1, &tmp_outputs);
   // remember depthwise conv to create concat
@@ -300,6 +315,7 @@ int DepthwiseConv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2D
   int dev_num = static_cast<int>(splits_.size());
   for (int i = 0; i < dev_num; ++i) {
     auto new_depth_conv_prim = CopyConvPrim(conv_prim);
+    MS_CHECK_TRUE_RET(new_depth_conv_prim != nullptr, RET_ERROR);
     new_depth_conv_prim->set_pad_mode(PAD);
     AdJustConvPrim(new_depth_conv_prim, &visited_in_channel, &visited_out_channel, &visited_group, i);
     AdJustInputs(new_depth_conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs, i);
@@ -356,10 +372,10 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
   split_prim->set_number_split(split_num);
   split_prim->set_ratio(new_splits);
 
-  std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
+  std::vector<AnfNodePtr> split_inputs;
   // ori_conv_node must only have one feature input
   split_inputs.push_back(ori_node->input(input_index + 1));
-  auto split_cnode = func_graph_->NewCNode(split_inputs);
+  auto split_cnode = func_graph_->NewCNode(split_prim, split_inputs);
   if (split_cnode == nullptr) {
     MS_LOG(ERROR) << name_ << " : Failed to create split node.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -400,6 +416,7 @@ int DepthwiseConv2DInfo::CreateConstantOutputsOfSplit(std::vector<AnfNodePtr> *s
   }
   auto constant_node = cnode_->input(input_index + 1);
   auto constant_tensor = GetTensorInfo(constant_node);
+  MS_CHECK_TRUE_RET(constant_tensor != nullptr, RET_ERROR);
   std::vector<tensor::TensorPtr> split_constant_tensors;
   CreateSplitConstantTensors(constant_tensor, splits_, split_dim, &split_constant_tensors);
   if (split_constant_tensors.empty()) {
@@ -436,6 +453,7 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
     case SplitH: {
       name_ = input_op_name + ("_input");
       auto feature_split_cnode = CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, dev_num, splits_);
+      MS_CHECK_TRUE_RET(feature_split_cnode != nullptr, RET_ERROR);
       if (CheckSplitResult(feature_split_cnode, feature_split_outputs, dev_num) != RET_OK) {
         return RET_ERROR;
       }
@@ -445,6 +463,7 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
     case SplitCOUT: {
       name_ = input_op_name + ("_input");
       auto feature_split_cnode = CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, dev_num, splits_);
+      MS_CHECK_TRUE_RET(feature_split_cnode != nullptr, RET_ERROR);
       if (CheckSplitResult(feature_split_cnode, feature_split_outputs, dev_num) != RET_OK) {
         return RET_ERROR;
       }

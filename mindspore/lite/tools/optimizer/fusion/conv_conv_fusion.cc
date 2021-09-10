@@ -189,6 +189,7 @@ void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &u
     }
     auto up_bias_parameter = up_conv_cnode->input(kConvBiasIndex)->cast<ParameterPtr>();
     auto new_bias_parameter = func_graph->add_parameter();
+    MS_ASSERT(new_bias_parameter != nullptr);
     if (GenNewConvBias(down_bias_parameter, down_weight_parameter, up_bias_parameter, new_bias_parameter) != RET_OK) {
       MS_LOG(ERROR) << "GenNewConvBias failed.";
       return;
@@ -203,7 +204,7 @@ void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &u
   }
   MS_LOG(INFO) << "fusion node success:" << down_conv_cnode->fullname_with_scope();
   // delete up conv node
-  manager->Replace(up_conv_cnode, up_conv_cnode->input(1));
+  (void)manager->Replace(up_conv_cnode, up_conv_cnode->input(1));
 }
 
 bool IsPrimitiveProper(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_cnode) {
