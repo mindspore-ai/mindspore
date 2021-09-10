@@ -404,10 +404,10 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         >>> # `add` is a metagraph object which will add two objects according to
         >>> # input type using ".register" decorator.
         >>> from mindspore import Tensor
-        >>> from mindspore.ops import Primitive, operations as P
+        >>> from mindspore import ops
         >>> from mindspore import dtype as mstype
         >>>
-        >>> tensor_add = P.Add()
+        >>> tensor_add = ops.Add()
         >>> add = MultitypeFuncGraph('add')
         >>> @add.register("Number", "Number")
         ... def add_scala(x, y):
