@@ -938,9 +938,6 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
     ModelRunner::Instance().RunModel(graph->graph_id());
   } catch (const std::exception &) {
     DumpTaskExceptionInfo(graph);
-    std::string file_name = "task_error_debug" + std::to_string(graph->graph_id()) + ".ir";
-    auto graph_tmp = std::make_shared<session::KernelGraph>(*graph);
-    DumpIR(file_name, graph_tmp, true);
 #ifdef ENABLE_TDTQUE
     // Run task error, we should call TdtHostDestroy to release tdt to avoid DeviceQueueOp hostPush hung
     // case1: cpu usage 100% cause thread/process exit, but some tdt thread remain in backend
