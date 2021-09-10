@@ -37,7 +37,9 @@ class BufferSample(PrimitiveWithInfer):
         buffer_shape (tuple(shape)): The shape of an buffer.
         buffer_dtype (tuple(type)): The type of an buffer.
         seed (int64): Random seed for sample. Default: 0. If use the default seed, it will generate a ramdom
-        one in kernel. Set a number other than `0` to keep a specific seed.
+        one in kernel. Set a number other than `0` to keep a specific seed. Default: 0.
+        unique (bool): Whether the sampled data is strictly unique. Setting it to False has a better performance.
+            Default: False
 
     Inputs:
         - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
@@ -98,7 +100,7 @@ class BufferSample(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, capacity, batch_size, buffer_shape, buffer_dtype, seed=0):
+    def __init__(self, capacity, batch_size, buffer_shape, buffer_dtype, seed=0, unique=False):
         """Initialize BufferSample."""
         self.init_prim_io_names(inputs=["buffer"], outputs=["sample"])
         validator.check_value_type("shape of init data", buffer_shape, [tuple, list], self.name)
@@ -110,6 +112,7 @@ class BufferSample(PrimitiveWithInfer):
         validator.check_int(self._batch_size, capacity, Rel.LE, "batchsize", self.name)
         self.add_prim_attr('capacity', capacity)
         self.add_prim_attr('seed', seed)
+        self.add_prim_attr('unique', unique)
         buffer_elements = []
         for shape in buffer_shape:
             buffer_elements.append(reduce(lambda x, y: x * y, shape))

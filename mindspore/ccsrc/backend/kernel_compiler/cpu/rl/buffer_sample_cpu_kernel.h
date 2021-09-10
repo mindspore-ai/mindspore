@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <random>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -28,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 class BufferCPUSampleKernel : public CPUKernel {
  public:
-  BufferCPUSampleKernel() : element_nums_(0), capacity_(0), batch_size_(0), exp_size_(0), seed_(0) {}
+  BufferCPUSampleKernel() : element_nums_(0), capacity_(0), batch_size_(0), exp_size_(0), seed_(0), unique_(false) {}
 
   ~BufferCPUSampleKernel() override = default;
   void Init(const CNodePtr &kernel_node) {
@@ -36,16 +37,19 @@ class BufferCPUSampleKernel : public CPUKernel {
     auto types = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
     capacity_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "capacity");
     seed_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed");
+    unique_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "unique");
     batch_size_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "batch_size"));
     element_nums_ = shapes.size();
     for (size_t i = 0; i < element_nums_; i++) {
       exp_element_list.push_back(shapes[i] * UnitSizeInBytes(types[i]->type_id()));
     }
-    // init seed for random_shuffle
+    // init seed for random_shuffle and uniform distribution
     if (seed_ == 0) {
       std::srand(time(nullptr));
+      generator_.seed(time(nullptr));
     } else {
       std::srand(seed_);
+      generator_.seed(seed_);
     }
     // buffer size
     for (auto i : exp_element_list) {
@@ -69,12 +73,21 @@ class BufferCPUSampleKernel : public CPUKernel {
                     << std::min(capacity_, IntToLong(count_addr[0]));
     }
     // Generate random indexes
+    // If unique_ == true, use random_shuffle to guarantee the index in generated indexes is unique.
+    // If unique_ == false, use a uniform distribution to generate the indexes. Some of the indexes may be repeated.
+    // Case unique_ == false has a better perfomace than case unique_ ==  true.
     std::vector<size_t> indexes;
-    for (size_t i = 0; i < IntToSize(count_addr[0]); ++i) {
-      indexes.push_back(i);
+    if (unique_) {
+      for (size_t i = 0; i < IntToSize(count_addr[0]); ++i) {
+        indexes.emplace_back(i);
+      }
+      random_shuffle(indexes.begin(), indexes.end(), [&](int i) { return std::rand() % i; });
+    } else {
+      std::uniform_int_distribution<> distrib(0, count_addr[0]);
+      for (size_t i = 0; i < batch_size_; ++i) {
+        indexes.emplace_back(distrib(generator_));
+      }
     }
-
-    random_shuffle(indexes.begin(), indexes.end(), [&](int i) { return std::rand() % i; });
 
     auto task = [&](size_t start, size_t end) {
       for (size_t j = start; j < end; j++) {
@@ -106,6 +119,8 @@ class BufferCPUSampleKernel : public CPUKernel {
   size_t batch_size_;
   int64_t exp_size_;
   int64_t seed_;
+  bool unique_;
+  std::mt19937 generator_;
   std::vector<size_t> exp_element_list;
 };
 }  // namespace kernel
