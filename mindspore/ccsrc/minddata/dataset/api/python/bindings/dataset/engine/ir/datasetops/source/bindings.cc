@@ -32,6 +32,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/div2k_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
@@ -134,6 +135,18 @@ PYBIND_REGISTER(CSVNode, 2, ([](const py::module *m) {
                                                   num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
                       THROW_IF_ERROR(csv->ValidateParams());
                       return csv;
+                    }));
+                }));
+
+PYBIND_REGISTER(DIV2KNode, 2, ([](const py::module *m) {
+                  (void)py::class_<DIV2KNode, DatasetNode, std::shared_ptr<DIV2KNode>>(*m, "DIV2KNode",
+                                                                                       "to create a DIV2KNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, std::string downgrade, int32_t scale,
+                                     bool decode, py::handle sampler) {
+                      auto div2k = std::make_shared<DIV2KNode>(dataset_dir, usage, downgrade, scale, decode,
+                                                               toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(div2k->ValidateParams());
+                      return div2k;
                     }));
                 }));
 

@@ -18,6 +18,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     mappable_leaf_op.cc
     nonmappable_leaf_op.cc
     cityscapes_op.cc
+    div2k_op.cc
     flickr_op.cc
     )
 

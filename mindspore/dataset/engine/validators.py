@@ -1489,3 +1489,45 @@ def check_cityscapes_dataset(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_div2k_dataset(method):
+    """A wrapper that wraps a parameter checker around the original DIV2KDataset."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle', 'decode']
+
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        usage = param_dict.get('usage')
+        check_valid_str(usage, ['train', 'valid', 'all'], "usage")
+
+        downgrade = param_dict.get('downgrade')
+        check_valid_str(downgrade, ['bicubic', 'unknown', 'mild', 'difficult', 'wild'], 'downgrade')
+
+        validate_dataset_param_value(['scale'], param_dict, int)
+        scale = param_dict.get('scale')
+        scale_values = [2, 3, 4, 8]
+        if scale not in scale_values:
+            raise ValueError("Input scale is not within the valid set of {0}.".format(str(scale_values)))
+
+        if scale == 8 and downgrade != "bicubic":
+            raise ValueError("DIV2KNode: scale equal to 8 is allowed only in bicubic downgrade.")
+
+        downgrade_2018 = ["mild", "difficult", "wild"]
+        if downgrade in downgrade_2018 and scale != 4:
+            raise ValueError("DIV2KNode: {0} downgrade requires scale equal to 4.".format(downgrade))
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        return method(self, *args, **kwargs)
+
+    return new_method

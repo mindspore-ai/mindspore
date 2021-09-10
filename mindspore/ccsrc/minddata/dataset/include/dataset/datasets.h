@@ -1524,6 +1524,112 @@ inline std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_f
                                       cache);
 }
 
+/// \class DIV2KDataset
+/// \brief A source dataset for reading and parsing DIV2K dataset.
+class DIV2KDataset : public Dataset {
+ public:
+  /// \brief Constructor of DIV2KDataset.
+  /// \param[in] dataset_dir The dataset dir to be read.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "valid" or "all".
+  /// \param[in] downgrade The mode of downgrade. Acceptable downgrades include "bicubic", "unknown", "mild",
+  ///     "difficult" or "wild".
+  /// \param[in] scale The scale of downgrade. Acceptable scales include 2, 3, 4 or 8.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                        const std::vector<char> &downgrade, int32_t scale, bool decode,
+                        const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of DIV2KDataset.
+  /// \param[in] dataset_dir The dataset dir to be read.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "valid" or "all".
+  /// \param[in] downgrade The mode of downgrade. Acceptable downgrades include "bicubic", "unknown", "mild",
+  ///     "difficult" or "wild".
+  /// \param[in] scale The scale of downgrade. Acceptable scales include 2, 3, 4 or 8.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                        const std::vector<char> &downgrade, int32_t scale, bool decode, const Sampler *sampler,
+                        const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of DIV2KDataset.
+  /// \param[in] dataset_dir The dataset dir to be read.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "valid" or "all".
+  /// \param[in] downgrade The mode of downgrade. Acceptable downgrades include "bicubic", "unknown", "mild",
+  ///     "difficult" or "wild".
+  /// \param[in] scale The scale of downgrade. Acceptable scales include 2, 3, 4 or 8.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                        const std::vector<char> &downgrade, int32_t scale, bool decode,
+                        const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of DIV2KDataset.
+  ~DIV2KDataset() = default;
+};
+
+/// \brief Function to create a DIV2KDataset.
+/// \note The generated dataset has two columns ["hr_image", "lr_image"].
+/// \param[in] dataset_dir The dataset dir to be read.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "valid" or "all".
+/// \param[in] downgrade The mode of downgrade. Acceptable downgrades include "bicubic", "unknown", "mild", "difficult"
+///     or "wild".
+/// \param[in] scale The scale of downgrade. Acceptable scales include 2, 3, 4 or 8.
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current DIV2KDataset.
+inline std::shared_ptr<DIV2KDataset> DIV2K(const std::string &dataset_dir, const std::string &usage,
+                                           const std::string &downgrade, int32_t scale, bool decode = false,
+                                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<DIV2KDataset>(StringToChar(dataset_dir), StringToChar(usage), StringToChar(downgrade), scale,
+                                        decode, sampler, cache);
+}
+
+/// \brief Function to create a DIV2KDataset.
+/// \note The generated dataset has two columns ["hr_image", "lr_image"].
+/// \param[in] dataset_dir The dataset dir to be read.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "valid" or "all".
+/// \param[in] downgrade The mode of downgrade. Acceptable downgrades include "bicubic", "unknown", "mild", "difficult"
+///     or "wild".
+/// \param[in] scale The scale of downgrade. Acceptable scales include 2, 3, 4 or 8.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current DIV2KDataset.
+inline std::shared_ptr<DIV2KDataset> DIV2K(const std::string &dataset_dir, const std::string &usage,
+                                           const std::string &downgrade, int32_t scale, bool decode,
+                                           const Sampler *sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<DIV2KDataset>(StringToChar(dataset_dir), StringToChar(usage), StringToChar(downgrade), scale,
+                                        decode, sampler, cache);
+}
+
+/// \brief Function to create a DIV2KDataset.
+/// \note The generated dataset has two columns ["hr_image", "lr_image"].
+/// \param[in] dataset_dir The dataset dir to be read.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "valid" or "all".
+/// \param[in] downgrade The mode of downgrade. Acceptable downgrades include "bicubic", "unknown", "mild", "difficult"
+///     or "wild".
+/// \param[in] scale The scale of downgrade. Acceptable scales include 2, 3, 4 or 8.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current DIV2KDataset.
+inline std::shared_ptr<DIV2KDataset> DIV2K(const std::string &dataset_dir, const std::string &usage,
+                                           const std::string &downgrade, int32_t scale, bool decode,
+                                           const std::reference_wrapper<Sampler> sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<DIV2KDataset>(StringToChar(dataset_dir), StringToChar(usage), StringToChar(downgrade), scale,
+                                        decode, sampler, cache);
+}
+
 /// \class FlickrDataset
 /// \brief A source dataset for reading and parsing Flickr dataset.
 class FlickrDataset : public Dataset {
