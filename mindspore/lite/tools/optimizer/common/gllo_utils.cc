@@ -358,6 +358,34 @@ std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value) {
   return result_value;
 }
 
+std::vector<float> CastToFloat(const ValuePtr &value) {
+  if (value == nullptr) {
+    MS_LOG(WARNING) << "valueptr is nullptr.";
+    return {};
+  }
+  std::vector<float> cur_value = {};
+  if (utils::isa<ValueSequeuePtr>(value)) {
+    if (!value->cast<ValueSequeuePtr>()->value().empty()) {
+      auto data_type = value->cast<ValueSequeuePtr>()->value().front()->type()->number_type();
+      if (data_type == kNumberTypeFloat || data_type == kNumberTypeFloat32) {
+        cur_value = GetValue<std::vector<float>>(value);
+      } else {
+        MS_LOG(ERROR) << "the function only process float data.";
+        return {};
+      }
+    }
+  } else {
+    auto data_type = value->type()->number_type();
+    if (data_type == kNumberTypeFloat || data_type == kNumberTypeFloat32) {
+      cur_value.push_back(GetValue<float>(value));
+    } else {
+      MS_LOG(ERROR) << "the function only process float data.";
+      return {};
+    }
+  }
+  return cur_value;
+}
+
 bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type) {
   if (node == nullptr || primitive_type == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -1009,6 +1037,29 @@ ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const 
     MS_LOG(ERROR) << "init parameter from tensor info failed";
     return nullptr;
   }
+  return param_node;
+}
+
+ParameterPtr BuildFloatVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<float> &data,
+                                        const std::string &node_name) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  auto param_node = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
+  param_node->set_name(node_name);
+
+  std::vector<int64_t> shape_vector{static_cast<int64_t>(data.size())};
+  auto tensor_info = lite::CreateTensorInfo(data.data(), data.size() * sizeof(float), shape_vector, kNumberTypeFloat);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return nullptr;
+  }
+
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
+
   return param_node;
 }
 
