@@ -459,7 +459,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
     tensor->set_sync_status(kNoNeedSync);
   }
   if (device_memcpy_nums > 0) {
-    auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
     MS_EXCEPTION_IF_NULL(runtime_instance);
     auto compute_stream = runtime_instance->compute_stream();
     auto model_stream = runtime_instance->GetModelStream(kernel_graph->graph_id());
