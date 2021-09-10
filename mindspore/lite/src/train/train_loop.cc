@@ -42,7 +42,6 @@ int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCall
     MS_LOG(ERROR) << "TrainLoop train failed";
     return RET_ERROR;
   }
-  MS_CHECK_GT(epochs, 0, RET_ERROR);
   session::TrainLoopCallBackData cb_data(true, epoch_, train_session_, this);
 
   if (load_func == nullptr) load_func = TrainLoop::LoadData;
@@ -61,16 +60,28 @@ int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCall
     MSTensorVec row_vec;
     int s = 0;
 
-    iter->GetNextRow(&row_vec);
+    auto status = iter->GetNextRow(&row_vec);
+    if (status != Status::OK()) {
+      MS_LOG(ERROR) << "Get row failed";
+      return RET_ERROR;
+    }
     while (!row_vec.empty()) {
       ret = load_func(cb_data.session_->GetInputs(), &row_vec);
       if (ret != RET_OK) break;
       cb_data.step_ = s++;
       for (auto cb : cbs) cb->StepBegin(cb_data);
 
-      train_session_->RunGraph(before_cb_, after_cb_);
+      ret = train_session_->RunGraph(before_cb_, after_cb_);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Run Graph failed";
+        return RET_ERROR;
+      }
       for (auto cb : cbs) cb->StepEnd(cb_data);
-      iter->GetNextRow(&row_vec);
+      status = iter->GetNextRow(&row_vec);
+      if (status != Status::OK()) {
+        MS_LOG(ERROR) << "Get row failed";
+        return RET_ERROR;
+      }
     }
     int break_loop = false;
     for (auto cb : cbs) {
@@ -120,7 +131,11 @@ int TrainLoop::Eval(Dataset *ds, std::vector<session::TrainLoopCallBack *> cbs, 
   MSTensorVec row_vec;
   int s = 0;
 
-  iter->GetNextRow(&row_vec);
+  auto status = iter->GetNextRow(&row_vec);
+  if (status != Status::OK()) {
+    MS_LOG(ERROR) << "Get row failed";
+    return RET_ERROR;
+  }
   while (!row_vec.empty()) {
     if (s >= max_steps) break;
     ret = load_func(cb_data.session_->GetInputs(), &row_vec);
@@ -134,7 +149,11 @@ int TrainLoop::Eval(Dataset *ds, std::vector<session::TrainLoopCallBack *> cbs, 
 
     auto outputs = cb_data.session_->GetPredictions();
     for (auto metric : metrics_) metric->Update(cb_data.session_->GetInputs(), outputs);
-    iter->GetNextRow(&row_vec);
+    status = iter->GetNextRow(&row_vec);
+    if (status != Status::OK()) {
+      MS_LOG(ERROR) << "Get row failed";
+      return RET_ERROR;
+    }
   }
   iter->Stop();
   for (auto cb : cbs) cb->EpochEnd(cb_data);
