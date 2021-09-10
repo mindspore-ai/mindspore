@@ -309,9 +309,7 @@ def _verify_config(kwargs):
         if console == _std_off and file_path is not None:
             file_real_path = os.path.realpath(file_path)
             if not os.path.exists(file_real_path):
-                raise ValueError(f'The file path does not exist.'
-                                 f'{_confmap_dict["filepath"]}:{file_path}')
-
+                os.makedirs(file_real_path, exist_ok=True)
         # Check the input value of maxBytes
         max_bytes = kwargs.get('maxBytes', None)
         if console == _std_off and max_bytes is not None:
