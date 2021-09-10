@@ -1,0 +1,100 @@
+#!/bin/bash
+# Copyright 2021 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+if [ $# -ne 1 ]
+then
+    echo "=============================================================================================================="
+    echo "Please run the script as: "
+    echo "sh run_finetune_eval.sh [TASK_TYPE]"
+    echo "for example: scripts/sh run_finetune_eval.sh msra_ner"
+    echo "TASK_TYPE including [msra_ner, chnsenticorp, xnli, dbqa, drcd]"
+    echo "=============================================================================================================="
+exit 1
+fi
+
+mkdir -p ms_log
+mkdir -p save_models
+CUR_DIR=`pwd`
+MODEL_PATH=${CUR_DIR}/pretrain_models/converted
+DATA_PATH=${CUR_DIR}/data
+SAVE_PATH=${CUR_DIR}/save_models
+export GLOG_log_dir=${CUR_DIR}/ms_log
+export GLOG_logtostderr=0
+
+TASK_TYPE=$1
+DEVICE_ID=0
+case $TASK_TYPE in
+  "msra_ner")
+    PY_NAME=run_ernie_ner
+    NUM_LABELS=7
+    EVAL_BATCH_SIZE=32
+    LABEL_MAP="${DATA_PATH}/msra_ner/label_map.json"
+    CKPT_PATH="${SAVE_PATH}/msra_ner-6_1304.ckpt" \
+    EVAL_DATA_PATH="${DATA_PATH}/msra_ner/msra_ner_test.mindrecord"
+    EVAL_JSON_PATH=""
+    ;;
+  "chnsenticorp")
+    PY_NAME=run_ernie_classifier
+    NUM_LABELS=3
+    EVAL_BATCH_SIZE=32
+    LABEL_MAP=""
+    CKPT_PATH="${SAVE_PATH}/chnsenticorp-0-10_400.ckpt" \
+    EVAL_DATA_PATH="${DATA_PATH}/chnsenticorp/chnsenticorp_test.mindrecord"
+    EVAL_JSON_PATH=""
+    ;;
+  "xnli")
+    PY_NAME=run_ernie_classifier
+    NUM_LABELS=3
+    EVAL_BATCH_SIZE=32
+    LABEL_MAP=""
+    CKPT_PATH="${SAVE_PATH}/xnli-0-3_767.ckpt" \
+    EVAL_DATA_PATH="${DATA_PATH}/xnli/xnli_test.mindrecord"
+    EVAL_JSON_PATH=""
+    ;;
+  "dbqa")
+    PY_NAME=run_ernie_classifier
+    NUM_LABELS=2
+    EVAL_BATCH_SIZE=32
+    LABEL_MAP=""
+    CKPT_PATH="${SAVE_PATH}/dbqa-0-3_356.ckpt" \
+    EVAL_DATA_PATH="${DATA_PATH}/nlpcc-dbqa/dbqa_test.mindrecord"
+    EVAL_JSON_PATH=""
+    ;;
+  "drcd")
+    PY_NAME=run_ernie_mrc
+    NUM_LABELS=2
+    EVAL_BATCH_SIZE=32
+    LABEL_MAP=""
+    CKPT_PATH="${SAVE_PATH}/drcd-0-3_299.ckpt" \
+    EVAL_DATA_PATH="${DATA_PATH}/drcd/drcd_test.mindrecord"
+    EVAL_JSON_PATH="${DATA_PATH}/drcd/test.json"
+    ;;
+  esac
+
+python ${CUR_DIR}/${PY_NAME}.py \
+    --task_type=${TASK_TYPE} \
+    --device_target="Ascend" \
+    --label_map_config=${LABEL_MAP} \
+    --vocab_path="${MODEL_PATH}/vocab.txt" \
+    --do_train="false" \
+    --do_eval="true" \
+    --device_id=$DEVICE_ID \
+    --number_labels=${NUM_LABELS} \
+    --train_data_shuffle="true" \
+    --eval_data_shuffle="false" \
+    --eval_batch_size=${EVAL_BATCH_SIZE} \
+    --load_finetune_checkpoint_path=${CKPT_PATH} \
+    --eval_data_file_path=${EVAL_DATA_PATH} \
+    --eval_json_path=${EVAL_JSON_PATH} > ${GLOG_log_dir}/${TASK_TYPE}_eval_log.txt 2>&1 &
