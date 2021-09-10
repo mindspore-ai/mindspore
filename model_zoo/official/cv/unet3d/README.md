@@ -20,6 +20,10 @@
         - [Evaluation](#evaluation)
             - [Evaluating on Ascend](#training-on-ascend)
             - [Evaluating on GPU](#training-on-gpu)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
     - [Model Description](#model-description)
         - [Performance](#performance)
             - [Evaluation Performance](#evaluation-performance)
@@ -344,6 +348,40 @@ The above python command will run in the background. You can view the results th
 ```shell
 
 # grep "eval average dice is:" eval.log
+eval average dice is 0.9502010010453671
+
+```
+
+## Inference Process
+
+### [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`file_format` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+- `NEED_PREPROCESS` means weather need preprocess or not, it's value is 'y' or 'n'.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```shell
+
+# grep "eval average dice is:" acc.log
 eval average dice is 0.9502010010453671
 
 ```
