@@ -15,6 +15,7 @@
  */
 
 #include "src/sub_graph_kernel.h"
+#include <algorithm>
 #include "src/tensor.h"
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
@@ -141,9 +142,8 @@ void SubGraphKernel::InitInputTensorInitRefCount() {
   for (auto &input : this->in_tensors()) {
     int input_init_ref_count = input->init_ref_count();
     for (auto *node : nodes_) {
-      if (lite::IsContain(node->in_tensors(), input)) {
-        input_init_ref_count++;
-      }
+      input_init_ref_count += std::count_if(node->in_tensors().begin(), node->in_tensors().end(),
+                                            [&input](lite::Tensor *item) { return item == input; });
     }
     input->set_init_ref_count(input_init_ref_count);
   }
