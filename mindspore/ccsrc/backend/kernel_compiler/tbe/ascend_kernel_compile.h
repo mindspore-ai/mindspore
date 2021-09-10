@@ -66,7 +66,7 @@ class AscendKernelCompileManager {
   ~AscendKernelCompileManager();
   void GetAllAscendNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph, std::vector<AnfNodePtr> *tbe_nodes);
   void QueryFinishJob(const std::string &type);
-  void ParseTargetJobStatus(const std::string &type, const std::string &build_res, std::vector<int> *success_job);
+  void ParseTargetJobStatus(const std::string &type, const std::string &job_result, std::vector<int> *success_job);
   void QueryPreBuildFinishJob();
   void QueryFusionFinishJob(KernelModMap *kernel_mode_ret);
   void PrintProcessLog(const nlohmann::json &json, int adjust_log_level);

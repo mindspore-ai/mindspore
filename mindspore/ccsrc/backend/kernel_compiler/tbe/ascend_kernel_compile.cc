@@ -344,15 +344,16 @@ nlohmann::json AscendKernelCompileManager::TurnStrToJson(const std::string &stri
   return json;
 }
 
-void AscendKernelCompileManager::ParseTargetJobStatus(const std::string &type, const std::string &build_result,
+void AscendKernelCompileManager::ParseTargetJobStatus(const std::string &type, const std::string &job_result,
                                                       std::vector<int> *success_job) {
   MS_EXCEPTION_IF_NULL(success_job);
-  auto json_obj = TurnStrToJson(build_result);
+  auto json_obj = TurnStrToJson(job_result);
   if (json_obj.at(kStatus) == kSuccess) {
     nlohmann::json query_obj;
     if (!ParseJson(GetJsonValue<std::string>(json_obj, kResult), &query_obj)) {
       MS_LOG(EXCEPTION) << "Parse query result error.";
     }
+    auto kernel_name = GetJsonValue<std::string>(query_obj, kFusionOpName);
     struct TargetJobStatus task_info;
     QueryResultProcess(json_obj, &task_info);
     if (task_info.job_status == kSuccess) {
@@ -367,16 +368,16 @@ void AscendKernelCompileManager::ParseTargetJobStatus(const std::string &type, c
     } else if (task_info.job_status == kFailed) {
       if (type == kPreCompile) {
         success_job->emplace_back(task_info.target_job_id);
-        MS_LOG(WARNING) << "Single op pre build failed ,res: " << query_obj;
+        MS_LOG(WARNING) << "Single op pre build failed ,op: " << kernel_name;
       } else {
         ResetOldTask();
         single_processed_kernels_.clear();
-        MS_LOG(EXCEPTION) << "Single op compile failed ,res: " << query_obj;
+        MS_LOG(EXCEPTION) << "Single op compile failed ,op: " << kernel_name;
       }
     }
   } else {
     auto file_name = GetJsonValue<std::string>(json_obj, kJobType) + "_" + json_obj.at(kJobId).dump();
-    TbeUtils::SaveJsonInfo(file_name, build_result);
+    TbeUtils::SaveJsonInfo(file_name, job_result);
     MS_LOG(EXCEPTION) << "Query job failed";
   }
 }
@@ -391,9 +392,9 @@ void AscendKernelCompileManager::QueryFinishJob(const std::string &job_type) {
       nlohmann::json query_json;
       auto kernel_json = iter->second;
       JsonAssemble(kQuery, kernel_json, &query_json);
-      auto build_result = build_manager_->ProcessTbeJob(query_json);
+      auto job_result = build_manager_->ProcessTbeJob(query_json);
       query_cnt++;
-      ParseTargetJobStatus(job_type, build_result, &success_job);
+      ParseTargetJobStatus(job_type, job_result, &success_job);
       iter++;
     }
     for (auto k : success_job) {
