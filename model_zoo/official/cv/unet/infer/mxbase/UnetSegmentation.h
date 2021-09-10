@@ -40,10 +40,10 @@ class UnetSegmentation {
     APP_ERROR Init(const InitParam &initParam);
     APP_ERROR DeInit();
     APP_ERROR ReadImage(const std::string &imgPath, cv::Mat &imageMat);
-    APP_ERROR ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat, MxBase::ResizedImageInfo &resziedImageInfo);
+    void ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat, MxBase::ResizedImageInfo &resziedImageInfo);
     APP_ERROR CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase);
     APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs, std::vector<MxBase::TensorBase> &outputs);
-    APP_ERROR PostProcess(std::vector<MxBase::TensorBase> &inputs, const MxBase::ResizedImageInfo &resziedInfo,
+    APP_ERROR PostProcess(std::vector<MxBase::TensorBase> &inputs, const MxBase::ResizedImageInfo &resizedInfo,
                             cv::Mat &output);
     APP_ERROR Process(const std::string &imgPath);
 
