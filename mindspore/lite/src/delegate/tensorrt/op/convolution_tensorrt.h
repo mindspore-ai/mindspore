@@ -36,7 +36,7 @@ class ConvolutionTensorRT : public TensorRTOp {
  private:
   void SetAttributes(const schema::Conv2DFusion *ms_op, nvinfer1::IConvolutionLayer *current_layer_);
 
-  float *pack_weight_{nullptr};
+  void *pack_weight_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_TENSORRT_OP_CONVOLUTION_TENSORRT_H_

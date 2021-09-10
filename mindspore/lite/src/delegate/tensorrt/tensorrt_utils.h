@@ -58,9 +58,12 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
 nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
                                                const mindspore::MSTensor &ms_tensor, size_t expand_shape_size);
 
-nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value);
+nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value,
+                                          const DataType data_type);
 
-nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, float **pack_weight);
+nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, void **pack_weight);
+
+nvinfer1::Weights TransposeWeightFP32(const mindspore::MSTensor &ms_tensor, void **pack_weight);
 
 nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor);
 
@@ -69,5 +72,8 @@ void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_);
 Format GetOutputFormat(Format input_format, nvinfer1::Permutation perm);
 
 int ConvertAxisFromNHWC2NCHW(int nhwc_axis);
+
+void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, size_t channel, size_t task_id,
+                        size_t thread_count);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_
