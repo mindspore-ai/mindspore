@@ -260,7 +260,7 @@ def test_case_10():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
     data1 = data1.map(operations=[(lambda x: x * 10)], input_columns="col0",
-                      output_columns="out", num_parallel_workers=4, python_multiprocessing=True)
+                      output_columns="out", num_parallel_workers=4)
     data1 = data1.map(operations=[(lambda x: x + x), (lambda x: x + 1), (lambda x: x + 2)], input_columns="out",
                       output_columns="out", num_parallel_workers=4, python_multiprocessing=True)
 
