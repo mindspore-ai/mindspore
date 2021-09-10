@@ -19,6 +19,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include "include/lite_utils.h"
 
 namespace mindspore {
@@ -38,6 +39,26 @@ struct MS_API ConverterParameters {
   std::string model_file;
   std::string weight_file;
   std::map<std::string, std::string> attrs;
+};
+
+/// \brief ConverterContext defined is to set the basic information of the exported model.
+class MS_API ConverterContext {
+ public:
+  /// \brief Constructor.
+  ConverterContext() = default;
+
+  /// \brief Destructor.
+  ~ConverterContext() = default;
+
+  /// \brief Static method to set exported model's output name as needed by users.
+  ///
+  /// \param[in] output_names Define model's output name, the order of which is consistent with the original model.
+  static void SetGraphOutputTensorNames(const std::vector<std::string> &output_names);
+
+  /// \brief Static method to obtain the outputs' name.
+  ///
+  /// \return the outputs' name.
+  static std::vector<std::string> GetGraphOutputTensorNames();
 };
 }  // namespace converter
 }  // namespace mindspore

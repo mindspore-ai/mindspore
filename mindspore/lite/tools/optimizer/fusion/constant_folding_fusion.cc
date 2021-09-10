@@ -359,7 +359,7 @@ bool ConstFoldPass::CheckCanFusion(const CNodePtr &cnode) const {
     return true;
   }
   if (CheckPrimitiveType(cnode, prim::kPrimShape)) {
-    if (is_control_flow_ || lite::ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() == 0) {
+    if (is_control_flow_ || lite::ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() == 0) {
       return false;
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));

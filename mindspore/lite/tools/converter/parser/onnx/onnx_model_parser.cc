@@ -291,8 +291,9 @@ STATUS ConvertGraphInputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr
                     << static_cast<onnx::TensorProto_DataType>(input_value.type().tensor_type().elem_type());
       return RET_ERROR;
     }
-    std::vector<int64_t> shape_vector = ConverterContext::GetInstance()->GetGraphInputTensorShape(input_value.name());
-    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
+    std::vector<int64_t> shape_vector =
+      ConverterInnerContext::GetInstance()->GetGraphInputTensorShape(input_value.name());
+    if (ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
       MS_LOG(WARNING) << "Can not find name in map. name is " << input_value.name();
     }
     if (shape_vector.empty()) {
@@ -612,7 +613,7 @@ STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, con
     std::vector<std::string> output_names;
     std::transform(onnx_graph.output().begin(), onnx_graph.output().end(), std::back_inserter(output_names),
                    [](auto &graph_output) { return graph_output.name(); });
-    ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_names);
+    ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(output_names);
   }
   return status;
 }

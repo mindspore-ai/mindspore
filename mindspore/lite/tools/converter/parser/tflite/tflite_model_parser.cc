@@ -405,8 +405,8 @@ STATUS TfliteModelParser::ConvertGraphInputs(const std::unique_ptr<tflite::SubGr
     }
     auto parameter = func_graph->add_parameter();
     const auto &tensor = tflite_subgraph->tensors.at(tflite_graph_input);
-    std::vector<int64_t> shape_vector = ConverterContext::GetInstance()->GetGraphInputTensorShape(tensor->name);
-    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
+    std::vector<int64_t> shape_vector = ConverterInnerContext::GetInstance()->GetGraphInputTensorShape(tensor->name);
+    if (ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
       MS_LOG(WARNING) << "Can not find name in map. name is " << tensor->name;
     }
     if (shape_vector.empty()) {
@@ -500,7 +500,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs(const std::unique_ptr<tflite::SubG
     auto output_idx = tflite_subgraph->outputs;
     std::transform(output_idx.begin(), output_idx.end(), std::back_inserter(output_names),
                    [&](auto out_idx) { return tflite_subgraph->tensors.at(out_idx)->name; });
-    ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_names);
+    ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(output_names);
   } else {
     // set output cnode name for subgraph
     for (size_t i = 0; i < output_nodes.size(); i++) {

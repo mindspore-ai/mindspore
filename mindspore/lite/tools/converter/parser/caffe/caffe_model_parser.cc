@@ -267,8 +267,8 @@ STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
       }
       auto parameter = res_graph_->add_parameter();
       MSLITE_CHECK_PTR(parameter);
-      std::vector<int64_t> shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(layer.name());
-      if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
+      std::vector<int64_t> shape = ConverterInnerContext::GetInstance()->GetGraphInputTensorShape(layer.name());
+      if (ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
         MS_LOG(WARNING) << "Can not find name in map. name is " << layer.name();
       }
       if (shape.empty()) {
@@ -293,8 +293,8 @@ STATUS CaffeModelParser::ConvertGraphInputsOfShape() {
   for (int i = 0; i < caffe_model_.input_shape_size(); i++) {
     auto shape = caffe_model_.input_shape(i);
     std::vector<int64_t> shape_vector =
-      ConverterContext::GetInstance()->GetGraphInputTensorShape(caffe_model_.input(i));
-    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
+      ConverterInnerContext::GetInstance()->GetGraphInputTensorShape(caffe_model_.input(i));
+    if (ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
       MS_LOG(WARNING) << "Can not find name in map. name is " << caffe_model_.input(i);
     }
     if (shape_vector.empty()) {
@@ -324,8 +324,8 @@ STATUS CaffeModelParser::ConvertGraphInputsOfShape() {
 STATUS CaffeModelParser::ConvertGraphInputsOfDim() {
   const int default_input_dim_size = 4;
   for (int i = 0; i < caffe_model_.input_size(); i++) {
-    std::vector<int64_t> shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(caffe_model_.input(i));
-    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
+    std::vector<int64_t> shape = ConverterInnerContext::GetInstance()->GetGraphInputTensorShape(caffe_model_.input(i));
+    if (ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
       MS_LOG(WARNING) << "Can not find name in map. name is " << caffe_model_.input(i);
     }
     if (shape.empty()) {
@@ -426,7 +426,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     res_graph_->set_return(returnCnode);
   }
   // save original output tensor names.
-  ConverterContext::GetInstance()->SetGraphOutputTensorNames(caffeInspector.GetGraphOutput());
+  ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(caffeInspector.GetGraphOutput());
   return RET_OK;
 }
 
