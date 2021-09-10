@@ -28,7 +28,9 @@
 #include "runtime/device/ascend/ge_runtime/davinci_model.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/session/session_basic.h"
+#ifndef ENABLE_SECURITY
 #include "runtime/device/ascend/dump/data_dumper.h"
+#endif
 
 using std::unordered_map;
 using std::vector;
@@ -62,7 +64,9 @@ class AscendKernelRuntime : public KernelRuntime {
   void SetContext() override;
   void CreateContext() override;
   const void *context() const override { return rt_context_; }
+#ifndef ENABLE_SECURITY
   void PreInit() override;
+#endif
   uint64_t GetAvailableMemMaxSize() const override;
   DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kAscend; };
   std::shared_ptr<DeviceEvent> CreateDeviceEvent() override;
@@ -92,14 +96,16 @@ class AscendKernelRuntime : public KernelRuntime {
   void ReleaseDeviceRes() override;
   bool GraphWithEmptyTaskList(const session::KernelGraph *graph) const;
   bool CheckGraphIdValid(GraphId graph_id) const;
+#ifndef ENABLE_SECURITY
   void DistributeDebugTask(NotNull<const session::KernelGraph *> graph,
                            const NotNull<std::function<void *()>> &model_handle);
   void LaunchDataDump(GraphId graph_id);
+  void ReportProfilingData();
+#endif
   static CNodePtr GetErrorNodeName(uint32_t streamid, uint32_t taskid);
   static std::string GetDumpPath();
   static void DumpTaskExceptionInfo(const session::KernelGraph *graph);
   static void TaskFailCallback(rtExceptionInfo *task_fail_info);
-  void ReportProfilingData();
   static bool DeleteDumpDir(const std::string &path);
   static int DeleteDumpFile(std::string path);
   static std::string GetRealPath(const std::string &path);
@@ -108,7 +114,9 @@ class AscendKernelRuntime : public KernelRuntime {
   bool initialized_{false};
   unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
   unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
+#ifndef ENABLE_SECURITY
   unordered_map<GraphId, std::shared_ptr<DataDumper>> graph_data_dumper_;
+#endif
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
   static std::map<std::string, uint32_t> overflow_tasks_;
   static std::vector<rtExceptionInfo> task_fail_infoes_;

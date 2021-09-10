@@ -15,7 +15,9 @@
  */
 
 #include "runtime/device/ascend/tasksink/task_generator.h"
+#ifndef ENABLE_SECURITY
 #include "runtime/device/ascend/dump/data_dumper.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -26,11 +28,13 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
   return true;
 }
 }  // namespace tasksink
+#ifndef ENABLE_SECURITY
 void DataDumper::LoadDumpInfo() {}
 void DataDumper::UnloadDumpInfo() {}
 void DataDumper::OpDebugRegister() {}
 void DataDumper::OpDebugUnregister() {}
 DataDumper::~DataDumper() {}
+#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

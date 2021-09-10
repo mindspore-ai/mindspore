@@ -34,7 +34,9 @@ void AscendStreamAssign::GetHcomStreams(std::vector<uint32_t> *streams) { return
 void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
 bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return true; }
 bool KernelAdjust::NeedInsertSwitch() { return true; }
+#ifndef ENABLE_SECURITY
 void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) { return; }
+#endif
 void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   return;
 }

@@ -19,8 +19,10 @@
 #include <runtime/rt.h>
 #include "backend/kernel_compiler/task_stream.h"
 #include "utils/ms_utils.h"
+#ifndef ENABLE_SECURITY
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
+#endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
 #endif
@@ -260,10 +262,12 @@ bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
     current_op_index++;
   }
 
+#ifndef ENABLE_SECURITY
   ProfilingUtils::SetGraphKernelName(graph_id, kernel_name_list);
   if (ProfilingManager::GetInstance().IsProfiling()) {
     ProfilingUtils::SetGraphProfilingCNode(graph_id, profiling_cnode_list);
   }
+#endif
 
   return true;
 }

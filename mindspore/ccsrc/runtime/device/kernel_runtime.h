@@ -99,7 +99,9 @@ class KernelRuntime {
 #endif
   }
 
+#ifndef ENABLE_SECURITY
   virtual void PreInit() {}
+#endif
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
   virtual void GenKernelEvents(const session::KernelGraph *graph);
   virtual std::shared_ptr<DeviceEvent> CreateDeviceEvent() { return nullptr; }

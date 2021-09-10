@@ -42,7 +42,9 @@ size_t kNPUShape = 8;
 }  // namespace
 namespace mindspore {
 namespace device {
+#ifndef ENABLE_SECURITY
 using device::ascend::ProfilingUtils;
+#endif
 void KernelAdjust::ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   const std::vector<CNodePtr> &origin_cnode_list = kernel_graph_ptr->execution_order();
@@ -804,6 +806,7 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   MS_LOG(INFO) << "---------------- LoadSwitchInputs End--";
 }
 
+#ifndef ENABLE_SECURITY
 void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) {
   if (!ascend::ProfilingManager::GetInstance().IsProfiling()) {
     MS_LOG(INFO) << "No need to profiling";
@@ -852,6 +855,7 @@ void KernelAdjust::InsertProfilingKernel(const ProfilingTraceInfo &profiling_tra
   }
   kernel_graph_ptr->set_execution_order(new_cnode_list);
 }
+#endif
 
 CNodePtr KernelAdjust::CreateNPUGetFloatStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                                const CNodePtr &npu_alloc_cnode) {
