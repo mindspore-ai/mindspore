@@ -1140,3 +1140,17 @@ TEST_F(MindDataTestExecute, TestRandomEqualizeEager) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+TEST_F(MindDataTestExecute, TestRandomAdjustSharpnessEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomAdjustSharpnessEager.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto random_adjust_sharpness_op = vision::RandomAdjustSharpness(2.0, 0.6);
+
+  auto transform = Execute({decode, random_adjust_sharpness_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}

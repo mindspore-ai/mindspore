@@ -348,6 +348,28 @@ class RandomAutoContrast final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Randomly adjust the sharpness of the input image with a given probability.
+class RandomAdjustSharpness final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] degree A float representing sharpness adjustment degree, which must be non negative.
+  /// \param[in] prob A float representing the probability of the image being sharpness adjusted, which
+  ///     must in range of [0, 1] (default=0.5).
+  explicit RandomAdjustSharpness(float degree, float prob = 0.5);
+
+  /// \brief Destructor.
+  ~RandomAdjustSharpness() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Blend an image with its grayscale version with random weights
 ///        t and 1 - t generated from a given range. If the range is trivial
 ///        then the weights are determinate and t equals to the bound of the interval.
