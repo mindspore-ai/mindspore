@@ -76,7 +76,7 @@ MSCOCO2017
 
 ### [脚本和示例代码](#content)
 
-```shell
+```retinanet
 .
 └─Retinanet
   ├─README.md
@@ -194,18 +194,41 @@ bash scripts/run_single_train.sh DEVICE_ID MINDRECORD_DIR PRE_TRAINED(optional) 
 
 #### 运行
 
-```运行
-训练前，先创建MindRecord文件，以COCO数据集为例，yaml文件配置好coco数据集路径和mindrecord存储路径
-python create_data.py --dataset coco
+```cocodataset
+数据集结构
+└─cocodataset
+  ├─train2017
+  ├─val2017
+  ├─test2017
+  ├─annotations
 
+```
+
+```default_config.yaml
+训练前，先创建MindRecord文件，以COCO数据集为例，yaml文件配置好coco数据集路径和mindrecord存储路径
+# your cocodataset dir
+coco_root: /home/DataSet/cocodataset/
+# mindrecord dataset dir
+mindrecord_dr: /home/DataSet/MindRecord_COCO
+```
+
+```MindRecord
+# 生成训练数据集
+python create_data.py --create_dataset coco --prefix retinanet.mindrecord --is_training True
+
+# 生成测试数据集
+python create_data.py --create_dataset coco --prefix retinanet_eval.mindrecord --is_training False
+```
+
+```bash
 Ascend:
 # 八卡并行训练示例(在retinanet目录下运行)：
-bash scripts/run_distribute_train.sh 8 RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) MINDRECORD_DIR(mindrecord数据集文件夹路径) PRE_TRAINED(预训练checkpoint地址，可选) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小，可选）
-
-例如：sh scripts/run_distribute_train.sh 8 scripts/rank_table_8pcs.json ./cache/mindrecord_coco
+bash scripts/run_distribute_train.sh [DEVICE_NUM] [RANK_TABLE_FILE] [MINDRECORD_DIR] [PRE_TRAINED(optional)] [PRE_TRAINED_EPOCH_SIZE(optional)]
+# example: bash scripts/run_distribute_train.sh 8 /root/hccl_8p_01234567_10.155.170.71.json /home/DataSet/MindRecord_COCO/
 
 # 单卡训练示例(在retinanet目录下运行)：
-bash scripts/run_single_train.sh 0 ./cache/mindrecord_coco
+bash scripts/run_single_train.sh [DEVICE_ID] [MINDRECORD_DIR]
+# example: bash scripts/run_single_train.sh 0 /home/DataSet/MindRecord_COCO/
 ```
 
 #### 结果
@@ -289,12 +312,13 @@ Epoch time: 164531.610, per step time: 359.239
 
 ```eval
 bash scripts/run_eval.sh [DEVICE_ID] [DATASET] [MINDRECORD_DIR] [CHECKPOINT_PATH] [ANN_FILE PATH]
+# example: bash scripts/run_eval.sh 0 coco /home/DataSet/MindRecord_COCO/ /home/model/retinanet/ckpt/retinanet_500-458.ckpt /home/DataSet/cocodataset/annotations/instances_{}.json
 ```
 
 #### <span id="running">运行</span>
 
 ```eval运行
-bash scripts/run_eval.sh 0 coco /cache/mindrecord_dir/ /cache/checkpoint/retinanet_500-458.ckpt /cache/anno_path/instances_{}.json
+bash scripts/run_eval.sh 0 coco /home/DataSet/MindRecord_COCO/ /home/model/retinanet/ckpt/retinanet_500-458.ckpt /home/DataSet/cocodataset/annotations/instances_{}.json
 ```
 
 > checkpoint 可以在训练过程中产生.

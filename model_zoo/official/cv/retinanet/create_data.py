@@ -15,11 +15,8 @@
 
 """create mindrecord for training retinanet."""
 
-import argparse
 from src.dataset import create_mindrecord
+from src.model_utils.config import config
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="retinanet dataset create")
-    parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
-    args_opt = parser.parse_args()
-    mindrecord_file = create_mindrecord(args_opt.dataset, "retinanet.mindrecord", True)
+    mindrecord_file = create_mindrecord(config.create_dataset, config.prefix, config.is_training)

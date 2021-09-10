@@ -18,6 +18,12 @@ modelarts_dataset_unzip_name: "MindRecord_COCO"
 distribute: False
 
 # ======================================================================================
+# create dataset
+create_dataset: "coco"
+prefix: "retinanet.mindrecord"
+is_training: True
+
+# ======================================================================================
 # Training options
 img_shape: [600, 600]
 num_retinanet_boxes: 67995
@@ -56,7 +62,7 @@ mindrecord_dir: "./"
 coco_root: "./"
 train_data_type: "train2017"
 val_data_type: "val2017"
-instances_set: "./instances_{}.json"
+instances_set: "annotations/instances_{}.json"
 coco_classes: ["background", "person", "bicycle", "car", "motorcycle", "airplane", "bus",
                      "train", "truck", "boat", "traffic light", "fire hydrant",
                      "stop sign", "parking meter", "bench", "bird", "cat", "dog",
@@ -92,7 +98,7 @@ finish_epoch: 0
 # optimiter options
 workers: 24
 mode: "sink"
-epoch_size: 550
+epoch_size: 500
 batch_size: 32
 pre_trained: ""
 pre_trained_epoch_size: 0
