@@ -514,13 +514,13 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         >>> import numpy as np
         >>> import mindspore.context as context
         >>> import mindspore.nn as nn
+        >>> import mindspore.ops as ops
         >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as P
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.opt = P.FusedCastAdamWeightDecay()
+        ...         self.opt = ops.FusedCastAdamWeightDecay()
         ...         self.var = Parameter(Tensor(np.ones([2, 2]), mstype.float16), name="var")
         ...         self.m = Parameter(Tensor(np.ones([2, 2]), mstype.float32), name="m")
         ...         self.v = Parameter(Tensor(np.ones([2, 2]), mstype.float32), name="v")

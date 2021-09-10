@@ -171,6 +171,7 @@ __all__ = [
     'LinSpace',
     'Adam',
     'AdamWeightDecay',
+    'FusedCastAdamWeightDecay',
     'FusedSparseAdam',
     'FusedSparseLazyAdam',
     'AdamNoUpdateParam',
