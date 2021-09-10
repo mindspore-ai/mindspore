@@ -1923,7 +1923,7 @@ class MaxPool3D(PrimitiveWithInfer):
         if isinstance(self.pad_list, int):
             self.pad_list = (self.pad_list,) * 6
         if len(self.pad_list) == 3:
-            self.pad_list = (pad_list[0], pad_list[0], pad_list[1], pad_list[1], pad_list[2], pad_list[3])
+            self.pad_list = (pad_list[0], pad_list[0], pad_list[1], pad_list[1], pad_list[2], pad_list[2])
         if len(self.pad_list) != 3 and len(self.pad_list) != 6:
             raise ValueError(f"For `maxpool3d` attr 'pad_list' should be an positive int number or a tuple of "
                              f"three or six positive int numbers, but got `{len(self.pad_list)}` numbers.")
@@ -1951,11 +1951,11 @@ class MaxPool3D(PrimitiveWithInfer):
             out_w = math.ceil(input_w / stride_w)
         else:
             out_d = ((input_d + self.pad_list[0] + self.pad_list[1] -
-                      (self.kernel_size[0] - 1) - 1) / stride_d) + 1
+                      (kernel_d - 1) - 1) / stride_d) + 1
             out_h = ((input_h + self.pad_list[2] + self.pad_list[3] -
-                      (self.kernel_size[1] - 1) - 1) / stride_h) + 1
+                      (kernel_h - 1) - 1) / stride_h) + 1
             out_w = ((input_w + self.pad_list[4] + self.pad_list[5] -
-                      (self.kernel_size[2] - 1) - 1) / stride_w) + 1
+                      (kernel_w - 1) - 1) / stride_w) + 1
             if self.ceil_mode:
                 out_d = math.ceil(out_d)
                 out_h = math.ceil(out_h)
