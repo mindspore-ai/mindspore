@@ -237,3 +237,30 @@ def test_dump_with_diagnostic_path():
         add = Net()
         add(Tensor(x), Tensor(y))
         assert len(os.listdir(dump_file_path)) == 5
+
+
+def run_e2e_dump_execution_graph():
+    """Run e2e dump and check execution order."""
+    if sys.platform != 'linux':
+        return
+    pwd = os.getcwd()
+    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'e2e_dump_exe_graph')
+        dump_config_path = os.path.join(tmp_dir, 'e2e_dump.json')
+        generate_dump_json(dump_path, dump_config_path, 'test_e2e_dump')
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        add = Net()
+        add(Tensor(x), Tensor(y))
+        exe_graph_path = os.path.join(dump_path, 'rank_0', 'execution_order')
+        assert len(os.listdir(exe_graph_path)) == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dump_with_execution_graph():
+    """Test dump with execution graph on GPU."""
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    run_e2e_dump_execution_graph()

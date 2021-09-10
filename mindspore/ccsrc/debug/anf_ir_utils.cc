@@ -644,7 +644,7 @@ void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph) {
   }
 
   auto filepath = GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
-  auto real_filepath = Common::GetRealPath(filepath);
+  auto real_filepath = Common::CreatePrefixPath(filepath);
   if (!real_filepath.has_value()) {
     MS_LOG(ERROR) << "The export ir path: " << filepath << " is not illegal.";
     return;

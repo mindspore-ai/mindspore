@@ -2677,14 +2677,8 @@ void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
 }  // namespace session
 void DumpGraphExeOrder(const std::string &file_name, const std::string &target_dir,
                        const std::vector<CNodePtr> &execution_order) {
-  auto dir_path = FileUtils::CreateNotExistDirs(target_dir + "/execution_order/");
-  if (!dir_path.has_value()) {
-    MS_LOG(ERROR) << "Failed to CreateNotExistDirs: " << target_dir << "/execution_order/ in DumpGraphExeOrder";
-    return;
-  }
-
-  std::string file_path = dir_path.value() + "/" + file_name;
-  auto realpath = FileUtils::GetRealPath(common::SafeCStr(file_path));
+  std::string file_path = target_dir + "/execution_order/" + file_name;
+  auto realpath = Common::CreatePrefixPath(file_path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path: " << file_path << " filed.";
     return;

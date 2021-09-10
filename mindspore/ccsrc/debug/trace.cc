@@ -350,7 +350,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     MS_LOG(DEBUG) << "Node configs is empty";
     return false;
   }
-  auto real_filepath = Common::GetRealPath(filename);
+  auto real_filepath = Common::CreatePrefixPath(filename);
   if (!real_filepath.has_value()) {
     MS_LOG(ERROR) << "The export ir path: " << filename << " is not illegal.";
     return false;
@@ -413,7 +413,7 @@ std::string GetEvalFailDatPath() {
     path = ".";
   }
   path += "/rank_" + std::to_string(GetRank()) + "/om/analyze_fail.dat";
-  auto realpath = Common::GetRealPath(path);
+  auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
     MS_EXCEPTION(ValueError) << "Get real path failed. path=" << path;
   }

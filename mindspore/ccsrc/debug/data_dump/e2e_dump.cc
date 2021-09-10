@@ -28,6 +28,7 @@
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/config_manager.h"
+#include "utils/file_utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
@@ -301,10 +302,9 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
     MS_LOG(INFO) << "cur_iter_dump_path: " << cur_iter_dump_path;
 
     // create cur_iter_dump_path dirs
-    bool status = Common::CreateNotExistDirs(root_cur_iter_dump_path);
-    if (!status) {
+    auto dir_path = FileUtils::CreateNotExistDirs(root_cur_iter_dump_path);
+    if (!dir_path.has_value()) {
       MS_LOG(EXCEPTION) << "Failed at CreateNotExistDirs for " << root_cur_iter_dump_path;
-      return;
     }
   }
 }
@@ -340,8 +340,8 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
 
     if (dump_json_parser.IsDumpIter(current_iter)) {
       // create actual dir for iteration in final dump dir
-      bool status = Common::CreateNotExistDirs(cur_iter_dump_path);
-      if (!status) {
+      auto dir_path = FileUtils::CreateNotExistDirs(cur_iter_dump_path);
+      if (!dir_path.has_value()) {
         MS_LOG(EXCEPTION) << "failed at CreateNotExistDirs for " << cur_iter_dump_path;
       }
 

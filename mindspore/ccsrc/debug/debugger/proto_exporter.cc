@@ -563,7 +563,7 @@ void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &s
     return;
   }
   std::string file_path = target_dir + "/" + "ms_output_" + suffix + ".pb";
-  auto realpath = Common::GetRealPath(file_path);
+  auto realpath = Common::CreatePrefixPath(file_path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file_path;
     return;

@@ -59,7 +59,7 @@ void FileUtils::SplitDirAndFileName(const std::string &path, std::optional<std::
 
   if (path_split_pos != std::string::npos) {
     *prefix_path = path.substr(0, path_split_pos);
-    *file_name = path.substr(path_split_pos);
+    *file_name = path.substr(path_split_pos + 1);
   } else {
     *prefix_path = std::nullopt;
     *file_name = path;

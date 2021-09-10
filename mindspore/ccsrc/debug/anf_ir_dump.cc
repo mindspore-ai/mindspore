@@ -598,7 +598,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   if (!target_file.empty()) {
     path = target_file;
   }
-  auto realpath = Common::GetRealPath(path);
+  auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << path;
     return;
@@ -641,7 +641,7 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
     return;
   }
   auto path = Common::AddId(filename, ".ir");
-  auto realpath = Common::GetRealPath(path);
+  auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. path=" << path;
     return;

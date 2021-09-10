@@ -382,14 +382,14 @@ struct GlogLogDirRegister {
         both_exist = true;
       }
       log_dir_str += "/rank_" + rank + "/logs";
-      auto real_log_dir_str = Common::GetRealPath(log_dir_str);
+      auto real_log_dir_str = Common::CreatePrefixPath(log_dir_str);
       // While 'GLOG_logtostderr' = 0, logs output to files. 'GLOG_log_dir' must be specified as the path of log files.
       // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
       if (logtostderr_str == "0" && real_log_dir_str.has_value()) {
         if (!Common::IsPathValid(real_log_dir_str.value(), MAX_DIRECTORY_LENGTH, "")) {
           MS_LOG(ERROR) << "The path of log files, which set by 'GLOG_log_dir', is invalid";
           exit(EXIT_FAILURE);
-        } else if (!Common::CreateNotExistDirs(real_log_dir_str.value())) {
+        } else if (!FileUtils::CreateNotExistDirs(real_log_dir_str.value())) {
           MS_LOG(ERROR) << "Create the path of log files, which set by 'GLOG_log_dir', failed.";
           exit(EXIT_FAILURE);
         }
