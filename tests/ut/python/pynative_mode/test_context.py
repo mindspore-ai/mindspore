@@ -15,7 +15,6 @@
 """ test_context """
 import os
 import shutil
-import json
 import pytest
 
 from mindspore import context
@@ -92,38 +91,6 @@ def test_dump_target():
     context.set_context(enable_dump=True)
     assert context.get_context("enable_dump")
     assert context.get_context("save_dump_path") == "."
-
-
-def test_enable_profiling():
-    """ test_profiling_mode """
-    with pytest.raises(TypeError):
-        context.set_context(enable_profiling=1)
-    with pytest.raises(TypeError):
-        context.set_context(enable_profiling="1")
-    context.set_context(enable_profiling=True)
-    assert context.get_context("enable_profiling") is True
-    context.set_context(enable_profiling=False)
-    assert context.get_context("enable_profiling") is False
-
-
-def test_profiling_options():
-    """ test_profiling_options """
-    with pytest.raises(TypeError):
-        context.set_context(profiling_options=True)
-    with pytest.raises(TypeError):
-        context.set_context(profiling_options=1)
-    profiling_options = {
-        "output": "",
-        "fp_point": "",
-        "bp_point": "",
-        "training_trace": "on",
-        "task_trace": "on",
-        "aic_metrics": "PipeUtilization",
-        "aicpu": "on"
-    }
-    profiling_options = json.dumps(profiling_options)
-    context.set_context(profiling_options=profiling_options)
-    assert context.get_context("profiling_options") == profiling_options
 
 
 def test_variable_memory_max_size():
