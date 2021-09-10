@@ -15,7 +15,9 @@
 """
 Built-in py_transforms_utils functions.
 """
+import json
 import random
+from types import FunctionType
 import numpy as np
 
 from ..core.py_util_helpers import is_numpy, ExceptionHandler
@@ -161,4 +163,9 @@ class FuncWrapper:
         return result
 
     def to_json(self):
+        if isinstance(self.transform, FunctionType):
+            json_obj = {}
+            json_obj["tensor_op_name"] = self.transform.__name__
+            json_obj["python_module"] = self.__class__.__module__
+            return json.dumps(json_obj)
         return self.transform.to_json()

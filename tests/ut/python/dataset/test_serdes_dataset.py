@@ -396,6 +396,17 @@ def test_serdes_pyvision(remove_json_files=True):
     data1 = data1.map(operations=py.Compose(transforms1), input_columns=["image"])
     data1 = data1.map(operations=py.RandomApply(transforms2), input_columns=["image"])
     util_check_serialize_deserialize_file(data1, "pyvision_dataset_pipeline", remove_json_files)
+    data2 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
+    data2 = data2.map(operations=(lambda x, y, z: (
+        np.array(x).flatten().reshape(10, 39),
+        np.array(y).flatten().reshape(10, 39),
+        np.array(z).flatten().reshape(10, 1)
+    )))
+    ds.serialize(data2, "pyvision_dataset_pipeline.json")
+    assert validate_jsonfile("pyvision_dataset_pipeline.json") is True
+
+    if remove_json_files:
+        delete_json_files()
 
 
 def test_serdes_uniform_augment(remove_json_files=True):
