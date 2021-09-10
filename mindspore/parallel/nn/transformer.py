@@ -30,6 +30,8 @@ from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator
 from mindspore import log as logger
+from mindspore.parallel._utils import _get_parallel_mode
+from mindspore.context import ParallelMode
 from .layers import _LayerNorm, _Linear, _check_input_shape, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
     _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value, Router
@@ -284,7 +286,11 @@ class FeedForward(Cell):
     will project the input dimension from hidden_size to ffn_hidden_size, the second linear will project the
     dimension from ffn_hidden_size to hidden_size. The first linear is sharded on the relative dimension,
     the second linear is sharded on the output dimension. The overview process can be
-    `DROPOUT(FFN(FFN(x)))`
+
+    .. math::
+        Dropout((xW_1+b_1)W_2 + b_2))
+
+        where the W_1, W_2, b_1 and b_2 are trainable parameters.
 
     Args:
         hidden_size (int): The dimension of the inputs.
@@ -308,7 +314,7 @@ class FeedForward(Cell):
 
     Raises:
         ValueError: `hidden_act` is not a string.
-        ValueError: `parallel_config` is not a subclass of OpParallelConfig.
+        TypeError: `parallel_config` is not a subclass of OpParallelConfig.
         ValueError: `ffn_hidden_size` is not a multiple of the model parallel way.
         ValueError: `hidden_size` is not a multiple of the model parallel way.
 
@@ -343,12 +349,12 @@ class FeedForward(Cell):
         dp = parallel_config.data_parallel
         mp = parallel_config.model_parallel
         if ffn_hidden_size % mp != 0:
-            raise ValueError("ffn_hidden_size {ffn_hidden_size} should be a multiple of the model parallel way {mp}")
+            raise ValueError(f"ffn_hidden_size {ffn_hidden_size} should be a multiple of the model parallel way {mp}")
         if hidden_size % mp != 0:
-            raise ValueError("hidden_size {hidden_size} should be a multiple of the model parallel way {mp}")
+            raise ValueError(f"hidden_size {hidden_size} should be a multiple of the model parallel way {mp}")
         if dropout_rate < 0 or dropout_rate >= 1:
-            raise ValueError("dropout_rate probability should be a number in range [0, 1.0), "
-                             "but got {}".format(dropout_rate))
+            raise ValueError(f"dropout_rate probability should be a number in range [0, 1.0), "
+                             "but got {dropout_rate}")
         input_size = hidden_size
         output_size = ffn_hidden_size
         # Here, 'ep' stands for expert parallel number, which is equal to data parallel number.
@@ -360,6 +366,7 @@ class FeedForward(Cell):
                                transpose_b=False,
                                expert_num=expert_num,
                                param_init_type=param_init_type)
+
         if expert_num > 1:
             self.mapping.shard(strategy_matmul=((ep, 1, 1), (ep, 1, mp)),
                                strategy_bias=((ep, 1, mp), (mp,)),
@@ -368,7 +375,7 @@ class FeedForward(Cell):
             self.mapping.shard(strategy_matmul=((dp, 1), (1, mp)),
                                strategy_bias=((dp, mp), (mp,)),
                                strategy_activation=((dp, 1, mp),))
-        # Project back to embedding_size
+        # Project back to hidden_size
         self.projection = _Linear(in_channels=output_size,
                                   out_channels=input_size,
                                   transpose_b=False,
@@ -515,6 +522,7 @@ class MoE(Cell):
         aux_loss = self.mul(self.aux_loss_factor, aux_loss)
         return combined_output, aux_loss
 
+
 class AttentionMask(Cell):
     r"""
     Get the Lower triangular matrix from the input mask. The input mask is a 2D tensor (batch_size, seq_length)
@@ -535,14 +543,14 @@ class AttentionMask(Cell):
     Raises:
         TypeError: `seq_length` is not a int.
         ValueError: `seq_length` is not a positive value.
-        ValueError: `parallel_config` is not a subclass of OpParallelConfig.
+        TypeError: `parallel_config` is not a subclass of OpParallelConfig.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
         >>> mask = mindspore.parallel.nn.AttentionMask(seq_length=4)
-        >>> mask_array = np.array([[1, 1, 1, 0]], np.int32)
+        >>> mask_array = np.array([[1, 1, 1, 0]], np.float32)
         >>> inputs = Tensor(mask_array)
         >>> res = mask(inputs)
         >>> print(res)
@@ -617,7 +625,7 @@ class VocabEmbedding(Cell):
             parallel_config.model_parallel
         ValueError: `vocab_size` is not a positive value.
         ValueError: `embedding_size` is not a positive value.
-        ValueError: `parallel_config` is not a subclass of OpParallelConfig.
+        TypeError: `parallel_config` is not a subclass of OpParallelConfig.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -661,9 +669,17 @@ class VocabEmbedding(Cell):
 
 
 class MultiHeadAttention(Cell):
-    """
+    r"""
     This is an implementation of multihead attention in the paper `Attention is all you need
-    <https://arxiv.org/pdf/1706.03762v5.pdf>`_.
+    <https://arxiv.org/pdf/1706.03762v5.pdf>`_. Given the query vector with source length, and the
+    key and value vector with target length, the attention will be performered as the following
+
+    .. math::
+           MultiHeadAttention(query, key, vector) = Concat(head_1, \dots, head_h)W^O
+
+    where :math:`head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)`. The default is with a bias.
+
+    if query, key and value tensor is same, then it will be self attention.
 
     Args:
         batch_size(int): The batch size of the input tensor.
@@ -714,7 +730,7 @@ class MultiHeadAttention(Cell):
         ...                            num_heads=3)
         >>> from_tensor = Tensor(np.ones((2, 20, 15)), dtype.float32)
         >>> to_tensor = Tensor(np.ones((2, 20, 15)), dtype.float16)
-        >>> attention_mask = Tensor(np.ones((2, 1, 20, 20)), dtype.float16)
+        >>> attention_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
         >>> attn_out, past = model(from_tensor, to_tensor, to_tensor, attention_mask)
         >>> print(attn_out.shape)
         (2, 20, 15)
@@ -731,7 +747,7 @@ class MultiHeadAttention(Cell):
                                 tgt_seq_length=Validator.check_positive_int,
                                 attention_dropout_rate=Validator.check_non_negative_float,
                                 hidden_dropout_rate=Validator.check_non_negative_float,
-                                softmax_comptue_type=_valid_value_checks([mstype.float32, mstype.float16],
+                                softmax_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                          "MultiHeadAttention"),
                                 param_init_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                     "MultiHeadAttention"),
@@ -746,7 +762,7 @@ class MultiHeadAttention(Cell):
                  hidden_dropout_rate=0.1,
                  attention_dropout_rate=0.1,
                  compute_dtype=mstype.float16,
-                 softmax_comptue_type=mstype.float32,
+                 softmax_compute_type=mstype.float32,
                  param_init_type=mstype.float32,
                  use_past=False,
                  parallel_config=default_dpmp_config):
@@ -757,11 +773,11 @@ class MultiHeadAttention(Cell):
         self.hidden_size = hidden_size
         self.batch_size = batch_size
         if hidden_dropout_rate < 0 or hidden_dropout_rate >= 1:
-            raise ValueError("hidden_dropout_rate probability should be a number in range [0, 1.0), "
-                             "but got {}".format(hidden_dropout_rate))
+            raise ValueError(f"hidden_dropout_rate probability should be a number in range [0, 1.0), "
+                             "but got {hidden_dropout_rate}")
         if attention_dropout_rate < 0 or attention_dropout_rate >= 1:
-            raise ValueError("attention_dropout_rate probability should be a number in range [0, 1.0), "
-                             "but got {}".format(attention_dropout_rate))
+            raise ValueError(f"attention_dropout_rate probability should be a number in range [0, 1.0), "
+                             "but got {attention_dropout_rate}")
         if hidden_size % num_heads != 0:
             raise ValueError(f"The hidden size {hidden_size} should be a multiple of num_heads {num_heads}")
         if num_heads % parallel_config.model_parallel != 0:
@@ -837,7 +853,7 @@ class MultiHeadAttention(Cell):
                           strategy_bias=((parallel_config.data_parallel, parallel_config.model_parallel),
                                          (parallel_config.model_parallel,)))
         self.dtype = compute_dtype
-        self.softmax_dtype = softmax_comptue_type
+        self.softmax_dtype = softmax_compute_type
         if self.use_past:
             # operators used for state reuse
             seq_range = np.arange(src_seq_length).reshape(1, 1, -1)
@@ -933,11 +949,10 @@ class MultiHeadAttention(Cell):
 
         layer_present = (key_present, value_present)
         # multi head attention considering attention mask
+        # [bs, seq_length, hidden_size]
         attention = self._attn(query, key, value, attention_mask)
-        # [bs, seq_length, embedding_size]
-        attention_merge = self._merge_heads(attention)
         # Output
-        output = self.projection(attention_merge)
+        output = self.projection(attention)
         output = self.dropout(output)
         return output, layer_present
 
@@ -1038,7 +1053,8 @@ class MultiHeadAttention(Cell):
         attention_probs = self.prob_dropout(attention_probs)
         # Weighted sum output [bs, num_heads, seq_length, size_per_head]
         weighted_values = self.batch_matmul(attention_probs, value)
-        return weighted_values
+        attention_merge = self._merge_heads(weighted_values)
+        return attention_merge
 
 
 class TransformerEncoderLayer(Cell):
@@ -1060,7 +1076,7 @@ class TransformerEncoderLayer(Cell):
                          'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Can be dtype.float32 or dtype.float16. Default dtype.float16.
-        softmax_comptue_type(dtype.Number): The computation type of the softmax in the attention.
+        softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
             Can be dtype.float32 or dtype.float16. Default mstype.float16.
         param_init_type(dtype.Number): The parameter initialization type of the module.
             Can be dtype.float32 or dtype.float16. Default dtype.float32.
@@ -1115,7 +1131,7 @@ class TransformerEncoderLayer(Cell):
                                 post_layernorm_residual=Validator.check_bool,
                                 layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                            "TransformerEncoderLayer"),
-                                softmax_comptue_type=_valid_value_checks([mstype.float32, mstype.float16],
+                                softmax_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                          "TransformerEncoderLayer"),
                                 param_init_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                     "TransformerEncoderLayer"),
@@ -1132,7 +1148,7 @@ class TransformerEncoderLayer(Cell):
                  hidden_dropout_rate=0.1,
                  post_layernorm_residual=False,
                  layernorm_compute_type=mstype.float32,
-                 softmax_comptue_type=mstype.float32,
+                 softmax_compute_type=mstype.float32,
                  param_init_type=mstype.float32,
                  hidden_act='gelu',
                  use_past=False,
@@ -1142,8 +1158,16 @@ class TransformerEncoderLayer(Cell):
         _check_config(parallel_config)
         if num_heads % parallel_config.model_parallel != 0:
             raise ValueError(
-                f"num heads must be divisibled by the model parallel way {parallel_config.model_parallel},"
+                f"num heads must be divisibled by the model parallel way {parallel_config.model_parallel}, "
                 f"but found {num_heads}")
+        if hidden_size % parallel_config.model_parallel != 0:
+            raise ValueError(
+                f"hidden_size must be divisibled by the model parallel way {parallel_config.model_parallel}, "
+                f"but found {hidden_size}")
+        if ffn_hidden_size % parallel_config.model_parallel != 0:
+            raise ValueError(
+                f"ffn_hidden_size must be divisibled by the model parallel way {parallel_config.model_parallel}, "
+                f"but found {ffn_hidden_size}")
         self.use_past = use_past
         self.seq_length = seq_length
         self.hidden_size = hidden_size
@@ -1160,7 +1184,7 @@ class TransformerEncoderLayer(Cell):
                                             num_heads=num_heads,
                                             hidden_dropout_rate=hidden_dropout_rate,
                                             attention_dropout_rate=attention_dropout_rate,
-                                            softmax_comptue_type=softmax_comptue_type,
+                                            softmax_compute_type=softmax_compute_type,
                                             param_init_type=param_init_type,
                                             use_past=use_past,
                                             parallel_config=parallel_config)
@@ -1298,7 +1322,7 @@ class TransformerDecoderLayer(Cell):
                          'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Can be dtype.float32 or dtype.float16. Default dtype.float16.
-        softmax_comptue_type(dtype.Number): The computation type of the softmax in the attention.
+        softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
             Can be dtype.float32 or dtype.float16. Default mstype.float16.
         param_init_type: The parameter initialization type of the module. Can be dtype.float32 or dtype.float16.
             Default dtype.float32.
@@ -1337,8 +1361,8 @@ class TransformerDecoderLayer(Cell):
         ...                                 src_seq_length=20, tgt_seq_length=10)
         >>> encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
         >>> decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
-        >>> decoder_input_mask = Tensor(np.ones((2, 1, 10, 10)), dtype.float16)
-        >>> memory_mask = Tensor(np.ones((2, 1, 10, 20)), dtype.float16)
+        >>> decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
+        >>> memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
         >>> output, past = model(decoder_input_value, decoder_input_mask, encoder_input_value, memory_mask)
         >>> print(output.shape)
         (2, 10, 64)
@@ -1364,7 +1388,7 @@ class TransformerDecoderLayer(Cell):
                                 post_layernorm_residual=Validator.check_bool,
                                 layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                            "TransformerDecoderLayer"),
-                                softmax_comptue_type=_valid_value_checks([mstype.float32, mstype.float16],
+                                softmax_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                          "TransformerDecoderLayer"),
                                 param_init_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                     "TransformerDecoderLayer"),
@@ -1382,16 +1406,28 @@ class TransformerDecoderLayer(Cell):
                  post_layernorm_residual=False,
                  use_past=False,
                  layernorm_compute_type=mstype.float32,
-                 softmax_comptue_type=mstype.float32,
+                 softmax_compute_type=mstype.float32,
                  param_init_type=mstype.float32,
                  hidden_act='gelu',
                  moe_config=default_moe_config,
                  parallel_config=default_dpmp_config):
         super(TransformerDecoderLayer, self).__init__()
         _check_config(parallel_config)
+        if num_heads % parallel_config.model_parallel != 0:
+            raise ValueError(
+                f"num heads must be divisibled by the model parallel way {parallel_config.model_parallel}, "
+                f"but found {num_heads}")
+        if hidden_size % parallel_config.model_parallel != 0:
+            raise ValueError(
+                f"hidden_size must be divisibled by the model parallel way {parallel_config.model_parallel}, "
+                f"but found {hidden_size}")
+        if ffn_hidden_size % parallel_config.model_parallel != 0:
+            raise ValueError(
+                f"ffn_hidden_size must be divisibled by the model parallel way {parallel_config.model_parallel}, "
+                f"but found {ffn_hidden_size}")
         self.batch_size = batch_size
         self.use_past = use_past
-        self.softmax_comptue_type = softmax_comptue_type
+        self.softmax_compute_type = softmax_compute_type
 
         self.src_seq_length = src_seq_length
         self.tgt_seq_length = tgt_seq_length
@@ -1411,7 +1447,7 @@ class TransformerDecoderLayer(Cell):
                                             hidden_dropout_rate=hidden_dropout_rate,
                                             attention_dropout_rate=attention_dropout_rate,
                                             use_past=use_past,
-                                            softmax_comptue_type=softmax_comptue_type,
+                                            softmax_compute_type=softmax_compute_type,
                                             param_init_type=param_init_type,
                                             parallel_config=parallel_config)
         # Cross attention with the output of encoder as memory tensor
@@ -1422,7 +1458,7 @@ class TransformerDecoderLayer(Cell):
                                                   tgt_seq_length=src_seq_length,
                                                   hidden_dropout_rate=hidden_dropout_rate,
                                                   attention_dropout_rate=attention_dropout_rate,
-                                                  softmax_comptue_type=softmax_comptue_type,
+                                                  softmax_compute_type=softmax_compute_type,
                                                   use_past=use_past,
                                                   param_init_type=param_init_type,
                                                   parallel_config=parallel_config)
@@ -1614,7 +1650,8 @@ def _get_lambda_func(total_layer=None):
 
 class TransformerEncoder(Cell):
     r"""
-    Transformer Encoder module with multi-layer stacled of `TransformerEncoderLayer`.
+    Transformer Encoder module with multi-layer stacked of `TransformerEncoderLayer`, including multihead self
+    attention and feedforward layer.
 
     Args:
         batch_size(int): The batch size of the input tensor.
@@ -1631,7 +1668,7 @@ class TransformerEncoder(Cell):
                          'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Can be dtype.float32 or dtype.float16. Default dtype.float16.
-        softmax_comptue_type(dtype.Number): The computation type of the softmax in the attention.
+        softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
             Can be dtype.float32 or dtype.float16. Default mstype.float16.
         param_init_type: The parameter initialization type of the module. Can be dtype.float32 or dtype.float16.
             Default dtype.float32.
@@ -1697,7 +1734,7 @@ class TransformerEncoder(Cell):
                                 post_layernorm_residual=Validator.check_bool,
                                 layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                            "TransformerEncoder"),
-                                softmax_comptue_type=_valid_value_checks([mstype.float32, mstype.float16],
+                                softmax_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                          "TransformerEncoder"),
                                 param_init_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                     "TransformerEncoder"),
@@ -1716,7 +1753,7 @@ class TransformerEncoder(Cell):
                  hidden_act='gelu',
                  post_layernorm_residual=False,
                  layernorm_compute_type=mstype.float32,
-                 softmax_comptue_type=mstype.float32,
+                 softmax_compute_type=mstype.float32,
                  param_init_type=mstype.float32,
                  lambda_func=None,
                  offset=0,
@@ -1729,6 +1766,8 @@ class TransformerEncoder(Cell):
         self.use_moe = (moe_config.expert_num > 1)
         self.add = P.TensorAdd().shard(((), ()))
         self.aux_loss = Tensor(0.0, mstype.float32)
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
+            raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
         self.num_layers = num_layers
         self.blocks = nn.CellList()
         for i in range(num_layers):
@@ -1739,7 +1778,7 @@ class TransformerEncoder(Cell):
                                             attention_dropout_rate=attention_dropout_rate,
                                             hidden_dropout_rate=hidden_dropout_rate,
                                             layernorm_compute_type=layernorm_compute_type,
-                                            softmax_comptue_type=softmax_comptue_type,
+                                            softmax_compute_type=softmax_compute_type,
                                             num_heads=num_heads,
                                             hidden_act=hidden_act,
                                             post_layernorm_residual=post_layernorm_residual,
@@ -1780,7 +1819,8 @@ class TransformerEncoder(Cell):
 
 class TransformerDecoder(Cell):
     r"""
-    Transformer Decoder module with multi-layer stacled of `TransformerDecoderLayer`.
+    Transformer Decoder module with multi-layer stacked of `TransformerDecoderLayer`, including multihead self
+    attention, cross attention and feedforward layer.
 
     Args:
         batch_size(int): The batch size of the input tensor.
@@ -1798,7 +1838,7 @@ class TransformerDecoder(Cell):
                          'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Can be dtype.float32 or dtype.float16. Default dtype.float16.
-        softmax_comptue_type(dtype.Number): The computation type of the softmax in the attention.
+        softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
             Can be dtype.float32 or dtype.float16. Default mstype.float16.
         param_init_type: The parameter initialization type of the module. Can be dtype.float32 or dtype.float16.
             Default dtype.float32.
@@ -1826,6 +1866,7 @@ class TransformerDecoder(Cell):
           past value parameter used in the incremental prediction. Only valid when use_past is True. Default True
         - **batch_valid_length** (Tensor) - Int32 tensor with shape (batch_size,) the past calculated the index.
           Used for incremental prediction when the use_past is True. Default None.
+
     Outputs:
         Tuple, a tuple contains(`output`, `layer_present`)
 
@@ -1844,8 +1885,8 @@ class TransformerDecoder(Cell):
         ...                            num_heads=2, src_seq_length=20, tgt_seq_length=10)
         >>> encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
         >>> decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
-        >>> decoder_input_mask = Tensor(np.ones((2, 1, 10, 10)), dtype.float16)
-        >>> memory_mask = Tensor(np.ones((2, 1, 10, 20)), dtype.float16)
+        >>> decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
+        >>> memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
         >>> output, past = model(decoder_input_value, decoder_input_mask, encoder_input_value, memory_mask)
         >>> print(output.shape)
         (2, 10, 64)
@@ -1876,7 +1917,7 @@ class TransformerDecoder(Cell):
                                 post_layernorm_residual=Validator.check_bool,
                                 layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                            "TransformerDecoder"),
-                                softmax_comptue_type=_valid_value_checks([mstype.float32, mstype.float16],
+                                softmax_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                          "TransformerDecoder"),
                                 param_init_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                     "TransformerDecoder"),
@@ -1895,7 +1936,7 @@ class TransformerDecoder(Cell):
                  hidden_dropout_rate=0.1,
                  post_layernorm_residual=False,
                  layernorm_compute_type=mstype.float32,
-                 softmax_comptue_type=mstype.float32,
+                 softmax_compute_type=mstype.float32,
                  param_init_type=mstype.float32,
                  hidden_act='gelu',
                  lambda_func=None,
@@ -1908,6 +1949,8 @@ class TransformerDecoder(Cell):
 
         self.add = P.TensorAdd().shard(((), ()))
         self.aux_loss = Tensor(0.0, mstype.float32)
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
+            raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
         self.num_layers = num_layers
         self.blocks = nn.CellList()
         self.use_moe = (moe_config.expert_num > 1)
@@ -1921,7 +1964,7 @@ class TransformerDecoder(Cell):
                                             hidden_dropout_rate=hidden_dropout_rate,
                                             num_heads=num_heads,
                                             layernorm_compute_type=layernorm_compute_type,
-                                            softmax_comptue_type=softmax_comptue_type,
+                                            softmax_compute_type=softmax_compute_type,
                                             hidden_act=hidden_act,
                                             use_past=use_past,
                                             param_init_type=param_init_type,
@@ -1969,7 +2012,7 @@ class TransformerDecoder(Cell):
 class Transformer(Cell):
     r"""
     Transformer module including encoder and decoder. The difference with the original implements is the module use
-    the residual addition before the layernormalization. And the default hidden act is `gelu`.
+    the residual addition before the layer normalization. And the default hidden act is `gelu`.
     The detials can be found in `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_.
 
     Note:
@@ -2037,13 +2080,13 @@ class Transformer(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> model = Transformer(encoder_layers=1, decoder_layers=2, hidden_size=64, ffn_hidden_size=64,
-        ...      src_seq_length=20, tgt_seq_length=10)
+        >>> model = Transformer(batch_size=2, encoder_layers=1, decoder_layers=2, hidden_size=64, ffn_hidden_size=64,
+        ...         src_seq_length=20, tgt_seq_length=10)
         >>> encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
-        >>> encoder_input_mask = Tensor(np.ones((2, 1, 20, 20)), dtype.float16)
+        >>> encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
         >>> decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
-        >>> decoder_input_mask = Tensor(np.ones((2, 1, 10, 10)), dtype.float16)
-        >>> memory_mask = Tensor(np.ones((2, 1, 10, 20)), dtype.float16)
+        >>> decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
+        >>> memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
         >>> output, en_past, de_past = model(encoder_input_value, encoder_input_mask, decoder_input_value,
         ...                                  decoder_input_mask, memory_mask)
         >>> print(output.shape)
@@ -2079,11 +2122,11 @@ class Transformer(Cell):
                                 hidden_dropout_rate=Validator.check_non_negative_float,
                                 hidden_act=_valid_type_checks([str], "Transformer"),
                                 post_layernorm_residual=Validator.check_bool,
-                                layernorm_compute_type=_valid_type_checks([mstype.float32, mstype.float16],
-                                                                          "Transformer"),
-                                softmax_comptue_type=_valid_type_checks([mstype.float32, mstype.float16],
-                                                                        "Transformer"),
-                                param_init_type=_valid_type_checks([mstype.float32, mstype.float16], "Transformer"),
+                                layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
+                                                                           "Transformer"),
+                                softmax_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
+                                                                         "Transformer"),
+                                param_init_type=_valid_value_checks([mstype.float32, mstype.float16], "Transformer"),
                                 parallel_config=_valid_type_checks([TransformerOpParallelConfig], "Transformer"),
                                 use_past=Validator.check_bool)
     def __init__(self,
@@ -2100,7 +2143,7 @@ class Transformer(Cell):
                  hidden_act='gelu',
                  post_layernorm_residual=False,
                  layernorm_compute_type=mstype.float32,
-                 softmax_comptue_type=mstype.float32,
+                 softmax_compute_type=mstype.float32,
                  param_init_type=mstype.float32,
                  lambda_func=None,
                  use_past=False,
@@ -2118,7 +2161,9 @@ class Transformer(Cell):
                              f"layer {decoder_layers}, please use TransformerDecoder")
         if encoder_layers > 0 and decoder_layers > 0 and use_past is True:
             raise ValueError("The transformer with encoder and decoder does not support use_past=True.")
-        # The shard setting of Transformer is set within the class StackedTransformer
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
+            raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
+        # The shard setting of Transformer is set within the TransformerEncoderLayer
         if not lambda_func:
             lambda_func = _get_lambda_func(total_layer=encoder_layers + decoder_layers)
 
@@ -2136,7 +2181,7 @@ class Transformer(Cell):
                                               hidden_dropout_rate=hidden_dropout_rate,
                                               hidden_act=hidden_act,
                                               layernorm_compute_type=layernorm_compute_type,
-                                              softmax_comptue_type=softmax_comptue_type,
+                                              softmax_compute_type=softmax_compute_type,
                                               post_layernorm_residual=post_layernorm_residual,
                                               param_init_type=param_init_type,
                                               lambda_func=lambda_func,
@@ -2162,7 +2207,7 @@ class Transformer(Cell):
                                               hidden_act=hidden_act,
                                               post_layernorm_residual=post_layernorm_residual,
                                               layernorm_compute_type=layernorm_compute_type,
-                                              softmax_comptue_type=softmax_comptue_type,
+                                              softmax_compute_type=softmax_compute_type,
                                               lambda_func=lambda_func,
                                               use_past=use_past,
                                               param_init_type=param_init_type,
