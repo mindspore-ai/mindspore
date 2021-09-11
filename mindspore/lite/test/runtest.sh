@@ -95,5 +95,8 @@ echo 'run custom delegate st test'
 echo 'runtime pass'
 ./lite-test --gtest_filter="RuntimePass.*"
 
+echo 'Optimize Allocator'
+./lite-test --gtest_filter="OptAllocator.*"
+
 echo 'Runtime config file test'
 ./lite-test --gtest_filter="MixDataTypeTest.Config1"

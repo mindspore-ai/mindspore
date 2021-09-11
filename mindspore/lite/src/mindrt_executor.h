@@ -29,7 +29,9 @@
 namespace mindspore::lite {
 class MindrtExecutor : public Executor {
  public:
-  explicit MindrtExecutor(std::unordered_map<Tensor *, Tensor *> *output_map) : output_tensor_map_(output_map) {}
+  explicit MindrtExecutor(std::unordered_map<Tensor *, Tensor *> *output_map,
+                          std::unordered_map<Tensor *, Tensor *> *input_map)
+      : isolate_output_map_(output_map), isolate_input_map_(input_map) {}
   virtual ~MindrtExecutor() { MindrtTerminate(op_actors_); }
 
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
@@ -52,7 +54,8 @@ class MindrtExecutor : public Executor {
   std::vector<std::shared_ptr<LiteOpActor>> op_actors_;
   std::vector<OpDataPtr<Tensor>> input_data_;
   std::vector<OpDataPtr<Tensor>> output_data_;
-  std::unordered_map<Tensor *, Tensor *> *output_tensor_map_;
+  std::unordered_map<Tensor *, Tensor *> *isolate_output_map_;
+  std::unordered_map<Tensor *, Tensor *> *isolate_input_map_;
 };
 
 }  // namespace mindspore::lite

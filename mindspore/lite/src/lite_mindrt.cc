@@ -141,7 +141,7 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
     for (LiteQuantParam quant : old_tensor->quant_params()) {
       new_tensor->AddQuantParam(quant);
     }
-    isolate_input_map_.insert(std::make_pair(new_tensor, old_tensor));
+    isolate_input_map_->insert(std::make_pair(new_tensor, old_tensor));
     ReplaceNodeInTensor(kernel_, old_tensor, new_tensor);
     /* set subgraph input for copy data */
     kernel_->set_in_tensor(new_tensor, i);
@@ -149,7 +149,10 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
   return RET_OK;
 }
 
-int LiteOpActor::LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
+int LiteOpActor::LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
+                               std::unordered_map<Tensor *, Tensor *> *input_map) {
+  isolate_input_map_ = input_map;
+
   /* Init output arrow */
   auto ret = CompileArrow();
   if (ret != RET_OK) {
@@ -175,7 +178,7 @@ int LiteOpActor::LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors
 
 int LiteOpActor::ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                                   const std::vector<std::vector<int>> &dims) {
-  for (auto map : isolate_input_map_) {
+  for (auto map : *isolate_input_map_) {
     auto isolate_tensor = map.first;
     auto src_tensor = map.second;
     for (size_t i = 0; i < inputs.size(); i++) {
