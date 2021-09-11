@@ -16,12 +16,12 @@
 import math
 import numpy as np
 
+
 def get_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch):
     """
     generate learning rate array
 
     Args:
-       global_step(int): total steps of the training
        lr_init(float): init learning rate
        lr_end(float): end learning rate
        lr_max(float): max learning rate
