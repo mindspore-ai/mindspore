@@ -7,7 +7,7 @@ add_definitions(-DENABLE_DVPP_INTERFACE)
 #add_compile_options(-std=c++11 -fPIE -fstack-protector-all -fPIC -Wall)
 add_link_options(-Wl,-z,relro,-z,now,-z,noexecstack -s -pie)
 
-add_compile_options(-std=c++11 -fPIE -fstack-protector-all -fPIC -Wall \
+add_compile_options(-std=c++11 -fPIE -fstack-protector-all -fPIC -Wall
 -Dgoogle=mindxsdk_private -D_GLIBCXX_USE_CXX11_ABI=0)
 
 
