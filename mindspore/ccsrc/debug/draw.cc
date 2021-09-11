@@ -16,7 +16,6 @@
 
 #include "debug/draw.h"
 
-#include <algorithm>
 #include <iostream>
 #include <iterator>
 #include <vector>
@@ -29,7 +28,6 @@
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "ir/tensor.h"
-#include "pipeline/jit/base.h"
 
 namespace mindspore {
 // namespace to support debug utils
@@ -191,7 +189,8 @@ void Draw(const std::string &filename, const FuncGraphPtr &func_graph) {
   const std::string filepath = GetSaveGraphsPathName(Common::AddId(filename_with_suffix, dot_suffix));
   auto real_filepath = Common::CreatePrefixPath(filepath);
   if (!real_filepath.has_value()) {
-    MS_LOG(EXCEPTION) << "The export ir path: " << filepath << " is not illegal.";
+    MS_LOG(ERROR) << "The export ir path: " << filepath << " is illegal.";
+    return;
   }
   DrawByOpt(real_filepath.value(), func_graph, false);
 }
@@ -201,7 +200,8 @@ void DrawUserFuncGraph(const std::string &filename, const FuncGraphPtr &func_gra
   const std::string filepath = GetSaveGraphsPathName(Common::AddId(filename, dot_suffix));
   auto real_filepath = Common::CreatePrefixPath(filepath);
   if (!real_filepath.has_value()) {
-    MS_LOG(EXCEPTION) << "The export ir path: " << filepath << " is not illegal.";
+    MS_LOG(ERROR) << "The export ir path: " << filepath << " is illegal.";
+    return;
   }
   DrawByOpt(real_filepath.value(), func_graph, true);
 }
@@ -339,7 +339,7 @@ void BaseDigraph::FuncGraphParameters(const FuncGraphPtr &key) {
     }
     buffer_ << "</td></tr>";
     count++;
-    // wrap the text.
+    // Wrap the text.
     if (count % 10 == 0) {
       buffer_ << "\n";
     }
@@ -386,7 +386,8 @@ static std::string ReplaceAll(std::string str, const std::string &from, const st
   size_t start_pos = 0;
   while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
     (void)str.replace(start_pos, from.length(), to);
-    start_pos += to.length();  // Handles case where 'to' is a substring of 'from'
+    // Handles case where 'to' is a substring of 'from'
+    start_pos += to.length();
   }
   return str;
 }
@@ -526,9 +527,9 @@ void Digraph::Node(const AnfNodePtr &node, int id) {
   buffer_ << "node" << node << "_" << id;
   buffer_ << "[";
 
-  // set fontname
+  // Set fontname
   buffer_ << "fontname=\"Courier New\",";
-  // set label and shape
+  // Set label and shape
   buffer_ << "shape=" << Shape(node) << ",";
   if (node->isa<CNode>()) {
     DrawCNode(this, node->cast<CNodePtr>());
@@ -566,7 +567,7 @@ void Digraph::Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int 
 
   buffer_ << "[arrowhead=vee,";
 
-  // check how many inputs for end
+  // Check how many inputs for end
   if (end->isa<CNode>()) {
     auto cnode = end->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
@@ -620,9 +621,9 @@ void ModelDigraph::Node(const AnfNodePtr &node, int id) {
   buffer_ << "node" << node << "_" << id;
   buffer_ << "[";
 
-  // set fontname
+  // Set fontname
   buffer_ << "fontname=\"Courier New\",";
-  // set label and shape
+  // Set label and shape
   buffer_ << "shape=" << Shape(node) << ",";
   if (node->isa<CNode>()) {
     DrawCNode(this, node->cast<CNodePtr>());
