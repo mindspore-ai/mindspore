@@ -440,7 +440,9 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
 
   auto op_launch_start_end_time = profiler_inst->GetSingleOpLaunchTime();
   std::string op_name = kernel->fullname_with_scope();
-  PynativeProfiler::SetOpNameAndLaunchTime(std::make_pair(op_name, op_launch_start_end_time));
+  PynativeProfiler::SetDeviceOpNameAndLaunchTimePoint(std::make_pair(op_name, op_launch_start_end_time));
+  PynativeProfiler::SetDeviceOpNameAndLaunchCostTime(
+    std::make_pair(op_name, op_launch_start_end_time.second - op_launch_start_end_time.first));
 
   if (profiler_inst->GetSyncEnableFlag()) {
     CHECK_RET_WITH_RETURN_ERROR(SyncStream(), "Profiler SyncStream failed.");

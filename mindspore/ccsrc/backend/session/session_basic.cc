@@ -35,7 +35,6 @@
 #include "backend/optimizer/common/common_backend_optimization.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "pipeline/pynative/pynative_profiling.h"
 #include "utils/ms_utils.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
@@ -2267,9 +2266,7 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
   CreateOutputPlaceholder(kernel_graph, inputs, graph_output_info.graph_outputs, &graph_output_info.output_indexes);
   std::map<KernelWithIndex, size_t> cnode_refcount;
   GetRefCount(kernel_graph.get(), &cnode_refcount);
-  PynativeProfiler::SetBackwardTimePoint("BackwardBuildOpsInGraph", "Start");
   BuildOpsInGraph(graph_id, parameter_index, inputs, cnode_refcount);
-  PynativeProfiler::SetBackwardTimePoint("BackwardBuildOpsInGraph", "End");
 
   // Clear bucket resources every step
   if (kernel_graph->is_bprop()) {
@@ -2289,11 +2286,8 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
 
     // Build and run current single op
     VectorRef op_outputs;
-    PynativeProfiler::SetBackwardRunOpImplOpName(kernel->fullname_with_scope());
-    PynativeProfiler::SetBackwardTimePoint("BackwardRunOpImpl", "Start");
     RunOpImplOrigin(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
                     input_tensor_info.input_tensors_mask);
-    PynativeProfiler::SetBackwardTimePoint("BackwardRunOpImpl", "End");
     graph_output_info.graph_output_tensors.clear();
     // Handle inputs and outputs of current op
     HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);

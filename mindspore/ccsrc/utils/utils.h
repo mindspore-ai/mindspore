@@ -524,6 +524,7 @@ constexpr auto kLoadRealInput = 1;
 constexpr auto kLoadStateInput = 2;
 // time transfer unit
 constexpr int kBasicTimeTransferUnit = 1000;
+constexpr int kMaxVectorSize = 10000;
 // index of input or output
 enum Index : size_t {
   kIndex0 = 0,

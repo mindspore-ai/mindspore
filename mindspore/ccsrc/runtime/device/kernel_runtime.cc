@@ -1090,7 +1090,8 @@ bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_
   auto launch_end_time = GetTime();
   double launch_start_time = launch_end_time - cost_time / kBasicTimeTransferUnit;
   auto op_launch_start_time_end_time = std::make_pair(launch_start_time, launch_end_time);
-  PynativeProfiler::SetOpNameAndLaunchTime(std::make_pair(op_name, op_launch_start_time_end_time));
+  PynativeProfiler::SetDeviceOpNameAndLaunchTimePoint(std::make_pair(op_name, op_launch_start_time_end_time));
+  PynativeProfiler::SetDeviceOpNameAndLaunchCostTime(std::make_pair(op_name, cost_time / kBasicTimeTransferUnit));
   if (!ret) {
     MS_LOG(EXCEPTION) << "Launch kernel failed, kernel name is : " << op_name;
   }
