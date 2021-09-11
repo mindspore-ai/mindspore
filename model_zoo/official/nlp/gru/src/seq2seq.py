@@ -84,7 +84,6 @@ class Encoder(nn.Cell):
         self.fc = nn.Dense(2*self.hidden_size, self.hidden_size).to_float(config.compute_type)
         self.shape = P.Shape()
         self.transpose = P.Transpose()
-        self.p = P.Print()
         self.cast = P.Cast()
         self.text_len = config.max_length
         self.squeeze = P.Squeeze(axis=0)
@@ -131,7 +130,6 @@ class Decoder(nn.Cell):
         self.text_len = config.max_length
         self.shape = P.Shape()
         self.transpose = P.Transpose()
-        self.p = P.Print()
         self.cast = P.Cast()
         self.concat = P.Concat(axis=2)
         self.squeeze = P.Squeeze(axis=0)

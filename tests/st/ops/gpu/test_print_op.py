@@ -21,6 +21,7 @@ from mindspore import Tensor
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 import mindspore.context as context
+from tests.security_utils import security_off_wrap
 
 
 class PrintNetOneInput(nn.Cell):
@@ -53,6 +54,8 @@ class PrintNetIndex(nn.Cell):
         return x
 
 
+
+@security_off_wrap
 def print_testcase(nptype):
     # large shape
     x = np.arange(20808).reshape(6, 3, 34, 34).astype(nptype)
@@ -85,6 +88,7 @@ class PrintNetString(nn.Cell):
         return x
 
 
+@security_off_wrap
 def print_testcase_string(nptype):
     x = np.ones(18).astype(nptype)
     y = np.arange(9).reshape(3, 3).astype(nptype)
@@ -106,6 +110,7 @@ class PrintTypes(nn.Cell):
         return x
 
 
+@security_off_wrap
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -118,6 +123,7 @@ def test_print_multiple_types():
     net(x, y, z)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -125,6 +131,7 @@ def test_print_bool():
     print_testcase(np.bool)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -132,6 +139,7 @@ def test_print_int8():
     print_testcase(np.int8)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -139,6 +147,7 @@ def test_print_int16():
     print_testcase(np.int16)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -146,6 +155,7 @@ def test_print_int32():
     print_testcase(np.int32)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -153,6 +163,7 @@ def test_print_int64():
     print_testcase(np.int64)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -160,6 +171,7 @@ def test_print_uint8():
     print_testcase(np.uint8)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -167,6 +179,7 @@ def test_print_uint16():
     print_testcase(np.uint16)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -174,6 +187,7 @@ def test_print_uint32():
     print_testcase(np.uint32)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -181,6 +195,7 @@ def test_print_uint64():
     print_testcase(np.uint64)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -188,6 +203,7 @@ def test_print_float16():
     print_testcase(np.float16)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -195,6 +211,7 @@ def test_print_float32():
     print_testcase(np.float32)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

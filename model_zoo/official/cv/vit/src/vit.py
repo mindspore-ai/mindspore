@@ -82,7 +82,6 @@ class DropPath(Cell):
         self.rand = P.UniformReal(seed=seed) # seed must be 0, if set to other value, it's not rand for multiple call
         self.shape = P.Shape()
         self.floor = P.Floor()
-        self.print = P.Print()
 
     def construct(self, x):
         if self.training:

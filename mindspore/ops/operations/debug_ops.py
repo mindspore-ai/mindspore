@@ -17,11 +17,11 @@
 from types import FunctionType, MethodType
 
 from mindspore import context
+from mindspore._c_expression import security
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ..primitive import prim_attr_register, Primitive, PrimitiveWithInfer
-
 
 def _check_mode(class_name):
     """Check for PyNative mode."""
@@ -407,6 +407,9 @@ class Print(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Print."""
+        if security.enable_security():
+            raise ValueError(
+                'The Print is not supported, please without `-s on` and recompile source.')
         self.add_prim_attr("side_effect_io", True)
 
     def __call__(self, *args):

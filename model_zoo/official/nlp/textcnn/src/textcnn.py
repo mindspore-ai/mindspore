@@ -115,7 +115,6 @@ class TextCNN(nn.Cell):
 
         self.fc = nn.Dense(96*3, self.num_classes)
         self.drop = nn.Dropout(keep_prob=0.5)
-        self.print = P.Print()
         self.reducemax = P.ReduceMax(keep_dims=False)
 
     def make_layer(self, kernel_height):

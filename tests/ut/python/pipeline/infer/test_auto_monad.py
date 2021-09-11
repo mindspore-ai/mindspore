@@ -9,6 +9,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter, ParameterTuple
+from tests.security_utils import security_off_wrap
 
 grad_all_list = C.GradOperation(get_all=True, get_by_list=True)
 grad_by_list = C.GradOperation(get_by_list=True)
@@ -117,6 +118,7 @@ def test_insert_gradient_of():
     print(grad_net(Tensor(input_data)))
 
 
+@security_off_wrap
 def test_user_defined_bprop():
     class UserDefinedNet(nn.Cell):
         def __init__(self):
@@ -151,6 +153,7 @@ def test_user_defined_bprop():
 
 
 # user defined bprop don't have the same size of parameters with primal's
+@security_off_wrap
 def test_user_defined_bad_bprop():
     class UserDefinedNet(nn.Cell):
         def __init__(self):
@@ -186,6 +189,7 @@ def test_user_defined_bad_bprop():
 
 
 # shoul compile success and Print in presented in the final function graph.
+@security_off_wrap
 @pytest.mark.skip(reason="isolated nodes exception")
 def test_unused_var():
     class UnusedVar(nn.Cell):
@@ -212,6 +216,7 @@ def test_unused_var():
 
 
 # shoul compile success and Print in presented in the final function graph.
+@security_off_wrap
 @pytest.mark.skip(reason="isolated nodes exception")
 def test_hof_unused_var():
     class UnusedVar(nn.Cell):
@@ -241,6 +246,7 @@ def test_hof_unused_var():
 
 
 # shoul compile success and Print in presented in the final function graph.
+@security_off_wrap
 @pytest.mark.skip(reason="isolated nodes exception")
 def test_partial_hof_unused_var():
     class UnusedVar(nn.Cell):

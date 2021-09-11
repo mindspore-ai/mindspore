@@ -52,7 +52,6 @@ class RpnRegClsBlock(nn.Cell):
         self.shape1 = (-1, config.num_step, config.rnn_batch_size)
         self.shape2 = (config.batch_size, -1, config.rnn_batch_size, config.num_step)
         self.transpose = P.Transpose()
-        self.print = P.Print()
 
     def construct(self, x):
         x = self.reshape(x, self.shape)
@@ -143,7 +142,6 @@ class RPN(nn.Cell):
         self.loss = Tensor(np.zeros((1,)).astype(np.float16))
         self.clsloss = Tensor(np.zeros((1,)).astype(np.float16))
         self.regloss = Tensor(np.zeros((1,)).astype(np.float16))
-        self.print = P.Print()
 
     def _make_rpn_layer(self, num_layers, in_channels, feat_channels, num_anchors, cls_out_channels):
         """

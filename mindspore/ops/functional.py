@@ -23,6 +23,7 @@ from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
 from .composite import GradOperation
+from .._c_expression import security
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -125,7 +126,8 @@ scalar_to_array = P.ScalarToArray()
 scalar_to_tensor = P.ScalarToTensor()
 tuple_to_array = P.TupleToArray()
 scalar_cast = P.ScalarCast()
-print_ = P.Print()
+if not security.enable_security():
+    print_ = P.Print()
 expand_dims = P.ExpandDims()
 transpose = P.Transpose()
 squeeze = P.Squeeze()

@@ -124,7 +124,6 @@ class ResNetMulti(nn.Cell):
             self.layer5 = ClassifierModule(1024, [6, 12, 18, 24], [6, 12, 18, 24], num_classes)
 
         self.layer6 = ClassifierModule(2048, [6, 12, 18, 24], [6, 12, 18, 24], num_classes)
-        self.p = P.Print()
         self.shape = Shape()
         self.pad = nn.Pad(((0, 0), (0, 0), (1, 1), (1, 1)), "CONSTANT")
 

@@ -37,7 +37,6 @@ class OpenPoseNet(nn.Cell):
         self.stage_6 = Stage_x()
         self.shape = P.Shape()
         self.cat = P.Concat(axis=1)
-        self.print = P.Print()
         if loadvgg and vggpath:
             param_dict = load_checkpoint(vggpath)
             param_dict_new = {}

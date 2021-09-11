@@ -42,7 +42,6 @@ class YoloPostProcess(Cell):
     """
     def __init__(self, num_classes, cur_anchors, conf_thresh, network_size, reduction, anchors_mask):
         super(YoloPostProcess, self).__init__()
-        self.print = P.Print()
         self.num_classes = num_classes
         self.anchors = cur_anchors
         self.conf_thresh = conf_thresh

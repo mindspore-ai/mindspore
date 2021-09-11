@@ -174,7 +174,6 @@ class BuildTestNetwork(nn.Cell):
     '''BuildTestNetwork'''
     def __init__(self, network, reduction_0, reduction_1, reduction_2, anchors, anchors_mask, num_classes, args):
         super(BuildTestNetwork, self).__init__()
-        self.print = P.Print()
         self.network = network
         self.reduction_0 = reduction_0
         self.reduction_1 = reduction_1

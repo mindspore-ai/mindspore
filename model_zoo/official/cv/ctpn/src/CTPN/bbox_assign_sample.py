@@ -96,7 +96,6 @@ class BboxAssignSample(nn.Cell):
         self.range_pos_size = Tensor(np.arange(self.num_expected_pos).astype(np.float16))
         self.check_gt_one = Tensor(np.array(-1 * np.ones((self.num_gts, 4)), dtype=np.float16))
         self.check_anchor_two = Tensor(np.array(-2 * np.ones((self.num_bboxes, 4)), dtype=np.float16))
-        self.print = P.Print()
 
 
     def construct(self, gt_bboxes_i, gt_labels_i, valid_mask, bboxes, gt_valids):

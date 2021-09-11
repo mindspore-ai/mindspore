@@ -245,7 +245,6 @@ class InceptionC(nn.Cell):
         self.concat = P.Concat(1)
         if not self.noReLU:
             self.relu = nn.ReLU()
-        self.print = P.Print()
 
     def construct(self, x):
         x0 = self.branch0(x)

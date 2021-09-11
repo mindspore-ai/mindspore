@@ -34,6 +34,7 @@ from mindspore.ops import operations as P
 from mindspore.train.callback import _CheckpointManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
      export, _save_graph, load
+from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
 
 context.set_context(mode=context.GRAPH_MODE, print_file_path="print/print.pb")
@@ -419,6 +420,7 @@ class PrintNet(nn.Cell):
         return int8, uint8, int16, uint16, int32, uint32, int64, uint64, flt16, flt32, flt64, bool_, scale1, scale2
 
 
+@security_off_wrap
 def test_print():
     print_net = PrintNet()
     int8 = Tensor(np.random.randint(100, size=(10, 10), dtype="int8"))
