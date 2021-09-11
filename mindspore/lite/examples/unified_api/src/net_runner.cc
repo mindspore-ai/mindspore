@@ -24,7 +24,8 @@
 #include <iostream>
 #include <fstream>
 #include <utility>
-#include "include/context.h"
+#include "include/api/context.h"
+#include "include/api/types.h"
 #include "include/api/serialization.h"
 #include "include/api/callback/loss_monitor.h"
 #include "include/api/metrics/accuracy.h"
@@ -109,26 +110,26 @@ class Measurement : public mindspore::TrainCallBack {
 };
 
 // Definition of verbose callback function after forwarding operator.
-bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                    const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                    const mindspore::CallBackParam &call_param) {
+bool after_callback(const std::vector<mindspore::MSTensor> &after_inputs,
+                    const std::vector<mindspore::MSTensor> &after_outputs,
+                    const mindspore::MSCallBackParam &call_param) {
   printf("%s\n", call_param.node_name.c_str());
   for (size_t i = 0; i < after_inputs.size(); i++) {
-    int num2p = (after_inputs.at(i)->ElementsNum());
+    int num2p = (after_inputs.at(i).ElementNum());
     printf("in%zu(%d): ", i, num2p);
     if (num2p > kPrintNum) num2p = kPrintNum;
-    if (after_inputs.at(i)->data_type() == mindspore::kNumberTypeInt32) {
-      auto d = reinterpret_cast<int *>(after_inputs.at(i)->MutableData());
+    if (after_inputs.at(i).DataType() == mindspore::DataType::kNumberTypeInt32) {
+      auto d = reinterpret_cast<const int *>(after_inputs.at(i).Data().get());
       for (int j = 0; j < num2p; j++) printf("%d, ", d[j]);
     } else {
-      auto d = reinterpret_cast<float *>(after_inputs.at(i)->MutableData());
+      auto d = reinterpret_cast<const float *>(after_inputs.at(i).Data().get());
       for (int j = 0; j < num2p; j++) printf("%f, ", d[j]);
     }
     printf("\n");
   }
   for (size_t i = 0; i < after_outputs.size(); i++) {
-    auto d = reinterpret_cast<float *>(after_outputs.at(i)->MutableData());
-    int num2p = (after_outputs.at(i)->ElementsNum());
+    auto d = reinterpret_cast<const float *>(after_inputs.at(i).Data().get());
+    int num2p = (after_outputs.at(i).ElementNum());
     printf("ou%zu(%d): ", i, num2p);
     if (num2p > kElem2Print) {
       num2p = kElem2Print;
