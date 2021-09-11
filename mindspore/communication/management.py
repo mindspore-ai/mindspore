@@ -210,10 +210,10 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         >>> from mindspore.context import set_context
         >>> set_context(device_target="Ascend", device_num=16) # 2 server, each server with 8 NPU.
         >>> init()
-        >>> world_rank = get_rank() # rank_id is 7.
+        >>> world_rank = get_rank() # rank_id is 9.
         >>> local_rank = get_local_rank()
         >>> print("local_rank is: {}, world_rank is {}"%(local_rank, world_rank))
-        local_rank_size is: 1, world_rank is 7
+        local_rank is: 1, world_rank is 9
     """
     if not isinstance(group, str):
         raise TypeError("Group name must be a string, but got {}".format(type(group)))

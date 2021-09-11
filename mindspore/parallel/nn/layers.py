@@ -476,6 +476,7 @@ class FixedSparseAttention(nn.Cell):
         self.transpose2 = P.Transpose().shard(((dp, 1, 1, 1),))
         self.transpose3 = P.Transpose().shard(((dp, mp, 1, 1, 1, 1),))
         self.transpose4 = P.Transpose().shard(((dp, mp, 1, 1),))
+        self.div = P.RealDiv().shard(((mp, dp, 1, 1), ()))
         self.slice1 = P.StridedSlice().shard(((dp, 1, 1),))
 
     def _transpose_inputs(self, q, k, v):
@@ -550,8 +551,8 @@ class FixedSparseAttention(nn.Cell):
 
         q, k, v = self._transpose_inputs(q, k, v)
         local_mask, global_mask = self._generate_attention_mask(attention_mask)
-        q = q / F.cast(self.scale_factor, F.dtype(q))
-        k = k / F.cast(self.scale_factor, F.dtype(k))
+        q = self.div(q, F.cast(self.scale_factor, F.dtype(q)))
+        k = self.div(k, F.cast(self.scale_factor, F.dtype(k)))
         local_prob, global_prob = self.matmul_dds(q, k, local_mask, global_mask)
         attention = self.matmul_dsd(local_prob, global_prob, v)
         attention_merge = self.transpose3(attention, (0, 1, 3, 4, 2, 5))
