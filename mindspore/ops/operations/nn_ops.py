@@ -3422,7 +3422,6 @@ class DropoutGenMask(Primitive):
         validator.check_value_type("Seed0", Seed0, [int], self.name)
         validator.check_value_type("Seed1", Seed1, [int], self.name)
         self.add_prim_attr("_random_effect", True)
-        self.add_prim_attr('side_effect_mem', True)
 
 
 class DropoutDoMask(Primitive):
