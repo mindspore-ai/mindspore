@@ -24,16 +24,24 @@
 namespace mindspore::lite {
 void MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels,
                                       const std::vector<Tensor *> &inputs) {
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    for (size_t j = 0; j < kernels.size(); ++j) {
-      auto in_tensor_size = kernels[j]->in_tensors().size();
-      for (size_t k = 0; k < in_tensor_size; ++k) {
-        if (inputs[i] != kernels[j]->in_tensors()[k]) {
-          continue;
-        }
-        auto data = std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), inputs[i], static_cast<int>(k));
-        input_data_.emplace_back(data);
+  for (size_t j = 0; j < kernels.size(); ++j) {
+    auto in_tensor_size = kernels[j]->in_tensors().size();
+    for (size_t k = 0; k < in_tensor_size; ++k) {
+      auto tensor = kernels[j]->in_tensors()[k];
+      if (!tensor->IsGraphInput()) {
+        continue;
       }
+      size_t idx = std::find(inputs.begin(), inputs.end(), tensor) - inputs.begin();
+      if (idx == inputs.size()) {
+        MS_LOG(ERROR) << "The input is not found.";
+        return;
+      }
+      auto data = std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), inputs.at(idx), static_cast<int>(k));
+      if (data == nullptr) {
+        MS_LOG(ERROR) << "new opdata failed.";
+        return;
+      }
+      input_data_.emplace_back(data);
     }
   }
 }
@@ -42,6 +50,9 @@ void MindrtExecutor::PrepareOutputData(const std::vector<kernel::LiteKernel *> &
                                        const std::vector<Tensor *> &outputs) {
   for (size_t i = 0; i < outputs.size(); ++i) {
     Tensor *graph_output_tensor = outputs[i];
+    if (graph_output_tensor->IsGraphInput()) {
+      continue;
+    }
     auto current_output_map =
       std::find_if(output_tensor_map_->begin(), output_tensor_map_->end(), [&](const auto output_map_tensor) {
         if (graph_output_tensor == output_map_tensor.second) {
