@@ -358,6 +358,7 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const std::unique_ptr<tflite::Ope
     round_type = 2;
   }
   auto quant_params_holder = std::make_shared<QuantParamHolder>(op->inputs.size(), op->outputs.size());
+  MSLITE_CHECK_PTR(quant_params_holder);
   size_t idx = 0;
   for (auto input_idx : op->inputs) {
     if (input_idx < 0) {
@@ -666,7 +667,9 @@ STATUS TfliteModelParser::ConvertOutputTensor(const std::unique_ptr<tflite::SubG
     (void)std::transform(tensor->shape.begin(), tensor->shape.end(), std::back_inserter(shape_vector),
                          [](const int32_t &value) { return static_cast<int64_t>(value); });
     auto type_ptr = TypeIdToType(GetTfliteDataType(tensor->type));
-    dst_cnode->set_abstract(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
+    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+    MSLITE_CHECK_PTR(abstract_tensor);
+    dst_cnode->set_abstract(abstract_tensor);
     anf_node_map->insert(std::pair(op->outputs.front(), dst_cnode));
   } else {
     AbstractBasePtrList abstract_list;
@@ -708,7 +711,9 @@ STATUS TfliteModelParser::ConvertOutputTensor(const std::unique_ptr<tflite::SubG
       anf_node_map->insert(std::pair(output_idx, get_item_cnode));
       op_idx++;
     }
-    dst_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+    auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+    MSLITE_CHECK_PTR(abstract_tuple);
+    dst_cnode->set_abstract(abstract_tuple);
   }
   return RET_OK;
 }
