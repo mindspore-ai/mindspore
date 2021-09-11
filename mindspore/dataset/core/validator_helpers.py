@@ -532,6 +532,20 @@ def check_dir(dataset_dir):
         raise ValueError("The folder {} does not exist or is not a directory or permission denied!".format(dataset_dir))
 
 
+def check_list_same_size(list1, list2, list1_name="", list2_name=""):
+    """
+    Validates the two lists as the same size.
+
+    :param list1: the first list to be validated
+    :param list2: the secend list to be validated
+    :param list1_name: name of the list1
+    :param list2_name: name of the list2
+    :return: Exception: when the two list no same size, nothing otherwise.
+    """
+    if len(list1) != len(list2):
+        raise ValueError("The size of {0} should be the same as that of {1}.".format(list1_name, list2_name))
+
+
 def check_file(dataset_file):
     """
     Validates if the argument is a valid file name.

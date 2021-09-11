@@ -34,11 +34,34 @@ Status ValidateIntScalarNonNegative(const std::string &op_name, const std::strin
 // Helper function to non-nan float scalar
 Status ValidateFloatScalarNotNan(const std::string &op_name, const std::string &scalar_name, float scalar);
 
-template <typename T>
 // Helper function to check scalar is not equal to zero
+template <typename T>
 Status ValidateScalarNotZero(const std::string &op_name, const std::string &scalar_name, const T scalar) {
   if (scalar == 0) {
     std::string err_msg = op_name + ": " + scalar_name + " can't be zero, got: " + std::to_string(scalar);
+    MS_LOG(ERROR) << err_msg;
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+  }
+  return Status::OK();
+}
+
+// Helper function to check vector is not empty
+template <typename T>
+Status ValidateVectorNotEmpty(const std::string &op_name, const std::string &vec_name, const std::vector<T> &vec) {
+  if (vec.empty()) {
+    std::string err_msg = op_name + ": " + vec_name + " can't be empty.";
+    MS_LOG(ERROR) << err_msg;
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+  }
+  return Status::OK();
+}
+
+// Helper function to check two vector size equal
+template <typename T>
+Status ValidateVectorSameSize(const std::string &op_name, const std::string &vec1_name, const std::vector<T> &vec1,
+                              const std::string &vec2_name, const std::vector<T> &vec2) {
+  if (vec1.size() != vec2.size()) {
+    std::string err_msg = op_name + ": the size of " + vec1_name + " should be the same as that of " + vec2_name;
     MS_LOG(ERROR) << err_msg;
     return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }

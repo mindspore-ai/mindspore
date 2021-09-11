@@ -321,6 +321,31 @@ class HighpassBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Design filter. Similar to SoX implementation.
+class LFilter final : public TensorTransform {
+ public:
+  /// \param[in] a_coeffs Numerator coefficients of difference equation of dimension of (n_order + 1).
+  ///     Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
+  ///     Must be same size as b_coeffs (pad with 0's as necessary).
+  /// \param[in] b_coeffs Numerator coefficients of difference equation of dimension of (n_order + 1).
+  ///     Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
+  ///     Must be same size as a_coeffs (pad with 0's as necessary).
+  /// \param[in] clamp If True, clamp the output signal to be in the range [-1, 1] (Default: True).
+  explicit LFilter(std::vector<float> a_coeffs, std::vector<float> b_coeffs, bool clamp = true);
+
+  /// \brief Destructor.
+  ~LFilter() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Design biquad lowpass filter and perform filtering. Similar to SoX implementation.
 class LowpassBiquad final : public TensorTransform {
  public:

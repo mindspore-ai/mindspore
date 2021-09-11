@@ -33,6 +33,7 @@
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
@@ -192,6 +193,16 @@ PYBIND_REGISTER(
         return highpass_biquad;
       }));
   }));
+
+PYBIND_REGISTER(LFilterOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::LFilterOperation, TensorOperation, std::shared_ptr<audio::LFilterOperation>>(
+                    *m, "LFilterOperation")
+                    .def(py::init([](std::vector<float> a_coeffs, std::vector<float> b_coeffs, bool clamp) {
+                      auto lfilter = std::make_shared<audio::LFilterOperation>(a_coeffs, b_coeffs, clamp);
+                      THROW_IF_ERROR(lfilter->ValidateParams());
+                      return lfilter;
+                    }));
+                }));
 
 PYBIND_REGISTER(
   LowpassBiquadOperation, 1, ([](const py::module *m) {

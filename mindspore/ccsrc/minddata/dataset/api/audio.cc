@@ -29,6 +29,7 @@
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
@@ -230,6 +231,22 @@ std::shared_ptr<TensorOperation> HighpassBiquad::Parse() {
   return std::make_shared<HighpassBiquadOperation>(data_->sample_rate_, data_->cutoff_freq_, data_->Q_);
 }
 
+// LFilter Transform Operation.
+struct LFilter::Data {
+  Data(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp)
+      : a_coeffs_(a_coeffs), b_coeffs_(b_coeffs), clamp_(clamp) {}
+  std::vector<float> a_coeffs_;
+  std::vector<float> b_coeffs_;
+  bool clamp_;
+};
+
+LFilter::LFilter(std::vector<float> a_coeffs, std::vector<float> b_coeffs, bool clamp)
+    : data_(std::make_shared<Data>(a_coeffs, b_coeffs, clamp)) {}
+
+std::shared_ptr<TensorOperation> LFilter::Parse() {
+  return std::make_shared<LFilterOperation>(data_->a_coeffs_, data_->b_coeffs_, data_->clamp_);
+}
+
 // LowpassBiquad Transform Operation.
 struct LowpassBiquad::Data {
   Data(int32_t sample_rate, float cutoff_freq, float Q) : sample_rate_(sample_rate), cutoff_freq_(cutoff_freq), Q_(Q) {}
@@ -290,7 +307,6 @@ TimeStretch::TimeStretch(float hop_length, int n_freq, float fixed_rate)
 std::shared_ptr<TensorOperation> TimeStretch::Parse() {
   return std::make_shared<TimeStretchOperation>(data_->hop_length_, data_->n_freq_, data_->fixed_rate_);
 }
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore
