@@ -108,7 +108,7 @@ There are sorts of energy in the output, steps (_steps_), temperature (_TEMP_), 
 | Output                    | numpy file
 | Speed                      | 5.0 ms/step
 | Total time                 | 5.7 s
-| Script                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge)
+| Script                    | [Link](https://gitee.com/mindspore/mindspore/tree/r1.3/model_zoo/research/hpc/sponge)
 
 ## ModelZoo Homepage
 
