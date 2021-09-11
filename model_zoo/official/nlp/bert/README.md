@@ -40,6 +40,7 @@
             - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
+- [FAQ](#faq)
 
 # [BERT Description](#contents)
 
@@ -825,5 +826,10 @@ Refer to the [ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/mo
   You could try lower `learning_rate` to use lower base learning rate or higher `power` to make learning rate decrease faster in config yaml.
 
 - **Q: Why the training process failed with error for the shape can not match?**
+
   **A**: This is usually caused by the config `seq_length` of model can't match the dataset. You could check and modified the `seq_length` in yaml config according to the dataset you used.
   The parameter of model won't change with `seq_length`, the shapes of parameter only depends on model config `max_position_embeddings`.
+
+- **Q: Why the training process failed with error about operator `Gather`?**
+
+  **A**: Bert use operator `Gather` for embedding. The size of vocab is configured by `vocab_size` in yaml config file. If the vocab used to construct the dataset is larger than config, the operator will failed for the violation access.

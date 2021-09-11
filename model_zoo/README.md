@@ -102,6 +102,8 @@ Here is the ModelZoo for MindSpore which support different devices including Asc
 
 If you are looking for exclusive models only for Ascend using different ML platform, you could refer to [Ascend ModelZoo](https://hiascend.com/software/modelzoo) and corresponding [gitee repository](https://gitee.com/ascend/modelzoo)
 
+Modelzoo will be transferred to a new repo [models](https://gitee.com/mindspore/models).
+
 ## Disclaimers
 
 Mindspore only provides scripts that downloads and preprocesses public datasets. We do not own these datasets and are not responsible for their quality or maintenance. Please make sure you have permission to use the dataset under the dataset’s license. The models trained on these dataset are for non-commercial research and educational purpose only.
@@ -119,3 +121,7 @@ MindSpore is Apache 2.0 licensed. Please see the LICENSE file.
 - **Q: How to resolve the lack of memory while using `PYNATIVE_MODE` with errors such as *Failed to alloc memory pool memory*?**
 
   **A**: `PYNATIVE_MODE` usually requires more memory than `GRAPH_MODE`, especially in training process which have to deal with back propagation. You could try using smaller batch size.
+
+- **Q: How to resolve the error about the interface not supported, such as `cann not import`?**
+
+  **A**: Please check the version of MindSpore and the branch you fetch the modelzoo scripts. Some model scripits in latest branch will use new interface in the latest version of MindSpore.
