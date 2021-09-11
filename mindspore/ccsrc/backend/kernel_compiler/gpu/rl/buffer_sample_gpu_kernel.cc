@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 BufferSampleKernel::BufferSampleKernel()
     : element_nums_(0), capacity_(0), batch_size_(0), seed_(0), states_init_(false), unique_(false) {}
 

@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 BufferAppendKernel::BufferAppendKernel() : element_nums_(0), exp_batch_(0), capacity_(0) {}
 
 BufferAppendKernel::~BufferAppendKernel() {}
