@@ -32,6 +32,7 @@ constexpr size_t NCHWTopPadPos = 4;
 
 STATUS TFConvBaseParser::ParseKernels(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
                                       std::vector<int64_t> *kernel) {
+  MS_ASSERT(kernel != nullptr);
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(node_def, "value", &attr_value)) {
     MS_LOG(ERROR) << "The kernels should be specified";
@@ -51,6 +52,7 @@ STATUS TFConvBaseParser::ParseKernels(const tensorflow::NodeDef &node_def, const
 
 STATUS TFConvBaseParser::ParseStrides(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
                                       std::vector<int64_t> *strides) {
+  MS_ASSERT(strides != nullptr);
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(node_def, "strides", &attr_value)) {
     strides->at(0) = 1;
@@ -97,6 +99,7 @@ STATUS TFConvBaseParser::ParseExplicitPaddings(const tensorflow::NodeDef &node_d
 
 STATUS TFConvBaseParser::ParseDilations(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
                                         std::vector<int64_t> *dilations) {
+  MS_ASSERT(dilations != nullptr);
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(node_def, "dilations", &attr_value)) {
     dilations->at(0) = 1;
