@@ -238,6 +238,12 @@ class WaitedDSCallback(Callback, DSCallback):
         return c_cb
 
     def end(self, run_context):
+        """
+        Internal method, release the wait if training is ended.
+
+        Args:
+          run_context: Include some information of the model.
+        """
         self.epoch_end(run_context)
         self.step_end(run_context)
         self.training_ended = True

@@ -226,6 +226,7 @@ Execute::~Execute() {
 Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output) {
   // Validate input tensor
   CHECK_FAIL_RETURN_UNEXPECTED(input.DataSize() > 0, "Input Tensor has no data.");
+  CHECK_FAIL_RETURN_UNEXPECTED(output != nullptr, "Output Tensor can not be nullptr.");
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
 
   // Parse TensorTransform transforms_ into TensorOperation ops_
@@ -311,6 +312,8 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
 Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::vector<MSTensor> *output_tensor_list) {
   // Validate input tensor
   CHECK_FAIL_RETURN_UNEXPECTED(!input_tensor_list.empty(), "Input Tensor is not valid.");
+  CHECK_FAIL_RETURN_UNEXPECTED(output_tensor_list != nullptr, "Output Tensor can not be nullptr.");
+  output_tensor_list->clear();
   for (auto &tensor : input_tensor_list) {
     CHECK_FAIL_RETURN_UNEXPECTED(tensor.DataSize() > 0, "Input Tensor has no data.");
   }
