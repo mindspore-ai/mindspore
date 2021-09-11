@@ -26,6 +26,7 @@
 #include "tools/converter/quantizer/quant_helper/default_quant_all_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/only_need_inputs_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/quant_dtype_cast_quant_param_propogator.h"
+#include "tools/converter/quantizer/quant_helper/matmul_quant_type_determiner.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite {
@@ -115,6 +116,7 @@ QuantHelperRegister::QuantHelperRegister() {
   auto conv_determiner = std::make_shared<ConvQuantTypeDeterminer>();
   auto default_quant_all_determiner = std::make_shared<DefaultQuantAllQuantTypeDeterminer>();
   auto only_need_inputs_determiner = std::make_shared<OnlyNeedInputsQuantTypeDeterminer>();
+  auto matmul_determiner = std::make_shared<MatmulQuantTypeDeterminer>();
 
   register_map_[schema::PrimitiveType_BiasAdd] = new QuantNodeHelper(bias_add_propogator, base_determiner);
 
@@ -131,7 +133,8 @@ QuantHelperRegister::QuantHelperRegister() {
   register_map_[schema::PrimitiveType_Concat] = new QuantNodeHelper(concat_propogator, base_determiner);
 
   register_map_[schema::PrimitiveType_Conv2DFusion] = new QuantNodeHelper(conv_propogator, conv_determiner);
-  register_map_[schema::PrimitiveType_MatMul] = new QuantNodeHelper(conv_propogator, conv_determiner);
+  register_map_[schema::PrimitiveType_MatMul] = new QuantNodeHelper(conv_propogator, matmul_determiner);
+  register_map_[schema::PrimitiveType_FullConnection] = new QuantNodeHelper(conv_propogator, matmul_determiner);
 
   register_map_[schema::PrimitiveType_QuantDTypeCast] =
     new QuantNodeHelper(quant_dtype_cast_propogator, default_quant_all_determiner);
