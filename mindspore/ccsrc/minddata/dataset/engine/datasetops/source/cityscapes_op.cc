@@ -21,7 +21,7 @@
 #include <set>
 #include <utility>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -124,7 +124,7 @@ void CityscapesOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status CityscapesOp::ParseCityscapesData() {
-  auto real_dataset_dir = Common::GetRealPath(dataset_dir_);
+  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
   if (!real_dataset_dir.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << dataset_dir_;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + dataset_dir_);

@@ -22,7 +22,7 @@
 #include <fstream>
 #include <iomanip>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
@@ -84,7 +84,7 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
 }
 
 Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  auto realpath = Common::GetRealPath(file);
+  auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file);
@@ -230,7 +230,7 @@ Status ClueOp::CalculateNumRowsPerShard() {
 }
 
 int64_t CountTotalRowsPerFile(const std::string &file) {
-  auto realpath = Common::GetRealPath(file);
+  auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file;
     return 0;

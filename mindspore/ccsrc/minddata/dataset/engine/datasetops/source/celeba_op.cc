@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -71,7 +71,7 @@ Status CelebAOp::ParseAttrFile() {
   TaskManager::FindMe()->Post();
   Path folder_path(folder_path_);
 
-  auto realpath = Common::GetRealPath((folder_path / "list_attr_celeba.txt").ToString());
+  auto realpath = FileUtils::GetRealPath((folder_path / "list_attr_celeba.txt").ToString().data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").ToString();
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").ToString());

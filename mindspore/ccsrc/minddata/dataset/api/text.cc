@@ -18,7 +18,7 @@
 #include <fstream>
 #include <regex>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
@@ -172,7 +172,7 @@ Status JiebaTokenizer::AddDictChar(const std::vector<char> &file_path) {
 
 Status JiebaTokenizer::ParserFile(const std::string &file_path,
                                   std::vector<std::pair<std::string, int64_t>> *const user_dict) {
-  auto realpath = Common::GetRealPath(file_path);
+  auto realpath = FileUtils::GetRealPath(file_path.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file_path;
     RETURN_STATUS_SYNTAX_ERROR("Get real path failed, path=" + file_path);

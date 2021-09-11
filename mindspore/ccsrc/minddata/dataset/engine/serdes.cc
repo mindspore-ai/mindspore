@@ -17,7 +17,7 @@
 #include <stack>
 #include "minddata/dataset/engine/serdes.h"
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/utils.h"
 
 namespace mindspore {
@@ -56,17 +56,26 @@ Status Serdes::SaveToJSON(std::shared_ptr<DatasetNode> node, const std::string &
 
 Status Serdes::SaveJSONToFile(nlohmann::json json_string, const std::string &file_name) {
   try {
-    auto realpath = Common::GetRealPath(file_name);
+    std::optional<std::string> dir = "";
+    std::optional<std::string> local_file_name = "";
+    FileUtils::SplitDirAndFileName(file_name, &dir, &local_file_name);
+    if (!dir.has_value()) {
+      dir = ".";
+    }
+    auto realpath = FileUtils::GetRealPath(dir.value().data());
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
       RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);
     }
 
-    std::ofstream file(realpath.value());
+    std::optional<std::string> whole_path = "";
+    FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
+
+    std::ofstream file(whole_path.value());
     file << json_string;
     file.close();
 
-    ChangeFileMode(realpath.value(), S_IRUSR | S_IWUSR);
+    ChangeFileMode(whole_path.value(), S_IRUSR | S_IWUSR);
   } catch (const std::exception &err) {
     RETURN_STATUS_UNEXPECTED("Save json string into " + file_name + " failed!");
   }

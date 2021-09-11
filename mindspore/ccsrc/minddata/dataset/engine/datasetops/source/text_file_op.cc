@@ -20,7 +20,7 @@
 #include <string>
 #include <utility>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/wait_post.h"
@@ -79,7 +79,7 @@ Status TextFileOp::LoadTensor(const std::string &line, TensorRow *out_row) {
 }
 
 Status TextFileOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  auto realpath = Common::GetRealPath(file);
+  auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file);
@@ -169,7 +169,7 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
 
 // Internal helper function to calculate rows
 int64_t CountTotalRows(const std::string &file) {
-  auto realpath = Common::GetRealPath(file);
+  auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file;
     return 0;

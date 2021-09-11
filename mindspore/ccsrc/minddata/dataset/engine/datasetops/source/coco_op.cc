@@ -17,7 +17,7 @@
 
 #include <algorithm>
 #include <fstream>
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
@@ -263,7 +263,7 @@ Status CocoOp::SearchNodeInJson(const nlohmann::json &input_tree, std::string no
 Status CocoOp::ParseAnnotationIds() {
   nlohmann::json js;
   try {
-    auto realpath = Common::GetRealPath(annotation_path_);
+    auto realpath = FileUtils::GetRealPath(annotation_path_.data());
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed, path=" << annotation_path_;
       RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + annotation_path_);

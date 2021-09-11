@@ -23,7 +23,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/serdes.h"
@@ -97,7 +97,7 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   std::string line;
   Path folder_path(dataset_dir_);
 
-  auto realpath = Common::GetRealPath((folder_path / "list_attr_celeba.txt").ToString());
+  auto realpath = FileUtils::GetRealPath((folder_path / "list_attr_celeba.txt").ToString().data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").ToString();
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").ToString());
@@ -136,7 +136,7 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
       }
     }
     if (!partition_file.is_open()) {
-      auto realpath_eval = Common::GetRealPath((folder_path / "list_eval_partition.txt").ToString());
+      auto realpath_eval = FileUtils::GetRealPath((folder_path / "list_eval_partition.txt").ToString().data());
       if (!realpath_eval.has_value()) {
         MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_eval_partition.txt").ToString();
         RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_eval_partition.txt").ToString());

@@ -20,7 +20,7 @@
 #include <sentencepiece_processor.h>
 #include <fstream>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "utils/utils.h"
 #include "minddata/dataset/util/path.h"
@@ -85,37 +85,20 @@ Status SentencePieceVocab::BuildFromFile(const std::vector<std::string> &path_li
 
 Status SentencePieceVocab::SaveModel(const std::shared_ptr<SentencePieceVocab> *vocab, std::string path,
                                      std::string filename) {
-  char real_path[PATH_MAX] = {0};
-
-  if (path.size() >= PATH_MAX) {
-    RETURN_STATUS_UNEXPECTED(
-      "SentencePieceVocab: sentence model path is invalid for "
-      "path length longer than 4096.");
-  }
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, common::SafeCStr(path), PATH_MAX) == nullptr) {
-    RETURN_STATUS_UNEXPECTED(
-      "SentencePieceVocab: sentence model path is invalid for "
-      "path length longer than 4096.");
-  }
-#else
-  if (realpath(common::SafeCStr(path), real_path) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("SentencePieceVocab: sentence model path: " + path +
-                             " is not existed or permission denied.");
-  }
-#endif
-
-  std::string abs_real_path = (Path(real_path) / Path(filename)).ToString();
-  auto realpath = Common::GetRealPath(abs_real_path);
+  auto realpath = FileUtils::GetRealPath(path.data());
   if (!realpath.has_value()) {
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + abs_real_path);
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);
   }
 
-  std::ofstream os_file(realpath.value(), std::ios::out);
+  std::optional<std::string> whole_path = "";
+  std::optional<std::string> local_file_name = filename;
+  FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
+
+  std::ofstream os_file(whole_path.value(), std::ios::out);
   (void)os_file.write(vocab->get()->model_proto().data(), vocab->get()->model_proto().size());
   os_file.close();
 
-  ChangeFileMode(realpath.value(), S_IRUSR | S_IWUSR);
+  ChangeFileMode(whole_path.value(), S_IRUSR | S_IWUSR);
 
   return Status::OK();
 }
