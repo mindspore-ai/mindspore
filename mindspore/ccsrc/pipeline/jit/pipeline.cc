@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ void SetLoopCount(const ResourcePtr &resource) {
 
 void GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_name) {
   MS_EXCEPTION_IF_NULL(resource);
-  auto realpath = Common::GetRealPath(kCompileCacheFilePath);
+  auto realpath = Common::CreatePrefixPath(kCompileCacheFilePath);
   if (!realpath.has_value()) {
     MS_LOG(EXCEPTION) << "Get real path failed. filename=" << kCompileCacheFilePath;
   }
@@ -205,7 +205,7 @@ void GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_na
 
 void CacheFuncGraph(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  auto realpath = Common::GetRealPath(kCompileCacheFilePath);
+  auto realpath = Common::CreatePrefixPath(kCompileCacheFilePath);
   if (!realpath.has_value()) {
     MS_LOG(EXCEPTION) << "Get real path failed. filename=" << kCompileCacheFilePath;
   }
