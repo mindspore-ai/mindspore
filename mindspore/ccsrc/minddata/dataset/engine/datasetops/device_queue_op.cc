@@ -149,6 +149,9 @@ Status DeviceQueueOp::operator()() {
         }
       }
     }
+    if (tdtInstancePtr->acl_handle_ == nullptr) {
+      RETURN_STATUS_UNEXPECTED("Create channel for sending data failed, please check DEVICE ID setting.");
+    }
     RETURN_IF_NOT_OK(SendDataToAscend());
 #endif
   } else if (device_type_ == DeviceType::GPU) {
@@ -685,7 +688,7 @@ void DeviceQueueOp::DetectPerBatchTime(uint64_t *start_time, uint64_t *end_time)
   if (*end_time - *start_time > kTimeOutMilliSeconds) {
     MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to fetch and send a batch of data"
                        " into device, which might result `GetNext` timeout problem. You may test dataset processing"
-                       " performance and optimize it.";
+                       " performance and optimize it or check whether sending data part is blocked as queue is full.";
   }
   *start_time = *end_time;
 }
