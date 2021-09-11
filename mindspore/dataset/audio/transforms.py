@@ -49,8 +49,8 @@ class AllpassBiquad(AudioTensorOperation):
     Design two-pole all-pass filter for audio waveform of dimension of (..., time).
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value must be greater than 0.
-        central_freq (float): central frequency (in Hz), the value must be greater than 0.
+        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        central_freq (float): central frequency (in Hz).
         Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
 
     Examples:
@@ -161,7 +161,7 @@ class BandpassBiquad(AudioTensorOperation):
     Design two-pole band-pass filter. Similar to SoX implementation.
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
         central_freq (float): Central frequency (in Hz).
         Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0,1] (default=0.707).
         const_skirt_gain (bool, optional) : If True, uses a constant skirt gain (peak gain = Q).
@@ -192,8 +192,8 @@ class BandrejectBiquad(AudioTensorOperation):
     Design two-pole band filter for audio waveform of dimension of (..., time).
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value must be greater than 0.
-        central_freq (float): central frequency (in Hz), the value must be greater than 0.
+        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        central_freq (float): central frequency (in Hz).
         Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
 
     Examples:
@@ -220,7 +220,7 @@ class BassBiquad(AudioTensorOperation):
     Design a bass tone-control effect for audio waveform of dimension of (..., time).
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
         gain (float): Desired gain at the boost (or attenuation) in dB.
         central_freq (float): Central frequency (in Hz) (default=100.0).
         Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
