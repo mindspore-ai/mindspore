@@ -151,13 +151,23 @@ class TbeJob:
         if not msg:
             self.warning("Get empty error manager message, op_name: {}".format(self.fusion_op_name))
             return
-        exception_info = msg[0]
-        if not isinstance(exception_info, dict):
+        exception_info = None
+        op_name = self.fusion_op_name
+        if isinstance(msg, Exception):
+            for arg in msg.args:
+                if isinstance(arg, dict) and "errCode" in arg:
+                    exception_info = arg
+                    break
+            if not exception_info:
+                self.error("Exception message:{}".format(msg))
+                return
+        else:
+            exception_info = msg[0]
+            if len(msg) >= 2:
+                op_name = msg[1]
+        if not isinstance(exception_info, dict) or not exception_info:
             self.warning("Get illegal error manager message, op_name: {}".format(self.fusion_op_name))
             return
-        op_name = self.fusion_op_name
-        if len(msg) >= 2:
-            op_name = msg[1]
         exception_info["op_name"] = op_name
         processed_msg = json.dumps(exception_info)
         message = LogMessage(len(self.process_info), LogLevel.ERROR_MANAGER, processed_msg)

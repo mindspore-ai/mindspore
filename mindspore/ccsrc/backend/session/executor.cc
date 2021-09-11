@@ -137,6 +137,7 @@ void RunGraphTask::Run() {
     std::map<DeviceAddressPtr, DeviceAddressPtr> new_to_old_device_address;
     session_->UpdateOutputTensors(&outputs_, tensor_to_node_, &new_to_old_device_address);
   } catch (const std::exception &e) {
+    session_->ReportErrorMessage();
     ExecutorManager::Instance().OnEvent(ExecutorEvent::kException);
     MsException::Instance().SetException();
   }
