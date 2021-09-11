@@ -374,6 +374,16 @@ class Cell(Cell_):
                 f"The function construct needs {positional_args} positional argument and {default_args} default "
                 f"argument, but provided {len(inputs)}")
 
+    class CellGuard:
+        def __enter__(self):
+            _pynative_executor.set_lazy_build(True)
+            _pynative_executor.enter_cell()
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            _pynative_executor.exit_cell()
+            if _pynative_executor.is_top_cell():
+                _pynative_executor.set_lazy_build(False)
+
     def __call__(self, *inputs, **kwargs):
         if self.__class__.construct is Cell.construct:
             logger.warning(f"The '{self.__class__}' does not override the method 'construct', "
@@ -392,7 +402,11 @@ class Cell(Cell_):
             return out
 
         # Run in PyNative mode.
-        self._do_parameter_broadcast()
+        if _pynative_executor.is_top_cell():
+            _pynative_executor.set_lazy_build(True)
+            # There many Casts in parameter_broadcast. Enable lazy_build and build faster.
+            self._do_parameter_broadcast()
+
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("The cell inputs should not be numpy arrays.")
@@ -407,7 +421,13 @@ class Cell(Cell_):
                 cast_inputs = self._cast_mixed_precision_inputs(inputs, mstype.float32)
         if not cast_inputs:
             cast_inputs = inputs
-        output = self.run_construct(cast_inputs, kwargs)
+
+        with self.CellGuard():
+            output = self.run_construct(cast_inputs, kwargs)
+
+        if _pynative_executor.is_top_cell():
+            _pynative_executor.execute_all_task()
+
         if isinstance(output, Parameter):
             output = output.data
         _pynative_executor.end_graph(self, output, *inputs, **kwargs)

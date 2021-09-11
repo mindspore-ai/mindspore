@@ -154,6 +154,7 @@ class AscendSession : public SessionBasic {
   KernelGraphPtr CreateKernelGraph(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                                    std::vector<tensor::TensorPtr> *input_tensors,
                                    const std::vector<int64_t> &tensors_mask, bool cache_miss);
+  static bool DisableLazyBuild(const OpRunInfo &op_run_info);
   // key is final_graph_id,value is child graph execute order of final graph
   std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
   // key is final_graph_id,value is the graph types of child graphs

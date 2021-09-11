@@ -889,6 +889,7 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   }
   op_exec_info->py_primitive = prim;
   op_exec_info->op_inputs = args[PY_INPUTS];
+  op_exec_info->lazy_build = lazy_build_;
   return op_exec_info;
 }
 
@@ -1117,6 +1118,7 @@ py::object ForwardExecutor::DoAutoCast(const py::object &arg, const TypeId &type
   inputs[0] = arg;
   inputs[1] = dst_type;
   op_exec_info->op_inputs = inputs;
+  op_exec_info->lazy_build = lazy_build_;
   py::object ret = py::none();
   RunOpInner(&ret, op_exec_info);
   return ret;
@@ -1861,6 +1863,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
                                     op_exec_info->abstract,
                                     op_exec_info->is_dynamic_shape,
                                     op_exec_info->is_mixed_precision_cast,
+                                    op_exec_info->lazy_build,
                                     op_exec_info->next_op_name,
                                     static_cast<int>(op_exec_info->next_input_index)};
 #else
@@ -1869,6 +1872,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
                                     op_exec_info->abstract,
                                     op_exec_info->is_dynamic_shape,
                                     op_exec_info->is_mixed_precision_cast,
+                                    op_exec_info->lazy_build,
                                     op_exec_info->next_op_name,
                                     op_exec_info->next_input_index};
 #endif
@@ -3055,6 +3059,8 @@ void PynativeExecutor::ClearGrad(const py::object &cell, const py::args &args) {
 void PynativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear all res";
   session::PynativeTaskManager::GetInstance().Reset();
+  SetLazyBuild(false);
+  cell_depth_ = 0;
 
   // Maybe exit in runop step
   auto ms_context = MsContext::GetInstance();
@@ -3125,11 +3131,32 @@ void PynativeExecutor::Sync() {
   }
 }
 
+void PynativeExecutor::SetLazyBuild(bool enable) { forward_executor()->set_lazy_build(enable); }
+
+void PynativeExecutor::EnterCell() {
+  if (cell_depth_ < UINT32_MAX) {
+    ++cell_depth_;
+  } else {
+    MS_LOG(ERROR) << "Cell call stack too deep";
+  }
+}
+
+void PynativeExecutor::ExitCell() {
+  if (cell_depth_ > 0) {
+    --cell_depth_;
+  }
+}
+
+bool PynativeExecutor::IsTopCell() const { return cell_depth_ == 0; }
+
 void PynativeExecutor::ExecuteAllTask() { session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks(); }
 
 REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                          (void)py::class_<PynativeExecutor, std::shared_ptr<PynativeExecutor>>(*m, "PynativeExecutor_")
                            .def_static("get_instance", &PynativeExecutor::GetInstance, "PynativeExecutor get_instance.")
+                           .def("enter_cell", &PynativeExecutor::EnterCell, "enter cell.")
+                           .def("exit_cell", &PynativeExecutor::ExitCell, "exit cell.")
+                           .def("is_top_cell", &PynativeExecutor::IsTopCell, "check top cell.")
                            .def("new_graph", &PynativeExecutor::NewGraph, "pynative new a graph.")
                            .def("end_graph", &PynativeExecutor::EndGraph, "pynative end a graph.")
                            .def("check_graph", &PynativeExecutor::CheckGraph, "pynative check a grad graph.")
@@ -3139,6 +3166,7 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("clear_cell", &PynativeExecutor::ClearCell, "pynative clear status.")
                            .def("clear_grad", &PynativeExecutor::ClearGrad, "pynative clear grad status.")
                            .def("sync", &PynativeExecutor::Sync, "pynative sync stream.")
+                           .def("set_lazy_build", &PynativeExecutor::SetLazyBuild, "pynative build kernel async")
                            .def("execute_all_task", &PynativeExecutor::ExecuteAllTask, "clear all task")
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
                            .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")

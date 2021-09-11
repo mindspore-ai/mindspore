@@ -854,21 +854,24 @@ KernelGraphPtr AscendSession::CreateKernelGraph(const GraphInfo &graph_info, OpR
   return graph;
 }
 
+bool AscendSession::DisableLazyBuild(const OpRunInfo &op_run_info) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  return !op_run_info.lazy_build || ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode ||
+         op_run_info.is_dynamic_shape || ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+}
+
 void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                               std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                               const std::vector<int64_t> &tensors_mask) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode || op_run_info->is_dynamic_shape ||
-      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  if (DisableLazyBuild(*op_run_info)) {
     session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
     RunOpImplOrigin(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
     return;
   }
 
   MS_EXCEPTION_IF_NULL(input_tensors);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-
   bool cache_miss = run_op_graphs_.find(graph_info) == run_op_graphs_.end();
   auto graph = CreateKernelGraph(graph_info, op_run_info, input_tensors, tensors_mask, cache_miss);
   EraseValueNodeTensor(tensors_mask, input_tensors);
