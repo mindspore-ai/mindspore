@@ -48,7 +48,8 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
       offline_tune[j] = tolower(offline_tune[j]);
     }
     if (!(offline_tune == "true" || offline_tune == "false")) {
-      MS_LOG(ERROR) << "The value of ENABLE_TUNE_DUMP must be 'true' or 'false'";
+      MS_LOG(ERROR) << "Invalid environment variable 'ENABLE_TUNE_DUMP', it should be 'true' or 'false', but got "
+                    << tune_mode;
       return false;
     }
   }

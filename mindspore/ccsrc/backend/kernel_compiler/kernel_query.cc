@@ -127,7 +127,7 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   }
 
   if (kernel_info_list->empty()) {
-    MS_EXCEPTION(NotExistsError) << "Can not find any available operator info for op ["
+    MS_EXCEPTION(NotExistsError) << "Can not find any available operator info for operator ["
                                  << AnfAlgo::GetCNodeName(kernel_node) << ", " << kernel_node->fullname_with_scope()
                                  << "]. Node DebugString:" << kernel_node->DebugString()
                                  << ", maybe the operator can not supported on current platform. \n trace "
