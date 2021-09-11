@@ -355,7 +355,31 @@ class Model:
 
         return dataset_helper, network
 
-    def _init(self, train_dataset=None, valid_dataset=None, sink_size=-1):
+    def _warmup_dataset(self, epoch, train_dataset, sink_size=-1):
+        """
+        Trigger dataset pipeline running before graph compiling.
+
+        Args:
+            epoch (int): Total number of iterations on the data.
+            train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
+                                     initialized. Default: None.
+            sink_size (int): Control the amount of data in each sink. Default: -1.
+        """
+        if sink_size == -1:
+            epoch_num = epoch
+        else:
+            epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size())
+            train_dataset.__total_batch__ = epoch * sink_size
+        dataset_helper = None
+        dataset_helper, _ = self._exec_preprocess(is_train=True,
+                                                  dataset=train_dataset,
+                                                  dataset_sink_mode=True,
+                                                  sink_size=sink_size,
+                                                  epoch_num=epoch_num,
+                                                  dataset_helper=dataset_helper)
+        train_dataset._dataset_helper = dataset_helper
+
+    def _init(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1):
         """
         Initialize compute graphs and data graphs with the sink mode.
 
@@ -368,6 +392,7 @@ class Model:
             valid_dataset (Dataset): A evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
                                      will be initialized, and `metrics` in `Model` can not be None. Default: None.
             sink_size (int): Control the amount of data in each sink. Default: -1.
+            epoch (int): Total number of iterations on the data. Default: 1.
         """
         if context.get_context("mode") != context.GRAPH_MODE or context.get_context("device_target") != "Ascend":
             raise RuntimeError('Pre-init process only supports GRAPH MODE and Ascend target currently.')
@@ -387,6 +412,7 @@ class Model:
                                                                         dataset=train_dataset,
                                                                         dataset_sink_mode=True,
                                                                         sink_size=sink_size)
+            self._warmup_dataset(epoch, train_dataset, sink_size)
             self._train_network = train_network
             if context.get_auto_parallel_context("pipeline_stages") > 1 and valid_dataset:
                 self._train_network.add_flags_recursive(is_first_iteration=True)
@@ -514,6 +540,8 @@ class Model:
         # used to stop training for early stop, such as stopAtTIme or stopATStep
         should_stop = False
         dataset_helper = None
+        if hasattr(train_dataset, '_dataset_helper'):
+            dataset_helper = train_dataset._dataset_helper
         for i in range(epoch):
             cb_params.cur_epoch_num = i + 1
             list_callback.epoch_begin(run_context)
