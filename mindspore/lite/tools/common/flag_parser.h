@@ -77,7 +77,7 @@ class FlagParser {
     bool isBoolean = false;
     std::string helpInfo;
     bool isParsed = false;
-    std::function<Option<Nothing>(FlagParser *, const std::string &)> parse;
+    std::function<Option<Nothing>(FlagParser *, const std::string &)> parse = nullptr;
   };
 
   inline void AddFlag(const FlagInfo &flag);

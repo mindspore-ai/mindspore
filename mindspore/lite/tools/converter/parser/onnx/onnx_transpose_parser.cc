@@ -35,7 +35,9 @@ ops::PrimitiveC *OnnxTransposeParser::Parse(const onnx::GraphProto &onnx_graph, 
       }
     }
   }
-  prim->AddAttr("perm", MakeValue(perm));
+  auto perm_value = MakeValue(perm);
+  MS_CHECK_TRUE_MSG(perm_value != nullptr, nullptr, "MakeValue failed");
+  prim->AddAttr("perm", perm_value);
   return prim.release();
 }
 
