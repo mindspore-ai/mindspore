@@ -120,7 +120,6 @@ bool AnfNodeConfigEqual::operator()(const AnfNodeConfigPtr lhs, const AnfNodeCon
 
 AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list) {
   StaticAnalysisException::Instance().ClearException();
-  AnalysisSchedule::GetInstance().Reset();
   AnalysisResult result;
   try {
     MS_EXCEPTION_IF_NULL(func_graph);
@@ -761,13 +760,11 @@ bool NeedWaitForBranches(const AbstractBasePtr &abstract) {
 }
 
 void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList args_conf_list, AnfNodeConfigPtr out_conf,
-                   std::string caller, AsyncAbstractPtr async_result_branch, AsyncAbstractPtr async_result_main,
-                   AsyncAbstractPtr async_run_flag, const trace::TraceGraphEvalStack &graph_evals,
+                   const std::string &threadID, AsyncAbstractPtr async_result_branch,
+                   AsyncAbstractPtr async_result_main, AsyncInferTaskPtr async_run_flag,
+                   const trace::TraceGraphEvalStack &graph_evals,
                    const trace::TraceCNodeEvalStack &trace_c_node_evals) {
-  // Set threadID xxx.yyy.zzz for debug info.
-  if (IS_OUTPUT_ON(DEBUG)) {
-    AnalysisSchedule::SetThreadID(caller);
-  }
+  AnalysisSchedule::SetThreadID(threadID);
   // Restore trace stack for dump stack when there is exception.
   trace::TraceEvalCNodeStackPrepare(trace_c_node_evals);
   trace::TraceGraphEvalStackPrepare(graph_evals);
@@ -829,37 +826,42 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   } else {
     return std::make_shared<EvalResult>(eval_result, nullptr);
   }
-
   auto possible_parent_fg = out_conf->node()->func_graph();
-  std::string threadId = AnalysisSchedule::GetThreadID();
+
   // Eval result of the main.
   AsyncAbstractPtr asyncResult_main = std::make_shared<AsyncAbstract>();
   // Eval result of the branches
   std::vector<AsyncAbstractPtr> branchAsyncResults;
 
   for (auto &evaluator : evaluators) {
+    static std::atomic<int> idCount{0};
+    std::string threadId = AnalysisSchedule::GetThreadID() + "." + std::to_string(idCount.fetch_add(1));
     MS_EXCEPTION_IF_NULL(evaluator);
     SetUndeterminedFlag(evaluator, possible_parent_fg);
     AsyncAbstractPtr branchAsyncResult = std::make_shared<AsyncAbstract>();
     // Control the order to run.
     AsyncAbstractPtr asyncRunOrder = std::make_shared<AsyncAbstract>();
+    AsyncInferTaskPtr asyncTask = AsyncInferTask::MakeShared(asyncRunOrder, threadId);
     // Add point to the async thread.
     AnalysisSchedule::GetInstance().IncreaseThreadCount();
     MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluator->ToString();
     auto thread =
       std::thread(ExecEvaluator, evaluator, shared_from_this(), args_conf_list, out_conf, threadId, branchAsyncResult,
-                  asyncResult_main, asyncRunOrder, trace::GetCurrenGraphEvalStack(), trace::GetCNodeDebugStack());
+                  asyncResult_main, asyncTask, trace::GetCurrenGraphEvalStack(), trace::GetCNodeDebugStack());
     thread.detach();
     // Push to list of running loop
     asyncRunOrder->SetResult(std::make_shared<AbstractScalar>(1));
-    AnalysisSchedule::GetInstance().Add2Schedule(asyncRunOrder);  // Activate order
+    MS_LOG(DEBUG) << " add to schedule: " << asyncTask.get();
+    AnalysisSchedule::GetInstance().Add2Schedule(asyncTask);  // Activate order witch child thread.
     (void)branchAsyncResults.emplace_back(std::move(branchAsyncResult));
   }
 
   MS_LOG(DEBUG) << GetInferThread() << "async : wait for one of async to finish.  " << evaluators[0]->ToString()
                 << " or  " << evaluators[1]->ToString() << "...";
-  AnalysisSchedule::GetInstance().Add2Schedule(asyncResult_main);  // Third order
-  auto firstResult = asyncResult_main->GetResult();
+  auto async_main = AsyncInferTask::MakeShared(asyncResult_main);
+  MS_LOG(DEBUG) << " add to schedule: " << async_main.get();
+  AnalysisSchedule::GetInstance().Add2Schedule(async_main);  // Third order
+  auto firstResult = async_main->GetResult();
   MS_EXCEPTION_IF_NULL(firstResult);
   MS_LOG(DEBUG) << GetInferThread() << "async main thread result of " << out_conf->node()->ToString() << " = "
                 << firstResult->ToString();
@@ -869,15 +871,19 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   if (NeedWaitForBranches(firstResult)) {
     for (size_t i = 0; i < len; ++i) {
       MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[i]->ToString();
-      AnalysisSchedule::GetInstance().Add2Schedule(branchAsyncResults[i]);
-      auto result = branchAsyncResults[i]->GetResult();
+      auto async_branch = AsyncInferTask::MakeShared(branchAsyncResults[i]);
+      MS_LOG(DEBUG) << " add to schedule: " << async_branch.get();
+      AnalysisSchedule::GetInstance().Add2Schedule(async_branch);
+      auto result = async_branch->GetResult();
       MS_EXCEPTION_IF_NULL(result);
       out_specs.push_back(result);
     }
   } else {
     // Give one more chance to wait for the result of the branches.
-    AnalysisSchedule::GetInstance().Add2Schedule(asyncResult_main);
-    (void)asyncResult_main->GetResult();
+    auto async_tmp = AsyncInferTask::MakeShared(asyncResult_main);
+    MS_LOG(DEBUG) << " add to schedule: " << async_tmp.get();
+    AnalysisSchedule::GetInstance().Add2Schedule(async_tmp);
+    (void)async_tmp->GetResult();
     for (size_t i = 0; i < len; ++i) {
       // Not wait to get the result of branch.
       auto result = branchAsyncResults[i]->TryGetResult();
