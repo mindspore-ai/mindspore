@@ -15,7 +15,6 @@
 """coco eval for fasterrcnn"""
 import json
 import numpy as np
-import mmcv
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
@@ -42,7 +41,7 @@ def coco_eval(result_files, result_types, coco, max_dets=(100, 300, 1000), singl
     if not anns:
         return summary_init
 
-    if mmcv.is_str(coco):
+    if isinstance(coco, str):
         coco = COCO(coco)
     assert isinstance(coco, COCO)
 
@@ -208,18 +207,22 @@ def results2json(dataset, results, out_file):
         json_results = det2json(dataset, results)
         result_files['bbox'] = '{}.{}.json'.format(out_file, 'bbox')
         result_files['proposal'] = '{}.{}.json'.format(out_file, 'bbox')
-        mmcv.dump(json_results, result_files['bbox'])
+        with open(result_files['bbox'], 'w') as fp:
+            json.dump(json_results, fp)
     elif isinstance(results[0], tuple):
         json_results = segm2json(dataset, results)
         result_files['bbox'] = '{}.{}.json'.format(out_file, 'bbox')
         result_files['proposal'] = '{}.{}.json'.format(out_file, 'bbox')
         result_files['segm'] = '{}.{}.json'.format(out_file, 'segm')
-        mmcv.dump(json_results[0], result_files['bbox'])
-        mmcv.dump(json_results[1], result_files['segm'])
+        with open(result_files['bbox'], 'w') as fp:
+            json.dump(json_results[0], fp)
+        with open(result_files['segm'], 'w') as fp:
+            json.dump(json_results[1], fp)
     elif isinstance(results[0], np.ndarray):
         json_results = proposal2json(dataset, results)
         result_files['proposal'] = '{}.{}.json'.format(out_file, 'proposal')
-        mmcv.dump(json_results, result_files['proposal'])
+        with open(result_files['proposal'], 'w') as fp:
+            json.dump(json_results, fp)
     else:
         raise TypeError('invalid type of results')
     return result_files
