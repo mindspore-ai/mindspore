@@ -18,7 +18,11 @@
 #include "MxBase/DeviceManager/DeviceManager.h"
 #include "MxBase/Log/Log.h"
 
-using namespace MxBase;
+using MxBase::DeviceManager;
+using MxBase::TensorBase;
+using MxBase::MemoryData;
+using MxBase::ClassInfo;
+
 namespace {
     const uint32_t YUV_BYTE_NU = 3;
     const uint32_t YUV_BYTE_DE = 2;
@@ -27,7 +31,7 @@ namespace {
 
 APP_ERROR Resnet18ClassifyOpencv::Init(const InitParam &initParam) {
     deviceId_ = initParam.deviceId;
-    APP_ERROR ret = MxBase::DeviceManager::GetInstance()->InitDevices();
+    APP_ERROR ret = DeviceManager::GetInstance()->InitDevices();
     if (ret != APP_ERR_OK) {
         LogError << "Init devices failed, ret=" << ret << ".";
         return ret;
@@ -76,36 +80,36 @@ APP_ERROR Resnet18ClassifyOpencv::DeInit() {
     dvppWrapper_->DeInit();
     model_->DeInit();
     post_->DeInit();
-    MxBase::DeviceManager::GetInstance()->DestroyDevices();
+    DeviceManager::GetInstance()->DestroyDevices();
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet18ClassifyOpencv::ConvertImageToTensorBase(std::string &imgPath,
-                                                           MxBase::TensorBase &tensorBase) {
+APP_ERROR Resnet18ClassifyOpencv::ConvertImageToTensorBase(const std::string &imgPath,
+                                                           TensorBase &tensorBase) {
     static constexpr uint32_t resizeHeight = 304;
     static constexpr uint32_t resizeWidth = 304;
 
     cv::Mat imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
     cv::resize(imageMat, imageMat, cv::Size(resizeWidth, resizeHeight));
-    const uint32_t dataSize =  imageMat.cols *  imageMat.rows * XRGB_WIDTH_NU;
+    const uint32_t dataSize =  imageMat.cols *  imageMat.rows * MxBase::XRGB_WIDTH_NU;
     LogInfo << "image size after resize" << imageMat.cols << " " << imageMat.rows;
 
     MemoryData memoryDataDst(dataSize, MemoryData::MEMORY_DEVICE, deviceId_);
     MemoryData memoryDataSrc(imageMat.data, dataSize, MemoryData::MEMORY_HOST_MALLOC);
 
-    APP_ERROR ret = MemoryHelper::MxbsMallocAndCopy(memoryDataDst, memoryDataSrc);
+    APP_ERROR ret = MxBase::MemoryHelper::MxbsMallocAndCopy(memoryDataDst, memoryDataSrc);
     if (ret != APP_ERR_OK) {
         LogError << GetError(ret) << "Memory malloc failed.";
         return ret;
     }
 
-    std::vector<uint32_t> shape = {imageMat.rows * XRGB_WIDTH_NU, static_cast<uint32_t>(imageMat.cols)};
-    tensorBase = TensorBase(memoryDataDst, false, shape, TENSOR_DTYPE_UINT8);
+    std::vector<uint32_t> shape = {imageMat.rows * MxBase::XRGB_WIDTH_NU, static_cast<uint32_t>(imageMat.cols)};
+    tensorBase = TensorBase(memoryDataDst, false, shape, MxBase::TENSOR_DTYPE_UINT8);
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet18ClassifyOpencv::Inference(std::vector<MxBase::TensorBase> &inputs,
-                                            std::vector<MxBase::TensorBase> &outputs) {
+APP_ERROR Resnet18ClassifyOpencv::Inference(std::vector<TensorBase> &inputs,
+                                            std::vector<TensorBase> &outputs) {
     auto dtypes = model_->GetOutputDataType();
     for (size_t i = 0; i < modelDesc_.outputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
@@ -120,8 +124,8 @@ APP_ERROR Resnet18ClassifyOpencv::Inference(std::vector<MxBase::TensorBase> &inp
         }
         outputs.push_back(tensor);
     }
-    DynamicInfo dynamicInfo = {};
-    dynamicInfo.dynamicType = DynamicType::STATIC_BATCH;
+    MxBase::DynamicInfo dynamicInfo = {};
+    dynamicInfo.dynamicType = MxBase::DynamicType::STATIC_BATCH;
     auto startTime = std::chrono::high_resolution_clock::now();
     APP_ERROR ret = model_->ModelInference(inputs, outputs, dynamicInfo);
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -134,8 +138,8 @@ APP_ERROR Resnet18ClassifyOpencv::Inference(std::vector<MxBase::TensorBase> &inp
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet18ClassifyOpencv::PostProcess(std::vector<MxBase::TensorBase> &inputs,
-                                              std::vector<std::vector<MxBase::ClassInfo>> &clsInfos) {
+APP_ERROR Resnet18ClassifyOpencv::PostProcess(std::vector<TensorBase> &inputs,
+                                              std::vector<std::vector<ClassInfo>> &clsInfos) {
     APP_ERROR ret = post_->Process(inputs, clsInfos);
     if (ret != APP_ERR_OK) {
         LogError << "Process failed, ret=" << ret << ".";
@@ -144,8 +148,8 @@ APP_ERROR Resnet18ClassifyOpencv::PostProcess(std::vector<MxBase::TensorBase> &i
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet18ClassifyOpencv::SaveResult(std::string &imgPath,
-                                             std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos) {
+APP_ERROR Resnet18ClassifyOpencv::SaveResult(const std::string &imgPath,
+                                             std::vector<std::vector<ClassInfo>> &batchClsInfos) {
     LogInfo << "image path" << imgPath;
     std::string fileName = imgPath.substr(imgPath.find_last_of("/") + 1);
     size_t dot = fileName.find_last_of(".");
@@ -174,10 +178,10 @@ APP_ERROR Resnet18ClassifyOpencv::SaveResult(std::string &imgPath,
     return APP_ERR_OK;
 }
 
-APP_ERROR Resnet18ClassifyOpencv::Process(std::string &imgPath) {
-    MxBase::TensorBase tensorBase;
-    std::vector<MxBase::TensorBase> inputs = {};
-    std::vector<MxBase::TensorBase> outputs = {};
+APP_ERROR Resnet18ClassifyOpencv::Process(const std::string &imgPath) {
+    TensorBase tensorBase;
+    std::vector<TensorBase> inputs;
+    std::vector<TensorBase> outputs;
 
     APP_ERROR ret = ConvertImageToTensorBase(imgPath, tensorBase);
     if (ret != APP_ERR_OK) {
@@ -196,7 +200,7 @@ APP_ERROR Resnet18ClassifyOpencv::Process(std::string &imgPath) {
         LogError << "Inference failed, ret=" << ret << ".";
         return ret;
     }
-    std::vector<std::vector<MxBase::ClassInfo>> BatchClsInfos = {};
+    std::vector<std::vector<ClassInfo>> BatchClsInfos;
     ret = PostProcess(outputs, BatchClsInfos);
     if (ret != APP_ERR_OK) {
         LogError << "PostProcess failed, ret=" << ret << ".";

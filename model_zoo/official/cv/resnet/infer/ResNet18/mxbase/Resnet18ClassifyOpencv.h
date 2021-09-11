@@ -41,17 +41,17 @@ class Resnet18ClassifyOpencv {
  public:
     APP_ERROR Init(const InitParam &initParam);
     APP_ERROR DeInit();
-    APP_ERROR ConvertImageToTensorBase(std::string &imgPath, MxBase::TensorBase &tensorBase);
+    APP_ERROR ConvertImageToTensorBase(const std::string &imgPath, MxBase::TensorBase &tensorBase);
     APP_ERROR Inference(std::vector<MxBase::TensorBase> &inputs,
                         std::vector<MxBase::TensorBase> &outputs);
     APP_ERROR PostProcess(std::vector<MxBase::TensorBase> &inputs,
                           std::vector<std::vector<MxBase::ClassInfo>> &clsInfos);
-    APP_ERROR Process(std::string &imgPath);
+    APP_ERROR Process(const std::string &imgPath);
     // get infer time
     double GetInferCostMilliSec() const {return inferCostTimeMilliSec;}
 
  private:
-    APP_ERROR SaveResult(std::string &imgPath,
+    APP_ERROR SaveResult(const std::string &imgPath,
                          std::vector<std::vector<MxBase::ClassInfo>> &batchClsInfos);
     std::shared_ptr<MxBase::DvppWrapper> dvppWrapper_;
     std::shared_ptr<MxBase::ModelInferenceProcessor> model_;
