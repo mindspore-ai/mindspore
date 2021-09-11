@@ -27,29 +27,23 @@ namespace opt {
 class TfGeLUFusion : public GeLUFusion {
  public:
   explicit TfGeLUFusion(const std::string &name = "TfGeLUFusion", bool multigraph = true)
-      : GeLUFusion(name, multigraph) {
-    power_ = std::make_shared<Var>();
-    power_y_ = std::make_shared<Var>();
-    mul1_x_ = std::make_shared<Var>();
-    mul2_x_ = std::make_shared<Var>();
-    tanh_ = std::make_shared<Var>();
-    add2_x_ = std::make_shared<Var>();
-    mul3_x_ = std::make_shared<Var>();
-  }
+      : GeLUFusion(name, multigraph) {}
+
   ~TfGeLUFusion() override = default;
 
  private:
+  bool Init() const override;
   bool CheckPattern(const EquivPtr &equiv) const override;
   const BaseRef DefinePattern() const override;
 
  private:
-  VarPtr power_ = nullptr;
-  VarPtr power_y_ = nullptr;
-  VarPtr mul1_x_ = nullptr;
-  VarPtr mul2_x_ = nullptr;
-  VarPtr tanh_ = nullptr;
-  VarPtr add2_x_ = nullptr;
-  VarPtr mul3_x_ = nullptr;
+  mutable VarPtr power_ = nullptr;
+  mutable VarPtr power_y_ = nullptr;
+  mutable VarPtr mul1_x_ = nullptr;
+  mutable VarPtr mul2_x_ = nullptr;
+  mutable VarPtr tanh_ = nullptr;
+  mutable VarPtr add2_x_ = nullptr;
+  mutable VarPtr mul3_x_ = nullptr;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -29,22 +29,31 @@ namespace mindspore {
 namespace opt {
 class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
  public:
-  explicit MultiHeadAttentionFusion(const std::string &name = "MultiHeadAttentionFusion", bool multigraph = true);
+  explicit MultiHeadAttentionFusion(const std::string &name = "MultiHeadAttentionFusion", bool multigraph = true)
+      : MultiplePatternProcessPass(name, multigraph) {}
 
   ~MultiHeadAttentionFusion() override = default;
 
  protected:
+  virtual bool Init() const;
+
   std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
 
   AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
                      const EquivPtr &) const override;
-  // define patterns
-  VectorRef DefineMPWithMaskPattern() const;
-  VectorRef DefineMPWithoutMaskPattern() const;
+
   // create multi-head-attention without mask
   virtual std::shared_ptr<ops::Attention> BuildAttentionPrim(const EquivPtr &equiv) const;
+
+ private:
+  // define patterns
+  VectorRef DefineMPWithMaskPattern() const;
+
+  VectorRef DefineMPWithoutMaskPattern() const;
+
   CNodePtr CreateMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                         const std::string &base_name, int var_offset) const;
+
   // create masked-multi-head-attention
   CNodePtr CreateMaskedMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                               const std::string &base_name, int var_offset) const;
@@ -53,23 +62,23 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   const std::string kMPAWithoutMaskPatternName = "MPAWithoutMaskPattern";
   const std::string kMPAWithMaskPatternName = "MPAWithMaskPattern";
 
-  VarPtr input_q_{nullptr};
-  VarPtr input_k_{nullptr};
-  VarPtr input_v_{nullptr};
+  mutable VarPtr input_q_{nullptr};
+  mutable VarPtr input_k_{nullptr};
+  mutable VarPtr input_v_{nullptr};
 
-  VarPtr weight_q_{nullptr};
-  VarPtr weight_k_{nullptr};
-  VarPtr weight_v_{nullptr};
-  VarPtr weight_o_{nullptr};
-  VarPtr bias_q_{nullptr};
-  VarPtr bias_k_{nullptr};
-  VarPtr bias_v_{nullptr};
-  VarPtr bias_o_{nullptr};
+  mutable VarPtr weight_q_{nullptr};
+  mutable VarPtr weight_k_{nullptr};
+  mutable VarPtr weight_v_{nullptr};
+  mutable VarPtr weight_o_{nullptr};
+  mutable VarPtr bias_q_{nullptr};
+  mutable VarPtr bias_k_{nullptr};
+  mutable VarPtr bias_v_{nullptr};
+  mutable VarPtr bias_o_{nullptr};
 
-  VarPtr mask_{nullptr};
+  mutable VarPtr mask_{nullptr};
 
-  VarPtr reshape_k_{nullptr};
-  VarPtr reshape_v_{nullptr};
+  mutable VarPtr reshape_k_{nullptr};
+  mutable VarPtr reshape_v_{nullptr};
 };
 
 }  // namespace opt

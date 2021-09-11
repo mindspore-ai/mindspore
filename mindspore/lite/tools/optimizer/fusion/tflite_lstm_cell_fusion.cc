@@ -147,6 +147,23 @@ STATUS TfliteLstmCellFusion::GetFloatScalarFromTensorInfo(const AnfNodePtr &tens
   return RET_OK;
 }
 
+bool TfliteLstmCellFusion::Init() const {
+  for (size_t i = 0; i < this->while_input_var_num_; ++i) {
+    auto is_var = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(is_var != nullptr, false);
+    while_input_vars_.emplace_back(is_var);
+  }
+  cell_zoneout_old_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(cell_zoneout_old_ != nullptr, false);
+  cell_zoneout_new_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(cell_zoneout_new_ != nullptr, false);
+  hidden_zoneout_old_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(hidden_zoneout_old_ != nullptr, false);
+  hidden_zoneout_new_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(hidden_zoneout_new_ != nullptr, false);
+  return true;
+}
+
 TfliteLstmCellFusion::TfliteLstmCellFusion(const std::string &name, bool multigraph, int input_length, int var_num,
                                            int cond_nodes_num, int cond_cnodes_num, int body_nodes_num,
                                            int body_cnodes_num)
@@ -162,13 +179,6 @@ TfliteLstmCellFusion::TfliteLstmCellFusion(const std::string &name, bool multigr
   this->cond_cnodes_num_ = cond_cnodes_num == 0 ? kCondCNodesNum : cond_cnodes_num;
   this->body_nodes_num_ = body_nodes_num == 0 ? kBodyNodesNum : body_nodes_num;
   this->body_cnodes_num_ = body_cnodes_num == 0 ? kBodyCNodesNum : body_cnodes_num;
-  for (size_t i = 0; i < this->while_input_var_num_; ++i) {
-    while_input_vars_.emplace_back(std::make_shared<Var>());
-  }
-  cell_zoneout_old_ = std::make_shared<Var>();
-  cell_zoneout_new_ = std::make_shared<Var>();
-  hidden_zoneout_old_ = std::make_shared<Var>();
-  hidden_zoneout_new_ = std::make_shared<Var>();
 }
 
 AnfNodePtr TfliteLstmCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) {
@@ -271,6 +281,10 @@ AnfNodePtr TfliteLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &p
 }
 
 const BaseRef TfliteLstmCellFusion::DefinePattern() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
   auto is_while_node = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimWhile));
   MS_CHECK_TRUE_RET(is_while_node != nullptr, {});
   VectorRef while_node = VectorRef({is_while_node});

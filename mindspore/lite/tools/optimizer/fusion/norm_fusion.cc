@@ -81,6 +81,26 @@ bool IsReduceNode(const EquivPtr &equiv, const VarPtr &input_prim, const VarPtr 
 }
 }  // namespace
 
+bool NormFusion::Init() const {
+  input_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_ != nullptr, false);
+  mean1_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mean1_ != nullptr, false);
+  mean1_axes_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mean1_axes_ != nullptr, false);
+  mean2_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mean2_ != nullptr, false);
+  mean2_axes_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mean2_axes_ != nullptr, false);
+  gamma_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(gamma_ != nullptr, false);
+  beta_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(beta_ != nullptr, false);
+  epsilon_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(epsilon_ != nullptr, false);
+  return true;
+}
+
 CNodePtr NormFusion::CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                     const schema::PrimitiveType type, float epsilon, int begin_norm_axis,
                                     int begin_params_axis) const {
@@ -461,6 +481,10 @@ const AnfNodePtr NormFusion::Process(const FuncGraphPtr &func_graph, const AnfNo
 }
 
 const BaseRef TfNormFusion::DefinePattern() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
   VectorRef mean1_ref = VectorRef({mean1_, input_, mean1_axes_});
   auto is_squared_diffference = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSquaredDifference>);
   MS_CHECK_TRUE_RET(is_squared_diffference != nullptr, {});
@@ -491,6 +515,10 @@ const BaseRef TfNormFusion::DefinePattern() const {
 }
 
 const BaseRef OnnxLayerNormFusion::DefinePattern() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
   VectorRef mean1_ref = VectorRef({mean1_, input_, mean1_axes_});
   auto is_sub1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSubFusion>);
   MS_CHECK_TRUE_RET(is_sub1 != nullptr, {});

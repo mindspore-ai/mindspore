@@ -30,43 +30,57 @@ class TfliteLstmCellFusion : public PatternProcessPass {
   explicit TfliteLstmCellFusion(const std::string &name = "TfliteLstmCellFusion", bool multigraph = true,
                                 int input_length = 0, int var_num = 0, int cond_nodes_num = 0, int cond_cnodes_num = 0,
                                 int body_nodes_num = 0, int body_cnodes_num = 0);
-  ~TfliteLstmCellFusion() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
- public:
+  ~TfliteLstmCellFusion() override = default;
+
   static EquivPtr MatchGraph(const FuncGraphPtr &func_graph, const PrimitiveVarMapPtr &primitive_vars,
                              const AnfNodePtr &pattern);
+
   static EquivPtr CheckSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &pattern,
                                 const PrimitiveVarMapPtr &primitive_vars, const AnfNodePtr &anf_sub_graph,
                                 size_t cnode_num, size_t all_node_num);
+
   static lite::STATUS SetAbstractTuple(const CNodePtr &cnode, int output_num);
+
   static CNodePtr CreateOutputGetItem(const FuncGraphPtr &func_graph, const CNodePtr &node, int item_index);
 
  protected:
-  VarPtr cell_zoneout_old_ = nullptr;
-  VarPtr cell_zoneout_new_ = nullptr;
-  VarPtr hidden_zoneout_old_ = nullptr;
-  VarPtr hidden_zoneout_new_ = nullptr;
-  std::vector<VarPtr> while_input_vars_;
+  bool Init() const;
+
+  const BaseRef DefinePattern() const override;
+
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
   static lite::STATUS GetFloatScalarFromTensorInfo(const AnfNodePtr &tensor_info, float *v);
+
   static CNodePtr CreateSqueezeNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
                                     const std::vector<int> &axis);
+
   static lite::STATUS AdjustOtherGetItems(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode,
                                           const CNodePtr &lstm_cnode, const CNodePtr &output_get_item);
+
   static AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars);
+
   virtual AnfNodePtr GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
+
   virtual CNodePtr CreateLSTMNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const EquivPtr &body_equiv,
                                   const std::string &base_name, float zoneout_cell, float zoneout_hidden) const;
 
  private:
   bool CheckBodyGraph(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const CNodePtr &while_cnode,
                       float *zoneout_cell, float *zoneout_hidden) const;
+
   static bool CheckReferencedOutputs(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode);
 
   static lite::STATUS GetConcatedParam(const std::vector<AnfNodePtr> &params, const ParameterPtr &new_param,
                                        bool is_bias);
+
+ protected:
+  mutable VarPtr cell_zoneout_old_ = nullptr;
+  mutable VarPtr cell_zoneout_new_ = nullptr;
+  mutable VarPtr hidden_zoneout_old_ = nullptr;
+  mutable VarPtr hidden_zoneout_new_ = nullptr;
+  mutable std::vector<VarPtr> while_input_vars_;
 
  private:
   size_t while_input_var_num_ = 0;
@@ -76,7 +90,6 @@ class TfliteLstmCellFusion : public PatternProcessPass {
   size_t body_nodes_num_ = 0;
   size_t body_cnodes_num_ = 0;
 };
-
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TFLITE_LSTM_CELL_FUSION_H_

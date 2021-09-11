@@ -44,8 +44,34 @@ bool CheckTanh(const EquivPtr &equiv, const VarPtr &input) {
 }
 }  // namespace
 
+bool TfGeLUFusion::Init() const {
+  if (!GeLUFusion::Init()) {
+    MS_LOG(ERROR) << "basic class initial member failed.";
+    return false;
+  }
+  power_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(power_ != nullptr, false);
+  power_y_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(power_y_ != nullptr, false);
+  mul1_x_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mul1_x_ != nullptr, false);
+  mul2_x_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mul2_x_ != nullptr, false);
+  tanh_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(tanh_ != nullptr, false);
+  add2_x_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(add2_x_ != nullptr, false);
+  mul3_x_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mul3_x_ != nullptr, false);
+  return true;
+}
+
 // gelu(x) = 1/2 * x * [1 + tanh(0.79788 * (x + 0.044715 * x ^ 3))]
 const BaseRef TfGeLUFusion::DefinePattern() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
   VectorRef pow_ref({power_, input_, power_y_});
   auto is_mul1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
   MS_CHECK_TRUE_RET(is_mul1 != nullptr, {});

@@ -28,22 +28,20 @@ namespace opt {
 class GLUFusion : public PatternProcessPass {
  public:
   explicit GLUFusion(const std::string &name = "glu_fusion", bool multigraph = true)
-      : PatternProcessPass(name, multigraph),
-        input_(std::make_shared<Var>()),
-        axis_(std::make_shared<SeqVar>()),
-        split_prim_(std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSplit>)) {}
+      : PatternProcessPass(name, multigraph) {}
 
   ~GLUFusion() override = default;
 
  private:
+  bool Init() const;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   const BaseRef DefinePattern() const override;
   CNodePtr CreateGLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
 
  protected:
-  VarPtr input_ = nullptr;
-  VarPtr axis_ = nullptr;
-  VarPtr split_prim_ = nullptr;
+  mutable VarPtr input_ = nullptr;
+  mutable VarPtr axis_ = nullptr;
+  mutable VarPtr split_prim_ = nullptr;
 };
 }  // namespace opt
 }  // namespace mindspore

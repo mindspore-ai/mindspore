@@ -27,21 +27,19 @@ namespace opt {
 class OnnxGeLUFusion : public GeLUFusion {
  public:
   explicit OnnxGeLUFusion(const std::string &name = "OnnxGeLUFusion", bool multigraph = true)
-      : GeLUFusion(name, multigraph) {
-    div_y_ = std::make_shared<Var>();
-    add_y_ = std::make_shared<Var>();
-    mul1_y_ = std::make_shared<Var>();
-  }
+      : GeLUFusion(name, multigraph) {}
+
   ~OnnxGeLUFusion() override = default;
 
  private:
+  bool Init() const override;
   bool CheckPattern(const EquivPtr &equiv) const override;
   const BaseRef DefinePattern() const override;
 
  private:
-  VarPtr div_y_ = nullptr;
-  VarPtr add_y_ = nullptr;
-  VarPtr mul1_y_ = nullptr;
+  mutable VarPtr div_y_ = nullptr;
+  mutable VarPtr add_y_ = nullptr;
+  mutable VarPtr mul1_y_ = nullptr;
 };
 }  // namespace opt
 }  // namespace mindspore

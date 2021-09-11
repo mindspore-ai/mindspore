@@ -26,8 +26,26 @@ constexpr float ADD_Y = 1.0;
 constexpr float MUL1_y = 0.5;
 }  // namespace
 
+bool OnnxGeLUFusion::Init() const {
+  if (!GeLUFusion::Init()) {
+    MS_LOG(ERROR) << "basic class initial member failed.";
+    return false;
+  }
+  div_y_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(div_y_ != nullptr, false);
+  add_y_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(add_y_ != nullptr, false);
+  mul1_y_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mul1_y_ != nullptr, false);
+  return true;
+}
+
 // gelu(x) = 1/2 * x * [1 + erf(x / sqrt(2))]
 const BaseRef OnnxGeLUFusion::DefinePattern() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
   auto is_div = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimDivFusion>);
   MS_CHECK_TRUE_RET(is_div != nullptr, {});
   VectorRef div_ref({is_div, input_, div_y_});

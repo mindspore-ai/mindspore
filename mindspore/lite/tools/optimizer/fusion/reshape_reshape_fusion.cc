@@ -26,7 +26,9 @@ const auto &p1 = std::placeholders::_1;
 }  // namespace
 
 const BaseRef ReshapeReshapeFusion::DefinePattern() const {
+  reshape_input_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(reshape_input_ != nullptr, {});
+  reshape_shape_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(reshape_shape_ != nullptr, {});
   auto is_reshape1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
   MS_CHECK_TRUE_RET(is_reshape1 != nullptr, {});
