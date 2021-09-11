@@ -98,7 +98,10 @@ bool AsyncMemcpy(void *dst, uint64_t dst_size, const void *src, uint64_t src_siz
     MS_LOG(INFO) << "dst addr is same with src addr, no need memcpy data.";
     return true;
   }
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto ret = runtime_instance->MemcpyAsync(dst, src, src_size, static_cast<int32_t>(RT_MEMCPY_DEVICE_TO_DEVICE));
   if (!ret) {
