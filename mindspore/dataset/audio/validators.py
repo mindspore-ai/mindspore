@@ -215,6 +215,21 @@ def check_deemph_biquad(method):
     return new_method
 
 
+def check_equalizer_biquad(method):
+    """Wrapper method to check the parameters of EqualizerBiquad."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, center_freq, gain, Q], _ = parse_user_args(method, *args, **kwargs)
+        check_biquad_sample_rate(sample_rate)
+        check_biquad_central_freq(center_freq)
+        check_biquad_gain(gain)
+        check_biquad_Q(Q)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_lowpass_biquad(method):
     """Wrapper method to check the parameters of LowpassBiquad."""
 

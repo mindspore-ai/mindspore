@@ -30,6 +30,7 @@
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -156,6 +157,17 @@ PYBIND_REGISTER(
         return deemph_biquad;
       }));
   }));
+
+PYBIND_REGISTER(EqualizerBiquadOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::EqualizerBiquadOperation, TensorOperation,
+                                   std::shared_ptr<audio::EqualizerBiquadOperation>>(*m, "EqualizerBiquadOperation")
+                    .def(py::init([](int sample_rate, float center_freq, float gain, float Q) {
+                      auto equalizer_biquad =
+                        std::make_shared<audio::EqualizerBiquadOperation>(sample_rate, center_freq, gain, Q);
+                      THROW_IF_ERROR(equalizer_biquad->ValidateParams());
+                      return equalizer_biquad;
+                    }));
+                }));
 
 PYBIND_REGISTER(
   FrequencyMaskingOperation, 1, ([](const py::module *m) {

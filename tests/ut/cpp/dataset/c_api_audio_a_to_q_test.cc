@@ -490,6 +490,61 @@ TEST_F(MindDataTestPipeline, TestAnglePipelineError) {
   EXPECT_ERROR(iter->GetNextRow(&row));
 }
 
+TEST_F(MindDataTestPipeline, TestEqualizerBiquadSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEqualizerBiquadSuccess.";
+
+  // Create an input tensor
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {1, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a filter object
+  std::shared_ptr<TensorTransform> equalizer_biquad(new audio::EqualizerBiquad(44100, 3.5, 5.5, 0.707));
+  auto ds1 = ds->Map({equalizer_biquad}, {"col1"}, {"audio"});
+  EXPECT_NE(ds1, nullptr);
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestEqualizerBiquadWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEqualizerBiquadWrongArgs.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 10}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  std::shared_ptr<Dataset> ds01;
+  std::shared_ptr<Dataset> ds02;
+  EXPECT_NE(ds, nullptr);
+
+  // Check sample_rate
+  MS_LOG(INFO) << "sample_rate is zero.";
+  auto equalizer_biquad_op_01 = audio::EqualizerBiquad(0, 200.0, 5.5, 0.7);
+  ds01 = ds->Map({equalizer_biquad_op_01});
+  EXPECT_NE(ds01, nullptr);
+
+  std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
+  EXPECT_EQ(iter01, nullptr);
+
+  // Check Q
+  MS_LOG(INFO) << "Q is zero.";
+  auto equalizer_biquad_op_02 = audio::EqualizerBiquad(44100, 2000.0, 5.5, 0);
+  ds02 = ds->Map({equalizer_biquad_op_02});
+  EXPECT_NE(ds02, nullptr);
+
+  std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
+  EXPECT_EQ(iter02, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestLowpassBiquadSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLowpassBiquadSuccess.";
 

@@ -249,6 +249,29 @@ class DeemphBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief EqualizerBiquad TensorTransform. Apply highpass biquad filter on audio.
+class EqualizerBiquad final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+  /// \param[in] center_freq Filter's central frequency (in Hz).
+  /// \param[in] gain Desired gain at the boost (or attenuation) in dB.
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  EqualizerBiquad(int32_t sample_rate, float center_freq, float gain, float Q = 0.707);
+
+  /// \brief Destructor.
+  ~EqualizerBiquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief FrequencyMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the frequency domain.
 class FrequencyMasking final : public TensorTransform {
