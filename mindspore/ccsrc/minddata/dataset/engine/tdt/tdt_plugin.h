@@ -46,6 +46,8 @@ class TdtPlugin {
 
   ~TdtPlugin();
 
+  acltdtChannelHandle *acl_handle_;
+
  private:
   Status DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item = true);
 
@@ -58,8 +60,6 @@ class TdtPlugin {
   void ReportErrorMessage();
 
   void *tdt_handle_ = nullptr;
-
-  acltdtChannelHandle *acl_handle_;
 };
 }  // namespace dataset
 }  // namespace mindspore

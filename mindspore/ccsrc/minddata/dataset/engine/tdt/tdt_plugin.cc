@@ -34,7 +34,8 @@ TdtPlugin::TdtPlugin(const std::string &channel_name, int32_t device_id) {
   // create acl tdt handle
   acl_handle_ = acltdtCreateChannel(device_id, channel_name.c_str());
   if (acl_handle_ == nullptr) {
-    MS_LOG(ERROR) << "Failed to create channel for tdt queue.";
+    MS_LOG(ERROR) << "Create channel for sending data failed, please check DEVICE ID setting, DEVICE ID that passed "
+                     "into dataset(from context) and training process should be the same.";
     ReportErrorMessage();
   }
   TdtHandle::AddHandle(&acl_handle_, nullptr);
