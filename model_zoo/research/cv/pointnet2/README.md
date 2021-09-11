@@ -206,7 +206,7 @@ You can view the results through the file "eval_log.txt". The accuracy of the te
 | Speed                      | 1.2 s/step                                                   |
 | Total time                 | 27.3 h                                                       |
 | Checkpoint for Fine tuning | 17 MB (.ckpt file)                                        |
-| Scripts                    | [PointNet++ Script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/pointnet2) |
+| Scripts                    | [PointNet++ Script](https://gitee.com/mindspore/mindspore/tree/r1.3/model_zoo/research/cv/pointnet2) |
 
 ## Inference Performance
 
