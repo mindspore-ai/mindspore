@@ -161,6 +161,10 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t kernel_size_x,
                     int32_t kernel_size_y, float sigma_x, float sigma_y);
 
+/// \brief Validate image rank.
+/// \param[in] op_name operator name.
+/// \param[in] rank refers to the rank of input image shape.
+Status ValidateImageRank(const std::string &op_name, int32_t rank);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_LITE_IMAGE_UTILS_H_

@@ -29,7 +29,7 @@ const InterpolationMode ResizeOp::kDefInterpolation = InterpolationMode::kLinear
 
 Status ResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "Resize: image shape should be <H,W,C> or <H,W>.");
+  RETURN_IF_NOT_OK(ValidateImageRank("Resize", input->shape().Size()));
   int32_t output_h = 0;
   int32_t output_w = 0;
   int32_t input_h = static_cast<int>(input->shape()[0]);
@@ -71,7 +71,9 @@ Status ResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   if (!outputs.empty()) {
     return Status::OK();
   }
-  return Status(StatusCode::kMDUnexpectedError, "Resize: invalid input wrong shape.");
+  return Status(StatusCode::kMDUnexpectedError,
+                "Resize: invalid input shape, expected 2D or 3D input, but got input dimension is:" +
+                  std::to_string(inputs[0].Rank()));
 }
 }  // namespace dataset
 }  // namespace mindspore

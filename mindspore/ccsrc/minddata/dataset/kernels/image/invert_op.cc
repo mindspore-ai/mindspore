@@ -30,11 +30,11 @@ Status InvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("Invert: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Invert: load image failed.");
     }
 
     if (input_cv->Rank() != 3) {
-      RETURN_STATUS_UNEXPECTED("Invert: image shape is not <H,W,C>");
+      RETURN_STATUS_UNEXPECTED("Invert: image shape is not <H,W,C>, got rank: " + std::to_string(input_cv->Rank()));
     }
     int num_channels = input_cv->shape()[2];
     if (num_channels != 3) {

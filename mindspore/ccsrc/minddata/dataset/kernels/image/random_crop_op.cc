@@ -62,11 +62,16 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
   CHECK_FAIL_RETURN_UNEXPECTED(
     pad_top_ < input->shape()[0] * max_ratio && pad_bottom_ < input->shape()[0] * max_ratio &&
       pad_left_ < input->shape()[1] * max_ratio && pad_right_ < input->shape()[1] * max_ratio,
-    "Pad: padding size is three times bigger than the image size.");
+    "Pad: padding size is three times bigger than the image size, padding top: " + std::to_string(pad_top_) +
+      ", padding bottom: " + std::to_string(pad_bottom_) + ", padding pad_left_: " + std::to_string(pad_left_) +
+      ", padding padding right:" + std::to_string(pad_right_) + ", image shape: " + std::to_string(input->shape()[0]) +
+      ", " + std::to_string(input->shape()[1]));
 
   RETURN_IF_NOT_OK(
     Pad(input, pad_image, pad_top_, pad_bottom_, pad_left_, pad_right_, border_type_, fill_r_, fill_g_, fill_b_));
-  CHECK_FAIL_RETURN_UNEXPECTED((*pad_image)->shape().Size() >= 2, "RandomCrop: invalid shape of image after pad.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    (*pad_image)->shape().Size() >= 2,
+    "RandomCrop: invalid shape of image after pad, got rank: " + std::to_string((*pad_image)->shape().Size()));
 
   *padded_image_h = (*pad_image)->shape()[0];
   *padded_image_w = (*pad_image)->shape()[1];
@@ -97,11 +102,12 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
 
   if (crop_height_ == 0 || crop_width_ == 0) {
     return Status(StatusCode::kMDShapeMisMatch, __LINE__, __FILE__,
-                  "RandomCrop: invalid crop size, crop dimension is not allowed to be zero.");
+                  "RandomCrop: invalid crop size, crop width or crop height is not allowed to be zero.");
   }
   if (*padded_image_h < crop_height_ || *padded_image_w < crop_width_ || crop_height_ == 0 || crop_width_ == 0) {
     return Status(StatusCode::kMDShapeMisMatch, __LINE__, __FILE__,
-                  "RandomCrop: invalid crop size, crop size is bigger than the image dimensions.");
+                  "RandomCrop: invalid crop size, crop size is bigger than the image dimensions, got crop height: " +
+                    std::to_string(crop_height_) + ", crop width: " + std::to_string(crop_width_));
   }
   return Status::OK();
 }
@@ -126,9 +132,7 @@ Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
   const int output_count = input.size();
   output->resize(output_count);
   for (size_t i = 0; i < input.size(); i++) {
-    if (input[i]->Rank() != 3 && input[i]->Rank() != 2) {
-      RETURN_STATUS_UNEXPECTED("RandomCrop: image shape is not <H,W,C> or <H,W>.");
-    }
+    RETURN_IF_NOT_OK(ValidateImageRank("RandomCrop", input[i]->shape().Size()));
     std::shared_ptr<Tensor> pad_image = nullptr;
     int32_t t_pad_top = 0;
     int32_t t_pad_bottom = 0;

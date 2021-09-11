@@ -68,7 +68,9 @@ Status RandomRotationOp::OutputShape(const std::vector<TensorShape> &inputs, std
   // if expand_, then we cannot know the shape. We need the input image to find the output shape --> set it to
   // <-1,-1[,3]>
   CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() > 0 && inputs[0].Size() >= 2,
-                               "RandomRotationOp::OutputShape inputs is invalid.");
+                               "RandomRotationOp: invalid input shape, expected 2D or 3D input, but got input"
+                               " dimension is: " +
+                                 std::to_string(inputs[0].Rank()));
   if (!expand_) {
     outputH = inputs[0][0];
     outputW = inputs[0][1];

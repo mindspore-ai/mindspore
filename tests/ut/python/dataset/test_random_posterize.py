@@ -215,7 +215,7 @@ def test_rescale_with_random_posterize():
         _ = dataset.output_shapes()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "input image data type can not be float" in str(e)
+        assert "data type of input image should be int" in str(e)
 
 
 if __name__ == "__main__":

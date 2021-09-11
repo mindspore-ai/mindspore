@@ -27,9 +27,7 @@ namespace dataset {
 
 Status GaussianBlurOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  if (input->Rank() != 3 && input->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("GaussianBlur: input image is not in shape of <H,W,C> or <H,W>");
-  }
+  RETURN_IF_NOT_OK(ValidateImageRank("GaussianBlur", input->Rank()));
   return GaussianBlur(input, output, kernel_x_, kernel_y_, sigma_x_, sigma_y_);
 }
 }  // namespace dataset

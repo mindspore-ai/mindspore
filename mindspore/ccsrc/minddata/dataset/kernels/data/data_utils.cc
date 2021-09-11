@@ -43,7 +43,8 @@ Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_
     RETURN_IF_NOT_OK(input->GetItemAt<uint64_t>(&class_idx, {index}));
   }
   if (class_idx >= static_cast<uint64_t>(num_classes)) {
-    RETURN_STATUS_UNEXPECTED("OneHot: OneHot index values are not in range");
+    RETURN_STATUS_UNEXPECTED("OneHot: index values should not bigger than num classes: " + std::to_string(num_classes) +
+                             ", but got: " + std::to_string(class_idx));
   }
   if (input->type() == DataType::DE_UINT64) {
     RETURN_IF_NOT_OK((*output)->SetItemAt<uint64_t>({index, static_cast<dsize_t>(class_idx)}, 1));
@@ -68,7 +69,8 @@ Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_pt
     RETURN_IF_NOT_OK(input->GetItemAt<int64_t>(&class_idx, {index}));
   }
   if (class_idx >= static_cast<int64_t>(num_classes)) {
-    RETURN_STATUS_UNEXPECTED("OneHot: OneHot index values are not in range");
+    RETURN_STATUS_UNEXPECTED("OneHot: index values should not bigger than num classes: " + std::to_string(num_classes) +
+                             ", but got: " + std::to_string(class_idx));
   }
   if (input->type() == DataType::DE_INT64) {
     RETURN_IF_NOT_OK((*output)->SetItemAt<int64_t>({index, static_cast<dsize_t>(class_idx)}, 1));
@@ -88,10 +90,11 @@ Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
   input->Squeeze();
 
   if (input->Rank() > 1) {  // We expect the input to be int he first dimension
-    RETURN_STATUS_UNEXPECTED("OneHot: OneHot only supports scalars or 1D input.");
+    RETURN_STATUS_UNEXPECTED("OneHot: OneHot only supports scalars or 1D input, got rank: " +
+                             std::to_string(input->Rank()));
   }
   if (!input->type().IsInt()) {
-    RETURN_STATUS_UNEXPECTED("OneHot: OneHot does not support input of this type.");
+    RETURN_STATUS_UNEXPECTED("OneHot: OneHot only not support input of int type.");
   }
   try {
     dsize_t num_elements = 1;
@@ -219,7 +222,7 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
   const TensorShape &input_shape = input->shape();
 
   CHECK_FAIL_RETURN_UNEXPECTED(!((fill_type == DataType::DE_STRING) && (input_type != DataType::DE_STRING)),
-                               "Fill: fill datatype does not match the input datatype.");
+                               "Fill: fill datatype is string but the input datatype is not string.");
 
   CHECK_FAIL_RETURN_UNEXPECTED(fill_value->shape() == TensorShape({}),
                                "Fill: the shape of fill_value is not a scalar.");
@@ -338,7 +341,9 @@ Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       break;
     case DataType::DE_UNKNOWN:
       // sanity check, unreachable code.
-      RETURN_STATUS_UNEXPECTED("TypeCast: TypeCast does not support input of this type.");
+      RETURN_STATUS_UNEXPECTED(
+        "TypeCast: TypeCast does not support input of this type, supported is: [bool, int8, int16, int32, int64, uint8,"
+        " uint16, uint32, uint64, float16, float32, float64]");
   }
   return Status::OK();
 }
@@ -398,7 +403,9 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
   if (src->Rank() == 0 || src->shape().AsVector() == pad_shape) {
     (*dst) = src;  // if no padding, copy the pointer
   } else {
-    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(), "PadEnd: invalid pad shape.");
+    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(),
+                                 "PadEnd: invalid pad shape, as rank of input is: " + std::to_string(src->Rank()) +
+                                   ", and rank of pad value: " + std::to_string(pad_shape.size()));
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(pad_shape), src->type(), dst));
     auto tensor_type = src->type().value();
     if (pad_val == 0) {  // if pad with zero, don't care what type it is
@@ -455,7 +462,9 @@ Status PadEndString(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> 
   if (src->Rank() == 0 || src->shape().AsVector() == pad_shape) {
     (*dst) = src;  // if no padding, copy the pointer
   } else {
-    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(), "Pad to diff rank not allowed");
+    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(),
+                                 "PadEnd: invalid pad shape, as rank of input is: " + std::to_string(src->Rank()) +
+                                   ", and rank of pad value: " + std::to_string(pad_shape.size()));
     std::vector<dsize_t> cur_ind(src->Rank(), 0);
     std::vector<std::string> strings;
     RETURN_IF_NOT_OK(PadEndStringHelper(src, &strings, TensorShape(pad_shape), cur_ind, 0, pad_val));
@@ -530,7 +539,8 @@ Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Te
 Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::shared_ptr<Tensor> &value,
             RelationalOp op) {
   CHECK_FAIL_RETURN_UNEXPECTED(input->type().IsNumeric() == value->type().IsNumeric(),
-                               "Mask: input datatype does not match the value datatype.");
+                               "Mask: input datatype does not match the value datatype, both should be numeric or "
+                               "non-numerical in the same time.");
   CHECK_FAIL_RETURN_UNEXPECTED(value->shape() == TensorShape::CreateScalar(), "Mask: value shape is not a scalar");
 
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_BOOL), output));
@@ -594,7 +604,7 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
                    std::shared_ptr<Tensor> append) {
   CHECK_FAIL_RETURN_UNEXPECTED(input.size() > 0, "Concatenate: input is null");
   axis = Tensor::HandleNeg(axis, input[0]->shape().Rank());
-  CHECK_FAIL_RETURN_UNEXPECTED(axis == 0, "Concatenate: only 1D input supported");
+  CHECK_FAIL_RETURN_UNEXPECTED(axis == 0, "Concatenate: only 1D input supported, got rank: " + std::to_string(axis));
 
   TensorShape t = TensorShape::CreateScalar();
 
@@ -603,22 +613,30 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
   TensorRow tensor_list;
 
   if (prepend != nullptr) {
-    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == prepend->type(),
-                                 "Concatenate: input datatype does not match the prepend datatype.");
-    CHECK_FAIL_RETURN_UNEXPECTED(prepend->shape().Rank() == 1, "Concatenate: only 1D input supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      first_dtype == prepend->type(),
+      "Concatenate: input datatype does not match the prepend datatype: " + prepend->type().ToString());
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      prepend->shape().Rank() == 1,
+      "Concatenate: only 1D input supported, got rank of input: " + std::to_string(prepend->shape().Rank()));
     tensor_list.emplace_back(prepend);
   }
 
   for (dsize_t i = 0; i < input.size(); i++) {
     CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == input[i]->type(), "Concatenate: inconsistent datatype of input.");
-    CHECK_FAIL_RETURN_UNEXPECTED(input[i]->shape().Rank() == 1, "Concatenate: only 1D input supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      input[i]->shape().Rank() == 1,
+      "Concatenate: only 1D input supported, got rank of input: " + std::to_string(input[i]->shape().Rank()));
     tensor_list.emplace_back(input[i]);
   }
 
   if (append != nullptr) {
-    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == append->type(),
-                                 "Concatenate: input datatype does not match the append datatype.");
-    CHECK_FAIL_RETURN_UNEXPECTED(append->shape().Rank() == 1, "Concatenate: only 1D append supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      first_dtype == append->type(),
+      "Concatenate: input datatype does not match the append datatype: " + append->type().ToString());
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      append->shape().Rank() == 1,
+      "Concatenate: only 1D append supported, got rank of input: " + std::to_string(append->shape().Rank()));
     tensor_list.emplace_back(append);
   }
 
@@ -670,7 +688,8 @@ Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
   TensorShape remaining({-1});
   std::vector<int64_t> index(tensor_shape.size(), 0);
   if (tensor_shape.size() <= 1) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: input must be at least 2-D in order to unpack.");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: input must be at least 2-D in order to unpack, but got rank: " +
+                             std::to_string(tensor_shape.size()));
   }
   TensorShape element_shape(std::vector<int64_t>(tensor_shape.begin() + 1, tensor_shape.end()));
 
@@ -682,7 +701,7 @@ Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(element_shape, input->type(), start_addr_of_index, &out));
     std::shared_ptr<CVTensor> cv_out = CVTensor::AsCVTensor(std::move(out));
     if (!cv_out->mat().data) {
-      RETURN_STATUS_UNEXPECTED("MixUpBatch: allocate memory failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] MixUpBatch: allocate memory failed.");
     }
     output->push_back(cv_out);
   }
@@ -695,7 +714,8 @@ Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vect
   TensorShape remaining({-1});
   std::vector<int64_t> index(tensor_shape.size(), 0);
   if (tensor_shape.size() <= 1) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: input must be at least 2-D in order to unpack.");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: input must be at least 2-D in order to unpack, but got rank:" +
+                             std::to_string(tensor_shape.size()));
   }
   TensorShape element_shape(std::vector<int64_t>(tensor_shape.begin() + 1, tensor_shape.end()));
 
@@ -793,7 +813,8 @@ Status UniqueHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 
 Status Unique(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
               std::shared_ptr<Tensor> *output_idx, std::shared_ptr<Tensor> *output_cnt) {
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Rank() == 1, "Unique: only 1D input supported.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Rank() == 1, "Unique: only 1D input supported, but got rank: " +
+                                                             std::to_string(input->shape().Rank()));
   if (input->type() == DataType::DE_INT64) {
     RETURN_IF_NOT_OK(UniqueHelper<int64_t>(input, output, output_idx, output_cnt));
   } else if (input->type() == DataType::DE_INT32) {

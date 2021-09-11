@@ -39,7 +39,7 @@ Status RandomCropDecodeResizeOp::Compute(const TensorRow &input, TensorRow *outp
   decoded.resize(output_count);
   for (size_t i = 0; i < input.size(); i++) {
     if (input[i] == nullptr) {
-      RETURN_STATUS_UNEXPECTED("RandomCropDecodeResize: input image is empty.");
+      RETURN_STATUS_UNEXPECTED("RandomCropDecodeResize: input image is empty since got nullptr.");
     }
     if (!IsNonEmptyJPEG(input[i])) {
       DecodeOp op(true);

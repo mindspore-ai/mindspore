@@ -45,16 +45,20 @@ Status BoundingBox::ReadFromTensor(const TensorPtr &bbox_tensor, dsize_t index_o
 Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
   if (image_and_bbox.size() != 2) {
     return Status(StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
-                  "BoundingBox: invalid input, likely missed bounding boxes.");
+                  "BoundingBox: invalid input, size of input data should be 2 (including image and bounding box), "
+                  "but got: " +
+                    std::to_string(image_and_bbox.size()));
   }
   if (image_and_bbox[1]->shape().Size() < 2) {
     return Status(StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
-                  "BoundingBox: bounding boxes should have to be two-dimensional matrix at least.");
+                  "BoundingBox: bounding boxes should have to be two-dimensional matrix at least, but got " +
+                    std::to_string(image_and_bbox[1]->shape().Size()) + " dimension.");
   }
   int64_t num_of_features = image_and_bbox[1]->shape()[1];
   if (num_of_features < kNumOfCols) {
-    return Status(StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
-                  "BoundingBox: bounding boxes should be have at least 4 features.");
+    return Status(
+      StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
+      "BoundingBox: bounding boxes should be have at least 4 features, but got: " + std::to_string(num_of_features));
   }
   std::vector<std::shared_ptr<BoundingBox>> bbox_list;
   RETURN_IF_NOT_OK(GetListOfBoundingBoxes(image_and_bbox[1], &bbox_list));
@@ -62,16 +66,20 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
   int64_t img_w = image_and_bbox[0]->shape()[1];
   for (auto &bbox : bbox_list) {
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int64_t>::max() - bbox->x()) > bbox->width(),
-                                 "BoundingBox: bbox_width is too large.");
+                                 "BoundingBox: bbox width is too large as coordinate x bigger than max num of int64.");
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int64_t>::max() - bbox->y()) > bbox->height(),
-                                 "BoundingBox: bbox_height is too large.");
+                                 "BoundingBox: bbox height is too large as coordinate y bigger than max num of int64.");
     if ((bbox->x() + bbox->width() > img_w) || (bbox->y() + bbox->height() > img_h)) {
       return Status(StatusCode::kMDBoundingBoxOutOfBounds, __LINE__, __FILE__,
-                    "BoundingBox: bounding boxes is out of bounds of the image");
+                    "BoundingBox: bounding boxes is out of bounds of the image, as image width: " +
+                      std::to_string(img_w) + ", bbox width coordinate: " + std::to_string(bbox->x() + bbox->width()) +
+                      ", and image height: " + std::to_string(img_h) +
+                      ", bbox height coordinate: " + std::to_string(bbox->y() + bbox->height()));
     }
     if (static_cast<int>(bbox->x()) < 0 || static_cast<int>(bbox->y()) < 0) {
       return Status(StatusCode::kMDBoundingBoxOutOfBounds, __LINE__, __FILE__,
-                    "BoundingBox: the coordinates of the bounding boxes has negative value.");
+                    "BoundingBox: the coordinates of the bounding boxes has negative value, got: (" +
+                      std::to_string(bbox->x()) + "," + std::to_string(bbox->y()) + ").");
     }
   }
   return Status::OK();
@@ -116,10 +124,10 @@ Status BoundingBox::PadBBoxes(const TensorPtr *bbox_list, size_t bbox_count, int
     std::shared_ptr<BoundingBox> bbox;
     RETURN_IF_NOT_OK(ReadFromTensor(*bbox_list, i, &bbox));
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - bbox->x()) > pad_left,
-                                 "BoundingBox: pad_left is too large.");
+                                 "BoundingBox: pad_left is too large as coordinate x bigger than max num of int64.");
     bbox->SetX(bbox->x() + pad_left);
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - bbox->y()) > pad_top,
-                                 "BoundingBox: pad_top is too large.");
+                                 "BoundingBox: pad_top is too large as coordinate y bigger than max num of int64.");
     bbox->SetY(bbox->y() + pad_top);
     RETURN_IF_NOT_OK(bbox->WriteToTensor(*bbox_list, i));
   }
@@ -199,13 +207,13 @@ Status BoundingBox::UpdateBBoxesForResize(const TensorPtr &bbox_list, size_t bbo
     RETURN_IF_NOT_OK(ReadFromTensor(bbox_list, i, &bbox));
 
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / bbox->x()) > W_aspRatio,
-                                 "BoundingBox: W_aspRatio is too large.");
+                                 "BoundingBox: Width aspect Ratio is too large as got: " + std::to_string(W_aspRatio));
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / bbox->y()) > H_aspRatio,
-                                 "BoundingBox: H_aspRatio is too large.");
+                                 "BoundingBox: Height aspect Ratio is too large as got: " + std::to_string(H_aspRatio));
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / bbox->width()) > W_aspRatio,
-                                 "BoundingBox: W_aspRatio is too large.");
+                                 "BoundingBox: Width aspect Ratio is too large as got: " + std::to_string(W_aspRatio));
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / bbox->height()) > H_aspRatio,
-                                 "BoundingBox: H_aspRatio is too large.");
+                                 "BoundingBox: Height aspect Ratio is too large as got: " + std::to_string(H_aspRatio));
 
     // update positions and widths
     bbox->SetX(bbox->x() * W_aspRatio);

@@ -29,7 +29,8 @@ Status RandomSolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
   uint8_t threshold_min_ = threshold_[0], threshold_max_ = threshold_[1];
 
   CHECK_FAIL_RETURN_UNEXPECTED(threshold_min_ <= threshold_max_,
-                               "RandomSolarize: min of threshold is greater than max of threshold.");
+                               "RandomSolarize: min of threshold: " + std::to_string(threshold_min_) +
+                                 " is greater than max of threshold: " + std::to_string(threshold_max_));
 
   uint8_t threshold_min = std::uniform_int_distribution(threshold_min_, threshold_max_)(rnd_);
   uint8_t threshold_max = std::uniform_int_distribution(threshold_min_, threshold_max_)(rnd_);

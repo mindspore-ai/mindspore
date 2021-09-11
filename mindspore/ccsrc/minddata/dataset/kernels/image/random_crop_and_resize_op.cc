@@ -61,8 +61,7 @@ Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output)
   int crop_height = 0;
   int crop_width = 0;
   for (size_t i = 0; i < input.size(); i++) {
-    CHECK_FAIL_RETURN_UNEXPECTED(input[i]->shape().Size() >= 2,
-                                 "RandomCropAndResize: the image is not <H,W,C> or <H,W>");
+    RETURN_IF_NOT_OK(ValidateImageRank("RandomCropAndResize", input[i]->shape().Size()));
     int h_in = input[i]->shape()[0];
     int w_in = input[i]->shape()[1];
     if (i == 0) {
@@ -87,7 +86,9 @@ Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs
   if (!outputs.empty()) {
     return Status::OK();
   }
-  return Status(StatusCode::kMDUnexpectedError, "RandomCropAndResize: invalid input shape");
+  return Status(StatusCode::kMDUnexpectedError,
+                "RandomCropAndResize: invalid input shape, expected 2D or 3D input, but got input dimension is: " +
+                  std::to_string(inputs[0].Rank()));
 }
 Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width) {
   CHECK_FAIL_RETURN_UNEXPECTED(crop_height != nullptr, "crop_height is nullptr.");

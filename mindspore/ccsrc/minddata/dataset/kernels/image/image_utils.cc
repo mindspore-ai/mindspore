@@ -16,6 +16,7 @@
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include <opencv2/imgproc/types_c.h>
 #include <algorithm>
+#include <limits>
 #include <vector>
 #include <stdexcept>
 #include <opencv2/imgcodecs.hpp>
@@ -81,7 +82,9 @@ Status GetConvertShape(ConvertMode convert_mode, const std::shared_ptr<CVTensor>
   } else if (std::find(one_channels.begin(), one_channels.end(), convert_mode) != one_channels.end()) {
     *node = {input_cv->shape()[0], input_cv->shape()[1]};
   } else {
-    RETURN_STATUS_UNEXPECTED("The mode of image channel conversion must be in ConvertMode.");
+    RETURN_STATUS_UNEXPECTED(
+      "The mode of image channel conversion must be in ConvertMode, which mainly includes "
+      "conversion between RGB, BGR, GRAY, RGBA etc.");
   }
   return Status::OK();
 }
@@ -104,8 +107,9 @@ bool CheckTensorShape(const std::shared_ptr<Tensor> &tensor, const int &channel)
 Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int flip_code) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
 
-  if (input_cv->Rank() <= 1 || input_cv->mat().dims > 2) {
-    RETURN_STATUS_UNEXPECTED("Flip: input tensor is not in shape of <H,W,C> or <H,W>.");
+  if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
+    RETURN_STATUS_UNEXPECTED("Flip: shape of input is not <H,W,C> or <H,W>, but got rank:" +
+                             std::to_string(input_cv->Rank()));
   }
 
   std::shared_ptr<CVTensor> output_cv;
@@ -120,7 +124,7 @@ Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int 
       RETURN_STATUS_UNEXPECTED("Flip: " + std::string(e.what()));
     }
   } else {
-    RETURN_STATUS_UNEXPECTED("Flip: allocate memory failed.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Flip: allocate memory failed.");
   }
 }
 
@@ -136,11 +140,9 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               int32_t output_width, double fx, double fy, InterpolationMode mode) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
   if (!input_cv->mat().data) {
-    RETURN_STATUS_UNEXPECTED("Resize: load image failed.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Resize: load image failed.");
   }
-  if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("Resize: input tensor is not in shape of <H,W,C> or <H,W>");
-  }
+  RETURN_IF_NOT_OK(ValidateImageRank("Resize", input_cv->Rank()));
 
   if (mode == InterpolationMode::kCubicPil) {
     LiteMat imIn, imOut;
@@ -162,7 +164,10 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   // resize image too large or too small, 1000 is arbitrarily chosen here to prevent open cv from segmentation fault
   if (output_height > in_image.rows * kResizeShapeLimits || output_width > in_image.cols * kResizeShapeLimits) {
     std::string err_msg =
-      "Resize: the resizing width or height is too big, it's 1000 times bigger than the original image.";
+      "Resize: the resizing width or height is too big, it's 1000 times bigger than the original image, got output "
+      "height: " +
+      std::to_string(output_height) + ", width: " + std::to_string(output_width) +
+      ", and original image size:" + std::to_string(in_image.rows) + ", " + std::to_string(in_image.cols);
     return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   if (output_height == 0 || output_width == 0) {
@@ -208,7 +213,7 @@ Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
   if (!input_cv->mat().data) {
-    RETURN_STATUS_UNEXPECTED("Decode: load image failed.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Decode: load image failed.");
   }
   try {
     cv::Mat img_mat = cv::imdecode(input_cv->mat(), cv::IMREAD_COLOR | cv::IMREAD_IGNORE_ORIENTATION);
@@ -287,7 +292,7 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
     try {
       num_lines_read = jpeg_read_scanlines(cinfo, &scanline_ptr, 1);
     } catch (std::runtime_error &e) {
-      RETURN_STATUS_UNEXPECTED("Decode: image decode failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Decode: image decode failed.");
     }
     if (cinfo->out_color_space == JCS_CMYK && num_lines_read > 0) {
       for (int i = 0; i < crop_w; ++i) {
@@ -314,11 +319,11 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
       int copy_status = memcpy_s(buffer, buffer_size, scanline_ptr + offset, stride);
       if (copy_status != 0) {
         jpeg_destroy_decompress(cinfo);
-        RETURN_STATUS_UNEXPECTED("Decode: memcpy failed.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] Decode: memcpy failed.");
       }
     } else {
       jpeg_destroy_decompress(cinfo);
-      std::string err_msg = "Decode: image decode failed.";
+      std::string err_msg = "[Internal ERROR] Decode: image decode failed.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     buffer += stride;
@@ -342,7 +347,7 @@ static Status JpegSetColorSpace(jpeg_decompress_struct *cinfo) {
       return Status::OK();
     default:
       jpeg_destroy_decompress(cinfo);
-      std::string err_msg = "Decode: image decode failed.";
+      std::string err_msg = "[Internal ERROR] Decode: image decode failed.";
       RETURN_STATUS_UNEXPECTED(err_msg);
   }
 }
@@ -373,9 +378,9 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     return DestroyDecompressAndReturnError(e.what());
   }
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - crop_w) > crop_x,
-                               "JpegCropAndDecode: addition out of bounds.");
+                               "JpegCropAndDecode: addition(crop x and crop width) out of bounds.");
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - crop_h) > crop_y,
-                               "JpegCropAndDecode: addition out of bounds.");
+                               "JpegCropAndDecode: addition(crop y and crop height) out of bounds.");
   if (crop_x == 0 && crop_y == 0 && crop_w == 0 && crop_h == 0) {
     crop_w = cinfo.output_width;
     crop_h = cinfo.output_height;
@@ -424,7 +429,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
 Status Rescale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rescale, float shift) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
   if (!input_cv->mat().data) {
-    RETURN_STATUS_UNEXPECTED("Rescale: load image failed.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Rescale: load image failed.");
   }
   cv::Mat input_image = input_cv->mat();
   std::shared_ptr<CVTensor> output_cv;
@@ -441,24 +446,24 @@ Status Rescale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
 Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int x, int y, int w, int h) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
   if (!input_cv->mat().data) {
-    RETURN_STATUS_UNEXPECTED("Crop: load image failed.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Crop: load image failed.");
   }
-  if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("Crop: invalid image Shape, only support <H,W,C> or <H,W>");
-  }
-  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - y) > h, "Crop: addition out of bounds.");
+  RETURN_IF_NOT_OK(ValidateImageRank("Crop", input_cv->Rank()));
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - y) > h,
+                               "Crop: addition(x and height) out of bounds.");
   // account for integer overflow
   if (y < 0 || (y + h) > input_cv->shape()[0] || (y + h) < 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Crop: invalid y coordinate value for crop, "
-      "y coordinate value exceeds the boundary of the image.");
+      "Crop: invalid y coordinate value for crop, y coordinate value exceeds the boundary of the image, got y: " +
+      std::to_string(y));
   }
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - x) > w, "Crop: addition out of bounds.");
   // account for integer overflow
   if (x < 0 || (x + w) > input_cv->shape()[1] || (x + w) < 0) {
     RETURN_STATUS_UNEXPECTED(
       "Crop: invalid x coordinate value for crop, "
-      "x coordinate value exceeds the boundary of the image.");
+      "x coordinate value exceeds the boundary of the image, got x: " +
+      std::to_string(x));
   }
   try {
     TensorShape shape{h, w};
@@ -480,22 +485,23 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, ConvertMode convert_mode) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != 2) {
-      RETURN_STATUS_UNEXPECTED("ConvertColor: invalid image Shape, only support <H,W,C> or <H,W>");
-    }
+    RETURN_IF_NOT_OK(ValidateImageRank("ConvertColor", input_cv->Rank()));
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("ConvertColor: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] ConvertColor: load image failed.");
     }
     if (input_cv->Rank() == 3) {
       int num_channels = input_cv->shape()[CHANNEL_INDEX];
       if (num_channels != 3 && num_channels != 4) {
-        RETURN_STATUS_UNEXPECTED("ConvertColor: number of channels of image should be 3, 4");
+        RETURN_STATUS_UNEXPECTED("ConvertColor: number of channels of image should be 3 or 4, but got:" +
+                                 std::to_string(num_channels));
       }
     }
     std::vector<dsize_t> node;
     RETURN_IF_NOT_OK(GetConvertShape(convert_mode, input_cv, &node));
     if (node.empty()) {
-      RETURN_STATUS_UNEXPECTED("ConvertColor: convert mode must be in ConvertMode.");
+      RETURN_STATUS_UNEXPECTED(
+        "ConvertColor: convert mode must be in ConvertMode, which mainly includes conversion "
+        "between RGB, BGR, GRAY, RGBA etc.");
     }
     TensorShape out_shape = TensorShape(node);
     std::shared_ptr<CVTensor> output_cv;
@@ -512,7 +518,7 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("HWC2CHW: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] HWC2CHW: load image failed.");
     }
     if (input_cv->Rank() == 2) {
       // If input tensor is 2D, we assume we have hw dimensions
@@ -524,7 +530,8 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
     if (input_cv->shape().Size() < MIN_IMAGE_DIMENSION || input_cv->shape().Size() > DEFAULT_IMAGE_CHANNELS ||
         (input_cv->shape().Size() == DEFAULT_IMAGE_CHANNELS && num_channels != DEFAULT_IMAGE_CHANNELS &&
          num_channels != MIN_IMAGE_CHANNELS)) {
-      RETURN_STATUS_UNEXPECTED("HWC2CHW: image shape is not <H,W,C>.");
+      RETURN_STATUS_UNEXPECTED("HWC2CHW: image shape is not <H,W,C>, but got rank: " +
+                               std::to_string(input_cv->shape().Size()));
     }
     cv::Mat output_img;
 
@@ -604,7 +611,7 @@ Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Te
   } else {
     RETURN_STATUS_UNEXPECTED(
       "CutMixBatch: MaskWithTensor failed: "
-      "image format must be CHW, HWC, or HW.");
+      "image format must be <C,H,W>, <H,W,C>, or <H,W>.");
   }
   return Status::OK();
 }
@@ -655,11 +662,9 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("CropAndResize: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] CropAndResize: load image failed.");
     }
-    if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != 2) {
-      RETURN_STATUS_UNEXPECTED("CropAndResize: image shape is not <H,W,C> or <H,W>");
-    }
+    RETURN_IF_NOT_OK(ValidateImageRank("CropAndResize", input_cv->Rank()));
     // image too large or too small, 1000 is arbitrary here to prevent opencv from segmentation fault
     const uint32_t kCropShapeLimits = 1000;
     if (crop_height == 0 || crop_width == 0 || target_height == 0 || target_height > crop_height * kCropShapeLimits ||
@@ -713,11 +718,9 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("Rotate: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Rotate: load image failed.");
     }
-    if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_DIMENSION) {
-      RETURN_STATUS_UNEXPECTED("Rotate: image shape is not <H,W,C> or <H,W>.");
-    }
+    RETURN_IF_NOT_OK(ValidateImageRank("Rotate", input_cv->Rank()));
 
     cv::Mat input_img = input_cv->mat();
     if (input_img.cols > (MAX_INT_PRECISION * 2) || input_img.rows > (MAX_INT_PRECISION * 2)) {
@@ -789,7 +792,9 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED((*output)->Rank() == DEFAULT_IMAGE_RANK, "Normalize: image shape is not <H,W,C>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(std.size() == mean.size(), "Normalize: mean and std vectors are not of same size.");
+  CHECK_FAIL_RETURN_UNEXPECTED(std.size() == mean.size(),
+                               "Normalize: mean and std vectors are not of same size, got size of std:" +
+                                 std::to_string(std.size()) + ", and mean size:" + std::to_string(mean.size()));
 
   // caller provided 1 mean/std value and there are more than one channel --> duplicate mean/std value
   if (mean.size() == 1 && (*output)->shape()[CHANNEL_INDEX] != 1) {
@@ -799,7 +804,10 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     }
   }
   CHECK_FAIL_RETURN_UNEXPECTED((*output)->shape()[CHANNEL_INDEX] == mean.size(),
-                               "Normalize: number of channels does not match the size of mean and std vectors.");
+                               "Normalize: number of channels does not match the size of mean and std vectors, got "
+                               "channels: " +
+                                 std::to_string((*output)->shape()[CHANNEL_INDEX]) +
+                                 ", size of mean:" + std::to_string(mean.size()));
 
   switch (input->type().value()) {
     case DataType::DE_BOOL:
@@ -854,7 +862,7 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
                     const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std, const std::string &dtype) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
   if (!(input_cv->mat().data && input_cv->Rank() == DEFAULT_IMAGE_CHANNELS)) {
-    RETURN_STATUS_UNEXPECTED("NormalizePad: load image failed.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] NormalizePad: load image failed.");
   }
   DataType tensor_type = DataType(DataType::DE_FLOAT32);
   int compute_type = CV_32F;
@@ -870,12 +878,16 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   RETURN_IF_NOT_OK(CVTensor::CreateEmpty(new_shape, tensor_type, &output_cv));
   mean->Squeeze();
   if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != DEFAULT_IMAGE_CHANNELS) {
-    std::string err_msg = "NormalizePad: mean tensor should be of size 3 and type float.";
+    std::string err_msg =
+      "NormalizePad: mean tensor should be of size 3 and type float, but got rank: " + std::to_string(mean->Rank()) +
+      ", and type: " + mean->type().ToString();
     return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   std->Squeeze();
   if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != DEFAULT_IMAGE_CHANNELS) {
-    std::string err_msg = "NormalizePad: std tensor should be of size 3 and type float.";
+    std::string err_msg =
+      "NormalizePad: std tensor should be of size 3 and type float, but got rank: " + std::to_string(std->Rank()) +
+      ", and type: " + std->type().ToString();
     return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   try {
@@ -884,7 +896,7 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     std::vector<cv::Mat> rgb;
     cv::split(in_image, rgb);
     if (rgb.size() != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED("NormalizePad: input image is not in RGB.");
+      RETURN_STATUS_UNEXPECTED("NormalizePad: input image is not in RGB, got rank: " + std::to_string(in_image.dims));
     }
     for (int8_t i = 0; i < DEFAULT_IMAGE_CHANNELS; i++) {
       float mean_c, std_c;
@@ -906,13 +918,17 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("AdjustBrightness: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustBrightness: load image failed.");
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "AdjustBrightness: shape is invalid.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      input_cv->shape().Size() > CHANNEL_INDEX,
+      "AdjustBrightness: image rank should not bigger than:" + std::to_string(CHANNEL_INDEX) + ", but got" +
+        std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     // Rank of the image represents how many dimensions, image is expected to be HWC
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED("AdjustBrightness: image shape is not <H,W,C> or channel is not 3.");
+      RETURN_STATUS_UNEXPECTED("AdjustBrightness: image shape is not <H,W,C> or channel is not 3, got image rank: " +
+                               std::to_string(input_cv->Rank()) + ", and channel:" + std::to_string(num_channels));
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
@@ -929,12 +945,15 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("AdjustContrast: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustContrast: load image failed.");
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "AdjustBrightness: shape is invalid.");
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX,
+                                 "AdjustContrast: image rank should not bigger than:" + std::to_string(CHANNEL_INDEX) +
+                                   ", but got" + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->Rank() != DEFAULT_IMAGE_CHANNELS || num_channels != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED("AdjustContrast: image shape is not <H,W,C> or channel is not 3.");
+      RETURN_STATUS_UNEXPECTED("AdjustContrast: image shape is not <H,W,C> or channel is not 3, got image rank: " +
+                               std::to_string(input_cv->Rank()) + ", and channel:" + std::to_string(num_channels));
     }
     cv::Mat gray, output_img;
     cv::cvtColor(input_img, gray, CV_RGB2GRAY);
@@ -963,7 +982,8 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
       num_channels = input->shape()[-1];
     }
     if (num_channels != 1 && num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("AdjustGamma: channel of input image should be 1 or 3.");
+      RETURN_STATUS_UNEXPECTED("AdjustGamma: channel of input image should be 1 or 3, but got: " +
+                               std::to_string(num_channels));
     }
     if (input->type().IsFloat()) {
       for (auto itr = input->begin<float>(); itr != input->end<float>(); itr++) {
@@ -975,7 +995,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
     } else {
       std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
       if (!input_cv->mat().data) {
-        RETURN_STATUS_UNEXPECTED("AdjustGamma: load image failed.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustGamma: load image failed.");
       }
       cv::Mat input_img = input_cv->mat();
       std::shared_ptr<CVTensor> output_cv;
@@ -1015,10 +1035,11 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("AutoContrast: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] AutoContrast: load image failed.");
     }
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_DIMENSION) {
-      RETURN_STATUS_UNEXPECTED("AutoContrast: image channel should be 1 or 3.");
+      RETURN_STATUS_UNEXPECTED("AutoContrast: image channel should be 1 or 3,  but got: " +
+                               std::to_string(input_cv->Rank()));
     }
     // Reshape to extend dimension if rank is 2 for algorithm to work. then reshape output to be of rank 2 like input
     if (input_cv->Rank() == MIN_IMAGE_DIMENSION) {
@@ -1027,7 +1048,8 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     // Get number of channels and image matrix
     std::size_t num_of_channels = input_cv->shape()[CHANNEL_INDEX];
     if (num_of_channels != MIN_IMAGE_CHANNELS && num_of_channels != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED("AutoContrast: image shape is not <H,W,C>.");
+      RETURN_STATUS_UNEXPECTED("AutoContrast: channel of input image should be 1 or 3, but got: " +
+                               std::to_string(num_of_channels));
     }
     cv::Mat image = input_cv->mat();
     // Separate the image to channels
@@ -1093,12 +1115,16 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("AdjustSaturation: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustSaturation: load image failed.");
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "AdjustSaturation: shape is invalid.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      input_cv->shape().Size() > CHANNEL_INDEX,
+      "AdjustSaturation: image rank should not bigger than: " + std::to_string(CHANNEL_INDEX) +
+        ", but got: " + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED("AdjustSaturation: image shape is not <H,W,C> or channel is not 3.");
+      RETURN_STATUS_UNEXPECTED("AdjustSaturation: image shape is not <H,W,C> or channel is not 3, but got rank: " +
+                               std::to_string(input_cv->Rank()) + ", and channel: " + std::to_string(num_channels));
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
@@ -1116,18 +1142,22 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 
 Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &hue) {
   if (hue > 0.5 || hue < -0.5) {
-    RETURN_STATUS_UNEXPECTED("AdjustHue: invalid parameter, hue is not within [-0.5, 0.5].");
+    RETURN_STATUS_UNEXPECTED("AdjustHue: invalid parameter, hue should within [-0.5, 0.5], but got: " +
+                             std::to_string(hue));
   }
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("AdjustHue: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustHue: load image failed.");
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > 2, "AdjustHue: shape is invalid.");
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > 2,
+                                 "AdjustHue: image rank should not bigger than:" + std::to_string(2) +
+                                   ", but got: " + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED("AdjustHue: image shape is not <H,W,C> or channel is not 3.");
+      RETURN_STATUS_UNEXPECTED("AdjustHue: image shape is not <H,W,C> or channel is not 3, but got rank: " +
+                               std::to_string(input_cv->Rank()) + ", and channel: " + std::to_string(num_channels));
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
@@ -1154,10 +1184,10 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("Equalize: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Equalize: load image failed.");
     }
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_DIMENSION) {
-      RETURN_STATUS_UNEXPECTED("Equalize: image shape is not <H,W,C> or <H,W>");
+      RETURN_STATUS_UNEXPECTED("Equalize: image rank should be 1 or 3,  but got: " + std::to_string(input_cv->Rank()));
     }
     // For greyscale images, extend dimension if rank is 2 and reshape output to be of rank 2.
     if (input_cv->Rank() == MIN_IMAGE_DIMENSION) {
@@ -1166,7 +1196,8 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     // Get number of channels and image matrix
     std::size_t num_of_channels = input_cv->shape()[CHANNEL_INDEX];
     if (num_of_channels != MIN_IMAGE_CHANNELS && num_of_channels != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED("Equalize: image shape is not <H,W,C>.");
+      RETURN_STATUS_UNEXPECTED("Equalize: channel of input image should be 1 or 3, but got: " +
+                               std::to_string(num_of_channels));
     }
     cv::Mat image = input_cv->mat();
     // Separate the image to channels
@@ -1199,17 +1230,21 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX, "Erase: shape is invalid.");
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->mat().data == nullptr) {
-      RETURN_STATUS_UNEXPECTED("CutOut: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] CutOut: load image failed.");
     }
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED("CutOut: image shape is not <H,W,C> or channel is not 3.");
+      RETURN_STATUS_UNEXPECTED("CutOut: image shape is not <H,W,C> or channel is not 3, but got rank: " +
+                               std::to_string(input_cv->Rank()) + ", and channel: " + std::to_string(num_channels));
     }
     cv::Mat input_img = input_cv->mat();
     int32_t image_h = input_cv->shape()[0];
     int32_t image_w = input_cv->shape()[1];
     // check if erase size is bigger than image itself
     if (box_height > image_h || box_width > image_w) {
-      RETURN_STATUS_UNEXPECTED("CutOut: box size is too large for image erase");
+      RETURN_STATUS_UNEXPECTED(
+        "CutOut: box size is too large for image erase, got box height: " + std::to_string(box_height) +
+        "box weight: " + std::to_string(box_width) + ", and image height: " + std::to_string(image_h) +
+        ", image width: " + std::to_string(image_w));
     }
 
     // for random color
@@ -1265,7 +1300,8 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 
     // validate rank
     if (input_cv->Rank() == 1 || input_cv->mat().dims > MIN_IMAGE_DIMENSION) {
-      RETURN_STATUS_UNEXPECTED("Pad: input tensor is not in shape of <H,W,C> or <H,W>.");
+      RETURN_STATUS_UNEXPECTED("Pad: input shape is not <H,W,C> or <H, W>, got rank: " +
+                               std::to_string(input_cv->Rank()));
     }
 
     // get the border type in openCV
@@ -1297,10 +1333,9 @@ Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->shape().Size() != DEFAULT_IMAGE_CHANNELS || num_channels != 4) {
-      std::string err_msg =
-        "RgbaToRgb: Number of channels of image does not equal 4, "
-        "but got : " +
-        std::to_string(num_channels);
+      std::string err_msg = "RgbaToRgb: rank of image is not: " + std::to_string(DEFAULT_IMAGE_CHANNELS) +
+                            ", but got: " + std::to_string(input_cv->shape().Size()) +
+                            ", or channels of image should be 4, but got: " + std::to_string(num_channels);
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     TensorShape out_shape = TensorShape({input_cv->shape()[0], input_cv->shape()[1], 3});
@@ -1319,10 +1354,9 @@ Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->shape().Size() != DEFAULT_IMAGE_CHANNELS || num_channels != 4) {
-      std::string err_msg =
-        "RgbaToBgr: number of channels of image should be 4, "
-        "but got : " +
-        std::to_string(num_channels);
+      std::string err_msg = "RgbaToBgr: rank of image is not: " + std::to_string(DEFAULT_IMAGE_CHANNELS) +
+                            ", but got: " + std::to_string(input_cv->shape().Size()) +
+                            ", or channels of image should be 4, but got: " + std::to_string(num_channels);
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     TensorShape out_shape = TensorShape({input_cv->shape()[0], input_cv->shape()[1], 3});
@@ -1341,10 +1375,12 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     auto input_type = input->type();
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("RgbToBgr: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] RgbToBgr: load image failed.");
     }
     if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("RgbToBgr: input tensor is not in shape of <H,W,C> or channel is not 3.");
+      RETURN_STATUS_UNEXPECTED("RgbToBgr: input tensor is not in shape of <H,W,C> or channel is not 3, got rank: " +
+                               std::to_string(input_cv->Rank()) +
+                               ", and channel: " + std::to_string(input_cv->shape()[2]));
     }
 
     cv::Mat image = input_cv->mat().clone();
@@ -1396,7 +1432,9 @@ Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || input_cv->shape()[CHANNEL_INDEX] != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED("RgbToGray: image shape is not <H,W,C> or channel is not 3.");
+      RETURN_STATUS_UNEXPECTED(
+        "RgbToGray: image shape is not <H,W,C> or channel is not 3, got rank: " + std::to_string(input_cv->Rank()) +
+        ", and channel: " + std::to_string(input_cv->shape()[2]));
     }
     TensorShape out_shape = TensorShape({input_cv->shape()[0], input_cv->shape()[1]});
     std::shared_ptr<CVTensor> output_cv;
@@ -1433,9 +1471,7 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               InterpolationMode interpolation, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    if (input_cv->Rank() < MIN_IMAGE_DIMENSION || input_cv->Rank() > DEFAULT_IMAGE_RANK) {
-      RETURN_STATUS_UNEXPECTED("Affine: image shape is not <H,W,C> or <H,W>.");
-    }
+    RETURN_IF_NOT_OK(ValidateImageRank("Affine", input_cv->Rank()));
 
     cv::Mat affine_mat(mat);
     affine_mat = affine_mat.reshape(1, {2, 3});
@@ -1457,7 +1493,7 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (input_cv->mat().data == nullptr) {
-      RETURN_STATUS_UNEXPECTED("GaussianBlur: load image failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] GaussianBlur: load image failed.");
     }
     cv::Mat output_cv_mat;
     cv::GaussianBlur(input_cv->mat(), output_cv_mat, cv::Size(kernel_x, kernel_y), static_cast<double>(sigma_x),
@@ -1475,19 +1511,21 @@ Status ComputePatchSize(const std::shared_ptr<CVTensor> &input_cv,
                         std::shared_ptr<std::pair<int32_t, int32_t>> *patch_size, int32_t num_height, int32_t num_width,
                         SliceMode slice_mode) {
   if (input_cv->mat().data == nullptr) {
-    RETURN_STATUS_UNEXPECTED("SlicePatches: Tensor could not convert to CV Tensor.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] SlicePatches: Tensor could not convert to CV Tensor.");
   }
-  if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("SlicePatches: image shape is not <H,W,C> or <H,W>.");
-  }
+  RETURN_IF_NOT_OK(ValidateImageRank("Affine", input_cv->Rank()));
 
   cv::Mat in_img = input_cv->mat();
   cv::Size s = in_img.size();
   if (num_height == 0 || num_height > s.height) {
-    RETURN_STATUS_UNEXPECTED("SlicePatches: The number of patches on height axis equals 0 or is greater than height.");
+    RETURN_STATUS_UNEXPECTED(
+      "SlicePatches: The number of patches on height axis equals 0 or is greater than height, got number of patches:" +
+      std::to_string(num_height));
   }
   if (num_width == 0 || num_width > s.width) {
-    RETURN_STATUS_UNEXPECTED("SlicePatches: The number of patches on width axis equals 0 or is greater than width.");
+    RETURN_STATUS_UNEXPECTED(
+      "SlicePatches: The number of patches on width axis equals 0 or is greater than width, got number of patches:" +
+      std::to_string(num_width));
   }
   int32_t patch_h = s.height / num_height;
   if (s.height % num_height != 0) {
@@ -1546,6 +1584,14 @@ Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::share
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("SlicePatches: " + std::string(e.what()));
   }
+}
+
+Status ValidateImageRank(const std::string &op_name, int32_t rank) {
+  if (rank != 2 && rank != 3) {
+    std::string err_msg = op_name + ": image shape is not <H,W,C> or <H, W>, but got rank:" + std::to_string(rank);
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

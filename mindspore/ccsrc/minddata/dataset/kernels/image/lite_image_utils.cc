@@ -811,5 +811,12 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   }
 }
 
+Status ValidateImageRank(const std::string &op_name, int32_t rank) {
+  if (rank != 2 && rank != 3) {
+    std::string err_msg = op_name + ": image shape is not <H,W,C> or <H, W>, but got rank:" + std::to_string(rank);
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore
