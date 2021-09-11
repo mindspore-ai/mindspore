@@ -71,8 +71,8 @@ Status RenameOp::ComputeColMap() {
         MS_LOG(DEBUG) << "Rename operator index found " << index << " value " << id << ".";
         if (new_col_name.find(out_columns_[index]) != new_col_name.end()) {
           std::string err_msg(
-            "rename operation does not support rename one column name into another already exist column name, existed"
-            " column name is: " +
+            "Invalid parameter, rename operation does not support rename one column name into another already exist "
+            "column name, existed column name is: " +
             out_columns_[index] + ".");
           RETURN_STATUS_UNEXPECTED(err_msg);
         }
@@ -82,8 +82,8 @@ Status RenameOp::ComputeColMap() {
         // not found
         if (new_col_name.find(name) != new_col_name.end()) {
           std::string err_msg(
-            "rename operation does not support rename one column name into another already exist column name, existed"
-            " column name is: " +
+            "Invalid parameter, rename operation does not support rename one column name into another already exist "
+            "column name, existed column name is: " +
             name + ".");
           RETURN_STATUS_UNEXPECTED(err_msg);
         }

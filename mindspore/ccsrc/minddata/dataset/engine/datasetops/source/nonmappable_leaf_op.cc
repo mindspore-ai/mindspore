@@ -226,7 +226,7 @@ bool NonMappableLeafOp::NeedPushFileToBlockQueue(const std::string &file_name, i
   bool push = false;
   int64_t start_index = device_id_ * num_rows_per_shard_;
   if (device_id_ + 1 < 0) {
-    MS_LOG(ERROR) << "Device id is invalid";
+    MS_LOG(ERROR) << "Device id is invalid, got " + std::to_string(device_id_);
     return false;
   }
 

@@ -45,7 +45,7 @@ const int64_t kTFRecordFileLimit = 0x140000000;
 bool TFReaderOp::ValidateFirstRowCrc(const std::string &filename) {
   auto realpath = Common::GetRealPath(filename);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << filename;
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << filename;
     return false;
   }
 
@@ -167,7 +167,9 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
     }
     std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not be suitable to read with TFRecordDataset API. Check file path." + file_list);
+      "Invalid data, TFRecordDataset API can't read the data file(interface mismatch or no data under the file). "
+      "Check file path." +
+      file_list);
   }
   return Status::OK();
 }
@@ -271,8 +273,8 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
 Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   auto realpath = Common::GetRealPath(filename);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << filename;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + filename);
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << filename;
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + filename);
   }
 
   std::ifstream reader;
@@ -451,7 +453,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
       pad_size = new_pad_size;
     } else {
       if (cur_shape.known() && cur_shape.NumOfElements() != max_size) {
-        std::string err_msg = "Shape in schema's column '" + current_col.Name() + "' is incorrect." +
+        std::string err_msg = "Invalid data, shape in schema's column '" + current_col.Name() + "' is incorrect." +
                               "\nshape received: " + cur_shape.ToString() +
                               "\ntotal elements in shape received: " + std::to_string(cur_shape.NumOfElements()) +
                               "\nexpected total elements in shape: " + std::to_string(max_size);
@@ -555,8 +557,8 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
 Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::string> columns_to_load) {
   auto realpath = Common::GetRealPath(tf_file);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << tf_file;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + tf_file);
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << tf_file;
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + tf_file);
   }
 
   std::ifstream reader;
@@ -684,7 +686,7 @@ int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &file
   for (int i = begin; i < end; i++) {
     auto realpath = Common::GetRealPath(filenames[i]);
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Get real path failed, path=" << filenames[i];
+      MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << filenames[i];
       continue;
     }
 

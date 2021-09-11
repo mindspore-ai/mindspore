@@ -58,8 +58,7 @@ DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampl
 Status DatasetOp::AddChild(std::shared_ptr<DatasetOp> child) {
   if (std::dynamic_pointer_cast<DeviceQueueOp>(child) != nullptr) {
     std::string err_msg(
-      "DeviceQueueOp cannot be added as a child. DeviceQueueOp must be a root node, which means no operator should be "
-      "after device_queue operation.");
+      "Unsupported scenario, \'send\' operator can only be after \'device_queue\' operation, but got " + Name());
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   if (operator_id_ == kInvalidOperatorId) {
@@ -132,11 +131,11 @@ void DatasetOp::RemoveParent(const DatasetOp *parent) {
 // Removes this node from the tree and connects it's parent/child together
 Status DatasetOp::Remove() {
   if (parent_.size() > 1) {
-    std::string err_msg("No support for op removal if the operator has more than one parent.");
+    std::string err_msg("[Internal ERROR], no support for the relationship between operators is not one-to-one.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   if (child_.size() > 1) {
-    std::string err_msg("No support for op removal if the operator has more than one child.");
+    std::string err_msg("[Internal ERROR], no support for the relationship between operators is not one-to-one.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -348,7 +347,7 @@ std::string DatasetOp::ColumnNameMapAsString() const {
 // Operations changing the column map must overwrite this function.
 Status DatasetOp::ComputeColMap() {
   if (child_.size() > 1) {
-    RETURN_STATUS_UNEXPECTED("Assigning column name map from child only works for single-child operators.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR], no support for the relationship between operators is not one-to-one.");
   }
   if (column_name_id_map_.empty()) {
     column_name_id_map_ = child_[0]->column_name_id_map();

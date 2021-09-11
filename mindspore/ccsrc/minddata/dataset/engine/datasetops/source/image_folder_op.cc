@@ -73,7 +73,8 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
   num_rows_ = image_label_pairs_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not be suitable to read with ImageFolderDataset API. Check file path: " +
+      "Invalid data, ImageFolderDataset API can't read the data file(interface mismatch or no data found). "
+      "Check file path: " +
       folder_path_);
   }
   // free memory of two queues used for pre-scan
@@ -120,10 +121,13 @@ void ImageFolderOp::Print(std::ostream &out, bool show_all) const {
 Status ImageFolderOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
     if (image_label_pairs_.empty()) {
-      RETURN_STATUS_UNEXPECTED("No images found in dataset, try iterate dataset to check if read images success.");
+      RETURN_STATUS_UNEXPECTED(
+        "Invalid data, ImageFolderDataset API can't read the data file(interface mismatch or no data found). "
+        "Check file path: " +
+        folder_path_);
     } else {
       RETURN_STATUS_UNEXPECTED(
-        "Map containing image-index pair is nullptr or has been set in other place,"
+        "[Internal ERROR], Map containing image-index pair is nullptr or has been set in other place,"
         "it must be empty before using GetClassIds.");
     }
   }
@@ -203,7 +207,7 @@ Status ImageFolderOp::StartAsyncWalk() {
   TaskManager::FindMe()->Post();
   Path dir(folder_path_);
   if (dir.Exists() == false || dir.IsDirectory() == false) {
-    RETURN_STATUS_UNEXPECTED("Invalid parameter, failed to open image folder: " + folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open image folder: " + folder_path_);
   }
   dirname_offset_ = folder_path_.length();
   RETURN_IF_NOT_OK(RecursiveWalkFolder(&dir));
@@ -270,7 +274,7 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
     } else {
       for (const auto &p : class_index) {
         CHECK_FAIL_RETURN_UNEXPECTED(folder_names.find(p.first) != folder_names.end(),
-                                     "folder: " + p.first + " doesn't exist in " + path + " .");
+                                     "Invalid parameter, folder: " + p.first + " doesn't exist in " + path + " .");
       }
       (*num_classes) = class_index.size();
     }

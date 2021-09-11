@@ -74,7 +74,7 @@ void MnistOp::Print(std::ostream &out, bool show_all) const {
 Status MnistOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
     if (image_label_pairs_.empty()) {
-      RETURN_STATUS_UNEXPECTED("No image found in dataset, try iterate dataset to check if read images success.");
+      RETURN_STATUS_UNEXPECTED("Invalid data, no image found in dataset.");
     } else {
       RETURN_STATUS_UNEXPECTED(
         "[Internal ERROR] Map for containing image-index pair is nullptr or has been set in other place,"
@@ -208,7 +208,8 @@ Status MnistOp::ParseMnistData() {
   num_rows_ = image_label_pairs_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not be suitable to read with MnistDataset API. Check file in directory: " +
+      "Invalid data, MnistDataset API can't read the data file(interface mismatch or no data found). "
+      "Check file in directory: " +
       folder_path_);
   }
   return Status::OK();

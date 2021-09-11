@@ -454,8 +454,8 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
 
   auto realpath = Common::GetRealPath(file);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file);
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file;
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file);
   }
 
   std::ifstream ifs;
@@ -575,7 +575,9 @@ Status CsvOp::CalculateNumRowsPerShard() {
     }
     std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not suitable to read with CSVDataset API. Check file path: " + file_list + ".");
+      "Invalid data, CSVDataset API can't read the data file(interface mismatch or no data found). "
+      "Check file path: " +
+      file_list + ".");
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));
@@ -587,13 +589,13 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
   CsvParser csv_parser(0, jagged_rows_connector_.get(), field_delim_, column_default_list_, file);
   Status rc = csv_parser.InitCsvParser();
   if (rc.IsError()) {
-    MS_LOG(ERROR) << "Failed to initialize CSV Parser. Error:" << rc;
+    MS_LOG(ERROR) << "[Internal ERROR], failed to initialize CSV Parser. Error:" << rc;
     return 0;
   }
 
   auto realpath = Common::GetRealPath(file);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file;
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file;
     return 0;
   }
 
@@ -665,8 +667,8 @@ Status CsvOp::ComputeColMap() {
 
       /* Process exception if ERROR in column name solving*/
       if (!rc.IsOk()) {
-        MS_LOG(ERROR) << "Fail to analyse column name map, invalid file: " + csv_file;
-        RETURN_STATUS_UNEXPECTED("Fail to analyse column name map, invalid file: " + csv_file);
+        MS_LOG(ERROR) << "Invalid file, fail to analyse column name map, path=" + csv_file;
+        RETURN_STATUS_UNEXPECTED("Invalid file, fail to analyse column name map, path=" + csv_file);
       }
     }
   } else {
@@ -695,8 +697,8 @@ Status CsvOp::ColMapAnalyse(const std::string &csv_file_name) {
     if (!check_flag_) {
       auto realpath = Common::GetRealPath(csv_file_name);
       if (!realpath.has_value()) {
-        MS_LOG(ERROR) << "Get real path failed, path=" << csv_file_name;
-        RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + csv_file_name);
+        MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << csv_file_name;
+        RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + csv_file_name);
       }
 
       std::string line;
@@ -755,7 +757,7 @@ bool CsvOp::ColumnNameValidate() {
   for (auto &csv_file : csv_files_list_) {
     auto realpath = Common::GetRealPath(csv_file);
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Get real path failed, path=" << csv_file;
+      MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << csv_file;
       return false;
     }
 
@@ -773,8 +775,8 @@ bool CsvOp::ColumnNameValidate() {
     } else {  // Case the other files
       if (col_names != record) {
         MS_LOG(ERROR)
-          << "Every corresponding column name must be identical, either element or permutation. Invalid files are: " +
-               match_file + " and " + csv_file;
+          << "Invalid parameter, every corresponding column name must be identical, either element or permutation. "
+          << "Invalid files are: " + match_file + " and " + csv_file;
         return false;
       }
     }

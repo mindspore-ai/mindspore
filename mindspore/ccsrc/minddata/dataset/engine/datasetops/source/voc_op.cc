@@ -121,8 +121,8 @@ Status VOCOp::ParseImageIds() {
 
   auto realpath = Common::GetRealPath(image_sets_file);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << image_sets_file;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + image_sets_file);
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << image_sets_file;
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + image_sets_file);
   }
 
   std::ifstream in_file;
@@ -167,7 +167,8 @@ Status VOCOp::ParseAnnotationIds() {
   num_rows_ = image_ids_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not be suitable to read with VOCDataset API. Check file in directory:" +
+      "Invalid data, VOCDataset API can't read the data file(interface mismatch or no data found). "
+      "Check file in directory:" +
       folder_path_);
   }
   return Status::OK();
@@ -337,8 +338,8 @@ Status VOCOp::ComputeColMap() {
 Status VOCOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
   if ((*output_class_indexing).empty()) {
     if (task_type_ != TaskType::Detection) {
-      MS_LOG(ERROR) << "Class index only valid in \"Detection\" task.";
-      RETURN_STATUS_UNEXPECTED("GetClassIndexing: Get Class Index failed in VOCOp.");
+      MS_LOG(ERROR) << "Invalid parameter, GetClassIndexing only valid in \"Detection\" task.";
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, GetClassIndexing only valid in \"Detection\" task.");
     }
     RETURN_IF_NOT_OK(ParseImageIds());
     RETURN_IF_NOT_OK(ParseAnnotationIds());

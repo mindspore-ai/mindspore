@@ -326,7 +326,7 @@ Status MapOp::ValidateInColumns(const std::unordered_map<std::string, int32_t> &
   for (const auto &inCol : in_columns_) {
     bool found = col_name_id_map.find(inCol) != col_name_id_map.end();
     if (!found) {
-      std::string err_msg = "input column name: " + inCol + " doesn't exist in the dataset columns.";
+      std::string err_msg = "Invalid parameter, input column name: " + inCol + " doesn't exist in the dataset columns.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }

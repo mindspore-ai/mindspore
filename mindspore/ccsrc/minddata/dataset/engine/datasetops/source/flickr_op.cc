@@ -96,8 +96,8 @@ void FlickrOp::Print(std::ostream &out, bool show_all) const {
 Status FlickrOp::ParseFlickrData() {
   auto real_file_path = Common::GetRealPath(file_path_);
   if (!real_file_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file_path_;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_path_);
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_path_;
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file_path_);
   }
 
   std::ifstream file_handle(real_file_path.value());
@@ -165,8 +165,8 @@ Status FlickrOp::ParseFlickrData() {
 Status FlickrOp::CheckImageType(const std::string &file_name, bool *valid) {
   auto real_file_name = Common::GetRealPath(file_name);
   if (!real_file_name.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_name;
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file_name);
   }
 
   std::ifstream file_handle;

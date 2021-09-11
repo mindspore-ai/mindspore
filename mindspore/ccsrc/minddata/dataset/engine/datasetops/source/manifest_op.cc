@@ -109,7 +109,7 @@ void ManifestOp::Print(std::ostream &out, bool show_all) const {
 Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_labelname_.empty()) {
     if (image_labelname_.empty()) {
-      RETURN_STATUS_UNEXPECTED("No image found in dataset. Try iterate dataset to check if read images success.");
+      RETURN_STATUS_UNEXPECTED("Invalid data, no image found in dataset.");
     } else {
       RETURN_STATUS_UNEXPECTED(
         "[Internal ERROR] Map for containing image-index pair is nullptr or has been set in other place,"
@@ -138,8 +138,8 @@ Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids)
 Status ManifestOp::ParseManifestFile() {
   auto realpath = Common::GetRealPath(file_);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file_;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_);
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_;
+    RETURN_STATUS_UNEXPECTED("Invalid data, get real path failed, path=" + file_);
   }
 
   std::ifstream file_handle(realpath.value());
@@ -211,8 +211,8 @@ Status ManifestOp::ParseManifestFile() {
 Status ManifestOp::CheckImageType(const std::string &file_name, bool *valid) {
   auto realpath = Common::GetRealPath(file_name);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_name;
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file_name);
   }
 
   std::ifstream file_handle;
@@ -258,7 +258,9 @@ Status ManifestOp::CountDatasetInfo() {
   num_rows_ = static_cast<int64_t>(image_labelname_.size());
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not be suitable to read with ManifestDataset API. Check file path: " + file_);
+      "Invalid data, ManifestDataset API can't read the data file(interface mismatch or no data found). "
+      "Check file path: " +
+      file_);
   }
   return Status::OK();
 }
