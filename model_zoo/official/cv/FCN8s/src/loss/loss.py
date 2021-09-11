@@ -20,7 +20,7 @@ from mindspore.ops import operations as P
 
 
 class SoftmaxCrossEntropyLoss(nn.Cell):
-    def __init__(self, num_cls=21, ignore_label=255):
+    def __init__(self, num_cls=21, ignore_label=255, device_num=8):
         super(SoftmaxCrossEntropyLoss, self).__init__()
         self.one_hot = P.OneHot(axis=-1)
         self.on_value = Tensor(1.0, mstype.float32)
@@ -35,6 +35,7 @@ class SoftmaxCrossEntropyLoss(nn.Cell):
         self.div = P.RealDiv()
         self.transpose = P.Transpose()
         self.reshape = P.Reshape()
+        self.transpose.shard(((1, 1, 1, device_num),))
 
     def construct(self, logits, labels):
         labels_int = self.cast(labels, mstype.int32)

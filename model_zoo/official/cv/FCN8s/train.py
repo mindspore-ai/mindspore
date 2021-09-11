@@ -78,7 +78,7 @@ def train():
     if context.get_auto_parallel_context("parallel_mode") in [ParallelMode.SEMI_AUTO_PARALLEL,
                                                               ParallelMode.AUTO_PARALLEL]:
         net.set_model_parallel_shard_strategy(device_num)
-    loss_ = loss.SoftmaxCrossEntropyLoss(config.num_classes, config.ignore_label)
+    loss_ = loss.SoftmaxCrossEntropyLoss(config.num_classes, config.ignore_label, device_num=device_num)
 
     # load pretrained vgg16 parameters to init FCN8s
     if config.ckpt_vgg16:
