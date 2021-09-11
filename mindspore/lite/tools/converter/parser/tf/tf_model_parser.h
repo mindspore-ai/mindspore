@@ -90,7 +90,7 @@ class TFModelParser : public converter::ModelParser {
 
   static STATUS ConvertQuantParams(const size_t &input_size, const size_t &output_size, ops::PrimitiveC *primitive_c);
 
-  static STATUS MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph);
+  static STATUS MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_nodes, const FuncGraphPtr &anf_graph);
 
   STATUS RecordNullInput(const CNodePtr &node, const std::vector<std::string> &input_name_not_found);
 

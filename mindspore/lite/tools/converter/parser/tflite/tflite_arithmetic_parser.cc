@@ -50,8 +50,10 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteAddParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::AddFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -64,8 +66,10 @@ ops::PrimitiveC *TfliteAddParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteMulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::MulFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -80,8 +84,10 @@ ops::PrimitiveC *TfliteMulParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteDivParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::DivFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -96,8 +102,10 @@ ops::PrimitiveC *TfliteDivParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteSubParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::SubFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -112,8 +120,10 @@ ops::PrimitiveC *TfliteSubParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteFloorDivParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::FloorDiv>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -121,8 +131,10 @@ ops::PrimitiveC *TfliteFloorDivParser::Parse(const std::unique_ptr<tflite::Opera
 }
 
 ops::PrimitiveC *TfliteFloorModParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::FloorMod>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -130,8 +142,10 @@ ops::PrimitiveC *TfliteFloorModParser::Parse(const std::unique_ptr<tflite::Opera
 }
 
 ops::PrimitiveC *TflitePowParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::PowFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -142,8 +156,10 @@ ops::PrimitiveC *TflitePowParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteSquaredDifferenceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::SquaredDifference>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -151,8 +167,10 @@ ops::PrimitiveC *TfliteSquaredDifferenceParser::Parse(const std::unique_ptr<tfli
 }
 
 ops::PrimitiveC *TfliteMaximumParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Maximum>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -160,8 +178,10 @@ ops::PrimitiveC *TfliteMaximumParser::Parse(const std::unique_ptr<tflite::Operat
 }
 
 ops::PrimitiveC *TfliteMinimumParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Minimum>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -169,8 +189,10 @@ ops::PrimitiveC *TfliteMinimumParser::Parse(const std::unique_ptr<tflite::Operat
 }
 
 ops::PrimitiveC *TfliteAbsParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Abs>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -178,8 +200,10 @@ ops::PrimitiveC *TfliteAbsParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteCosParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Cos>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -187,8 +211,10 @@ ops::PrimitiveC *TfliteCosParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteFloorParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Floor>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -196,8 +222,10 @@ ops::PrimitiveC *TfliteFloorParser::Parse(const std::unique_ptr<tflite::Operator
 }
 
 ops::PrimitiveC *TfliteExpParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::ExpFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -210,8 +238,10 @@ ops::PrimitiveC *TfliteExpParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteCeilParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Ceil>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -219,8 +249,10 @@ ops::PrimitiveC *TfliteCeilParser::Parse(const std::unique_ptr<tflite::OperatorT
 }
 
 ops::PrimitiveC *TfliteLogParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Log>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -228,8 +260,10 @@ ops::PrimitiveC *TfliteLogParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteRoundParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Round>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -237,8 +271,10 @@ ops::PrimitiveC *TfliteRoundParser::Parse(const std::unique_ptr<tflite::Operator
 }
 
 ops::PrimitiveC *TfliteSqrtParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Sqrt>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -246,8 +282,10 @@ ops::PrimitiveC *TfliteSqrtParser::Parse(const std::unique_ptr<tflite::OperatorT
 }
 
 ops::PrimitiveC *TfliteRsqrtParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Rsqrt>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -255,8 +293,10 @@ ops::PrimitiveC *TfliteRsqrtParser::Parse(const std::unique_ptr<tflite::Operator
 }
 
 ops::PrimitiveC *TfliteSquareParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Square>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -264,8 +304,10 @@ ops::PrimitiveC *TfliteSquareParser::Parse(const std::unique_ptr<tflite::Operato
 }
 
 ops::PrimitiveC *TfliteSinParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Sin>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -273,8 +315,10 @@ ops::PrimitiveC *TfliteSinParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteNegParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Neg>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -282,8 +326,10 @@ ops::PrimitiveC *TfliteNegParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Equal>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -291,8 +337,10 @@ ops::PrimitiveC *TfliteEqualParser::Parse(const std::unique_ptr<tflite::Operator
 }
 
 ops::PrimitiveC *TfliteNotEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::NotEqual>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -300,8 +348,10 @@ ops::PrimitiveC *TfliteNotEqualParser::Parse(const std::unique_ptr<tflite::Opera
 }
 
 ops::PrimitiveC *TfliteGreaterParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Greater>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -309,8 +359,10 @@ ops::PrimitiveC *TfliteGreaterParser::Parse(const std::unique_ptr<tflite::Operat
 }
 
 ops::PrimitiveC *TfliteGreaterEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::GreaterEqual>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -318,8 +370,10 @@ ops::PrimitiveC *TfliteGreaterEqualParser::Parse(const std::unique_ptr<tflite::O
 }
 
 ops::PrimitiveC *TfliteLessParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Less>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -327,8 +381,10 @@ ops::PrimitiveC *TfliteLessParser::Parse(const std::unique_ptr<tflite::OperatorT
 }
 
 ops::PrimitiveC *TfliteLessEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                              const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::LessEqual>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);

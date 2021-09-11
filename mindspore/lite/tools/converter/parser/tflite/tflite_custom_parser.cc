@@ -35,8 +35,10 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteCustomParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   const auto &custom_attr = tflite_op->custom_options;
   const auto &opnode = tflite_model->operator_codes.at(tflite_op->opcode_index);
@@ -58,7 +60,7 @@ ops::PrimitiveC *TfliteCustomParser::Parse(const std::unique_ptr<tflite::Operato
   } else if (custom_type == "Mfcc") {
     return Mfcc(custom_attr);
   } else if (custom_type == "FlexRFFT") {
-    return Rfft(custom_attr, tflite_op, tflite_model);
+    return Rfft(custom_attr, tflite_op, tflite_subgraph, tflite_model);
   } else if (custom_type == "FlexReal") {
     return FftReal();
   } else if (custom_type == "FlexImag") {
@@ -154,19 +156,14 @@ ops::PrimitiveC *TfliteCustomParser::ExtractFeatures() {
 
 ops::PrimitiveC *TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_attr,
                                           const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Rfft>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph failed";
-    return nullptr;
-  }
   std::vector<int64_t> fft_length;
   if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, fft_length)) {
     MS_LOG(ERROR) << "rfft -> fftLength get failed";
