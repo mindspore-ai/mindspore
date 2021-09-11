@@ -55,7 +55,7 @@ SentencePieceTokenizerOp::SentencePieceTokenizerOp(const std::string &model_path
 Status SentencePieceTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   if (!model_status_.IsOk()) {
-    return model_status_;
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, model_status_.GetErrDescription());
   }
 
   if (input->Rank() != 0 || input->type() != DataType::DE_STRING) {
