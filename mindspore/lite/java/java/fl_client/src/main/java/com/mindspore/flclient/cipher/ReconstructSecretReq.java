@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2019-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,33 @@
 
 package com.mindspore.flclient.cipher;
 
+import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
+
 import com.google.flatbuffers.FlatBufferBuilder;
+
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.FLClientStatus;
 import com.mindspore.flclient.FLCommunication;
 import com.mindspore.flclient.FLParameter;
 import com.mindspore.flclient.LocalFLParameter;
 import com.mindspore.flclient.cipher.struct.DecryptShareSecrets;
-import mindspore.schema.ClientShare;
-import mindspore.schema.ResponseCode;
 
+import mindspore.schema.ClientShare;
+import mindspore.schema.ReconstructSecret;
+import mindspore.schema.ResponseCode;
+import mindspore.schema.SendReconstructSecret;
+
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
-
+/**
+ * reconstruct secret request
+ *
+ * @since 2021-8-27
+ */
 public class ReconstructSecretReq {
     private static final Logger LOGGER = Logger.getLogger(ReconstructSecretReq.class.toString());
     private FLCommunication flCommunication;
@@ -41,36 +51,44 @@ public class ReconstructSecretReq {
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
     private int retCode;
 
-    public String getNextRequestTime() {
-        return nextRequestTime;
-    }
-
-    public void setNextRequestTime(String nextRequestTime) {
-        this.nextRequestTime = nextRequestTime;
-    }
-
-    public int getRetCode() {
-        return retCode;
-    }
-
+    /**
+     * reconstruct secret request
+     */
     public ReconstructSecretReq() {
         flCommunication = FLCommunication.getInstance();
     }
 
-    public FLClientStatus sendReconstructSecret(List<DecryptShareSecrets> decryptShareSecretsList, List<String> u3ClientList, int iteration) {
-        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+    /**
+     * send secret shards to server
+     *
+     * @param decryptShareSecretsList secret shards list
+     * @param u3ClientList            u3 client list
+     * @param iteration               iter number
+     * @return request result
+     */
+    public FLClientStatus sendReconstructSecret(List<DecryptShareSecrets> decryptShareSecretsList,
+                                                List<String> u3ClientList, int iteration) {
+        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(), flParameter.getDomainName());
         FlatBufferBuilder builder = new FlatBufferBuilder();
         int desFlId = builder.createString(localFLParameter.getFlID());
-        String dateTime = LocalDateTime.now().toString();
+        Date date = new Date();
+        long timestamp = date.getTime();
+        String dateTime = String.valueOf(timestamp);
         int time = builder.createString(dateTime);
         int shareSecretsSize = decryptShareSecretsList.size();
         if (shareSecretsSize <= 0) {
-            LOGGER.info(Common.addTag("[PairWiseMask] request failed: the decryptShareSecretsList is null, please waite."));
+            LOGGER.info(Common.addTag("[PairWiseMask] request failed: the decryptShareSecretsList is null, please " +
+                    "waite."));
             return FLClientStatus.FAILED;
         } else {
             int[] decryptShareList = new int[shareSecretsSize];
             for (int i = 0; i < shareSecretsSize; i++) {
                 DecryptShareSecrets decryptShareSecrets = decryptShareSecretsList.get(i);
+                if (decryptShareSecrets.getFlID() == null) {
+                    LOGGER.severe(Common.addTag("[PairWiseMask] get remote flID failed!"));
+                    return FLClientStatus.FAILED;
+                }
+
                 String srcFlId = decryptShareSecrets.getFlID();
                 byte[] share;
                 int index;
@@ -86,31 +104,33 @@ public class ReconstructSecretReq {
                 int clientShare = ClientShare.createClientShare(builder, fbsSrcFlId, fbsShare, index);
                 decryptShareList[i] = clientShare;
             }
-            int reconstructShareSecrets = mindspore.schema.SendReconstructSecret.createReconstructSecretSharesVector(builder, decryptShareList);
-            int reconstructSecretRoot = mindspore.schema.SendReconstructSecret.createSendReconstructSecret(builder, desFlId, reconstructShareSecrets, iteration, time);
+            int reconstructShareSecrets = SendReconstructSecret.createReconstructSecretSharesVector(builder,
+                    decryptShareList);
+            int reconstructSecretRoot = SendReconstructSecret.createSendReconstructSecret(builder, desFlId,
+                    reconstructShareSecrets, iteration, time);
             builder.finish(reconstructSecretRoot);
             byte[] msg = builder.sizedByteArray();
             try {
                 byte[] responseData = flCommunication.syncRequest(url + "/reconstructSecrets", msg);
-                if (Common.isSafeMod(responseData, localFLParameter.getSafeMod())) {
-                    LOGGER.info(Common.addTag("[sendReconstructSecret] The cluster is in safemode, need wait some time and request again"));
+                if (!Common.isSeverReady(responseData)) {
+                    LOGGER.info(Common.addTag("[sendReconstructSecret] the server is not ready now, need wait some " +
+                            "time and request again"));
                     Common.sleep(SLEEP_TIME);
                     nextRequestTime = "";
                     return FLClientStatus.RESTART;
                 }
                 ByteBuffer buffer = ByteBuffer.wrap(responseData);
-                mindspore.schema.ReconstructSecret reconstructSecretRsp = mindspore.schema.ReconstructSecret.getRootAsReconstructSecret(buffer);
-                FLClientStatus status = judgeSendReconstructSecrets(reconstructSecretRsp);
-                return status;
-            } catch (Exception e) {
+                ReconstructSecret reconstructSecretRsp = ReconstructSecret.getRootAsReconstructSecret(buffer);
+                return judgeSendReconstructSecrets(reconstructSecretRsp);
+            } catch (IOException ex) {
                 LOGGER.severe(Common.addTag("[PairWiseMask] un solved error code in reconstruct"));
-                e.printStackTrace();
+                ex.printStackTrace();
                 return FLClientStatus.FAILED;
             }
         }
     }
 
-    public FLClientStatus judgeSendReconstructSecrets(mindspore.schema.ReconstructSecret bufData) {
+    private FLClientStatus judgeSendReconstructSecrets(ReconstructSecret bufData) {
         retCode = bufData.retcode();
         LOGGER.info(Common.addTag("[PairWiseMask] **************the response of SendReconstructSecrets**************"));
         LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
@@ -122,7 +142,8 @@ public class ReconstructSecretReq {
                 LOGGER.info(Common.addTag("[PairWiseMask] ReconstructSecrets success"));
                 return FLClientStatus.SUCCESS;
             case (ResponseCode.OutOfTime):
-                LOGGER.info(Common.addTag("[PairWiseMask] SendReconstructSecrets out of time: need wait and request startFLJob again"));
+                LOGGER.info(Common.addTag("[PairWiseMask] SendReconstructSecrets out of time: need wait and request " +
+                        "startFLJob again"));
                 setNextRequestTime(bufData.nextReqTime());
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
@@ -130,8 +151,36 @@ public class ReconstructSecretReq {
                 LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in SendReconstructSecrets"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReconstructSecret is invalid: " + retCode));
+                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReconstructSecret is " +
+                        "invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
+    }
+
+    /**
+     * get next request time
+     *
+     * @return next request time
+     */
+    public String getNextRequestTime() {
+        return nextRequestTime;
+    }
+
+    /**
+     * set next request time
+     *
+     * @param nextRequestTime next request time
+     */
+    public void setNextRequestTime(String nextRequestTime) {
+        this.nextRequestTime = nextRequestTime;
+    }
+
+    /**
+     * get retCode
+     *
+     * @return retCode
+     */
+    public int getRetCode() {
+        return retCode;
     }
 }

@@ -157,14 +157,31 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
   PBMetadata device_metas = DistributedMetadataStore::GetInstance().GetMetadata(kCtxDeviceMetas);
   FLIdToDeviceMeta fl_id_to_meta = device_metas.device_metas();
   std::string update_model_fl_id = update_model_req->fl_id()->str();
-  MS_LOG(INFO) << "Update model for fl id " << update_model_fl_id;
-  if (fl_id_to_meta.fl_id_to_meta().count(update_model_fl_id) == 0) {
-    std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
-    BuildUpdateModelRsp(
-      fbb, schema::ResponseCode_OutOfTime, reason,
-      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
-    return ResultCode::kSuccessAndReturn;
+  MS_LOG(INFO) << "UpdateModel for fl id " << update_model_fl_id;
+  if (ps::PSContext::instance()->encrypt_type() != ps::kPWEncryptType) {
+    if (fl_id_to_meta.fl_id_to_meta().count(update_model_fl_id) == 0) {
+      std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
+      BuildUpdateModelRsp(
+        fbb, schema::ResponseCode_OutOfTime, reason,
+        std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+      MS_LOG(ERROR) << reason;
+      return ResultCode::kSuccessAndReturn;
+    }
+  } else {
+    std::vector<std::string> get_secrets_clients;
+#ifdef ENABLE_ARMOUR
+    mindspore::armour::CipherMetaStorage cipher_meta_storage;
+    cipher_meta_storage.GetClientListFromServer(fl::server::kCtxGetSecretsClientList, &get_secrets_clients);
+#endif
+    if (find(get_secrets_clients.begin(), get_secrets_clients.end(), update_model_fl_id) ==
+        get_secrets_clients.end()) {  // the client not in get_secrets_clients
+      std::string reason = "fl_id: " + update_model_fl_id + " is not in get_secrets_clients. Please retry later.";
+      BuildUpdateModelRsp(
+        fbb, schema::ResponseCode_OutOfTime, reason,
+        std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+      MS_LOG(ERROR) << reason;
+      return ResultCode::kSuccessAndReturn;
+    }
   }
 
   size_t data_size = fl_id_to_meta.fl_id_to_meta().at(update_model_fl_id).data_size();

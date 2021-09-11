@@ -19,27 +19,15 @@
 
 #include <random>
 #include <vector>
-#ifndef _WIN32
-#include <openssl/rand.h>
-#endif
 #include "fl/armour/secure_protocol/encrypt.h"
 
 namespace mindspore {
 namespace armour {
 
-#define RANDOM_LEN 8
-
-class Random {
+class Masking {
  public:
-  explicit Random(size_t init_seed);
-  ~Random();
-  // use openssl RAND_priv_bytes
-  static int GetRandomBytes(unsigned char *secret, int num_bytes);
-
-  static int RandomAESCTR(std::vector<float> *noise, int noise_len, const unsigned char *seed, int seed_len);
-
- private:
-  std::default_random_engine generator;
+  static int GetMasking(std::vector<float> *noise, int noise_len, const uint8_t *secret, int secret_len,
+                        const uint8_t *ivec, int ivec_size);
 };
 }  // namespace armour
 }  // namespace mindspore

@@ -213,53 +213,24 @@ void Server::InitIteration() {
 #ifdef ENABLE_ARMOUR
   std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
   if (encrypt_type == ps::kPWEncryptType) {
-    cipher_initial_client_cnt_ = rounds_config_[0].threshold_count;
-    cipher_exchange_secrets_cnt_ = cipher_initial_client_cnt_ * 1.0;
-    cipher_share_secrets_cnt_ = cipher_initial_client_cnt_ * cipher_config_.share_secrets_ratio;
-    cipher_get_clientlist_cnt_ = rounds_config_[1].threshold_count;
-    cipher_reconstruct_secrets_up_cnt_ = rounds_config_[1].threshold_count;
-    cipher_reconstruct_secrets_down_cnt_ = cipher_config_.reconstruct_secrets_threshold;
+    cipher_exchange_keys_cnt_ = cipher_config_.exchange_keys_threshold;
+    cipher_get_keys_cnt_ = cipher_config_.get_keys_threshold;
+    cipher_share_secrets_cnt_ = cipher_config_.share_secrets_threshold;
+    cipher_get_secrets_cnt_ = cipher_config_.get_secrets_threshold;
+    cipher_get_clientlist_cnt_ = cipher_config_.client_list_threshold;
+    cipher_reconstruct_secrets_up_cnt_ = cipher_config_.reconstruct_secrets_threshold;
+    cipher_reconstruct_secrets_down_cnt_ = cipher_config_.reconstruct_secrets_threshold - 1;
     cipher_time_window_ = cipher_config_.cipher_time_window;
 
     MS_LOG(INFO) << "Initializing cipher:";
-    MS_LOG(INFO) << " cipher_initial_client_cnt_: " << cipher_initial_client_cnt_
-                 << " cipher_exchange_secrets_cnt_: " << cipher_exchange_secrets_cnt_
+    MS_LOG(INFO) << " cipher_exchange_keys_cnt_: " << cipher_exchange_keys_cnt_
+                 << " cipher_get_keys_cnt_: " << cipher_get_keys_cnt_
                  << " cipher_share_secrets_cnt_: " << cipher_share_secrets_cnt_;
-    MS_LOG(INFO) << " cipher_get_clientlist_cnt_: " << cipher_get_clientlist_cnt_
+    MS_LOG(INFO) << " cipher_get_secrets_cnt_: " << cipher_get_secrets_cnt_
+                 << " cipher_get_clientlist_cnt_: " << cipher_get_clientlist_cnt_
                  << " cipher_reconstruct_secrets_up_cnt_: " << cipher_reconstruct_secrets_up_cnt_
-                 << " cipher_time_window_: " << cipher_time_window_
-                 << " cipher_reconstruct_secrets_down_cnt_: " << cipher_reconstruct_secrets_down_cnt_;
-
-    std::shared_ptr<Round> exchange_keys_round =
-      std::make_shared<Round>("exchangeKeys", true, cipher_time_window_, true, cipher_exchange_secrets_cnt_);
-    MS_EXCEPTION_IF_NULL(exchange_keys_round);
-    iteration_->AddRound(exchange_keys_round);
-
-    std::shared_ptr<Round> get_keys_round =
-      std::make_shared<Round>("getKeys", true, cipher_time_window_, true, cipher_exchange_secrets_cnt_);
-    MS_EXCEPTION_IF_NULL(get_keys_round);
-    iteration_->AddRound(get_keys_round);
-
-    std::shared_ptr<Round> share_secrets_round =
-      std::make_shared<Round>("shareSecrets", true, cipher_time_window_, true, cipher_share_secrets_cnt_);
-    MS_EXCEPTION_IF_NULL(share_secrets_round);
-    iteration_->AddRound(share_secrets_round);
-
-    std::shared_ptr<Round> get_secrets_round =
-      std::make_shared<Round>("getSecrets", true, cipher_time_window_, true, cipher_share_secrets_cnt_);
-    MS_EXCEPTION_IF_NULL(get_secrets_round);
-    iteration_->AddRound(get_secrets_round);
-
-    std::shared_ptr<Round> get_clientlist_round =
-      std::make_shared<Round>("getClientList", true, cipher_time_window_, true, cipher_get_clientlist_cnt_);
-    MS_EXCEPTION_IF_NULL(get_clientlist_round);
-    iteration_->AddRound(get_clientlist_round);
-
-    std::shared_ptr<Round> reconstruct_secrets_round = std::make_shared<Round>(
-      "reconstructSecrets", true, cipher_time_window_, true, cipher_reconstruct_secrets_up_cnt_);
-    MS_EXCEPTION_IF_NULL(reconstruct_secrets_round);
-    iteration_->AddRound(reconstruct_secrets_round);
-    MS_LOG(INFO) << "Cipher rounds has been added.";
+                 << " cipher_reconstruct_secrets_down_cnt_: " << cipher_reconstruct_secrets_down_cnt_
+                 << " cipher_time_window_: " << cipher_time_window_;
   }
 #endif
 
@@ -314,8 +285,8 @@ void Server::InitCipher() {
   param.dp_eps = dp_eps;
   param.dp_norm_clip = dp_norm_clip;
   param.encrypt_type = encrypt_type;
-  cipher_init_->Init(param, 0, cipher_initial_client_cnt_, cipher_exchange_secrets_cnt_, cipher_share_secrets_cnt_,
-                     cipher_get_clientlist_cnt_, cipher_reconstruct_secrets_down_cnt_,
+  cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
+                     cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_reconstruct_secrets_down_cnt_,
                      cipher_reconstruct_secrets_up_cnt_);
 #endif
 }

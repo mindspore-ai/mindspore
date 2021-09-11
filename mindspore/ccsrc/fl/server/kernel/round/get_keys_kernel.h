@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_FL_SERVER_KERNEL_GET_KEYS_KERNEL_H
 
 #include <vector>
+#include <string>
+#include <memory>
 #include "fl/server/common.h"
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
@@ -41,6 +43,8 @@ class GetKeysKernel : public RoundKernel {
   Executor *executor_;
   size_t iteration_time_window_;
   armour::CipherKeys *cipher_key_;
+  bool CountForGetKeys(const std::shared_ptr<FBBuilder> &fbb, const schema::GetExchangeKeys *get_keys_req,
+                       const int iter_num);
 };
 }  // namespace kernel
 }  // namespace server

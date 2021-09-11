@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2019-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,127 +13,179 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.mindspore.flclient;
 
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
+import static com.mindspore.flclient.LocalFLParameter.LENET;
+
 import com.google.flatbuffers.FlatBufferBuilder;
+
 import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.TrainLenet;
+
 import mindspore.schema.FeatureMap;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.logging.Logger;
 
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
-import static com.mindspore.flclient.LocalFLParameter.LENET;
-
+/**
+ * Defines encryption and decryption methods.
+ *
+ * @since 2021-06-30
+ */
 public class SecureProtocol {
     private static final Logger LOGGER = Logger.getLogger(SecureProtocol.class.toString());
+    private static double deltaError = 1e-6d;
+    private static Map<String, float[]> modelMap;
+
     private FLParameter flParameter = FLParameter.getInstance();
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
     private int iteration;
-    private CipherClient cipher;
+    private CipherClient cipherClient;
     private FLClientStatus status;
     private float[] featureMask = new float[0];
     private double dpEps;
     private double dpDelta;
     private double dpNormClip;
-    private static double deltaError = 1e-6;
-    private static Map<String, float[]> modelMap;
     private ArrayList<String> encryptFeatureName = new ArrayList<String>();
     private int retCode;
 
+    /**
+     * Obtain current status code in client.
+     *
+     * @return current status code in client.
+     */
     public FLClientStatus getStatus() {
         return status;
     }
 
-    public float[] getFeatureMask() {
-        return featureMask;
-    }
-
+    /**
+     * Obtain retCode returned by server.
+     *
+     * @return the retCode returned by server.
+     */
     public int getRetCode() {
         return retCode;
     }
 
-    public SecureProtocol() {
-    }
-
+    /**
+     * Setting parameters for pairwise masking.
+     *
+     * @param iter         current iteration of federated learning task.
+     * @param minSecretNum minimum number of secret fragments required to reconstruct a secret
+     * @param prime        teh big prime number used to split secrets into pieces
+     * @param featureSize  the total feature size in model
+     */
     public void setPWParameter(int iter, int minSecretNum, byte[] prime, int featureSize) {
-        this.iteration = iter;
-        this.cipher = new CipherClient(iteration, minSecretNum, prime, featureSize);
-    }
-
-    public FLClientStatus setDPParameter(int iter, double diffEps,
-                                         double diffDelta, double diffNorm, Map<String, float[]> map) {
-        try {
-            this.iteration = iter;
-            this.dpEps = diffEps;
-            this.dpDelta = diffDelta;
-            this.dpNormClip = diffNorm;
-            this.modelMap = map;
-            status = FLClientStatus.SUCCESS;
-        } catch (Exception e) {
-            LOGGER.severe(Common.addTag("[DPEncrypt] catch Exception in setDPParameter: " + e.getMessage()));
-            status = FLClientStatus.FAILED;
+        if (prime == null || prime.length == 0) {
+            LOGGER.severe(Common.addTag("[PairWiseMask] the input argument <prime> is null, please check!"));
+            throw new IllegalArgumentException();
         }
-        return status;
+        this.iteration = iter;
+        this.cipherClient = new CipherClient(iteration, minSecretNum, prime, featureSize);
     }
 
+    /**
+     * Setting parameters for differential privacy.
+     *
+     * @param iter      current iteration of federated learning task.
+     * @param diffEps   privacy budget eps of DP mechanism.
+     * @param diffDelta privacy budget delta of DP mechanism.
+     * @param diffNorm  normClip factor of DP mechanism.
+     * @param map       model weights.
+     * @return the status code corresponding to the response message.
+     */
+    public FLClientStatus setDPParameter(int iter, double diffEps, double diffDelta, double diffNorm, Map<String,
+            float[]> map) {
+        this.iteration = iter;
+        this.dpEps = diffEps;
+        this.dpDelta = diffDelta;
+        this.dpNormClip = diffNorm;
+        this.modelMap = map;
+        return FLClientStatus.SUCCESS;
+    }
+
+    /**
+     * Obtain the feature names that needed to be encrypted.
+     *
+     * @return the feature names that needed to be encrypted.
+     */
     public ArrayList<String> getEncryptFeatureName() {
         return encryptFeatureName;
     }
 
+    /**
+     * Set the parameter encryptFeatureName.
+     *
+     * @param encryptFeatureName the feature names that needed to be encrypted.
+     */
     public void setEncryptFeatureName(ArrayList<String> encryptFeatureName) {
         this.encryptFeatureName = encryptFeatureName;
     }
 
+    /**
+     * Obtain the returned timestamp for next request from server.
+     *
+     * @return the timestamp for next request.
+     */
     public String getNextRequestTime() {
-        return cipher.getNextRequestTime();
+        return cipherClient.getNextRequestTime();
     }
 
+    /**
+     * Generate pairwise mask and individual mask.
+     *
+     * @return the status code corresponding to the response message.
+     */
     public FLClientStatus pwCreateMask() {
-        LOGGER.info("[PairWiseMask] ==============request flID: " + localFLParameter.getFlID() + "==============");
+        LOGGER.info(String.format("[PairWiseMask] ==============request flID: %s ==============",
+                localFLParameter.getFlID()));
         // round 0
-        status = cipher.exchangeKeys();
-        retCode = cipher.getRetCode();
-        LOGGER.info("[PairWiseMask] ============= RequestExchangeKeys+GetExchangeKeys response: " + status + "============");
+        status = cipherClient.exchangeKeys();
+        retCode = cipherClient.getRetCode();
+        LOGGER.info(String.format("[PairWiseMask] ============= RequestExchangeKeys+GetExchangeKeys response: %s ",
+                "============", status));
         if (status != FLClientStatus.SUCCESS) {
             return status;
         }
         // round 1
-        try {
-            status = cipher.shareSecrets();
-            retCode = cipher.getRetCode();
-            LOGGER.info("[Encrypt] =============RequestShareSecrets+GetShareSecrets response: " + status + "=============");
-        } catch (Exception e) {
-            LOGGER.severe("[PairWiseMask] catch Exception in pwCreateMask");
-            status = FLClientStatus.FAILED;
-        }
+        status = cipherClient.shareSecrets();
+        retCode = cipherClient.getRetCode();
+        LOGGER.info(String.format("[Encrypt] =============RequestShareSecrets+GetShareSecrets response: %s ",
+                "=============", status));
         if (status != FLClientStatus.SUCCESS) {
             return status;
         }
         // round2
-        try {
-            featureMask = cipher.doubleMaskingWeight();
-            retCode = cipher.getRetCode();
-            LOGGER.info("[Encrypt] =============Create double feature mask: SUCCESS=============");
-        } catch (Exception e) {
-            LOGGER.severe("[PairWiseMask] catch Exception in pwCreateMask");
-            status = FLClientStatus.FAILED;
+        featureMask = cipherClient.doubleMaskingWeight();
+        if (featureMask == null || featureMask.length <= 0) {
+            LOGGER.severe(Common.addTag("[Encrypt] the returned featureMask from cipherClient.doubleMaskingWeight" +
+                    " is null, please check!"));
+            return FLClientStatus.FAILED;
         }
+        retCode = cipherClient.getRetCode();
+        LOGGER.info("[Encrypt] =============Create double feature mask: SUCCESS=============");
         return status;
     }
 
+    /**
+     * Add the pairwise mask and individual mask to model weights.
+     *
+     * @param builder       the FlatBufferBuilder object used for serialization model weights.
+     * @param trainDataSize trainDataSize tne size of train data set.
+     * @return the serialized model weights after adding masks.
+     */
     public int[] pwMaskModel(FlatBufferBuilder builder, int trainDataSize) {
         if (featureMask == null || featureMask.length == 0) {
             LOGGER.severe("[Encrypt] feature mask is null, please check");
             return new int[0];
         }
-        LOGGER.info("[Encrypt] feature mask size: " + featureMask.length);
+        LOGGER.info(String.format("[Encrypt] feature mask size: %s", featureMask.length));
         // get feature map
         Map<String, float[]> map = new HashMap<String, float[]>();
         if (flParameter.getFlName().equals(ALBERT)) {
@@ -142,6 +194,9 @@ public class SecureProtocol {
         } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
+        } else {
+            LOGGER.severe(Common.addTag("[Encrypt] the flName is not valid, only support: lenet, albert"));
+            throw new IllegalArgumentException();
         }
         int featureSize = encryptFeatureName.size();
         int[] featuresMap = new int[featureSize];
@@ -149,9 +204,13 @@ public class SecureProtocol {
         for (int i = 0; i < featureSize; i++) {
             String key = encryptFeatureName.get(i);
             float[] data = map.get(key);
-            LOGGER.info("[Encrypt] feature name: " + key + " feature size: " + data.length);
+            LOGGER.info(String.format("[Encrypt] feature name: %s feature size: %s", key, data.length));
             for (int j = 0; j < data.length; j++) {
                 float rawData = data[j];
+                if (maskIndex >= featureMask.length) {
+                    LOGGER.severe("[Encrypt] the maskIndex is out of range for array featureMask, please check");
+                    return new int[0];
+                }
                 float maskData = rawData * trainDataSize + featureMask[maskIndex];
                 maskIndex += 1;
                 data[j] = maskData;
@@ -164,17 +223,23 @@ public class SecureProtocol {
         return featuresMap;
     }
 
+    /**
+     * Reconstruct the secrets used for unmasking model weights.
+     *
+     * @return current status code in client.
+     */
     public FLClientStatus pwUnmasking() {
-        status = cipher.reconstructSecrets();   // round3
-        retCode = cipher.getRetCode();
-        LOGGER.info("[Encrypt] =============GetClientList+SendReconstructSecret: " + status + "=============");
+        status = cipherClient.reconstructSecrets();   // round3
+        retCode = cipherClient.getRetCode();
+        LOGGER.info(String.format("[Encrypt] =============GetClientList+SendReconstructSecret: %s =============",
+                status));
         return status;
     }
 
-    private static float calculateErf(double x) {
-        double result = 0;
+    private static float calculateErf(double erfInput) {
+        double result = 0d;
         int segmentNum = 10000;
-        double deltaX = x / segmentNum;
+        double deltaX = erfInput / segmentNum;
         result += 1;
         for (int i = 1; i < segmentNum; i++) {
             result += 2 * Math.exp(-Math.pow(deltaX * i, 2));
@@ -183,33 +248,36 @@ public class SecureProtocol {
         return (float) (result * deltaX / Math.pow(Math.PI, 0.5));
     }
 
-    private static double calculatePhi(double t) {
-        return 0.5 * (1.0 + calculateErf((t / Math.sqrt(2.0))));
+    private static double calculatePhi(double phiInput) {
+        return 0.5 * (1.0 + calculateErf((phiInput / Math.sqrt(2.0))));
     }
 
-    private static double calculateBPositive(double eps, double s) {
-        return calculatePhi(Math.sqrt(eps * s)) - Math.exp(eps) * calculatePhi(-Math.sqrt(eps * (s + 2.0)));
+    private static double calculateBPositive(double eps, double calInput) {
+        return calculatePhi(Math.sqrt(eps * calInput)) -
+                Math.exp(eps) * calculatePhi(-Math.sqrt(eps * (calInput + 2.0)));
     }
 
-    private static double calculateBNegative(double eps, double s) {
-        return calculatePhi(-Math.sqrt(eps * s)) - Math.exp(eps) * calculatePhi(-Math.sqrt(eps * (s + 2.0)));
+    private static double calculateBNegative(double eps, double calInput) {
+        return calculatePhi(-Math.sqrt(eps * calInput)) -
+                Math.exp(eps) * calculatePhi(-Math.sqrt(eps * (calInput + 2.0)));
     }
 
-    private static double calculateSPositive(double eps, double targetDelta, double sInf, double sSup) {
-        double deltaSup = calculateBPositive(eps, sSup);
+    private static double calculateSPositive(double eps, double targetDelta, double initSInf, double initSSup) {
+        double deltaSup = calculateBPositive(eps, initSSup);
+        double sInf = initSInf;
+        double sSup = initSSup;
         while (deltaSup <= targetDelta) {
             sInf = sSup;
             sSup = 2 * sInf;
             deltaSup = calculateBPositive(eps, sSup);
         }
-
         double sMid = sInf + (sSup - sInf) / 2.0;
         int iterMax = 1000;
         int iters = 0;
         while (true) {
-            double b = calculateBPositive(eps, sMid);
-            if (b <= targetDelta) {
-                if (targetDelta - b <= deltaError) {
+            double bPositive = calculateBPositive(eps, sMid);
+            if (bPositive <= targetDelta) {
+                if (targetDelta - bPositive <= deltaError) {
                     break;
                 } else {
                     sInf = sMid;
@@ -226,8 +294,10 @@ public class SecureProtocol {
         return sMid;
     }
 
-    private static double calculateSNegative(double eps, double targetDelta, double sInf, double sSup) {
-        double deltaSup = calculateBNegative(eps, sSup);
+    private static double calculateSNegative(double eps, double targetDelta, double initSInf, double initSSup) {
+        double deltaSup = calculateBNegative(eps, initSSup);
+        double sInf = initSInf;
+        double sSup = initSSup;
         while (deltaSup > targetDelta) {
             sInf = sSup;
             sSup = 2 * sInf;
@@ -238,9 +308,9 @@ public class SecureProtocol {
         int iterMax = 1000;
         int iters = 0;
         while (true) {
-            double b = calculateBNegative(eps, sMid);
-            if (b <= targetDelta) {
-                if (targetDelta - b <= deltaError) {
+            double bNegative = calculateBNegative(eps, sMid);
+            if (bNegative <= targetDelta) {
+                if (targetDelta - bNegative <= deltaError) {
                     break;
                 } else {
                     sSup = sMid;
@@ -259,17 +329,26 @@ public class SecureProtocol {
 
     private static double calculateSigma(double clipNorm, double eps, double targetDelta) {
         double deltaZero = calculateBPositive(eps, 0);
-        double alpha = 1;
+        double alpha = 1d;
         if (targetDelta > deltaZero) {
-            double s = calculateSPositive(eps, targetDelta, 0, 1);
-            alpha = Math.sqrt(1.0 + s / 2.0) - Math.sqrt(s / 2.0);
+            double sPositive = calculateSPositive(eps, targetDelta, 0, 1);
+            alpha = Math.sqrt(1.0 + sPositive / 2.0) - Math.sqrt(sPositive / 2.0);
         } else if (targetDelta < deltaZero) {
-            double s = calculateSNegative(eps, targetDelta, 0, 1);
-            alpha = Math.sqrt(1.0 + s / 2.0) + Math.sqrt(s / 2.0);
+            double sNegative = calculateSNegative(eps, targetDelta, 0, 1);
+            alpha = Math.sqrt(1.0 + sNegative / 2.0) + Math.sqrt(sNegative / 2.0);
+        } else {
+            LOGGER.info(Common.addTag("[Encrypt] targetDelta = deltaZero"));
         }
         return alpha * clipNorm / Math.sqrt(2.0 * eps);
     }
 
+    /**
+     * Add differential privacy mask to model weights.
+     *
+     * @param builder       the FlatBufferBuilder object used for serialization model weights.
+     * @param trainDataSize tne size of train data set.
+     * @return the serialized model weights after adding masks.
+     */
     public int[] dpMaskModel(FlatBufferBuilder builder, int trainDataSize) {
         // get feature map
         Map<String, float[]> map = new HashMap<String, float[]>();
@@ -279,6 +358,9 @@ public class SecureProtocol {
         } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
+        } else {
+            LOGGER.severe(Common.addTag("[Encrypt] the flName is not valid, only support: lenet, albert"));
+            throw new IllegalArgumentException();
         }
         Map<String, float[]> mapBeforeTrain = modelMap;
         int featureSize = encryptFeatureName.size();
@@ -286,19 +368,18 @@ public class SecureProtocol {
         double gaussianSigma = calculateSigma(dpNormClip, dpEps, dpDelta);
         LOGGER.info(Common.addTag("[Encrypt] =============Noise sigma of DP is: " + gaussianSigma + "============="));
 
-        // prepare gaussian noise
-        SecureRandom random = new SecureRandom();
-        int randomInt = random.nextInt();
-        Random r = new Random(randomInt);
-
         // calculate l2-norm of all layers' update array
-        double updateL2Norm = 0;
+        double updateL2Norm = 0d;
         for (int i = 0; i < featureSize; i++) {
             String key = encryptFeatureName.get(i);
             float[] data = map.get(key);
             float[] dataBeforeTrain = mapBeforeTrain.get(key);
             for (int j = 0; j < data.length; j++) {
                 float rawData = data[j];
+                if (j >= dataBeforeTrain.length) {
+                    LOGGER.severe("[Encrypt] the index j is out of range for array dataBeforeTrain, please check");
+                    return new int[0];
+                }
                 float rawDataBeforeTrain = dataBeforeTrain[j];
                 float updateData = rawData - rawDataBeforeTrain;
                 updateL2Norm += updateData * updateData;
@@ -311,11 +392,26 @@ public class SecureProtocol {
         int[] featuresMap = new int[featureSize];
         for (int i = 0; i < featureSize; i++) {
             String key = encryptFeatureName.get(i);
+            if (!map.containsKey(key)) {
+                LOGGER.severe("[Encrypt] the key: " + key + " is not in map, please check!");
+                return new int[0];
+            }
             float[] data = map.get(key);
             float[] data2 = new float[data.length];
+            if (!mapBeforeTrain.containsKey(key)) {
+                LOGGER.severe("[Encrypt] the key: " + key + " is not in mapBeforeTrain, please check!");
+                return new int[0];
+            }
             float[] dataBeforeTrain = mapBeforeTrain.get(key);
+
+            // prepare gaussian noise
+            SecureRandom secureRandom = Common.getSecureRandom();
             for (int j = 0; j < data.length; j++) {
                 float rawData = data[j];
+                if (j >= dataBeforeTrain.length) {
+                    LOGGER.severe("[Encrypt] the index j is out of range for array dataBeforeTrain, please check");
+                    return new int[0];
+                }
                 float rawDataBeforeTrain = dataBeforeTrain[j];
                 float updateData = rawData - rawDataBeforeTrain;
 
@@ -323,7 +419,7 @@ public class SecureProtocol {
                 updateData *= clipFactor;
 
                 // add noise
-                double gaussianNoise = r.nextGaussian() * gaussianSigma;
+                double gaussianNoise = secureRandom.nextGaussian() * gaussianSigma;
                 updateData += gaussianNoise;
                 data2[j] = rawDataBeforeTrain + updateData;
                 data2[j] = data2[j] * trainDataSize;
@@ -335,5 +431,4 @@ public class SecureProtocol {
         }
         return featuresMap;
     }
-
 }

@@ -21,203 +21,170 @@ namespace mindspore {
 namespace armour {
 bool CipherKeys::GetKeys(const int cur_iterator, const std::string &next_req_time,
                          const schema::GetExchangeKeys *get_exchange_keys_req,
-                         const std::shared_ptr<fl::server::FBBuilder> &get_exchange_keys_resp_builder) {
+                         const std::shared_ptr<fl::server::FBBuilder> &fbb) {
   MS_LOG(INFO) << "CipherMgr::GetKeys START";
-  if (get_exchange_keys_req == nullptr || get_exchange_keys_resp_builder == nullptr) {
-    MS_LOG(ERROR) << "Request is nullptr or Response builder is nullptr.";
-    BuildGetKeys(get_exchange_keys_resp_builder, schema::ResponseCode_SystemError, cur_iterator, next_req_time, false);
+  if (get_exchange_keys_req == nullptr) {
+    MS_LOG(ERROR) << "Request is nullptr";
+    BuildGetKeysRsp(fbb, schema::ResponseCode_SystemError, cur_iterator, next_req_time, false);
     return false;
   }
-
   // get clientlist from memory server.
-  std::vector<std::string> clients;
+  std::map<std::string, std::vector<std::vector<uint8_t>>> client_public_keys;
+  cipher_init_->cipher_meta_storage_.GetClientKeysFromServer(fl::server::kCtxClientsKeys, &client_public_keys);
 
-  cipher_init_->cipher_meta_storage_.GetClientListFromServer(fl::server::kCtxExChangeKeysClientList, &clients);
-
-  size_t cur_clients_num = clients.size();
+  size_t cur_exchange_clients_num = client_public_keys.size();
   std::string fl_id = get_exchange_keys_req->fl_id()->str();
 
-  if (find(clients.begin(), clients.end(), fl_id) == clients.end()) {
-    MS_LOG(INFO) << "The fl_id is not in clients.";
-    BuildGetKeys(get_exchange_keys_resp_builder, schema::ResponseCode_RequestError, cur_iterator, next_req_time, false);
+  if (cur_exchange_clients_num < cipher_init_->exchange_key_threshold) {
+    MS_LOG(INFO) << "The server is not ready yet: cur_exchangekey_clients_num < exchange_key_threshold";
+    MS_LOG(INFO) << "cur_exchangekey_clients_num : " << cur_exchange_clients_num
+                 << ", exchange_key_threshold : " << cipher_init_->exchange_key_threshold;
+    BuildGetKeysRsp(fbb, schema::ResponseCode_SucNotReady, cur_iterator, next_req_time, false);
     return false;
   }
-  if (cur_clients_num < cipher_init_->client_num_need_) {
-    MS_LOG(INFO) << "The server is not ready yet: cur_clients_num < client_num_need";
-    MS_LOG(INFO) << "cur_clients_num : " << cur_clients_num << ", client_num_need : " << cipher_init_->client_num_need_;
-    BuildGetKeys(get_exchange_keys_resp_builder, schema::ResponseCode_SucNotReady, cur_iterator, next_req_time, false);
+
+  if (client_public_keys.find(fl_id) == client_public_keys.end()) {
+    MS_LOG(INFO) << "Get keys: the fl_id: " << fl_id << "is not in exchange keys clients.";
+    BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, cur_iterator, next_req_time, false);
+    return false;
+  }
+
+  bool ret = cipher_init_->cipher_meta_storage_.UpdateClientToServer(fl::server::kCtxGetKeysClientList, fl_id);
+  if (!ret) {
+    MS_LOG(ERROR) << "update get keys clients failed";
+    BuildGetKeysRsp(fbb, schema::ResponseCode_OutOfTime, cur_iterator, next_req_time, false);
     return false;
   }
 
   MS_LOG(INFO) << "GetKeys client list: ";
-  for (size_t i = 0; i < clients.size(); i++) {
-    MS_LOG(INFO) << "fl_id: " << clients[i];
-  }
-
-  bool flag =
-    BuildGetKeys(get_exchange_keys_resp_builder, schema::ResponseCode_SUCCEED, cur_iterator, next_req_time, true);
-  return flag;
-}  // namespace armour
+  BuildGetKeysRsp(fbb, schema::ResponseCode_SUCCEED, cur_iterator, next_req_time, true);
+  return true;
+}
 
 bool CipherKeys::ExchangeKeys(const int cur_iterator, const std::string &next_req_time,
                               const schema::RequestExchangeKeys *exchange_keys_req,
-                              const std::shared_ptr<fl::server::FBBuilder> &exchange_keys_resp_builder) {
+                              const std::shared_ptr<fl::server::FBBuilder> &fbb) {
   MS_LOG(INFO) << "CipherMgr::ExchangeKeys START";
   // step 0: judge if the input param is legal.
-  if (exchange_keys_req == nullptr || exchange_keys_resp_builder == nullptr) {
-    MS_LOG(ERROR) << "Request is nullptr or Response builder is nullptr.";
-    std::string reason = "Request is nullptr or Response builder is nullptr.";
-    BuildExchangeKeysRsp(exchange_keys_resp_builder, schema::ResponseCode_RequestError, reason, next_req_time,
-                         cur_iterator);
+  if (exchange_keys_req == nullptr) {
+    std::string reason = "Request is nullptr";
+    MS_LOG(ERROR) << reason;
+    BuildExchangeKeysRsp(fbb, schema::ResponseCode_RequestError, reason, next_req_time, cur_iterator);
+    return false;
+  }
+  std::string fl_id = exchange_keys_req->fl_id()->str();
+  mindspore::fl::PBMetadata device_metas =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(fl::server::kCtxDeviceMetas);
+  mindspore::fl::FLIdToDeviceMeta fl_id_to_meta = device_metas.device_metas();
+  MS_LOG(INFO) << "exchange key for fl id " << fl_id;
+  if (fl_id_to_meta.fl_id_to_meta().count(fl_id) == 0) {
+    std::string reason = "devices_meta for " + fl_id + " is not set. Please retry later.";
+    BuildExchangeKeysRsp(fbb, schema::ResponseCode_OutOfTime, reason, next_req_time, cur_iterator);
+    MS_LOG(ERROR) << reason;
     return false;
   }
 
   // step 1: get clientlist and client keys from memory server.
-  std::map<std::string, std::vector<std::vector<unsigned char>>> record_public_keys;
+  std::map<std::string, std::vector<std::vector<uint8_t>>> client_public_keys;
   std::vector<std::string> client_list;
   cipher_init_->cipher_meta_storage_.GetClientListFromServer(fl::server::kCtxExChangeKeysClientList, &client_list);
-  cipher_init_->cipher_meta_storage_.GetClientKeysFromServer(fl::server::kCtxClientsKeys, &record_public_keys);
+  cipher_init_->cipher_meta_storage_.GetClientKeysFromServer(fl::server::kCtxClientsKeys, &client_public_keys);
 
   // step2: process new item data. and update new item data to memory server.
   size_t cur_clients_num = client_list.size();
-  size_t cur_clients_has_keys_num = record_public_keys.size();
+  size_t cur_clients_has_keys_num = client_public_keys.size();
   if (cur_clients_num != cur_clients_has_keys_num) {
     std::string reason = "client num and keys num are not equal.";
-    MS_LOG(ERROR) << reason;
-    MS_LOG(ERROR) << "cur_clients_num is " << cur_clients_num << ". cur_clients_has_keys_num is "
-                  << cur_clients_has_keys_num;
-    BuildExchangeKeysRsp(exchange_keys_resp_builder, schema::ResponseCode_OutOfTime, reason, next_req_time,
-                         cur_iterator);
-
-    return false;
+    MS_LOG(WARNING) << reason;
+    MS_LOG(WARNING) << "cur_clients_num is " << cur_clients_num << ". cur_clients_has_keys_num is "
+                    << cur_clients_has_keys_num;
   }
+  MS_LOG(WARNING) << "exchange_key_threshold " << cipher_init_->exchange_key_threshold << ". cur_clients_num "
+                  << cur_clients_num << ". cur_clients_keys_num " << cur_clients_has_keys_num;
 
-  MS_LOG(INFO) << "client_num_need_ " << cipher_init_->client_num_need_ << ". cur_clients_num " << cur_clients_num;
-  std::string fl_id = exchange_keys_req->fl_id()->str();
-  if (cur_clients_num >= cipher_init_->client_num_need_) {  // the client num is enough, return false.
-    MS_LOG(ERROR) << "The server has received enough requests and refuse this request.";
-    BuildExchangeKeysRsp(exchange_keys_resp_builder, schema::ResponseCode_OutOfTime,
-                         "The server has received enough requests and refuse this request.", next_req_time,
-                         cur_iterator);
-    return false;
-  }
-  if (record_public_keys.find(fl_id) != record_public_keys.end()) {  // the client already exists, return false.
-    MS_LOG(INFO) << "The server has received the request, please do not request again.";
-    BuildExchangeKeysRsp(exchange_keys_resp_builder, schema::ResponseCode_SUCCEED,
+  if (client_public_keys.find(fl_id) != client_public_keys.end()) {  // the client already exists, return false.
+    MS_LOG(ERROR) << "The server has received the request, please do not request again.";
+    BuildExchangeKeysRsp(fbb, schema::ResponseCode_SUCCEED,
                          "The server has received the request, please do not request again.", next_req_time,
                          cur_iterator);
     return false;
   }
 
-  // Gets the members of the deserialized data ： exchange_keys_req
-  auto fbs_cpk = exchange_keys_req->c_pk();
-  size_t cpk_len = fbs_cpk->size();
-  auto fbs_spk = exchange_keys_req->s_pk();
-  size_t spk_len = fbs_spk->size();
-
-  // transform fbs (fbs_cpk & fbs_spk) to a vector: public_key
-  std::vector<std::vector<unsigned char>> cur_public_key;
-  std::vector<unsigned char> cpk(cpk_len);
-  std::vector<unsigned char> spk(spk_len);
-  bool ret_create_code_cpk = CreateArray<unsigned char>(&cpk, *fbs_cpk);
-  bool ret_create_code_spk = CreateArray<unsigned char>(&spk, *fbs_spk);
-  if (!(ret_create_code_cpk && ret_create_code_spk)) {
-    MS_LOG(ERROR) << "create cur_public_key failed";
-    BuildExchangeKeysRsp(exchange_keys_resp_builder, schema::ResponseCode_OutOfTime, "update key or client failed",
-                         next_req_time, cur_iterator);
-    return false;
-  }
-  cur_public_key.push_back(cpk);
-  cur_public_key.push_back(spk);
-
   bool retcode_key =
-    cipher_init_->cipher_meta_storage_.UpdateClientKeyToServer(fl::server::kCtxClientsKeys, fl_id, cur_public_key);
+    cipher_init_->cipher_meta_storage_.UpdateClientKeyToServer(fl::server::kCtxClientsKeys, exchange_keys_req);
   bool retcode_client =
     cipher_init_->cipher_meta_storage_.UpdateClientToServer(fl::server::kCtxExChangeKeysClientList, fl_id);
   if (retcode_key && retcode_client) {
     MS_LOG(INFO) << "The client " << fl_id << " CipherMgr::ExchangeKeys Success";
-    BuildExchangeKeysRsp(exchange_keys_resp_builder, schema::ResponseCode_SUCCEED,
-                         "Success, but the server is not ready yet.", next_req_time, cur_iterator);
+    BuildExchangeKeysRsp(fbb, schema::ResponseCode_SUCCEED, "Success, but the server is not ready yet.", next_req_time,
+                         cur_iterator);
     return true;
   } else {
     MS_LOG(ERROR) << "update key or client failed";
-    BuildExchangeKeysRsp(exchange_keys_resp_builder, schema::ResponseCode_OutOfTime, "update key or client failed",
-                         next_req_time, cur_iterator);
+    BuildExchangeKeysRsp(fbb, schema::ResponseCode_OutOfTime, "update key or client failed", next_req_time,
+                         cur_iterator);
     return false;
   }
 }
 
-void CipherKeys::BuildExchangeKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &exchange_keys_resp_builder,
-                                      const schema::ResponseCode retcode, const std::string &reason,
-                                      const std::string &next_req_time, const int iteration) {
-  auto rsp_reason = exchange_keys_resp_builder->CreateString(reason);
-  auto rsp_next_req_time = exchange_keys_resp_builder->CreateString(next_req_time);
-  schema::ResponseExchangeKeysBuilder rsp_builder(*(exchange_keys_resp_builder.get()));
+void CipherKeys::BuildExchangeKeysRsp(std::shared_ptr<fl::server::FBBuilder> fbb, const schema::ResponseCode retcode,
+                                      const std::string &reason, const std::string &next_req_time,
+                                      const int iteration) {
+  auto rsp_reason = fbb->CreateString(reason);
+  auto rsp_next_req_time = fbb->CreateString(next_req_time);
+
+  schema::ResponseExchangeKeysBuilder rsp_builder(*(fbb.get()));
   rsp_builder.add_retcode(retcode);
   rsp_builder.add_reason(rsp_reason);
   rsp_builder.add_next_req_time(rsp_next_req_time);
   rsp_builder.add_iteration(iteration);
   auto rsp_exchange_keys = rsp_builder.Finish();
-  exchange_keys_resp_builder->Finish(rsp_exchange_keys);
+  fbb->Finish(rsp_exchange_keys);
   return;
 }
 
-bool CipherKeys::BuildGetKeys(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
-                              const int iteration, const std::string &next_req_time, bool is_good) {
-  bool flag = true;
-  if (is_good) {
-    // convert client keys to standard keys list.
-    std::vector<flatbuffers::Offset<schema::ClientPublicKeys>> public_keys_list;
-    MS_LOG(INFO) << "Get Keys: ";
-    std::map<std::string, std::vector<std::vector<unsigned char>>> record_public_keys;
-    cipher_init_->cipher_meta_storage_.GetClientKeysFromServer(fl::server::kCtxClientsKeys, &record_public_keys);
-    if (record_public_keys.size() < cipher_init_->client_num_need_) {
-      MS_LOG(INFO) << "NOT READY. keys num: " << record_public_keys.size()
-                   << "clients num: " << cipher_init_->client_num_need_;
-      flag = false;
-      auto fbs_next_req_time = fbb->CreateString(next_req_time);
-      schema::ReturnExchangeKeysBuilder rsp_buider(*(fbb.get()));
-      rsp_buider.add_retcode(retcode);
-      rsp_buider.add_iteration(iteration);
-      rsp_buider.add_next_req_time(fbs_next_req_time);
-      auto rsp_get_keys = rsp_buider.Finish();
-
-      fbb->Finish(rsp_get_keys);
-    } else {
-      for (auto iter = record_public_keys.begin(); iter != record_public_keys.end(); ++iter) {
-        // read (fl_id, c_pk, s_pk) from the map: record_public_keys_
-        std::string fl_id = iter->first;
-        MS_LOG(INFO) << "fl_id : " << fl_id;
-
-        //   To serialize the members to a new Table：ClientPublicKeys
-        auto fbs_fl_id = fbb->CreateString(fl_id);
-        auto fbs_c_pk = fbb->CreateVector(iter->second[0].data(), iter->second[0].size());
-        auto fbs_s_pk = fbb->CreateVector(iter->second[1].data(), iter->second[1].size());
-        auto cur_public_key = schema::CreateClientPublicKeys(*fbb, fbs_fl_id, fbs_c_pk, fbs_s_pk);
-        public_keys_list.push_back(cur_public_key);
-      }
-      auto remote_publickeys = fbb->CreateVector(public_keys_list);
-      auto fbs_next_req_time = fbb->CreateString(next_req_time);
-      schema::ReturnExchangeKeysBuilder rsp_buider(*(fbb.get()));
-      rsp_buider.add_retcode(retcode);
-      rsp_buider.add_iteration(iteration);
-      rsp_buider.add_remote_publickeys(remote_publickeys);
-      rsp_buider.add_next_req_time(fbs_next_req_time);
-      auto rsp_get_keys = rsp_buider.Finish();
-      fbb->Finish(rsp_get_keys);
-      MS_LOG(INFO) << "CipherMgr::GetKeys Success";
-    }
-  } else {
+void CipherKeys::BuildGetKeysRsp(std::shared_ptr<fl::server::FBBuilder> fbb, const schema::ResponseCode retcode,
+                                 const int iteration, const std::string &next_req_time, bool is_good) {
+  if (!is_good) {
     auto fbs_next_req_time = fbb->CreateString(next_req_time);
     schema::ReturnExchangeKeysBuilder rsp_buider(*(fbb.get()));
     rsp_buider.add_retcode(retcode);
     rsp_buider.add_iteration(iteration);
     rsp_buider.add_next_req_time(fbs_next_req_time);
     auto rsp_get_keys = rsp_buider.Finish();
-
     fbb->Finish(rsp_get_keys);
+    return;
   }
-  return flag;
+  const fl::PBMetadata &clients_keys_pb_out =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(fl::server::kCtxClientsKeys);
+  const fl::ClientKeys &clients_keys_pb = clients_keys_pb_out.client_keys();
+  std::vector<flatbuffers::Offset<schema::ClientPublicKeys>> public_keys_list;
+  for (auto iter = clients_keys_pb.client_keys().begin(); iter != clients_keys_pb.client_keys().end(); ++iter) {
+    std::string fl_id = iter->first;
+    fl::KeysPb keys_pb = iter->second;
+    auto fbs_fl_id = fbb->CreateString(fl_id);
+    std::vector<uint8_t> cpk(keys_pb.key(0).begin(), keys_pb.key(0).end());
+    std::vector<uint8_t> spk(keys_pb.key(1).begin(), keys_pb.key(1).end());
+    auto fbs_c_pk = fbb->CreateVector(cpk.data(), cpk.size());
+    auto fbs_s_pk = fbb->CreateVector(spk.data(), spk.size());
+    std::vector<uint8_t> pw_iv(keys_pb.pw_iv().begin(), keys_pb.pw_iv().end());
+    auto fbs_pw_iv = fbb->CreateVector(pw_iv.data(), pw_iv.size());
+    std::vector<uint8_t> pw_salt(keys_pb.pw_salt().begin(), keys_pb.pw_salt().end());
+    auto fbs_pw_salt = fbb->CreateVector(pw_salt.data(), pw_salt.size());
+    auto cur_public_key = schema::CreateClientPublicKeys(*fbb, fbs_fl_id, fbs_c_pk, fbs_s_pk, fbs_pw_iv, fbs_pw_salt);
+    public_keys_list.push_back(cur_public_key);
+  }
+  auto remote_publickeys = fbb->CreateVector(public_keys_list);
+  auto fbs_next_req_time = fbb->CreateString(next_req_time);
+  schema::ReturnExchangeKeysBuilder rsp_buider(*(fbb.get()));
+  rsp_buider.add_retcode(retcode);
+  rsp_buider.add_iteration(iteration);
+  rsp_buider.add_remote_publickeys(remote_publickeys);
+  rsp_buider.add_next_req_time(fbs_next_req_time);
+  auto rsp_get_keys = rsp_buider.Finish();
+  fbb->Finish(rsp_get_keys);
+  MS_LOG(INFO) << "CipherMgr::GetKeys Success";
+  return;
 }
 
 void CipherKeys::ClearKeys() {

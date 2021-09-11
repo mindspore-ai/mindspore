@@ -80,7 +80,7 @@ class Server {
         worker_num_(0),
         fl_server_port_(0),
         cipher_initial_client_cnt_(0),
-        cipher_exchange_secrets_cnt_(0),
+        cipher_exchange_keys_cnt_(0),
         cipher_share_secrets_cnt_(0),
         cipher_get_clientlist_cnt_(0),
         cipher_reconstruct_secrets_up_cnt_(0),
@@ -197,8 +197,10 @@ class Server {
   uint32_t worker_num_;
   uint16_t fl_server_port_;
   size_t cipher_initial_client_cnt_;
-  size_t cipher_exchange_secrets_cnt_;
+  size_t cipher_exchange_keys_cnt_;
+  size_t cipher_get_keys_cnt_;
   size_t cipher_share_secrets_cnt_;
+  size_t cipher_get_secrets_cnt_;
   size_t cipher_get_clientlist_cnt_;
   size_t cipher_reconstruct_secrets_up_cnt_;
   size_t cipher_reconstruct_secrets_down_cnt_;

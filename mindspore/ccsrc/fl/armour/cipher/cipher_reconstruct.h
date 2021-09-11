@@ -28,6 +28,8 @@
 #include "fl/armour/cipher/cipher_init.h"
 #include "fl/armour/cipher/cipher_meta_storage.h"
 
+#define IV_NUM 3
+
 namespace mindspore {
 namespace armour {
 // The process of reconstruct secret mask in the secure aggregation
@@ -44,7 +46,7 @@ class CipherReconStruct {
   // reconstruct secret mask
   bool ReconstructSecrets(const int cur_iterator, const std::string &next_req_time,
                           const schema::SendReconstructSecret *reconstruct_secret_req,
-                          const std::shared_ptr<fl::server::FBBuilder> &reconstruct_secret_resp_builder,
+                          const std::shared_ptr<fl::server::FBBuilder> &fbb,
                           const std::vector<std::string> &client_list);
 
   // build response code of reconstruct secret.
@@ -60,26 +62,28 @@ class CipherReconStruct {
   bool GetSymbol(const std::string &str1, const std::string &str2);
   // get suv noise by computing shares result.
   bool GetSuvNoise(const std::vector<std::string> &clients_share_list,
-                   const std::map<std::string, std::vector<std::vector<unsigned char>>> &record_public_keys,
-                   const string &fl_id, std::vector<float> *noise, uint8_t *secret, int length);
+                   const std::map<std::string, std::vector<std::vector<uint8_t>>> &record_public_keys,
+                   const std::map<std::string, std::vector<std::vector<uint8_t>>> &client_ivs, const string &fl_id,
+                   std::vector<float> *noise, uint8_t *secret, int length);
   // malloc shares.
   bool MallocShares(std::vector<Share *> *shares_tmp, int shares_size);
   // delete shares.
   void DeleteShares(std::vector<Share *> *shares_tmp);
   // convert shares from receiving clients to sending clients.
-  void ConvertSharesToShares(const std::map<std::string, std::vector<clientshare_str>> &src,
+  bool ConvertSharesToShares(const std::map<std::string, std::vector<clientshare_str>> &src,
                              std::map<std::string, std::vector<clientshare_str>> *des);
   // generate noise from shares.
   bool ReconstructSecretsGenNoise(const std::vector<string> &client_list);
   // get noise masks sum.
-  bool GetNoiseMasksSum(std::vector<float> *result, const std::map<std::string, std::vector<float>> &client_keys);
+  bool GetNoiseMasksSum(std::vector<float> *result, const std::map<std::string, std::vector<float>> &client_noise);
 
   // combine noise mask.
-  bool CombineMask(std::vector<Share *> *shares_tmp, std::map<std::string, std::vector<float>> *client_keys,
+  bool CombineMask(std::vector<Share *> *shares_tmp, std::map<std::string, std::vector<float>> *client_noise,
                    const std::vector<std::string> &clients_share_list,
                    const std::map<std::string, std::vector<std::vector<unsigned char>>> &record_public_keys,
                    const std::map<std::string, std::vector<clientshare_str>> &reconstruct_secret_list,
-                   const std::vector<string> &client_list);
+                   const std::vector<string> &client_list,
+                   const std::map<std::string, std::vector<std::vector<unsigned char>>> &client_ivs);
 };
 }  // namespace armour
 }  // namespace mindspore

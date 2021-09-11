@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2019-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.mindspore.flclient;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.logging.Logger;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -21,25 +37,49 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.logging.Logger;
 
+/**
+ * Define SSL socket factory tools for https communication.
+ *
+ * @since 2021-06-30
+ */
 public class SSLSocketFactoryTools {
     private static final Logger LOGGER = Logger.getLogger(SSLSocketFactory.class.toString());
+    private static volatile SSLSocketFactoryTools sslSocketFactoryTools;
+
     private FLParameter flParameter = FLParameter.getInstance();
     private X509Certificate x509Certificate;
     private SSLSocketFactory sslSocketFactory;
     private SSLContext sslContext;
     private MyTrustManager myTrustManager;
-    private static volatile SSLSocketFactoryTools sslSocketFactoryTools;
+    private final HostnameVerifier hostnameVerifier = new HostnameVerifier() {
+        @Override
+        public boolean verify(String hostname, SSLSession session) {
+            if (hostname == null || hostname.isEmpty()) {
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the parameter of <hostname> is null or empty, " +
+                        "please check!"));
+                throw new IllegalArgumentException();
+            }
+            if (session == null) {
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the parameter of <session> is null, please " +
+                        "check!"));
+                throw new IllegalArgumentException();
+            }
+            String domainName = flParameter.getDomainName();
+            if ((domainName == null || domainName.isEmpty() || domainName.split("//").length < 2)) {
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the <domainName> is null or not valid, it should" +
+                        " be like as https://...... , please check!"));
+                throw new IllegalArgumentException();
+            }
+            if (domainName.split("//")[1].split(":").length < 2) {
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the format of <domainName> is not valid, it " +
+                        "should be like as https://127.0.0.1:6666 when setting <useSSL> to true, please check!"));
+                throw new IllegalArgumentException();
+            }
+            String ip = domainName.split("//")[1].split(":")[0];
+            return hostname.equals(ip);
+        }
+    };
 
     private SSLSocketFactoryTools() {
         initSslSocketFactory();
@@ -52,14 +92,19 @@ public class SSLSocketFactoryTools {
             myTrustManager = new MyTrustManager(x509Certificate);
             sslContext.init(null, new TrustManager[]{
                     myTrustManager
-            }, new java.security.SecureRandom());
+            }, Common.getSecureRandom());
             sslSocketFactory = sslContext.getSocketFactory();
-
-        } catch (Exception e) {
-            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools]catch Exception in initSslSocketFactory: " + e.getMessage()));
+        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
+            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools]catch Exception in initSslSocketFactory: " +
+                    ex.getMessage()));
         }
     }
 
+    /**
+     * Get the singleton object of the class SSLSocketFactoryTools.
+     *
+     * @return the singleton object of the class SSLSocketFactoryTools.
+     */
     public static SSLSocketFactoryTools getInstance() {
         SSLSocketFactoryTools localRef = sslSocketFactoryTools;
         if (localRef == null) {
@@ -73,29 +118,37 @@ public class SSLSocketFactoryTools {
         return localRef;
     }
 
-    public X509Certificate readCert(String assetName) {
-        InputStream inputStream = null;
-        try {
-            inputStream = new FileInputStream(assetName);
-        } catch (Exception e) {
-            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch Exception of read inputStream in readCert: " + e.getMessage()));
+    private X509Certificate readCert(String assetName) {
+        if (assetName == null || assetName.isEmpty()) {
+            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the parameter of <assetName> is null or empty, " +
+                    "please check!"));
             return null;
         }
+        InputStream inputStream = null;
         X509Certificate cert = null;
         try {
+            inputStream = new FileInputStream(assetName);
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            cert = (X509Certificate) cf.generateCertificate(inputStream);
-        } catch (Exception e) {
-            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch Exception of creating CertificateFactory in readCert: " + e.getMessage()));
+            Certificate certificate = cf.generateCertificate(inputStream);
+            if (certificate instanceof X509Certificate) {
+                cert = (X509Certificate) certificate;
+            } else {
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] cf.generateCertificate(inputStream) can not " +
+                        "convert to X509Certificate"));
+            }
+        } catch (FileNotFoundException | CertificateException ex) {
+            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch FileNotFoundException or CertificateException " +
+                    "when creating " +
+                    "CertificateFactory in readCert: " + ex.getMessage()));
         } finally {
             try {
                 if (inputStream != null) {
                     inputStream.close();
                 }
-            } catch (Throwable ex) {
+            } catch (IOException ex) {
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch IOException: " + ex.getMessage()));
             }
         }
-
         return cert;
     }
 
@@ -111,7 +164,6 @@ public class SSLSocketFactoryTools {
         return myTrustManager;
     }
 
-
     private static final class MyTrustManager implements X509TrustManager {
         X509Certificate cert;
 
@@ -126,27 +178,25 @@ public class SSLSocketFactoryTools {
         @Override
         public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             for (X509Certificate cert : chain) {
-
                 // Make sure that it hasn't expired.
                 cert.checkValidity();
-
                 // Verify the certificate's public key chain.
                 try {
-                    cert.verify(((X509Certificate) this.cert).getPublicKey());
+                    cert.verify(this.cert.getPublicKey());
                 } catch (NoSuchAlgorithmException e) {
-                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch NoSuchAlgorithmException in checkServerTrusted: " + e.getMessage()));
-                    throw new RuntimeException();
+                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
+                            "NoSuchAlgorithmException in checkServerTrusted: " + e.getMessage()));
                 } catch (InvalidKeyException e) {
-                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch InvalidKeyException in checkServerTrusted: " + e.getMessage()));
-                    throw new RuntimeException();
+                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
+                            "InvalidKeyException in checkServerTrusted: " + e.getMessage()));
                 } catch (NoSuchProviderException e) {
-                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch NoSuchProviderException in checkServerTrusted: " + e.getMessage()));
-                    throw new RuntimeException();
+                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
+                            "NoSuchProviderException in checkServerTrusted: " + e.getMessage()));
                 } catch (SignatureException e) {
-                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch SignatureException in checkServerTrusted: " + e.getMessage()));
-                    throw new RuntimeException();
+                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
+                            "SignatureException in checkServerTrusted: " + e.getMessage()));
                 }
-                LOGGER.info(Common.addTag("checkServerTrusted success!"));
+                LOGGER.info(Common.addTag("**********************checkServerTrusted success!**********************"));
             }
         }
 
@@ -155,14 +205,4 @@ public class SSLSocketFactoryTools {
             return new java.security.cert.X509Certificate[0];
         }
     }
-
-    private final HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-        @Override
-        public boolean verify(String hostname, SSLSession session) {
-            LOGGER.info(Common.addTag("[SSLSocketFactoryTools] server hostname: " + flParameter.getHostName()));
-            LOGGER.info(Common.addTag("[SSLSocketFactoryTools] client request hostname: " + hostname));
-            return hostname.equals(flParameter.getHostName());
-        }
-    };
-
 }

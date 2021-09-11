@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2019-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package com.mindspore.flclient;
 
+import static com.mindspore.flclient.FLParameter.TIME_OUT;
+
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -24,12 +26,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -39,20 +35,27 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
-import static com.mindspore.flclient.FLParameter.TIME_OUT;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
+/**
+ * Define the communication interface.
+ *
+ * @since 2021-06-30
+ */
 public class FLCommunication implements IFLCommunication {
     private static int timeOut;
-    private static boolean ssl = false;
-    private static String env;
-    private static SSLSocketFactory sslSocketFactory;
-    private static X509TrustManager x509TrustManager;
-    private FLParameter flParameter = FLParameter.getInstance();
+    private static boolean ifCertificateVerify = false;
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("applicatiom/json;charset=utf-8");
     private static final Logger LOGGER = Logger.getLogger(FLCommunication.class.toString());
-    private OkHttpClient client;
-
     private static volatile FLCommunication communication;
+
+    private FLParameter flParameter = FLParameter.getInstance();
+    private OkHttpClient client;
 
     private FLCommunication() {
         if (flParameter.getTimeOut() != 0) {
@@ -60,13 +63,12 @@ public class FLCommunication implements IFLCommunication {
         } else {
             timeOut = TIME_OUT;
         }
-        ssl = flParameter.isUseSSL();
+        ifCertificateVerify = flParameter.isUseSSL();
         client = getOkHttpClient();
     }
 
     private static OkHttpClient getOkHttpClient() {
         X509TrustManager trustManager = new X509TrustManager() {
-
             @Override
             public X509Certificate[] getAcceptedIssuers() {
                 return new X509Certificate[]{};
@@ -89,14 +91,15 @@ public class FLCommunication implements IFLCommunication {
             builder.connectTimeout(timeOut, TimeUnit.SECONDS);
             builder.writeTimeout(timeOut, TimeUnit.SECONDS);
             builder.readTimeout(3 * timeOut, TimeUnit.SECONDS);
-            if (ssl) {
-                builder.sslSocketFactory(SSLSocketFactoryTools.getInstance().getmSslSocketFactory(), SSLSocketFactoryTools.getInstance().getmTrustManager());
+            if (ifCertificateVerify) {
+                builder.sslSocketFactory(SSLSocketFactoryTools.getInstance().getmSslSocketFactory(),
+                        SSLSocketFactoryTools.getInstance().getmTrustManager());
                 builder.hostnameVerifier(SSLSocketFactoryTools.getInstance().getHostnameVerifier());
             } else {
                 final SSLContext sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-                final javax.net.ssl.SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-                builder.sslSocketFactory(sslSocketFactory, trustManager);
+                sslContext.init(null, trustAllCerts, Common.getSecureRandom());
+                final SSLSocketFactory sslFactory = sslContext.getSocketFactory();
+                builder.sslSocketFactory(sslFactory, trustManager);
                 builder.hostnameVerifier(new HostnameVerifier() {
                     @Override
                     public boolean verify(String arg0, SSLSession arg1) {
@@ -104,14 +107,18 @@ public class FLCommunication implements IFLCommunication {
                     }
                 });
             }
-
             return builder.build();
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            LOGGER.severe(Common.addTag("[OkHttpClient] catch NoSuchAlgorithmException or KeyManagementException: " + e.getMessage()));
-            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
+            LOGGER.severe(Common.addTag("[OkHttpClient] catch NoSuchAlgorithmException or KeyManagementException: " + ex.getMessage()));
+            throw new IllegalArgumentException(ex);
         }
     }
 
+    /**
+     * Get the singleton object of the class FLCommunication.
+     *
+     * @return the singleton object of the class FLCommunication.
+     */
     public static FLCommunication getInstance() {
         FLCommunication localRef = communication;
         if (localRef == null) {
@@ -138,6 +145,9 @@ public class FLCommunication implements IFLCommunication {
         if (!response.isSuccessful()) {
             throw new IOException("Unexpected code " + response);
         }
+        if (response.body() == null) {
+            throw new IOException("the returned response is null");
+        }
         return response.body().bytes();
     }
 
@@ -159,11 +169,10 @@ public class FLCommunication implements IFLCommunication {
             }
 
             @Override
-            public void onFailure(Call call, IOException e) {
-                asyncCallBack.onFailure(e);
+            public void onFailure(Call call, IOException ioException) {
+                asyncCallBack.onFailure(ioException);
                 call.cancel();
             }
         });
     }
-
 }

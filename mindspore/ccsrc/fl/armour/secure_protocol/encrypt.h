@@ -22,7 +22,9 @@
 #endif
 #include "utils/log_adapter.h"
 
-#define INIT_VEC_SIZE 16
+#define AES_IV_SIZE 16
+#define KEY_LENGTH_32 32
+#define KEY_LENGTH_16 16
 
 namespace mindspore {
 namespace armour {
@@ -35,21 +37,21 @@ class SymmetricEncrypt : Encrypt {};
 
 class AESEncrypt : SymmetricEncrypt {
  public:
-  AESEncrypt(const unsigned char *key, int key_len, unsigned char *ivec, int ivec_len, AES_MODE mode);
+  AESEncrypt(const unsigned char *key, int key_len, const uint8_t *ivec, int ivec_len, AES_MODE mode);
   ~AESEncrypt();
-  int EncryptData(const unsigned char *data, const int len, unsigned char *encrypt_data, int *encrypt_len);
-  int DecryptData(const unsigned char *encrypt_data, const int encrypt_len, unsigned char *data, int *len);
+  int EncryptData(const uint8_t *data, const int len, uint8_t *encrypt_data, int *encrypt_len);
+  int DecryptData(const uint8_t *encrypt_data, const int encrypt_len, uint8_t *data, int *len);
 
  private:
-  const unsigned char *privKey;
+  const uint8_t *privKey;
   int privKeyLen;
-  unsigned char *iVec;
+  const uint8_t *iVec;
   int iVecLen;
   AES_MODE aesMode;
-  int evp_aes_encrypt(const unsigned char *data, const int len, const unsigned char *key, unsigned char *ivec,
-                      unsigned char *encrypt_data, int *encrypt_len);
-  int evp_aes_decrypt(const unsigned char *encrypt_data, const int len, const unsigned char *key, unsigned char *ivec,
-                      unsigned char *decrypt_data, int *decrypt_len);
+  int evp_aes_encrypt(const uint8_t *data, const int len, const uint8_t *key, const uint8_t *ivec,
+                      uint8_t *encrypt_data, int *encrypt_len);
+  int evp_aes_decrypt(const uint8_t *encrypt_data, const int len, const uint8_t *key, const uint8_t *ivec,
+                      uint8_t *decrypt_data, int *decrypt_len);
 };
 
 }  // namespace armour

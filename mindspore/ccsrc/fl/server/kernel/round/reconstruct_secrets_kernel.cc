@@ -52,7 +52,6 @@ void ReconstructSecretsKernel::InitKernel(size_t required_cnt) {
 
 bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
-  std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
   bool response = false;
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   // MS_LOG(INFO) << "ITERATION NUMBER IS : " << LocalMetaStore::GetInstance().curr_iter_num();
@@ -61,71 +60,58 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
                << total_duration;
   clock_t start_time = clock();
 
-  if (inputs.size() != 1) {
+  if (inputs.size() != 1 || outputs.size() != 1) {
     MS_LOG(ERROR) << "ReconstructSecretsKernel needs 1 input, but got " << inputs.size();
-    cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_SystemError,
-                                                   "ReconstructSecretsKernel input num not match.", iter_num,
-                                                   std::to_string(CURRENT_TIME_MILLI.count()));
-  } else if (outputs.size() != 1) {
-    MS_LOG(ERROR) << "ReconstructSecretsKernel  needs 1 output, but got " << outputs.size();
-    cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_SystemError,
-                                                   "ReconstructSecretsKernel output num not match.", iter_num,
-                                                   std::to_string(CURRENT_TIME_MILLI.count()));
-  } else {
-    if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
-      MS_LOG(ERROR) << "Current amount for ReconstructSecretsKernel is enough.";
+    return false;
+  }
+
+  std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
+  void *req_data = inputs[0]->addr;
+
+  if (fbb == nullptr || req_data == nullptr) {
+    std::string reason = "FBBuilder builder or req_data is nullptr.";
+    MS_LOG(ERROR) << reason;
+    return false;
+  }
+
+  // get client list from memory server.
+  std::vector<string> update_model_clients;
+  const PBMetadata update_model_clients_pb_out =
+    DistributedMetadataStore::GetInstance().GetMetadata(kCtxUpdateModelClientList);
+  const UpdateModelClientList &update_model_clients_pb = update_model_clients_pb_out.client_list();
+
+  for (int i = 0; i < update_model_clients_pb.fl_id_size(); ++i) {
+    update_model_clients.push_back(update_model_clients_pb.fl_id(i));
+  }
+
+  const schema::SendReconstructSecret *reconstruct_secret_req =
+    flatbuffers::GetRoot<schema::SendReconstructSecret>(req_data);
+  std::string fl_id = reconstruct_secret_req->fl_id()->str();
+
+  if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
+    MS_LOG(ERROR) << "Current amount for ReconstructSecretsKernel is enough.";
+    if (find(update_model_clients.begin(), update_model_clients.end(), fl_id) != update_model_clients.end()) {
+      // client in get update model client list.
+      cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_SUCCEED,
+                                                     "Current amount for ReconstructSecretsKernel is enough.", iter_num,
+                                                     std::to_string(CURRENT_TIME_MILLI.count()));
+    } else {
       cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_OutOfTime,
                                                      "Current amount for ReconstructSecretsKernel is enough.", iter_num,
                                                      std::to_string(CURRENT_TIME_MILLI.count()));
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-      return true;
     }
-
-    void *req_data = inputs[0]->addr;
-    const schema::SendReconstructSecret *reconstruct_secret_req =
-      flatbuffers::GetRoot<schema::SendReconstructSecret>(req_data);
-
-    // get client list from memory server.
-    std::vector<string> client_list;
-    uint64_t update_model_client_num = 0;
-    if (LocalMetaStore::GetInstance().has_value(kCtxUpdateModelThld)) {
-      update_model_client_num = LocalMetaStore::GetInstance().value<uint64_t>(kCtxUpdateModelThld);
-    } else {
-      MS_LOG(ERROR) << "update_model_client_num is zero.";
-      cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_SystemError,
-                                                     "update_model_client_num is zero.", iter_num,
-                                                     std::to_string(CURRENT_TIME_MILLI.count()));
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-      return true;
-    }
-    const PBMetadata client_list_pb_out =
-      DistributedMetadataStore::GetInstance().GetMetadata(kCtxUpdateModelClientList);
-
-    const UpdateModelClientList &client_list_pb = client_list_pb_out.client_list();
-    int client_list_actual_size = client_list_pb.fl_id_size();
-    if (client_list_actual_size < 0) {
-      client_list_actual_size = 0;
-    }
-    if (static_cast<uint64_t>(client_list_actual_size) < update_model_client_num) {
-      MS_LOG(INFO) << "ReconstructSecretsKernel : client list is not ready " << inputs.size();
-      cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_SucNotReady,
-                                                     "ReconstructSecretsKernel : client list is not ready", iter_num,
-                                                     std::to_string(CURRENT_TIME_MILLI.count()));
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-      return true;
-    }
-    for (int i = 0; i < client_list_pb.fl_id_size(); ++i) {
-      client_list.push_back(client_list_pb.fl_id(i));
-    }
-    response = cipher_reconstruct_.ReconstructSecrets(iter_num, std::to_string(CURRENT_TIME_MILLI.count()),
-                                                      reconstruct_secret_req, fbb, client_list);
-    if (response) {
-      // MS_LOG(INFO) << "start ReconstructSecretsKernel Success. fl_id : " << reconstruct_secret_req->fl_id()->str();
-      DistributedCountService::GetInstance().Count(name_, reconstruct_secret_req->fl_id()->str());
-      // MS_LOG(INFO) << "end ReconstructSecretsKernel Success. fl_id : " << reconstruct_secret_req->fl_id()->str();
-    }
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
   }
 
+  response = cipher_reconstruct_.ReconstructSecrets(iter_num, std::to_string(CURRENT_TIME_MILLI.count()),
+                                                    reconstruct_secret_req, fbb, update_model_clients);
+  if (response) {
+    DistributedCountService::GetInstance().Count(name_, reconstruct_secret_req->fl_id()->str());
+  }
+  if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
+    MS_LOG(INFO) << "Current amount for ReconstructSecretsKernel is enough.";
+  }
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
   clock_t end_time = clock();
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
@@ -142,7 +128,6 @@ void ReconstructSecretsKernel::OnLastCountEvent(const std::shared_ptr<ps::core::
     while (!Executor::GetInstance().IsAllWeightAggregationDone()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-
     MS_LOG(INFO) << "start unmask";
     while (!Executor::GetInstance().Unmask()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));

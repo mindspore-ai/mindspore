@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_FL_SERVER_KERNEL_GET_SECRETS_KERNEL_H
 
 #include <vector>
+#include <memory>
 #include "fl/server/common.h"
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
@@ -41,6 +42,8 @@ class GetSecretsKernel : public RoundKernel {
   Executor *executor_;
   size_t iteration_time_window_;
   armour::CipherShares *cipher_share_;
+  bool CountForGetSecrets(const std::shared_ptr<FBBuilder> &fbb, const schema::GetShareSecrets *get_secrets_req,
+                          const int iter_num);
 };
 }  // namespace kernel
 }  // namespace server

@@ -24,7 +24,8 @@
 #endif
 #include "utils/log_adapter.h"
 
-#define KEK_KEY_LEN 32
+#define KEY_LEN 32
+#define SALT_LEN 32
 #define ITERATION 10000
 
 namespace mindspore {

@@ -62,6 +62,11 @@ struct RoundConfig {
 struct CipherConfig {
   float share_secrets_ratio = 1.0;
   uint64_t cipher_time_window = 300000;
+  size_t exchange_keys_threshold = 0;
+  size_t get_keys_threshold = 0;
+  size_t share_secrets_threshold = 0;
+  size_t get_secrets_threshold = 0;
+  size_t client_list_threshold = 0;
   size_t reconstruct_secrets_threshold = 0;
 };
 
@@ -207,8 +212,11 @@ constexpr auto kCtxClientNoises = "clients_noises";
 constexpr auto kCtxClientsEncryptedShares = "clients_encrypted_shares";
 constexpr auto kCtxClientsReconstructShares = "clients_restruct_shares";
 constexpr auto kCtxShareSecretsClientList = "share_secrets_client_list";
+constexpr auto kCtxGetSecretsClientList = "get_secrets_client_list";
 constexpr auto kCtxReconstructClientList = "reconstruct_client_list";
 constexpr auto kCtxExChangeKeysClientList = "exchange_keys_client_list";
+constexpr auto kCtxGetUpdateModelClientList = "get_update_model_client_list";
+constexpr auto kCtxGetKeysClientList = "get_keys_client_list";
 constexpr auto kCtxFedAvgTotalDataSize = "fed_avg_total_data_size";
 constexpr auto kCtxCipherPrimer = "cipher_primer";
 

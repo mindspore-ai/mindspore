@@ -14,44 +14,39 @@
  * limitations under the License.
  */
 
-#include "fl/armour/secure_protocol/random.h"
+#include "fl/armour/secure_protocol/masking.h"
 
 namespace mindspore {
 namespace armour {
-Random::Random(size_t init_seed) { generator.seed(init_seed); }
-
-Random::~Random() {}
-
 #ifdef _WIN32
-int Random::GetRandomBytes(unsigned char *secret, int num_bytes) {
-  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
-  return -1;
-}
-
-int Random::RandomAESCTR(std::vector<float> *noise, int noise_len, const unsigned char *seed, int seed_len) {
+int Masking::GetMasking(std::vector<float> *noise, int noise_len, const uint8_t *seed, int seed_len,
+                        const uint8_t *ivec, int ivec_size) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return -1;
 }
 
 #else
-int Random::GetRandomBytes(unsigned char *secret, int num_bytes) {
-  int retval = RAND_priv_bytes(secret, num_bytes);
-  return retval;
-}
-
-int Random::RandomAESCTR(std::vector<float> *noise, int noise_len, const unsigned char *seed, int seed_len) {
-  if (seed_len != 16 && seed_len != 32) {
-    MS_LOG(ERROR) << "seed length must be 16 or 32!";
+int Masking::GetMasking(std::vector<float> *noise, int noise_len, const uint8_t *secret, int secret_len,
+                        const uint8_t *ivec, int ivec_size) {
+  if ((secret_len != KEY_LENGTH_16 && secret_len != KEY_LENGTH_32) || secret == NULL) {
+    MS_LOG(ERROR) << "secret is invalid!";
+    return -1;
+  }
+  if (noise == NULL || noise_len <= 0) {
+    MS_LOG(ERROR) << "noise is invalid!";
+    return -1;
+  }
+  if (ivec == NULL || ivec_size != AES_IV_SIZE) {
+    MS_LOG(ERROR) << "ivec is invalid!";
     return -1;
   }
   int size = noise_len * sizeof(int);
-  std::vector<unsigned char> data(size, 0);
-  std::vector<unsigned char> encrypt_data(size, 0);
-  std::vector<unsigned char> ivec(INIT_VEC_SIZE, 0);
+  std::vector<uint8_t> data(size, 0);
+  std::vector<uint8_t> encrypt_data(size, 0);
   int encrypt_len = 0;
-  AESEncrypt encrypt(seed, seed_len, ivec.data(), INIT_VEC_SIZE, AES_CTR);
+  AESEncrypt encrypt(secret, secret_len, ivec, AES_IV_SIZE, AES_CTR);
   if (encrypt.EncryptData(data.data(), size, encrypt_data.data(), &encrypt_len) != 0) {
-    MS_LOG(ERROR) << "call encryptData fail!";
+    MS_LOG(ERROR) << "call AES-CTR failed!";
     return -1;
   }
 

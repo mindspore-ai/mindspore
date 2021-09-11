@@ -36,58 +36,75 @@ void ShareSecretsKernel::InitKernel(size_t) {
   cipher_share_ = &armour::CipherShares::GetInstance();
 }
 
+bool ShareSecretsKernel::CountForShareSecrets(const std::shared_ptr<FBBuilder> &fbb,
+                                              const schema::RequestShareSecrets *share_secrets_req,
+                                              const int iter_num) {
+  MS_ERROR_IF_NULL_W_RET_VAL(share_secrets_req, false);
+  if (!DistributedCountService::GetInstance().Count(name_, share_secrets_req->fl_id()->str())) {
+    std::string reason = "Counting for share secret kernel request failed. Please retry later.";
+    cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime, reason,
+                                        std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+    MS_LOG(ERROR) << reason;
+    return false;
+  }
+  return true;
+}
+
 bool ShareSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                 const std::vector<AddressPtr> &outputs) {
   bool response = false;
-  std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   size_t total_duration = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   MS_LOG(INFO) << "ITERATION NUMBER IS : " << iter_num << ", Total ShareSecretsKernel allowed Duration Is "
                << total_duration;
   clock_t start_time = clock();
 
-  if (inputs.size() != 1) {
-    MS_LOG(ERROR) << "ShareSecretsKernel needs 1 input,but got " << inputs.size();
-    cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_SystemError, "ShareSecretsKernel input num not match",
-                                        std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
-  } else if (outputs.size() != 1) {
-    MS_LOG(ERROR) << "ShareSecretsKernel needs 1 output,but got " << outputs.size();
-    cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_SystemError,
-                                        "ShareSecretsKernel output num not match",
-                                        std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
-  } else {
-    if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
-      MS_LOG(ERROR) << "Current amount for ShareSecretsKernel is enough.";
-      cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime,
-                                          "Current amount for ShareSecretsKernel is enough.",
-                                          std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
-    } else {
-      void *req_data = inputs[0]->addr;
-      const schema::RequestShareSecrets *share_secrets_req =
-        flatbuffers::GetRoot<schema::RequestShareSecrets>(req_data);
-      size_t iter_client = (size_t)share_secrets_req->iteration();
-      if (iter_num != iter_client) {
-        MS_LOG(ERROR) << "ShareSecretsKernel iteration invalid. server now iteration is " << iter_num
-                      << ". client request iteration is " << iter_client;
-        cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime, "ShareSecretsKernel iteration invalid",
-                                            std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
-      } else {
-        response =
-          cipher_share_->ShareSecrets(iter_num, share_secrets_req, fbb, std::to_string(CURRENT_TIME_MILLI.count()));
-        if (response) {
-          DistributedCountService::GetInstance().Count(name_, share_secrets_req->fl_id()->str());
-        }
-      }
-    }
+  if (inputs.size() != 1 || outputs.size() != 1) {
+    std::string reason = "inputs or outputs size is invalid.";
+    MS_LOG(ERROR) << reason;
+    return false;
   }
 
+  std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
+  void *req_data = inputs[0]->addr;
+  if (fbb == nullptr || req_data == nullptr) {
+    std::string reason = "FBBuilder builder or req_data is nullptr.";
+    MS_LOG(ERROR) << reason;
+    return false;
+  }
+
+  if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
+    MS_LOG(ERROR) << "Current amount for ShareSecretsKernel is enough.";
+    cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime,
+                                        "Current amount for ShareSecretsKernel is enough.",
+                                        std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+  const schema::RequestShareSecrets *share_secrets_req = flatbuffers::GetRoot<schema::RequestShareSecrets>(req_data);
+  size_t iter_client = (size_t)share_secrets_req->iteration();
+  if (iter_num != iter_client) {
+    MS_LOG(ERROR) << "ShareSecretsKernel iteration invalid. server now iteration is " << iter_num
+                  << ". client request iteration is " << iter_client;
+    cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime, "ShareSecretsKernel iteration invalid",
+                                        std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+  response = cipher_share_->ShareSecrets(iter_num, share_secrets_req, fbb, std::to_string(CURRENT_TIME_MILLI.count()));
+  if (!response) {
+    MS_LOG(WARNING) << "update secret shares is failed.";
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+  if (!CountForShareSecrets(fbb, share_secrets_req, iter_num)) {
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
   clock_t end_time = clock();
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
   MS_LOG(INFO) << "share_secrets_kernel success time is : " << duration;
-  if (!response) {
-    MS_LOG(INFO) << "share_secrets_kernel response is false.";
-  }
   return true;
 }
 
