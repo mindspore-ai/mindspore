@@ -831,11 +831,7 @@ void TopCellInfo::Clear() {
   forward_already_run_ = false;
   input_args_id_.clear();
   all_op_info_.clear();
-
-  if (resource_ != nullptr) {
-    resource_->Clean();
-    resource_ = nullptr;
-  }
+  resource_ = nullptr;
   df_builder_ = nullptr;
   k_pynative_cell_ptr_ = nullptr;
   graph_info_map_.clear();
