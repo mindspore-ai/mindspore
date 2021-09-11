@@ -90,7 +90,7 @@ def test_resizebilinear_error():
     net = Net()
     with pytest.raises(ValueError) as ex:
         net()
-    assert "size and scale both none" in str(ex.value)
+    assert "'size' and 'scale' both none" in str(ex.value)
 
 
 def test_resizebilinear_error_1():
@@ -106,4 +106,4 @@ def test_resizebilinear_error_1():
     net = Net()
     with pytest.raises(ValueError) as ex:
         net()
-    assert "size and scale both not none" in str(ex.value)
+    assert "'size' and 'scale' both not none" in str(ex.value)

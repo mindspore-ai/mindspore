@@ -104,7 +104,7 @@ class CropAndResize(PrimitiveWithInfer):
         box_index_shape = list(box_index['shape'])
         # get value
         if crop_size['value'] is None:
-            raise ValueError(f"For {self.name}, crop_size must be constant.")
+            raise ValueError(f"For '{self.name}', the 'crop_size' cannot be None, but got {crop_size['value']}.")
         crop_size_value = crop_size['value']
         # get dtype
         x_dtype = x['dtype']

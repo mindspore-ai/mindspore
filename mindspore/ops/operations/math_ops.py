@@ -394,7 +394,7 @@ class _Reduce(PrimitiveWithInfer):
         args = {'input_x': input_x['dtype']}
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtype, self.name)
         if not isinstance(axis, mstype.tensor_type) and axis_v is None:
-            raise ValueError(f"For {self.name}, axis must be const.")
+            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
         out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
         if -1 in input_shp:
             if axis_v is None:
@@ -404,7 +404,8 @@ class _Reduce(PrimitiveWithInfer):
                     max_v = max(input_max_shp)
                 axis_shape_list = axis['shape']
                 if len(axis_shape_list) != 1:
-                    raise ValueError("axis_shape must be 1-D, but got ", len(axis_shape_list))
+                    raise ValueError(f"For '{self.name}', the shape of 'axis' must be 1-D, but "
+                                     f"got {len(axis_shape_list)}.")
                 axis_shape = axis_shape_list[0]
                 if len(axis_shape) == 1 and axis_shape[0] == -1 and not self.keep_dims:
                     out_shape = np.array([-2]).tolist()
@@ -1052,7 +1053,7 @@ class CumProd(PrimitiveWithInfer):
 
     def infer_value(self, x, axis):
         if axis is None:
-            raise ValueError(f"For {self.name}, axis must be const.")
+            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
 
 
 class MatMul(PrimitiveWithCheck):
@@ -1107,8 +1108,8 @@ class MatMul(PrimitiveWithCheck):
     def check_shape_size(self, x1, x2):
         """Check the shape size of inputs for MatMul."""
         if len(x1) != 2 or len(x2) != 2:
-            raise ValueError('P.MatMul inputs x1, x2 should have the same dimension size and '
-                             + f'equal to 2, while x1 size is ({len(x1)}) and x2 size is ({len(x2)}).')
+            raise ValueError(f"For '{self.name}', inputs 'x', 'y' should have the same dimension size and "
+                             f"be equal to 2, but got the size of 'x': ({len(x1)}) and the size of 'y': ({len(x2)}).")
 
     def check_shape(self, x1, x2):
         self.check_shape_size(x1, x2)
@@ -1116,8 +1117,8 @@ class MatMul(PrimitiveWithCheck):
         # expected dimension of x, y, x:[...,a,b] y:[..., c,d], the dim size should be the same except the last two
         for i in range(len(x1) - 2):
             if x1[i] != x2[i]:
-                raise ValueError(f'For \'{cls_name}\' shape in dim[{i}] not the same, '
-                                 + f'while x1 is {x1[i]}, x2 is {x2[i]}')
+                raise ValueError(f"For '{cls_name}', the dim[{i}] of 'x' should be equal to the dim[{i}] of 'y', "
+                                 f"but got 'x[{i}]': {x1[i]} and 'y[{i}]': {x2[i]}.")
 
         # validate whether last two dims satisfying matrix multiply
         x1_last = x1[-2:]
@@ -1126,10 +1127,9 @@ class MatMul(PrimitiveWithCheck):
         x2_row = x2_last[self.transpose_b]
         if np.all(np.array(x1) != -1) and np.all(np.array(x2) != -1):
             if x1_col != x2_row:
-                raise ValueError(f'For \'{cls_name}\' evaluator shapes of inputs can not do this operator,'
-                                 f' dimensions must be equal,'
-                                 + f' got {x1_col} and {x2_row}, with x1 shape {x1}(transpose_a={self.transpose_a})'
-                                 + f', x2 shape {x2}(transpose_b={self.transpose_b}).')
+                raise ValueError(f"For '{cls_name}', the input dimensions must be equal, but got 'x1_col': {x1_col} "
+                                 f"and 'x2_row': {x2_row}. And 'x' shape {x1}(transpose_a={self.transpose_a}), "
+                                 f"'y' shape {x2}(transpose_b={self.transpose_b}).")
         # set attribute
         self.add_prim_attr('transpose_x1', self.transpose_a)
         self.add_prim_attr('transpose_x2', self.transpose_b)
@@ -1212,8 +1212,8 @@ class BatchMatMul(MatMul):
 
     def check_shape_size(self, x, y):
         if len(x) != len(y) or len(x) < 3:
-            raise ValueError('For \'BatchMatMul\' input x, y should be the same dimension size and should be '
-                             'greater or equal to 3,' + f' while x size = {len(x)}, y size= {len(y)}')
+            raise ValueError(f"For '{self.name}', input 'x', 'y' should be the same dimension size and should be "
+                             f"greater than or equal to 3, but got 'x' size: {len(x)}, 'y' size: {len(y)}.")
 
 
 class CumSum(PrimitiveWithInfer):
@@ -1291,7 +1291,7 @@ class CumSum(PrimitiveWithInfer):
         cls_name = self.name
         x_shp = x['shape']
         if axis['value'] is None:
-            raise ValueError(f"For {self.name}, axis must be const.")
+            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
         validator.check_value_type('axis', axis['value'], [int], cls_name)
         valid_dtypes = [mstype.uint8, mstype.int8, mstype.int32, mstype.float16, mstype.float32, mstype.float64]
         validator.check_tensor_dtype_valid('x', x['dtype'], valid_dtypes, cls_name)
@@ -1346,7 +1346,9 @@ class AddN(Primitive):
             return False, None
         if isinstance(inputs[0], Tensor):
             return True, inputs[0]
-        raise TypeError("Expecting Tensor, got : {}".format(type(inputs[0])))
+        raise TypeError(f"For '{self.name}', the type of 'inputs[0]' should be a tensor, but "
+                        f"got {type(inputs[0]).__name__}, "
+                        f"or the length of 'inputs' should not equal to 1, but got ({len(inputs)}).")
 
 
 class AccumulateNV2(PrimitiveWithInfer):
@@ -1400,7 +1402,9 @@ class AccumulateNV2(PrimitiveWithInfer):
             return False, None
         if isinstance(inputs[0], Tensor):
             return True, inputs[0]
-        raise TypeError("Expecting Tensor, got : {}".format(type(inputs[0])))
+        raise TypeError(f"For '{self.name}', the type of 'inputs[0]' should be a tensor, "
+                        f"but got {type(inputs[0]).__name__}, "
+                        f"or the length of 'inputs' should not equal to 1, but got ({len(inputs)}).")
 
     def infer_shape(self, inputs):
         cls_name = self.name
@@ -1532,7 +1536,8 @@ class InplaceAdd(PrimitiveWithInfer):
                         Rel.EQ, self.name)
         for i in self.indices:
             if i < 0 or i >= x_shape[0]:
-                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+                raise ValueError(f"For '{self.name}', the value of 'indices' must be "
+                                 f"in [0, {x_shape[0]}), but got {i}.")
         x_rank = len(x_shape)
         for idx in range(x_rank)[1:]:
             validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)
@@ -1600,7 +1605,8 @@ class InplaceSub(PrimitiveWithInfer):
                         Rel.EQ, self.name)
         for i in self.indices:
             if i < 0 or i >= x_shape[0]:
-                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+                raise ValueError(f"For '{self.name}', the value of 'indices' must be "
+                                 f"in [0, {x_shape[0]}), but got {i}.")
         x_rank = len(x_shape)
         for idx in range(x_rank)[1:]:
             validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)

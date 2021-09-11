@@ -2322,7 +2322,6 @@ class LJEnergy(PrimitiveWithInfer):
         validator.check_int(len(scaler), 1, Rel.EQ, "scaler_dim", cls_name)
         validator.check_int(len(nl_numbers), 1, Rel.EQ, "nl_numbers_dim", cls_name)
         validator.check_int(len(nl_serial), 2, Rel.EQ, "nl_serial_dim", cls_name)
-        validator.check_int(len(scaler), 1, Rel.EQ, "scaler_dim", cls_name)
         validator.check_int(len(d_lj_b), 1, Rel.EQ, "d_LJ_B_dim", cls_name)
 
         validator.check_int(uint_crd[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
@@ -2333,7 +2332,6 @@ class LJEnergy(PrimitiveWithInfer):
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial_shape[1]", cls_name)
-        validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return charge
 
@@ -2414,7 +2412,6 @@ class LJForce(PrimitiveWithInfer):
         validator.check_int(len(scaler), 1, Rel.EQ, "scaler_dim", cls_name)
         validator.check_int(len(nl_numbers), 1, Rel.EQ, "nl_numbers_dim", cls_name)
         validator.check_int(len(nl_serial), 2, Rel.EQ, "nl_serial_dim", cls_name)
-        validator.check_int(len(scaler), 1, Rel.EQ, "scaler_dim", cls_name)
         validator.check_int(len(d_lj_b), 1, Rel.EQ, "d_LJ_B_dim", cls_name)
 
         validator.check_int(uint_crd[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
@@ -2425,7 +2422,6 @@ class LJForce(PrimitiveWithInfer):
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial_shape[1]", cls_name)
-        validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return uint_crd
 
@@ -2510,7 +2506,6 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
         validator.check_int(len(scaler), 1, Rel.EQ, "scaler_dim", cls_name)
         validator.check_int(len(nl_numbers), 1, Rel.EQ, "nl_numbers_dim", cls_name)
         validator.check_int(len(nl_serial), 2, Rel.EQ, "nl_serial_dim", cls_name)
-        validator.check_int(len(scaler), 1, Rel.EQ, "scaler_dim", cls_name)
         validator.check_int(len(d_lj_b), 1, Rel.EQ, "d_LJ_B_dim", cls_name)
 
         validator.check_int(uint_crd[0], n, Rel.EQ, "uint_crd_shape[0]", cls_name)
@@ -2521,7 +2516,6 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], 800, Rel.EQ, "nl_serial_shape[1]", cls_name)
-        validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return uint_crd
 

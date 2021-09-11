@@ -46,7 +46,8 @@ def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
 @constexpr
 def _check_input_3d(input_shape, param_name, func_name):
     if len(input_shape) != 3:
-        raise ValueError(f"{func_name} {param_name} should be 3d, but got shape {input_shape}")
+        raise ValueError(f"For '{func_name}', the {param_name} should be 3d, but got the length of input_shape:"
+                         f" {len(input_shape)}.")
 
 
 class LSTM(Cell):
@@ -166,7 +167,8 @@ class LSTM(Cell):
             self.cast = P.Cast()
             self.shape = P.Shape()
             if dropout < 0 or dropout > 1:
-                raise ValueError("For LSTM, dropout must be a number in range [0, 1], but got {}".format(dropout))
+                raise ValueError(f"For '{self.cls_name}', the 'dropout' must be a number in range [0, 1], "
+                                 f"but got {dropout}.")
             if dropout == 1:
                 self.dropout_op = P.ZerosLike()
             else:

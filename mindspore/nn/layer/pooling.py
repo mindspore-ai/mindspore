@@ -32,12 +32,13 @@ class _PoolNd(Cell):
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
+            raise ValueError(f"For '{self.cls_name}, the 'NHWC' format only support in GPU target, but got device "
+                             f"target {context.get_context('device_target')}.")
 
         def _check_int_or_tuple(arg_name, arg_value):
             validator.check_value_type(arg_name, arg_value, [int, tuple], self.cls_name)
-            error_msg = f'For \'{self.cls_name}\' the {arg_name} should be an positive int number or ' \
-                        f'a tuple of two positive int numbers, but got {arg_value}'
+            error_msg = f"For '{self.cls_name}', the '{arg_name}' should be an positive int number or " \
+                        f"a tuple of two positive int numbers, but got {arg_value}"
             if isinstance(arg_value, int):
                 if arg_value <= 0:
                     raise ValueError(error_msg)
@@ -61,9 +62,10 @@ class _PoolNd(Cell):
 
 
 @constexpr
-def _shape_check(in_shape):
+def _shape_check(in_shape, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(in_shape) != 3:
-        raise ValueError("The input must has 3 dim")
+        raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}")
 
 
 class MaxPool2d(_PoolNd):
@@ -216,7 +218,7 @@ class MaxPool1d(_PoolNd):
         self.squeeze = P.Squeeze(2)
 
     def construct(self, x):
-        _shape_check(self.shape(x))
+        _shape_check(self.shape(x), self.cls_name)
         x = self.expand(x, 2)
         output = self.max_pool(x)
         output = self.squeeze(output)
@@ -382,7 +384,7 @@ class AvgPool1d(_PoolNd):
         self.squeeze = P.Squeeze(2)
 
     def construct(self, x):
-        x = F.depend(x, _shape_check(self.shape(x)))
+        x = F.depend(x, _shape_check(self.shape(x), self.cls_name))
         batch, channel, width = self.shape(x)
         if width == self.kernel_size[1]:
             x = self.reduce_mean(x, 2)

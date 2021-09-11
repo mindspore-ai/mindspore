@@ -148,7 +148,7 @@ class Range(Cell):
         """Initialize Range."""
         super(Range, self).__init__()
         if delta == 0:
-            raise ValueError("The input of `delta` can not be equal to zero.")
+            raise ValueError(f"For '{self.cls_name}', the 'delta' can not be zero.")
         data = np.arange(start, limit, delta)
         if data.dtype == np.float:
             self.ms_dtype = mstype.float32
@@ -750,11 +750,13 @@ class LBeta(Cell):
 
 
 @constexpr
-def get_broadcast_matmul_shape(x_shape, y_shape):
+def get_broadcast_matmul_shape(x_shape, y_shape, prim_name=None):
     """get broadcast_matmul shape"""
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if (len(x_shape) < 2) or (len(y_shape) < 2):
-        raise ValueError('For matmul, rank of x1 and x2 should be equal to or greater than 2, '
-                         + f'but got {x_shape} and {y_shape}.')
+        raise ValueError(f"{msg_prefix} length of 'x_shape' and 'y_shape' should be equal to or greater than 2, "
+                         f"but got the length of 'x_shape': {len(x_shape)} and the length of 'y_shape': "
+                         f"{len(y_shape)}.")
     x_shape_batch = x_shape[:-2]
     y_shape_batch = y_shape[:-2]
     if x_shape_batch == y_shape_batch:
@@ -771,7 +773,9 @@ def get_broadcast_matmul_shape(x_shape, y_shape):
         elif x_shape[i] == y_shape[i]:
             broadcast_shape_back.append(x_shape[i])
         else:
-            raise ValueError(f"For MatMul, the x1_shape {x_shape} and x2_shape {y_shape} can not broadcast.")
+            raise ValueError(f"{msg_prefix} 'x_shape[{i}]' should be equal to 1, or the 'y_shape[{i}]' should be equal "
+                             f"to 1, or the 'x_shape[{i}]' should be equal to 'y_shape[{i}]', but got "
+                             f"'x_shape[{i}]': {x_shape[i]}, 'y_shape[{i}]': {y_shape[i]}.")
 
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
     x_broadcast_shape = broadcast_shape_front + tuple(broadcast_shape_back) + x_shape[-2:]
@@ -780,8 +784,9 @@ def get_broadcast_matmul_shape(x_shape, y_shape):
 
 
 @constexpr
-def check_col_row_equal(x1_shape, x2_shape, transpose_x1, transpose_x2):
+def check_col_row_equal(x1_shape, x2_shape, transpose_x1, transpose_x2, prim_name=None):
     """check col and row equal"""
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(x1_shape) == 1:
         transpose_x1 = False
         x1_shape = (1,) + x1_shape
@@ -793,8 +798,8 @@ def check_col_row_equal(x1_shape, x2_shape, transpose_x1, transpose_x2):
     x1_col = x1_last[not transpose_x1]  # x1_col = x1_last[1] if (not transpose_a) else x1_last[0]
     x2_row = x2_last[transpose_x2]  # x2_row = x2_last[0] if (not transpose_b) else x2_last[1]
     if x1_col != x2_row:
-        raise ValueError('The column of matrix dimensions of x1 should be equal to '
-                         + f'the row of matrix dimensions of x2, but got {x1_col} and {x2_row}.')
+        raise ValueError(f"{msg_prefix} column of matrix dimensions of 'x1' should be equal to "
+                         f"the row of matrix dimensions of 'x2', but got 'x1_col' {x1_col} and 'x2_row' {x2_row}.")
 
 
 def matmul_op_select(x1_shape, x2_shape, transpose_x1, transpose_x2):

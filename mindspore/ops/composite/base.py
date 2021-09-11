@@ -319,11 +319,11 @@ class GradOperation(GradOperation_):
     def __init__(self, get_all=False, get_by_list=False, sens_param=False):
         """Initialize GradOperation."""
         if not isinstance(get_all, bool):
-            raise TypeError(f'get_all should be bool, but got {type(get_all)}')
+            raise TypeError(f"For 'GradOperation', the 'get_all' should be bool, but got {type(get_all)}")
         if not isinstance(get_by_list, bool):
-            raise TypeError(f'get_by_list should be bool, but got {type(get_by_list)}')
+            raise TypeError(f"For 'GradOperation', the 'get_by_list' should be bool, but got {type(get_by_list)}")
         if not isinstance(sens_param, bool):
-            raise TypeError(f'sens_param should be bool, but got {type(sens_param)}')
+            raise TypeError(f"For 'GradOperation', the 'sens_param' should be bool, but got {type(sens_param)}")
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param
@@ -443,7 +443,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
                 continue
             output = fn(*args)
             return output
-        raise ValueError("Cannot find fn match given args.")
+        raise ValueError(f"For 'MultitypeFuncGraph', cannot find fn match given args.")
 
     def register(self, *type_names):
         """
@@ -461,7 +461,8 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
                 if isinstance(type_input, str):
                     return mstype.typing.str_to_type(type_input)
                 if not isinstance(type_input, mstype.Type):
-                    raise TypeError(f"MultitypeFuncGraph register only support str or {mstype.Type}")
+                    raise TypeError(f"For 'MultitypeFuncGraph', register only support str or {mstype.Type}, but got "
+                                    f"'type_input': {type_input}.")
                 return type_input
 
             types = tuple(map(convert_type, type_names))

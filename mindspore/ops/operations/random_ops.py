@@ -70,7 +70,7 @@ class StandardNormal(PrimitiveWithInfer):
     def __infer__(self, shape):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For {self.name}, shape must be const.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -128,7 +128,7 @@ class StandardLaplace(PrimitiveWithInfer):
     def __infer__(self, shape):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For {self.name}, shape must be const.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -192,7 +192,7 @@ class Gamma(PrimitiveWithInfer):
     def __infer__(self, shape, alpha, beta):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For {self.name}, shape must be const.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -257,7 +257,7 @@ class Poisson(PrimitiveWithInfer):
     def __infer__(self, shape, mean):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For {self.name}, shape must be const.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -330,7 +330,7 @@ class UniformInt(PrimitiveWithInfer):
     def __infer__(self, shape, minval, maxval):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For {self.name}, shape must be const.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -507,7 +507,8 @@ class RandomCategorical(PrimitiveWithInfer):
         Validator.check_positive_int(num_samples_v, "num_samples", self.name)
         x_shape = list(logits['shape'])
         if len(x_shape) != 2:
-            raise ValueError("RandomCategorical shape should be 2-dimension.")
+            raise ValueError(f"For '{self.name}', the shape of 'logits' should be 2-dimension, "
+                             f"but got {len(x_shape)}.")
         ndim = len(x_shape) - 1
         x_shape[ndim] = num_samples_v
         self.add_prim_attr('num_samples', num_samples_v)
@@ -566,11 +567,12 @@ class Multinomial(PrimitiveWithInfer):
     def __infer__(self, inputs, num_samples):
         input_shape = inputs["shape"]
         if len(input_shape) != 1 and len(input_shape) != 2:
-            raise ValueError("input dim must be 1 or 2")
+            raise ValueError(f"For '{self.name}', the dimension of 'inputs' must be 1 or 2, "
+                             f"but got {len(input_shape)}.")
         Validator.check_tensor_dtype_valid('inputs', inputs['dtype'], [mstype.float32], self.name)
         num_samples_value = num_samples["value"]
         if num_samples_value is None:
-            raise ValueError(f"For {self.name}, shape nust be const")
+            raise ValueError(f"For '{self.name}', the 'num_samples' cannot be None, but got {num_samples}.")
         Validator.check_value_type("num_samples", num_samples_value, (int,), self.name)
         Validator.check_positive_int(num_samples_value, "num_samples")
         y_shape = (num_samples_value,)

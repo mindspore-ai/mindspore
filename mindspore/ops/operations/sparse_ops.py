@@ -67,22 +67,22 @@ class SparseToDense(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('values', values['dtype'], mstype.number_type + (mstype.bool_,), self.name)
         indices_shape = indices['shape']
         if len(indices_shape) != 2:
-            raise ValueError("SparseToDense requires 'indices' must be a 2-D Tensor, "
-                             f"but got 'indices' shape: {indices_shape}")
+            raise ValueError(f"For '{self.name}', the 'indices' must be a 2-D tensor, "
+                             f"but got 'indices' shape: {indices_shape}.")
         values_shape = values['shape']
         if len(values_shape) != 1 or values_shape[0] != indices_shape[0]:
-            raise ValueError("SparseToDense requires 'values' must be a 1-D Tensor and "
-                             "the first dimension length must be equal to the first dimension length of 'indices', "
-                             f"but got 'indices' shape: {indices_shape}, 'values' shape: {values_shape}")
+            raise ValueError(f"For '{self.name}', the 'values' must be a 1-D tensor and the first dimension length "
+                             f"must be equal to the first dimension length of 'indices', "
+                             f"but got 'indices' shape: {indices_shape}, 'values' shape: {values_shape}.")
         sparse_shape_v = sparse_shape['value']
         for i in sparse_shape_v:
             if isinstance(i, bool) or not isinstance(i, int) or i <= 0:
-                raise ValueError("SparseToDense requires all elements in 'sparse_shape' must be "
-                                 f"positive int number, but got 'sparse_shape': {sparse_shape_v}")
+                raise ValueError(f"For '{self.name}', all elements in 'sparse_shape' must be "
+                                 f"positive int number, but got 'sparse_shape': {sparse_shape_v}.")
         if len(sparse_shape_v) != indices_shape[1]:
-            raise ValueError("SparseToDense requires the 'sparse_shape' length should be equal to the 'indices' "
-                             "second dimension length, but got the 'indices' second dimension length: "
-                             f"{indices_shape[1]}, 'sparse_shape' length: {len(sparse_shape_v)}")
+            raise ValueError(f"For '{self.name}', the length of 'sparse_shape' should be equal to the second dimension "
+                             f"length of 'indices', but got the second dimension length of 'indices': "
+                             f"{indices_shape[1]}, length of 'sparse_shape': {len(sparse_shape_v)}.")
         out = {'shape': sparse_shape['value'],
                'dtype': values['dtype'],
                'value': None}
@@ -157,26 +157,29 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
         validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
         indices_shape = indices['shape']
         if len(indices_shape) != 2 or indices_shape[1] != 2:
-            raise ValueError("SparseTensorDenseMatmul requires 'indices' must be a 2-D Tensor and "
-                             f"the second dimension length must be 2, but got 'indices' shape: {indices_shape}")
+            raise ValueError(f"For '{self.name}', the 'indices' must be a 2-D tensor and "
+                             f"the second dimension length must be 2, but got 'indices' shape: {indices_shape}.")
         values_shape = values['shape']
         if len(values_shape) != 1 or values_shape[0] != indices_shape[0]:
-            raise ValueError("SparseTensorDenseMatmul requires 'value's must be a 1-D Tensor and "
+            raise ValueError(f"For '{self.name}', the 'values' must be a 1-D tensor and "
                              f"the first dimension length must be equal to the first dimension length of 'indices', "
-                             f"but got 'indices' shape: {indices_shape}, 'values' shape: {values_shape}")
+                             f"but got 'indices' shape: {indices_shape}, 'values' shape: {values_shape}.")
         a_shape = sparse_shape['value'][::-1] if self.adjoint_st else sparse_shape['value']
         b_shape = dense['shape'][::-1] if self.adjoint_dt else dense['shape']
         for i in a_shape:
             if isinstance(i, bool) or not isinstance(i, int) or i <= 0:
-                raise ValueError("SparseTensorDenseMatmul requires all elements in 'sparse_shape' must be "
-                                 f"positive int number, but got sparse shape: {a_shape}")
+                raise ValueError(f"For '{self.name}', all elements in 'sparse_shape' must be "
+                                 f"positive int number, but got 'sparse_shape': {a_shape}.")
         if len(a_shape) != 2 or len(b_shape) != 2:
-            raise ValueError("SparseTensorDenseMatmul requires both the 'sparse_shape' length and the dense tensor "
-                             f"rank should be equal to 2, but got 'sparse_shape' length: {len(a_shape)}, "
-                             f"dense tensor rank: {len(b_shape)}")
+            raise ValueError(f"For '{self.name}', both the length of 'sparse_shape' and the tensor "
+                             f"rank of 'dense' should be equal to 2, but got the length of "
+                             f"'sparse_shape': {len(a_shape)}, "
+                             f"the tensor rank of 'dense': {len(b_shape)}.")
         if a_shape[1] != b_shape[0]:
-            raise ValueError(f"The sparse tensor shape: {a_shape} and the dense tensor shape: {b_shape} "
-                             f"don't meet the condition for matmul")
+            raise ValueError(f"For '{self.name}', the second dimension length of 'sparse_shape' must be equal to the "
+                             f"first dimension length of 'dense', but got "
+                             f"the tensor shape of 'sparse': {a_shape} and the tensor shape of 'dense': {b_shape}. "
+                             f"Don't meet the condition for matmul")
         out_shape = [a_shape[0], b_shape[1]]
         out = {'shape': tuple(out_shape),
                'dtype': values['dtype'],

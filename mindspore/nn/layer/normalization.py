@@ -62,17 +62,20 @@ class _BatchNorm(Cell):
         super(_BatchNorm, self).__init__()
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
         if num_features < 1:
-            raise ValueError("num_features must be at least 1")
+            raise ValueError(f"For '{self.cls_name}', the 'num_features' must be at least 1, but got {num_features}.")
 
         if momentum < 0 or momentum > 1:
-            raise ValueError("momentum should be a number in range [0, 1], but got {}".format(momentum))
+            raise ValueError(f"For '{self.cls_name}', the 'momentum' should be a number in range [0, 1], "
+                             f"but got {momentum}.")
         self.input_dims = input_dims
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
+            raise ValueError(f"For '{self.cls_name}', the 'NHWC' format only support in GPU target, but got device "
+                             f"target {context.get_context('device_target')}.")
         self.use_batch_statistics = use_batch_statistics
         if self.use_batch_statistics is not None and not isinstance(self.use_batch_statistics, bool):
-            raise ValueError("use_batch_statistics should be a boolean value or None.")
+            raise ValueError(f"For '{self.cls_name}', the 'use_batch_statistics' should be a boolean value or None,"
+                             f" but got {use_batch_statistics}.")
         self.num_features = num_features
         self.eps = eps
         self.moving_mean = Parameter(initializer(
@@ -159,11 +162,14 @@ class _BatchNorm(Cell):
         raise NotImplementedError
 
     def list_group(self, world_rank, group_size):
+        """ Check whether world_rank and group_size  are valid. """
         if group_size > get_group_size():
-            raise ValueError("group size can not be greater than local rank size, group size is {}, "
-                             "local_rank_size is {}".format(group_size, get_group_size()))
+            raise ValueError(f"For '{self.cls_name}', the 'group_size' cannot be greater than local rank size, "
+                             f"but got 'group_size': {group_size}, local rank size: {get_group_size()}.")
         if len(world_rank) % group_size != 0:
-            raise ValueError("please make your group size correct.")
+            raise ValueError(f"For '{self.cls_name}', the dimension of 'world_rank' should be divisible by "
+                             f"'group_size', but got the length of 'world_rank': {len(world_rank)}, "
+                             f"'group_size': {group_size}.")
         world_rank_list = zip(*(iter(world_rank),) * group_size)
         group_list = [list(i) for i in world_rank_list]
         return group_list
@@ -173,7 +179,8 @@ class _BatchNorm(Cell):
         for rid in itertools.chain(*process_groups):
             validator.check_int_range(rid, 0, rank_size, Rel.INC_LEFT, "rank id in process_groups")
             if rid in seen:
-                raise ValueError("rank id in process_groups should not be duplicated.")
+                raise ValueError(f"For '{self.cls_name}', rank id in 'process_groups' should not be duplicated, "
+                                 f"but got {rid}.")
             seen.add(rid)
 
     def _create_global_groups(self):
@@ -197,7 +204,7 @@ class _BatchNorm(Cell):
                     management.create_group(SYNC_BN_GROUP_NAME, self.process_groups[i])
 
     def construct(self, x):
-        _shape_check_bn(self.shape(x), self.input_dims)
+        _shape_check_bn(self.shape(x), self.input_dims, self.cls_name)
         if self.use_batch_statistics is None:
             if self.training:
                 return self.bn_train(x,
@@ -231,29 +238,33 @@ class _BatchNorm(Cell):
 
 
 @constexpr
-def _channel_check(channel, num_channel):
+def _channel_check(channel, num_channel, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if channel != num_channel:
-        raise ValueError("the input channel is not equal with num_channel")
+        raise ValueError(f"{msg_prefix} channel should be equal with num_channel, but got channel: "
+                         f"{channel}, num_channel: {num_channel}.")
 
 
 @constexpr
-def _shape_check(in_shape):
+def _shape_check(in_shape, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(in_shape) != 4:
-        raise ValueError("The input must has 4 dims.")
+        raise ValueError(f"{msg_prefix} in_shape must has 4 dims, but got the length of in_shape: {len(in_shape)}.")
 
 
 @constexpr
-def _shape_check_bn(in_shape, in_dims):
+def _shape_check_bn(in_shape, in_dims, prim_name=None):
     """check input dims of batch norm."""
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     dim = len(in_shape)
     if in_dims == '1d' and dim != 2:
-        raise ValueError("The input must has 2 dims.")
+        raise ValueError(f"{msg_prefix} in_shape must have 2 dims, but got {len(in_shape)}.")
     if in_dims == '2d' and dim != 4:
-        raise ValueError("The input must has 4 dims.")
+        raise ValueError(f"{msg_prefix} in_shape must have 4 dims, but got {len(in_shape)}.")
     if in_dims == '3d' and dim != 5:
-        raise ValueError("The input must has 5 dims.")
+        raise ValueError(f"{msg_prefix} in_shape must have 5 dims, but got {len(in_shape)}.")
     if in_dims == 'both' and dim != 2 and dim != 4:
-        raise ValueError("The input must has 2 dims or 4 dims.")
+        raise ValueError(f"{msg_prefix} in_shape must have 2 dims or 4 dims, but got {len(in_shape)}.")
 
 
 @constexpr
@@ -472,9 +483,11 @@ class BatchNorm2d(_BatchNorm):
 
 
 @constexpr
-def _check_3d_shape(input_shape):
+def _check_3d_shape(input_shape, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(input_shape) != 5:
-        raise ValueError("For BatchNorm3d, input data must be 5-dimensional.")
+        raise ValueError(f"{msg_prefix} input_shape must be 5-dimensional, but got the length of input_shape: "
+                         f"{len(input_shape)}.")
 
 
 class BatchNorm3d(Cell):
@@ -570,7 +583,7 @@ class BatchNorm3d(Cell):
 
     def construct(self, input_x):
         x_shape = F.shape(input_x)
-        _check_3d_shape(x_shape)
+        _check_3d_shape(x_shape, self.cls_name)
         input_x = self.reshape(input_x, (x_shape[0], x_shape[1], x_shape[2] * x_shape[3], x_shape[4]))
         bn2d_out = self.bn2d(input_x)
         bn3d_out = self.reshape(bn2d_out, x_shape)
@@ -686,7 +699,8 @@ class GlobalBatchNorm(_BatchNorm):
                                               input_dims='both')
         self.group_device_num = validator.check_positive_int(device_num_each_group)
         if self.group_device_num <= 1:
-            raise ValueError("the number of group must be greater than 1.")
+            raise ValueError(f"For '{self.cls_name}', the 'device_num_each_group' must be greater than 1, "
+                             f"but got {self.group_device_num}.")
 
     def _check_data_dim(self, x):
         if x.dim == 0:
@@ -874,8 +888,8 @@ class LayerNorm(Cell):
         """Initialize LayerNorm."""
         super(LayerNorm, self).__init__()
         if not isinstance(normalized_shape, (tuple, list)):
-            raise TypeError("The type of 'normalized_shape' should be tuple[int] or list[int], but '{}' type is {}."
-                            .format(normalized_shape, type(normalized_shape)))
+            raise TypeError(f"For '{self.cls_name}', the type of 'normalized_shape' should be tuple[int] or list[int], "
+                            f"but got '{normalized_shape}' and the type is {type(normalized_shape)}.")
         self.normalized_shape = normalized_shape
         self.begin_norm_axis = begin_norm_axis
         self.begin_params_axis = begin_params_axis
@@ -985,10 +999,11 @@ class InstanceNorm2d(Cell):
         args_input = {"gamma_init": gamma_init, "beta_init": beta_init}
         self.check_types_valid(args_input, 'InstanceNorm2d')
         if num_features < 1:
-            raise ValueError("num_features must be at least 1")
+            raise ValueError(f"For '{self.cls_name}', the 'num_features' must be at least 1, but got {num_features}.")
 
         if momentum < 0 or momentum > 1:
-            raise ValueError("momentum should be a number in range [0, 1], but got {}".format(momentum))
+            raise ValueError(f"For '{self.cls_name}', the 'momentum' should be a number in range [0, 1], "
+                             f"but got {momentum}.")
         self.num_features = num_features
         self.eps = eps
         self.input_dims = '2d'
@@ -1007,7 +1022,7 @@ class InstanceNorm2d(Cell):
         raise NotImplementedError
 
     def construct(self, x):
-        _shape_check_bn(self.shape(x), self.input_dims)
+        _shape_check_bn(self.shape(x), self.input_dims, self.cls_name)
         return self.instance_bn(x,
                                 self.gamma,
                                 self.beta,
@@ -1022,10 +1037,11 @@ class InstanceNorm2d(Cell):
         for key, _ in args_dict.items():
             val = args_dict[key]
             if not isinstance(val, (Tensor, numbers.Number, str, Initializer)):
-                raise TypeError(f"[{name}]Supported type for arg {key} is [Tensor, numbers.Number, str, Initializer],"
-                                f"but got {type(val)}")
+                raise TypeError(f"For '{self.cls_name}', the type of args_dict['{key}'] should be in "
+                                f"[Tensor, numbers.Number, str, Initializer], but got type {type(val)}.")
             if isinstance(val, Tensor) and val.dtype != mstype.float32:
-                raise TypeError(f"[{name}]The type of arg {key} should be float32, but got {val.dtype}")
+                raise TypeError(f"For '{self.cls_name}', the type of args_dict['{key}'] should be float32, "
+                                f"but got {val.dtype}.")
 
 
 class GroupNorm(Cell):
@@ -1090,7 +1106,8 @@ class GroupNorm(Cell):
         self.num_groups = validator.check_positive_int(num_groups)
         self.num_channels = validator.check_positive_int(num_channels)
         if num_channels % num_groups != 0:
-            raise ValueError("num_channels should be divided by num_groups")
+            raise ValueError(f"For '{self.cls_name}', the 'num_channels' should be divided by 'num_groups', "
+                             f"but got 'num_channels': {num_channels}, 'num_groups': {num_groups}.")
         self.eps = validator.check_value_type('eps', eps, (float,), type(self).__name__)
         self.affine = validator.check_bool(affine)
 
@@ -1112,7 +1129,7 @@ class GroupNorm(Cell):
     def _cal_output(self, x):
         """calculate groupnorm output"""
         batch, channel, height, width = self.shape(x)
-        _channel_check(channel, self.num_channels)
+        _channel_check(channel, self.num_channels, self.cls_name)
         x = self.reshape(x, (batch, self.num_groups, -1))
         mean = self.reduce_mean(x, 2)
         var = self.reduce_sum(self.square(x - mean), 2) / (channel * height * width / self.num_groups)
@@ -1123,7 +1140,7 @@ class GroupNorm(Cell):
         return output
 
     def construct(self, x):
-        _shape_check(self.shape(x))
+        _shape_check(self.shape(x), self.cls_name)
         output = self._cal_output(x)
         return output
 
