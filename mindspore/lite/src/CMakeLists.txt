@@ -155,7 +155,7 @@ if(ENABLE_MINDRT)
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
         )
-elseif(TARGET_HIMIX200 OR TARGET_OHOS_LITE)
+else()
     file(GLOB MINDRT_ACTOR ${CORE_DIR}/mindrt/src/actor/*.cc)
     set(LITE_SRC
         ${LITE_SRC}

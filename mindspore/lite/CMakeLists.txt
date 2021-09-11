@@ -314,10 +314,8 @@ if(WIN32)
     add_compile_definitions(BUILDING_DLL)
 endif()
 
-if(ENABLE_MINDRT OR TARGET_HIMIX200 OR TARGET_OHOS_LITE)
-    include_directories(${CORE_DIR}/mindrt/include)
-    include_directories(${CORE_DIR}/mindrt/src)
-endif()
+include_directories(${CORE_DIR}/mindrt/include)
+include_directories(${CORE_DIR}/mindrt/src)
 
 if(NOT WIN32 AND NOT APPLE)
     if(ENABLE_MODEL_OBF)
