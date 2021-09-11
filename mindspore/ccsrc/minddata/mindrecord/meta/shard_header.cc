@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "minddata/mindrecord/include/shard_page.h"
@@ -60,7 +60,7 @@ Status ShardHeader::InitializeHeader(const std::vector<json> &headers, bool load
 }
 
 Status ShardHeader::CheckFileStatus(const std::string &path) {
-  auto realpath = Common::GetRealPath(path);
+  auto realpath = FileUtils::GetRealPath(path.data());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path: " + path);
   std::ifstream fin(realpath.value(), std::ios::in | std::ios::binary);
   CHECK_FAIL_RETURN_UNEXPECTED(fin, "Failed to open file. path: " + path);
@@ -585,7 +585,7 @@ Status ShardHeader::GetStatisticByID(int64_t statistic_id, std::shared_ptr<Stati
 }
 
 Status ShardHeader::PagesToFile(const std::string dump_file_name) {
-  auto realpath = Common::GetRealPath(dump_file_name);
+  auto realpath = FileUtils::GetRealPath(dump_file_name.data());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + dump_file_name);
   // write header content to file, dump whatever is in the file before
   std::ofstream page_out_handle(realpath.value(), std::ios_base::trunc | std::ios_base::out);
@@ -602,7 +602,7 @@ Status ShardHeader::FileToPages(const std::string dump_file_name) {
   for (auto &v : pages_) {  // clean pages
     v.clear();
   }
-  auto realpath = Common::GetRealPath(dump_file_name);
+  auto realpath = FileUtils::GetRealPath(dump_file_name.data());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + dump_file_name);
   // attempt to open the file contains the page in json
   std::ifstream page_in_handle(realpath.value());

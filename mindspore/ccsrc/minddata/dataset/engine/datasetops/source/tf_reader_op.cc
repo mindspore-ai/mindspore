@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "proto/example.pb.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
@@ -43,7 +43,7 @@ namespace dataset {
 const int64_t kTFRecordFileLimit = 0x140000000;
 
 bool TFReaderOp::ValidateFirstRowCrc(const std::string &filename) {
-  auto realpath = Common::GetRealPath(filename);
+  auto realpath = FileUtils::GetRealPath(filename.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << filename;
     return false;
@@ -269,7 +269,7 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
 
 // Reads a tf_file file and loads the data into multiple TensorRows.
 Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  auto realpath = Common::GetRealPath(filename);
+  auto realpath = FileUtils::GetRealPath(filename.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << filename;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + filename);
@@ -553,7 +553,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
 }
 
 Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::string> columns_to_load) {
-  auto realpath = Common::GetRealPath(tf_file);
+  auto realpath = FileUtils::GetRealPath(tf_file.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << tf_file;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + tf_file);
@@ -682,7 +682,7 @@ Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std
 int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &filenames, int64_t begin, int64_t end) {
   int64_t rows_read = 0;
   for (int i = begin; i < end; i++) {
-    auto realpath = Common::GetRealPath(filenames[i]);
+    auto realpath = FileUtils::GetRealPath(filenames[i].data());
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed, path=" << filenames[i];
       continue;

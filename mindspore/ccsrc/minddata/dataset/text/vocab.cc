@@ -22,7 +22,7 @@
 #include <utility>
 #include <algorithm>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
 #else
@@ -124,7 +124,7 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
                                const std::vector<WordType> &special_tokens, bool prepend_special,
                                std::shared_ptr<Vocab> *vocab) {
   // Validate parameters
-  auto realpath = Common::GetRealPath(path);
+  auto realpath = FileUtils::GetRealPath(path.data());
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);
   }
@@ -204,7 +204,7 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
   WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
   std::unordered_map<WordType, WordIdType> word2id;
 
-  auto realpath = Common::GetRealPath(path);
+  auto realpath = FileUtils::GetRealPath(path.data());
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);
   }

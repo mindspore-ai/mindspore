@@ -16,7 +16,7 @@
 
 #include "minddata/dataset/util/random.h"
 #include "minddata/mindrecord/include/shard_writer.h"
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "./securec.h"
@@ -65,13 +65,23 @@ Status ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &path
 Status ShardWriter::OpenDataFiles(bool append) {
   // Open files
   for (const auto &file : file_paths_) {
-    auto realpath = Common::GetRealPath(file);
+    std::optional<std::string> dir = "";
+    std::optional<std::string> local_file_name = "";
+    FileUtils::SplitDirAndFileName(file, &dir, &local_file_name);
+    if (!dir.has_value()) {
+      dir = ".";
+    }
+
+    auto realpath = FileUtils::GetRealPath(dir.value().data());
     CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + file);
+
+    std::optional<std::string> whole_path = "";
+    FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
 
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
     if (!append) {
       // if not append and mindrecord file exist, return FAILED
-      fs->open(realpath.value(), std::ios::in | std::ios::binary);
+      fs->open(whole_path.value(), std::ios::in | std::ios::binary);
       if (fs->good()) {
         fs->close();
         RETURN_STATUS_UNEXPECTED("MindRecord file already existed, please delete file: " + file);
@@ -453,7 +463,7 @@ Status ShardWriter::LockWriter(bool parallel_writer, std::unique_ptr<int> *fd_pt
   // Open files
   file_streams_.clear();
   for (const auto &file : file_paths_) {
-    auto realpath = Common::GetRealPath(file);
+    auto realpath = FileUtils::GetRealPath(file.data());
     if (!realpath.has_value()) {
       close(fd);
       RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file);

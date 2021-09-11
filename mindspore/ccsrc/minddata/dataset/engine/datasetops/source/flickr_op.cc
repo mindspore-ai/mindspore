@@ -20,7 +20,7 @@
 #include <set>
 #include <utility>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -94,7 +94,7 @@ void FlickrOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status FlickrOp::ParseFlickrData() {
-  auto real_file_path = Common::GetRealPath(file_path_);
+  auto real_file_path = FileUtils::GetRealPath(file_path_.data());
   if (!real_file_path.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file_path_;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_path_);
@@ -163,7 +163,7 @@ Status FlickrOp::ParseFlickrData() {
 // Optimization: Could take in a tensor
 // This function does not return status because we want to just skip bad input, not crash
 Status FlickrOp::CheckImageType(const std::string &file_name, bool *valid) {
-  auto real_file_name = Common::GetRealPath(file_name);
+  auto real_file_name = FileUtils::GetRealPath(file_name.data());
   if (!real_file_name.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);

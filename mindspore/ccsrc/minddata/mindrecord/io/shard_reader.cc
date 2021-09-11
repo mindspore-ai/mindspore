@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <thread>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
 #include "utils/ms_utils.h"
 
@@ -178,10 +178,21 @@ Status ShardReader::CheckColumnList(const std::vector<std::string> &selected_col
 Status ShardReader::Open() {
   file_streams_.clear();
   for (const auto &file : file_paths_) {
-    auto realpath = Common::GetRealPath(file);
+    std::optional<std::string> dir = "";
+    std::optional<std::string> local_file_name = "";
+    FileUtils::SplitDirAndFileName(file, &dir, &local_file_name);
+    if (!dir.has_value()) {
+      dir = ".";
+    }
+
+    auto realpath = FileUtils::GetRealPath(dir.value().data());
     CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + file);
+
+    std::optional<std::string> whole_path = "";
+    FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
+
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-    fs->open(realpath.value(), std::ios::in | std::ios::binary);
+    fs->open(whole_path.value(), std::ios::in | std::ios::binary);
     CHECK_FAIL_RETURN_UNEXPECTED(fs->good(), "Failed to open file: " + file);
     MS_LOG(INFO) << "Open shard file successfully.";
     file_streams_.push_back(fs);
@@ -194,10 +205,21 @@ Status ShardReader::Open(int n_consumer) {
     std::vector<std::vector<std::shared_ptr<std::fstream>>>(n_consumer, std::vector<std::shared_ptr<std::fstream>>());
   for (const auto &file : file_paths_) {
     for (int j = 0; j < n_consumer; ++j) {
-      auto realpath = Common::GetRealPath(file);
+      std::optional<std::string> dir = "";
+      std::optional<std::string> local_file_name = "";
+      FileUtils::SplitDirAndFileName(file, &dir, &local_file_name);
+      if (!dir.has_value()) {
+        dir = ".";
+      }
+
+      auto realpath = FileUtils::GetRealPath(dir.value().data());
       CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + file);
+
+      std::optional<std::string> whole_path = "";
+      FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
+
       std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-      fs->open(realpath.value(), std::ios::in | std::ios::binary);
+      fs->open(whole_path.value(), std::ios::in | std::ios::binary);
       CHECK_FAIL_RETURN_UNEXPECTED(fs->good(), "Failed to open file: " + file);
       file_streams_random_[j].push_back(fs);
     }
@@ -387,7 +409,7 @@ Status ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, con
   MS_LOG(INFO) << "Get " << static_cast<int>(labels.size()) << " records from shard " << shard_id << " index.";
 
   std::string file_name = file_paths_[shard_id];
-  auto realpath = Common::GetRealPath(file_name);
+  auto realpath = FileUtils::GetRealPath(file_name.data());
   if (!realpath.has_value()) {
     sqlite3_free(errmsg);
     sqlite3_close(db);
@@ -702,7 +724,7 @@ Status ShardReader::GetLabelsFromBinaryFile(int shard_id, const std::vector<std:
                                             std::shared_ptr<std::vector<json>> *labels_ptr) {
   RETURN_UNEXPECTED_IF_NULL(labels_ptr);
   std::string file_name = file_paths_[shard_id];
-  auto realpath = Common::GetRealPath(file_name);
+  auto realpath = FileUtils::GetRealPath(file_name.data());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + file_name);
 
   std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();

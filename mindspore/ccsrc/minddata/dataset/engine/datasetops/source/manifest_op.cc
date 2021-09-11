@@ -21,7 +21,7 @@
 #include <set>
 #include <nlohmann/json.hpp>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
@@ -136,7 +136,7 @@ Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids)
 // {"source": "/path/to/image1.jpg", "usage":"train", annotation": ...}
 // {"source": "/path/to/image2.jpg", "usage":"eval", "annotation": ...}
 Status ManifestOp::ParseManifestFile() {
-  auto realpath = Common::GetRealPath(file_);
+  auto realpath = FileUtils::GetRealPath(file_.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file_;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_);
@@ -209,7 +209,7 @@ Status ManifestOp::ParseManifestFile() {
 
 // Only support JPEG/PNG/GIF/BMP
 Status ManifestOp::CheckImageType(const std::string &file_name, bool *valid) {
-  auto realpath = Common::GetRealPath(file_name);
+  auto realpath = FileUtils::GetRealPath(file_name.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);

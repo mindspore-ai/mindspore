@@ -26,7 +26,7 @@
 #include <regex>
 #include <thread>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -123,7 +123,7 @@ Status CacheServerHW::GetNumaNodeInfo() {
     numa_id_t numa_node = static_cast<numa_id_t>(strtol(node_dir.data() + strlen(kNodeName), nullptr, kDecimal));
     Path f = p / kCpuList;
 
-    auto realpath = Common::GetRealPath(f.ToString());
+    auto realpath = FileUtils::GetRealPath(f.ToString().data());
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed, path=" << f.ToString();
       RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + f.ToString());
@@ -246,7 +246,7 @@ bool CacheServerHW::numa_enabled() {
 }
 
 uint64_t CacheServerHW::GetAvailableMemory() {
-  auto realpath = Common::GetRealPath(kMemInfoFileName);
+  auto realpath = FileUtils::GetRealPath(kMemInfoFileName);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << kMemInfoFileName;
     return 0;

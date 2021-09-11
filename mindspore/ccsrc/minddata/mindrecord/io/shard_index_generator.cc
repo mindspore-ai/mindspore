@@ -17,7 +17,7 @@
 
 #include "minddata/mindrecord/include/shard_index_generator.h"
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 
 using mindspore::LogStream;
@@ -166,15 +166,26 @@ Status ShardIndexGenerator::GenerateFieldName(const std::pair<uint64_t, std::str
 }
 
 Status ShardIndexGenerator::CheckDatabase(const std::string &shard_address, sqlite3 **db) {
-  auto realpath = Common::GetRealPath(shard_address);
+  std::optional<std::string> dir = "";
+  std::optional<std::string> local_file_name = "";
+  FileUtils::SplitDirAndFileName(shard_address, &dir, &local_file_name);
+  if (!dir.has_value()) {
+    dir = ".";
+  }
+
+  auto realpath = FileUtils::GetRealPath(dir.value().data());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + shard_address);
-  std::ifstream fin(realpath.value());
+
+  std::optional<std::string> whole_path = "";
+  FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
+
+  std::ifstream fin(whole_path.value());
   if (!append_ && fin.good()) {
     fin.close();
     RETURN_STATUS_UNEXPECTED("Invalid file, DB file already exist: " + shard_address);
   }
   fin.close();
-  if (sqlite3_open_v2(common::SafeCStr(shard_address), db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr)) {
+  if (sqlite3_open_v2(common::SafeCStr(whole_path.value()), db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr)) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open database: " + shard_address + ", error" +
                              std::string(sqlite3_errmsg(*db)));
   }
@@ -484,7 +495,7 @@ Status ShardIndexGenerator::ExecuteTransaction(const int &shard_no, sqlite3 *db,
   std::string shard_address = shard_header_.GetShardAddressByID(shard_no);
   CHECK_FAIL_RETURN_UNEXPECTED(!shard_address.empty(), "shard address is empty.");
 
-  auto realpath = Common::GetRealPath(shard_address);
+  auto realpath = FileUtils::GetRealPath(shard_address.data());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + shard_address);
   std::fstream in;
   in.open(realpath.value(), std::ios::in | std::ios::binary);

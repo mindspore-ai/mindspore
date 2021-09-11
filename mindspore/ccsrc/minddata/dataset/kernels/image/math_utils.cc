@@ -40,12 +40,12 @@ Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p,
       }
     }
     cut = static_cast<int32_t>((hi_p / kMaxPerc) * n);
-    for (int32_t ub = hist->size() - 1; ub >= 0 && cut > 0; ub--) {
-      if (cut > (*hist)[ub]) {
-        cut -= (*hist)[ub];
-        (*hist)[ub] = 0;
+    for (auto ub_iter = hist->end() - 1; ub_iter >= hist->begin() && cut > 0; ub_iter--) {
+      if (cut > *ub_iter) {
+        cut -= *ub_iter;
+        *ub_iter = 0;
       } else {
-        (*hist)[ub] -= cut;
+        *ub_iter -= cut;
         cut = 0;
       }
     }

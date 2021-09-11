@@ -21,7 +21,7 @@
 #include <set>
 #include <utility>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -126,7 +126,7 @@ int64_t USPSOp::CountRows(const std::string &data_file) {
 }
 
 Status USPSOp::GetFiles() {
-  auto real_dataset_dir = Common::GetRealPath(dataset_dir_);
+  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
   CHECK_FAIL_RETURN_UNEXPECTED(real_dataset_dir.has_value(), "Get real path failed: " + dataset_dir_);
   Path root_dir(real_dataset_dir.value());
 

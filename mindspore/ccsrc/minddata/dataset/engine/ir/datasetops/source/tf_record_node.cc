@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/opt/pass.h"
@@ -59,7 +59,7 @@ Status TFRecordNode::ValidateParams() {
   }
 
   for (const auto &f : dataset_files_) {
-    auto realpath = Common::GetRealPath(f);
+    auto realpath = FileUtils::GetRealPath(f.data());
     CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(),
                                  "TFRecordNode: dataset file: [" + f + "] is invalid or does not exist.");
   }

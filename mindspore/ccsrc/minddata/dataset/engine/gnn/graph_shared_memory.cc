@@ -17,7 +17,7 @@
 #include "minddata/dataset/engine/gnn/graph_shared_memory.h"
 
 #include <string>
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/log_adapter.h"
 
@@ -53,7 +53,7 @@ GraphSharedMemory::~GraphSharedMemory() {
 Status GraphSharedMemory::CreateSharedMemory() {
   if (memory_key_ == -1) {
     // ftok to generate unique key
-    auto realpath = Common::GetRealPath(mr_file_);
+    auto realpath = FileUtils::GetRealPath(mr_file_.data());
     CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + mr_file_);
     memory_key_ = ftok(common::SafeCStr(realpath.value()), kGnnSharedMemoryId);
     CHECK_FAIL_RETURN_UNEXPECTED(memory_key_ != -1, "Failed to get key of shared memory. file_name:" + mr_file_);
