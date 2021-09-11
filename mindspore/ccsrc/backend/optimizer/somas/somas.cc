@@ -37,11 +37,11 @@
 #include "debug/rdr/running_data_recorder.h"
 #endif
 #include "common/thread_pool.h"
-#include "profiler/device/common/memory_profiling.h"
+#include "profiler/device/ascend/memory_profiling.h"
 
-using mindspore::profiler::MemoryProfiling;
-using mindspore::profiler::NodeMemory;
-using mindspore::profiler::TensorMemory;
+using mindspore::profiler::ascend::MemoryProfiling;
+using mindspore::profiler::ascend::NodeMemory;
+using mindspore::profiler::ascend::TensorMemory;
 
 namespace mindspore {
 namespace somas {

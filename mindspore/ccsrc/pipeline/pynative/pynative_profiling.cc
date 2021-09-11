@@ -21,6 +21,7 @@
 #include <string>
 #include "utils/profile.h"
 #include "utils/ms_context.h"
+#include "profiler/device/profiling.h"
 
 namespace mindspore {
 void PynativeProfiler::SetEnableProfilingFlag() {
@@ -28,9 +29,10 @@ void PynativeProfiler::SetEnableProfilingFlag() {
   if (flag) {
     return;
   }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  enable_profiler_flag_ = ms_context->get_param<bool>(MS_CTX_ENABLE_PROFILING);
+
+  auto profiler_manager = profiler::ProfilerManager::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_manager);
+  enable_profiler_flag_ = profiler_manager->GetProfilingEnableFlag();
   flag = true;
 }
 

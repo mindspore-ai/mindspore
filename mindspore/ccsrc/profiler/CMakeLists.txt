@@ -5,7 +5,7 @@ endif()
 
 if(ENABLE_D)
     file(GLOB_RECURSE PROFILER_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-      "device/common/*.cc" "device/cpu/*.cc")
+      "device/cpu/*.cc" "device/ascend/*.cc")
 endif()
 
 if(ENABLE_CPU AND NOT (ENABLE_D OR ENABLE_GPU))

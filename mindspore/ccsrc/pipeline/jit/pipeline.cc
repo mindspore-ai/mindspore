@@ -1363,11 +1363,14 @@ void ReleaseGeTsd() {
 
 #ifndef ENABLE_SECURITY
 void StartUpProfiling() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PROFILING)) {
+#ifdef ENABLE_D
+  if (!ProfilingManager::GetInstance().IsProfiling()) {
     return;
   }
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+
   MS_LOG(INFO) << "Startup profiling";
   // Start up profiling before OpenTsd
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -1378,6 +1381,7 @@ void StartUpProfiling() {
     MS_EXCEPTION_IF_NULL(runtime_instance);
     runtime_instance->PreInit();
   }
+#endif
 }
 #endif
 

@@ -59,8 +59,9 @@ class ProfilerManager {
   ~ProfilerManager() = default;
   ProfilerManager(const ProfilerManager &) = delete;
   ProfilerManager &operator=(const ProfilerManager &) = delete;
-  bool GetEnableRecorderActorFlag();
+  bool GetProfilingEnableFlag();
   void RecordOneStepStartEndInfo();
+  std::string GetProfilingOptions() const;
 
  private:
   static std::shared_ptr<ProfilerManager> profiler_manager_inst_;

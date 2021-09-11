@@ -66,6 +66,7 @@ using mindspore::dataset::TdtHandle;
 #endif
 
 #include "backend/session/pynative_task_manager.h"
+#include "profiler/device/profiling.h"
 
 #ifndef ENABLE_SECURITY
 using mindspore::device::ascend::ProfilingManager;
@@ -73,6 +74,7 @@ using mindspore::device::ascend::ProfilingUtils;
 #endif
 using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::ge::model_runner::ModelRunner;
+using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 using mindspore::kernel::tbe::TbeUtils;
 using std::vector;
 
@@ -236,7 +238,7 @@ void AsyncDataDumpUninit() {
 void AscendKernelRuntime::ReportProfilingData() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->get_param<bool>(MS_CTX_ENABLE_PROFILING) &&
+  if (ProfilingManager::GetInstance().IsProfiling() &&
       context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     // Save Profiling Framework data
     OpNameTaskStreamReporter reporter(device_id_, "nonsink", stream_id_task_id_op_name_map_);
@@ -334,7 +336,11 @@ bool AscendKernelRuntime::Init() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  auto profiling_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PROFILING);
+
+  auto profiler_manager = profiler::ProfilerManager::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_manager);
+  auto profiling_flag = profiler_manager->GetProfilingEnableFlag();
+
   if (execution_mode == kPynativeMode && profiling_flag) {
     pynative_mode_profiling_flag_ = true;
   }
@@ -1164,11 +1170,12 @@ bool AscendKernelRuntime::CheckGraphIdValid(GraphId graph_id) const {
 }
 
 void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (!context->get_param<bool>(MS_CTX_ENABLE_PROFILING)) {
+  auto profiler_manager = profiler::ProfilerManager::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_manager);
+  if (!profiler_manager->GetProfilingEnableFlag()) {
     return;
   }
+
   // save task info
   uint32_t stream_id;
   uint32_t task_id;

@@ -28,9 +28,11 @@
 #include "toolchain/slog.h"
 #include "runtime/base.h"
 #include "runtime/device/ascend/profiling/profiling_callback_register.h"
+#include "profiler/device/profiling.h"
 
 using std::map;
 using std::string;
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -50,9 +52,9 @@ class ProfilingManager {
   bool StopProfiling();
 
   inline bool IsProfiling() const {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    return context->get_param<bool>(MS_CTX_ENABLE_PROFILING);
+    auto profiler_manager = profiler::ProfilerManager::GetInstance();
+    MS_EXCEPTION_IF_NULL(profiler_manager);
+    return profiler_manager->GetProfilingEnableFlag();
   }
   Status PluginInit() const;
   void PluginUnInit() const;

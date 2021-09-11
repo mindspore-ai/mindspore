@@ -117,13 +117,13 @@ Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) {
     return PROF_FAILED;
   }
 
-  auto context = MsContext::GetInstance();
-  if (context == nullptr) {
-    MS_LOG(ERROR) << "Context is nullptr.";
+  auto profiler_manager = profiler::ProfilerManager::GetInstance();
+  if (profiler_manager == nullptr) {
+    MS_LOG(ERROR) << "Profiler manager instance is nullptr.";
     return PROF_FAILED;
   }
+  const string prof_options_str = profiler_manager->GetProfilingOptions();
 
-  const string prof_options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
   const nlohmann::json options_all = nlohmann::json::parse(prof_options_str);
   nlohmann::json options_for_cann;
   options_for_cann["output"] = options_all["output"];
