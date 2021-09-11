@@ -37,6 +37,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 using mindspore::converter::kFmkTypeOnnx;
 namespace mindspore {
@@ -250,7 +251,9 @@ STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_
       anf_nodes_map->emplace(output_name, get_item_cnode);
       op_idx++;
     }
-    cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+    auto new_abstract_list = std::make_shared<abstract::AbstractTuple>(abstract_list);
+    CHECK_NULL_RETURN(new_abstract_list);
+    cnode->set_abstract(new_abstract_list);
   }
   anf_nodes_map->emplace(onnx_node.name(), cnode);
   return RET_OK;
@@ -403,6 +406,7 @@ FuncGraphPtr BuildCondGraph(const AnfNodePtr &root_while_node, int inputs_num, c
     }
     if (i == 1) {
       auto and_value_node = CreateValueNode(schema::PrimitiveType_LogicalAnd);
+      MS_CHECK_TRUE_MSG(and_value_node != nullptr, nullptr, "CreateValueNode failed");
       std::vector<AnfNodePtr> and_inputs = {and_value_node, less_cnode, input_parameter};
       auto and_cnode = cond_graph->NewCNode(and_inputs);
       if (and_cnode == nullptr) {
@@ -563,7 +567,9 @@ STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
   MS_ASSERT(onnx_model_ != nullptr);
   OnnxNodeParser::set_opset_version(onnx_model_.opset_import().Get(0).version());
   onnx_root_graph_ = onnx_model_.graph();
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
+  auto fmk_value_node = MakeValue(static_cast<int>(converter::kFmkTypeOnnx));
+  CHECK_NULL_RETURN(fmk_value_node);
+  res_graph_->set_attr("fmk", fmk_value_node);
   return RET_OK;
 }
 

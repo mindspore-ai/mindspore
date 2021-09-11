@@ -44,14 +44,14 @@ STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor, int32_t index) 
   MS_ASSERT(tensor != nullptr);
   size_t wShapeSize = tensor->data.empty() ? 0 : GetShapeSize(*(tensor.get()));
   void *oriWeightData = tensor->data.data();
+  if (oriWeightData == nullptr) {
+    return RET_OK;
+  }
   std::vector<int8_t> qDatas(wShapeSize);
   auto weightQauntParam = GetTensorQuantParam(tensor);
   if (tensor->dataType == TypeId::kNumberTypeFloat ||
       tensor->dataType == TypeId::kNumberTypeFloat32) {  // normal awareing quant
     auto *weightData = static_cast<float *>(oriWeightData);
-    if (weightData == nullptr) {
-      return RET_OK;
-    }
     for (size_t j = 0; j < wShapeSize; j++) {
       qDatas[j] = QuantizeData<int8_t>(weightData[j], weightQauntParam.get());
     }

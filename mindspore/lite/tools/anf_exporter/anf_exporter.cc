@@ -21,7 +21,6 @@
 #include <functional>
 #include <utility>
 #include <vector>
-#include <algorithm>
 #include "tools/converter/converter_flags.h"
 #include "abstract/abstract_value.h"
 #include "mindspore/core/ir/primitive.h"
@@ -40,6 +39,7 @@
 #include "src/ops/ops_utils.h"
 #include "src/weight_decoder.h"
 #include "tools/common/node_util.h"
+#include "src/common/log_util.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
@@ -166,6 +166,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     quant_param_holder = std::make_shared<QuantParamHolder>(dst_node->inputIndex.size(), dst_node->outputIndex.size());
   }
 
+  CHECK_NULL_RETURN(quant_param_holder);
   input_quant_params = quant_param_holder->get_input_quant_params();
   output_quant_params = quant_param_holder->get_output_quant_params();
   dst_node->quantType = quant_param_holder->quant_type();
@@ -208,6 +209,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_WeightQuant) {
         std::unique_ptr<schema::QuantParamT> output_quant_param_ptr =
           std::make_unique<schema::QuantParamT>(channel_quant_param);
+        CHECK_NULL_RETURN(output_quant_param_ptr);
         MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
                       << " zp: " << output_quant_param_ptr->zeroPoint;
         output_tensor->quantParams.emplace_back(std::move(output_quant_param_ptr));
@@ -454,7 +456,9 @@ int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::uniqu
     return RET_OK;
   }
 
-  meta_graphT->subGraph.emplace_back(std::make_unique<schema::SubGraphT>());
+  auto subgraph_ptr = std::make_unique<schema::SubGraphT>();
+  CHECK_NULL_RETURN(subgraph_ptr);
+  meta_graphT->subGraph.emplace_back(std::move(subgraph_ptr));
   auto subgraph_index = meta_graphT->subGraph.size() - 1;
   fg_subgraph_map_[func_graph] = subgraph_index;
   auto subgraph_name = func_graph->get_attr("graph_name");

@@ -18,6 +18,7 @@
 #include <memory>
 #include "ops/fusion/topk_fusion.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -27,7 +28,9 @@ ops::PrimitiveC *OnnxTopkParser::Parse(const onnx::GraphProto &onnx_graph, const
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "k") {
-      prim->AddAttr("k", MakeValue(static_cast<int32_t>(onnx_node_attr.i())));
+      auto k_value = MakeValue(static_cast<int32_t>(onnx_node_attr.i()));
+      MS_CHECK_TRUE_MSG(k_value != nullptr, nullptr, "CreateValueNode failed");
+      prim->AddAttr("k", k_value);
     }
   }
 

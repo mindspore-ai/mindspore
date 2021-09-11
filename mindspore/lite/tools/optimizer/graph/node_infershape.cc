@@ -15,7 +15,6 @@
  */
 
 #include "tools/optimizer/graph/node_infershape.h"
-#include <algorithm>
 #include <memory>
 #include <vector>
 #include "tools/common/node_util.h"
@@ -489,7 +488,9 @@ STATUS NodeInferShape::SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, con
       if (tensor->data_type() == kObjectTypeTensorType) {
         shape = {0};
       }
-      new_abstract->set_shape(std::make_shared<abstract::Shape>(shape));
+      auto abstract_shape = std::make_shared<abstract::Shape>(shape);
+      CHECK_NULL_RETURN(abstract_shape);
+      new_abstract->set_shape(abstract_shape);
     }
     cnode->set_abstract(new_abstract);
   } else {
@@ -506,11 +507,15 @@ STATUS NodeInferShape::SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, con
         if (tensor->data_type() == kObjectTypeTensorType) {
           shape = {0};
         }
-        new_abstract->set_shape(std::make_shared<abstract::Shape>(shape));
+        auto abstract_shape = std::make_shared<abstract::Shape>(shape);
+        CHECK_NULL_RETURN(abstract_shape);
+        new_abstract->set_shape(abstract_shape);
       }
       abstract_list.emplace_back(new_abstract);
     }
-    cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+    auto new_abstract_list = std::make_shared<abstract::AbstractTuple>(abstract_list);
+    CHECK_NULL_RETURN(new_abstract_list);
+    cnode->set_abstract(new_abstract_list);
   }
   return RET_OK;
 }
