@@ -15,10 +15,14 @@
         - [用法](#用法)
         - [Ascend处理器环境运行](#ascend处理器环境运行)
         - [结果](#结果)
-    - [评估过程](#评估过程)
-        - [用法](#用法)
-        - [Ascend处理器环境运行](#ascend处理器环境运行)
-        - [结果](#结果)
+- [评估过程](#评估过程)
+    - [用法](#用法)
+    - [Ascend处理器环境运行](#ascend处理器环境运行)
+    - [结果](#结果)
+- [Ascend310推理过程](#推理过程)
+    - [导出MindIR](#导出MindIR)
+    - [在Acsend310执行推理](#在Acsend310执行推理)
+    - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -55,14 +59,12 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 - 下载数据集，目录结构如下：
 
 ```text
-└─train
+└─cifar-10-batches-bin
     ├─data_batch_1.bin                  # 训练数据集
     ├─data_batch_2.bin                  # 训练数据集
     ├─data_batch_3.bin                  # 训练数据集
     ├─data_batch_4.bin                  # 训练数据集
     ├─data_batch_5.bin                  # 训练数据集
-    └─test_batch.bin                    # 评估数据集
-└─eval
     └─test_batch.bin                    # 评估数据集
 ```
 
@@ -84,22 +86,14 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 
 ```Shell
 # 分布式训练
-用法：
-cd scripts
-bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：
-cd scripts
-bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
+用法：bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 运行评估示例
-用法：
-cd scripts
-bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
+用法：bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
-
-若没有[PRETRAINED_CKPT_PATH]，使用 “” 作为参数运行脚本。
 
 # 脚本说明
 
@@ -107,10 +101,19 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
 
 ```text
 └──wideresnet
-  ├── README.md
+  ├── README_CN.md
+  ├── ascend310_infer
+    ├── inc
+      ├── util.h
+    ├── src
+      ├── build.sh
+      ├── CMakeList.txt
+      ├── main.cc
+      ├── utils.cc
   ├── scripts
     ├── run_distribute_train.sh            # 启动Ascend分布式训练（8卡）
-    ├── run_eval.sh                        # 启动Ascend评估
+    ├── run_eval.sh                        # 启动Ascend910评估
+    ├── run_infer_310.sh                   # 启动Ascend310评估
     └── run_standalone_train.sh            # 启动Ascend单机训练（单卡）
   ├── src
     ├── config.py                          # 参数配置
@@ -119,9 +122,11 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
     ├── generator_lr.py                    # 生成每个步骤的学习率
     ├── save_callback.py                   # 自定义回调函数保存最优ckpt
     └── wide_resnet.py                     # WideResNet网络结构
-  ├── eval.py                              # 评估网络
-  ├── export.py                            # 导出网络
-  └── train.py                             # 训练网络
+  ├── eval.py                              # 910评估网络
+  ├── export.py                            # 910导出网络
+  ├── postprocess.py                       # 310推理精度计算
+  ├── preprocess.py                        # 310推理前数据处理
+  └── train.py                             # 910训练网络
 ```
 
 # 脚本参数
@@ -159,18 +164,12 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
 
 ```Shell
 # 分布式训练
-用法：
-cd scripts
-bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：
-cd scripts
-bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
+用法：bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 ```
-
-若没有[PRETRAINED_CKPT_PATH]，使用 “” 作为参数运行脚本。
 
 分布式训练需要提前创建JSON格式的HCCL配置文件。
 
@@ -219,16 +218,12 @@ epoch: 4 step: 195, loss is 1.221174
 
 ```Shell
 # 评估
-用法：
-cd scripts
-bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
+Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ```Shell
 # 评估示例
-用法：
-cd scripts
-bash run_eval.sh  /cifar10  WideResNet_best.ckpt
+bash  run_eval.sh  /cifar10  WideResNet_best.ckpt
 ```
 
 训练过程中可以生成检查点。
@@ -242,6 +237,35 @@ bash run_eval.sh  /cifar10  WideResNet_best.ckpt
 ```text
 result: {'top_1_accuracy': 0.9622395833333334}
 ```
+
+# Ascend310推理过程
+
+## 导出MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_format [FILE_FORMAT] --device_id [0]
+```
+
+参数ckpt_file为必填项，
+`file_format` 必须在 ["AIR", "MINDIR"]中选择。
+
+## 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
+```
+
+- `MINDIR_PATH` mindir文件路径
+- `DATASET_PATH` 推理数据集路径
+- `DEVICE_ID` 可选，默认值为0。
+
+## 结果
+
+推理结果保存在脚本执行的当前路径，
+你可以在当前文件夹中acc.log查看推理精度，在time_Result中查看推理时间。
 
 # 模型描述
 
