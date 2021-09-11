@@ -135,8 +135,8 @@ void RankCpuKernel<T>::SetFunc() {
 template <typename T>
 void RankCpuKernel<T>::Launch1DInt(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter,
                                    float *output_addr) const {
-  const int n = axisIterator_.AxisSize();
-  for (int i = 0; i < n; ++i) {
+  const size_t n = axisIterator_.AxisSize();
+  for (size_t i = 0; i < n; ++i) {
     values[i] = input_addr[iter.GetPos(i)];
   }
 
@@ -152,7 +152,7 @@ void RankCpuKernel<T>::Launch1DInt(const T *input_addr, size_t *sort_idx, T *val
   int culmutive_rank = 1;
   int duplicate_count = 0;
 
-  for (int i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; ++i) {
     duplicate_count++;
     if ((i == n - 1) || (values[sort_idx[i]] != values[sort_idx[i + 1]])) {
       func_(i, duplicate_count, culmutive_rank, iter, sort_idx, output_addr);
@@ -165,12 +165,12 @@ void RankCpuKernel<T>::Launch1DInt(const T *input_addr, size_t *sort_idx, T *val
     // pct calculation
     if (method_ == Method::Dense) {
       auto size = static_cast<float>(culmutive_rank - 1);
-      for (int i = 0; i < n; ++i) {
+      for (size_t i = 0; i < n; ++i) {
         output_addr[iter.GetPos(i)] = output_addr[iter.GetPos(i)] / size;
       }
     } else {
       auto size = static_cast<float>(n);
-      for (int i = 0; i < n; ++i) {
+      for (size_t i = 0; i < n; ++i) {
         output_addr[iter.GetPos(i)] = output_addr[iter.GetPos(i)] / size;
       }
     }
@@ -180,7 +180,7 @@ void RankCpuKernel<T>::Launch1DInt(const T *input_addr, size_t *sort_idx, T *val
 template <typename T>
 void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan,
                                      const AxisIterator &iter, float *output_addr) const {
-  const int n = axisIterator_.AxisSize();
+  const size_t n = axisIterator_.AxisSize();
   T nan_padding_value;
   if (ascending_ != (option_ == NaOption::Top)) {
     nan_padding_value = std::numeric_limits<T>::max();
@@ -188,7 +188,7 @@ void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *v
     nan_padding_value = std::numeric_limits<T>::min();
   }
 
-  for (int i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; ++i) {
     const T value = input_addr[iter.GetPos(i)];
     if (std::isnan(value)) {
       values[i] = nan_padding_value;
@@ -212,13 +212,13 @@ void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *v
   int duplicate_count = 0;
   int nans_count = 0;
 
-  for (int i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; ++i) {
     duplicate_count++;
 
     if ((i == n - 1) || (values[sort_idx[i]] != values[sort_idx[i + 1]]) ||
         (is_nan[sort_idx[i]] != is_nan[sort_idx[i + 1]])) {
       if ((option_ == NaOption::Keep) && is_nan[sort_idx[i]]) {
-        for (int j = i - duplicate_count + 1; j < i + 1; ++j) {
+        for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[iter.GetPos(sort_idx[j])] = NAN;
         }
       } else {
@@ -239,7 +239,7 @@ void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *v
       if ((option_ == NaOption::Keep && (nans_count > 0))) {
         size--;
       }
-      for (int i = 0; i < n; ++i) {
+      for (size_t i = 0; i < n; ++i) {
         output_addr[iter.GetPos(i)] = output_addr[iter.GetPos(i)] / size;
       }
     } else {
@@ -247,7 +247,7 @@ void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *v
       if (option_ == NaOption::Keep) {
         size -= static_cast<float>(nans_count);
       }
-      for (int i = 0; i < n; ++i) {
+      for (size_t i = 0; i < n; ++i) {
         output_addr[iter.GetPos(i)] = output_addr[iter.GetPos(i)] / size;
       }
     }

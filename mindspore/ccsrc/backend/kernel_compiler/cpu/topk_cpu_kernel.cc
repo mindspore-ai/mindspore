@@ -15,12 +15,15 @@
  */
 
 #include "backend/kernel_compiler/cpu/topk_cpu_kernel.h"
+#include <algorithm>
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
+                                 const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2 || outputs.size() != 2) {
     MS_LOG(EXCEPTION) << "TopK needs 2 inputs and 2 outputs, but get inputs: " << inputs.size()
                       << "outputs: " << outputs.size();
@@ -33,6 +36,7 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
   }
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   int k = reinterpret_cast<int *>(inputs[1]->addr)[0];
+  auto workspace = reinterpret_cast<size_t *>(workspaces[0]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   auto indices = reinterpret_cast<int *>(outputs[1]->addr);
   if (k < 1) {
@@ -42,35 +46,42 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
   if (outputs[0]->size != outer_size_ * k_num * sizeof(T)) {
     MS_LOG(EXCEPTION) << "Error output data size!";
   }
+
+  const std::function<bool(size_t, size_t)> comparator = [input](size_t index_1, size_t index_2) {
+    return input[index_1] > input[index_2];
+  };
+
+  std::vector<common::Task> tasks;
+  tasks.reserve(outer_size_);
   for (size_t i = 0; i < outer_size_; ++i) {
-    std::vector<size_t> idx(inner_size_);
-    auto base_input = i * inner_size_;
-    std::iota(idx.begin(), idx.end(), base_input);
+    tasks.emplace_back([this, i, k_num, &comparator, input, workspace, indices, output]() {
+      size_t *idx = workspace + i * inner_size_;
+      auto base_input = i * inner_size_;
+      std::iota(idx, idx + inner_size_, base_input);
 
-    if (sorted_) {
-      constexpr float fraction = 0.5;
-      const size_t threshold = inner_size_ * fraction;
-      // fall back to stable_sort
-      if (k_num > threshold) {
-        stable_sort(idx.begin(), idx.end(),
-                    [&input](size_t index_1, size_t index_2) { return input[index_1] > input[index_2]; });
+      if (sorted_) {
+        constexpr float fraction = 0.5;
+        const size_t threshold = inner_size_ * fraction;
+        // fall back to stable_sort
+        if (k_num > threshold) {
+          std::stable_sort(idx, idx + inner_size_, comparator);
+        } else {
+          std::nth_element(idx, idx + SizeToLong(k_num), idx + inner_size_, comparator);
+          std::stable_sort(idx, idx + SizeToLong(k_num), comparator);
+        }
       } else {
-        nth_element(idx.begin(), idx.begin() + SizeToLong(k_num), idx.end(),
-                    [&input](size_t index_1, size_t index_2) { return input[index_1] > input[index_2]; });
-        stable_sort(idx.begin(), idx.begin() + SizeToLong(k_num),
-                    [&input](size_t index_1, size_t index_2) { return input[index_1] > input[index_2]; });
+        std::nth_element(idx, idx + SizeToLong(k_num), idx + inner_size_, comparator);
       }
-    } else {
-      nth_element(idx.begin(), idx.begin() + SizeToLong(k_num), idx.end(),
-                  [&input](size_t index_1, size_t index_2) { return input[index_1] > input[index_2]; });
-    }
 
-    auto base_output = i * k_num;
-    for (size_t j = 0; j < k_num; ++j) {
-      indices[base_output + j] = SizeToInt(idx[j]) - SizeToInt(base_input);
-      output[base_output + j] = input[idx[j]];
-    }
+      auto base_output = i * k_num;
+      for (size_t j = 0; j < k_num; ++j) {
+        indices[base_output + j] = SizeToInt(idx[j]) - SizeToInt(base_input);
+        output[base_output + j] = input[idx[j]];
+      }
+      return common::SUCCESS;
+    });
   }
+  common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 
 void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -84,12 +95,20 @@ void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool TopKCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+void TopKCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  size_t element_size = outer_size_ * inner_size_;
+  // id
+  workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
+}
+
+bool TopKCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                           const std::vector<kernel::AddressPtr> &workspaces,
                            const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
+    LaunchKernel<float16>(inputs, workspaces, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    LaunchKernel<float>(inputs, workspaces, outputs);
   }
   return true;
 }

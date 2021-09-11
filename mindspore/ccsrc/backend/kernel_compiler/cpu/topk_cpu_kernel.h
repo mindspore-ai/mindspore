@@ -28,12 +28,14 @@ class TopKCPUKernel : public CPUKernel {
   TopKCPUKernel() = default;
   ~TopKCPUKernel() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs) override;
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
+                    const std::vector<AddressPtr> &outputs);
   size_t outer_size_{1};
   size_t inner_size_{1};
   bool sorted_{false};

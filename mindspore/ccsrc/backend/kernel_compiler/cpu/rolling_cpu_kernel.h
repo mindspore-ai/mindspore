@@ -41,26 +41,23 @@ class RollingCpuKernel : public CPUKernel {
   ~RollingCpuKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void AxisCalculate(const std::vector<size_t> &input_shape);
   void RollingBoundsCalculate();
   void MethodSwitch();
 
   int64_t window_{0};
   int64_t min_periods_{0};
-  size_t axis_{0};
   bool center_{false};
   std::string closed_{};
   rolling::Method method_{};
-  std::function<S(const T *input_addr, int outer_offset, size_t start, size_t end, int col)> reduceMethod_{};
+  std::function<S(const T *values, const size_t *ids, size_t start, size_t end)> reduceMethod_{};
   // shape info
-  size_t outer_size_{0};
-  size_t axis_size_{0};
-  size_t inner_size_{0};
+  AxisIterator axisIterator_{};
   // rolling info
   std::vector<size_t> starts_{};
   std::vector<size_t> ends_{};

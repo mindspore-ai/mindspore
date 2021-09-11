@@ -249,7 +249,8 @@ class AxisIterator {
   inline void SetOffset(size_t outer_index, size_t inner_index) {
     axis_offset_ = outer_index * axis_size_ * inner_size_ + inner_index;
   }
-  inline size_t GetPos(int i) const { return axis_offset_ + i * inner_size_; }
+  inline size_t GetPos(size_t i) const { return axis_offset_ + i * inner_size_; }
+  inline size_t RevertPos(size_t i) const { return (i - axis_offset_) / inner_size_; }
 
   inline size_t OuterSize() const { return outer_size_; }
   inline size_t AxisSize() const { return axis_size_; }

@@ -29,14 +29,13 @@ class SortCpuKernel : public CPUKernel {
   ~SortCpuKernel() = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  size_t inner_size_{1};
-  size_t outer_size_{1};
-  size_t axis_size_{1};
+  AxisIterator axisIterator_{};
   bool descending_{false};
 };
 
