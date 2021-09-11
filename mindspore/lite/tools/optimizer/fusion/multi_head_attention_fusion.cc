@@ -25,28 +25,6 @@ const auto &p1 = std::placeholders::_1;
 const size_t kWeightShapeSize = 2;
 }  // namespace
 
-MultiHeadAttentionFusion::MultiHeadAttentionFusion(const string &name, bool multigraph)
-    : MultiplePatternProcessPass(name, multigraph) {
-  input_q_ = std::make_shared<Var>();
-  input_k_ = std::make_shared<Var>();
-  input_v_ = std::make_shared<Var>();
-
-  weight_q_ = std::make_shared<CondVar>(IsParamNode);
-  weight_k_ = std::make_shared<CondVar>(IsParamNode);
-  weight_v_ = std::make_shared<CondVar>(IsParamNode);
-  weight_o_ = std::make_shared<CondVar>(IsParamNode);
-
-  bias_q_ = std::make_shared<CondVar>(IsParamNode);
-  bias_k_ = std::make_shared<CondVar>(IsParamNode);
-  bias_v_ = std::make_shared<CondVar>(IsParamNode);
-  bias_o_ = std::make_shared<CondVar>(IsParamNode);
-
-  mask_ = std::make_shared<Var>();
-
-  reshape_k_ = std::make_shared<Var>();
-  reshape_v_ = std::make_shared<Var>();
-}
-
 namespace {
 VectorRef DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &bias) {
   auto is_matmul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul));
@@ -184,6 +162,42 @@ VectorRef DefineProcessOutputPattern(const BaseRef &input, const BaseRef &weight
 }
 }  // namespace
 
+bool MultiHeadAttentionFusion::Init() const {
+  input_q_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_q_ != nullptr, false);
+  input_k_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_k_ != nullptr, false);
+  input_v_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_v_ != nullptr, false);
+
+  weight_q_ = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(weight_q_ != nullptr, false);
+  weight_k_ = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(weight_k_ != nullptr, false);
+  weight_v_ = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(weight_v_ != nullptr, false);
+  weight_o_ = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(weight_o_ != nullptr, false);
+
+  bias_q_ = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(bias_q_ != nullptr, false);
+  bias_k_ = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(bias_k_ != nullptr, false);
+  bias_v_ = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(bias_v_ != nullptr, false);
+  bias_o_ = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(bias_o_ != nullptr, false);
+
+  mask_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mask_ != nullptr, false);
+
+  reshape_k_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_k_ != nullptr, false);
+  reshape_v_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_v_ != nullptr, false);
+  return true;
+}
+
 VectorRef MultiHeadAttentionFusion::DefineMPWithoutMaskPattern() const {
   auto is_param1 = std::make_shared<CondVar>(IsParamNode);
   MS_CHECK_TRUE_RET(is_param1 != nullptr, {});
@@ -215,6 +229,10 @@ VectorRef MultiHeadAttentionFusion::DefineMPWithoutMaskPattern() const {
 
 std::unordered_map<std::string, VectorRef> MultiHeadAttentionFusion::DefinePatterns() const {
   std::unordered_map<std::string, VectorRef> patterns;
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return patterns;
+  }
   patterns[kMPAWithoutMaskPatternName] = DefineMPWithoutMaskPattern();
   patterns[kMPAWithMaskPatternName] = DefineMPWithMaskPattern();
   return patterns;

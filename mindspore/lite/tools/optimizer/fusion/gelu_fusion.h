@@ -35,6 +35,7 @@ class GeLUFusion : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  protected:
+  virtual bool Init() const;
   virtual bool CheckPattern(const EquivPtr &equiv) const = 0;
   const float GetParameterValue(const EquivPtr &equiv, const VarPtr &input) const;
 
@@ -42,7 +43,7 @@ class GeLUFusion : public PatternProcessPass {
   CNodePtr CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
 
  protected:
-  VarPtr input_{nullptr};
+  mutable VarPtr input_{nullptr};
   mutable bool approximate_{false};
 };
 }  // namespace opt

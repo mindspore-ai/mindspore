@@ -114,7 +114,6 @@ TfLstmCellFusion::TfLstmCellFusion(const std::string &name, bool multigraph)
    * vars for lstm cell input
    * 0:cond 1:body 2:index 3:limit1 4:output 5:cell 6:hidden 7:limit2 8:input 9:kernel 10:bias
    */
-  forget_bias_ = std::make_shared<Var>();
 }
 
 AnfNodePtr TfLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
@@ -135,6 +134,8 @@ AnfNodePtr TfLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primi
   MS_CHECK_TRUE_RET(is_param2 != nullptr, nullptr);
   VectorRef add3 = VectorRef({is_var2, placeholders[0], is_param2});
 
+  forget_bias_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(forget_bias_ != nullptr, nullptr);
   auto hidden_cells = GenerateBodyGraphHiddenPattern(forget_bias_, placeholders);
   MS_CHECK_TRUE_RET(hidden_cells.size() == kInputSizeTwo, {});
 

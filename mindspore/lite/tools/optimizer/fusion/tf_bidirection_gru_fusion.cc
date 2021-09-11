@@ -90,9 +90,7 @@ VectorRef GenerateBodyGraphHiddenPattern(const BaseRef &sigmoid1, const BaseRef 
 }
 }  // namespace
 
-TfBidirectionGruFusion::TfBidirectionGruFusion(int num_fw_vars, int num_bw_vars, const std::string &name,
-                                               bool multi_graph)
-    : PatternProcessPass(name, multi_graph) {
+bool TfBidirectionGruFusion::Init() const {
   /*
    * vars for while input
    * fw_while_inputs:
@@ -100,17 +98,27 @@ TfBidirectionGruFusion::TfBidirectionGruFusion(int num_fw_vars, int num_bw_vars,
    * bw_while_inputs:
    * 0:cond 1:body 2:kernel_gate 3:bias_gate 4:cand_kernel 5:cand_bias
    */
-  for (int i = 0; i < num_fw_vars; ++i) {
-    fw_vars_.emplace_back(std::make_shared<Var>());
+  for (int i = 0; i < num_fw_vars_; ++i) {
+    auto is_var = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(is_var != nullptr, false);
+    fw_vars_.emplace_back(is_var);
   }
-  for (int i = 0; i < num_bw_vars; ++i) {
-    bw_vars_.emplace_back(std::make_shared<Var>());
+  for (int i = 0; i < num_bw_vars_; ++i) {
+    auto is_var = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(is_var != nullptr, false);
+    bw_vars_.emplace_back(is_var);
   }
   input_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_ != nullptr, false);
   input_length_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_length_ != nullptr, false);
   transpose_input_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(transpose_input_ != nullptr, false);
   fw_init_state_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(fw_init_state_ != nullptr, false);
   bw_init_state_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(bw_init_state_ != nullptr, false);
+  return true;
 }
 
 const VectorRef TfBidirectionGruFusion::DefineFowardPattern() const {
@@ -246,8 +254,12 @@ const VectorRef TfBidirectionGruFusion::DefinebackwardPattern() const {
 }
 
 const BaseRef TfBidirectionGruFusion::DefinePattern() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
+
   // forward
-  BaseRef b = nullptr;
   auto fw_out_trans = DefineFowardPattern();
   MS_CHECK_TRUE_RET(!fw_out_trans.empty(), {});
 

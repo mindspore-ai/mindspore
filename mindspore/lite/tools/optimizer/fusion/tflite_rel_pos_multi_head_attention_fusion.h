@@ -29,13 +29,18 @@ namespace mindspore::opt {
 class TfliteRelPosMultiHeadAttentionFusion : public MultiHeadAttentionFusion {
  public:
   explicit TfliteRelPosMultiHeadAttentionFusion(const std::string &name = "TfliteRelPosMultiHeadAttentionFusion",
-                                                bool multigraph = true);
+                                                bool multigraph = true)
+      : MultiHeadAttentionFusion(name, multigraph) {}
   ~TfliteRelPosMultiHeadAttentionFusion() override = default;
+
+ private:
+  bool Init() const override;
+
   std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+
   AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
                      const EquivPtr &) const override;
 
- protected:
   std::shared_ptr<ops::Attention> BuildAttentionPrim(const EquivPtr &equiv) const override;
 
   const VectorRef DefineProcessInputPattern(const BaseRef &input, const BaseRef &weight, const BaseRef &bias,
@@ -49,19 +54,19 @@ class TfliteRelPosMultiHeadAttentionFusion : public MultiHeadAttentionFusion {
 
  private:
   const std::string kRPMHAttentionPatternName = "RPMHAttentionPattern";
-  VarPtr query_u_{nullptr};
-  VarPtr query_v_{nullptr};
-  VarPtr query_prim_{nullptr};
-  VarPtr key_prim_{nullptr};
-  VarPtr value_prim_{nullptr};
-  VarPtr pos_prim_{nullptr};
-  VarPtr output_prim_{nullptr};
-  VarPtr input_p_{nullptr};
-  VarPtr weight_p_{nullptr};
-  std::vector<VarPtr> query_stack_params_;
-  std::vector<VarPtr> key_stack_params_;
-  std::vector<VarPtr> value_stack_params_;
-  std::vector<VarPtr> pos_stack_params_;
+  mutable VarPtr query_u_{nullptr};
+  mutable VarPtr query_v_{nullptr};
+  mutable VarPtr query_prim_{nullptr};
+  mutable VarPtr key_prim_{nullptr};
+  mutable VarPtr value_prim_{nullptr};
+  mutable VarPtr pos_prim_{nullptr};
+  mutable VarPtr output_prim_{nullptr};
+  mutable VarPtr input_p_{nullptr};
+  mutable VarPtr weight_p_{nullptr};
+  mutable std::vector<VarPtr> query_stack_params_;
+  mutable std::vector<VarPtr> key_stack_params_;
+  mutable std::vector<VarPtr> value_stack_params_;
+  mutable std::vector<VarPtr> pos_stack_params_;
 };
 
 }  // namespace mindspore::opt

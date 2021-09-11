@@ -35,8 +35,8 @@ class ConvTransformFusion : public PatternProcessPass {
  private:
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   void GenTransParam(const CNodePtr &, int, float *, float *) const;
-  void GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
-  void CalNewWeightTensor(const CNodePtr &, const tensor::TensorPtr &, int, const float *) const;
+  int GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
+  int CalNewWeightTensor(const CNodePtr &, const tensor::TensorPtr &, int, const float *) const;
   static void CalNewBiasTensor(float *, int, bool, const float *, const float *);
   bool IsVariableWeightConv(const CNodePtr &conv_node) const;
 

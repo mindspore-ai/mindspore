@@ -44,7 +44,7 @@ class TfLstmCellFusion : public TfliteLstmCellFusion {
                                 int hidden_size) const;
 
  private:
-  VarPtr forget_bias_ = nullptr;
+  mutable VarPtr forget_bias_ = nullptr;
 };
 }  // namespace opt
 }  // namespace mindspore

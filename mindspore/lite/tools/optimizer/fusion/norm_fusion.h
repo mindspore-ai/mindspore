@@ -34,19 +34,14 @@ class NormFusion : public PatternProcessPass {
  public:
   explicit NormFusion(const std::string &name = "NormFusion", bool multigraph = true)
       : PatternProcessPass(name, multigraph) {
-    input_ = std::make_shared<Var>();
-    mean1_ = std::make_shared<Var>();
-    mean1_axes_ = std::make_shared<Var>();
-    mean2_ = std::make_shared<Var>();
-    mean2_axes_ = std::make_shared<Var>();
-    gamma_ = std::make_shared<Var>();
-    beta_ = std::make_shared<Var>();
-    epsilon_ = std::make_shared<Var>();
-
     InitShapeSizeInferFuncMap();
   }
 
   ~NormFusion() override = default;
+
+ protected:
+  bool Init() const;
+
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
@@ -61,14 +56,14 @@ class NormFusion : public PatternProcessPass {
   std::map<string, int> ShapeSizeInfer(const FuncGraphPtr &func_graph) const;
 
  protected:
-  VarPtr input_ = nullptr;
-  VarPtr mean1_ = nullptr;
-  VarPtr mean1_axes_ = nullptr;
-  VarPtr mean2_ = nullptr;
-  VarPtr mean2_axes_ = nullptr;
-  VarPtr gamma_ = nullptr;
-  VarPtr beta_ = nullptr;
-  VarPtr epsilon_ = nullptr;
+  mutable VarPtr input_ = nullptr;
+  mutable VarPtr mean1_ = nullptr;
+  mutable VarPtr mean1_axes_ = nullptr;
+  mutable VarPtr mean2_ = nullptr;
+  mutable VarPtr mean2_axes_ = nullptr;
+  mutable VarPtr gamma_ = nullptr;
+  mutable VarPtr beta_ = nullptr;
+  mutable VarPtr epsilon_ = nullptr;
   std::map<schema::PrimitiveType, std::function<int(std::vector<int>, const schema::PrimitiveT &)>>
     shape_size_infer_registry_;
 };
@@ -80,6 +75,8 @@ class TfNormFusion : public NormFusion {
       : NormFusion(name, multigraph) {}
 
   ~TfNormFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
 };
 
@@ -90,6 +87,8 @@ class OnnxLayerNormFusion : public NormFusion {
       : NormFusion(name, multigraph) {}
 
   ~OnnxLayerNormFusion() override = default;
+
+ private:
   const BaseRef DefinePattern() const override;
 };
 }  // namespace opt

@@ -172,6 +172,11 @@ const BaseRef TfBidirectionGruCfFusion::DefineBidirectionRnnPattern(const BaseRe
 }
 
 const BaseRef TfBidirectionGruCfFusion::DefinePattern() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
+
   const auto fw_out_trans = DefineBidirectionRnnPattern(transpose_input_, fw_vars_, fw_init_state_);
 
   auto bw_reverse_in = VectorRef({GetPrim(prim::kPrimReverseSequence), input_, input_length_});

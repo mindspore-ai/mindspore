@@ -24,6 +24,11 @@
 
 namespace mindspore {
 namespace opt {
+bool GeLUFusion::Init() const {
+  input_ = std::make_shared<Var>();
+  return input_ != nullptr;
+}
+
 CNodePtr GeLUFusion::CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                     const EquivPtr &equiv) const {
   MS_ASSERT(func_graph != nullptr && node != nullptr && equiv != nullptr);

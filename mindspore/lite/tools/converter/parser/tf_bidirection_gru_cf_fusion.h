@@ -31,13 +31,17 @@ namespace opt {
 class TfBidirectionGruCfFusion : public TfBidirectionGruFusion {
  public:
   explicit TfBidirectionGruCfFusion(const std::string &name = "tf_bidirection_gru_cf_fusion", bool multi_graph = true);
+
   ~TfBidirectionGruCfFusion() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  const BaseRef DefinePattern() const override;
+
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
   BaseRef DefineGruCellPattern(const BaseRef &in_ta_read, const BaseRef &switch3_true,
                                const std::vector<VarPtr> &vars) const;
+
   const BaseRef DefineBidirectionRnnPattern(const BaseRef &input, const std::vector<VarPtr> &vars,
                                             const VarPtr &init_state) const;
 };

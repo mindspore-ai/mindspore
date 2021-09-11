@@ -32,44 +32,64 @@ constexpr size_t kWhileUniqInputsLength = 6;
 class TfBidirectionGruFusion : public PatternProcessPass {
  public:
   explicit TfBidirectionGruFusion(int num_fw_vars = kWhileUniqInputsLength, int num_bw_vars = kWhileUniqInputsLength,
-                                  const std::string &name = "TfBidirectionGruFusion", bool multi_graph = true);
+                                  const std::string &name = "TfBidirectionGruFusion", bool multi_graph = true)
+      : PatternProcessPass(name, multi_graph), num_fw_vars_(num_fw_vars), num_bw_vars_(num_bw_vars) {}
+
   ~TfBidirectionGruFusion() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  protected:
+  bool Init() const;
+
+  const BaseRef DefinePattern() const override;
+
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
   virtual AnfNodePtr GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
+
   CNodePtr CreateBiDirectionGruNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const EquivPtr &equiv,
                                     const std::string &base_name, int var_offset) const;
+
   static CNodePtr GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
                                      const std::string &base_name);
 
  private:
   const VectorRef DefineFowardPattern() const;
+
   const VectorRef DefinebackwardPattern() const;
+
   AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
 
   static tensor::TensorPtr GetDefaultTensorInfo(const AnfNodePtr &parameter_anf);
+
   static lite::STATUS GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf, const AnfNodePtr &bw_cand_kernel_anf,
                                             int *input_size, int *hidden_size);
+
   static ParameterPtr AddDefaultParameter(const FuncGraphPtr &func_graph, const std::string &name,
                                           const std::vector<int> &shape, TypeId type, void **tensor_data);
+
   static lite::STATUS ConvertWeightData(const AnfNodePtr &gate_weight, const AnfNodePtr &cand_weight, int input_size,
                                         int hidden_size, float *gate_tensor_data, float *recu_tensor_data);
+
   static lite::STATUS ConvertBiasData(const AnfNodePtr &gate_bias, const AnfNodePtr &cand_bias, int hidden_size,
                                       float *tensor_data);
+
   static void CopyFlattenMatData(const float *mat, int C, int r0, int r1, int c0, int c1, float *data, bool t = false);
+
   static CNodePtr GetStackedHiddenState(const FuncGraphPtr &func_graph, const AnfNodePtr &fw_init_state,
                                         const AnfNodePtr &bw_init_state, const std::string &base_name);
 
  protected:
-  std::vector<VarPtr> fw_vars_;
-  std::vector<VarPtr> bw_vars_;
-  VarPtr input_;
-  VarPtr input_length_;
-  VarPtr transpose_input_;
-  VarPtr fw_init_state_;
-  VarPtr bw_init_state_;
+  mutable std::vector<VarPtr> fw_vars_;
+  mutable std::vector<VarPtr> bw_vars_;
+  mutable VarPtr input_;
+  mutable VarPtr input_length_;
+  mutable VarPtr transpose_input_;
+  mutable VarPtr fw_init_state_;
+  mutable VarPtr bw_init_state_;
+
+ private:
+  int num_fw_vars_{0};
+  int num_bw_vars_{0};
 };
 inline bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
 }  // namespace opt

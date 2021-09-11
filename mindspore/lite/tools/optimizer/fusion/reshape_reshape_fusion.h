@@ -33,8 +33,8 @@ class ReshapeReshapeFusion : public PatternProcessPass {
  private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  VarPtr reshape_input_{std::make_shared<Var>()};
-  VarPtr reshape_shape_{std::make_shared<Var>()};
+  mutable VarPtr reshape_input_{nullptr};
+  mutable VarPtr reshape_shape_{nullptr};
 };
 }  // namespace opt
 }  // namespace mindspore

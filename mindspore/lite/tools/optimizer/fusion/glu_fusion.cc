@@ -42,7 +42,21 @@ CNodePtr GLUFusion::CreateGLUNode(const FuncGraphPtr &func_graph, const AnfNodeP
   return glu_cnode;
 }
 
+bool GLUFusion::Init() const {
+  input_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_ != nullptr, false);
+  axis_ = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(axis_ != nullptr, false);
+  split_prim_ = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSplit>);
+  MS_CHECK_TRUE_RET(split_prim_ != nullptr, false);
+  return true;
+}
+
 const BaseRef GLUFusion::DefinePattern() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
   VectorRef split_ref({split_prim_, input_, axis_});
   auto is_tuple_getitem1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTupleGetItem>);
   MS_CHECK_TRUE_RET(is_tuple_getitem1 != nullptr, {});

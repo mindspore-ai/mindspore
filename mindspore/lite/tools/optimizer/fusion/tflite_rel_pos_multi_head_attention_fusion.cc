@@ -33,28 +33,52 @@ const size_t kStackParamSize = 2;
 const size_t kInputSize = 16;
 const size_t kOutputSize = 2;
 }  // namespace
-
-TfliteRelPosMultiHeadAttentionFusion::TfliteRelPosMultiHeadAttentionFusion(const string &name, bool multigraph)
-    : MultiHeadAttentionFusion(name, multigraph) {
+bool TfliteRelPosMultiHeadAttentionFusion::Init() const {
+  if (!MultiHeadAttentionFusion::Init()) {
+    MS_LOG(ERROR) << "basic class initial member failed.";
+    return false;
+  }
   query_u_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(query_u_ != nullptr, false);
   query_v_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(query_v_ != nullptr, false);
   input_p_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_p_ != nullptr, false);
   weight_p_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(weight_p_ != nullptr, false);
   query_prim_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimFullConnection));
+  MS_CHECK_TRUE_RET(query_prim_ != nullptr, false);
   key_prim_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimFullConnection));
+  MS_CHECK_TRUE_RET(key_prim_ != nullptr, false);
   value_prim_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimFullConnection));
+  MS_CHECK_TRUE_RET(value_prim_ != nullptr, false);
   output_prim_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimFullConnection));
+  MS_CHECK_TRUE_RET(output_prim_ != nullptr, false);
   pos_prim_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimFullConnection));
+  MS_CHECK_TRUE_RET(pos_prim_ != nullptr, false);
 
   for (size_t i = 0; i < kStackParamSize; i++) {
-    query_stack_params_.emplace_back(std::make_shared<Var>());
-    key_stack_params_.emplace_back(std::make_shared<Var>());
-    value_stack_params_.emplace_back(std::make_shared<Var>());
-    pos_stack_params_.emplace_back(std::make_shared<Var>());
+    auto is_var1 = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(is_var1 != nullptr, false);
+    query_stack_params_.emplace_back(is_var1);
+    auto is_var2 = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(is_var2 != nullptr, false);
+    key_stack_params_.emplace_back(is_var2);
+    auto is_var3 = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(is_var3 != nullptr, false);
+    value_stack_params_.emplace_back(is_var3);
+    auto is_var4 = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(is_var4 != nullptr, false);
+    pos_stack_params_.emplace_back(is_var4);
   }
+  return true;
 }
 
 std::unordered_map<std::string, VectorRef> TfliteRelPosMultiHeadAttentionFusion::DefinePatterns() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
   auto query = DefineProcessInputPattern(input_q_, weight_q_, bias_q_, query_stack_params_, query_prim_);
   auto is_add1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
   MS_CHECK_TRUE_RET(is_add1 != nullptr, {});
