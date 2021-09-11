@@ -79,7 +79,7 @@ void LayerNormCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   }
   std::vector<common::Task> tasks;
   tasks.reserve(thread_num);
-  auto task = [this, &x, &gamma, &beta, &y, &mean, &var, thread_num](size_t start, size_t end) {
+  auto task = [this, &x, &gamma, &beta, &y, &mean, &var, thread_num](size_t start) {
     for (size_t c = 0; c < ceil(static_cast<double>(block_num_) / thread_num); ++c) {
       if (c * thread_num + start >= block_num_) {
         continue;
@@ -104,7 +104,7 @@ void LayerNormCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   };
   for (size_t i = 0; i < thread_num; ++i) {
     auto block = [&, i]() {
-      task(i, i + 1);
+      task(i);
       return common::SUCCESS;
     };
     tasks.emplace_back(block);

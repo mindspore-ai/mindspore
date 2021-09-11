@@ -81,7 +81,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto thread_num2 = block_num_ < thread_num ? block_num_ : thread_num;
   std::vector<common::Task> tasks2;
   tasks2.reserve(thread_num2);
-  auto task1 = [this, &x, &dy, &var, &mean, &dg, &db, thread_num1](size_t start, size_t end) {
+  auto task1 = [this, &x, &dy, &var, &mean, &dg, &db, thread_num1](size_t start) {
     for (size_t c = 0; c < ceil(static_cast<double>(param_num_) / thread_num1); ++c) {
       if (c * thread_num1 + start >= param_num_) {
         continue;
@@ -98,7 +98,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
       db[param_index] = dbeta;
     }
   };
-  auto task2 = [this, &x, &dy, &var, &mean, &dx, &gamma, thread_num2](size_t start, size_t end) {
+  auto task2 = [this, &x, &dy, &var, &mean, &dx, &gamma, thread_num2](size_t start) {
     for (size_t c = 0; c < ceil(static_cast<double>(block_num_) / thread_num2); ++c) {
       if (c * thread_num2 + start >= block_num_) {
         continue;
@@ -129,7 +129,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   };
   for (size_t i = 0; i < thread_num1; ++i) {
     auto block = [&, i]() {
-      task1(i, i + 1);
+      task1(i);
       return common::SUCCESS;
     };
     tasks1.emplace_back(block);
@@ -137,7 +137,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   common::ThreadPool::GetInstance().SyncRun(tasks1);
   for (size_t i = 0; i < thread_num2; ++i) {
     auto block = [&, i]() {
-      task2(i, i + 1);
+      task2(i);
       return common::SUCCESS;
     };
     tasks2.emplace_back(block);
