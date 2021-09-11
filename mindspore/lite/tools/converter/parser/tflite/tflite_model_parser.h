@@ -21,6 +21,8 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include <map>
+#include <utility>
 #include "tools/converter/model_parser.h"
 #include "include/registry/model_parser_registry.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
@@ -39,19 +41,33 @@ class TfliteModelParser : public converter::ModelParser {
   static int Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
  private:
-  std::unordered_map<int, AnfNodePtr> nodes_;
   std::unique_ptr<tflite::ModelT> tflite_model_;
+  std::map<int, CNodePtr> control_flow_nodes_;
+  std::map<CNodePtr, std::pair<FuncGraphPtr, FuncGraphPtr>> control_flow_map_;
   char *tflite_model_buf_ = nullptr;
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const std::string &model_path);
-  STATUS ConvertConstTensor(const tflite::TensorT *tensor, const ParameterPtr &parameter,
+  STATUS ConvertConstTensor(const std::unique_ptr<tflite::TensorT> &tensor, const ParameterPtr &parameter,
                             const std::string &tensor_name, bool is_uint8_weight_quant);
-  STATUS ConvertOutputTensor(const tflite::OperatorT *op, const CNodePtr &dst_cnode);
-  STATUS ConvertOpQuantParams(const tflite::OperatorT *op, ops::PrimitiveC *primitive_c);
-  STATUS ConvertOps();
-  STATUS ConvertGraphInputs();
-  STATUS ConvertGraphOutputs();
-  static STATUS SetTensorQuantParam(const tflite::TensorT *tflite_tensor, std::vector<QuantParamT> *quant_params,
-                                    int round_type = 1);
+  STATUS ConvertOps(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, const FuncGraphPtr &func_graph,
+                    std::unordered_map<int, AnfNodePtr> *anf_node_map);
+  STATUS ConvertGraphInputs(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, const FuncGraphPtr &func_graph,
+                            std::unordered_map<int, AnfNodePtr> *anf_node_map);
+  STATUS ConvertGraphOutputs(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, const FuncGraphPtr &func_graph,
+                             std::unordered_map<int, AnfNodePtr> *anf_node_map);
+  STATUS ConvertTfliteGraph();
+  STATUS ProcessControlFlowOp(const std::unique_ptr<tflite::OperatorT> &op, const CNodePtr &anf_node,
+                              const std::string &op_type);
+  STATUS BuildSubFuncGraphMap(size_t subgraph_idx, const FuncGraphPtr &sub_func_graph,
+                              const std::string &subgraph_name);
+  STATUS ControlFlowNodePostProcess();
+  static STATUS ConvertOutputTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                    const FuncGraphPtr &func_graph, const std::unique_ptr<tflite::OperatorT> &op,
+                                    const CNodePtr &dst_cnode, std::unordered_map<int, AnfNodePtr> *anf_node_map);
+  static STATUS ConvertOpQuantParams(const std::unique_ptr<tflite::OperatorT> &op,
+                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                     ops::PrimitiveC *primitive_c);
+  static STATUS SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
+                                    std::vector<QuantParamT> *quant_params, int round_type = 1);
 };
 }  // namespace lite
 }  // namespace mindspore

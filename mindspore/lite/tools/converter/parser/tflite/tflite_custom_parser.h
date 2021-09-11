@@ -32,6 +32,7 @@ class TfliteCustomParser : public TfliteNodeParser {
   ~TfliteCustomParser() override = default;
 
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 
   static ops::PrimitiveC *DetectPostProcess(const std::vector<uint8_t> &custom_attr,
@@ -48,6 +49,7 @@ class TfliteCustomParser : public TfliteNodeParser {
   static ops::PrimitiveC *ExtractFeatures();
 
   ops::PrimitiveC *Rfft(const std::vector<uint8_t> &custom_attr, const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                         const std::unique_ptr<tflite::ModelT> &tflite_model);
 
   static ops::PrimitiveC *FftReal();

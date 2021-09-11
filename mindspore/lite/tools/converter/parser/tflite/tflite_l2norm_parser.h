@@ -32,6 +32,7 @@ class TfliteL2NormParser : public TfliteNodeParser {
   ~TfliteL2NormParser() override = default;
 
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 }  // namespace lite

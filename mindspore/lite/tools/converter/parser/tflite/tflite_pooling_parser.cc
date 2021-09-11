@@ -25,8 +25,10 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::AvgPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -35,11 +37,6 @@ ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::Operat
   prim->set_round_mode(mindspore::RoundMode::FLOOR);
   prim->set_global(false);
 
-  const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
-    return nullptr;
-  }
   const auto &tflite_attr = tflite_op->builtin_options.AsPool2DOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: conv attr failed";
@@ -67,8 +64,10 @@ ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::Operat
 }
 
 ops::PrimitiveC *TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::MaxPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -77,11 +76,6 @@ ops::PrimitiveC *TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::Operat
   prim->set_round_mode(mindspore::RoundMode::FLOOR);
   prim->set_global(false);
 
-  const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
-    return nullptr;
-  }
   const auto &tflite_attr = tflite_op->builtin_options.AsPool2DOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: conv attr failed";
