@@ -44,24 +44,24 @@ class ConvertToolLoader:
     @staticmethod
     def find_toolkit_path():
         """Find the path to Ascend toolkit."""
-        ascend_install_path = "/usr/local/Ascend"
-        if not os.path.exists(ascend_install_path):
-            ascend_toolkit_path = os.getenv("ASCEND_TOOLKIT_PATH")
-            if not ascend_toolkit_path:
-                raise ValueError(
-                    "Failed to get $ASCEND_TOOLKIT_PATH in environment. Please install run packages " +
-                    "and set the environment variable correctly.")
-            ascend_install_path = ascend_toolkit_path
-        ascend_install_path = Path(ascend_install_path).resolve()
-        msaccucmp_file_list = list(ascend_install_path.rglob('msaccucmp.py*'))
+        ascend_toolkit_path = os.getenv("ASCEND_TOOLKIT_PATH")
+        if not ascend_toolkit_path:
+            ascend_toolkit_path = "/usr/local/Ascend"
+        if not os.path.exists(ascend_toolkit_path):
+            raise ValueError(
+                "Path {} does not exist. Please install Ascend run packages " \
+                "and set the environment variable $ASCEND_TOOLKIT_PATH correctly.".format(ascend_toolkit_path))
+        ascend_toolkit_path = Path(ascend_toolkit_path).resolve()
+        msaccucmp_file_list = list(ascend_toolkit_path.rglob('msaccucmp.py*'))
         if not msaccucmp_file_list:
-            raise ValueError("Failed to find msaccucmp.py or msaccucmp.pyc file under " +
-                             ascend_install_path + ". Please install Ascend toolkit.")
+            raise ValueError("Failed to find msaccucmp.py or msaccucmp.pyc file under {}. " \
+                             "Please install Ascend toolkit.".format(ascend_toolkit_path))
         return msaccucmp_file_list[0].parent
 
     def load_convert_tool(self):
         """load CANN conversion tool from the toolkit path."""
         toolkit_path = self.find_toolkit_path()
+        # add toolkit path to system searching module path
         if str(toolkit_path) not in sys.path:
             sys.path.append(str(toolkit_path))
         try:
@@ -72,9 +72,12 @@ class ConvertToolLoader:
             self.format_conversion = import_module(
                 'shape_conversion').FormatConversionMain
         except ModuleNotFoundError:
+            # restore system searching module path
+            if str(toolkit_path) in sys.path:
+                sys.path.remove(str(toolkit_path))
             raise ModuleNotFoundError(
-                "Failed to load CANN conversion tools under " + toolkit_path + ". Please make sure Ascend " +
-                "toolkit has been installed properly.")
+                "Failed to load CANN conversion tools under {}. Please make sure Ascend " \
+                "toolkit has been installed properly.".format(toolkit_path))
 
         try:
             self.progress = import_module("progress").Progress
@@ -93,6 +96,10 @@ class ConvertToolLoader:
         except ModuleNotFoundError:
             self.compare_none_error = self.utils.VECTOR_COMPARISON_NONE_ERROR
             self.compare_exception = self.utils.CompareError
+
+        # restore system searching module path
+        if str(toolkit_path) in sys.path:
+            sys.path.remove(str(toolkit_path))
 
 def parse_args(file_list, output_path):
     """Helper function to parse the input argument for the conversion configuration."""
