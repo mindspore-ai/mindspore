@@ -114,6 +114,14 @@ void Worker::Active(Task *task, int task_id) {
   cond_var_.notify_one();
 }
 
+void Worker::Active() {
+  {
+    std::lock_guard<std::mutex> _l(mutex_);
+    status_ = kThreadBusy;
+  }
+  cond_var_.notify_one();
+}
+
 bool Worker::available() {
   int expected = kThreadIdle;
   return status_.compare_exchange_strong(expected, kThreadHeld);
@@ -319,11 +327,11 @@ ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<in
   return pool;
 }
 
-int ThreadPool::SetMaxSpinCount(int max_spin_count) {
+void ThreadPool::SetMaxSpinCount(int max_spin_count) {
   for (auto worker : workers_) {
-    THREAD_ERROR_IF_NULL(worker);
-    worker->SetMaxSpinCount(max_spin_count);
+    if (worker != nullptr) {
+      worker->SetMaxSpinCount(max_spin_count);
+    }
   }
-  return THREAD_OK;
 }
 }  // namespace mindspore

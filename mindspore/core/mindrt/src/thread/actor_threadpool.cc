@@ -57,7 +57,7 @@ bool ActorWorker::RunQueueActorTask() {
   return true;
 }
 
-bool ActorWorker::Active() {
+bool ActorWorker::ActorActive() {
   {
     std::lock_guard<std::mutex> _l(mutex_);
     if (status_ != kThreadIdle) {
@@ -72,15 +72,19 @@ bool ActorWorker::Active() {
 ActorThreadPool::~ActorThreadPool() {
   // wait until actor queue is empty
   bool terminate = false;
+  int count = 0;
   do {
     {
       std::lock_guard<std::mutex> _l(actor_mutex_);
       terminate = actor_queue_.empty();
     }
     if (!terminate) {
+      for (auto &worker : workers_) {
+        worker->Active();
+      }
       std::this_thread::yield();
     }
-  } while (!terminate);
+  } while (!terminate && count++ < kMaxCount);
   for (auto &worker : workers_) {
     delete worker;
     worker = nullptr;
@@ -107,7 +111,7 @@ void ActorThreadPool::PushActorToQueue(const ActorReference &actor) {
   // active one idle actor thread if exist
   for (size_t i = 0; i < actor_thread_num_; ++i) {
     auto worker = reinterpret_cast<ActorWorker *>(workers_[i]);
-    if (worker->Active()) {
+    if (worker->ActorActive()) {
       break;
     }
   }
